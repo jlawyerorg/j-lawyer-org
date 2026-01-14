@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.persistence;
 
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.LockModeType;
 import javax.persistence.PersistenceContext;
 
 /**
@@ -685,5 +686,10 @@ public class InvoicePoolFacade extends AbstractFacade<InvoicePool> implements In
     public InvoicePoolFacade() {
         super(InvoicePool.class);
     }
-    
+
+    @Override
+    public InvoicePool findForUpdate(String id) {
+        return em.find(InvoicePool.class, id, LockModeType.PESSIMISTIC_WRITE);
+    }
+
 }

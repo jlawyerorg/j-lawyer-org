@@ -686,5 +686,15 @@ public interface InvoicePoolFacadeLocal {
     List<InvoicePool> findRange(int[] range);
 
     int count();
-    
+
+    /**
+     * Finds an InvoicePool by ID with a pessimistic write lock.
+     * Use this method when updating the lastIndex to prevent race conditions
+     * during concurrent invoice number generation.
+     *
+     * @param id the pool ID
+     * @return the locked InvoicePool entity, or null if not found
+     */
+    InvoicePool findForUpdate(String id);
+
 }

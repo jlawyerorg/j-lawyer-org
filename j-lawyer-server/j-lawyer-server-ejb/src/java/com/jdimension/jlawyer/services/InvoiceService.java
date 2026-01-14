@@ -937,7 +937,7 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
     @Override
     @RolesAllowed({"loginRole"})
     public String nextInvoiceNumber(InvoicePool pool) throws Exception {
-        InvoicePool ip = this.invoicePools.find(pool.getId());
+        InvoicePool ip = this.invoicePools.findForUpdate(pool.getId());
         if (ip == null) {
             log.error("invalid invoice pool with id " + pool.getId());
             throw new Exception("Ungültiger Rechnungsnummernkreis");
