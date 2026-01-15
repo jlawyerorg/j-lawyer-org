@@ -959,6 +959,22 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         int textX = x + (AVATAR_SIZE - fm.stringWidth(initials)) / 2;
         int textY = y + (AVATAR_SIZE + fm.getAscent() - fm.getDescent()) / 2;
         g2d.drawString(initials, textX, textY);
+
+        // Draw user icon badge (bottom-right of avatar)
+        try {
+            ImageIcon userIcon = UserSettings.getInstance().getUserSmallIcon(sender);
+            if (userIcon != null && userIcon.getIconWidth() > 0) {
+                int badgeSize = 16;
+                int badgeX = x + AVATAR_SIZE - badgeSize + 2;
+                int badgeY = y + AVATAR_SIZE - badgeSize + 2;
+
+                // Draw the icon scaled to badge size using ImageIcon for proper loading
+                Image scaledIcon = userIcon.getImage().getScaledInstance(badgeSize, badgeSize, Image.SCALE_SMOOTH);
+                new ImageIcon(scaledIcon).paintIcon(this, g2d, badgeX, badgeY);
+            }
+        } catch (Exception ex) {
+            log.error("Error painting user icon badge", ex);
+        }
     }
 
     private String getInitials(String name) {
@@ -1080,10 +1096,10 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
             bubbleX = BUBBLE_MARGIN;
             bubbleWidth = width - (2 * BUBBLE_MARGIN);
         } else {
-            // Other message: left-aligned with avatar space, right margin for asymmetry
+            // Other message: left-aligned with avatar space
             int avatarSpace = AVATAR_SIZE + AVATAR_GAP;
             bubbleX = BUBBLE_MARGIN + avatarSpace;
-            bubbleWidth = width - BUBBLE_MARGIN - avatarSpace - ASYMMETRIC_MARGIN;
+            bubbleWidth = width - (2 * BUBBLE_MARGIN) - avatarSpace;
         }
 
         // Calculate left offset: status bar + checkmarks (if applicable)
