@@ -98,7 +98,7 @@
             <StringItem index="2" value="3 MB"/>
             <StringItem index="3" value="5 MB"/>
             <StringItem index="4" value="10 MB"/>
-            <StringItem index="5" value="unbegrenzt"/>
+            <StringItem index="5" value="50 MB"/>
           </StringArray>
         </Property>
       </Properties>

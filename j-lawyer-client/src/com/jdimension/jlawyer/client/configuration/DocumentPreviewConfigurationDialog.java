@@ -695,8 +695,8 @@ public class DocumentPreviewConfigurationDialog extends javax.swing.JDialog {
             this.cmbSize.setSelectedItem("5 MB");
         } else if((""+10l*1024l*1024l).equals(maxPreviewBytesString)) {
             this.cmbSize.setSelectedItem("10 MB");
-        } else if((""+Long.MAX_VALUE).equals(maxPreviewBytesString)) {
-            this.cmbSize.setSelectedItem("unbegrenzt");
+        } else if((""+50l*1024l*1024l).equals(maxPreviewBytesString)) {
+            this.cmbSize.setSelectedItem("50 MB");
         } else {
             this.cmbSize.setSelectedItem("2 MB");
         }
@@ -737,7 +737,7 @@ public class DocumentPreviewConfigurationDialog extends javax.swing.JDialog {
 
         jLabel1.setText("Dokumentvorschau laden für Dokumente bis");
 
-        cmbSize.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1 MB", "2 MB", "3 MB", "5 MB", "10 MB", "unbegrenzt" }));
+        cmbSize.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1 MB", "2 MB", "3 MB", "5 MB", "10 MB", "50 MB" }));
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -792,8 +792,8 @@ public class DocumentPreviewConfigurationDialog extends javax.swing.JDialog {
             set.setConfiguration(ClientSettings.CONF_DOCUMENTS_MAXPREVIEWBYTES, ""+5l*1024l*1024l);
         } else if(("10 MB").equals(maxPreviewBytesString)) {
             set.setConfiguration(ClientSettings.CONF_DOCUMENTS_MAXPREVIEWBYTES, ""+10l*1024l*1024l);
-        } else if(("unbegrenzt").equals(maxPreviewBytesString)) {
-            set.setConfiguration(ClientSettings.CONF_DOCUMENTS_MAXPREVIEWBYTES, ""+Long.MAX_VALUE);
+        } else if(("50 MB").equals(maxPreviewBytesString)) {
+            set.setConfiguration(ClientSettings.CONF_DOCUMENTS_MAXPREVIEWBYTES, ""+50l*1024l*1024l);
         } else {
             set.setConfiguration(ClientSettings.CONF_DOCUMENTS_MAXPREVIEWBYTES, ""+2l*1024l*1024l);
         }

@@ -754,6 +754,8 @@ public class LoadDocumentPreviewThread implements Runnable {
             String maxPreviewBytesString = settings.getConfiguration(ClientSettings.CONF_DOCUMENTS_MAXPREVIEWBYTES, "" + maxPreviewBytes);
             try {
                 maxPreviewBytes = Long.parseLong(maxPreviewBytesString);
+                if(maxPreviewBytes > (50l * 1024l * 1024l))
+                    maxPreviewBytes = 50l * 1024l * 1024l;
             } catch (Throwable t) {
                 log.error("invalid setting for maximum document previes bytes: " + maxPreviewBytesString);
             }
