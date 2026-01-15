@@ -1078,6 +1078,93 @@ public class ComponentUtils {
         split.setDividerLocation(dl);
     }
 
+    /**
+     * Restores a SplitPane divider position from a stored ratio (0.0-1.0).
+     * The ratio is applied relative to the SplitPane's current size.
+     * If the component is not yet sized, a ComponentListener is added to apply the ratio later.
+     *
+     * @param split the JSplitPane to restore
+     * @param container the class used as namespace for the setting key
+     * @param componentName the component name used in the setting key
+     */
+    public static void restoreSplitPaneRatio(JSplitPane split, Class container, String componentName) {
+        try {
+            String ratioStr = ClientSettings.getInstance().getConfiguration(
+                    "split.ratio." + container.getName() + "." + componentName, "");
+            if (ratioStr.isEmpty()) {
+                // Try to migrate from old pixel-based setting
+                String pixelStr = ClientSettings.getInstance().getConfiguration(
+                        "split." + container.getName() + "." + componentName, "");
+                if (!pixelStr.isEmpty()) {
+                    // Will be converted to ratio on first resize
+                    int pixels = Integer.parseInt(pixelStr);
+                    split.setDividerLocation(pixels);
+                    return;
+                }
+                // Default to 50%
+                ratioStr = "0.5";
+            }
+
+            final double ratio = Double.parseDouble(ratioStr);
+
+            // Check if component is already sized
+            int totalSize = split.getOrientation() == JSplitPane.HORIZONTAL_SPLIT
+                    ? split.getWidth() : split.getHeight();
+
+            if (totalSize > 0) {
+                int location = (int) (totalSize * ratio);
+                split.setDividerLocation(location);
+            } else {
+                // Component not yet sized, apply ratio when it becomes visible
+                split.addComponentListener(new java.awt.event.ComponentAdapter() {
+                    private boolean applied = false;
+
+                    @Override
+                    public void componentResized(java.awt.event.ComponentEvent e) {
+                        if (!applied) {
+                            int size = split.getOrientation() == JSplitPane.HORIZONTAL_SPLIT
+                                    ? split.getWidth() : split.getHeight();
+                            if (size > 0) {
+                                split.setDividerLocation((int) (size * ratio));
+                                applied = true;
+                            }
+                        }
+                    }
+                });
+            }
+        } catch (Throwable t) {
+            log.error("Could not restore divider ratio for " + componentName + " in " + container.getName(), t);
+        }
+    }
+
+    /**
+     * Persists a SplitPane divider position as a ratio (0.0-1.0).
+     * The ratio is calculated relative to the SplitPane's total size.
+     *
+     * @param split the JSplitPane to persist
+     * @param container the class used as namespace for the setting key
+     * @param componentName the component name used in the setting key
+     */
+    public static void persistSplitPaneRatio(JSplitPane split, Class container, String componentName) {
+        split.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if (evt.getPropertyName().equals(JSplitPane.DIVIDER_LOCATION_PROPERTY)) {
+                int dividerLocation = split.getDividerLocation();
+                int totalSize = split.getOrientation() == JSplitPane.HORIZONTAL_SPLIT
+                        ? split.getWidth() : split.getHeight();
+
+                if (dividerLocation > 0 && totalSize > 0) {
+                    double ratio = (double) dividerLocation / totalSize;
+                    // Clamp ratio to valid range
+                    ratio = Math.max(0.0, Math.min(1.0, ratio));
+
+                    ClientSettings s = ClientSettings.getInstance();
+                    s.setConfiguration("split.ratio." + container.getName() + "." + componentName,
+                            String.format(java.util.Locale.US, "%.4f", ratio));
+                }
+            }
+        });
+    }
+
     public static void populateOptionsCombobox(AppOptionGroupBean[] options, JComboBox cmb) {
         String[] items = new String[options.length + 1];
         items[0] = "";

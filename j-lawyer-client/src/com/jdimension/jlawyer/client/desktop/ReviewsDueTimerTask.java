@@ -688,7 +688,6 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
     private static final Logger log = Logger.getLogger(ReviewsDueTimerTask.class.getName());
     private Component owner;
     private JPanel resultUI;
-    private JSplitPane split;
     private boolean ignoreCurrentEditor = false;
     private JTabbedPane eventPane = null;
 
@@ -704,20 +703,18 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
      * @param owner
      * @param eventPane
      * @param resultPanel
-     * @param split
      * @param ignoreCurrentEditor
      */
-    public ReviewsDueTimerTask(Component owner, JTabbedPane eventPane, JPanel resultPanel, JSplitPane split, boolean ignoreCurrentEditor) {
+    public ReviewsDueTimerTask(Component owner, JTabbedPane eventPane, JPanel resultPanel, boolean ignoreCurrentEditor) {
         super();
         this.owner = owner;
         this.resultUI = resultPanel;
-        this.split = split;
         this.ignoreCurrentEditor = ignoreCurrentEditor;
         this.eventPane = eventPane;
     }
 
-    public ReviewsDueTimerTask(Component owner, JTabbedPane eventPane, JPanel resultPanel, JSplitPane split) {
-        this(owner, eventPane, resultPanel, split, false);
+    public ReviewsDueTimerTask(Component owner, JTabbedPane eventPane, JPanel resultPanel) {
+        this(owner, eventPane, resultPanel, false);
     }
 
     @Override
@@ -849,15 +846,6 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
             return;
         }
         final ArrayList<ReviewDueEntry> list = entries;
-        try {
-
-            SwingUtilities.invokeLater(() -> {
-                split.setDividerLocation(split.getDividerLocation() + 1);
-                split.setDividerLocation(split.getDividerLocation() - 1);
-            });
-        } catch (Throwable t) {
-            log.error(t);
-        }
 
         if (stopped) {
             return;
@@ -893,8 +881,6 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                         }
 
                     }
-                    split.setDividerLocation(split.getDividerLocation() + 1);
-                    split.setDividerLocation(split.getDividerLocation() - 1);
                 }
 
                 private void addEventTypeTab(String eventTypeName) {

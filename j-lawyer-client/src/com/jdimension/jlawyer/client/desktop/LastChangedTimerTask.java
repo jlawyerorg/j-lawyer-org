@@ -688,7 +688,6 @@ public class LastChangedTimerTask extends java.util.TimerTask {
 
     private static final Logger log = Logger.getLogger(LastChangedTimerTask.class.getName());
     private JPanel resultUI;
-    private JSplitPane split;
     private boolean ignoreCurrentEditor = false;
     
     private volatile boolean stopped = false;
@@ -701,18 +700,16 @@ public class LastChangedTimerTask extends java.util.TimerTask {
      * Creates a new instance of LastChangedTimerTask
      * @param owner
      * @param resultPanel
-     * @param split
      * @param ignoreCurrentEditor
      */
-    public LastChangedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, boolean ignoreCurrentEditor) {
+    public LastChangedTimerTask(Component owner, JPanel resultPanel, boolean ignoreCurrentEditor) {
         super();
         this.resultUI = resultPanel;
-        this.split = split;
         this.ignoreCurrentEditor = ignoreCurrentEditor;
     }
 
-    public LastChangedTimerTask(Component owner, JPanel resultPanel, JSplitPane split) {
-        this(owner, resultPanel, split, false);
+    public LastChangedTimerTask(Component owner, JPanel resultPanel) {
+        this(owner, resultPanel, false);
     }
 
     @Override
@@ -805,9 +802,6 @@ public class LastChangedTimerTask extends java.util.TimerTask {
                         return;
                     }
                 }
-
-                split.setDividerLocation(split.getDividerLocation() + 1);
-                split.setDividerLocation(split.getDividerLocation() - 1);
 
             });
         } catch (Throwable t) {

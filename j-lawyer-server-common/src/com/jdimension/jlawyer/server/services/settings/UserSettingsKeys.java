@@ -706,7 +706,15 @@ public class UserSettingsKeys {
     public static final String CONF_DESKTOP_LASTFILTERDUESINCEDAYS = "client.desktop.lastfilterduesincedays";
     public static final String CONF_DESKTOP_LASTFILTERDUEINDAYS = "client.desktop.lastfilterdueindays";
     public static final String CONF_DESKTOP_LASTFILTERDOCUMENTTAG = "client.desktop.lastfilterdocumenttag";
-    
+
+    // Desktop grid layout customization
+    public static final String CONF_DESKTOP_GRID_ROWS = "client.desktop.grid.rows";
+    public static final String CONF_DESKTOP_GRID_COLS = "client.desktop.grid.cols";
+    public static final String CONF_DESKTOP_PANEL_LAYOUT = "client.desktop.panel.layout";
+    public static final String CONF_DESKTOP_SECTION_LASTCHANGED_VISIBLE = "client.desktop.section.lastchanged.visible";
+    public static final String CONF_DESKTOP_SECTION_DUE_VISIBLE = "client.desktop.section.due.visible";
+    public static final String CONF_DESKTOP_SECTION_TAGGED_VISIBLE = "client.desktop.section.tagged.visible";
+
     public static final String CONF_COLORS_RECENT = "client.colorchooser.recent";
 
     public static final String CONF_CALENDAR_DEFAULTTAB = "user.calendar.defaulttab";

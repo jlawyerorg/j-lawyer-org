@@ -697,7 +697,6 @@ public class TaggedTimerTask extends java.util.TimerTask {
     private static boolean running = false;
     private Component owner;
     private JPanel resultUI;
-    private JSplitPane split;
     private boolean ignoreCurrentEditor = false;
     private boolean rebuildPopup = true;
     private JPopupMenu popTags = null;
@@ -713,12 +712,11 @@ public class TaggedTimerTask extends java.util.TimerTask {
     }
 
     /**
-     * Creates a new instance of SystemStateTimerTask
+     * Creates a new instance of TaggedTimerTask
      *
      * @param owner
      * @param tagsPane
      * @param resultPanel
-     * @param split
      * @param tagMenu
      * @param popDocumentTags
      * @param popTags
@@ -726,12 +724,11 @@ public class TaggedTimerTask extends java.util.TimerTask {
      * @param ignoreCurrentEditorParam
      * @param rebuildPopup
      */
-    public TaggedTimerTask(Component owner, JTabbedPane tagsPane, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags, boolean ignoreCurrentEditorParam, boolean rebuildPopup) {
+    public TaggedTimerTask(Component owner, JTabbedPane tagsPane, JPanel resultPanel, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags, boolean ignoreCurrentEditorParam, boolean rebuildPopup) {
         super();
         this.owner = owner;
         this.resultUI = resultPanel;
         this.tagsPane = tagsPane;
-        this.split = split;
         this.ignoreCurrentEditor = ignoreCurrentEditorParam;
         this.rebuildPopup = rebuildPopup;
         this.popTags = popTags;
@@ -740,12 +737,12 @@ public class TaggedTimerTask extends java.util.TimerTask {
         this.tagDocumentMenu = tagDocumentMenu;
     }
 
-    public TaggedTimerTask(Component owner, JTabbedPane tagsPane, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags, boolean ignoreCurrentEditorParam) {
-        this(owner, tagsPane, resultPanel, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, ignoreCurrentEditorParam, true);
+    public TaggedTimerTask(Component owner, JTabbedPane tagsPane, JPanel resultPanel, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags, boolean ignoreCurrentEditorParam) {
+        this(owner, tagsPane, resultPanel, tagMenu, tagDocumentMenu, popTags, popDocumentTags, ignoreCurrentEditorParam, true);
     }
 
-    public TaggedTimerTask(Component owner, JTabbedPane tagsPane, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags) {
-        this(owner, tagsPane, resultPanel, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, false);
+    public TaggedTimerTask(Component owner, JTabbedPane tagsPane, JPanel resultPanel, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags) {
+        this(owner, tagsPane, resultPanel,tagMenu, tagDocumentMenu, popTags, popDocumentTags, false);
     }
 
     private void buildPopup(JButton button, JPopupMenu popup, List<String> tagsInUse, String[] lastFilterTags, String userSettingsKey) {
@@ -809,7 +806,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                     } catch (Exception ex) {
                         log.warn("Could not keep tag popup open at stored anchor", ex);
                     }
-                    TimerTask taggedTask = new TaggedTimerTask(EditorsRegistry.getInstance().getMainWindow(), tagsPane, resultUI, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, true, false);
+                    TimerTask taggedTask = new TaggedTimerTask(EditorsRegistry.getInstance().getMainWindow(), tagsPane, resultUI, tagMenu, tagDocumentMenu, popTags, popDocumentTags, true, false);
                     new java.util.Timer().schedule(taggedTask, 1000);
                 });
             }
@@ -1135,9 +1132,6 @@ public class TaggedTimerTask extends java.util.TimerTask {
                                 }
                             }
 
-                            split.setDividerLocation(split.getDividerLocation() + 1);
-                            split.setDividerLocation(split.getDividerLocation() - 1);
-                            
                             // reselect the tab that was active before the refresh
                             int selectTabIndex=-1;
                             if(reselectTabWithTitle!=null) {

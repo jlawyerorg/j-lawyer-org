@@ -693,6 +693,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.DateUtils;
+import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.voip.MailingQueueEntry;
@@ -747,6 +748,10 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private transient Timer timer9=null;
     private UpdateAddressTagsTask tagsTask2=null;
     private transient Timer timer10=null;
+
+    // Layout customization
+    private DesktopLayoutManager layoutManager;
+    private JPopupMenu popLayoutMenu;
     private UpdateDocumentTagsTask tagsTask3=null;
     private transient Timer timer11=null;
 
@@ -787,12 +792,9 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.jScrollPane4.getViewport().setOpaque(false);
         
         Color splitPaneColor=new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 170);
-        ComponentUtils.decorateSplitPane(jSplitPane1, splitPaneColor);
-        ComponentUtils.decorateSplitPane(jSplitPane2, splitPaneColor);
         
         updateCurrentDay();
         
-        this.jSplitPane1.setDividerLocation(0.5d);
 
         EventBroker b = EventBroker.getInstance();
         b.subscribeConsumer(this, Event.TYPE_UPDATE_APPLICATION);
@@ -820,7 +822,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         BoxLayout boxLayout=new BoxLayout(this.pnlLastChanged, BoxLayout.Y_AXIS);
         this.pnlLastChanged.setLayout(boxLayout);
         this.lastChangedTimer = new Timer();
-        LastChangedTimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, this.jSplitPane1);
+        final LastChangedTimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged);
         this.lastChangedTimer.schedule(lastChangedTask, 1000, 15l*59000l);
 
         Timer timer3 = new Timer();
@@ -828,13 +830,13 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         timer3.schedule(autoUpdateTask, 20000, 24l * 60l * 60l * 1000l);
 
         this.reviewsTimer = new Timer();
-        ReviewsDueTimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1);
+        final ReviewsDueTimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue);
         reviewsTimer.schedule(revDueTask, 1000, 15l*61000l);
 
         BoxLayout boxLayout2=new BoxLayout(this.pnlTagged, BoxLayout.Y_AXIS);
         this.pnlTagged.setLayout(boxLayout2);
-        Timer timer5 = new Timer();
-        TaggedTimerTask taggedTask = new TaggedTimerTask(this, this.tabPaneTagged, this.pnlTagged, this.jSplitPane2, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter);
+        final Timer timer5 = new Timer();
+        final TaggedTimerTask taggedTask = new TaggedTimerTask(this, this.tabPaneTagged, this.pnlTagged, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter);
         timer5.schedule(taggedTask, 1000, 3l*63000l);
 
         Timer timer6 = new Timer();
@@ -956,13 +958,19 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         }));
         
 
-        this.jSplitPane1.setDividerLocation(0.5d);
         
-        ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
-        ComponentUtils.restoreSplitPane(this.jSplitPane2, this.getClass(), "jSplitPane2");
-        
-        ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
-        ComponentUtils.persistSplitPane(this.jSplitPane2, this.getClass(), "jSplitPane2");
+
+        // Initialize layout manager and apply visibility settings
+        this.layoutManager = new DesktopLayoutManager(this.getClass());
+        this.layoutManager.registerPanel(DesktopLayoutPreset.PANEL_LASTCHANGED, "Zuletzt geändert", this.jPanel1);
+        this.layoutManager.registerPanel(DesktopLayoutPreset.PANEL_DUE, "Fällig", this.jPanel2);
+        this.layoutManager.registerPanel(DesktopLayoutPreset.PANEL_TAGGED, "Nach Etikett", this.jPanel3);
+
+        // Build layout context menu
+        buildLayoutContextMenu();
+
+        // Apply initial visibility settings
+        applyLayoutVisibility();
 
         UserSettings us = UserSettings.getInstance();
         this.lblUserName.setText(us.getCurrentUser().getPrincipalId());
@@ -995,17 +1003,160 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         });
     }
-    
+
+    private void buildLayoutContextMenu() {
+        popLayoutMenu = new JPopupMenu();
+
+        // Menu item to open configuration dialog
+        javax.swing.JMenuItem miLayoutConfig = new javax.swing.JMenuItem("Layout anpassen...");
+        miLayoutConfig.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png")));
+        miLayoutConfig.addActionListener(e -> openLayoutConfigDialog());
+        popLayoutMenu.add(miLayoutConfig);
+
+        popLayoutMenu.addSeparator();
+
+        // Submenu for presets
+        javax.swing.JMenu menuPresets = new javax.swing.JMenu("Layout-Vorlage");
+        for (DesktopLayoutPreset preset : DesktopLayoutPreset.values()) {
+            javax.swing.JMenuItem miPreset = new javax.swing.JMenuItem(preset.getDisplayName());
+            // Set icon based on preset
+            switch (preset) {
+                case CLASSIC:
+                    miPreset.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/classical_dashboard_20dp_0E72B5_FILL0_wght400_GRAD0_opsz20.png")));
+                    break;
+                case HORIZONTAL:
+                    miPreset.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/horizontal_landscape_20dp_0E72B5_FILL0_wght400_GRAD0_opsz20.png")));
+                    break;
+                case VERTICAL:
+                    miPreset.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/vertical_portrait_20dp_0E72B5_FILL0_wght400_GRAD0_opsz20.png")));
+                    break;
+                case COMPACT:
+                    miPreset.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/tab_20dp_0E72B5_FILL0_wght400_GRAD0_opsz20.png")));
+                    break;
+            }
+            miPreset.addActionListener(e -> {
+                layoutManager.applyPreset(preset);
+                applyLayoutVisibility();
+            });
+            menuPresets.add(miPreset);
+        }
+        popLayoutMenu.add(menuPresets);
+
+        // Submenu for visibility toggles
+        javax.swing.JMenu menuVisibility = new javax.swing.JMenu("Bereiche anzeigen");
+
+        JCheckBoxMenuItem chkLastChanged = new JCheckBoxMenuItem("Zuletzt geändert");
+        chkLastChanged.setSelected(layoutManager.isPanelVisible(DesktopLayoutPreset.PANEL_LASTCHANGED));
+        chkLastChanged.addActionListener(e -> togglePanelVisibility(DesktopLayoutPreset.PANEL_LASTCHANGED, chkLastChanged));
+        menuVisibility.add(chkLastChanged);
+
+        JCheckBoxMenuItem chkDue = new JCheckBoxMenuItem("Fällig");
+        chkDue.setSelected(layoutManager.isPanelVisible(DesktopLayoutPreset.PANEL_DUE));
+        chkDue.addActionListener(e -> togglePanelVisibility(DesktopLayoutPreset.PANEL_DUE, chkDue));
+        menuVisibility.add(chkDue);
+
+        JCheckBoxMenuItem chkTagged = new JCheckBoxMenuItem("Nach Etikett");
+        chkTagged.setSelected(layoutManager.isPanelVisible(DesktopLayoutPreset.PANEL_TAGGED));
+        chkTagged.addActionListener(e -> togglePanelVisibility(DesktopLayoutPreset.PANEL_TAGGED, chkTagged));
+        menuVisibility.add(chkTagged);
+
+        popLayoutMenu.add(menuVisibility);
+    }
+
+    private void updateVisibilityMenuItems() {
+        // Update checkbox states in the visibility submenu
+        for (MenuElement element : popLayoutMenu.getSubElements()) {
+            if (element instanceof javax.swing.JMenu) {
+                javax.swing.JMenu menu = (javax.swing.JMenu) element;
+                if ("Bereiche anzeigen".equals(menu.getText())) {
+                    for (int i = 0; i < menu.getItemCount(); i++) {
+                        javax.swing.JMenuItem item = menu.getItem(i);
+                        if (item instanceof JCheckBoxMenuItem) {
+                            JCheckBoxMenuItem chk = (JCheckBoxMenuItem) item;
+                            String panelId = getPanelIdFromMenuText(chk.getText());
+                            if (panelId != null) {
+                                chk.setSelected(layoutManager.isPanelVisible(panelId));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private String getPanelIdFromMenuText(String text) {
+        if ("Zuletzt geändert".equals(text)) {
+            return DesktopLayoutPreset.PANEL_LASTCHANGED;
+        } else if ("Fällig".equals(text)) {
+            return DesktopLayoutPreset.PANEL_DUE;
+        } else if ("Nach Etikett".equals(text)) {
+            return DesktopLayoutPreset.PANEL_TAGGED;
+        }
+        return null;
+    }
+
+    private void togglePanelVisibility(String panelId, JCheckBoxMenuItem menuItem) {
+        boolean success = layoutManager.togglePanelVisibility(panelId);
+        if (!success) {
+            // Could not toggle (would hide last panel)
+            menuItem.setSelected(true);
+            JOptionPane.showMessageDialog(this,
+                    "Mindestens ein Bereich muss sichtbar sein.",
+                    "Hinweis",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        // Apply the visibility change to the layout
+        applyLayoutVisibility();
+    }
+
+    private void openLayoutConfigDialog() {
+        java.awt.Window window = javax.swing.SwingUtilities.getWindowAncestor(this);
+        javax.swing.JFrame parentFrame = (window instanceof javax.swing.JFrame) ? (javax.swing.JFrame) window : null;
+        DesktopGridLayoutDialog dialog = new DesktopGridLayoutDialog(parentFrame, layoutManager, this::applyLayoutVisibility);
+        dialog.showDialog();
+    }
+
+    private void applyLayoutVisibility() {
+        // Get the split pane color from the theme
+        Color splitPaneColor = new Color(
+                DefaultColorTheme.COLOR_DARK_GREY.getRed(),
+                DefaultColorTheme.COLOR_DARK_GREY.getGreen(),
+                DefaultColorTheme.COLOR_DARK_GREY.getBlue(),
+                170);
+
+        // Build the dynamic layout using the LayoutManager
+        javax.swing.JComponent layoutComponent = layoutManager.buildLayout(splitPaneColor);
+
+        // Clear and rebuild pnlGridContainer
+        pnlGridContainer.removeAll();
+        pnlGridContainer.add(layoutComponent, java.awt.BorderLayout.CENTER);
+
+        // Ensure the layout fills available space but doesn't exceed it
+        // This prevents scrolling of the entire DesktopPanel
+        layoutComponent.setMinimumSize(new java.awt.Dimension(0, 0));
+
+        // Restore and persist SplitPane ratios
+        layoutManager.restoreSplitPaneRatios();
+        layoutManager.persistSplitPaneRatios();
+
+        // Revalidate and repaint
+        pnlGridContainer.revalidate();
+        pnlGridContainer.repaint();
+        revalidate();
+        repaint();
+    }
+
     public void updateCurrentDay() {
-        
+
         Date now = new Date();
         SimpleDateFormat dfWeekday = new SimpleDateFormat("EEEE");
         SimpleDateFormat dfMonth = new SimpleDateFormat("MMMM");
         SimpleDateFormat dfDay = new SimpleDateFormat("dd");
         this.lblDay.setText(dfWeekday.format(now) + " " + dfDay.format(now) + ". " + dfMonth.format(now));
-        
+
     }
-    
+
     private void buildDueSinceDaysPopup() {
         this.updateDueSinceDaysLabel();
 
@@ -1023,7 +1174,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             mi.addActionListener((ActionEvent e) -> {
                 UserSettings.getInstance().setSetting(UserSettings.CONF_DESKTOP_LASTFILTERDUESINCEDAYS, mi.getText());
                 this.updateDueSinceDaysLabel();
-                TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1, true);
+                TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, true);
                 new java.util.Timer().schedule(revDueTask, 100);
             });
         }
@@ -1041,7 +1192,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             mi.addActionListener((ActionEvent e) -> {
                 UserSettings.getInstance().setSetting(UserSettings.CONF_DESKTOP_LASTFILTERDUEINDAYS, mi.getText());
                 this.updateDueSinceDaysLabel();
-                TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1, true);
+                TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, true);
                 new java.util.Timer().schedule(revDueTask, 100);
             });
         }
@@ -1096,7 +1247,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 }
                 this.lblUserFilterCount.setText("" + al.size());
                 UserSettings.getInstance().setSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS, al.toArray(new String[al.size()]));
-                TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1, true);
+                TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, true);
                 new java.util.Timer().schedule(revDueTask, 100);
             });
         }
@@ -1135,7 +1286,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 this.lblUserFilterCountTagged.setText("" + al.size());
                 UserSettings.getInstance().setSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS_TAGGED, al.toArray(new String[al.size()]));
                 // refresh tagged view
-                TimerTask taggedTask = new TaggedTimerTask(this, this.tabPaneTagged, this.pnlTagged, this.jSplitPane2, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter, true);
+                TimerTask taggedTask = new TaggedTimerTask(this, this.tabPaneTagged, this.pnlTagged, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter, true);
                 new java.util.Timer().schedule(taggedTask, 100);
             });
         }
@@ -1172,7 +1323,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 this.lblUserFilterCountLastchanged.setText("" + al.size());
                 UserSettings.getInstance().setSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS_LASTCHANGED, al.toArray(new String[al.size()]));
                 // refresh tagged view
-                LastChangedTimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, this.jSplitPane1, true);
+                LastChangedTimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, true);
                 new java.util.Timer().schedule(lastChangedTask, 100);
             });
         }
@@ -1181,14 +1332,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     public void setUnreadMessages(int count) {
         this.lblUnreadMail.setText("" + count);
         this.lblUnreadMail.setToolTipText(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/DesktopPanel").getString("label.unreadmail.tooltip"), new Object[]{count}));
-    }
-
-    public void setAddressCount(int count) {
-//        this.lblAddressCount.setText(""+count);
-    }
-
-    public void setArchiveFileCount(int count) {
-//        this.lblArchiveFileCount.setText(""+count);
     }
 
     @Override
@@ -1225,7 +1368,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         popUserFilterTagged = new javax.swing.JPopupMenu();
         popUserFilterLastchanged = new javax.swing.JPopupMenu();
         btnGrpDueInDays = new javax.swing.ButtonGroup();
-        jSplitPane1 = new javax.swing.JSplitPane();
         jPanel2 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
         cmdUserFilter = new javax.swing.JButton();
@@ -1237,7 +1379,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblUserFilterCount = new javax.swing.JLabel();
         lblDueSinceDays = new javax.swing.JLabel();
         cmdDueSinceDays = new javax.swing.JButton();
-        jSplitPane2 = new javax.swing.JSplitPane();
         jPanel1 = new javax.swing.JPanel();
         jLabel5 = new javax.swing.JLabel();
         jScrollPane3 = new javax.swing.JScrollPane();
@@ -1276,23 +1417,9 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         desktopWidgetPanel2 = new com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel();
         lblUserIcon = new javax.swing.JLabel();
         lblUserName = new javax.swing.JLabel();
+        cmdEditDesktop = new javax.swing.JButton();
         lblDay = new javax.swing.JLabel();
-
-        addHierarchyBoundsListener(new java.awt.event.HierarchyBoundsListener() {
-            public void ancestorMoved(java.awt.event.HierarchyEvent evt) {
-            }
-            public void ancestorResized(java.awt.event.HierarchyEvent evt) {
-                formAncestorResized(evt);
-            }
-        });
-        addComponentListener(new java.awt.event.ComponentAdapter() {
-            public void componentResized(java.awt.event.ComponentEvent evt) {
-                formComponentResized(evt);
-            }
-        });
-
-        jSplitPane1.setDividerLocation(600);
-        jSplitPane1.setOpaque(false);
+        pnlGridContainer = new javax.swing.JPanel();
 
         jPanel2.setOpaque(false);
 
@@ -1397,12 +1524,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .addContainerGap())
         );
 
-        jSplitPane1.setRightComponent(jPanel2);
-
-        jSplitPane2.setDividerLocation(400);
-        jSplitPane2.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
-        jSplitPane2.setOpaque(false);
-
         jPanel1.setOpaque(false);
 
         jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() | java.awt.Font.BOLD, jLabel5.getFont().getSize()+2));
@@ -1470,7 +1591,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(cmdRefreshLastChanged)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel5)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 370, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 19, Short.MAX_VALUE)
                         .add(cmdUserFilterLastchanged)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblUserFilterCountLastchanged))
@@ -1491,8 +1612,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .add(jScrollPane3)
                 .addContainerGap())
         );
-
-        jSplitPane2.setLeftComponent(jPanel1);
 
         jPanel3.setOpaque(false);
 
@@ -1572,7 +1691,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(pnlTaggedLayout.createSequentialGroup()
                 .addContainerGap()
                 .add(jLabel10)
-                .addContainerGap(226, Short.MAX_VALUE))
+                .addContainerGap(375, Short.MAX_VALUE))
         );
 
         jScrollPane4.setViewportView(pnlTagged);
@@ -1594,7 +1713,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(cmdTagFilter)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdDocumentTagFilter)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 120, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(cmdUserFilterTagged)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblUserFilterCountTagged))
@@ -1615,13 +1734,9 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(org.jdesktop.layout.GroupLayout.LEADING, cmdUserFilterTagged, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, lblUserFilterCountTagged, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(tabPaneTagged, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 76, Short.MAX_VALUE)
+                .add(tabPaneTagged, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 445, Short.MAX_VALUE)
                 .addContainerGap())
         );
-
-        jSplitPane2.setRightComponent(jPanel3);
-
-        jSplitPane1.setLeftComponent(jSplitPane2);
 
         lblUnreadMail.setFont(lblUnreadMail.getFont().deriveFont(lblUnreadMail.getFont().getStyle() | java.awt.Font.BOLD, lblUnreadMail.getFont().getSize()+2));
         lblUnreadMail.setForeground(java.awt.Color.white);
@@ -1694,7 +1809,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .add(lblUpdateStatusFormPlugins)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(lblNewsStatus)
-                .addContainerGap(88, Short.MAX_VALUE))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         messagesWidgetLayout.setVerticalGroup(
             messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1803,6 +1918,14 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         });
 
+        cmdEditDesktop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/dashboard_2_edit_32dp_0E72B5_FILL0_wght400_GRAD0_opsz40.png"))); // NOI18N
+        cmdEditDesktop.setToolTipText("Desktop-Layout anpassen");
+        cmdEditDesktop.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdEditDesktopActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout desktopWidgetPanel2Layout = new org.jdesktop.layout.GroupLayout(desktopWidgetPanel2);
         desktopWidgetPanel2.setLayout(desktopWidgetPanel2Layout);
         desktopWidgetPanel2Layout.setHorizontalGroup(
@@ -1811,12 +1934,15 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .add(lblUserName)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(lblUserIcon))
+                .add(lblUserIcon)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdEditDesktop))
         );
         desktopWidgetPanel2Layout.setVerticalGroup(
             desktopWidgetPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(desktopWidgetPanel2Layout.createSequentialGroup()
-                .add(desktopWidgetPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                .add(desktopWidgetPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                    .add(cmdEditDesktop, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(lblUserIcon, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(lblUserName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -1827,6 +1953,9 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblDay.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblDay.setText("28");
 
+        pnlGridContainer.setOpaque(false);
+        pnlGridContainer.setLayout(new java.awt.BorderLayout());
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -1834,13 +1963,13 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(pnlGridContainer, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
                         .add(messagesWidget, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblDay, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(lblDay, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 107, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(desktopWidgetPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(jSplitPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .add(systemInformationWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1853,21 +1982,13 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, lblDay, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, messagesWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .add(8, 8, 8)
-                .add(jSplitPane1)
-                .add(4, 4, 4)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(pnlGridContainer, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(systemInformationWidget, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void formAncestorResized(java.awt.event.HierarchyEvent evt) {//GEN-FIRST:event_formAncestorResized
-        //System.out.println("ancestor resized");
-    }//GEN-LAST:event_formAncestorResized
-
-    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
-        // TODO add your handling code here:
-    }//GEN-LAST:event_formComponentResized
 
     private void openModule(Class<?> editorClass, String source) {
         if (editorClass == null) {
@@ -1919,7 +2040,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private void cmdRefreshLastChangedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshLastChangedActionPerformed
         Timer timer = new Timer();
 
-        TimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, this.jSplitPane1, true);
+        TimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, true);
         timer.schedule(lastChangedTask, 10);
 
     }//GEN-LAST:event_cmdRefreshLastChangedActionPerformed
@@ -1927,7 +2048,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private void cmdRefreshRevDueActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshRevDueActionPerformed
         Timer timer = new Timer();
 
-        TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1, true);
+        TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, true);
         timer.schedule(revDueTask, 10);
     }//GEN-LAST:event_cmdRefreshRevDueActionPerformed
 
@@ -1938,7 +2059,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private void cmdRefreshTaggedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshTaggedActionPerformed
 
         Timer timer = new Timer();
-        TimerTask taggedTask = new TaggedTimerTask(this, this.tabPaneTagged, this.pnlTagged, this.jSplitPane2, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter, true);
+        TimerTask taggedTask = new TaggedTimerTask(this, this.tabPaneTagged, this.pnlTagged, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter, true);
         timer.schedule(taggedTask, 10);
     }//GEN-LAST:event_cmdRefreshTaggedActionPerformed
 
@@ -1974,12 +2095,18 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.popUserFilterLastchanged.show(this.cmdUserFilterLastchanged, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdUserFilterLastchangedMousePressed
 
+    private void cmdEditDesktopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditDesktopActionPerformed
+        updateVisibilityMenuItems();
+        popLayoutMenu.show(cmdEditDesktop, 0, cmdEditDesktop.getHeight());
+    }//GEN-LAST:event_cmdEditDesktopActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup btnGrpDueInDays;
     private javax.swing.ButtonGroup btnGrpDueSinceDays;
     private javax.swing.JButton cmdDocumentTagFilter;
     private javax.swing.JButton cmdDueSinceDays;
+    private javax.swing.JButton cmdEditDesktop;
     private javax.swing.JButton cmdRefreshLastChanged;
     private javax.swing.JButton cmdRefreshRevDue;
     private javax.swing.JButton cmdRefreshTagged;
@@ -2000,8 +2127,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
-    private javax.swing.JSplitPane jSplitPane1;
-    private javax.swing.JSplitPane jSplitPane2;
     private javax.swing.JLabel lblAddressCount;
     private javax.swing.JLabel lblArchiveFileArchivedCount;
     private javax.swing.JLabel lblArchiveFileCount;
@@ -2024,6 +2149,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JLabel lblUserName;
     private javax.swing.JLabel lblVoipBalance;
     private com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel messagesWidget;
+    private javax.swing.JPanel pnlGridContainer;
     private javax.swing.JPanel pnlLastChanged;
     private javax.swing.JPanel pnlRevDue;
     private javax.swing.JPanel pnlTagged;
@@ -2136,18 +2262,18 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             ArchiveFileReviewsBean r=((ReviewAddedEvent) e).getReview();
             
             if(DateUtils.containsToday(r.getBeginDate(), r.getEndDate())) {
-                TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1);
+                TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue);
                 reviewsTimer.schedule(revDueTask, 10);
             }
         } else if(e instanceof ReviewUpdatedEvent) {
             ArchiveFileReviewsBean r=((ReviewUpdatedEvent) e).getReview();
             
             if(DateUtils.containsToday(r.getBeginDate(), r.getEndDate()) || DateUtils.containsToday(((ReviewUpdatedEvent) e).getOldBeginDate(), ((ReviewUpdatedEvent) e).getOldEndDate())) {
-                TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1);
+                TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue);
                 reviewsTimer.schedule(revDueTask, 10);
             }
         } else if(e instanceof CasesChangedEvent) {
-            TimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, this.jSplitPane1, true);
+            TimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, true);
             this.lastChangedTimer.schedule(lastChangedTask, 10);
         }
     }
