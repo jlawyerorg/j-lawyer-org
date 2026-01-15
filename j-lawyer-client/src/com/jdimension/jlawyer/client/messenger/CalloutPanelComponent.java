@@ -684,6 +684,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.BasicStroke;
 import java.awt.RenderingHints;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.Image;
 import java.awt.Frame;
 import java.awt.Toolkit;
@@ -741,8 +742,35 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
     protected int read = READ_NOTAPPLICABLE;
 
     private SimpleDateFormat dfSent = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-    
+
     private String tooltipText="";
+
+    // Modern chat bubble styling constants
+    private static final int BUBBLE_RADIUS = 18;
+    private static final int BUBBLE_MARGIN = 12;
+    private static final int ASYMMETRIC_MARGIN = 50;
+    private static final int PADDING_H = 14;
+    private static final int PADDING_TOP = 10;
+    private static final int PADDING_BOTTOM = 8;
+    private static final int AVATAR_SIZE = 32;
+    private static final int AVATAR_GAP = 8;
+    private static final int MENTION_BAR_WIDTH = 4;
+    private static final int READ_RECEIPT_WIDTH = 28;  // Width reserved for checkmarks
+
+    // Modern colors
+    private static final Color COLOR_BUBBLE_OTHER = new Color(58, 58, 60);
+    private static final Color COLOR_TIMESTAMP = new Color(255, 255, 255, 140);
+    private static final Color COLOR_SHADOW = new Color(0, 0, 0, 20);
+
+    // Avatar color palette
+    private static final Color[] AVATAR_COLORS = {
+        new Color(88, 86, 214),   // Purple
+        new Color(255, 149, 0),   // Orange
+        new Color(52, 199, 89),   // Green
+        new Color(0, 122, 255),   // Blue
+        new Color(255, 45, 85),   // Pink
+        new Color(90, 200, 250)   // Teal
+    };
 
     /**
      * Creates new form CalloutPanelComponent
@@ -753,6 +781,7 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
 
     public CalloutPanelComponent(List<AppUserBean> principals, String ownPrincipal, InstantMessage im, boolean ownMessage) {
         initComponents();
+        setOpaque(false);  // Transparent background for container with background image
 
         this.defaultFont = UIManager.getFont("defaultFont");
         if (this.defaultFont == null) {
@@ -911,6 +940,60 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         this.setToolTipText(this.tooltipText);
     }
 
+    private void paintShadow(Graphics2D g2d, int x, int y, int w, int h) {
+        for (int i = 3; i > 0; i--) {
+            g2d.setColor(new Color(0, 0, 0, 8 * (4 - i)));
+            g2d.fill(new RoundRectangle2D.Float(x + 1, y + i, w, h, BUBBLE_RADIUS, BUBBLE_RADIUS));
+        }
+    }
+
+    private void paintAvatar(Graphics2D g2d, int x, int y, String sender) {
+        Color avatarColor = getAvatarColor(sender);
+        g2d.setColor(avatarColor);
+        g2d.fillOval(x, y, AVATAR_SIZE, AVATAR_SIZE);
+
+        String initials = getInitials(sender);
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(defaultFontBold.deriveFont(13f));
+        FontMetrics fm = g2d.getFontMetrics();
+        int textX = x + (AVATAR_SIZE - fm.stringWidth(initials)) / 2;
+        int textY = y + (AVATAR_SIZE + fm.getAscent() - fm.getDescent()) / 2;
+        g2d.drawString(initials, textX, textY);
+    }
+
+    private String getInitials(String name) {
+        if (name == null || name.isEmpty()) return "?";
+        String[] parts = name.trim().split("\\s+");
+        if (parts.length >= 2) {
+            return ("" + parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+        }
+        return name.substring(0, Math.min(2, name.length())).toUpperCase();
+    }
+
+    private Color getAvatarColor(String name) {
+        if (name == null || name.isEmpty()) return AVATAR_COLORS[0];
+        int hash = Math.abs(name.hashCode());
+        return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+    }
+
+    private void paintReadReceipt(Graphics2D g2d, int x, int y, int status) {
+        if (status == READ_NOTAPPLICABLE) return;
+
+        g2d.setStroke(new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        Color checkColor = (status == READ)
+            ? DefaultColorTheme.COLOR_LOGO_GREEN  // Bright green for confirmed
+            : new Color(180, 180, 180);           // Light grey for unconfirmed (visible)
+
+        g2d.setColor(checkColor);
+        // Larger double checkmark
+        // First checkmark
+        g2d.drawLine(x, y + 8, x + 6, y + 14);
+        g2d.drawLine(x + 6, y + 14, x + 14, y + 2);
+        // Second checkmark (offset)
+        g2d.drawLine(x + 7, y + 8, x + 13, y + 14);
+        g2d.drawLine(x + 13, y + 14, x + 21, y + 2);
+    }
+
     public void markAllMentionsDone(String messageId, List<String> mentionIds, boolean done) {
         
         for(String mId: mentionIds) {
@@ -976,154 +1059,197 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
 
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
 
-        if(!(getParent() instanceof MessagePanel))
+        if (!(getParent() instanceof MessagePanel))
             return;
-        
-        // Use parent width for preferred sizing, actual width for painting to avoid overflow/clip issues
+
         int parentWidth = ((MessagePanel) getParent()).getCalloutWidth();
         int width = getWidth() > 0 ? getWidth() : parentWidth;
-        int height = getHeight();
-
-        if (this.isOwnMessage()) {
-            g2d.setColor(DefaultColorTheme.COLOR_LOGO_BLUE);
-        } else {
-            g2d.setColor(DefaultColorTheme.COLOR_DARK_GREY);
-        }
-
-        g2d.fillRect(0, 0, width, height);
-
-        if (this.message != null && this.message.hasMentions()) {
-            if (this.message.hasOpenMentions()) {
-                if(this.message.getMentions().size()==this.message.getOpenMentionsCount())
-                    // all open
-                    g2d.setColor(DefaultColorTheme.COLOR_LOGO_RED);
-                else
-                    // partially open
-                    g2d.setColor(Color.ORANGE);
-            } else {
-                g2d.setColor(DefaultColorTheme.COLOR_LOGO_GREEN);
-            }
-
-            g2d.fillRect(0, 0, 5, height);
-        }
-
-        g2d.setColor(DefaultColorTheme.COLOR_DARK_GREY);
 
         g2d.setFont(defaultFont);
-
-        // Calculate wrapped text
         FontMetrics metrics = g2d.getFontMetrics();
-        int messageWidth = width - 130; // Adjusted for padding
-        //int yOffset = height / 2;
-        int yOffset = 10 + metrics.getHeight();
+
+        // Calculate bubble dimensions based on alignment
+        int bubbleX, bubbleWidth;
+        int avatarX = BUBBLE_MARGIN;
+        int avatarY = PADDING_TOP;
+
+        if (this.isOwnMessage()) {
+            // Own message: starts at left margin, extends to right with some margin
+            bubbleX = BUBBLE_MARGIN;
+            bubbleWidth = width - (2 * BUBBLE_MARGIN);
+        } else {
+            // Other message: left-aligned with avatar space, right margin for asymmetry
+            int avatarSpace = AVATAR_SIZE + AVATAR_GAP;
+            bubbleX = BUBBLE_MARGIN + avatarSpace;
+            bubbleWidth = width - BUBBLE_MARGIN - avatarSpace - ASYMMETRIC_MARGIN;
+        }
+
+        // Calculate left offset: status bar + checkmarks (if applicable)
+        int hasMentionBar = (this.message != null && this.message.hasMentions()) ? MENTION_BAR_WIDTH + 6 : 0;
+        int hasReadReceipt = (this.read != READ_NOTAPPLICABLE) ? READ_RECEIPT_WIDTH + 4 : 0;
+        int leftContentOffset = hasMentionBar + hasReadReceipt;
+
+        // Calculate text area within bubble
+        int textStartX = bubbleX + PADDING_H + leftContentOffset;
+        int textAreaWidth = bubbleWidth - (2 * PADDING_H) - leftContentOffset - 80; // 80 for icons
+        int yOffset = PADDING_TOP + metrics.getHeight();
         int lineSpacing = metrics.getHeight();
 
-        g2d.setColor(Color.WHITE);
-        String content = null;
-        if (this.message == null || this.message.getContent() == null) {
-            content = "";
-        } else {
-            content = this.message.getContent();
-        }
+        // Calculate content height first for bubble sizing
+        String content = (this.message == null || this.message.getContent() == null) ? "" : this.message.getContent();
         String[] lines = content.split("\n");
+        int contentHeight = 0;
         for (String line : lines) {
             String[] words = line.split(" ");
-            String initial="";
-            if(words.length>0)
-                initial=words[0];
+            String initial = (words.length > 0) ? words[0] : "";
             StringBuilder currentLine = new StringBuilder(initial);
 
             for (int i = 1; i < words.length; i++) {
                 String testLine = currentLine.toString() + " " + words[i];
-                if (metrics.stringWidth(testLine) <= messageWidth) {
+                if (metrics.stringWidth(testLine) <= textAreaWidth) {
                     currentLine.append(" ").append(words[i]);
                 } else {
-                    this.drawWithHighlights(currentLine.toString(), g2d, 40, yOffset, defaultFont, defaultFontBold, Color.WHITE, DefaultColorTheme.COLOR_LIGHT_GREY);
+                    contentHeight += lineSpacing;
+                    currentLine = new StringBuilder(words[i]);
+                }
+            }
+            contentHeight += lineSpacing;
+        }
+
+        int bubbleHeight = PADDING_TOP + contentHeight + PADDING_BOTTOM + lineSpacing; // extra for timestamp
+        int totalHeight = bubbleHeight + PADDING_TOP;
+
+        // Draw avatar for other messages
+        if (!this.isOwnMessage()) {
+            String sender = (this.message != null && this.message.getSender() != null) ? this.message.getSender() : "?";
+            paintAvatar(g2d, avatarX, avatarY, sender);
+        }
+
+        // Draw shadow
+        paintShadow(g2d, bubbleX, PADDING_TOP / 2, bubbleWidth, bubbleHeight);
+
+        // Draw bubble background
+        g2d.setColor(this.isOwnMessage() ? DefaultColorTheme.COLOR_LOGO_BLUE : COLOR_BUBBLE_OTHER);
+        g2d.fill(new RoundRectangle2D.Float(bubbleX, PADDING_TOP / 2, bubbleWidth, bubbleHeight, BUBBLE_RADIUS, BUBBLE_RADIUS));
+
+        // Draw mention indicator bar inside bubble (left edge)
+        if (this.message != null && this.message.hasMentions()) {
+            if (this.message.hasOpenMentions()) {
+                if (this.message.getMentions().size() == this.message.getOpenMentionsCount())
+                    g2d.setColor(DefaultColorTheme.COLOR_LOGO_RED);
+                else
+                    g2d.setColor(Color.ORANGE);
+            } else {
+                g2d.setColor(DefaultColorTheme.COLOR_LOGO_GREEN);
+            }
+            g2d.fill(new RoundRectangle2D.Float(bubbleX + 4, PADDING_TOP / 2 + 6, MENTION_BAR_WIDTH, bubbleHeight - 12, 2, 2));
+        }
+
+        // Draw read receipt checkmarks right next to status bar
+        if (this.read != READ_NOTAPPLICABLE) {
+            int checkX = bubbleX + PADDING_H + hasMentionBar;
+            int checkY = PADDING_TOP / 2 + (bubbleHeight / 2) - 8;  // Vertically centered
+            paintReadReceipt(g2d, checkX, checkY, this.read);
+            // Update indicator position for click detection
+            indicatorX = checkX;
+            indicatorY = checkY;
+            indicatorSize = READ_RECEIPT_WIDTH;
+        }
+
+        // Draw message text
+        g2d.setFont(defaultFont);
+        g2d.setColor(Color.WHITE);
+        int textX = textStartX;
+        yOffset = PADDING_TOP / 2 + PADDING_TOP + metrics.getAscent();
+
+        for (String line : lines) {
+            String[] words = line.split(" ");
+            String initial = (words.length > 0) ? words[0] : "";
+            StringBuilder currentLine = new StringBuilder(initial);
+
+            for (int i = 1; i < words.length; i++) {
+                String testLine = currentLine.toString() + " " + words[i];
+                if (metrics.stringWidth(testLine) <= textAreaWidth) {
+                    currentLine.append(" ").append(words[i]);
+                } else {
+                    this.drawWithHighlights(currentLine.toString(), g2d, textX, yOffset, defaultFont, defaultFontBold, Color.WHITE, DefaultColorTheme.COLOR_LIGHT_GREY);
                     currentLine = new StringBuilder(words[i]);
                     yOffset += lineSpacing;
                 }
             }
 
-            this.drawWithHighlights(currentLine.toString(), g2d, 40, yOffset, defaultFont, defaultFontBold, Color.WHITE, DefaultColorTheme.COLOR_LIGHT_GREY);
+            this.drawWithHighlights(currentLine.toString(), g2d, textX, yOffset, defaultFont, defaultFontBold, Color.WHITE, DefaultColorTheme.COLOR_LIGHT_GREY);
             yOffset += lineSpacing;
         }
 
+        // Draw timestamp (bottom-right inside bubble)
         g2d.setFont(miniFont);
-        g2d.setColor(DefaultColorTheme.COLOR_LOGO_GREEN);
-        Date sent = null;
-        if (this.message == null || this.message.getSent() == null) {
-            sent = new Date();
-        } else {
-            sent = this.message.getSent();
-        }
-        g2d.drawString(getFormattedTimestamp(sent), 34, yOffset); // Timestamp position
-        if (this.read != READ_NOTAPPLICABLE) {
-            indicatorY = 10 + (metrics.getHeight() - 10);
-            if (read == READ) {
-                // read
-                g2d.setColor(DefaultColorTheme.COLOR_LOGO_GREEN);
-                g2d.fillOval(10, indicatorY, 15, 15); // Unread indicator position
-            } else {
-                // unread
-                g2d.setColor(DefaultColorTheme.COLOR_LOGO_RED);
-                g2d.fillOval(10, indicatorY, 15, 15); // Unread indicator position
-            }
-        }
-        
-        // Place icons right-aligned within the actual visible width
-        int rightPadding = 10;
-        int iconSize = 20;
-        int gap = 8; // tighter spacing between icons
+        FontMetrics miniFm = g2d.getFontMetrics();
+        Date sent = (this.message == null || this.message.getSent() == null) ? new Date() : this.message.getSent();
+        String timestamp = getFormattedTimestamp(sent);
+        int timestampWidth = miniFm.stringWidth(timestamp);
+        int timestampX = bubbleX + bubbleWidth - PADDING_H - timestampWidth;
+        int timestampY = PADDING_TOP / 2 + bubbleHeight - PADDING_BOTTOM;
+
+        g2d.setColor(COLOR_TIMESTAMP);
+        g2d.drawString(timestamp, timestampX, timestampY);
+
+        // Place icons inside bubble, top-right
+        int rightPadding = PADDING_H;
+        int iconSize = 18;
+        int gap = 6;
+        int iconY = PADDING_TOP / 2 + 8;
         boolean showMarkRead = (this.ownMessage || UserUtils.isCurrentUserAdmin());
-        int x = width - rightPadding - iconSize;
+        int x = bubbleX + bubbleWidth - rightPadding - iconSize;
 
         // delete icon
         this.deleteX = x;
+        this.deleteY = iconY;
         ICON_DELETE.paintIcon(this, g2d, this.deleteX, this.deleteY);
         x -= (iconSize + gap);
 
         // copy icon
         this.copyX = x;
+        this.copyY = iconY;
         ICON_COPY.paintIcon(this, g2d, this.copyX, this.copyY);
         x -= (iconSize + gap);
 
         // mark read icon (optional)
         if (showMarkRead) {
             this.markReadX = x;
+            this.markReadY = iconY;
             ICON_MARKREAD.paintIcon(this, g2d, this.markReadX, this.markReadY);
             x -= (iconSize + gap);
         } else {
             this.markReadX = -1;
         }
 
-        // reply icon position
-        this.replyX = Math.max(8, x);
-        // Prefer using the provided reply icon; fallback to vector glyph if unavailable
+        // reply icon
+        this.replyX = Math.max(bubbleX + 8, x);
+        this.replyY = iconY;
         try {
             if (ICON_REPLY_ORIG != null && ICON_REPLY_ORIG.getIconWidth() > 0 && ICON_REPLY_ORIG.getIconHeight() > 0) {
                 Image scaled = ICON_REPLY_ORIG.getImage().getScaledInstance(iconSize, iconSize, Image.SCALE_SMOOTH);
-                // Use ImageIcon painting to avoid async draw issues
                 new ImageIcon(scaled).paintIcon(this, g2d, this.replyX, this.replyY);
             } else {
-                // Fallback vector glyph
                 g2d.setColor(Color.WHITE);
-                g2d.setStroke(new BasicStroke(2.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-                int centerY = this.replyY + 10;
-                int startX = this.replyX + 18;
-                int bendX = startX - 12;
-                int bendY = centerY;
-                g2d.drawLine(startX, centerY, bendX, bendY);
-                g2d.drawLine(bendX, bendY, bendX, bendY + 8);
-                int[] xs = new int[] { bendX, bendX - 6, bendX + 2 };
-                int[] ys = new int[] { bendY, bendY + 6, bendY + 6 };
+                g2d.setStroke(new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                int centerY = this.replyY + 9;
+                int startX = this.replyX + 16;
+                int bendX = startX - 10;
+                g2d.drawLine(startX, centerY, bendX, centerY);
+                g2d.drawLine(bendX, centerY, bendX, centerY + 6);
+                int[] xs = new int[] { bendX, bendX - 5, bendX + 2 };
+                int[] ys = new int[] { centerY, centerY + 5, centerY + 5 };
                 g2d.fillPolygon(xs, ys, 3);
             }
         } catch (Throwable t) {
             log.error("Error painting reply icon", t);
         }
 
-        this.setPreferredSize(new Dimension(parentWidth, yOffset + lineSpacing));
+        this.setPreferredSize(new Dimension(parentWidth, totalHeight));
     }
 
     /**
