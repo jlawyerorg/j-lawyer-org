@@ -672,6 +672,12 @@ import java.awt.event.KeyEvent;
 import java.util.Date;
 import java.util.List;
 import javax.swing.JMenuItem;
+import javax.swing.MenuElement;
+import javax.swing.MenuSelectionManager;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
 import org.jboss.logging.Logger;
 
 /**
@@ -683,12 +689,55 @@ public class MessageSendPanel extends javax.swing.JPanel {
     private static final Logger log = Logger.getLogger(MessageSendPanel.class.getName());
 
     protected NewMessageConsumer messageConsumer = null;
+    private StringBuilder popupSearchText = new StringBuilder();
+    private KeyEventDispatcher popupKeyDispatcher = null;
 
     /**
      * Creates new form MessageSendPanel
      */
     public MessageSendPanel() {
         initComponents();
+        setupPopupKeyHandler();
+    }
+
+    private void setupPopupKeyHandler() {
+        popupKeyDispatcher = (KeyEvent e) -> {
+            if (!popUsers.isVisible()) {
+                return false;
+            }
+            if (e.getID() != KeyEvent.KEY_TYPED) {
+                return false;
+            }
+            char c = e.getKeyChar();
+            if (Character.isLetterOrDigit(c) || c == '_' || c == '-') {
+                popupSearchText.append(c);
+                selectMatchingMenuItem(popupSearchText.toString());
+                return true;
+            } else if (c == KeyEvent.VK_BACK_SPACE && popupSearchText.length() > 0) {
+                popupSearchText.deleteCharAt(popupSearchText.length() - 1);
+                selectMatchingMenuItem(popupSearchText.toString());
+                return true;
+            }
+            return false;
+        };
+
+        popUsers.addPopupMenuListener(new PopupMenuListener() {
+            @Override
+            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                popupSearchText.setLength(0);
+                KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(popupKeyDispatcher);
+            }
+
+            @Override
+            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+                KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(popupKeyDispatcher);
+            }
+
+            @Override
+            public void popupMenuCanceled(PopupMenuEvent e) {
+                KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(popupKeyDispatcher);
+            }
+        });
     }
 
     public void setUsers(List<AppUserBean> userCandidates) {
@@ -859,6 +908,23 @@ public class MessageSendPanel extends javax.swing.JPanel {
         }
 
         this.taMessage.setText("");
+    }
+
+    private void selectMatchingMenuItem(String searchText) {
+        if (searchText == null || searchText.isEmpty()) {
+            return;
+        }
+        String searchLower = searchText.toLowerCase();
+        MenuElement[] subElements = popUsers.getSubElements();
+        for (MenuElement element : subElements) {
+            if (element instanceof JMenuItem) {
+                JMenuItem item = (JMenuItem) element;
+                if (item.getText().toLowerCase().startsWith(searchLower)) {
+                    MenuSelectionManager.defaultManager().setSelectedPath(new MenuElement[]{popUsers, item});
+                    return;
+                }
+            }
+        }
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
