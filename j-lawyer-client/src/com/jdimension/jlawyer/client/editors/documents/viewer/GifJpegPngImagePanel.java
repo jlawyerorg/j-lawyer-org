@@ -676,6 +676,14 @@ public class GifJpegPngImagePanel extends javax.swing.JPanel implements PreviewP
 
     private static final Logger log = Logger.getLogger(GifJpegPngImagePanel.class.getName());
     private String documentId=null;
+
+    private int zoomFactor = 100;
+    private Image originalImage = null;
+    private int originalWidth = 0;
+    private int originalHeight = 0;
+
+    // Drag-to-scroll support
+    private java.awt.Point dragStartPoint = null;
     
     /**
      * Creates new form PlaintextPanel
@@ -700,28 +708,124 @@ public class GifJpegPngImagePanel extends javax.swing.JPanel implements PreviewP
 
         jScrollPane1 = new javax.swing.JScrollPane();
         lblContent = new javax.swing.JLabel();
+        sliderZoom = new javax.swing.JSlider();
+        cmdFitToScreen = new javax.swing.JButton();
 
         lblContent.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblContent.setText("Lade...");
         lblContent.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        lblContent.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                lblContentMousePressed(evt);
+            }
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                lblContentMouseReleased(evt);
+            }
+        });
+        lblContent.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            public void mouseDragged(java.awt.event.MouseEvent evt) {
+                lblContentMouseDragged(evt);
+            }
+        });
+        lblContent.addMouseWheelListener(new java.awt.event.MouseWheelListener() {
+            public void mouseWheelMoved(java.awt.event.MouseWheelEvent evt) {
+                lblContentMouseWheelMoved(evt);
+            }
+        });
         jScrollPane1.setViewportView(lblContent);
+
+        sliderZoom.setMaximum(300);
+        sliderZoom.setMinimum(25);
+        sliderZoom.setPaintLabels(true);
+        sliderZoom.setToolTipText("Zoom 25% .. 300%");
+        sliderZoom.setValue(100);
+        sliderZoom.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                sliderZoomStateChanged(evt);
+            }
+        });
+
+        cmdFitToScreen.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_fit_screen_black_48dp.png"))); // NOI18N
+        cmdFitToScreen.setToolTipText("auf Seitenhoehe einpassen");
+        cmdFitToScreen.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdFitToScreenActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 304, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(sliderZoom, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdFitToScreen)
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 22, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmdFitToScreen)
+                    .addComponent(sliderZoom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 194, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void lblContentMouseWheelMoved(java.awt.event.MouseWheelEvent evt) {//GEN-FIRST:event_lblContentMouseWheelMoved
+        this.sliderZoom.setValue(this.sliderZoom.getValue() + (-3 * evt.getWheelRotation()));
+    }//GEN-LAST:event_lblContentMouseWheelMoved
+
+    private void sliderZoomStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sliderZoomStateChanged
+        this.zoomFactor = this.sliderZoom.getValue();
+        reRenderImage();
+    }//GEN-LAST:event_sliderZoomStateChanged
+
+    private void cmdFitToScreenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdFitToScreenActionPerformed
+        this.sliderZoom.setValue(100);
+    }//GEN-LAST:event_cmdFitToScreenActionPerformed
+
+    private void lblContentMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblContentMousePressed
+        this.dragStartPoint = evt.getPoint();
+        this.lblContent.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.MOVE_CURSOR));
+    }//GEN-LAST:event_lblContentMousePressed
+
+    private void lblContentMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblContentMouseReleased
+        this.dragStartPoint = null;
+        this.lblContent.setCursor(java.awt.Cursor.getDefaultCursor());
+    }//GEN-LAST:event_lblContentMouseReleased
+
+    private void lblContentMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblContentMouseDragged
+        if (this.dragStartPoint != null) {
+            javax.swing.JViewport viewport = this.jScrollPane1.getViewport();
+            java.awt.Point viewPosition = viewport.getViewPosition();
+
+            int deltaX = this.dragStartPoint.x - evt.getX();
+            int deltaY = this.dragStartPoint.y - evt.getY();
+
+            int newX = Math.max(0, viewPosition.x + deltaX);
+            int newY = Math.max(0, viewPosition.y + deltaY);
+
+            // Ensure we don't scroll beyond the content
+            int maxX = Math.max(0, this.lblContent.getWidth() - viewport.getWidth());
+            int maxY = Math.max(0, this.lblContent.getHeight() - viewport.getHeight());
+            newX = Math.min(newX, maxX);
+            newY = Math.min(newY, maxY);
+
+            viewport.setViewPosition(new java.awt.Point(newX, newY));
+        }
+    }//GEN-LAST:event_lblContentMouseDragged
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdFitToScreen;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblContent;
+    private javax.swing.JSlider sliderZoom;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -757,8 +861,9 @@ public class GifJpegPngImagePanel extends javax.swing.JPanel implements PreviewP
                     return;
                 }
 
-                int originalWidth = imageIcon.getIconWidth();
-                int originalHeight = imageIcon.getIconHeight();
+                // Store original image dimensions
+                GifJpegPngImagePanel.this.originalWidth = imageIcon.getIconWidth();
+                GifJpegPngImagePanel.this.originalHeight = imageIcon.getIconHeight();
 
                 // Validate that we have valid dimensions
                 if (originalWidth <= 0 || originalHeight <= 0) {
@@ -767,25 +872,29 @@ public class GifJpegPngImagePanel extends javax.swing.JPanel implements PreviewP
                     return;
                 }
 
-                // Get the original image
-                Image originalImage = imageIcon.getImage();
+                // Store original image reference for re-rendering
+                GifJpegPngImagePanel.this.originalImage = imageIcon.getImage();
 
-                // need to subtract the height of the page navigation buttons, but
+                // need to subtract the height of the toolbar, but
                 // the panel has not been layed out yet, so there is no height we could query
                 int panelHeight = GifJpegPngImagePanel.this.getHeight();
-                int targetHeight = Math.max(panelHeight - 35, 200);
+                int baseTargetHeight = Math.max(panelHeight - 55, 200);
 
                 // Scale the image if needed
                 final ImageIcon finalIcon;
 
-                if (targetHeight > 50 && originalHeight != targetHeight) {
-                    float scaleFactor = (float)targetHeight / (float)originalHeight;
-                    int targetWidth = (int)((float)originalWidth * scaleFactor);
+                if (baseTargetHeight > 50 && originalHeight != baseTargetHeight) {
+                    float baseScaleFactor = (float)baseTargetHeight / (float)originalHeight;
+                    int baseTargetWidth = (int)((float)originalWidth * baseScaleFactor);
+
+                    // Apply zoom factor (100% = fit to screen)
+                    int finalWidth = (int)((float)baseTargetWidth * ((float)zoomFactor / 100f));
+                    int finalHeight = (int)((float)baseTargetHeight * ((float)zoomFactor / 100f));
 
                     // Ensure scaled dimensions are valid
-                    if (targetWidth > 0 && targetHeight > 0) {
+                    if (finalWidth > 0 && finalHeight > 0) {
                         // Use Image.getScaledInstance with SCALE_SMOOTH
-                        Image scaledImage = originalImage.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH);
+                        Image scaledImage = originalImage.getScaledInstance(finalWidth, finalHeight, Image.SCALE_SMOOTH);
 
                         // Wait for the scaled image to be fully created
                         java.awt.MediaTracker scaledTracker = new java.awt.MediaTracker(GifJpegPngImagePanel.this);
@@ -819,6 +928,47 @@ public class GifJpegPngImagePanel extends javax.swing.JPanel implements PreviewP
                 ThreadUtils.updateLabel(lblContent, "Unerwarteter Fehler: " + e.getMessage());
             }
         }, "ImageLoader-" + documentId).start();
+    }
+
+    private void reRenderImage() {
+        if (this.originalImage == null || this.originalWidth <= 0 || this.originalHeight <= 0) {
+            return;
+        }
+
+        // Calculate base scale to fit panel height
+        int panelHeight = this.getHeight();
+        int baseTargetHeight = Math.max(panelHeight - 55, 200);
+
+        float baseScaleFactor = (float) baseTargetHeight / (float) this.originalHeight;
+        int baseWidth = (int) ((float) this.originalWidth * baseScaleFactor);
+        int baseHeight = baseTargetHeight;
+
+        // Apply zoom factor
+        int finalWidth = (int) ((float) baseWidth * ((float) this.zoomFactor / 100f));
+        int finalHeight = (int) ((float) baseHeight * ((float) this.zoomFactor / 100f));
+
+        // Scale image
+        if (finalWidth > 0 && finalHeight > 0) {
+            Image scaledImage = this.originalImage.getScaledInstance(finalWidth, finalHeight, Image.SCALE_SMOOTH);
+
+            // Use MediaTracker to wait for scaled image
+            java.awt.MediaTracker tracker = new java.awt.MediaTracker(this);
+            tracker.addImage(scaledImage, 0);
+            try {
+                tracker.waitForAll();
+            } catch (InterruptedException e) {
+                log.error("Scaled image loading interrupted", e);
+            }
+
+            final ImageIcon finalIcon = new ImageIcon(scaledImage);
+
+            javax.swing.SwingUtilities.invokeLater(() -> {
+                lblContent.setText("");
+                lblContent.setIcon(finalIcon);
+                lblContent.revalidate();
+                lblContent.repaint();
+            });
+        }
     }
 
     @Override
