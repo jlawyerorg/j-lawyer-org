@@ -17,6 +17,7 @@ import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.editors.files.ViewArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -69,6 +70,13 @@ public class CaseGroupHeaderPanel extends javax.swing.JPanel {
         this.lblCaseInfo.setCursor(new Cursor(Cursor.HAND_CURSOR));
         this.lblTags.setOpaque(false);
         this.lblTags.setForeground(DefaultColorTheme.COLOR_LIGHT_GREY);
+
+        // Use smaller icon in compact view mode
+        boolean compactView = UserSettings.getInstance().getSettingAsBoolean(
+            UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, true);
+        if (compactView) {
+            this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_folder_blue_36dp.png")));
+        }
 
         ClientSettings settings = ClientSettings.getInstance();
         String fontSizeOffset = settings.getConfiguration(ClientSettings.CONF_UI_FONTSIZEOFFSET, "0");
