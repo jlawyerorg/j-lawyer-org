@@ -723,8 +723,8 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
     private static final Color DEFAULT_HIGHLIGHT_COLOR = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 220).darker().darker();
     private static final Color DEFAULT_NORMAL_COLOR = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 190).darker().darker();
 
-    private static final int NORMAL_ALPHA = 70;
-    private static final int HIGHLIGHT_ALPHA = 100;
+    private static final int NORMAL_ALPHA = 120;
+    private static final int HIGHLIGHT_ALPHA = 160;
 
     private Color normalColor = DEFAULT_NORMAL_COLOR;
     private Color highlightColor = DEFAULT_HIGHLIGHT_COLOR;
