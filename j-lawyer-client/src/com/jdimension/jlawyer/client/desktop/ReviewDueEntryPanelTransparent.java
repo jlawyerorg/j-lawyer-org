@@ -720,16 +720,22 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
     private static final Color OVERDUE_RESPITE_COLOR=DefaultColorTheme.COLOR_LOGO_RED.brighter().brighter();
     private static final Color OVERDUE_REVIEW_COLOR=Color.ORANGE;
     
-    private static final Color HIGHLIGHT_COLOR = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 220).darker().darker();
-    private static final Color NORMAL_COLOR = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 190).darker().darker();
+    private static final Color DEFAULT_HIGHLIGHT_COLOR = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 220).darker().darker();
+    private static final Color DEFAULT_NORMAL_COLOR = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 190).darker().darker();
+
+    private static final int NORMAL_ALPHA = 70;
+    private static final int HIGHLIGHT_ALPHA = 100;
+
+    private Color normalColor = DEFAULT_NORMAL_COLOR;
+    private Color highlightColor = DEFAULT_HIGHLIGHT_COLOR;
 
     /**
      * Creates new form ReviewDueEntryPanelTransparent
      */
     public ReviewDueEntryPanelTransparent() {
         initComponents();
-        
-        this.jPanel1.setBackground(NORMAL_COLOR);
+
+        this.jPanel1.setBackground(normalColor);
         // Rounded corners removed so entries blend together within a group
 
         this.setOpaque(false);
@@ -878,12 +884,12 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
 
         this.cmdPostpone.setEnabled(true);
         if (e.getType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
-            this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrunred.png")));
+            this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/notifications_important_20dp_white.png")));
             this.cmdPostpone.setEnabled(false);
         } else if (e.getType() == ArchiveFileConstants.REVIEWTYPE_EVENT) {
-            this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrun.png")));
+            this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/notifications_calendar_20dp_white.png")));
         } else {
-            this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrungrey.png")));
+            this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/notifications_20dp_white.png")));
         }
 
         if (UserSettings.getInstance().getCurrentUser().getPrincipalId().equals(e.getResponsible())) {
@@ -899,6 +905,18 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
 //        this.lblTags.setText("");
 //        this.lblTags.setIcon(null);
 //        this.lblTags.setToolTipText(null);
+
+        // Set background color based on calendar setup color
+        if (this.e.getCalendarSetupColor() != Integer.MIN_VALUE) {
+            Color baseColor = new Color(this.e.getCalendarSetupColor());
+            this.normalColor = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), NORMAL_ALPHA);
+            this.highlightColor = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), HIGHLIGHT_ALPHA);
+        } else {
+            this.normalColor = DEFAULT_NORMAL_COLOR;
+            this.highlightColor = DEFAULT_HIGHLIGHT_COLOR;
+        }
+        this.jPanel1.setBackground(normalColor);
+
         this.repaint();
 
     }
@@ -1213,9 +1231,9 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
     }//GEN-LAST:event_formMouseExited
 
     private void highlight(boolean highlight) {
-        Color c=NORMAL_COLOR;
-        if(highlight) {
-            c=HIGHLIGHT_COLOR;
+        Color c = normalColor;
+        if (highlight) {
+            c = highlightColor;
         }
         this.jPanel1.setBackground(c);
         this.repaint();
