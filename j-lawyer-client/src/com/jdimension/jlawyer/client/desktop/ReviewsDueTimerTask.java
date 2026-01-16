@@ -806,7 +806,7 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
             if (stopped) {
                 return;
             }
-            // Sort entries for grouping: by event type, then by day, then by case, then by time
+            // Sort entries for grouping: by event type, then by day, then by time, then by case
             Collections.sort(entries, (ReviewDueEntry arg1, ReviewDueEntry arg2) -> {
                 // 1. Event type (descending - higher value first: EVENT=30, RESPITE=20, FOLLOWUP=10)
                 if (arg1.getType() != arg2.getType()) {
@@ -824,20 +824,22 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                 int dayCompare = compareDayOnly(d1, d2);
                 if (dayCompare != 0) return dayCompare;
 
-                // 3. Archive file ID (group same cases together within same day)
+                // 3. Exact time (ascending - earlier times first within a day)
+                int timeCompare = d1.compareTo(d2);
+                if (timeCompare != 0) return timeCompare;
+
+                // 4. Archive file ID (group same cases together within same time)
                 String id1 = arg1.getArchiveFileId();
                 String id2 = arg2.getArchiveFileId();
                 if (id1 != null && id2 != null) {
-                    int caseCompare = id1.compareTo(id2);
-                    if (caseCompare != 0) return caseCompare;
+                    return id1.compareTo(id2);
                 } else if (id1 == null && id2 != null) {
                     return -1;
                 } else if (id1 != null && id2 == null) {
                     return 1;
                 }
 
-                // 4. Exact time (ascending - earlier times first within a group)
-                return d1.compareTo(d2);
+                return 0;
             });
 
         } catch (Throwable ex) {
