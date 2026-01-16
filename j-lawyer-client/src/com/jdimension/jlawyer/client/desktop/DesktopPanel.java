@@ -1497,7 +1497,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(cmdRefreshRevDue)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel6)
-                        .add(192, 192, 192)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 192, Short.MAX_VALUE)
                         .add(cmdDueSinceDays)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblDueSinceDays)
@@ -1505,7 +1505,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(cmdUserFilter)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblUserFilterCount)
-                        .add(0, 0, Short.MAX_VALUE)))
+                        .add(0, 0, 0)))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
