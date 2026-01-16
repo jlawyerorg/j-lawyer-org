@@ -799,8 +799,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 "/icons16/material/unfold_less_20dp_97BF0D_FILL0_wght400_GRAD0_opsz20.png")));
         }
 
-        Color splitPaneColor=new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 170);
-        
         updateCurrentDay();
         
 
@@ -830,7 +828,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         BoxLayout boxLayout=new BoxLayout(this.pnlLastChanged, BoxLayout.Y_AXIS);
         this.pnlLastChanged.setLayout(boxLayout);
         this.lastChangedTimer = new Timer();
-        final LastChangedTimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged);
+        final LastChangedTimerTask lastChangedTask = new LastChangedTimerTask(this.pnlLastChanged);
         this.lastChangedTimer.schedule(lastChangedTask, 1000, 15l*59000l);
 
         Timer timer3 = new Timer();
@@ -1331,7 +1329,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 this.lblUserFilterCountLastchanged.setText("" + al.size());
                 UserSettings.getInstance().setSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS_LASTCHANGED, al.toArray(new String[al.size()]));
                 // refresh tagged view
-                LastChangedTimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, true);
+                LastChangedTimerTask lastChangedTask = new LastChangedTimerTask(this.pnlLastChanged, true);
                 new java.util.Timer().schedule(lastChangedTask, 100);
             });
         }
@@ -2060,7 +2058,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private void cmdRefreshLastChangedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshLastChangedActionPerformed
         Timer timer = new Timer();
 
-        TimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, true);
+        TimerTask lastChangedTask = new LastChangedTimerTask(this.pnlLastChanged, true);
         timer.schedule(lastChangedTask, 10);
 
     }//GEN-LAST:event_cmdRefreshLastChangedActionPerformed
@@ -2319,7 +2317,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 reviewsTimer.schedule(revDueTask, 10);
             }
         } else if(e instanceof CasesChangedEvent) {
-            TimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, true);
+            TimerTask lastChangedTask = new LastChangedTimerTask(this.pnlLastChanged, true);
             this.lastChangedTimer.schedule(lastChangedTask, 10);
         }
     }

@@ -748,7 +748,6 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
     // Modern chat bubble styling constants
     private static final int BUBBLE_RADIUS = 18;
     private static final int BUBBLE_MARGIN = 12;
-    private static final int ASYMMETRIC_MARGIN = 50;
     private static final int PADDING_H = 14;
     private static final int PADDING_TOP = 10;
     private static final int PADDING_BOTTOM = 8;
@@ -760,7 +759,6 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
     // Modern colors
     private static final Color COLOR_BUBBLE_OTHER = new Color(58, 58, 60);
     private static final Color COLOR_TIMESTAMP = new Color(255, 255, 255, 140);
-    private static final Color COLOR_SHADOW = new Color(0, 0, 0, 20);
 
     // Avatar color palette
     private static final Color[] AVATAR_COLORS = {
@@ -1087,7 +1085,8 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         FontMetrics metrics = g2d.getFontMetrics();
 
         // Calculate bubble dimensions based on alignment
-        int bubbleX, bubbleWidth;
+        int bubbleX;
+        int bubbleWidth;
         int avatarX = BUBBLE_MARGIN;
         int avatarY = PADDING_TOP;
 

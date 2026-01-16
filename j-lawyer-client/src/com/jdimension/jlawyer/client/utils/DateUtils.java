@@ -721,8 +721,12 @@ public class DateUtils {
             return false;
         }
 
-        Date now = new Date();
-        return (begin.getTime() <= now.getTime() && end.getTime() >= now.getTime());
+        // Compare only the date parts, ignoring the time of day
+        LocalDate today = LocalDate.now();
+        LocalDate beginDate = begin.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate endDate = end.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+        return (!today.isBefore(beginDate) && !today.isAfter(endDate));
     }
     
     public static boolean isToday(Date date) {

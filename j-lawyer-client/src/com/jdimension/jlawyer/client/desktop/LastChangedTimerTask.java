@@ -698,18 +698,17 @@ public class LastChangedTimerTask extends java.util.TimerTask {
 
     /**
      * Creates a new instance of LastChangedTimerTask
-     * @param owner
      * @param resultPanel
      * @param ignoreCurrentEditor
      */
-    public LastChangedTimerTask(Component owner, JPanel resultPanel, boolean ignoreCurrentEditor) {
+    public LastChangedTimerTask(JPanel resultPanel, boolean ignoreCurrentEditor) {
         super();
         this.resultUI = resultPanel;
         this.ignoreCurrentEditor = ignoreCurrentEditor;
     }
 
-    public LastChangedTimerTask(Component owner, JPanel resultPanel) {
-        this(owner, resultPanel, false);
+    public LastChangedTimerTask(JPanel resultPanel) {
+        this(resultPanel, false);
     }
 
     @Override

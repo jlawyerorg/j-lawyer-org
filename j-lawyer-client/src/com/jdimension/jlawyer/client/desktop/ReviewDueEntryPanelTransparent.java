@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.client.desktop;
 
-import com.formdev.flatlaf.FlatClientProperties;
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
@@ -683,14 +682,12 @@ import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
-import java.awt.Polygon;
 import java.awt.Window;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -736,50 +733,19 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         initComponents();
 
         this.jPanel1.setBackground(normalColor);
-        // Rounded corners removed so entries blend together within a group
 
         this.setOpaque(false);
         this.lblResponsible.setOpaque(false);
         this.lblDescription.setOpaque(false);
-//        this.lblTags.setOpaque(false);
-//        this.lblTags.setForeground(DefaultColorTheme.COLOR_LIGHT_GREY);
         this.lblResponsible.setForeground(DefaultColorTheme.COLOR_LIGHT_GREY);
         
-//        ClientSettings settings = ClientSettings.getInstance();
-//        String fontSizeOffset = settings.getConfiguration(ClientSettings.CONF_UI_FONTSIZEOFFSET, "0");
-//        try {
-//            int offset = Integer.parseInt(fontSizeOffset);
-//            Font currentFont = this.lblTags.getFont();
-//            this.lblTags.setFont(currentFont.deriveFont((float) currentFont.getSize() + (float) offset));
-//        } catch (Throwable t) {
-//            log.error("Could not set font size", t);
-//        }
-
     }
 
     @Override
      protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-//        Dimension arcs = new Dimension(15,15);
-//        int width = getWidth();
-//        int height = getHeight();
         Graphics2D graphics = (Graphics2D) g;
-//        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-//
-//        
-//        graphics.setComposite(AlphaComposite.SrcOver.derive(this.alpha));
-//        graphics.setColor(getBackground());
-//
-//        //Draws the rounded opaque panel with borders.
-//        graphics.setColor(getBackground());
-//        graphics.fillRoundRect(0, 0, width-1, height-1, arcs.width, arcs.height);//paint background
-//        graphics.setColor(getForeground());
-//        
-//        graphics.setColor(Color.WHITE);
-//        graphics.drawRoundRect(0, 0, width-1, height-1, arcs.width, arcs.height);//paint border
-//        graphics.drawRoundRect(1, 1, width-3, height-3, arcs.width, arcs.height);//paint border
-//        graphics.drawRoundRect(2, 2, width-5, height-5, arcs.width, arcs.height);//paint border
-        
+       
         if(this.e!=null && this.e.getCalendarSetupColor()!=Integer.MIN_VALUE) {
             graphics.setColor(new Color(this.e.getCalendarSetupColor()));
             // Draw vertical bar on left edge spanning full height
@@ -808,22 +774,6 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         String caseNumber = e.getArchiveFileNumber();
         if (caseNumber == null) {
             caseNumber = "";
-        }
-
-        String caseName = e.getArchiveFileName();
-        if (caseName == null) {
-            caseName = "";
-        }
-        if (caseName.length() > 45) {
-            caseName = caseName.substring(0, 45) + "...";
-        }
-
-        String caseReason = e.getArchiveFileReason();
-        if (caseReason == null) {
-            caseReason = "";
-        }
-        if (caseReason.length() > 53) {
-            caseReason = caseReason.substring(0, 53) + "...";
         }
 
         String dueDate = e.getReview().toString() + ": ";
@@ -900,11 +850,6 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
                 this.lblResponsible.setForeground(OVERDUE_REVIEW_COLOR);
             }
         }
-
-        // Tags are now shown in the group header, not in individual entries
-//        this.lblTags.setText("");
-//        this.lblTags.setIcon(null);
-//        this.lblTags.setToolTipText(null);
 
         // Set background color based on calendar setup color
         if (this.e.getCalendarSetupColor() != Integer.MIN_VALUE) {
