@@ -2304,16 +2304,28 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             this.repaint();
         } else if(e instanceof ReviewAddedEvent) {
             ArchiveFileReviewsBean r=((ReviewAddedEvent) e).getReview();
-            
-            if(DateUtils.containsToday(r.getBeginDate(), r.getEndDate())) {
+
+            int daysSince = UserSettings.getInstance().getSettingAsInt(UserSettings.CONF_DESKTOP_LASTFILTERDUESINCEDAYS, 1);
+            if (daysSince > 0) {
+                daysSince = -1 * daysSince;
+            }
+            int inDays = UserSettings.getInstance().getSettingAsInt(UserSettings.CONF_DESKTOP_LASTFILTERDUEINDAYS, 0);
+
+            if(DateUtils.overlapsWithRange(r.getBeginDate(), r.getEndDate(), daysSince, inDays)) {
                 TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue);
                 reviewsTimer.schedule(revDueTask, 10);
             }
         } else if(e instanceof ReviewUpdatedEvent) {
             ArchiveFileReviewsBean r=((ReviewUpdatedEvent) e).getReview();
-            
-            if(DateUtils.containsToday(r.getBeginDate(), r.getEndDate()) || DateUtils.containsToday(((ReviewUpdatedEvent) e).getOldBeginDate(), ((ReviewUpdatedEvent) e).getOldEndDate())) {
-                TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue);
+
+            int daysSince = UserSettings.getInstance().getSettingAsInt(UserSettings.CONF_DESKTOP_LASTFILTERDUESINCEDAYS, 1);
+            if (daysSince > 0) {
+                daysSince = -1 * daysSince;
+            }
+            int inDays = UserSettings.getInstance().getSettingAsInt(UserSettings.CONF_DESKTOP_LASTFILTERDUEINDAYS, 0);
+
+            if(DateUtils.overlapsWithRange(r.getBeginDate(), r.getEndDate(), daysSince, inDays) || DateUtils.overlapsWithRange(((ReviewUpdatedEvent) e).getOldBeginDate(), ((ReviewUpdatedEvent) e).getOldEndDate(), daysSince, inDays)) {
+                TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, ((ReviewUpdatedEvent) e).isIgnoreCurrentEditor());
                 reviewsTimer.schedule(revDueTask, 10);
             }
         } else if(e instanceof CasesChangedEvent) {

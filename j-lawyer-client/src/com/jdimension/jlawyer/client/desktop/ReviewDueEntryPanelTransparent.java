@@ -667,6 +667,8 @@ import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
@@ -693,8 +695,11 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import javax.swing.Icon;
 import javax.swing.JOptionPane;
+import javax.swing.JProgressBar;
 import javax.swing.JTextField;
+import javax.swing.Timer;
 import org.apache.log4j.Logger;
 import org.jdesktop.swingx.util.WindowUtils;
 import themes.colors.DefaultColorTheme;
@@ -726,11 +731,19 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
     private Color normalColor = DEFAULT_NORMAL_COLOR;
     private Color highlightColor = DEFAULT_HIGHLIGHT_COLOR;
 
+    private static final int REFRESH_DELAY_MS = 3000;
+    private static final int PROGRESS_UPDATE_INTERVAL_MS = 50;
+    private JProgressBar progressBar;
+    private Timer progressTimer;
+    private Icon originalPostponeIcon;
+    private boolean countdownActive = false;
+
     /**
      * Creates new form ReviewDueEntryPanelTransparent
      */
     public ReviewDueEntryPanelTransparent() {
         initComponents();
+        initProgressBar();
 
         this.jPanel1.setBackground(normalColor);
 
@@ -752,8 +765,72 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
             int barWidth = 4;
             graphics.fillRect(0, 0, barWidth, getHeight());
         }
-        
+
      }
+
+    private void initProgressBar() {
+        progressBar = new JProgressBar(0, REFRESH_DELAY_MS);
+        progressBar.setVisible(false);
+        progressBar.setBorderPainted(false);
+        progressBar.setOpaque(true);
+        progressBar.setBackground(normalColor);
+    }
+
+    private void startRefreshCountdown(ArchiveFileReviewsBean updatedReview, Date oldBeginDate, Date oldEndDate) {
+        // Save original icon and show cancel icon (button stays enabled for cancellation)
+        originalPostponeIcon = cmdPostpone.getIcon();
+        cmdPostpone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
+        cmdPostpone.setToolTipText("Aktualisierung abbrechen");
+        countdownActive = true;
+
+        // Show progress bar at bottom of this panel with calendar color
+        progressBar.setValue(0);
+        if (this.e != null && this.e.getCalendarSetupColor() != Integer.MIN_VALUE) {
+            progressBar.setForeground(new Color(this.e.getCalendarSetupColor()));
+        } else {
+            progressBar.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+        }
+        progressBar.setBounds(0, getHeight() - 3, getWidth(), 3);
+        progressBar.setVisible(true);
+        add(progressBar);
+        setComponentZOrder(progressBar, 0);
+
+        // Animation timer for progress bar
+        final long startTime = System.currentTimeMillis();
+        progressTimer = new Timer(PROGRESS_UPDATE_INTERVAL_MS, null);
+        progressTimer.addActionListener(evt -> {
+            long elapsed = System.currentTimeMillis() - startTime;
+            if (elapsed >= REFRESH_DELAY_MS) {
+                progressTimer.stop();
+                progressBar.setVisible(false);
+                countdownActive = false;
+
+                // Restore button icon and tooltip
+                cmdPostpone.setIcon(originalPostponeIcon);
+                cmdPostpone.setToolTipText("auf einen späteren Termin verschieben");
+
+                // Publish event to trigger refresh of the entire "Fällig" section
+                EventBroker eb = EventBroker.getInstance();
+                eb.publishEvent(new ReviewUpdatedEvent(oldBeginDate, oldEndDate, updatedReview, true));
+            } else {
+                progressBar.setValue((int) elapsed);
+                progressBar.repaint();
+            }
+        });
+        progressTimer.start();
+    }
+
+    private void cancelRefreshCountdown() {
+        if (progressTimer != null && progressTimer.isRunning()) {
+            progressTimer.stop();
+        }
+        progressBar.setVisible(false);
+        countdownActive = false;
+
+        // Restore button icon and tooltip
+        cmdPostpone.setIcon(originalPostponeIcon);
+        cmdPostpone.setToolTipText("auf einen späteren Termin verschieben");
+    }
 
     public void setEntry(ReviewDueEntry entry) {
         this.e = entry;
@@ -1110,6 +1187,12 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
     }//GEN-LAST:event_chkDescriptionMouseClicked
 
     private void cmdPostponeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPostponeActionPerformed
+        // If countdown is active, cancel it and allow user to select a new date
+        if (countdownActive) {
+            cancelRefreshCountdown();
+            return;
+        }
+
         JTextField hiddenField = new JTextField();
         MultiCalDialog dlg = new MultiCalDialog(hiddenField, EditorsRegistry.getInstance().getMainWindow(), true);
         dlg.setVisible(true);
@@ -1125,7 +1208,11 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         // update data
         EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird aktualisiert...");
         ArchiveFileReviewsBean arb = e.getReview();
-        
+
+        // Store old dates for the event notification
+        Date oldBeginDate = arb.getBeginDate();
+        Date oldEndDate = arb.getEndDate();
+
         if (arb.getEventType() == EventTypes.EVENTTYPE_EVENT) {
             Calendar evCal = Calendar.getInstance();
             evCal.setTime(arb.getBeginDate());
@@ -1157,10 +1244,25 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
                 return;
             }
 
+            // Update local UI immediately
             boolean postPonedDone = this.chkDescription.isSelected();
-            // update UI
             this.setEntry(e);
             this.chkDescription.setSelected(postPonedDone);
+
+            // Show the new date in the label so user can verify their selection
+            SimpleDateFormat dfDisplay = new SimpleDateFormat("dd.MM.yyyy");
+            String newDateStr = dfDisplay.format(d);
+            String reason = e.getReviewReason();
+            if (reason == null || reason.isEmpty()) {
+                reason = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("followup.nodescription");
+            }
+            if (reason.length() > 35) {
+                reason = reason.substring(0, 35) + "...";
+            }
+            this.lblDescription.setText("<html><b>" + newDateStr + "</b>: " + reason + "</html>");
+
+            // Start countdown and trigger full refresh after 3 seconds
+            startRefreshCountdown(arb, oldBeginDate, oldEndDate);
         }
         EditorsRegistry.getInstance().clearStatus();
 

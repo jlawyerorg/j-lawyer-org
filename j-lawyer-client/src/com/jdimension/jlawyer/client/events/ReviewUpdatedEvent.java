@@ -675,6 +675,7 @@ public class ReviewUpdatedEvent extends Event {
     private ArchiveFileReviewsBean review;
     private Date oldBeginDate=null;
     private Date oldEndDate=null;
+    private boolean ignoreCurrentEditor = false;
     
     public ReviewUpdatedEvent(Date oldBegin, Date oldEnd, ArchiveFileReviewsBean updatedRev) {
         super(Event.TYPE_REVIEWUPDATED);
@@ -682,6 +683,14 @@ public class ReviewUpdatedEvent extends Event {
         this.oldBeginDate=oldBegin;
         this.oldEndDate=oldEnd;
         
+    }
+    
+    public ReviewUpdatedEvent(Date oldBegin, Date oldEnd, ArchiveFileReviewsBean updatedRev, boolean ignoreCurrentEditor) {
+        super(Event.TYPE_REVIEWUPDATED);
+        this.review=updatedRev;
+        this.oldBeginDate=oldBegin;
+        this.oldEndDate=oldEnd;
+        this.ignoreCurrentEditor=ignoreCurrentEditor;
     }
 
     
@@ -717,6 +726,20 @@ public class ReviewUpdatedEvent extends Event {
      */
     public Date getOldEndDate() {
         return oldEndDate;
+    }
+
+    /**
+     * @return the ignoreCurrentEditor
+     */
+    public boolean isIgnoreCurrentEditor() {
+        return ignoreCurrentEditor;
+    }
+
+    /**
+     * @param ignoreCurrentEditor the ignoreCurrentEditor to set
+     */
+    public void setIgnoreCurrentEditor(boolean ignoreCurrentEditor) {
+        this.ignoreCurrentEditor = ignoreCurrentEditor;
     }
 
     

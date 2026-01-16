@@ -745,6 +745,46 @@ public class DateUtils {
         return givenLocalDate.isEqual(currentDate);
     }
 
+    /**
+     * Checks if a date range (begin to end) overlaps with a time span around today.
+     * The time span is defined as (today + daysSince) to (today + inDays).
+     *
+     * @param begin the start date of the range to check
+     * @param end the end date of the range to check
+     * @param daysSince days before today (should be negative or zero, e.g. -7 for one week ago)
+     * @param inDays days after today (should be zero or positive, e.g. 7 for one week ahead)
+     * @return true if the date range overlaps with the time span
+     */
+    public static boolean overlapsWithRange(Date begin, Date end, int daysSince, int inDays) {
+
+        if (begin == null && end == null) {
+            return false;
+        }
+
+        // Calculate the viewing range: from (today + daysSince) to (today + inDays)
+        LocalDate today = LocalDate.now();
+        LocalDate rangeStart = today.plusDays(daysSince);
+        LocalDate rangeEnd = today.plusDays(inDays);
+
+        // Convert event dates to LocalDate, using the single date if one is null
+        LocalDate eventStart;
+        LocalDate eventEnd;
+
+        if (begin == null) {
+            eventStart = end.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            eventEnd = eventStart;
+        } else if (end == null) {
+            eventStart = begin.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            eventEnd = eventStart;
+        } else {
+            eventStart = begin.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            eventEnd = end.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        }
+
+        // Two ranges overlap if: eventStart <= rangeEnd AND eventEnd >= rangeStart
+        return !eventStart.isAfter(rangeEnd) && !eventEnd.isBefore(rangeStart);
+    }
+
     public static String getHumanReadableTimeInPast(Date d) {
 
         if (d == null) {
