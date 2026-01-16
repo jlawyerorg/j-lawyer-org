@@ -729,7 +729,7 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
 
         // Check if compact view is enabled - skip loading tags if true
         final boolean compactView = UserSettings.getInstance().getSettingAsBoolean(
-            UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, false);
+            UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, true);
 
         try {
 
@@ -927,8 +927,11 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                                     labelColor = ServerColorTheme.COLOR_LOGO_GREEN;
                                 }
 
+                                sectionHeader.setBorder(javax.swing.BorderFactory.createLineBorder(labelColor, 3));
+
                                 JLabel sectionLabel = new JLabel(entry.getReview().getEventTypeName());
-                                sectionLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource(iconPath)));
+                                javax.swing.ImageIcon originalIcon = new javax.swing.ImageIcon(getClass().getResource(iconPath));
+                                sectionLabel.setIcon(tintIcon(originalIcon, labelColor));
                                 sectionLabel.setForeground(labelColor);
                                 sectionLabel.setFont(sectionLabel.getFont().deriveFont(java.awt.Font.BOLD, sectionLabel.getFont().getSize() + 2f));
                                 sectionHeader.add(sectionLabel);
@@ -1075,6 +1078,34 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
         String archiveId = entry.getArchiveFileId() != null ? entry.getArchiveFileId() : "";
         return entry.getType() + "|" + archiveId + "|" +
                cal.get(Calendar.YEAR) + "|" + cal.get(Calendar.DAY_OF_YEAR);
+    }
+
+    /**
+     * Tints a white icon with the specified color.
+     *
+     * @param icon the original icon (should be white)
+     * @param color the target color
+     * @return a new ImageIcon with the tinted color
+     */
+    private static javax.swing.ImageIcon tintIcon(javax.swing.ImageIcon icon, java.awt.Color color) {
+        java.awt.Image img = icon.getImage();
+        java.awt.image.BufferedImage bi = new java.awt.image.BufferedImage(
+            icon.getIconWidth(), icon.getIconHeight(), java.awt.image.BufferedImage.TYPE_INT_ARGB);
+        java.awt.Graphics2D g2d = bi.createGraphics();
+        g2d.drawImage(img, 0, 0, null);
+        g2d.dispose();
+
+        for (int y = 0; y < bi.getHeight(); y++) {
+            for (int x = 0; x < bi.getWidth(); x++) {
+                int argb = bi.getRGB(x, y);
+                int alpha = (argb >> 24) & 0xff;
+                if (alpha > 0) {
+                    int newArgb = (alpha << 24) | (color.getRed() << 16) | (color.getGreen() << 8) | color.getBlue();
+                    bi.setRGB(x, y, newArgb);
+                }
+            }
+        }
+        return new javax.swing.ImageIcon(bi);
     }
 
 }

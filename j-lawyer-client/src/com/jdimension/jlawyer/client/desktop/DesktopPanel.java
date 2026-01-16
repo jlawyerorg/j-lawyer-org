@@ -791,10 +791,10 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.jScrollPane1.getViewport().setOpaque(false);
         this.jScrollPane4.getViewport().setOpaque(false);
 
-        // Set compact view icon based on saved setting
+        // Set compact view icon based on saved setting (default: compact view enabled)
         boolean compactView = UserSettings.getInstance().getSettingAsBoolean(
-            UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, false);
-        if (compactView) {
+            UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, true);
+        if (!compactView) {
             toggleDueCompactView.setIcon(new javax.swing.ImageIcon(getClass().getResource(
                 "/icons16/material/unfold_less_20dp_97BF0D_FILL0_wght400_GRAD0_opsz20.png")));
         }
@@ -2123,7 +2123,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private void toggleDueCompactViewMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_toggleDueCompactViewMouseClicked
         UserSettings settings = UserSettings.getInstance();
         boolean currentCompact = settings.getSettingAsBoolean(
-            UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, false);
+            UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, true);
         boolean newCompact = !currentCompact;
 
         settings.setSettingAsBoolean(UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW,
