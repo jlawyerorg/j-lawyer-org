@@ -806,7 +806,7 @@ public class LastChangedEntryPanelTransparent extends javax.swing.JPanel {
             }
         });
 
-        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
+        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/sharp_folder_blue_36dp.png"))); // NOI18N
 
         lblDescription.setFont(lblDescription.getFont());
         lblDescription.setForeground(new java.awt.Color(255, 255, 255));

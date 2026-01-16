@@ -730,24 +730,24 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         initComponents();
         
         this.jPanel1.setBackground(NORMAL_COLOR);
-        this.jPanel1.putClientProperty(FlatClientProperties.COMPONENT_ROUND_RECT, true);
+        // Rounded corners removed so entries blend together within a group
 
         this.setOpaque(false);
         this.lblResponsible.setOpaque(false);
         this.lblDescription.setOpaque(false);
-        this.lblTags.setOpaque(false);
-        this.lblTags.setForeground(DefaultColorTheme.COLOR_LIGHT_GREY);
+//        this.lblTags.setOpaque(false);
+//        this.lblTags.setForeground(DefaultColorTheme.COLOR_LIGHT_GREY);
         this.lblResponsible.setForeground(DefaultColorTheme.COLOR_LIGHT_GREY);
         
-        ClientSettings settings = ClientSettings.getInstance();
-        String fontSizeOffset = settings.getConfiguration(ClientSettings.CONF_UI_FONTSIZEOFFSET, "0");
-        try {
-            int offset = Integer.parseInt(fontSizeOffset);
-            Font currentFont = this.lblTags.getFont();
-            this.lblTags.setFont(currentFont.deriveFont((float) currentFont.getSize() + (float) offset));
-        } catch (Throwable t) {
-            log.error("Could not set font size", t);
-        }
+//        ClientSettings settings = ClientSettings.getInstance();
+//        String fontSizeOffset = settings.getConfiguration(ClientSettings.CONF_UI_FONTSIZEOFFSET, "0");
+//        try {
+//            int offset = Integer.parseInt(fontSizeOffset);
+//            Font currentFont = this.lblTags.getFont();
+//            this.lblTags.setFont(currentFont.deriveFont((float) currentFont.getSize() + (float) offset));
+//        } catch (Throwable t) {
+//            log.error("Could not set font size", t);
+//        }
 
     }
 
@@ -776,11 +776,9 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         
         if(this.e!=null && this.e.getCalendarSetupColor()!=Integer.MIN_VALUE) {
             graphics.setColor(new Color(this.e.getCalendarSetupColor()));
-            Polygon plgn = new Polygon();
-            plgn.addPoint(3, 3);
-            plgn.addPoint(17, 3);
-            plgn.addPoint(3, 17);
-            graphics.fillPolygon(plgn);
+            // Draw vertical bar on left edge spanning full height
+            int barWidth = 4;
+            graphics.fillRect(0, 0, barWidth, getHeight());
         }
         
      }
@@ -860,8 +858,16 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         tooltip.append("<html>");
         this.lblDescription.setToolTipText(tooltip.toString());
 
-        this.unDoneDescription = "<html><b>" + dueDate + reason + "</b><br/><font color=\"white\">" + caseNumber + " " + caseName + HTML_BR + caseReason + "</font></html>";
-        this.doneDescription = "<html><s><b>" + dueDate + reason + "</b><br/><font color=\"white\">" + caseNumber + " " + caseName + HTML_BR + caseReason + "</font></s></html>";
+        // Case info (number, name, reason) and tags are now shown in the group header
+        if (e.getType() == ArchiveFileConstants.REVIEWTYPE_EVENT) {
+            this.unDoneDescription = "<html>" + dueDate + reason + "</html>";
+            this.doneDescription = "<html><s>" + dueDate + reason + "</s></html>";
+        } else {
+            this.unDoneDescription = "<html>" + reason + "</html>";
+            this.doneDescription = "<html><s>" + reason + "</s></html>";
+        }
+        
+
         this.lblDescription.setText(unDoneDescription);
         this.lblResponsible.setText(e.getResponsible());
         if (e.getResponsible() != null && !("".equalsIgnoreCase(e.getResponsible()))) {
@@ -889,21 +895,10 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
             }
         }
 
-        this.lblTags.setText("");
-        if (e.getTags() != null) {
-
-            String tagList = TagUtils.getTagList(e.getTags());
-            String shortenedTagList = tagList;
-            if (shortenedTagList.length() > 105) {
-                shortenedTagList = shortenedTagList.substring(0, 105) + "...";
-            }
-
-            this.lblTags.setText(shortenedTagList);
-            this.lblTags.setToolTipText(tagList);
-            
-            if(this.lblTags.getText().length()>0)
-                this.lblTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png")));
-        }
+        // Tags are now shown in the group header, not in individual entries
+//        this.lblTags.setText("");
+//        this.lblTags.setIcon(null);
+//        this.lblTags.setToolTipText(null);
         this.repaint();
 
     }
@@ -923,7 +918,6 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         chkDescription = new javax.swing.JCheckBox();
         lblDescription = new javax.swing.JLabel();
         cmdPostpone = new javax.swing.JButton();
-        lblTags = new javax.swing.JLabel();
 
         setOpaque(false);
         addMouseListener(new java.awt.event.MouseAdapter() {
@@ -978,57 +972,34 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
             }
         });
 
-        lblTags.setFont(lblTags.getFont().deriveFont(lblTags.getFont().getStyle() & ~java.awt.Font.BOLD, lblTags.getFont().getSize()-2));
-        lblTags.setText(" ");
-        lblTags.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                lblTagsMouseEntered(evt);
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                lblTagsMouseExited(evt);
-            }
-        });
-
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblIcon)
-                    .addComponent(chkDescription))
+                .addComponent(chkDescription)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(41, 41, 41)
-                        .addComponent(lblResponsible))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdPostpone)))
+                .addComponent(lblIcon)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, 173, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
+                .addComponent(lblResponsible)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdPostpone)
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(cmdPostpone)
-                        .addGap(3, 3, 3)
-                        .addComponent(lblResponsible))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(chkDescription)
-                        .addGap(3, 3, 3)
-                        .addComponent(lblIcon, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(lblDescription)
-                        .addGap(3, 3, 3)
-                        .addComponent(lblTags)))
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(chkDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addComponent(lblIcon, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(lblDescription, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(lblResponsible, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdPostpone, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 29, Short.MAX_VALUE))))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -1043,9 +1014,8 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -1242,14 +1212,6 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         highlight(false);
     }//GEN-LAST:event_formMouseExited
 
-    private void lblTagsMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblTagsMouseEntered
-        highlight(true);
-    }//GEN-LAST:event_lblTagsMouseEntered
-
-    private void lblTagsMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblTagsMouseExited
-        highlight(false);
-    }//GEN-LAST:event_lblTagsMouseExited
-
     private void highlight(boolean highlight) {
         Color c=NORMAL_COLOR;
         if(highlight) {
@@ -1266,6 +1228,5 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
     private javax.swing.JLabel lblDescription;
     private javax.swing.JLabel lblIcon;
     private javax.swing.JLabel lblResponsible;
-    private javax.swing.JLabel lblTags;
     // End of variables declaration//GEN-END:variables
 }

@@ -863,7 +863,7 @@ public class TaggedEntryPanelTransparent extends javax.swing.JPanel {
             }
         });
 
-        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
+        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/sharp_folder_blue_36dp.png"))); // NOI18N
 
         lblDocument.setFont(lblDocument.getFont().deriveFont(lblDocument.getFont().getStyle() & ~java.awt.Font.BOLD, lblDocument.getFont().getSize()-2));
         lblDocument.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));

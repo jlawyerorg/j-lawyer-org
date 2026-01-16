@@ -806,34 +806,37 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
             if (stopped) {
                 return;
             }
+            // Sort entries for grouping: by event type, then by day, then by case, then by time
             Collections.sort(entries, (ReviewDueEntry arg1, ReviewDueEntry arg2) -> {
-                Date d1 = arg1.getDue();
-                Date d2 = arg2.getDue();
-
-                if (d1 == null) {
-                    return -1;
+                // 1. Event type (descending - higher value first: EVENT=30, RESPITE=20, FOLLOWUP=10)
+                if (arg1.getType() != arg2.getType()) {
+                    return Integer.compare(arg2.getType(), arg1.getType());
                 }
 
-                if (d2 == null) {
+                // Null date handling
+                Date d1 = arg1.getDue();
+                Date d2 = arg2.getDue();
+                if (d1 == null && d2 == null) return 0;
+                if (d1 == null) return -1;
+                if (d2 == null) return 1;
+
+                // 2. Day comparison (group entries by day)
+                int dayCompare = compareDayOnly(d1, d2);
+                if (dayCompare != 0) return dayCompare;
+
+                // 3. Archive file ID (group same cases together within same day)
+                String id1 = arg1.getArchiveFileId();
+                String id2 = arg2.getArchiveFileId();
+                if (id1 != null && id2 != null) {
+                    int caseCompare = id1.compareTo(id2);
+                    if (caseCompare != 0) return caseCompare;
+                } else if (id1 == null && id2 != null) {
+                    return -1;
+                } else if (id1 != null && id2 == null) {
                     return 1;
                 }
 
-                if (arg1.getType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
-                    if (arg2.getType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
-                        return d1.compareTo(d2);
-                    } else {
-                        return -1;
-                    }
-                }
-
-                if (arg2.getType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
-                    if (arg1.getType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
-                        return d1.compareTo(d2);
-                    } else {
-                        return 1;
-                    }
-                }
-
+                // 4. Exact time (ascending - earlier times first within a group)
                 return d1.compareTo(d2);
             });
 
@@ -863,19 +866,49 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                     }
 
                     int maxCount = Math.min(list.size(), 200);
+                    String lastGroupKey = null;
+
                     for (int k = 0; k < maxCount; k++) {
                         if (stopped) return;
                         try {
+                            ReviewDueEntry entry = list.get(k);
+                            String currentGroupKey = buildGroupKey(entry);
+
+                            // Add header when group changes
+                            if (!currentGroupKey.equals(lastGroupKey)) {
+                                // Add header to main panel
+                                CaseGroupHeaderPanel header = new CaseGroupHeaderPanel();
+                                header.setGroupInfo(entry.getArchiveFileId(),
+                                                   entry.getArchiveFileNumber(),
+                                                   entry.getArchiveFileName(),
+                                                   entry.getArchiveFileReason(),
+                                                   entry.getDue(),
+                                                   entry.getTags());
+                                resultUI.add(header);
+
+                                // Also add header to event type tab
+                                addEventTypeTab(entry.getReview().getEventTypeName());
+                                addHeaderToTab(entry.getReview().getEventTypeName(),
+                                              entry.getArchiveFileId(),
+                                              entry.getArchiveFileNumber(),
+                                              entry.getArchiveFileName(),
+                                              entry.getArchiveFileReason(),
+                                              entry.getDue(),
+                                              entry.getTags());
+
+                                lastGroupKey = currentGroupKey;
+                            }
+
                             ReviewDueEntryPanelTransparent ep = new ReviewDueEntryPanelTransparent();
 
-                            ep.setEntry(list.get(k));
+                            ep.setEntry(entry);
                             resultUI.add(ep);
-                            addEventTypeTab(list.get(k).getReview().getEventTypeName());
+                            addEventTypeTab(entry.getReview().getEventTypeName());
 
                             // need new identical child, one child component cannot have two parents
                             ReviewDueEntryPanelTransparent ep2 = new ReviewDueEntryPanelTransparent();
-                            ep2.setEntry(list.get(k));
-                            addEntryToTab(list.get(k).getReview().getEventTypeName(), ep2);
+                            ep2.setEntry(entry);
+                            addEntryToTab(entry.getReview().getEventTypeName(), ep2);
                         } catch (Throwable t) {
                             log.error("Error adding review entry to desktop", t);
                         }
@@ -922,12 +955,59 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                     }
                 }
 
+                private void addHeaderToTab(String eventTypeName, String fileId, String fileNumber, String fileName, String fileReason, java.util.Date due, java.util.ArrayList<String> tags) {
+                    for (int i = 0; i < eventPane.getTabCount(); i++) {
+                        if (stopped) return;
+                        if (eventPane.getTitleAt(i).equals(eventTypeName)) {
+                            JScrollPane sp = (JScrollPane) eventPane.getComponentAt(i);
+                            JViewport p = (JViewport) sp.getComponent(0);
+                            CaseGroupHeaderPanel header = new CaseGroupHeaderPanel();
+                            header.setGroupInfo(fileId, fileNumber, fileName, fileReason, due, tags);
+                            ((JPanel) p.getComponent(0)).add(header);
+                            break;
+                        }
+                    }
+                }
+
             }
             );
         } catch (Throwable t) {
             log.error(t);
         }
 
+    }
+
+    /**
+     * Compares two dates by day only (ignoring time).
+     *
+     * @param d1 first date
+     * @param d2 second date
+     * @return negative if d1 is before d2 (day-wise), positive if after, 0 if same day
+     */
+    private static int compareDayOnly(Date d1, Date d2) {
+        Calendar c1 = Calendar.getInstance();
+        Calendar c2 = Calendar.getInstance();
+        c1.setTime(d1);
+        c2.setTime(d2);
+        int yearCmp = Integer.compare(c1.get(Calendar.YEAR), c2.get(Calendar.YEAR));
+        if (yearCmp != 0) return yearCmp;
+        return Integer.compare(c1.get(Calendar.DAY_OF_YEAR), c2.get(Calendar.DAY_OF_YEAR));
+    }
+
+    /**
+     * Builds a group key for grouping entries by event type, case ID, and day.
+     *
+     * @param entry the review entry
+     * @return a string key representing the group
+     */
+    private static String buildGroupKey(ReviewDueEntry entry) {
+        Calendar cal = Calendar.getInstance();
+        if (entry.getDue() != null) {
+            cal.setTime(entry.getDue());
+        }
+        String archiveId = entry.getArchiveFileId() != null ? entry.getArchiveFileId() : "";
+        return entry.getType() + "|" + archiveId + "|" +
+               cal.get(Calendar.YEAR) + "|" + cal.get(Calendar.DAY_OF_YEAR);
     }
 
 }
