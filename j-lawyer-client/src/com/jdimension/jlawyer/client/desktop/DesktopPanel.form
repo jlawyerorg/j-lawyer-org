@@ -53,13 +53,12 @@
               <Group type="102" alignment="1" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="1" attributes="0">
-                      <Component id="prgRefreshDue" max="32767" attributes="0"/>
                       <Component id="tabPaneDue" alignment="0" max="32767" attributes="0"/>
                       <Group type="102" alignment="0" attributes="0">
                           <Component id="cmdRefreshRevDue" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" pref="169" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
                           <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" pref="29" max="-2" attributes="0"/>
+                          <EmptySpace min="-2" pref="192" max="-2" attributes="0"/>
                           <Component id="cmdDueSinceDays" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="lblDueSinceDays" min="-2" max="-2" attributes="0"/>
@@ -78,20 +77,18 @@
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="0" attributes="0">
+                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
                       <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="jLabel6" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="lblDueSinceDays" alignment="3" max="32767" attributes="0"/>
-                          <Component id="cmdDueSinceDays" alignment="3" max="32767" attributes="0"/>
+                          <Component id="jLabel6" alignment="3" max="32767" attributes="0"/>
+                          <Component id="lblDueSinceDays" alignment="0" max="32767" attributes="0"/>
+                          <Component id="cmdDueSinceDays" alignment="0" max="32767" attributes="0"/>
                       </Group>
-                      <Component id="cmdUserFilter" max="32767" attributes="0"/>
-                      <Component id="lblUserFilterCount" max="32767" attributes="0"/>
-                      <Component id="cmdRefreshRevDue" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="cmdUserFilter" alignment="0" max="32767" attributes="0"/>
+                      <Component id="lblUserFilterCount" alignment="0" max="32767" attributes="0"/>
+                      <Component id="cmdRefreshRevDue" alignment="0" max="32767" attributes="0"/>
                   </Group>
-                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                  <Component id="prgRefreshDue" max="32767" attributes="0"/>
-                  <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
-                  <Component id="tabPaneDue" min="-2" pref="478" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="tabPaneDue" pref="397" max="32767" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
           </Group>
@@ -241,8 +238,6 @@
           <Events>
             <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdDueSinceDaysMousePressed"/>
           </Events>
-        </Component>
-        <Component class="javax.swing.JProgressBar" name="prgRefreshDue">
         </Component>
       </SubComponents>
     </Container>
