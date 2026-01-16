@@ -66,12 +66,10 @@
                   <EmptySpace max="32767" attributes="0"/>
                   <Group type="103" groupAlignment="0" max="-2" attributes="0">
                       <Component id="chkDescription" max="32767" attributes="0"/>
-                      <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                          <Component id="lblIcon" alignment="0" max="32767" attributes="0"/>
-                          <Component id="lblDescription" alignment="0" max="32767" attributes="0"/>
-                          <Component id="lblResponsible" alignment="0" max="32767" attributes="0"/>
-                          <Component id="cmdPostpone" alignment="0" pref="29" max="32767" attributes="0"/>
-                      </Group>
+                      <Component id="lblIcon" alignment="0" max="32767" attributes="0"/>
+                      <Component id="lblDescription" alignment="0" max="32767" attributes="0"/>
+                      <Component id="lblResponsible" alignment="0" max="32767" attributes="0"/>
+                      <Component id="cmdPostpone" alignment="0" max="32767" attributes="0"/>
                   </Group>
               </Group>
           </Group>

@@ -124,7 +124,7 @@ public class CaseGroupHeaderPanel extends javax.swing.JPanel {
         }
 
         StringBuilder displayText = new StringBuilder();
-        displayText.append("<html><b>").append(dateStr).append(" | ").append(caseNumber).append(" - ").append(caseName).append("</b>");
+        displayText.append("<html><b>").append(dateStr).append("</b> | ").append(caseNumber).append(" - ").append(caseName);
         if (!caseReason.isEmpty()) {
             displayText.append("<br/>").append(caseReason);
         }

@@ -893,11 +893,11 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
 
         // Case info (number, name, reason) and tags are now shown in the group header
         if (e.getType() == ArchiveFileConstants.REVIEWTYPE_EVENT) {
-            this.unDoneDescription = "<html>" + dueDate + reason + "</html>";
-            this.doneDescription = "<html><s>" + dueDate + reason + "</s></html>";
+            this.unDoneDescription = "<html><b>" + dueDate + reason + "</b></html>";
+            this.doneDescription = "<html><s><b>" + dueDate + reason + "</b></s></html>";
         } else {
-            this.unDoneDescription = "<html>" + reason + "</html>";
-            this.doneDescription = "<html><s>" + reason + "</s></html>";
+            this.unDoneDescription = "<html><b>" + reason + "</b></html>";
+            this.doneDescription = "<html><s><b>" + reason + "</b></s></html>";
         }
         
 
@@ -1259,7 +1259,7 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
             if (reason.length() > 35) {
                 reason = reason.substring(0, 35) + "...";
             }
-            this.lblDescription.setText("<html><b>" + newDateStr + "</b>: " + reason + "</html>");
+            this.lblDescription.setText("<html><b>" + newDateStr + ": " + reason + "</b></html>");
 
             // Start countdown and trigger full refresh after 3 seconds
             startRefreshCountdown(arb, oldBeginDate, oldEndDate);
