@@ -792,8 +792,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.jScrollPane4.getViewport().setOpaque(false);
 
         // Set compact view icon based on saved setting
-        boolean compactView = "true".equals(UserSettings.getInstance().getSetting(
-            UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, "false"));
+        boolean compactView = UserSettings.getInstance().getSettingAsBoolean(
+            UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, false);
         if (compactView) {
             toggleDueCompactView.setIcon(new javax.swing.ImageIcon(getClass().getResource(
                 "/icons16/material/unfold_less_20dp_97BF0D_FILL0_wght400_GRAD0_opsz20.png")));
@@ -1532,13 +1532,13 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                    .add(lblDueSinceDays, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(cmdUserFilter, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(lblUserFilterCount, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(cmdRefreshRevDue, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(cmdDueSinceDays, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, toggleDueCompactView, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, lblDueSinceDays, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(cmdUserFilter)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, lblUserFilterCount, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(cmdRefreshRevDue)
+                    .add(cmdDueSinceDays)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, toggleDueCompactView, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(tabPaneDue, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 397, Short.MAX_VALUE)
                 .addContainerGap())
@@ -2122,12 +2122,12 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     private void toggleDueCompactViewMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_toggleDueCompactViewMouseClicked
         UserSettings settings = UserSettings.getInstance();
-        boolean currentCompact = "true".equals(settings.getSetting(
-            UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, "false"));
+        boolean currentCompact = settings.getSettingAsBoolean(
+            UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, false);
         boolean newCompact = !currentCompact;
 
-        settings.setSetting(UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW,
-            String.valueOf(newCompact));
+        settings.setSettingAsBoolean(UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW,
+            newCompact);
 
         // Icon wechseln
         if (newCompact) {

@@ -860,8 +860,8 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
         }
         
         // Check if compact view is enabled
-            final boolean compactView = "true".equals(UserSettings.getInstance().getSetting(
-                UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, "false"));
+            final boolean compactView = UserSettings.getInstance().getSettingAsBoolean(
+                UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, false);
         
         try {
             SwingUtilities.invokeLater(

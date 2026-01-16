@@ -79,13 +79,13 @@
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                      <Component id="lblDueSinceDays" alignment="0" max="-2" attributes="0"/>
-                      <Component id="jLabel6" max="-2" attributes="0"/>
+                      <Component id="lblDueSinceDays" alignment="1" max="32767" attributes="0"/>
+                      <Component id="jLabel6" alignment="1" max="32767" attributes="0"/>
                       <Component id="cmdUserFilter" alignment="0" max="-2" attributes="0"/>
-                      <Component id="lblUserFilterCount" alignment="0" max="-2" attributes="0"/>
+                      <Component id="lblUserFilterCount" alignment="1" max="32767" attributes="0"/>
                       <Component id="cmdRefreshRevDue" alignment="0" max="-2" attributes="0"/>
                       <Component id="cmdDueSinceDays" alignment="0" max="-2" attributes="0"/>
-                      <Component id="toggleDueCompactView" alignment="1" max="-2" attributes="0"/>
+                      <Component id="toggleDueCompactView" alignment="1" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="tabPaneDue" pref="397" max="32767" attributes="0"/>
