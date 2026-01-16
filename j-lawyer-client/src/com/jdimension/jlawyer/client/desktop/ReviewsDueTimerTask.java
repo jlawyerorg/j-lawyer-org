@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.desktop;
 import com.jdimension.jlawyer.client.editors.*;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
@@ -741,6 +742,8 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                 return;
             }
             
+            
+
             int sinceDays=UserSettings.getInstance().getSettingAsInt(UserSettings.CONF_DESKTOP_LASTFILTERDUESINCEDAYS, 1);
             if(sinceDays>0)
                 sinceDays=sinceDays*-1;
@@ -855,6 +858,11 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
         if (stopped) {
             return;
         }
+        
+        // Check if compact view is enabled
+            final boolean compactView = "true".equals(UserSettings.getInstance().getSetting(
+                UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, "false"));
+        
         try {
             SwingUtilities.invokeLater(
                     new Runnable() {
@@ -878,14 +886,18 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
 
                             // Add header when group changes
                             if (!currentGroupKey.equals(lastGroupKey)) {
+                                // In compact view, hide reason and tags
+                                String displayReason = compactView ? "" : entry.getArchiveFileReason();
+                                ArrayList<String> displayTags = compactView ? null : entry.getTags();
+
                                 // Add header to main panel
                                 CaseGroupHeaderPanel header = new CaseGroupHeaderPanel();
                                 header.setGroupInfo(entry.getArchiveFileId(),
                                                    entry.getArchiveFileNumber(),
                                                    entry.getArchiveFileName(),
-                                                   entry.getArchiveFileReason(),
+                                                   displayReason,
                                                    entry.getDue(),
-                                                   entry.getTags());
+                                                   displayTags);
                                 resultUI.add(header);
 
                                 // Also add header to event type tab
@@ -894,9 +906,9 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                                               entry.getArchiveFileId(),
                                               entry.getArchiveFileNumber(),
                                               entry.getArchiveFileName(),
-                                              entry.getArchiveFileReason(),
+                                              displayReason,
                                               entry.getDue(),
-                                              entry.getTags());
+                                              displayTags);
 
                                 lastGroupKey = currentGroupKey;
                             }

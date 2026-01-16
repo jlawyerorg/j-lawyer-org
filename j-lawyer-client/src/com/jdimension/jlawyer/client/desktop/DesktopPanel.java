@@ -790,7 +790,15 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.jScrollPane3.getViewport().setOpaque(false);
         this.jScrollPane1.getViewport().setOpaque(false);
         this.jScrollPane4.getViewport().setOpaque(false);
-        
+
+        // Set compact view icon based on saved setting
+        boolean compactView = "true".equals(UserSettings.getInstance().getSetting(
+            UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, "false"));
+        if (compactView) {
+            toggleDueCompactView.setIcon(new javax.swing.ImageIcon(getClass().getResource(
+                "/icons16/material/unfold_less_20dp_97BF0D_FILL0_wght400_GRAD0_opsz20.png")));
+        }
+
         Color splitPaneColor=new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 170);
         
         updateCurrentDay();
@@ -1379,6 +1387,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblUserFilterCount = new javax.swing.JLabel();
         lblDueSinceDays = new javax.swing.JLabel();
         cmdDueSinceDays = new javax.swing.JButton();
+        toggleDueCompactView = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         jLabel5 = new javax.swing.JLabel();
         jScrollPane3 = new javax.swing.JScrollPane();
@@ -1485,6 +1494,15 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         });
 
+        toggleDueCompactView.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/unfold_less_20dp_97BF0D_FILL0_wght400_GRAD0_opsz20.png"))); // NOI18N
+        toggleDueCompactView.setToolTipText("kompakte Darstellung ein/aus");
+        toggleDueCompactView.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        toggleDueCompactView.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                toggleDueCompactViewMouseClicked(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1497,15 +1515,16 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(cmdRefreshRevDue)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel6)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 192, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 154, Short.MAX_VALUE)
+                        .add(toggleDueCompactView)
+                        .add(18, 18, 18)
                         .add(cmdDueSinceDays)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblDueSinceDays)
                         .add(18, 18, 18)
                         .add(cmdUserFilter)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblUserFilterCount)
-                        .add(0, 0, 0)))
+                        .add(lblUserFilterCount)))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -1513,13 +1532,13 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                    .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(jLabel6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(lblDueSinceDays, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(cmdDueSinceDays, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .add(cmdUserFilter, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(lblUserFilterCount, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(cmdRefreshRevDue, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(lblDueSinceDays, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmdUserFilter, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(lblUserFilterCount, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmdRefreshRevDue, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmdDueSinceDays, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, toggleDueCompactView, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(tabPaneDue, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 397, Short.MAX_VALUE)
                 .addContainerGap())
@@ -2101,6 +2120,31 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         popLayoutMenu.show(cmdEditDesktop, 0, cmdEditDesktop.getHeight());
     }//GEN-LAST:event_cmdEditDesktopActionPerformed
 
+    private void toggleDueCompactViewMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_toggleDueCompactViewMouseClicked
+        UserSettings settings = UserSettings.getInstance();
+        boolean currentCompact = "true".equals(settings.getSetting(
+            UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, "false"));
+        boolean newCompact = !currentCompact;
+
+        settings.setSetting(UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW,
+            String.valueOf(newCompact));
+
+        // Icon wechseln
+        if (newCompact) {
+            toggleDueCompactView.setIcon(new javax.swing.ImageIcon(getClass().getResource(
+               "/icons16/material/unfold_less_20dp_97BF0D_FILL0_wght400_GRAD0_opsz20.png"))); 
+        } else {
+            toggleDueCompactView.setIcon(new javax.swing.ImageIcon(getClass().getResource(
+                "/icons16/material/unfold_less_20dp_FFFFFF_FILL0_wght400_GRAD0_opsz20.png")));
+                
+        }
+
+        // Ansicht aktualisieren
+        Timer timer = new Timer();
+        TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, true);
+        timer.schedule(revDueTask, 10);
+    }//GEN-LAST:event_toggleDueCompactViewMouseClicked
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup btnGrpDueInDays;
@@ -2163,6 +2207,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel systemInformationWidget;
     private javax.swing.JTabbedPane tabPaneDue;
     private javax.swing.JTabbedPane tabPaneTagged;
+    private javax.swing.JLabel toggleDueCompactView;
     // End of variables declaration//GEN-END:variables
 
     @Override

@@ -58,7 +58,9 @@
                           <Component id="cmdRefreshRevDue" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="192" max="32767" attributes="0"/>
+                          <EmptySpace pref="154" max="32767" attributes="0"/>
+                          <Component id="toggleDueCompactView" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace type="separate" max="-2" attributes="0"/>
                           <Component id="cmdDueSinceDays" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="lblDueSinceDays" min="-2" max="-2" attributes="0"/>
@@ -66,7 +68,6 @@
                           <Component id="cmdUserFilter" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="lblUserFilterCount" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
@@ -78,14 +79,13 @@
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="jLabel6" alignment="3" max="32767" attributes="0"/>
-                          <Component id="lblDueSinceDays" alignment="0" max="32767" attributes="0"/>
-                          <Component id="cmdDueSinceDays" alignment="0" max="32767" attributes="0"/>
-                      </Group>
-                      <Component id="cmdUserFilter" alignment="0" max="32767" attributes="0"/>
-                      <Component id="lblUserFilterCount" alignment="0" max="32767" attributes="0"/>
-                      <Component id="cmdRefreshRevDue" alignment="0" max="32767" attributes="0"/>
+                      <Component id="lblDueSinceDays" alignment="0" max="-2" attributes="0"/>
+                      <Component id="jLabel6" max="-2" attributes="0"/>
+                      <Component id="cmdUserFilter" alignment="0" max="-2" attributes="0"/>
+                      <Component id="lblUserFilterCount" alignment="0" max="-2" attributes="0"/>
+                      <Component id="cmdRefreshRevDue" alignment="0" max="-2" attributes="0"/>
+                      <Component id="cmdDueSinceDays" alignment="0" max="-2" attributes="0"/>
+                      <Component id="toggleDueCompactView" alignment="1" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="tabPaneDue" pref="397" max="32767" attributes="0"/>
@@ -237,6 +237,20 @@
           </Properties>
           <Events>
             <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdDueSinceDaysMousePressed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JLabel" name="toggleDueCompactView">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons16/material/unfold_less_20dp_97BF0D_FILL0_wght400_GRAD0_opsz20.png"/>
+            </Property>
+            <Property name="toolTipText" type="java.lang.String" value="kompakte Darstellung ein/aus"/>
+            <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
+              <Color id="Handcursor"/>
+            </Property>
+          </Properties>
+          <Events>
+            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="toggleDueCompactViewMouseClicked"/>
           </Events>
         </Component>
       </SubComponents>
