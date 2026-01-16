@@ -725,6 +725,11 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
         }
 
         ArrayList<ReviewDueEntry> entries = new ArrayList<>();
+
+        // Check if compact view is enabled - skip loading tags if true
+        final boolean compactView = UserSettings.getInstance().getSettingAsBoolean(
+            UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, false);
+
         try {
 
             EditorsRegistry reg = EditorsRegistry.getInstance();
@@ -793,14 +798,16 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                     if (ar.getCalendarSetup() != null) {
                         e.setCalendarSetupColor(ar.getCalendarSetup().getBackground());
                     }
-                    Collection<ArchiveFileTagsBean> tags = fileService.getTags(afb.getId());
-                    ArrayList<String> xTags = new ArrayList<>();
-                    if (tags != null) {
-                        for (ArchiveFileTagsBean aftb : tags) {
-                            xTags.add(aftb.getTagName());
+                    if (!compactView) {
+                        Collection<ArchiveFileTagsBean> tags = fileService.getTags(afb.getId());
+                        ArrayList<String> xTags = new ArrayList<>();
+                        if (tags != null) {
+                            for (ArchiveFileTagsBean aftb : tags) {
+                                xTags.add(aftb.getTagName());
+                            }
+                            Collections.sort(xTags);
+                            e.setTags(xTags);
                         }
-                        Collections.sort(xTags);
-                        e.setTags(xTags);
                     }
                     entries.add(e);
                 }
@@ -858,11 +865,7 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
         if (stopped) {
             return;
         }
-        
-        // Check if compact view is enabled
-            final boolean compactView = UserSettings.getInstance().getSettingAsBoolean(
-                UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, false);
-        
+
         try {
             SwingUtilities.invokeLater(
                     new Runnable() {
