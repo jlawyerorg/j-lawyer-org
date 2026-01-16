@@ -676,6 +676,7 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
+import org.jlawyer.themes.ServerColorTheme;
 import java.util.*;
 import javax.swing.*;
 import org.apache.log4j.Logger;
@@ -880,12 +881,61 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
 
                     int maxCount = Math.min(list.size(), 200);
                     String lastGroupKey = null;
+                    int lastEventType = -1;
 
                     for (int k = 0; k < maxCount; k++) {
                         if (stopped) return;
                         try {
                             ReviewDueEntry entry = list.get(k);
                             String currentGroupKey = buildGroupKey(entry);
+
+                            // Add section header when event type changes
+                            if (entry.getType() != lastEventType) {
+                                // Add spacer before section header (except for the first one)
+                                if (lastEventType != -1) {
+                                    JPanel spacer = new JPanel();
+                                    spacer.setOpaque(false);
+                                    spacer.setPreferredSize(new java.awt.Dimension(0, 12));
+                                    spacer.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 12));
+                                    resultUI.add(spacer);
+                                }
+
+                                JPanel sectionHeader = new JPanel() {
+                                    @Override
+                                    protected void paintComponent(java.awt.Graphics g) {
+                                        java.awt.Graphics2D g2d = (java.awt.Graphics2D) g.create();
+                                        g2d.setColor(new java.awt.Color(0, 0, 0, 180));
+                                        g2d.fillRect(0, 0, getWidth(), getHeight());
+                                        g2d.dispose();
+                                        super.paintComponent(g);
+                                    }
+                                };
+                                sectionHeader.setOpaque(false);
+                                sectionHeader.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 8, 4));
+
+                                // Determine icon and color based on event type
+                                String iconPath;
+                                java.awt.Color labelColor;
+                                if (entry.getType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
+                                    iconPath = "/icons16/material/notifications_important_20dp_white.png";
+                                    labelColor = ServerColorTheme.COLOR_LOGO_RED;
+                                } else if (entry.getType() == ArchiveFileConstants.REVIEWTYPE_EVENT) {
+                                    iconPath = "/icons16/material/notifications_calendar_20dp_white.png";
+                                    labelColor = ServerColorTheme.COLOR_LOGO_BLUE;
+                                } else {
+                                    iconPath = "/icons16/material/notifications_20dp_white.png";
+                                    labelColor = ServerColorTheme.COLOR_LOGO_GREEN;
+                                }
+
+                                JLabel sectionLabel = new JLabel(entry.getReview().getEventTypeName());
+                                sectionLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource(iconPath)));
+                                sectionLabel.setForeground(labelColor);
+                                sectionLabel.setFont(sectionLabel.getFont().deriveFont(java.awt.Font.BOLD, sectionLabel.getFont().getSize() + 2f));
+                                sectionHeader.add(sectionLabel);
+                                sectionHeader.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, sectionHeader.getPreferredSize().height));
+                                resultUI.add(sectionHeader);
+                                lastEventType = entry.getType();
+                            }
 
                             // Add header when group changes
                             if (!currentGroupKey.equals(lastGroupKey)) {

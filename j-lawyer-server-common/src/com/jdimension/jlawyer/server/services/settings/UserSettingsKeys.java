@@ -714,6 +714,7 @@ public class UserSettingsKeys {
     public static final String CONF_DESKTOP_SECTION_LASTCHANGED_VISIBLE = "client.desktop.section.lastchanged.visible";
     public static final String CONF_DESKTOP_SECTION_DUE_VISIBLE = "client.desktop.section.due.visible";
     public static final String CONF_DESKTOP_SECTION_TAGGED_VISIBLE = "client.desktop.section.tagged.visible";
+    public static final String CONF_DESKTOP_DUE_COMPACT_VIEW = "client.desktop.due.compactview";
 
     public static final String CONF_COLORS_RECENT = "client.colorchooser.recent";
 
