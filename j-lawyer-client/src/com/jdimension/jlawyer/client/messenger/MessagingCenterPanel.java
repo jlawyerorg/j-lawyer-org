@@ -1513,7 +1513,13 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
                 JScrollPane sp = (JScrollPane) this.tabsPane.getComponentAt(i);
                 this.updateMentionStatus(((JPanel) sp.getViewport().getComponent(0)), (InstantMessageMentionChangedEvent) e);
             }
-            
+
+            // Remove message from "an mich" tab after delay when marked as done
+            InstantMessageMentionChangedEvent mentionEvent = (InstantMessageMentionChangedEvent) e;
+            if (mentionEvent.isDone()) {
+                this.scheduleRemovalFromMessagesToMe(mentionEvent.getMessageId(), mentionEvent.getMentionId());
+            }
+
         } else if (e instanceof InstantMessageDeletedEvent) {
             this.deletedMessageIds.add(((InstantMessageDeletedEvent) e).getMessageId());
             
@@ -1547,6 +1553,55 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             if (messagesPanel.getComponent(i) instanceof MessagePanel) {
                 ((MessagePanel) messagesPanel.getComponent(i)).mentionUpdated(e.getMessageId(), e.getMentionId(), e.isDone());
             }
+        }
+    }
+
+    private void scheduleRemovalFromMessagesToMe(String messageId, String mentionId) {
+        // Check if the mention belongs to the current user
+        String currentUser = UserSettings.getInstance().getCurrentUser().getPrincipalId();
+
+        for (int i = 0; i < this.pnlMessagesToMe.getComponentCount(); i++) {
+            if (this.pnlMessagesToMe.getComponent(i) instanceof MessagePanel) {
+                MessagePanel mp = (MessagePanel) this.pnlMessagesToMe.getComponent(i);
+                InstantMessage msg = mp.getMessage();
+                if (msg != null && msg.getId() != null && msg.getId().equals(messageId)) {
+                    // Check if the mention is for the current user
+                    InstantMessageMention mention = msg.getMentionFor(currentUser);
+                    if (mention != null && mention.getId() != null && mention.getId().equals(mentionId)) {
+                        // Schedule removal with 3 second delay
+                        Timer removalTimer = new Timer();
+                        removalTimer.schedule(new TimerTask() {
+                            @Override
+                            public void run() {
+                                SwingUtilities.invokeLater(() -> {
+                                    removeMessageFromMessagesToMe(messageId);
+                                });
+                                removalTimer.cancel();
+                            }
+                        }, 3000);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    private void removeMessageFromMessagesToMe(String messageId) {
+        boolean removed = false;
+        for (int i = 0; i < this.pnlMessagesToMe.getComponentCount(); i++) {
+            if (this.pnlMessagesToMe.getComponent(i) instanceof MessagePanel) {
+                MessagePanel mp = (MessagePanel) this.pnlMessagesToMe.getComponent(i);
+                if (mp.getMessage() != null && mp.getMessage().getId() != null && mp.getMessage().getId().equals(messageId)) {
+                    this.pnlMessagesToMe.remove(i);
+                    removed = true;
+                    break;
+                }
+            }
+        }
+        if (removed) {
+            this.pnlMessagesToMe.revalidate();
+            this.pnlMessagesToMe.repaint();
+            this.jScrollPane2.revalidate();
         }
     }
 }
