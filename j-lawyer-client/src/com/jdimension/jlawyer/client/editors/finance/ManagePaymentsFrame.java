@@ -677,6 +677,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -900,7 +901,7 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
                                         p.getContact().getBankCode(),
                                         p.getContact().toDisplayName()
                                 ),
-                                p.getTotal(),
+                                p.getTotal().setScale(2, RoundingMode.HALF_UP),
                                 p.getPaymentNumber() + " " + p.getReason(),
                                 SEPATransaction.Currency.EUR
                         ));
