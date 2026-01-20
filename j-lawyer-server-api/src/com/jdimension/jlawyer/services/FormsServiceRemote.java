@@ -699,6 +699,8 @@ public interface FormsServiceRemote {
     ArchiveFileFormsBean addForm(String caseId, ArchiveFileFormsBean form) throws Exception;
 
     List<ArchiveFileFormsBean> getFormsForCase(String caseId);
+    
+    List<ArchiveFileFormsBean> getFormsByType(String typeId) throws Exception;
 
     void removeFormType(String formTypeId) throws Exception;
 
