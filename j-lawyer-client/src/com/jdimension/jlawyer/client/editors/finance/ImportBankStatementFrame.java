@@ -1286,8 +1286,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                     this.cmdNextActionPerformed(null);
                 }
 
-                this.cmdNext.setEnabled(transactions.size() > 1);
-                this.cmdPrevious.setEnabled(false);
+                this.updateNavigationButtons();
 
             } catch (Exception ex) {
                 log.error("Unable to load bank statements from CSV", ex);
@@ -1444,19 +1443,42 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
     private void cmdNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNextActionPerformed
         this.processActions();
+
+        // Bei letzter Transaktion: nur speichern, nicht navigieren
+        if (this.txIndex >= transactions.size() - 1) {
+            return;
+        }
+
         this.txIndex++;
-        this.cmdNext.setEnabled(transactions.size() - 1 > this.txIndex);
-        this.cmdPrevious.setEnabled(this.txIndex > 0);
+        this.updateNavigationButtons();
         this.loadTransaction(txIndex);
     }//GEN-LAST:event_cmdNextActionPerformed
 
     private void cmdPreviousActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPreviousActionPerformed
         this.processActions();
         this.txIndex--;
-        this.cmdNext.setEnabled(transactions.size() - 1 > this.txIndex);
-        this.cmdPrevious.setEnabled(this.txIndex > 0);
+        this.updateNavigationButtons();
         this.loadTransaction(txIndex);
     }//GEN-LAST:event_cmdPreviousActionPerformed
+
+    private void updateNavigationButtons() {
+        boolean isLastTransaction = (this.txIndex >= transactions.size() - 1);
+
+        // cmdNext: immer enabled, Icon wechseln bei letzter Transaktion
+        this.cmdNext.setEnabled(true);
+        if (isLastTransaction) {
+            this.cmdNext.setIcon(new javax.swing.ImageIcon(
+                getClass().getResource("/icons/agt_action_success.png")));
+            this.cmdNext.setToolTipText("Buchung ausführen");
+        } else {
+            this.cmdNext.setIcon(new javax.swing.ImageIcon(
+                getClass().getResource("/icons/1rightarrow.png")));
+            this.cmdNext.setToolTipText("zur nächsten Buchung wechseln");
+        }
+
+        // cmdPrevious: nur enabled wenn nicht erste Transaktion
+        this.cmdPrevious.setEnabled(this.txIndex > 0);
+    }
 
     private void initializeOptions() {
         try {
