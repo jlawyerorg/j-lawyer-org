@@ -6973,9 +6973,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public ArrayList<String> getAllArchiveFileNumbersUnrestricted(boolean activeCasesOnly) throws Exception {
         JDBCUtils utils = new JDBCUtils();
         ArrayList<String> list = new ArrayList<>();
-        String sql = "select fileNumber from cases";
+        String sql = "select fileNumber from cases ORDER BY LENGTH(fileNumber) DESC";
         if (activeCasesOnly) {
-            sql = "select fileNumber from cases where archived=0";
+            sql = "select fileNumber from cases where archived=0 ORDER BY LENGTH(fileNumber) DESC";
         }
         try (Connection con = utils.getConnection(); PreparedStatement st = con.prepareStatement(sql); ResultSet rs = st.executeQuery()) {
 
