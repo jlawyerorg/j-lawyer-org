@@ -1194,13 +1194,6 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
                         if (this.newEventListener.getCase() != null) {
                             this.newEventListener.getCase().setLastCalendarSetup(eventType, this.calendarSelectionButton.getSelectedSetup().getId());
                         }
-
-                        // clear selection
-//                        for (int i = 0; i < ((DefaultListModel) this.lstReviewReasons.getModel()).size(); i++) {
-//                            CalendarEntryTemplateListItem item = (CalendarEntryTemplateListItem) ((DefaultListModel) this.lstReviewReasons.getModel()).getElementAt(i);
-//                            item.setSelected(false);
-//                            this.lstReviewReasons.repaint(this.lstReviewReasons.getCellBounds(i, i));
-//                        }
                     }
                 } else {
                     // for a single selected template, the user may override its name

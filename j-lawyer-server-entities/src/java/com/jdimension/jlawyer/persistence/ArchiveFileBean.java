@@ -1214,10 +1214,15 @@ public class ArchiveFileBean implements Serializable {
         switch (eventType) {
             case EventTypes.EVENTTYPE_FOLLOWUP:
                 this.setLastCalendarSetupFollowups(setup);
+                break;
             case EventTypes.EVENTTYPE_RESPITE:
                 this.setLastCalendarSetupRespites(setup);
+                break;
             case EventTypes.EVENTTYPE_EVENT:
                 this.setLastCalendarSetupEvents(setup);
+                break;
+            default:
+                break;
         }
     }
 
