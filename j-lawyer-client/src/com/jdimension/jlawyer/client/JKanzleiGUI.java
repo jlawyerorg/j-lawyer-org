@@ -2852,7 +2852,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuCalendarSetupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCalendarSetupActionPerformed
 
-        if (checkSysAdmin()) {
+        if (checkAdmin()) {
             CalendarSetupDialog dlg = new CalendarSetupDialog(this, true);
             FrameUtils.centerDialog(dlg, this);
             dlg.setVisible(true);
