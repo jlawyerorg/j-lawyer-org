@@ -659,7 +659,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="messagesWidget" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="lblDay" pref="107" max="32767" attributes="0"/>
+                      <Component id="lblDay" pref="95" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="desktopWidgetPanel2" min="-2" max="-2" attributes="0"/>
                   </Group>
@@ -1033,7 +1033,7 @@
                   <Component id="lblUserName" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="lblUserIcon" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
+                  <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Component id="cmdEditDesktop" min="-2" max="-2" attributes="0"/>
               </Group>
           </Group>
