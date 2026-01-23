@@ -310,7 +310,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
         try {
             // Create WebView
             webView = new WebView();
-            webView.setZoom(1.0);
+            webView.setZoom(1.15);
             webEngine = webView.getEngine();
 
             // Enable JavaScript
