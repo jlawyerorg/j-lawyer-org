@@ -2072,7 +2072,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         ServerSettingsBean sb = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
         StirlingPdfAPI pdfApi = null;
         if (sb != null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
-            pdfApi = new StirlingPdfAPI(sb.getSettingValue(), 5000, 120000);
+            pdfApi = new StirlingPdfAPI(sb.getSettingValue(), 5000, 25000);
         }
 
         try {

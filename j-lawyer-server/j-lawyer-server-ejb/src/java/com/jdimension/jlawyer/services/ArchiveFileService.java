@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.events.CaseRemovedEvent;
 import com.jdimension.jlawyer.events.CaseTagChangedEvent;
 import com.jdimension.jlawyer.events.CaseUpdatedEvent;
 import com.jdimension.jlawyer.events.DocumentCreatedEvent;
+import com.jdimension.jlawyer.events.PdfPreviewGenerationRequest;
 import com.jdimension.jlawyer.events.DocumentRemovedEvent;
 import com.jdimension.jlawyer.events.DocumentTagChangedEvent;
 import com.jdimension.jlawyer.events.DocumentUpdatedEvent;
@@ -843,6 +844,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     Event<CaseTagChangedEvent> caseTagChangedEvent;
     @Inject
     Event<DocumentTagChangedEvent> docTagChangedEvent;
+    @Inject
+    Event<PdfPreviewGenerationRequest> pdfPreviewEvent;
 
     @Inject
     @JMSConnectionFactory("java:/JmsXA")
@@ -1831,20 +1834,16 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (!this.skipSearchIndex()) {
             DocumentPreview txtPreview = new DocumentPreview("");
             try {
+                // TEXT preview synchron (fuer Suchindex)
+                PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade, null);
+                txtPreview = pg.createPreview(archiveFileId, docId, fileName, DocumentPreview.TYPE_TEXT);
+
+                // PDF preview asynchron
                 if (DocumentPreview.supportsPdfPreview(fileName)) {
-
-                    ServerSettingsBean sb = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
-                    StirlingPdfAPI pdfApi = null;
-                    if (sb != null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
-                        pdfApi = new StirlingPdfAPI(sb.getSettingValue(), 5000, 120000);
-                    }
-
-                    PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade, pdfApi);
-                    txtPreview = pg.createPreview(archiveFileId, docId, fileName, DocumentPreview.TYPE_TEXT);
-                    DocumentPreview pdfPreview = pg.createPreview(aFile.getId(), docId, db.getName(), DocumentPreview.TYPE_PDF);
-                } else {
-                    PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade, null);
-                    txtPreview = pg.createPreview(archiveFileId, docId, fileName, DocumentPreview.TYPE_TEXT);
+                    PdfPreviewGenerationRequest pdfRequest = new PdfPreviewGenerationRequest(
+                            aFile.getId(), docId, db.getName(), false
+                    );
+                    this.pdfPreviewEvent.fireAsync(pdfRequest);
                 }
             } catch (Throwable t) {
                 log.error("Error creating document preview", t);
@@ -2115,20 +2114,16 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         DocumentPreview txtPreview = new DocumentPreview("");
         try {
+            // TEXT preview synchron (fuer Suchindex)
+            PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade, null);
+            txtPreview = pg.updatePreview(aId, db.getId(), db.getName(), DocumentPreview.TYPE_TEXT);
+
+            // PDF preview asynchron
             if (DocumentPreview.supportsPdfPreview(db.getName())) {
-
-                ServerSettingsBean sb = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
-                StirlingPdfAPI pdfApi = null;
-                if (sb != null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
-                    pdfApi = new StirlingPdfAPI(sb.getSettingValue(), 5000, 120000);
-                }
-
-                PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade, pdfApi);
-                txtPreview = pg.updatePreview(aId, db.getId(), db.getName(), DocumentPreview.TYPE_TEXT);
-                DocumentPreview pdfPreview = pg.updatePreview(aId, db.getId(), db.getName(), DocumentPreview.TYPE_PDF);
-            } else {
-                PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade, null);
-                txtPreview = pg.updatePreview(aId, db.getId(), db.getName(), DocumentPreview.TYPE_TEXT);
+                PdfPreviewGenerationRequest pdfRequest = new PdfPreviewGenerationRequest(
+                        aId, db.getId(), db.getName(), true
+                );
+                this.pdfPreviewEvent.fireAsync(pdfRequest);
             }
         } catch (Throwable t) {
             log.error("Error updating document preview", t);
@@ -3982,20 +3977,16 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         DocumentPreview txtPreview = new DocumentPreview("");
         try {
+            // TEXT preview synchron (fuer Suchindex)
+            PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade, null);
+            txtPreview = pg.createPreview(aFile.getId(), docId, db.getName(), DocumentPreview.TYPE_TEXT);
+
+            // PDF preview asynchron
             if (DocumentPreview.supportsPdfPreview(fileName)) {
-
-                ServerSettingsBean sb = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
-                StirlingPdfAPI pdfApi = null;
-                if (sb != null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
-                    pdfApi = new StirlingPdfAPI(sb.getSettingValue(), 5000, 120000);
-                }
-
-                PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade, pdfApi);
-                txtPreview = pg.createPreview(aFile.getId(), docId, db.getName(), DocumentPreview.TYPE_TEXT);
-                DocumentPreview pdfPreview = pg.createPreview(aFile.getId(), docId, db.getName(), DocumentPreview.TYPE_PDF);
-            } else {
-                PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade, null);
-                txtPreview = pg.createPreview(aFile.getId(), docId, db.getName(), DocumentPreview.TYPE_TEXT);
+                PdfPreviewGenerationRequest pdfRequest = new PdfPreviewGenerationRequest(
+                        aFile.getId(), docId, db.getName(), false
+                );
+                this.pdfPreviewEvent.fireAsync(pdfRequest);
             }
         } catch (Throwable t) {
             log.error("Error creating document preview", t);

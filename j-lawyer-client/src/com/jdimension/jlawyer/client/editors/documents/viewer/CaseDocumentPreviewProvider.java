@@ -688,7 +688,12 @@ public class CaseDocumentPreviewProvider implements DocumentPreviewProvider {
     @Override
     public DocumentPreview getPreview() throws Exception {
         try {
-            return this.afs.getDocumentPreview(this.docId, DocumentPreview.TYPE_PDF);
+            DocumentPreview pdfPreview = this.afs.getDocumentPreview(this.docId, DocumentPreview.TYPE_PDF);
+            // Fallback auf TEXT wenn PDF noch nicht generiert (async in Bearbeitung)
+            if (pdfPreview == null || pdfPreview.getBytes() == null || pdfPreview.getBytes().length == 0) {
+                return this.afs.getDocumentPreview(this.docId, DocumentPreview.TYPE_TEXT);
+            }
+            return pdfPreview;
         } catch (Exception ex) {
             log.warn(ex.getMessage());
             return this.afs.getDocumentPreview(this.docId, DocumentPreview.TYPE_TEXT);
