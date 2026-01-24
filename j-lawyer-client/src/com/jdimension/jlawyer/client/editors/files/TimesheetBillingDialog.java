@@ -1028,11 +1028,17 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
                         aggregatedPositions.put(identifier, ip);
                     }
                     InvoicePosition ip = aggregatedPositions.get(identifier);
-                    float totalMinutes = ((float) (p.getStopped().getTime() - p.getStarted().getTime())) / 1000f / 60f;
-                    double roundedMinutes = Math.ceil(totalMinutes / p.getTimesheet().getInterval()) * p.getTimesheet().getInterval();
-                    float roundedMinutesFloat = new Float(roundedMinutes);
-                    //float total=roundedMinutesFloat/60f*unitPrice.floatValue();
-                    ip.setUnits(ip.getUnits().add(BigDecimal.valueOf(roundedMinutesFloat / 60f)));
+                    // Use BigDecimal for precise calculation to avoid rounding issues
+                    long durationMs = p.getStopped().getTime() - p.getStarted().getTime();
+                    BigDecimal totalMinutes = BigDecimal.valueOf(durationMs)
+                            .divide(BigDecimal.valueOf(1000 * 60), 10, RoundingMode.HALF_UP);
+                    int interval = p.getTimesheet().getInterval();
+                    // Round up to next interval
+                    BigDecimal intervals = totalMinutes.divide(BigDecimal.valueOf(interval), 0, RoundingMode.CEILING);
+                    BigDecimal roundedMinutes = intervals.multiply(BigDecimal.valueOf(interval));
+                    // Convert minutes to hours
+                    BigDecimal hours = roundedMinutes.divide(BigDecimal.valueOf(60), 10, RoundingMode.HALF_UP);
+                    ip.setUnits(ip.getUnits().add(hours));
 
                     try {
                         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -1051,7 +1057,11 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
 
         EventBroker eb = EventBroker.getInstance();
         for (InvoicePosition p : aggregatedPositions.values()) {
-            p.setUnits(p.getUnits().setScale(2, RoundingMode.CEILING));
+            // Round units to 2 decimal places using HALF_UP for consistent rounding
+            p.setUnits(p.getUnits().setScale(2, RoundingMode.HALF_UP));
+            // Calculate total using BigDecimal arithmetic to avoid rounding issues
+            BigDecimal total = p.getUnits().multiply(p.getUnitPrice()).setScale(2, RoundingMode.HALF_UP);
+            p.setTotal(total);
             eb.publishEvent(new InvoicePositionAddedEvent(this.invoice.getId(), p));
         }
 

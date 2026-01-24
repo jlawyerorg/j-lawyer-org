@@ -799,6 +799,18 @@ public class EInvoiceUtils {
             if (!caseInvoice.isSmallBusiness()) {
                 taxRate = BigDecimal.ZERO;
             }
+
+            // Consistency check: verify that stored total matches calculated total
+            BigDecimal calculatedTotal = pos.getUnitPrice()
+                    .multiply(pos.getUnits())
+                    .setScale(2, RoundingMode.HALF_UP);
+            BigDecimal storedTotal = pos.getTotal().setScale(2, RoundingMode.HALF_UP);
+            if (calculatedTotal.compareTo(storedTotal) != 0) {
+                log.warn("Position '" + pos.getName() + "': stored total (" + storedTotal
+                        + ") differs from calculated total (" + calculatedTotal
+                        + "). Using calculated value for e-invoice.");
+            }
+
             i.addItem(new Item(new Product(pos.getName(), pos.getDescription(), "H87", taxRate), /*price*/ pos.getUnitPrice(), /*qty*/ pos.getUnits()));
         }
 

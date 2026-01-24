@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.persistence.InvoicePosition;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Container;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.List;
@@ -768,17 +769,18 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
             JOptionPane.showMessageDialog(this, "fehlerhafter Steuersatz: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
         //this.updateEntryTotal();
-        clone.setTotal(BigDecimal.valueOf(((Number)this.txtTotal.getValue()).doubleValue()));
-        
+        // Use setScale with HALF_UP rounding for consistent precision
+        clone.setTotal(BigDecimal.valueOf(((Number)this.txtTotal.getValue()).doubleValue()).setScale(2, RoundingMode.HALF_UP));
+
         if(this.txtUnitPrice.getValue()==null)
             clone.setUnitPrice(BigDecimal.ZERO);
         else
-            clone.setUnitPrice(BigDecimal.valueOf(((Number) this.txtUnitPrice.getValue()).doubleValue()));
-        
+            clone.setUnitPrice(BigDecimal.valueOf(((Number) this.txtUnitPrice.getValue()).doubleValue()).setScale(2, RoundingMode.HALF_UP));
+
         if(this.txtUnits.getValue()==null)
             clone.setUnits(BigDecimal.ONE);
         else
-            clone.setUnits(BigDecimal.valueOf(((Number) this.txtUnits.getValue()).doubleValue()));
+            clone.setUnits(BigDecimal.valueOf(((Number) this.txtUnits.getValue()).doubleValue()).setScale(2, RoundingMode.HALF_UP));
         return clone;
     }
 
@@ -1008,7 +1010,11 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
             if (unitPrice != null) {
                 this.txtUnitPrice.putClientProperty(FlatClientProperties.OUTLINE, null);
                 this.txtTotal.putClientProperty(FlatClientProperties.OUTLINE, null);
-                this.txtTotal.setValue(((Number) this.txtUnits.getValue()).doubleValue() * unitPrice.doubleValue());
+                // Use BigDecimal for precise calculation to avoid rounding issues
+                BigDecimal units = BigDecimal.valueOf(((Number) this.txtUnits.getValue()).doubleValue());
+                BigDecimal price = BigDecimal.valueOf(unitPrice.doubleValue());
+                BigDecimal total = units.multiply(price).setScale(2, RoundingMode.HALF_UP);
+                this.txtTotal.setValue(total.doubleValue());
             } else {
                 this.txtUnitPrice.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_ERROR);
                 this.txtTotal.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_ERROR);
