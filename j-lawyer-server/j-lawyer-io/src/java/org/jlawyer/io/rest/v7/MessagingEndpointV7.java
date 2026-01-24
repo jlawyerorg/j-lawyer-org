@@ -674,13 +674,16 @@ import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
+import java.util.stream.Collectors;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
@@ -820,6 +823,7 @@ public class MessagingEndpointV7 implements MessagingEndpointLocalV7 {
      * Returns a list of instant messages the requesting user has access to, created up to x seconds in the past
      *
      * @param seconds number of seconds - only messages created after this point in time in the past are retrieved
+     * @param includeArchived if true (default), messages from archived cases are included; if false, they are excluded
      * @response 401 User not authorized
      * @response 403 User not authenticated
      */
@@ -829,7 +833,8 @@ public class MessagingEndpointV7 implements MessagingEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/since/{seconds}")
     @RolesAllowed({"readArchiveFileRole"})
-    public Response getMessagesSince(@PathParam("seconds") int seconds) {
+    public Response getMessagesSince(@PathParam("seconds") int seconds,
+                                     @QueryParam("includeArchived") @DefaultValue("true") boolean includeArchived) {
         try {
 
             InitialContext ic = new InitialContext();
@@ -840,6 +845,12 @@ public class MessagingEndpointV7 implements MessagingEndpointLocalV7 {
             List<InstantMessage> messages = msgService.getMessagesSince(now.getTime(), Integer.MAX_VALUE);
             if(messages==null)
                 messages=new ArrayList<>();
+
+            if (!includeArchived) {
+                messages = messages.stream()
+                    .filter(m -> m.getCaseContext() == null || !m.getCaseContext().isArchived())
+                    .collect(Collectors.toList());
+            }
 
             ArrayList<RestfulInstantMessageV7> msgList = new ArrayList<>();
             for (InstantMessage im : messages) {

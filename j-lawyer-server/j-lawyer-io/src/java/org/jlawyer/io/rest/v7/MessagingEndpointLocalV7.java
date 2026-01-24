@@ -678,7 +678,7 @@ public interface MessagingEndpointLocalV7 {
     
     public Response deleteMessage(String id);
     
-    public Response getMessagesSince(int seconds);
+    public Response getMessagesSince(int seconds, boolean includeArchived);
     
     public Response markMentionDone(String id);
     
