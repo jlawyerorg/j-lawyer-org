@@ -975,6 +975,22 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     @Override
     @RolesAllowed({"writeAddressRole"})
     public void setTag(String addressId, AddressTagsBean tag, boolean active) throws Exception {
+        
+        if(tag==null) {
+            log.warn("Tried to set a null tag on a contact - skipping");
+            return;
+        }
+        
+        if(tag.getTagName()==null) {
+            log.warn("Tried to set a tag with name null on a contact - skipping");
+            return;
+        }
+        
+        if("".equals(tag.getTagName().trim())) {
+            log.warn("Tried to set a tag with an empty name on a contact - skipping");
+            return;
+        }
+        
         AddressBean ab = this.addressFacade.find(addressId);
         List check = this.addressTagsFacade.findByAddressKeyAndTagName(ab, tag.getTagName());
         StringGenerator idGen = new StringGenerator();

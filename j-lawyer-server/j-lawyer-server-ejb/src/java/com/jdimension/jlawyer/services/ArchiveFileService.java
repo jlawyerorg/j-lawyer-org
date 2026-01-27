@@ -2540,6 +2540,21 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public void setTag(String archiveFileId, ArchiveFileTagsBean tag, boolean active) throws Exception {
+        
+        if(tag==null) {
+            log.warn("Tried to set a null tag on a case - skipping");
+            return;
+        }
+        
+        if(tag.getTagName()==null) {
+            log.warn("Tried to set a tag with name null on a case - skipping");
+            return;
+        }
+        
+        if("".equals(tag.getTagName().trim())) {
+            log.warn("Tried to set a tag with an empty name on a case - skipping");
+            return;
+        }
 
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
@@ -2595,6 +2610,21 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     private void setDocumentTagImpl(List<String> documentIds, DocumentTagsBean tag, boolean active, boolean roleCheck) throws Exception {
         
         if (documentIds == null || documentIds.isEmpty()) {
+            return;
+        }
+        
+        if(tag==null) {
+            log.warn("Tried to set a null tag on a document - skipping");
+            return;
+        }
+        
+        if(tag.getTagName()==null) {
+            log.warn("Tried to set a tag with name null on a document - skipping");
+            return;
+        }
+        
+        if("".equals(tag.getTagName().trim())) {
+            log.warn("Tried to set a tag with an empty name on a document - skipping");
             return;
         }
 
