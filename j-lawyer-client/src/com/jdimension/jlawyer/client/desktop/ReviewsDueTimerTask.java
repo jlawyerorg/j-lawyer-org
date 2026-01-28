@@ -676,7 +676,6 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
-import org.jlawyer.themes.ServerColorTheme;
 import java.util.*;
 import javax.swing.*;
 import org.apache.log4j.Logger;
@@ -692,6 +691,7 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
     private JPanel resultUI;
     private boolean ignoreCurrentEditor = false;
     private JTabbedPane eventPane = null;
+    private java.util.function.Consumer<ArrayList<ReviewDueEntry>> entriesCallback = null;
 
     private volatile boolean stopped = false;
 
@@ -717,6 +717,22 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
 
     public ReviewsDueTimerTask(Component owner, JTabbedPane eventPane, JPanel resultPanel) {
         this(owner, eventPane, resultPanel, false);
+    }
+
+    /**
+     * Creates a new instance of ReviewsDueTimerTask with a callback for caching entries.
+     *
+     * @param owner the owner component
+     * @param eventPane the tabbed pane for event types
+     * @param resultPanel the panel to render entries into
+     * @param ignoreCurrentEditor whether to ignore if the current editor is active
+     * @param entriesCallback callback to receive loaded entries for caching (may be null)
+     */
+    public ReviewsDueTimerTask(Component owner, JTabbedPane eventPane, JPanel resultPanel,
+                               boolean ignoreCurrentEditor,
+                               java.util.function.Consumer<ArrayList<ReviewDueEntry>> entriesCallback) {
+        this(owner, eventPane, resultPanel, ignoreCurrentEditor);
+        this.entriesCallback = entriesCallback;
     }
 
     @Override
@@ -863,186 +879,18 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
         }
         final ArrayList<ReviewDueEntry> list = entries;
 
-        if (stopped) {
-            return;
-        }
-
-        try {
-            SwingUtilities.invokeLater(
-                    new Runnable() {
-                @Override
-                public void run() {
-                    resultUI.removeAll();
-
-                    // remove all tabs except for the first one
-                    for (int i = eventPane.getTabCount() - 1; i > 0; i--) {
-                        eventPane.removeTabAt(i);
-                    }
-
-                    int maxCount = Math.min(list.size(), 200);
-                    String lastGroupKey = null;
-                    int lastEventType = -1;
-
-                    for (int k = 0; k < maxCount; k++) {
-                        if (stopped) return;
-                        try {
-                            ReviewDueEntry entry = list.get(k);
-                            String currentGroupKey = buildGroupKey(entry);
-
-                            // Add section header when event type changes
-                            if (entry.getType() != lastEventType) {
-                                // Add spacer before section header (except for the first one)
-                                if (lastEventType != -1) {
-                                    JPanel spacer = new JPanel();
-                                    spacer.setOpaque(false);
-                                    spacer.setPreferredSize(new java.awt.Dimension(0, 12));
-                                    spacer.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 12));
-                                    resultUI.add(spacer);
-                                }
-
-                                JPanel sectionHeader = new JPanel() {
-                                    @Override
-                                    protected void paintComponent(java.awt.Graphics g) {
-                                        java.awt.Graphics2D g2d = (java.awt.Graphics2D) g.create();
-                                        g2d.setColor(new java.awt.Color(0, 0, 0, 180));
-                                        g2d.fillRect(0, 0, getWidth(), getHeight());
-                                        g2d.dispose();
-                                        super.paintComponent(g);
-                                    }
-                                };
-                                sectionHeader.setOpaque(false);
-                                sectionHeader.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 8, 4));
-
-                                // Determine icon and color based on event type
-                                String iconPath;
-                                java.awt.Color labelColor;
-                                if (entry.getType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
-                                    iconPath = "/icons16/material/notifications_important_20dp_white.png";
-                                    labelColor = ServerColorTheme.COLOR_LOGO_RED;
-                                } else if (entry.getType() == ArchiveFileConstants.REVIEWTYPE_EVENT) {
-                                    iconPath = "/icons16/material/notifications_calendar_20dp_white.png";
-                                    labelColor = ServerColorTheme.COLOR_LOGO_BLUE;
-                                } else {
-                                    iconPath = "/icons16/material/notifications_20dp_white.png";
-                                    labelColor = ServerColorTheme.COLOR_LOGO_GREEN;
-                                }
-
-                                sectionHeader.setBorder(javax.swing.BorderFactory.createLineBorder(labelColor, 3));
-
-                                JLabel sectionLabel = new JLabel(entry.getReview().getEventTypeName());
-                                javax.swing.ImageIcon originalIcon = new javax.swing.ImageIcon(getClass().getResource(iconPath));
-                                sectionLabel.setIcon(tintIcon(originalIcon, labelColor));
-                                sectionLabel.setForeground(labelColor);
-                                sectionLabel.setFont(sectionLabel.getFont().deriveFont(java.awt.Font.BOLD, sectionLabel.getFont().getSize() + 2f));
-                                sectionHeader.add(sectionLabel);
-                                sectionHeader.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, sectionHeader.getPreferredSize().height));
-                                resultUI.add(sectionHeader);
-                                lastEventType = entry.getType();
-                            }
-
-                            // Add header when group changes
-                            if (!currentGroupKey.equals(lastGroupKey)) {
-                                // In compact view, hide reason and tags
-                                String displayReason = compactView ? "" : entry.getArchiveFileReason();
-                                ArrayList<String> displayTags = compactView ? null : entry.getTags();
-
-                                // Add header to main panel
-                                CaseGroupHeaderPanel header = new CaseGroupHeaderPanel();
-                                header.setGroupInfo(entry.getArchiveFileId(),
-                                                   entry.getArchiveFileNumber(),
-                                                   entry.getArchiveFileName(),
-                                                   displayReason,
-                                                   entry.getDue(),
-                                                   displayTags);
-                                resultUI.add(header);
-
-                                // Also add header to event type tab
-                                addEventTypeTab(entry.getReview().getEventTypeName());
-                                addHeaderToTab(entry.getReview().getEventTypeName(),
-                                              entry.getArchiveFileId(),
-                                              entry.getArchiveFileNumber(),
-                                              entry.getArchiveFileName(),
-                                              displayReason,
-                                              entry.getDue(),
-                                              displayTags);
-
-                                lastGroupKey = currentGroupKey;
-                            }
-
-                            ReviewDueEntryPanelTransparent ep = new ReviewDueEntryPanelTransparent();
-
-                            ep.setEntry(entry);
-                            resultUI.add(ep);
-                            addEventTypeTab(entry.getReview().getEventTypeName());
-
-                            // need new identical child, one child component cannot have two parents
-                            ReviewDueEntryPanelTransparent ep2 = new ReviewDueEntryPanelTransparent();
-                            ep2.setEntry(entry);
-                            addEntryToTab(entry.getReview().getEventTypeName(), ep2);
-                        } catch (Throwable t) {
-                            log.error("Error adding review entry to desktop", t);
-                        }
-
-                    }
+        // Delegate rendering to DesktopPanel to avoid code duplication
+        // Both caching and rendering must happen on the EDT for thread safety
+        if (owner instanceof DesktopPanel) {
+            final DesktopPanel desktopPanel = (DesktopPanel) owner;
+            final ArrayList<ReviewDueEntry> entriesCopy = new ArrayList<>(entries);
+            SwingUtilities.invokeLater(() -> {
+                // Notify callback with entries for caching (client-side search)
+                if (entriesCallback != null) {
+                    entriesCallback.accept(entriesCopy);
                 }
-
-                private void addEventTypeTab(String eventTypeName) {
-                    boolean hasTab = false;
-                    for (int i = 0; i < eventPane.getTabCount(); i++) {
-                        if (eventPane.getTitleAt(i).equals(eventTypeName)) {
-                            hasTab = true;
-                            break;
-                        }
-                    }
-                    if (!hasTab) {
-                        JScrollPane scroll = new JScrollPane();
-                        scroll.getVerticalScrollBar().setUnitIncrement(16);
-
-                        JPanel tPanel = new JPanel();
-                        BoxLayout layout = new BoxLayout(tPanel, BoxLayout.Y_AXIS);
-                        tPanel.setLayout(layout);
-                        tPanel.setOpaque(false);
-
-                        scroll.getViewport().add(tPanel);
-                        scroll.getViewport().setOpaque(false);
-                        scroll.setBorder(null);
-                        scroll.setOpaque(false);
-                        eventPane.addTab(eventTypeName, scroll);
-                    }
-
-                }
-
-                private void addEntryToTab(String eventTypeName, ReviewDueEntryPanelTransparent ep) {
-
-                    for (int i = 0; i < eventPane.getTabCount(); i++) {
-                        if (stopped) return;
-                        if (eventPane.getTitleAt(i).equals(eventTypeName)) {
-                            JScrollPane sp = (JScrollPane) eventPane.getComponentAt(i);
-                            JViewport p = (JViewport) sp.getComponent(0);
-                            ((JPanel) p.getComponent(0)).add(ep);
-                            break;
-                        }
-                    }
-                }
-
-                private void addHeaderToTab(String eventTypeName, String fileId, String fileNumber, String fileName, String fileReason, java.util.Date due, java.util.ArrayList<String> tags) {
-                    for (int i = 0; i < eventPane.getTabCount(); i++) {
-                        if (stopped) return;
-                        if (eventPane.getTitleAt(i).equals(eventTypeName)) {
-                            JScrollPane sp = (JScrollPane) eventPane.getComponentAt(i);
-                            JViewport p = (JViewport) sp.getComponent(0);
-                            CaseGroupHeaderPanel header = new CaseGroupHeaderPanel();
-                            header.setGroupInfo(fileId, fileNumber, fileName, fileReason, due, tags);
-                            ((JPanel) p.getComponent(0)).add(header);
-                            break;
-                        }
-                    }
-                }
-
-            }
-            );
-        } catch (Throwable t) {
-            log.error(t);
+                desktopPanel.renderDueEntries(list, compactView);
+            });
         }
 
     }
@@ -1062,50 +910,6 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
         int yearCmp = Integer.compare(c1.get(Calendar.YEAR), c2.get(Calendar.YEAR));
         if (yearCmp != 0) return yearCmp;
         return Integer.compare(c1.get(Calendar.DAY_OF_YEAR), c2.get(Calendar.DAY_OF_YEAR));
-    }
-
-    /**
-     * Builds a group key for grouping entries by event type, case ID, and day.
-     *
-     * @param entry the review entry
-     * @return a string key representing the group
-     */
-    private static String buildGroupKey(ReviewDueEntry entry) {
-        Calendar cal = Calendar.getInstance();
-        if (entry.getDue() != null) {
-            cal.setTime(entry.getDue());
-        }
-        String archiveId = entry.getArchiveFileId() != null ? entry.getArchiveFileId() : "";
-        return entry.getType() + "|" + archiveId + "|" +
-               cal.get(Calendar.YEAR) + "|" + cal.get(Calendar.DAY_OF_YEAR);
-    }
-
-    /**
-     * Tints a white icon with the specified color.
-     *
-     * @param icon the original icon (should be white)
-     * @param color the target color
-     * @return a new ImageIcon with the tinted color
-     */
-    private static javax.swing.ImageIcon tintIcon(javax.swing.ImageIcon icon, java.awt.Color color) {
-        java.awt.Image img = icon.getImage();
-        java.awt.image.BufferedImage bi = new java.awt.image.BufferedImage(
-            icon.getIconWidth(), icon.getIconHeight(), java.awt.image.BufferedImage.TYPE_INT_ARGB);
-        java.awt.Graphics2D g2d = bi.createGraphics();
-        g2d.drawImage(img, 0, 0, null);
-        g2d.dispose();
-
-        for (int y = 0; y < bi.getHeight(); y++) {
-            for (int x = 0; x < bi.getWidth(); x++) {
-                int argb = bi.getRGB(x, y);
-                int alpha = (argb >> 24) & 0xff;
-                if (alpha > 0) {
-                    int newArgb = (alpha << 24) | (color.getRed() << 16) | (color.getGreen() << 8) | color.getBlue();
-                    bi.setRGB(x, y, newArgb);
-                }
-            }
-        }
-        return new javax.swing.ImageIcon(bi);
     }
 
 }

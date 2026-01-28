@@ -755,6 +755,9 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private UpdateDocumentTagsTask tagsTask3=null;
     private transient Timer timer11=null;
 
+    // Cache for due entries - used for client-side search filtering
+    private ArrayList<ReviewDueEntry> cachedDueEntries = new ArrayList<>();
+
     /**
      * Creates new form DesktopPanel
      */
@@ -816,6 +819,24 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         b.subscribeConsumer(this, Event.TYPE_REVIEWUPDATED);
         b.subscribeConsumer(this, Event.TYPE_CASESCHANGED);
 
+        // Configure search field with FlatLaf features
+        this.txtSearchDue.putClientProperty("JTextField.showClearButton", true);
+        this.txtSearchDue.putClientProperty("JTextField.placeholderText", "Suche...");
+        this.txtSearchDue.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                filterDueEntries(txtSearchDue.getText());
+            }
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                filterDueEntries(txtSearchDue.getText());
+            }
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                filterDueEntries(txtSearchDue.getText());
+            }
+        });
+
         this.buildUsersPopupCalendarEntries();
         this.buildDueSinceDaysPopup();
         this.buildUsersPopupTagged();
@@ -836,8 +857,14 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         timer3.schedule(autoUpdateTask, 20000, 24l * 60l * 60l * 1000l);
 
         this.reviewsTimer = new Timer();
-        final ReviewsDueTimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue);
+        final ReviewsDueTimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, false,
+            (entries) -> {
+                this.cachedDueEntries = entries;
+            });
         reviewsTimer.schedule(revDueTask, 1000, 15l*61000l);
+        
+        this.txtSearchDue.putClientProperty("JTextField.showClearButton", true);
+        this.txtSearchDue.putClientProperty("JTextField.placeholderText", "Suche: ...");
 
         BoxLayout boxLayout2=new BoxLayout(this.pnlTagged, BoxLayout.Y_AXIS);
         this.pnlTagged.setLayout(boxLayout2);
@@ -1386,6 +1413,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblDueSinceDays = new javax.swing.JLabel();
         cmdDueSinceDays = new javax.swing.JButton();
         toggleDueCompactView = new javax.swing.JLabel();
+        txtSearchDue = new javax.swing.JTextField();
         jPanel1 = new javax.swing.JPanel();
         jLabel5 = new javax.swing.JLabel();
         jScrollPane3 = new javax.swing.JScrollPane();
@@ -1513,7 +1541,9 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(cmdRefreshRevDue)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel6)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 154, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(txtSearchDue, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 130, Short.MAX_VALUE)
+                        .add(18, 18, 18)
                         .add(toggleDueCompactView)
                         .add(18, 18, 18)
                         .add(cmdDueSinceDays)
@@ -1531,14 +1561,16 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .addContainerGap()
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, lblDueSinceDays, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(jLabel6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(txtSearchDue, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(cmdUserFilter)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, lblUserFilterCount, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(cmdRefreshRevDue)
                     .add(cmdDueSinceDays)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, toggleDueCompactView, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(tabPaneDue, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 397, Short.MAX_VALUE)
+                .add(tabPaneDue, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 393, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1752,7 +1784,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(org.jdesktop.layout.GroupLayout.LEADING, cmdUserFilterTagged, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, lblUserFilterCountTagged, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(tabPaneTagged, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 445, Short.MAX_VALUE)
+                .add(tabPaneTagged)
                 .addContainerGap())
         );
 
@@ -2066,7 +2098,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private void cmdRefreshRevDueActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshRevDueActionPerformed
         Timer timer = new Timer();
 
-        TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, true);
+        TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, true,
+            (entries) -> {
+                this.cachedDueEntries = entries;
+                javax.swing.SwingUtilities.invokeLater(() -> this.txtSearchDue.setText(""));
+            });
         timer.schedule(revDueTask, 10);
     }//GEN-LAST:event_cmdRefreshRevDueActionPerformed
 
@@ -2139,7 +2175,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         // Ansicht aktualisieren
         Timer timer = new Timer();
-        TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, true);
+        TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, true,
+            (entries) -> {
+                this.cachedDueEntries = entries;
+                javax.swing.SwingUtilities.invokeLater(() -> this.txtSearchDue.setText(""));
+            });
         timer.schedule(revDueTask, 10);
     }//GEN-LAST:event_toggleDueCompactViewMouseClicked
 
@@ -2206,7 +2246,298 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JTabbedPane tabPaneDue;
     private javax.swing.JTabbedPane tabPaneTagged;
     private javax.swing.JLabel toggleDueCompactView;
+    private javax.swing.JTextField txtSearchDue;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * Filters and displays due entries based on search text.
+     * Searches: case number, case name, case reason, calendar event summary, responsible person.
+     * Does NOT search tags.
+     *
+     * @param searchText the search text (minimum 3 characters to trigger filtering)
+     */
+    private void filterDueEntries(String searchText) {
+        if (cachedDueEntries == null || cachedDueEntries.isEmpty()) {
+            return;
+        }
+
+        final String filterLower = searchText == null ? "" : searchText.toLowerCase().trim();
+        final boolean compactView = UserSettings.getInstance().getSettingAsBoolean(
+            UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, true);
+
+        // Determine which entries to display
+        final ArrayList<ReviewDueEntry> entriesToDisplay;
+        if (filterLower.length() <= 1) {
+            // Show all entries when search text is cleared or too short
+            entriesToDisplay = new ArrayList<>(cachedDueEntries);
+        } else {
+            // Filter entries based on search criteria
+            entriesToDisplay = new ArrayList<>();
+            for (ReviewDueEntry entry : cachedDueEntries) {
+                if (matchesSearch(entry, filterLower)) {
+                    entriesToDisplay.add(entry);
+                }
+            }
+        }
+
+        // Re-render entries on EDT
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            renderDueEntries(entriesToDisplay, compactView);
+        });
+    }
+
+    /**
+     * Checks if an entry matches the search criteria.
+     * Searches: archiveFileNumber, archiveFileName, archiveFileReason, reviewReason, responsible.
+     * Does NOT search tags.
+     */
+    private boolean matchesSearch(ReviewDueEntry entry, String searchLower) {
+        // Search in case number
+        if (entry.getArchiveFileNumber() != null &&
+            entry.getArchiveFileNumber().toLowerCase().contains(searchLower)) {
+            return true;
+        }
+        // Search in case name
+        if (entry.getArchiveFileName() != null &&
+            entry.getArchiveFileName().toLowerCase().contains(searchLower)) {
+            return true;
+        }
+        // Search in case reason
+        if (entry.getArchiveFileReason() != null &&
+            entry.getArchiveFileReason().toLowerCase().contains(searchLower)) {
+            return true;
+        }
+        // Search in calendar event summary
+        if (entry.getReviewReason() != null &&
+            entry.getReviewReason().toLowerCase().contains(searchLower)) {
+            return true;
+        }
+        // Search in responsible person
+        if (entry.getResponsible() != null &&
+            entry.getResponsible().toLowerCase().contains(searchLower)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Renders the given entries to the Due panel and tabs.
+     * This method must be called on the EDT.
+     * Package-visible so ReviewsDueTimerTask can call it.
+     */
+    void renderDueEntries(ArrayList<ReviewDueEntry> entries, boolean compactView) {
+        pnlRevDue.removeAll();
+
+        // Remove all tabs except for the first one ("alle")
+        for (int i = tabPaneDue.getTabCount() - 1; i > 0; i--) {
+            tabPaneDue.removeTabAt(i);
+        }
+
+        int maxCount = Math.min(entries.size(), 200);
+        String lastGroupKey = null;
+        int lastEventType = -1;
+
+        for (int k = 0; k < maxCount; k++) {
+            ReviewDueEntry entry = entries.get(k);
+            String currentGroupKey = buildDueGroupKey(entry);
+
+            // Add section header when event type changes
+            if (entry.getType() != lastEventType) {
+                if (lastEventType != -1) {
+                    addDueSpacer(pnlRevDue);
+                }
+                addDueSectionHeader(pnlRevDue, entry);
+                lastEventType = entry.getType();
+            }
+
+            // Add header when group changes
+            if (!currentGroupKey.equals(lastGroupKey)) {
+                String displayReason = compactView ? "" : entry.getArchiveFileReason();
+                ArrayList<String> displayTags = compactView ? null : entry.getTags();
+
+                // Add header to main panel
+                CaseGroupHeaderPanel header = new CaseGroupHeaderPanel();
+                header.setGroupInfo(entry.getArchiveFileId(),
+                                   entry.getArchiveFileNumber(),
+                                   entry.getArchiveFileName(),
+                                   displayReason,
+                                   entry.getDue(),
+                                   displayTags);
+                pnlRevDue.add(header);
+
+                // Also add header to event type tab
+                addDueEventTypeTab(entry.getReview().getEventTypeName());
+                addDueHeaderToTab(entry.getReview().getEventTypeName(), entry, displayReason, displayTags);
+
+                lastGroupKey = currentGroupKey;
+            }
+
+            // Add entry panel
+            ReviewDueEntryPanelTransparent ep = new ReviewDueEntryPanelTransparent();
+            ep.setEntry(entry);
+            pnlRevDue.add(ep);
+
+            addDueEventTypeTab(entry.getReview().getEventTypeName());
+            ReviewDueEntryPanelTransparent ep2 = new ReviewDueEntryPanelTransparent();
+            ep2.setEntry(entry);
+            addDueEntryToTab(entry.getReview().getEventTypeName(), ep2);
+        }
+
+        pnlRevDue.revalidate();
+        pnlRevDue.repaint();
+        tabPaneDue.revalidate();
+        tabPaneDue.repaint();
+    }
+
+    /**
+     * Builds a group key for grouping entries by event type, case ID, and day.
+     */
+    private String buildDueGroupKey(ReviewDueEntry entry) {
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        if (entry.getDue() != null) {
+            cal.setTime(entry.getDue());
+        }
+        String archiveId = entry.getArchiveFileId() != null ? entry.getArchiveFileId() : "";
+        return entry.getType() + "|" + archiveId + "|" +
+               cal.get(java.util.Calendar.YEAR) + "|" + cal.get(java.util.Calendar.DAY_OF_YEAR);
+    }
+
+    /**
+     * Adds a spacer panel to the due entries panel.
+     */
+    private void addDueSpacer(javax.swing.JPanel panel) {
+        javax.swing.JPanel spacer = new javax.swing.JPanel();
+        spacer.setOpaque(false);
+        spacer.setPreferredSize(new java.awt.Dimension(0, 12));
+        spacer.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 12));
+        panel.add(spacer);
+    }
+
+    /**
+     * Adds a section header for a due entry type.
+     */
+    private void addDueSectionHeader(javax.swing.JPanel panel, ReviewDueEntry entry) {
+        javax.swing.JPanel sectionHeader = new javax.swing.JPanel() {
+            @Override
+            protected void paintComponent(java.awt.Graphics g) {
+                java.awt.Graphics2D g2d = (java.awt.Graphics2D) g.create();
+                g2d.setColor(new java.awt.Color(0, 0, 0, 180));
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+                g2d.dispose();
+                super.paintComponent(g);
+            }
+        };
+        sectionHeader.setOpaque(false);
+        sectionHeader.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 8, 4));
+
+        // Determine icon and color based on event type
+        String iconPath;
+        java.awt.Color labelColor;
+        if (entry.getType() == com.jdimension.jlawyer.server.constants.ArchiveFileConstants.REVIEWTYPE_RESPITE) {
+            iconPath = "/icons16/material/notifications_important_20dp_white.png";
+            labelColor = org.jlawyer.themes.ServerColorTheme.COLOR_LOGO_RED;
+        } else if (entry.getType() == com.jdimension.jlawyer.server.constants.ArchiveFileConstants.REVIEWTYPE_EVENT) {
+            iconPath = "/icons16/material/notifications_calendar_20dp_white.png";
+            labelColor = org.jlawyer.themes.ServerColorTheme.COLOR_LOGO_BLUE;
+        } else {
+            iconPath = "/icons16/material/notifications_20dp_white.png";
+            labelColor = org.jlawyer.themes.ServerColorTheme.COLOR_LOGO_GREEN;
+        }
+
+        sectionHeader.setBorder(javax.swing.BorderFactory.createLineBorder(labelColor, 3));
+
+        javax.swing.JLabel sectionLabel = new javax.swing.JLabel(entry.getReview().getEventTypeName());
+        javax.swing.ImageIcon originalIcon = new javax.swing.ImageIcon(getClass().getResource(iconPath));
+        sectionLabel.setIcon(tintDueIcon(originalIcon, labelColor));
+        sectionLabel.setForeground(labelColor);
+        sectionLabel.setFont(sectionLabel.getFont().deriveFont(java.awt.Font.BOLD, sectionLabel.getFont().getSize() + 2f));
+        sectionHeader.add(sectionLabel);
+        sectionHeader.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, sectionHeader.getPreferredSize().height));
+        panel.add(sectionHeader);
+    }
+
+    /**
+     * Tints a white icon with the specified color.
+     */
+    private javax.swing.ImageIcon tintDueIcon(javax.swing.ImageIcon icon, java.awt.Color color) {
+        java.awt.Image img = icon.getImage();
+        java.awt.image.BufferedImage bi = new java.awt.image.BufferedImage(
+            icon.getIconWidth(), icon.getIconHeight(), java.awt.image.BufferedImage.TYPE_INT_ARGB);
+        java.awt.Graphics2D g2d = bi.createGraphics();
+        g2d.drawImage(img, 0, 0, null);
+        g2d.dispose();
+
+        for (int y = 0; y < bi.getHeight(); y++) {
+            for (int x = 0; x < bi.getWidth(); x++) {
+                int argb = bi.getRGB(x, y);
+                int alpha = (argb >> 24) & 0xff;
+                if (alpha > 0) {
+                    int newArgb = (alpha << 24) | (color.getRed() << 16) | (color.getGreen() << 8) | color.getBlue();
+                    bi.setRGB(x, y, newArgb);
+                }
+            }
+        }
+        return new javax.swing.ImageIcon(bi);
+    }
+
+    /**
+     * Adds an event type tab if it doesn't exist.
+     */
+    private void addDueEventTypeTab(String eventTypeName) {
+        boolean hasTab = false;
+        for (int i = 0; i < tabPaneDue.getTabCount(); i++) {
+            if (tabPaneDue.getTitleAt(i).equals(eventTypeName)) {
+                hasTab = true;
+                break;
+            }
+        }
+        if (!hasTab) {
+            javax.swing.JScrollPane scroll = new javax.swing.JScrollPane();
+            scroll.getVerticalScrollBar().setUnitIncrement(16);
+
+            javax.swing.JPanel tPanel = new javax.swing.JPanel();
+            BoxLayout layout = new BoxLayout(tPanel, BoxLayout.Y_AXIS);
+            tPanel.setLayout(layout);
+            tPanel.setOpaque(false);
+
+            scroll.getViewport().add(tPanel);
+            scroll.getViewport().setOpaque(false);
+            scroll.setBorder(null);
+            scroll.setOpaque(false);
+            tabPaneDue.addTab(eventTypeName, scroll);
+        }
+    }
+
+    /**
+     * Adds a case header to the specified event type tab.
+     */
+    private void addDueHeaderToTab(String eventTypeName, ReviewDueEntry entry, String displayReason, ArrayList<String> displayTags) {
+        for (int i = 0; i < tabPaneDue.getTabCount(); i++) {
+            if (tabPaneDue.getTitleAt(i).equals(eventTypeName)) {
+                javax.swing.JScrollPane sp = (javax.swing.JScrollPane) tabPaneDue.getComponentAt(i);
+                javax.swing.JViewport p = (javax.swing.JViewport) sp.getComponent(0);
+                CaseGroupHeaderPanel header = new CaseGroupHeaderPanel();
+                header.setGroupInfo(entry.getArchiveFileId(), entry.getArchiveFileNumber(),
+                                   entry.getArchiveFileName(), displayReason, entry.getDue(), displayTags);
+                ((javax.swing.JPanel) p.getComponent(0)).add(header);
+                break;
+            }
+        }
+    }
+
+    /**
+     * Adds an entry panel to the specified event type tab.
+     */
+    private void addDueEntryToTab(String eventTypeName, ReviewDueEntryPanelTransparent ep) {
+        for (int i = 0; i < tabPaneDue.getTabCount(); i++) {
+            if (tabPaneDue.getTitleAt(i).equals(eventTypeName)) {
+                javax.swing.JScrollPane sp = (javax.swing.JScrollPane) tabPaneDue.getComponentAt(i);
+                javax.swing.JViewport p = (javax.swing.JViewport) sp.getComponent(0);
+                ((javax.swing.JPanel) p.getComponent(0)).add(ep);
+                break;
+            }
+        }
+    }
 
     @Override
     public void onEvent(Event e) {
