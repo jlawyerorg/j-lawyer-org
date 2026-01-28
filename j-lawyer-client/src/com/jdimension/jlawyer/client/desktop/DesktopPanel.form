@@ -86,11 +86,11 @@
                           <Component id="jLabel6" alignment="3" max="32767" attributes="0"/>
                           <Component id="txtSearchDue" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <Component id="cmdUserFilter" alignment="0" max="-2" attributes="0"/>
                       <Component id="lblUserFilterCount" alignment="1" max="32767" attributes="0"/>
                       <Component id="cmdRefreshRevDue" alignment="0" max="-2" attributes="0"/>
-                      <Component id="cmdDueSinceDays" alignment="0" max="-2" attributes="0"/>
                       <Component id="toggleDueCompactView" alignment="1" max="32767" attributes="0"/>
+                      <Component id="cmdDueSinceDays" alignment="0" max="32767" attributes="0"/>
+                      <Component id="cmdUserFilter" alignment="0" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="tabPaneDue" pref="393" max="32767" attributes="0"/>
