@@ -732,6 +732,35 @@ public class StringUtils extends ServerStringUtils {
         }
     }
     
+    /**
+     * Sanitizes a string for SEPA XML compliance according to EPC guidelines.
+     * Replaces German umlauts with their two-letter equivalents and removes
+     * all characters not allowed in SEPA transactions.
+     * Allowed characters: a-z A-Z 0-9 / - ? : ( ) . , ' + and space
+     *
+     * @param input the input string to sanitize
+     * @return SEPA-compliant string, or empty string if input is null
+     */
+    public static String sanitizeForSepa(String input) {
+        if (input == null) {
+            return "";
+        }
+        // Replace German umlauts with two-letter equivalents
+        String result = input
+                .replace("ä", "ae").replace("Ä", "Ae")
+                .replace("ö", "oe").replace("Ö", "Oe")
+                .replace("ü", "ue").replace("Ü", "Ue")
+                .replace("ß", "ss");
+
+        // Keep only SEPA-allowed characters: a-zA-Z0-9 /-?:().,'+
+        result = result.replaceAll("[^a-zA-Z0-9 /\\-?:().,'+]", "");
+
+        // Collapse multiple spaces and trim
+        result = result.replaceAll("\\s+", " ").trim();
+
+        return result;
+    }
+
     public static String formatDuration(long milliseconds) {
         
       long seconds=milliseconds/1000l;
