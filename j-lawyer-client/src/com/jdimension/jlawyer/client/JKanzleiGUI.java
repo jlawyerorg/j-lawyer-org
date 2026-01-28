@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.cloud.CloudInstance;
 import com.jdimension.jlawyer.client.editors.files.CaseExportDialog;
 import com.jdimension.jlawyer.client.plugins.form.FormsManagementDialog;
 import com.jdimension.jlawyer.client.configuration.*;
+import com.jdimension.jlawyer.client.desktop.GlobalSearchDialog;
 import com.jdimension.jlawyer.client.desktop.UpdateAddressTagsTask;
 import com.jdimension.jlawyer.client.desktop.UpdateArchiveFileTagsTask;
 import com.jdimension.jlawyer.client.desktop.UpdateDocumentTagsTask;
@@ -715,6 +716,7 @@ import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -726,8 +728,10 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
@@ -799,6 +803,17 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         registry.setMainEditorsPane(this.jPanel1);
 
         registry.setStatusLabel(this.statusLabel);
+
+        // Register global search hotkey (Cmd+K on macOS, Ctrl+K on Windows/Linux)
+        KeyStroke globalSearchKey = KeyStroke.getKeyStroke(KeyEvent.VK_K,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx());
+        getRootPane().registerKeyboardAction(
+                e -> {
+                    GlobalSearchDialog dlg = new GlobalSearchDialog(this, true);
+                    dlg.setVisible(true);
+                },
+                globalSearchKey,
+                JComponent.WHEN_IN_FOCUSED_WINDOW);
 
         // will initialize the system tray icon for the first time
         SwingUtilities.invokeLater(() -> {

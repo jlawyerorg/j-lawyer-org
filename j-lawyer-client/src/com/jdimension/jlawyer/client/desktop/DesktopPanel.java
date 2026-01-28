@@ -763,6 +763,15 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
      */
     public DesktopPanel() {
         initComponents();
+
+        // Set tooltip with platform-specific keyboard shortcut
+        String os = System.getProperty("os.name").toLowerCase();
+        if (os.contains("mac")) {
+            this.cmdGlobalSearch.setToolTipText("Globale Suche (Cmd+K)");
+        } else {
+            this.cmdGlobalSearch.setToolTipText("Globale Suche (Strg+K)");
+        }
+
         configureStatusLabels();
 
         this.lblNewsStatus.setText(" ");
@@ -1453,6 +1462,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblUserIcon = new javax.swing.JLabel();
         lblUserName = new javax.swing.JLabel();
         cmdEditDesktop = new javax.swing.JButton();
+        cmdGlobalSearch = new javax.swing.JButton();
         lblDay = new javax.swing.JLabel();
         pnlGridContainer = new javax.swing.JPanel();
 
@@ -1976,25 +1986,36 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         });
 
+        cmdGlobalSearch.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_search_blue_36dp.png"))); // NOI18N
+        cmdGlobalSearch.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                cmdGlobalSearchMouseClicked(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout desktopWidgetPanel2Layout = new org.jdesktop.layout.GroupLayout(desktopWidgetPanel2);
         desktopWidgetPanel2.setLayout(desktopWidgetPanel2Layout);
         desktopWidgetPanel2Layout.setHorizontalGroup(
             desktopWidgetPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(desktopWidgetPanel2Layout.createSequentialGroup()
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap()
                 .add(lblUserName)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(lblUserIcon)
-                .add(18, 18, 18)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(cmdGlobalSearch)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdEditDesktop))
         );
         desktopWidgetPanel2Layout.setVerticalGroup(
             desktopWidgetPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(desktopWidgetPanel2Layout.createSequentialGroup()
-                .add(desktopWidgetPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                    .add(cmdEditDesktop, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(lblUserIcon, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(lblUserName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .add(desktopWidgetPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(desktopWidgetPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                        .add(cmdEditDesktop, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(lblUserIcon, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(lblUserName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(cmdGlobalSearch))
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -2017,7 +2038,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(layout.createSequentialGroup()
                         .add(messagesWidget, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblDay, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 95, Short.MAX_VALUE)
+                        .add(lblDay, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(desktopWidgetPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(systemInformationWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -2183,6 +2204,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         timer.schedule(revDueTask, 10);
     }//GEN-LAST:event_toggleDueCompactViewMouseClicked
 
+    private void cmdGlobalSearchMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdGlobalSearchMouseClicked
+        GlobalSearchDialog dlg = new GlobalSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_cmdGlobalSearchMouseClicked
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup btnGrpDueInDays;
@@ -2190,6 +2216,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JButton cmdDocumentTagFilter;
     private javax.swing.JButton cmdDueSinceDays;
     private javax.swing.JButton cmdEditDesktop;
+    private javax.swing.JButton cmdGlobalSearch;
     private javax.swing.JButton cmdRefreshLastChanged;
     private javax.swing.JButton cmdRefreshRevDue;
     private javax.swing.JButton cmdRefreshTagged;
