@@ -19,9 +19,11 @@ public class GlobalSearchResultItem {
         CALENDAR
     }
 
-    private static final ImageIcon ICON_CASE = new ImageIcon(GlobalSearchResultItem.class.getResource("/icons16/material/baseline_folder_blue_36dp.png"));
-    private static final ImageIcon ICON_ADDRESS = new ImageIcon(GlobalSearchResultItem.class.getResource("/icons16/material/baseline_perm_contact_calendar_white_36dp.png"));
-    private static final ImageIcon ICON_CALENDAR = new ImageIcon(GlobalSearchResultItem.class.getResource("/icons16/material/baseline_event_available_blue_36dp.png"));
+    private static final ImageIcon ICON_CASE = new ImageIcon(GlobalSearchResultItem.class.getResource("/icons32/material/sharp_folder_blue_36dp.png"));
+    private static final ImageIcon ICON_CASE_ARCHIVED = new ImageIcon(GlobalSearchResultItem.class.getResource("/icons32/material/folder_32dp_666666.png"));
+    private static final ImageIcon ICON_ADDRESS = new ImageIcon(GlobalSearchResultItem.class.getResource("/icons32/material/baseline_perm_contact_calendar_blue_36dp.png"));
+    private static final ImageIcon ICON_CALENDAR = new ImageIcon(GlobalSearchResultItem.class.getResource("/icons32/material/baseline_event_available_blue_36dp.png"));
+    
 
     private final ResultType type;
     private final Object bean;
@@ -65,6 +67,9 @@ public class GlobalSearchResultItem {
     public Icon getIcon() {
         switch (type) {
             case CASE:
+                if (((ArchiveFileBean) bean).isArchived()) {
+                    return ICON_CASE_ARCHIVED;
+                }
                 return ICON_CASE;
             case ADDRESS:
                 return ICON_ADDRESS;

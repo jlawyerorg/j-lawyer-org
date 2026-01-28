@@ -202,7 +202,7 @@ public class GlobalSearchDialog extends JDialog {
     }
 
     private void saveFilterState(String key, boolean value) {
-        UserSettings.getInstance().setSetting(key, value ? "1" : "0");
+        UserSettings.getInstance().setSettingAsBoolean(key, value);
     }
 
     private void setupKeyBindings() {
