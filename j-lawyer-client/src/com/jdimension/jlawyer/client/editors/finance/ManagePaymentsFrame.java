@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.editors.finance;
 import com.jdimension.jlawyer.client.editors.files.PaymentMgmtEntryPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.Payment;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -899,10 +900,10 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
                                 new SEPABankAccount(
                                         recipientIban,
                                         p.getContact().getBankCode(),
-                                        p.getContact().toDisplayName()
+                                        StringUtils.sanitizeForSepa(p.getContact().toDisplayName())
                                 ),
                                 p.getTotal().setScale(2, RoundingMode.HALF_UP),
-                                p.getPaymentNumber() + " " + p.getReason(),
+                                StringUtils.sanitizeForSepa(p.getPaymentNumber() + " " + p.getReason()),
                                 SEPATransaction.Currency.EUR
                         ));
                     } catch (Exception ex) {
@@ -913,7 +914,7 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
                 final SEPABankAccount sender = new SEPABankAccount(
                         iban,
                         UserSettings.getInstance().getUser(paymentsForIban.get(0).getSender()).getBankBic(),
-                        UserSettings.getInstance().getUser(paymentsForIban.get(0).getSender()).getCompany()
+                        StringUtils.sanitizeForSepa(UserSettings.getInstance().getUser(paymentsForIban.get(0).getSender()).getCompany())
                 );
                 SEPA sepa = new SEPACreditTransfer(SEPA.PaymentMethods.TransferAdvice, sender, transactions);
                 ByteArrayOutputStream bout = new ByteArrayOutputStream();
