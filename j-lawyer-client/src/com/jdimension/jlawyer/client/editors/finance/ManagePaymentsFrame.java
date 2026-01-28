@@ -672,7 +672,6 @@ import com.jdimension.jlawyer.persistence.Payment;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
