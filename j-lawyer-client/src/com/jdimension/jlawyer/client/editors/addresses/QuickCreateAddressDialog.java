@@ -679,7 +679,9 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.HashMap;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
 import org.apache.log4j.Logger;
 
 /**
@@ -1349,7 +1351,11 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
                     }
                     html.append("</ul>");
                     html.append("</html>");
-                    int simResponse = JOptionPane.showConfirmDialog(this, html.toString(), "Ähnlichkeitssuche", JOptionPane.YES_NO_OPTION);
+                    JLabel label = new JLabel(html.toString());
+                    JScrollPane scrollPane = new JScrollPane(label);
+                    scrollPane.setPreferredSize(new java.awt.Dimension(500, Math.min(label.getPreferredSize().height + 10, 400)));
+                    scrollPane.setBorder(null);
+                    int simResponse = JOptionPane.showConfirmDialog(this, scrollPane, "Ähnlichkeitssuche", JOptionPane.YES_NO_OPTION);
                     if (simResponse == JOptionPane.NO_OPTION) {
                         this.result=null;
                     }

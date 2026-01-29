@@ -732,6 +732,7 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import org.apache.log4j.Logger;
@@ -1218,7 +1219,11 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                     }
                     html.append("</ul>");
                     html.append("</html>");
-                    int simResponse = JOptionPane.showConfirmDialog(this, html.toString(), "Ähnlichkeitssuche", JOptionPane.YES_NO_OPTION);
+                    JLabel label = new JLabel(html.toString());
+                    JScrollPane scrollPane = new JScrollPane(label);
+                    scrollPane.setPreferredSize(new java.awt.Dimension(500, Math.min(label.getPreferredSize().height + 10, 400)));
+                    scrollPane.setBorder(null);
+                    int simResponse = JOptionPane.showConfirmDialog(this, scrollPane, "Ähnlichkeitssuche", JOptionPane.YES_NO_OPTION);
                     if (simResponse == JOptionPane.NO_OPTION) {
                         return false;
                     }
@@ -4465,7 +4470,11 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                     }
                     html.append("</ul>");
                     html.append("</html>");
-                    int response = JOptionPane.showConfirmDialog(this, html.toString(), "Ähnlichkeitssuche", JOptionPane.YES_NO_OPTION);
+                    JLabel label2 = new JLabel(html.toString());
+                    JScrollPane scrollPane2 = new JScrollPane(label2);
+                    scrollPane2.setPreferredSize(new java.awt.Dimension(500, Math.min(label2.getPreferredSize().height + 10, 400)));
+                    scrollPane2.setBorder(null);
+                    int response = JOptionPane.showConfirmDialog(this, scrollPane2, "Ähnlichkeitssuche", JOptionPane.YES_NO_OPTION);
                     if (response == JOptionPane.NO_OPTION) {
                         return true;
                     }
