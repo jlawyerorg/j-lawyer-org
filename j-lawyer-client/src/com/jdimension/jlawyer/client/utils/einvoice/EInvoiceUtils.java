@@ -673,7 +673,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.log4j.Logger;
 import org.mustangproject.BankDetails;
 import org.mustangproject.Contact;
@@ -910,8 +912,9 @@ public class EInvoiceUtils {
 
         // Invoice Items
         List<Item> items = zii.getLineItemList();
-        BigDecimal totalTaxAmount = BigDecimal.ZERO;
         BigDecimal totalAmount = BigDecimal.ZERO;
+        // Nettobeträge pro Steuersatz sammeln (EN 16931: Steuer auf Summe pro Steuerkategorie)
+        Map<BigDecimal, BigDecimal> netAmountsByTaxRate = new HashMap<>();
 
         for (Item item : items) {
             BigDecimal quantity = item.getQuantity();
@@ -920,14 +923,14 @@ public class EInvoiceUtils {
             // Netto-Einzelbetrag (Menge * Einzelpreis), kaufmännisch gerundet
             BigDecimal netAmount = price.multiply(quantity).setScale(2, RoundingMode.HALF_UP);
 
-            // Steuerbetrag pro Position, kaufmännisch gerundet
             BigDecimal taxRate = item.getProduct().getVATPercent();
+            // Steuerbetrag pro Position nur fuer Anzeige in der Tabelle
             BigDecimal taxAmount = netAmount
                     .multiply(taxRate.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP))
                     .setScale(2, RoundingMode.HALF_UP);
 
             totalAmount = totalAmount.add(netAmount);
-            totalTaxAmount = totalTaxAmount.add(taxAmount);
+            netAmountsByTaxRate.merge(taxRate, netAmount, BigDecimal::add);
 
             html.append("<tr>")
                     .append("<td>").append(item.getProduct().getName()).append("</td>")
@@ -938,6 +941,16 @@ public class EInvoiceUtils {
                     .append("<td align=\"right\">").append(taxRate).append("%</td>")
                     .append("<td align=\"right\">").append(moneyFormat.format(taxAmount)).append("</td>")
                     .append("</tr>");
+        }
+
+        // Steuer auf aggregierte Nettobeträge pro Steuersatz berechnen (EN 16931)
+        BigDecimal totalTaxAmount = BigDecimal.ZERO;
+        for (Map.Entry<BigDecimal, BigDecimal> entry : netAmountsByTaxRate.entrySet()) {
+            BigDecimal rate = entry.getKey();
+            BigDecimal netSum = entry.getValue();
+            totalTaxAmount = totalTaxAmount.add(
+                    netSum.multiply(rate.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP))
+                            .setScale(2, RoundingMode.HALF_UP));
         }
 
         html.append("</table>");
