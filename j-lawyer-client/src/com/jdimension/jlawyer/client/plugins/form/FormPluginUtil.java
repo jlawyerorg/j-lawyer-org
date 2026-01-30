@@ -784,7 +784,7 @@ public class FormPluginUtil {
     public static Map<String, FormPlugin> getAvailableRepositoryPlugins() {
         List<FormTypeBean> serverFormPlugins = getServerPlugins();
 
-        Map<String, FormPlugin> formPlugins = new TreeMap<>();
+        Map<String, FormPlugin> formPlugins = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         Map<String, ServerFormPlugin> repositoryPlugins = new TreeMap<>();
         try {
             ClientSettings settings = ClientSettings.getInstance();
@@ -844,7 +844,7 @@ public class FormPluginUtil {
         List<FormTypeBean> serverFormPlugins = getServerPlugins();
 
         // check for local plugins
-        TreeMap<String, FormPlugin> formPlugins = new TreeMap<>();
+        TreeMap<String, FormPlugin> formPlugins = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         try {
 
             File internalXml = new File(FormPluginUtil.getLocalDirectoryInternalPlugins() + File.separator + "j-lawyer-forms-internal.xml");
