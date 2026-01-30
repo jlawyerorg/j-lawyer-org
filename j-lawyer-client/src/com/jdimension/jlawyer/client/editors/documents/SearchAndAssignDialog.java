@@ -740,8 +740,8 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
         this.txtSearchString.putClientProperty("JTextField.showClearButton", true);
         this.searchContext = searchContext;
         this.forceCaseId = forceCaseId;
-        FrameUtils.centerDialog(this, EditorsRegistry.getInstance().getMainWindow());
         this.initialize();
+        FrameUtils.centerDialog(this, EditorsRegistry.getInstance().getMainWindow());
     }
 
     /**
@@ -758,8 +758,8 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
         this.txtSearchString.putClientProperty("JTextField.showClearButton", true);
         this.searchContext = searchContext;
         this.forceCaseId = forceCaseId;
-        FrameUtils.centerDialog(this, EditorsRegistry.getInstance().getMainWindow());
         this.initialize();
+        FrameUtils.centerDialog(this, EditorsRegistry.getInstance().getMainWindow());
 
     }
     
