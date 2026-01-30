@@ -1745,7 +1745,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         this.closeInvolvedPartyEntryPanelSubscriptions();
 
-        for (int t = this.tabPaneForms.getTabCount() - 1; t > 0; t--) {
+        for (int t = this.tabPaneForms.getTabCount() - 2; t >= 0; t--) {
             this.tabPaneForms.remove(t);
         }
         this.txtFormDescription.setText("");
@@ -1757,7 +1757,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
         pi.setShowCancelButton(false);
-        ArchiveFileDetailLoadAction a = new ArchiveFileDetailLoadAction(pi, this, dto.getId(), this.dto, this.caseFolderPanel1, this.tblHistory, this.pnlInvolvedParties, this.tblReviewReasons, this.tagPanel, this.documentTagPanel, this.pnlInvoices, this.pnlClaimLedgers, this.pnlPayments, this.pnlTimesheets, this.pnlMessages, this.readOnly, BeaAccess.isBeaEnabled(), selectDocumentWithFileName, this.lblArchivedSince, dto.isArchived(), this.popDocumentFavorites, this.cmbFormType, this.pnlAddForms, this.tabPaneForms, this.cmbGroup, this.tblGroups, this.togCaseSync);
+        ArchiveFileDetailLoadAction a = new ArchiveFileDetailLoadAction(pi, this, dto.getId(), this.dto, this.caseFolderPanel1, this.tblHistory, this.pnlInvolvedParties, this.tblReviewReasons, this.tagPanel, this.documentTagPanel, this.pnlInvoices, this.pnlClaimLedgers, this.pnlPayments, this.pnlTimesheets, this.pnlMessages, this.readOnly, BeaAccess.isBeaEnabled(), selectDocumentWithFileName, this.lblArchivedSince, dto.isArchived(), this.popDocumentFavorites, this.cmbGroup, this.tblGroups, this.togCaseSync);
 
         a.start();
 
@@ -1905,7 +1905,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         ThreadUtils.repaintComponent(documentTagPanel);
 
-        for (int t = this.tabPaneForms.getTabCount() - 1; t > 0; t--) {
+        for (int t = this.tabPaneForms.getTabCount() - 2; t >= 0; t--) {
             this.tabPaneForms.remove(t);
         }
 
@@ -5625,7 +5625,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
 
     public void saveFormData() {
-        for (int f = 1; f < this.tabPaneForms.getTabCount(); f++) {
+        for (int f = 0; f < this.tabPaneForms.getTabCount() - 1; f++) {
             FormInstancePanel fip = (FormInstancePanel) this.tabPaneForms.getComponentAt(f);
             fip.save();
         }
@@ -7466,7 +7466,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             formInstance.initialize();
             SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
 
-            tabPaneForms.addTab("<html><b>" + ftb.getName() + "</b><br/>" + df.format(affb.getCreationDate()) + "<br/>" + affb.getPlaceHolder() + "</html>", null, formInstance);
+            tabPaneForms.insertTab("<html><b>" + ftb.getName() + "</b><br/>" + df.format(affb.getCreationDate()) + "<br/>" + affb.getPlaceHolder() + "</html>", null, formInstance, null, tabPaneForms.getTabCount() - 1);
         } catch (Throwable t) {
             log.error("Error loading form plugin", t);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden des Falldatenblattes: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);

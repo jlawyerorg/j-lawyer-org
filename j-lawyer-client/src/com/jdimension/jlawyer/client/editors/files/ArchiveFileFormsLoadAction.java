@@ -145,7 +145,7 @@ public class ArchiveFileFormsLoadAction extends ProgressableAction {
                     final FormInstancePanel finalFormInstance = formInstance;
                     final String finalTabTitle = tabTitle;
                     SwingUtilities.invokeLater(() -> {
-                        tabPaneForms.addTab(finalTabTitle, null, finalFormInstance);
+                        tabPaneForms.insertTab(finalTabTitle, null, finalFormInstance, null, tabPaneForms.getTabCount() - 1);
                     });
 
                 } catch (Throwable t) {
@@ -156,6 +156,13 @@ public class ArchiveFileFormsLoadAction extends ProgressableAction {
                     });
                 }
             }
+
+            // select first form tab if any forms were loaded
+            SwingUtilities.invokeLater(() -> {
+                if (tabPaneForms.getTabCount() > 1) {
+                    tabPaneForms.setSelectedIndex(0);
+                }
+            });
 
         } catch (Exception ex) {
             log.error("Error loading forms", ex);

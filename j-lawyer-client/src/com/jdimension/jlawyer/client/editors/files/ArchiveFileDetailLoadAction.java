@@ -729,9 +729,6 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     private boolean beaEnabled = false;
     private String selectDocumentWithFileName;
     private JPopupMenu popDocumentFavorites;
-    private JComboBox cmbFormTypes = null;
-    private JPanel formsPanel = null;
-    private JTabbedPane tabPaneForms = null;
     private JComboBox cmbGroups = null;
     private JTable tblGroups = null;
     private CaseFolderPanel caseFolders = null;
@@ -739,7 +736,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
     private final SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMAN);
 
-    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, CaseFolderPanel caseFolders, JTable historyTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, JPanel invoicesPanel, JPanel claimLedgersPanel, JPanel paymentsPanel, JPanel timesheetsPanel, JPanel pnlMessages, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JComboBox formTypes, JPanel formsPanel, JTabbedPane tabPaneForms, JComboBox cmbGroups, JTable tblGroups, JToggleButton togCaseSync) {
+    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, CaseFolderPanel caseFolders, JTable historyTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, JPanel invoicesPanel, JPanel claimLedgersPanel, JPanel paymentsPanel, JPanel timesheetsPanel, JPanel pnlMessages, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JComboBox cmbGroups, JTable tblGroups, JToggleButton togCaseSync) {
         super(i, false);
 
         this.caseFolders = caseFolders;
@@ -751,9 +748,6 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.contactsForCasePanel = contactsForCasePanel;
         this.tblReviews = tblReviews;
         this.tagPanel = tagPanel;
-        this.cmbFormTypes = formTypes;
-        this.formsPanel = formsPanel;
-        this.tabPaneForms = tabPaneForms;
         this.documentTagPanel = documentTagPanel;
         this.invoicesPanel = invoicesPanel;
         this.claimLedgersPanel=claimLedgersPanel;
