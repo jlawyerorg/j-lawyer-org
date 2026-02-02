@@ -736,6 +736,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
     private List<String> allCaseTagsAsString = new ArrayList<>();
 
     private HashMap<String, String> contactToIbanTo = null;
+    private ArrayList<String> allFileNumbers = null;
 
     private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
     private DecimalFormat nf = new DecimalFormat("0.00");
@@ -782,6 +783,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             }
 
             this.contactToIbanTo = locator.lookupAddressServiceRemote().getAddressesWithIban();
+            this.allFileNumbers = locator.lookupArchiveFileServiceRemote().getAllArchiveFileNumbers(true);
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
@@ -1829,7 +1831,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             double jaroWinklerMatchDistance = 0.9d;
             for (Payment pay : this.openPayments) {
                 double dist = JaroWinkler.jaroWinklerDistance(this.currentTransaction.getPurpose(), pay.getPaymentNumber());
-                if (dist > 0.9d && (jaroWinklerInvoiceMatch == null || dist > jaroWinklerMatchDistance)) {
+                if (dist > 0.9d && (jaroWinklerPaymentMatch == null || dist > jaroWinklerMatchDistance)) {
                     jaroWinklerPaymentMatch = pay;
                     jaroWinklerMatchDistance = dist;
                     log.info("found payment " + jaroWinklerPaymentMatch.getPaymentNumber() + " with distance " + dist + ", compared: " + pay.getPaymentNumber() + " & " + this.currentTransaction.getPurpose());
@@ -1843,8 +1845,34 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         }
 
         ArchiveFileBean caseMatch = null;
-        if (invoiceMatch == null) {
-            // try to identify by sender iban
+        if (invoiceMatch != null) {
+            caseMatch = invoiceMatch.getArchiveFileKey();
+        } else if (paymentMatch != null) {
+            caseMatch = paymentMatch.getArchiveFileKey();
+        }
+
+        // try to identify by file number in purpose
+        if (caseMatch == null && this.allFileNumbers != null) {
+            String purposeLower = this.currentTransaction.getPurpose().toLowerCase();
+            for (String fn : this.allFileNumbers) {
+                if (purposeLower.contains(fn.toLowerCase())) {
+                    try {
+                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                        ArchiveFileBean a = locator.lookupArchiveFileServiceRemote().getArchiveFileByFileNumber(fn);
+                        if (a != null) {
+                            log.info("file number " + fn + " found in transaction purpose");
+                            caseMatch = a;
+                            break;
+                        }
+                    } catch (Exception ex) {
+                        log.error("Unable to determine case by file number", ex);
+                    }
+                }
+            }
+        }
+
+        // try to identify by sender iban
+        if (caseMatch == null) {
             String iban = StringUtils.normalizeIban(this.currentTransaction.getFromIban());
             if (this.contactToIbanTo.containsValue(iban)) {
                 try {
@@ -1864,12 +1892,6 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                     log.error("Unable to determine unique case by IBAN", ex);
                 }
             }
-
-        } else {
-            caseMatch = invoiceMatch.getArchiveFileKey();
-        }
-        if (caseMatch == null && invoiceMatch == null && paymentMatch != null) {
-            caseMatch = paymentMatch.getArchiveFileKey();
         }
 
         this.taTransaction.append(System.lineSeparator());
