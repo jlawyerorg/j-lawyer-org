@@ -733,6 +733,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import org.apache.log4j.Logger;
 import org.jlawyer.plugins.calculation.Cell;
+import org.jlawyer.plugins.calculation.FlexibleInvoiceTableData;
 import org.jlawyer.plugins.calculation.StyledCalculationTable;
 import org.mustangproject.ZUGFeRD.Profiles;
 import org.mustangproject.ZUGFeRD.ZUGFeRD2PullProvider;
@@ -2526,6 +2527,37 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         ct.setBorderColor(new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.lines.color", Color.BLACK.getRGB())));
         ct.setFontFamily(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.table.fontfamily", "Arial"));
         ct.setFontSize(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.fontsize", 12));
+
+        // build flexible invoice table data
+        FlexibleInvoiceTableData flexData = new FlexibleInvoiceTableData();
+        int flexIndex = 0;
+        for (Component fc : this.pnlInvoicePositions.getComponents()) {
+            if (fc instanceof InvoicePositionEntryPanel) {
+                InvoicePosition fpos = ((InvoicePositionEntryPanel) fc).getEntry();
+                BigDecimal fu = fpos.getUnits();
+                BigDecimal fup = fpos.getUnitPrice();
+                BigDecimal ft = fpos.getTaxRate();
+                BigDecimal fNetAmount = fu.multiply(fup).setScale(2, RoundingMode.HALF_UP);
+
+                HashMap<String, String> posMap = new HashMap<>();
+                posMap.put("{{BELP_NR}}", String.valueOf(++flexIndex));
+                posMap.put("{{BELP_NAME}}", fpos.getName() != null ? fpos.getName() : "");
+                posMap.put("{{BELP_BESCHR}}", fpos.getDescription() != null ? fpos.getDescription() : "");
+                posMap.put("{{BELP_MENGE}}", currencyFormat.format(fu));
+                posMap.put("{{BELP_EINZEL}}", currencyFormat.format(fup));
+                posMap.put("{{BELP_UST}}", percentageFormat.format(ft) + "%");
+                posMap.put("{{BELP_NETTO}}", currencyFormat.format(fNetAmount) + " " + this.cmbCurrency.getSelectedItem());
+                flexData.getPositions().add(posMap);
+            }
+        }
+        for (BigDecimal taxRate : taxRateToTaxTotalSorted.keySet()) {
+            HashMap<String, String> taxMap = new HashMap<>();
+            taxMap.put("{{BEL_UST_SATZ}}", percentageFormat.format(taxRate) + "%");
+            taxMap.put("{{BEL_UST_BETRAG}}", currencyFormat.format(taxRateToTaxTotalSorted.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem());
+            flexData.getTaxRates().add(taxMap);
+        }
+        flexData.setNetTotal(currencyFormat.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
+        ct.setFlexibleInvoiceData(flexData);
 
         return ct;
 

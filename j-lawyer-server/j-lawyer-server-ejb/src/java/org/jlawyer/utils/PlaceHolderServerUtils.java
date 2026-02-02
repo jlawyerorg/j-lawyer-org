@@ -683,7 +683,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import javax.naming.InitialContext;
+import org.jlawyer.plugins.calculation.FlexibleInvoiceTableData;
 import org.jlawyer.plugins.calculation.GenericCalculationTable;
+import org.jlawyer.plugins.calculation.StyledCalculationTable;
 
 /**
  *
@@ -1398,6 +1400,39 @@ public class PlaceHolderServerUtils extends PlaceHolders {
 
         if (placeHolders.containsKey(BEL_TABELLE) && invoiceTable != null) {
             placeHolders.put(BEL_TABELLE, invoiceTable);
+        }
+
+        // flexible invoice table placeholders
+        if (invoiceTable instanceof StyledCalculationTable) {
+            FlexibleInvoiceTableData flexData = ((StyledCalculationTable) invoiceTable).getFlexibleInvoiceData();
+            if (flexData != null) {
+                boolean hasFlexPlaceholders = placeHolders.containsKey(BELP_NR)
+                        || placeHolders.containsKey(BELP_NAME)
+                        || placeHolders.containsKey(BELP_BESCHR)
+                        || placeHolders.containsKey(BELP_MENGE)
+                        || placeHolders.containsKey(BELP_EINZEL)
+                        || placeHolders.containsKey(BELP_UST)
+                        || placeHolders.containsKey(BELP_NETTO)
+                        || placeHolders.containsKey(BEL_UST_SATZ)
+                        || placeHolders.containsKey(BEL_UST_BETRAG);
+                if (hasFlexPlaceholders) {
+                    // put FlexibleInvoiceTableData under BELP_NR key for document renderers to pick up
+                    placeHolders.put(BELP_NR, flexData);
+                    // remove remaining BELP_* keys so they are not treated as regular string placeholders
+                    placeHolders.remove(BELP_NAME);
+                    placeHolders.remove(BELP_BESCHR);
+                    placeHolders.remove(BELP_MENGE);
+                    placeHolders.remove(BELP_EINZEL);
+                    placeHolders.remove(BELP_UST);
+                    placeHolders.remove(BELP_NETTO);
+                    placeHolders.remove(BEL_UST_SATZ);
+                    placeHolders.remove(BEL_UST_BETRAG);
+                }
+                // BEL_SUM_NETTO as regular string replacement
+                if (placeHolders.containsKey(BEL_SUM_NETTO)) {
+                    placeHolders.put(BEL_SUM_NETTO, flexData.getNetTotal());
+                }
+            }
         }
 
         if (placeHolders.containsKey(BEL_GIROCODE) && giroCode != null) {

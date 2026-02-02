@@ -679,6 +679,7 @@ public class StyledCalculationTable extends GenericCalculationTable implements S
     private Color borderColor=Color.BLACK;
     private Hashtable<Integer,Integer> columnWidths=new Hashtable<>();
     private String fontFamily="Arial";
+    private FlexibleInvoiceTableData flexibleInvoiceData = null;
     
     
     public StyledCalculationTable() {
@@ -924,6 +925,20 @@ public class StyledCalculationTable extends GenericCalculationTable implements S
      */
     public void setFontFamily(String fontFamily) {
         this.fontFamily = fontFamily;
+    }
+
+    /**
+     * @return the flexibleInvoiceData
+     */
+    public FlexibleInvoiceTableData getFlexibleInvoiceData() {
+        return flexibleInvoiceData;
+    }
+
+    /**
+     * @param flexibleInvoiceData the flexibleInvoiceData to set
+     */
+    public void setFlexibleInvoiceData(FlexibleInvoiceTableData flexibleInvoiceData) {
+        this.flexibleInvoiceData = flexibleInvoiceData;
     }
 
     private int pixelFontSizeToHtmlSize(int fontSize) {

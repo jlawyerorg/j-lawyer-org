@@ -685,6 +685,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.jlawyer.plugins.calculation.CalculationTable;
 import org.jlawyer.plugins.calculation.Cell;
+import org.jlawyer.plugins.calculation.FlexibleInvoiceTableData;
 import org.jlawyer.plugins.calculation.StyledCalculationTable;
 import org.odftoolkit.odfdom.dom.element.draw.DrawFrameElement;
 import org.odftoolkit.odfdom.dom.element.draw.DrawImageElement;
@@ -1886,6 +1887,96 @@ public class LibreOfficeAccess {
                                 }
 
                             }
+                        }
+                    }
+                } else if (values.get(key) instanceof FlexibleInvoiceTableData) {
+                    FlexibleInvoiceTableData flexData = (FlexibleInvoiceTableData) values.get(key);
+                    List<Table> allTables = outputOdt.getTableList();
+                    ArrayList<Integer> flexTableIndices = new ArrayList<>();
+                    for (int tIdx = 0; tIdx < allTables.size(); tIdx++) {
+                        Table t = allTables.get(tIdx);
+                        // scan all rows for BELP_ or BEL_UST_ placeholders
+                        TableTableElement tableElement = t.getOdfElement();
+                        NodeList rowNodes = tableElement.getElementsByTagNameNS(
+                                TableTableRowElement.ELEMENT_NAME.getUri(),
+                                TableTableRowElement.ELEMENT_NAME.getLocalName());
+
+                        // collect template rows
+                        ArrayList<Node> positionTemplateRows = new ArrayList<>();
+                        ArrayList<Node> taxTemplateRows = new ArrayList<>();
+                        for (int ri = 0; ri < rowNodes.getLength(); ri++) {
+                            Node rowNode = rowNodes.item(ri);
+                            String rowText = rowNode.getTextContent();
+                            if (rowText != null) {
+                                if (rowText.contains("{{BELP_")) {
+                                    positionTemplateRows.add(rowNode);
+                                } else if (rowText.contains("{{BEL_UST_")) {
+                                    taxTemplateRows.add(rowNode);
+                                }
+                            }
+                        }
+
+                        if (!positionTemplateRows.isEmpty() || !taxTemplateRows.isEmpty()) {
+                            flexTableIndices.add(tIdx);
+                        }
+
+                        // duplicate position template rows (clone preserves formatting)
+                        for (Node templateRow : positionTemplateRows) {
+                            Node parentNode = templateRow.getParentNode();
+                            for (int pi = 0; pi < flexData.getPositions().size(); pi++) {
+                                Node clonedRow = templateRow.cloneNode(true);
+                                parentNode.insertBefore(clonedRow, templateRow);
+                            }
+                            parentNode.removeChild(templateRow);
+                        }
+
+                        // duplicate tax template rows
+                        for (Node templateRow : taxTemplateRows) {
+                            Node parentNode = templateRow.getParentNode();
+                            for (int ti = 0; ti < flexData.getTaxRates().size(); ti++) {
+                                Node clonedRow = templateRow.cloneNode(true);
+                                parentNode.insertBefore(clonedRow, templateRow);
+                            }
+                            parentNode.removeChild(templateRow);
+                        }
+                    }
+
+                    // replace placeholders using TextNavigation (handles ODF text spans correctly)
+                    String[] belpKeys = {"{{BELP_NR}}", "{{BELP_NAME}}", "{{BELP_BESCHR}}", "{{BELP_MENGE}}", "{{BELP_EINZEL}}", "{{BELP_UST}}", "{{BELP_NETTO}}"};
+                    for (String belpKey : belpKeys) {
+                        String pattern = belpKey.replace("{", "\\{").replace("}", "\\}");
+                        for (int pi = 0; pi < flexData.getPositions().size(); pi++) {
+                            String value = flexData.getPositions().get(pi).getOrDefault(belpKey, "");
+                            TextNavigation nav = new TextNavigation(pattern, outputOdt);
+                            if (nav.hasNext()) {
+                                TextSelection sel = (TextSelection) nav.nextSelection();
+                                sel.replaceWith(value);
+                            }
+                        }
+                    }
+                    String[] taxKeys = {"{{BEL_UST_SATZ}}", "{{BEL_UST_BETRAG}}"};
+                    for (String taxKey : taxKeys) {
+                        String pattern = taxKey.replace("{", "\\{").replace("}", "\\}");
+                        for (int ti = 0; ti < flexData.getTaxRates().size(); ti++) {
+                            String value = flexData.getTaxRates().get(ti).getOrDefault(taxKey, "");
+                            TextNavigation nav = new TextNavigation(pattern, outputOdt);
+                            if (nav.hasNext()) {
+                                TextSelection sel = (TextSelection) nav.nextSelection();
+                                sel.replaceWith(value);
+                            }
+                        }
+                    }
+
+                    // let LibreOffice calculate optimal column widths on open
+                    List<Table> freshTables = outputOdt.getTableList();
+                    for (int idx : flexTableIndices) {
+                        if (idx >= freshTables.size()) {
+                            continue;
+                        }
+                        Table flexTable = freshTables.get(idx);
+                        int numColumns = flexTable.getColumnCount();
+                        for (int col = 0; col < numColumns; col++) {
+                            flexTable.getColumnByIndex(col).setUseOptimalWidth(true);
                         }
                     }
                 }

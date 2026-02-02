@@ -17,7 +17,8 @@
       "Bash(ls:*)",
       "WebFetch(domain:www.formdev.com)",
       "WebFetch(domain:www.ej-technologies.com)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(unzip:*)"
     ],
     "deny": [],
     "ask": []

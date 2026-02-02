@@ -846,6 +846,18 @@ public class PlaceHolders {
     public static final String BEL_ABSSTEUERNR = "{{BEL_ABSSTEUERNR}}";
     public static final String BEL_ABSUSTIDNR = "{{BEL_ABSUSTIDNR}}";
     
+    // flexible invoice position placeholders
+    public static final String BELP_NR = "{{BELP_NR}}";
+    public static final String BELP_NAME = "{{BELP_NAME}}";
+    public static final String BELP_BESCHR = "{{BELP_BESCHR}}";
+    public static final String BELP_MENGE = "{{BELP_MENGE}}";
+    public static final String BELP_EINZEL = "{{BELP_EINZEL}}";
+    public static final String BELP_UST = "{{BELP_UST}}";
+    public static final String BELP_NETTO = "{{BELP_NETTO}}";
+    public static final String BEL_SUM_NETTO = "{{BEL_SUM_NETTO}}";
+    public static final String BEL_UST_SATZ = "{{BEL_UST_SATZ}}";
+    public static final String BEL_UST_BETRAG = "{{BEL_UST_BETRAG}}";
+
     public static final String ZE_TABELLE = "{{ZE_TABELLE}}";
     public static final String ZE_SUMMEN = "{{ZE_SUMMEN}}";
     
@@ -1051,6 +1063,18 @@ public class PlaceHolders {
         ALLPLACEHOLDERS.add(BEL_ABSUSTIDNR);
         
         ALLPLACEHOLDERS.add(INGO_TEXT);
+
+        // flexible invoice position placeholders
+        ALLPLACEHOLDERS.add(BELP_NR);
+        ALLPLACEHOLDERS.add(BELP_NAME);
+        ALLPLACEHOLDERS.add(BELP_BESCHR);
+        ALLPLACEHOLDERS.add(BELP_MENGE);
+        ALLPLACEHOLDERS.add(BELP_EINZEL);
+        ALLPLACEHOLDERS.add(BELP_UST);
+        ALLPLACEHOLDERS.add(BELP_NETTO);
+        ALLPLACEHOLDERS.add(BEL_SUM_NETTO);
+        ALLPLACEHOLDERS.add(BEL_UST_SATZ);
+        ALLPLACEHOLDERS.add(BEL_UST_BETRAG);
 
         return ALLPLACEHOLDERS;
     }

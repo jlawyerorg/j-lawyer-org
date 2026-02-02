@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.documents;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -697,9 +698,18 @@ import org.apache.xmlbeans.XmlCursor;
 import org.apache.xmlbeans.XmlObject;
 import org.jlawyer.plugins.calculation.CalculationTable;
 import org.jlawyer.plugins.calculation.Cell;
+import org.jlawyer.plugins.calculation.FlexibleInvoiceTableData;
 import org.jlawyer.plugins.calculation.StyledCalculationTable;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRow;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTbl;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTc;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblLayoutType;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTText;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STTblLayoutType;
 
 /**
  *
@@ -967,6 +977,100 @@ public class MicrosoftOfficeAccess {
                         cell.addParagraph().createRun().addPicture(new ByteArrayInputStream((byte[]) values.get(key)), Document.PICTURE_TYPE_PNG, "Girocode", Units.toEMU(150), Units.toEMU(150)); // Adjust width and height as needed
 
                         t.removeRow(0);
+                    }
+                } else if (values.get(key) instanceof FlexibleInvoiceTableData) {
+                    FlexibleInvoiceTableData flexData = (FlexibleInvoiceTableData) values.get(key);
+                    List<XWPFTable> allTables = outputDocx.getTables();
+                    ArrayList<Integer> flexTableIndices = new ArrayList<>();
+                    for (int tblIdx = 0; tblIdx < allTables.size(); tblIdx++) {
+                        XWPFTable table = allTables.get(tblIdx);
+                        CTTbl ctTbl = table.getCTTbl();
+                        // collect template row indices (using XWPFTable before CTTbl manipulation)
+                        ArrayList<Integer> positionTemplateIndices = new ArrayList<>();
+                        ArrayList<Integer> taxTemplateIndices = new ArrayList<>();
+                        for (int ri = 0; ri < table.getNumberOfRows(); ri++) {
+                            XWPFTableRow row = table.getRow(ri);
+                            StringBuilder rowText = new StringBuilder();
+                            for (XWPFTableCell tc : row.getTableCells()) {
+                                rowText.append(tc.getText());
+                            }
+                            String rt = rowText.toString();
+                            if (rt.contains("{{BELP_")) {
+                                positionTemplateIndices.add(ri);
+                            } else if (rt.contains("{{BEL_UST_")) {
+                                taxTemplateIndices.add(ri);
+                            }
+                        }
+
+                        if (!positionTemplateIndices.isEmpty() || !taxTemplateIndices.isEmpty()) {
+                            flexTableIndices.add(tblIdx);
+                        }
+
+                        // clone rows in reverse index order to keep indices stable
+                        // tax template rows
+                        for (int ti = taxTemplateIndices.size() - 1; ti >= 0; ti--) {
+                            int templateIdx = taxTemplateIndices.get(ti);
+                            CTRow templateCTRow = ctTbl.getTrArray(templateIdx);
+                            for (int di = 0; di < flexData.getTaxRates().size(); di++) {
+                                CTRow clonedRow = (CTRow) templateCTRow.copy();
+                                ctTbl.insertNewTr(templateIdx + di);
+                                ctTbl.setTrArray(templateIdx + di, clonedRow);
+                            }
+                            ctTbl.removeTr(templateIdx + flexData.getTaxRates().size());
+                        }
+
+                        // position template rows
+                        for (int pi = positionTemplateIndices.size() - 1; pi >= 0; pi--) {
+                            int templateIdx = positionTemplateIndices.get(pi);
+                            CTRow templateCTRow = ctTbl.getTrArray(templateIdx);
+                            for (int di = 0; di < flexData.getPositions().size(); di++) {
+                                CTRow clonedRow = (CTRow) templateCTRow.copy();
+                                ctTbl.insertNewTr(templateIdx + di);
+                                ctTbl.setTrArray(templateIdx + di, clonedRow);
+                            }
+                            ctTbl.removeTr(templateIdx + flexData.getPositions().size());
+                        }
+
+                        // replace placeholders at CT level (avoids disconnected POI wrappers, handles split runs)
+                        int posCounter = 0;
+                        int taxCounter = 0;
+                        for (int ri = 0; ri < ctTbl.sizeOfTrArray(); ri++) {
+                            CTRow ctRow = ctTbl.getTrArray(ri);
+                            String rowText = getCTRowText(ctRow);
+                            if (rowText.contains("{{BELP_") && posCounter < flexData.getPositions().size()) {
+                                replacePlaceholdersInCTRow(ctRow, flexData.getPositions().get(posCounter));
+                                posCounter++;
+                            } else if (rowText.contains("{{BEL_UST_") && taxCounter < flexData.getTaxRates().size()) {
+                                replacePlaceholdersInCTRow(ctRow, flexData.getTaxRates().get(taxCounter));
+                                taxCounter++;
+                            }
+                        }
+                    }
+
+                    // reload document to refresh POI wrappers after CT-level table manipulation
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    outputDocx.write(baos);
+                    outputDocx.close();
+                    outputDocx = new XWPFDocument(new ByteArrayInputStream(baos.toByteArray()));
+
+                    // let Word calculate optimal column widths (autofit layout)
+                    for (int flexIdx : flexTableIndices) {
+                        if (flexIdx >= outputDocx.getTables().size()) {
+                            continue;
+                        }
+                        XWPFTable flexTable = outputDocx.getTables().get(flexIdx);
+                        CTTbl ctTbl = flexTable.getCTTbl();
+                        CTTblPr tblPr = ctTbl.getTblPr();
+                        if (tblPr == null) {
+                            tblPr = ctTbl.addNewTblPr();
+                        }
+                        CTTblLayoutType tblLayout;
+                        if (tblPr.isSetTblLayout()) {
+                            tblLayout = tblPr.getTblLayout();
+                        } else {
+                            tblLayout = tblPr.addNewTblLayout();
+                        }
+                        tblLayout.setType(STTblLayoutType.AUTOFIT);
                     }
                 }
 
@@ -1336,6 +1440,66 @@ public class MicrosoftOfficeAccess {
                     }
                     if (bodyElement.getElementType().compareTo(BodyElementType.TABLE) == 0) {
                         findScriptsInTable(pattern, (XWPFTable) bodyElement, resultList, allPartyTypesPlaceHolders, formsPlaceHolders);
+                    }
+                }
+            }
+        }
+    }
+
+    private static String getCTRowText(CTRow row) {
+        StringBuilder sb = new StringBuilder();
+        for (CTTc tc : row.getTcList()) {
+            for (CTP p : tc.getPList()) {
+                for (CTR r : p.getRList()) {
+                    for (CTText t : r.getTList()) {
+                        String s = t.getStringValue();
+                        if (s != null) {
+                            sb.append(s);
+                        }
+                    }
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    private static void replacePlaceholdersInCTRow(CTRow row, HashMap<String, String> data) {
+        for (CTTc tc : row.getTcList()) {
+            for (CTP p : tc.getPList()) {
+                // concatenate all text across runs to handle split-run placeholders
+                List<CTR> runs = p.getRList();
+                StringBuilder fullText = new StringBuilder();
+                for (CTR r : runs) {
+                    for (CTText t : r.getTList()) {
+                        String s = t.getStringValue();
+                        if (s != null) {
+                            fullText.append(s);
+                        }
+                    }
+                }
+
+                String text = fullText.toString();
+                String replaced = text;
+                boolean changed = false;
+                for (HashMap.Entry<String, String> entry : data.entrySet()) {
+                    if (replaced.contains(entry.getKey())) {
+                        replaced = replaced.replace(entry.getKey(), entry.getValue());
+                        changed = true;
+                    }
+                }
+
+                if (changed) {
+                    // put replaced text into first CTText element, clear the rest
+                    boolean first = true;
+                    for (CTR r : runs) {
+                        for (CTText t : r.getTList()) {
+                            if (first) {
+                                t.setStringValue(replaced);
+                                first = false;
+                            } else {
+                                t.setStringValue("");
+                            }
+                        }
                     }
                 }
             }
