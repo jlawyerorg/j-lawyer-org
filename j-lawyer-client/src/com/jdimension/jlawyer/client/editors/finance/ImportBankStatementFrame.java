@@ -1183,6 +1183,14 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
     private void cmdCsvUploadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCsvUploadActionPerformed
         JFileChooser chooser = new JFileChooser();
+        ClientSettings cs = ClientSettings.getInstance();
+        String lastDir = cs.getConfiguration(ClientSettings.CONF_BANKSTATEMENT_CSV_LASTDIR, null);
+        if (lastDir != null) {
+            File dir = new File(lastDir);
+            if (dir.exists() && dir.isDirectory()) {
+                chooser.setCurrentDirectory(dir);
+            }
+        }
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
 
@@ -1209,6 +1217,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
                 String url = chooser.getSelectedFile().getCanonicalPath();
                 File f = new File(url);
+                cs.setConfiguration(ClientSettings.CONF_BANKSTATEMENT_CSV_LASTDIR, f.getParent());
 
                 // Create a DecimalFormat with German locale (comma as decimal separator)
                 DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.forLanguageTag(csvConfig.getLocale()));
