@@ -763,6 +763,7 @@ import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import com.jdimension.jlawyer.ui.tagging.WrapLayout;
 import com.jdimension.jlawyer.ui.tagging.MultiDocumentTagActionListener;
+import java.nio.charset.StandardCharsets;
 import java.util.Hashtable;
 import java.util.Map;
 import javax.swing.JOptionPane;
@@ -9632,7 +9633,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
             newName = FileUtils.sanitizeFileName(newName);
             
-            ArchiveFileDocumentsBean newDoc = remote.addDocument(this.dto.getId(), newName, md.getBytes(), "", null);
+            ArchiveFileDocumentsBean newDoc = remote.addDocument(this.dto.getId(), newName, md.getBytes(StandardCharsets.UTF_8), "", null);
             this.caseFolderPanel1.addDocument(remote.getDocument(newDoc.getId()), null);
             javax.swing.JOptionPane.showMessageDialog(this, "Ergebnis wurde als Dokument zur Akte gespeichert.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, javax.swing.JOptionPane.INFORMATION_MESSAGE);
         } catch (Throwable ex) {

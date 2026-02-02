@@ -682,6 +682,12 @@ import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.services.IntegrationServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -885,7 +891,7 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
     public void showContent(String documentId, byte[] content) {
         this.id = documentId;
         this.initialContent = content;
-        htmlEditor.setText(new String(content));
+        htmlEditor.setText(decodeContent(content));
         htmlEditor.setCaretPosition(0);
 
     }
@@ -925,7 +931,7 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
                     log.warn("HtmlPanel.removeNotify(): getText() returned null/empty, skipping save (docId=" + this.id + ")");
                     return;
                 }
-                byte[] currentBytes = currentText.getBytes();
+                byte[] currentBytes = currentText.getBytes(StandardCharsets.UTF_8);
                 if (this.initialContent != null && !Arrays.equals(this.initialContent, currentBytes)) {
                     log.debug("HtmlPanel.removeNotify(): content changed, saving " + currentBytes.length + " bytes (docId=" + this.id + ")");
                     ClientSettings settings = ClientSettings.getInstance();
@@ -941,6 +947,23 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
             }
         } else {
             log.debug("HtmlPanel.removeNotify(): skipping save - id=" + this.id + ", readOnly=" + this.readOnly);
+        }
+    }
+
+    /**
+     * Decodes a byte array to String, trying UTF-8 first and falling back to
+     * Windows-1252 if the bytes are not valid UTF-8. This handles legacy notes
+     * that were saved with the platform default encoding on Windows (Cp1252).
+     */
+    private static String decodeContent(byte[] content) {
+        try {
+            CharsetDecoder utf8Decoder = StandardCharsets.UTF_8.newDecoder()
+                    .onMalformedInput(CodingErrorAction.REPORT)
+                    .onUnmappableCharacter(CodingErrorAction.REPORT);
+            return utf8Decoder.decode(ByteBuffer.wrap(content)).toString();
+        } catch (CharacterCodingException e) {
+            log.info("Document content is not valid UTF-8, falling back to Windows-1252");
+            return new String(content, Charset.forName("windows-1252"));
         }
     }
 

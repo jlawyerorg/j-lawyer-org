@@ -676,6 +676,7 @@ import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.event.KeyEvent;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import javax.swing.DefaultComboBoxModel;
@@ -1318,7 +1319,7 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
             waitForHtmlContentOnMac();
             String contentToSave = this.htmlNoteEditor.getText();
             log.debug("AddNoteFrame: Saving " + contentToSave.length() + " chars for note '" + fileName + "'");
-            ArchiveFileDocumentsBean db = afs.addDocument(this.aFile.getId(), FileUtils.sanitizeFileName(fileName), contentToSave.getBytes(), "", null);
+            ArchiveFileDocumentsBean db = afs.addDocument(this.aFile.getId(), FileUtils.sanitizeFileName(fileName), contentToSave.getBytes(StandardCharsets.UTF_8), "", null);
             log.debug("AddNoteFrame: Note '" + fileName + "' saved successfully");
             EventBroker eb = EventBroker.getInstance();
             eb.publishEvent(new DocumentAddedEvent(db));
