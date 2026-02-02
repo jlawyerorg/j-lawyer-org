@@ -1634,7 +1634,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     }
 
     @Override
-    @RolesAllowed(value = {"adminRole"})
+    @RolesAllowed(value = {"loginRole"})
     public AssistantPrompt addAssistantPrompt(AssistantPrompt ap) throws Exception {
         StringGenerator idGen = new StringGenerator();
         String id = idGen.getID().toString();
@@ -1644,7 +1644,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     }
 
     @Override
-    @RolesAllowed(value = {"adminRole"})
+    @RolesAllowed(value = {"loginRole"})
     public AssistantReplacement addAssistantReplacement(AssistantReplacement ap) throws Exception {
         StringGenerator idGen = new StringGenerator();
         String id = idGen.getID().toString();
@@ -1655,14 +1655,14 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     }
 
     @Override
-    @RolesAllowed(value = {"adminRole"})
+    @RolesAllowed(value = {"loginRole"})
     public AssistantPrompt updateAssistantPrompt(AssistantPrompt ap) throws Exception {
         this.assistantPromptFacade.edit(ap);
         return ap;
     }
 
     @Override
-    @RolesAllowed(value = {"adminRole"})
+    @RolesAllowed(value = {"loginRole"})
     public AssistantReplacement updateAssistantReplacement(AssistantReplacement ap) throws Exception {
         this.assistantReplacementFacade.edit(ap);
         this.singleton.flushAssistantReplacements();
