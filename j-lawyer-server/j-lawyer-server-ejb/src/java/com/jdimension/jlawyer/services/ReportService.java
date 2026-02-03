@@ -767,6 +767,9 @@ public class ReportService implements ReportServiceRemote {
             String query2 = "select 'Akten', year(date_created) as Jahr, count(*) as Akten from cases c where c.date_created>=? and c.date_created<=? group by Jahr order by Jahr asc";
             result.getBarCharts().add(getBarChart(false, "Akten pro Jahr", "Jahr", "Anzahl Akten", query2, 1, 2, 3, params));
 
+            String queryByLawyer = "select IFNULL(NULLIF(lawyer, ''), 'unbekannt') as Anwalt, year(date_created) as Jahr, count(*) as Akten from cases c where c.date_created>=? and c.date_created<=? group by Anwalt, Jahr order by Jahr asc";
+            result.getBarCharts().add(getLineChart(false, "Akten pro Jahr und Anwalt", "Jahr", "Anzahl Akten", queryByLawyer, 1, 2, 3, params));
+
             String queryYearMonth = "SELECT year(date_created) AS Jahr, "
                     + "CAST(SUM(CASE WHEN month(date_created) = 1 THEN 1 ELSE 0 END) AS UNSIGNED) AS 'Januar', "
                     + "CAST(SUM(CASE WHEN month(date_created) = 2 THEN 1 ELSE 0 END) AS UNSIGNED) AS 'Februar', "
@@ -826,12 +829,18 @@ public class ReportService implements ReportServiceRemote {
                     + "ORDER BY Jahr ASC");
             result.getTables().add(getTable(false, "Akten pro Jahr nach Sachgebiet", casesBySubjectFieldQuery.toString(), null, params));
 
+            String queryBySubjectFieldChart = "select IFNULL(NULLIF(subjectField, ''), 'unbekannt') as Sachgebiet, year(date_created) as Jahr, count(*) as Akten from cases c where c.date_created>=? and c.date_created<=? group by Sachgebiet, Jahr order by Jahr asc";
+            result.getBarCharts().add(getLineChart(false, "Akten pro Jahr nach Sachgebiet", "Jahr", "Anzahl Akten", queryBySubjectFieldChart, 1, 2, 3, params));
+
         } else if (Reports.RPT_CASES_BYMONTH.equals(reportId)) {
             String query = "select DATE_FORMAT(date_created,'%Y-%m') as Monat, count(*) as Akten from cases c where c.date_created>=? and c.date_created<=? group by Monat order by Monat asc";
             result.getTables().add(getTable(false, "Akten pro Monat", query, null, params));
 
             String query2 = "select 'Akten' as Serie, DATE_FORMAT(date_created,'%Y-%m') as Monat, count(*) as Akten from cases c where c.date_created>=? and c.date_created<=? group by Monat order by Monat asc";
             result.getBarCharts().add(getBarChart(false, "Akten pro Monat", "Monat", "Anzahl Akten", query2, 1, 2, 3, params));
+
+            String queryByLawyerMonth = "select IFNULL(NULLIF(lawyer, ''), 'unbekannt') as Anwalt, DATE_FORMAT(date_created,'%Y-%m') as Monat, count(*) as Akten from cases c where c.date_created>=? and c.date_created<=? group by Anwalt, Monat order by Monat asc";
+            result.getBarCharts().add(getLineChart(false, "Akten pro Monat und Anwalt", "Monat", "Anzahl Akten", queryByLawyerMonth, 1, 2, 3, params));
 
             // determine all lawyers for the timeframe
             String queryLawyers = "SELECT distinct(lawyer) FROM cases c WHERE c.date_created >= ? AND c.date_created <= ? order by upper(lawyer) asc";
@@ -872,6 +881,9 @@ public class ReportService implements ReportServiceRemote {
                     + "GROUP BY Monat\n"
                     + "ORDER BY Monat ASC");
             result.getTables().add(getTable(false, "Akten pro Monat nach Sachgebiet", casesBySubjectFieldQuery.toString(), null, params));
+
+            String queryBySubjectFieldMonth = "select IFNULL(NULLIF(subjectField, ''), 'unbekannt') as Sachgebiet, DATE_FORMAT(date_created,'%Y-%m') as Monat, count(*) as Akten from cases c where c.date_created>=? and c.date_created<=? group by Sachgebiet, Monat order by Monat asc";
+            result.getBarCharts().add(getLineChart(false, "Akten pro Monat nach Sachgebiet", "Monat", "Anzahl Akten", queryBySubjectFieldMonth, 1, 2, 3, params));
 
         } else if (Reports.RPT_INV_ALL.equals(reportId)) {
             String query = "SELECT inv.case_id, inv.invoice_no as RNr, invt.display_name as Belegart, cont.company as EmpfaengerFirma, cont.name as EmpfaengerName, \n"
@@ -1465,6 +1477,9 @@ public class ReportService implements ReportServiceRemote {
                     + "GROUP BY Monat\n"
                     + "ORDER BY Monat ASC");
             result.getTables().add(getTable(false, "Einnahmen pro Monat", casesByLawyerQuery.toString(), null, params));
+
+            String queryEarningsByLawyerChart = "select IFNULL(NULLIF(c.lawyer, ''), 'unbekannt') as Anwalt, DATE_FORMAT(ca.entry_date, '%Y-%m') as Monat, SUM(ca.in_earnings) as Einnahmen from cases c, case_account_entries ca where ca.entry_date>=? and ca.entry_date<=? and ca.case_id=c.id group by Anwalt, Monat order by Monat asc";
+            result.getBarCharts().add(getLineChart(false, "Einnahmen pro Monat", "Monat", "Einnahmen", queryEarningsByLawyerChart, 1, 2, 3, params));
 
             String query = "\n"
                     + "select case_account_entries.case_id, fileNumber as Aktenzeichen, cases.name as Rubrum, reason as wegen, lawyer as Anwalt, assistant as Sachbearbeiter, DATE_FORMAT(entry_date,'%Y-%m-%d') as Buchungsdatum, case_account_entries.description as Kommentar, in_earnings as Einnahmen, out_spendings as Ausgaben, in_expenditure as AuslagenEin, out_expenditure as AuslagenAus, in_escrow as FremdgeldEin, out_escrow as FremdgeldAus, invoice_no as BelegNr, invoices.name as Bezeichung, round(invoices.total_gross, 2) Bruttobetrag from case_account_entries\n"
