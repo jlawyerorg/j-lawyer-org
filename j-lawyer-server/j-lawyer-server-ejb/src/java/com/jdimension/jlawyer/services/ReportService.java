@@ -1779,4 +1779,12 @@ public class ReportService implements ReportServiceRemote {
         return chart;
     }
 
+    private ReportResultBarChart getLineChart(boolean caseIdColumn, String name, String xTitle, String yTitle, String query, int seriesNameColIndex, int xColIndex, int yColIndex, Object... params) {
+        ReportResultBarChart chart = getBarChart(caseIdColumn, name, xTitle, yTitle, query, seriesNameColIndex, xColIndex, yColIndex, params);
+        for (ReportResultBarChartSeries s : chart.getSeries()) {
+            s.setRenderStyle("Line");
+        }
+        return chart;
+    }
+
 }

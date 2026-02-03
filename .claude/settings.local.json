@@ -19,7 +19,8 @@
       "WebFetch(domain:www.ej-technologies.com)",
       "Bash(xargs:*)",
       "Bash(unzip:*)",
-      "Bash(gh issue view:*)"
+      "Bash(gh issue view:*)",
+      "Bash(jar tf:*)"
     ],
     "deny": [],
     "ask": []

@@ -710,6 +710,8 @@ public class DynamicBarChartPanel extends javax.swing.JPanel {
             CategorySeries series = ch.addSeries(s.getName(), s.getxData(), s.getyData());
             if(s.getFillColor()!=null)
                 series.setFillColor(s.getFillColor());
+            if(s.getRenderStyle()!=null)
+                series.setChartCategorySeriesRenderStyle(CategorySeries.CategorySeriesRenderStyle.valueOf(s.getRenderStyle()));
         }
 
         XChartPanel<CategoryChart> xchartPanel = new XChartPanel<>(ch);

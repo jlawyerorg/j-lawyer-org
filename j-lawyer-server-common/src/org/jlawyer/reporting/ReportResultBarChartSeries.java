@@ -680,7 +680,8 @@ public class ReportResultBarChartSeries implements Serializable {
     protected List xData=new ArrayList();
     protected List<Number> yData=new ArrayList<>();
     protected Color fillColor=Color.BLUE;
-    
+    protected String renderStyle=null;
+
     public ReportResultBarChartSeries() {
         
     }
@@ -740,5 +741,19 @@ public class ReportResultBarChartSeries implements Serializable {
     public void setFillColor(Color fillColor) {
         this.fillColor = fillColor;
     }
-    
+
+    /**
+     * @return the renderStyle
+     */
+    public String getRenderStyle() {
+        return renderStyle;
+    }
+
+    /**
+     * @param renderStyle the renderStyle to set
+     */
+    public void setRenderStyle(String renderStyle) {
+        this.renderStyle = renderStyle;
+    }
+
 }
