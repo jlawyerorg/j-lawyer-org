@@ -18,7 +18,8 @@
       "WebFetch(domain:www.formdev.com)",
       "WebFetch(domain:www.ej-technologies.com)",
       "Bash(xargs:*)",
-      "Bash(unzip:*)"
+      "Bash(unzip:*)",
+      "Bash(gh issue view:*)"
     ],
     "deny": [],
     "ask": []
