@@ -766,6 +766,66 @@ public class ReportService implements ReportServiceRemote {
 
             String query2 = "select 'Akten', year(date_created) as Jahr, count(*) as Akten from cases c where c.date_created>=? and c.date_created<=? group by Jahr order by Jahr asc";
             result.getBarCharts().add(getBarChart(false, "Akten pro Jahr", "Jahr", "Anzahl Akten", query2, 1, 2, 3, params));
+
+            String queryYearMonth = "SELECT year(date_created) AS Jahr, "
+                    + "CAST(SUM(CASE WHEN month(date_created) = 1 THEN 1 ELSE 0 END) AS UNSIGNED) AS 'Januar', "
+                    + "CAST(SUM(CASE WHEN month(date_created) = 2 THEN 1 ELSE 0 END) AS UNSIGNED) AS 'Februar', "
+                    + "CAST(SUM(CASE WHEN month(date_created) = 3 THEN 1 ELSE 0 END) AS UNSIGNED) AS 'März', "
+                    + "CAST(SUM(CASE WHEN month(date_created) = 4 THEN 1 ELSE 0 END) AS UNSIGNED) AS 'April', "
+                    + "CAST(SUM(CASE WHEN month(date_created) = 5 THEN 1 ELSE 0 END) AS UNSIGNED) AS 'Mai', "
+                    + "CAST(SUM(CASE WHEN month(date_created) = 6 THEN 1 ELSE 0 END) AS UNSIGNED) AS 'Juni', "
+                    + "CAST(SUM(CASE WHEN month(date_created) = 7 THEN 1 ELSE 0 END) AS UNSIGNED) AS 'Juli', "
+                    + "CAST(SUM(CASE WHEN month(date_created) = 8 THEN 1 ELSE 0 END) AS UNSIGNED) AS 'August', "
+                    + "CAST(SUM(CASE WHEN month(date_created) = 9 THEN 1 ELSE 0 END) AS UNSIGNED) AS 'September', "
+                    + "CAST(SUM(CASE WHEN month(date_created) = 10 THEN 1 ELSE 0 END) AS UNSIGNED) AS 'Oktober', "
+                    + "CAST(SUM(CASE WHEN month(date_created) = 11 THEN 1 ELSE 0 END) AS UNSIGNED) AS 'November', "
+                    + "CAST(SUM(CASE WHEN month(date_created) = 12 THEN 1 ELSE 0 END) AS UNSIGNED) AS 'Dezember' "
+                    + "FROM cases c "
+                    + "WHERE c.date_created >= ? AND c.date_created <= ? "
+                    + "GROUP BY Jahr "
+                    + "ORDER BY Jahr ASC";
+            result.getTables().add(getTable(false, "Jahresvergleich", queryYearMonth, null, params));
+
+            // determine all lawyers for the timeframe
+            String queryLawyers = "SELECT distinct(lawyer) FROM cases c WHERE c.date_created >= ? AND c.date_created <= ? order by upper(lawyer) asc";
+            ReportResultTable lawyerTable = getTable(false, "lawyers", queryLawyers, null, params);
+
+            StringBuilder casesByLawyerQuery = new StringBuilder();
+            casesByLawyerQuery.append("SELECT year(date_created) AS Jahr, ");
+            ArrayList<Object[]> lawyerRows = lawyerTable.getValues();
+            for (Object[] lawyerRow : lawyerRows) {
+                String lawyer = (String) lawyerRow[0];
+                if (lawyer != null && !("".equalsIgnoreCase(lawyer))) {
+                    casesByLawyerQuery.append("CAST(SUM(CASE WHEN c.lawyer = '").append(lawyer).append("' THEN 1 ELSE 0 END) AS UNSIGNED) AS '").append(lawyer).append("',");
+                }
+            }
+            casesByLawyerQuery.append("CAST(SUM(CASE WHEN c.lawyer IS NULL OR c.lawyer = '' THEN 1 ELSE 0 END) AS UNSIGNED) AS unbekannt\n"
+                    + "FROM cases c\n"
+                    + "WHERE c.date_created >= ? AND c.date_created <= ?\n"
+                    + "GROUP BY Jahr\n"
+                    + "ORDER BY Jahr ASC");
+            result.getTables().add(getTable(false, "Akten pro Jahr und Anwalt", casesByLawyerQuery.toString(), null, params));
+
+            // determine all subject fields for the timeframe
+            String querySubjectFields = "SELECT distinct(subjectField) FROM cases c WHERE c.date_created >= ? AND c.date_created <= ? order by upper(subjectField) asc";
+            ReportResultTable subjectFieldTable = getTable(false, "subjectfields", querySubjectFields, null, params);
+
+            StringBuilder casesBySubjectFieldQuery = new StringBuilder();
+            casesBySubjectFieldQuery.append("SELECT year(date_created) AS Jahr, ");
+            ArrayList<Object[]> subjectFieldRows = subjectFieldTable.getValues();
+            for (Object[] subjectFieldRow : subjectFieldRows) {
+                String subjectField = (String) subjectFieldRow[0];
+                if (subjectField != null && !("".equalsIgnoreCase(subjectField))) {
+                    casesBySubjectFieldQuery.append("CAST(SUM(CASE WHEN c.subjectField = '").append(subjectField).append("' THEN 1 ELSE 0 END) AS UNSIGNED) AS '").append(subjectField).append("',");
+                }
+            }
+            casesBySubjectFieldQuery.append("CAST(SUM(CASE WHEN c.subjectField IS NULL OR c.subjectField = '' THEN 1 ELSE 0 END) AS UNSIGNED) AS unbekannt\n"
+                    + "FROM cases c\n"
+                    + "WHERE c.date_created >= ? AND c.date_created <= ?\n"
+                    + "GROUP BY Jahr\n"
+                    + "ORDER BY Jahr ASC");
+            result.getTables().add(getTable(false, "Akten pro Jahr nach Sachgebiet", casesBySubjectFieldQuery.toString(), null, params));
+
         } else if (Reports.RPT_CASES_BYMONTH.equals(reportId)) {
             String query = "select DATE_FORMAT(date_created,'%Y-%m') as Monat, count(*) as Akten from cases c where c.date_created>=? and c.date_created<=? group by Monat order by Monat asc";
             result.getTables().add(getTable(false, "Akten pro Monat", query, null, params));
