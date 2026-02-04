@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFact
 import com.jdimension.jlawyer.client.editors.documents.viewer.GifJpegPngImageWithTextPanel;
 import com.jdimension.jlawyer.client.editors.documents.viewer.HtmlPanel;
 import com.jdimension.jlawyer.client.editors.documents.viewer.PreviewPanel;
+import com.jdimension.jlawyer.client.encryption.PDFEncryptor;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
@@ -679,13 +680,18 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.encryption.InvalidPasswordException;
 import org.apache.log4j.Logger;
 
 /**
@@ -773,6 +779,51 @@ public class LoadDocumentPreviewThread implements Runnable {
                 try {
                     // Heavy I/O operation: downloads document from server (can take seconds/minutes)
                     byte[] data = CachingDocumentLoader.getInstance().getDocument(this.docDto.getId());
+
+                    // Check if PDF is encrypted and offer decryption
+                    if (this.docDto.getName().toLowerCase().endsWith(".pdf")) {
+                        boolean needsUserPassword = false;
+                        try {
+                            PDDocument testDoc = PDDocument.load(data);
+                            // PDF opened without password - if encrypted, it only has an owner password
+                            // which doesn't prevent viewing, so no action needed
+                            testDoc.close();
+                        } catch (InvalidPasswordException ipe) {
+                            needsUserPassword = true;
+                        }
+
+                        if (needsUserPassword && !this.readOnly) {
+                            boolean retry = true;
+                            while (retry) {
+                                final AtomicReference<String> passwordRef = new AtomicReference<>(null);
+                                SwingUtilities.invokeAndWait(() -> {
+                                    JPasswordField pwField = new JPasswordField(30);
+                                    int result = JOptionPane.showConfirmDialog(pnlPreview, pwField, "PDF ist verschlüsselt - Passwort eingeben:", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                                    if (result == JOptionPane.OK_OPTION) {
+                                        passwordRef.set(new String(pwField.getPassword()));
+                                    }
+                                });
+
+                                String password = passwordRef.get();
+                                if (password == null) {
+                                    // user cancelled
+                                    break;
+                                }
+
+                                try {
+                                    byte[] decryptedData = PDFEncryptor.decryptPdf(data, password);
+                                    afs.setDocumentContent(this.docDto.getId(), decryptedData);
+                                    data = decryptedData;
+                                    retry = false;
+                                } catch (InvalidPasswordException ipe2) {
+                                    SwingUtilities.invokeAndWait(() -> {
+                                        JOptionPane.showMessageDialog(pnlPreview, "Falsches Passwort!", "Fehler", JOptionPane.ERROR_MESSAGE);
+                                    });
+                                }
+                            }
+                        }
+                    }
+
                     // Heavy processing operation: creates viewer and parses document
                     preview = DocumentViewerFactory.getDocumentViewer(this.caseDto, this.docDto.getId(), this.docDto.getName(), readOnly, new CaseDocumentPreviewProvider(afs, this.docDto.getId()), data, panelWidth, panelHeight, this.saveCallback);
                 } catch (Exception ex) {

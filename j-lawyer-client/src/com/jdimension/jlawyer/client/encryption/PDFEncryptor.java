@@ -680,6 +680,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.encryption;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
@@ -690,6 +691,15 @@ import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
  * @author jens
  */
 public class PDFEncryptor {
+
+    public static byte[] decryptPdf(byte[] pdfData, String password) throws Exception {
+        PDDocument doc = PDDocument.load(pdfData, password);
+        doc.setAllSecurityToBeRemoved(true);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        doc.save(baos);
+        doc.close();
+        return baos.toByteArray();
+    }
 
     public static String encryptPdf(String pdfSourcePath, String targetDirectory, String password) throws Exception {
         File pdfSourceFile=new File(pdfSourcePath);
