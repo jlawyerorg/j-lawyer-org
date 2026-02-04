@@ -675,6 +675,7 @@ import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.apache.log4j.Logger;
@@ -709,14 +710,17 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
 
         this.txtUnitPrice.getDocument().addDocumentListener(new DocumentListener() {
             public void changedUpdate(DocumentEvent e) {
+                checkNegativeUnitPrice();
                 updateParentTotal();
             }
 
             public void removeUpdate(DocumentEvent e) {
+                checkNegativeUnitPrice();
                 updateParentTotal();
             }
 
             public void insertUpdate(DocumentEvent e) {
+                checkNegativeUnitPrice();
                 updateParentTotal();
             }
         });
@@ -997,6 +1001,21 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
         }
     }
     
+    private void checkNegativeUnitPrice() {
+        String text = this.txtUnitPrice.getText();
+        boolean negative = text != null && text.contains("-");
+        SwingUtilities.invokeLater(() -> {
+            if (negative) {
+                txtUnitPrice.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_WARNING);
+                txtUnitPrice.setToolTipText("Negative Beträge sind in e-Rechnungen nicht erlaubt - nur die Menge darf negativ sein.");
+            } else {
+                txtUnitPrice.putClientProperty(FlatClientProperties.OUTLINE, null);
+                txtUnitPrice.setToolTipText(null);
+            }
+            txtUnitPrice.repaint();
+        });
+    }
+
     public void updateParentTotal() {
         this.parent.updateTotals(this);
     }
@@ -1008,7 +1027,15 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
             unitPrice = (Number) this.txtUnitPrice.getValue();
 
             if (unitPrice != null) {
-                this.txtUnitPrice.putClientProperty(FlatClientProperties.OUTLINE, null);
+                if (unitPrice.doubleValue() < 0) {
+                    this.txtUnitPrice.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_WARNING);
+                    this.txtUnitPrice.setToolTipText("Negative Beträge sind in e-Rechnungen nicht erlaubt - nur die Menge darf negativ sein.");
+                    this.txtUnitPrice.repaint();
+                } else {
+                    this.txtUnitPrice.putClientProperty(FlatClientProperties.OUTLINE, null);
+                    this.txtUnitPrice.setToolTipText(null);
+                    this.txtUnitPrice.repaint();
+                }
                 this.txtTotal.putClientProperty(FlatClientProperties.OUTLINE, null);
                 // Use BigDecimal for precise calculation to avoid rounding issues
                 BigDecimal units = BigDecimal.valueOf(((Number) this.txtUnits.getValue()).doubleValue());
