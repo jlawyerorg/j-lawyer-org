@@ -1316,6 +1316,10 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
         this.taEventDescription.setText(description);
     }
 
+    public void setLocation(String location) {
+        this.txtEventLocation.setText(location);
+    }
+
     public void setEventType(int eventType) {
         this.radioEventTypeFollowUp.setSelected(true);
         switch (eventType) {

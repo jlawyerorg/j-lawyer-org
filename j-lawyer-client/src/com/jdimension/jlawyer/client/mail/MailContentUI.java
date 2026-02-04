@@ -673,6 +673,9 @@ import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
 import com.jdimension.jlawyer.client.assistant.AssistantInputAdapter;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import de.costache.calendar.NewEventEntryDialog;
 import com.jdimension.jlawyer.client.editors.documents.viewer.html.cid.CidCache;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
@@ -692,6 +695,8 @@ import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.BorderLayout;
+import java.awt.Cursor;
+import java.awt.Dialog;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
@@ -707,6 +712,7 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -732,6 +738,10 @@ import javax.mail.util.SharedByteArrayInputStream;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import net.fortuna.ical4j.data.CalendarBuilder;
+import net.fortuna.ical4j.model.Component;
+import net.fortuna.ical4j.model.Property;
+import net.fortuna.ical4j.model.component.VEvent;
 import org.apache.log4j.Logger;
 import org.simplejavamail.outlookmessageparser.model.OutlookFileAttachment;
 import org.simplejavamail.outlookmessageparser.model.OutlookMessage;
@@ -798,6 +808,12 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     private String contentType = ContentTypes.TEXT_PLAIN;
     private String body = "";
 
+    private String icsSummary = null;
+    private String icsDescription = null;
+    private String icsLocation = null;
+    private Date icsStartDate = null;
+    private Date icsEndDate = null;
+
     /**
      * Creates new form MailContentUI
      */
@@ -822,6 +838,16 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         addCopyFunctionality(lblTo);
         addCopyFunctionality(lblCC);
         addCopyFunctionality(lblBCC);
+
+        this.lblCalendarEntry.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (icsSummary == null && icsStartDate == null) {
+                    return;
+                }
+                openCalendarEntryFromIcs();
+            }
+        });
 
         WebViewRegister.getInstance();
 
@@ -955,6 +981,158 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         this.setBody("", ContentTypes.TEXT_PLAIN);
 
         ((DefaultListModel) this.lstAttachments.getModel()).removeAllElements();
+
+        this.icsSummary = null;
+        this.icsDescription = null;
+        this.icsLocation = null;
+        this.icsStartDate = null;
+        this.icsEndDate = null;
+        this.lblCalendarEntry.setText("");
+        this.lblCalendarEntry.setToolTipText(null);
+        this.lblCalendarEntry.setCursor(null);
+    }
+
+    void detectAndShowIcsAttachment() {
+        this.icsSummary = null;
+        this.icsDescription = null;
+        this.icsLocation = null;
+        this.icsStartDate = null;
+        this.icsEndDate = null;
+        this.lblCalendarEntry.setText("");
+        this.lblCalendarEntry.setToolTipText(null);
+        this.lblCalendarEntry.setCursor(null);
+
+        try {
+            String icsAttachmentName = null;
+            DefaultListModel model = (DefaultListModel) this.lstAttachments.getModel();
+            for (int i = 0; i < model.getSize(); i++) {
+                String name = model.getElementAt(i).toString();
+                if (name.toLowerCase().endsWith(".ics")) {
+                    icsAttachmentName = name;
+                    break;
+                }
+            }
+
+            if (icsAttachmentName == null) {
+                return;
+            }
+
+            byte[] data = null;
+            if (this.emlMsgContainer != null) {
+                data = EmailUtils.getAttachmentBytes(icsAttachmentName, this.emlMsgContainer);
+            } else if (this.outlookMsgContainer != null) {
+                for (OutlookFileAttachment ofa : this.outlookMsgContainer.fetchTrueAttachments()) {
+                    if ((ofa.getFilename() != null && ofa.getFilename().equals(icsAttachmentName)) || ((ofa.getLongFilename() != null && ofa.getLongFilename().equals(icsAttachmentName)))) {
+                        data = ofa.getData();
+                        break;
+                    }
+                }
+            }
+
+            if (data == null || data.length == 0) {
+                return;
+            }
+
+            CalendarBuilder builder = new CalendarBuilder();
+            net.fortuna.ical4j.model.Calendar calendar = builder.build(new ByteArrayInputStream(data));
+            VEvent event = (VEvent) calendar.getComponents().getComponent(Component.VEVENT);
+            if (event == null) {
+                return;
+            }
+
+            Property summaryProp = event.getProperties().getProperty(Property.SUMMARY);
+            if (summaryProp != null) {
+                this.icsSummary = summaryProp.getValue();
+            }
+            Property descProp = event.getProperties().getProperty(Property.DESCRIPTION);
+            if (descProp != null) {
+                this.icsDescription = descProp.getValue();
+            }
+            Property locProp = event.getProperties().getProperty(Property.LOCATION);
+            if (locProp != null) {
+                this.icsLocation = locProp.getValue();
+            }
+            if (event.getStartDate() != null) {
+                this.icsStartDate = event.getStartDate().getDate();
+            }
+            if (event.getEndDate() != null) {
+                this.icsEndDate = event.getEndDate().getDate();
+            }
+
+            String displaySummary = this.icsSummary != null ? this.icsSummary : icsAttachmentName;
+            String hexBlue = String.format("#%02x%02x%02x", DefaultColorTheme.COLOR_LOGO_BLUE.getRed(), DefaultColorTheme.COLOR_LOGO_BLUE.getGreen(), DefaultColorTheme.COLOR_LOGO_BLUE.getBlue());
+
+            StringBuilder dateInfo = new StringBuilder();
+            SimpleDateFormat dfLabel = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+            if (this.icsStartDate != null) {
+                dateInfo.append(dfLabel.format(this.icsStartDate));
+                if (this.icsEndDate != null) {
+                    dateInfo.append(" - ").append(dfLabel.format(this.icsEndDate));
+                }
+            }
+
+            StringBuilder labelHtml = new StringBuilder();
+            labelHtml.append("<html><table cellpadding='0' cellspacing='0'><tr>");
+            labelHtml.append("<td><table cellpadding='2' cellspacing='0'><tr><td style='color:white; background-color:").append(hexBlue).append(";'>&nbsp;Kalendereinladung&nbsp;</td></tr></table></td>");
+            labelHtml.append("<td>&nbsp;&nbsp;<b>").append(displaySummary).append("</b>");
+            if (dateInfo.length() > 0) {
+                labelHtml.append("&nbsp;&nbsp;<font color='#888888'>").append(dateInfo).append("</font>");
+            }
+            if (this.icsLocation != null && !this.icsLocation.isEmpty()) {
+                labelHtml.append("&nbsp;&nbsp;<font color='#888888'>").append(this.icsLocation).append("</font>");
+            }
+            labelHtml.append("&nbsp;&nbsp;<font color='").append(hexBlue).append("'><u>als Kalendereintrag übernehmen</u></font>");
+            labelHtml.append("</td></tr></table></html>");
+
+            this.lblCalendarEntry.setText(labelHtml.toString());
+            this.lblCalendarEntry.setToolTipText(displaySummary);
+            this.lblCalendarEntry.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        } catch (Exception ex) {
+            log.error("Error detecting ICS attachment", ex);
+        }
+    }
+
+    private void openCalendarEntryFromIcs() {
+        ArchiveFileBean targetCase = this.caseContext;
+
+        if (targetCase == null) {
+            SearchAndAssignDialog searchDlg = new SearchAndAssignDialog(
+                    EditorsRegistry.getInstance().getMainWindow(), true,
+                    this.lblSubject.getText(), null);
+            searchDlg.setVisible(true);
+            targetCase = searchDlg.getCaseSelection();
+            searchDlg.dispose();
+            if (targetCase == null) {
+                return;
+            }
+        }
+
+        NewEventEntryDialog dlg = new NewEventEntryDialog(
+                null, EditorsRegistry.getInstance().getMainWindow(),
+                Dialog.ModalityType.APPLICATION_MODAL,
+                targetCase, false);
+
+        dlg.setEventType(ArchiveFileReviewsBean.EVENTTYPE_EVENT);
+        if (icsSummary != null) {
+            dlg.setSummary(icsSummary);
+        }
+        if (icsDescription != null) {
+            dlg.setDescription(icsDescription);
+        }
+        if (icsLocation != null) {
+            dlg.setLocation(icsLocation);
+        }
+        if (icsStartDate != null) {
+            dlg.setBeginDate(icsStartDate);
+        }
+        if (icsEndDate != null) {
+            dlg.setEndDate(icsEndDate);
+        }
+        dlg.setReviewAssignees(targetCase.getAssistant(), targetCase.getLawyer());
+
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
     }
 
     public String getBody() {
@@ -1015,6 +1193,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         try {
             setOutlookMessageImpl(this, om, lblSubject, lblSentDate, lblTo, lblCC, lblBCC, lblFrom, lstAttachments, webViewId);
+            this.detectAndShowIcsAttachment();
 
         } catch (Exception ex) {
             log.error("Error getting contents of Outlook message", ex);
@@ -1071,6 +1250,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 return true;
             } else {
                 MailContentUI.setMessageImpl(this, msg, ms, this.lblSubject, this.lblSentDate, this.lblTo, this.lblCC, this.lblBCC, this.lblFrom, this.lstAttachments, false, this.fxContainer, this.webViewId);
+                this.detectAndShowIcsAttachment();
             }
 
         } catch (Exception ex) {
@@ -1673,6 +1853,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         lstAttachments = new javax.swing.JList();
         jSeparator2 = new javax.swing.JSeparator();
         fxContainer = new javax.swing.JPanel();
+        lblCalendarEntry = new javax.swing.JLabel();
 
         mnuSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
         mnuSave.setText("Speichern");
@@ -1886,7 +2067,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         );
         fxContainerLayout.setVerticalGroup(
             fxContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 183, Short.MAX_VALUE)
+            .addGap(0, 177, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -1896,11 +2077,17 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(fxContainer, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(lblCalendarEntry, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, 0)
+                .addComponent(lblCalendarEntry)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(fxContainer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -2294,6 +2481,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JLabel lblBCC;
     private javax.swing.JLabel lblCC;
+    private javax.swing.JLabel lblCalendarEntry;
     private javax.swing.JLabel lblFrom;
     private javax.swing.JLabel lblSentDate;
     private javax.swing.JLabel lblSubject;

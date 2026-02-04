@@ -727,6 +727,10 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
         this.newEventPanel.setDescription(description);
     }
 
+    public void setLocation(String location) {
+        this.newEventPanel.setLocation(location);
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always

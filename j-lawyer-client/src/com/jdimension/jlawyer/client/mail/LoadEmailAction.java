@@ -744,6 +744,7 @@ public class LoadEmailAction extends ProgressableAction {
                     i.setVisible(true);
                     i.repaint();
                     MailContentUI.setMessageImpl(contentUI, msg, ms, lblSubject, lblSentDate, lblTo, lblCC, lblBCC, lblFrom, lstAttachments, true, fxContainer, webViewId);
+                    contentUI.detectAndShowIcsAttachment();
                 } catch (Throwable t) {
                     log.error(t);
                 }

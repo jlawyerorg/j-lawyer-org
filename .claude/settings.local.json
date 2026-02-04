@@ -20,7 +20,8 @@
       "Bash(xargs:*)",
       "Bash(unzip:*)",
       "Bash(gh issue view:*)",
-      "Bash(jar tf:*)"
+      "Bash(jar tf:*)",
+      "Bash(javap:*)"
     ],
     "deny": [],
     "ask": []
