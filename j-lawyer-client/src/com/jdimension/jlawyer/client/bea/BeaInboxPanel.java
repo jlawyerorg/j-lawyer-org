@@ -1724,7 +1724,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     boolean isTrash = tf.getType().equals(Folder.TYPE_TRASH);
 
                     for (int i = selected.length - 1; i > -1; i--) {
-                        if (isCancelled()) break;
+                        if (isCancelled()) {
+                            break;
+                        }
 
                         try {
                             MessageHeader mh = headers[i];
@@ -2002,7 +2004,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     if (!isCancelled()) {
                         // Load attachments - this can be slow for large files
                         for (Attachment att : msg.getAttachments()) {
-                            if (isCancelled()) break;
+                            if (isCancelled()) {
+                                break;
+                            }
                             byte[] data = att.getContent();
                             if (data != null) {
                                 String attachmentUrl = FileUtils.createTempFile(att.getFileName(), data);
@@ -2095,7 +2099,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                         // Load all recipient identities - this can be slow with many recipients
                         for (Recipient r : to) {
-                            if (isCancelled()) break;
+                            if (isCancelled()) {
+                                break;
+                            }
                             try {
                                 Identity identity = bea.getIdentity(r.getSafeId());
                                 recipients.add(identity);
@@ -2268,7 +2274,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     EditorsRegistry.getInstance().updateStatus("Markiere Nachrichten als gelesen...");
 
                     for (MessageHeader mh : headers) {
-                        if (isCancelled()) break;
+                        if (isCancelled()) {
+                            break;
+                        }
                         BeaAccess.getInstance().setMessageReadByUser(mh);
                         mh.setRead(true);
                     }
@@ -2347,7 +2355,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     private void displayMessageImpl() {
 
-        int splitLocationBefore=this.jSplitPane1.getDividerLocation();
+        int splitLocationBefore = this.jSplitPane1.getDividerLocation();
 
         if (this.tblMails.getSelectedRow() < 0 || this.tblMails.getSelectedRows().length > 1) {
             return;
@@ -2444,21 +2452,12 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     actionPanelEntries.add(berp);
                 }
 
-                // allow navigating to senders address
-                for (AddressBean h : hits) {
-                    NavigateToAddressPanel ap = new NavigateToAddressPanel(this.getClass().getName());
-                    ap.setAddress(h);
-                    ap.setBackground(new Color(153, 204, 255));
-                    actionPanelEntries.add(ap);
-                }
-
                 String referenceJustice = msg.getReferenceJustice();
-                boolean foundByReferenceJustice=this.addActionsByReference(afs, referenceJustice, actionPanelEntries);
-                boolean foundByReference=false;
-                if(!foundByReferenceJustice) {
-                    foundByReference=this.addActionsByReference(afs, referenceJustice, actionPanelEntries);
+                boolean foundByReferenceJustice = this.addActionsByReference(afs, referenceJustice, actionPanelEntries);
+                boolean foundByReference = false;
+                if (!foundByReferenceJustice) {
+                    foundByReference = this.addActionsByReference(afs, referenceJustice, actionPanelEntries);
                 }
-                
 
                 if (!foundByReference && !foundByReferenceJustice) {
                     // display all cases where sender is involved
@@ -2486,11 +2485,20 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                             actionPanelEntries.add(ep);
                             i++;
-                            if(actionPanelEntries.size()>20)
+                            if (actionPanelEntries.size() > 20) {
                                 break;
+                            }
                         }
 
                     }
+                }
+
+                // allow navigating to senders address
+                for (AddressBean h : hits) {
+                    NavigateToAddressPanel ap = new NavigateToAddressPanel(this.getClass().getName());
+                    ap.setAddress(h);
+                    ap.setBackground(new Color(153, 204, 255));
+                    actionPanelEntries.add(ap);
                 }
             }
 
@@ -2511,7 +2519,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         }
 
     }
-    
+
     private boolean addActionsByReference(ArchiveFileServiceRemote afs, String reference, ArrayList<Component> actionPanelEntries) throws Exception {
         boolean foundByReference = false;
         if (!StringUtils.isEmpty(reference)) {
@@ -2519,7 +2527,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             this.sortCases(refList);
             if (!refList.isEmpty()) {
                 foundByReference = true;
-                for(ArchiveFileAddressesBean aab: refList) {
+                for (ArchiveFileAddressesBean aab : refList) {
                     SaveToCasePanel ep = new SaveToCasePanel(this.getClass().getName());
                     ep.setBackground(ep.getBackground().brighter());
                     CaseForContactEntry lce = new CaseForContactEntry();
@@ -2531,8 +2539,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     lce.setArchived(aab.getArchiveFileKey().isArchived());
                     ep.setEntry(lce, this);
                     actionPanelEntries.add(ep);
-                    if(actionPanelEntries.size()>20)
+                    if (actionPanelEntries.size() > 20) {
                         break;
+                    }
                 }
             }
 
@@ -2555,8 +2564,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     ep.setEntry(lce, this);
                     actionPanelEntries.add(ep);
                     foundByFileNumber = true;
-                    if(actionPanelEntries.size()>20)
+                    if (actionPanelEntries.size() > 20) {
                         break;
+                    }
                 }
             }
         }
