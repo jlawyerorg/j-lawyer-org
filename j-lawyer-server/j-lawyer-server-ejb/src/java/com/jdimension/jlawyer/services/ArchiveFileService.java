@@ -1271,7 +1271,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 ad.setArchiveFileKey(dto);
                 this.archiveFileAddressesFacade.create(ad);
                 if (ad.getAddressKey() != null) {
-                    this.addCaseHistory(idGen.getID().toString(), dto, "Beteiligte(n) hinzugefügt: " + ad.getAddressKey().toDisplayName());
+                    this.addCaseHistory(idGen.getID().toString(), dto, "Beteiligte(n) hinzugefügt: " + ad.getAddressKey().toDisplayName() + " (" + ad.getReferenceTypeAsString() + ")");
                 }
             }
         }
@@ -1715,7 +1715,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 ad.setArchiveFileKey(dto);
                 this.archiveFileAddressesFacade.create(ad);
                 if (ad.getAddressKey() != null) {
-                    this.addCaseHistory(idGen.getID().toString(), dto, "Beteiligte(n) hinzugefügt: " + ad.getAddressKey().toDisplayName());
+                    this.addCaseHistory(idGen.getID().toString(), dto, "Beteiligte(n) hinzugefügt: " + ad.getAddressKey().toDisplayName() + " (" + ad.getReferenceTypeAsString() + ")");
                 }
             }
         }
@@ -4445,7 +4445,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), address.getArchiveFileKey(), this.securityFacade, this.getAllowedGroups(address.getArchiveFileKey()));
 
         this.archiveFileAddressesFacade.create(address);
-        this.addCaseHistory(idGen.getID().toString(), address.getArchiveFileKey(), "Beteiligte(n) hinzugefügt: " + address.getAddressKey().toDisplayName());
+        this.addCaseHistory(idGen.getID().toString(), address.getArchiveFileKey(), "Beteiligte(n) hinzugefügt: " + address.getAddressKey().toDisplayName() + " (" + address.getReferenceTypeAsString() + ")");
 
         address = this.archiveFileAddressesFacade.find(id);
 
