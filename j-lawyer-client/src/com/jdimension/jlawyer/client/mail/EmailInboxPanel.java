@@ -722,7 +722,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Set;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
@@ -2875,16 +2877,21 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                         }
 
                         // find cases that might be relevant for the sender of the mail
-                        if(subjectBodyCases.isEmpty())  {
+                        {
                             ArrayList<String> addedFileNumbers = new ArrayList<>();
-                            
+                            Set<String> subjectBodyFileNumbers = new HashSet<>();
+                            for (ArchiveFileBean af : subjectBodyCases) {
+                                subjectBodyFileNumbers.add(af.getFileNumber());
+                            }
+
                             for (AddressBean h : hits) {
                                 Collection caseCol = afs.getArchiveFileAddressesForAddress(h.getId());
 
                                 for (Object o : caseCol) {
                                     ArchiveFileAddressesBean afab = (ArchiveFileAddressesBean) o;
                                     ArchiveFileBean a = afab.getArchiveFileKey();
-                                    if (!addedFileNumbers.contains(a.getFileNumber())) {
+                                    if (!addedFileNumbers.contains(a.getFileNumber())
+                                            && !subjectBodyFileNumbers.contains(a.getFileNumber())) {
                                         addedFileNumbers.add(afab.getArchiveFileKey().getFileNumber());
                                         addressRelatedCases.add(a);
                                     }
@@ -2922,9 +2929,17 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 }
             }
             
-            subjectBodyCases.addAll(addressRelatedCases);
+            // die spezifischeren Ergebnisse sollen oben stehen
+            List<ArchiveFileBean> orderedCases = new ArrayList<>();
+            if (subjectBodyCases.size() >= addressRelatedCases.size()) {
+                orderedCases.addAll(addressRelatedCases);
+                orderedCases.addAll(subjectBodyCases);
+            } else {
+                orderedCases.addAll(subjectBodyCases);
+                orderedCases.addAll(addressRelatedCases);
+            }
             int i = 0;
-            for (Object c : subjectBodyCases) {
+            for (Object c : orderedCases) {
                 ArchiveFileBean aFile = (ArchiveFileBean) c;
                 SaveToCasePanel ep = new SaveToCasePanel(this.getClass().getName());
                 if (i % 2 == 0) {
