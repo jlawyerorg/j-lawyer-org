@@ -670,7 +670,6 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -904,6 +903,9 @@ public class LibreOfficeAccess {
                 graphicProps.setStyleVerticalRelAttribute("page");
                 graphicProps.setStyleHorizontalPosAttribute("from-left");
                 graphicProps.setStyleHorizontalRelAttribute("page");
+
+                // Lock position and size to prevent accidental moving/resizing
+                graphicProps.setStyleProtectAttribute("position size");
 
                 // Append properties to style
                 style.appendChild(graphicProps);

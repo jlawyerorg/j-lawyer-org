@@ -1811,7 +1811,7 @@ public class MicrosoftOfficeAccess {
             "xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\" " +
             "xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">" +
             "<wp:anchor distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\" simplePos=\"0\" relativeHeight=\"0\" " +
-            "behindDoc=\"1\" locked=\"0\" layoutInCell=\"0\" allowOverlap=\"1\">" +
+            "behindDoc=\"1\" locked=\"1\" layoutInCell=\"0\" allowOverlap=\"1\">" +
             "<wp:simplePos x=\"0\" y=\"0\"/>" +
             "<wp:positionH relativeFrom=\"page\">" +
             "<wp:posOffset>0</wp:posOffset>" +
@@ -1823,13 +1823,13 @@ public class MicrosoftOfficeAccess {
             "<wp:effectExtent l=\"0\" t=\"0\" r=\"0\" b=\"0\"/>" +
             "<wp:wrapNone/>" +
             "<wp:docPr id=\"" + picId + "\" name=\"Background Image\"/>" +
-            "<wp:cNvGraphicFramePr/>" +
+            "<wp:cNvGraphicFramePr><a:graphicFrameLocks noMove=\"1\" noResize=\"1\" noChangeAspect=\"1\"/></wp:cNvGraphicFramePr>" +
             "<a:graphic>" +
             "<a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">" +
             "<pic:pic>" +
             "<pic:nvPicPr>" +
             "<pic:cNvPr id=\"" + picId + "\" name=\"" + imgFile.getName() + "\"/>" +
-            "<pic:cNvPicPr/>" +
+            "<pic:cNvPicPr><a:picLocks noMove=\"1\" noResize=\"1\" noChangeAspect=\"1\" noSelect=\"1\"/></pic:cNvPicPr>" +
             "</pic:nvPicPr>" +
             "<pic:blipFill>" +
             "<a:blip r:embed=\"" + pictureId + "\"/>" +
