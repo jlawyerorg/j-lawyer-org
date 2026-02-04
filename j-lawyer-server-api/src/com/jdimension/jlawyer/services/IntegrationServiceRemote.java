@@ -700,6 +700,19 @@ public interface IntegrationServiceRemote {
 
     byte[] getObservedFile(String fileName) throws Exception;
 
+    /**
+     * Extracts text content from an observed (scan) file using Apache Tika.
+     * Returns the extracted text, or an empty string if extraction fails
+     * or the file contains no extractable text.
+     *
+     * @param fileName the name of the observed file
+     * @param maxChars maximum number of characters to return from the beginning
+     *                 of the text, or -1 to return the entire text
+     * @return the extracted text content, or empty string
+     * @throws Exception if the file cannot be read
+     */
+    String getObservedFileText(String fileName, int maxChars) throws Exception;
+
     String assignObservedFile(String fileName, String archiveFileId, String renameTo) throws Exception;
 
     Collection<String> getAllEmailTemplateNames();

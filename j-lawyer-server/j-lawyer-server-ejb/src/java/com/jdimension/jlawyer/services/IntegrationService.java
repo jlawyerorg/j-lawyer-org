@@ -1109,6 +1109,43 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     }
 
     @Override
+    @RolesAllowed(value = {"readArchiveFileRole"})
+    public String getObservedFileText(String fileName, int maxChars) throws Exception {
+        byte[] data = this.getObservedFile(fileName);
+        if (data == null) {
+            return "";
+        }
+
+        Tika tika = TikaConfigurator.newTika(fileName);
+        try {
+            try (Reader r = tika.parse(new ByteArrayInputStream(data)); BufferedReader br = new BufferedReader(r); StringWriter sw = new StringWriter(); BufferedWriter bw = new BufferedWriter(sw)) {
+                char[] buffer = new char[1024];
+                int totalChars = 0;
+                int bytesRead = -1;
+                while ((bytesRead = br.read(buffer)) > -1) {
+                    if (maxChars >= 0) {
+                        int remaining = maxChars - totalChars;
+                        if (remaining <= 0) {
+                            break;
+                        }
+                        int charsToWrite = Math.min(bytesRead, remaining);
+                        bw.write(buffer, 0, charsToWrite);
+                        totalChars += charsToWrite;
+                    } else {
+                        bw.write(buffer, 0, bytesRead);
+                    }
+                }
+                bw.flush();
+                return sw.toString();
+            }
+        } catch (Throwable t) {
+            log.error("Error extracting text from observed file " + fileName, t);
+        }
+
+        return "";
+    }
+
+    @Override
     public boolean validateExternalStorageLocation(String location) throws Exception {
         try {
             VirtualFile vf = VirtualFile.getFile(location);

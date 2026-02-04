@@ -691,6 +691,7 @@ import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.pojo.FileMetadata;
@@ -742,6 +743,11 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     private List<ArchiveFileBean> cachedOthersCases = null;
     private long cacheTimestamp = 0;
     private static final long CACHE_VALIDITY_MS = 60000; // 1 minute
+
+    private ArrayList<String> allFileNumbers = new ArrayList<>();
+    private long lastFileNumbersUpdate = 0L;
+    private ArrayList<String> allForeignFileNumbers = new ArrayList<>();
+    private long lastForeignFileNumbersUpdate = 0L;
 
     @Override
     public void notifyStatusBarReady() {
@@ -912,6 +918,8 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         cachedMyCases = null;
         cachedOthersCases = null;
         cacheTimestamp = 0;
+        lastFileNumbersUpdate = 0L;
+        lastForeignFileNumbersUpdate = 0L;
 
         ClientSettings settings = ClientSettings.getInstance();
         try {
@@ -1212,7 +1220,8 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             // Performance optimization: load case suggestions asynchronously
             final ArrayList<Component> finalEntries = actionPanelEntries;
             final int initialIndex = i;
-            loadCaseSuggestionsAsync(finalEntries, initialIndex);
+            String selectedFileName = fileNames.size() == 1 ? fileNames.get(0) : null;
+            loadCaseSuggestionsAsync(finalEntries, initialIndex, selectedFileName);
 
             log.info("displaying preview");
             // display document preview
@@ -1389,28 +1398,105 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     /**
      * Performance optimization: Load case suggestions asynchronously with caching
      */
-    private void loadCaseSuggestionsAsync(final ArrayList<Component> actionPanelEntries, final int initialIndex) {
-        // Check if cache is still valid
-        long now = System.currentTimeMillis();
-        if (cachedMyCases != null && cachedOthersCases != null && (now - cacheTimestamp) < CACHE_VALIDITY_MS) {
-            if (log.isDebugEnabled()) {
-                log.debug("Using cached case suggestions");
-            }
-            // Use cached data immediately
-            addCaseSuggestionsToUI(cachedMyCases, cachedOthersCases, actionPanelEntries, initialIndex);
-            return;
-        }
+    private void loadCaseSuggestionsAsync(final ArrayList<Component> actionPanelEntries, final int initialIndex, final String selectedFileName) {
 
         // Cache invalid or empty - load asynchronously
         new Thread(() -> {
             try {
-                if (log.isDebugEnabled()) {
-                    log.debug("Loading case suggestions from server (cache expired or empty)");
-                }
 
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+
+                // Try text-based matching when a single file is selected
+                if (selectedFileName != null) {
+                    try {
+                        IntegrationServiceRemote intService = locator.lookupIntegrationServiceRemote();
+                        String extractedText = intService.getObservedFileText(selectedFileName, 7500);
+
+                        if (extractedText != null && !extractedText.trim().isEmpty()) {
+                            String textLower = extractedText.toLowerCase();
+
+                            // Load file number caches if expired
+                            if ((System.currentTimeMillis() - this.lastFileNumbersUpdate) > 15000L) {
+                                this.allFileNumbers = fileService.getAllArchiveFileNumbers(true);
+                                this.lastFileNumbersUpdate = System.currentTimeMillis();
+                            }
+                            if ((System.currentTimeMillis() - this.lastForeignFileNumbersUpdate) > 15000L) {
+                                this.allForeignFileNumbers = fileService.getAllReferencedFileNumbers(5, true);
+                                this.lastForeignFileNumbersUpdate = System.currentTimeMillis();
+                            }
+
+                            ArrayList<ArchiveFileBean> textMatchedCases = new ArrayList<>();
+                            ArrayList<String> matchedFileNumbers = new ArrayList<>();
+
+                            // Search for own file numbers in text
+                            for (String fn : allFileNumbers) {
+                                String fnLower = fn.toLowerCase();
+                                if (textLower.contains(fnLower)) {
+                                    ArchiveFileBean a = fileService.getArchiveFileByFileNumber(fn);
+                                    if (a != null && !matchedFileNumbers.contains(a.getFileNumber())) {
+                                        textMatchedCases.add(a);
+                                        matchedFileNumbers.add(a.getFileNumber());
+                                    }
+                                }
+                                if (textMatchedCases.size() > 20) {
+                                    break;
+                                }
+                            }
+
+                            // Search for foreign file numbers in text
+                            if (textMatchedCases.size() <= 20) {
+                                for (String fn : allForeignFileNumbers) {
+                                    String fnLower = fn.toLowerCase();
+                                    if (!StringUtils.isEmpty(fnLower) && textLower.contains(fnLower)) {
+                                        List<ArchiveFileAddressesBean> a = fileService.getArchiveFileAddressesByReference(fn);
+                                        if (a != null) {
+                                            for (ArchiveFileAddressesBean aab : a) {
+                                                ArchiveFileBean af = aab.getArchiveFileKey();
+                                                if (af != null && !matchedFileNumbers.contains(af.getFileNumber())) {
+                                                    textMatchedCases.add(af);
+                                                    matchedFileNumbers.add(af.getFileNumber());
+                                                }
+                                            }
+                                        }
+                                        if (textMatchedCases.size() > 20) {
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (!textMatchedCases.isEmpty()) {
+                                // Text-based matches found - display them
+                                javax.swing.SwingUtilities.invokeLater(() -> {
+                                    addCaseSuggestionsToUI(textMatchedCases, actionPanelEntries, initialIndex);
+                                });
+                                return;
+                            }
+                        }
+                    } catch (Exception ex) {
+                        log.error("Error during text-based case matching", ex);
+                    }
+                }
+
+                // Fallback: load last-changed cases
+                // Check if cache is still valid
+                long now = System.currentTimeMillis();
+                if (cachedMyCases != null && cachedOthersCases != null && (now - cacheTimestamp) < CACHE_VALIDITY_MS) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Using cached case suggestions");
+                    }
+                    javax.swing.SwingUtilities.invokeLater(() -> {
+                        addCaseSuggestionsToUI(cachedMyCases, cachedOthersCases, actionPanelEntries, initialIndex);
+                    });
+                    return;
+                }
+
+                if (log.isDebugEnabled()) {
+                    log.debug("Loading case suggestions from server (cache expired or empty)");
+                }
+
                 String currentUserId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
 
                 // Performance optimization: load both lists in parallel
@@ -1515,6 +1601,33 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 actionPanelEntries.add(ep);
                 i++;
             }
+        }
+
+        // Update UI layout
+        this.pnlActionsChild.setLayout(new GridLayout(actionPanelEntries.size(), 1));
+        this.pnlActionsChild.removeAll();
+        for (Component o : actionPanelEntries) {
+            this.pnlActionsChild.add(o);
+        }
+        this.pnlActionsChild.revalidate();
+        this.pnlActionsChild.repaint();
+    }
+
+    /**
+     * Helper method to add text-matched case suggestions to UI
+     */
+    private void addCaseSuggestionsToUI(List<ArchiveFileBean> matchedCases,
+                                       ArrayList<Component> actionPanelEntries, int initialIndex) {
+        int i = initialIndex;
+
+        for (ArchiveFileBean af : matchedCases) {
+            SaveScanToCasePanel ep = this.getSaveToCasePanel(af);
+            if (i % 2 == 0) {
+                ep.setBackground(ep.getBackground().darker());
+            }
+            ep.setBackground(ep.getBackground().brighter());
+            actionPanelEntries.add(ep);
+            i++;
         }
 
         // Update UI layout
