@@ -3447,6 +3447,23 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             String temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAILS_DELETEENABLED, "false");
             if ("true".equalsIgnoreCase(temp)) {
                 this.cmdDeleteActionPerformed(null);
+            } else if (caseId == null && targetCase != null) {
+                SaveToCasePanel ep = new SaveToCasePanel(this.getClass().getName());
+                ep.setBackground(ep.getBackground().brighter());
+                CaseForContactEntry lce = new CaseForContactEntry();
+                lce.setFileNumber(targetCase.getFileNumber());
+                lce.setId(targetCase.getId());
+                lce.setRole("");
+                lce.setName(targetCase.getName());
+                lce.setReason(StringUtils.nonEmpty(targetCase.getReason()));
+                lce.setArchived(targetCase.isArchived());
+                ep.setEntry(lce, this);
+
+                this.pnlActionsChild.add(ep, 0);
+                GridLayout layout = (GridLayout) this.pnlActionsChild.getLayout();
+                layout.setRows(layout.getRows() + 1);
+                this.pnlActionsChild.revalidate();
+                this.pnlActionsChild.repaint();
             }
             return true;
         } else {
