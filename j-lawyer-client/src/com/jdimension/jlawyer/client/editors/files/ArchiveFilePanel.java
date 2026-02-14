@@ -5354,7 +5354,74 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ipep.doLayout();
         this.pnlInvolvedParties.doLayout();
 
+        try {
+            // If the added party is a Mandant and insurance data exists, suggest insurer addresses
+            if (afab.getReferenceType() != null && "Mandant".equalsIgnoreCase(afab.getReferenceType().getName())) {
+                if (adrb != null && hasInsuranceData(adrb)) {
+                    InsuranceSuggestDialog suggest = new InsuranceSuggestDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, adrb, allPartyTypes);
+                    suggest.setTitle("Zu Adresse " + adrb.toDisplayName() + " (Mandant) bestehen Versicherungen");
+                    FrameUtils.centerDialog(suggest, EditorsRegistry.getInstance().getMainWindow());
+                    suggest.setVisible(true);
+                    // If insurers were added, reflect them in UI
+                    try {
+                        java.util.List<ArchiveFileAddressesBean> inv = suggest.getSelectedInvolvements();
+                        if (inv != null) {
+                            for (int i = 0; i < inv.size(); i++) {
+                                ArchiveFileAddressesBean added = inv.get(i);
+                                AddressBean ins = added != null ? added.getAddressKey() : null;
+                                if (ins == null || existsPartyWithAddress(ins.getId())) continue;
+                                InvolvedPartyEntryPanel ipepIns = new InvolvedPartyEntryPanel(dto, this, this.pnlInvolvedParties, this.getClass().getName(), BeaAccess.isBeaEnabled(), allPartyTypes);
+                                ipepIns.setEntry(ins, added, false);
+                                ipepIns.setAlignmentX(Component.LEFT_ALIGNMENT);
+                                this.pnlInvolvedParties.add(ipepIns);
+                            }
+                            this.pnlInvolvedParties.revalidate();
+                            this.pnlInvolvedParties.repaint();
+                        }
+                    } catch (Throwable t2) {
+                        log.debug("could not add insurer panel after selection", t2);
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            log.warn("Error suggesting insurer addresses", t);
+        }
+
     }//GEN-LAST:event_cmdSearchClientActionPerformed
+
+    private boolean existsPartyWithAddress(String addressId) {
+        try {
+            for (Component c : this.pnlInvolvedParties.getComponents()) {
+                if (c instanceof InvolvedPartyEntryPanel) {
+                    InvolvedPartyEntryPanel p = (InvolvedPartyEntryPanel) c;
+                    AddressBean ab = p.getAdress();
+                    if (ab != null && addressId.equals(ab.getId())) {
+                        return true;
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            // ignore
+        }
+        return false;
+    }
+
+    private boolean hasInsuranceData(AddressBean ab) {
+        try {
+            if (ab == null) return false;
+            if (ab.isLegalProtection()) return true;
+            if (ab.isTrafficLegalProtection()) return true;
+            if (ab.getInsuranceName() != null && !"".equals(ab.getInsuranceName().trim())) return true;
+            if (ab.getInsuranceNumber() != null && !"".equals(ab.getInsuranceNumber().trim())) return true;
+            if (ab.getTrafficInsuranceName() != null && !"".equals(ab.getTrafficInsuranceName().trim())) return true;
+            if (ab.getTrafficInsuranceNumber() != null && !"".equals(ab.getTrafficInsuranceNumber().trim())) return true;
+            if (ab.getMotorInsuranceName() != null && !"".equals(ab.getMotorInsuranceName().trim())) return true;
+            if (ab.getMotorInsuranceNumber() != null && !"".equals(ab.getMotorInsuranceNumber().trim())) return true;
+            return false;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
 
     public boolean confirmSave(String question, String tagToActivate) {
         int response = JOptionPane.showConfirmDialog(this, question, "Akte speichern", JOptionPane.YES_NO_OPTION);
