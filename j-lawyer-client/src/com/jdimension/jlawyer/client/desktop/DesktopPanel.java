@@ -2379,7 +2379,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
             // Add header when group changes
             if (!currentGroupKey.equals(lastGroupKey)) {
-                String displayReason = compactView ? "" : entry.getArchiveFileReason();
+                String displayReason = entry.getArchiveFileReason();
                 ArrayList<String> displayTags = compactView ? null : entry.getTags();
 
                 // Add header to main panel

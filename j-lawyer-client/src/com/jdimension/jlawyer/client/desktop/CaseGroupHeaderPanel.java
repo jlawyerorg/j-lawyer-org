@@ -123,9 +123,12 @@ public class CaseGroupHeaderPanel extends javax.swing.JPanel {
             caseReason = caseReason.substring(0, 53) + "...";
         }
 
+        boolean compactView = UserSettings.getInstance().getSettingAsBoolean(
+            UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, true);
+
         StringBuilder displayText = new StringBuilder();
         displayText.append("<html><b>").append(dateStr).append("</b> | ").append(caseNumber).append(" - ").append(caseName);
-        if (!caseReason.isEmpty()) {
+        if (!compactView && !caseReason.isEmpty()) {
             displayText.append("<br/>").append(caseReason);
         }
         displayText.append("</html>");
