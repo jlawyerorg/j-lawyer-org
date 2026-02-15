@@ -1736,7 +1736,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdSaveProfile)
-                .addContainerGap(112, Short.MAX_VALUE))
+                .addContainerGap(124, Short.MAX_VALUE))
         );
 
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
@@ -1958,32 +1958,32 @@ public class LoginDialog extends javax.swing.JFrame {
 
         jPanel9.setOpaque(false);
 
-        jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() | java.awt.Font.BOLD));
-        jLabel3.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() | java.awt.Font.BOLD, jLabel3.getFont().getSize()+3));
+        jLabel3.setForeground(new java.awt.Color(151, 191, 13));
         jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel3.setText("1. App installieren: \"j-lawyer.CLOUD\" in den Stores");
+        jLabel3.setText("1. App installieren");
 
         jLabel18.setFont(jLabel18.getFont().deriveFont(jLabel18.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel18.setForeground(new java.awt.Color(255, 255, 255));
         jLabel18.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/android_20dp_FFFFFF.png"))); // NOI18N
-        jLabel18.setText("Android: https://play.google.com/store/apps/details?id=org.jlawyer.mobile&hl=de");
+        jLabel18.setText("Android: \"j-lawyer.CLOUD\" (Cloud-User) oder \"j-lawyer.COMMUNITY\" (self-hosted)");
         jLabel18.setToolTipText("Android / Google Play Store");
 
         jLabel20.setFont(jLabel20.getFont().deriveFont(jLabel20.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel20.setForeground(new java.awt.Color(255, 255, 255));
         jLabel20.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel20.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/phone_iphone_20dp_FFFFFF.png"))); // NOI18N
-        jLabel20.setText("iPhone / iPad: https://apps.apple.com/de/app/j-lawyer-cloud/id6477718420");
+        jLabel20.setText("iPhone / iPad: \"j-lawyer.CLOUD\" (Cloud-User) oder \"j-lawyer.COMMUNITY\" (self-hosted)");
         jLabel20.setToolTipText("iOS / Apple App Store");
 
-        jLabel21.setFont(jLabel21.getFont().deriveFont(jLabel21.getFont().getStyle() | java.awt.Font.BOLD));
-        jLabel21.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel21.setFont(jLabel21.getFont().deriveFont(jLabel21.getFont().getStyle() | java.awt.Font.BOLD, jLabel21.getFont().getSize()+3));
+        jLabel21.setForeground(new java.awt.Color(151, 191, 13));
         jLabel21.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel21.setText("2. App starten und Profile-Dialog öffnen");
 
-        jLabel22.setFont(jLabel22.getFont().deriveFont(jLabel22.getFont().getStyle() | java.awt.Font.BOLD));
-        jLabel22.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel22.setFont(jLabel22.getFont().deriveFont(jLabel22.getFont().getStyle() | java.awt.Font.BOLD, jLabel22.getFont().getSize()+3));
+        jLabel22.setForeground(new java.awt.Color(151, 191, 13));
         jLabel22.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel22.setText("3. Profil durch scannen des QR-Codes übernehmen");
 
