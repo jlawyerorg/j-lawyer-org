@@ -685,6 +685,8 @@ public class FoldersListPanel extends javax.swing.JPanel {
     protected boolean readOnly = false;
     private CaseFolder rootFolder = null;
     protected CaseFolderPanel caseFolderPanel = null;
+    // track collapsed folders by ID, persisted per-user per-case
+    private java.util.Set<String> collapsedFolderIds = new java.util.HashSet<>();
 
     /**
      * Creates new form FoldersPanel
@@ -704,7 +706,8 @@ public class FoldersListPanel extends javax.swing.JPanel {
         this.pnlFolders.removeAll();
         FolderListCell cell = new FolderListCell(this, 0, "Dokumente", this.readOnly);
         cell.setSelected(true, false);
-
+        // no root folder known yet here; render as leaf for now
+        cell.setExpanded(false, false);
         this.pnlFolders.add(cell, gbc);
 
     }
@@ -719,20 +722,37 @@ public class FoldersListPanel extends javax.swing.JPanel {
     }
     
     public void renderEmptyFullState() {
+        java.util.HashSet<String> directDocFolders = new java.util.HashSet<>();
+        for (ArchiveFileDocumentsBean db : this.caseFolderPanel.getDocuments()) {
+            if (db.getFolder() != null && db.getFolder().getId() != null) {
+                directDocFolders.add(db.getFolder().getId());
+            }
+        }
+
         for (Component c : this.pnlFolders.getComponents()) {
             if (c instanceof FolderListCell) {
-                boolean folderHasDocuments=false;
-                for(ArchiveFileDocumentsBean db: this.caseFolderPanel.getDocuments()) {
-                    if(db.getFolder()!=null) {
-                        if(db.getFolder().getId().equals(((FolderListCell) c).getFolder().getId())) {
-                            folderHasDocuments=true;
+                FolderListCell cell = (FolderListCell) c;
+                if (cell.getFolder() == null) continue;
+                boolean hasDirect = directDocFolders.contains(cell.getFolder().getId());
+                boolean hasDescendant = false;
+                if (!hasDirect) {
+                    java.util.ArrayList<String> subtree = new java.util.ArrayList<>();
+                    this.collectSubtreeIds(cell.getFolder(), subtree);
+                    for (String id : subtree) {
+                        if (!id.equals(cell.getFolder().getId()) && directDocFolders.contains(id)) {
+                            hasDescendant = true;
                             break;
                         }
                     }
                 }
-                
-                
-                ((FolderListCell) c).setEmpty(!folderHasDocuments);
+
+                if (hasDirect) {
+                    cell.setFillState(FolderListCell.FILL_FULL);
+                } else if (hasDescendant) {
+                    cell.setFillState(FolderListCell.FILL_HALF);
+                } else {
+                    cell.setFillState(FolderListCell.FILL_EMPTY);
+                }
             }
         }
 
@@ -753,6 +773,10 @@ public class FoldersListPanel extends javax.swing.JPanel {
         this.pnlFolders.add(cell, gbc);
 
         this.buildRecursive(1, rootFolder, unselectedIds);
+
+        // load and apply expansion state after building
+        this.loadExpansionState();
+        this.applyExpansionVisibility();
 
         //this.pnlFolders.add(Box.createVerticalGlue());
         // https://stackoverflow.com/questions/27925606/difficulties-in-aligning-scrollpane-in-top-left-corner
@@ -825,6 +849,10 @@ public class FoldersListPanel extends javax.swing.JPanel {
                 if (unselectedIds.contains(child.getId())) {
                     childNode.setSelected(false);
                 }
+                boolean hasChildren = child.getChildren() != null && !child.getChildren().isEmpty();
+                boolean isCollapsed = this.collapsedFolderIds.contains(child.getId());
+                // initial icon state; visibility is applied later
+                childNode.setExpanded(!isCollapsed, hasChildren);
                 this.pnlFolders.add(childNode, gbc);
                 buildRecursive(level + 1, child, unselectedIds);
             }
@@ -990,5 +1018,135 @@ public class FoldersListPanel extends javax.swing.JPanel {
      */
     public CaseFolder getRootFolder() {
         return rootFolder;
+    }
+
+    public void reloadExpansionStateFromSettings() {
+        this.loadExpansionState();
+        this.applyExpansionVisibility();
+        this.forceRelayout();
+    }
+
+    // ===== Expand/Collapse handling =====
+    public void toggleExpandedFor(FolderListCell cell) {
+        if (cell == null || cell.getFolder() == null) return;
+        String id = cell.getFolder().getId();
+        if (this.collapsedFolderIds.contains(id)) {
+            this.collapsedFolderIds.remove(id);
+        } else {
+            this.collapsedFolderIds.add(id);
+        }
+        boolean hasChildren = cell.getFolder().getChildren() != null && !cell.getFolder().getChildren().isEmpty();
+        cell.setExpanded(!this.collapsedFolderIds.contains(id), hasChildren);
+        this.saveExpansionState();
+        this.applyExpansionVisibility();
+        this.forceRelayout();
+    }
+
+    public void collapseAllFromLevel1() {
+        this.collapsedFolderIds.clear();
+        // collapse all nodes with level >= 1 that have children
+        for (Component c : this.pnlFolders.getComponents()) {
+            if (c instanceof FolderListCell) {
+                FolderListCell flc = (FolderListCell) c;
+                if (flc.getFolder() != null && flc.getLevel() >= 1) {
+                    if (flc.getFolder().getChildren() != null && !flc.getFolder().getChildren().isEmpty()) {
+                        this.collapsedFolderIds.add(flc.getFolder().getId());
+                    }
+                }
+            }
+        }
+        this.updateIconsForAll();
+        this.saveExpansionState();
+        this.applyExpansionVisibility();
+        this.forceRelayout();
+    }
+
+    public void expandAllFromLevel1() {
+        this.collapsedFolderIds.clear();
+        this.updateIconsForAll();
+        this.saveExpansionState();
+        this.applyExpansionVisibility();
+        this.forceRelayout();
+    }
+
+    private void updateIconsForAll() {
+        for (Component c : this.pnlFolders.getComponents()) {
+            if (c instanceof FolderListCell) {
+                FolderListCell flc = (FolderListCell) c;
+                if (flc.getFolder() != null) {
+                    boolean hasChildren = flc.getFolder().getChildren() != null && !flc.getFolder().getChildren().isEmpty();
+                    boolean isCollapsed = this.collapsedFolderIds.contains(flc.getFolder().getId());
+                    flc.setExpanded(!isCollapsed, hasChildren);
+                }
+            }
+        }
+    }
+
+    private void applyExpansionVisibility() {
+        // Walk through the list and hide descendants of collapsed nodes
+        int lastVisibleLevel = 0;
+        java.util.Deque<Integer> collapsedLevels = new java.util.ArrayDeque<>();
+
+        // First, ensure root is visible
+        for (Component c : this.pnlFolders.getComponents()) {
+            if (!(c instanceof FolderListCell)) continue;
+            FolderListCell flc = (FolderListCell) c;
+            int level = flc.getLevel();
+
+            // Pop any collapsed levels that are above current level
+            while (!collapsedLevels.isEmpty() && level <= collapsedLevels.peek()) {
+                collapsedLevels.pop();
+            }
+
+            boolean ancestorCollapsed = !collapsedLevels.isEmpty();
+            boolean visible = !ancestorCollapsed;
+            if (flc.getLevel() == 0) {
+                visible = true; // root always visible
+            }
+
+            flc.setVisible(visible);
+
+            boolean hasChildren = flc.getFolder() != null && flc.getFolder().getChildren() != null && !flc.getFolder().getChildren().isEmpty();
+            boolean isCollapsed = flc.getFolder() != null && this.collapsedFolderIds.contains(flc.getFolder().getId());
+            flc.setExpanded(!isCollapsed, hasChildren);
+
+            if (hasChildren && isCollapsed) {
+                collapsedLevels.push(level);
+            }
+
+            lastVisibleLevel = level;
+        }
+
+        this.pnlFolders.revalidate();
+        this.pnlFolders.repaint();
+    }
+
+    private void saveExpansionState() {
+        try {
+            if (this.caseFolderPanel == null || this.caseFolderPanel.getCase() == null) return;
+            String caseId = this.caseFolderPanel.getCase().getId();
+            String key = "client.documents.foldertree.collapsed." + caseId;
+            String value = String.join(",", this.collapsedFolderIds);
+            com.jdimension.jlawyer.client.settings.UserSettings.getInstance().setSetting(key, value);
+        } catch (Exception ex) {
+            // ignore persistence errors silently for UI state
+        }
+    }
+
+    private void loadExpansionState() {
+        try {
+            this.collapsedFolderIds.clear();
+            if (this.caseFolderPanel == null || this.caseFolderPanel.getCase() == null) return;
+            String caseId = this.caseFolderPanel.getCase().getId();
+            String key = "client.documents.foldertree.collapsed." + caseId;
+            String value = com.jdimension.jlawyer.client.settings.UserSettings.getInstance().getSetting(key, "");
+            if (value != null && !value.trim().isEmpty()) {
+                for (String id : value.split(",")) {
+                    if (id != null && !id.trim().isEmpty()) this.collapsedFolderIds.add(id.trim());
+                }
+            }
+        } catch (Exception ex) {
+            this.collapsedFolderIds.clear();
+        }
     }
 }
