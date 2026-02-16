@@ -804,11 +804,6 @@ public class FormPluginEntryPanel extends javax.swing.JPanel {
                 cmdActionsMousePressed(evt);
             }
         });
-        cmdActions.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdActionsActionPerformed(evt);
-            }
-        });
 
         lblDescription.setText("Beschreibung");
 
@@ -906,10 +901,6 @@ public class FormPluginEntryPanel extends javax.swing.JPanel {
 
     }//GEN-LAST:event_mnuRemoveActionPerformed
 
-
-    private void cmdActionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdActionsActionPerformed
-
-    }//GEN-LAST:event_cmdActionsActionPerformed
 
     private void cmdActionsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdActionsMousePressed
         if(this.plugin.getState()==FormPlugin.STATE_INSTALLED)

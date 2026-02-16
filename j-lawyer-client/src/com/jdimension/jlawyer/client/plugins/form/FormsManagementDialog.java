@@ -666,7 +666,6 @@ package com.jdimension.jlawyer.client.plugins.form;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import java.awt.Component;
 import java.util.Map;
-import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -674,8 +673,6 @@ import themes.colors.DefaultColorTheme;
  * @author jens
  */
 public class FormsManagementDialog extends javax.swing.JDialog implements FormActionCallback {
-
-    private static final Logger log = Logger.getLogger(FormsManagementDialog.class.getName());
 
     /**
      * Creates new form FormsManagementDialog

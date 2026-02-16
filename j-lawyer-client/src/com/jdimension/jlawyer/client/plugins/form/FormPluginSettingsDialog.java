@@ -684,7 +684,10 @@ public class FormPluginSettingsDialog extends javax.swing.JDialog {
     
 
     /**
-     * Creates new form FormsManagementDialog
+     * Creates new form FormPluginSettingsDialog
+     * @param parent
+     * @param modal
+     * @param plugin
      */
     public FormPluginSettingsDialog(java.awt.Dialog parent, boolean modal, FormPlugin plugin) {
         super(parent, modal);
