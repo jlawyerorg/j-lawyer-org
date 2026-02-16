@@ -1230,6 +1230,11 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
         GenericNode gn = (GenericNode) tn.getUserObject();
 
+        int response = JOptionPane.showConfirmDialog(this, "Ordner '" + gn.getName() + "' löschen?", "Löschen", JOptionPane.YES_NO_OPTION);
+        if (response == JOptionPane.NO_OPTION) {
+            return;
+        }
+
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
