@@ -664,7 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.services;
 
 import java.util.List;
-import javax.ejb.Remote;
+import javax.ejb.Local;
 import org.jlawyer.reporting.ReportMetadata;
 import org.jlawyer.reporting.ReportResult;
 
@@ -672,17 +672,11 @@ import org.jlawyer.reporting.ReportResult;
  *
  * @author jens
  */
-@Remote
-public interface ReportServiceRemote {
+@Local
+public interface ReportServiceLocal {
 
     ReportResult invokeReport(String reportId, Object... params) throws Exception;
 
-    /**
-     * Returns metadata for all available server-side reports, including their
-     * identifiers, names, descriptions, categories, and security types.
-     *
-     * @return list of report metadata entries
-     */
     List<ReportMetadata> getAvailableReports();
 
 }

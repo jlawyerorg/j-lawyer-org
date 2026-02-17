@@ -661,28 +661,61 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
-
-import java.util.List;
-import javax.ejb.Remote;
-import org.jlawyer.reporting.ReportMetadata;
-import org.jlawyer.reporting.ReportResult;
+package org.jlawyer.io.rest.v7.pojo;
 
 /**
  *
  * @author jens
  */
-@Remote
-public interface ReportServiceRemote {
+public class RestfulReportRequestV7 {
 
-    ReportResult invokeReport(String reportId, Object... params) throws Exception;
+    private String reportId;
+    private String fromDate;
+    private String toDate;
+
+    public RestfulReportRequestV7() {
+    }
 
     /**
-     * Returns metadata for all available server-side reports, including their
-     * identifiers, names, descriptions, categories, and security types.
-     *
-     * @return list of report metadata entries
+     * @return the reportId
      */
-    List<ReportMetadata> getAvailableReports();
+    public String getReportId() {
+        return reportId;
+    }
+
+    /**
+     * @param reportId the reportId to set
+     */
+    public void setReportId(String reportId) {
+        this.reportId = reportId;
+    }
+
+    /**
+     * @return the fromDate
+     */
+    public String getFromDate() {
+        return fromDate;
+    }
+
+    /**
+     * @param fromDate the fromDate to set
+     */
+    public void setFromDate(String fromDate) {
+        this.fromDate = fromDate;
+    }
+
+    /**
+     * @return the toDate
+     */
+    public String getToDate() {
+        return toDate;
+    }
+
+    /**
+     * @param toDate the toDate to set
+     */
+    public void setToDate(String toDate) {
+        this.toDate = toDate;
+    }
 
 }

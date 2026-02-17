@@ -82,6 +82,7 @@
             <classpath>
                 <pathelement location="tools/jaxrs-analyzer.jar"/>
                 <pathelement location="../../j-lawyer-server-entities/dist/j-lawyer-server-entities.jar"/>
+                <pathelement location="../../j-lawyer-server-common/dist/j-lawyer-server-common.jar"/>
                 <pathelement path="${java.class.path}"/>
             </classpath>
         </java>

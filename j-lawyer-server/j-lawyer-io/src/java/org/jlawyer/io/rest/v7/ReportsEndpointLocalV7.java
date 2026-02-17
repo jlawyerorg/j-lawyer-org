@@ -661,28 +661,21 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package org.jlawyer.io.rest.v7;
 
-import java.util.List;
-import javax.ejb.Remote;
-import org.jlawyer.reporting.ReportMetadata;
-import org.jlawyer.reporting.ReportResult;
+import javax.ejb.Local;
+import javax.ws.rs.core.Response;
+import org.jlawyer.io.rest.v7.pojo.RestfulReportRequestV7;
 
 /**
  *
  * @author jens
  */
-@Remote
-public interface ReportServiceRemote {
+@Local
+public interface ReportsEndpointLocalV7 {
 
-    ReportResult invokeReport(String reportId, Object... params) throws Exception;
+    Response getAvailableReports();
 
-    /**
-     * Returns metadata for all available server-side reports, including their
-     * identifiers, names, descriptions, categories, and security types.
-     *
-     * @return list of report metadata entries
-     */
-    List<ReportMetadata> getAvailableReports();
+    Response invokeReport(RestfulReportRequestV7 request);
 
 }

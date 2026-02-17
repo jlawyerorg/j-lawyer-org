@@ -21,7 +21,20 @@
       "Bash(unzip:*)",
       "Bash(gh issue view:*)",
       "Bash(jar tf:*)",
-      "Bash(javap:*)"
+      "Bash(javap:*)",
+      "Bash(/home/jens/dev/j-lawyer-org/j-lawyer-server-common/src/org/jlawyer/reporting/ReportMetadata.java:*)",
+      "Bash(/home/jens/dev/j-lawyer-org/j-lawyer-server/j-lawyer-server-ejb/src/java/com/jdimension/jlawyer/services/ReportServiceLocal.java:*)",
+      "Bash(/home/jens/dev/j-lawyer-org/j-lawyer-server-common/src/org/jlawyer/reporting/ReportCatalog.java:*)",
+      "Bash(/home/jens/dev/j-lawyer-org/j-lawyer-server/j-lawyer-io/src/java/org/jlawyer/io/rest/v7/ReportsEndpointLocalV7.java:*)",
+      "Bash(__NEW_LINE_1f2cb85f6e8a2a5e__ echo \"Created ReportsEndpointLocalV7.java\")",
+      "Bash(/home/jens/dev/j-lawyer-org/j-lawyer-server/j-lawyer-io/src/java/org/jlawyer/io/rest/v7/pojo/RestfulReportMetadataV7.java:*)",
+      "Bash(/home/jens/dev/j-lawyer-org/j-lawyer-server/j-lawyer-io/src/java/org/jlawyer/io/rest/v7/pojo/RestfulReportRequestV7.java:*)",
+      "Bash(/home/jens/dev/j-lawyer-org/j-lawyer-server/j-lawyer-io/src/java/org/jlawyer/io/rest/v7/pojo/RestfulReportResultBarChartSeriesV7.java:*)",
+      "Bash(/home/jens/dev/j-lawyer-org/j-lawyer-server/j-lawyer-io/src/java/org/jlawyer/io/rest/v7/pojo/RestfulReportResultBarChartV7.java:*)",
+      "Bash(/home/jens/dev/j-lawyer-org/j-lawyer-server/j-lawyer-io/src/java/org/jlawyer/io/rest/v7/pojo/RestfulReportResultTableV7.java:*)",
+      "Bash(/home/jens/dev/j-lawyer-org/j-lawyer-server/j-lawyer-io/src/java/org/jlawyer/io/rest/v7/pojo/RestfulReportResultV7.java:*)",
+      "Bash(/home/jens/dev/j-lawyer-org/j-lawyer-server/j-lawyer-io/src/java/org/jlawyer/io/rest/v7/ReportsEndpointV7.java:*)",
+      "Bash(__NEW_LINE_f1f2fadd558b570a__ echo \"Created ReportsEndpointV7.java\")"
     ],
     "deny": [],
     "ask": []

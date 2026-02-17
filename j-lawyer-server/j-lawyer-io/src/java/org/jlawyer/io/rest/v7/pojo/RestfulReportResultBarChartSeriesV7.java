@@ -661,28 +661,113 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package org.jlawyer.io.rest.v7.pojo;
 
+import java.awt.Color;
+import java.util.ArrayList;
 import java.util.List;
-import javax.ejb.Remote;
-import org.jlawyer.reporting.ReportMetadata;
-import org.jlawyer.reporting.ReportResult;
+import org.jlawyer.reporting.ReportResultBarChartSeries;
 
 /**
  *
  * @author jens
  */
-@Remote
-public interface ReportServiceRemote {
+public class RestfulReportResultBarChartSeriesV7 {
 
-    ReportResult invokeReport(String reportId, Object... params) throws Exception;
+    private String name;
+    private List<String> xData = new ArrayList<>();
+    private List<Number> yData = new ArrayList<>();
+    private String fillColor;
+    private String renderStyle;
+
+    public RestfulReportResultBarChartSeriesV7() {
+    }
+
+    public static RestfulReportResultBarChartSeriesV7 fromBarChartSeries(ReportResultBarChartSeries s) {
+        RestfulReportResultBarChartSeriesV7 r = new RestfulReportResultBarChartSeriesV7();
+        r.setName(s.getName());
+        List<String> xStrings = new ArrayList<>();
+        for (Object x : s.getxData()) {
+            xStrings.add(x != null ? x.toString() : "");
+        }
+        r.setxData(xStrings);
+        r.setyData(s.getyData());
+        Color c = s.getFillColor();
+        if (c != null) {
+            r.setFillColor(String.format("#%02x%02x%02x", c.getRed(), c.getGreen(), c.getBlue()));
+        }
+        r.setRenderStyle(s.getRenderStyle());
+        return r;
+    }
 
     /**
-     * Returns metadata for all available server-side reports, including their
-     * identifiers, names, descriptions, categories, and security types.
-     *
-     * @return list of report metadata entries
+     * @return the name
      */
-    List<ReportMetadata> getAvailableReports();
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * @return the xData
+     */
+    public List<String> getxData() {
+        return xData;
+    }
+
+    /**
+     * @param xData the xData to set
+     */
+    public void setxData(List<String> xData) {
+        this.xData = xData;
+    }
+
+    /**
+     * @return the yData
+     */
+    public List<Number> getyData() {
+        return yData;
+    }
+
+    /**
+     * @param yData the yData to set
+     */
+    public void setyData(List<Number> yData) {
+        this.yData = yData;
+    }
+
+    /**
+     * @return the fillColor
+     */
+    public String getFillColor() {
+        return fillColor;
+    }
+
+    /**
+     * @param fillColor the fillColor to set
+     */
+    public void setFillColor(String fillColor) {
+        this.fillColor = fillColor;
+    }
+
+    /**
+     * @return the renderStyle
+     */
+    public String getRenderStyle() {
+        return renderStyle;
+    }
+
+    /**
+     * @param renderStyle the renderStyle to set
+     */
+    public void setRenderStyle(String renderStyle) {
+        this.renderStyle = renderStyle;
+    }
 
 }

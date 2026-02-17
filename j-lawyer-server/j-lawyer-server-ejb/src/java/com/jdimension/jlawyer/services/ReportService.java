@@ -685,6 +685,8 @@ import javax.ejb.EJBException;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import org.apache.log4j.Logger;
+import org.jlawyer.reporting.ReportCatalog;
+import org.jlawyer.reporting.ReportMetadata;
 import org.jlawyer.reporting.ReportResult;
 import org.jlawyer.reporting.ReportResultBarChart;
 import org.jlawyer.reporting.ReportResultBarChartSeries;
@@ -696,7 +698,7 @@ import org.jlawyer.reporting.Reports;
  * @author jens
  */
 @Stateless
-public class ReportService implements ReportServiceRemote {
+public class ReportService implements ReportServiceRemote, ReportServiceLocal {
 
     private static final Logger log = Logger.getLogger(ReportService.class.getName());
 
@@ -1800,6 +1802,12 @@ public class ReportService implements ReportServiceRemote {
             s.setRenderStyle("Line");
         }
         return chart;
+    }
+
+    @Override
+    @RolesAllowed({"commonReportRole"})
+    public List<ReportMetadata> getAvailableReports() {
+        return ReportCatalog.getAllReports();
     }
 
 }

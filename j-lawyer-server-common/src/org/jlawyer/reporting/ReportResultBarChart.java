@@ -688,7 +688,7 @@ public class ReportResultBarChart implements Serializable {
     
     public boolean hasData() {
         for(ReportResultBarChartSeries s: series) {
-            if(s.getxData().size()>0)
+            if(!s.getxData().isEmpty())
                 return true;
         }
         return false;

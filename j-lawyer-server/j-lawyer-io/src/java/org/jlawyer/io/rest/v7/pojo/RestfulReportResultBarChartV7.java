@@ -661,28 +661,126 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package org.jlawyer.io.rest.v7.pojo;
 
+import java.util.ArrayList;
 import java.util.List;
-import javax.ejb.Remote;
-import org.jlawyer.reporting.ReportMetadata;
-import org.jlawyer.reporting.ReportResult;
+import org.jlawyer.reporting.ReportResultBarChart;
+import org.jlawyer.reporting.ReportResultBarChartSeries;
 
 /**
  *
  * @author jens
  */
-@Remote
-public interface ReportServiceRemote {
+public class RestfulReportResultBarChartV7 {
 
-    ReportResult invokeReport(String reportId, Object... params) throws Exception;
+    private String chartName;
+    private String xAxisTitle;
+    private String yAxisTitle;
+    private String datePattern;
+    private boolean toolTipsEnabled;
+    private List<RestfulReportResultBarChartSeriesV7> series = new ArrayList<>();
+
+    public RestfulReportResultBarChartV7() {
+    }
+
+    public static RestfulReportResultBarChartV7 fromBarChart(ReportResultBarChart c) {
+        RestfulReportResultBarChartV7 r = new RestfulReportResultBarChartV7();
+        r.setChartName(c.getChartName());
+        r.setxAxisTitle(c.getxAxisTitle());
+        r.setyAxisTitle(c.getyAxisTitle());
+        r.setDatePattern(c.getDatePattern());
+        r.setToolTipsEnabled(c.isToolTipsEnabled());
+        List<RestfulReportResultBarChartSeriesV7> seriesList = new ArrayList<>();
+        for (ReportResultBarChartSeries s : c.getSeries()) {
+            seriesList.add(RestfulReportResultBarChartSeriesV7.fromBarChartSeries(s));
+        }
+        r.setSeries(seriesList);
+        return r;
+    }
 
     /**
-     * Returns metadata for all available server-side reports, including their
-     * identifiers, names, descriptions, categories, and security types.
-     *
-     * @return list of report metadata entries
+     * @return the chartName
      */
-    List<ReportMetadata> getAvailableReports();
+    public String getChartName() {
+        return chartName;
+    }
+
+    /**
+     * @param chartName the chartName to set
+     */
+    public void setChartName(String chartName) {
+        this.chartName = chartName;
+    }
+
+    /**
+     * @return the xAxisTitle
+     */
+    public String getxAxisTitle() {
+        return xAxisTitle;
+    }
+
+    /**
+     * @param xAxisTitle the xAxisTitle to set
+     */
+    public void setxAxisTitle(String xAxisTitle) {
+        this.xAxisTitle = xAxisTitle;
+    }
+
+    /**
+     * @return the yAxisTitle
+     */
+    public String getyAxisTitle() {
+        return yAxisTitle;
+    }
+
+    /**
+     * @param yAxisTitle the yAxisTitle to set
+     */
+    public void setyAxisTitle(String yAxisTitle) {
+        this.yAxisTitle = yAxisTitle;
+    }
+
+    /**
+     * @return the datePattern
+     */
+    public String getDatePattern() {
+        return datePattern;
+    }
+
+    /**
+     * @param datePattern the datePattern to set
+     */
+    public void setDatePattern(String datePattern) {
+        this.datePattern = datePattern;
+    }
+
+    /**
+     * @return the toolTipsEnabled
+     */
+    public boolean isToolTipsEnabled() {
+        return toolTipsEnabled;
+    }
+
+    /**
+     * @param toolTipsEnabled the toolTipsEnabled to set
+     */
+    public void setToolTipsEnabled(boolean toolTipsEnabled) {
+        this.toolTipsEnabled = toolTipsEnabled;
+    }
+
+    /**
+     * @return the series
+     */
+    public List<RestfulReportResultBarChartSeriesV7> getSeries() {
+        return series;
+    }
+
+    /**
+     * @param series the series to set
+     */
+    public void setSeries(List<RestfulReportResultBarChartSeriesV7> series) {
+        this.series = series;
+    }
 
 }

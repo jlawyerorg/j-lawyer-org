@@ -661,28 +661,109 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package org.jlawyer.reporting;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import javax.ejb.Remote;
-import org.jlawyer.reporting.ReportMetadata;
-import org.jlawyer.reporting.ReportResult;
 
 /**
  *
  * @author jens
  */
-@Remote
-public interface ReportServiceRemote {
+public class ReportCatalog {
 
-    ReportResult invokeReport(String reportId, Object... params) throws Exception;
+    private static final List<ReportMetadata> ALL_REPORTS;
+
+    static {
+        List<ReportMetadata> reports = new ArrayList<>();
+
+        reports.add(new ReportMetadata(Reports.RPT_INV_OPEN, "Offene Rechnungen",
+                "Alle offenen Rechnungen im Ueberblick",
+                "Finanzen: Rechnungen", 10, true, true, ReportMetadata.SECURITY_COMMON, "faellig"));
+
+        reports.add(new ReportMetadata(Reports.RPT_INV_OVERDUE, "Faellige Rechnungen",
+                "Alle faelligen Rechnungen im Ueberblick",
+                "Finanzen: Rechnungen", 20, true, true, ReportMetadata.SECURITY_COMMON, "faellig"));
+
+        reports.add(new ReportMetadata(Reports.RPT_INV_DRAFTS, "Rechnungsentwuerfe",
+                "Alle Rechnungen im Entwurfsstatus im Ueberblick",
+                "Finanzen: Rechnungen", 10, false, true, ReportMetadata.SECURITY_COMMON, "erstellt"));
+
+        reports.add(new ReportMetadata(Reports.RPT_CASES_WITHOUT_INVOICE, "Akten ohne Rechnung",
+                "Tabellarische Auswertung aller Akten ohne umsatzrelevante Rechnungen",
+                "Finanzen: Rechnungen", 25, false, true, ReportMetadata.SECURITY_COMMON, "Erstellungsdatum der Akten"));
+
+        reports.add(new ReportMetadata(Reports.RPT_INV_ALL, "Alle Rechnungen / Belege",
+                "Alle Rechnungen / Belege unabhaengig von Belegart, Status oder Erstellungsdatum",
+                "Finanzen: Rechnungen", 20, false, true, ReportMetadata.SECURITY_COMMON, "erstellt"));
+
+        reports.add(new ReportMetadata(Reports.RPT_PAY_ALL, "Alle Zahlungen",
+                "Alle Zahlungen unabhaengig von Status oder Erstellungsdatum",
+                "Finanzen: Zahlungen", 20, false, true, ReportMetadata.SECURITY_COMMON, "erstellt"));
+
+        reports.add(new ReportMetadata(Reports.RPT_REVENUE_BYCUSTOMER, "Umsatz pro Kunde / Kundin",
+                "Umsaetze pro Kunde / Kundin, basierend auf bezahlten Rechnungen",
+                "Finanzen: Controlling", 20, false, true, ReportMetadata.SECURITY_CONFIDENTIAL, "Faelligkeitsdatum der Rechnungen"));
+
+        reports.add(new ReportMetadata(Reports.RPT_ACCOUNTS_BOOKINGS, "Aktenkonto - Buchungen",
+                "Alle Buchungen in Aktenkonten in einem bestimmten Zeitraum",
+                "Finanzen: Controlling", 15, false, true, ReportMetadata.SECURITY_CONFIDENTIAL, "Buchungsdatum"));
+
+        reports.add(new ReportMetadata(Reports.RPT_ACCOUNTS_ESCROW, "Akten mit nicht ausgeglichenem Fremdgeld",
+                "Akten eines bestimmten Zeitraumes mit nicht ausgeglichenem Fremdgeld",
+                "Finanzen: Controlling", 20, false, true, ReportMetadata.SECURITY_COMMON, "Erstellungsdatum der Akten"));
+
+        reports.add(new ReportMetadata(Reports.RPT_ACCOUNTS_EARNINGS, "Ergebnis pro Akte",
+                "Akten eines bestimmten Zeitraumes und deren betriebswirtschaftliches Ergebnis, basierend auf Aktenkonten",
+                "Finanzen: Controlling", 20, false, true, ReportMetadata.SECURITY_CONFIDENTIAL, "Erstellungsdatum der Akten"));
+
+        reports.add(new ReportMetadata(Reports.RPT_TSHEETS_OPEN_OVERVIEW, "Alle offenen Zeiterfassungsprojekte im Ueberblick",
+                "Alle offenen Zeiterfassungsprojekte im Ueberblick, absteigend sortiert nach letzter Buchung",
+                "Zeiterfassung", 10, false, true, ReportMetadata.SECURITY_COMMON, "Zeiten gebucht"));
+
+        reports.add(new ReportMetadata(Reports.RPT_TSHEETS_OPEN_POSITIONS, "Alle offenen Zeiterfassungsprojekte und deren Buchungen",
+                "Alle offenen Zeiterfassungsprojekte und deren Buchungen, als Gesamtansicht und gruppiert nach Projekt",
+                "Zeiterfassung", 20, false, true, ReportMetadata.SECURITY_COMMON, "Zeiten gebucht"));
+
+        reports.add(new ReportMetadata(Reports.RPT_TSHEETS_VALUES, "Gebuchte Zeiten pro Mitarbeiter",
+                "Werte aller gebuchten Zeiten, gruppiert nach Mitarbeiter(-in) und Monat / Jahr",
+                "Zeiterfassung", 22, false, true, ReportMetadata.SECURITY_CONFIDENTIAL, "Zeiten gebucht"));
+
+        reports.add(new ReportMetadata(Reports.RPT_TSHEETS_VALUES_USER, "Meine gebuchten Zeiten",
+                "Werte aller durch mich gebuchten Zeiten, gruppiert nach Monat / Jahr",
+                "Zeiterfassung", 22, false, true, ReportMetadata.SECURITY_COMMON, "Zeiten gebucht"));
+
+        reports.add(new ReportMetadata(Reports.RPT_EMPLOYEE_ACTIVITY, "Mitarbeiterreport",
+                "Tabellarische Auswertungen zu Aktenaktivitaeten einer Mitarbeiterin / eines Mitarbeiters",
+                "Zeiterfassung", 30, true, true, ReportMetadata.SECURITY_CONFIDENTIAL, null));
+
+        reports.add(new ReportMetadata(Reports.RPT_CASES_BYMONTH, "Akten pro Monat",
+                "Grafische / tabellarische Auswertungen des Aktenaufkommens pro Monat fuer einen ausgewaehlten Zeitraum",
+                "Unternehmensentwicklung", 10, true, true, ReportMetadata.SECURITY_CONFIDENTIAL, null));
+
+        reports.add(new ReportMetadata(Reports.RPT_CASES_BYYEAR, "Akten pro Jahr",
+                "Grafische / tabellarische Auswertungen des Aktenaufkommens pro Jahr",
+                "Unternehmensentwicklung", 20, true, true, ReportMetadata.SECURITY_COMMON, null));
+
+        reports.add(new ReportMetadata(Reports.RPT_CASES_BYSIZE, "Akten nach Groesse / Speicherbelegung",
+                "Tabellarische Auswertungen der 500 groessten Akten",
+                "Systemwartung", 10, false, true, ReportMetadata.SECURITY_COMMON, null));
+
+        reports.add(new ReportMetadata(Reports.RPT_CASES_UNSECURED, "Akten ohne Zugriffsbeschraenkungen",
+                "Tabellarische Auswertungen aller Akten ohne Zugriffsbeschraenkungen",
+                "Systemwartung", 20, false, true, ReportMetadata.SECURITY_COMMON, null));
+
+        ALL_REPORTS = Collections.unmodifiableList(reports);
+    }
 
     /**
-     * Returns metadata for all available server-side reports, including their
-     * identifiers, names, descriptions, categories, and security types.
+     * Returns metadata for all available server-side reports.
      *
-     * @return list of report metadata entries
+     * @return unmodifiable list of report metadata
      */
-    List<ReportMetadata> getAvailableReports();
+    public static List<ReportMetadata> getAllReports() {
+        return ALL_REPORTS;
+    }
 
 }

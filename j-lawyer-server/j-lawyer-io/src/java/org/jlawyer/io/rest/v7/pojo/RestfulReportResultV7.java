@@ -661,28 +661,63 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package org.jlawyer.io.rest.v7.pojo;
 
+import java.util.ArrayList;
 import java.util.List;
-import javax.ejb.Remote;
-import org.jlawyer.reporting.ReportMetadata;
 import org.jlawyer.reporting.ReportResult;
+import org.jlawyer.reporting.ReportResultBarChart;
+import org.jlawyer.reporting.ReportResultTable;
 
 /**
  *
  * @author jens
  */
-@Remote
-public interface ReportServiceRemote {
+public class RestfulReportResultV7 {
 
-    ReportResult invokeReport(String reportId, Object... params) throws Exception;
+    private List<RestfulReportResultTableV7> tables = new ArrayList<>();
+    private List<RestfulReportResultBarChartV7> barCharts = new ArrayList<>();
+
+    public RestfulReportResultV7() {
+    }
+
+    public static RestfulReportResultV7 fromReportResult(ReportResult result) {
+        RestfulReportResultV7 r = new RestfulReportResultV7();
+        for (ReportResultTable t : result.getTables()) {
+            r.getTables().add(RestfulReportResultTableV7.fromReportResultTable(t));
+        }
+        for (ReportResultBarChart c : result.getBarCharts()) {
+            r.getBarCharts().add(RestfulReportResultBarChartV7.fromBarChart(c));
+        }
+        return r;
+    }
 
     /**
-     * Returns metadata for all available server-side reports, including their
-     * identifiers, names, descriptions, categories, and security types.
-     *
-     * @return list of report metadata entries
+     * @return the tables
      */
-    List<ReportMetadata> getAvailableReports();
+    public List<RestfulReportResultTableV7> getTables() {
+        return tables;
+    }
+
+    /**
+     * @param tables the tables to set
+     */
+    public void setTables(List<RestfulReportResultTableV7> tables) {
+        this.tables = tables;
+    }
+
+    /**
+     * @return the barCharts
+     */
+    public List<RestfulReportResultBarChartV7> getBarCharts() {
+        return barCharts;
+    }
+
+    /**
+     * @param barCharts the barCharts to set
+     */
+    public void setBarCharts(List<RestfulReportResultBarChartV7> barCharts) {
+        this.barCharts = barCharts;
+    }
 
 }

@@ -661,28 +661,170 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package org.jlawyer.reporting;
 
-import java.util.List;
-import javax.ejb.Remote;
-import org.jlawyer.reporting.ReportMetadata;
-import org.jlawyer.reporting.ReportResult;
+import java.io.Serializable;
 
 /**
  *
  * @author jens
  */
-@Remote
-public interface ReportServiceRemote {
+public class ReportMetadata implements Serializable {
 
-    ReportResult invokeReport(String reportId, Object... params) throws Exception;
+    private static final long serialVersionUID = 1L;
+
+    public static final int SECURITY_COMMON = 10;
+    public static final int SECURITY_CONFIDENTIAL = 20;
+
+    private String reportId;
+    private String name;
+    private String description;
+    private String category;
+    private int sequence;
+    private boolean typeChart;
+    private boolean typeTable;
+    private int securityType;
+    private String dateSelectionLabel;
+
+    public ReportMetadata() {
+    }
+
+    public ReportMetadata(String reportId, String name, String description, String category, int sequence, boolean typeChart, boolean typeTable, int securityType, String dateSelectionLabel) {
+        this.reportId = reportId;
+        this.name = name;
+        this.description = description;
+        this.category = category;
+        this.sequence = sequence;
+        this.typeChart = typeChart;
+        this.typeTable = typeTable;
+        this.securityType = securityType;
+        this.dateSelectionLabel = dateSelectionLabel;
+    }
 
     /**
-     * Returns metadata for all available server-side reports, including their
-     * identifiers, names, descriptions, categories, and security types.
-     *
-     * @return list of report metadata entries
+     * @return the reportId
      */
-    List<ReportMetadata> getAvailableReports();
+    public String getReportId() {
+        return reportId;
+    }
+
+    /**
+     * @param reportId the reportId to set
+     */
+    public void setReportId(String reportId) {
+        this.reportId = reportId;
+    }
+
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * @param description the description to set
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    /**
+     * @return the category
+     */
+    public String getCategory() {
+        return category;
+    }
+
+    /**
+     * @param category the category to set
+     */
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    /**
+     * @return the sequence
+     */
+    public int getSequence() {
+        return sequence;
+    }
+
+    /**
+     * @param sequence the sequence to set
+     */
+    public void setSequence(int sequence) {
+        this.sequence = sequence;
+    }
+
+    /**
+     * @return the typeChart
+     */
+    public boolean isTypeChart() {
+        return typeChart;
+    }
+
+    /**
+     * @param typeChart the typeChart to set
+     */
+    public void setTypeChart(boolean typeChart) {
+        this.typeChart = typeChart;
+    }
+
+    /**
+     * @return the typeTable
+     */
+    public boolean isTypeTable() {
+        return typeTable;
+    }
+
+    /**
+     * @param typeTable the typeTable to set
+     */
+    public void setTypeTable(boolean typeTable) {
+        this.typeTable = typeTable;
+    }
+
+    /**
+     * @return the securityType
+     */
+    public int getSecurityType() {
+        return securityType;
+    }
+
+    /**
+     * @param securityType the securityType to set
+     */
+    public void setSecurityType(int securityType) {
+        this.securityType = securityType;
+    }
+
+    /**
+     * @return the dateSelectionLabel
+     */
+    public String getDateSelectionLabel() {
+        return dateSelectionLabel;
+    }
+
+    /**
+     * @param dateSelectionLabel the dateSelectionLabel to set
+     */
+    public void setDateSelectionLabel(String dateSelectionLabel) {
+        this.dateSelectionLabel = dateSelectionLabel;
+    }
 
 }

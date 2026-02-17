@@ -661,28 +661,116 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package org.jlawyer.io.rest.v7.pojo;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import javax.ejb.Remote;
-import org.jlawyer.reporting.ReportMetadata;
-import org.jlawyer.reporting.ReportResult;
+import org.jlawyer.reporting.ReportResultTable;
 
 /**
  *
  * @author jens
  */
-@Remote
-public interface ReportServiceRemote {
+public class RestfulReportResultTableV7 {
 
-    ReportResult invokeReport(String reportId, Object... params) throws Exception;
+    private String tableName;
+    private List<String> columnNames = new ArrayList<>();
+    private List<List<String>> rows = new ArrayList<>();
+    private boolean hasCaseIdColumn;
+    private boolean hasSumRows;
+
+    public RestfulReportResultTableV7() {
+    }
+
+    public static RestfulReportResultTableV7 fromReportResultTable(ReportResultTable t) {
+        RestfulReportResultTableV7 r = new RestfulReportResultTableV7();
+        r.setTableName(t.getTableName());
+        if (t.getColumnNames() != null) {
+            r.setColumnNames(Arrays.asList(t.getColumnNames()));
+        }
+        r.setHasCaseIdColumn(t.isHasCaseIdColumn());
+        r.setHasSumRows(t.isHasSumRows());
+        List<List<String>> rowList = new ArrayList<>();
+        for (Object[] row : t.getValues()) {
+            List<String> stringRow = new ArrayList<>();
+            for (Object val : row) {
+                stringRow.add(val != null ? val.toString() : "");
+            }
+            rowList.add(stringRow);
+        }
+        r.setRows(rowList);
+        return r;
+    }
 
     /**
-     * Returns metadata for all available server-side reports, including their
-     * identifiers, names, descriptions, categories, and security types.
-     *
-     * @return list of report metadata entries
+     * @return the tableName
      */
-    List<ReportMetadata> getAvailableReports();
+    public String getTableName() {
+        return tableName;
+    }
+
+    /**
+     * @param tableName the tableName to set
+     */
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
+
+    /**
+     * @return the columnNames
+     */
+    public List<String> getColumnNames() {
+        return columnNames;
+    }
+
+    /**
+     * @param columnNames the columnNames to set
+     */
+    public void setColumnNames(List<String> columnNames) {
+        this.columnNames = columnNames;
+    }
+
+    /**
+     * @return the rows
+     */
+    public List<List<String>> getRows() {
+        return rows;
+    }
+
+    /**
+     * @param rows the rows to set
+     */
+    public void setRows(List<List<String>> rows) {
+        this.rows = rows;
+    }
+
+    /**
+     * @return the hasCaseIdColumn
+     */
+    public boolean isHasCaseIdColumn() {
+        return hasCaseIdColumn;
+    }
+
+    /**
+     * @param hasCaseIdColumn the hasCaseIdColumn to set
+     */
+    public void setHasCaseIdColumn(boolean hasCaseIdColumn) {
+        this.hasCaseIdColumn = hasCaseIdColumn;
+    }
+
+    /**
+     * @return the hasSumRows
+     */
+    public boolean isHasSumRows() {
+        return hasSumRows;
+    }
+
+    /**
+     * @param hasSumRows the hasSumRows to set
+     */
+    public void setHasSumRows(boolean hasSumRows) {
+        this.hasSumRows = hasSumRows;
+    }
 
 }

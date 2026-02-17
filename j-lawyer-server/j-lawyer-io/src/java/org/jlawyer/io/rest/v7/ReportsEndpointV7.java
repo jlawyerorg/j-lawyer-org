@@ -661,28 +661,112 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package org.jlawyer.io.rest.v7;
 
+import com.jdimension.jlawyer.services.ReportServiceLocal;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-import javax.ejb.Remote;
+import javax.annotation.security.RolesAllowed;
+import javax.ejb.Stateless;
+import javax.naming.InitialContext;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v7.pojo.RestfulReportMetadataV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulReportRequestV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulReportResultV7;
 import org.jlawyer.reporting.ReportMetadata;
 import org.jlawyer.reporting.ReportResult;
 
 /**
  *
- * @author jens
+ * http://localhost:8080/j-lawyer-io/rest/v7/reports/list
  */
-@Remote
-public interface ReportServiceRemote {
+@Stateless
+@Path("/v7/reports")
+@Consumes({"application/json"})
+@Produces({"application/json"})
+public class ReportsEndpointV7 implements ReportsEndpointLocalV7 {
 
-    ReportResult invokeReport(String reportId, Object... params) throws Exception;
+    private static final Logger log = Logger.getLogger(ReportsEndpointV7.class.getName());
+    private static final String LOOKUP_REPORTS = "java:global/j-lawyer-server/j-lawyer-server-ejb/ReportService!com.jdimension.jlawyer.services.ReportServiceLocal";
 
     /**
-     * Returns metadata for all available server-side reports, including their
-     * identifiers, names, descriptions, categories, and security types.
+     * Returns the list of available reports with their metadata.
      *
-     * @return list of report metadata entries
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
      */
-    List<ReportMetadata> getAvailableReports();
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/list")
+    @RolesAllowed({"commonReportRole"})
+    public Response getAvailableReports() {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ReportServiceLocal reports = (ReportServiceLocal) ic.lookup(LOOKUP_REPORTS);
+            List<ReportMetadata> metadata = reports.getAvailableReports();
+            List<RestfulReportMetadataV7> resultList = new ArrayList<>();
+            for (ReportMetadata m : metadata) {
+                resultList.add(RestfulReportMetadataV7.fromReportMetadata(m));
+            }
+
+            return Response.ok(resultList).build();
+        } catch (Exception ex) {
+            log.error("can not get available reports", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Invokes a report by its identifier and returns the result containing tables and/or bar charts.
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @POST
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/invoke")
+    @RolesAllowed({"commonReportRole"})
+    public Response invokeReport(RestfulReportRequestV7 request) {
+        try {
+
+            if (request.getReportId() == null || request.getReportId().isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("{\"error\":\"reportId is required\"}").build();
+            }
+
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            Date fromDate = null;
+            Date toDate = null;
+            if (request.getFromDate() != null && !request.getFromDate().isEmpty()) {
+                fromDate = sdf.parse(request.getFromDate());
+            }
+            if (request.getToDate() != null && !request.getToDate().isEmpty()) {
+                toDate = sdf.parse(request.getToDate());
+            }
+
+            InitialContext ic = new InitialContext();
+            ReportServiceLocal reports = (ReportServiceLocal) ic.lookup(LOOKUP_REPORTS);
+            ReportResult result = reports.invokeReport(request.getReportId(), fromDate, toDate);
+            RestfulReportResultV7 restResult = RestfulReportResultV7.fromReportResult(result);
+
+            return Response.ok(restResult).build();
+        } catch (Exception ex) {
+            log.error("can not invoke report " + request.getReportId(), ex);
+            return Response.serverError().build();
+        }
+    }
 
 }
