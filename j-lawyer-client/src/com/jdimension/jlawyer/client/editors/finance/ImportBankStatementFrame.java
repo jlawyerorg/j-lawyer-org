@@ -1447,7 +1447,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Aktenetiketten", "Aktenetiketten");
+            ThreadUtils.showErrorDialog(this, "Fehler beim Verarbeiten der Buchung", "Buchung durchführen");
         }
 
     }
@@ -1578,7 +1578,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                         locator.lookupArchiveFileServiceRemote().setTag(this.currentCase.getId(), aftb, tagSelected);
                     } catch (Exception ex) {
                         log.error("Error connecting to server", ex);
-                        ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Aktenetiketten", "Aktenetiketten");
+                        ThreadUtils.showErrorDialog(this, "Fehler beim Setzen des Aktenetiketts: " + tagName, "Aktenetiketten");
                     }
                 }
 
