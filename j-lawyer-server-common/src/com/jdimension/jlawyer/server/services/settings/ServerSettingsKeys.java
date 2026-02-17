@@ -799,7 +799,4 @@ public class ServerSettingsKeys {
     
     public static final String SERVERCONF_STIRLINGPDF_ENDPOINT="jlawyer.server.stirlingpdf.endpoint";
     
-    // setting this to false will disable full text search within a case
-    public static final String SERVERCONF_SEARCH_FULLTEXT_INCASE="jlawyer.server.search.fulltext.incase";
-    
 }

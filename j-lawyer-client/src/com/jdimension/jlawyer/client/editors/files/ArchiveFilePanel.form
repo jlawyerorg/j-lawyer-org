@@ -1497,16 +1497,16 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" attributes="0">
-                                  <Component id="jLabel15" min="-2" max="-2" attributes="0"/>
+                                  <Component id="togFulltextSearch" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="txtSearchDocumentNames" min="-2" pref="272" max="-2" attributes="0"/>
+                                  <Component id="txtSearchDocumentNames" min="-2" pref="135" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="cmdDocumentTagFilter" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="cmdClearSearch" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="lblDocumentHits" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace max="32767" attributes="0"/>
+                                  <EmptySpace pref="301" max="32767" attributes="0"/>
                                   <Component id="cmdNewDocument" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="cmdUploadDocument" min="-2" max="-2" attributes="0"/>
@@ -1527,7 +1527,6 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="1" attributes="0">
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="jLabel15" alignment="0" min="-2" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="cmdUploadDocument" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="cmdNewDocument" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -1537,11 +1536,12 @@
                                   <Component id="cmdAddNote" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="cmdAddVoiceMemo" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="cmdAssistantGenerate" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="togFulltextSearch" alignment="0" min="-2" pref="31" max="-2" attributes="0"/>
                               </Group>
                               <Component id="cmdDocumentTagFilter" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                          <Component id="splitDocumentsMain" pref="765" max="32767" attributes="0"/>
+                          <Component id="splitDocumentsMain" pref="768" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
@@ -1571,13 +1571,6 @@
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdUploadDocumentActionPerformed"/>
                   </Events>
-                </Component>
-                <Component class="javax.swing.JLabel" name="jLabel15">
-                  <Properties>
-                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/icons16/search.png"/>
-                    </Property>
-                  </Properties>
                 </Component>
                 <Component class="javax.swing.JTextField" name="txtSearchDocumentNames">
                   <Events>
@@ -1744,6 +1737,20 @@
                   </Properties>
                   <Events>
                     <EventHandler event="mouseReleased" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdAssistantGenerateMouseReleased"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JToggleButton" name="togFulltextSearch">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons16/search_off.png"/>
+                    </Property>
+                    <Property name="toolTipText" type="java.lang.String" value="Volltextsuche aktivieren / deaktivieren"/>
+                    <Property name="selectedIcon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons16/search.png"/>
+                    </Property>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="togFulltextSearchActionPerformed"/>
                   </Events>
                 </Component>
               </SubComponents>

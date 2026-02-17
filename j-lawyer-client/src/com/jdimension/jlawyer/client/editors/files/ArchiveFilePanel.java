@@ -750,6 +750,7 @@ import com.jdimension.jlawyer.client.wizard.WizardDataContainer;
 import com.jdimension.jlawyer.client.wizard.WizardSteps;
 import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.persistence.*;
+import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
@@ -1198,6 +1199,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         b.subscribeConsumer(this, Event.TYPE_REVIEWADDED);
         b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_MESSAGEDELETED);
         b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_NEWMESSAGES);
+        
+        this.togFulltextSearch.setSelected(UserSettings.getInstance().getSettingAsBoolean(UserSettingsKeys.CONF_CASES_SEARCH_FULLTEXT_INCASE, false));
 
     }
 
@@ -2183,7 +2186,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jPanel7 = new javax.swing.JPanel();
         cmdNewDocument = new javax.swing.JButton();
         cmdUploadDocument = new javax.swing.JButton();
-        jLabel15 = new javax.swing.JLabel();
         txtSearchDocumentNames = new javax.swing.JTextField();
         lblDocumentHits = new javax.swing.JLabel();
         cmdClearSearch = new javax.swing.JButton();
@@ -2199,6 +2201,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         documentTagPanel = new javax.swing.JPanel();
         cmdAddVoiceMemo = new javax.swing.JButton();
         cmdAssistantGenerate = new javax.swing.JButton();
+        togFulltextSearch = new javax.swing.JToggleButton();
         tabFinance = new javax.swing.JPanel();
         subTabsFinance = new javax.swing.JTabbedPane();
         jPanel8 = new javax.swing.JPanel();
@@ -3185,8 +3188,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
-        jLabel15.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/search.png"))); // NOI18N
-
         txtSearchDocumentNames.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 txtSearchDocumentNamesKeyReleased(evt);
@@ -3282,6 +3283,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
+        togFulltextSearch.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/search_off.png"))); // NOI18N
+        togFulltextSearch.setToolTipText("Volltextsuche aktivieren / deaktivieren");
+        togFulltextSearch.setSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/search.png"))); // NOI18N
+        togFulltextSearch.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                togFulltextSearchActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel7Layout = new org.jdesktop.layout.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
         jPanel7Layout.setHorizontalGroup(
@@ -3290,16 +3300,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap()
                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel7Layout.createSequentialGroup()
-                        .add(jLabel15)
+                        .add(togFulltextSearch)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(txtSearchDocumentNames, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 272, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(txtSearchDocumentNames, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 135, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdDocumentTagFilter)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdClearSearch)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblDocumentHits)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 301, Short.MAX_VALUE)
                         .add(cmdNewDocument)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdUploadDocument)
@@ -3316,7 +3326,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel7Layout.createSequentialGroup()
                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel15)
                     .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(cmdUploadDocument)
                         .add(cmdNewDocument)
@@ -3325,10 +3334,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(cmdClearSearch)
                         .add(cmdAddNote)
                         .add(cmdAddVoiceMemo)
-                        .add(cmdAssistantGenerate))
+                        .add(cmdAssistantGenerate)
+                        .add(togFulltextSearch, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 31, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(cmdDocumentTagFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(splitDocumentsMain, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 765, Short.MAX_VALUE)
+                .add(splitDocumentsMain, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 768, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -7255,7 +7265,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     // Perform full-text search, but do not fail the search in general if this does not work
                     if (!clearOnly && !isCancelled()) {
                         try {
-                            boolean performFulltextSearch = ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.SERVERCONF_SEARCH_FULLTEXT_INCASE, true);
+                            boolean performFulltextSearch = togFulltextSearch.isSelected();
                             if (performFulltextSearch && !searchText.trim().isEmpty()) {
                                 fullTextMatches = locator.lookupSearchServiceRemote().search(searchText, 5000, dto.getId());
                             }
@@ -9141,6 +9151,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }//GEN-LAST:event_cmdNewClaimLedgerActionPerformed
 
+    private void togFulltextSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_togFulltextSearchActionPerformed
+        UserSettings.getInstance().setSettingAsBoolean(UserSettingsKeys.CONF_CASES_SEARCH_FULLTEXT_INCASE, this.togFulltextSearch.isSelected());
+    }//GEN-LAST:event_togFulltextSearchActionPerformed
+
     public void exportSelectedDocumentsAsPdf() {
 
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
@@ -9800,7 +9814,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
-    private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel17;
     private javax.swing.JLabel jLabel18;
@@ -9975,6 +9988,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JTable tblReviewReasons;
     private javax.swing.JScrollPane tblReviewReasonsPane;
     private javax.swing.JToggleButton togCaseSync;
+    private javax.swing.JToggleButton togFulltextSearch;
     protected javax.swing.JTextField txtClaimNumber;
     protected javax.swing.JTextField txtClaimValue;
     protected javax.swing.JTextField txtCustom1;
