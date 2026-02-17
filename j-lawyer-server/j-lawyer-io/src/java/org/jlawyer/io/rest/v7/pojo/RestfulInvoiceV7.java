@@ -694,8 +694,9 @@ public class RestfulInvoiceV7 {
     private String currency="EUR";
     private String lastPoolId;
     private String paymentType;
+    private String buyerOrderReference;
 
-    
+
     public RestfulInvoiceV7() {
     }
     
@@ -724,7 +725,8 @@ public class RestfulInvoiceV7 {
             invoice.setElectronicInvoiceDocumentId(i.getElectronicInvoiceDocument().getId());
         invoice.setCurrency(i.getCurrency());
         invoice.setPaymentType(i.getPaymentType());
-        
+        invoice.setBuyerOrderReference(i.getBuyerOrderReference());
+
         return invoice;
     }
 
@@ -1021,5 +1023,19 @@ public class RestfulInvoiceV7 {
     public void setPaymentType(String paymentType) {
         this.paymentType = paymentType;
     }
-    
+
+    /**
+     * @return the buyerOrderReference
+     */
+    public String getBuyerOrderReference() {
+        return buyerOrderReference;
+    }
+
+    /**
+     * @param buyerOrderReference the buyerOrderReference to set
+     */
+    public void setBuyerOrderReference(String buyerOrderReference) {
+        this.buyerOrderReference = buyerOrderReference;
+    }
+
 }

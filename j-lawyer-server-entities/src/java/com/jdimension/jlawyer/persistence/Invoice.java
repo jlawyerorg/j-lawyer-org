@@ -784,7 +784,10 @@ public class Invoice implements Serializable {
     
     @Column(name = "payment_type")
     private String paymentType;
-    
+
+    @Column(name = "buyer_order_reference")
+    private String buyerOrderReference;
+
     public Invoice() {
     }
 
@@ -1161,7 +1164,21 @@ public class Invoice implements Serializable {
     public void setPaymentType(String paymentType) {
         this.paymentType = paymentType;
     }
-    
+
+    /**
+     * @return the buyerOrderReference
+     */
+    public String getBuyerOrderReference() {
+        return buyerOrderReference;
+    }
+
+    /**
+     * @param buyerOrderReference the buyerOrderReference to set
+     */
+    public void setBuyerOrderReference(String buyerOrderReference) {
+        this.buyerOrderReference = buyerOrderReference;
+    }
+
     public static String paymentTypeForDisplayValue(String dv) {
         if("Überweisung".equals(dv))
             return PAYMENTTYPE_BANKTRANSFER;

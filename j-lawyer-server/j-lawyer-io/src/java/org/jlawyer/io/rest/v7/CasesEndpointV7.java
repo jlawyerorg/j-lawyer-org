@@ -1126,6 +1126,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
                 invoiceToUpdate.setCurrency(invoice.getCurrency());
                 invoiceToUpdate.setSender(invoice.getSender());
                 invoiceToUpdate.setPaymentType(invoice.getPaymentType());
+                invoiceToUpdate.setBuyerOrderReference(invoice.getBuyerOrderReference());
 
                 // Use updateInvoiceType which handles pool changes and generates new invoice number
                 updatedInvoice = cases.updateInvoiceType(invoice.getCaseId(), invoiceToUpdate, newPool, existingInvoice.getInvoiceType());
@@ -1149,6 +1150,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
                 invoiceToUpdate.setCurrency(invoice.getCurrency());
                 invoiceToUpdate.setSender(invoice.getSender());
                 invoiceToUpdate.setPaymentType(invoice.getPaymentType());
+                invoiceToUpdate.setBuyerOrderReference(invoice.getBuyerOrderReference());
 
                 // Use updateInvoice which preserves pool and invoice number
                 updatedInvoice = cases.updateInvoice(invoice.getCaseId(), invoiceToUpdate);

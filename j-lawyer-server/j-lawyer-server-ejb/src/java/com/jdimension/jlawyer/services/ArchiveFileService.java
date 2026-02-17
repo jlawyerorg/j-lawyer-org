@@ -5744,6 +5744,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             updatedInvoice.setCurrency(invoice.getCurrency());
             updatedInvoice.setSender(invoice.getSender());
             updatedInvoice.setPaymentType(invoice.getPaymentType());
+            updatedInvoice.setBuyerOrderReference(invoice.getBuyerOrderReference());
 
             this.invoicesFacade.edit(updatedInvoice);
             this.updateInvoiceTotal(invoice.getId());
@@ -6060,6 +6061,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             newInvoice.setPaymentType(Invoice.PAYMENTTYPE_BANKTRANSFER);
         }
         
+        newInvoice.setBuyerOrderReference(oldInvoice.getBuyerOrderReference());
         newInvoice.setCreationDate(new Date());
         newInvoice.setCurrency(oldInvoice.getCurrency());
         newInvoice.setDescription(oldInvoice.getDescription());

@@ -786,6 +786,10 @@ public class EInvoiceUtils {
             i.setReferenceNumber(caseInvoice.getContact().getLeitwegId());
         }
 
+        if (!StringUtils.isEmpty(caseInvoice.getBuyerOrderReference())) {
+            i.setBuyerOrderReferencedDocumentID(caseInvoice.getBuyerOrderReference());
+        }
+
         List<InvoicePosition> positions = null;
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
@@ -854,6 +858,11 @@ public class EInvoiceUtils {
         if (invoice.getDetailedDeliveryPeriodFrom() != null && invoice.getDetailedDeliveryPeriodTo() != null) {
             html.append("<p>Leistungszeitraum: ").append(df.format(invoice.getDetailedDeliveryPeriodFrom()))
                     .append(" - ").append(df.format(invoice.getDetailedDeliveryPeriodTo())).append("</p>");
+        }
+
+        // Buyer Order Reference
+        if (!StringUtils.isEmpty(invoice.getBuyerOrderReferencedDocumentID())) {
+            html.append("<p>Bestellnummer: ").append(invoice.getBuyerOrderReferencedDocumentID()).append("</p>");
         }
 
         // Seller (TradeParty)
