@@ -663,6 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.cloud;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import ezvcard.Ezvcard;
 import ezvcard.VCard;
 import ezvcard.VCardVersion;
@@ -1089,7 +1091,11 @@ public class NextcloudContactsConnector {
             }
         }
         sb.append("remote.php/dav/addressbooks/users/");
-        sb.append(this.userName);
+        try {
+            sb.append(URLEncoder.encode(this.userName, "UTF-8"));
+        } catch (UnsupportedEncodingException ex) {
+            sb.append(this.userName);
+        }
         sb.append("/");
         return sb.toString();
 

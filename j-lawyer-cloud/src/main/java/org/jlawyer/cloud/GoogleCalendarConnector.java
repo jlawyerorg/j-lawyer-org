@@ -663,6 +663,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.cloud;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+
 /**
  *
  * @author jens
@@ -676,10 +679,14 @@ public class GoogleCalendarConnector extends NextcloudCalendarConnector {
     @Override
     protected String getBaseUrl() {
         // example: https://apidata.googleusercontent.com/caldav/v2/your_email@gmail.com/events
-        
+
         StringBuilder sb = new StringBuilder();
         sb.append("https://apidata.googleusercontent.com/caldav/v2/");
-        sb.append(this.userName);
+        try {
+            sb.append(URLEncoder.encode(this.userName, "UTF-8"));
+        } catch (UnsupportedEncodingException ex) {
+            sb.append(this.userName);
+        }
         sb.append("/");
         return sb.toString();
 

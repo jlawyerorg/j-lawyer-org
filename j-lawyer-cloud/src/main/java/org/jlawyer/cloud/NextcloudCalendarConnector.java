@@ -663,6 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.cloud;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -1179,7 +1181,11 @@ public class NextcloudCalendarConnector {
             }
         }
         sb.append("remote.php/dav/calendars/");
-        sb.append(this.userName);
+        try {
+            sb.append(URLEncoder.encode(this.userName, "UTF-8"));
+        } catch (UnsupportedEncodingException ex) {
+            sb.append(this.userName);
+        }
         sb.append("/");
         return sb.toString();
 
