@@ -797,7 +797,8 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     // Auto-save draft functionality
     private javax.swing.Timer autoSaveTimer = null;
     private String currentDraftDocumentId = null;
-    private static final int AUTO_SAVE_INTERVAL = 60000; // 60 seconds
+    private static final int AUTO_SAVE_INITIAL_DELAY = 10000; // 10 seconds
+    private static final int AUTO_SAVE_INTERVAL = 30000; // 30 seconds
     private volatile boolean autoSaveInProgress = false;
 
     private String contextDictateSign = null;
@@ -1163,10 +1164,12 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     }
 
     private void initAutoSave() {
-        this.autoSaveTimer = new javax.swing.Timer(AUTO_SAVE_INTERVAL, new java.awt.event.ActionListener() {
+        this.autoSaveTimer = new javax.swing.Timer(AUTO_SAVE_INITIAL_DELAY, new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 performAutoSave();
+                // after the initial save, switch to the regular interval
+                autoSaveTimer.setDelay(AUTO_SAVE_INTERVAL);
             }
         });
         this.autoSaveTimer.setRepeats(true);
