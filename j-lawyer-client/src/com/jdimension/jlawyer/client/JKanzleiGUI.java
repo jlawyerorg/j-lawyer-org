@@ -2876,7 +2876,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuAddressBookSyncActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressBookSyncActionPerformed
 
-        if (checkSysAdmin()) {
+        if (checkAdmin()) {
             AddressBookSetupDialog dlg = new AddressBookSetupDialog(this, true);
             FrameUtils.centerDialog(dlg, this);
             dlg.setVisible(true);
