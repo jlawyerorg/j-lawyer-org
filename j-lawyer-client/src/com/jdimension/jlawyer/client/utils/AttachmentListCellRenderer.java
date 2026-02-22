@@ -669,7 +669,7 @@ import java.io.File;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JLabel;
 import javax.swing.JList;
-import org.jlawyer.bea.model.Attachment;
+import com.jdimension.jlawyer.services.bea.rest.BeaAttachment;
 
 /**
  *
@@ -691,10 +691,10 @@ public class AttachmentListCellRenderer extends DefaultListCellRenderer {
             ArchiveFileDocumentsBean d = (ArchiveFileDocumentsBean) o;
             ((JLabel) ret).setText(d.getName());
             ((JLabel) ret).setIcon(FileUtils.getInstance().getFileTypeIcon(d.getName()));
-        } else if (o instanceof Attachment) {
-            Attachment d = (Attachment) o;
+        } else if (o instanceof BeaAttachment) {
+            BeaAttachment d = (BeaAttachment) o;
             ((JLabel) ret).setText(d.toString());
-            ((JLabel) ret).setIcon(FileUtils.getInstance().getFileTypeIcon(d.getFileName()));
+            ((JLabel) ret).setIcon(FileUtils.getInstance().getFileTypeIcon(d.getName()));
         } else if (o instanceof File) {
             File d = (File) o;
             ((JLabel) ret).setText(d.getName());

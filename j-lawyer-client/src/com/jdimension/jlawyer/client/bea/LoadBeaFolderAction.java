@@ -681,10 +681,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import com.jdimension.jlawyer.services.bea.rest.BeaFolder;
+import com.jdimension.jlawyer.services.bea.rest.BeaMessageHeader;
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.BeaWrapperException;
-import org.jlawyer.bea.model.Folder;
-import org.jlawyer.bea.model.MessageHeader;
 
 /**
  *
@@ -696,20 +695,20 @@ public class LoadBeaFolderAction extends ProgressableAction {
     private final SimpleDateFormat dfDateTime = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
     private final SimpleDateFormat dfDate = new SimpleDateFormat("dd.MM.yyyy");
 
-    private org.jlawyer.bea.model.Folder f = null;
+    private BeaFolder f = null;
     private JTable table = null;
     private int sortCol = -1;
     private int scrollToRow = -1;
     
     private JSplitPane mainSplitter=null;
 
-    private List<MessageHeader> headers = null;
+    private List<BeaMessageHeader> headers = null;
 
     private final Set<String> addedMessageIds = new HashSet<>();
 
     private int max = 1;
 
-    public LoadBeaFolderAction(ProgressIndicator i, org.jlawyer.bea.model.Folder f, JTable table, int sortCol, int scrollToRow, JSplitPane mainSplitter) throws BeaWrapperException {
+    public LoadBeaFolderAction(ProgressIndicator i, BeaFolder f, JTable table, int sortCol, int scrollToRow, JSplitPane mainSplitter) throws Exception {
         super(i, false);
         this.f = f;
         this.table = table;
@@ -717,7 +716,7 @@ public class LoadBeaFolderAction extends ProgressableAction {
         this.scrollToRow = scrollToRow;
 
         BeaAccess bea = BeaAccess.getInstance();
-        headers = bea.getFolderOverview(f, BeaAccess.getFilter());
+        headers = bea.getFolderOverview(bea.getLoggedInSafeId(), f, BeaAccess.getFilter());
         this.max = headers.size();
         this.mainSplitter=mainSplitter;
 
@@ -726,7 +725,7 @@ public class LoadBeaFolderAction extends ProgressableAction {
         // Check for duplicates in headers list
         Set<String> seenIds = new HashSet<>();
         int duplicatesInHeaders = 0;
-        for (MessageHeader mh : headers) {
+        for (BeaMessageHeader mh : headers) {
             if (!seenIds.add(mh.getId())) {
                 duplicatesInHeaders++;
                 log.warn("Duplicate message in headers list: id=" + mh.getId() + ", subject=" + mh.getSubject());
@@ -769,18 +768,18 @@ public class LoadBeaFolderAction extends ProgressableAction {
 
                 this.progress("Lade Nachrichten... " + (i + 1));
 
-                MessageHeader msgh = headers.get(i);
+                BeaMessageHeader msgh = headers.get(i);
                 EditorsRegistry.getInstance().updateStatus("Lade Nachricht " + StringUtils.nonNull(msgh.getSubject()), true);
 
                 String to = "";
-                if (msgh.getRecipient()!=null) {
-                    to = msgh.getRecipient().getName();
+                if (msgh.getRecipientName()!=null) {
+                    to = msgh.getRecipientName();
                 }
                 final String toString = to;
 
                 final int currentIndex = i;
 
-                if (Folder.TYPE_TRASH.equalsIgnoreCase(f.getType())) {
+                if (BeaFolder.TYPE_TRASH.equalsIgnoreCase(f.getType())) {
                     TableRowSorter<TableModel> sorter = new TableRowSorter<>(table.getModel());
                     sorter.setComparator(7, new DateStringComparator());
                     // "dd.MM.yyyy, HH:mm"
@@ -796,7 +795,7 @@ public class LoadBeaFolderAction extends ProgressableAction {
                             return;
                         }
 
-                        if (Folder.TYPE_TRASH.equalsIgnoreCase(f.getType())) {
+                        if (BeaFolder.TYPE_TRASH.equalsIgnoreCase(f.getType())) {
                             // trash folder - show permanent deletion date
                             if (msgh.getReceptionTime() != null) {
                                 ((DefaultTableModel) table.getModel()).addRow(new Object[]{msgh.isConfidential(), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getReceptionTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});

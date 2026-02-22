@@ -687,6 +687,9 @@ public class ScheduledTasksService implements ScheduledTasksServiceLocal {
     
     @EJB
     private CalendarServiceLocal calendarService;
+
+    @EJB
+    private BeaSessionRegistry sessionRegistry;
     
     @Override
     @Schedule(dayOfWeek = "1-7", hour = "6", minute = "01", second = "0", persistent = false)
@@ -715,16 +718,27 @@ public class ScheduledTasksService implements ScheduledTasksServiceLocal {
     // testing: @Schedule(hour = "*", minute = "*/3", persistent = false)
     @TransactionTimeout(value = 10, unit = TimeUnit.MINUTES)
     public void sendWeeklyDigest() {
-        
+
         try {
             Date now=new Date();
             Date since=new Date(now.getTime()-(7l*24l*60l*60l*1000l));
         } catch (Exception ex) {
             log.error("Could not send weekly digest", ex);
         }
-        
+
     }
 
-    
-    
+    @Override
+    @Schedule(hour = "*", minute = "*/15", second = "0", persistent = false)
+    public void cleanupStaleBeaSessions() {
+        try {
+            int removed = sessionRegistry.cleanupStaleSessions();
+            if (removed > 0) {
+                log.info("beA session cleanup completed: " + removed + " stale session(s) removed");
+            }
+        } catch (Exception ex) {
+            log.error("beA session cleanup failed", ex);
+        }
+    }
+
 }

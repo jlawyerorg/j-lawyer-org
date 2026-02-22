@@ -708,8 +708,6 @@ public class AppUserBean implements Serializable {
     private byte[] beaCertificate;
     @Column(name = "beaCertificatePassword")
     private String beaCertificatePassword;
-    @Column(name = "beaCertificateAutoLogin")
-    private boolean beaCertificateAutoLogin;
 
     @Column(name = "abbreviation")
     private String abbreviation;
@@ -984,20 +982,6 @@ public class AppUserBean implements Serializable {
      */
     public void setBeaCertificatePassword(String beaCertificatePassword) {
         this.beaCertificatePassword = beaCertificatePassword;
-    }
-
-    /**
-     * @return the beaCertificateAutoLogin
-     */
-    public boolean isBeaCertificateAutoLogin() {
-        return beaCertificateAutoLogin;
-    }
-
-    /**
-     * @param beaCertificateAutoLogin the beaCertificateAutoLogin to set
-     */
-    public void setBeaCertificateAutoLogin(boolean beaCertificateAutoLogin) {
-        this.beaCertificateAutoLogin = beaCertificateAutoLogin;
     }
 
     /**

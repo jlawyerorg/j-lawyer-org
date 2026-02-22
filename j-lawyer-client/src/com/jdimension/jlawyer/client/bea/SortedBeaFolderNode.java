@@ -668,7 +668,7 @@ import java.util.Comparator;
 import java.util.Vector;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
-import org.jlawyer.bea.model.Folder;
+import com.jdimension.jlawyer.services.bea.rest.BeaFolder;
 
 /**
  *
@@ -697,13 +697,13 @@ public class SortedBeaFolderNode extends DefaultMutableTreeNode {
                 if(u2==null)
                     return 1;
                 
-                if(!(u1 instanceof Folder))
+                if(!(u1 instanceof BeaFolder))
                     return -1;
-                if(!(u2 instanceof Folder))
+                if(!(u2 instanceof BeaFolder))
                     return 1;
                 
-                Folder f1=(Folder)u1;
-                Folder f2=(Folder)u2;
+                BeaFolder f1=(BeaFolder)u1;
+                BeaFolder f2=(BeaFolder)u2;
                 
                 String f1name = "";
                 if (f1.getName() != null) {
@@ -714,19 +714,19 @@ public class SortedBeaFolderNode extends DefaultMutableTreeNode {
                     f2name = f2.getName().toLowerCase();
                 }
                 
-                if(Folder.TYPE_INBOX.equals(f1.getType()))
+                if(BeaFolder.TYPE_INBOX.equals(f1.getType()))
                     f1name="0000";
                 
-                if(Folder.TYPE_DRAFT.equals(f1.getType()))
+                if(BeaFolder.TYPE_DRAFT.equals(f1.getType()))
                     f1name="0001";
                 
-                if(Folder.TYPE_OUTBOX.equals(f1.getType()))
+                if(BeaFolder.TYPE_OUTBOX.equals(f1.getType()))
                     f1name="0002";
                 
-                if(Folder.TYPE_SENT.equals(f1.getType()))
+                if(BeaFolder.TYPE_SENT.equals(f1.getType()))
                     f1name="0003";
                 
-                if(Folder.TYPE_TRASH.equals(f1.getType()))
+                if(BeaFolder.TYPE_TRASH.equals(f1.getType()))
                     f1name="0004";
                 
                 if(BeaAccess.FOLDER_NAME_JLAWYER_PROCESSED.equals(f1.getName()))
@@ -734,19 +734,19 @@ public class SortedBeaFolderNode extends DefaultMutableTreeNode {
                 
                 
                 
-                if(Folder.TYPE_INBOX.equals(f2.getType()))
+                if(BeaFolder.TYPE_INBOX.equals(f2.getType()))
                     f2name="0000";
                 
-                if(Folder.TYPE_DRAFT.equals(f2.getType()))
+                if(BeaFolder.TYPE_DRAFT.equals(f2.getType()))
                     f2name="0001";
                 
-                if(Folder.TYPE_OUTBOX.equals(f2.getType()))
+                if(BeaFolder.TYPE_OUTBOX.equals(f2.getType()))
                     f2name="0002";
                 
-                if(Folder.TYPE_SENT.equals(f2.getType()))
+                if(BeaFolder.TYPE_SENT.equals(f2.getType()))
                     f2name="0003";
                 
-                if(Folder.TYPE_TRASH.equals(f2.getType()))
+                if(BeaFolder.TYPE_TRASH.equals(f2.getType()))
                     f2name="0004";
                 
                 if(BeaAccess.FOLDER_NAME_JLAWYER_PROCESSED.equals(f2.getName()))

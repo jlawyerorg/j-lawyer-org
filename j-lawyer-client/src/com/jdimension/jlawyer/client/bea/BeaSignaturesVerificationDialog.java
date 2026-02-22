@@ -666,7 +666,7 @@ package com.jdimension.jlawyer.client.bea;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
 import javax.swing.text.StyledEditorKit;
 import javax.swing.text.html.HTMLDocument;
-import org.jlawyer.bea.model.VerificationResult;
+import com.jdimension.jlawyer.services.bea.rest.BeaVerificationResult;
 
 /**
  *
@@ -687,11 +687,11 @@ public class BeaSignaturesVerificationDialog extends javax.swing.JDialog {
     public void setStatus(String status) {
         lblStatus.setIcon(BeaAccess.getSignatureStatusIcon(status));
         lblStatus.setText("Status der Signaturprüfungen unbekannt");
-        if(status.equalsIgnoreCase(VerificationResult.STATUS_SUCCESS)) {
+        if(status.equalsIgnoreCase(BeaVerificationResult.STATUS_SUCCESS)) {
             lblStatus.setText("alle Signaturen korrekt");
-        } else if(status.equalsIgnoreCase(VerificationResult.STATUS_PARTIAL)) {
+        } else if(status.equalsIgnoreCase(BeaVerificationResult.STATUS_PARTIAL)) {
             lblStatus.setText("einige Signaturen mit unbekanntem Status");
-        } else if(status.equalsIgnoreCase(VerificationResult.STATUS_FAILED)) {
+        } else if(status.equalsIgnoreCase(BeaVerificationResult.STATUS_FAILED)) {
             lblStatus.setText("eine odere mehrere inkorrekte Signaturen");
         }
     }

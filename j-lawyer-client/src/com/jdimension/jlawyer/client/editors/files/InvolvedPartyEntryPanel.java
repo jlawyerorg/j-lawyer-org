@@ -665,8 +665,6 @@ package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.bea.BeaInboxPanel;
-import com.jdimension.jlawyer.client.bea.BeaLoginCallback;
-import com.jdimension.jlawyer.client.bea.BeaLoginDialog;
 import com.jdimension.jlawyer.client.bea.IdentityPanel;
 import com.jdimension.jlawyer.client.bea.SendBeaMessageFrame;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
@@ -704,7 +702,7 @@ import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.model.Identity;
+import com.jdimension.jlawyer.services.bea.rest.BeaIdentity;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -1337,25 +1335,18 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
     private void mnuSendBeaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendBeaActionPerformed
 
-        if (!BeaAccess.hasInstance()) {
-            BeaLoginCallback callback = null;
-            try {
-                callback = (BeaLoginCallback) EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, callback);
-            loginPanel.setVisible(true);
-            if (!BeaAccess.hasInstance()) {
-                return;
-            }
+        try {
+            if (!BeaAccess.getInstance().ensureLoggedIn()) return;
+        } catch (Exception ex) {
+            log.error(ex);
+            return;
         }
 
         if (this.a.getBeaSafeId() == null || "".equals(this.a.getBeaSafeId())) {
             JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine beA-Adresse erfasst.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
         } else {
-            Identity iTo = null;
+            BeaIdentity iTo = null;
             try {
                 BeaAccess bea = BeaAccess.getInstance();
                 iTo = bea.getIdentity(this.a.getBeaSafeId());
@@ -1388,25 +1379,18 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
     private void mnuShowBeaIdentityActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuShowBeaIdentityActionPerformed
 
-        if (!BeaAccess.hasInstance()) {
-            BeaLoginCallback callback = null;
-            try {
-                callback = (BeaLoginCallback) EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, callback);
-            loginPanel.setVisible(true);
-            if (!BeaAccess.hasInstance()) {
-                return;
-            }
+        try {
+            if (!BeaAccess.getInstance().ensureLoggedIn()) return;
+        } catch (Exception ex) {
+            log.error(ex);
+            return;
         }
 
         if (this.a.getBeaSafeId() == null || "".equals(this.a.getBeaSafeId())) {
             JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine beA-Adresse erfasst.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
 
         } else {
-            Identity iTo = null;
+            BeaIdentity iTo = null;
             try {
                 BeaAccess bea = BeaAccess.getInstance();
                 iTo = bea.getIdentity(this.a.getBeaSafeId());

@@ -688,6 +688,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.List;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -696,13 +697,13 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import javax.swing.text.StyledEditorKit;
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.model.Attachment;
-import org.jlawyer.bea.model.Message;
-import org.jlawyer.bea.model.MessageExport;
-import org.jlawyer.bea.model.MessageJournalEntry;
-import org.jlawyer.bea.model.ProcessCard;
-import org.jlawyer.bea.model.ProcessCardEntry;
-import org.jlawyer.bea.model.VerificationResult;
+import com.jdimension.jlawyer.services.bea.rest.BeaAttachment;
+import com.jdimension.jlawyer.services.bea.rest.BeaMessage;
+import com.jdimension.jlawyer.services.bea.rest.BeaMessageExport;
+import com.jdimension.jlawyer.services.bea.rest.BeaMessageJournalEntry;
+import com.jdimension.jlawyer.services.bea.rest.BeaProcessCard;
+import com.jdimension.jlawyer.services.bea.rest.BeaProcessCardEntry;
+import com.jdimension.jlawyer.services.bea.rest.BeaVerificationResult;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -713,7 +714,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
     private static final Logger log = Logger.getLogger(BeaMessageContentUI.class.getName());
     private static final String DATEFORMAT = "dd.MM.yyyy HH:mm";
-    private Message msgContainer = null;
+    private BeaMessage msgContainer = null;
     private String documentId = null;
     private ArchiveFileBean caseContext=null;
     
@@ -824,7 +825,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         this.caseContext=a;
     }
 
-    public void setMessage(org.jlawyer.bea.model.Message msg, String documentId) {
+    public void setMessage(BeaMessage msg, String documentId) {
 
         this.msgContainer = msg;
         this.documentId = documentId;
@@ -854,7 +855,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         }
     }
 
-    public static void setMessageImpl(Message msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblFrom, JLabel lblCaseNumber, JLabel lblReferenceJustice, JEditorPane editBody, JList lstAttachments, JList lstAttachmentsTechnical, JTable journalTable, JTable processCardTable, JLabel lblEeb, JTabbedPane tabs, JButton cmdVerify, JLabel lblSndStatus) throws Exception {
+    public static void setMessageImpl(BeaMessage msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblFrom, JLabel lblCaseNumber, JLabel lblReferenceJustice, JEditorPane editBody, JList lstAttachments, JList lstAttachmentsTechnical, JTable journalTable, JTable processCardTable, JLabel lblEeb, JTabbedPane tabs, JButton cmdVerify, JLabel lblSndStatus) throws Exception {
         // we copy the message to avoid the "Unable to load BODYSTRUCTURE" issue
 
         if (msg.getReceptionTime() == null) {
@@ -890,15 +891,15 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         lblTo.setToolTipText(to);
 
         ((DefaultListModel) lstAttachments.getModel()).removeAllElements();
-        ArrayList<Attachment> attachments = msg.getAttachments();
-        for (Attachment a : attachments) {
+        List<BeaAttachment> attachments = msg.getAttachments();
+        for (BeaAttachment a : attachments) {
             if(a.isTechnicalAttachment())
                 ((DefaultListModel) lstAttachmentsTechnical.getModel()).addElement(a);
             else
                 ((DefaultListModel) lstAttachments.getModel()).addElement(a);
         }
-        ArrayList<Attachment> vhnAttachments = msg.getVhnAttachments();
-        for (Attachment a : vhnAttachments) {
+        List<BeaAttachment> vhnAttachments = msg.getVhnAttachments();
+        for (BeaAttachment a : vhnAttachments) {
             ((DefaultListModel) lstAttachmentsTechnical.getModel()).addElement(a);
         }
 
@@ -911,7 +912,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         journalTable.setRowSorter(sorter);
         SimpleDateFormat df2 = new SimpleDateFormat(DATEFORMAT);
         if (msg.getJournal() != null) {
-            for (MessageJournalEntry e : msg.getJournal()) {
+            for (BeaMessageJournalEntry e : msg.getJournal()) {
                 ((DefaultTableModel) journalTable.getModel()).addRow(new Object[]{e.getFromSurnameFirstname(), e.getFromUsername(), e.getAttachmentReference(), e.getEventType(), df2.format(e.getTimestamp())});
 
             }
@@ -927,7 +928,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             if(!StringUtils.isEmpty(msg.getProcessCard().getExceptionMessage())) {
                 ((DefaultTableModel) processCardTable.getModel()).addRow(new Object[]{"", msg.getProcessCard().getExceptionMessage()});
             }
-            for (ProcessCardEntry e : msg.getProcessCard().getEntries()) {
+            for (BeaProcessCardEntry e : msg.getProcessCard().getEntries()) {
                 ((DefaultTableModel) processCardTable.getModel()).addRow(new Object[]{StringUtils.nonEmpty(e.getCode()), e.getText()});
 
             }
@@ -936,11 +937,11 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         if(!StringUtils.isEmpty(msg.getVerificationStatus())) {
             cmdVerify.setIcon(BeaAccess.getSignatureStatusIcon(msg.getVerificationStatus()));
             cmdVerify.setToolTipText("Status der Signaturprüfungen unbekannt");
-            if (msg.getVerificationStatus().equalsIgnoreCase(VerificationResult.STATUS_SUCCESS)) {
+            if (msg.getVerificationStatus().equalsIgnoreCase(BeaVerificationResult.STATUS_SUCCESS)) {
                 cmdVerify.setToolTipText("alle Signaturen korrekt");
-            } else if (msg.getVerificationStatus().equalsIgnoreCase(VerificationResult.STATUS_PARTIAL)) {
+            } else if (msg.getVerificationStatus().equalsIgnoreCase(BeaVerificationResult.STATUS_PARTIAL)) {
                 cmdVerify.setToolTipText("einige Signaturen mit unbekanntem Status");
-            } else if (msg.getVerificationStatus().equalsIgnoreCase(VerificationResult.STATUS_FAILED)) {
+            } else if (msg.getVerificationStatus().equalsIgnoreCase(BeaVerificationResult.STATUS_FAILED)) {
                 cmdVerify.setToolTipText("eine odere mehrere inkorrekte Signaturen");
             }
         }
@@ -948,13 +949,13 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         int sendStatus=msg.getSentStatus();
         lblSndStatus.setIcon(ICON_SENDSTATUS_UNKNOWN);
         switch (sendStatus) {
-            case Message.SENDSTATUS_FAIL:
+            case BeaMessage.SENDSTATUS_FAIL:
                 lblSndStatus.setIcon(ICON_SENDSTATUS_FAIL);
                 break;
-            case Message.SENDSTATUS_SUCCESS:
+            case BeaMessage.SENDSTATUS_SUCCESS:
                 lblSndStatus.setIcon(ICON_SENDSTATUS_SUCCESS);
                 break;
-            case Message.SENDSTATUS_INVALID:
+            case BeaMessage.SENDSTATUS_INVALID:
                 lblSndStatus.setIcon(ICON_SENDSTATUS_INVALID);
                 break;
             default:
@@ -1406,7 +1407,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             String selectedFolder = null;
             for (Object selected : attList.getSelectedValuesList()) {
 
-                byte[] data = ((Attachment) selected).getContent();
+                byte[] data = ((BeaAttachment) selected).getContent();
 
                 String useFolder = userHome;
                 if (selectedFolder != null) {
@@ -1499,7 +1500,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
                 for (Object selected : attList.getSelectedValuesList()) {
 
-                    byte[] data = ((Attachment) selected).getContent();
+                    byte[] data = ((BeaAttachment) selected).getContent();
 
                     String newName = FileUtils.getNewFileName(sel, selected.toString(), true);
                     if (newName == null) {
@@ -1536,27 +1537,16 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     private void cmdRefreshJournalActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshJournalActionPerformed
         try {
 
-            if (!BeaAccess.hasInstance()) {
-                BeaLoginCallback callback = null;
-                try {
-                    callback = (BeaLoginCallback) EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
-                } catch (Throwable t) {
-                    log.error(t);
-                }
-
-                BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, callback);
-                loginPanel.setVisible(true);
-                if (!BeaAccess.hasInstance()) {
-                    ThreadUtils.showErrorDialog(this, "beA-Login fehlgeschlagen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-                    return;
-                }
+            if (!BeaAccess.getInstance().ensureLoggedIn()) {
+                return;
             }
             BeaAccess bea = BeaAccess.getInstance();
-            ArrayList<MessageJournalEntry> journal = bea.getMessageJournal(this.msgContainer.getId());
+            String safeId = bea.getLoggedInSafeId();
+            ArrayList<BeaMessageJournalEntry> journal = new ArrayList<>(bea.getMessageJournal(safeId, this.msgContainer.getId()));
             this.msgContainer.setJournal(journal);
             if (this.documentId != null) {
-                BeaAccess.addSignatureVerification(bea, msgContainer);
-                MessageExport mex = BeaAccess.exportMessage(msgContainer);
+                BeaAccess.addSignatureVerification(bea, safeId, msgContainer);
+                BeaMessageExport mex = BeaAccess.exportMessage(this.msgContainer);
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
                     locator.lookupArchiveFileServiceRemote().setDocumentContent(this.documentId, mex.getContent());
@@ -1575,33 +1565,23 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     private void cmdRefreshProcessCardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshProcessCardActionPerformed
         try {
 
-            if (!BeaAccess.hasInstance()) {
-                BeaLoginCallback callback = null;
-                try {
-                    callback = (BeaLoginCallback) EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
-                } catch (Throwable t) {
-                    log.error(t);
-                }
-
-                BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, callback);
-                loginPanel.setVisible(true);
-                if (!BeaAccess.hasInstance()) {
-                    ThreadUtils.showErrorDialog(this, "beA-Login fehlgeschlagen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-                    return;
-                }
+            if (!BeaAccess.getInstance().ensureLoggedIn()) {
+                return;
             }
-            
-            ProcessCard pc = BeaAccess.getInstance().getProcessCards(Long.parseLong(msgContainer.getId()));
+
+            BeaAccess bea = BeaAccess.getInstance();
+            String safeId = bea.getLoggedInSafeId();
+            BeaProcessCard pc = bea.getProcessCards(safeId, msgContainer.getId());
             // only replace if not empty! process cards cannot be downloaded after the message has been moved to the SENT folder
             if (pc != null) {
-                if (pc.getEntries().size() > 0) {
+                if (!pc.getEntries().isEmpty()) {
                     msgContainer.setProcessCard(pc);
                 }
             }
 
             if (this.documentId != null) {
-                BeaAccess.addSignatureVerification(BeaAccess.getInstance(), msgContainer);
-                MessageExport mex = BeaAccess.exportMessage(msgContainer);
+                BeaAccess.addSignatureVerification(bea, safeId, msgContainer);
+                BeaMessageExport mex = BeaAccess.exportMessage(this.msgContainer);
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
                     locator.lookupArchiveFileServiceRemote().setDocumentContent(this.documentId, mex.getContent());
@@ -1627,7 +1607,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     private void cmdToPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdToPdfActionPerformed
         if (this.msgContainer != null) {
             try {
-                byte[] pdf = this.msgContainer.toPdf("j-lawyer.org " + VersionUtils.getFullClientVersion());
+                byte[] pdf = BeaAccess.messageToPdf(this.msgContainer, "j-lawyer.org " + VersionUtils.getFullClientVersion());
                 String fileName = "beA-Nachricht-" + this.msgContainer.getId() + ".pdf";
                 ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("beacontentui-" + fileName, fileName);
                 Launcher launcher = LauncherFactory.getLauncher(fileName, pdf, store, EditorsRegistry.getInstance().getMainWindow());
@@ -1648,26 +1628,15 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         try {
 
             String vHtml = "";
-            String vStatus = VerificationResult.STATUS_FAILED;
+            String vStatus = BeaVerificationResult.STATUS_FAILED;
             if (StringUtils.isEmpty(this.msgContainer.getVerificationHtml()) || StringUtils.isEmpty(this.msgContainer.getVerificationStatus())) {
 
-                if (!BeaAccess.hasInstance()) {
-                    BeaLoginCallback callback = null;
-                    try {
-                        callback = (BeaLoginCallback) EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
-                    } catch (Throwable t) {
-                        log.error(t);
-                    }
-
-                    BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, callback);
-                    loginPanel.setVisible(true);
-                    if (!BeaAccess.hasInstance()) {
-                        ThreadUtils.showErrorDialog(this, "beA-Login fehlgeschlagen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-                        return;
-                    }
+                if (!BeaAccess.getInstance().ensureLoggedIn()) {
+                    return;
                 }
                 BeaAccess bea = BeaAccess.getInstance();
-                VerificationResult vr = bea.verifyMessage(this.msgContainer.getId());
+                String safeId = bea.getLoggedInSafeId();
+                BeaVerificationResult vr = bea.verifyMessage(safeId, this.msgContainer.getId());
                 vHtml=vr.getHtml();
                 vStatus=vr.getStatus();
             } else {
@@ -1716,8 +1685,8 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     private void attachmentsMouseClicked(java.awt.event.MouseEvent evt, JList attList) {
         if (evt.getClickCount() == 2 && attList.getSelectedValue() != null) {
             try {
-                byte[] data = ((Attachment) attList.getSelectedValue()).getContent();
-                String fileName = ((Attachment) attList.getSelectedValue()).getFileName();
+                byte[] data = ((BeaAttachment) attList.getSelectedValue()).getContent();
+                String fileName = ((BeaAttachment) attList.getSelectedValue()).getName();
                 ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("beaattachment-" + fileName, fileName);
                 Launcher launcher = LauncherFactory.getLauncher(fileName, data, store, EditorsRegistry.getInstance().getMainWindow());
                 launcher.launch(false);

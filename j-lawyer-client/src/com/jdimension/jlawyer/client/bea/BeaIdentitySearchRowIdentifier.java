@@ -664,7 +664,7 @@
 package com.jdimension.jlawyer.client.bea;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
-import org.jlawyer.bea.model.Identity;
+import com.jdimension.jlawyer.services.bea.rest.BeaIdentity;
 
 
 /**
@@ -674,17 +674,17 @@ import org.jlawyer.bea.model.Identity;
 public class BeaIdentitySearchRowIdentifier {
     
     /** Creates a new instance of QuickAddressSearchRowIdentifier */
-    public BeaIdentitySearchRowIdentifier(Identity dto) {
+    public BeaIdentitySearchRowIdentifier(BeaIdentity dto) {
         this.identity=dto;
     }
 
-    private Identity identity;
+    private BeaIdentity identity;
 
-    public Identity getIdentity() {
+    public BeaIdentity getIdentity() {
         return identity;
     }
 
-    public void setIdentity(Identity i) {
+    public void setIdentity(BeaIdentity i) {
         this.identity = i;
     }
 

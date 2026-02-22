@@ -819,7 +819,7 @@ public class XjustizPanel extends javax.swing.JPanel implements PreviewPanel {
 
         String html = null;
         try {
-            html = BeaAccess.getEebAsHtml(new String(content), null);
+            html = BeaAccess.getInstance().getEebAsHtml(new String(content), null);
 
         } catch (Exception ex) {
             html = "<html>XJustiz-Strukturdatensatz kann nicht geladen werden.</html>";

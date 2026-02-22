@@ -671,7 +671,7 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import java.awt.Component;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.model.Identity;
+import com.jdimension.jlawyer.services.bea.rest.BeaIdentity;
 
 /**
  *
@@ -807,7 +807,7 @@ public class CreateNewAddressPanel extends javax.swing.JPanel {
     private void loadFromBea(Object editor, String beaSafeId) throws Exception {
         if (beaSafeId != null) {
             BeaAccess bea = BeaAccess.getInstance();
-            Identity i = bea.getIdentity(beaSafeId);
+            BeaIdentity i = bea.getIdentity(beaSafeId);
             ((NewAddressPanel) editor).setCity(i.getCity());
             ((NewAddressPanel) editor).setCountry(i.getCountry());
             ((NewAddressPanel) editor).setEmail(i.getEmail());

@@ -677,5 +677,7 @@ public interface ScheduledTasksServiceLocal {
     void sendDailyAgenda();
     
     void sendWeeklyDigest();
-    
+
+    void cleanupStaleBeaSessions();
+
 }

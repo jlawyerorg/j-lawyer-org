@@ -665,8 +665,6 @@ package com.jdimension.jlawyer.client.editors.addresses;
 
 import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.bea.BeaIdentitySearchDialog;
-import com.jdimension.jlawyer.client.bea.BeaLoginCallback;
-import com.jdimension.jlawyer.client.bea.BeaLoginDialog;
 import com.jdimension.jlawyer.client.bea.IdentityPanel;
 import com.jdimension.jlawyer.client.bea.SendBeaMessageFrame;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
@@ -736,7 +734,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.model.Identity;
+import com.jdimension.jlawyer.services.bea.rest.BeaIdentity;
 import org.knowm.xchart.PieChart;
 import org.knowm.xchart.PieChartBuilder;
 import org.knowm.xchart.PieSeries.PieSeriesRenderStyle;
@@ -749,7 +747,7 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback, ThemeableEditor, PopulateOptionsEditor, SaveableEditor {
+public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor, PopulateOptionsEditor, SaveableEditor {
 
     private static final Logger log = Logger.getLogger(AddressPanel.class.getName());
     private AddressBean dto = null;
@@ -3303,17 +3301,16 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     }//GEN-LAST:event_cmdNewFaxActionPerformed
 
     private void cmdShowBeaIdentityActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowBeaIdentityActionPerformed
-        if (!BeaAccess.hasInstance()) {
-            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, this);
-            loginPanel.setVisible(true);
-            if (!BeaAccess.hasInstance()) {
-                return;
-            }
+        try {
+            if (!BeaAccess.getInstance().ensureLoggedIn()) return;
+        } catch (Exception ex) {
+            log.error(ex);
+            return;
         }
 
         try {
             BeaAccess bea = BeaAccess.getInstance();
-            Identity i = bea.getIdentity(this.txtBeaSafeId.getText());
+            BeaIdentity i = bea.getIdentity(this.txtBeaSafeId.getText());
             JDialog dlg = new JDialog(EditorsRegistry.getInstance().getMainWindow(), true);
             IdentityPanel ip = new IdentityPanel();
             ip.setIdentity(i);
@@ -3330,19 +3327,18 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     }//GEN-LAST:event_cmdShowBeaIdentityActionPerformed
 
     private void cmdGetDataFromBeaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdGetDataFromBeaActionPerformed
-        if (!BeaAccess.hasInstance()) {
-            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, this);
-            loginPanel.setVisible(true);
-            if (!BeaAccess.hasInstance()) {
-                return;
-            }
+        try {
+            if (!BeaAccess.getInstance().ensureLoggedIn()) return;
+        } catch (Exception ex) {
+            log.error(ex);
+            return;
         }
 
         try {
             BeaIdentitySearchDialog dlg = new BeaIdentitySearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null, this.txtFirstName.getText(), this.txtName.getText(), this.txtZipCode.getText(), this.txtCity.getText());
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
             dlg.setVisible(true);
-            Identity i = dlg.getSelection();
+            BeaIdentity i = dlg.getSelection();
             if (i != null) {
                 Object[] options = {"alle verfügbaren", "nur Safe-ID"};
                 int response = JOptionPane.showOptionDialog(this, "Sollen alle Daten oder nur die Safe-ID übernommen werden?", "Daten aus beA übernehmen", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[1]);
@@ -3406,16 +3402,15 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     }//GEN-LAST:event_cmdGetDataFromBeaActionPerformed
 
     private void cmdSendBeaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendBeaActionPerformed
-        if (!BeaAccess.hasInstance()) {
-            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, this);
-            loginPanel.setVisible(true);
-            if (!BeaAccess.hasInstance()) {
-                return;
-            }
+        try {
+            if (!BeaAccess.getInstance().ensureLoggedIn()) return;
+        } catch (Exception ex) {
+            log.error(ex);
+            return;
         }
         try {
             BeaAccess bea = BeaAccess.getInstance();
-            Identity i = bea.getIdentity(this.txtBeaSafeId.getText());
+            BeaIdentity i = bea.getIdentity(this.txtBeaSafeId.getText());
 
             SendBeaMessageFrame dlg = new SendBeaMessageFrame();
             dlg.setTo(i);
@@ -4518,16 +4513,6 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     @Override
     public Image getBackgroundImage() {
         return this.backgroundImage;
-    }
-
-    @Override
-    public void loginSuccess() {
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void loginFailure(String msg) {
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }

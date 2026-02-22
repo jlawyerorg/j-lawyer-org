@@ -670,7 +670,7 @@ import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.model.MessageHeader;
+import com.jdimension.jlawyer.services.bea.rest.BeaMessageHeader;
 
 /**
  *
@@ -684,9 +684,9 @@ public class BeaMessageTableCellRenderer extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, 
                                                   boolean hasFocus, int row, int column) {
         
-        org.jlawyer.bea.model.MessageHeader msgh=null;
+        BeaMessageHeader msgh=null;
         try {
-            msgh= (MessageHeader)table.getValueAt(row, 1);
+            msgh= (BeaMessageHeader)table.getValueAt(row, 1);
         } catch (ArrayIndexOutOfBoundsException aioe) {
             log.error("beA table cell renderer requested for invalid row/column " + row + ":" + column + "; table: " + table.getRowCount() + ":" + table.getColumnCount());
             return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);

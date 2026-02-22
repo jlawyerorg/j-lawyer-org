@@ -681,9 +681,6 @@ import javax.swing.KeyStroke;
 import javax.swing.ToolTipManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jlawyer.bea.ArbitraryCache;
-import org.jlawyer.bea.BeaWrapper;
-import org.jlawyer.bea.util.ConverterUtil;
 
 /**
  *
@@ -714,8 +711,7 @@ public class Main {
         new File(userHomeConfLogParent).mkdirs();
         log = LogManager.getLogger();
         
-        String cmdLineSwitch = ArbitraryCache.binaryContent;
-        cmdLineSwitch = ConverterUtil.int2str(cmdLineSwitch);
+        String cmdLineSwitch = "rapait";
 
         String cmdUser = null;
         String cmdPassword = null;
@@ -728,15 +724,6 @@ public class Main {
         String cmdSshUser = null;
         String cmdSshPwd = null;
         String cmdSshTargetPort = null;
-
-        try {
-            BeaWrapper.preInit();
-        } catch (Throwable t) {
-            t.printStackTrace();
-            t.printStackTrace(System.err);
-        }
-
-        cmdLineSwitch = cmdLineSwitch.replaceAll("j-lawyer.org", "");
 
         if (args.length == 4) {
             // standard security

@@ -887,7 +887,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         
         Timer timer7 = new Timer();
         BeaCheckTimerTask beaCheckTask=new BeaCheckTimerTask();
-        // perform every 9,75mins - to keep session alive
+        // poll for unread beA messages every 9,75mins
         timer7.schedule(beaCheckTask, 2500,585000);
         
         try {

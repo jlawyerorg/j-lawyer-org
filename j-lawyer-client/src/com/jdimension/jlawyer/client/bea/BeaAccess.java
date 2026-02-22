@@ -664,41 +664,33 @@
 package com.jdimension.jlawyer.client.bea;
 
 import com.jdimension.jlawyer.client.mail.LoadFolderRestriction;
+import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
-import com.jdimension.jlawyer.server.utils.ServerFileUtils;
-import java.io.File;
-import java.time.Duration;
+import com.jdimension.jlawyer.services.BeaServiceRemote;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.bea.rest.*;
+import com.lowagie.text.Document;
+import com.lowagie.text.Font;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.pdf.PdfWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 import javax.swing.ImageIcon;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
 import org.apache.log4j.Logger;
-import org.ehcache.Cache;
-import org.ehcache.PersistentCacheManager;
-import org.ehcache.config.builders.CacheConfigurationBuilder;
-import org.ehcache.config.builders.CacheManagerBuilder;
-import org.ehcache.config.builders.ExpiryPolicyBuilder;
-import org.ehcache.config.builders.ResourcePoolsBuilder;
-import org.ehcache.config.units.MemoryUnit;
-import org.jlawyer.bea.BeaWrapper;
-import org.jlawyer.bea.BeaWrapperException;
-import org.jlawyer.bea.MessageSorterFilter;
-import org.jlawyer.bea.model.Folder;
-import org.jlawyer.bea.model.Identity;
-import org.jlawyer.bea.model.BeaListItem;
-import org.jlawyer.bea.model.Message;
-import org.jlawyer.bea.model.MessageExport;
-import org.jlawyer.bea.model.MessageHeader;
-import org.jlawyer.bea.model.MessageJournalEntry;
-import org.jlawyer.bea.model.PostBox;
-import org.jlawyer.bea.model.ProcessCard;
-import org.jlawyer.bea.model.VerificationResult;
-import org.jlawyer.bea.xjustiz.EebRequestAttributes;
-import org.jlawyer.bea.xjustiz.EebResponseAttributes;
 
 /**
  *
@@ -710,62 +702,32 @@ public class BeaAccess {
 
     public static String FOLDER_NAME_JLAWYER_PROCESSED = "in Akte importiert";
 
-    private final String productName = "j-lawyer.org " + VersionUtils.getFullClientVersion();
-    private final String producer = "j-lawyer.org";
-    private final String registrationId = "1012.0001.0001.000224";
-
-    private BeaWrapper wrapper = null;
-
     private static BeaAccess instance = null;
-    private String beaEnabledVersions=null;
+    private String beaEnabledVersions = null;
 
-    private Collection<PostBox> inboxes = null;
-    private Hashtable<String, Identity> identityCache = new Hashtable<>();
-    private Hashtable<String, Folder> importedFolderCache = new Hashtable<>();
+    private List<BeaPostbox> inboxes = null;
+    private Hashtable<String, BeaIdentity> identityCache = new Hashtable<>();
+    private Hashtable<String, BeaFolder> importedFolderCache = new Hashtable<>();
+    private List<BeaListItem> cachedLegalAuthorities = null;
+    private BeaListItem cachedDefaultLegalAuthority = null;
 
-    private PersistentCacheManager cacheManager = null;
-    private Cache<String, Message> messageCache = null;
-    private Cache<Long, ArrayList> folderOverviewCache = null;
-    
-    private String cachePrefix="";
-    
-    private MessageSorterFilter lastFilter=null;
-
-    private BeaAccess(byte[] certificate, String password) throws BeaWrapperException {
-
-        ServerSettings set = ServerSettings.getInstance();
-        String endpoint = set.getSetting(ServerSettings.SERVERCONF_BEAENDPOINT, "https://schulung-ksw.bea-brak.de");
-
-        this.wrapper = new BeaWrapper(endpoint, certificate, password, productName, producer, registrationId);
-
-        this.cachePrefix=""+System.currentTimeMillis();
-        this.initializeCaches();
-
+    private BeaAccess() {
     }
 
-    private BeaAccess() throws BeaWrapperException {
-
-        ServerSettings set = ServerSettings.getInstance();
-        String endpoint = set.getSetting(ServerSettings.SERVERCONF_BEAENDPOINT, "https://schulung-ksw.bea-brak.de");
-        this.wrapper = new BeaWrapper(endpoint, productName, producer, registrationId);
-
-        this.cachePrefix=""+System.currentTimeMillis();
-        this.initializeCaches();
-    }
-    
-    public static int countTempFolders() {
-        return BeaWrapper.countTempFolders();
-    }
-    
-    public static String getTempFolder() {
-        return BeaWrapper.getTempFolder();
+    private BeaServiceRemote getService() throws Exception {
+        return JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties()).lookupBeaServiceRemote();
     }
 
     public static String getBeaWrapperVersion() {
-        return BeaWrapper.getVersion();
+        try {
+            return JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties()).lookupBeaServiceRemote().getBeaWrapperVersion();
+        } catch (Exception e) {
+            log.error("Could not get BeaWrapper version", e);
+            return "unknown";
+        }
     }
-    
-    public static MessageSorterFilter getFilter() {
+
+    public static BeaMessageFilter getFilter() {
         ClientSettings cs = ClientSettings.getInstance();
         String restriction = cs.getConfiguration(ClientSettings.CONF_BEA_DOWNLOADRESTRICTION, "" + LoadFolderRestriction.RESTRICTION_50);
         LoadFolderRestriction currentRestriction = null;
@@ -776,7 +738,7 @@ public class BeaAccess {
             currentRestriction = new LoadFolderRestriction(LoadFolderRestriction.RESTRICTION_50);
         }
 
-        MessageSorterFilter filter=new MessageSorterFilter();
+        BeaMessageFilter filter = new BeaMessageFilter();
         switch (currentRestriction.getRestriction()) {
             case LoadFolderRestriction.RESTRICTION_20:
                 filter.setLimit(20);
@@ -799,85 +761,96 @@ public class BeaAccess {
             default:
                 break;
         }
-        filter.setSorting(MessageSorterFilter.MESSAGE_ID, MessageSorterFilter.SORT_DESCENDING);
+        filter.setSortCriterion("RECEIVED");
+        filter.setSortDirection("DESC");
         return filter;
     }
 
-    private void checkValidBeaClient() throws BeaWrapperException {
-        if(this.beaEnabledVersions == null) {
+    private void checkValidBeaClient() throws Exception {
+        if (this.beaEnabledVersions == null) {
             ServerSettings set = ServerSettings.getInstance();
             this.beaEnabledVersions = set.getSetting(ServerSettings.SERVERCONF_BEAENABLEDVERSIONS, "");
         }
         boolean valid = (this.beaEnabledVersions.contains(VersionUtils.getFullClientVersion()));
         if (!valid) {
-            throw new BeaWrapperException("j-lawyer.org Client in Version " + VersionUtils.getFullClientVersion() + " ist nicht mehr für die beA-Schnittstelle qualifiziert." + System.lineSeparator() + "Bitte prüfen Sie unter www.j-lawyer.org ob ein Update verfügbar ist oder beA-bezogene Informationen des Herstellers vorliegen.");
+            throw new Exception("j-lawyer.org Client in Version " + VersionUtils.getFullClientVersion() + " ist nicht mehr für die beA-Schnittstelle qualifiziert." + System.lineSeparator() + "Bitte prüfen Sie unter www.j-lawyer.org ob ein Update verfügbar ist oder beA-bezogene Informationen des Herstellers vorliegen.");
         }
-    }
-
-    private void initializeCaches() {
-        String storagePath = System.getProperty("user.home") + System.getProperty("file.separator") + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty("file.separator") + "cache";
-        File storage = new File(storagePath);
-        try {
-            ServerFileUtils.getInstance().deleteRecursively(storage);
-        } catch (Throwable t) {
-            log.error("Could not clear bea cache directory", t);
-        }
-        storage.mkdirs();
-
-        this.cacheManager = CacheManagerBuilder.newCacheManagerBuilder()
-                .with(CacheManagerBuilder.persistence(new File(storagePath, this.cachePrefix + "-bea")))
-                .build(true);
-
-        try {
-            
-            this.messageCache = cacheManager.createCache("bea-messages-cache", CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, Message.class,
-                                        ResourcePoolsBuilder.heap(5).disk(1000, MemoryUnit.MB, true)).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofDays(3))).build());
-            
-        } catch (Throwable t) {
-            log.error(t);
-        }
-
-        try {
-            
-            this.folderOverviewCache = cacheManager.createCache("bea-messageheaders-cache", CacheConfigurationBuilder.newCacheConfigurationBuilder(Long.class, ArrayList.class,
-                                        ResourcePoolsBuilder.heap(5000).disk(500, MemoryUnit.MB, true)).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(300))).build());
-
-        } catch (Throwable t) {
-            log.error(t);
-        }
-
     }
 
     public static boolean hasInstance() {
         return instance != null;
     }
 
-    public static synchronized BeaAccess getInstance(byte[] certificate, String password) throws BeaWrapperException {
+    public static synchronized BeaAccess getInstance() throws Exception {
         if (instance == null) {
-
-            instance = new BeaAccess(certificate, password);
-
-        }
-        return instance;
-    }
-
-    public static synchronized BeaAccess getInstance() throws BeaWrapperException {
-        if (instance == null) {
-
             instance = new BeaAccess();
-
         }
         return instance;
     }
-    
-    public static boolean isEgvpPostBoxBySafeId(String safeId) {
-        return BeaWrapper.isEgvpPostBoxBySafeId(safeId);
+
+    /**
+     * Ensures that the user is logged in to beA. If already logged in, returns
+     * true immediately. If no certificate is configured for the current user,
+     * returns false silently (no error). Otherwise attempts auto-login using
+     * the server-side certificate.
+     *
+     * @return true if the user is now logged in, false otherwise
+     */
+    public boolean ensureLoggedIn() {
+        if (this.inboxes != null) {
+            return true;
+        }
+        AppUserBean cu = UserSettings.getInstance().getCurrentUser();
+        if (cu.getBeaCertificate() == null) {
+            return false;
+        }
+        try {
+            this.login();
+            return this.inboxes != null;
+        } catch (Exception e) {
+            log.error("beA auto-login failed", e);
+            return false;
+        }
     }
-    
+
+    /**
+     * Checks whether or not a beA user name represents an EGVP postbox.
+     *
+     * @param userName the user name
+     * @return true when the given user name represents an EGVP postbox, or if
+     * the user name is null. False otherwise.
+     */
     public static boolean isEgvpPostBoxByUserName(String userName) {
-        return BeaWrapper.isEgvpPostBoxByUserName(userName);
+        if (userName == null) {
+            return true;
+        }
+        try {
+            return JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties()).lookupBeaServiceRemote().isEgvpPostBox(null, userName);
+        } catch (Exception e) {
+            log.error("EGVP check failed for user " + userName, e);
+            return true;
+        }
     }
-    
+
+    /**
+     * Checks whether or not a SafeID represents an EGVP postbox
+     *
+     * @param safeId
+     * @return true when the given Safe ID represents an EGVP postbox. False if
+     * the given Safe ID is null, and false in all other cases.
+     */
+    public static boolean isEgvpPostBoxBySafeId(String safeId) {
+        if (safeId == null) {
+            return false;
+        }
+        try {
+            return JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties()).lookupBeaServiceRemote().isEgvpPostBox(safeId, null);
+        } catch (Exception e) {
+            log.error("EGVP check failed for Safe ID " + safeId, e);
+            return false;
+        }
+    }
+
     public static boolean isBeaEnabled() {
         ServerSettings set = ServerSettings.getInstance();
         String mode = set.getSetting(ServerSettings.SERVERCONF_BEAMODE, "on");
@@ -891,98 +864,72 @@ public class BeaAccess {
         return false;
     }
 
-    public static Hashtable getCertificateInformation(byte[] certificate, String password) throws BeaWrapperException {
-        return BeaWrapper.getCertificateInformation(certificate, password);
+    public static Map<String, String> getCertificateInformation(byte[] certificate, String password) throws Exception {
+        return JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties()).lookupBeaServiceRemote().getCertificateInformation(certificate, password);
     }
 
-    public void login() throws BeaWrapperException {
-
+    public BeaLoginResult login() throws Exception {
         this.checkValidBeaClient();
-
-        this.wrapper.login();
-    }
-
-    public boolean isLoggedIn() throws BeaWrapperException {
-
-        if (this.wrapper == null) {
-            return false;
+        BeaLoginResult result = getService().login();
+        if (result != null && result.getPostboxes() != null) {
+            this.inboxes = result.getPostboxes();
         }
-
-        return this.wrapper.isLoggedIn();
+        return result;
     }
 
-    public String getLoggedInSafeId() throws BeaWrapperException {
-        return this.wrapper.getLoggedInSafeId();
+    public boolean isLoggedIn() {
+        return instance != null;
     }
 
-    public void logout() throws BeaWrapperException {
+    public String getLoggedInSafeId() {
+        if (this.inboxes != null && !this.inboxes.isEmpty()) {
+            return this.inboxes.get(0).getSafeId();
+        }
+        return null;
+    }
+
+    public void logout() throws Exception {
         this.inboxes = null;
         this.identityCache.clear();
-        this.wrapper.logout();
-
-        // close cache
-        cacheManager.removeCache("bea-messages-cache");
+        this.importedFolderCache.clear();
         try {
-            // destroy disk persistent cache
-            cacheManager.destroyCache("bea-messages-cache");
-        } catch (Throwable t) {
-            log.error("Could not destroy bea-messages-cache", t);
+            getService().logout();
+        } catch (Exception e) {
+            log.error("Error during beA logout", e);
         }
-
-        // close cache
-        cacheManager.removeCache("bea-messageheaders-cache");
-        try {
-            // destroy disk persistent cache
-            cacheManager.destroyCache("bea-messageheaders-cache");
-        } catch (Throwable t) {
-            log.error("Could not destroy bea-messageheaders-cache", t);
-        }
-
-        // close cache manager
-        cacheManager.close();
-        
-        String storagePath = System.getProperty("user.home") + System.getProperty("file.separator") + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty("file.separator") + "cache" + System.getProperty("file.separator") + this.cachePrefix + "-bea";
-        File storage = new File(storagePath);
-        try {
-            ServerFileUtils.getInstance().deleteRecursively(storage);
-        } catch (Throwable t) {
-            log.error("Could not clear bea cache directory", t);
-        }
-
         instance = null;
     }
 
-    public Folder getImportedFolder(String safeId) throws BeaWrapperException {
+    public BeaFolder getImportedFolder(String safeId) throws Exception {
         if (!this.importedFolderCache.containsKey(safeId)) {
             this.getFolderStructure(safeId);
         }
         return this.importedFolderCache.get(safeId);
     }
-    
-    public VerificationResult verifyMessage(String messageId) throws BeaWrapperException {
+
+    public BeaVerificationResult verifyMessage(String safeId, String messageId) throws Exception {
         this.checkValidBeaClient();
-        return this.wrapper.verifyMessage(messageId);
+        return getService().verifyMessage(safeId, messageId);
     }
-    
+
     public static ImageIcon getSignatureStatusIcon(String status) {
-        if(status.equalsIgnoreCase(VerificationResult.STATUS_SUCCESS)) {
+        if (status.equalsIgnoreCase(BeaVerificationResult.STATUS_SUCCESS)) {
             return new javax.swing.ImageIcon(BeaAccess.class.getResource("/com/jdimension/jlawyer/client/bea/signature-success.png"));
-        } else if(status.equalsIgnoreCase(VerificationResult.STATUS_PARTIAL)) {
+        } else if (status.equalsIgnoreCase(BeaVerificationResult.STATUS_PARTIAL)) {
             return new javax.swing.ImageIcon(BeaAccess.class.getResource("/com/jdimension/jlawyer/client/bea/signature-partial.png"));
-        } else if(status.equalsIgnoreCase(VerificationResult.STATUS_FAILED)) {
+        } else if (status.equalsIgnoreCase(BeaVerificationResult.STATUS_FAILED)) {
             return new javax.swing.ImageIcon(BeaAccess.class.getResource("/com/jdimension/jlawyer/client/bea/signature-fail.png"));
         }
         return new javax.swing.ImageIcon(BeaAccess.class.getResource("/com/jdimension/jlawyer/client/bea/signature-unknown.png"));
     }
 
-    public Collection<Folder> getFolderStructure(String safeId) throws BeaWrapperException {
+    public List<BeaFolder> getFolderStructure(String safeId) throws Exception {
         this.checkValidBeaClient();
-        this.checkValidBeaClient();
-        Collection<Folder> folders = this.wrapper.getFolderStructure(safeId, true, true);
+        List<BeaFolder> folders = getService().getFolders(safeId);
         long inboxId = -1;
         long jlawyerProcessedId = -1;
-        for (Folder f : folders) {
-            if (Folder.TYPE_INBOX.equals(f.getType())) {
+        for (BeaFolder f : folders) {
+            if (BeaFolder.TYPE_INBOX.equals(f.getType())) {
                 inboxId = f.getId();
             }
             if (FOLDER_NAME_JLAWYER_PROCESSED.equals(f.getName())) {
@@ -991,10 +938,8 @@ public class BeaAccess {
             }
         }
         if (jlawyerProcessedId == -1) {
-            // try to create the default jlawyer folder
-            // this could fail, e.g. when connected to a "foreign" postbox and the folder creation privilege is not granted
             try {
-                Folder jlFolder = this.addFolder(FOLDER_NAME_JLAWYER_PROCESSED, inboxId);
+                BeaFolder jlFolder = this.addFolder(safeId, FOLDER_NAME_JLAWYER_PROCESSED, inboxId);
                 folders.add(jlFolder);
                 this.importedFolderCache.put(safeId, jlFolder);
             } catch (Throwable t) {
@@ -1005,26 +950,26 @@ public class BeaAccess {
         return folders;
     }
 
-    public Collection<PostBox> getPostBoxes() throws BeaWrapperException {
+    public List<BeaPostbox> getPostBoxes() throws Exception {
         this.checkValidBeaClient();
         synchronized (this) {
             if (this.inboxes == null) {
-                this.inboxes = this.wrapper.getPostBoxes();
+                this.inboxes = getService().getPostboxes();
             }
         }
         return this.inboxes;
     }
-    
-    public boolean isOutboxEmpty(String safeId) throws BeaWrapperException {
+
+    public boolean isOutboxEmpty(String safeId) throws Exception {
         this.checkValidBeaClient();
-        return this.wrapper.isOutboxEmpty(safeId);
+        return getService().isOutboxEmpty(safeId);
     }
 
-    public Identity getIdentity(String safeId) throws BeaWrapperException {
+    public BeaIdentity getIdentity(String safeId) throws Exception {
         this.checkValidBeaClient();
         synchronized (this) {
             if (!this.identityCache.containsKey(safeId)) {
-                Identity i = this.wrapper.getIdentity(safeId);
+                BeaIdentity i = getService().getIdentity(safeId);
                 if (i != null) {
                     this.identityCache.put(safeId, i);
                 }
@@ -1032,202 +977,127 @@ public class BeaAccess {
         }
         return this.identityCache.get(safeId);
     }
-    
-    public Identity getIdentity(String safeId, String zipCode) throws BeaWrapperException {
+
+    public BeaIdentity getIdentity(String safeId, String zipCode) throws Exception {
         this.checkValidBeaClient();
         synchronized (this) {
-            if (!this.identityCache.containsKey(safeId+zipCode)) {
-                Identity i = this.wrapper.getIdentity(safeId, zipCode);
+            if (!this.identityCache.containsKey(safeId + zipCode)) {
+                BeaIdentity i = getService().getIdentity(safeId, zipCode);
                 if (i != null) {
-                    this.identityCache.put(safeId+zipCode, i);
+                    this.identityCache.put(safeId + zipCode, i);
                 }
             }
         }
-        return this.identityCache.get(safeId+zipCode);
+        return this.identityCache.get(safeId + zipCode);
     }
 
-    public List<MessageHeader> getFolderOverview(Folder f) throws BeaWrapperException {
+    public List<BeaMessageHeader> getFolderOverview(String safeId, BeaFolder f) throws Exception {
         this.checkValidBeaClient();
-        
-        if(this.lastFilter!=null)
-            this.folderOverviewCache.clear();
-        
-        if (!this.folderOverviewCache.containsKey(f.getId())) {
-            ArrayList<MessageHeader> result = new ArrayList<>(this.wrapper.getFolderOverview(f).getMessageHeaders());
-            this.folderOverviewCache.put(f.getId(), result);
-
-        }
-        this.lastFilter=null;
-        return this.folderOverviewCache.get(f.getId());
+        return getService().getMessages(safeId, f.getId());
     }
-    
-    public List<MessageHeader> getFolderOverview(Folder f, MessageSorterFilter filter) throws BeaWrapperException {
+
+    public List<BeaMessageHeader> getFolderOverview(String safeId, BeaFolder f, BeaMessageFilter filter) throws Exception {
         this.checkValidBeaClient();
-        
-        if(this.lastFilter==null || !(this.lastFilter.toString().equals(filter.toString())))
-            this.folderOverviewCache.clear();
-        
-        if (!this.folderOverviewCache.containsKey(f.getId())) {
-            ArrayList<MessageHeader> result = new ArrayList<>(this.wrapper.getFolderOverview(f, filter).getMessageHeaders());
-            this.folderOverviewCache.put(f.getId(), result);
-
-        }
-
-        this.lastFilter=filter;
-        return this.folderOverviewCache.get(f.getId());
+        return getService().searchMessages(safeId, f.getId(), filter);
     }
-    
-    public List<String> getFolderOverviewMessageIdsWithoutCache(Folder f, MessageSorterFilter filter) throws BeaWrapperException {
+
+    public boolean setMessageReadByUser(String safeId, BeaMessageHeader msg) throws Exception {
         this.checkValidBeaClient();
-        
-        return this.wrapper.getFolderOverviewMessageIds(f, filter).getMessageIds();
+        return getService().markMessageRead(safeId, msg.getId());
     }
-    
-    public boolean setMessageReadByUser(MessageHeader msg) throws BeaWrapperException {
+
+    public BeaFolder addFolder(String safeId, String folderName, Long parentFolderId) throws Exception {
         this.checkValidBeaClient();
-        if (this.messageCache.containsKey(msg.getId())) {
-            this.messageCache.remove(msg.getId());
-        }
-        if(this.folderOverviewCache.containsKey(msg.getFolderId()))
-            this.folderOverviewCache.remove(msg.getFolderId());
-        return this.wrapper.setMessageReadByUser(msg.getId());
+        return getService().createFolder(safeId, folderName, parentFolderId);
     }
-    
-    public Folder addFolder(String folderName, Long parentFolderId) throws BeaWrapperException {
+
+    public boolean deleteFolder(String safeId, long folderId) throws Exception {
         this.checkValidBeaClient();
-        return this.wrapper.addFolder(folderName, parentFolderId);
+        getService().deleteFolder(safeId, folderId);
+        return true;
     }
 
-    public boolean deleteFolder(Long folderId) throws BeaWrapperException {
+    public String getEebAsHtml(String xmlRequest, String xmlResponse) throws Exception {
+        return getService().renderEebHtml(xmlRequest, xmlResponse);
+    }
+
+    public boolean isEebResponse(String xmlXjustiz) throws Exception {
+        return getService().isEebResponse(xmlXjustiz);
+    }
+
+    public boolean isEebRequest(String xmlXjustiz) throws Exception {
+        return getService().isEebRequest(xmlXjustiz);
+    }
+
+    public BeaEebResponseAttributes getEebResponseAttributes(String xmlXjustiz) throws Exception {
+        return getService().getEebResponseAttributes(xmlXjustiz);
+    }
+
+    public BeaEebRequestAttributes getEebRequestAttributes(String xmlXjustiz) throws Exception {
+        return getService().getEebRequestAttributes(xmlXjustiz);
+    }
+
+    public BeaMessage getMessage(String messageId, String safeId) throws Exception {
         this.checkValidBeaClient();
-        boolean success = this.wrapper.deleteFolder(folderId);
-        if (this.folderOverviewCache.containsKey(folderId)) {
-            this.folderOverviewCache.remove(folderId);
-        }
-        return success;
+        return getService().getMessage(safeId, messageId);
     }
 
-    public static String getEebAsHtml(String xmlRequest, String xmlResponse) throws BeaWrapperException {
-        return BeaWrapper.getEebAsHtml(xmlRequest, xmlResponse);
-    }
-    
-    public static boolean isEebResponse(String xmlXjustiz) {
-        return BeaWrapper.isEebResponse(xmlXjustiz);
-    }
-    
-    public static boolean isEebRequest(String xmlXjustiz) {
-        return BeaWrapper.isEebRequest(xmlXjustiz);
-    }
-    
-    public static EebResponseAttributes getEebResponseAttributes(String xmlXjustiz) throws BeaWrapperException {
-        return BeaWrapper.getEebResponseAttributes(xmlXjustiz);
-    }
-    
-    public static EebRequestAttributes getEebRequestAttributes(String xmlXjustiz) throws BeaWrapperException {
-        return BeaWrapper.getEebRequestAttributes(xmlXjustiz);
-    }
-
-    public synchronized Message getMessage(String messageId, String safeId) throws BeaWrapperException {
+    public List<BeaMessageJournalEntry> getMessageJournal(String safeId, String messageId) throws Exception {
         this.checkValidBeaClient();
-        if (!this.messageCache.containsKey(messageId)) {
-            Message m = this.wrapper.getMessage(messageId, safeId);
-            this.messageCache.put(messageId, m);
-        }
-        return this.messageCache.get(messageId);
+        return getService().getMessageJournal(safeId, messageId);
     }
 
-    public synchronized Message getMessage(String messageId, String safeId, boolean includeAttachments) throws BeaWrapperException {
+    public boolean moveMessageToTrash(String safeId, BeaMessageHeader msg) throws Exception {
         this.checkValidBeaClient();
-        if (!this.messageCache.containsKey(messageId)) {
-            Message m = this.wrapper.getMessage(messageId, safeId, includeAttachments);
-            this.messageCache.put(messageId, m);
-        }
-        return this.messageCache.get(messageId);
+        getService().deleteMessage(safeId, msg.getId());
+        return true;
     }
 
-    public static Message getMessageFromExport(MessageExport export) throws BeaWrapperException {
-        return BeaWrapper.getMessageFromExport(export);
-    }
-
-    public ArrayList<MessageJournalEntry> getMessageJournal(String messageId) throws BeaWrapperException {
+    public boolean restoreMessageFromTrash(String safeId, BeaMessageHeader msg) throws Exception {
         this.checkValidBeaClient();
-        return this.wrapper.getMessageJournal(messageId);
+        return getService().restoreMessage(safeId, msg.getId());
     }
 
-    public boolean moveMessageToTrash(MessageHeader msg) throws BeaWrapperException {
-        this.checkValidBeaClient();
-        
-        if(this.folderOverviewCache.containsKey(msg.getFolderId()))
-            this.folderOverviewCache.remove(msg.getFolderId());
-        Folder trashFolder = this.wrapper.getTrashFolder(msg.getPostBoxSafeId());
-        if (trashFolder != null) {
-            if (this.folderOverviewCache.containsKey(trashFolder.getId()))
-                this.folderOverviewCache.remove(trashFolder.getId());
-        }
-        return this.wrapper.moveMessageToTrash(msg.getId());
-    }
-
-    public boolean restoreMessageFromTrash(MessageHeader msg) throws BeaWrapperException {
-        this.checkValidBeaClient();
-        Folder inboxFolder = this.wrapper.getInboxFolder(msg.getPostBoxSafeId());
-        if (inboxFolder != null) {
-            if (this.folderOverviewCache.containsKey(inboxFolder.getId()))
-                this.folderOverviewCache.remove(inboxFolder.getId());
-        }
-        Folder trashFolder = this.wrapper.getTrashFolder(msg.getPostBoxSafeId());
-        if (trashFolder != null) {
-            if (this.folderOverviewCache.containsKey(trashFolder.getId()))
-                this.folderOverviewCache.remove(trashFolder.getId());
-        }
-        return this.wrapper.restoreMessageFromTrash(msg.getId());
-    }
-
-    public boolean moveMessageToFolder(String messageId, long sourceFolderId, long targetFolderId) throws BeaWrapperException {
-
+    public boolean moveMessageToFolder(String safeId, String messageId, long sourceFolderId, long targetFolderId) throws Exception {
         if (sourceFolderId == targetFolderId) {
             return true;
         }
-
         this.checkValidBeaClient();
-        boolean success = this.wrapper.moveMessageToFolder(messageId, targetFolderId);
-        if (this.folderOverviewCache.containsKey(targetFolderId)) {
-            this.folderOverviewCache.remove(targetFolderId);
-        }
-        if (this.folderOverviewCache.containsKey(sourceFolderId)) {
-            this.folderOverviewCache.remove(sourceFolderId);
-        }
-        return success;
+        return getService().moveMessage(safeId, messageId, targetFolderId);
     }
 
-    public boolean deleteMessage(MessageHeader msg) throws BeaWrapperException {
+    public boolean deleteMessage(String safeId, BeaMessageHeader msg) throws Exception {
         this.checkValidBeaClient();
-        boolean success = this.wrapper.deleteMessage(msg.getId());
-        if (this.messageCache.containsKey(msg.getId())) {
-            this.messageCache.remove(msg.getId());
+        getService().deleteMessage(safeId, msg.getId());
+        return true;
+    }
+
+    public static BeaMessageExport exportMessage(BeaMessage msg) {
+        BeaMessageExport export = new BeaMessageExport();
+
+        String refNum = msg.getReferenceNumber() != null ? msg.getReferenceNumber() : "";
+        String subj = msg.getSubject() != null ? msg.getSubject() : "";
+        String sender = msg.getSenderName() != null ? msg.getSenderName() : "";
+        String recipient = "";
+        if (msg.getRecipients() != null && !msg.getRecipients().isEmpty() && msg.getRecipients().get(0).getName() != null) {
+            recipient = msg.getRecipients().get(0).getName();
         }
-        if(this.folderOverviewCache.containsKey(msg.getFolderId()))
-            this.folderOverviewCache.remove(msg.getFolderId());
-        Folder trashFolder = this.wrapper.getTrashFolder(msg.getPostBoxSafeId());
-        if (trashFolder != null) {
-            if (this.folderOverviewCache.containsKey(trashFolder.getId()))
-                this.folderOverviewCache.remove(trashFolder.getId());
-        }
+        String fileName = refNum + "_" + subj + "_" + sender + "--" + recipient + ".bea";
+        fileName = fileName.replaceAll("[^a-zA-Z0-9äöüÄÖÜß._\\-]", "_");
+        export.setFileName(fileName);
 
-        return success;
-    }
-
-    public MessageExport exportMessage(String messageId, String safeId, long maxWaitForProcessCard) throws BeaWrapperException {
-        this.checkValidBeaClient();
-        return this.wrapper.exportMessage(messageId, safeId, maxWaitForProcessCard);
-    }
-
-    public static MessageExport exportMessage(Message msg) throws BeaWrapperException {
-        return BeaWrapper.exportMessage(msg);
-    }
-    
-    public static void addSignatureVerification(BeaAccess bea, Message msg) {
         try {
-            VerificationResult vr = bea.verifyMessage(msg.getId());
+            export.setContent(messageToXml(msg));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to serialize BeaMessage to XML", e);
+        }
+
+        return export;
+    }
+
+    public static void addSignatureVerification(BeaAccess bea, String safeId, BeaMessage msg) {
+        try {
+            BeaVerificationResult vr = bea.verifyMessage(safeId, msg.getId());
             msg.setVerificationHtml(vr.getHtml());
             msg.setVerificationStatus(vr.getStatus());
             msg.setVerificationXml(vr.getXml());
@@ -1235,91 +1105,261 @@ public class BeaAccess {
             log.error("Could not verify message " + msg.getId() + " - exporting without verification data", t);
         }
     }
-    
-    public Message sendAndRetrieveMessage(Message msg, String senderSafeId, String recipientSafeId, BeaListItem authority, BeaListItem priority) throws BeaWrapperException {
+
+    public BeaMessage sendMessage(String senderSafeId, BeaSendMessageRequest request) throws Exception {
         this.checkValidBeaClient();
-        Message sentMessage=this.wrapper.sendAndRetrieveMessage(msg, senderSafeId, recipientSafeId, authority, priority);
-        if (!this.messageCache.containsKey(sentMessage.getId())) {
-            this.messageCache.put(sentMessage.getId(), sentMessage);
-        }
-        
-        Folder sentFolder = this.wrapper.getSentFolder(senderSafeId);
-        if (sentFolder != null) {
-            if (this.folderOverviewCache.containsKey(sentFolder.getId()))
-                this.folderOverviewCache.remove(sentFolder.getId());
-        }
-        
-        Folder outboxFolder = this.wrapper.getOutboxFolder(senderSafeId);
-        if (outboxFolder != null) {
-            if (this.folderOverviewCache.containsKey(outboxFolder.getId()))
-                this.folderOverviewCache.remove(outboxFolder.getId());
-        }
-        Folder inboxFolder = this.wrapper.getInboxFolder(senderSafeId);
-        if (inboxFolder != null) {
-            if (this.folderOverviewCache.containsKey(inboxFolder.getId()))
-                this.folderOverviewCache.remove(inboxFolder.getId());
-        }
-        
-        return sentMessage;
+        return getService().sendMessage(senderSafeId, request);
     }
 
-    public String saveMessageToDrafts(Message msg, String senderSafeId, String recipientSafeId, BeaListItem authority, BeaListItem priority) throws BeaWrapperException {
+    public String saveDraft(String senderSafeId, BeaSaveDraftRequest request) throws Exception {
         this.checkValidBeaClient();
-        Folder draftsFolder = this.wrapper.getDraftsFolder(senderSafeId);
-        if (draftsFolder != null) {
-            if (this.folderOverviewCache.containsKey(draftsFolder.getId()))
-                this.folderOverviewCache.remove(draftsFolder.getId());
-        }
-        return this.wrapper.saveMessageToDrafts(msg, senderSafeId, recipientSafeId, authority, priority);
+        return getService().saveDraft(senderSafeId, request);
     }
 
-    public Message sendEebConfirmation(Message incomingMessage, String senderSafeId, String recipientSafeId, Date abgabeDate) throws BeaWrapperException {
+    public BeaMessage sendEebConfirmation(String senderSafeId, String messageId, String recipientSafeId, Date abgabeDate) throws Exception {
         this.checkValidBeaClient();
-        Folder sentFolder = this.wrapper.getSentFolder(senderSafeId);
-        if (sentFolder != null) {
-            if (this.folderOverviewCache.containsKey(sentFolder.getId()))
-                this.folderOverviewCache.remove(sentFolder.getId());
+        String abgabeDateStr = null;
+        if (abgabeDate != null) {
+            abgabeDateStr = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").format(abgabeDate);
         }
-        Folder inboxFolder = this.wrapper.getInboxFolder(senderSafeId);
-        if (inboxFolder != null) {
-            if (this.folderOverviewCache.containsKey(inboxFolder.getId()))
-                this.folderOverviewCache.remove(inboxFolder.getId());
-        }
-        return this.wrapper.sendEebConfirmation(incomingMessage, senderSafeId, recipientSafeId, abgabeDate);
+        return getService().sendEebConfirmation(senderSafeId, messageId, senderSafeId, recipientSafeId, abgabeDateStr);
     }
 
-    public Message sendEebRejection(Message incomingMessage, String senderSafeId, String recipientSafeId, String code, String comment) throws BeaWrapperException {
+    public BeaMessage sendEebRejection(String senderSafeId, String messageId, String recipientSafeId, String code, String comment) throws Exception {
         this.checkValidBeaClient();
-        Folder sentFolder = this.wrapper.getSentFolder(senderSafeId);
-        if (sentFolder != null) {
-            if (this.folderOverviewCache.containsKey(sentFolder.getId()))
-                this.folderOverviewCache.remove(sentFolder.getId());
-        }
-        Folder inboxFolder = this.wrapper.getInboxFolder(senderSafeId);
-        if (inboxFolder != null) {
-            if (this.folderOverviewCache.containsKey(inboxFolder.getId()))
-                this.folderOverviewCache.remove(inboxFolder.getId());
-        }
-        return this.wrapper.sendEebRejection(incomingMessage, senderSafeId, recipientSafeId, code, comment);
+        return getService().sendEebRejection(senderSafeId, messageId, senderSafeId, recipientSafeId, code, comment);
     }
 
-    public boolean isMessageReadByIdentity(String messageId, String safeId) throws BeaWrapperException {
+    public boolean isMessageReadByIdentity(String safeId, String messageId, String targetSafeId) throws Exception {
         this.checkValidBeaClient();
-        return this.wrapper.isMessageReadByIdentity(messageId, safeId);
+        return getService().isMessageReadByIdentity(safeId, messageId, targetSafeId);
     }
 
-    public Collection<Identity> searchIdentity(String firstName, String surName, String userName, String city, String zipCode, String officeName) throws BeaWrapperException {
+    public List<BeaIdentity> searchIdentity(String firstName, String surName, String userName, String city, String zipCode, String officeName) throws Exception {
         this.checkValidBeaClient();
-        return this.wrapper.searchIdentity(firstName, surName, userName, city, zipCode, officeName);
+        BeaIdentitySearchRequest request = new BeaIdentitySearchRequest();
+        request.setFirstName(firstName);
+        request.setSurName(surName);
+        request.setUserName(userName);
+        request.setCity(city);
+        request.setZipCode(zipCode);
+        request.setOfficeName(officeName);
+        return getService().searchIdentity(request);
     }
 
-    public ProcessCard getProcessCards(long messageId) throws BeaWrapperException {
+    public BeaProcessCard getProcessCards(String safeId, String messageId) throws Exception {
         this.checkValidBeaClient();
-        List<ProcessCard> pcards=this.wrapper.getProcessCards(""+messageId);
-        if(pcards.isEmpty())
+        List<BeaProcessCard> pcards = getService().getProcessCards(safeId, messageId);
+        if (pcards.isEmpty())
             return null;
         else
             return pcards.get(0);
     }
 
+    public List<BeaListItem> getLegalAuthorities() throws Exception {
+        this.checkValidBeaClient();
+        if (this.cachedLegalAuthorities == null) {
+            this.cachedLegalAuthorities = getService().getLegalAuthorities();
+        }
+        return this.cachedLegalAuthorities;
+    }
+
+    public BeaListItem getDefaultLegalAuthority() throws Exception {
+        this.checkValidBeaClient();
+        if (this.cachedDefaultLegalAuthority == null) {
+            this.cachedDefaultLegalAuthority = getService().getDefaultLegalAuthority();
+        }
+        return this.cachedDefaultLegalAuthority;
+    }
+
+    public List<BeaListItem> getMessagePriorities() throws Exception {
+        this.checkValidBeaClient();
+        return getService().getMessagePriorities();
+    }
+
+    public List<BeaListItem> getEebRejectionReasons() throws Exception {
+        return getService().getEebRejectionReasons();
+    }
+
+    public List<String> getFolderOverviewMessageIdsWithoutCache(BeaFolder folder, BeaMessageFilter filter) throws Exception {
+        this.checkValidBeaClient();
+        String safeId = this.getLoggedInSafeId();
+        List<BeaMessageHeader> headers = getService().searchMessages(safeId, folder.getId(), filter);
+        List<String> ids = new java.util.ArrayList<>();
+        for (BeaMessageHeader h : headers) {
+            if (!h.isRead()) {
+                ids.add(h.getId());
+            }
+        }
+        return ids;
+    }
+
+    public static int countTempFolders() {
+        // temp folder management is no longer relevant with server-side beAstie processing
+        return 0;
+    }
+
+    public static String getTempFolder() {
+        // temp folder management is no longer relevant with server-side beAstie processing
+        return System.getProperty("java.io.tmpdir");
+    }
+
+    public static BeaMessage getMessageFromExport(BeaMessageExport export) throws Exception {
+        return xmlToMessage(export.getContent());
+    }
+
+    public static byte[] messageToPdf(BeaMessage msg, String vendor) throws Exception {
+        SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
+        Document doc = new Document();
+        doc.addAuthor(vendor);
+        doc.addCreator(vendor);
+        doc.addTitle("beA-Nachricht: " + msg.getSubject());
+        ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+        PdfWriter writer = PdfWriter.getInstance(doc, byteOut);
+        Font fontBold = new Font(Font.HELVETICA, 12, Font.BOLD);
+        Font fontSmall = new Font(Font.HELVETICA, 2, Font.NORMAL);
+        doc.open();
+
+        String recTime = "";
+        if (msg.getReceptionTime() != null) {
+            recTime = df.format(msg.getReceptionTime()) + " Uhr";
+            doc.addCreationDate();
+        }
+        doc.add(new Paragraph("Erhalten: " + recTime, fontBold));
+
+        doc.add(new Paragraph("Von: " + msg.getSenderName() + " (" + msg.getSenderSafeId() + ")", fontBold));
+
+        if (msg.getRecipients() != null && !msg.getRecipients().isEmpty()) {
+            if (msg.getRecipients().size() == 1) {
+                BeaRecipient r = msg.getRecipients().get(0);
+                doc.add(new Paragraph("An: " + r.getName() + " (" + r.getSafeId() + ")", fontBold));
+            } else {
+                doc.add(new Paragraph("An:", fontBold));
+                com.lowagie.text.List recipientList = new com.lowagie.text.List();
+                recipientList.setAutoindent(true);
+                for (BeaRecipient r : msg.getRecipients()) {
+                    recipientList.add(r.getName() + " (" + r.getSafeId() + ")");
+                }
+                doc.add(recipientList);
+            }
+        }
+
+        doc.add(new Paragraph("Nachrichtentyp: " + msg.getMessageType(), fontBold));
+
+        doc.add(new Paragraph("Aktenzeichen:", fontBold));
+        if (msg.getReferenceNumber() != null || (msg.getReferenceJustice() != null && !msg.getReferenceJustice().isEmpty())) {
+            com.lowagie.text.List refList = new com.lowagie.text.List();
+            refList.setAutoindent(true);
+            if (msg.getReferenceNumber() != null) {
+                refList.add(msg.getReferenceNumber() + " (Absender)");
+            }
+            if (msg.getReferenceJustice() != null && !msg.getReferenceJustice().isEmpty()) {
+                refList.add(msg.getReferenceJustice() + " (Empfänger)");
+            }
+            doc.add(refList);
+        }
+
+        doc.add(new Paragraph("Anlagen:", fontBold));
+        if (msg.getAttachments() != null && !msg.getAttachments().isEmpty()) {
+            com.lowagie.text.List attList = new com.lowagie.text.List();
+            attList.setAutoindent(true);
+            for (BeaAttachment a : msg.getAttachments()) {
+                String sType = "Schriftsatz";
+                if (a.getType() == BeaAttachment.TYPE_ATTACHMENT) {
+                    sType = "Anlage";
+                } else if (a.getType() == BeaAttachment.TYPE_STRUKTURDATENSATZ) {
+                    sType = "Strukturdatensatz";
+                }
+                if (a.getAlias() != null) {
+                    attList.add(sType + ": " + a.getName() + " (" + a.getAlias() + ")");
+                } else {
+                    attList.add(sType + ": " + a.getName());
+                }
+            }
+            doc.add(attList);
+        }
+
+        if (msg.getVhnAttachments() != null && !msg.getVhnAttachments().isEmpty()) {
+            com.lowagie.text.List vhnList = new com.lowagie.text.List();
+            vhnList.setAutoindent(true);
+            for (BeaAttachment a : msg.getVhnAttachments()) {
+                String sType = "";
+                if (a.getType() == BeaAttachment.TYPE_VHN) {
+                    sType = "VHN";
+                } else if (a.getType() == BeaAttachment.TYPE_SIGNATURE) {
+                    sType = "Signatur";
+                }
+                if (a.getAlias() != null) {
+                    vhnList.add(sType + ": " + a.getName() + " (" + a.getAlias() + ")");
+                } else {
+                    vhnList.add(sType + ": " + a.getName());
+                }
+            }
+            doc.add(vhnList);
+        }
+
+        doc.add(new Paragraph(" "));
+        doc.add(new Paragraph(msg.getSubject(), fontBold));
+        doc.add(new Paragraph(" ", fontSmall));
+        if (msg.getBody() != null) {
+            doc.add(new Paragraph(msg.getBody(), fontBold));
+        }
+
+        doc.add(new Paragraph(" "));
+        doc.add(new Paragraph("Nachrichtenjournal:", fontBold));
+        doc.add(new Paragraph(" ", fontSmall));
+
+        if (msg.getJournal() != null && !msg.getJournal().isEmpty()) {
+            com.lowagie.text.List journalList = new com.lowagie.text.List();
+            journalList.setAutoindent(true);
+            for (BeaMessageJournalEntry mj : msg.getJournal()) {
+                if ("MESSAGE_ABHOLEN_DER_NACHRICHT_KSW".equalsIgnoreCase(mj.getEventType())) {
+                    continue;
+                }
+                StringBuilder sb = new StringBuilder();
+                String dateString = "<unbekannt>";
+                if (mj.getTimestamp() != null) {
+                    dateString = df.format(mj.getTimestamp());
+                }
+                sb.append(dateString).append(" ").append(mj.getEventType()).append(" - ");
+                if (mj.getFromSurnameFirstname() != null || mj.getFromUsername() != null) {
+                    sb.append(mj.getFromSurnameFirstname()).append(" (").append(mj.getFromUsername()).append(")");
+                }
+                if (mj.getAttachmentReference() != null) {
+                    sb.append(" - Anlage: ").append(mj.getAttachmentReference());
+                }
+                journalList.add(sb.toString());
+            }
+            doc.add(journalList);
+        }
+
+        doc.close();
+        writer.close();
+        return byteOut.toByteArray();
+    }
+
+    // ========== XML Serialization (JAXB, backward-compatible with old beawrapper format) ==========
+
+    private static JAXBContext beaMessageJaxbContext;
+
+    private static synchronized JAXBContext getBeaMessageJaxbContext() throws JAXBException {
+        if (beaMessageJaxbContext == null) {
+            beaMessageJaxbContext = JAXBContext.newInstance(BeaMessage.class);
+        }
+        return beaMessageJaxbContext;
+    }
+
+    private static byte[] messageToXml(BeaMessage msg) throws Exception {
+        Marshaller m = getBeaMessageJaxbContext().createMarshaller();
+        m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+        m.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        m.marshal(msg, out);
+        return out.toByteArray();
+    }
+
+    private static BeaMessage xmlToMessage(byte[] xml) throws Exception {
+        Unmarshaller u = getBeaMessageJaxbContext().createUnmarshaller();
+        return (BeaMessage) u.unmarshal(new ByteArrayInputStream(xml));
+    }
 }

@@ -663,7 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.bea;
 
-import org.jlawyer.bea.model.Attachment;
+import com.jdimension.jlawyer.services.bea.rest.BeaAttachment;
 
 /**
  *
@@ -673,7 +673,7 @@ public class BeaAttachmentMetadata {
     
     private String url=null;
     private String alias=null;
-    private int type=Attachment.TYPE_ATTACHMENT;
+    private int type=BeaAttachment.TYPE_ATTACHMENT;
 
     public BeaAttachmentMetadata() {
     }

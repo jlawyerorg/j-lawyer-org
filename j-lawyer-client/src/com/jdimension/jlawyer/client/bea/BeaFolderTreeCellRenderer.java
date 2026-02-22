@@ -670,7 +670,8 @@ import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.model.Identity;
+import com.jdimension.jlawyer.services.bea.rest.BeaFolder;
+import com.jdimension.jlawyer.services.bea.rest.BeaIdentity;
 
 /**
  *
@@ -713,8 +714,8 @@ public class BeaFolderTreeCellRenderer extends DefaultTreeCellRenderer {
         try {
 
             Object o = ((DefaultMutableTreeNode) object).getUserObject();
-            if (o instanceof org.jlawyer.bea.model.Folder) {
-                org.jlawyer.bea.model.Folder f = (org.jlawyer.bea.model.Folder) ((DefaultMutableTreeNode) object).getUserObject();
+            if (o instanceof BeaFolder) {
+                BeaFolder f = (BeaFolder) ((DefaultMutableTreeNode) object).getUserObject();
 
                 if ("trash".equalsIgnoreCase(f.getType())) {
                     this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png")));
@@ -739,7 +740,7 @@ public class BeaFolderTreeCellRenderer extends DefaultTreeCellRenderer {
                     this.setFont(this.getFont().deriveFont(Font.PLAIN));
                 }
 
-            } else if (o instanceof Identity) {
+            } else if (o instanceof BeaIdentity) {
                 this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/identity.png")));
             }
 

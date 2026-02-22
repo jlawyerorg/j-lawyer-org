@@ -684,8 +684,8 @@ import javax.swing.JDialog;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
+import com.jdimension.jlawyer.services.bea.rest.BeaIdentity;
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.model.Identity;
 
 /**
  *
@@ -864,7 +864,7 @@ public class AddBeaRecipientSearchDialog extends javax.swing.JDialog {
         if (!StringUtils.isEmpty(safeId)) {
             try {
                 BeaAccess bea = BeaAccess.getInstance();
-                Identity i = bea.getIdentity(safeId);
+                BeaIdentity i = bea.getIdentity(safeId);
                 DefaultListModel model=(DefaultListModel)this.to.getModel();
                 model.addElement(i);
                 

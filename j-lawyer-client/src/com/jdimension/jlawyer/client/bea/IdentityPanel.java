@@ -664,7 +664,7 @@
 package com.jdimension.jlawyer.client.bea;
 
 import com.jdimension.jlawyer.client.utils.StringUtils;
-import org.jlawyer.bea.model.Identity;
+import com.jdimension.jlawyer.services.bea.rest.BeaIdentity;
 
 /**
  *
@@ -679,7 +679,7 @@ public class IdentityPanel extends javax.swing.JPanel {
         initComponents();
     }
     
-    public void setIdentity(Identity i) {
+    public void setIdentity(BeaIdentity i) {
                 
         this.lblAddress.setText(StringUtils.nonEmpty(i.getStreet()) + " " + StringUtils.nonEmpty(i.getStreetNumber()) + ", " + StringUtils.nonEmpty(i.getCountry()) + " - " + StringUtils.nonEmpty(i.getZipCode()) + " " + StringUtils.nonEmpty(i.getCity()));
         this.lblChamber.setText("Kammer: " + StringUtils.nonEmpty(i.getChamber()) + ", " + StringUtils.nonEmpty(i.getChamberMemberShipId()));

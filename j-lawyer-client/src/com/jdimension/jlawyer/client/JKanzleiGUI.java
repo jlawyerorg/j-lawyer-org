@@ -736,7 +736,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.model.PostBox;
+import com.jdimension.jlawyer.services.bea.rest.BeaPostbox;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -2374,9 +2374,9 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         try {
             if (BeaAccess.hasInstance()) {
                 BeaAccess bea = BeaAccess.getInstance();
-                Collection<PostBox> postboxes = bea.getPostBoxes();
+                Collection<BeaPostbox> postboxes = bea.getPostBoxes();
                 boolean pendingMessages = false;
-                for (PostBox pb : postboxes) {
+                for (BeaPostbox pb : postboxes) {
                     if (!bea.isOutboxEmpty(pb.getSafeId())) {
                         pendingMessages = true;
                         break;
