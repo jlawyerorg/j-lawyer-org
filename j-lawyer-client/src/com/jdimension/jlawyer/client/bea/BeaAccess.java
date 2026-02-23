@@ -682,9 +682,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.swing.ImageIcon;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -706,8 +706,8 @@ public class BeaAccess {
     private String beaEnabledVersions = null;
 
     private List<BeaPostbox> inboxes = null;
-    private Hashtable<String, BeaIdentity> identityCache = new Hashtable<>();
-    private Hashtable<String, BeaFolder> importedFolderCache = new Hashtable<>();
+    private ConcurrentHashMap<String, BeaIdentity> identityCache = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, BeaFolder> importedFolderCache = new ConcurrentHashMap<>();
     private List<BeaListItem> cachedLegalAuthorities = null;
     private BeaListItem cachedDefaultLegalAuthority = null;
 
@@ -992,12 +992,10 @@ public class BeaAccess {
 
     public BeaIdentity getIdentity(String safeId) throws Exception {
         this.checkValidBeaClient();
-        synchronized (this) {
-            if (!this.identityCache.containsKey(safeId)) {
-                BeaIdentity i = getService().getIdentity(safeId);
-                if (i != null) {
-                    this.identityCache.put(safeId, i);
-                }
+        if (!this.identityCache.containsKey(safeId)) {
+            BeaIdentity i = getService().getIdentity(safeId);
+            if (i != null) {
+                this.identityCache.put(safeId, i);
             }
         }
         return this.identityCache.get(safeId);
@@ -1005,12 +1003,10 @@ public class BeaAccess {
 
     public BeaIdentity getIdentity(String safeId, String zipCode) throws Exception {
         this.checkValidBeaClient();
-        synchronized (this) {
-            if (!this.identityCache.containsKey(safeId + zipCode)) {
-                BeaIdentity i = getService().getIdentity(safeId, zipCode);
-                if (i != null) {
-                    this.identityCache.put(safeId + zipCode, i);
-                }
+        if (!this.identityCache.containsKey(safeId + zipCode)) {
+            BeaIdentity i = getService().getIdentity(safeId, zipCode);
+            if (i != null) {
+                this.identityCache.put(safeId + zipCode, i);
             }
         }
         return this.identityCache.get(safeId + zipCode);

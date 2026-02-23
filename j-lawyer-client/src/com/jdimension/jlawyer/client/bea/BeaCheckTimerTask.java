@@ -666,7 +666,7 @@ package com.jdimension.jlawyer.client.bea;
 import com.jdimension.jlawyer.client.events.BeaStatusEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import java.util.Collection;
-import java.util.Hashtable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import com.jdimension.jlawyer.services.bea.rest.BeaFolder;
 import com.jdimension.jlawyer.services.bea.rest.BeaMessageFilter;
@@ -682,7 +682,7 @@ public class BeaCheckTimerTask extends java.util.TimerTask {
     private static final Logger log = Logger.getLogger(BeaCheckTimerTask.class.getName());
 
     private Collection<BeaPostbox> postboxes = null;
-    private Hashtable<BeaPostbox, BeaFolder> inboxFolders = new Hashtable<BeaPostbox, BeaFolder>();
+    private ConcurrentHashMap<BeaPostbox, BeaFolder> inboxFolders = new ConcurrentHashMap<>();
 
     private BeaMessageFilter filter = null;
     

@@ -896,14 +896,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     }
 
     private void initWithCertificate() throws Exception {
-        AppUserBean cu = UserSettings.getInstance().getCurrentUser();
-        String pwd = null;
-        try {
-            pwd = CryptoProvider.defaultCrypto().decrypt(cu.getBeaCertificatePassword());
-        } catch (GeneralSecurityException | IOException ge) {
-            log.error("Unable to decrypt beA certificate password");
-            throw new Exception(ge);
-        }
         BeaAccess bea = BeaAccess.getInstance();
         bea.login();
         if (!SwingUtilities.isEventDispatchThread()) {
@@ -956,11 +948,11 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                 for (Long key : folderTable.keySet()) {
                     DefaultMutableTreeNode currentNode = nodeTable.get(key);
-                    BeaFolder currentFolder = folderTable.get(key);
-                    if (currentFolder.getParentId() == 0) {
+                    BeaFolder fCurrentFolder = folderTable.get(key);
+                    if (fCurrentFolder.getParentId() == 0) {
                         pbNode.add(currentNode);
                     } else {
-                        long parentId = currentFolder.getParentId();
+                        long parentId = fCurrentFolder.getParentId();
                         DefaultMutableTreeNode parent = nodeTable.get(parentId);
                         parent.add(currentNode);
                     }
@@ -1546,11 +1538,11 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 return;
             }
 
-            try {
-                BeaProcessCard pc = BeaAccess.getInstance().getProcessCards(BeaAccess.getInstance().getLoggedInSafeId(), msgC.getId());
-            } catch (Throwable t) {
-                log.error("Error getting process card", t);
-            }
+//            try {
+//                BeaProcessCard pc = BeaAccess.getInstance().getProcessCards(BeaAccess.getInstance().getLoggedInSafeId(), msgC.getId());
+//            } catch (Throwable t) {
+//                log.error("Error getting process card", t);
+//            }
 
             ViewBeaDialog view = new ViewBeaDialog(EditorsRegistry.getInstance().getMainWindow(), null);
             view.setMessage(msg);
@@ -3227,11 +3219,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 }
 
                 String comment = "";
-                String code = "";
-                List<BeaListItem> rejectionReasons = BeaAccess.getInstance().getEebRejectionReasons();
-                if (!rejectionReasons.isEmpty()) {
-                    code = rejectionReasons.get(0).getCode();
-                }
                 EebRejectDialog dlg = new EebRejectDialog(EditorsRegistry.getInstance().getMainWindow(), true);
                 FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
                 dlg.setVisible(true);
@@ -3239,7 +3226,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     // user decided to cancel
                     return false;
                 }
-                code = dlg.getRejectionCode();
+                String code = dlg.getRejectionCode();
                 if (dlg.getRejectionComment() != null) {
                     comment = dlg.getRejectionComment();
                 }

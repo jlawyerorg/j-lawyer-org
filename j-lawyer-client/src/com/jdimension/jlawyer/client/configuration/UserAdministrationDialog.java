@@ -707,7 +707,7 @@ import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import javax.swing.DefaultComboBoxModel;
@@ -2691,12 +2691,12 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_cmdSelectCertificateActionPerformed
 
-    private static Hashtable getCertificateInformation(byte[] certificate, String password) throws Exception {
+    private static HashMap getCertificateInformation(byte[] certificate, String password) throws Exception {
         
         KeyStore p12 = KeyStore.getInstance("pkcs12");
         p12.load(new ByteArrayInputStream(certificate), password.toCharArray());
         Enumeration e = p12.aliases();
-        Hashtable ht = new Hashtable();
+        HashMap ht = new HashMap();
 
         while (e.hasMoreElements()) {
             String alias = (String) e.nextElement();

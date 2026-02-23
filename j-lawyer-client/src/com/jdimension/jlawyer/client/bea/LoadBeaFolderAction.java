@@ -693,16 +693,13 @@ public class LoadBeaFolderAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(LoadBeaFolderAction.class.getName());
     private final SimpleDateFormat dfDateTime = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
-    private final SimpleDateFormat dfDate = new SimpleDateFormat("dd.MM.yyyy");
-
+    
     private BeaFolder f = null;
     private JTable table = null;
     private int sortCol = -1;
     private int scrollToRow = -1;
     
     private JSplitPane mainSplitter=null;
-
-    private List<String> messageIds = null;
 
     private final Set<String> addedMessageIds = new HashSet<>();
 
@@ -741,7 +738,7 @@ public class LoadBeaFolderAction extends ProgressableAction {
             // Step 1: fetch only message IDs (lightweight, fast)
             BeaAccess bea = BeaAccess.getInstance();
             String safeId = bea.getLoggedInSafeId();
-            messageIds = bea.getFolderOverviewIds(safeId, f, BeaAccess.getFilter());
+            List<String> messageIds = bea.getFolderOverviewIds(safeId, f, BeaAccess.getFilter());
             this.loadedIdsCount = messageIds.size();
             this.max = messageIds.size();
 
