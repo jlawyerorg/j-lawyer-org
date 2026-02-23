@@ -673,12 +673,13 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.model.Attachment;
-import org.jlawyer.bea.model.Identity;
-import org.jlawyer.bea.model.Message;
-import org.jlawyer.bea.model.Recipient;
+import com.jdimension.jlawyer.services.bea.rest.BeaAttachment;
+import com.jdimension.jlawyer.services.bea.rest.BeaIdentity;
+import com.jdimension.jlawyer.services.bea.rest.BeaMessage;
+import com.jdimension.jlawyer.services.bea.rest.BeaRecipient;
 
 /**
  *
@@ -687,7 +688,7 @@ import org.jlawyer.bea.model.Recipient;
 public class ViewBeaDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(ViewBeaDialog.class.getName());
-    private Message msg = null;
+    private BeaMessage msg = null;
     private ArchiveFileBean contextArchiveFile = null;
     private ObservedDocument odoc = null;
 
@@ -710,7 +711,7 @@ public class ViewBeaDialog extends javax.swing.JDialog {
 
     }
 
-    public void setMessage(Message msg) {
+    public void setMessage(BeaMessage msg) {
         if (this.odoc != null) {
             this.content.setMessage(msg, this.odoc.getStore().getDocumentIdentifier());
         } else {
@@ -825,28 +826,21 @@ public class ViewBeaDialog extends javax.swing.JDialog {
 
     private void cmdReplyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyActionPerformed
 
-        if (!BeaAccess.hasInstance()) {
-            BeaLoginCallback callback = null;
-            try {
-                callback = (BeaLoginCallback) EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, callback);
-            loginPanel.setVisible(true);
-            if (!BeaAccess.hasInstance()) {
-                return;
-            }
+        try {
+            if (!BeaAccess.getInstance().ensureLoggedIn()) return;
+        } catch (Exception ex) {
+            log.error(ex);
+            return;
         }
 
         SendBeaMessageFrame dlg = new SendBeaMessageFrame();
         dlg.setArchiveFile(this.contextArchiveFile);
 
-        Message msgC = this.msg;
+        BeaMessage msgC = this.msg;
         try {
             String replyToSafeId = msgC.getSenderSafeId();
             dlg.setAzRecipient(msgC.getReferenceNumber());
-            Identity replyToIdentity = BeaAccess.getInstance().getIdentity(replyToSafeId);
+            BeaIdentity replyToIdentity = BeaAccess.getInstance().getIdentity(replyToSafeId);
             try {
                 dlg.setTo(replyToIdentity);
             } catch (Throwable t) {
@@ -878,35 +872,28 @@ public class ViewBeaDialog extends javax.swing.JDialog {
         }
         this.setVisible(false);
         this.dispose();
-        
+
         dlg.toFront();
         dlg.requestFocus();
-        
+
     }//GEN-LAST:event_cmdReplyActionPerformed
 
     private void cmdReplyAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyAllActionPerformed
-        if (!BeaAccess.hasInstance()) {
-            BeaLoginCallback callback = null;
-            try {
-                callback = (BeaLoginCallback) EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, callback);
-            loginPanel.setVisible(true);
-            if (!BeaAccess.hasInstance()) {
-                return;
-            }
+        try {
+            if (!BeaAccess.getInstance().ensureLoggedIn()) return;
+        } catch (Exception ex) {
+            log.error(ex);
+            return;
         }
 
         SendBeaMessageFrame dlg = new SendBeaMessageFrame();
         dlg.setArchiveFile(this.contextArchiveFile);
 
-        Message msgC = this.msg;
+        BeaMessage msgC = this.msg;
         try {
             String replyToSafeId = msgC.getSenderSafeId();
             dlg.setAzRecipient(msgC.getReferenceNumber());
-            Identity replyToIdentity = BeaAccess.getInstance().getIdentity(replyToSafeId);
+            BeaIdentity replyToIdentity = BeaAccess.getInstance().getIdentity(replyToSafeId);
             try {
                 dlg.setTo(replyToIdentity);
             } catch (Throwable t) {
@@ -915,10 +902,10 @@ public class ViewBeaDialog extends javax.swing.JDialog {
                 return;
             }
 
-            ArrayList<Recipient> recipients = msgC.getRecipients();
-            for (Recipient rec : recipients) {
+            List<BeaRecipient> recipients = msgC.getRecipients();
+            for (BeaRecipient rec : recipients) {
                 String s = rec.getSafeId();
-                Identity i = BeaAccess.getInstance().getIdentity(s);
+                BeaIdentity i = BeaAccess.getInstance().getIdentity(s);
                 dlg.addTo(i);
             }
 
@@ -953,24 +940,17 @@ public class ViewBeaDialog extends javax.swing.JDialog {
 
     private void cmdForwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdForwardActionPerformed
 
-        if (!BeaAccess.hasInstance()) {
-            BeaLoginCallback callback=null;
-            try {
-                callback=(BeaLoginCallback)EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, callback);
-            loginPanel.setVisible(true);
-            if (!BeaAccess.hasInstance()) {
-                return;
-            }
+        try {
+            if (!BeaAccess.getInstance().ensureLoggedIn()) return;
+        } catch (Exception ex) {
+            log.error(ex);
+            return;
         }
 
         SendBeaMessageFrame dlg = new SendBeaMessageFrame();
         dlg.setArchiveFile(this.contextArchiveFile);
 
-        Message msgC = this.msg;
+        BeaMessage msgC = this.msg;
         try {
 
             String azSender = msgC.getReferenceNumber();
@@ -988,10 +968,10 @@ public class ViewBeaDialog extends javax.swing.JDialog {
             dlg.setSubject(subject);
             dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, msgC.getSenderName(), msgC.getReceptionTime()));
 
-            for (Attachment att : msgC.getAttachments()) {
+            for (BeaAttachment att : msgC.getAttachments()) {
                 byte[] data = att.getContent();
                 if (data != null) {
-                    String attachmentUrl = FileUtils.createTempFile(att.getFileName(), data);
+                    String attachmentUrl = FileUtils.createTempFile(att.getName(), data);
                     new File(attachmentUrl).deleteOnExit();
                     dlg.addAttachment(attachmentUrl, "");
                 }
@@ -1027,24 +1007,17 @@ public class ViewBeaDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_formWindowClosing
 
     private void cmdEditDraftActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditDraftActionPerformed
-        if (!BeaAccess.hasInstance()) {
-            BeaLoginCallback callback=null;
-            try {
-                callback=(BeaLoginCallback)EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, callback);
-            loginPanel.setVisible(true);
-            if (!BeaAccess.hasInstance()) {
-                return;
-            }
+        try {
+            if (!BeaAccess.getInstance().ensureLoggedIn()) return;
+        } catch (Exception ex) {
+            log.error(ex);
+            return;
         }
 
         SendBeaMessageFrame dlg = new SendBeaMessageFrame();
         dlg.setArchiveFile(this.contextArchiveFile);
         
-        Message msgC = this.msg;
+        BeaMessage msgC = this.msg;
         try {
 
             String azSender = msgC.getReferenceNumber();
@@ -1052,7 +1025,7 @@ public class ViewBeaDialog extends javax.swing.JDialog {
             dlg.setAzRecipient(azRecipient);
             dlg.setAzSender(azSender);
             if(msgC.getRecipients()!=null) {
-                for(Recipient r: msgC.getRecipients()) {
+                for(BeaRecipient r: msgC.getRecipients()) {
                     dlg.addTo(BeaAccess.getInstance().getIdentity(r.getSafeId()));
                 }
             }
@@ -1064,12 +1037,12 @@ public class ViewBeaDialog extends javax.swing.JDialog {
             dlg.setSubject(subject);
             dlg.setBody(this.content.getBody());
 
-            for (Attachment att : msgC.getAttachments()) {
-                if(att.getFileName().contains("xjustiz_nachricht.xml"))
+            for (BeaAttachment att : msgC.getAttachments()) {
+                if(att.getName().contains("xjustiz_nachricht.xml"))
                     continue;
                 byte[] data = att.getContent();
                 if (data != null) {
-                    String attachmentUrl = FileUtils.createTempFile(att.getFileName(), data);
+                    String attachmentUrl = FileUtils.createTempFile(att.getName(), data);
                     new File(attachmentUrl).deleteOnExit();
                     dlg.addAttachment(attachmentUrl, "", att.getAlias());
                 }

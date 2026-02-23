@@ -677,7 +677,7 @@ import java.util.Collection;
 import javax.swing.JButton;
 import javax.swing.JProgressBar;
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.model.Identity;
+import com.jdimension.jlawyer.services.bea.rest.BeaIdentity;
 
 /**
  *
@@ -747,7 +747,7 @@ public class ImportCourtsFromBeaThread implements Runnable {
 
         try {
 
-            Collection<Identity> result = null;
+            Collection<BeaIdentity> result = null;
             boolean failed=false;
             for (int i = 0; i < 100; i++) {
                 if(failed)
@@ -766,7 +766,7 @@ public class ImportCourtsFromBeaThread implements Runnable {
                         }
                     }
 
-                    for (Identity id : result) {
+                    for (BeaIdentity id : result) {
                         if ("JUSTIZ".equalsIgnoreCase(id.getType())) {
                             AddressBean[] existings = adr.searchSimple(id.getSurName());
                             AddressBean existingAddress = null;

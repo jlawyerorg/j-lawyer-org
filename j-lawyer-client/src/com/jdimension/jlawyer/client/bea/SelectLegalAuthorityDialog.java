@@ -668,10 +668,9 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+import com.jdimension.jlawyer.services.bea.rest.BeaListItem;
 import javax.swing.DefaultListModel;
 import javax.swing.JDialog;
-import org.jlawyer.bea.model.LegalAuthorities;
-import org.jlawyer.bea.model.BeaListItem;
 
 /**
  *
@@ -703,10 +702,15 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
     
     private void initialize() {
         DefaultListModel lm=new DefaultListModel();
-        List<BeaListItem> auths=LegalAuthorities.getAuthorities();
+        List<BeaListItem> auths;
+        try {
+            auths=BeaAccess.getInstance().getLegalAuthorities();
+        } catch (Exception ex) {
+            auths=new ArrayList<>();
+        }
         ArrayList<String> authNames=new ArrayList<>();
-        
-        
+
+
         for(BeaListItem la: auths) {
             authNames.add(la.getName());
             authorities.put(la.getName(), la);
@@ -715,10 +719,10 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
         for(String s: authNames) {
             lm.addElement(s);
         }
-        
+
         this.lstAuthorities.setModel(lm);
         this.cmdOK.setEnabled(true);
-        
+
         String la=ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEASEND_LASTLEGALAUTHORITY, "");
         this.txtSearch.setText(la);
         this.txtSearchKeyReleased(null);
@@ -830,7 +834,12 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
     private void txtSearchKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchKeyReleased
         this.cmdOK.setEnabled(false);
         DefaultListModel lm=new DefaultListModel();
-        List<BeaListItem> auths=LegalAuthorities.getAuthorities();
+        List<BeaListItem> auths;
+        try {
+            auths=BeaAccess.getInstance().getLegalAuthorities();
+        } catch (Exception ex) {
+            auths=new ArrayList<>();
+        }
         ArrayList<String> authNames=new ArrayList<>();
         for(BeaListItem la: auths) {
             if(la.getName().toLowerCase().contains(txtSearch.getText().toLowerCase()))
@@ -862,7 +871,11 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdCancelActionPerformed
 
     private void cmdUnknownActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUnknownActionPerformed
-        this.selectedAuthority=LegalAuthorities.getDefaultAuthority();
+        try {
+            this.selectedAuthority=BeaAccess.getInstance().getDefaultLegalAuthority();
+        } catch (Exception ex) {
+            this.selectedAuthority=null;
+        }
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdUnknownActionPerformed

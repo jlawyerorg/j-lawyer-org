@@ -729,12 +729,11 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.model.Attachment;
-import org.jlawyer.bea.model.Identity;
-import org.jlawyer.bea.model.BeaListItem;
-import org.jlawyer.bea.model.Message;
-import org.jlawyer.bea.model.MessagePriorities;
-import org.jlawyer.bea.model.PostBox;
+import com.jdimension.jlawyer.services.bea.rest.BeaAttachment;
+import com.jdimension.jlawyer.services.bea.rest.BeaIdentity;
+import com.jdimension.jlawyer.services.bea.rest.BeaListItem;
+import com.jdimension.jlawyer.services.bea.rest.BeaMessage;
+import com.jdimension.jlawyer.services.bea.rest.BeaPostbox;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -789,13 +788,8 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
             }
         });
         
-        List<BeaListItem> prios=MessagePriorities.getPriorities();
         this.cmbPriorities.removeAllItems();
         this.cmbPriorities.addItem("");
-        for(BeaListItem p: prios) {
-            this.cmbPriorities.addItem(p);
-        }
-        this.cmbPriorities.setSelectedIndex(0);
 
         this.quickDateSelectionPanel.setTarget(this.txtReviewDateField);
 
@@ -812,24 +806,34 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         this.cmbFrom.setModel(new DefaultComboBoxModel());
 
         try {
-            HashMap<String,Identity> allMailboxes=new HashMap<>();
+            HashMap<String,BeaIdentity> allMailboxes=new HashMap<>();
             BeaAccess bea = BeaAccess.getInstance();
-            for (PostBox pb : bea.getPostBoxes()) {
-                Identity ident=bea.getIdentity(pb.getSafeId());
+            String firstSafeId = null;
+            for (BeaPostbox pb : bea.getPostBoxes()) {
+                BeaIdentity ident=bea.getIdentity(pb.getSafeId());
                 ((DefaultComboBoxModel) this.cmbFrom.getModel()).addElement(ident);
                 allMailboxes.put(pb.getSafeId(), ident);
+                if (firstSafeId == null) {
+                    firstSafeId = pb.getSafeId();
+                }
             }
-            
+
             UserSettings usettings = UserSettings.getInstance();
             String lastSetup = usettings.getSetting(UserSettings.CONF_BEA_LASTUSEDMAILBOX, null);
             if (lastSetup != null && allMailboxes.containsKey(lastSetup)) {
                 this.cmbFrom.setSelectedItem(allMailboxes.get(lastSetup));
             }
 
+            List<BeaListItem> prios = bea.getMessagePriorities();
+            for (BeaListItem p : prios) {
+                this.cmbPriorities.addItem(p);
+            }
+
         } catch (Throwable t) {
             // leave dropdown empty
             log.error(t);
         }
+        this.cmbPriorities.setSelectedIndex(0);
 
         tp = new TextEditorPanel();
 
@@ -848,7 +852,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
 
         String fromIdentity = cu.getPrincipalId();
         if (this.cmbFrom.getSelectedItem() != null) {
-            Identity i = (Identity) this.cmbFrom.getSelectedItem();
+            BeaIdentity i = (BeaIdentity) this.cmbFrom.getSelectedItem();
             fromIdentity = i.toString();
         }
 
@@ -1138,7 +1142,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         }
     }
 
-    public void setTo(Identity i) {
+    public void setTo(BeaIdentity i) {
         ((DefaultListModel) this.lstTo.getModel()).removeAllElements();
         ((DefaultListModel) this.lstTo.getModel()).addElement(i);
     }
@@ -1147,7 +1151,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         ((DefaultListModel) this.lstTo.getModel()).removeAllElements();
     }
 
-    public void addTo(Identity i) {
+    public void addTo(BeaIdentity i) {
         ((DefaultListModel) this.lstTo.getModel()).addElement(i);
     }
 
@@ -1190,9 +1194,9 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
                     meta.setUrl(this.attachments.get(fileName));
                     meta.setAlias(alias);
                     if (schriftsatz) {
-                        meta.setType(Attachment.TYPE_SCHRIFTSATZ);
+                        meta.setType(BeaAttachment.TYPE_SCHRIFTSATZ);
                     } else {
-                        meta.setType(Attachment.TYPE_ATTACHMENT);
+                        meta.setType(BeaAttachment.TYPE_ATTACHMENT);
                     }
                     attachmentMetadata.add(meta);
                 }
@@ -1947,7 +1951,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         BeaIdentitySearchDialog dlg = new BeaIdentitySearchDialog(this, true, null, null, null, null, null, null);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
-        Identity i = dlg.getSelection();
+        BeaIdentity i = dlg.getSelection();
         if (i != null) {
             DefaultListModel model = (DefaultListModel) this.lstTo.getModel();
             model.addElement(i);
@@ -2090,7 +2094,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         ProgressIndicator dlg = new ProgressIndicator(this, true);
         dlg.setShowCancelButton(false);
         EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
-        String fromSafeId = ((Identity) this.cmbFrom.getSelectedItem()).getSafeId();
+        String fromSafeId = ((BeaIdentity) this.cmbFrom.getSelectedItem()).getSafeId();
         SendBeaMessageAction a = null;
 
         CaseFolder folder = this.contextFolder;
@@ -2109,17 +2113,17 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
 
         ArrayList<BeaAttachmentMetadata> attachmentMetadata = this.getAttachmentMetdata();
 
-        String messageType = Message.MESSAGETYPE_ALLGEMEINE_NACHRICHT;
+        String messageType = BeaMessage.MESSAGETYPE_ALLGEMEINE_NACHRICHT;
         if (this.cmbMessageType.getSelectedItem().equals("Testnachricht")) {
-            messageType = Message.MESSAGETYPE_TESTNACHRICHT;
+            messageType = BeaMessage.MESSAGETYPE_TESTNACHRICHT;
         } else if (this.cmbMessageType.getSelectedItem().equals("Mahnantrag")) {
-            messageType = Message.MESSAGETYPE_MAHN_ANTRAG;
+            messageType = BeaMessage.MESSAGETYPE_MAHN_ANTRAG;
         }
 
-        List<Identity> recipients = new ArrayList<>();
+        List<BeaIdentity> recipients = new ArrayList<>();
         if (this.lstTo.getModel().getSize() > 0) {
             for(int r=0;r<((DefaultListModel) this.lstTo.getModel()).size();r++) {
-                recipients.add((Identity) ((DefaultListModel) this.lstTo.getModel()).get(r));
+                recipients.add((BeaIdentity) ((DefaultListModel) this.lstTo.getModel()).get(r));
             }
         }
 
@@ -2251,7 +2255,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
 
         ProgressIndicator dlg = new ProgressIndicator(this, true);
         EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
-        String fromSafeId = ((Identity) this.cmbFrom.getSelectedItem()).getSafeId();
+        String fromSafeId = ((BeaIdentity) this.cmbFrom.getSelectedItem()).getSafeId();
         SaveBeaMessageAction a = null;
 
         CaseFolder folder = this.contextFolder;
@@ -2267,9 +2271,9 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
             }
         }
 
-        Identity recipient = null;
+        BeaIdentity recipient = null;
         if (this.lstTo.getModel().getSize() > 0) {
-            recipient = (Identity) ((DefaultListModel) this.lstTo.getModel()).elements().nextElement();
+            recipient = (BeaIdentity) ((DefaultListModel) this.lstTo.getModel()).elements().nextElement();
         }
 
         BeaListItem priority=null;
@@ -2673,7 +2677,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
             try {
                 BeaAccess bea = BeaAccess.getInstance();
                 JCheckBoxMenuItem mi = (JCheckBoxMenuItem) e.getSource();
-                Identity i = bea.getIdentity(safeId);
+                BeaIdentity i = bea.getIdentity(safeId);
                 if (mi.getState()) {
 
                     if (!model.contains(i)) {

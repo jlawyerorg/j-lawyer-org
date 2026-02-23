@@ -676,8 +676,8 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.KeyStroke;
 import org.apache.commons.lang3.StringUtils;
+import com.jdimension.jlawyer.services.bea.rest.BeaIdentity;
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.model.Identity;
 
 /**
  *
@@ -687,7 +687,7 @@ public class BeaIdentitySearchDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(BeaIdentitySearchDialog.class.getName());
     private JComponent nextFocus=null;
-    private Identity selection=null;
+    private BeaIdentity selection=null;
 
     /**
      * Creates new form BeaIdentitySearchDialog
@@ -700,7 +700,7 @@ public class BeaIdentitySearchDialog extends javax.swing.JDialog {
      * @param zipCode
      * @param city
      */
-    public BeaIdentitySearchDialog(JFrame parent, boolean modal, Identity target, JComponent nextFocus, String firstName, String surName, String zipCode, String city) {
+    public BeaIdentitySearchDialog(JFrame parent, boolean modal, BeaIdentity target, JComponent nextFocus, String firstName, String surName, String zipCode, String city) {
         super(parent, modal);
         this.nextFocus=nextFocus;
         this.selection=target;
@@ -744,7 +744,7 @@ public class BeaIdentitySearchDialog extends javax.swing.JDialog {
      * @param surName
      * @param zipCode
      */
-    public BeaIdentitySearchDialog(JDialog parent, boolean modal, Identity target, JComponent nextFocus, String firstName, String surName, String zipCode, String city) {
+    public BeaIdentitySearchDialog(JDialog parent, boolean modal, BeaIdentity target, JComponent nextFocus, String firstName, String surName, String zipCode, String city) {
         super(parent, modal);
         this.nextFocus=nextFocus;
         this.selection=target;
@@ -969,7 +969,7 @@ public class BeaIdentitySearchDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_tblResultsMouseClicked
 
-    public Identity getSelection() {
+    public BeaIdentity getSelection() {
         return this.selection;
     }
     

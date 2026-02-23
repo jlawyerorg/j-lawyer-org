@@ -872,6 +872,15 @@ public class JLawyerServiceLocator {
         }
     }
 
+    public BeaServiceRemote lookupBeaServiceRemote() {
+        try {
+            return (BeaServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//BeaService!com.jdimension.jlawyer.services.BeaServiceRemote");
+        } catch (NamingException ne) {
+            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
+            throw new RuntimeException(ne);
+        }
+    }
+
     public Topic lookupJMSTopic(String name) {
         try {
             Topic t = (Topic) icJms.lookup(name);

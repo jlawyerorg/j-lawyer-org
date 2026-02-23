@@ -681,9 +681,9 @@ import java.util.List;
 import org.apache.log4j.Logger;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
-import org.jlawyer.bea.model.Attachment;
-import org.jlawyer.bea.model.Message;
-import org.jlawyer.bea.model.MessageExport;
+import com.jdimension.jlawyer.services.bea.rest.BeaAttachment;
+import com.jdimension.jlawyer.services.bea.rest.BeaMessage;
+import com.jdimension.jlawyer.services.bea.rest.BeaMessageExport;
 import org.jmarkdownviewer.jmdviewer.parser.MarkdownParser;
 import org.mustangproject.ZUGFeRD.IZUGFeRDExporter;
 import org.mustangproject.ZUGFeRD.ZUGFeRDExporterFromPDFA;
@@ -804,29 +804,29 @@ public class FileConverter {
 
             File inputFile = new File(url);
             byte[] data = FileUtils.readFile(inputFile);
-            MessageExport export = new MessageExport();
+            BeaMessageExport export = new BeaMessageExport();
             export.setContent(data);
-            Message msg = BeaAccess.getMessageFromExport(export);
+            BeaMessage msg = BeaAccess.getMessageFromExport(export);
 
-            byte[] pdf = msg.toPdf("j-lawyer.org " + VersionUtils.getFullClientVersion());
+            byte[] pdf = BeaAccess.messageToPdf(msg, "j-lawyer.org " + VersionUtils.getFullClientVersion());
             String beaPdf = FileUtils.createTempFile(inputFile.getName() + ".pdf", pdf);
 
-            ArrayList<Attachment> attachments = msg.getAttachments();
+            List<BeaAttachment> attachments = msg.getAttachments();
             if (!attachments.isEmpty()) {
                 PDFMergerUtility merger = new PDFMergerUtility();
 
                 merger.addSource(new File(beaPdf));
 
-                for (Attachment att : attachments) {
+                for (BeaAttachment att : attachments) {
 
                     try {
-                        String attFile = FileUtils.createTempFile(att.getFileName(), att.getContent());
+                        String attFile = FileUtils.createTempFile(att.getName(), att.getContent());
                         String attFilePdf = convertToPDF(attFile);
 
                         merger.addSource(new File(attFilePdf));
 
                     } catch (Throwable t) {
-                        log.error("unable to convert attachment " + att.getFileName() + " of beA message " + url + " to PDF - skipping!", t);
+                        log.error("unable to convert attachment " + att.getName() + " of beA message " + url + " to PDF - skipping!", t);
                     }
                 }
 

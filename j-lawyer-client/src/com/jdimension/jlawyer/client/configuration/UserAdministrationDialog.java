@@ -699,11 +699,17 @@ import com.jdimension.jlawyer.services.SecurityServiceRemote;
 import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.security.KeyStore;
+import java.security.Principal;
+import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Map;
+import java.util.Set;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFileChooser;
 import javax.swing.table.DefaultTableModel;
@@ -845,7 +851,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         popDelete = new javax.swing.JPopupMenu();
         mnuDelete = new javax.swing.JMenuItem();
         mnuUpdatePassword = new javax.swing.JMenuItem();
-        btGrpAutoLogin = new javax.swing.ButtonGroup();
         jScrollPane1 = new javax.swing.JScrollPane();
         lstUsers = new javax.swing.JList();
         cmdClose = new javax.swing.JButton();
@@ -941,8 +946,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         taBeaCertificate = new javax.swing.JTextArea();
         pwdBeaCertificatePassword = new javax.swing.JPasswordField();
         jLabel16 = new javax.swing.JLabel();
-        rdAutoLogin = new javax.swing.JRadioButton();
-        rdManualLogin = new javax.swing.JRadioButton();
         cmdSelectCertificate = new javax.swing.JButton();
         cmdRemoveCertificate = new javax.swing.JButton();
         jPanel10 = new javax.swing.JPanel();
@@ -1630,13 +1633,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
         jLabel16.setText("Passwort:");
 
-        btGrpAutoLogin.add(rdAutoLogin);
-        rdAutoLogin.setSelected(true);
-        rdAutoLogin.setText("automatisch mit Zertifikat anmelden");
-
-        btGrpAutoLogin.add(rdManualLogin);
-        rdManualLogin.setText("manueller Login mit Zertifikat oder Kartenleser");
-
         cmdSelectCertificate.setText("...");
         cmdSelectCertificate.setToolTipText("Zertifikat uploaden");
         cmdSelectCertificate.addActionListener(new java.awt.event.ActionListener() {
@@ -1663,19 +1659,12 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jLabel16))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel8Layout.createSequentialGroup()
-                        .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(rdAutoLogin)
-                            .add(rdManualLogin))
-                        .add(0, 0, Short.MAX_VALUE))
-                    .add(jPanel8Layout.createSequentialGroup()
-                        .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jScrollPane2)
-                            .add(pwdBeaCertificatePassword))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(cmdSelectCertificate)
-                            .add(cmdRemoveCertificate))))
+                    .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 908, Short.MAX_VALUE)
+                    .add(pwdBeaCertificatePassword))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(cmdSelectCertificate)
+                    .add(cmdRemoveCertificate))
                 .addContainerGap())
         );
         jPanel8Layout.setVerticalGroup(
@@ -1693,11 +1682,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(pwdBeaCertificatePassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel16))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(rdAutoLogin)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(rdManualLogin)
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(257, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("beA", jPanel8);
@@ -2335,13 +2320,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 txtTaxNr.setText(u.getTaxNr());
                 txtUstId.setText(u.getTaxVatId());
 
-                if (u.isBeaCertificateAutoLogin()) {
-                    this.rdAutoLogin.setSelected(true);
-                    this.rdManualLogin.setSelected(false);
-                } else {
-                    this.rdAutoLogin.setSelected(false);
-                    this.rdManualLogin.setSelected(true);
-                }
                 try {
                     this.pwdBeaCertificatePassword.setText(CryptoProvider.defaultCrypto().decrypt(u.getBeaCertificatePassword()));
                 } catch (Throwable t) {
@@ -2354,9 +2332,9 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     this.taBeaCertificate.setText("kein Zertifikat hinterlegt");
                 } else {
                     this.taBeaCertificate.setText("");
-                    Hashtable ht = BeaAccess.getCertificateInformation(u.getBeaCertificate(), CryptoProvider.defaultCrypto().decrypt(u.getBeaCertificatePassword()));
+                    Map<String,String> ht = BeaAccess.getCertificateInformation(u.getBeaCertificate(), CryptoProvider.defaultCrypto().decrypt(u.getBeaCertificatePassword()));
                     for (Object key : ht.keySet()) {
-                        this.taBeaCertificate.setText(this.taBeaCertificate.getText() + key.toString() + ": " + ht.get(key).toString() + System.getProperty("line.separator"));
+                        this.taBeaCertificate.setText(this.taBeaCertificate.getText() + key.toString() + ": " + ht.get(key) + System.getProperty("line.separator"));
                     }
                 }
 
@@ -2438,9 +2416,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
             this.txtDisplayName.setText("");
             this.txtEmail.setText("");
-
-            this.rdAutoLogin.setSelected(false);
-            this.rdManualLogin.setSelected(true);
 
             this.pwdBeaCertificatePassword.setText("");
             this.currentCertificate = null;
@@ -2531,7 +2506,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
                 u.setBeaCertificate(this.currentCertificate);
                 u.setBeaCertificatePassword(CryptoProvider.defaultCrypto().encrypt(this.pwdBeaCertificatePassword.getText().trim()));
-                u.setBeaCertificateAutoLogin(this.rdAutoLogin.isSelected());
 
                 u.setCloudHost(this.pnlCloudConnection.getCloudHost());
                 String cloudPath = null;
@@ -2609,8 +2583,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.txtUser.setText("");
 
         this.pwdBeaCertificatePassword.setText("");
-        this.rdAutoLogin.setSelected(true);
-        this.rdManualLogin.setSelected(false);
         this.taBeaCertificate.setText("");
         this.txtAbbreviation.setText("");
         this.cmbPrimaryGroup.setSelectedIndex(0);
@@ -2703,13 +2675,12 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
                 this.currentCertificate = content;
 
-                Hashtable ht = BeaAccess.getCertificateInformation(content, certPwd.toString());
+                Map<String,String> ht = getCertificateInformation(content, certPwd.toString());
                 StringBuilder sb = new StringBuilder();
-                Enumeration keys = ht.keys();
-                while (keys.hasMoreElements()) {
-                    Object k = keys.nextElement();
+                Set<String> keys = ht.keySet();
+                for (String k: keys) {
                     Object v = ht.get(k);
-                    sb.append(k.toString()).append(": ").append(v.toString()).append(System.getProperty("line.separator"));
+                    sb.append(k).append(": ").append(v.toString()).append(System.getProperty("line.separator"));
                 }
                 this.taBeaCertificate.setText(sb.toString());
                 this.pwdBeaCertificatePassword.setText(certPwd.toString());
@@ -2720,6 +2691,29 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_cmdSelectCertificateActionPerformed
 
+    private static Hashtable getCertificateInformation(byte[] certificate, String password) throws Exception {
+        
+        KeyStore p12 = KeyStore.getInstance("pkcs12");
+        p12.load(new ByteArrayInputStream(certificate), password.toCharArray());
+        Enumeration e = p12.aliases();
+        Hashtable ht = new Hashtable();
+
+        while (e.hasMoreElements()) {
+            String alias = (String) e.nextElement();
+            X509Certificate c = (X509Certificate) p12.getCertificate(alias);
+            Principal subject = c.getSubjectDN();
+            String subjectArray[] = subject.toString().split(",");
+            for (String s : subjectArray) {
+                String[] str = s.trim().split("=");
+                String key = str[0];
+                String value = str[1];
+                ht.put(key, value);
+            }
+        }
+        return ht;
+
+    }
+    
     private void cmdRemoveCertificateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveCertificateActionPerformed
         this.currentCertificate = null;
         this.taBeaCertificate.setText("");
@@ -3293,7 +3287,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.ButtonGroup btGrpAutoLogin;
     private javax.swing.JCheckBox chkAdmin;
     private javax.swing.JCheckBox chkAutoLockDocuments;
     private javax.swing.JCheckBox chkCreateAddress;
@@ -3403,8 +3396,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JPopupMenu popDelete;
     private javax.swing.JPasswordField pwdBeaCertificatePassword;
     private javax.swing.JPasswordField pwdEpostPassword;
-    private javax.swing.JRadioButton rdAutoLogin;
-    private javax.swing.JRadioButton rdManualLogin;
     private javax.swing.JTextArea taBeaCertificate;
     private javax.swing.JTextArea taRole;
     private javax.swing.JTable tblCalendars;

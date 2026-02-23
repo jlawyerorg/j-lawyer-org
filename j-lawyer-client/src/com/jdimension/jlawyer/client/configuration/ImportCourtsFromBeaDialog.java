@@ -664,7 +664,6 @@
 package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.bea.BeaAccess;
-import com.jdimension.jlawyer.client.bea.BeaLoginDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import org.apache.log4j.Logger;
 
@@ -768,22 +767,11 @@ public class ImportCourtsFromBeaDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdImportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdImportActionPerformed
-        boolean needsReset = !BeaAccess.hasInstance();
-        if (!needsReset) {
-            try {
-                needsReset = !BeaAccess.getInstance().isLoggedIn();
-            } catch (Throwable t) {
-                log.error(t);
-                needsReset = true;
-            }
-        }
-
-        if (needsReset) {
-            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
-            loginPanel.setVisible(true);
-            if (!BeaAccess.hasInstance()) {
-                return;
-            }
+        try {
+            if (!BeaAccess.getInstance().ensureLoggedIn()) return;
+        } catch (Exception ex) {
+            log.error(ex);
+            return;
         }
         new Thread(new ImportCourtsFromBeaThread(this, this.progBar, this.cmdClose, this.cmdImport)).start();
     }//GEN-LAST:event_cmdImportActionPerformed

@@ -666,8 +666,8 @@ package com.jdimension.jlawyer.client.editors.documents.viewer;
 import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.model.Message;
-import org.jlawyer.bea.model.MessageExport;
+import com.jdimension.jlawyer.services.bea.rest.BeaMessage;
+import com.jdimension.jlawyer.services.bea.rest.BeaMessageExport;
 
 /**
  *
@@ -688,7 +688,7 @@ public class BeaPanel extends javax.swing.JPanel implements PreviewPanel {
         this.documentId=documentId;
     }
 
-    public void setMessage(Message msg) {
+    public void setMessage(BeaMessage msg) {
         this.content.setMessage(msg, this.documentId);
 
     }
@@ -734,9 +734,9 @@ public class BeaPanel extends javax.swing.JPanel implements PreviewPanel {
     public void showContent(String documentId, byte[] content) {
         this.documentId=documentId;
         try {
-            MessageExport export=new MessageExport();
+            BeaMessageExport export=new BeaMessageExport();
             export.setContent(content);
-            Message msg=BeaAccess.getMessageFromExport(export);
+            BeaMessage msg=BeaAccess.getMessageFromExport(export);
             this.setMessage(msg);
         } catch (Throwable t) {
             log.error(t);

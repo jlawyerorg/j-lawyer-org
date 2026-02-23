@@ -677,8 +677,6 @@ import com.jdimension.jlawyer.client.assistant.AssistantInputAdapter;
 import com.jdimension.jlawyer.comparator.ReviewsComparator;
 import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.bea.BeaInboxPanel;
-import com.jdimension.jlawyer.client.bea.BeaLoginCallback;
-import com.jdimension.jlawyer.client.bea.BeaLoginDialog;
 import com.jdimension.jlawyer.client.bea.SendBeaMessageFrame;
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.cloud.CloudInstance;
@@ -6904,18 +6902,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
-        if (!BeaAccess.hasInstance()) {
-            BeaLoginCallback callback = null;
-            try {
-                callback = (BeaLoginCallback) EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, callback);
-            loginPanel.setVisible(true);
-            if (!BeaAccess.hasInstance()) {
-                return;
-            }
+        try {
+            if (!BeaAccess.getInstance().ensureLoggedIn()) return;
+        } catch (Exception ex) {
+            log.error(ex);
+            return;
         }
 
         if (!this.readOnly) {
@@ -6970,19 +6961,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
-        if (!BeaAccess.hasInstance()) {
-            BeaLoginCallback callback = null;
-            try {
-                callback = (BeaLoginCallback) EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
-            } catch (Throwable t) {
-                log.error(t);
-            }
-
-            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, callback);
-            loginPanel.setVisible(true);
-            if (!BeaAccess.hasInstance()) {
-                return;
-            }
+        try {
+            if (!BeaAccess.getInstance().ensureLoggedIn()) return;
+        } catch (Exception ex) {
+            log.error(ex);
+            return;
         }
 
         if (!this.readOnly) {

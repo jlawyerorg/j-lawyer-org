@@ -670,10 +670,12 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collection;
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JTable;
+import com.jdimension.jlawyer.services.bea.rest.BeaIdentity;
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.model.Identity;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -682,6 +684,7 @@ import org.jlawyer.bea.model.Identity;
 public class BeaIdentitySearchThread implements Runnable {
 
     private static final Logger log = Logger.getLogger(BeaIdentitySearchThread.class.getName());
+    private static final ImageIcon ICON_WARNING = new ImageIcon(BeaIdentitySearchThread.class.getResource("/icons/messagebox_warning.png"));
 
     private String qFirstName;
     private String qName;
@@ -710,7 +713,7 @@ public class BeaIdentitySearchThread implements Runnable {
 
     @Override
     public void run() {
-        Collection<Identity> dtos = null;
+        Collection<BeaIdentity> dtos = null;
         BeaAccess bea = null;
         try {
             bea = BeaAccess.getInstance();
@@ -718,7 +721,9 @@ public class BeaIdentitySearchThread implements Runnable {
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             log.error(ex);
-            ThreadUtils.setLabel(errors, ex.getMessage());
+            ThreadUtils.setLabel(errors, extractErrorText(ex.getMessage()));
+            ThreadUtils.setLabelForeGround(errors, DefaultColorTheme.COLOR_LOGO_RED);
+            ThreadUtils.updateLabelIcon(errors, ICON_WARNING);
             EditorsRegistry.getInstance().clearStatus(true);
             ThreadUtils.setDefaultCursor(this.owner);
             return;
@@ -726,12 +731,12 @@ public class BeaIdentitySearchThread implements Runnable {
 
         long start = System.currentTimeMillis();
 //        // search service does not return emails - let's load the details of all matching identities, but only if it takes less than 5s
-        ArrayList<Identity> fullDtos = new ArrayList<>(dtos);
+        ArrayList<BeaIdentity> fullDtos = new ArrayList<>(dtos);
         for (int i = 0; i < fullDtos.size(); i++) {
-            Identity ident = fullDtos.get(i);
+            BeaIdentity ident = fullDtos.get(i);
             if (ident.getEmail() == null || "".equals(ident.getEmail())) {
                 try {
-                    Identity full = bea.getIdentity(ident.getSafeId());
+                    BeaIdentity full = bea.getIdentity(ident.getSafeId());
                     if(full.getEmail()!=null)
                         ident.setEmail(full.getEmail());
                 } catch (Throwable t) {
@@ -746,10 +751,12 @@ public class BeaIdentitySearchThread implements Runnable {
 
         String[] colNames = new String[]{"Name", "Vorname", "Nutzername", "PLZ", "Ort", "Straße", "Typ", "Kanzleiname", "E-Mail"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
-        for (Identity i : fullDtos) {
+        for (BeaIdentity i : fullDtos) {
             Object[] row = new Object[]{new BeaIdentitySearchRowIdentifier(i), i.getFirstName(), i.getUserName(), i.getZipCode(), i.getCity(), StringUtils.nonEmpty(i.getStreet()) + " " + StringUtils.nonEmpty(i.getStreetNumber()), i.getType(), StringUtils.nonEmpty(i.getOfficeName()), StringUtils.nonEmpty(i.getEmail())};
             model.addRow(row);
         }
+        ThreadUtils.setLabelForeGround(errors, null);
+        ThreadUtils.updateLabelIcon(errors, null);
         if (fullDtos.size() > 0) {
             ThreadUtils.setLabel(errors, fullDtos.size() + " Ergebnisse");
             ThreadUtils.setTableModel(this.target, model, 0, 0);
@@ -761,6 +768,34 @@ public class BeaIdentitySearchThread implements Runnable {
         }
         EditorsRegistry.getInstance().clearStatus(true);
         ThreadUtils.setDefaultCursor(this.owner);
+    }
+
+    private static String extractErrorText(String message) {
+        if (message == null) {
+            return "Unbekannter Fehler";
+        }
+        // BeaService throws "beAstie request failed (...): HTTP XXX - {json body}"
+        int jsonStart = message.indexOf('{');
+        if (jsonStart >= 0) {
+            try {
+                String jsonPart = message.substring(jsonStart);
+                javax.json.JsonObject json = javax.json.Json.createReader(new java.io.StringReader(jsonPart)).readObject();
+                if (json.containsKey("message")) {
+                    return json.getString("message");
+                }
+                if (json.containsKey("error")) {
+                    return json.getString("error");
+                }
+            } catch (Exception ignored) {
+                // not valid JSON, fall through
+            }
+        }
+        // strip the technical prefix "beAstie request failed (...): HTTP XXX - "
+        int dashIdx = message.indexOf(" - ");
+        if (dashIdx >= 0 && message.startsWith("beAstie")) {
+            return message.substring(dashIdx + 3);
+        }
+        return message;
     }
 
 }

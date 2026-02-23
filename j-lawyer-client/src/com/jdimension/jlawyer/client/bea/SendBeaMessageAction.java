@@ -687,13 +687,13 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.BeaWrapperException;
-import org.jlawyer.bea.model.Attachment;
-import org.jlawyer.bea.model.Identity;
-import org.jlawyer.bea.model.BeaListItem;
-import org.jlawyer.bea.model.Message;
-import org.jlawyer.bea.model.MessageExport;
-import org.jlawyer.bea.model.ProcessCard;
+import com.jdimension.jlawyer.services.bea.rest.BeaAttachment;
+import com.jdimension.jlawyer.services.bea.rest.BeaIdentity;
+import com.jdimension.jlawyer.services.bea.rest.BeaListItem;
+import com.jdimension.jlawyer.services.bea.rest.BeaMessage;
+import com.jdimension.jlawyer.services.bea.rest.BeaMessageExport;
+import com.jdimension.jlawyer.services.bea.rest.BeaProcessCard;
+import com.jdimension.jlawyer.services.bea.rest.BeaSendMessageRequest;
 
 /**
  *
@@ -706,7 +706,7 @@ public class SendBeaMessageAction extends ProgressableAction {
     private boolean readReceipt = false;
     private BeaListItem authority = null;
     private BeaListItem priority = null;
-    private List<Identity> recipients = null;
+    private List<BeaIdentity> recipients = null;
     private String subject = "";
     private String body = "";
     private String fromSafeId = "";
@@ -717,9 +717,9 @@ public class SendBeaMessageAction extends ProgressableAction {
     private String azSender = null;
     private String azRecipient = null;
 
-    private String msgType = Message.MESSAGETYPE_ALLGEMEINE_NACHRICHT;
+    private String msgType = BeaMessage.MESSAGETYPE_ALLGEMEINE_NACHRICHT;
 
-    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String messageType, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, List<Identity> to, String subject, String body, BeaListItem priority, String documentTag, String azSender, String azRecipient) {
+    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String messageType, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, List<BeaIdentity> to, String subject, String body, BeaListItem priority, String documentTag, String azSender, String azRecipient) {
         super(i, false, cleanAfter);
         this.attachments = attachmentMetadata;
         this.readReceipt = readReceipt;
@@ -736,13 +736,13 @@ public class SendBeaMessageAction extends ProgressableAction {
         this.msgType = messageType;
     }
 
-    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String messageType, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, List<Identity> to, String subject, String body, BeaListItem priority, ArchiveFileBean af, String documentTag, String azSender, String azRecipient, CaseFolder folder) {
+    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String messageType, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, List<BeaIdentity> to, String subject, String body, BeaListItem priority, ArchiveFileBean af, String documentTag, String azSender, String azRecipient, CaseFolder folder) {
         this(i, cleanAfter, messageType, fromSafeId, attachmentMetadata, cu, readReceipt, authority, to, subject, body, priority, documentTag, azSender, azRecipient);
         this.archiveFile = af;
         this.folder = folder;
     }
     
-    public SendBeaMessageAction(ProgressIndicator i, JFrame cleanAfter, String messageType, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, List<Identity> to, String subject, String body, BeaListItem priority, String documentTag, String azSender, String azRecipient) {
+    public SendBeaMessageAction(ProgressIndicator i, JFrame cleanAfter, String messageType, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, List<BeaIdentity> to, String subject, String body, BeaListItem priority, String documentTag, String azSender, String azRecipient) {
         super(i, false, cleanAfter);
         this.attachments = attachmentMetadata;
         this.readReceipt = readReceipt;
@@ -759,7 +759,7 @@ public class SendBeaMessageAction extends ProgressableAction {
         this.msgType = messageType;
     }
 
-    public SendBeaMessageAction(ProgressIndicator i, JFrame cleanAfter, String messageType, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, List<Identity> to, String subject, String body, BeaListItem priority, ArchiveFileBean af, String documentTag, String azSender, String azRecipient, CaseFolder folder) {
+    public SendBeaMessageAction(ProgressIndicator i, JFrame cleanAfter, String messageType, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, List<BeaIdentity> to, String subject, String body, BeaListItem priority, ArchiveFileBean af, String documentTag, String azSender, String azRecipient, CaseFolder folder) {
         this(i, cleanAfter, messageType, fromSafeId, attachmentMetadata, cu, readReceipt, authority, to, subject, body, priority, documentTag, azSender, azRecipient);
         this.archiveFile = af;
         this.folder = folder;
@@ -784,60 +784,60 @@ public class SendBeaMessageAction extends ProgressableAction {
         this.progress("Verbinde...");
         BeaAccess bea = BeaAccess.getInstance();
 
-        for (Identity to : recipients) {
+        for (BeaIdentity to : recipients) {
 
             if(to==null)
                 continue;
             
-            Message sentMessage = null;
-            Message msg = new Message();
-            msg.setMessageType(msgType);
+            BeaMessage sentMessage = null;
             String recipientsText = "";
 
             try {
                 this.progress("Erstelle Nachricht...");
 
-                msg.setSubject(subject);
-                msg.setBody(body);
-                if (this.azSender != null && !("".equals(this.azSender))) {
-                    msg.setReferenceNumber(this.azSender);
-                }
-
-                if (this.azRecipient != null && !("".equals(this.azRecipient))) {
-                    msg.setReferenceJustice(this.azRecipient);
-                }
-
                 recipientsText = to.toString();
 
                 String senderSafeId = this.fromSafeId;
+                String toSafeId = to.getSafeId();
+
+                BeaSendMessageRequest request = new BeaSendMessageRequest();
+                request.setRecipientSafeId(toSafeId);
+                request.setSubject(subject);
+                request.setBody(body);
+                if (this.azSender != null && !("".equals(this.azSender))) {
+                    request.setReferenceNumber(this.azSender);
+                }
+                if (this.azRecipient != null && !("".equals(this.azRecipient))) {
+                    request.setReferenceJustice(this.azRecipient);
+                }
+                if (this.authority != null) {
+                    request.setLegalAuthorityCode(this.authority.getCode());
+                }
+                if (this.priority != null) {
+                    request.setPriorityCode(this.priority.getCode());
+                }
+                request.setEebRequested(this.readReceipt);
 
                 for (BeaAttachmentMetadata meta : this.attachments) {
-                    Attachment att = new Attachment();
+                    BeaAttachment att = new BeaAttachment();
                     File f = new File(meta.getUrl());
-                    att.setFileName(f.getName());
+                    att.setName(f.getName());
                     att.setAlias(meta.getAlias());
                     att.setContent(FileUtils.readFileToByteArray(f));
                     att.setType(meta.getType());
-                    msg.getAttachments().add(att);
-                }
-
-                if (this.readReceipt) {
-                    msg.setEebRequested(true);
-                } else {
-                    msg.setEebRequested(false);
+                    request.getAttachments().add(att);
                 }
 
                 this.progress("Sende an " + to.toString() + "...");
-                String toSafeId = to.getSafeId();
-                sentMessage = bea.sendAndRetrieveMessage(msg, senderSafeId, toSafeId, this.authority, this.priority);
+                sentMessage = bea.sendMessage(senderSafeId, request);
 
-            } catch (BeaWrapperException ex) {
+            } catch (Exception ex) {
                 log.error(ex);
                 JOptionPane.showMessageDialog(this.indicator, "Nachricht kann nicht gesendet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 throw ex;
             }
 
-            ProcessCard p = sentMessage.getProcessCard();
+            BeaProcessCard p = null;
             boolean isEgvpRecipient = BeaAccess.isEgvpPostBoxBySafeId(to.getSafeId());
 
             Throwable storeException = null;
@@ -850,11 +850,11 @@ public class SendBeaMessageAction extends ProgressableAction {
 
                     this.progress("Laden der Nachricht...");
 
-                    Message msgEx = sentMessage;
+                    BeaMessage msgEx = sentMessage;
 
                     this.progress("Warten auf EGVP-Laufzettel...");
 
-                    if (isEgvpRecipient && p == null) {
+                    if (isEgvpRecipient) {
                         long maxWaitTime = 120000l;
                         long start = System.currentTimeMillis();
                         long waited = 0;
@@ -862,7 +862,7 @@ public class SendBeaMessageAction extends ProgressableAction {
                             if (this.isCancelled()) {
                                 break;
                             }
-                            p = bea.getProcessCards(Long.parseLong(sentMessage.getId()));
+                            p = bea.getProcessCards(this.fromSafeId, sentMessage.getId());
                             if (p != null) {
                                 msgEx.setProcessCard(p);
                                 break;
@@ -879,10 +879,10 @@ public class SendBeaMessageAction extends ProgressableAction {
 
                     if (!this.isCancelled()) {
                         this.progress("Speichern in Akte " + this.archiveFile.getFileNumber());
-                        BeaAccess.addSignatureVerification(bea, msgEx);
-                        MessageExport mex = BeaAccess.exportMessage(msgEx);
+                        BeaAccess.addSignatureVerification(bea, this.fromSafeId, msgEx);
+                        BeaMessageExport mex = BeaAccess.exportMessage(msgEx);
 
-                        java.util.Date receivedPrefix = msg.getReceptionTime();
+                        java.util.Date receivedPrefix = sentMessage.getReceptionTime();
                         if (receivedPrefix == null) {
                             receivedPrefix = new java.util.Date();
                         }
@@ -931,7 +931,7 @@ public class SendBeaMessageAction extends ProgressableAction {
 
                             ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();
                             historyDto.setChangeDate(new Date());
-                            historyDto.setChangeDescription("beA-Nachricht gesendet an " + recipientsText + ": " + msg.getSubject());
+                            historyDto.setChangeDescription("beA-Nachricht gesendet an " + recipientsText + ": " + this.subject);
                             afs.addHistory(this.archiveFile.getId(), historyDto);
 
                             if (folder != null) {
@@ -951,7 +951,7 @@ public class SendBeaMessageAction extends ProgressableAction {
             }
 
             boolean egvpError = false;
-            final ProcessCard pCheck = p;
+            final BeaProcessCard pCheck = p;
             if (isEgvpRecipient && pCheck == null) {
                 egvpError = true;
                 SwingUtilities.invokeLater(() -> {

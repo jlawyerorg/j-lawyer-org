@@ -663,10 +663,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.bea;
 
+import com.jdimension.jlawyer.services.bea.rest.BeaListItem;
 import java.util.HashMap;
 import java.util.List;
-import org.jlawyer.bea.model.BeaListItem;
-import org.jlawyer.bea.model.EebLists;
 
 /**
  *
@@ -686,7 +685,12 @@ public class EebRejectDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         
-        List<BeaListItem> rejects=EebLists.getRejectionReasons();
+        List<BeaListItem> rejects;
+        try {
+            rejects=BeaAccess.getInstance().getEebRejectionReasons();
+        } catch (Exception ex) {
+            rejects=new java.util.ArrayList<>();
+        }
         this.cmbReason.removeAllItems();
         for(BeaListItem li: rejects) {
             this.cmbReason.addItem(li.getName());
@@ -777,7 +781,19 @@ public class EebRejectDialog extends javax.swing.JDialog {
 
     private void cmdOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOKActionPerformed
         this.rejectionComment=this.taComment.getText();
-        BeaListItem rejectItem=EebLists.getRejectionReasonByName(this.cmbReason.getSelectedItem().toString());
+        BeaListItem rejectItem=null;
+        try {
+            List<BeaListItem> reasons=BeaAccess.getInstance().getEebRejectionReasons();
+            String selectedName=this.cmbReason.getSelectedItem().toString();
+            for(BeaListItem item: reasons) {
+                if(item.getName().equals(selectedName)) {
+                    rejectItem=item;
+                    break;
+                }
+            }
+        } catch (Exception ex) {
+            // ignore
+        }
         this.rejectionCode=null;
         if(rejectItem!=null)
             this.rejectionCode=rejectItem.getCode();

@@ -671,8 +671,8 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import java.awt.Window;
 import java.io.File;
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.model.Message;
-import org.jlawyer.bea.model.MessageExport;
+import com.jdimension.jlawyer.services.bea.rest.BeaMessage;
+import com.jdimension.jlawyer.services.bea.rest.BeaMessageExport;
 
 /**
  *
@@ -705,10 +705,10 @@ public class BEAInternalLauncher extends InternalLauncher {
             odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
             observer.addDocument(odoc);
 
-            MessageExport mex = new MessageExport();
+            BeaMessageExport mex = new BeaMessageExport();
             byte[] content = FileUtils.readFile(new File(url));
             mex.setContent(content);
-            Message msg = BeaAccess.getMessageFromExport(mex);
+            BeaMessage msg = BeaAccess.getMessageFromExport(mex);
             ArchiveFileBean archiveFile = null;
             if(this.store instanceof CaseDocumentStore) {
                 archiveFile=((CaseDocumentStore)store).getCase();

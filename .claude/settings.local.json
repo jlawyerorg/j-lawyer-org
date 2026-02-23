@@ -34,7 +34,21 @@
       "Bash(/home/jens/dev/j-lawyer-org/j-lawyer-server/j-lawyer-io/src/java/org/jlawyer/io/rest/v7/pojo/RestfulReportResultTableV7.java:*)",
       "Bash(/home/jens/dev/j-lawyer-org/j-lawyer-server/j-lawyer-io/src/java/org/jlawyer/io/rest/v7/pojo/RestfulReportResultV7.java:*)",
       "Bash(/home/jens/dev/j-lawyer-org/j-lawyer-server/j-lawyer-io/src/java/org/jlawyer/io/rest/v7/ReportsEndpointV7.java:*)",
-      "Bash(__NEW_LINE_f1f2fadd558b570a__ echo \"Created ReportsEndpointV7.java\")"
+      "Bash(__NEW_LINE_f1f2fadd558b570a__ echo \"Created ReportsEndpointV7.java\")",
+      "Bash(/tmp/gen_dtos.sh:*)",
+      "Bash(bash /tmp/gen_dtos.sh)",
+      "Bash(/home/jens/dev/j-lawyer-org/j-lawyer-server/j-lawyer-server-ejb/src/java/com/jdimension/jlawyer/services/BeaSessionRegistry.java:*)",
+      "Bash(jar xf:*)",
+      "Bash(git log:*)",
+      "Bash(for jar in /home/jens/dev/j-lawyer-org/j-lawyer-client/lib/bea/*.jar)",
+      "Bash(do if jar tf \"$jar\")",
+      "Bash(then echo \"$jar:\")",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(for jar in /home/jens/dev/j-lawyer-org/j-lawyer-client/lib/*.jar /home/jens/dev/j-lawyer-org/j-lawyer-client/lib/**/*.jar)",
+      "Bash(for jar in \"/home/jens/dev/projects/j-lawyer-material/bea/2024-01-10 KSW-Toolkit/KSW-Toolkit/sources/\"*.jar)",
+      "Bash(do jar tf:*)",
+      "Bash(mvn dependency:tree:*)"
     ],
     "deny": [],
     "ask": []
