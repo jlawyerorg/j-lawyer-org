@@ -751,13 +751,6 @@ public class LoadBeaFolderAction extends ProgressableAction {
             // Update progress indicator with actual count
             this.progress("Lade Nachrichten...", messageIds.size());
 
-            if (BeaFolder.TYPE_TRASH.equalsIgnoreCase(f.getType())) {
-                TableRowSorter<TableModel> sorter = new TableRowSorter<>(table.getModel());
-                sorter.setComparator(7, new DateStringComparator());
-                sorter.setComparator(4, new DateStringComparator("dd.MM.yyyy, HH:mm"));
-                table.setRowSorter(sorter);
-            }
-
             // Step 2: fetch each header individually with progress
             final int indexMax = messageIds.size() - 1;
             for (int i = 0; i < messageIds.size(); i++) {
@@ -796,30 +789,15 @@ public class LoadBeaFolderAction extends ProgressableAction {
 
                 SwingUtilities.invokeLater(() -> {
                     try {
-                        if (BeaFolder.TYPE_TRASH.equalsIgnoreCase(f.getType())) {
-                            // trash folder - show permanent deletion date
-                            if (msgh.getReceptionTime() != null) {
-                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{msgh.isConfidential(), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getReceptionTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
-                            } else {
-                                if (msgh.getSentTime() != null) {
-                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{msgh.isConfidential(), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getSentTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
-                                } else {
-                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{msgh.isConfidential(), msgh, msgh.getSender(), toString, null, msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
-                                }
-
-                            }
+                        if (msgh.getReceptionTime() != null) {
+                            ((DefaultTableModel) table.getModel()).addRow(new Object[]{msgh.isConfidential(), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getReceptionTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
                         } else {
-                            // not the trash folder
-                            if (msgh.getReceptionTime() != null) {
-                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{msgh.isConfidential(), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getReceptionTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
+                            if (msgh.getSentTime() != null) {
+                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{msgh.isConfidential(), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getSentTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
                             } else {
-                                if (msgh.getSentTime() != null) {
-                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{msgh.isConfidential(), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getSentTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
-                                } else {
-                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{msgh.isConfidential(), msgh, msgh.getSender(), toString, null, msgh.getReferenceNumber(), msgh.getReferenceJustice()});
-                                }
-
+                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{msgh.isConfidential(), msgh, msgh.getSender(), toString, null, msgh.getReferenceNumber(), msgh.getReferenceJustice()});
                             }
+
                         }
                         if (scrollToRow > 0) {
                             if (currentIndex == (indexMax)) {
