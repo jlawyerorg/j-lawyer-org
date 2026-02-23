@@ -762,6 +762,14 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     private boolean needsReset = false;
 
+    // lazy loading state
+    private static final int LAZY_LOAD_PAGE_SIZE = 20;
+    private volatile boolean isLazyLoading = false;
+    private volatile boolean allMessagesLoaded = false;
+    private int currentOffset = 0;
+    private BeaFolder currentFolder = null;
+    private javax.swing.event.ChangeListener scrollListener = null;
+
     /**
      * Creates new form BeaInboxPanel
      */
@@ -1423,6 +1431,13 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             return;
         }
 
+        // reset lazy loading state on folder change
+        this.isLazyLoading = false;
+        this.allMessagesLoaded = false;
+        this.currentOffset = 0;
+        this.currentFolder = null;
+        this.removeScrollListener();
+
         this.beaMessageContentUI.clear();
         this.pnlActionsChild.removeAll();
         this.cmdDelete.setEnabled(false);
@@ -1461,6 +1476,21 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                 ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
                 LoadBeaFolderAction a = new LoadBeaFolderAction(dlg, folder, tblMails, sortCol, scrollToRow, this.mainSplitter);
+
+                final int currentSortCol = sortCol;
+                a.setCallback(() -> {
+                    int loadedCount = a.getLoadedIdsCount();
+                    currentOffset = loadedCount;
+                    currentFolder = folder;
+
+                    int restrictionLimit = getCurrentRestrictionLimit();
+                    if (BeaAccess.isLazyLoadingApplicable() && loadedCount >= restrictionLimit && restrictionLimit > 0) {
+                        installScrollListener(folder, currentSortCol);
+                    } else {
+                        allMessagesLoaded = true;
+                    }
+                });
+
                 a.start();
 
             } catch (Exception ex) {
@@ -3349,6 +3379,143 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         }
     }
+    private int getCurrentRestrictionLimit() {
+        ClientSettings cs = ClientSettings.getInstance();
+        String restriction = cs.getConfiguration(ClientSettings.CONF_BEA_DOWNLOADRESTRICTION, "" + LoadFolderRestriction.RESTRICTION_50);
+        int restr;
+        try {
+            restr = Integer.parseInt(restriction);
+        } catch (Throwable t) {
+            restr = LoadFolderRestriction.RESTRICTION_50;
+        }
+        switch (restr) {
+            case LoadFolderRestriction.RESTRICTION_20:
+                return 20;
+            case LoadFolderRestriction.RESTRICTION_50:
+                return 50;
+            case LoadFolderRestriction.RESTRICTION_100:
+                return 100;
+            case LoadFolderRestriction.RESTRICTION_500:
+                return 500;
+            case LoadFolderRestriction.RESTRICTION_NONE:
+                return 1000;
+            default:
+                return -1;
+        }
+    }
+
+    private void removeScrollListener() {
+        if (this.scrollListener != null && this.jScrollPane3 != null) {
+            this.jScrollPane3.getViewport().removeChangeListener(this.scrollListener);
+            this.scrollListener = null;
+        }
+    }
+
+    private void installScrollListener(final BeaFolder folder, final int sortCol) {
+        removeScrollListener();
+        this.scrollListener = e -> {
+            if (allMessagesLoaded || isLazyLoading) {
+                return;
+            }
+            if (folder != currentFolder) {
+                return;
+            }
+            javax.swing.JViewport viewport = jScrollPane3.getViewport();
+            int viewHeight = viewport.getViewSize().height;
+            int extentHeight = viewport.getExtentSize().height;
+            int viewY = viewport.getViewPosition().y;
+            if (viewHeight - (viewY + extentHeight) < 50) {
+                loadNextPage(folder, sortCol);
+            }
+        };
+        this.jScrollPane3.getViewport().addChangeListener(this.scrollListener);
+    }
+
+    private void loadNextPage(final BeaFolder folder, final int sortCol) {
+        if (isLazyLoading || allMessagesLoaded) {
+            return;
+        }
+        isLazyLoading = true;
+
+        EditorsRegistry.getInstance().updateStatus("Lade weitere Nachrichten...", true);
+
+        new javax.swing.SwingWorker<java.util.List<BeaMessageHeader>, BeaMessageHeader>() {
+            private final SimpleDateFormat dfLazy = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
+            private int loadedPageSize = 0;
+
+            @Override
+            protected java.util.List<BeaMessageHeader> doInBackground() throws Exception {
+                java.util.List<BeaMessageHeader> headers = new java.util.ArrayList<>();
+                try {
+                    BeaAccess bea = BeaAccess.getInstance();
+                    String safeId = bea.getLoggedInSafeId();
+
+                    if (folder != currentFolder) {
+                        return headers;
+                    }
+
+                    com.jdimension.jlawyer.services.bea.rest.BeaMessageFilter filter = BeaAccess.getFilterPaged(currentOffset, LAZY_LOAD_PAGE_SIZE);
+                    java.util.List<String> ids = bea.getFolderOverviewIds(safeId, folder, filter);
+                    loadedPageSize = ids.size();
+
+                    for (String msgId : ids) {
+                        if (folder != currentFolder) {
+                            return headers;
+                        }
+                        try {
+                            BeaMessageHeader msgh = bea.getMessageHeader(safeId, msgId);
+                            headers.add(msgh);
+                            publish(msgh);
+                        } catch (Exception ex) {
+                            log.error("Failed to load header for message " + msgId, ex);
+                        }
+                    }
+                } catch (Exception ex) {
+                    log.error("Error during lazy loading of beA messages", ex);
+                }
+                return headers;
+            }
+
+            @Override
+            protected void process(java.util.List<BeaMessageHeader> chunks) {
+                if (folder != currentFolder) {
+                    return;
+                }
+                DefaultTableModel tm = (DefaultTableModel) tblMails.getModel();
+                for (BeaMessageHeader msgh : chunks) {
+                    String to = "";
+                    if (msgh.getRecipientName() != null) {
+                        to = msgh.getRecipientName();
+                    }
+                    if (msgh.getReceptionTime() != null) {
+                        tm.addRow(new Object[]{msgh.isConfidential(), msgh, msgh.getSender(), to, dfLazy.format(msgh.getReceptionTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
+                    } else if (msgh.getSentTime() != null) {
+                        tm.addRow(new Object[]{msgh.isConfidential(), msgh, msgh.getSender(), to, dfLazy.format(msgh.getSentTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
+                    } else {
+                        tm.addRow(new Object[]{msgh.isConfidential(), msgh, msgh.getSender(), to, null, msgh.getReferenceNumber(), msgh.getReferenceJustice()});
+                    }
+                }
+            }
+
+            @Override
+            protected void done() {
+                if (folder == currentFolder) {
+                    currentOffset += loadedPageSize;
+                    if (loadedPageSize < LAZY_LOAD_PAGE_SIZE) {
+                        allMessagesLoaded = true;
+                    }
+                    try {
+                        ComponentUtils.autoSizeColumns(tblMails);
+                    } catch (Throwable t) {
+                        log.error(t);
+                    }
+                }
+                isLazyLoading = false;
+                EditorsRegistry.getInstance().clearStatus(true);
+            }
+        }.execute();
+    }
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private com.jdimension.jlawyer.client.bea.BeaMessageContentUI beaMessageContentUI;
     private javax.swing.JCheckBox chkMoveToImported;

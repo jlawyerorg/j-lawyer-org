@@ -727,6 +727,31 @@ public class BeaAccess {
         }
     }
 
+    public static BeaMessageFilter getFilterPaged(int offset, int limit) {
+        BeaMessageFilter filter = new BeaMessageFilter();
+        filter.setOffset(offset);
+        filter.setLimit(limit);
+        filter.setSortCriterion("RECEIVED");
+        filter.setSortDirection("DESC");
+        return filter;
+    }
+
+    public static boolean isLazyLoadingApplicable() {
+        ClientSettings cs = ClientSettings.getInstance();
+        String restriction = cs.getConfiguration(ClientSettings.CONF_BEA_DOWNLOADRESTRICTION, "" + LoadFolderRestriction.RESTRICTION_50);
+        int restr;
+        try {
+            restr = Integer.parseInt(restriction);
+        } catch (Throwable t) {
+            restr = LoadFolderRestriction.RESTRICTION_50;
+        }
+        return restr == LoadFolderRestriction.RESTRICTION_20
+                || restr == LoadFolderRestriction.RESTRICTION_50
+                || restr == LoadFolderRestriction.RESTRICTION_100
+                || restr == LoadFolderRestriction.RESTRICTION_500
+                || restr == LoadFolderRestriction.RESTRICTION_NONE;
+    }
+
     public static BeaMessageFilter getFilter() {
         ClientSettings cs = ClientSettings.getInstance();
         String restriction = cs.getConfiguration(ClientSettings.CONF_BEA_DOWNLOADRESTRICTION, "" + LoadFolderRestriction.RESTRICTION_50);

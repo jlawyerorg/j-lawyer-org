@@ -706,6 +706,8 @@ public class LoadBeaFolderAction extends ProgressableAction {
 
     private final Set<String> addedMessageIds = new HashSet<>();
 
+    private int loadedIdsCount = 0;
+
     private int max = 1;
 
     public LoadBeaFolderAction(ProgressIndicator i, BeaFolder f, JTable table, int sortCol, int scrollToRow, JSplitPane mainSplitter) throws Exception {
@@ -740,6 +742,7 @@ public class LoadBeaFolderAction extends ProgressableAction {
             BeaAccess bea = BeaAccess.getInstance();
             String safeId = bea.getLoggedInSafeId();
             messageIds = bea.getFolderOverviewIds(safeId, f, BeaAccess.getFilter());
+            this.loadedIdsCount = messageIds.size();
             this.max = messageIds.size();
 
             log.info("LoadBeaFolderAction loading folder: " + f.getName() + " (id=" + f.getId() + "), message count: " + messageIds.size());
@@ -841,5 +844,9 @@ public class LoadBeaFolderAction extends ProgressableAction {
             return false;
         }
         return true;
+    }
+
+    public int getLoadedIdsCount() {
+        return loadedIdsCount;
     }
 }
