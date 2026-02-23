@@ -811,6 +811,42 @@ public interface BeaServiceRemote {
     List<BeaMessageHeader> searchMessages(String safeId, long folderId, BeaMessageFilter filter) throws Exception;
 
     /**
+     * Lists only the message IDs in a folder without loading full headers.
+     * This is a lightweight alternative to {@link #getMessages(String, long)}.
+     *
+     * @param safeId the Safe-ID of the postbox
+     * @param folderId the folder ID
+     * @return list of message ID strings
+     * @throws Exception if the query fails
+     */
+    List<String> getMessageIds(String safeId, long folderId) throws Exception;
+
+    /**
+     * Searches for message IDs in a folder with filter criteria including paging
+     * and sorting, without loading full headers. This is a lightweight
+     * alternative to {@link #searchMessages(String, long, BeaMessageFilter)}.
+     *
+     * @param safeId the Safe-ID of the postbox
+     * @param folderId the folder ID
+     * @param filter the search/filter criteria
+     * @return list of matching message ID strings
+     * @throws Exception if the search fails
+     */
+    List<String> searchMessageIds(String safeId, long folderId, BeaMessageFilter filter) throws Exception;
+
+    /**
+     * Retrieves a minimal message header without attachments for a single
+     * message. This is a lightweight alternative to
+     * {@link #getMessage(String, String)} when only header data is needed.
+     *
+     * @param safeId the Safe-ID of the postbox
+     * @param messageId the message ID
+     * @return the message header
+     * @throws Exception if the query fails
+     */
+    BeaMessageHeader getMessageHeader(String safeId, String messageId) throws Exception;
+
+    /**
      * Retrieves a full message including body, attachments, and metadata.
      *
      * @param safeId the Safe-ID of the postbox

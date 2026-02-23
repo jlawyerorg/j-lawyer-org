@@ -699,7 +699,11 @@ import com.jdimension.jlawyer.services.SecurityServiceRemote;
 import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.security.KeyStore;
+import java.security.Principal;
+import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -2671,7 +2675,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
                 this.currentCertificate = content;
 
-                Map<String,String> ht = BeaAccess.getCertificateInformation(content, certPwd.toString());
+                Map<String,String> ht = getCertificateInformation(content, certPwd.toString());
                 StringBuilder sb = new StringBuilder();
                 Set<String> keys = ht.keySet();
                 for (String k: keys) {
@@ -2687,6 +2691,29 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_cmdSelectCertificateActionPerformed
 
+    private static Hashtable getCertificateInformation(byte[] certificate, String password) throws Exception {
+        
+        KeyStore p12 = KeyStore.getInstance("pkcs12");
+        p12.load(new ByteArrayInputStream(certificate), password.toCharArray());
+        Enumeration e = p12.aliases();
+        Hashtable ht = new Hashtable();
+
+        while (e.hasMoreElements()) {
+            String alias = (String) e.nextElement();
+            X509Certificate c = (X509Certificate) p12.getCertificate(alias);
+            Principal subject = c.getSubjectDN();
+            String subjectArray[] = subject.toString().split(",");
+            for (String s : subjectArray) {
+                String[] str = s.trim().split("=");
+                String key = str[0];
+                String value = str[1];
+                ht.put(key, value);
+            }
+        }
+        return ht;
+
+    }
+    
     private void cmdRemoveCertificateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveCertificateActionPerformed
         this.currentCertificate = null;
         this.taBeaCertificate.setText("");

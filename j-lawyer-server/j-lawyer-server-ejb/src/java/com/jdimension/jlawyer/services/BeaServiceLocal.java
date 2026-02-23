@@ -703,6 +703,12 @@ public interface BeaServiceLocal {
 
     List<BeaMessageHeader> searchMessages(String safeId, long folderId, BeaMessageFilter filter) throws Exception;
 
+    List<String> getMessageIds(String safeId, long folderId) throws Exception;
+
+    List<String> searchMessageIds(String safeId, long folderId, BeaMessageFilter filter) throws Exception;
+
+    BeaMessageHeader getMessageHeader(String safeId, String messageId) throws Exception;
+
     BeaMessage getMessage(String safeId, String messageId) throws Exception;
 
     BeaMessage sendMessage(String safeId, BeaSendMessageRequest request) throws Exception;

@@ -1001,6 +1001,21 @@ public class BeaAccess {
         return getService().searchMessages(safeId, f.getId(), filter);
     }
 
+    public List<String> getFolderOverviewIds(String safeId, BeaFolder f, BeaMessageFilter filter) throws Exception {
+        this.checkValidBeaClient();
+        return getService().searchMessageIds(safeId, f.getId(), filter);
+    }
+
+    public List<String> getMessageIds(String safeId, long folderId) throws Exception {
+        this.checkValidBeaClient();
+        return getService().getMessageIds(safeId, folderId);
+    }
+
+    public BeaMessageHeader getMessageHeader(String safeId, String messageId) throws Exception {
+        this.checkValidBeaClient();
+        return getService().getMessageHeader(safeId, messageId);
+    }
+
     public boolean setMessageReadByUser(String safeId, BeaMessageHeader msg) throws Exception {
         this.checkValidBeaClient();
         return getService().markMessageRead(safeId, msg.getId());

@@ -903,6 +903,49 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
     }
 
     @Override
+    public List<String> getMessageIds(String safeId, long folderId) throws Exception {
+        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/folders/" + folderId + "/message-ids");
+        JsonArray arr = parseJsonArray(responseBody);
+        List<String> ids = new ArrayList<>();
+        for (JsonValue v : arr) {
+            ids.add(((JsonString) v).getString());
+        }
+        return ids;
+    }
+
+    @Override
+    public List<String> searchMessageIds(String safeId, long folderId, BeaMessageFilter filter) throws Exception {
+        javax.json.JsonObjectBuilder builder = Json.createObjectBuilder();
+        builder.add("onlyNew", filter.isOnlyNew());
+        if (filter.getLimit() != null) builder.add("limit", filter.getLimit());
+        if (filter.getOffset() != null) builder.add("offset", filter.getOffset());
+        if (filter.getSortDirection() != null) builder.add("sortDirection", filter.getSortDirection());
+        if (filter.getSortCriterion() != null) builder.add("sortCriterion", filter.getSortCriterion());
+        if (filter.getSentFrom() != null) builder.add("sentFrom", filter.getSentFrom().toInstant().toString());
+        if (filter.getSentTo() != null) builder.add("sentTo", filter.getSentTo().toInstant().toString());
+        if (filter.getReceivedFrom() != null) builder.add("receivedFrom", filter.getReceivedFrom().toInstant().toString());
+        if (filter.getReceivedTo() != null) builder.add("receivedTo", filter.getReceivedTo().toInstant().toString());
+        if (filter.getDeliveredFrom() != null) builder.add("deliveredFrom", filter.getDeliveredFrom().toInstant().toString());
+        if (filter.getDeliveredTo() != null) builder.add("deliveredTo", filter.getDeliveredTo().toInstant().toString());
+        if (filter.getSenderNameContains() != null) builder.add("senderNameContains", filter.getSenderNameContains());
+        if (filter.getRecipientNameContains() != null) builder.add("recipientNameContains", filter.getRecipientNameContains());
+
+        String responseBody = authenticatedPost("/api/v1/postboxes/" + encode(safeId) + "/folders/" + folderId + "/messages/search-ids", builder.build().toString());
+        JsonArray arr = parseJsonArray(responseBody);
+        List<String> ids = new ArrayList<>();
+        for (JsonValue v : arr) {
+            ids.add(((JsonString) v).getString());
+        }
+        return ids;
+    }
+
+    @Override
+    public BeaMessageHeader getMessageHeader(String safeId, String messageId) throws Exception {
+        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId) + "/header");
+        return parseMessageHeader(parseJson(responseBody));
+    }
+
+    @Override
     public BeaMessage getMessage(String safeId, String messageId) throws Exception {
         String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId));
         return parseMessage(parseJson(responseBody));
