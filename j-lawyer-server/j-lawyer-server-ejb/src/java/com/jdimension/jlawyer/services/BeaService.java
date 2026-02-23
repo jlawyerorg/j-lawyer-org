@@ -729,6 +729,13 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
             .connectTimeout(Duration.ofSeconds(30))
             .build();
 
+    // ========== Method-specific read timeouts ==========
+    private static final Duration TIMEOUT_15S = Duration.ofSeconds(15);
+    private static final Duration TIMEOUT_30S = Duration.ofSeconds(30);
+    private static final Duration TIMEOUT_60S = Duration.ofSeconds(60);
+    private static final Duration TIMEOUT_120S = Duration.ofSeconds(120);
+    private static final Duration TIMEOUT_300S = Duration.ofSeconds(300);
+
     // ========== Auth & Session ==========
 
     @Override
@@ -749,7 +756,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
                 .add("password", password)
                 .build().toString();
 
-        HttpResponse<String> response = sendPostRequest("/api/v1/auth/login", jsonBody, null);
+        HttpResponse<String> response = sendPostRequest("/api/v1/auth/login", jsonBody, null, TIMEOUT_30S);
         if (response.statusCode() != 200) {
             throw new Exception("beA login failed: " + response.body());
         }
@@ -771,7 +778,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         String token = sessionRegistry.getToken(principal);
         if (token != null) {
             try {
-                sendPostRequest("/api/v1/auth/logout", null, token);
+                sendPostRequest("/api/v1/auth/logout", null, token, TIMEOUT_30S);
             } finally {
                 sessionRegistry.removeToken(principal);
             }
@@ -780,7 +787,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
 
     @Override
     public String getBeaWrapperVersion() throws Exception {
-        String responseBody = authenticatedGet("/api/v1/auth/version");
+        String responseBody = authenticatedGet("/api/v1/auth/version", TIMEOUT_15S);
         JsonObject json = parseJson(responseBody);
         return json.getString("version", "unknown");
     }
@@ -793,7 +800,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
                 .add("password", password)
                 .build().toString();
 
-        String responseBody = authenticatedPost("/api/v1/auth/certificate-info", jsonBody);
+        String responseBody = authenticatedPost("/api/v1/auth/certificate-info", jsonBody, TIMEOUT_30S);
         JsonObject json = parseJson(responseBody);
         Map<String, String> result = new HashMap<>();
         for (String key : json.keySet()) {
@@ -811,14 +818,14 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
 
     @Override
     public List<BeaPostbox> getPostboxes() throws Exception {
-        String responseBody = authenticatedGet("/api/v1/postboxes");
+        String responseBody = authenticatedGet("/api/v1/postboxes", TIMEOUT_30S);
         JsonArray arr = parseJsonArray(responseBody);
         return parsePostboxList(arr);
     }
 
     @Override
     public BeaPostbox getPostbox(String safeId) throws Exception {
-        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId));
+        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId), TIMEOUT_30S);
         return parsePostbox(parseJson(responseBody));
     }
 
@@ -826,7 +833,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
 
     @Override
     public List<BeaFolder> getFolders(String safeId) throws Exception {
-        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/folders");
+        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/folders", TIMEOUT_30S);
         JsonArray arr = parseJsonArray(responseBody);
         List<BeaFolder> folders = new ArrayList<>();
         for (JsonValue v : arr) {
@@ -837,7 +844,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
 
     @Override
     public BeaFolder getFolder(String safeId, long folderId) throws Exception {
-        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/folders/" + folderId);
+        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/folders/" + folderId, TIMEOUT_30S);
         return parseFolder(parseJson(responseBody));
     }
 
@@ -848,18 +855,18 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         if (parentFolderId != null) {
             builder.add("parentFolderId", parentFolderId);
         }
-        String responseBody = authenticatedPost("/api/v1/postboxes/" + encode(safeId) + "/folders", builder.build().toString());
+        String responseBody = authenticatedPost("/api/v1/postboxes/" + encode(safeId) + "/folders", builder.build().toString(), TIMEOUT_30S);
         return parseFolder(parseJson(responseBody));
     }
 
     @Override
     public void deleteFolder(String safeId, long folderId) throws Exception {
-        authenticatedDelete("/api/v1/postboxes/" + encode(safeId) + "/folders/" + folderId);
+        authenticatedDelete("/api/v1/postboxes/" + encode(safeId) + "/folders/" + folderId, TIMEOUT_60S);
     }
 
     @Override
     public boolean isOutboxEmpty(String safeId) throws Exception {
-        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/folders/outbox/empty");
+        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/folders/outbox/empty", TIMEOUT_60S);
         return Boolean.parseBoolean(responseBody.trim());
     }
 
@@ -867,7 +874,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
 
     @Override
     public List<BeaMessageHeader> getMessages(String safeId, long folderId) throws Exception {
-        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/folders/" + folderId + "/messages");
+        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/folders/" + folderId + "/messages", TIMEOUT_120S);
         JsonArray arr = parseJsonArray(responseBody);
         List<BeaMessageHeader> headers = new ArrayList<>();
         for (JsonValue v : arr) {
@@ -893,7 +900,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         if (filter.getSenderNameContains() != null) builder.add("senderNameContains", filter.getSenderNameContains());
         if (filter.getRecipientNameContains() != null) builder.add("recipientNameContains", filter.getRecipientNameContains());
 
-        String responseBody = authenticatedPost("/api/v1/postboxes/" + encode(safeId) + "/folders/" + folderId + "/messages/search", builder.build().toString());
+        String responseBody = authenticatedPost("/api/v1/postboxes/" + encode(safeId) + "/folders/" + folderId + "/messages/search", builder.build().toString(), TIMEOUT_120S);
         JsonArray arr = parseJsonArray(responseBody);
         List<BeaMessageHeader> headers = new ArrayList<>();
         for (JsonValue v : arr) {
@@ -904,7 +911,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
 
     @Override
     public List<String> getMessageIds(String safeId, long folderId) throws Exception {
-        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/folders/" + folderId + "/message-ids");
+        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/folders/" + folderId + "/message-ids", TIMEOUT_60S);
         JsonArray arr = parseJsonArray(responseBody);
         List<String> ids = new ArrayList<>();
         for (JsonValue v : arr) {
@@ -930,7 +937,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         if (filter.getSenderNameContains() != null) builder.add("senderNameContains", filter.getSenderNameContains());
         if (filter.getRecipientNameContains() != null) builder.add("recipientNameContains", filter.getRecipientNameContains());
 
-        String responseBody = authenticatedPost("/api/v1/postboxes/" + encode(safeId) + "/folders/" + folderId + "/messages/search-ids", builder.build().toString());
+        String responseBody = authenticatedPost("/api/v1/postboxes/" + encode(safeId) + "/folders/" + folderId + "/messages/search-ids", builder.build().toString(), TIMEOUT_60S);
         JsonArray arr = parseJsonArray(responseBody);
         List<String> ids = new ArrayList<>();
         for (JsonValue v : arr) {
@@ -941,13 +948,13 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
 
     @Override
     public BeaMessageHeader getMessageHeader(String safeId, String messageId) throws Exception {
-        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId) + "/header");
+        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId) + "/header", TIMEOUT_30S);
         return parseMessageHeader(parseJson(responseBody));
     }
 
     @Override
     public BeaMessage getMessage(String safeId, String messageId) throws Exception {
-        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId));
+        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId), TIMEOUT_120S);
         return parseMessage(parseJson(responseBody));
     }
 
@@ -967,7 +974,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
             builder.add("attachments", buildAttachmentsArray(request.getAttachments()));
         }
 
-        String responseBody = authenticatedPost("/api/v1/postboxes/" + encode(safeId) + "/messages", builder.build().toString());
+        String responseBody = authenticatedPost("/api/v1/postboxes/" + encode(safeId) + "/messages", builder.build().toString(), TIMEOUT_300S);
         BeaMessage sentMessage=parseMessage(parseJson(responseBody));
         return sentMessage;
     }
@@ -989,19 +996,19 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
             builder.add("attachments", buildAttachmentsArray(request.getAttachments()));
         }
 
-        String responseBody = authenticatedPost("/api/v1/postboxes/" + encode(safeId) + "/drafts", builder.build().toString());
+        String responseBody = authenticatedPost("/api/v1/postboxes/" + encode(safeId) + "/drafts", builder.build().toString(), TIMEOUT_300S);
         JsonObject json = parseJson(responseBody);
         return json.getString("id", responseBody.trim());
     }
 
     @Override
     public void deleteMessage(String safeId, String messageId) throws Exception {
-        authenticatedDelete("/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId));
+        authenticatedDelete("/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId), TIMEOUT_30S);
     }
 
     @Override
     public boolean restoreMessage(String safeId, String messageId) throws Exception {
-        String responseBody = authenticatedPost("/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId) + "/restore", null);
+        String responseBody = authenticatedPost("/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId) + "/restore", null, TIMEOUT_120S);
         return true;
     }
 
@@ -1010,25 +1017,25 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         String jsonBody = Json.createObjectBuilder()
                 .add("targetFolderId", targetFolderId)
                 .build().toString();
-        authenticatedPut("/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId) + "/move", jsonBody);
+        authenticatedPut("/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId) + "/move", jsonBody, TIMEOUT_30S);
         return true;
     }
 
     @Override
     public boolean markMessageRead(String safeId, String messageId) throws Exception {
-        authenticatedPut("/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId) + "/read", null);
+        authenticatedPut("/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId) + "/read", null, TIMEOUT_15S);
         return true;
     }
 
     @Override
     public boolean isMessageReadByIdentity(String safeId, String messageId, String targetSafeId) throws Exception {
-        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId) + "/read/" + encode(targetSafeId));
+        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId) + "/read/" + encode(targetSafeId), TIMEOUT_30S);
         return Boolean.parseBoolean(responseBody.trim());
     }
 
     @Override
     public List<BeaMessageJournalEntry> getMessageJournal(String safeId, String messageId) throws Exception {
-        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId) + "/journal");
+        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId) + "/journal", TIMEOUT_30S);
         JsonArray arr = parseJsonArray(responseBody);
         List<BeaMessageJournalEntry> entries = new ArrayList<>();
         for (JsonValue v : arr) {
@@ -1039,7 +1046,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
 
     @Override
     public List<BeaProcessCard> getProcessCards(String safeId, String messageId) throws Exception {
-        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId) + "/processcards");
+        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId) + "/processcards", TIMEOUT_30S);
         JsonArray arr = parseJsonArray(responseBody);
         List<BeaProcessCard> cards = new ArrayList<>();
         for (JsonValue v : arr) {
@@ -1050,7 +1057,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
 
     @Override
     public BeaVerificationResult verifyMessage(String safeId, String messageId) throws Exception {
-        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId) + "/verify");
+        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId) + "/verify", TIMEOUT_120S);
         JsonObject json = parseJson(responseBody);
         BeaVerificationResult result = new BeaVerificationResult();
         result.setHtml(getStringOrNull(json, "html"));
@@ -1063,13 +1070,13 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
 
     @Override
     public BeaIdentity getIdentity(String safeId) throws Exception {
-        String responseBody = authenticatedGet("/api/v1/identities/" + encode(safeId));
+        String responseBody = authenticatedGet("/api/v1/identities/" + encode(safeId), TIMEOUT_30S);
         return parseIdentity(parseJson(responseBody));
     }
 
     @Override
     public BeaIdentity getIdentity(String safeId, String zipCode) throws Exception {
-        String responseBody = authenticatedGet("/api/v1/identities/" + encode(safeId) + "?zipCode=" + encode(zipCode));
+        String responseBody = authenticatedGet("/api/v1/identities/" + encode(safeId) + "?zipCode=" + encode(zipCode), TIMEOUT_30S);
         return parseIdentity(parseJson(responseBody));
     }
 
@@ -1083,7 +1090,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         if (request.getZipCode() != null) builder.add("zipCode", request.getZipCode());
         if (request.getOfficeName() != null) builder.add("officeName", request.getOfficeName());
 
-        String responseBody = authenticatedPost("/api/v1/identities/search", builder.build().toString());
+        String responseBody = authenticatedPost("/api/v1/identities/search", builder.build().toString(), TIMEOUT_60S);
         JsonArray arr = parseJsonArray(responseBody);
         List<BeaIdentity> identities = new ArrayList<>();
         for (JsonValue v : arr) {
@@ -1096,20 +1103,20 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
 
     @Override
     public List<BeaListItem> getLegalAuthorities() throws Exception {
-        String responseBody = authenticatedGet("/api/v1/reference-data/legal-authorities");
+        String responseBody = authenticatedGet("/api/v1/reference-data/legal-authorities", TIMEOUT_30S);
         return parseListItems(parseJsonArray(responseBody));
     }
 
     @Override
     public BeaListItem getDefaultLegalAuthority() throws Exception {
-        String responseBody = authenticatedGet("/api/v1/reference-data/legal-authorities/default");
+        String responseBody = authenticatedGet("/api/v1/reference-data/legal-authorities/default", TIMEOUT_15S);
         JsonObject json = parseJson(responseBody);
         return new BeaListItem(getStringOrNull(json, "code"), getStringOrNull(json, "name"));
     }
 
     @Override
     public List<BeaListItem> getMessagePriorities() throws Exception {
-        String responseBody = authenticatedGet("/api/v1/reference-data/message-priorities");
+        String responseBody = authenticatedGet("/api/v1/reference-data/message-priorities", TIMEOUT_15S);
         return parseListItems(parseJsonArray(responseBody));
     }
 
@@ -1120,7 +1127,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         String jsonBody = Json.createObjectBuilder()
                 .add("xmlContent", xml)
                 .build().toString();
-        String responseBody = authenticatedPost("/api/v1/eeb/check-request", jsonBody);
+        String responseBody = authenticatedPost("/api/v1/eeb/check-request", jsonBody, TIMEOUT_30S);
         return Boolean.parseBoolean(responseBody.trim());
     }
 
@@ -1129,7 +1136,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         String jsonBody = Json.createObjectBuilder()
                 .add("xmlContent", xml)
                 .build().toString();
-        String responseBody = authenticatedPost("/api/v1/eeb/check-response", jsonBody);
+        String responseBody = authenticatedPost("/api/v1/eeb/check-response", jsonBody, TIMEOUT_30S);
         return Boolean.parseBoolean(responseBody.trim());
     }
 
@@ -1138,7 +1145,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         String jsonBody = Json.createObjectBuilder()
                 .add("xmlContent", xml)
                 .build().toString();
-        String responseBody = authenticatedPost("/api/v1/eeb/request-attributes", jsonBody);
+        String responseBody = authenticatedPost("/api/v1/eeb/request-attributes", jsonBody, TIMEOUT_30S);
         JsonObject json = parseJson(responseBody);
         BeaEebRequestAttributes attrs = new BeaEebRequestAttributes();
         attrs.setSender(getStringOrNull(json, "sender"));
@@ -1159,7 +1166,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         String jsonBody = Json.createObjectBuilder()
                 .add("xmlContent", xml)
                 .build().toString();
-        String responseBody = authenticatedPost("/api/v1/eeb/response-attributes", jsonBody);
+        String responseBody = authenticatedPost("/api/v1/eeb/response-attributes", jsonBody, TIMEOUT_30S);
         JsonObject json = parseJson(responseBody);
         BeaEebResponseAttributes attrs = new BeaEebResponseAttributes();
         attrs.setCode(getStringOrNull(json, "code"));
@@ -1178,12 +1185,12 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         javax.json.JsonObjectBuilder builder = Json.createObjectBuilder();
         if (xmlRequest != null) builder.add("xmlRequest", xmlRequest);
         if (xmlResponse != null) builder.add("xmlResponse", xmlResponse);
-        return authenticatedPost("/api/v1/eeb/html", builder.build().toString());
+        return authenticatedPost("/api/v1/eeb/html", builder.build().toString(), TIMEOUT_30S);
     }
 
     @Override
     public List<BeaListItem> getEebRejectionReasons() throws Exception {
-        String responseBody = authenticatedGet("/api/v1/eeb/rejection-reasons");
+        String responseBody = authenticatedGet("/api/v1/eeb/rejection-reasons", TIMEOUT_15S);
         return parseListItems(parseJsonArray(responseBody));
     }
 
@@ -1195,7 +1202,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
                 .add("recipientSafeId", recipientSafeId);
         if (abgabeDate != null) builder.add("abgabeDate", abgabeDate);
 
-        String responseBody = authenticatedPost("/api/v1/postboxes/" + encode(safeId) + "/eeb/confirm", builder.build().toString());
+        String responseBody = authenticatedPost("/api/v1/postboxes/" + encode(safeId) + "/eeb/confirm", builder.build().toString(), TIMEOUT_60S);
         return parseMessage(parseJson(responseBody));
     }
 
@@ -1208,7 +1215,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
                 .add("code", code);
         if (comment != null) builder.add("comment", comment);
 
-        String responseBody = authenticatedPost("/api/v1/postboxes/" + encode(safeId) + "/eeb/reject", builder.build().toString());
+        String responseBody = authenticatedPost("/api/v1/postboxes/" + encode(safeId) + "/eeb/reject", builder.build().toString(), TIMEOUT_60S);
         return parseMessage(parseJson(responseBody));
     }
 
@@ -1225,7 +1232,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         if (userName != null && !userName.isEmpty()) {
             path.append(sep).append("userName=").append(encode(userName));
         }
-        String responseBody = authenticatedGet(path.toString());
+        String responseBody = authenticatedGet(path.toString(), TIMEOUT_15S);
         return Boolean.parseBoolean(responseBody.trim());
     }
 
@@ -1258,14 +1265,14 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         return token;
     }
 
-    private String authenticatedGet(String path) throws Exception {
+    private String authenticatedGet(String path, Duration timeout) throws Exception {
         String token = getToken();
-        HttpResponse<String> response = sendGetRequest(path, token);
+        HttpResponse<String> response = sendGetRequest(path, token, timeout);
         if (response.statusCode() == 401) {
             log.warn("HTTP 401 on GET " + path + " - re-authenticating and retrying");
             login();
             token = getToken();
-            response = sendGetRequest(path, token);
+            response = sendGetRequest(path, token, timeout);
         }
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
             throw new Exception("beAstie request failed (GET " + path + "): HTTP " + response.statusCode() + " - " + response.body());
@@ -1273,14 +1280,14 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         return response.body();
     }
 
-    private String authenticatedPost(String path, String jsonBody) throws Exception {
+    private String authenticatedPost(String path, String jsonBody, Duration timeout) throws Exception {
         String token = getToken();
-        HttpResponse<String> response = sendPostRequest(path, jsonBody, token);
+        HttpResponse<String> response = sendPostRequest(path, jsonBody, token, timeout);
         if (response.statusCode() == 401) {
             log.warn("HTTP 401 on POST " + path + " - re-authenticating and retrying");
             login();
             token = getToken();
-            response = sendPostRequest(path, jsonBody, token);
+            response = sendPostRequest(path, jsonBody, token, timeout);
         }
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
             throw new Exception("beAstie request failed (POST " + path + "): HTTP " + response.statusCode() + " - " + response.body());
@@ -1288,14 +1295,14 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         return response.body();
     }
 
-    private String authenticatedPut(String path, String jsonBody) throws Exception {
+    private String authenticatedPut(String path, String jsonBody, Duration timeout) throws Exception {
         String token = getToken();
-        HttpResponse<String> response = sendPutRequest(path, jsonBody, token);
+        HttpResponse<String> response = sendPutRequest(path, jsonBody, token, timeout);
         if (response.statusCode() == 401) {
             log.warn("HTTP 401 on PUT " + path + " - re-authenticating and retrying");
             login();
             token = getToken();
-            response = sendPutRequest(path, jsonBody, token);
+            response = sendPutRequest(path, jsonBody, token, timeout);
         }
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
             throw new Exception("beAstie request failed (PUT " + path + "): HTTP " + response.statusCode() + " - " + response.body());
@@ -1303,14 +1310,14 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         return response.body();
     }
 
-    private void authenticatedDelete(String path) throws Exception {
+    private void authenticatedDelete(String path, Duration timeout) throws Exception {
         String token = getToken();
-        HttpResponse<String> response = sendDeleteRequest(path, token);
+        HttpResponse<String> response = sendDeleteRequest(path, token, timeout);
         if (response.statusCode() == 401) {
             log.warn("HTTP 401 on DELETE " + path + " - re-authenticating and retrying");
             login();
             token = getToken();
-            response = sendDeleteRequest(path, token);
+            response = sendDeleteRequest(path, token, timeout);
         }
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
             throw new Exception("beAstie request failed (DELETE " + path + "): HTTP " + response.statusCode() + " - " + response.body());
@@ -1330,13 +1337,13 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         return cachedClientId;
     }
 
-    private HttpResponse<String> sendGetRequest(String path, String token) throws Exception {
+    private HttpResponse<String> sendGetRequest(String path, String token, Duration timeout) throws Exception {
         String baseUrl = getBeastieBaseUrl();
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + path))
                 .header("Accept", "application/json")
                 .header("X-Client-Id", getClientId())
-                .timeout(Duration.ofSeconds(120))
+                .timeout(timeout)
                 .GET();
         if (token != null) {
             builder.header("Authorization", "Bearer " + token);
@@ -1344,7 +1351,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         return httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
     }
 
-    private HttpResponse<String> sendPostRequest(String path, String jsonBody, String token) throws Exception {
+    private HttpResponse<String> sendPostRequest(String path, String jsonBody, String token, Duration timeout) throws Exception {
         String baseUrl = getBeastieBaseUrl();
         HttpRequest.BodyPublisher body = jsonBody != null
                 ? HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8)
@@ -1354,7 +1361,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
                 .header("Content-Type", "application/json")
                 .header("Accept", "application/json")
                 .header("X-Client-Id", getClientId())
-                .timeout(Duration.ofSeconds(120))
+                .timeout(timeout)
                 .POST(body);
         if (token != null) {
             builder.header("Authorization", "Bearer " + token);
@@ -1362,7 +1369,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         return httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
     }
 
-    private HttpResponse<String> sendPutRequest(String path, String jsonBody, String token) throws Exception {
+    private HttpResponse<String> sendPutRequest(String path, String jsonBody, String token, Duration timeout) throws Exception {
         String baseUrl = getBeastieBaseUrl();
         HttpRequest.BodyPublisher body = jsonBody != null
                 ? HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8)
@@ -1372,7 +1379,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
                 .header("Content-Type", "application/json")
                 .header("Accept", "application/json")
                 .header("X-Client-Id", getClientId())
-                .timeout(Duration.ofSeconds(120))
+                .timeout(timeout)
                 .PUT(body);
         if (token != null) {
             builder.header("Authorization", "Bearer " + token);
@@ -1380,13 +1387,13 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         return httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
     }
 
-    private HttpResponse<String> sendDeleteRequest(String path, String token) throws Exception {
+    private HttpResponse<String> sendDeleteRequest(String path, String token, Duration timeout) throws Exception {
         String baseUrl = getBeastieBaseUrl();
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + path))
                 .header("Accept", "application/json")
                 .header("X-Client-Id", getClientId())
-                .timeout(Duration.ofSeconds(120))
+                .timeout(timeout)
                 .DELETE();
         if (token != null) {
             builder.header("Authorization", "Bearer " + token);
