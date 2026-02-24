@@ -1097,6 +1097,14 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         this.dlgParent.updateTotals(this);
     }
 
+    public void setUnitPrice(BigDecimal unitPrice, int intervalMinutes) {
+        if (!this.txtUnitPrice.isEnabled()) {
+            return;
+        }
+        this.txtUnitPrice.setValue(unitPrice);
+        this.updateEntryTotal(intervalMinutes);
+    }
+
     // always called by the dialog, never by ent entry panel itself
     public void updateEntryTotal(int intervalMinutes) {
         Number unitPrice = 0f;

@@ -917,6 +917,7 @@ public class TimesheetDialog extends javax.swing.JDialog implements NewEventEntr
         jLabel4 = new javax.swing.JLabel();
         txtTimesheetInvoiceable = new javax.swing.JFormattedTextField();
         jLabel8 = new javax.swing.JLabel();
+        cmdChangeRate = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         pnlTimesheetPositions = new javax.swing.JPanel();
         lblTimesheetTotal = new javax.swing.JLabel();
@@ -1035,6 +1036,14 @@ public class TimesheetDialog extends javax.swing.JDialog implements NewEventEntr
         jLabel8.setFont(jLabel8.getFont());
         jLabel8.setText("abrechenbar:");
 
+        cmdChangeRate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
+        cmdChangeRate.setToolTipText("Stundensatz für Person ändern");
+        cmdChangeRate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdChangeRateActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1044,7 +1053,10 @@ public class TimesheetDialog extends javax.swing.JDialog implements NewEventEntr
                     .addComponent(jSeparator1)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cmdRemoveAllPositions)
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(cmdRemoveAllPositions)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdChangeRate))
                             .addComponent(lblTimesheetPositions))
                         .addGap(0, 242, Short.MAX_VALUE))
                     .addGroup(jPanel2Layout.createSequentialGroup()
@@ -1135,8 +1147,10 @@ public class TimesheetDialog extends javax.swing.JDialog implements NewEventEntr
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblTimesheetPositions)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdRemoveAllPositions)
-                .addGap(243, 243, 243))
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmdRemoveAllPositions)
+                    .addComponent(cmdChangeRate))
+                .addGap(240, 240, 240))
         );
 
         splitMain.setLeftComponent(jPanel2);
@@ -1210,7 +1224,7 @@ public class TimesheetDialog extends javax.swing.JDialog implements NewEventEntr
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(splitMain, javax.swing.GroupLayout.DEFAULT_SIZE, 663, Short.MAX_VALUE)
+                .addComponent(splitMain, javax.swing.GroupLayout.PREFERRED_SIZE, 663, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
@@ -1420,6 +1434,56 @@ public class TimesheetDialog extends javax.swing.JDialog implements NewEventEntr
         this.updateTotals(null);
     }//GEN-LAST:event_txtTimesheetLimitFocusLost
 
+    private void cmdChangeRateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdChangeRateActionPerformed
+        java.util.LinkedHashSet<String> principals = new java.util.LinkedHashSet<>();
+        for (Component c : this.pnlTimesheetPositions.getComponents()) {
+            if (c instanceof TimesheetPositionEntryPanel) {
+                TimesheetPosition pos = ((TimesheetPositionEntryPanel) c).getEntry();
+                if (pos != null && pos.getPrincipal() != null) {
+                    principals.add(pos.getPrincipal());
+                }
+            }
+        }
+
+        if (principals.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Keine Positionen vorhanden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        String[] principalArray = principals.toArray(new String[0]);
+        String selectedPrincipal = (String) JOptionPane.showInputDialog(this, "Person auswählen:", "Stundensatz ändern", JOptionPane.QUESTION_MESSAGE, null, principalArray, principalArray[0]);
+        if (selectedPrincipal == null) {
+            return;
+        }
+
+        String rateInput = JOptionPane.showInputDialog(this, "Neuer Stundensatz:", "Stundensatz ändern", JOptionPane.QUESTION_MESSAGE);
+        if (rateInput == null || rateInput.trim().isEmpty()) {
+            return;
+        }
+
+        BigDecimal newRate;
+        try {
+            rateInput = rateInput.replace(",", ".");
+            newRate = new BigDecimal(rateInput);
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Ungültiger Stundensatz: " + rateInput, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int intervalMinutes = Integer.parseInt(this.cmbTimesheetInterval.getSelectedItem().toString());
+        for (Component c : this.pnlTimesheetPositions.getComponents()) {
+            if (c instanceof TimesheetPositionEntryPanel) {
+                TimesheetPositionEntryPanel panel = (TimesheetPositionEntryPanel) c;
+                TimesheetPosition pos = panel.getEntry();
+                if (pos != null && selectedPrincipal.equals(pos.getPrincipal())) {
+                    panel.setUnitPrice(newRate, intervalMinutes);
+                }
+            }
+        }
+
+        this.updateTotals(null);
+    }//GEN-LAST:event_cmdChangeRateActionPerformed
+
     public void updateTotals(TimesheetPositionEntryPanel ep) {
 
         if (ep != null) {
@@ -1539,6 +1603,7 @@ public class TimesheetDialog extends javax.swing.JDialog implements NewEventEntr
     private javax.swing.JComboBox<String> cmbTimesheetInterval;
     private javax.swing.JButton cmdAllowedPositions;
     private javax.swing.JButton cmdCancel;
+    private javax.swing.JButton cmdChangeRate;
     private javax.swing.JButton cmdRemoveAllPositions;
     private javax.swing.JButton cmdSave;
     private javax.swing.JLabel jLabel1;

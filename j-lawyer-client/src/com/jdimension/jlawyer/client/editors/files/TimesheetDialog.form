@@ -117,7 +117,11 @@
                           <Component id="jSeparator1" max="32767" attributes="0"/>
                           <Group type="102" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="cmdRemoveAllPositions" min="-2" max="-2" attributes="0"/>
+                                  <Group type="102" attributes="0">
+                                      <Component id="cmdRemoveAllPositions" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="cmdChangeRate" min="-2" max="-2" attributes="0"/>
+                                  </Group>
                                   <Component id="lblTimesheetPositions" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace min="0" pref="242" max="32767" attributes="0"/>
@@ -233,8 +237,11 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblTimesheetPositions" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="cmdRemoveAllPositions" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="243" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="cmdRemoveAllPositions" min="-2" max="-2" attributes="0"/>
+                          <Component id="cmdChangeRate" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace min="-2" pref="240" max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -510,6 +517,17 @@
                 </Property>
                 <Property name="text" type="java.lang.String" value="abrechenbar:"/>
               </Properties>
+            </Component>
+            <Component class="javax.swing.JButton" name="cmdChangeRate">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/material/baseline_timer_black_48dp.png"/>
+                </Property>
+                <Property name="toolTipText" type="java.lang.String" value="Stundensatz f&#xfc;r Person &#xe4;ndern"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdChangeRateActionPerformed"/>
+              </Events>
             </Component>
           </SubComponents>
         </Container>
