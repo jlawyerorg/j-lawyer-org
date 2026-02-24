@@ -827,8 +827,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     private ByteArrayOutputStream byteArrayOutputStream;
 
     private boolean ignoreTemplateSelectionEvent = false;
-    private String savedTemplateSelection = null;
-
+    
     // these two are set in setBody method to capture the initial content
     // helpful, when user then selects a template - we can then re-construct the mail from scratch
     private String initialPreSignatureTxt = null;
@@ -3249,9 +3248,30 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     }//GEN-LAST:event_cmdOpenTbActionPerformed
 
     private void cmbFromActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbFromActionPerformed
-        // when replying or forwarding, to not apply mail template but leave the quoted content
-        if (!this.replyOrForward)
-            this.cmbTemplatesActionPerformed(evt);
+        // when replying or forwarding, do not apply mail template but leave the quoted content
+        if (!this.replyOrForward) {
+            if (ignoreTemplateSelectionEvent) {
+                return;
+            }
+
+            if (this.initializing) {
+                return;
+            }
+
+            int response = JOptionPane.showConfirmDialog(
+                    this,
+                    "Aktuellen Nachrichteninhalt zurücksetzen und Signatur des ausgewählten Postfachs anwenden?",
+                    "Anderer Absender mit neuer Signatur",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE
+            );
+
+            if (response == JOptionPane.YES_OPTION) {
+                this.cmbTemplatesActionPerformed(evt);
+            }
+        }
+            
+            
     }//GEN-LAST:event_cmbFromActionPerformed
 
     private void cmdAssistantMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdAssistantMouseReleased
@@ -3555,9 +3575,6 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     }//GEN-LAST:event_cmbTemplatesActionPerformed
 
     private void txtTemplateSearchMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtTemplateSearchMouseClicked
-        // Aktuelle Auswahl speichern
-        savedTemplateSelection = cmbTemplates.getSelectedItem().toString();
-
         // ComboBox-Auswahl temporär zurücksetzen, um Suche zu ermöglichen
         ignoreTemplateSelectionEvent = true;
         cmbTemplates.setSelectedItem("");
