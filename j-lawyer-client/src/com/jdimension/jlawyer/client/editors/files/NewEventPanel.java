@@ -704,6 +704,9 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
     private String assistant = "";
     private String lawyer = "";
 
+    private int reminderMinutes = -1;
+    private javax.swing.JPopupMenu reminderPopup = null;
+
     /**
      * Creates new form NewEventPanel
      */
@@ -712,6 +715,8 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
 
         this.quickDateSelectionPanel.setTarget(this.txtEventBeginDateField);
         this.quickDateSelectionPanel.setListener(this);
+
+        initReminderButton();
 
         this.lstReviewReasons.setCellRenderer(new CalendarEntryTemplateListCellRenderer());
         this.lstReviewReasons.addMouseListener(new MouseAdapter() {
@@ -814,6 +819,7 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
         jScrollPane9 = new javax.swing.JScrollPane();
         lstReviewReasons = new javax.swing.JList<>();
         jLabel22 = new javax.swing.JLabel();
+        cmdReminder = new javax.swing.JButton();
 
         btGrpReviewType.add(radioEventTypeFollowUp);
         radioEventTypeFollowUp.setSelected(true);
@@ -923,6 +929,8 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
 
         jLabel22.setText("Ort:");
 
+        cmdReminder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/notifications_off.png"))); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -952,7 +960,6 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
                             .addComponent(radioEventTypeEvent)
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                             .addComponent(calendarSelectionButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addComponent(jLabel23)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
@@ -960,7 +967,9 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
                                     .addComponent(cmbEventBeginTime, javax.swing.GroupLayout.Alignment.LEADING, 0, 1, Short.MAX_VALUE)
                                     .addComponent(txtEventBeginDateField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdEventBeginDateSelector))
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(cmdEventBeginDateSelector)
+                                    .addComponent(cmdReminder)))
                             .addComponent(jLabel7))
                         .addGap(18, 18, 18)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -972,6 +981,9 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(cmdEventEndDateSelector)))))
                 .addGap(0, 0, Short.MAX_VALUE))
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jLabel23)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -990,14 +1002,17 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
                     .addComponent(jLabel21))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(txtEventBeginDateField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cmdEventBeginDateSelector)
-                    .addComponent(txtEventEndDateField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cmdEventEndDateSelector))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmbEventBeginTime, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cmbEventEndTime, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(txtEventBeginDateField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(cmdEventBeginDateSelector)
+                            .addComponent(txtEventEndDateField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(cmdEventEndDateSelector))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(cmbEventBeginTime, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(cmbEventEndTime, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(cmdReminder))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel23)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1099,12 +1114,75 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdEventEndDateSelectorActionPerformed
 
+    private void initReminderButton() {
+        this.reminderPopup = new javax.swing.JPopupMenu();
+        int[] values = {0, 5, 10, 15, 30, 60, 120, 1440};
+        String[] labels = {"Bei Beginn", "5 Min.", "10 Min.", "15 Min.", "30 Min.", "1 Std.", "2 Std.", "1 Tag"};
+        for (int i = 0; i < values.length; i++) {
+            final int val = values[i];
+            javax.swing.JCheckBoxMenuItem item = new javax.swing.JCheckBoxMenuItem(labels[i]);
+            item.addActionListener(e -> {
+                this.reminderMinutes = val;
+                updateReminderIcon();
+                updateReminderCheckmarks();
+            });
+            this.reminderPopup.add(item);
+        }
+        this.reminderPopup.addSeparator();
+        javax.swing.JCheckBoxMenuItem deactivateItem = new javax.swing.JCheckBoxMenuItem("Keine Erinnerung");
+        deactivateItem.addActionListener(e -> {
+            this.reminderMinutes = -1;
+            updateReminderIcon();
+            updateReminderCheckmarks();
+        });
+        this.reminderPopup.add(deactivateItem);
+
+        this.cmdReminder.addActionListener(e -> {
+            updateReminderCheckmarks();
+            this.reminderPopup.show(this.cmdReminder, 0, this.cmdReminder.getHeight());
+        });
+        this.cmdReminder.setToolTipText("Erinnerung");
+        updateReminderIcon();
+    }
+
+    private void updateReminderCheckmarks() {
+        int[] values = {0, 5, 10, 15, 30, 60, 120, 1440};
+        for (int i = 0; i < values.length; i++) {
+            javax.swing.MenuElement me = this.reminderPopup.getSubElements()[i];
+            ((javax.swing.JCheckBoxMenuItem) me.getComponent()).setSelected(this.reminderMinutes == values[i]);
+        }
+        // "Keine Erinnerung" is after the separator
+        int deactivateIndex = this.reminderPopup.getComponentCount() - 1;
+        java.awt.Component lastComp = this.reminderPopup.getComponent(deactivateIndex);
+        if (lastComp instanceof javax.swing.JCheckBoxMenuItem) {
+            ((javax.swing.JCheckBoxMenuItem) lastComp).setSelected(this.reminderMinutes == -1);
+        }
+    }
+
+    private void updateReminderIcon() {
+        if (this.reminderMinutes >= 0) {
+            this.cmdReminder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/notifications_active.png")));
+        } else {
+            this.cmdReminder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/notifications_off.png")));
+        }
+    }
+
+    public int getReminderMinutes() {
+        return this.reminderMinutes;
+    }
+
+    public void setReminderMinutes(int reminderMinutes) {
+        this.reminderMinutes = reminderMinutes;
+        updateReminderIcon();
+    }
+
     private void toggleEventUi() {
 
         this.cmbEventBeginTime.setEnabled(this.radioEventTypeEvent.isSelected());
         this.cmbEventEndTime.setEnabled(this.radioEventTypeEvent.isSelected());
         this.cmdEventEndDateSelector.setEnabled(this.radioEventTypeEvent.isSelected());
         this.txtEventLocation.setEnabled(this.radioEventTypeEvent.isSelected());
+        this.cmdReminder.setEnabled(this.radioEventTypeEvent.isSelected());
 
         if (this.radioEventTypeEvent.isSelected()) {
             this.cmbEventBeginTime.setSelectedItem("10:00");
@@ -1114,6 +1192,8 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
             }
         } else {
             this.txtEventLocation.setText("");
+            this.reminderMinutes = -1;
+            updateReminderIcon();
             this.cmbEventBeginTime.setSelectedItem("00:00");
             this.cmbEventEndTime.setSelectedItem("23:59");
             this.txtEventEndDateField.setText(this.txtEventBeginDateField.getText());
@@ -1190,7 +1270,7 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
                 Window parentWindow = WindowUtils.findWindow(this);
                 if (selectionCount == 0 && !StringUtils.isEmpty(this.txtReviewReason.getText())) {
                     if (CalendarUtils.checkForConflicts(parentWindow, newOrChangedEvent)) {
-                        this.newEventListener.addReview(null, eventType, this.txtReviewReason.getText(), this.taEventDescription.getText(), beginDate, endDate, this.cmbReviewAssignee.getSelectedItem().toString(), this.txtEventLocation.getText(), this.calendarSelectionButton.getSelectedSetup());
+                        this.newEventListener.addReview(null, eventType, this.txtReviewReason.getText(), this.taEventDescription.getText(), beginDate, endDate, this.cmbReviewAssignee.getSelectedItem().toString(), this.txtEventLocation.getText(), this.calendarSelectionButton.getSelectedSetup(), this.reminderMinutes);
                         if (this.newEventListener.getCase() != null) {
                             this.newEventListener.getCase().setLastCalendarSetup(eventType, this.calendarSelectionButton.getSelectedSetup().getId());
                         }
@@ -1200,7 +1280,7 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
                     if (selectionCount == 1 && !StringUtils.isEmpty(this.txtReviewReason.getText()) && this.newEventListener != null) {
                         if (CalendarUtils.checkForConflicts(parentWindow, newOrChangedEvent)) {
                             CalendarEntryTemplateListItem item = (CalendarEntryTemplateListItem) ((DefaultListModel) this.lstReviewReasons.getModel()).getElementAt(this.lstReviewReasons.getSelectedIndex());
-                            this.newEventListener.addReview(item.getEntry(), eventType, this.txtReviewReason.getText(), this.taEventDescription.getText(), beginDate, endDate, this.cmbReviewAssignee.getSelectedItem().toString(), this.txtEventLocation.getText(), this.calendarSelectionButton.getSelectedSetup());
+                            this.newEventListener.addReview(item.getEntry(), eventType, this.txtReviewReason.getText(), this.taEventDescription.getText(), beginDate, endDate, this.cmbReviewAssignee.getSelectedItem().toString(), this.txtEventLocation.getText(), this.calendarSelectionButton.getSelectedSetup(), this.reminderMinutes);
                             if (this.newEventListener.getCase() != null) {
                                 this.newEventListener.getCase().setLastCalendarSetup(eventType, this.calendarSelectionButton.getSelectedSetup().getId());
                             }
@@ -1212,7 +1292,7 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
                             for (int i = 0; i < ((DefaultListModel) this.lstReviewReasons.getModel()).size(); i++) {
                                 CalendarEntryTemplateListItem item = (CalendarEntryTemplateListItem) ((DefaultListModel) this.lstReviewReasons.getModel()).getElementAt(i);
                                 if (item.isSelected() && this.newEventListener != null) {
-                                    this.newEventListener.addReview(item.getEntry(), eventType, item.toString(), this.taEventDescription.getText(), beginDate, endDate, this.cmbReviewAssignee.getSelectedItem().toString(), this.txtEventLocation.getText(), this.calendarSelectionButton.getSelectedSetup());
+                                    this.newEventListener.addReview(item.getEntry(), eventType, item.toString(), this.taEventDescription.getText(), beginDate, endDate, this.cmbReviewAssignee.getSelectedItem().toString(), this.txtEventLocation.getText(), this.calendarSelectionButton.getSelectedSetup(), this.reminderMinutes);
                                     if (this.newEventListener.getCase() != null) {
                                         this.newEventListener.getCase().setLastCalendarSetup(eventType, this.calendarSelectionButton.getSelectedSetup().getId());
                                     }
@@ -1353,6 +1433,7 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
     private javax.swing.JButton cmdEventBeginDateSelector;
     private javax.swing.JButton cmdEventEndDateSelector;
     private javax.swing.JButton cmdNewReview;
+    private javax.swing.JButton cmdReminder;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel21;
     private javax.swing.JLabel jLabel22;

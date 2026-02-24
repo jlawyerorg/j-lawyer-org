@@ -701,11 +701,14 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
     private ArchiveFileReviewsBean targetReview = null;
     private JTable tblReviewReasons = null;
     private ArchiveFileBean caseDto = null;
-    
+
     private Date oldBegin=null;
     private Date oldEnd=null;
 
     private int mode = MODE_DUPLICATE;
+
+    private int reminderMinutes = -1;
+    private javax.swing.JPopupMenu reminderPopup = null;
 
     /**
      * Creates new form EditorOrDuplicateEventDialog
@@ -725,6 +728,7 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
         this.tblReviewReasons = tblReviewReasons;
         this.caseDto = caseDto;
         initComponents();
+        initReminderButton();
         this.cmbReviewReason.requestFocus();
 
         this.quickDateSelectionPanel.setTarget(this.txtEventBeginDateField);
@@ -762,6 +766,9 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
         targetReview.setArchiveFileKey(rev.getArchiveFileKey());
         targetReview.setAssignee(rev.getAssignee());
         targetReview.setEventType(rev.getEventType());
+        targetReview.setReminderMinutes(rev.getReminderMinutes());
+        this.reminderMinutes = rev.getReminderMinutes();
+        updateReminderIcon();
         if (this.mode == MODE_EDIT) {
             targetReview.setId(rev.getId());
             targetReview.setDone(false);
@@ -784,12 +791,72 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
 
     }
 
+    private void initReminderButton() {
+        this.reminderPopup = new javax.swing.JPopupMenu();
+        int[] values = {0, 5, 10, 15, 30, 60, 120, 1440};
+        String[] labels = {"Bei Beginn", "5 Min.", "10 Min.", "15 Min.", "30 Min.", "1 Std.", "2 Std.", "1 Tag"};
+        for (int i = 0; i < values.length; i++) {
+            final int val = values[i];
+            javax.swing.JCheckBoxMenuItem item = new javax.swing.JCheckBoxMenuItem(labels[i]);
+            item.addActionListener(e -> {
+                this.reminderMinutes = val;
+                updateReminderIcon();
+                updateReminderCheckmarks();
+            });
+            this.reminderPopup.add(item);
+        }
+        this.reminderPopup.addSeparator();
+        javax.swing.JCheckBoxMenuItem deactivateItem = new javax.swing.JCheckBoxMenuItem("Keine Erinnerung");
+        deactivateItem.addActionListener(e -> {
+            this.reminderMinutes = -1;
+            updateReminderIcon();
+            updateReminderCheckmarks();
+        });
+        this.reminderPopup.add(deactivateItem);
+
+        this.cmdReminder.addActionListener(e -> {
+            updateReminderCheckmarks();
+            this.reminderPopup.show(this.cmdReminder, 0, this.cmdReminder.getHeight());
+        });
+        this.cmdReminder.setToolTipText("Erinnerung");
+        updateReminderIcon();
+    }
+
+    private void updateReminderCheckmarks() {
+        int[] values = {0, 5, 10, 15, 30, 60, 120, 1440};
+        for (int i = 0; i < values.length; i++) {
+            javax.swing.MenuElement me = this.reminderPopup.getSubElements()[i];
+            ((javax.swing.JCheckBoxMenuItem) me.getComponent()).setSelected(this.reminderMinutes == values[i]);
+        }
+        // "Keine Erinnerung" is after the separator (index values.length + 1 in sub-elements)
+        int deactivateIndex = this.reminderPopup.getComponentCount() - 1;
+        java.awt.Component lastComp = this.reminderPopup.getComponent(deactivateIndex);
+        if (lastComp instanceof javax.swing.JCheckBoxMenuItem) {
+            ((javax.swing.JCheckBoxMenuItem) lastComp).setSelected(this.reminderMinutes == -1);
+        }
+    }
+
+    private void updateReminderIcon() {
+        if (this.reminderMinutes >= 0) {
+            this.cmdReminder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/notifications_active.png")));
+        } else {
+            this.cmdReminder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/notifications_off.png")));
+        }
+    }
+
     private void toggleEventUi() {
 
-        this.cmbEventBeginTime.setEnabled(this.targetReview.hasEndDateAndTime());
-        this.cmbEventEndTime.setEnabled(this.targetReview.hasEndDateAndTime());
-        this.cmdEventEndDateSelector.setEnabled(this.targetReview.hasEndDateAndTime());
-        this.txtEventLocation.setEnabled(this.targetReview.hasEndDateAndTime());
+        boolean isEvent = this.targetReview.hasEndDateAndTime();
+        this.cmbEventBeginTime.setEnabled(isEvent);
+        this.cmbEventEndTime.setEnabled(isEvent);
+        this.cmdEventEndDateSelector.setEnabled(isEvent);
+        this.txtEventLocation.setEnabled(isEvent);
+        this.cmdReminder.setEnabled(isEvent);
+
+        if (!isEvent) {
+            this.reminderMinutes = -1;
+            updateReminderIcon();
+        }
 
     }
 
@@ -824,6 +891,7 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
         cmbEventBeginTime = new javax.swing.JComboBox<>();
         cmbEventEndTime = new javax.swing.JComboBox<>();
         calendarSelectionButton1 = new com.jdimension.jlawyer.client.calendar.CalendarSelectionButton();
+        cmdReminder = new javax.swing.JButton();
 
         jTextArea1.setColumns(20);
         jTextArea1.setRows(5);
@@ -904,6 +972,8 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
         cmbEventEndTime.setEditable(true);
         cmbEventEndTime.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "00:00", "00:30", "01:00", "01:30", "02:00", "02:30", "03:00", "03:30", "04:00", "04:30", "05:00", "05:30", "06:00", "06:30", "07:00", "07:30", "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00", "22:30", "23:00", "23:30" }));
 
+        cmdReminder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/notifications_off.png"))); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -923,26 +993,29 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
                         .addComponent(calendarSelectionButton1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel4)
+                            .addComponent(jLabel5))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(txtEventBeginDateField, javax.swing.GroupLayout.DEFAULT_SIZE, 96, Short.MAX_VALUE)
+                            .addComponent(txtEventEndDateField))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel4)
-                                    .addComponent(jLabel5))
+                                .addComponent(cmdEventEndDateSelector)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(txtEventBeginDateField, javax.swing.GroupLayout.DEFAULT_SIZE, 96, Short.MAX_VALUE)
-                                    .addComponent(txtEventEndDateField))
+                                .addComponent(cmbEventEndTime, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(cmdEventBeginDateSelector)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(cmdEventBeginDateSelector)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(cmbEventBeginTime, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(cmdEventEndDateSelector)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(cmbEventEndTime, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(cmbEventBeginTime, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(quickDateSelectionPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(cmdReminder)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 43, Short.MAX_VALUE)
+                                .addComponent(quickDateSelectionPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jLabel3)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -951,7 +1024,7 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
                                 .addComponent(jLabel6)
                                 .addGap(47, 47, 47)
                                 .addComponent(txtEventLocation, javax.swing.GroupLayout.PREFERRED_SIZE, 494, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 69, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -972,14 +1045,19 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
                                 .addComponent(cmbReviewReason, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                            .addComponent(txtEventBeginDateField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(jLabel4))
-                                        .addComponent(cmdEventBeginDateSelector))
-                                    .addComponent(quickDateSelectionPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                                    .addComponent(txtEventBeginDateField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                    .addComponent(jLabel4))
+                                                .addComponent(cmdEventBeginDateSelector))
+                                            .addComponent(quickDateSelectionPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(6, 6, 6)
+                                        .addComponent(cmdReminder, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                             .addComponent(cmbEventBeginTime, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdEventEndDateSelector))
@@ -1052,6 +1130,7 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
         targetReview.setLocation(this.txtEventLocation.getText());
         targetReview.setAssignee(this.cmbAssignee.getSelectedItem().toString());
         targetReview.setCalendarSetup(this.calendarSelectionButton1.getSelectedSetup());
+        targetReview.setReminderMinutes(this.reminderMinutes);
 
         if (CalendarUtils.checkForConflicts(this, targetReview)) {
             ClientSettings settings = ClientSettings.getInstance();
@@ -1179,6 +1258,7 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
     private javax.swing.JButton cmdEventBeginDateSelector;
     private javax.swing.JButton cmdEventEndDateSelector;
     private javax.swing.JButton cmdOK;
+    private javax.swing.JButton cmdReminder;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;

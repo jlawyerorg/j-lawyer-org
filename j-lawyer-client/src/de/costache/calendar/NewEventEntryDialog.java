@@ -806,7 +806,7 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
     // End of variables declaration//GEN-END:variables
 
     @Override
-    public void addReview(CalendarEntryTemplate template, int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup) throws Exception {
+    public void addReview(CalendarEntryTemplate template, int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup, int reminderMinutes) throws Exception {
         ArchiveFileReviewsBean ev = new ArchiveFileReviewsBean();
         ev.setBeginDate(beginDate);
         ev.setEndDate(endDate);
@@ -818,6 +818,7 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
         ev.setAssignee(assignee);
         ev.setLocation(location);
         ev.setCalendarSetup(calSetup);
+        ev.setReminderMinutes(reminderMinutes);
 
         try {
             if(this.preventRelatedEvents)

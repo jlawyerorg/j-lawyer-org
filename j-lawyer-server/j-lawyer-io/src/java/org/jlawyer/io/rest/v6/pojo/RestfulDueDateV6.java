@@ -675,6 +675,7 @@ public class RestfulDueDateV6 extends RestfulDueDateV4 {
     protected String caseName=null;
     protected String caseReason=null;
     protected String caseNumber=null;
+    protected int reminderMinutes=-1;
 
     /**
      * @return the caseId
@@ -731,5 +732,21 @@ public class RestfulDueDateV6 extends RestfulDueDateV4 {
     public void setCaseNumber(String caseNumber) {
         this.caseNumber = caseNumber;
     }
-    
+
+    /**
+     * @return the reminder lead time in minutes. -1 means no reminder,
+     * 0 means at event start, >0 means N minutes before the event.
+     */
+    public int getReminderMinutes() {
+        return reminderMinutes;
+    }
+
+    /**
+     * @param reminderMinutes the reminder lead time in minutes.
+     * -1 means no reminder, 0 means at event start, >0 means N minutes before.
+     */
+    public void setReminderMinutes(int reminderMinutes) {
+        this.reminderMinutes = reminderMinutes;
+    }
+
 }

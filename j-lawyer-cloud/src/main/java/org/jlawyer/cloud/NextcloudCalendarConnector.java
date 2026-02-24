@@ -684,6 +684,9 @@ import net.fortuna.ical4j.model.property.ProdId;
 import net.fortuna.ical4j.model.property.Uid;
 import net.fortuna.ical4j.model.property.Version;
 import net.fortuna.ical4j.model.property.XProperty;
+import net.fortuna.ical4j.model.component.VAlarm;
+import net.fortuna.ical4j.model.property.Action;
+import net.fortuna.ical4j.model.Dur;
 import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
@@ -1065,21 +1068,29 @@ public class NextcloudCalendarConnector {
 //		}
 //    }
     public String createEvent(String uid, String calendarHref, String summary, String description, String location, Date start, Date end, boolean allDayEvent) {
-        return this.putEvent(uid, calendarHref, null, summary, description, location, start, end, allDayEvent);
+        return this.putEvent(uid, calendarHref, null, summary, description, location, start, end, allDayEvent, -1);
+    }
+
+    public String createEvent(String uid, String calendarHref, String summary, String description, String location, Date start, Date end, boolean allDayEvent, int reminderMinutes) {
+        return this.putEvent(uid, calendarHref, null, summary, description, location, start, end, allDayEvent, reminderMinutes);
     }
 
     public String updateEvent(String uid, String calendarHref, String summary, String description, String location, Date start, Date end, boolean allDayEvent) {
+        return this.updateEvent(uid, calendarHref, summary, description, location, start, end, allDayEvent, -1);
+    }
+
+    public String updateEvent(String uid, String calendarHref, String summary, String description, String location, Date start, Date end, boolean allDayEvent, int reminderMinutes) {
         String etag = null;
         try {
             etag = this.getEtag(uid, calendarHref);
         } catch (Throwable t) {
             log.error("unable to get etag for " + calendarHref, t);
         }
-        return this.putEvent(uid, calendarHref, etag, summary, description, location, start, end, allDayEvent);
+        return this.putEvent(uid, calendarHref, etag, summary, description, location, start, end, allDayEvent, reminderMinutes);
     }
 
     // create or update
-    private String putEvent(String uid, String calendarHref, String etag, String summary, String description, String location, Date start, Date end, boolean allDayEvent) {
+    private String putEvent(String uid, String calendarHref, String etag, String summary, String description, String location, Date start, Date end, boolean allDayEvent, int reminderMinutes) {
 
         org.osaf.caldav4j.methods.HttpClient client = new org.osaf.caldav4j.methods.HttpClient();
         Credentials creds = new UsernamePasswordCredentials(this.userName, this.password);
@@ -1116,6 +1127,13 @@ public class NextcloudCalendarConnector {
             XProperty jlp = new XProperty("X-ALT-JLAWYERORG");
             jlp.setValue("1");
             vevent.getProperties().add(jlp);
+
+            if (reminderMinutes >= 0) {
+                VAlarm alarm = new VAlarm(new Dur(0, 0, -reminderMinutes, 0));
+                alarm.getProperties().add(Action.DISPLAY);
+                alarm.getProperties().add(new Description("Reminder"));
+                vevent.getAlarms().add(alarm);
+            }
 
             //vevent.getProperties().add(new Uid(uid));
             c.getComponents().add(vevent);

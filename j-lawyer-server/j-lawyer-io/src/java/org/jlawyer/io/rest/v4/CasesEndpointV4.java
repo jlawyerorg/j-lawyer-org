@@ -741,6 +741,7 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
                 dd.setSummary(rev.getSummary());
                 dd.setDescription(rev.getDescription());
                 dd.setLocation(rev.getLocation());
+                dd.setReminderMinutes(rev.getReminderMinutes());
                 dd.setType(RestfulDueDateV6.TYPE_RESPITE);
                 if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
                     dd.setType(RestfulDueDateV6.TYPE_FOLLOWUP);
@@ -758,7 +759,7 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
             return Response.serverError().build();
         }
     }
-    
+
     // when seeing something like
     //  com.fasterxml.jackson.databind.JsonMappingException: failed to lazily initialize a collection of role: com.jdimension.jlawyer.persistence.ArchiveFileBean.archiveFileFormsBeanList, could not initialize proxy - no Session
     // it is not necessarily an issue with fetch type eager or lazy, just put @XmlTransient to the getter of the list in the entity
@@ -796,6 +797,7 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
                 dd.setSummary(rev.getSummary());
                 dd.setDescription(rev.getDescription());
                 dd.setLocation(rev.getLocation());
+                dd.setReminderMinutes(rev.getReminderMinutes());
                 dd.setType(RestfulDueDateV6.TYPE_RESPITE);
                 if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
                     dd.setType(RestfulDueDateV6.TYPE_FOLLOWUP);
@@ -901,6 +903,7 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
                 dd.setSummary(rev.getSummary());
                 dd.setDescription(rev.getDescription());
                 dd.setLocation(rev.getLocation());
+                dd.setReminderMinutes(rev.getReminderMinutes());
                 dd.setType(RestfulDueDateV6.TYPE_RESPITE);
                 if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
                     dd.setType(RestfulDueDateV6.TYPE_FOLLOWUP);

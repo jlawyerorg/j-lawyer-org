@@ -846,6 +846,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             }
             rev.setLocation(dueDate.getLocation());
             rev.setSummary(dueDate.getSummary());
+            rev.setReminderMinutes(dueDate.getReminderMinutes());
             rev = cal.addReview(dueDate.getCaseId(), rev);
 
             RestfulDueDateV6 dd = new RestfulDueDateV6();
@@ -862,6 +863,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             dd.setCaseReason(rev.getArchiveFileKey().getReason());
             dd.setDescription(rev.getDescription());
             dd.setLocation(rev.getLocation());
+            dd.setReminderMinutes(rev.getReminderMinutes());
             dd.setType(RestfulDueDateV6.TYPE_RESPITE);
             if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
                 dd.setType(RestfulDueDateV6.TYPE_FOLLOWUP);
@@ -938,6 +940,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             rev.setDone(dueDate.isDone());
             rev.setLocation(dueDate.getLocation());
             rev.setSummary(dueDate.getSummary());
+            rev.setReminderMinutes(dueDate.getReminderMinutes());
             rev = cal.updateReview(dueDate.getCaseId(), rev);
 
             RestfulDueDateV6 dd = new RestfulDueDateV6();
@@ -954,6 +957,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             dd.setCaseReason(rev.getArchiveFileKey().getReason());
             dd.setDescription(rev.getDescription());
             dd.setLocation(rev.getLocation());
+            dd.setReminderMinutes(rev.getReminderMinutes());
             dd.setType(RestfulDueDateV6.TYPE_RESPITE);
             if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
                 dd.setType(RestfulDueDateV6.TYPE_FOLLOWUP);

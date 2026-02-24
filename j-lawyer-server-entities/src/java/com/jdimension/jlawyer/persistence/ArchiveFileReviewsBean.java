@@ -720,6 +720,9 @@ public class ArchiveFileReviewsBean implements Serializable, EventTypes {
     @ManyToOne
     private CalendarSetup calendarSetup;
 
+    @Column(name = "reminder_minutes")
+    private int reminderMinutes = -1;
+
     public Object getClone() {
         ArchiveFileReviewsBean a=new ArchiveFileReviewsBean();
         a.archiveFileKey=this.archiveFileKey;
@@ -733,6 +736,7 @@ public class ArchiveFileReviewsBean implements Serializable, EventTypes {
         a.id=this.id;
         a.location=this.location;
         a.summary=this.summary;
+        a.reminderMinutes=this.reminderMinutes;
         return a;
     }
 
@@ -950,6 +954,22 @@ public class ArchiveFileReviewsBean implements Serializable, EventTypes {
      */
     public void setCalendarSetup(CalendarSetup calendarSetup) {
         this.calendarSetup = calendarSetup;
+    }
+
+    /**
+     * @return the reminder lead time in minutes. -1 means no reminder,
+     * 0 means at event start, >0 means N minutes before the event.
+     */
+    public int getReminderMinutes() {
+        return reminderMinutes;
+    }
+
+    /**
+     * @param reminderMinutes the reminder lead time in minutes.
+     * -1 means no reminder, 0 means at event start, >0 means N minutes before.
+     */
+    public void setReminderMinutes(int reminderMinutes) {
+        this.reminderMinutes = reminderMinutes;
     }
 
 }

@@ -813,7 +813,7 @@ public class AddCalendarEventStep extends javax.swing.JPanel implements WizardSt
     }
 
     @Override
-    public void addReview(CalendarEntryTemplate template, int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup) throws Exception {
+    public void addReview(CalendarEntryTemplate template, int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup, int reminderMinutes) throws Exception {
         ArchiveFileReviewsBean reviewDto = new ArchiveFileReviewsBean();
         reviewDto.setEventType(eventType);
         reviewDto.setDone(false);
@@ -824,6 +824,7 @@ public class AddCalendarEventStep extends javax.swing.JPanel implements WizardSt
         reviewDto.setDescription(description);
         reviewDto.setLocation(location);
         reviewDto.setCalendarSetup(calSetup);
+        reviewDto.setReminderMinutes(reminderMinutes);
 
         this.data.put("newevent.event", reviewDto);
         this.data.put("newevent.template", template);

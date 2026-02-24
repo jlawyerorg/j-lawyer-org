@@ -50,7 +50,6 @@
                           <Component id="calendarSelectionButton" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
-                  <Component id="jLabel23" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
@@ -59,7 +58,10 @@
                                   <Component id="txtEventBeginDateField" alignment="0" min="-2" pref="125" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="cmdEventBeginDateSelector" min="-2" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="cmdEventBeginDateSelector" min="-2" max="-2" attributes="0"/>
+                                  <Component id="cmdReminder" min="-2" max="-2" attributes="0"/>
+                              </Group>
                           </Group>
                           <Component id="jLabel7" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
@@ -78,6 +80,10 @@
                   </Group>
               </Group>
               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+          </Group>
+          <Group type="102" alignment="0" attributes="0">
+              <Component id="jLabel23" min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="25" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -101,15 +107,20 @@
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="1" attributes="0">
-                  <Component id="txtEventBeginDateField" alignment="1" min="-2" max="-2" attributes="0"/>
-                  <Component id="cmdEventBeginDateSelector" alignment="1" min="-2" max="-2" attributes="0"/>
-                  <Component id="txtEventEndDateField" alignment="1" min="-2" max="-2" attributes="0"/>
-                  <Component id="cmdEventEndDateSelector" alignment="1" min="-2" max="-2" attributes="0"/>
-              </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="cmbEventBeginTime" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="cmbEventEndTime" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Group type="102" attributes="0">
+                      <Group type="103" groupAlignment="1" attributes="0">
+                          <Component id="txtEventBeginDateField" alignment="1" min="-2" max="-2" attributes="0"/>
+                          <Component id="cmdEventBeginDateSelector" alignment="1" min="-2" max="-2" attributes="0"/>
+                          <Component id="txtEventEndDateField" alignment="1" min="-2" max="-2" attributes="0"/>
+                          <Component id="cmdEventEndDateSelector" alignment="1" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="cmbEventBeginTime" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="cmbEventEndTime" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                  </Group>
+                  <Component id="cmdReminder" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="jLabel23" min="-2" max="-2" attributes="0"/>
@@ -443,6 +454,13 @@
     <Component class="javax.swing.JLabel" name="jLabel22">
       <Properties>
         <Property name="text" type="java.lang.String" value="Ort:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdReminder">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/material/notifications_off.png"/>
+        </Property>
       </Properties>
     </Component>
   </SubComponents>

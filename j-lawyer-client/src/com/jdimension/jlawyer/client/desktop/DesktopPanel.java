@@ -918,8 +918,12 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             }   
         };
         timer12.schedule(fileChooserPreload, 7500);
-        
-        
+
+        Timer reminderTimer = new Timer();
+        final ReminderNotificationTimerTask reminderTask = new ReminderNotificationTimerTask();
+        reminderTimer.schedule(reminderTask, 30000, 60000);
+
+
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 log.info("shutting down SystemStateTimerTask");
@@ -994,6 +998,13 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             try {
                 log.info("shutting down JFileChooser preloader task");
                 timer12.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down ReminderNotificationTimerTask");
+                reminderTask.stop();
+                reminderTimer.cancel();
             } catch (Throwable t) {
                 log.error("Error shutting down timer", t);
             }

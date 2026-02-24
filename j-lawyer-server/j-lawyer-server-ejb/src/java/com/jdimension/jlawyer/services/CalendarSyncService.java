@@ -760,7 +760,7 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
                 if (nc == null) {
                     return;
                 }
-                String newEventHref = nc.createEvent(event.getId(), cs.getHref(), this.getEventSummary(caseContext, event), this.getEventDescription(caseContext, event), event.getLocation(), event.getBeginDate(), event.getEndDate(), !event.hasEndDateAndTime());
+                String newEventHref = nc.createEvent(event.getId(), cs.getHref(), this.getEventSummary(caseContext, event), this.getEventDescription(caseContext, event), event.getLocation(), event.getBeginDate(), event.getEndDate(), !event.hasEndDateAndTime(), event.getReminderMinutes());
 
             } catch (Exception ex) {
                 log.error("Syncing new event to cloud failed: " + event.getId(), ex);
@@ -805,7 +805,7 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
                         return;
                     }
 
-                    String updatedEventHref = nc.updateEvent(event.getId(), cs.getHref(), this.getEventSummary(caseContext, event), this.getEventDescription(caseContext, event), event.getLocation(), event.getBeginDate(), event.getEndDate(), !event.hasEndDateAndTime());
+                    String updatedEventHref = nc.updateEvent(event.getId(), cs.getHref(), this.getEventSummary(caseContext, event), this.getEventDescription(caseContext, event), event.getLocation(), event.getBeginDate(), event.getEndDate(), !event.hasEndDateAndTime(), event.getReminderMinutes());
 
                 } catch (Exception ex) {
                     log.error("Syncing updated event to cloud failed: " + event.getId(), ex);

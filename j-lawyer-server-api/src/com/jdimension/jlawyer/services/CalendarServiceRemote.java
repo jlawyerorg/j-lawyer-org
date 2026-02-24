@@ -691,16 +691,39 @@ public interface CalendarServiceRemote {
 
     boolean isHolidayForCurrentUser(Date d) throws Exception;
     
+    /**
+     * Adds a new calendar event (review) to the specified case. The review's
+     * reminderMinutes field controls reminder behavior: -1 means no reminder,
+     * 0 means at event start, and values greater than 0 mean N minutes before
+     * the event. When a Nextcloud calendar is configured, a VALARM component
+     * is synchronized accordingly.
+     *
+     * @param archiveFileId the ID of the case to add the review to
+     * @param review the review/event to add
+     * @return the persisted review with generated ID
+     * @throws Exception if the case does not exist or access is denied
+     */
     ArchiveFileReviewsBean addReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception;
-    
+
     Collection<ArchiveFileReviewsBean> getAllOpenReviews();
-    
+
     void removeReview(String reviewId) throws Exception;
-    
+
     Collection<ArchiveFileReviewsBean> searchReviews(int status, int type, Date fromDate, Date toDate);
-    
+
     Collection<ArchiveFileReviewsBean> searchReviews(int status, int type, Date fromDate, Date toDate, int limit);
-    
+
+    /**
+     * Updates an existing calendar event (review). The review's reminderMinutes
+     * field controls reminder behavior: -1 means no reminder, 0 means at event
+     * start, and values greater than 0 mean N minutes before the event. Changes
+     * to reminderMinutes are synchronized to Nextcloud as VALARM components.
+     *
+     * @param archiveFileId the ID of the case containing the review
+     * @param review the review/event with updated data
+     * @return the updated review
+     * @throws Exception if the case or review does not exist or access is denied
+     */
     ArchiveFileReviewsBean updateReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception;
     
     void markReviewDone(String reviewId, boolean done) throws Exception;

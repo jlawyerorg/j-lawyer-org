@@ -5301,7 +5301,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
 
     @Override
-    public void addReview(CalendarEntryTemplate template, int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup) throws Exception {
+    public void addReview(CalendarEntryTemplate template, int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup, int reminderMinutes) throws Exception {
         ArchiveFileReviewsBean reviewDto = new ArchiveFileReviewsBean();
         reviewDto.setEventType(eventType);
         reviewDto.setDone(false);
@@ -5312,6 +5312,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         reviewDto.setDescription(description);
         reviewDto.setLocation(location);
         reviewDto.setCalendarSetup(calSetup);
+        reviewDto.setReminderMinutes(reminderMinutes);
 
         reviewDto = CalendarUtils.getInstance().storeCalendarEntry(reviewDto, this.dto, template, EditorsRegistry.getInstance().getMainWindow());
 

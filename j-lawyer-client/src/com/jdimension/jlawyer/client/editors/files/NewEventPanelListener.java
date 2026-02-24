@@ -674,7 +674,7 @@ import java.util.Date;
  */
 public interface NewEventPanelListener {
 
-    public void addReview(CalendarEntryTemplate template, int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup) throws Exception;
+    public void addReview(CalendarEntryTemplate template, int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup, int reminderMinutes) throws Exception;
 
     public void closeNewEventListener();
     
