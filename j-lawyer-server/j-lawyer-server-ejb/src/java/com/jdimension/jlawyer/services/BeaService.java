@@ -960,6 +960,9 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
 
     @Override
     public BeaMessage sendMessage(String safeId, BeaSendMessageRequest request) throws Exception {
+        if (request.getSubject() == null || request.getSubject().trim().isEmpty()) {
+            throw new Exception("Betreff darf nicht leer sein");
+        }
         javax.json.JsonObjectBuilder builder = Json.createObjectBuilder();
         builder.add("recipientSafeId", request.getRecipientSafeId());
         builder.add("subject", request.getSubject());
@@ -981,6 +984,9 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
 
     @Override
     public String saveDraft(String safeId, BeaSaveDraftRequest request) throws Exception {
+        if (request.getSubject() == null || request.getSubject().trim().isEmpty()) {
+            throw new Exception("Betreff darf nicht leer sein");
+        }
         javax.json.JsonObjectBuilder builder = Json.createObjectBuilder();
         builder.add("subject", request.getSubject());
         builder.add("recipientSafeId", request.getRecipientSafeId());

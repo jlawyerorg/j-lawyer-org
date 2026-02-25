@@ -784,6 +784,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
             }
 
             private void textChanged() {
+                txtSubject.putClientProperty("JComponent.outline", null);
                 setTitle("neue beA-Nachricht: " + txtSubject.getText());
             }
         });
@@ -2055,6 +2056,13 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
 
     private void cmdSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendActionPerformed
 
+        if (this.txtSubject.getText() == null || this.txtSubject.getText().trim().isEmpty()) {
+            this.txtSubject.putClientProperty("JComponent.outline", "error");
+            JOptionPane.showMessageDialog(this, "Betreff darf nicht leer sein", "beA-Nachricht senden", JOptionPane.WARNING_MESSAGE);
+            this.txtSubject.requestFocusInWindow();
+            return;
+        }
+
         if (this.attachments.isEmpty() && this.chkEeb.isSelected()) {
             JOptionPane.showMessageDialog(this, "Ein eEB kann nur für Nachrichten angefordert werden die mindestens einen Anhang enthalten.", "beA-Nachricht mit eEB senden", JOptionPane.WARNING_MESSAGE);
             return;
@@ -2222,6 +2230,13 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
     }//GEN-LAST:event_cmdAttachActionPerformed
 
     private void cmdSaveDraftActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveDraftActionPerformed
+        if (this.txtSubject.getText() == null || this.txtSubject.getText().trim().isEmpty()) {
+            this.txtSubject.putClientProperty("JComponent.outline", "error");
+            JOptionPane.showMessageDialog(this, "Betreff darf nicht leer sein", "beA-Entwurf speichern", JOptionPane.WARNING_MESSAGE);
+            this.txtSubject.requestFocusInWindow();
+            return;
+        }
+
         if (this.attachments.isEmpty() && this.chkEeb.isSelected()) {
             JOptionPane.showMessageDialog(this, "Ein eEB kann nur für Nachrichten angefordert werden die mindestens einen Anhang enthalten.", "beA-Nachricht mit eEB senden", JOptionPane.WARNING_MESSAGE);
             return;
