@@ -681,6 +681,7 @@ import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -752,7 +753,7 @@ public class BeaAccess {
                 || restr == LoadFolderRestriction.RESTRICTION_NONE;
     }
 
-    public static BeaMessageFilter getFilter() {
+    public static BeaMessageFilter getFilter(String folderType) {
         ClientSettings cs = ClientSettings.getInstance();
         String restriction = cs.getConfiguration(ClientSettings.CONF_BEA_DOWNLOADRESTRICTION, "" + LoadFolderRestriction.RESTRICTION_50);
         LoadFolderRestriction currentRestriction = null;
@@ -783,12 +784,63 @@ public class BeaAccess {
             case LoadFolderRestriction.RESTRICTION_NONE:
                 filter.setLimit(1000);
                 break;
+            case LoadFolderRestriction.RESTRICTION_LAST1W: {
+                Calendar cal = Calendar.getInstance();
+                cal.add(Calendar.DAY_OF_YEAR, -7);
+                applyDateFilter(filter, folderType, cal.getTime());
+                break;
+            }
+            case LoadFolderRestriction.RESTRICTION_LAST2W: {
+                Calendar cal = Calendar.getInstance();
+                cal.add(Calendar.DAY_OF_YEAR, -14);
+                applyDateFilter(filter, folderType, cal.getTime());
+                break;
+            }
+            case LoadFolderRestriction.RESTRICTION_LAST4W: {
+                Calendar cal = Calendar.getInstance();
+                cal.add(Calendar.DAY_OF_YEAR, -28);
+                applyDateFilter(filter, folderType, cal.getTime());
+                break;
+            }
+            case LoadFolderRestriction.RESTRICTION_LAST2M: {
+                Calendar cal = Calendar.getInstance();
+                cal.add(Calendar.MONTH, -2);
+                applyDateFilter(filter, folderType, cal.getTime());
+                break;
+            }
+            case LoadFolderRestriction.RESTRICTION_LAST6M: {
+                Calendar cal = Calendar.getInstance();
+                cal.add(Calendar.MONTH, -6);
+                applyDateFilter(filter, folderType, cal.getTime());
+                break;
+            }
+            case LoadFolderRestriction.RESTRICTION_LAST1Y: {
+                Calendar cal = Calendar.getInstance();
+                cal.add(Calendar.YEAR, -1);
+                applyDateFilter(filter, folderType, cal.getTime());
+                break;
+            }
             default:
                 break;
         }
         filter.setSortCriterion("RECEIVED");
         filter.setSortDirection("DESC");
         return filter;
+    }
+
+    private static void applyDateFilter(BeaMessageFilter filter, String folderType, Date fromDate) {
+        if (BeaFolder.TYPE_SENT.equals(folderType)) {
+            filter.setSentFrom(fromDate);
+        } else if (BeaFolder.TYPE_DRAFT.equals(folderType) || BeaFolder.TYPE_OUTBOX.equals(folderType)) {
+            // time-based filters not supported - fall back to limit
+            filter.setLimit(20);
+        } else if (BeaFolder.TYPE_TRASH.equals(folderType) || BeaFolder.TYPE_CUSTOM.equals(folderType)) {
+            filter.setReceivedFrom(fromDate);
+            filter.setSentFrom(fromDate);
+        } else {
+            // INBOX and subfolders
+            filter.setReceivedFrom(fromDate);
+        }
     }
 
     private void checkValidBeaClient() throws Exception {
@@ -1357,7 +1409,7 @@ public class BeaAccess {
                 if (mj.getTimestamp() != null) {
                     dateString = df.format(mj.getTimestamp());
                 }
-                sb.append(dateString).append(" ").append(mj.getEventType()).append(" - ");
+                sb.append(dateString).append(" ").append(BeaJournalEventTypes.getDisplayName(mj.getEventType())).append(" - ");
                 if (mj.getFromSurnameFirstname() != null || mj.getFromUsername() != null) {
                     sb.append(mj.getFromSurnameFirstname()).append(" (").append(mj.getFromUsername()).append(")");
                 }

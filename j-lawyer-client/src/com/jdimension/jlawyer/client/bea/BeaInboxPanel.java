@@ -985,7 +985,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 BeaFolder inbox = inboxFolders.get(safeId);
                 if (inbox != null) {
                     EditorsRegistry.getInstance().updateStatus("Nachrichtenübersicht wird geladen für " + inbox.getName() + "...");
-                    List<BeaMessageHeader> messages = BeaAccess.getInstance().getFolderOverview(safeId, inbox, BeaAccess.getFilter());
+                    List<BeaMessageHeader> messages = BeaAccess.getInstance().getFolderOverview(safeId, inbox, BeaAccess.getFilter(inbox.getType()));
                     int unread = 0;
                     for (BeaMessageHeader mh : messages) {
                         if (!mh.isRead()) {
@@ -1787,7 +1787,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             protected Integer doInBackground() throws Exception {
                 try {
                     BeaAccess bea = BeaAccess.getInstance();
-                    all = new ArrayList<>(bea.getFolderOverview(tf.getSafeId(), tf, BeaAccess.getFilter()));
+                    all = new ArrayList<>(bea.getFolderOverview(tf.getSafeId(), tf, BeaAccess.getFilter(tf.getType())));
 
                     pi.setMax(all.size());
                     pi.progress("Lösche Nachrichten...");

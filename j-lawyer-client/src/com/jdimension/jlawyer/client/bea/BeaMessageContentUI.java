@@ -913,7 +913,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         SimpleDateFormat df2 = new SimpleDateFormat(DATEFORMAT);
         if (msg.getJournal() != null) {
             for (BeaMessageJournalEntry e : msg.getJournal()) {
-                ((DefaultTableModel) journalTable.getModel()).addRow(new Object[]{e.getFromSurnameFirstname(), e.getFromUsername(), e.getAttachmentReference(), e.getEventType(), df2.format(e.getTimestamp())});
+                ((DefaultTableModel) journalTable.getModel()).addRow(new Object[]{e.getFromSurnameFirstname(), e.getFromUsername(), e.getAttachmentReference(), BeaJournalEventTypes.getDisplayName(e.getEventType()), df2.format(e.getTimestamp())});
 
             }
         }
