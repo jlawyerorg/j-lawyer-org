@@ -738,7 +738,7 @@ public class LoadBeaFolderAction extends ProgressableAction {
             // Step 1: fetch only message IDs (lightweight, fast)
             BeaAccess bea = BeaAccess.getInstance();
             String safeId = bea.getLoggedInSafeId();
-            List<String> messageIds = bea.getFolderOverviewIds(safeId, f, BeaAccess.getFilter());
+            List<String> messageIds = bea.getFolderOverviewIds(safeId, f, BeaAccess.getFilter(f.getType()));
             this.loadedIdsCount = messageIds.size();
             this.max = messageIds.size();
 

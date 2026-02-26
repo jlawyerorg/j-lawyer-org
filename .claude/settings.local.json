@@ -48,7 +48,9 @@
       "Bash(for jar in /home/jens/dev/j-lawyer-org/j-lawyer-client/lib/*.jar /home/jens/dev/j-lawyer-org/j-lawyer-client/lib/**/*.jar)",
       "Bash(for jar in \"/home/jens/dev/projects/j-lawyer-material/bea/2024-01-10 KSW-Toolkit/KSW-Toolkit/sources/\"*.jar)",
       "Bash(do jar tf:*)",
-      "Bash(mvn dependency:tree:*)"
+      "Bash(mvn dependency:tree:*)",
+      "Bash(cd:*)",
+      "WebFetch(domain:handbuch.bea-brak.de)"
     ],
     "deny": [],
     "ask": []
