@@ -680,6 +680,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
@@ -700,6 +701,12 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
     Timesheet entrySheet = null;
     TimesheetLogDialog containingParent = null;
     String numericInputFormat = "minutes";
+
+    // Dirty-tracking: snapshot of values at load time
+    private String snapshotDescription = null;
+    private String snapshotTemplateName = null;
+    private Date snapshotStart = null;
+    private Date snapshotEnd = null;
 
     /**
      * Creates new form TimesheetLogEntryPanel
@@ -818,6 +825,12 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         this.cmbTemplate.setEnabled(this.entry.getId() == null);
 
         this.cmdSave.setEnabled(started != null);
+
+        // capture snapshot for dirty-tracking
+        this.snapshotDescription = tsp.getDescription();
+        this.snapshotTemplateName = tsp.getName();
+        this.snapshotStart = tsp.getStarted();
+        this.snapshotEnd = tsp.getStopped();
 
     }
 
@@ -1057,8 +1070,26 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
 
     }//GEN-LAST:event_cmdStartStopActionPerformed
 
+    public boolean isDirty() {
+        if (!Objects.equals(this.taDescription.getText(), this.snapshotDescription)) {
+            return true;
+        }
+        if (!Objects.equals(this.cmbTemplate.getEditor().getItem().toString(), this.snapshotTemplateName)) {
+            return true;
+        }
+        if (!Objects.equals((Date) this.txtStart.getValue(), this.snapshotStart)) {
+            return true;
+        }
+        if (!Objects.equals((Date) this.txtEnd.getValue(), this.snapshotEnd)) {
+            return true;
+        }
+        return false;
+    }
+
     public void save() {
-        this.cmdSaveActionPerformed(null);
+        if (isDirty()) {
+            this.cmdSaveActionPerformed(null);
+        }
     }
 
     private boolean isValidTimeFormat(String text) {
