@@ -680,8 +680,12 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.border.MatteBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
@@ -700,6 +704,12 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
     Timesheet entrySheet = null;
     TimesheetLogDialog containingParent = null;
     String numericInputFormat = "minutes";
+
+    // Dirty-tracking: snapshot of values at load time
+    private String snapshotDescription = null;
+    private String snapshotTemplateName = null;
+    private Date snapshotStart = null;
+    private Date snapshotEnd = null;
 
     /**
      * Creates new form TimesheetLogEntryPanel
@@ -739,12 +749,46 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
 
         ComponentUtils.addAutoComplete(cmbTemplate);
 
+        this.taDescription.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                updateStatusBorder();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                updateStatusBorder();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                updateStatusBorder();
+            }
+        });
+
     }
 
     private void setStatusColor(Color c) {
         this.txtStart.setForeground(c);
         this.txtEnd.setForeground(c);
         this.lblDuration.setForeground(c);
+    }
+
+    private void updateStatusBorder() {
+        if (this.entry == null) {
+            return;
+        }
+        Color borderColor;
+        if (this.entry.getStarted() == null) {
+            borderColor = DefaultColorTheme.COLOR_DARK_GREY;
+        } else if (this.entry.getStopped() == null) {
+            borderColor = DefaultColorTheme.COLOR_LOGO_RED;
+        } else if (isDirty()) {
+            borderColor = DefaultColorTheme.COLOR_LOGO_BLUE;
+        } else {
+            borderColor = DefaultColorTheme.COLOR_LOGO_GREEN;
+        }
+        this.setBorder(new MatteBorder(0, 4, 0, 0, borderColor));
     }
 
     public boolean isEntryRunning() {
@@ -812,13 +856,43 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             this.lblDuration.setText("");
         }
 
-        this.txtStart.setEditable(!this.entry.isRunning());
-        this.txtEnd.setEditable(!this.entry.isRunning());
+        this.updateFieldsEditable();
 
         this.cmbTemplate.setEnabled(this.entry.getId() == null);
 
-        this.cmdSave.setEnabled(started != null);
+        // capture snapshot for dirty-tracking
+        this.snapshotDescription = tsp.getDescription();
+        this.snapshotTemplateName = tsp.getName();
+        this.snapshotStart = tsp.getStarted();
+        this.snapshotEnd = tsp.getStopped();
 
+        this.updateStatusBorder();
+
+    }
+
+    /**
+     * Updates field editability, save/edit button state based on entry status.
+     *
+     * State            | Fields          | txtStart/End | cmdSave  | cmdEdit | Color
+     * -----------------+-----------------+--------------+----------+---------+------
+     * New (not started)| enabled         | not editable | disabled | hidden  | grey
+     * Running          | desc enabled    | not editable | enabled  | hidden  | red
+     * Stopped+saved    | disabled        | not editable | disabled | visible | green
+     * After cmdEdit    | enabled         | editable     | enabled  | hidden  | blue
+     * After manual time| enabled         | editable     | enabled  | hidden  | blue
+     * Save (running)   | desc enabled    | not editable | enabled  | hidden  | red
+     * Save (stopped)   | disabled        | not editable | disabled | visible | green
+     */
+    private void updateFieldsEditable() {
+        if (this.entry == null) return;
+        boolean stopped = (this.entry.getStarted() != null && this.entry.getStopped() != null);
+        boolean running = this.entry.isRunning();
+        boolean editable = !stopped || running;
+        this.taDescription.setEnabled(editable);
+        this.txtStart.setEditable(!stopped && !running);
+        this.txtEnd.setEditable(!stopped && !running);
+        this.cmdSave.setEnabled(editable && this.entry.getStarted() != null);
+        this.cmdEdit.setVisible(stopped && !running);
     }
 
     public void timerTick() {
@@ -858,6 +932,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         cmdSave = new javax.swing.JButton();
         jLabel3 = new javax.swing.JLabel();
         txtManualEntry = new javax.swing.JFormattedTextField();
+        cmdEdit = new javax.swing.JButton();
 
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
 
@@ -886,6 +961,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         txtEnd.setFont(txtEnd.getFont());
 
         cmdStartStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_play_circle_black_48dp.png"))); // NOI18N
+        cmdStartStop.setToolTipText("Stoppuhr starten / stoppen");
         cmdStartStop.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdStartStopActionPerformed(evt);
@@ -900,7 +976,6 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
 
         cmdSave.setFont(cmdSave.getFont());
         cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
-        cmdSave.setText(" ");
         cmdSave.setToolTipText("Name und Beschreibung speichern");
         cmdSave.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -916,6 +991,14 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         txtManualEntry.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 txtManualEntryKeyPressed(evt);
+            }
+        });
+
+        cmdEdit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
+        cmdEdit.setToolTipText("bestehenden Eintrag bearbeiten");
+        cmdEdit.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdEditActionPerformed(evt);
             }
         });
 
@@ -939,6 +1022,8 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblProject, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdEdit)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdSave))
                     .addComponent(jScrollPane1)
                     .addGroup(layout.createSequentialGroup()
@@ -955,13 +1040,17 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(cmdSave)
-                    .addComponent(txtManualEntry)
-                    .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cmdStartStop, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblProject, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(cmdSave)
+                        .addComponent(txtManualEntry)
+                        .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdStartStop, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(lblProject, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(cmdEdit)
+                        .addGap(12, 12, 12)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmbTemplate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1057,8 +1146,26 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
 
     }//GEN-LAST:event_cmdStartStopActionPerformed
 
+    public boolean isDirty() {
+        if (!Objects.equals(this.taDescription.getText(), this.snapshotDescription)) {
+            return true;
+        }
+        if (!Objects.equals(this.cmbTemplate.getEditor().getItem().toString(), this.snapshotTemplateName)) {
+            return true;
+        }
+        if (!Objects.equals((Date) this.txtStart.getValue(), this.snapshotStart)) {
+            return true;
+        }
+        if (!Objects.equals((Date) this.txtEnd.getValue(), this.snapshotEnd)) {
+            return true;
+        }
+        return false;
+    }
+
     public void save() {
-        this.cmdSaveActionPerformed(null);
+        if (isDirty()) {
+            this.cmdSaveActionPerformed(null);
+        }
     }
 
     private boolean isValidTimeFormat(String text) {
@@ -1118,6 +1225,12 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
             TimesheetPosition updated = afs.timesheetPositionAdd(this.entry.getTimesheet().getId(), entry);
             this.setEntry(entryCase, entrySheet, updated);
+            // Felder nach manueller Zeiteingabe editierbar lassen
+            this.taDescription.setEnabled(true);
+            this.txtStart.setEditable(true);
+            this.txtEnd.setEditable(true);
+            this.cmdSave.setEnabled(true);
+            this.cmdEdit.setVisible(false);
         } catch (Exception ex) {
             log.error("Error adding timesheet position", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Hinzufügen des Zeiterfassungseintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1125,15 +1238,9 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
 
         this.containingParent.updatePercentageDone(entrySheet);
 
-        SwingUtilities.invokeLater(() -> {
-            try {
-                Thread.sleep(1500);
-                txtManualEntry.setValue(null);
-            } catch (Exception ex) {
-
-            }
-            setStatusColor(DefaultColorTheme.COLOR_LOGO_GREEN);
-        });
+        this.setStatusColor(DefaultColorTheme.COLOR_LOGO_BLUE);
+        this.setBorder(new javax.swing.border.MatteBorder(0, 4, 0, 0, DefaultColorTheme.COLOR_LOGO_BLUE));
+        this.txtManualEntry.setValue(null);
 
     }
 
@@ -1166,6 +1273,13 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             TimesheetPosition updated = afs.timesheetPositionSave(this.entry.getTimesheet().getId(), entry);
             this.setEntry(entryCase, entrySheet, updated);
             this.containingParent.updatePercentageDone(entrySheet);
+            if (this.entry.isRunning()) {
+                // bei laufender Stoppuhr bleibt Save enabled
+                this.cmdSave.setEnabled(true);
+                this.taDescription.setEnabled(true);
+            } else {
+                this.setStatusColor(DefaultColorTheme.COLOR_LOGO_GREEN);
+            }
         } catch (Exception ex) {
             log.error("Error updating timesheet position", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Zeiterfassungseintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1178,6 +1292,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         if (this.templates.containsKey(this.cmbTemplate.getEditor().getItem().toString())) {
             this.taDescription.setText(this.templates.get(this.cmbTemplate.getEditor().getItem().toString()).getDescription());
         }
+        this.updateStatusBorder();
     }//GEN-LAST:event_cmbTemplateActionPerformed
 
     private void txtManualEntryKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtManualEntryKeyPressed
@@ -1240,9 +1355,20 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_txtManualEntryKeyPressed
 
+    private void cmdEditActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditActionPerformed
+        this.taDescription.setEnabled(true);
+        this.txtStart.setEditable(true);
+        this.txtEnd.setEditable(true);
+        this.cmdSave.setEnabled(true);
+        this.cmdEdit.setVisible(false);
+        this.setStatusColor(DefaultColorTheme.COLOR_LOGO_BLUE);
+        this.setBorder(new javax.swing.border.MatteBorder(0, 4, 0, 0, DefaultColorTheme.COLOR_LOGO_BLUE));
+    }//GEN-LAST:event_cmdEditActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cmbTemplate;
+    private javax.swing.JButton cmdEdit;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdStartStop;
     private javax.swing.JLabel jLabel1;
