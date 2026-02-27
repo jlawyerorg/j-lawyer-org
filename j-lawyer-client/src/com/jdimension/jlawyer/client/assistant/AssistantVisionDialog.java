@@ -666,6 +666,8 @@ package com.jdimension.jlawyer.client.assistant;
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.AiResponse;
+import com.jdimension.jlawyer.ai.ConfigurationData;
+import com.jdimension.jlawyer.ai.ConfigurationUtils;
 import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.ai.OutputData;
@@ -831,8 +833,8 @@ public class AssistantVisionDialog extends javax.swing.JDialog {
             }
             this.initialPrompt = this.taPrompt.getText();
             this.taPrompt.setEnabled(true);
-        } else {
-            this.taPrompt.setEnabled(false);
+        } else if (c.isCustomPrompts()) {
+            this.taPrompt.setEnabled(true);
         }
 
         this.pnlParameters.setLayout(new java.awt.GridLayout(this.capability.getParameters().size(), 2, 6, 6));
@@ -1177,7 +1179,11 @@ public class AssistantVisionDialog extends javax.swing.JDialog {
                     });
 
                     
-                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getModelType(), fullPrompt, fParams, inputs, messages);
+                    List<ConfigurationData> promptConfigs = null;
+                    if (capability.getConfigurationValues() != null && !capability.getConfigurationValues().isEmpty()) {
+                        promptConfigs = ConfigurationUtils.fromProperties(capability.getConfigurationValues());
+                    }
+                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getActionId(), capability.getModelRef(), fullPrompt, capability.getSystemPrompt(), capability.isAsyncRecommended(), fParams, inputs, messages, promptConfigs);
                     
                     if (status.isAsync()) {
                         Thread.sleep(1000);
@@ -1238,7 +1244,7 @@ public class AssistantVisionDialog extends javax.swing.JDialog {
 
                 result = status;
                 if (status != null) {
-                    if (status.getStatus().equalsIgnoreCase("failed")) {
+                    if (status.isError()) {
                         Message errorMsg = new Message();
                         errorMsg.setContent(status.getStatus() + ": " + status.getStatusDetails());
                         errorMsg.setRole(Message.ROLE_ASSISTANT);

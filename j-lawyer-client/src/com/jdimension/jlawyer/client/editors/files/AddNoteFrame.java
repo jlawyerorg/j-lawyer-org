@@ -939,7 +939,7 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
     public void processOutput(AiCapability c, AiRequestStatus status) {
         String prependText = "";
         if (status != null) {
-            if (status.getStatus().equalsIgnoreCase("error")) {
+            if (status.isError()) {
                 // ignore output
             } else {
                 StringBuilder result = new StringBuilder();
@@ -1567,11 +1567,15 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
                         AiRequestStatus status = integrationService.submitAssistantRequest(
                                 transcribeConfig,
                                 transcribeCapability.getRequestType(),
-                                transcribeCapability.getModelType(),
+                                transcribeCapability.getActionId(),
+                                transcribeCapability.getModelRef(),
                                 getPrompt(transcribeCapability),
+                                null,
+                                transcribeCapability.isAsyncRecommended(),
                                 fParams,
                                 inputs,
-                                null // Assuming no conversation
+                                null, // Assuming no conversation
+                                null
                         );
 
                         resultRef.set(status);
@@ -1596,7 +1600,7 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
                     AiRequestStatus status = resultRef.get();
                     if (status != null) {
                         String resultText = "";
-                        if (status.getStatus().equalsIgnoreCase("failed")) {
+                        if (status.isError()) {
                             resultText = status.getStatus() + ": " + status.getStatusDetails();
                         } else {
                             StringBuilder resultString = new StringBuilder();

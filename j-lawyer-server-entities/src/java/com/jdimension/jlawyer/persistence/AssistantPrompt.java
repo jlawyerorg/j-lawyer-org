@@ -689,6 +689,12 @@ public class AssistantPrompt implements Serializable {
     private String requestType;
     @Column(name = "prompt_text")
     private String prompt;
+    @Column(name = "model_ref")
+    private String modelRef;
+    @Column(name = "configuration")
+    private String configuration;
+    @Column(name = "system_prompt")
+    private String systemPrompt;
 
     public AssistantPrompt() {
     }
@@ -774,6 +780,46 @@ public class AssistantPrompt implements Serializable {
         this.prompt = prompt;
     }
 
-    
-    
+    /**
+     * @return the modelRef
+     */
+    public String getModelRef() {
+        return modelRef;
+    }
+
+    /**
+     * @param modelRef the modelRef to set
+     */
+    public void setModelRef(String modelRef) {
+        this.modelRef = modelRef;
+    }
+
+    /**
+     * @return the configuration
+     */
+    public String getConfiguration() {
+        return configuration;
+    }
+
+    /**
+     * @param configuration the configuration to set
+     */
+    public void setConfiguration(String configuration) {
+        this.configuration = configuration;
+    }
+
+    /**
+     * @return the systemPrompt
+     */
+    public String getSystemPrompt() {
+        return systemPrompt;
+    }
+
+    /**
+     * @param systemPrompt the systemPrompt to set
+     */
+    public void setSystemPrompt(String systemPrompt) {
+        this.systemPrompt = systemPrompt;
+    }
+
 }

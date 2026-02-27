@@ -9599,7 +9599,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     public void processOutput(AiCapability c, AiRequestStatus status) {
         String resultText = "";
         if (status != null) {
-            if (status.getStatus().equalsIgnoreCase("error")) {
+            if (status.isError()) {
                 // ignore output
             } else {
                 StringBuilder result = new StringBuilder();

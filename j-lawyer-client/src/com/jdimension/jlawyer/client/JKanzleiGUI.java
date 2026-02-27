@@ -3071,7 +3071,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuAssistantConfigsActionPerformed
 
     private void mnuAssistantPromptsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAssistantPromptsActionPerformed
-            AssistantPromptSetupDialog dlg = new AssistantPromptSetupDialog(this, true);
+            AssistantPromptV2SetupDialog dlg = new AssistantPromptV2SetupDialog(this, true);
             FrameUtils.centerDialog(dlg, this);
             dlg.setVisible(true);
         

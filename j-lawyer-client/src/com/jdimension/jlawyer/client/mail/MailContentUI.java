@@ -713,8 +713,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
@@ -2305,8 +2307,17 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 this.popAssistant.add(new JSeparator());
             }
 
-            // Zweite Kategorie
+            // Zweite Kategorie - Duplikate aus erster Kategorie entfernen
             Map<AssistantConfig, List<AiCapability>> capabilitiesGenerate2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_GENERATE, AiCapability.INPUTTYPE_NONE);
+            for (AssistantConfig cfg : capabilitiesGenerate.keySet()) {
+                Set<String> alreadyAdded = new HashSet<>();
+                for (AiCapability cap : capabilitiesGenerate.get(cfg)) {
+                    alreadyAdded.add(cap.getName());
+                }
+                if (capabilitiesGenerate2.containsKey(cfg)) {
+                    capabilitiesGenerate2.get(cfg).removeIf(c -> alreadyAdded.contains(c.getName()));
+                }
+            }
             ingo.populateMenu(this.popAssistant, capabilitiesGenerate2, (AssistantInputAdapter) this, this.caseContext, EditorsRegistry.getInstance().getMainWindow(), false);
             if (!capabilitiesGenerate2.isEmpty()) {
                 this.popAssistant.add(new JSeparator());
@@ -2591,7 +2602,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         String prependText = "";
         if (status != null) {
-            if (status.getStatus().equalsIgnoreCase("error")) {
+            if (status.isError()) {
                 // ignore output
             } else {
                 StringBuilder result = new StringBuilder();

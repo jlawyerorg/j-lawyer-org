@@ -668,6 +668,8 @@ import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
+import com.jdimension.jlawyer.ai.ConfigurationData;
+import com.jdimension.jlawyer.ai.ConfigurationUtils;
 import com.jdimension.jlawyer.ai.Input;
 import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.ai.Prompt;
@@ -834,6 +836,15 @@ public class AssistantAccess {
                         }
                         cp.setDefaultPrompt(p.getPrompt());
                         clone.setDefaultPrompt(cp);
+                        if (p.getModelRef() != null && !p.getModelRef().isEmpty()) {
+                            clone.setModelRef(p.getModelRef());
+                        }
+                        if (p.getConfiguration() != null && !p.getConfiguration().isEmpty()) {
+                            clone.setConfigurationValues(p.getConfiguration());
+                        }
+                        if (p.getSystemPrompt() != null && !p.getSystemPrompt().isEmpty()) {
+                            clone.setSystemPrompt(p.getSystemPrompt());
+                        }
                         filtered.get(config).add(clone);
                     }
                 }
@@ -859,6 +870,7 @@ public class AssistantAccess {
             for (AiCapability c : capabilities.get(config)) {
                 JMenuItem mi = new JMenuItem();
                 mi.setText(c.getName());
+                mi.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/" + c.getRequestType() + ".png")));
                 mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
                 mi.addActionListener((ActionEvent e) -> {
                     ClientSettings settings = ClientSettings.getInstance();
@@ -874,8 +886,12 @@ public class AssistantAccess {
                             }
                         }
 
-                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, c.getRequestType(), c.getModelType(), adapter.getPrompt(c), params, adapter.getInputs(c), adapter.getMessages(c));
-                        if (status.getStatus().equalsIgnoreCase("error")) {
+                        List<ConfigurationData> promptConfigs = null;
+                        if (c.getConfigurationValues() != null && !c.getConfigurationValues().isEmpty()) {
+                            promptConfigs = ConfigurationUtils.fromProperties(c.getConfigurationValues());
+                        }
+                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, c.getRequestType(), c.getActionId(), c.getModelRef(), adapter.getPrompt(c), c.getSystemPrompt(), c.isAsyncRecommended(), params, adapter.getInputs(c), adapter.getMessages(c), promptConfigs);
+                        if (status.isError()) {
                             adapter.processError(c, status);
                         } else {
                             adapter.processOutput(c, status);
@@ -897,6 +913,7 @@ public class AssistantAccess {
             for (AiCapability c : capabilities.get(config)) {
                 JMenuItem mi = new JMenuItem();
                 mi.setText(c.getName());
+                mi.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/" + c.getRequestType() + ".png")));
                 mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
                 mi.addActionListener((ActionEvent e) -> {
                     if(AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType())) {
@@ -912,13 +929,14 @@ public class AssistantAccess {
         }
 
     }
-    
+
     public void populateMenu(JPopupMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities, AssistantInputAdapter adapter, ArchiveFileBean selectedCase, JFrame parent, boolean modal) {
 
         for (AssistantConfig config : capabilities.keySet()) {
             for (AiCapability c : capabilities.get(config)) {
                 JMenuItem mi = new JMenuItem();
                 mi.setText(c.getName());
+                mi.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/" + c.getRequestType() + ".png")));
                 mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
                 mi.addActionListener((ActionEvent e) -> {
                     if(AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType())) {
@@ -941,6 +959,7 @@ public class AssistantAccess {
             for (AiCapability c : capabilities.get(config)) {
                 JMenuItem mi = new JMenuItem();
                 mi.setText(c.getName());
+                mi.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/" + c.getRequestType() + ".png")));
                 mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
                 mi.addActionListener((ActionEvent e) -> {
                     if(AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType())) {

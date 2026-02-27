@@ -717,146 +717,97 @@ public class AssistantAPI {
         return encoder.encode(authString.getBytes());
     }
 
-    public AiRequestStatus submitRequest(String requestType, String modelType, String prompt, List<ConfigurationData> configurations, List<ParameterData> params, List<InputData> inputs, List<Message> messages) throws AssistantException {
+    public AiRequestStatus submitRequest(String requestType, String actionId, String model, String prompt, String systemPrompt, boolean asyncRecommended, List<ConfigurationData> configurations, List<ParameterData> params, List<InputData> inputs, List<Message> messages) throws AssistantException {
         log.info("submitting j-lawyer.AI request");
 
-
-        /*
-        {
-  "prompt": "string",
-  "parameterData": [
-    {
-      "id": "string",
-      "value": "string"
-    }
-  ],
-  "inputData": [
-    {
-      "type": "string",
-      "data": "string",
-      "fileName": "string",
-      "base64Encoded": true
-    }
-  ],
-  "requestType": "string",
-  "modelType": "string"
-}
-         */
         String authStringEnc = this.getAuthString();
+
+        boolean useAsync = asyncRecommended;
+        String endpoint = "j-lawyer-ai/v2/" + requestType;
+        if (useAsync) {
+            endpoint = endpoint + "-async";
+        }
 
         JerseyClient restClient = (JerseyClient) JerseyClientBuilder.createClient();
         restClient.property(ClientProperties.CONNECT_TIMEOUT, this.connectTimeout*1000);
         restClient.property(ClientProperties.READ_TIMEOUT, this.readTimeout*1000);
-        JerseyWebTarget webTarget = restClient.target(baseUri + "j-lawyer-ai/v1/request-submit");
+        JerseyWebTarget webTarget = restClient.target(baseUri + endpoint);
 
-        StringBuilder jsonQuery = new StringBuilder();
-        jsonQuery.append("{");
+        JsonObject jsonQuery = new JsonObject();
+        if (actionId != null) {
+            jsonQuery.put("actionId", actionId);
+        }
+        if (model != null) {
+            jsonQuery.put("model", model);
+        }
         if (prompt != null) {
-            jsonQuery.append("\"prompt\": \"").append(Jsoner.escape(prompt)).append("\",");
+            jsonQuery.put("prompt", prompt);
         }
-
+        if (systemPrompt != null && !systemPrompt.isEmpty()) {
+            jsonQuery.put("systemPrompt", systemPrompt);
+        }
         if (params != null && !params.isEmpty()) {
-            jsonQuery.append("\"parameterData\": [");
-
-            for (int i = 0; i < params.size(); i++) {
-                jsonQuery.append("{");
-                jsonQuery.append("\"id\": \"").append(Jsoner.escape(params.get(i).getId())).append("\",");
-                jsonQuery.append("\"value\": \"").append(Jsoner.escape(params.get(i).getValue())).append("\"");
-                jsonQuery.append("}");
-                if (i < params.size() - 1) {
-                    jsonQuery.append(",");
-                }
+            JsonArray paramsArray = new JsonArray();
+            for (ParameterData p : params) {
+                JsonObject po = new JsonObject();
+                po.put("id", p.getId());
+                po.put("value", p.getValue());
+                paramsArray.add(po);
             }
-
-            jsonQuery.append("],");
+            jsonQuery.put("parameterData", paramsArray);
         }
-//        if (params != null && !params.isEmpty()) {
-//            jsonQuery.append("\"parameterData\": [");
-//
-//            for (int i = 0; i < params.size(); i++) {
-//                jsonQuery.append("{");
-//                jsonQuery.append("\"id\": \"").append(Jsoner.escape(params.get(i).getId())).append("\",");
-//                jsonQuery.append("\"value\": \"").append(Jsoner.escape(params.get(i).getValue())).append("\"");
-//                jsonQuery.append("}");
-//                if (i < params.size() - 1) {
-//                    jsonQuery.append(",");
-//                }
-//            }
-//
-//            jsonQuery.append("],");
-//        }
         if (configurations != null && !configurations.isEmpty()) {
-            jsonQuery.append("\"configurationData\": [");
-
-            for (int i = 0; i < configurations.size(); i++) {
-                jsonQuery.append("{");
-                jsonQuery.append("\"id\": \"").append(Jsoner.escape(configurations.get(i).getId())).append("\",");
-                jsonQuery.append("\"value\": \"").append(Jsoner.escape(configurations.get(i).getValue())).append("\"");
-                jsonQuery.append("}");
-                if (i < configurations.size() - 1) {
-                    jsonQuery.append(",");
-                }
+            JsonArray configsArray = new JsonArray();
+            for (ConfigurationData cd : configurations) {
+                JsonObject co = new JsonObject();
+                co.put("id", cd.getId());
+                co.put("value", cd.getValue());
+                configsArray.add(co);
             }
-
-            jsonQuery.append("],");
+            jsonQuery.put("configurationData", configsArray);
         }
         if (messages != null && !messages.isEmpty()) {
-            jsonQuery.append("\"messages\": [");
-
-            for (int i = 0; i < messages.size(); i++) {
-                jsonQuery.append("{");
-                jsonQuery.append("\"content\": \"").append(Jsoner.escape(messages.get(i).getContent())).append("\",");
-                jsonQuery.append("\"role\": \"").append(Jsoner.escape(messages.get(i).getRole())).append("\"");
-                jsonQuery.append("}");
-                if (i < messages.size() - 1) {
-                    jsonQuery.append(",");
-                }
+            JsonArray messagesArray = new JsonArray();
+            for (Message m : messages) {
+                JsonObject mo = new JsonObject();
+                mo.put("content", m.getContent());
+                mo.put("role", m.getRole());
+                messagesArray.add(mo);
             }
-
-            jsonQuery.append("],");
+            jsonQuery.put("messages", messagesArray);
         }
         if (inputs != null && !inputs.isEmpty()) {
-            jsonQuery.append("\"inputData\": [");
-
-            for (int i = 0; i < inputs.size(); i++) {
-                jsonQuery.append("{");
-                jsonQuery.append("\"type\": \"").append(Jsoner.escape(inputs.get(i).getType())).append("\",");
-                if (inputs.get(i).getFileName() != null) {
-                    jsonQuery.append("\"fileName\": \"").append(Jsoner.escape(inputs.get(i).getFileName())).append("\",");
+            JsonArray inputsArray = new JsonArray();
+            for (InputData inp : inputs) {
+                JsonObject io = new JsonObject();
+                io.put("type", inp.getType());
+                if (inp.getFileName() != null) {
+                    io.put("fileName", inp.getFileName());
                 }
-                jsonQuery.append("\"base64Encoded\": ").append("" + inputs.get(i).isBase64()).append(",");
-                if (inputs.get(i).isBase64()) {
-                    String b64 = null;
+                io.put("base64Encoded", inp.isBase64());
+                if (inp.isBase64()) {
                     try {
                         Base64 encoder = new Base64();
-                        b64 = encoder.encode(inputs.get(i).getData());
+                        String b64 = encoder.encode(inp.getData());
+                        io.put("data", b64);
                     } catch (Throwable t) {
                         log.error(t);
-                        throw new AssistantException("Datei " + inputs.get(i).getFileName() + " konnte nicht nach Base64 kodiert werden: " + t.getMessage(), t);
+                        throw new AssistantException("Datei " + inp.getFileName() + " konnte nicht nach Base64 kodiert werden: " + t.getMessage(), t);
                     }
-                    jsonQuery.append("\"data\": \"").append(b64).append("\"");
                 } else {
-                    jsonQuery.append("\"data\": \"").append(Jsoner.escape(inputs.get(i).getStringData())).append("\"");
+                    io.put("data", inp.getStringData());
                 }
-                jsonQuery.append("}");
-                if (i < inputs.size() - 1) {
-                    jsonQuery.append(",");
-                }
+                inputsArray.add(io);
             }
-
-            jsonQuery.append("],");
+            jsonQuery.put("inputData", inputsArray);
         }
-        jsonQuery.append("\"requestType\": \"").append(Jsoner.escape(requestType)).append("\",");
-        jsonQuery.append("\"modelType\": \"").append(Jsoner.escape(modelType)).append("\"");
-        jsonQuery.append("}");
+
+        String jsonBody = Jsoner.serialize(jsonQuery);
 
         try {
-            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).post(javax.ws.rs.client.Entity.entity(jsonQuery.toString(), javax.ws.rs.core.MediaType.APPLICATION_JSON));
+            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).post(javax.ws.rs.client.Entity.entity(jsonBody, javax.ws.rs.core.MediaType.APPLICATION_JSON));
             String returnValue = response.readEntity(String.class);
-            if (response.getStatus() != 200) {
-                log.error("Could not send j-lawyer.AI request: " + returnValue + " [" + response.getStatus() + "]");
-                throw new AssistantException("Could not submit j-lawyer.AI request: " + returnValue + " [" + response.getStatus() + "]");
-            }
+            int httpStatus = response.getStatus();
 
             Object jsonOutput = Jsoner.deserialize(returnValue);
             AiRequestStatus status = new AiRequestStatus();
@@ -866,7 +817,7 @@ public class AssistantAPI {
                 status.setRequestId(result.getString(key));
 
                 key = Jsoner.mintJsonKey("async", null);
-                status.setAsync(result.getBoolean(key));
+                status.setAsync(result.getBooleanOrDefault(key));
 
                 key = Jsoner.mintJsonKey("status", null);
                 status.setStatus(result.getString(key));
@@ -874,8 +825,11 @@ public class AssistantAPI {
                 key = Jsoner.mintJsonKey("statusDetails", null);
                 status.setStatusDetails(result.getString(key));
 
-                key = Jsoner.mintJsonKey("statusDetails", null);
-                status.setStatusDetails(result.getString(key));
+                if (httpStatus != 200 && httpStatus != 202) {
+                    log.error("j-lawyer.AI request failed: " + status.getStatusDetails() + " [" + httpStatus + "]");
+                    response.close();
+                    return status;
+                }
 
                 AiResponse res = new AiResponse();
                 JsonObject r = (JsonObject) result.get("response");
@@ -906,21 +860,23 @@ public class AssistantAPI {
                     res.setExecutionMillis(r.getLong(key));
 
                     JsonArray o = (JsonArray) r.get("outputData");
-                    for (Object outputObj : o) {
-                        JsonObject oo = (JsonObject) outputObj;
-                        OutputData od = new OutputData();
-                        od.setBase64Encoded(oo.getBoolean(Jsoner.mintJsonKey("base64Encoded", null)));
-                        if (od.isBase64Encoded()) {
-                            String b64 = oo.getString(Jsoner.mintJsonKey("data", null));
+                    if (o != null) {
+                        for (Object outputObj : o) {
+                            JsonObject oo = (JsonObject) outputObj;
+                            OutputData od = new OutputData();
+                            od.setBase64Encoded(oo.getBoolean(Jsoner.mintJsonKey("base64Encoded", null)));
+                            if (od.isBase64Encoded()) {
+                                String b64 = oo.getString(Jsoner.mintJsonKey("data", null));
 
-                            od.setData(new Base64().decode(b64));
-                        } else {
-                            od.setStringData(oo.getString(Jsoner.mintJsonKey("data", null)));
+                                od.setData(new Base64().decode(b64));
+                            } else {
+                                od.setStringData(oo.getString(Jsoner.mintJsonKey("data", null)));
+                            }
+
+                            od.setFileName(oo.getString(Jsoner.mintJsonKey("fileName", null)));
+                            od.setType(oo.getString(Jsoner.mintJsonKey("type", null)));
+                            res.getOutputData().add(od);
                         }
-
-                        od.setFileName(oo.getString(Jsoner.mintJsonKey("fileName", null)));
-                        od.setType(oo.getString(Jsoner.mintJsonKey("type", null)));
-                        res.getOutputData().add(od);
                     }
                     status.setResponse(res);
                 }
@@ -942,7 +898,7 @@ public class AssistantAPI {
         JerseyClient restClient = (JerseyClient) JerseyClientBuilder.createClient();
         restClient.property(ClientProperties.CONNECT_TIMEOUT, this.connectTimeout*1000);
         restClient.property(ClientProperties.READ_TIMEOUT, this.readTimeout*1000);
-        JerseyWebTarget webTarget = restClient.target(baseUri + "j-lawyer-ai/v1/capabilities");
+        JerseyWebTarget webTarget = restClient.target(baseUri + "j-lawyer-ai/v2/actions");
         List<AiCapability> allCapabilities = new ArrayList<>();
         try {
             Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + this.getAuthString()).accept(MIMETYPE_JSON).get();
@@ -955,31 +911,37 @@ public class AssistantAPI {
             Object jsonOutput = Jsoner.deserialize(returnValue);
             if (jsonOutput instanceof JsonArray) {
 
-                JsonArray capabilities = (JsonArray) jsonOutput;
-                for (Object cObj : capabilities) {
+                JsonArray actions = (JsonArray) jsonOutput;
+                for (Object cObj : actions) {
                     JsonObject c = (JsonObject) cObj;
                     AiCapability capability = new AiCapability();
 
-                    JsonKey stringKey = Jsoner.mintJsonKey("name", null);
+                    JsonKey stringKey = Jsoner.mintJsonKey("actionId", null);
+                    capability.setActionId(c.getString(stringKey));
+
+                    stringKey = Jsoner.mintJsonKey("name", null);
                     capability.setName(c.getString(stringKey));
-
-                    JsonKey promptKey = Jsoner.mintJsonKey("defaultPrompt", null);
-                    JsonObject promptObject = (JsonObject) c.getMap(promptKey);
-                    if (promptObject != null) {
-                        Prompt p = new Prompt();
-                        capability.setDefaultPrompt(p);
-                        p.setDefaultPrompt(promptObject.getString(Jsoner.mintJsonKey("defaultPrompt", null)));
-                        p.setMaxTokens(promptObject.getInteger(Jsoner.mintJsonKey("maxTokens", null)));
-                    }
-
-                    stringKey = Jsoner.mintJsonKey("async", null);
-                    capability.setAsync(c.getBoolean(stringKey));
-
-                    stringKey = Jsoner.mintJsonKey("customPrompts", null);
-                    capability.setCustomPrompts(c.getBoolean(stringKey));
 
                     stringKey = Jsoner.mintJsonKey("description", null);
                     capability.setDescription(c.getString(stringKey));
+
+                    stringKey = Jsoner.mintJsonKey("requestType", null);
+                    capability.setRequestType(c.getString(stringKey));
+
+                    stringKey = Jsoner.mintJsonKey("usageTypes", null);
+                    capability.setUsageTypes(c.getString(stringKey));
+
+                    stringKey = Jsoner.mintJsonKey("model", null);
+                    capability.setModelRef(c.getString(stringKey));
+                    capability.setModelType(c.getString(stringKey));
+
+                    stringKey = Jsoner.mintJsonKey("asyncRecommended", null);
+                    boolean asyncRec = c.getBooleanOrDefault(stringKey);
+                    capability.setAsyncRecommended(asyncRec);
+                    capability.setAsync(asyncRec);
+
+                    stringKey = Jsoner.mintJsonKey("customPrompts", null);
+                    capability.setCustomPrompts(c.getBooleanOrDefault(stringKey));
 
                     Object inputs = c.getCollection(Jsoner.mintJsonKey("input", null));
                     if (inputs != null && inputs instanceof JsonArray) {
@@ -991,9 +953,6 @@ public class AssistantAPI {
                             capability.getInput().add(input);
                         }
                     }
-
-                    stringKey = Jsoner.mintJsonKey("modelType", null);
-                    capability.setModelType(c.getString(stringKey));
 
                     Object outputs = c.getCollection(Jsoner.mintJsonKey("output", null));
                     if (outputs != null && outputs instanceof JsonArray) {
@@ -1020,24 +979,18 @@ public class AssistantAPI {
                             capability.getParameters().add(parameter);
                         }
                     }
-                    
+
                     Object configurations = c.getCollection(Jsoner.mintJsonKey("configurations", null));
                     if (configurations != null && configurations instanceof JsonArray) {
                         JsonArray configurationsArray = (JsonArray) configurations;
                         for (Object oObj : configurationsArray) {
                             JsonObject o = (JsonObject) oObj;
                             Configuration config = new Configuration();
-                            config.setId(o.getString(Jsoner.mintJsonKey("id", null)));
-                            config.setDescription(o.getString(Jsoner.mintJsonKey("description", null)));
+                            config.setId(o.getString(Jsoner.mintJsonKey("name", null)));
+                            config.setDescription(o.getString(Jsoner.mintJsonKey("value", null)));
                             capability.getConfigurations().add(config);
                         }
                     }
-
-                    stringKey = Jsoner.mintJsonKey("requestType", null);
-                    capability.setRequestType(c.getString(stringKey));
-                    
-                    stringKey = Jsoner.mintJsonKey("usageTypes", null);
-                    capability.setUsageTypes(c.getString(stringKey));
 
                     allCapabilities.add(capability);
 
@@ -1056,6 +1009,68 @@ public class AssistantAPI {
 
     }
     
+    public List<AiModel> getModels() throws AssistantException {
+        JerseyClient restClient = (JerseyClient) JerseyClientBuilder.createClient();
+        restClient.property(ClientProperties.CONNECT_TIMEOUT, this.connectTimeout*1000);
+        restClient.property(ClientProperties.READ_TIMEOUT, this.readTimeout*1000);
+        JerseyWebTarget webTarget = restClient.target(baseUri + "j-lawyer-ai/v2/models");
+        List<AiModel> allModels = new ArrayList<>();
+        try {
+            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + this.getAuthString()).accept(MIMETYPE_JSON).get();
+            String returnValue = response.readEntity(String.class);
+            if (response.getStatus() != 200) {
+                log.error("Could not determine assistant models: " + returnValue + " [" + response.getStatus() + "]");
+                throw new AssistantException("Could not determine assistant models: " + returnValue + " [" + response.getStatus() + "]");
+            }
+
+            Object jsonOutput = Jsoner.deserialize(returnValue);
+            if (jsonOutput instanceof JsonArray) {
+                JsonArray models = (JsonArray) jsonOutput;
+                for (Object mObj : models) {
+                    JsonObject m = (JsonObject) mObj;
+                    AiModel model = new AiModel();
+
+                    model.setName(m.getString(Jsoner.mintJsonKey("name", null)));
+                    model.setDescription(m.getString(Jsoner.mintJsonKey("description", null)));
+                    model.setProvider(m.getString(Jsoner.mintJsonKey("provider", null)));
+                    model.setLocal(m.getBooleanOrDefault(Jsoner.mintJsonKey("local", null)));
+
+                    Object reqTypes = m.getCollection(Jsoner.mintJsonKey("supportedRequestTypes", null));
+                    if (reqTypes != null && reqTypes instanceof JsonArray) {
+                        JsonArray reqTypesArray = (JsonArray) reqTypes;
+                        List<String> typesList = new ArrayList<>();
+                        for (Object rt : reqTypesArray) {
+                            typesList.add(rt.toString());
+                        }
+                        model.setSupportedRequestTypes(typesList);
+                    }
+
+                    Object configs = m.getCollection(Jsoner.mintJsonKey("configurations", null));
+                    if (configs != null && configs instanceof JsonArray) {
+                        JsonArray configsArray = (JsonArray) configs;
+                        for (Object cObj : configsArray) {
+                            JsonObject co = (JsonObject) cObj;
+                            Configuration config = new Configuration();
+                            config.setId(co.getString(Jsoner.mintJsonKey("name", null)));
+                            config.setDescription(co.getString(Jsoner.mintJsonKey("description", null)));
+                            model.getConfigurations().add(config);
+                        }
+                    }
+
+                    allModels.add(model);
+                }
+            }
+            response.close();
+
+        } catch (Exception ex) {
+            log.error("Could not determine assistant models", ex);
+            throw new AssistantException(ex);
+        } finally {
+            restClient.close();
+        }
+        return allModels;
+    }
+
     public AiUser getUserInformation() throws AssistantException {
         JerseyClient restClient = (JerseyClient) JerseyClientBuilder.createClient();
         restClient.property(ClientProperties.CONNECT_TIMEOUT, this.connectTimeout*1000);
@@ -1166,7 +1181,7 @@ public class AssistantAPI {
         JerseyClient restClient = (JerseyClient) JerseyClientBuilder.createClient();
         restClient.property(ClientProperties.CONNECT_TIMEOUT, this.connectTimeout*1000);
         restClient.property(ClientProperties.READ_TIMEOUT, this.readTimeout*1000);
-        JerseyWebTarget webTarget = restClient.target(baseUri + "j-lawyer-ai/v1/request-status/" + requestId);
+        JerseyWebTarget webTarget = restClient.target(baseUri + "j-lawyer-ai/v2/request-status/" + requestId);
 
         AiResponse resp = new AiResponse();
         resp.setRequestId(requestId);

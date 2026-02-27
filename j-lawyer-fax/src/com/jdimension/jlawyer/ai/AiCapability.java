@@ -39,9 +39,16 @@ public class AiCapability implements Serializable {
     private String modelType;
     private boolean async=false;
     private boolean customPrompts=false;
+
+    private String actionId;
+    private boolean asyncRecommended=false;
+    private String modelRef;
     
+    private String configurationValues;
+    private String systemPrompt;
+
     private Prompt defaultPrompt=null;
-    
+
     private List<Configuration> configurations=new ArrayList<>();
     
     private List<Parameter> parameters=new ArrayList<>();
@@ -79,6 +86,11 @@ public class AiCapability implements Serializable {
         clone.output=output;
         clone.parameters=parameters;
         clone.requestType=requestType;
+        clone.actionId=actionId;
+        clone.asyncRecommended=asyncRecommended;
+        clone.modelRef=modelRef;
+        clone.configurationValues=configurationValues;
+        clone.systemPrompt=systemPrompt;
         return clone;
     }
     
@@ -253,6 +265,75 @@ public class AiCapability implements Serializable {
     public void setUsageTypes(String usageTypes) {
         this.usageTypes = usageTypes;
     }
-    
-    
+
+    /**
+     * @return the actionId
+     */
+    public String getActionId() {
+        return actionId;
+    }
+
+    /**
+     * @param actionId the actionId to set
+     */
+    public void setActionId(String actionId) {
+        this.actionId = actionId;
+    }
+
+    /**
+     * @return the asyncRecommended
+     */
+    public boolean isAsyncRecommended() {
+        return asyncRecommended;
+    }
+
+    /**
+     * @param asyncRecommended the asyncRecommended to set
+     */
+    public void setAsyncRecommended(boolean asyncRecommended) {
+        this.asyncRecommended = asyncRecommended;
+    }
+
+    /**
+     * @return the modelRef
+     */
+    public String getModelRef() {
+        return modelRef;
+    }
+
+    /**
+     * @param modelRef the modelRef to set
+     */
+    public void setModelRef(String modelRef) {
+        this.modelRef = modelRef;
+    }
+
+    /**
+     * @return the configurationValues
+     */
+    public String getConfigurationValues() {
+        return configurationValues;
+    }
+
+    /**
+     * @param configurationValues the configurationValues to set
+     */
+    public void setConfigurationValues(String configurationValues) {
+        this.configurationValues = configurationValues;
+    }
+
+    /**
+     * @return the systemPrompt
+     */
+    public String getSystemPrompt() {
+        return systemPrompt;
+    }
+
+    /**
+     * @param systemPrompt the systemPrompt to set
+     */
+    public void setSystemPrompt(String systemPrompt) {
+        this.systemPrompt = systemPrompt;
+    }
+
 }

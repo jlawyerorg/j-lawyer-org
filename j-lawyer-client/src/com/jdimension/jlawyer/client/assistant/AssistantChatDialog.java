@@ -666,6 +666,8 @@ package com.jdimension.jlawyer.client.assistant;
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.AiResponse;
+import com.jdimension.jlawyer.ai.ConfigurationData;
+import com.jdimension.jlawyer.ai.ConfigurationUtils;
 import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.ai.OutputData;
@@ -867,8 +869,8 @@ public class AssistantChatDialog extends javax.swing.JDialog {
             }
             this.initialPrompt = this.taPrompt.getText();
             this.taPrompt.setEnabled(true);
-        } else {
-            this.taPrompt.setEnabled(false);
+        } else if (c.isCustomPrompts()) {
+            this.taPrompt.setEnabled(true);
         }
 
         this.pnlParameters.setLayout(new java.awt.GridLayout(this.capability.getParameters().size(), 2, 6, 6));
@@ -1280,7 +1282,11 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                         });
                     });
 
-                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getModelType(), fullPrompt, fParams, null, messages);
+                    List<ConfigurationData> promptConfigs = null;
+                    if (capability.getConfigurationValues() != null && !capability.getConfigurationValues().isEmpty()) {
+                        promptConfigs = ConfigurationUtils.fromProperties(capability.getConfigurationValues());
+                    }
+                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getActionId(), capability.getModelRef(), fullPrompt, capability.getSystemPrompt(), capability.isAsyncRecommended(), fParams, null, messages, promptConfigs);
                     // after initial request, unselect input text
                     taInputString.setCaretPosition(0);
 
@@ -1357,7 +1363,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
 
                 result = status;
                 if (status != null) {
-                    if (status.getStatus().equalsIgnoreCase("failed")) {
+                    if (status.isError()) {
                         // Check if user was at bottom BEFORE update
                         JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
                         int currentValue = verticalBar.getValue();
@@ -1785,10 +1791,14 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                         AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(
                             transcribeConfig,
                             transcribeCapability.getRequestType(),
-                            transcribeCapability.getModelType(),
+                            transcribeCapability.getActionId(),
+                            transcribeCapability.getModelRef(),
                             null,
+                            null,
+                            transcribeCapability.isAsyncRecommended(),
                             fParams,
                             inputs,
+                            null,
                             null
                         );
 
@@ -1813,7 +1823,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                     AiRequestStatus status = resultRef.get();
                     if (status != null) {
                         String resultText = "";
-                        if (status.getStatus().equalsIgnoreCase("failed")) {
+                        if (status.isError()) {
                             resultText = status.getStatus() + ": " + status.getStatusDetails();
                             log.error("Transcription failed: " + status.getStatusDetails());
                             ThreadUtils.showErrorDialog(AssistantChatDialog.this, "Transkription fehlgeschlagen: " + status.getStatusDetails(), DesktopUtils.POPUP_TITLE_ERROR);
@@ -1828,7 +1838,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                         }
 
                         // Append transcribed text at the end of taPrompt
-                        if (!resultText.isEmpty() && !status.getStatus().equalsIgnoreCase("failed")) {
+                        if (!resultText.isEmpty() && !status.isError()) {
                             String currentText = taPrompt.getText();
                             if (!currentText.isEmpty() && !currentText.endsWith(" ") && !currentText.endsWith("\n")) {
                                 currentText += " ";
