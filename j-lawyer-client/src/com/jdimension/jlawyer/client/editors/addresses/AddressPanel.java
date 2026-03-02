@@ -962,6 +962,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         }
         this.lblHeaderInfo.setText(dto.toDisplayName());
         this.txtBankAccount.setText(dto.getBankAccount());
+        this.txtBankAccountOwner.setText(dto.getBankAccountOwner());
         this.txtBankCode.setText(dto.getBankCode());
         this.txtBankName.setText(dto.getBankName());
         this.txtSepaReference.setText(dto.getSepaReference());
@@ -1014,6 +1015,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.txtDeathDate.setText(dto.getDateOfDeath());
         this.txtVatId.setText(dto.getVatId());
         this.txtTin.setText(dto.getTin());
+        this.chkTaxDeduction.setSelected(dto.isTaxDeduction());
         this.cmbLegalForm.setSelectedItem(dto.getLegalForm());
         this.txtRegCourt.setText(dto.getCompanyRegistrationCourt());
         this.txtRegNr.setText(dto.getCompanyRegistrationNumber());
@@ -1272,6 +1274,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.cmdNewSmsWithEncryptionPassword.setEnabled(false);
         this.lblHeaderInfo.setText("");
         this.txtBankAccount.setText("");
+        this.txtBankAccountOwner.setText("");
         this.txtBankCode.setText("");
         this.txtBankName.setText("");
         this.txtCity.setText("");
@@ -1320,6 +1323,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.txtDeathDate.setText("");
         this.txtVatId.setText("");
         this.txtTin.setText("");
+        this.chkTaxDeduction.setSelected(false);
         this.cmbLegalForm.setSelectedItem("");
         this.txtRegCourt.setText("");
         this.txtRegNr.setText("");
@@ -1579,6 +1583,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         cmdSelectSepaSince = new javax.swing.JButton();
         txtSepaSince = new javax.swing.JTextField();
         jLabel52 = new javax.swing.JLabel();
+        jLabel56 = new javax.swing.JLabel();
+        txtBankAccountOwner = new javax.swing.JTextField();
         jPanel11 = new javax.swing.JPanel();
         jLabel21 = new javax.swing.JLabel();
         txtTrafficInsuranceNumber = new javax.swing.JTextField();
@@ -1595,6 +1601,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         txtVatId = new javax.swing.JTextField();
         jLabel35 = new javax.swing.JLabel();
         txtTin = new javax.swing.JTextField();
+        chkTaxDeduction = new javax.swing.JCheckBox();
         jPanel9 = new javax.swing.JPanel();
         jPanel6 = new javax.swing.JPanel();
         jLabel16 = new javax.swing.JLabel();
@@ -2620,6 +2627,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jLabel52.setText("vom:");
 
+        jLabel56.setText("Kontoinhaber:");
+
         org.jdesktop.layout.GroupLayout jPanel4Layout = new org.jdesktop.layout.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
@@ -2629,23 +2638,30 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(jPanel4Layout.createSequentialGroup()
                         .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel13)
-                            .add(jLabel12)
-                            .add(jLabel14))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(txtBankAccount)
-                            .add(txtBankCode)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtBankName)))
+                            .add(jLabel12))
+                        .add(72, 72, 72)
+                        .add(txtBankName))
                     .add(jPanel4Layout.createSequentialGroup()
                         .add(jLabel51)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(txtSepaReference)
+                        .add(txtSepaReference, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 770, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jLabel52)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(txtSepaSince, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 125, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdSelectSepaSince)))
+                        .add(cmdSelectSepaSince))
+                    .add(jPanel4Layout.createSequentialGroup()
+                        .add(jLabel56)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel4Layout.createSequentialGroup()
+                                .add(txtBankCode, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 200, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .add(18, 18, 18)
+                                .add(jLabel14)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(txtBankAccount))
+                            .add(txtBankAccountOwner))))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdChooseBank)
                 .addContainerGap())
@@ -2660,11 +2676,13 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel13)
-                    .add(txtBankCode, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(txtBankCode, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel14)
                     .add(txtBankAccount, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel56)
+                    .add(txtBankAccountOwner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(cmdSelectSepaSince, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -2737,7 +2755,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .add(19, 19, 19)
                 .add(jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(txtMotorInsuranceNumber)
-                    .add(cmbMotorInsurance, 0, 349, Short.MAX_VALUE))
+                    .add(cmbMotorInsurance, 0, 393, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel12Layout.setVerticalGroup(
@@ -2759,6 +2777,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jLabel35.setText("Steuernummer:");
 
+        chkTaxDeduction.setText("vorsteuerabzugsberechtigt");
+
         org.jdesktop.layout.GroupLayout jPanel21Layout = new org.jdesktop.layout.GroupLayout(jPanel21);
         jPanel21.setLayout(jPanel21Layout);
         jPanel21Layout.setHorizontalGroup(
@@ -2771,6 +2791,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .add(jPanel21Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(txtVatId)
                     .add(txtTin))
+                .add(18, 18, 18)
+                .add(chkTaxDeduction)
                 .addContainerGap())
         );
         jPanel21Layout.setVerticalGroup(
@@ -2778,7 +2800,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(jPanel21Layout.createSequentialGroup()
                 .add(jPanel21Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel34)
-                    .add(txtVatId, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(txtVatId, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(chkTaxDeduction))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel21Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel35)
@@ -3875,6 +3898,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.ButtonGroup btnGroupGender;
     private javax.swing.JToggleButton chkEncryption;
     private javax.swing.JCheckBox chkLegalProtection;
+    private javax.swing.JCheckBox chkTaxDeduction;
     private javax.swing.JCheckBox chkTrafficLegalProtection;
     protected javax.swing.JComboBox cmbComplimentaryClose;
     protected javax.swing.JComboBox<String> cmbCountry;
@@ -3962,6 +3986,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JLabel jLabel53;
     private javax.swing.JLabel jLabel54;
     private javax.swing.JLabel jLabel55;
+    private javax.swing.JLabel jLabel56;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
@@ -4026,6 +4051,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JPanel tagPanel;
     private javax.swing.JTextField txtAdjunct;
     protected javax.swing.JTextField txtBankAccount;
+    private javax.swing.JTextField txtBankAccountOwner;
     protected javax.swing.JTextField txtBankCode;
     protected javax.swing.JTextField txtBankName;
     protected javax.swing.JTextField txtBeaSafeId;
@@ -4083,6 +4109,9 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
             return true;
         }
         if (!StringUtils.equals(dto.getBankName(), this.txtBankName.getText())) {
+            return true;
+        }
+        if (!StringUtils.equals(dto.getBankAccountOwner(), this.txtBankAccountOwner.getText())) {
             return true;
         }
         if (!StringUtils.equals(dto.getSepaReference(), this.txtSepaReference.getText())) {
@@ -4219,6 +4248,9 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         if (!StringUtils.equals(dto.getTin(), this.txtTin.getText())) {
             return true;
         }
+        if (dto.isTaxDeduction() != this.chkTaxDeduction.isSelected()) {
+            return true;
+        }
         if (!StringUtils.equals(dto.getLegalForm(), (String) this.cmbLegalForm.getSelectedItem())) {
             return true;
         }
@@ -4270,6 +4302,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     private void fillDTO(AddressBean adr) throws Exception {
         adr.setBankAccount(this.txtBankAccount.getText());
+        adr.setBankAccountOwner(this.txtBankAccountOwner.getText());
         adr.setBankCode(this.txtBankCode.getText());
         adr.setBankName(this.txtBankName.getText());
         adr.setSepaReference(this.txtSepaReference.getText());
@@ -4358,6 +4391,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         adr.setDateOfDeath(this.txtDeathDate.getText());
         adr.setVatId(this.txtVatId.getText());
         adr.setTin(this.txtTin.getText());
+        adr.setTaxDeduction(this.chkTaxDeduction.isSelected());
         if (this.cmbLegalForm.getSelectedItem() != null) {
             adr.setLegalForm(this.cmbLegalForm.getSelectedItem().toString());
         } else {

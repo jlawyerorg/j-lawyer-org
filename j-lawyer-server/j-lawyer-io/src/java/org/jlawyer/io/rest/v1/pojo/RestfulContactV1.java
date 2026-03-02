@@ -685,6 +685,7 @@ public class RestfulContactV1 {
     private short trafficLegalProtection=0;
     private String trafficInsuranceNumber=null;
     private String trafficInsuranceName=null;
+    private short taxDeduction=0;
     
     private String motorInsuranceNumber=null;
     private String motorInsuranceName=null;
@@ -704,6 +705,7 @@ public class RestfulContactV1 {
     private String bankName=null;
     private String bankCode=null;
     private String bankAccount=null;
+    private String bankAccountOwner=null;
     private String email=null;
     private String website=null;
     private String creator=null;
@@ -723,6 +725,7 @@ public class RestfulContactV1 {
     
     public AddressBean toAddressBean(AddressBean ad) {
         ad.setBankAccount(this.getBankAccount());
+        ad.setBankAccountOwner(this.getBankAccountOwner());
         ad.setBankCode(this.getBankCode());
         ad.setBankName(this.getBankName());
         ad.setBeaSafeId(this.getBeaSafeId());
@@ -759,14 +762,16 @@ public class RestfulContactV1 {
         ad.setTrafficInsuranceName(this.getTrafficInsuranceName());
         ad.setTrafficInsuranceNumber(this.getTrafficInsuranceNumber());
         ad.setTrafficLegalProtection(this.getTrafficLegalProtection()==1);
+        ad.setTaxDeduction(this.getTaxDeduction()==1);
         ad.setWebsite(this.getWebsite());
         ad.setZipCode(this.getZipCode());
         return ad;
     }
-    
+
     public static RestfulContactV1 fromAddressBean(AddressBean a) {
         RestfulContactV1 ad=new RestfulContactV1();
         ad.setBankAccount(a.getBankAccount());
+        ad.setBankAccountOwner(a.getBankAccountOwner());
         ad.setBankCode(a.getBankCode());
         ad.setBankName(a.getBankName());
         ad.setBeaSafeId(a.getBeaSafeId());
@@ -809,6 +814,10 @@ public class RestfulContactV1 {
             ad.setTrafficLegalProtection((short)1);
         else
             ad.setTrafficLegalProtection((short)0);
+        if(a.isTaxDeduction())
+            ad.setTaxDeduction((short)1);
+        else
+            ad.setTaxDeduction((short)0);
         ad.setWebsite(a.getWebsite());
         ad.setZipCode(a.getZipCode());
         return ad;
@@ -896,6 +905,20 @@ public class RestfulContactV1 {
      */
     public void setLegalProtection(short legalProtection) {
         this.legalProtection = legalProtection;
+    }
+
+    /**
+     * @return the taxDeduction
+     */
+    public short getTaxDeduction() {
+        return taxDeduction;
+    }
+
+    /**
+     * @param taxDeduction the taxDeduction to set
+     */
+    public void setTaxDeduction(short taxDeduction) {
+        this.taxDeduction = taxDeduction;
     }
 
     /**
@@ -1176,6 +1199,20 @@ public class RestfulContactV1 {
      */
     public void setBankAccount(String bankAccount) {
         this.bankAccount = bankAccount;
+    }
+
+    /**
+     * @return the bankAccountOwner
+     */
+    public String getBankAccountOwner() {
+        return bankAccountOwner;
+    }
+
+    /**
+     * @param bankAccountOwner the bankAccountOwner to set
+     */
+    public void setBankAccountOwner(String bankAccountOwner) {
+        this.bankAccountOwner = bankAccountOwner;
     }
 
     /**

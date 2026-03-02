@@ -750,6 +750,9 @@ public class AddressBean implements Serializable {
     @Basic(optional = false)
     @Column(name = "trafficLegalProtection")
     private boolean trafficLegalProtection;
+    @Basic(optional = false)
+    @Column(name = "tax_deduction")
+    private boolean taxDeduction;
     @Column(name = "trafficInsuranceNumber")
     private String trafficInsuranceNumber;
     @Column(name = "trafficInsuranceName")
@@ -788,7 +791,9 @@ public class AddressBean implements Serializable {
     private String bankCode;
     @Column(name = "bankAccount")
     private String bankAccount;
-    
+    @Column(name = "bank_account_owner")
+    private String bankAccountOwner;
+
     @Column(name = "sepa_reference")
     private String sepaReference;
     @Column(name = "sepa_since")
@@ -1075,6 +1080,14 @@ public class AddressBean implements Serializable {
         this.bankAccount = bankAccount;
     }
 
+    public String getBankAccountOwner() {
+        return bankAccountOwner;
+    }
+
+    public void setBankAccountOwner(String bankAccountOwner) {
+        this.bankAccountOwner = bankAccountOwner;
+    }
+
     public String getEmail() {
         return email;
     }
@@ -1258,6 +1271,20 @@ public class AddressBean implements Serializable {
      */
     public void setTrafficLegalProtection(boolean trafficLegalProtection) {
         this.trafficLegalProtection = trafficLegalProtection;
+    }
+
+    /**
+     * @return the taxDeduction
+     */
+    public boolean isTaxDeduction() {
+        return taxDeduction;
+    }
+
+    /**
+     * @param taxDeduction the taxDeduction to set
+     */
+    public void setTaxDeduction(boolean taxDeduction) {
+        this.taxDeduction = taxDeduction;
     }
 
     /**
