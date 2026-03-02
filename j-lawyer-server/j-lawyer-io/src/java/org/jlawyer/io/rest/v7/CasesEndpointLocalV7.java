@@ -725,4 +725,6 @@ public interface CasesEndpointLocalV7 {
 
     Response duplicateInvoice(String id, RestfulInvoiceDuplicateRequestV7 request);
 
+    Response getCaseTimesheets(String id);
+
 }

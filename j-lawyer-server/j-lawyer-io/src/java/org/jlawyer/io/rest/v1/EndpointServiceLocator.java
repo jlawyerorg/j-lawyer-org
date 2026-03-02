@@ -686,6 +686,7 @@ import org.jlawyer.io.rest.v7.MessagingEndpointV7;
 import org.jlawyer.io.rest.v7.ReportsEndpointV7;
 import org.jlawyer.io.rest.v7.WebHooksEndpointV7;
 import org.jlawyer.io.rest.v8.BeaEndpointV8;
+import org.jlawyer.io.rest.v8.TimesheetsEndpointV8;
 
 @ApplicationPath("/rest")
 public class EndpointServiceLocator extends Application
@@ -717,6 +718,7 @@ public class EndpointServiceLocator extends Application
         s.add(InvoicesEndpointV7.class);
         s.add(ReportsEndpointV7.class);
         s.add(BeaEndpointV8.class);
+        s.add(TimesheetsEndpointV8.class);
         return s;
     }
 }

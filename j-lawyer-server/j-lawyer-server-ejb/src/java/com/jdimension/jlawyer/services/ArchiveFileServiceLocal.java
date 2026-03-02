@@ -682,6 +682,8 @@ import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePosition;
 import com.jdimension.jlawyer.persistence.InvoiceType;
+import com.jdimension.jlawyer.persistence.Timesheet;
+import com.jdimension.jlawyer.persistence.TimesheetPosition;
 import com.jdimension.jlawyer.pojo.DataBucket;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -859,5 +861,18 @@ public interface ArchiveFileServiceLocal {
 
     List<CaseAccountEntry> getAccountEntries(String caseId) throws Exception;
     List<CaseAccountEntry> getAccountEntriesUnrestricted(String caseId) throws Exception;
+
+    // Timesheets
+    List<Timesheet> getOpenTimesheets(String caseId) throws Exception;
+    List<Timesheet> getOpenTimesheets() throws Exception;
+    Timesheet getTimesheet(String timesheetId) throws Exception;
+    List<TimesheetPosition> getTimesheetPositions(String timesheetId) throws Exception;
+    List<TimesheetPosition> getOpenTimesheetPositions(String principal) throws Exception;
+    List<TimesheetPosition> getLastTimesheetPositions(String caseId, String principal) throws Exception;
+    TimesheetPosition timesheetPositionStart(String timesheetId, TimesheetPosition position) throws Exception;
+    TimesheetPosition timesheetPositionStop(String timesheetId, TimesheetPosition position) throws Exception;
+    TimesheetPosition timesheetPositionSave(String timesheetId, TimesheetPosition position) throws Exception;
+    TimesheetPosition timesheetPositionAdd(String timesheetId, TimesheetPosition position) throws Exception;
+    int hasOpenTimesheetPositions(String principal) throws Exception;
 
 }
