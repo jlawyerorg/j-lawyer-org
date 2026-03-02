@@ -1585,6 +1585,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         jLabel52 = new javax.swing.JLabel();
         jLabel56 = new javax.swing.JLabel();
         txtBankAccountOwner = new javax.swing.JTextField();
+        cmdPopuplateAccountOwner = new javax.swing.JButton();
         jPanel11 = new javax.swing.JPanel();
         jLabel21 = new javax.swing.JLabel();
         txtTrafficInsuranceNumber = new javax.swing.JTextField();
@@ -2629,6 +2630,14 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jLabel56.setText("Kontoinhaber:");
 
+        cmdPopuplateAccountOwner.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_home.png"))); // NOI18N
+        cmdPopuplateAccountOwner.setToolTipText("automatisch mit Unternehmen / Name vorbelegen");
+        cmdPopuplateAccountOwner.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdPopuplateAccountOwnerActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel4Layout = new org.jdesktop.layout.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
@@ -2637,20 +2646,24 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel4Layout.createSequentialGroup()
                         .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jLabel13)
-                            .add(jLabel12))
-                        .add(72, 72, 72)
-                        .add(txtBankName))
-                    .add(jPanel4Layout.createSequentialGroup()
-                        .add(jLabel51)
+                            .add(jPanel4Layout.createSequentialGroup()
+                                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                    .add(jLabel13)
+                                    .add(jLabel12))
+                                .add(72, 72, 72)
+                                .add(txtBankName))
+                            .add(jPanel4Layout.createSequentialGroup()
+                                .add(jLabel51)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(txtSepaReference, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 770, Short.MAX_VALUE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                .add(jLabel52)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(txtSepaSince, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 125, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdSelectSepaSince)))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(txtSepaReference, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 770, Short.MAX_VALUE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(jLabel52)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(txtSepaSince, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 125, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdSelectSepaSince))
+                        .add(cmdChooseBank))
                     .add(jPanel4Layout.createSequentialGroup()
                         .add(jLabel56)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -2661,9 +2674,9 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                                 .add(jLabel14)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(txtBankAccount))
-                            .add(txtBankAccountOwner))))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(cmdChooseBank)
+                            .add(txtBankAccountOwner))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdPopuplateAccountOwner)))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -2682,7 +2695,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel56)
-                    .add(txtBankAccountOwner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(txtBankAccountOwner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmdPopuplateAccountOwner))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(cmdSelectSepaSince, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -3732,6 +3746,17 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         }
     }//GEN-LAST:event_cmdNewCaseActionPerformed
 
+    private void cmdPopuplateAccountOwnerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPopuplateAccountOwnerActionPerformed
+        String company = this.txtCompany.getText();
+        if (company != null && !company.trim().isEmpty()) {
+            this.txtBankAccountOwner.setText(company.trim());
+        } else {
+            String first = this.txtFirstName.getText() != null ? this.txtFirstName.getText().trim() : "";
+            String last = this.txtName.getText() != null ? this.txtName.getText().trim() : "";
+            this.txtBankAccountOwner.setText((first + " " + last).trim());
+        }
+    }//GEN-LAST:event_cmdPopuplateAccountOwnerActionPerformed
+
     private void updateAge() {
         Date birth = null;
         Date death = null;
@@ -3926,6 +3951,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JButton cmdNewFax;
     private javax.swing.JButton cmdNewSms;
     private javax.swing.JButton cmdNewSmsWithEncryptionPassword;
+    private javax.swing.JButton cmdPopuplateAccountOwner;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdSelectBirthday;
     private javax.swing.JButton cmdSelectDeathday;
