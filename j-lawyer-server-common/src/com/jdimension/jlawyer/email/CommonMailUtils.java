@@ -867,6 +867,10 @@ public class CommonMailUtils {
             return null;
         }
 
+        if (inbox.getName() == null) {
+            return null;
+        }
+
         if (inbox.getName().equalsIgnoreCase(name)) {
             return inbox;
         }
@@ -880,6 +884,9 @@ public class CommonMailUtils {
 
         Folder[] children = inbox.list();
         for (Folder f : children) {
+            if (f.getName() == null) {
+                continue;
+            }
             if (f.getName().equalsIgnoreCase(name)) {
                 return f;
             }
