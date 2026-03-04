@@ -943,6 +943,22 @@ public class AssistantAPI {
                     stringKey = Jsoner.mintJsonKey("customPrompts", null);
                     capability.setCustomPrompts(c.getBooleanOrDefault(stringKey));
 
+                    Object promptObj = c.get("prompt");
+                    if (promptObj != null && promptObj instanceof JsonObject) {
+                        JsonObject promptJson = (JsonObject) promptObj;
+                        Prompt prompt = new Prompt();
+                        prompt.setDefaultPrompt(promptJson.getString(Jsoner.mintJsonKey("defaultPrompt", null)));
+                        Object maxTokensObj = promptJson.get("maxTokens");
+                        if (maxTokensObj instanceof Number) {
+                            prompt.setMaxTokens(((Number) maxTokensObj).longValue());
+                        }
+                        capability.setDefaultPrompt(prompt);
+                        String sysPrompt = promptJson.getString(Jsoner.mintJsonKey("systemPrompt", null));
+                        if (sysPrompt != null) {
+                            capability.setSystemPrompt(sysPrompt);
+                        }
+                    }
+
                     Object inputs = c.getCollection(Jsoner.mintJsonKey("input", null));
                     if (inputs != null && inputs instanceof JsonArray) {
                         JsonArray inputArray = (JsonArray) inputs;
