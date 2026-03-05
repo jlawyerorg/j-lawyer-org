@@ -670,11 +670,14 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.utils.einvoice.EInvoiceUtils;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.event.AdjustmentEvent;
 import java.awt.geom.AffineTransform;
+import java.awt.image.BaseMultiResolutionImage;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -708,7 +711,8 @@ import themes.colors.DefaultColorTheme;
 public class PdfImageScrollingPanel extends javax.swing.JPanel implements PreviewPanel {
 
     private static final Logger log = Logger.getLogger(PdfImageScrollingPanel.class.getName());
-    private static final int MAX_RENDER_PAGES = 10;
+    private static final int MAX_RENDER_PAGES_DEFAULT = 10;
+    private static final int MAX_RENDER_PAGES_HIDPI = 5;
     private transient Object zoomSemaphore = "";
 
     HashMap<Integer, File> orgImage = new HashMap<>();
@@ -788,7 +792,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                 int extent = scrollBar.getModel().getExtent();
                 int value = scrollBar.getValue();
                 if (value + extent >= max) {
-                    this.renderContent(labelIndex, renderedPages, renderedPages + MAX_RENDER_PAGES, zoomFactor, false);
+                    this.renderContent(labelIndex, renderedPages, renderedPages + getMaxRenderPages(), zoomFactor, false);
                 }
 
                 currentPage = labelIndex;
@@ -888,7 +892,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
         // Otherwise, render ahead including the desired page
         int from = renderedPages;
-        int to = Math.max(desired, renderedPages) + MAX_RENDER_PAGES - 1;
+        int to = Math.max(desired, renderedPages) + getMaxRenderPages() - 1;
         renderContent(currentPage, from, to, this.zoomFactor, true);
 
         // Wait until the page is available, then scroll to it
@@ -1219,16 +1223,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                         width = (int) (width / (297f / 210f));
                     }
 
-                    BufferedImage scaledImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-                    Graphics2D g2d = scaledImage.createGraphics();
-                    g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-                    g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                    g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
-                    g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-
-                    g2d.drawImage(img, 0, 0, width, height, null);
-                    g2d.dispose();
+                    final java.awt.Image displayImage = createHiDpiAwareImage(img, width, height, getDisplayScaleFactor());
 
                     final int iIndex = i;
                     SwingUtilities.invokeAndWait(() -> {
@@ -1241,7 +1236,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
                             PdfPageImage pnlPage = new PdfPageImage(this, this.readOnly);
                             pnlPage.setBorder(new EmptyBorder(0, 0, 10, 0));
-                            pnlPage.setPage(iIndex, new ImageIcon(scaledImage));
+                            pnlPage.setPage(iIndex, new ImageIcon(displayImage));
                             pnlPages.add(pnlPage);
                         }
                     });
@@ -1380,17 +1375,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                                 width1 = (int) (width1 / (297f / 210f));
                             }
 
-                            // todo: check for landscape mode and display those pages with lower height
-                            BufferedImage scaledImage = new BufferedImage(width1, height1, BufferedImage.TYPE_INT_RGB);
-                            Graphics2D g2d = scaledImage.createGraphics();
-                            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-                            g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                            g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
-                            g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-
-                            g2d.drawImage(buffImg, 0, 0, width1, height1, null);
-                            g2d.dispose();
+                            final java.awt.Image displayImage = createHiDpiAwareImage(buffImg, width1, height1, getDisplayScaleFactor());
 
                             buffImg = null;
 
@@ -1399,7 +1384,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
                                 PdfPageImage pnlPage = new PdfPageImage(this, this.readOnly);
                                 pnlPage.setBorder(new EmptyBorder(0, 0, 10, 0));
-                                pnlPage.setPage(iIndex, new ImageIcon(scaledImage));
+                                pnlPage.setPage(iIndex, new ImageIcon(displayImage));
                                 pnlPages.add(pnlPage);
                                 pnlPages.invalidate();
                                 pnlPages.revalidate();
@@ -1454,15 +1439,20 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
             return 300;
         }
 
+        // Check for HiDPI: first try sun.java2d.uiScale system property
         String uiScale = System.getProperty("sun.java2d.uiScale");
         try {
             if (uiScale != null && Double.parseDouble(uiScale) > 1.0) {
                 return 300;
-            } else {
-                // proceed with dynamic calculation below
             }
         } catch (Throwable t) {
-            log.warn("unable to get UI scale factor", t);
+            log.warn("unable to get UI scale factor from system property", t);
+        }
+
+        // Fallback: detect display scaling via AWT graphics transform
+        // This reliably detects Windows DPI scaling (125%, 150%, 200%, etc.)
+        if (getDisplayScaleFactor() > 1.0) {
+            return 300;
         }
 
         if (totalPages <= 20) {
@@ -1477,6 +1467,81 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
         // Ensure DPI does not go below minDpi
         return Math.max(dpi, minDpi);
+    }
+
+    private static double cachedDisplayScale = -1.0;
+
+    /**
+     * Returns the display scale factor (e.g. 2.0 on macOS Retina, 1.5 on
+     * Windows with 150% scaling, 1.0 on standard displays).
+     * The value is cached after the first call since the scale factor
+     * does not change during the application's lifetime.
+     */
+    static double getDisplayScaleFactor() {
+        if (cachedDisplayScale > 0) {
+            return cachedDisplayScale;
+        }
+        try {
+            GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+            AffineTransform tx = gd.getDefaultConfiguration().getDefaultTransform();
+            cachedDisplayScale = tx.getScaleX();
+        } catch (Throwable t) {
+            log.warn("unable to detect display scale factor", t);
+            cachedDisplayScale = 1.0;
+        }
+        return cachedDisplayScale;
+    }
+
+    /**
+     * Returns the maximum number of pages to render at once.
+     * Reduced on HiDPI displays to keep memory usage in check,
+     * since each page image requires more pixels.
+     */
+    static int getMaxRenderPages() {
+        return getDisplayScaleFactor() > 1.0 ? MAX_RENDER_PAGES_HIDPI : MAX_RENDER_PAGES_DEFAULT;
+    }
+
+    /**
+     * Creates an image suitable for display on HiDPI screens.
+     * On standard displays (scale=1.0) returns a BufferedImage scaled to
+     * the logical dimensions.
+     * On HiDPI displays, wraps a high-res and a logical-res variant
+     * into a BaseMultiResolutionImage so the JLabel uses the correct
+     * logical size for layout but renders with full physical resolution.
+     */
+    static java.awt.Image createHiDpiAwareImage(BufferedImage sourceImage, int logicalWidth, int logicalHeight, double displayScale) {
+        if (displayScale <= 1.0) {
+            // Standard display: scale source to logical size
+            BufferedImage scaled = new BufferedImage(logicalWidth, logicalHeight, BufferedImage.TYPE_INT_RGB);
+            Graphics2D g = scaled.createGraphics();
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.drawImage(sourceImage, 0, 0, logicalWidth, logicalHeight, null);
+            g.dispose();
+            return scaled;
+        }
+
+        // HiDPI display: create physical-resolution variant
+        int physWidth = (int) (logicalWidth * displayScale);
+        int physHeight = (int) (logicalHeight * displayScale);
+
+        BufferedImage hiRes = new BufferedImage(physWidth, physHeight, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2 = hiRes.createGraphics();
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.drawImage(sourceImage, 0, 0, physWidth, physHeight, null);
+        g2.dispose();
+
+        // 1x variant for correct JLabel layout sizing - scale down from hiRes
+        BufferedImage loRes = new BufferedImage(logicalWidth, logicalHeight, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g1 = loRes.createGraphics();
+        g1.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g1.drawImage(hiRes, 0, 0, logicalWidth, logicalHeight, null);
+        g1.dispose();
+
+        return new BaseMultiResolutionImage(loRes, hiRes);
     }
 
     private File saveBufferedImage(BufferedImage img) {
@@ -1659,20 +1724,11 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                     width1 = (int) (width1 / (297f / 210f));
                 }
 
-                BufferedImage bi2 = new BufferedImage(width1, height1, BufferedImage.TYPE_INT_RGB);
-                Graphics2D g2d = bi2.createGraphics();
-                g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-                g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
-                g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-
-                g2d.drawImage(rotated, 0, 0, width1, height1, null);
-                g2d.dispose();
+                java.awt.Image displayImage = createHiDpiAwareImage(rotated, width1, height1, getDisplayScaleFactor());
 
                 Component[] components = pnlPages.getComponents();
                 if (components[pageIndex] instanceof PdfPageImage) {
-                    ((PdfPageImage) components[pageIndex]).setPage(pageIndex, new ImageIcon(bi2));
+                    ((PdfPageImage) components[pageIndex]).setPage(pageIndex, new ImageIcon(displayImage));
                 }
             }
         }
@@ -1741,7 +1797,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         this.renderedPages = 0;
         this.totalPages = 0;
         this.currentPage = 0;
-        this.renderContent(0, 0, MAX_RENDER_PAGES - 1, this.zoomFactor, true);
+        this.renderContent(0, 0, getMaxRenderPages() - 1, this.zoomFactor, true);
 
     }
 
