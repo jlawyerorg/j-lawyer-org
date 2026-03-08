@@ -21,6 +21,7 @@ public class AiModel implements Serializable {
     private String provider;
     private List<String> supportedRequestTypes = new ArrayList<>();
     private boolean local = false;
+    private boolean deductTokens = true;
     private List<Configuration> configurations = new ArrayList<>();
 
     /**
@@ -91,6 +92,20 @@ public class AiModel implements Serializable {
      */
     public void setLocal(boolean local) {
         this.local = local;
+    }
+
+    /**
+     * @return the deductTokens
+     */
+    public boolean isDeductTokens() {
+        return deductTokens;
+    }
+
+    /**
+     * @param deductTokens the deductTokens to set
+     */
+    public void setDeductTokens(boolean deductTokens) {
+        this.deductTokens = deductTokens;
     }
 
     /**

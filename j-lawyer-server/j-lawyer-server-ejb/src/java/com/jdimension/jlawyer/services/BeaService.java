@@ -1543,6 +1543,17 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         h.setPostBoxSafeId(getStringOrNull(json, "postBoxSafeId"));
         h.setRecipientName(getStringOrNull(json, "recipientName"));
         h.setRecipientSafeId(getStringOrNull(json, "recipientSafeId"));
+        // fallback: getMessageHeader endpoint returns MessageDto which has recipients array instead of recipientSafeId/recipientName
+        if (h.getRecipientSafeId() == null && json.containsKey("recipients") && !json.isNull("recipients")) {
+            JsonArray recipients = json.getJsonArray("recipients");
+            if (recipients != null && !recipients.isEmpty()) {
+                JsonObject firstRecipient = recipients.getJsonObject(0);
+                if (h.getRecipientName() == null) {
+                    h.setRecipientName(getStringOrNull(firstRecipient, "name"));
+                }
+                h.setRecipientSafeId(getStringOrNull(firstRecipient, "safeId"));
+            }
+        }
         h.setRead(getBooleanOrDefault(json, "read", false));
         h.setFolderId(getLongOrDefault(json, "folderId", 0));
         return h;

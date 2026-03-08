@@ -1050,6 +1050,7 @@ public class AssistantAPI {
                     model.setDescription(m.getString(Jsoner.mintJsonKey("description", null)));
                     model.setProvider(m.getString(Jsoner.mintJsonKey("provider", null)));
                     model.setLocal(m.getBooleanOrDefault(Jsoner.mintJsonKey("local", null)));
+                    model.setDeductTokens(m.getBooleanOrDefault(Jsoner.mintJsonKey("deductTokens", true)));
 
                     Object reqTypes = m.getCollection(Jsoner.mintJsonKey("supportedRequestTypes", null));
                     if (reqTypes != null && reqTypes instanceof JsonArray) {

@@ -56,6 +56,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
     private JTextArea taPrompt;
     private JTextArea taSystemPrompt;
     private JPanel pnlConfig;
+    private JLabel lblDeductTokens;
     private JButton cmdAdd;
     private JButton cmdRemove;
     private JButton cmdSave;
@@ -157,6 +158,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
         this.taPrompt.setText("");
         this.taSystemPrompt.setText("");
         clearConfigPanel();
+        updateDeductTokensLabel();
         updatingUI = false;
     }
 
@@ -195,8 +197,28 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
         updateConfigPanel();
     }
 
+    private void updateDeductTokensLabel() {
+        String selectedModelName = (String) cmbModel.getSelectedItem();
+        if (selectedModelName == null || MODEL_DEFAULT.equals(selectedModelName)) {
+            lblDeductTokens.setText(" ");
+            return;
+        }
+        for (AiModel m : allModels) {
+            if (m.getName().equals(selectedModelName)) {
+                if (m.isDeductTokens()) {
+                    lblDeductTokens.setText("Nutzung wird vom Guthaben abgezogen");
+                } else {
+                    lblDeductTokens.setText("keine Guthabenabbuchung");
+                }
+                return;
+            }
+        }
+        lblDeductTokens.setText(" ");
+    }
+
     private void updateConfigPanel() {
         clearConfigPanel();
+        updateDeductTokensLabel();
 
         String selectedModelName = (String) cmbModel.getSelectedItem();
         if (selectedModelName == null || MODEL_DEFAULT.equals(selectedModelName)) {
@@ -429,6 +451,10 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
         cmbModel = new JComboBox<>();
         cmbModel.addItem(MODEL_DEFAULT);
 
+        lblDeductTokens = new JLabel();
+        lblDeductTokens.setFont(lblDeductTokens.getFont().deriveFont(lblDeductTokens.getFont().getSize() - 2f));
+        lblDeductTokens.setForeground(new java.awt.Color(153, 153, 153));
+
         // === Config panel ===
         pnlConfig = new JPanel();
         pnlConfig.setLayout(new GridBagLayout());
@@ -467,7 +493,8 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
                                                         .addComponent(jScrollPane2)
                                                         .addComponent(jScrollPane3)
                                                         .addComponent(cmbRequestType, GroupLayout.Alignment.TRAILING, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                                        .addComponent(cmbModel, GroupLayout.Alignment.TRAILING, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                                        .addComponent(cmbModel, GroupLayout.Alignment.TRAILING, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                        .addComponent(lblDeductTokens)))
                                         .addComponent(configScrollPane)
                                         .addGroup(layout.createSequentialGroup()
                                                 .addComponent(jLabel5)
@@ -499,6 +526,8 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
                                                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                                                         .addComponent(jLabelModel)
                                                         .addComponent(cmbModel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(lblDeductTokens)
                                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                                         .addComponent(jScrollPane2, GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE)

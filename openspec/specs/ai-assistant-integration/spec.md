@@ -1,5 +1,8 @@
-## ADDED Requirements
+# ai-assistant-integration Specification
 
+## Purpose
+TBD - created by archiving change update-ingo-api-v2. Update Purpose after archive.
+## Requirements
 ### Requirement: v2 Type-Specific Request Submission
 The system SHALL submit AI requests to type-specific v2 endpoints (`/v2/{requestType}` for synchronous, `/v2/{requestType}-async` for asynchronous) instead of the single v1 endpoint (`/v1/request-submit`).
 
@@ -41,19 +44,3 @@ The system SHALL poll for async request status using `GET /v2/request-status/{re
 - **THEN** it SHALL call `GET /v2/request-status/{requestId}`
 - **AND** parse the `AiResponse` with status, outputData, and executionMillis
 
-## MODIFIED Requirements
-
-### Requirement: AI Capability Data Model
-The `AiCapability` class SHALL include additional fields to support the v2 action concept:
-- `actionId` (String): Unique identifier for the action on the server
-- `asyncRecommended` (boolean): Whether async execution is recommended (replaces the v1 `async` flag semantically)
-- `modelRef` (String): Reference to the default model name for this action
-
-The existing `async` field SHALL be populated from the v2 `asyncRecommended` field to maintain backward compatibility with existing UI code.
-
-#### Scenario: AiCapability populated from v2 action
-- **WHEN** the client parses a v2 action response
-- **THEN** it SHALL set `actionId` to the action's unique identifier
-- **AND** set `async` to the value of `asyncRecommended`
-- **AND** set `modelRef` to the action's model reference
-- **AND** preserve all other fields (name, description, requestType, input, output, parameters, configurations, usageTypes)
