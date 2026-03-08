@@ -680,6 +680,7 @@ import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePosition;
 import com.jdimension.jlawyer.persistence.InvoicePositionFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoiceType;
+import com.jdimension.jlawyer.persistence.Timesheet;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.services.AddressServiceLocal;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
@@ -719,6 +720,7 @@ import org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulStatusResponseV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulRecycleBinDocumentV7;
+import org.jlawyer.io.rest.v8.pojo.RestfulTimesheetV8;
 
 /**
  *
@@ -2141,6 +2143,43 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete account entry " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns a list of open timesheets for a given case
+     *
+     * @param id case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/{id}/timesheets")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCaseTimesheets(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileBean currentCase = cases.getArchiveFile(id);
+            if (currentCase == null) {
+                log.error("case with id " + id + " does not exist");
+                return Response.serverError().build();
+            }
+
+            List<Timesheet> timesheets = cases.getOpenTimesheets(id);
+
+            ArrayList<RestfulTimesheetV8> resultList = new ArrayList<>();
+            for (Timesheet ts : timesheets) {
+                resultList.add(RestfulTimesheetV8.fromTimesheet(ts));
+            }
+
+            return Response.ok(resultList).build();
+        } catch (Exception ex) {
+            log.error("can not get timesheets for case " + id, ex);
             return Response.serverError().build();
         }
     }

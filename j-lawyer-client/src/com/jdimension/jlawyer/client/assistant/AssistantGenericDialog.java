@@ -666,6 +666,8 @@ package com.jdimension.jlawyer.client.assistant;
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.AiResponse;
+import com.jdimension.jlawyer.ai.ConfigurationData;
+import com.jdimension.jlawyer.ai.ConfigurationUtils;
 import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.ai.OutputData;
@@ -813,8 +815,8 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
                 this.taPrompt.setText(promptWithValues);
             }
             this.taPrompt.setEnabled(true);
-        } else {
-            this.taPrompt.setEnabled(false);
+        } else if (c.isCustomPrompts()) {
+            this.taPrompt.setEnabled(true);
         }
 
         this.pnlParameters.setLayout(new java.awt.GridLayout(this.capability.getParameters().size(), 2, 6, 6));
@@ -1198,7 +1200,11 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
                         });
                     });
 
-                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getModelType(), taPrompt.getText(), fParams, inputs, null);
+                    List<ConfigurationData> promptConfigs = null;
+                    if (capability.getConfigurationValues() != null && !capability.getConfigurationValues().isEmpty()) {
+                        promptConfigs = ConfigurationUtils.fromProperties(capability.getConfigurationValues());
+                    }
+                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getActionId(), capability.getModelRef(), taPrompt.getText(), capability.getSystemPrompt(), capability.isAsyncRecommended(), fParams, inputs, null, promptConfigs);
                     if (status.isAsync()) {
                         Thread.sleep(1000);
                         // poll until final result is available
@@ -1272,7 +1278,7 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
                 AiRequestStatus status = resultRef.get();
                 result = status;
                 if (status != null) {
-                    if (status.getStatus().equalsIgnoreCase("failed")) {
+                    if (status.isError()) {
                         // Check if user was at bottom BEFORE update
                         JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
                         int currentValue = verticalBar.getValue();

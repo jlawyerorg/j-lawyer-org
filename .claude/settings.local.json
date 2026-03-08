@@ -50,7 +50,8 @@
       "Bash(do jar tf:*)",
       "Bash(mvn dependency:tree:*)",
       "Bash(cd:*)",
-      "WebFetch(domain:handbuch.bea-brak.de)"
+      "WebFetch(domain:handbuch.bea-brak.de)",
+      "Bash(do jar:*)"
     ],
     "deny": [],
     "ask": []

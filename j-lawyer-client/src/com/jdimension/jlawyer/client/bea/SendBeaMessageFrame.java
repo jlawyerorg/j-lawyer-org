@@ -733,6 +733,7 @@ import com.jdimension.jlawyer.services.bea.rest.BeaAttachment;
 import com.jdimension.jlawyer.services.bea.rest.BeaIdentity;
 import com.jdimension.jlawyer.services.bea.rest.BeaListItem;
 import com.jdimension.jlawyer.services.bea.rest.BeaMessage;
+import com.jdimension.jlawyer.services.bea.rest.BeaMessageHeader;
 import com.jdimension.jlawyer.services.bea.rest.BeaPostbox;
 import themes.colors.DefaultColorTheme;
 
@@ -754,6 +755,9 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
     private TextEditorPanel tp;
 
     private BeaListItem authority = null;
+
+    private String draftSafeId = null;
+    private String draftMessageId = null;
 
     private List<PartyTypeBean> allPartyTypes = new ArrayList<>();
     private List<String> allPartyTypesPlaceholders = new ArrayList<>();
@@ -1116,6 +1120,11 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
 
     public void setDictateSign(String dictateSign) {
         this.contextDictateSign = dictateSign;
+    }
+
+    public void setDraftInfo(String safeId, String messageId) {
+        this.draftSafeId = safeId;
+        this.draftMessageId = messageId;
     }
 
     public void setArchiveFile(ArchiveFileBean af) {
@@ -2188,6 +2197,32 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
             a = new SendBeaMessageAction(dlg, this, messageType, fromSafeId, attachmentMetadata, this.cu, this.chkEeb.isSelected(), this.authority, recipients, this.txtSubject.getText(), ed.getText(), priority, this.contextArchiveFile, createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString(), folder);
         } else {
             a = new SendBeaMessageAction(dlg, this, messageType, fromSafeId, attachmentMetadata, this.cu, this.chkEeb.isSelected(), this.authority, recipients, this.txtSubject.getText(), ed.getText(), priority, createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString());
+        }
+        if (this.draftSafeId != null && this.draftMessageId != null) {
+            final String safeid = this.draftSafeId;
+            final String msgid = this.draftMessageId;
+            a.setCallback(() -> {
+                int response = JOptionPane.showConfirmDialog(
+                    EditorsRegistry.getInstance().getMainWindow(),
+                    "Entwurf löschen?",
+                    "beA-Entwurf",
+                    JOptionPane.YES_NO_OPTION);
+                if (response == JOptionPane.YES_OPTION) {
+                    try {
+                        BeaAccess bea = BeaAccess.getInstance();
+                        BeaMessageHeader header = new BeaMessageHeader();
+                        header.setId(msgid);
+                        bea.moveMessageToTrash(safeid, header);
+                    } catch (Exception ex) {
+                        log.error("Fehler beim Löschen des Entwurfs", ex);
+                        JOptionPane.showMessageDialog(
+                            EditorsRegistry.getInstance().getMainWindow(),
+                            "Entwurf konnte nicht gelöscht werden: " + ex.getMessage(),
+                            com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
+                            JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            });
         }
         a.start();
 

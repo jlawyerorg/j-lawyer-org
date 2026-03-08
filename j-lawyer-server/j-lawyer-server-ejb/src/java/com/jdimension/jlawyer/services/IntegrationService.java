@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.ai.AiCapability;
+import com.jdimension.jlawyer.ai.AiModel;
 import com.jdimension.jlawyer.ai.AiRequestLog;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.AiResponse;
@@ -720,6 +721,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -1512,8 +1514,32 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
     @Override
     @RolesAllowed(value = {"loginRole"})
+    @TransactionTimeout(value = 1, unit = TimeUnit.MINUTES)
+    public Map<AssistantConfig, List<AiModel>> getAssistantModels() throws Exception {
+        Map<AssistantConfig, List<AiModel>> allModels = new HashMap<>();
+        List<AssistantConfig> configs = this.assistantFacade.findAll();
+        CachingCrypto crypto = CryptoProvider.newCrypto();
+        for (AssistantConfig c : configs) {
+            String pwd = c.getPassword();
+            if (pwd != null) {
+                pwd = crypto.decrypt(c.getPassword());
+            }
+
+            try {
+                AssistantAPI api = new AssistantAPI(c.getUrl(), c.getUserName(), pwd, c.getConnectionTimeout(), c.getReadTimeout());
+                allModels.put(c, api.getModels());
+            } catch (Exception ex) {
+                log.error("Can not determine assistant models for " + c.getName(), ex);
+            }
+        }
+
+        return allModels;
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
     @TransactionTimeout(value = 60, unit = TimeUnit.MINUTES)
-    public AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String modelType, String prompt, List<ParameterData> params, List<InputData> inputs, List<Message> messages) throws Exception {
+    public AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String actionId, String model, String prompt, String systemPrompt, boolean asyncRecommended, List<ParameterData> params, List<InputData> inputs, List<Message> messages, List<ConfigurationData> promptConfigurations) throws Exception {
         List<AssistantConfig> configs = this.assistantFacade.findAll();
         CachingCrypto crypto = CryptoProvider.newCrypto();
         for (AssistantConfig c : configs) {
@@ -1531,7 +1557,18 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             if (!ServerStringUtils.isEmpty(rawConfigs)) {
                 configurations = parseConfiguration(rawConfigs);
             }
-            AiRequestStatus status = api.submitRequest(requestType, modelType, prompt, configurations, params, inputs, messages);
+            // Prompt-specific configuration overrides/supplements server config
+            if (promptConfigurations != null && !promptConfigurations.isEmpty()) {
+                Map<String, ConfigurationData> merged = new LinkedHashMap<>();
+                for (ConfigurationData cd : configurations) {
+                    merged.put(cd.getId(), cd);
+                }
+                for (ConfigurationData cd : promptConfigurations) {
+                    merged.put(cd.getId(), cd);
+                }
+                configurations = new ArrayList<>(merged.values());
+            }
+            AiRequestStatus status = api.submitRequest(requestType, actionId, model, prompt, systemPrompt, asyncRecommended, configurations, params, inputs, messages);
 
             // perform replacements in case of transcription requests
             if (status.getResponse() != null && AiCapability.REQUESTTYPE_TRANSCRIBE.equals(status.getResponse().getRequestType()) && !status.getResponse().getOutputData().isEmpty()) {

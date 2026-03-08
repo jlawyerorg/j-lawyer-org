@@ -1016,7 +1016,12 @@ public class ViewBeaDialog extends javax.swing.JDialog {
 
         SendBeaMessageFrame dlg = new SendBeaMessageFrame();
         dlg.setArchiveFile(this.contextArchiveFile);
-        
+        try {
+            dlg.setDraftInfo(BeaAccess.getInstance().getLoggedInSafeId(), this.msg.getId());
+        } catch (Exception ex) {
+            log.error("Could not populate draft information in SendBeaMessageFrame - draft will not be deleter after it was sent", ex);
+        }
+
         BeaMessage msgC = this.msg;
         try {
 

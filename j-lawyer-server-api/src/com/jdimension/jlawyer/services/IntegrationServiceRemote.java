@@ -664,10 +664,12 @@
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.ai.AiCapability;
+import com.jdimension.jlawyer.ai.AiModel;
 import com.jdimension.jlawyer.ai.AiRequestLog;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.AiResponse;
 import com.jdimension.jlawyer.ai.AiUser;
+import com.jdimension.jlawyer.ai.ConfigurationData;
 import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.ai.ParameterData;
@@ -761,7 +763,35 @@ public interface IntegrationServiceRemote {
 
     Map<AssistantConfig,List<AiCapability>> getAssistantCapabilities() throws Exception;
 
-    AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String modelType, String prompt, List<ParameterData> params, List<InputData> inputs, List<Message> messages) throws Exception;
+    /**
+     * Returns the available AI models for all configured assistant servers.
+     * Each model includes its name, provider, supported request types, and
+     * configuration options.
+     *
+     * @return a map of assistant configurations to their available models
+     * @throws Exception if there is a communication error
+     */
+    Map<AssistantConfig, List<AiModel>> getAssistantModels() throws Exception;
+
+    /**
+     * Submits an AI assistant request to the configured j-lawyer-ai v2 REST API.
+     * The request is routed to a type-specific endpoint based on the requestType.
+     *
+     * @param config the assistant server configuration to use
+     * @param requestType the type of request (e.g. summarize, chat, extract)
+     * @param actionId the v2 action identifier on the server, may be null to use the default action
+     * @param model the model name to override the action's default model, may be null
+     * @param prompt the prompt text, may be null
+     * @param systemPrompt the system prompt text, may be null
+     * @param asyncRecommended whether the server recommends asynchronous processing for this action
+     * @param params parameter data for the request, may be null
+     * @param inputs input data for the request, may be null
+     * @param messages chat messages for conversational requests, may be null
+     * @param promptConfigurations prompt-specific configuration overrides, may be null
+     * @return the request status including the response for synchronous requests
+     * @throws Exception if the request fails
+     */
+    AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String actionId, String model, String prompt, String systemPrompt, boolean asyncRecommended, List<ParameterData> params, List<InputData> inputs, List<Message> messages, List<ConfigurationData> promptConfigurations) throws Exception;
     
     AiResponse getAssistantRequestStatus(AssistantConfig config, String requestId) throws Exception;
 

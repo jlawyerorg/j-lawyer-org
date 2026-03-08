@@ -895,11 +895,14 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
                             recipientIban = recipientIban.replace(" ", "");
                         }
 
+                        String recipientName = (p.getContact().getBankAccountOwner() != null && !p.getContact().getBankAccountOwner().trim().isEmpty())
+                                ? p.getContact().getBankAccountOwner().trim()
+                                : p.getContact().toDisplayName();
                         transactions.add(new SEPATransaction(
                                 new SEPABankAccount(
                                         recipientIban,
                                         p.getContact().getBankCode(),
-                                        StringUtils.sanitizeForSepa(p.getContact().toDisplayName())
+                                        StringUtils.sanitizeForSepa(recipientName)
                                 ),
                                 p.getTotal().setScale(2, RoundingMode.HALF_UP),
                                 StringUtils.sanitizeForSepa(p.getPaymentNumber() + " " + p.getReason()),

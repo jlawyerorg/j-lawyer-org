@@ -970,6 +970,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
 
             // file number must not be changed
             currentContact.setBankAccount(contact.getBankAccount());
+            currentContact.setBankAccountOwner(contact.getBankAccountOwner());
             currentContact.setBankCode(contact.getBankCode());
             currentContact.setBankName(contact.getBankName());
             currentContact.setSepaReference(contact.getSepaReference());
@@ -1004,6 +1005,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
             currentContact.setTrafficInsuranceName(contact.getTrafficInsuranceName());
             currentContact.setTrafficInsuranceNumber(contact.getTrafficInsuranceNumber());
             currentContact.setTrafficLegalProtection(contact.getTrafficLegalProtection() == 1);
+            currentContact.setTaxDeduction(contact.getTaxDeduction() == 1);
             currentContact.setWebsite(contact.getWebsite());
             currentContact.setZipCode(contact.getZipCode());
 

@@ -684,6 +684,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
@@ -790,9 +792,18 @@ public class EmailUtils extends CommonMailUtils {
                 return null;
             }
 
+            // sort by email address length descending so the most specific (longest) match wins
+            List<MailboxSetup> sortedMailboxes = new ArrayList<>(mailboxes);
+            Collections.sort(sortedMailboxes, new Comparator<MailboxSetup>() {
+                @Override
+                public int compare(MailboxSetup o1, MailboxSetup o2) {
+                    return Integer.compare(o2.getEmailAddress().length(), o1.getEmailAddress().length());
+                }
+            });
+
             opened = openFolder(msg.getFolder());
             Address[] froms = msg.getFrom();
-            for (MailboxSetup ms : mailboxes) {
+            for (MailboxSetup ms : sortedMailboxes) {
                 if (froms != null) {
                     for (Address from : froms) {
                         if (from.toString().contains(ms.getEmailAddress())) {
@@ -836,11 +847,20 @@ public class EmailUtils extends CommonMailUtils {
                 return null;
             }
 
+            // sort by email address length descending so the most specific (longest) match wins
+            List<MailboxSetup> sortedMailboxes = new ArrayList<>(mailboxes);
+            Collections.sort(sortedMailboxes, new Comparator<MailboxSetup>() {
+                @Override
+                public int compare(MailboxSetup o1, MailboxSetup o2) {
+                    return Integer.compare(o2.getEmailAddress().length(), o1.getEmailAddress().length());
+                }
+            });
+
             String from = msg.getFromEmail();
             if (from == null) {
                 from = "";
             }
-            for (MailboxSetup ms : mailboxes) {
+            for (MailboxSetup ms : sortedMailboxes) {
                 if (!StringUtils.isEmpty(from) && from.contains(ms.getEmailAddress())) {
                     return ms;
                 }

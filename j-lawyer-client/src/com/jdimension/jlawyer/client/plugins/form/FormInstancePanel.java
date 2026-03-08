@@ -669,7 +669,7 @@ import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.client.assistant.AssistantAccess;
-import com.jdimension.jlawyer.client.assistant.AssistantExtractDialog;
+import com.jdimension.jlawyer.client.assistant.AssistantExtractPanel;
 import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
@@ -983,7 +983,7 @@ public class FormInstancePanel extends javax.swing.JPanel implements AssistantFl
         
         
         
-        AssistantExtractDialog dlg = new AssistantExtractDialog(this.plugin.getCaseDto(), extractConfig, extractCapability, this, EditorsRegistry.getInstance().getMainWindow(), true);
+        AssistantExtractPanel dlg = new AssistantExtractPanel(this.plugin.getCaseDto(), extractConfig, extractCapability, this, EditorsRegistry.getInstance().getMainWindow(), true);
         dlg.setRequestTypeLabel("Falldaten aus Dokument(en) extrahieren");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);

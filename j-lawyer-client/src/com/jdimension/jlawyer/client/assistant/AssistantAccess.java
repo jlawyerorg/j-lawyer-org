@@ -668,6 +668,8 @@ import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
+import com.jdimension.jlawyer.ai.ConfigurationData;
+import com.jdimension.jlawyer.ai.ConfigurationUtils;
 import com.jdimension.jlawyer.ai.Input;
 import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.ai.Prompt;
@@ -834,6 +836,15 @@ public class AssistantAccess {
                         }
                         cp.setDefaultPrompt(p.getPrompt());
                         clone.setDefaultPrompt(cp);
+                        if (p.getModelRef() != null && !p.getModelRef().isEmpty()) {
+                            clone.setModelRef(p.getModelRef());
+                        }
+                        if (p.getConfiguration() != null && !p.getConfiguration().isEmpty()) {
+                            clone.setConfigurationValues(p.getConfiguration());
+                        }
+                        if (p.getSystemPrompt() != null && !p.getSystemPrompt().isEmpty()) {
+                            clone.setSystemPrompt(p.getSystemPrompt());
+                        }
                         filtered.get(config).add(clone);
                     }
                 }
@@ -859,6 +870,7 @@ public class AssistantAccess {
             for (AiCapability c : capabilities.get(config)) {
                 JMenuItem mi = new JMenuItem();
                 mi.setText(c.getName());
+                mi.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/" + c.getRequestType() + ".png")));
                 mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
                 mi.addActionListener((ActionEvent e) -> {
                     ClientSettings settings = ClientSettings.getInstance();
@@ -874,8 +886,12 @@ public class AssistantAccess {
                             }
                         }
 
-                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, c.getRequestType(), c.getModelType(), adapter.getPrompt(c), params, adapter.getInputs(c), adapter.getMessages(c));
-                        if (status.getStatus().equalsIgnoreCase("error")) {
+                        List<ConfigurationData> promptConfigs = null;
+                        if (c.getConfigurationValues() != null && !c.getConfigurationValues().isEmpty()) {
+                            promptConfigs = ConfigurationUtils.fromProperties(c.getConfigurationValues());
+                        }
+                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, c.getRequestType(), c.getActionId(), c.getModelRef(), adapter.getPrompt(c), c.getSystemPrompt(), c.isAsyncRecommended(), params, adapter.getInputs(c), adapter.getMessages(c), promptConfigs);
+                        if (status.isError()) {
                             adapter.processError(c, status);
                         } else {
                             adapter.processOutput(c, status);
@@ -897,13 +913,14 @@ public class AssistantAccess {
             for (AiCapability c : capabilities.get(config)) {
                 JMenuItem mi = new JMenuItem();
                 mi.setText(c.getName());
+                mi.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/" + c.getRequestType() + ".png")));
                 mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
                 mi.addActionListener((ActionEvent e) -> {
                     if(AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType())) {
-                        AssistantChatDialog dlg = new AssistantChatDialog(selectedCase, config, c, adapter, parent, modal);
+                        AssistantChatPanel dlg = new AssistantChatPanel(selectedCase, config, c, adapter, parent, modal);
                         dlg.setVisible(true);
                     } else {
-                        AssistantGenericDialog dlg = new AssistantGenericDialog(selectedCase, config, c, adapter, !c.hasParameters(), parent, modal);
+                        AssistantGenericPanel dlg = new AssistantGenericPanel(selectedCase, config, c, adapter, !c.hasParameters(), parent, modal);
                         dlg.setVisible(true);
                     }
                 });
@@ -912,20 +929,21 @@ public class AssistantAccess {
         }
 
     }
-    
+
     public void populateMenu(JPopupMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities, AssistantInputAdapter adapter, ArchiveFileBean selectedCase, JFrame parent, boolean modal) {
 
         for (AssistantConfig config : capabilities.keySet()) {
             for (AiCapability c : capabilities.get(config)) {
                 JMenuItem mi = new JMenuItem();
                 mi.setText(c.getName());
+                mi.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/" + c.getRequestType() + ".png")));
                 mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
                 mi.addActionListener((ActionEvent e) -> {
                     if(AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType())) {
-                        AssistantChatDialog dlg = new AssistantChatDialog(selectedCase, config, c, adapter, parent, modal);
+                        AssistantChatPanel dlg = new AssistantChatPanel(selectedCase, config, c, adapter, parent, modal);
                         dlg.setVisible(true);
                     } else {
-                        AssistantGenericDialog dlg = new AssistantGenericDialog(selectedCase, config, c, adapter, !c.hasParameters(), parent, modal);
+                        AssistantGenericPanel dlg = new AssistantGenericPanel(selectedCase, config, c, adapter, !c.hasParameters(), parent, modal);
                         dlg.setVisible(true);
                     }
                 });
@@ -941,16 +959,17 @@ public class AssistantAccess {
             for (AiCapability c : capabilities.get(config)) {
                 JMenuItem mi = new JMenuItem();
                 mi.setText(c.getName());
+                mi.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/" + c.getRequestType() + ".png")));
                 mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
                 mi.addActionListener((ActionEvent e) -> {
                     if(AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType())) {
-                        AssistantChatDialog dlg = new AssistantChatDialog(selectedCase, config, c, adapter, EditorsRegistry.getInstance().getMainWindow(), false);
+                        AssistantChatPanel dlg = new AssistantChatPanel(selectedCase, config, c, adapter, EditorsRegistry.getInstance().getMainWindow(), false);
                         dlg.setVisible(true);
                     } else if(AiCapability.REQUESTTYPE_VISION.equals(c.getRequestType())) {
-                        AssistantVisionDialog dlg = new AssistantVisionDialog(selectedCase, config, c, adapter, EditorsRegistry.getInstance().getMainWindow(), false);
+                        AssistantVisionPanel dlg = new AssistantVisionPanel(selectedCase, config, c, adapter, EditorsRegistry.getInstance().getMainWindow(), false);
                         dlg.setVisible(true);
                     } else {
-                        AssistantGenericDialog dlg = new AssistantGenericDialog(selectedCase, config, c, adapter, !c.hasParameters(), EditorsRegistry.getInstance().getMainWindow(), false);
+                        AssistantGenericPanel dlg = new AssistantGenericPanel(selectedCase, config, c, adapter, !c.hasParameters(), EditorsRegistry.getInstance().getMainWindow(), false);
                         dlg.setVisible(true);
                     }
                 });

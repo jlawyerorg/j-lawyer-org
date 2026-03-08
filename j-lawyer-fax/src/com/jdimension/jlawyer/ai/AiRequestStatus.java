@@ -89,5 +89,13 @@ public class AiRequestStatus implements Serializable {
     public void setAsync(boolean async) {
         this.async = async;
     }
-    
+
+    /**
+     * Returns true if the request status indicates an error (status is "ERROR" or "FAILED").
+     * @return true if the request has failed
+     */
+    public boolean isError() {
+        return status != null && (status.equalsIgnoreCase("error") || status.equalsIgnoreCase("failed"));
+    }
+
 }

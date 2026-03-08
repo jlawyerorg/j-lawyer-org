@@ -743,8 +743,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.activation.FileDataSource;
@@ -1632,7 +1634,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     public void processOutput(AiCapability c, AiRequestStatus status) {
         String prependText = "";
         if (status != null) {
-            if (status.getStatus().equalsIgnoreCase("error")) {
+            if (status.isError()) {
                 // ignore output
             } else {
                 StringBuilder result = new StringBuilder();
@@ -1901,7 +1903,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                     try {
                         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(transcribeConfig, transcribeCapability.getRequestType(), transcribeCapability.getModelType(), "", fParams, inputs, null);
+                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(transcribeConfig, transcribeCapability.getRequestType(), transcribeCapability.getActionId(), transcribeCapability.getModelRef(), "", null, transcribeCapability.isAsyncRecommended(), fParams, inputs, null, null);
                         resultRef.set(status);
 
                     } catch (Throwable t) {
@@ -1919,7 +1921,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                     AiRequestStatus status = resultRef.get();
                     if (status != null) {
                         String resultText = "";
-                        if (status.getStatus().equalsIgnoreCase("failed")) {
+                        if (status.isError()) {
                             resultText = status.getStatus() + ": " + status.getStatusDetails();
                         } else {
                             StringBuilder resultString = new StringBuilder();
@@ -3281,6 +3283,15 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             Map<AssistantConfig, List<AiCapability>> capabilitiesGenerate = ingo.filterCapabilities(AiCapability.REQUESTTYPE_GENERATE, AiCapability.INPUTTYPE_STRING);
             ingo.populateMenu(this.popAssistant, capabilitiesGenerate, (AssistantInputAdapter) this, this.contextArchiveFile, this, true);
             Map<AssistantConfig, List<AiCapability>> capabilitiesGenerate2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_GENERATE, AiCapability.INPUTTYPE_NONE);
+            for (AssistantConfig cfg : capabilitiesGenerate.keySet()) {
+                Set<String> alreadyAdded = new HashSet<>();
+                for (AiCapability cap : capabilitiesGenerate.get(cfg)) {
+                    alreadyAdded.add(cap.getName());
+                }
+                if (capabilitiesGenerate2.containsKey(cfg)) {
+                    capabilitiesGenerate2.get(cfg).removeIf(c -> alreadyAdded.contains(c.getName()));
+                }
+            }
             ingo.populateMenu(this.popAssistant, capabilitiesGenerate2, (AssistantInputAdapter) this, this.contextArchiveFile, this, true);
             Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_EXPLAIN, AiCapability.INPUTTYPE_STRING);
             ingo.populateMenu(this.popAssistant, capabilities, (AssistantInputAdapter) this, this.contextArchiveFile, this, true);

@@ -666,6 +666,8 @@ package com.jdimension.jlawyer.client.assistant;
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.AiResponse;
+import com.jdimension.jlawyer.ai.ConfigurationData;
+import com.jdimension.jlawyer.ai.ConfigurationUtils;
 import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.ai.OutputData;
@@ -1222,7 +1224,11 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                     try {
                         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(generateConfig, generateCapability.getRequestType(), generateCapability.getModelType(), taPrompt.getText(), fParams, inputs, null);
+                        List<ConfigurationData> promptConfigs = null;
+                        if (generateCapability.getConfigurationValues() != null && !generateCapability.getConfigurationValues().isEmpty()) {
+                            promptConfigs = ConfigurationUtils.fromProperties(generateCapability.getConfigurationValues());
+                        }
+                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(generateConfig, generateCapability.getRequestType(), generateCapability.getActionId(), generateCapability.getModelRef(), taPrompt.getText(), generateCapability.getSystemPrompt(), generateCapability.isAsyncRecommended(), fParams, inputs, null, promptConfigs);
                         if (status.isAsync()) {
                             Thread.sleep(1000);
                             // poll until final result is available
@@ -1266,7 +1272,7 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                     // Task completion actions
                     AiRequestStatus status = resultRef.get();
                     if (status != null) {
-                        if (status.getStatus().equalsIgnoreCase("failed")) {
+                        if (status.isError()) {
                             taResult.insert(status.getStatus() + ": " + status.getStatusDetails(), taResult.getCaretPosition());
                         } else {
                             StringBuilder resultString = new StringBuilder();
@@ -1321,7 +1327,7 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                     try {
                         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(translateConfig, translateCapability.getRequestType(), translateCapability.getModelType(), taPrompt.getText(), fParams, inputs, null);
+                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(translateConfig, translateCapability.getRequestType(), translateCapability.getActionId(), translateCapability.getModelRef(), taPrompt.getText(), null, translateCapability.isAsyncRecommended(), fParams, inputs, null, null);
                         resultRef.set(status);
 
                     } catch (Throwable t) {
@@ -1335,7 +1341,7 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                     // Task completion actions
                     AiRequestStatus status = resultRef.get();
                     if (status != null) {
-                        if (status.getStatus().equalsIgnoreCase("failed")) {
+                        if (status.isError()) {
                             taResult.insert(status.getStatus() + ": " + status.getStatusDetails(), taResult.getCaretPosition());
                         } else {
                             StringBuilder resultString = new StringBuilder();
@@ -1490,7 +1496,7 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                     try {
                         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(transcribeConfig, transcribeCapability.getRequestType(), transcribeCapability.getModelType(), "", fParams, inputs, null);
+                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(transcribeConfig, transcribeCapability.getRequestType(), transcribeCapability.getActionId(), transcribeCapability.getModelRef(), "", null, transcribeCapability.isAsyncRecommended(), fParams, inputs, null, null);
                         resultRef.set(status);
 
                     } catch (Throwable t) {
@@ -1504,7 +1510,7 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                     // Task completion actions
                     AiRequestStatus status = resultRef.get();
                     if (status != null) {
-                        if (status.getStatus().equalsIgnoreCase("failed")) {
+                        if (status.isError()) {
                             taResult.setText(status.getStatus() + ": " + status.getStatusDetails());
                         } else {
                             StringBuilder resultString = new StringBuilder();
@@ -1571,7 +1577,7 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
     @Override
     public void processOutput(AiCapability c, AiRequestStatus status) {
         if (status != null) {
-            if (status.getStatus().equalsIgnoreCase("error")) {
+            if (status.isError()) {
                 // ignore output
             } else {
                 StringBuilder result = new StringBuilder();

@@ -685,7 +685,7 @@ import java.util.stream.Collectors;
  * @author jens
  */
 @Stateless
-public class TimesheetService implements TimesheetServiceRemote {
+public class TimesheetService implements TimesheetServiceRemote, TimesheetServiceLocal {
     
     @EJB
     private TimesheetPositionTemplateFacadeLocal posTemplates;
