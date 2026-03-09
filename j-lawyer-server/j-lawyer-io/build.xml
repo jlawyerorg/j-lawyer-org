@@ -84,6 +84,7 @@
                 <pathelement location="../../j-lawyer-server-entities/dist/j-lawyer-server-entities.jar"/>
                 <pathelement location="../../j-lawyer-server-api/dist/j-lawyer-server-api.jar"/>
                 <pathelement location="../../j-lawyer-server-common/dist/j-lawyer-server-common.jar"/>
+                <pathelement location="../j-lawyer-server-ejb/dist/j-lawyer-server-ejb.jar"/>
                 <pathelement path="${java.class.path}"/>
             </classpath>
         </java>

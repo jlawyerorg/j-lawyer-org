@@ -665,6 +665,7 @@ package org.jlawyer.io.rest.v7;
 
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
+import org.jlawyer.io.rest.v7.pojo.RestfulBackupConfigurationV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulCredentials;
 
 /**
@@ -679,5 +680,11 @@ public interface AdministrationEndpointLocalV7 {
     Response getJobStatus(String jobId);
     
     public Response listJobs();
+    
+    Response getBackupConfiguration();
+    
+    Response updateBackupConfiguration(RestfulBackupConfigurationV7 configuration);
+    
+    Response deleteBackupData();
     
 }
