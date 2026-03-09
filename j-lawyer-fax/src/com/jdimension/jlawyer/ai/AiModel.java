@@ -22,6 +22,7 @@ public class AiModel implements Serializable {
     private List<String> supportedRequestTypes = new ArrayList<>();
     private boolean local = false;
     private boolean deductTokens = true;
+    private boolean supportsTools = false;
     private List<Configuration> configurations = new ArrayList<>();
 
     /**
@@ -106,6 +107,20 @@ public class AiModel implements Serializable {
      */
     public void setDeductTokens(boolean deductTokens) {
         this.deductTokens = deductTokens;
+    }
+
+    /**
+     * @return the supportsTools
+     */
+    public boolean isSupportsTools() {
+        return supportsTools;
+    }
+
+    /**
+     * @param supportsTools the supportsTools to set
+     */
+    public void setSupportsTools(boolean supportsTools) {
+        this.supportsTools = supportsTools;
     }
 
     /**

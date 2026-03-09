@@ -51,7 +51,17 @@
       "Bash(mvn dependency:tree:*)",
       "Bash(cd:*)",
       "WebFetch(domain:handbuch.bea-brak.de)",
-      "Bash(do jar:*)"
+      "Bash(do jar:*)",
+      "WebFetch(domain:lite.duckduckgo.com)",
+      "WebFetch(domain:html.duckduckgo.com)",
+      "WebFetch(domain:api.duckduckgo.com)",
+      "WebFetch(domain:api.search.brave.com)",
+      "WebFetch(domain:developers.google.com)",
+      "WebFetch(domain:jsoup.org)",
+      "WebFetch(domain:search.brave.com)",
+      "Bash(curl -s -A \"Mozilla/5.0 \\(compatible; j-lawyer.org Legal Assistant\\)\" \"https://www.google.com/search?q=BGH+Urteil+Mietminderung&hl=de&num=10\" -o /tmp/google_test.html)",
+      "Read(//tmp/**)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

@@ -1154,6 +1154,7 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
                             fParams,
                             inputs,
                             null, // Assuming no conversation
+                            null,
                             null
                         );
 

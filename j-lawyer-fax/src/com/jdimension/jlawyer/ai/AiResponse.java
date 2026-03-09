@@ -19,6 +19,7 @@ public class AiResponse implements Serializable {
     public static final String STATUS_EXECUTING="EXECUTING";
     public static final String STATUS_FINISHED="FINISHED";
     public static final String STATUS_FAILED="FAILED";
+    public static final String STATUS_TOOL_CALL_PENDING="TOOL_CALL_PENDING";
     
     private String prompt;
     private List<OutputData> outputData=new ArrayList<>();
@@ -29,6 +30,9 @@ public class AiResponse implements Serializable {
     private String status;
     private String statusMessage;
     
+    private List<ToolCall> toolCalls=new ArrayList<>();
+    private List<Message> messages=new ArrayList<>();
+
     private float progress=0f;
     private long executionMillis=0;
 
@@ -151,6 +155,32 @@ public class AiResponse implements Serializable {
         this.executionMillis = executionMillis;
     }
 
-    
-    
+    /**
+     * @return the toolCalls
+     */
+    public List<ToolCall> getToolCalls() {
+        return toolCalls;
+    }
+
+    /**
+     * @param toolCalls the toolCalls to set
+     */
+    public void setToolCalls(List<ToolCall> toolCalls) {
+        this.toolCalls = toolCalls;
+    }
+
+    /**
+     * @return the messages
+     */
+    public List<Message> getMessages() {
+        return messages;
+    }
+
+    /**
+     * @param messages the messages to set
+     */
+    public void setMessages(List<Message> messages) {
+        this.messages = messages;
+    }
+
 }

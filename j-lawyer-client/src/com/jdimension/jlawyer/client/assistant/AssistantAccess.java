@@ -800,6 +800,7 @@ public class AssistantAccess {
         Map<AssistantConfig, List<AiCapability>> all = this.getCapabilities();
         Map<AssistantConfig, List<AiCapability>> filtered = new HashMap<>();
         for (AssistantConfig config : all.keySet()) {
+            boolean customPromptsAdded = false;
             for (AiCapability c : all.get(config)) {
                 if (requestType != null && !c.getRequestType().equals(requestType)) {
                     continue;
@@ -824,9 +825,11 @@ public class AssistantAccess {
                     filtered.put(config, new ArrayList<>());
                 }
                 filtered.get(config).add(c);
-                
+
                 // if capability allows use of custom prompts, add the capability with the custom prompt to the filtered list
-                if(prompts.containsKey(requestType) && c.isCustomPrompts()) {
+                // only add once per config to avoid duplicates when multiple capabilities support custom prompts
+                if(!customPromptsAdded && prompts.containsKey(requestType) && c.isCustomPrompts()) {
+                    customPromptsAdded = true;
                     for(AssistantPrompt p: prompts.get(requestType)) {
                         AiCapability clone=(AiCapability)c.clone();
                         clone.setName(p.getName());
@@ -848,12 +851,11 @@ public class AssistantAccess {
                         filtered.get(config).add(clone);
                     }
                 }
-                
-                // Sort the list of AiCapabilities by name for each AssistantConfig
-                List<AiCapability> sortedCapabilities = filtered.get(config);
-                if (sortedCapabilities != null) {
-                    sortedCapabilities.sort(Comparator.comparing(AiCapability::getName));
-                }
+            }
+            // Sort the list of AiCapabilities by name for each AssistantConfig
+            List<AiCapability> sortedCapabilities = filtered.get(config);
+            if (sortedCapabilities != null) {
+                sortedCapabilities.sort(Comparator.comparing(AiCapability::getName));
             }
         }
         return filtered;
@@ -890,7 +892,7 @@ public class AssistantAccess {
                         if (c.getConfigurationValues() != null && !c.getConfigurationValues().isEmpty()) {
                             promptConfigs = ConfigurationUtils.fromProperties(c.getConfigurationValues());
                         }
-                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, c.getRequestType(), c.getActionId(), c.getModelRef(), adapter.getPrompt(c), c.getSystemPrompt(), c.isAsyncRecommended(), params, adapter.getInputs(c), adapter.getMessages(c), promptConfigs);
+                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, c.getRequestType(), c.getActionId(), c.getModelRef(), adapter.getPrompt(c), c.getSystemPrompt(), c.isAsyncRecommended(), params, adapter.getInputs(c), adapter.getMessages(c), promptConfigs, null);
                         if (status.isError()) {
                             adapter.processError(c, status);
                         } else {

@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.editors.files;
 
 import com.iradraconis.shrinkify.ShrinkifyGui;
 import com.jdimension.jlawyer.ai.AiCapability;
+import com.jdimension.jlawyer.ai.AiModel;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.Message;
@@ -1669,6 +1670,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         if (this.dto != null) {
             this.cmdEditCaseNumber.setEnabled(UserUtils.isCurrentUserAdmin());
+            this.cmdIngoChat.setEnabled(true);
         }
 
         this.txtFilterParties.setText("");
@@ -1820,6 +1822,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     public void clearInputs() {
         this.dto = null;
+        this.cmdIngoChat.setEnabled(false);
 
         this.newEventPanel.reset();
 
@@ -2312,6 +2315,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         togCaseSync = new javax.swing.JToggleButton();
         cmdTimesheetLog = new javax.swing.JButton();
         cmdSendInstantMessage = new javax.swing.JButton();
+        cmdIngoChat = new javax.swing.JButton();
 
         mnuSetReviewDone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         mnuSetReviewDone.setText("erledigt");
@@ -3324,6 +3328,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel7Layout.createSequentialGroup()
                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(togFulltextSearch, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 31, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(cmdUploadDocument)
                         .add(cmdNewDocument)
@@ -3332,8 +3337,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(cmdClearSearch)
                         .add(cmdAddNote)
                         .add(cmdAddVoiceMemo)
-                        .add(cmdAssistantGenerate)
-                        .add(togFulltextSearch, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 31, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(cmdAssistantGenerate))
                     .add(cmdDocumentTagFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(splitDocumentsMain, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 768, Short.MAX_VALUE)
@@ -4427,6 +4431,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
+        cmdIngoChat.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
+        cmdIngoChat.setToolTipText("Assistent Ingo - Chat öffnen");
+        cmdIngoChat.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdIngoChatActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -4444,6 +4456,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(jLabel2)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdIngoChat)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdTimesheetLog)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -4470,7 +4484,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(org.jdesktop.layout.GroupLayout.LEADING, togCaseSync, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, cmdFavoriteDocuments, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .add(cmdTimesheetLog)
-                    .add(cmdSendInstantMessage))
+                    .add(cmdSendInstantMessage)
+                    .add(cmdIngoChat))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(lblHeaderInfo)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -9139,6 +9154,62 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         UserSettings.getInstance().setSettingAsBoolean(UserSettingsKeys.CONF_CASES_SEARCH_FULLTEXT_INCASE, this.togFulltextSearch.isSelected());
     }//GEN-LAST:event_togFulltextSearchActionPerformed
 
+    private void cmdIngoChatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdIngoChatActionPerformed
+        try {
+            AssistantAccess ingo = AssistantAccess.getInstance();
+            Map<AssistantConfig, List<AiCapability>> chatCapabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_CHAT, AiCapability.INPUTTYPE_NONE);
+
+            ClientSettings cs = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(cs.getLookupProperties());
+            Map<AssistantConfig, List<AiModel>> modelsMap = locator.lookupIntegrationServiceRemote().getAssistantModels();
+            Set<String> toolModelNames = new HashSet<>();
+            for (List<AiModel> models : modelsMap.values()) {
+                for (AiModel m : models) {
+                    if (m.isSupportsTools()) {
+                        toolModelNames.add(m.getName());
+                    }
+                }
+            }
+
+            Map<AssistantConfig, List<AiCapability>> toolCapabilities = new HashMap<>();
+            for (Map.Entry<AssistantConfig, List<AiCapability>> entry : chatCapabilities.entrySet()) {
+                for (AiCapability c : entry.getValue()) {
+                    if (c.getModelRef() != null && toolModelNames.contains(c.getModelRef())) {
+                        toolCapabilities.computeIfAbsent(entry.getKey(), k -> new ArrayList<>()).add(c);
+                    }
+                }
+            }
+
+            if (toolCapabilities.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Es sind keine Chat-Aktionen mit Tool-Unterstützung konfiguriert.", "Ingo", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            final ArchiveFilePanel self = this;
+            AssistantInputAdapter contextAdapter = new AssistantInputAdapter() {
+                @Override
+                public List<InputData> getInputs(AiCapability c) {
+                    List<InputData> inputs = new ArrayList<>();
+                    InputData caseContext = new InputData();
+                    caseContext.setType(InputData.TYPE_STRING);
+                    caseContext.setStringData("Nutze für die folgende Konversation die Akte mit ID " + dto.getId() + " und Aktenzeichen " + dto.getFileNumber() + ".");
+                    inputs.add(caseContext);
+                    return inputs;
+                }
+                @Override
+                public List<Message> getMessages(AiCapability c) { return Collections.emptyList(); }
+            };
+
+            JPopupMenu popup = new JPopupMenu();
+            ingo.populateMenu(popup, toolCapabilities, contextAdapter, this.dto, EditorsRegistry.getInstance().getMainWindow(), false);
+            popup.show(cmdIngoChat, 0, cmdIngoChat.getHeight());
+
+        } catch (Exception ex) {
+            log.error("Error loading Ingo chat capabilities", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Ingo-Aktionen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdIngoChatActionPerformed
+
     public void exportSelectedDocumentsAsPdf() {
 
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
@@ -9772,6 +9843,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdFavoriteDocuments;
     private javax.swing.JButton cmdFormsManager;
     private javax.swing.JButton cmdHeaderAddNote;
+    private javax.swing.JButton cmdIngoChat;
     private javax.swing.JButton cmdLoadFullHistory;
     private javax.swing.JButton cmdNewClaimLedger;
     private javax.swing.JButton cmdNewDocument;

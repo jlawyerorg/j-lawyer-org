@@ -721,7 +721,7 @@ public class AssistantGenericPanel extends JDialog {
                     if (capability.getConfigurationValues() != null && !capability.getConfigurationValues().isEmpty()) {
                         promptConfigs = ConfigurationUtils.fromProperties(capability.getConfigurationValues());
                     }
-                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getActionId(), capability.getModelRef(), taPrompt.getText(), capability.getSystemPrompt(), capability.isAsyncRecommended(), fParams, inputs, null, promptConfigs);
+                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getActionId(), capability.getModelRef(), taPrompt.getText(), capability.getSystemPrompt(), capability.isAsyncRecommended(), fParams, inputs, null, promptConfigs, null);
                     if (status.isAsync()) {
                         Thread.sleep(1000);
                         AiResponse res = locator.lookupIntegrationServiceRemote().getAssistantRequestStatus(config, status.getRequestId());
@@ -1079,6 +1079,7 @@ public class AssistantGenericPanel extends JDialog {
                             transcribeCapability.isAsyncRecommended(),
                             fParams,
                             inputs,
+                            null,
                             null,
                             null
                         );

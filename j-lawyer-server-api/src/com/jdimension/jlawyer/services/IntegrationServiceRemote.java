@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.ai.ConfigurationData;
 import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.ai.ParameterData;
+import com.jdimension.jlawyer.ai.ToolDefinition;
 import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.email.EmailTemplate;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
@@ -788,10 +789,11 @@ public interface IntegrationServiceRemote {
      * @param inputs input data for the request, may be null
      * @param messages chat messages for conversational requests, may be null
      * @param promptConfigurations prompt-specific configuration overrides, may be null
+     * @param tools tool definitions for tool calling support, may be null
      * @return the request status including the response for synchronous requests
      * @throws Exception if the request fails
      */
-    AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String actionId, String model, String prompt, String systemPrompt, boolean asyncRecommended, List<ParameterData> params, List<InputData> inputs, List<Message> messages, List<ConfigurationData> promptConfigurations) throws Exception;
+    AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String actionId, String model, String prompt, String systemPrompt, boolean asyncRecommended, List<ParameterData> params, List<InputData> inputs, List<Message> messages, List<ConfigurationData> promptConfigurations, List<ToolDefinition> tools) throws Exception;
     
     AiResponse getAssistantRequestStatus(AssistantConfig config, String requestId) throws Exception;
 

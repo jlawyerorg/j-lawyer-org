@@ -676,6 +676,7 @@ import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.ai.OutputData;
 import com.jdimension.jlawyer.ai.ParameterData;
+import com.jdimension.jlawyer.ai.ToolDefinition;
 import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.documents.TikaConfigurator;
 import com.jdimension.jlawyer.email.EmailTemplate;
@@ -1539,7 +1540,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     @Override
     @RolesAllowed(value = {"loginRole"})
     @TransactionTimeout(value = 60, unit = TimeUnit.MINUTES)
-    public AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String actionId, String model, String prompt, String systemPrompt, boolean asyncRecommended, List<ParameterData> params, List<InputData> inputs, List<Message> messages, List<ConfigurationData> promptConfigurations) throws Exception {
+    public AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String actionId, String model, String prompt, String systemPrompt, boolean asyncRecommended, List<ParameterData> params, List<InputData> inputs, List<Message> messages, List<ConfigurationData> promptConfigurations, List<ToolDefinition> tools) throws Exception {
         List<AssistantConfig> configs = this.assistantFacade.findAll();
         CachingCrypto crypto = CryptoProvider.newCrypto();
         for (AssistantConfig c : configs) {
@@ -1568,7 +1569,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
                 }
                 configurations = new ArrayList<>(merged.values());
             }
-            AiRequestStatus status = api.submitRequest(requestType, actionId, model, prompt, systemPrompt, asyncRecommended, configurations, params, inputs, messages);
+            AiRequestStatus status = api.submitRequest(requestType, actionId, model, prompt, systemPrompt, asyncRecommended, configurations, params, inputs, messages, tools);
 
             // perform replacements in case of transcription requests
             if (status.getResponse() != null && AiCapability.REQUESTTYPE_TRANSCRIBE.equals(status.getResponse().getRequestType()) && !status.getResponse().getOutputData().isEmpty()) {

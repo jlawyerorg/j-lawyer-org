@@ -21,6 +21,8 @@ public class Message implements Serializable {
     
     private String content=null;
     private String role=ROLE_USER;
+    private String toolCallId=null;
+    private String toolName=null;
 
     public Message() {
     }
@@ -52,7 +54,33 @@ public class Message implements Serializable {
     public void setRole(String role) {
         this.role = role;
     }
-    
-    
-    
+
+    /**
+     * @return the toolCallId
+     */
+    public String getToolCallId() {
+        return toolCallId;
+    }
+
+    /**
+     * @param toolCallId the toolCallId to set
+     */
+    public void setToolCallId(String toolCallId) {
+        this.toolCallId = toolCallId;
+    }
+
+    /**
+     * @return the toolName
+     */
+    public String getToolName() {
+        return toolName;
+    }
+
+    /**
+     * @param toolName the toolName to set
+     */
+    public void setToolName(String toolName) {
+        this.toolName = toolName;
+    }
+
 }

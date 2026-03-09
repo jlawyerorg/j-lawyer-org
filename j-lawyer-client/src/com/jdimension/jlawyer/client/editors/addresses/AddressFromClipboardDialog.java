@@ -988,7 +988,7 @@ public class AddressFromClipboardDialog extends javax.swing.JDialog {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(extractConfig, extractCapability.getRequestType(), extractCapability.getActionId(), extractCapability.getModelRef(), "", null, extractCapability.isAsyncRecommended(), null, inputs, null, null);
+            AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(extractConfig, extractCapability.getRequestType(), extractCapability.getActionId(), extractCapability.getModelRef(), "", null, extractCapability.isAsyncRecommended(), null, inputs, null, null, null);
             if (status != null) {
                 String resultText = "";
                 if (status.isError()) {

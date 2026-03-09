@@ -1903,7 +1903,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                     try {
                         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(transcribeConfig, transcribeCapability.getRequestType(), transcribeCapability.getActionId(), transcribeCapability.getModelRef(), "", null, transcribeCapability.isAsyncRecommended(), fParams, inputs, null, null);
+                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(transcribeConfig, transcribeCapability.getRequestType(), transcribeCapability.getActionId(), transcribeCapability.getModelRef(), "", null, transcribeCapability.isAsyncRecommended(), fParams, inputs, null, null, null);
                         resultRef.set(status);
 
                     } catch (Throwable t) {

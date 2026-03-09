@@ -205,11 +205,19 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
         }
         for (AiModel m : allModels) {
             if (m.getName().equals(selectedModelName)) {
+                StringBuilder info = new StringBuilder();
                 if (m.isDeductTokens()) {
-                    lblDeductTokens.setText("Nutzung wird vom Guthaben abgezogen");
+                    info.append("Nutzung wird vom Guthaben abgezogen");
                 } else {
-                    lblDeductTokens.setText("keine Guthabenabbuchung");
+                    info.append("keine Guthabenabbuchung");
                 }
+                info.append(" | ");
+                if (m.isSupportsTools()) {
+                    info.append("unterstützt Werkzeuge");
+                } else {
+                    info.append("keine Werkzeugunterstützung");
+                }
+                lblDeductTokens.setText(info.toString());
                 return;
             }
         }
