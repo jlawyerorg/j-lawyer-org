@@ -30,7 +30,14 @@ import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
+import com.jdimension.jlawyer.client.utils.SelectAttachmentDialog;
+import com.jdimension.jlawyer.documents.DocumentPreview;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.IntegrationServiceRemote;
 import com.formdev.flatlaf.ui.FlatLineBorder;
+import java.io.File;
+import java.nio.file.Files;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -70,6 +77,7 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
@@ -165,6 +173,7 @@ public class AssistantChatPanel extends JDialog {
     private JTextArea taPrompt;
     private JButton cmdSubmit;
     private JButton cmdInterrupt;
+    private JButton cmdAttach;
     private JButton cmdTranscribe;
     private JComboBox<String> cmbDevices;
     private JButton cmdClose;
@@ -300,6 +309,8 @@ public class AssistantChatPanel extends JDialog {
         if (!hasInputData) {
             this.lblContextToggle.setVisible(false);
             this.pnlContextContent.setVisible(false);
+        } else {
+            updateContextToggleLabel(false);
         }
 
         // Enter sends message, Shift+Enter inserts newline
@@ -404,7 +415,7 @@ public class AssistantChatPanel extends JDialog {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 boolean visible = !pnlContextContent.isVisible();
                 pnlContextContent.setVisible(visible);
-                lblContextToggle.setText(visible ? "\u25bc Kontext verbergen" : "\u25b6 Kontext anzeigen");
+                updateContextToggleLabel(visible);
                 headerPanel.revalidate();
             }
         });
@@ -527,6 +538,12 @@ public class AssistantChatPanel extends JDialog {
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
         btnPanel.setOpaque(false);
 
+        cmdAttach = new JButton(new ImageIcon(getClass().getResource("/icons/attach.png")));
+        cmdAttach.setToolTipText("Dokument als Kontext anh\u00e4ngen");
+        cmdAttach.putClientProperty("JButton.buttonType", "roundRect");
+        cmdAttach.addActionListener(e -> cmdAttachActionPerformed(e));
+        btnPanel.add(cmdAttach);
+
         cmdTranscribe = new JButton(new ImageIcon(getClass().getResource("/icons16/material/baseline_mic_black_48dp.png")));
         cmdTranscribe.setToolTipText("KI-Anfrage diktieren");
         cmdTranscribe.setEnabled(false);
@@ -606,11 +623,6 @@ public class AssistantChatPanel extends JDialog {
             public void componentResized(java.awt.event.ComponentEvent evt) {
                 ComponentUtils.storeDialogSize(AssistantChatPanel.this);
             }
-
-            @Override
-            public void componentShown(java.awt.event.ComponentEvent evt) {
-                FrameUtils.centerDialogOnParentMonitor(AssistantChatPanel.this, AssistantChatPanel.this.getOwner().getLocation());
-            }
         });
 
         pack();
@@ -618,6 +630,14 @@ public class AssistantChatPanel extends JDialog {
 
     @Override
     public void setVisible(boolean visible) {
+        if (visible) {
+            // Center after restoreDialogSize has set the final dimensions
+            if (getOwner() != null) {
+                FrameUtils.centerDialogOnParentMonitor(this, getOwner().getLocation());
+            } else {
+                FrameUtils.centerDialog(this, null);
+            }
+        }
         super.setVisible(visible);
         if (visible) {
             SwingUtilities.invokeLater(() -> {
@@ -776,29 +796,30 @@ public class AssistantChatPanel extends JDialog {
                             messages = new ArrayList<>(toolResponse.getMessages());
                         }
 
-                        // Process each tool call
-                        List<Message> toolResultMessages = new ArrayList<>();
-                        for (ToolCall tc : toolResponse.getToolCalls()) {
+                        // Phase 1: Create panels and handle approvals for all tool calls
+                        List<ToolCall> toolCalls = toolResponse.getToolCalls();
+                        List<String> toolSummaries = new ArrayList<>();
+                        List<String> riskLevels = new ArrayList<>();
+                        List<String> paramTooltips = new ArrayList<>();
+                        List<Boolean> approvals = new ArrayList<>();
+                        List<JPanel> toolPanels = new ArrayList<>();
+
+                        for (ToolCall tc : toolCalls) {
                             String toolSummary = toolRegistry.formatToolCallSummary(tc);
                             final String riskLevel = toolRegistry.getRiskLevel(tc.getToolName());
                             final String paramTooltip = formatParamTooltip(tc.getArguments());
+                            toolSummaries.add(toolSummary);
+                            riskLevels.add(riskLevel);
+                            paramTooltips.add(paramTooltip);
 
-                            // Check if already approved
                             boolean approved;
+                            String displayMsg;
                             if (!toolRegistry.requiresApproval(tc.getToolName())) {
-                                // Low risk — auto-approve without dialog
                                 approved = true;
-                                final String autoMsg = toolSummary;
-                                SwingUtilities.invokeAndWait(() -> {
-                                    addToolStatusMessage(autoMsg, riskLevel, paramTooltip, owner);
-                                });
+                                displayMsg = toolSummary;
                             } else if (toolRegistry.isApproved(tc.getToolName())) {
                                 approved = true;
-                                // Display auto-approved tool call
-                                final String autoMsg = toolSummary + " (automatisch genehmigt)";
-                                SwingUtilities.invokeAndWait(() -> {
-                                    addToolStatusMessage(autoMsg, riskLevel, paramTooltip, owner);
-                                });
+                                displayMsg = toolSummary + " (automatisch genehmigt)";
                             } else {
                                 // Show approval dialog on EDT
                                 final AtomicReference<String> approvalResult = new AtomicReference<>();
@@ -842,7 +863,30 @@ public class AssistantChatPanel extends JDialog {
                                 } else {
                                     approved = false;
                                 }
+                                displayMsg = toolSummary;
                             }
+                            approvals.add(approved);
+
+                            // Create panel for this tool call
+                            final String fDisplayMsg = displayMsg;
+                            final String fRiskLevel = riskLevel;
+                            final String fParamTooltip = paramTooltip;
+                            final AtomicReference<JPanel> panelRef = new AtomicReference<>();
+                            SwingUtilities.invokeAndWait(() -> {
+                                panelRef.set(addToolStatusMessage(fDisplayMsg, fRiskLevel, fParamTooltip, owner));
+                            });
+                            toolPanels.add(panelRef.get());
+                        }
+
+                        // Phase 2: Execute tools and update panels with results
+                        List<Message> toolResultMessages = new ArrayList<>();
+                        for (int i = 0; i < toolCalls.size(); i++) {
+                            ToolCall tc = toolCalls.get(i);
+                            boolean approved = approvals.get(i);
+                            String toolSummary = toolSummaries.get(i);
+                            String riskLevel = riskLevels.get(i);
+                            String paramTooltip = paramTooltips.get(i);
+                            JPanel toolPanel = toolPanels.get(i);
 
                             Message toolResultMsg = new Message();
                             toolResultMsg.setRole(Message.ROLE_TOOL);
@@ -860,15 +904,17 @@ public class AssistantChatPanel extends JDialog {
                                 toolResultMsg.setContent(toolResult);
 
                                 final String displayResult = toolSummary + " — Ergebnis erhalten";
+                                final JPanel tp = toolPanel;
                                 SwingUtilities.invokeAndWait(() -> {
-                                    addToolStatusMessage(displayResult, riskLevel, paramTooltip, owner);
+                                    updateToolStatusMessage(tp, displayResult);
                                 });
                             } else {
                                 toolResultMsg.setContent("{\"denied\": true, \"message\": \"Der Benutzer hat diesen Werkzeugaufruf abgelehnt.\"}");
 
                                 final String displayDenied = toolSummary + " — abgelehnt";
+                                final JPanel tp = toolPanel;
                                 SwingUtilities.invokeAndWait(() -> {
-                                    addToolStatusMessage(displayDenied, riskLevel, paramTooltip, owner);
+                                    updateToolStatusMessage(tp, displayDenied);
                                 });
                             }
                             toolResultMessages.add(toolResultMsg);
@@ -1020,6 +1066,57 @@ public class AssistantChatPanel extends JDialog {
         };
 
         worker.execute();
+    }
+
+    private void updateContextToggleLabel(boolean visible) {
+        int charCount = taInputString.getText().length();
+        String charInfo = " (" + charCount + " Zeichen)";
+        lblContextToggle.setText(visible ? "\u25bc Kontext verbergen" + charInfo : "\u25b6 Kontext anzeigen" + charInfo);
+    }
+
+    private void cmdAttachActionPerformed(ActionEvent evt) {
+        String caseId = (this.selectedCase != null) ? this.selectedCase.getId() : null;
+        SelectAttachmentDialog dlg = new SelectAttachmentDialog(this, true, caseId);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            StringBuilder sb = new StringBuilder();
+
+            ArchiveFileDocumentsBean[] docs = dlg.getSelectedDocuments();
+            if (docs != null) {
+                ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+                for (ArchiveFileDocumentsBean doc : docs) {
+                    DocumentPreview preview = afs.getDocumentPreview(doc.getId(), DocumentPreview.TYPE_TEXT);
+                    sb.append("--- ").append(doc.getName()).append(" ---").append(System.lineSeparator());
+                    sb.append(preview.getText()).append(System.lineSeparator()).append(System.lineSeparator());
+                }
+            }
+
+            File[] files = dlg.getSelectedFiles();
+            if (files != null) {
+                IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
+                for (File f : files) {
+                    byte[] data = Files.readAllBytes(f.toPath());
+                    String text = is.extractText(data, f.getName(), -1);
+                    sb.append("--- ").append(f.getName()).append(" ---").append(System.lineSeparator());
+                    sb.append(text).append(System.lineSeparator()).append(System.lineSeparator());
+                }
+            }
+
+            if (sb.length() > 0) {
+                this.taInputString.append(sb.toString());
+                this.lblContextToggle.setVisible(true);
+                this.pnlContextContent.setVisible(true);
+                updateContextToggleLabel(true);
+                this.pnlContextContent.getParent().revalidate();
+            }
+        } catch (Exception ex) {
+            log.error("Error attaching document context", ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1197,7 +1294,7 @@ public class AssistantChatPanel extends JDialog {
         });
     }
 
-    private void addToolStatusMessage(String text, String riskLevel, String tooltip, JDialog dialogOwner) {
+    private JPanel addToolStatusMessage(String text, String riskLevel, String tooltip, JDialog dialogOwner) {
         Color bgColor;
         Color borderColor;
         Color indicatorColor;
@@ -1227,6 +1324,7 @@ public class AssistantChatPanel extends JDialog {
 
         JLabel lbl = new JLabel(text);
         lbl.setFont(lbl.getFont().deriveFont(lbl.getFont().getSize2D() - 1f));
+        lbl.setName("toolStatusLabel");
         toolPanel.add(lbl);
 
         if (tooltip != null && !tooltip.isEmpty()) {
@@ -1239,6 +1337,19 @@ public class AssistantChatPanel extends JDialog {
         pnlMessages.revalidate();
         pnlMessages.repaint();
         scrollToBottom();
+        return toolPanel;
+    }
+
+    private void updateToolStatusMessage(JPanel toolPanel, String newText) {
+        for (Component comp : toolPanel.getComponents()) {
+            if (comp instanceof JLabel && "toolStatusLabel".equals(comp.getName())) {
+                ((JLabel) comp).setText(newText);
+                toolPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, toolPanel.getPreferredSize().height + 8));
+                toolPanel.revalidate();
+                toolPanel.repaint();
+                break;
+            }
+        }
     }
 
     private String formatParamTooltip(String argumentsJson) {

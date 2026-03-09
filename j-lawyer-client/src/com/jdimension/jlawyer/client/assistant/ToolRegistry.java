@@ -95,8 +95,16 @@ public class ToolRegistry {
         TOOLS.add(new ToolDefinition("search_contacts", "Sucht nach Kontakten/Adressen anhand eines Suchbegriffs.",
                 Arrays.asList(new ToolParameter("query", "string", "Suchbegriff für die Kontaktsuche", true))));
 
-        TOOLS.add(new ToolDefinition("list_case_documents", "Listet alle Dokumente einer Akte auf.",
-                Arrays.asList(new ToolParameter("fileNumber", "string", "Aktenzeichen der Akte", true))));
+        TOOLS.add(new ToolDefinition("list_case_documents", "Listet Dokumente einer Akte seitenweise auf (20 pro Seite). Gibt totalDocuments, page, totalPages und hasMore zurück.",
+                Arrays.asList(
+                        new ToolParameter("fileNumber", "string", "Aktenzeichen der Akte", true),
+                        new ToolParameter("page", "integer", "Seitennummer (1-basiert, Standard: 1)", false))));
+
+        TOOLS.add(new ToolDefinition("search_case_documents", "Durchsucht Dokumente einer Akte anhand des Dateinamens (case-insensitive, Teilübereinstimmung). Ergebnisse sind seitenweise (20 pro Seite).",
+                Arrays.asList(
+                        new ToolParameter("fileNumber", "string", "Aktenzeichen der Akte", true),
+                        new ToolParameter("query", "string", "Suchbegriff für den Dateinamen", true),
+                        new ToolParameter("page", "integer", "Seitennummer (1-basiert, Standard: 1)", false))));
 
         TOOLS.add(new ToolDefinition("get_document_text", "Extrahiert den Textinhalt eines Dokuments (PDF oder Textdatei).",
                 Arrays.asList(new ToolParameter("documentId", "string", "ID des Dokuments. Es darf kein Dokumentname als Parameter übergeben werden.", true))));
@@ -294,6 +302,8 @@ public class ToolRegistry {
                     return executeSearchContacts(args);
                 case "list_case_documents":
                     return executeListCaseDocuments(args);
+                case "search_case_documents":
+                    return executeSearchCaseDocuments(args);
                 case "get_document_text":
                     return executeGetDocumentText(args);
                 case "get_case_by_id":
@@ -385,7 +395,9 @@ public class ToolRegistry {
                 case "search_contacts":
                     return "Kontaktsuche: '" + args.getOrDefault("query", "") + "'";
                 case "list_case_documents":
-                    return "Dokumentenliste: " + args.getOrDefault("fileNumber", "");
+                    return "Dokumentenliste: " + args.getOrDefault("fileNumber", "") + " (Seite " + args.getOrDefault("page", "1") + ")";
+                case "search_case_documents":
+                    return "Dokumentensuche: '" + args.getOrDefault("query", "") + "' in " + args.getOrDefault("fileNumber", "") + " (Seite " + args.getOrDefault("page", "1") + ")";
                 case "get_document_text":
                     return "Dokumenttext: " + args.getOrDefault("documentId", "");
                 case "get_case_by_id":
@@ -578,6 +590,16 @@ public class ToolRegistry {
             return ToolJsonUtils.error("Aktenzeichen fehlt");
         }
 
+        int page = 1;
+        Object pageObj = args.get("page");
+        if (pageObj != null) {
+            page = ((Number) pageObj).intValue();
+            if (page < 1) {
+                page = 1;
+            }
+        }
+        final int PAGE_SIZE = 20;
+
         JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
         ArchiveFileServiceRemote svc = locator.lookupArchiveFileServiceRemote();
 
@@ -593,17 +615,42 @@ public class ToolRegistry {
             return ToolJsonUtils.error("Akte nicht gefunden: " + fileNumber);
         }
 
-        Collection<ArchiveFileDocumentsBean> docs = svc.getDocuments(caseBean.getId());
+        Collection<ArchiveFileDocumentsBean> allDocs = svc.getDocuments(caseBean.getId());
+
+        // Filter deleted documents and sort by creation date descending
+        List<ArchiveFileDocumentsBean> filteredDocs = new ArrayList<>();
+        for (ArchiveFileDocumentsBean doc : allDocs) {
+            if (!doc.isDeleted()) {
+                filteredDocs.add(doc);
+            }
+        }
+        filteredDocs.sort((a, b) -> {
+            if (a.getCreationDate() == null && b.getCreationDate() == null) return 0;
+            if (a.getCreationDate() == null) return 1;
+            if (b.getCreationDate() == null) return -1;
+            return b.getCreationDate().compareTo(a.getCreationDate());
+        });
+
+        int totalDocuments = filteredDocs.size();
+        int totalPages = (int) Math.ceil((double) totalDocuments / PAGE_SIZE);
+        if (totalPages == 0) {
+            totalPages = 1;
+        }
+        if (page > totalPages) {
+            page = totalPages;
+        }
+
+        int fromIndex = (page - 1) * PAGE_SIZE;
+        int toIndex = Math.min(fromIndex + PAGE_SIZE, totalDocuments);
+        List<ArchiveFileDocumentsBean> pageDocs = filteredDocs.subList(fromIndex, toIndex);
+
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
         StringBuilder sb = new StringBuilder();
         sb.append("{\"fileNumber\": \"").append(ToolJsonUtils.escapeJson(fileNumber)).append("\"");
         sb.append(", \"documents\": [");
         int count = 0;
-        for (ArchiveFileDocumentsBean doc : docs) {
-            if (doc.isDeleted()) {
-                continue;
-            }
+        for (ArchiveFileDocumentsBean doc : pageDocs) {
             if (count > 0) {
                 sb.append(",");
             }
@@ -619,7 +666,107 @@ public class ToolRegistry {
             sb.append("}");
             count++;
         }
-        sb.append("], \"totalDocuments\": ").append(count);
+        sb.append("], \"totalDocuments\": ").append(totalDocuments);
+        sb.append(", \"page\": ").append(page);
+        sb.append(", \"totalPages\": ").append(totalPages);
+        sb.append(", \"hasMore\": ").append(page < totalPages);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    private String executeSearchCaseDocuments(JsonObject args) throws Exception {
+        String fileNumber = (String) args.get("fileNumber");
+        if (fileNumber == null || fileNumber.trim().isEmpty()) {
+            return ToolJsonUtils.error("Aktenzeichen fehlt");
+        }
+
+        String query = (String) args.get("query");
+        if (query == null || query.trim().isEmpty()) {
+            return ToolJsonUtils.error("Suchbegriff fehlt");
+        }
+        String queryLower = query.toLowerCase();
+
+        int page = 1;
+        Object pageObj = args.get("page");
+        if (pageObj != null) {
+            page = ((Number) pageObj).intValue();
+            if (page < 1) {
+                page = 1;
+            }
+        }
+        final int PAGE_SIZE = 20;
+
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        ArchiveFileServiceRemote svc = locator.lookupArchiveFileServiceRemote();
+
+        ArchiveFileBean[] results = svc.searchEnhanced(fileNumber, false, new String[]{}, new String[]{});
+        ArchiveFileBean caseBean = null;
+        for (ArchiveFileBean r : results) {
+            if (fileNumber.equals(r.getFileNumber())) {
+                caseBean = r;
+                break;
+            }
+        }
+        if (caseBean == null) {
+            return ToolJsonUtils.error("Akte nicht gefunden: " + fileNumber);
+        }
+
+        Collection<ArchiveFileDocumentsBean> allDocs = svc.getDocuments(caseBean.getId());
+
+        // Filter deleted documents, match by filename, sort by creation date descending
+        List<ArchiveFileDocumentsBean> filteredDocs = new ArrayList<>();
+        for (ArchiveFileDocumentsBean doc : allDocs) {
+            if (!doc.isDeleted() && doc.getName() != null && doc.getName().toLowerCase().contains(queryLower)) {
+                filteredDocs.add(doc);
+            }
+        }
+        filteredDocs.sort((a, b) -> {
+            if (a.getCreationDate() == null && b.getCreationDate() == null) return 0;
+            if (a.getCreationDate() == null) return 1;
+            if (b.getCreationDate() == null) return -1;
+            return b.getCreationDate().compareTo(a.getCreationDate());
+        });
+
+        int totalDocuments = filteredDocs.size();
+        int totalPages = (int) Math.ceil((double) totalDocuments / PAGE_SIZE);
+        if (totalPages == 0) {
+            totalPages = 1;
+        }
+        if (page > totalPages) {
+            page = totalPages;
+        }
+
+        int fromIndex = (page - 1) * PAGE_SIZE;
+        int toIndex = Math.min(fromIndex + PAGE_SIZE, totalDocuments);
+        List<ArchiveFileDocumentsBean> pageDocs = filteredDocs.subList(fromIndex, toIndex);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"fileNumber\": \"").append(ToolJsonUtils.escapeJson(fileNumber)).append("\"");
+        sb.append(", \"query\": \"").append(ToolJsonUtils.escapeJson(query)).append("\"");
+        sb.append(", \"documents\": [");
+        int count = 0;
+        for (ArchiveFileDocumentsBean doc : pageDocs) {
+            if (count > 0) {
+                sb.append(",");
+            }
+            sb.append("{\"id\": \"").append(ToolJsonUtils.escapeJson(doc.getId())).append("\"");
+            sb.append(", \"name\": \"").append(ToolJsonUtils.escapeJson(doc.getName())).append("\"");
+            sb.append(", \"size\": ").append(doc.getSize());
+            if (doc.getCreationDate() != null) {
+                sb.append(", \"creationDate\": \"").append(sdf.format(doc.getCreationDate())).append("\"");
+            }
+            if (doc.getFolder() != null) {
+                sb.append(", \"folder\": \"").append(ToolJsonUtils.escapeJson(doc.getFolder().getName())).append("\"");
+            }
+            sb.append("}");
+            count++;
+        }
+        sb.append("], \"totalDocuments\": ").append(totalDocuments);
+        sb.append(", \"page\": ").append(page);
+        sb.append(", \"totalPages\": ").append(totalPages);
+        sb.append(", \"hasMore\": ").append(page < totalPages);
         sb.append("}");
         return sb.toString();
     }

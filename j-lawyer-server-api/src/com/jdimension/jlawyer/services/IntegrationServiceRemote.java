@@ -818,5 +818,17 @@ public interface IntegrationServiceRemote {
     AssistantReplacement updateAssistantReplacement(AssistantReplacement ap) throws Exception;
 
     void removeAssistantReplacement(AssistantReplacement ap) throws Exception;
-    
+
+    /**
+     * Extracts plain text from arbitrary document bytes using Apache Tika,
+     * without persisting the document on the server.
+     *
+     * @param data the document content as byte array
+     * @param fileName the file name (used to determine the document type)
+     * @param maxChars maximum number of characters to return, or -1 for unlimited
+     * @return the extracted text content, or empty string if extraction fails
+     * @throws Exception if text extraction encounters an error
+     */
+    String extractText(byte[] data, String fileName, int maxChars) throws Exception;
+
 }
