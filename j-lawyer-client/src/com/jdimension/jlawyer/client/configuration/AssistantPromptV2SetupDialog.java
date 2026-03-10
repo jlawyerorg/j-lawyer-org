@@ -57,6 +57,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
     private JTextArea taSystemPrompt;
     private JPanel pnlConfig;
     private JLabel lblDeductTokens;
+    private JTextArea taModelDescription;
     private JButton cmdAdd;
     private JButton cmdRemove;
     private JButton cmdSave;
@@ -224,9 +225,26 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
         lblDeductTokens.setText(" ");
     }
 
+    private void updateModelDescription() {
+        String selectedModelName = (String) cmbModel.getSelectedItem();
+        if (selectedModelName == null || MODEL_DEFAULT.equals(selectedModelName)) {
+            taModelDescription.setText("");
+            return;
+        }
+        for (AiModel m : allModels) {
+            if (m.getName().equals(selectedModelName)) {
+                taModelDescription.setText(m.getDescription() != null ? m.getDescription() : "");
+                taModelDescription.setCaretPosition(0);
+                return;
+            }
+        }
+        taModelDescription.setText("");
+    }
+
     private void updateConfigPanel() {
         clearConfigPanel();
         updateDeductTokensLabel();
+        updateModelDescription();
 
         String selectedModelName = (String) cmbModel.getSelectedItem();
         if (selectedModelName == null || MODEL_DEFAULT.equals(selectedModelName)) {
@@ -463,6 +481,16 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
         lblDeductTokens.setFont(lblDeductTokens.getFont().deriveFont(lblDeductTokens.getFont().getSize() - 2f));
         lblDeductTokens.setForeground(new java.awt.Color(153, 153, 153));
 
+        JLabel jLabelModelDesc = new JLabel("Modellbeschreibung:");
+        taModelDescription = new JTextArea();
+        taModelDescription.setColumns(20);
+        taModelDescription.setLineWrap(true);
+        taModelDescription.setWrapStyleWord(true);
+        taModelDescription.setRows(3);
+        taModelDescription.setEditable(false);
+        JScrollPane jScrollPaneModelDesc = new JScrollPane();
+        jScrollPaneModelDesc.setViewportView(taModelDescription);
+
         // === Config panel ===
         pnlConfig = new JPanel();
         pnlConfig.setLayout(new GridBagLayout());
@@ -487,6 +515,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
                                                         .addComponent(jLabel1)
                                                         .addComponent(jLabel3)
                                                         .addComponent(jLabelModel)
+                                                        .addComponent(jLabelModelDesc)
                                                         .addGroup(layout.createSequentialGroup()
                                                                 .addComponent(jLabel11)
                                                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
@@ -502,7 +531,8 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
                                                         .addComponent(jScrollPane3)
                                                         .addComponent(cmbRequestType, GroupLayout.Alignment.TRAILING, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                                         .addComponent(cmbModel, GroupLayout.Alignment.TRAILING, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                                        .addComponent(lblDeductTokens)))
+                                                        .addComponent(lblDeductTokens)
+                                                        .addComponent(jScrollPaneModelDesc)))
                                         .addComponent(configScrollPane)
                                         .addGroup(layout.createSequentialGroup()
                                                 .addComponent(jLabel5)
@@ -536,6 +566,10 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
                                                         .addComponent(cmbModel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                                 .addComponent(lblDeductTokens)
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                        .addComponent(jScrollPaneModelDesc, GroupLayout.PREFERRED_SIZE, 60, GroupLayout.PREFERRED_SIZE)
+                                                        .addComponent(jLabelModelDesc))
                                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                                         .addComponent(jScrollPane2, GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE)
