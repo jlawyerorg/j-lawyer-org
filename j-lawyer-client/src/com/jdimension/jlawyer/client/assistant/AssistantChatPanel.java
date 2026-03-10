@@ -825,30 +825,11 @@ public class AssistantChatPanel extends JDialog {
                                 final AtomicReference<String> approvalResult = new AtomicReference<>();
                                 final String dialogTitle = toolSummary;
                                 SwingUtilities.invokeAndWait(() -> {
-                                    String[] options = {"Erlauben", "Ablehnen", "Immer erlauben", "Für Sitzung erlauben"};
-                                    int choice = javax.swing.JOptionPane.showOptionDialog(
-                                            owner,
-                                            "Ingo möchte ein Werkzeug verwenden:\n\n" + dialogTitle + "\n\nWerkzeug: " + tc.getToolName() + "\nParameter: " + tc.getArguments(),
-                                            "Werkzeugaufruf genehmigen",
-                                            javax.swing.JOptionPane.DEFAULT_OPTION,
-                                            javax.swing.JOptionPane.QUESTION_MESSAGE,
-                                            null,
-                                            options,
-                                            options[0]);
-                                    switch (choice) {
-                                        case 0:
-                                            approvalResult.set("allow");
-                                            break;
-                                        case 2:
-                                            approvalResult.set("always");
-                                            break;
-                                        case 3:
-                                            approvalResult.set("session");
-                                            break;
-                                        default:
-                                            approvalResult.set("deny");
-                                            break;
-                                    }
+                                    ToolDefinition toolDef = toolRegistry.getToolDefinition(tc.getToolName());
+                                    ToolApprovalDialog approvalDialog = new ToolApprovalDialog(
+                                            owner, dialogTitle, tc.getToolName(), riskLevel, toolDef, tc.getArguments());
+                                    approvalDialog.setVisible(true);
+                                    approvalResult.set(approvalDialog.getApprovalResult());
                                 });
 
                                 String decision = approvalResult.get();

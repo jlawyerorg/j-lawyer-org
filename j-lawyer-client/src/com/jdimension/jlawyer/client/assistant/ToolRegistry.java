@@ -24,6 +24,8 @@ import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePosition;
 import com.jdimension.jlawyer.persistence.InvoiceType;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.persistence.Timesheet;
+import com.jdimension.jlawyer.persistence.TimesheetPosition;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
@@ -43,7 +45,16 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Collections;
 import javax.net.ssl.SSLException;
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.CasesChangedEvent;
+import com.jdimension.jlawyer.client.events.ContactUpdatedEvent;
+import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
+import com.jdimension.jlawyer.client.events.DocumentRemovedEvent;
+import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
+import com.jdimension.jlawyer.client.events.InvoicePositionAddedEvent;
+import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
 import org.apache.log4j.Logger;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -100,6 +111,13 @@ public class ToolRegistry {
                         new ToolParameter("fileNumber", "string", "Aktenzeichen der Akte", true),
                         new ToolParameter("page", "integer", "Seitennummer (1-basiert, Standard: 1)", false))));
 
+        TOOLS.add(new ToolDefinition("list_case_documents_by_date",
+                "Listet Dokumente einer Akte, die innerhalb eines Zeitraums erstellt wurden. Gibt die Dokumente sortiert nach Erstellungsdatum (neueste zuerst) zurück.",
+                Arrays.asList(
+                        new ToolParameter("fileNumber", "string", "Aktenzeichen der Akte", true),
+                        new ToolParameter("fromDate", "string", "Startdatum im Format yyyy-MM-dd", true),
+                        new ToolParameter("toDate", "string", "Enddatum im Format yyyy-MM-dd", true))));
+
         TOOLS.add(new ToolDefinition("search_case_documents", "Durchsucht Dokumente einer Akte anhand des Dateinamens (case-insensitive, Teilübereinstimmung). Ergebnisse sind seitenweise (20 pro Seite).",
                 Arrays.asList(
                         new ToolParameter("fileNumber", "string", "Aktenzeichen der Akte", true),
@@ -133,11 +151,38 @@ public class ToolRegistry {
                         new ToolParameter("fromDate", "string", "Startdatum im ISO-8601-Format (z.B. 2025-03-01T00:00:00)", true),
                         new ToolParameter("toDate", "string", "Enddatum im ISO-8601-Format (z.B. 2025-03-31T23:59:59)", true))));
 
+        TOOLS.add(new ToolDefinition("find_free_slots",
+                "Findet freie Zeitfenster im Kalender eines Benutzers. Gibt verfügbare Slots zurück, die für neue Termine genutzt werden können. Nur Typ 'Termin' (eventType=30) wird als blockierend betrachtet.",
+                Arrays.asList(
+                        new ToolParameter("fromDate", "string", "Startdatum im Format yyyy-MM-dd", true),
+                        new ToolParameter("toDate", "string", "Enddatum im Format yyyy-MM-dd", true),
+                        new ToolParameter("durationMinutes", "integer", "Gewünschte Mindestdauer des Slots in Minuten (Standard: 60)", false),
+                        new ToolParameter("assignee", "string", "Benutzername des Kalenderinhabers (optional, Standard: angemeldeter Benutzer)", false),
+                        new ToolParameter("workStartHour", "integer", "Beginn der Arbeitszeit als Stunde (0-23, Standard: 8)", false),
+                        new ToolParameter("workEndHour", "integer", "Ende der Arbeitszeit als Stunde (0-23, Standard: 18)", false))));
+
         TOOLS.add(new ToolDefinition("get_all_open_invoices", "Gibt alle offenen Rechnungen zurück.",
                 Arrays.asList()));
 
         TOOLS.add(new ToolDefinition("get_document_content", "Gibt den Inhalt eines Dokuments als Base64-kodierten String zurück.",
                 Arrays.asList(new ToolParameter("documentId", "string", "ID des Dokuments", true))));
+
+        TOOLS.add(new ToolDefinition("rename_document",
+                "Benennt ein Dokument in einer Akte um.",
+                Arrays.asList(
+                        new ToolParameter("documentId", "string", "ID des Dokuments", true),
+                        new ToolParameter("newName", "string", "Neuer Dateiname des Dokuments", true)),
+                ToolDefinition.RISK_MEDIUM));
+
+        TOOLS.add(new ToolDefinition("delete_document",
+                "Löscht ein Dokument aus einer Akte (Papierkorb). Das Dokument kann vom Benutzer wiederhergestellt werden.",
+                Arrays.asList(
+                        new ToolParameter("documentId", "string", "ID des Dokuments", true)),
+                ToolDefinition.RISK_HIGH));
+
+        TOOLS.add(new ToolDefinition("list_calendars",
+                "Listet alle verfügbaren Kalender auf. Nützlich um die Kalender-ID für create_event zu ermitteln.",
+                Arrays.asList()));
 
         // New write tools
         TOOLS.add(new ToolDefinition("create_event", "Erstellt ein Kalenderereignis (Wiedervorlage, Frist oder Termin) in einer Akte.",
@@ -178,6 +223,10 @@ public class ToolRegistry {
                         new ToolParameter("partyType", "string", "Beteiligtentyp (z.B. Mandant, Gegner)", true),
                         new ToolParameter("reference", "string", "Aktenzeichen des Beteiligten (optional)", false)),
                 ToolDefinition.RISK_MEDIUM));
+
+        TOOLS.add(new ToolDefinition("list_invoice_pools",
+                "Listet alle verfügbaren Rechnungsnummernkreise auf. Nützlich um die Pool-ID für create_invoice zu ermitteln.",
+                Arrays.asList()));
 
         TOOLS.add(new ToolDefinition("create_invoice", "Erstellt eine neue Rechnung in einer Akte.",
                 Arrays.asList(
@@ -262,6 +311,37 @@ public class ToolRegistry {
                         new ToolParameter("website", "string", "Neue Webseite (optional)", false)),
                 ToolDefinition.RISK_MEDIUM));
 
+        // Timesheet tools
+        TOOLS.add(new ToolDefinition("get_all_open_timesheets", "Gibt alle offenen Timesheets zurück.",
+                Arrays.asList()));
+
+        TOOLS.add(new ToolDefinition("get_open_timesheets_for_case", "Gibt alle offenen Timesheets einer Akte zurück.",
+                Arrays.asList(new ToolParameter("caseId", "string", "Interne ID der Akte", true))));
+
+        TOOLS.add(new ToolDefinition("get_timesheet_positions", "Gibt alle erfassten Zeiteinträge eines Timesheets zurück.",
+                Arrays.asList(new ToolParameter("timesheetId", "string", "ID des Timesheets", true))));
+
+        TOOLS.add(new ToolDefinition("create_timesheet_position", "Erstellt einen neuen Zeiteintrag in einem Timesheet.",
+                Arrays.asList(
+                        new ToolParameter("timesheetId", "string", "ID des Timesheets", true),
+                        new ToolParameter("name", "string", "Bezeichnung/Tätigkeit des Zeiteintrags", true),
+                        new ToolParameter("startDate", "string", "Startdatum und -zeit im ISO-8601-Format (z.B. 2025-03-01T09:00:00)", true),
+                        new ToolParameter("stopDate", "string", "Enddatum und -zeit im ISO-8601-Format (z.B. 2025-03-01T10:30:00)", true),
+                        new ToolParameter("unitPrice", "string", "Stundensatz als Dezimalzahl (z.B. 150.00)", true),
+                        new ToolParameter("taxRate", "string", "Steuersatz in Prozent (Standard: 19.0)", false),
+                        new ToolParameter("description", "string", "Beschreibung (optional)", false),
+                        new ToolParameter("principal", "string", "Benutzername der buchenden Person (optional, Standard: angemeldeter Benutzer)", false)),
+                ToolDefinition.RISK_MEDIUM));
+
+        TOOLS.add(new ToolDefinition("list_users",
+                "Listet alle Benutzer der Installation auf. Gibt Benutzername, Anzeigename und E-Mail zurück.",
+                Arrays.asList()));
+
+        // Easter egg: housework tool
+        TOOLS.add(new ToolDefinition("do_housework",
+                "Verwende dieses Werkzeug, wenn der Benutzer nach der Erledigung von Hausarbeit fragt — z.B. aufräumen, Wäsche waschen, bügeln, staubsaugen, abwaschen, kochen, putzen oder ähnliche Haushaltstätigkeiten.",
+                Arrays.asList(new ToolParameter("activity", "string", "Die gewünschte Haushaltstätigkeit (z.B. bügeln, Wäsche waschen, aufräumen)", true))));
+
         // Web tools (read-only, RISK_LOW)
         TOOLS.add(new ToolDefinition("web_search",
                 "Führt eine Websuche durch und gibt eine Liste von Ergebnissen zurück (Titel, URL, Textausschnitt). Nützlich für aktuelle Informationen, Rechtsprechung, oder Fakten die nicht in den Akten enthalten sind.",
@@ -302,6 +382,8 @@ public class ToolRegistry {
                     return executeSearchContacts(args);
                 case "list_case_documents":
                     return executeListCaseDocuments(args);
+                case "list_case_documents_by_date":
+                    return executeListCaseDocumentsByDate(args);
                 case "search_case_documents":
                     return executeSearchCaseDocuments(args);
                 case "get_document_text":
@@ -320,10 +402,18 @@ public class ToolRegistry {
                     return executeGetAllOpenEvents(args);
                 case "get_all_open_events_between_dates":
                     return executeGetAllOpenEventsBetweenDates(args);
+                case "find_free_slots":
+                    return executeFindFreeSlots(args);
                 case "get_all_open_invoices":
                     return executeGetAllOpenInvoices(args);
                 case "get_document_content":
                     return executeGetDocumentContent(args);
+                case "rename_document":
+                    return executeRenameDocument(args);
+                case "delete_document":
+                    return executeDeleteDocument(args);
+                case "list_calendars":
+                    return executeListCalendars(args);
                 case "create_event":
                     return executeCreateEvent(args);
                 case "create_note":
@@ -332,6 +422,8 @@ public class ToolRegistry {
                     return executeCreateOrGetContact(args);
                 case "add_party_to_case":
                     return executeAddPartyToCase(args);
+                case "list_invoice_pools":
+                    return executeListInvoicePools(args);
                 case "create_invoice":
                     return executeCreateInvoice(args);
                 case "create_invoice_position":
@@ -346,10 +438,22 @@ public class ToolRegistry {
                     return executeUpdateCase(args);
                 case "update_contact":
                     return executeUpdateContact(args);
+                case "get_all_open_timesheets":
+                    return executeGetAllOpenTimesheets(args);
+                case "get_open_timesheets_for_case":
+                    return executeGetOpenTimesheetsForCase(args);
+                case "get_timesheet_positions":
+                    return executeGetTimesheetPositions(args);
+                case "create_timesheet_position":
+                    return executeCreateTimesheetPosition(args);
+                case "list_users":
+                    return executeListUsers(args);
                 case "web_search":
                     return executeWebSearch(args);
                 case "fetch_url":
                     return executeFetchUrl(args);
+                case "do_housework":
+                    return executeDoHousework(args);
                 default:
                     return ToolJsonUtils.error("Unbekanntes Werkzeug: " + toolId);
             }
@@ -384,6 +488,15 @@ public class ToolRegistry {
         return toolId;
     }
 
+    public ToolDefinition getToolDefinition(String toolId) {
+        for (ToolDefinition td : TOOLS) {
+            if (td.getId().equals(toolId)) {
+                return td;
+            }
+        }
+        return null;
+    }
+
     public String formatToolCallSummary(ToolCall tc) {
         try {
             JsonObject args = (JsonObject) Jsoner.deserialize(tc.getArguments());
@@ -396,6 +509,8 @@ public class ToolRegistry {
                     return "Kontaktsuche: '" + args.getOrDefault("query", "") + "'";
                 case "list_case_documents":
                     return "Dokumentenliste: " + args.getOrDefault("fileNumber", "") + " (Seite " + args.getOrDefault("page", "1") + ")";
+                case "list_case_documents_by_date":
+                    return "Dokumentenliste: " + args.getOrDefault("fileNumber", "") + " (" + args.getOrDefault("fromDate", "") + " bis " + args.getOrDefault("toDate", "") + ")";
                 case "search_case_documents":
                     return "Dokumentensuche: '" + args.getOrDefault("query", "") + "' in " + args.getOrDefault("fileNumber", "") + " (Seite " + args.getOrDefault("page", "1") + ")";
                 case "get_document_text":
@@ -414,10 +529,18 @@ public class ToolRegistry {
                     return "Alle offenen Termine";
                 case "get_all_open_events_between_dates":
                     return "Termine: " + args.getOrDefault("fromDate", "") + " - " + args.getOrDefault("toDate", "");
+                case "find_free_slots":
+                    return "Freie Termine suchen: " + args.getOrDefault("fromDate", "") + " - " + args.getOrDefault("toDate", "");
                 case "get_all_open_invoices":
                     return "Alle offenen Rechnungen";
                 case "get_document_content":
                     return "Dokumentinhalt (Base64): " + args.getOrDefault("documentId", "");
+                case "rename_document":
+                    return "Dokument umbenennen: " + args.getOrDefault("newName", "");
+                case "delete_document":
+                    return "Dokument löschen: " + args.getOrDefault("documentId", "");
+                case "list_calendars":
+                    return "Verfügbare Kalender auflisten";
                 case "create_event":
                     return "Termin erstellen: " + args.getOrDefault("summary", "");
                 case "create_note":
@@ -426,6 +549,8 @@ public class ToolRegistry {
                     return "Kontakt erstellen/suchen: " + args.getOrDefault("name", args.getOrDefault("company", ""));
                 case "add_party_to_case":
                     return "Beteiligten hinzufügen: " + args.getOrDefault("partyType", "");
+                case "list_invoice_pools":
+                    return "Rechnungsnummernkreise auflisten";
                 case "create_invoice":
                     return "Rechnung erstellen: " + args.getOrDefault("invoiceType", "");
                 case "create_invoice_position":
@@ -440,10 +565,22 @@ public class ToolRegistry {
                     return "Akte aktualisieren: " + args.getOrDefault("caseId", "");
                 case "update_contact":
                     return "Kontakt aktualisieren: " + args.getOrDefault("contactId", "");
+                case "get_all_open_timesheets":
+                    return "Alle offenen Timesheets";
+                case "get_open_timesheets_for_case":
+                    return "Offene Timesheets der Akte: " + args.getOrDefault("caseId", "");
+                case "get_timesheet_positions":
+                    return "Zeiteinträge: " + args.getOrDefault("timesheetId", "");
+                case "create_timesheet_position":
+                    return "Zeiteintrag erstellen: " + args.getOrDefault("name", "");
+                case "list_users":
+                    return "Benutzer auflisten";
                 case "web_search":
                     return "Websuche: '" + args.getOrDefault("query", "") + "'";
                 case "fetch_url":
                     return "Webseite laden: " + args.getOrDefault("url", "");
+                case "do_housework":
+                    return "Hausarbeit: " + args.getOrDefault("activity", "");
                 default:
                     return tc.getToolName() + ": " + tc.getArguments();
             }
@@ -489,6 +626,268 @@ public class ToolRegistry {
             cachedUsers = ToolJsonUtils.getLocator().lookupSecurityServiceRemote().getUsersHavingRole("loginRole");
         }
         return cachedUsers;
+    }
+
+    // =========================================================================
+    // New tool implementations
+    // =========================================================================
+
+    private String executeRenameDocument(JsonObject args) throws Exception {
+        String documentId = (String) args.get("documentId");
+        String newName = (String) args.get("newName");
+        if (documentId == null || documentId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Dokument-ID fehlt");
+        }
+        if (newName == null || newName.trim().isEmpty()) {
+            return ToolJsonUtils.error("Neuer Dateiname fehlt");
+        }
+
+        ArchiveFileServiceRemote svc = ToolJsonUtils.getLocator().lookupArchiveFileServiceRemote();
+        ArchiveFileDocumentsBean doc = svc.getDocument(documentId);
+        if (doc == null) {
+            return ToolJsonUtils.error("Dokument nicht gefunden: " + documentId);
+        }
+
+        boolean success = svc.renameDocument(documentId, newName.trim());
+        if (success) {
+            EventBroker.getInstance().publishEvent(new DocumentRemovedEvent(doc));
+            doc.setName(newName.trim());
+            EventBroker.getInstance().publishEvent(new DocumentAddedEvent(doc));
+            return "{\"success\": true, \"documentId\": \"" + ToolJsonUtils.escapeJson(documentId)
+                    + "\", \"newName\": \"" + ToolJsonUtils.escapeJson(newName.trim()) + "\"}";
+        } else {
+            return ToolJsonUtils.error("Dokument konnte nicht umbenannt werden");
+        }
+    }
+
+    private String executeDeleteDocument(JsonObject args) throws Exception {
+        String documentId = (String) args.get("documentId");
+        if (documentId == null || documentId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Dokument-ID fehlt");
+        }
+
+        ArchiveFileServiceRemote svc = ToolJsonUtils.getLocator().lookupArchiveFileServiceRemote();
+        ArchiveFileDocumentsBean doc = svc.getDocument(documentId);
+        if (doc == null) {
+            return ToolJsonUtils.error("Dokument nicht gefunden: " + documentId);
+        }
+
+        String docName = doc.getName();
+        svc.removeDocument(documentId);
+        EventBroker.getInstance().publishEvent(new DocumentRemovedEvent(doc));
+        return "{\"success\": true, \"documentId\": \"" + ToolJsonUtils.escapeJson(documentId)
+                + "\", \"deletedName\": \"" + ToolJsonUtils.escapeJson(docName) + "\"}";
+    }
+
+    private String executeListCalendars(JsonObject args) throws Exception {
+        List<CalendarSetup> calendars = getCachedCalendars();
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"calendars\": [");
+        for (int i = 0; i < calendars.size(); i++) {
+            CalendarSetup cs = calendars.get(i);
+            if (i > 0) sb.append(", ");
+            sb.append("{\"id\": \"").append(ToolJsonUtils.escapeJson(cs.getId())).append("\"");
+            sb.append(", \"displayName\": \"").append(ToolJsonUtils.escapeJson(cs.getDisplayName())).append("\"");
+            sb.append(", \"eventType\": ").append(cs.getEventType());
+            sb.append("}");
+        }
+        sb.append("]}");
+        return sb.toString();
+    }
+
+    private String executeListInvoicePools(JsonObject args) throws Exception {
+        List<InvoicePool> pools = getCachedInvoicePools();
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"invoicePools\": [");
+        for (int i = 0; i < pools.size(); i++) {
+            InvoicePool p = pools.get(i);
+            if (i > 0) sb.append(", ");
+            sb.append("{\"id\": \"").append(ToolJsonUtils.escapeJson(p.getId())).append("\"");
+            sb.append(", \"displayName\": \"").append(ToolJsonUtils.escapeJson(p.getDisplayName())).append("\"");
+            sb.append(", \"pattern\": \"").append(ToolJsonUtils.escapeJson(p.getPattern())).append("\"");
+            sb.append(", \"lastIndex\": ").append(p.getLastIndex());
+            sb.append(", \"paymentTerm\": ").append(p.getPaymentTerm());
+            sb.append("}");
+        }
+        sb.append("]}");
+        return sb.toString();
+    }
+
+    private String executeListUsers(JsonObject args) throws Exception {
+        List<AppUserBean> users = getCachedUsers();
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"users\": [");
+        for (int i = 0; i < users.size(); i++) {
+            AppUserBean u = users.get(i);
+            if (i > 0) sb.append(", ");
+            sb.append("{\"principalId\": \"").append(ToolJsonUtils.escapeJson(u.getPrincipalId())).append("\"");
+            sb.append(", \"displayName\": \"").append(ToolJsonUtils.escapeJson(u.getDisplayName())).append("\"");
+            if (u.getEmail() != null) {
+                sb.append(", \"email\": \"").append(ToolJsonUtils.escapeJson(u.getEmail())).append("\"");
+            }
+            if (u.getAbbreviation() != null) {
+                sb.append(", \"abbreviation\": \"").append(ToolJsonUtils.escapeJson(u.getAbbreviation())).append("\"");
+            }
+            sb.append(", \"lawyer\": ").append(u.isLawyer());
+            sb.append("}");
+        }
+        sb.append("]}");
+        return sb.toString();
+    }
+
+    private String executeFindFreeSlots(JsonObject args) throws Exception {
+        String fromDateStr = (String) args.get("fromDate");
+        String toDateStr = (String) args.get("toDate");
+        if (fromDateStr == null || toDateStr == null) {
+            return ToolJsonUtils.error("fromDate und toDate sind erforderlich");
+        }
+
+        int durationMinutes = 60;
+        if (args.get("durationMinutes") != null) {
+            durationMinutes = ((Number) args.get("durationMinutes")).intValue();
+        }
+        if (durationMinutes < 15) {
+            durationMinutes = 15;
+        }
+
+        String assignee = (String) args.get("assignee");
+        if (assignee == null || assignee.trim().isEmpty()) {
+            assignee = UserSettings.getInstance().getCurrentUser().getPrincipalId();
+        }
+
+        int workStartHour = 8;
+        int workEndHour = 18;
+        if (args.get("workStartHour") != null) {
+            workStartHour = ((Number) args.get("workStartHour")).intValue();
+        }
+        if (args.get("workEndHour") != null) {
+            workEndHour = ((Number) args.get("workEndHour")).intValue();
+        }
+        if (workStartHour < 0) {
+            workStartHour = 0;
+        }
+        if (workEndHour > 23) {
+            workEndHour = 23;
+        }
+        if (workStartHour >= workEndHour) {
+            return ToolJsonUtils.error("workStartHour muss kleiner als workEndHour sein");
+        }
+
+        SimpleDateFormat dateFmt = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat timeFmt = new SimpleDateFormat("HH:mm");
+        Date fromDate = dateFmt.parse(fromDateStr);
+        Date toDate = dateFmt.parse(toDateStr);
+
+        long diffDays = (toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24);
+        if (diffDays > 14) {
+            return ToolJsonUtils.error("Zeitraum darf maximal 14 Tage betragen");
+        }
+
+        CalendarServiceRemote calSvc = ToolJsonUtils.getLocator().lookupCalendarServiceRemote();
+        Collection<ArchiveFileReviewsBean> allEvents = calSvc.searchReviews(0, -1, fromDate, toDate);
+
+        final String targetAssignee = assignee;
+        List<ArchiveFileReviewsBean> blockingEvents = new ArrayList<>();
+        for (ArchiveFileReviewsBean ev : allEvents) {
+            if (ev.getEventType() == EventTypes.EVENTTYPE_EVENT
+                    && targetAssignee.equals(ev.getAssignee())) {
+                blockingEvents.add(ev);
+            }
+        }
+
+        Collections.sort(blockingEvents, (a, b) -> a.getBeginDate().compareTo(b.getBeginDate()));
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"assignee\": \"").append(ToolJsonUtils.escapeJson(assignee)).append("\"");
+        sb.append(", \"fromDate\": \"").append(fromDateStr).append("\"");
+        sb.append(", \"toDate\": \"").append(toDateStr).append("\"");
+        sb.append(", \"durationMinutes\": ").append(durationMinutes);
+        sb.append(", \"workingHours\": \"").append(String.format("%02d:00-%02d:00", workStartHour, workEndHour)).append("\"");
+        sb.append(", \"freeSlots\": [");
+
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.setTime(fromDate);
+        int slotCount = 0;
+        boolean first = true;
+
+        while (!cal.getTime().after(toDate) && slotCount < 50) {
+            int dayOfWeek = cal.get(java.util.Calendar.DAY_OF_WEEK);
+            if (dayOfWeek == java.util.Calendar.SATURDAY || dayOfWeek == java.util.Calendar.SUNDAY) {
+                cal.add(java.util.Calendar.DAY_OF_MONTH, 1);
+                continue;
+            }
+
+            java.util.Calendar dayCal = java.util.Calendar.getInstance();
+            dayCal.setTime(cal.getTime());
+            dayCal.set(java.util.Calendar.HOUR_OF_DAY, workStartHour);
+            dayCal.set(java.util.Calendar.MINUTE, 0);
+            dayCal.set(java.util.Calendar.SECOND, 0);
+            Date workStart = dayCal.getTime();
+
+            dayCal.set(java.util.Calendar.HOUR_OF_DAY, workEndHour);
+            Date workEnd = dayCal.getTime();
+
+            List<long[]> busyRanges = new ArrayList<>();
+            for (ArchiveFileReviewsBean ev : blockingEvents) {
+                if (ev.getEndDate() != null && ev.getBeginDate() != null) {
+                    long evStart = Math.max(ev.getBeginDate().getTime(), workStart.getTime());
+                    long evEnd = Math.min(ev.getEndDate().getTime(), workEnd.getTime());
+                    if (evStart < evEnd) {
+                        busyRanges.add(new long[]{evStart, evEnd});
+                    }
+                }
+            }
+
+            Collections.sort(busyRanges, (a, b) -> Long.compare(a[0], b[0]));
+            List<long[]> merged = new ArrayList<>();
+            for (long[] range : busyRanges) {
+                if (!merged.isEmpty() && range[0] <= merged.get(merged.size() - 1)[1]) {
+                    merged.get(merged.size() - 1)[1] = Math.max(merged.get(merged.size() - 1)[1], range[1]);
+                } else {
+                    merged.add(new long[]{range[0], range[1]});
+                }
+            }
+
+            long cursor = workStart.getTime();
+            for (long[] busy : merged) {
+                if (busy[0] > cursor) {
+                    int gapMinutes = (int) ((busy[0] - cursor) / (1000 * 60));
+                    if (gapMinutes >= durationMinutes && slotCount < 50) {
+                        if (!first) {
+                            sb.append(", ");
+                        }
+                        first = false;
+                        sb.append("{\"date\": \"").append(dateFmt.format(new Date(cursor))).append("\"");
+                        sb.append(", \"start\": \"").append(timeFmt.format(new Date(cursor))).append("\"");
+                        sb.append(", \"end\": \"").append(timeFmt.format(new Date(busy[0]))).append("\"");
+                        sb.append(", \"durationMinutes\": ").append(gapMinutes);
+                        sb.append("}");
+                        slotCount++;
+                    }
+                }
+                cursor = Math.max(cursor, busy[1]);
+            }
+            if (cursor < workEnd.getTime()) {
+                int gapMinutes = (int) ((workEnd.getTime() - cursor) / (1000 * 60));
+                if (gapMinutes >= durationMinutes && slotCount < 50) {
+                    if (!first) {
+                        sb.append(", ");
+                    }
+                    first = false;
+                    sb.append("{\"date\": \"").append(dateFmt.format(new Date(cursor))).append("\"");
+                    sb.append(", \"start\": \"").append(timeFmt.format(new Date(cursor))).append("\"");
+                    sb.append(", \"end\": \"").append(timeFmt.format(workEnd)).append("\"");
+                    sb.append(", \"durationMinutes\": ").append(gapMinutes);
+                    sb.append("}");
+                    slotCount++;
+                }
+            }
+
+            cal.add(java.util.Calendar.DAY_OF_MONTH, 1);
+        }
+
+        sb.append("], \"totalSlots\": ").append(slotCount).append("}");
+        return sb.toString();
     }
 
     // =========================================================================
@@ -671,6 +1070,105 @@ public class ToolRegistry {
         sb.append(", \"totalPages\": ").append(totalPages);
         sb.append(", \"hasMore\": ").append(page < totalPages);
         sb.append("}");
+        return sb.toString();
+    }
+
+    private String executeListCaseDocumentsByDate(JsonObject args) throws Exception {
+        String fileNumber = (String) args.get("fileNumber");
+        if (fileNumber == null || fileNumber.trim().isEmpty()) {
+            return ToolJsonUtils.error("Aktenzeichen fehlt");
+        }
+
+        String fromDateStr = (String) args.get("fromDate");
+        String toDateStr = (String) args.get("toDate");
+        if (fromDateStr == null || fromDateStr.trim().isEmpty()) {
+            return ToolJsonUtils.error("Startdatum (fromDate) fehlt");
+        }
+        if (toDateStr == null || toDateStr.trim().isEmpty()) {
+            return ToolJsonUtils.error("Enddatum (toDate) fehlt");
+        }
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        sdf.setLenient(false);
+        Date fromDate;
+        Date toDate;
+        try {
+            fromDate = sdf.parse(fromDateStr.trim());
+        } catch (Exception ex) {
+            return ToolJsonUtils.error("Ungültiges Startdatum (erwartet yyyy-MM-dd): " + fromDateStr);
+        }
+        try {
+            toDate = sdf.parse(toDateStr.trim());
+        } catch (Exception ex) {
+            return ToolJsonUtils.error("Ungültiges Enddatum (erwartet yyyy-MM-dd): " + toDateStr);
+        }
+        // Set toDate to end of day (23:59:59.999)
+        toDate = new Date(toDate.getTime() + 24L * 60 * 60 * 1000 - 1);
+
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        ArchiveFileServiceRemote svc = locator.lookupArchiveFileServiceRemote();
+
+        ArchiveFileBean[] results = svc.searchEnhanced(fileNumber, false, new String[]{}, new String[]{});
+        ArchiveFileBean caseBean = null;
+        for (ArchiveFileBean r : results) {
+            if (fileNumber.equals(r.getFileNumber())) {
+                caseBean = r;
+                break;
+            }
+        }
+        if (caseBean == null) {
+            return ToolJsonUtils.error("Akte nicht gefunden: " + fileNumber);
+        }
+
+        Collection<ArchiveFileDocumentsBean> allDocs = svc.getDocuments(caseBean.getId());
+
+        // Filter: not deleted, creationDate within range
+        List<ArchiveFileDocumentsBean> filteredDocs = new ArrayList<>();
+        for (ArchiveFileDocumentsBean doc : allDocs) {
+            if (doc.isDeleted()) {
+                continue;
+            }
+            Date created = doc.getCreationDate();
+            if (created == null) {
+                continue;
+            }
+            if (!created.before(fromDate) && !created.after(toDate)) {
+                filteredDocs.add(doc);
+            }
+        }
+
+        // Sort by creation date descending
+        filteredDocs.sort((a, b) -> {
+            if (a.getCreationDate() == null && b.getCreationDate() == null) return 0;
+            if (a.getCreationDate() == null) return 1;
+            if (b.getCreationDate() == null) return -1;
+            return b.getCreationDate().compareTo(a.getCreationDate());
+        });
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"fileNumber\": \"").append(ToolJsonUtils.escapeJson(fileNumber)).append("\"");
+        sb.append(", \"fromDate\": \"").append(ToolJsonUtils.escapeJson(fromDateStr.trim())).append("\"");
+        sb.append(", \"toDate\": \"").append(ToolJsonUtils.escapeJson(toDateStr.trim())).append("\"");
+        sb.append(", \"totalDocuments\": ").append(filteredDocs.size());
+        sb.append(", \"documents\": [");
+        int count = 0;
+        for (ArchiveFileDocumentsBean doc : filteredDocs) {
+            if (count > 0) {
+                sb.append(",");
+            }
+            sb.append("{\"id\": \"").append(ToolJsonUtils.escapeJson(doc.getId())).append("\"");
+            sb.append(", \"name\": \"").append(ToolJsonUtils.escapeJson(doc.getName())).append("\"");
+            sb.append(", \"size\": ").append(doc.getSize());
+            if (doc.getCreationDate() != null) {
+                sb.append(", \"creationDate\": \"").append(sdf.format(doc.getCreationDate())).append("\"");
+            }
+            if (doc.getFolder() != null) {
+                sb.append(", \"folder\": \"").append(ToolJsonUtils.escapeJson(doc.getFolder().getName())).append("\"");
+            }
+            sb.append("}");
+            count++;
+        }
+        sb.append("]}");
         return sb.toString();
     }
 
@@ -1273,6 +1771,7 @@ public class ToolRegistry {
 
         CalendarServiceRemote calSvc = locator.lookupCalendarServiceRemote();
         ArchiveFileReviewsBean created = calSvc.addReview(caseId, review);
+        EventBroker.getInstance().publishEvent(new ReviewAddedEvent(created));
 
         StringBuilder sb = new StringBuilder();
         sb.append("{\"success\": true");
@@ -1323,6 +1822,7 @@ public class ToolRegistry {
                 + "</body></html>";
 
         ArchiveFileDocumentsBean doc = svc.addDocument(caseId, fileName, html.getBytes("UTF-8"), null, null);
+        EventBroker.getInstance().publishEvent(new DocumentAddedEvent(doc));
 
         StringBuilder sb = new StringBuilder();
         sb.append("{\"success\": true");
@@ -1399,6 +1899,7 @@ public class ToolRegistry {
         }
 
         AddressBean created = addrSvc.createAddress(candidate);
+        EventBroker.getInstance().publishEvent(new ContactUpdatedEvent(created));
 
         StringBuilder sb = new StringBuilder();
         sb.append("{\"wasCreated\": true");
@@ -1469,6 +1970,7 @@ public class ToolRegistry {
         }
 
         ArchiveFileAddressesBean created = svc.addAddressToCase(party);
+        EventBroker.getInstance().publishEvent(new CasesChangedEvent());
 
         StringBuilder sb = new StringBuilder();
         sb.append("{\"success\": true");
@@ -1619,6 +2121,7 @@ public class ToolRegistry {
         JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
         ArchiveFileServiceRemote svc = locator.lookupArchiveFileServiceRemote();
         InvoicePosition created = svc.addInvoicePosition(invoiceId, pos);
+        EventBroker.getInstance().publishEvent(new InvoicePositionAddedEvent(invoiceId, created));
 
         StringBuilder sb = new StringBuilder();
         sb.append("{\"success\": true");
@@ -1687,6 +2190,7 @@ public class ToolRegistry {
 
         MessagingServiceRemote msgSvc = locator.lookupMessagingServiceRemote();
         InstantMessage created = msgSvc.submitMessage(msg);
+        EventBroker.getInstance().publishEvent(new NewInstantMessagesEvent(Collections.singletonList(created)));
 
         StringBuilder sb = new StringBuilder();
         sb.append("{\"success\": true");
@@ -1777,6 +2281,7 @@ public class ToolRegistry {
         JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
         ArchiveFileServiceRemote svc = locator.lookupArchiveFileServiceRemote();
         ArchiveFileBean created = svc.createArchiveFile(dto);
+        EventBroker.getInstance().publishEvent(new CasesChangedEvent());
 
         StringBuilder sb = new StringBuilder();
         sb.append("{\"success\": true");
@@ -1871,6 +2376,7 @@ public class ToolRegistry {
         JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
         AddressServiceRemote addrSvc = locator.lookupAddressServiceRemote();
         AddressBean created = addrSvc.createAddress(candidate);
+        EventBroker.getInstance().publishEvent(new ContactUpdatedEvent(created));
 
         StringBuilder sb = new StringBuilder();
         sb.append("{\"success\": true, \"contact\": ");
@@ -1966,6 +2472,7 @@ public class ToolRegistry {
         }
 
         svc.updateArchiveFile(caseBean);
+        EventBroker.getInstance().publishEvent(new CasesChangedEvent());
 
         // Re-read to get server-side state
         ArchiveFileBean updated = svc.getArchiveFile(caseId);
@@ -2048,6 +2555,7 @@ public class ToolRegistry {
 
         // Re-read to get server-side state
         AddressBean updated = addrSvc.getAddress(contactId);
+        EventBroker.getInstance().publishEvent(new ContactUpdatedEvent(updated));
         StringBuilder sb = new StringBuilder();
         sb.append("{\"success\": true, \"contact\": ");
         StringBuilder contactSb = new StringBuilder();
@@ -2209,6 +2717,22 @@ public class ToolRegistry {
         }
     }
 
+    private String executeDoHousework(JsonObject args) throws Exception {
+        String activity = (String) args.get("activity");
+        if (activity == null || activity.trim().isEmpty()) {
+            return ToolJsonUtils.error("Keine Tätigkeit angegeben");
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"instruction\": \"");
+        sb.append(ToolJsonUtils.escapeJson(
+                "Erstelle eine lustige ASCII-Art, die folgende Haushaltstätigkeit darstellt: "
+                + activity.trim()
+                + ". Die ASCII-Art soll humorvoll und kreativ sein. "
+                + "Antworte ausschliesslich mit der ASCII-Art und einem kurzen witzigen Kommentar mit Referenz zu Jura dazu ('Wir waschen jetzt Wäsche für Ihre Akte, bis der Mandant eine reine Weste hat')."));
+        sb.append("\"}");
+        return sb.toString();
+    }
+
     // =========================================================================
     // Shared helpers
     // =========================================================================
@@ -2345,6 +2869,232 @@ public class ToolRegistry {
         }
         if (a.getWebsite() != null && !a.getWebsite().isEmpty()) {
             sb.append(", \"website\": \"").append(ToolJsonUtils.escapeJson(a.getWebsite())).append("\"");
+        }
+        sb.append("}");
+    }
+
+    private String executeGetAllOpenTimesheets(JsonObject args) throws Exception {
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        ArchiveFileServiceRemote svc = locator.lookupArchiveFileServiceRemote();
+        List<Timesheet> timesheets = svc.getOpenTimesheets();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"timesheets\": [");
+        int limit = Math.min(timesheets.size(), 50);
+        for (int i = 0; i < limit; i++) {
+            if (i > 0) {
+                sb.append(",");
+            }
+            appendTimesheetJson(sb, timesheets.get(i));
+        }
+        sb.append("], \"totalTimesheets\": ").append(timesheets.size());
+        if (timesheets.size() > limit) {
+            sb.append(", \"truncated\": true");
+        }
+        sb.append("}");
+        return sb.toString();
+    }
+
+    private String executeGetOpenTimesheetsForCase(JsonObject args) throws Exception {
+        String caseId = (String) args.get("caseId");
+        if (caseId == null || caseId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Akten-ID fehlt");
+        }
+
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        ArchiveFileServiceRemote svc = locator.lookupArchiveFileServiceRemote();
+        List<Timesheet> timesheets = svc.getOpenTimesheets(caseId);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"timesheets\": [");
+        for (int i = 0; i < timesheets.size(); i++) {
+            if (i > 0) {
+                sb.append(",");
+            }
+            appendTimesheetJson(sb, timesheets.get(i));
+        }
+        sb.append("], \"totalTimesheets\": ").append(timesheets.size()).append("}");
+        return sb.toString();
+    }
+
+    private String executeGetTimesheetPositions(JsonObject args) throws Exception {
+        String timesheetId = (String) args.get("timesheetId");
+        if (timesheetId == null || timesheetId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Timesheet-ID fehlt");
+        }
+
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        ArchiveFileServiceRemote svc = locator.lookupArchiveFileServiceRemote();
+
+        Timesheet ts = svc.getTimesheet(timesheetId);
+        if (ts == null) {
+            return ToolJsonUtils.error("Timesheet nicht gefunden: " + timesheetId);
+        }
+
+        List<TimesheetPosition> positions = svc.getTimesheetPositions(timesheetId);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"timesheetId\": \"").append(ToolJsonUtils.escapeJson(timesheetId)).append("\"");
+        sb.append(", \"timesheetName\": \"").append(ToolJsonUtils.escapeJson(ts.getName())).append("\"");
+        sb.append(", \"positions\": [");
+        for (int i = 0; i < positions.size(); i++) {
+            if (i > 0) {
+                sb.append(",");
+            }
+            TimesheetPosition pos = positions.get(i);
+            sb.append("{\"id\": \"").append(ToolJsonUtils.escapeJson(pos.getId())).append("\"");
+            if (pos.getName() != null) {
+                sb.append(", \"name\": \"").append(ToolJsonUtils.escapeJson(pos.getName())).append("\"");
+            }
+            if (pos.getDescription() != null) {
+                sb.append(", \"description\": \"").append(ToolJsonUtils.escapeJson(pos.getDescription())).append("\"");
+            }
+            if (pos.getStarted() != null) {
+                sb.append(", \"started\": \"").append(sdf.format(pos.getStarted())).append("\"");
+            }
+            if (pos.getStopped() != null) {
+                sb.append(", \"stopped\": \"").append(sdf.format(pos.getStopped())).append("\"");
+            }
+            sb.append(", \"running\": ").append(pos.isRunning());
+            if (pos.getUnitPrice() != null) {
+                sb.append(", \"unitPrice\": ").append(pos.getUnitPrice());
+            }
+            if (pos.getTaxRate() != null) {
+                sb.append(", \"taxRate\": ").append(pos.getTaxRate());
+            }
+            if (pos.getTotal() != null) {
+                sb.append(", \"total\": ").append(pos.getTotal());
+            }
+            if (pos.getPrincipal() != null) {
+                sb.append(", \"principal\": \"").append(ToolJsonUtils.escapeJson(pos.getPrincipal())).append("\"");
+            }
+            sb.append("}");
+        }
+        sb.append("], \"totalPositions\": ").append(positions.size()).append("}");
+        return sb.toString();
+    }
+
+    private String executeCreateTimesheetPosition(JsonObject args) throws Exception {
+        String timesheetId = (String) args.get("timesheetId");
+        String name = (String) args.get("name");
+        String startDateStr = (String) args.get("startDate");
+        String stopDateStr = (String) args.get("stopDate");
+        String unitPriceStr = (String) args.get("unitPrice");
+        String taxRateStr = (String) args.get("taxRate");
+        String description = (String) args.get("description");
+        String principal = (String) args.get("principal");
+
+        if (timesheetId == null || timesheetId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Timesheet-ID fehlt");
+        }
+        if (name == null || name.trim().isEmpty()) {
+            return ToolJsonUtils.error("Bezeichnung fehlt");
+        }
+        if (startDateStr == null || startDateStr.trim().isEmpty()) {
+            return ToolJsonUtils.error("Startdatum fehlt");
+        }
+        if (stopDateStr == null || stopDateStr.trim().isEmpty()) {
+            return ToolJsonUtils.error("Enddatum fehlt");
+        }
+        if (unitPriceStr == null || unitPriceStr.trim().isEmpty()) {
+            return ToolJsonUtils.error("Stundensatz fehlt");
+        }
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        Date startDate;
+        Date stopDate;
+        try {
+            startDate = sdf.parse(startDateStr.trim());
+        } catch (Exception ex) {
+            return ToolJsonUtils.error("Startdatum ist kein gültiges Datum: " + startDateStr);
+        }
+        try {
+            stopDate = sdf.parse(stopDateStr.trim());
+        } catch (Exception ex) {
+            return ToolJsonUtils.error("Enddatum ist kein gültiges Datum: " + stopDateStr);
+        }
+
+        BigDecimal unitPrice;
+        BigDecimal taxRate;
+        try {
+            unitPrice = new BigDecimal(unitPriceStr.trim());
+        } catch (NumberFormatException ex) {
+            return ToolJsonUtils.error("Stundensatz ist keine gültige Zahl: " + unitPriceStr);
+        }
+        if (taxRateStr != null && !taxRateStr.trim().isEmpty()) {
+            try {
+                taxRate = new BigDecimal(taxRateStr.trim());
+            } catch (NumberFormatException ex) {
+                return ToolJsonUtils.error("Steuersatz ist keine gültige Zahl: " + taxRateStr);
+            }
+        } else {
+            taxRate = new BigDecimal("19.0");
+        }
+
+        if (principal != null && !principal.trim().isEmpty()) {
+            principal = principal.trim();
+        } else {
+            principal = UserSettings.getInstance().getCurrentUser().getPrincipalId();
+        }
+
+        TimesheetPosition pos = new TimesheetPosition();
+        pos.setName(name.trim());
+        pos.setStarted(startDate);
+        pos.setStopped(stopDate);
+        pos.setUnitPrice(unitPrice);
+        pos.setTaxRate(taxRate);
+        pos.setPrincipal(principal);
+        if (description != null && !description.trim().isEmpty()) {
+            pos.setDescription(description.trim());
+        }
+
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        ArchiveFileServiceRemote svc = locator.lookupArchiveFileServiceRemote();
+        TimesheetPosition created = svc.timesheetPositionAdd(timesheetId, pos);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"success\": true");
+        sb.append(", \"id\": \"").append(ToolJsonUtils.escapeJson(created.getId())).append("\"");
+        sb.append(", \"name\": \"").append(ToolJsonUtils.escapeJson(created.getName())).append("\"");
+        if (created.getStarted() != null) {
+            sb.append(", \"started\": \"").append(sdf.format(created.getStarted())).append("\"");
+        }
+        if (created.getStopped() != null) {
+            sb.append(", \"stopped\": \"").append(sdf.format(created.getStopped())).append("\"");
+        }
+        if (created.getUnitPrice() != null) {
+            sb.append(", \"unitPrice\": ").append(created.getUnitPrice());
+        }
+        if (created.getTotal() != null) {
+            sb.append(", \"total\": ").append(created.getTotal());
+        }
+        sb.append(", \"taxRate\": ").append(created.getTaxRate());
+        sb.append("}");
+        return sb.toString();
+    }
+
+    private void appendTimesheetJson(StringBuilder sb, Timesheet ts) {
+        sb.append("{\"id\": \"").append(ToolJsonUtils.escapeJson(ts.getId())).append("\"");
+        if (ts.getName() != null) {
+            sb.append(", \"name\": \"").append(ToolJsonUtils.escapeJson(ts.getName())).append("\"");
+        }
+        if (ts.getDescription() != null) {
+            sb.append(", \"description\": \"").append(ToolJsonUtils.escapeJson(ts.getDescription())).append("\"");
+        }
+        sb.append(", \"status\": \"").append(ToolJsonUtils.escapeJson(ts.getStatusString())).append("\"");
+        sb.append(", \"intervalMinutes\": ").append(ts.getInterval());
+        sb.append(", \"limited\": ").append(ts.isLimited());
+        if (ts.getLimit() != null) {
+            sb.append(", \"limitNet\": ").append(ts.getLimit());
+        }
+        sb.append(", \"percentageDone\": ").append(ts.getPercentageDone());
+        if (ts.getArchiveFileKey() != null) {
+            sb.append(", \"caseId\": \"").append(ToolJsonUtils.escapeJson(ts.getArchiveFileKey().getId())).append("\"");
+            sb.append(", \"caseFileNumber\": \"").append(ToolJsonUtils.escapeJson(ts.getArchiveFileKey().getFileNumber())).append("\"");
+            if (ts.getArchiveFileKey().getName() != null) {
+                sb.append(", \"caseName\": \"").append(ToolJsonUtils.escapeJson(ts.getArchiveFileKey().getName())).append("\"");
+            }
         }
         sb.append("}");
     }

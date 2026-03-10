@@ -869,7 +869,9 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         clone.setTimesheet(this.position.getTimesheet());
         clone.setStarted((Date) this.txtStarted.getValue());
         clone.setStopped((Date) this.txtStopped.getValue());
-        clone.setPrincipal(this.cmbPrincipal.getSelectedItem().toString());
+        clone.setPrincipal(null);
+        if(this.cmbPrincipal.getSelectedItem()!=null)
+            clone.setPrincipal(this.cmbPrincipal.getSelectedItem().toString());
 
         clone.setName(this.txtName.getText());
         clone.setDescription(this.taDescription.getText());
