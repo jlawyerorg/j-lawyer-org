@@ -9185,7 +9185,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 return;
             }
 
-            final ArchiveFilePanel self = this;
             AssistantInputAdapter contextAdapter = new AssistantInputAdapter() {
                 @Override
                 public List<InputData> getInputs(AiCapability c) {

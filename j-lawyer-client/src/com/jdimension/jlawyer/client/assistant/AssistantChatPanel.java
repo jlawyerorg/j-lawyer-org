@@ -854,7 +854,7 @@ public class AssistantChatPanel extends JDialog {
                             final String fParamTooltip = paramTooltip;
                             final AtomicReference<JPanel> panelRef = new AtomicReference<>();
                             SwingUtilities.invokeAndWait(() -> {
-                                panelRef.set(addToolStatusMessage(fDisplayMsg, fRiskLevel, fParamTooltip, owner));
+                                panelRef.set(addToolStatusMessage(fDisplayMsg, fRiskLevel, fParamTooltip));
                             });
                             toolPanels.add(panelRef.get());
                         }
@@ -865,8 +865,6 @@ public class AssistantChatPanel extends JDialog {
                             ToolCall tc = toolCalls.get(i);
                             boolean approved = approvals.get(i);
                             String toolSummary = toolSummaries.get(i);
-                            String riskLevel = riskLevels.get(i);
-                            String paramTooltip = paramTooltips.get(i);
                             JPanel toolPanel = toolPanels.get(i);
 
                             Message toolResultMsg = new Message();
@@ -1275,7 +1273,7 @@ public class AssistantChatPanel extends JDialog {
         });
     }
 
-    private JPanel addToolStatusMessage(String text, String riskLevel, String tooltip, JDialog dialogOwner) {
+    private JPanel addToolStatusMessage(String text, String riskLevel, String tooltip) {
         Color bgColor;
         Color borderColor;
         Color indicatorColor;
