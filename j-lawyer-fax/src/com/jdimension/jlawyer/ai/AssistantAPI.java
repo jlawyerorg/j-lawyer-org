@@ -717,7 +717,7 @@ public class AssistantAPI {
         return encoder.encode(authString.getBytes());
     }
 
-    public AiRequestStatus submitRequest(String requestType, String actionId, String model, String prompt, String systemPrompt, boolean asyncRecommended, List<ConfigurationData> configurations, List<ParameterData> params, List<InputData> inputs, List<Message> messages) throws AssistantException {
+    public AiRequestStatus submitRequest(String requestType, String actionId, String model, String prompt, String systemPrompt, boolean asyncRecommended, List<ConfigurationData> configurations, List<ParameterData> params, List<InputData> inputs, List<Message> messages, List<ToolDefinition> tools) throws AssistantException {
         log.info("submitting j-lawyer.AI request");
 
         String authStringEnc = this.getAuthString();
@@ -772,9 +772,35 @@ public class AssistantAPI {
                 JsonObject mo = new JsonObject();
                 mo.put("content", m.getContent());
                 mo.put("role", m.getRole());
+                if (m.getToolCallId() != null) {
+                    mo.put("toolCallId", m.getToolCallId());
+                }
+                if (m.getToolName() != null) {
+                    mo.put("toolName", m.getToolName());
+                }
                 messagesArray.add(mo);
             }
             jsonQuery.put("messages", messagesArray);
+        }
+        if (tools != null && !tools.isEmpty()) {
+            JsonArray toolsArray = new JsonArray();
+            for (ToolDefinition td : tools) {
+                JsonObject to = new JsonObject();
+                to.put("id", td.getId());
+                to.put("description", td.getDescription());
+                JsonArray paramsArray = new JsonArray();
+                for (ToolParameter tp : td.getParameters()) {
+                    JsonObject po = new JsonObject();
+                    po.put("name", tp.getName());
+                    po.put("type", tp.getType());
+                    po.put("description", tp.getDescription());
+                    po.put("required", tp.isRequired());
+                    paramsArray.add(po);
+                }
+                to.put("parameters", paramsArray);
+                toolsArray.add(to);
+            }
+            jsonQuery.put("tools", toolsArray);
         }
         if (inputs != null && !inputs.isEmpty()) {
             JsonArray inputsArray = new JsonArray();
@@ -878,6 +904,34 @@ public class AssistantAPI {
                             res.getOutputData().add(od);
                         }
                     }
+
+                    // Deserialize toolCalls
+                    JsonArray tc = (JsonArray) r.get("toolCalls");
+                    if (tc != null) {
+                        for (Object tcObj : tc) {
+                            JsonObject tco = (JsonObject) tcObj;
+                            ToolCall toolCall = new ToolCall();
+                            toolCall.setId(tco.getString(Jsoner.mintJsonKey("id", null)));
+                            toolCall.setToolName(tco.getString(Jsoner.mintJsonKey("toolName", null)));
+                            toolCall.setArguments(tco.getString(Jsoner.mintJsonKey("arguments", null)));
+                            res.getToolCalls().add(toolCall);
+                        }
+                    }
+
+                    // Deserialize messages (conversation state)
+                    JsonArray msgs = (JsonArray) r.get("messages");
+                    if (msgs != null) {
+                        for (Object msgObj : msgs) {
+                            JsonObject mo = (JsonObject) msgObj;
+                            Message msg = new Message();
+                            msg.setContent(mo.getString(Jsoner.mintJsonKey("content", null)));
+                            msg.setRole(mo.getString(Jsoner.mintJsonKey("role", null)));
+                            msg.setToolCallId(mo.getString(Jsoner.mintJsonKey("toolCallId", null)));
+                            msg.setToolName(mo.getString(Jsoner.mintJsonKey("toolName", null)));
+                            res.getMessages().add(msg);
+                        }
+                    }
+
                     status.setResponse(res);
                 }
 
@@ -1051,6 +1105,7 @@ public class AssistantAPI {
                     model.setProvider(m.getString(Jsoner.mintJsonKey("provider", null)));
                     model.setLocal(m.getBooleanOrDefault(Jsoner.mintJsonKey("local", null)));
                     model.setDeductTokens(m.getBooleanOrDefault(Jsoner.mintJsonKey("deductTokens", true)));
+                    model.setSupportsTools(m.getBooleanOrDefault(Jsoner.mintJsonKey("supportsTools", false)));
 
                     Object reqTypes = m.getCollection(Jsoner.mintJsonKey("supportedRequestTypes", null));
                     if (reqTypes != null && reqTypes instanceof JsonArray) {
@@ -1272,6 +1327,35 @@ public class AssistantAPI {
                     od.setFileName(oo.getString(Jsoner.mintJsonKey("fileName", null)));
                     od.setType(oo.getString(Jsoner.mintJsonKey("type", null)));
                     resp.getOutputData().add(od);
+                }
+            }
+
+            // Deserialize toolCalls
+            Object toolCallsData = r.getCollection(Jsoner.mintJsonKey("toolCalls", null));
+            if (toolCallsData != null && toolCallsData instanceof JsonArray) {
+                JsonArray tcArray = (JsonArray) toolCallsData;
+                for (Object tcObj : tcArray) {
+                    JsonObject tco = (JsonObject) tcObj;
+                    ToolCall toolCall = new ToolCall();
+                    toolCall.setId(tco.getString(Jsoner.mintJsonKey("id", null)));
+                    toolCall.setToolName(tco.getString(Jsoner.mintJsonKey("toolName", null)));
+                    toolCall.setArguments(tco.getString(Jsoner.mintJsonKey("arguments", null)));
+                    resp.getToolCalls().add(toolCall);
+                }
+            }
+
+            // Deserialize messages
+            Object msgsData = r.getCollection(Jsoner.mintJsonKey("messages", null));
+            if (msgsData != null && msgsData instanceof JsonArray) {
+                JsonArray msgsArray = (JsonArray) msgsData;
+                for (Object msgObj : msgsArray) {
+                    JsonObject mo = (JsonObject) msgObj;
+                    Message msg = new Message();
+                    msg.setContent(mo.getString(Jsoner.mintJsonKey("content", null)));
+                    msg.setRole(mo.getString(Jsoner.mintJsonKey("role", null)));
+                    msg.setToolCallId(mo.getString(Jsoner.mintJsonKey("toolCallId", null)));
+                    msg.setToolName(mo.getString(Jsoner.mintJsonKey("toolName", null)));
+                    resp.getMessages().add(msg);
                 }
             }
 

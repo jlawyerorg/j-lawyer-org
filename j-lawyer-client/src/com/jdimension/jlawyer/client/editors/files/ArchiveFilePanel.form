@@ -623,6 +623,8 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblPanelTitle" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdIngoChat" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdTimesheetLog" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="togCaseSync" min="-2" max="-2" attributes="0"/>
@@ -655,6 +657,7 @@
                   </Group>
                   <Component id="cmdTimesheetLog" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdSendInstantMessage" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdIngoChat" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblHeaderInfo" min="-2" max="-2" attributes="0"/>
@@ -1527,6 +1530,7 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="1" attributes="0">
                           <Group type="103" groupAlignment="0" attributes="0">
+                              <Component id="togFulltextSearch" alignment="0" min="-2" pref="31" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="cmdUploadDocument" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="cmdNewDocument" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -1536,7 +1540,6 @@
                                   <Component id="cmdAddNote" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="cmdAddVoiceMemo" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="cmdAssistantGenerate" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="togFulltextSearch" alignment="0" min="-2" pref="31" max="-2" attributes="0"/>
                               </Group>
                               <Component id="cmdDocumentTagFilter" min="-2" max="-2" attributes="0"/>
                           </Group>
@@ -3659,6 +3662,17 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSendInstantMessageActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdIngoChat">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/material/j-lawyer-ai.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Assistent Ingo - Chat &#xf6;ffnen"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdIngoChatActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>

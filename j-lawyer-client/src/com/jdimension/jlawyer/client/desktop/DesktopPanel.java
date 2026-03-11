@@ -667,6 +667,10 @@ import com.jdimension.jlawyer.client.bea.BeaCheckTimerTask;
 import com.jdimension.jlawyer.client.bea.BeaInboxPanel;
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.configuration.UserProfileDialog;
+import com.jdimension.jlawyer.ai.AiCapability;
+import com.jdimension.jlawyer.ai.AiModel;
+import com.jdimension.jlawyer.client.assistant.AssistantAccess;
+import com.jdimension.jlawyer.client.assistant.AssistantInputAdapter;
 import com.jdimension.jlawyer.client.editors.*;
 import com.jdimension.jlawyer.client.editors.documents.ScannerPanel;
 import com.jdimension.jlawyer.client.editors.addresses.EditAddressPanel;
@@ -699,7 +703,9 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.voip.MailingQueueEntry;
 import com.jdimension.jlawyer.client.voip.MailingStatusPanel;
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.AssistantConfig;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Component;
@@ -715,6 +721,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.ResourceBundle;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -1470,12 +1478,13 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblVoipBalance = new javax.swing.JLabel();
         lblAssistant = new javax.swing.JLabel();
         desktopWidgetPanel2 = new com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel();
-        lblUserIcon = new javax.swing.JLabel();
-        lblUserName = new javax.swing.JLabel();
         cmdEditDesktop = new javax.swing.JButton();
         cmdGlobalSearch = new javax.swing.JButton();
+        cmdIngoChat = new javax.swing.JButton();
         lblDay = new javax.swing.JLabel();
         pnlGridContainer = new javax.swing.JPanel();
+        lblUserName = new javax.swing.JLabel();
+        lblUserIcon = new javax.swing.JLabel();
 
         jPanel2.setOpaque(false);
 
@@ -1969,26 +1978,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(lblAssistant)))
         );
 
-        lblUserIcon.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblUserIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/avatar32/identity.png"))); // NOI18N
-        lblUserIcon.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        lblUserIcon.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                lblUserIconMouseClicked(evt);
-            }
-        });
-
-        lblUserName.setFont(lblUserName.getFont().deriveFont(lblUserName.getFont().getStyle() | java.awt.Font.BOLD, lblUserName.getFont().getSize()+2));
-        lblUserName.setForeground(new java.awt.Color(255, 255, 255));
-        lblUserName.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblUserName.setText("My User Name");
-        lblUserName.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        lblUserName.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                lblUserNameMouseClicked(evt);
-            }
-        });
-
         cmdEditDesktop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/dashboard_2_edit_32dp_0E72B5_FILL0_wght400_GRAD0_opsz40.png"))); // NOI18N
         cmdEditDesktop.setToolTipText("Desktop-Layout anpassen");
         cmdEditDesktop.addActionListener(new java.awt.event.ActionListener() {
@@ -2004,16 +1993,21 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         });
 
+        cmdIngoChat.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/j-lawyer-ai.png"))); // NOI18N
+        cmdIngoChat.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdIngoChatActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout desktopWidgetPanel2Layout = new org.jdesktop.layout.GroupLayout(desktopWidgetPanel2);
         desktopWidgetPanel2.setLayout(desktopWidgetPanel2Layout);
         desktopWidgetPanel2Layout.setHorizontalGroup(
             desktopWidgetPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(desktopWidgetPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(lblUserName)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(cmdIngoChat)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(lblUserIcon)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .add(cmdGlobalSearch)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdEditDesktop))
@@ -2022,11 +2016,9 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             desktopWidgetPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(desktopWidgetPanel2Layout.createSequentialGroup()
                 .add(desktopWidgetPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(desktopWidgetPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                        .add(cmdEditDesktop, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(lblUserIcon, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(lblUserName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .add(cmdGlobalSearch))
+                    .add(cmdEditDesktop)
+                    .add(cmdGlobalSearch)
+                    .add(cmdIngoChat))
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -2037,6 +2029,26 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         pnlGridContainer.setOpaque(false);
         pnlGridContainer.setLayout(new java.awt.BorderLayout());
+
+        lblUserName.setFont(lblUserName.getFont().deriveFont(lblUserName.getFont().getStyle() | java.awt.Font.BOLD, lblUserName.getFont().getSize()+2));
+        lblUserName.setForeground(new java.awt.Color(255, 255, 255));
+        lblUserName.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblUserName.setText("My User Name");
+        lblUserName.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblUserName.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblUserNameMouseClicked(evt);
+            }
+        });
+
+        lblUserIcon.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblUserIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/avatar32/identity.png"))); // NOI18N
+        lblUserIcon.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblUserIcon.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblUserIconMouseClicked(evt);
+            }
+        });
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
@@ -2049,7 +2061,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(layout.createSequentialGroup()
                         .add(messagesWidget, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblDay, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
+                        .add(lblDay, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 99, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(lblUserName)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(lblUserIcon)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(desktopWidgetPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(systemInformationWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -2059,11 +2075,13 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(desktopWidgetPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(desktopWidgetPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, lblDay, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, messagesWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, messagesWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(lblUserIcon, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(lblUserName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(pnlGridContainer, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -2220,6 +2238,56 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdGlobalSearchMouseClicked
 
+    private void cmdIngoChatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdIngoChatActionPerformed
+        try {
+            AssistantAccess ingo = AssistantAccess.getInstance();
+            Map<AssistantConfig, List<AiCapability>> chatCapabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_CHAT, AiCapability.INPUTTYPE_NONE);
+
+            // Determine which models support tools
+            ClientSettings cs = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(cs.getLookupProperties());
+            Map<AssistantConfig, List<AiModel>> modelsMap = locator.lookupIntegrationServiceRemote().getAssistantModels();
+            Set<String> toolModelNames = new java.util.HashSet<>();
+            for (List<AiModel> models : modelsMap.values()) {
+                for (AiModel m : models) {
+                    if (m.isSupportsTools()) {
+                        toolModelNames.add(m.getName());
+                    }
+                }
+            }
+
+            // Filter to only capabilities whose model supports tools
+            Map<AssistantConfig, List<AiCapability>> toolCapabilities = new java.util.HashMap<>();
+            for (Map.Entry<AssistantConfig, List<AiCapability>> entry : chatCapabilities.entrySet()) {
+                for (AiCapability c : entry.getValue()) {
+                    if (c.getModelRef() != null && toolModelNames.contains(c.getModelRef())) {
+                        toolCapabilities.computeIfAbsent(entry.getKey(), k -> new ArrayList<>()).add(c);
+                    }
+                }
+            }
+
+            if (toolCapabilities.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Es sind keine Chat-Aktionen mit Tool-Unterstützung konfiguriert.", "Ingo", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            AssistantInputAdapter emptyAdapter = new AssistantInputAdapter() {
+                @Override
+                public List<com.jdimension.jlawyer.ai.InputData> getInputs(AiCapability c) { return java.util.Collections.emptyList(); }
+                @Override
+                public List<com.jdimension.jlawyer.ai.Message> getMessages(AiCapability c) { return java.util.Collections.emptyList(); }
+            };
+
+            JPopupMenu popup = new JPopupMenu();
+            ingo.populateMenu(popup, toolCapabilities, emptyAdapter, null, EditorsRegistry.getInstance().getMainWindow(), false);
+            popup.show(cmdIngoChat, 0, cmdIngoChat.getHeight());
+
+        } catch (Exception ex) {
+            log.error("Error loading Ingo chat capabilities", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Ingo-Aktionen: " + ex.getMessage(), "Ingo", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdIngoChatActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup btnGrpDueInDays;
@@ -2228,6 +2296,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JButton cmdDueSinceDays;
     private javax.swing.JButton cmdEditDesktop;
     private javax.swing.JButton cmdGlobalSearch;
+    private javax.swing.JButton cmdIngoChat;
     private javax.swing.JButton cmdRefreshLastChanged;
     private javax.swing.JButton cmdRefreshRevDue;
     private javax.swing.JButton cmdRefreshTagged;

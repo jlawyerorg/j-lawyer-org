@@ -660,7 +660,7 @@ public class AssistantVisionPanel extends JDialog {
                     if (capability.getConfigurationValues() != null && !capability.getConfigurationValues().isEmpty()) {
                         promptConfigs = ConfigurationUtils.fromProperties(capability.getConfigurationValues());
                     }
-                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getActionId(), capability.getModelRef(), fullPrompt, capability.getSystemPrompt(), capability.isAsyncRecommended(), fParams, inputs, messages, promptConfigs);
+                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getActionId(), capability.getModelRef(), fullPrompt, capability.getSystemPrompt(), capability.isAsyncRecommended(), fParams, inputs, messages, promptConfigs, null);
 
                     if (status.isAsync()) {
                         Thread.sleep(1000);
@@ -1102,6 +1102,7 @@ public class AssistantVisionPanel extends JDialog {
                             transcribeCapability.isAsyncRecommended(),
                             fParams,
                             transcribeInputs,
+                            null,
                             null,
                             null
                         );

@@ -1286,7 +1286,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                     if (capability.getConfigurationValues() != null && !capability.getConfigurationValues().isEmpty()) {
                         promptConfigs = ConfigurationUtils.fromProperties(capability.getConfigurationValues());
                     }
-                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getActionId(), capability.getModelRef(), fullPrompt, capability.getSystemPrompt(), capability.isAsyncRecommended(), fParams, null, messages, promptConfigs);
+                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getActionId(), capability.getModelRef(), fullPrompt, capability.getSystemPrompt(), capability.isAsyncRecommended(), fParams, null, messages, promptConfigs, null);
                     // after initial request, unselect input text
                     taInputString.setCaretPosition(0);
 
@@ -1798,6 +1798,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                             transcribeCapability.isAsyncRecommended(),
                             fParams,
                             inputs,
+                            null,
                             null,
                             null
                         );

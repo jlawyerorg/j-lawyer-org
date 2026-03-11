@@ -1575,6 +1575,7 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
                                 fParams,
                                 inputs,
                                 null, // Assuming no conversation
+                                null,
                                 null
                         );
 

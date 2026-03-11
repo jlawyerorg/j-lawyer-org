@@ -62,11 +62,13 @@ public class AiCapability implements Serializable {
     static {
         capabilities.add(REQUESTTYPE_CHAT);
         capabilities.add(REQUESTTYPE_EXPLAIN);
+        capabilities.add(REQUESTTYPE_EXTRACT);
         capabilities.add(REQUESTTYPE_GENERATE);
         capabilities.add(REQUESTTYPE_SUMMARIZE);
         capabilities.add(REQUESTTYPE_TRANSCRIBE);
         capabilities.add(REQUESTTYPE_TRANSLATE);
         capabilities.add(REQUESTTYPE_VISION);
+        
     }
     
     public static List<String> capabilities() {
