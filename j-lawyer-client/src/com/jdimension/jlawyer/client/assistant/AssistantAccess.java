@@ -991,8 +991,14 @@ public class AssistantAccess {
             
             // Iterate through the key-value pairs in the JSON object
             for (String key : jsonObject.keySet()) {
-                // Assuming all values are of type String, otherwise handle differently
-                resultMap.put(key, jsonObject.getString(key));
+                javax.json.JsonValue value = jsonObject.get(key);
+                if (value == null || value.getValueType() == javax.json.JsonValue.ValueType.NULL) {
+                    resultMap.put(key, "");
+                } else if (value.getValueType() == javax.json.JsonValue.ValueType.STRING) {
+                    resultMap.put(key, jsonObject.getString(key));
+                } else {
+                    resultMap.put(key, value.toString());
+                }
             }
         }
 

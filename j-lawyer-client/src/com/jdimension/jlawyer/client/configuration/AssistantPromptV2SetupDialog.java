@@ -481,7 +481,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
         lblDeductTokens.setFont(lblDeductTokens.getFont().deriveFont(lblDeductTokens.getFont().getSize() - 2f));
         lblDeductTokens.setForeground(new java.awt.Color(153, 153, 153));
 
-        JLabel jLabelModelDesc = new JLabel("Modellbeschreibung:");
+        JLabel jLabelModelDesc = new JLabel();
         taModelDescription = new JTextArea();
         taModelDescription.setColumns(20);
         taModelDescription.setLineWrap(true);
@@ -568,7 +568,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
                                                 .addComponent(lblDeductTokens)
                                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                        .addComponent(jScrollPaneModelDesc, GroupLayout.PREFERRED_SIZE, 60, GroupLayout.PREFERRED_SIZE)
+                                                        .addComponent(jScrollPaneModelDesc, GroupLayout.PREFERRED_SIZE, 80, GroupLayout.PREFERRED_SIZE)
                                                         .addComponent(jLabelModelDesc))
                                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
