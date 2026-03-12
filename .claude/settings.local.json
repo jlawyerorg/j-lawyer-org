@@ -64,7 +64,8 @@
       "Bash(curl:*)",
       "WebFetch(domain:api.sipgate.com)",
       "WebFetch(domain:www.sipgate.io)",
-      "WebFetch(domain:en.sipgate.io)"
+      "WebFetch(domain:en.sipgate.io)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ],
     "deny": [],
     "ask": []

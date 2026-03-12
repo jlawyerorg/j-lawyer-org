@@ -775,16 +775,14 @@ public class MultiValueTag extends javax.swing.JPanel {
         if(this.jComboBox1.getSelectedItem()==null || "".equals(this.jComboBox1.getSelectedItem())) {
             setBackground(Color.WHITE);
             this.jComboBox1.setBackground(Color.WHITE);
-            this.jComboBox1.putClientProperty("ComboBox.buttonBackground", "#FF0000");
-            this.jComboBox1.putClientProperty("JComboBox.buttonArrowColor", null);
+            this.jComboBox1.putClientProperty(FlatClientProperties.STYLE, "buttonBackground: #0000; buttonArrowColor: null");
             this.jLabel1.setFont(this.jLabel1.getFont().deriveFont(Font.PLAIN));
             this.jLabel1.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
             this.jComboBox1.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         } else {
             setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.jComboBox1.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
-            this.jComboBox1.putClientProperty("ComboBox.buttonBackground", "#ccccc8");
-            this.jComboBox1.putClientProperty("JComboBox.buttonArrowColor", Color.WHITE);
+            this.jComboBox1.putClientProperty(FlatClientProperties.STYLE, "buttonBackground: #0000; buttonArrowColor: #ffffff");
             this.jLabel1.setFont(this.jLabel1.getFont().deriveFont(Font.BOLD));
             this.jLabel1.setForeground(Color.WHITE);
             this.jComboBox1.setForeground(Color.WHITE);
