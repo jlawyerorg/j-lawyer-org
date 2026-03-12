@@ -797,16 +797,22 @@ public class EmailUtils extends CommonMailUtils {
             Collections.sort(sortedMailboxes, new Comparator<MailboxSetup>() {
                 @Override
                 public int compare(MailboxSetup o1, MailboxSetup o2) {
-                    return Integer.compare(o2.getEmailAddress().length(), o1.getEmailAddress().length());
+                    int len1 = o1.getEmailAddress() != null ? o1.getEmailAddress().length() : 0;
+                    int len2 = o2.getEmailAddress() != null ? o2.getEmailAddress().length() : 0;
+                    return Integer.compare(len2, len1);
                 }
             });
 
             opened = openFolder(msg.getFolder());
             Address[] froms = msg.getFrom();
             for (MailboxSetup ms : sortedMailboxes) {
+                String emailAddr = ms.getEmailAddress();
+                if (emailAddr == null || emailAddr.isEmpty()) {
+                    continue;
+                }
                 if (froms != null) {
                     for (Address from : froms) {
-                        if (from.toString().contains(ms.getEmailAddress())) {
+                        if (from.toString().contains(emailAddr)) {
                             if (opened) {
                                 closeIfIMAP(msg.getFolder());
                             }
@@ -816,7 +822,7 @@ public class EmailUtils extends CommonMailUtils {
                 }
                 if (msg.getAllRecipients() != null) {
                     for (Address to : msg.getAllRecipients()) {
-                        if (to.toString().contains(ms.getEmailAddress())) {
+                        if (to.toString().contains(emailAddr)) {
                             if (opened) {
                                 closeIfIMAP(msg.getFolder());
                             }
