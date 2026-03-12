@@ -61,7 +61,10 @@
       "WebFetch(domain:search.brave.com)",
       "Bash(curl -s -A \"Mozilla/5.0 \\(compatible; j-lawyer.org Legal Assistant\\)\" \"https://www.google.com/search?q=BGH+Urteil+Mietminderung&hl=de&num=10\" -o /tmp/google_test.html)",
       "Read(//tmp/**)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "WebFetch(domain:api.sipgate.com)",
+      "WebFetch(domain:www.sipgate.io)",
+      "WebFetch(domain:en.sipgate.io)"
     ],
     "deny": [],
     "ask": []
