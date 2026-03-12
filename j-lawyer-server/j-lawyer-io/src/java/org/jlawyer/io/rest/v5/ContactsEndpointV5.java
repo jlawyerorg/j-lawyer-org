@@ -730,6 +730,7 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
                 RestfulTagV1 t = new RestfulTagV1();
                 t.setId(tag.getId());
                 t.setName(tag.getTagName());
+                t.setTagValue(tag.getTagValue());
                 t.setDateSet(tag.getDateSet());
                 tagList.add(t);
             }
@@ -796,6 +797,7 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
                 AddressTagsBean newTag=new AddressTagsBean();
                 newTag.setAddressKey(addr);
                 newTag.setTagName(tag.getName());
+                newTag.setTagValue(tag.getTagValue());
                 if(tag.getDateSet()!=null)
                     newTag.setDateSet(tag.getDateSet());
                 newTag.setId(tag.getId());

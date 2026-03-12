@@ -746,6 +746,32 @@ public class TaggedTimerTask extends java.util.TimerTask {
     }
 
     private void buildPopup(JButton button, JPopupMenu popup, List<String> tagsInUse, String[] lastFilterTags, String userSettingsKey) {
+        buildPopup(button, popup, tagsInUse, lastFilterTags, userSettingsKey, null, null);
+    }
+
+    private void buildPopup(JButton button, JPopupMenu popup, List<String> tagsInUse, String[] lastFilterTags, String userSettingsKey, HashMap<String, AppOptionGroupBean[]> mvTagDefs, String mvTagPrefix) {
+        // Expand multi-value tags into per-value entries
+        List<String> expandedTags = new ArrayList<>();
+        java.util.Set<String> mvTagNames = new java.util.HashSet<>();
+        if (mvTagDefs != null && mvTagPrefix != null) {
+            for (java.util.Map.Entry<String, AppOptionGroupBean[]> entry : mvTagDefs.entrySet()) {
+                String groupName = entry.getKey();
+                String tagName = groupName.substring(mvTagPrefix.length());
+                mvTagNames.add(tagName);
+                for (AppOptionGroupBean ogb : entry.getValue()) {
+                    expandedTags.add(tagName + ": " + ogb.getValue());
+                }
+            }
+        }
+        if (tagsInUse != null) {
+            for (String t : tagsInUse) {
+                if (!mvTagNames.contains(t) && !expandedTags.contains(t)) {
+                    expandedTags.add(t);
+                }
+            }
+        }
+        StringUtils.sortIgnoreCase(expandedTags);
+
         // update combobox with tags that are currently in use, but only if there was an actual change
         List<String> currentComboItems = new ArrayList<>();
         MenuElement[] elements = popup.getSubElements();
@@ -755,15 +781,11 @@ public class TaggedTimerTask extends java.util.TimerTask {
         }
         Collections.sort(currentComboItems);
         StringUtils.sortIgnoreCase(currentComboItems);
-        if (tagsInUse == null) {
-            tagsInUse = new ArrayList<>();
-        }
-        StringUtils.sortIgnoreCase(tagsInUse);
-        if (!tagsInUse.equals(currentComboItems)) {
+        if (!expandedTags.equals(currentComboItems)) {
 
             popup.removeAll();
             boolean hasSelection = false;
-            for (String t : tagsInUse) {
+            for (String t : expandedTags) {
                 JCheckBoxMenuItem mi = new StayOpenCheckBoxMenuItem(t);
                 if (Arrays.asList(lastFilterTags).contains(t)) {
                     mi.setSelected(true);
@@ -869,7 +891,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
             if (stopped) return;
             if (this.rebuildPopup && !(this.popTags.isVisible())) {
                 UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_LASTFILTERTAG);
-                this.buildPopup(this.tagMenu, this.popTags, allCaseTagsAsString, lastFilterTags, UserSettings.CONF_DESKTOP_LASTFILTERTAG);
+                this.buildPopup(this.tagMenu, this.popTags, allCaseTagsAsString, lastFilterTags, UserSettings.CONF_DESKTOP_LASTFILTERTAG, settings.getArchiveFileMvTagDefs(), com.jdimension.jlawyer.server.constants.OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS_MV_PREFIX);
             }
 
             if (stopped) return;
@@ -894,7 +916,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
             if (stopped) return;
             if (this.rebuildPopup && !(this.popDocumentTags.isVisible())) {
                 UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
-                this.buildPopup(this.tagDocumentMenu, this.popDocumentTags, allDocTagsAsString, lastFilterDocumentTags, UserSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
+                this.buildPopup(this.tagDocumentMenu, this.popDocumentTags, allDocTagsAsString, lastFilterDocumentTags, UserSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG, settings.getDocumentMvTagDefs(), com.jdimension.jlawyer.server.constants.OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX);
             }
 
             if (lastFilterTags.length == 0 && lastFilterDocumentTags.length == 0) {
@@ -913,7 +935,42 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
 
-            myNewList = fileService.getTagged(lastFilterTags, null, 1000);
+            // Parse filter tags into tag names and value maps for multi-value tag support
+            HashMap<String, AppOptionGroupBean[]> caseMvDefs = settings.getArchiveFileMvTagDefs();
+            java.util.Set<String> caseMvTagNames = new java.util.HashSet<>();
+            if (caseMvDefs != null) {
+                String prefix = com.jdimension.jlawyer.server.constants.OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS_MV_PREFIX;
+                for (String key : caseMvDefs.keySet()) {
+                    caseMvTagNames.add(key.substring(prefix.length()));
+                }
+            }
+            java.util.Set<String> tagNamesSet = new java.util.LinkedHashSet<>();
+            HashMap<String, java.util.List<String>> caseTagValuesBuilder = new HashMap<>();
+            for (String ft : lastFilterTags) {
+                int colonIdx = ft.indexOf(": ");
+                if (colonIdx > 0 && caseMvTagNames.contains(ft.substring(0, colonIdx))) {
+                    String tagName = ft.substring(0, colonIdx);
+                    String tagValue = ft.substring(colonIdx + 2);
+                    tagNamesSet.add(tagName);
+                    caseTagValuesBuilder.computeIfAbsent(tagName, k -> new ArrayList<>()).add(tagValue);
+                } else {
+                    tagNamesSet.add(ft);
+                }
+            }
+            String[] parsedTagNames = tagNamesSet.toArray(new String[0]);
+            HashMap<String, String[]> caseTagValues = null;
+            if (!caseTagValuesBuilder.isEmpty()) {
+                caseTagValues = new HashMap<>();
+                for (java.util.Map.Entry<String, java.util.List<String>> e : caseTagValuesBuilder.entrySet()) {
+                    caseTagValues.put(e.getKey(), e.getValue().toArray(new String[0]));
+                }
+            }
+
+            if (caseTagValues != null) {
+                myNewList = fileService.getTagged(parsedTagNames, null, 1000, caseTagValues, null);
+            } else {
+                myNewList = fileService.getTagged(parsedTagNames, null, 1000);
+            }
 
             if (stopped) return;
             // Filter by selected users (shared with due panel); default to current user if none stored
@@ -938,7 +995,26 @@ public class TaggedTimerTask extends java.util.TimerTask {
             tags = fileService.getTags(myNewListIds);
 
             if (stopped) return;
-            myNewDocumentList = fileService.getTaggedDocuments(lastFilterDocumentTags, 1000);
+            // Parse document filter tags: extract raw tag names for server query
+            HashMap<String, AppOptionGroupBean[]> docMvDefs = settings.getDocumentMvTagDefs();
+            java.util.Set<String> docMvTagNames = new java.util.HashSet<>();
+            if (docMvDefs != null) {
+                String docPrefix = com.jdimension.jlawyer.server.constants.OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX;
+                for (String key : docMvDefs.keySet()) {
+                    docMvTagNames.add(key.substring(docPrefix.length()));
+                }
+            }
+            java.util.Set<String> docTagNamesSet = new java.util.LinkedHashSet<>();
+            for (String ft : lastFilterDocumentTags) {
+                int colonIdx = ft.indexOf(": ");
+                if (colonIdx > 0 && docMvTagNames.contains(ft.substring(0, colonIdx))) {
+                    docTagNamesSet.add(ft.substring(0, colonIdx));
+                } else {
+                    docTagNamesSet.add(ft);
+                }
+            }
+            String[] parsedDocTagNames = docTagNamesSet.toArray(new String[0]);
+            myNewDocumentList = fileService.getTaggedDocuments(parsedDocTagNames, 1000);
             if (selectedUsers.length > 0) {
                 java.util.Set<String> selected = new java.util.HashSet<>(java.util.Arrays.asList(selectedUsers));
                 filteredDocumentList.clear();
@@ -1020,10 +1096,11 @@ public class TaggedTimerTask extends java.util.TimerTask {
                                     ArrayList<String> xTags = new ArrayList<>();
                                     HashMap<String,Date> tagDates=new HashMap<>();
                                     for (ArchiveFileTagsBean aftb : tags.get(aFile.getId())) {
-                                        xTags.add(aftb.getTagName());
-                                        tagDates.put(aftb.getTagName(), aftb.getDateSet());
-                                        if (!allTags.contains(aftb.getTagName())) {
-                                            allTags.add(aftb.getTagName());
+                                        String displayName = aftb.getTagValue() != null ? aftb.getTagName() + ": " + aftb.getTagValue() : aftb.getTagName();
+                                        xTags.add(displayName);
+                                        tagDates.put(displayName, aftb.getDateSet());
+                                        if (!allTags.contains(displayName)) {
+                                            allTags.add(displayName);
                                         }
                                     }
                                     Collections.sort(xTags);
@@ -1033,9 +1110,10 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
                                 if (tags.get(aFile.getId()) != null) {
                                     for (ArchiveFileTagsBean aftb : tags.get(aFile.getId())) {
+                                        String displayName = aftb.getTagValue() != null ? aftb.getTagName() + ": " + aftb.getTagValue() : aftb.getTagName();
                                         TaggedEntryPanelTransparent tep = new TaggedEntryPanelTransparent();
                                         tep.setEntry(te);
-                                        tagToTep.put(aftb.getTagName(), tep);
+                                        tagToTep.put(displayName, tep);
                                     }
 
                                 }
@@ -1065,10 +1143,11 @@ public class TaggedTimerTask extends java.util.TimerTask {
                                     ArrayList<String> xTags = new ArrayList<>();
                                     HashMap<String,Date> tagDates=new HashMap<>();
                                     for (DocumentTagsBean dtb : documentTags.get(aDoc.getId())) {
-                                        xTags.add(dtb.getTagName());
-                                        tagDates.put(dtb.getTagName(), dtb.getDateSet());
-                                        if (!allTags.contains(dtb.getTagName())) {
-                                            allTags.add(dtb.getTagName());
+                                        String displayName = dtb.getTagValue() != null ? dtb.getTagName() + ": " + dtb.getTagValue() : dtb.getTagName();
+                                        xTags.add(displayName);
+                                        tagDates.put(displayName, dtb.getDateSet());
+                                        if (!allTags.contains(displayName)) {
+                                            allTags.add(displayName);
                                         }
                                     }
                                     Collections.sort(xTags);
@@ -1078,9 +1157,10 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
                                 if (documentTags.get(aDoc.getId()) != null) {
                                     for (DocumentTagsBean dtb : documentTags.get(aDoc.getId())) {
+                                        String displayName = dtb.getTagValue() != null ? dtb.getTagName() + ": " + dtb.getTagValue() : dtb.getTagName();
                                         TaggedEntryPanelTransparent tep = new TaggedEntryPanelTransparent();
                                         tep.setEntry(te);
-                                        tagToTep.put(dtb.getTagName(), tep);
+                                        tagToTep.put(displayName, tep);
                                     }
 
                                 }

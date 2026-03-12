@@ -685,6 +685,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
@@ -825,8 +826,8 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
         ClientSettings s = ClientSettings.getInstance();
         List<String> tags = s.getArchiveFileTagsInUse();
         List<String> documentTags = s.getDocumentTagsInUse();
-        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter, null);
-        TagUtils.populateTags(documentTags, cmdDocumentTagFilter, popDocumentTagFilter, null);
+        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter, null, ClientSettings.getInstance().getArchiveFileMvTagDefs(), com.jdimension.jlawyer.server.constants.OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS_MV_PREFIX);
+        TagUtils.populateTags(documentTags, cmdDocumentTagFilter, popDocumentTagFilter, null, ClientSettings.getInstance().getDocumentMvTagDefs(), com.jdimension.jlawyer.server.constants.OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX);
 
         ComponentUtils.restoreDialogSize(this);
 
@@ -1140,7 +1141,9 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
             EditorsRegistry.getInstance().clearStatus(false);
         }
         
-        new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString.getText(), true, TagUtils.getSelectedTags(popTagFilter), TagUtils.getSelectedTags(popDocumentTagFilter), caseIdsSyncedForUser, this.tblResults, this)).start();
+        HashMap<String, String[]> caseTagValues = TagUtils.getSelectedTagValues(this.popTagFilter);
+        HashMap<String, String[]> documentTagValues = TagUtils.getSelectedTagValues(this.popDocumentTagFilter);
+        new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString.getText(), true, TagUtils.getSelectedTags(popTagFilter, true), TagUtils.getSelectedTags(popDocumentTagFilter, true), caseIdsSyncedForUser, this.tblResults, this, caseTagValues, documentTagValues)).start();
 
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 

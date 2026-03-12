@@ -689,6 +689,7 @@ import com.jdimension.jlawyer.services.MessagingServiceLocal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -1517,13 +1518,20 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/bytag/{tag}")
     @RolesAllowed({"readArchiveFileRole"})
-    public Response getCasesByTag(@PathParam("tag") String tag) {
+    public Response getCasesByTag(@PathParam("tag") String tag, @QueryParam("value") @DefaultValue("") String value) {
 
         try {
 
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
-            List<ArchiveFileBean> matches = cases.getTagged(new String[]{tag}, null, Integer.MAX_VALUE);
+            List<ArchiveFileBean> matches;
+            if (value != null && !value.isEmpty()) {
+                HashMap<String, String[]> tagValues = new HashMap<>();
+                tagValues.put(tag, new String[]{value});
+                matches = cases.getTagged(new String[]{tag}, null, Integer.MAX_VALUE, tagValues, null);
+            } else {
+                matches = cases.getTagged(new String[]{tag}, null, Integer.MAX_VALUE);
+            }
             ArrayList<RestfulCaseOverviewV1> rcoList = new ArrayList<>();
             if (matches != null) {
                 for (ArchiveFileBean afb : matches) {
@@ -1701,7 +1709,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/documents/bytag/{tag}")
     @RolesAllowed({"readArchiveFileRole"})
-    public Response getDocumentsByTag(@PathParam("tag") String tag) {
+    public Response getDocumentsByTag(@PathParam("tag") String tag, @QueryParam("value") @DefaultValue("") String value) {
         try {
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);

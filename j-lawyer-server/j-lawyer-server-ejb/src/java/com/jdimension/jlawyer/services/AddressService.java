@@ -1005,6 +1005,13 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                     tag.setDateSet(new Date());
                 this.addressTagsFacade.create(tag);
 
+            } else {
+                AddressTagsBean existing = (AddressTagsBean) check.get(0);
+                if (tag.getTagValue() != null) {
+                    existing.setTagValue(tag.getTagValue());
+                    existing.setDateSet(new Date());
+                    this.addressTagsFacade.edit(existing);
+                }
             }
         } else {
             if (!check.isEmpty()) {
@@ -1018,6 +1025,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
         evt.setAddressId(addressId);
         evt.setActive(active);
         evt.setTagName(tag.getTagName());
+        evt.setTagValue(tag.getTagValue());
         this.tagChangedEvent.fireAsync(evt);
 
     }
@@ -1048,6 +1056,30 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
         }
 
         return list;
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public int renameContactTagName(String oldName, String newName) {
+        return this.addressTagsFacade.renameTagName(oldName, newName);
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public int renameContactTagValue(String tagName, String oldValue, String newValue) {
+        return this.addressTagsFacade.renameTagValue(tagName, oldValue, newValue);
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public int deleteContactTagsByNameAndValue(String tagName, String tagValue) {
+        return this.addressTagsFacade.deleteByTagNameAndTagValue(tagName, tagValue);
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public int deleteContactTagsByName(String tagName) {
+        return this.addressTagsFacade.deleteByTagName(tagName);
     }
 
     @Override
@@ -1246,7 +1278,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                 }
                 inClause = inClause.replaceFirst(",", "");
 
-                st = con.prepareStatement("select addressKey, tagName from contact_tags where addressKey in (" + "select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(department) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(city) like ? or ucase(birthName) like ?) and (contact_tags.tagName in (" + inClause + ") and contact_tags.addressKey=contacts.id)" + ")");
+                st = con.prepareStatement("select addressKey, IF(tag_value IS NOT NULL, CONCAT(tagName, ': ', tag_value), tagName) from contact_tags where addressKey in (" + "select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(department) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(city) like ? or ucase(birthName) like ?) and (contact_tags.tagName in (" + inClause + ") and contact_tags.addressKey=contacts.id)" + ")");
                 String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
                 st.setString(1, wildCard);
                 st.setString(2, wildCard);
@@ -1268,7 +1300,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                     index = index + 1;
                 }
             } else {
-                st = con.prepareStatement("select addressKey, tagName from contact_tags where addressKey in (" + PS_SEARCHENHANCED_2 + ")");
+                st = con.prepareStatement("select addressKey, IF(tag_value IS NOT NULL, CONCAT(tagName, ': ', tag_value), tagName) from contact_tags where addressKey in (" + PS_SEARCHENHANCED_2 + ")");
                 String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
                 st.setString(1, wildCard);
                 st.setString(2, wildCard);
@@ -1314,6 +1346,238 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             } catch (Throwable t) {
                 log.error(t);
             }
+        }
+
+        return list;
+    }
+
+    /**
+     * Builds a SQL condition fragment for tag name matching with optional tag-value filtering.
+     */
+    private String buildTagCondition(String tagAlias, String[] tagNames, HashMap<String, String[]> tagValues, List<String> params) {
+        if (tagValues == null || tagValues.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            for (String t : tagNames) {
+                sb.append(",?");
+                params.add(t);
+            }
+            return tagAlias + ".tagName IN (" + sb.toString().replaceFirst(",", "") + ")";
+        }
+
+        List<String> booleanTags = new ArrayList<>();
+        for (String t : tagNames) {
+            if (!tagValues.containsKey(t)) {
+                booleanTags.add(t);
+            }
+        }
+
+        StringBuilder condition = new StringBuilder("(");
+        boolean first = true;
+
+        if (!booleanTags.isEmpty()) {
+            StringBuilder inClause = new StringBuilder();
+            for (String t : booleanTags) {
+                inClause.append(",?");
+                params.add(t);
+            }
+            condition.append(tagAlias).append(".tagName IN (").append(inClause.toString().replaceFirst(",", "")).append(")");
+            first = false;
+        }
+
+        for (String t : tagNames) {
+            if (tagValues.containsKey(t)) {
+                String[] values = tagValues.get(t);
+                if (values != null && values.length > 0) {
+                    if (!first) condition.append(" OR ");
+                    condition.append("(").append(tagAlias).append(".tagName = ?");
+                    params.add(t);
+                    StringBuilder valClause = new StringBuilder();
+                    for (String v : values) {
+                        valClause.append(",?");
+                        params.add(v);
+                    }
+                    condition.append(" AND ").append(tagAlias).append(".tag_value IN (").append(valClause.toString().replaceFirst(",", "")).append("))");
+                    first = false;
+                }
+            }
+        }
+
+        condition.append(")");
+        return condition.toString();
+    }
+
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public AddressBean[] searchEnhanced(String multiTermQuery, String[] tagName, HashMap<String, String[]> tagValues) {
+        if (tagValues == null) {
+            return searchEnhanced(multiTermQuery, tagName);
+        }
+
+        if (multiTermQuery == null) {
+            multiTermQuery = "";
+        }
+        multiTermQuery = multiTermQuery.trim();
+        multiTermQuery = multiTermQuery.replace(",", " ");
+        String[] terms = multiTermQuery.split("\\s+");
+
+        ArrayList<String> idList = new ArrayList<>();
+        boolean firstTerm = true;
+        for (String term : terms) {
+            ArrayList<String> termIdList = this.searchEnhancedSingleTerm(term, tagName, tagValues);
+            if (firstTerm) {
+                firstTerm = false;
+                idList.addAll(termIdList);
+            } else {
+                idList.retainAll(termIdList);
+            }
+        }
+
+        ArrayList<AddressBean> list = new ArrayList<>();
+        for (String id : idList) {
+            list.add(this.addressFacade.find(id));
+        }
+        return (AddressBean[]) list.toArray(new AddressBean[list.size()]);
+    }
+
+    private ArrayList<String> searchEnhancedSingleTerm(String query, String[] tagName, HashMap<String, String[]> tagValues) {
+        if (query == null) {
+            query = "";
+        }
+        query = query.trim();
+
+        JDBCUtils utils = new JDBCUtils();
+        ResultSet rs = null;
+        PreparedStatement st = null;
+
+        boolean withTag = false;
+        if (tagName != null && tagName.length > 0) {
+            if (!(tagName.length == 1 && "".equals(tagName[0]))) {
+                withTag = true;
+            }
+        }
+
+        ArrayList<String> idList = new ArrayList<>();
+        try (Connection con = utils.getConnection()) {
+            if (withTag) {
+                List<String> params = new ArrayList<>();
+                String tagCond = buildTagCondition("contact_tags", tagName, tagValues, params);
+
+                st = con.prepareStatement("select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(department) like ? or ucase(company) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(city) like ? or ucase(birthName) like ? or zipCode like ?) and (" + tagCond + " and contact_tags.addressKey=contacts.id)");
+                String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
+                int index = 1;
+                for (int i = 0; i < 14; i++) {
+                    st.setString(index++, wildCard);
+                }
+                for (String p : params) {
+                    st.setString(index++, p);
+                }
+            } else {
+                st = con.prepareStatement(PS_SEARCHENHANCED_2);
+                String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
+                for (int i = 1; i <= 14; i++) {
+                    st.setString(i, wildCard);
+                }
+            }
+            rs = st.executeQuery();
+            while (rs.next()) {
+                String id = rs.getString(1);
+                if (!idList.contains(id)) {
+                    idList.add(id);
+                }
+            }
+        } catch (SQLException sqle) {
+            log.error("Error finding addresses", sqle);
+            throw new EJBException("Addressensuche konnte nicht ausgeführt werden.", sqle);
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Throwable t) { log.error(t); }
+            try { if (st != null) st.close(); } catch (Throwable t) { log.error(t); }
+        }
+
+        return idList;
+    }
+
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public Map<String, ArrayList<String>> searchTagsEnhanced(String multiTermQuery, String[] tagName, HashMap<String, String[]> tagValues) {
+        if (tagValues == null) {
+            return searchTagsEnhanced(multiTermQuery, tagName);
+        }
+
+        if (multiTermQuery == null) {
+            multiTermQuery = "";
+        }
+        multiTermQuery = multiTermQuery.trim();
+        multiTermQuery = multiTermQuery.replace(",", " ");
+        String[] terms = multiTermQuery.split("\\s+");
+
+        Map<String, ArrayList<String>> resultMap = new HashMap<>();
+        boolean firstTerm = true;
+        for (String term : terms) {
+            Map<String, ArrayList<String>> termMap = this.searchTagsEnhancedSingleTerm(term, tagName, tagValues);
+            if (firstTerm) {
+                firstTerm = false;
+                resultMap.putAll(termMap);
+            } else {
+                resultMap.keySet().retainAll(termMap.keySet());
+            }
+        }
+        return resultMap;
+    }
+
+    private Map<String, ArrayList<String>> searchTagsEnhancedSingleTerm(String query, String[] tagName, HashMap<String, String[]> tagValues) {
+        if (query == null) {
+            query = "";
+        }
+        query = query.trim();
+
+        JDBCUtils utils = new JDBCUtils();
+        ResultSet rs = null;
+        PreparedStatement st = null;
+
+        boolean withTag = false;
+        if (tagName != null && tagName.length > 0) {
+            if (!(tagName.length == 1 && "".equals(tagName[0]))) {
+                withTag = true;
+            }
+        }
+
+        HashMap<String, ArrayList<String>> list = new HashMap<>();
+        try (Connection con = utils.getConnection()) {
+            if (withTag) {
+                List<String> params = new ArrayList<>();
+                String tagCond = buildTagCondition("contact_tags", tagName, tagValues, params);
+
+                st = con.prepareStatement("select addressKey, IF(tag_value IS NOT NULL, CONCAT(tagName, ': ', tag_value), tagName) from contact_tags where addressKey in (" + "select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(department) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(city) like ? or ucase(birthName) like ?) and (" + tagCond + " and contact_tags.addressKey=contacts.id)" + ")");
+                String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
+                int index = 1;
+                for (int i = 0; i < 13; i++) {
+                    st.setString(index++, wildCard);
+                }
+                for (String p : params) {
+                    st.setString(index++, p);
+                }
+            } else {
+                st = con.prepareStatement("select addressKey, IF(tag_value IS NOT NULL, CONCAT(tagName, ': ', tag_value), tagName) from contact_tags where addressKey in (" + PS_SEARCHENHANCED_2 + ")");
+                String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
+                for (int i = 1; i <= 14; i++) {
+                    st.setString(i, wildCard);
+                }
+            }
+            rs = st.executeQuery();
+            while (rs.next()) {
+                String id = rs.getString(1);
+                String tag = rs.getString(2);
+                if (!list.containsKey(id)) {
+                    list.put(id, new ArrayList<>());
+                }
+                list.get(id).add(tag);
+            }
+        } catch (SQLException sqle) {
+            log.error("Error finding addresses", sqle);
+            throw new EJBException("Addressensuche konnte nicht ausgeführt werden.", sqle);
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Throwable t) { log.error(t); }
+            try { if (st != null) st.close(); } catch (Throwable t) { log.error(t); }
         }
 
         return list;

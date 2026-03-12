@@ -732,10 +732,43 @@ public interface ArchiveFileServiceRemote {
 
     ArchiveFileHistoryBean addHistory(String archiveFileId, ArchiveFileHistoryBean history) throws Exception;
 
+    /**
+     * Sets or removes a tag on a case. For multi-value tags, the tag bean's
+     * tagValue field specifies the selected dropdown value. When active is true
+     * and the tag already exists, the tagValue is updated on the existing row.
+     * When active is false, the tag row is removed regardless of tagValue.
+     * Boolean tags have tagValue set to null.
+     *
+     * @param archiveFileId the case ID
+     * @param tag the tag bean containing tagName and optional tagValue
+     * @param active true to set/update the tag, false to remove it
+     * @throws Exception on error
+     */
     void setTag(String archiveFileId, ArchiveFileTagsBean tag, boolean active) throws Exception;
-    
+
+    /**
+     * Sets or removes a tag on a document. For multi-value tags, the tag bean's
+     * tagValue field specifies the selected dropdown value. When active is true
+     * and the tag already exists, the tagValue is updated on the existing row.
+     * When active is false, the tag row is removed regardless of tagValue.
+     * Boolean tags have tagValue set to null.
+     *
+     * @param documentId the document ID
+     * @param tag the tag bean containing tagName and optional tagValue
+     * @param active true to set/update the tag, false to remove it
+     * @throws Exception on error
+     */
     void setDocumentTag(String documentId, DocumentTagsBean tag, boolean active) throws Exception;
 
+    /**
+     * Sets or removes a tag on multiple documents. For multi-value tags, the
+     * tag bean's tagValue field specifies the selected dropdown value.
+     *
+     * @param documentIds the list of document IDs
+     * @param tag the tag bean containing tagName and optional tagValue
+     * @param active true to set/update the tag, false to remove it
+     * @throws Exception on error
+     */
     void setDocumentTags(List<String> documentIds, DocumentTagsBean tag, boolean active) throws Exception;
 
     Collection<ArchiveFileTagsBean> getTags(String archiveFileId) throws Exception;
@@ -750,7 +783,92 @@ public interface ArchiveFileServiceRemote {
     
     List<String> searchDocumentTagsInUse();
 
+    /**
+     * Renames a case tag name in all existing case tag rows.
+     *
+     * @param oldName the current tag name
+     * @param newName the new tag name
+     * @return number of updated rows
+     */
+    int renameCaseTagName(String oldName, String newName);
+
+    /**
+     * Renames a case tag value in all existing case tag rows with the given tag name.
+     *
+     * @param tagName the tag name to match
+     * @param oldValue the current value
+     * @param newValue the new value
+     * @return number of updated rows
+     */
+    int renameCaseTagValue(String tagName, String oldValue, String newValue);
+
+    /**
+     * Deletes all case tag rows matching the given tag name and tag value.
+     *
+     * @param tagName the tag name
+     * @param tagValue the tag value
+     * @return number of deleted rows
+     */
+    int deleteCaseTagsByNameAndValue(String tagName, String tagValue);
+
+    /**
+     * Deletes all case tag rows matching the given tag name.
+     *
+     * @param tagName the tag name
+     * @return number of deleted rows
+     */
+    int deleteCaseTagsByName(String tagName);
+
+    /**
+     * Renames a document tag name in all existing document tag rows.
+     *
+     * @param oldName the current tag name
+     * @param newName the new tag name
+     * @return number of updated rows
+     */
+    int renameDocumentTagName(String oldName, String newName);
+
+    /**
+     * Renames a document tag value in all existing document tag rows with the given tag name.
+     *
+     * @param tagName the tag name to match
+     * @param oldValue the current value
+     * @param newValue the new value
+     * @return number of updated rows
+     */
+    int renameDocumentTagValue(String tagName, String oldValue, String newValue);
+
+    /**
+     * Deletes all document tag rows matching the given tag name and tag value.
+     *
+     * @param tagName the tag name
+     * @param tagValue the tag value
+     * @return number of deleted rows
+     */
+    int deleteDocumentTagsByNameAndValue(String tagName, String tagValue);
+
+    /**
+     * Deletes all document tag rows matching the given tag name.
+     *
+     * @param tagName the tag name
+     * @return number of deleted rows
+     */
+    int deleteDocumentTagsByName(String tagName);
+
     ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName);
+
+    /**
+     * Searches for cases with optional tag-value filtering for multi-value tags.
+     *
+     * @param query search text
+     * @param withArchive include archived cases
+     * @param tagName case tag names to filter by
+     * @param documentTagName document tag names to filter by
+     * @param caseTagValues optional map of case tag name to selected values for multi-value tag filtering
+     * @param documentTagValues optional map of document tag name to selected values for multi-value tag filtering
+     * @return matching cases
+     */
+    ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName, HashMap<String, String[]> caseTagValues, HashMap<String, String[]> documentTagValues);
 
     DocumentPreview getDocumentPreview(String id, String previewType) throws Exception;
 
@@ -772,11 +890,36 @@ public interface ArchiveFileServiceRemote {
 
     List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit);
 
+    /**
+     * Returns cases matching the given tags, with optional tag-value filtering for multi-value tags.
+     *
+     * @param tagName case tag names to filter by
+     * @param docTagName document tag names to filter by
+     * @param limit maximum number of results
+     * @param caseTagValues optional map of case tag name to selected values for multi-value tag filtering
+     * @param documentTagValues optional map of document tag name to selected values for multi-value tag filtering
+     * @return matching cases
+     */
+    List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit, HashMap<String, String[]> caseTagValues, HashMap<String, String[]> documentTagValues);
+
     boolean setDocumentDate(String id, Date date) throws Exception;
     
     boolean setDocumentFavorite(String id, boolean favorite) throws Exception;
 
     HashMap<String,ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName);
+
+    /**
+     * Searches for case tag associations with optional tag-value filtering for multi-value tags.
+     *
+     * @param query search text
+     * @param withArchive include archived cases
+     * @param tagName case tag names to filter by
+     * @param documentTagName document tag names to filter by
+     * @param caseTagValues optional map of case tag name to selected values for multi-value tag filtering
+     * @param documentTagValues optional map of document tag name to selected values for multi-value tag filtering
+     * @return map of case ID to list of tag display strings
+     */
+    HashMap<String,ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName, HashMap<String, String[]> caseTagValues, HashMap<String, String[]> documentTagValues);
 
     ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String letterHead, GenericNode templateFolder, String templateName, HashMap<String,Object> placeHolderValues, String dictateSign, String externalId) throws Exception;
 

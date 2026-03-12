@@ -839,8 +839,19 @@ public interface ArchiveFileServiceLocal {
 
     void addCaseHistory(String newHistoryId, ArchiveFileBean dto, String description, String principalId, Date changeDate);
     
+    int renameCaseTagName(String oldName, String newName);
+    int renameCaseTagValue(String tagName, String oldValue, String newValue);
+    int deleteCaseTagsByNameAndValue(String tagName, String tagValue);
+    int deleteCaseTagsByName(String tagName);
+    int renameDocumentTagName(String oldName, String newName);
+    int renameDocumentTagValue(String tagName, String oldValue, String newValue);
+    int deleteDocumentTagsByNameAndValue(String tagName, String tagValue);
+    int deleteDocumentTagsByName(String tagName);
+
     ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagNames);
+    ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagNames, HashMap<String, String[]> caseTagValues, HashMap<String, String[]> documentTagValues);
     List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit);
+    List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit, HashMap<String, String[]> caseTagValues, HashMap<String, String[]> documentTagValues);
     List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit);
     List<ArchiveFileAddressesBean> getArchiveFileAddressesByReference(String reference) throws Exception;
 

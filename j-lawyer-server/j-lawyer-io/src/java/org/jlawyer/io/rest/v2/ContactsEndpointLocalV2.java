@@ -678,7 +678,7 @@ public interface ContactsEndpointLocalV2 {
     
     Response getContactByAnyExternalId(String extId);
     
-    Response getContactsByTag(String tag);
+    Response getContactsByTag(String tag, String value);
     
     Response getContactByExternalId(int extIdIndex, String extId);
 

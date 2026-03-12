@@ -853,6 +853,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
                 RestfulTagV1 t = new RestfulTagV1();
                 t.setId(tag.getId());
                 t.setName(tag.getTagName());
+                t.setTagValue(tag.getTagValue());
                 t.setDateSet(tag.getDateSet());
                 tagList.add(t);
             }
@@ -922,6 +923,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
                 ArchiveFileTagsBean newTag=new ArchiveFileTagsBean();
                 newTag.setArchiveFileKey(afb);
                 newTag.setTagName(tag.getName());
+                newTag.setTagValue(tag.getTagValue());
                 if(tag.getDateSet()!=null) {
                     newTag.setDateSet(tag.getDateSet());
                 }
@@ -962,6 +964,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
                 DocumentTagsBean newTag=new DocumentTagsBean();
                 newTag.setArchiveFileKey(doc);
                 newTag.setTagName(tag.getName());
+                newTag.setTagValue(tag.getTagValue());
                 if(tag.getDateSet()!=null)
                     newTag.setDateSet(tag.getDateSet());
                 newTag.setId(tag.getId());

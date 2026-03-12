@@ -729,7 +729,7 @@ public class AddBeaRecipientSearchDialog extends javax.swing.JDialog {
 
         ClientSettings s = ClientSettings.getInstance();
         List<String> tags = s.getAddressTagsInUse();
-        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter, null);
+        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter, null, ClientSettings.getInstance().getAddressMvTagDefs(), com.jdimension.jlawyer.server.constants.OptionConstants.OPTIONGROUP_ADDRESSTAGS_MV_PREFIX);
 
         ComponentUtils.restoreDialogSize(this);
 
@@ -886,7 +886,7 @@ public class AddBeaRecipientSearchDialog extends javax.swing.JDialog {
         EditorsRegistry.getInstance().updateStatus("Suche Adressen...");
         ThreadUtils.setWaitCursor(this);
         
-        new Thread(new QuickEmailSearchThread(this, this.txtSearchString.getText().trim(), TagUtils.getSelectedTags(popTagFilter), this.tblResults)).start();
+        new Thread(new QuickEmailSearchThread(this, this.txtSearchString.getText().trim(), TagUtils.getSelectedTags(popTagFilter, true), this.tblResults, TagUtils.getSelectedTagValues(this.popTagFilter))).start();
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 
     private void txtSearchStringKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchStringKeyPressed

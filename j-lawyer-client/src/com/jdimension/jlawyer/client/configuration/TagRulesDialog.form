@@ -50,7 +50,7 @@
                               </Group>
                           </Group>
                       </Group>
-                      <EmptySpace min="0" pref="234" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="264" max="32767" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="1" attributes="0">
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
@@ -324,7 +324,7 @@
             <Font component="jLabel3" property="font" relativeSize="true" size="0"/>
           </FontInfo>
         </Property>
-        <Property name="text" type="java.lang.String" value="Etiketten (kommasepariert):"/>
+        <Property name="text" type="java.lang.String" value="Etiketten (kommasepariert, Listenetiketten: Name=Wert):"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JCheckBox" name="chkCancelOnMatch">

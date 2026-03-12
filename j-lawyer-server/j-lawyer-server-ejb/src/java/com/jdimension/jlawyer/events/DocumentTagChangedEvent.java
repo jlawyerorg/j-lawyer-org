@@ -681,6 +681,7 @@ public class DocumentTagChangedEvent extends CustomHook implements Jsonable {
     protected String caseId=null;
     protected String documentId=null;
     protected String tagName=null;
+    protected String tagValue=null;
     protected boolean active=true;
     
     public DocumentTagChangedEvent() {
@@ -707,6 +708,7 @@ public class DocumentTagChangedEvent extends CustomHook implements Jsonable {
         json.put("caseId", this.caseId);
         json.put("documentId", this.documentId);
         json.put("tagName", this.getTagName());
+        json.put("tagValue", this.getTagValue());
         json.put("active", this.isActive());
         json.toJson(writer);
     }
@@ -766,6 +768,19 @@ public class DocumentTagChangedEvent extends CustomHook implements Jsonable {
     public void setDocumentId(String documentId) {
         this.documentId = documentId;
     }
-    
-    
+
+    /**
+     * @return the tagValue
+     */
+    public String getTagValue() {
+        return tagValue;
+    }
+
+    /**
+     * @param tagValue the tagValue to set
+     */
+    public void setTagValue(String tagValue) {
+        this.tagValue = tagValue;
+    }
+
 }

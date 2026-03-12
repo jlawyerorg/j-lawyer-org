@@ -692,4 +692,13 @@ public interface AddressTagsBeanFacadeLocal {
     List<AddressTagsBean> findByAddressKeyAndTagName(AddressBean archiveFileKey, String tagName);
     
     List<AddressTagsBean> findByTagName(String tagName);
+
+    int renameTagName(String oldName, String newName);
+
+    int renameTagValue(String tagName, String oldValue, String newValue);
+
+    int deleteByTagNameAndTagValue(String tagName, String tagValue);
+
+    int deleteByTagName(String tagName);
+
 }

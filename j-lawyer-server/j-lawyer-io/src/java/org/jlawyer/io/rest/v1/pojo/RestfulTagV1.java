@@ -673,6 +673,7 @@ public class RestfulTagV1 {
     
     private String id=null;
     private String name=null;
+    private String tagValue=null;
     private Date dateSet=null;
 
     public RestfulTagV1() {
@@ -719,7 +720,19 @@ public class RestfulTagV1 {
     public void setDateSet(Date dateSet) {
         this.dateSet = dateSet;
     }
-    
-    
-    
+
+    /**
+     * @return the tagValue
+     */
+    public String getTagValue() {
+        return tagValue;
+    }
+
+    /**
+     * @param tagValue the tagValue to set
+     */
+    public void setTagValue(String tagValue) {
+        this.tagValue = tagValue;
+    }
+
 }

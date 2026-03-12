@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Component;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import javax.swing.JTable;
 import org.apache.log4j.Logger;
@@ -688,7 +689,8 @@ public class QuickAddressSearchThread implements Runnable {
     private Component owner;
     private JTable target;
     private String[] tag;
-    
+    private HashMap<String, String[]> tagValues=null;
+
     /** Creates a new instance of QuickAddressSearchThread
      * @param owner
      * @param query
@@ -701,6 +703,11 @@ public class QuickAddressSearchThread implements Runnable {
         this.tag=tag;
     }
 
+    public QuickAddressSearchThread(Component owner, String query, String[] tag, JTable target, HashMap<String, String[]> tagValues) {
+        this(owner, query, tag, target);
+        this.tagValues = tagValues;
+    }
+
     @Override
     public void run() {
         AddressBean[] dtos=null;
@@ -710,8 +717,13 @@ public class QuickAddressSearchThread implements Runnable {
             JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             
             AddressServiceRemote addressService = locator.lookupAddressServiceRemote();
-            dtos=addressService.searchEnhanced(query, tag);
-            tags=addressService.searchTagsEnhanced(query, tag);
+            if (tagValues != null) {
+                dtos=addressService.searchEnhanced(query, tag, tagValues);
+                tags=addressService.searchTagsEnhanced(query, tag, tagValues);
+            } else {
+                dtos=addressService.searchEnhanced(query, tag);
+                tags=addressService.searchTagsEnhanced(query, tag);
+            }
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             ThreadUtils.setDefaultCursor(this.owner);

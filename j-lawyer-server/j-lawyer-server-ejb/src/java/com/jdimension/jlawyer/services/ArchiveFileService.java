@@ -1931,14 +1931,26 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                                 continue;
                             }
 
+                            String tagName = tag;
+                            String tagValue = null;
+                            int eqIdx = tag.indexOf('=');
+                            if (eqIdx > 0) {
+                                tagName = tag.substring(0, eqIdx).trim();
+                                tagValue = tag.substring(eqIdx + 1).trim();
+                                if (tagValue.isEmpty()) {
+                                    tagValue = null;
+                                }
+                            }
+
                             DocumentTagsBean dtb = new DocumentTagsBean();
                             dtb.setArchiveFileKey(doc);
                             dtb.setDateSet(new Date());
-                            dtb.setTagName(tag);
+                            dtb.setTagName(tagName);
+                            dtb.setTagValue(tagValue);
                             try {
                                 this.setDocumentTagUnrestricted(doc.getId(), dtb, true);
                             } catch (Exception ex) {
-                                log.error("Could not apply auto-tag " + tag + " to document " + doc.getName() + "[" + doc.getId() + "]", ex);
+                                log.error("Could not apply auto-tag " + tagName + " to document " + doc.getName() + "[" + doc.getId() + "]", ex);
                             }
                         }
 
@@ -2572,9 +2584,26 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     tag.setDateSet(new Date());
                 }
                 this.archiveFileTagsFacade.create(tag);
-                historyText = "Akten-Etikett gesetzt: " + tag.getTagName();
+                if (tag.getTagValue() != null && !tag.getTagValue().isEmpty()) {
+                    historyText = "Akten-Etikett gesetzt: " + tag.getTagName() + " = " + tag.getTagValue();
+                } else {
+                    historyText = "Akten-Etikett gesetzt: " + tag.getTagName();
+                }
             } else {
-                historyText = "Akten-Etikett gesetzt: " + tag.getTagName() + "(war bereits gesetzt)";
+                ArchiveFileTagsBean existing = (ArchiveFileTagsBean) check.get(0);
+                if (tag.getTagValue() != null) {
+                    String oldValue = existing.getTagValue();
+                    existing.setTagValue(tag.getTagValue());
+                    existing.setDateSet(new Date());
+                    this.archiveFileTagsFacade.edit(existing);
+                    if (oldValue != null && !oldValue.isEmpty()) {
+                        historyText = "Akten-Etikett geändert: " + tag.getTagName() + " = " + oldValue + " \u2192 " + tag.getTagValue();
+                    } else {
+                        historyText = "Akten-Etikett gesetzt: " + tag.getTagName() + " = " + tag.getTagValue();
+                    }
+                } else {
+                    historyText = "Akten-Etikett gesetzt: " + tag.getTagName() + " (war bereits gesetzt)";
+                }
             }
         } else if (!check.isEmpty()) {
             ArchiveFileTagsBean remove = (ArchiveFileTagsBean) check.get(0);
@@ -2588,6 +2617,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         evt.setCaseId(archiveFileId);
         evt.setActive(active);
         evt.setTagName(tag.getTagName());
+        evt.setTagValue(tag.getTagValue());
         this.caseTagChangedEvent.fireAsync(evt);
 
     }
@@ -2656,8 +2686,26 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                         newTag.setDateSet(tag.getDateSet());
                     }
                     newTag.setTagName(tag.getTagName());
+                    newTag.setTagValue(tag.getTagValue());
                     this.documentTagsFacade.create(newTag);
-                    historyText = "Dokument-Etikett gesetzt an " + aFile.getName() + ": " + newTag.getTagName();
+                    if (tag.getTagValue() != null && !tag.getTagValue().isEmpty()) {
+                        historyText = "Dokument-Etikett gesetzt an " + aFile.getName() + ": " + newTag.getTagName() + " = " + tag.getTagValue();
+                    } else {
+                        historyText = "Dokument-Etikett gesetzt an " + aFile.getName() + ": " + newTag.getTagName();
+                    }
+                } else {
+                    DocumentTagsBean existing = (DocumentTagsBean) check.get(0);
+                    if (tag.getTagValue() != null) {
+                        String oldValue = existing.getTagValue();
+                        existing.setTagValue(tag.getTagValue());
+                        existing.setDateSet(new Date());
+                        this.documentTagsFacade.edit(existing);
+                        if (oldValue != null && !oldValue.isEmpty()) {
+                            historyText = "Dokument-Etikett geändert an " + aFile.getName() + ": " + tag.getTagName() + " = " + oldValue + " \u2192 " + tag.getTagValue();
+                        } else {
+                            historyText = "Dokument-Etikett gesetzt an " + aFile.getName() + ": " + tag.getTagName() + " = " + tag.getTagValue();
+                        }
+                    }
                 }
             } else if (!check.isEmpty()) {
                 DocumentTagsBean remove = (DocumentTagsBean) check.get(0);
@@ -2672,6 +2720,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             evt.setDocumentId(documentId);
             evt.setActive(active);
             evt.setTagName(tag.getTagName());
+            evt.setTagValue(tag.getTagValue());
             this.docTagChangedEvent.fireAsync(evt);
         }
 
@@ -2804,6 +2853,54 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         return list;
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public int renameCaseTagName(String oldName, String newName) {
+        return this.archiveFileTagsFacade.renameTagName(oldName, newName);
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public int renameCaseTagValue(String tagName, String oldValue, String newValue) {
+        return this.archiveFileTagsFacade.renameTagValue(tagName, oldValue, newValue);
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public int deleteCaseTagsByNameAndValue(String tagName, String tagValue) {
+        return this.archiveFileTagsFacade.deleteByTagNameAndTagValue(tagName, tagValue);
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public int deleteCaseTagsByName(String tagName) {
+        return this.archiveFileTagsFacade.deleteByTagName(tagName);
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public int renameDocumentTagName(String oldName, String newName) {
+        return this.documentTagsFacade.renameTagName(oldName, newName);
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public int renameDocumentTagValue(String tagName, String oldValue, String newValue) {
+        return this.documentTagsFacade.renameTagValue(tagName, oldValue, newValue);
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public int deleteDocumentTagsByNameAndValue(String tagName, String tagValue) {
+        return this.documentTagsFacade.deleteByTagNameAndTagValue(tagName, tagValue);
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public int deleteDocumentTagsByName(String tagName) {
+        return this.documentTagsFacade.deleteByTagName(tagName);
     }
 
     @Override
@@ -3026,6 +3123,171 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             } catch (Throwable t) {
                 log.error(t);
             }
+        }
+
+        return (ArchiveFileBean[]) list.toArray(new ArchiveFileBean[list.size()]);
+    }
+
+    /**
+     * Builds a SQL condition fragment for tag name matching with optional tag-value filtering.
+     * Returns a condition like: (tagAlias.tagName IN (?, ?) OR (tagAlias.tagName = ? AND tagAlias.tag_value IN (?, ?)))
+     * and populates the params list with the corresponding parameter values.
+     */
+    private String buildTagCondition(String tagAlias, String[] tagNames, HashMap<String, String[]> tagValues, List<String> params) {
+        if (tagValues == null || tagValues.isEmpty()) {
+            // No value filtering - use simple IN clause
+            StringBuilder sb = new StringBuilder();
+            for (String t : tagNames) {
+                sb.append(",?");
+                params.add(t);
+            }
+            return tagAlias + ".tagName IN (" + sb.toString().replaceFirst(",", "") + ")";
+        }
+
+        // Separate boolean tags from value-filtered tags
+        List<String> booleanTags = new ArrayList<>();
+        for (String t : tagNames) {
+            if (!tagValues.containsKey(t)) {
+                booleanTags.add(t);
+            }
+        }
+
+        StringBuilder condition = new StringBuilder("(");
+        boolean first = true;
+
+        if (!booleanTags.isEmpty()) {
+            StringBuilder inClause = new StringBuilder();
+            for (String t : booleanTags) {
+                inClause.append(",?");
+                params.add(t);
+            }
+            condition.append(tagAlias).append(".tagName IN (").append(inClause.toString().replaceFirst(",", "")).append(")");
+            first = false;
+        }
+
+        for (String t : tagNames) {
+            if (tagValues.containsKey(t)) {
+                String[] values = tagValues.get(t);
+                if (values != null && values.length > 0) {
+                    if (!first) condition.append(" OR ");
+                    condition.append("(").append(tagAlias).append(".tagName = ?");
+                    params.add(t);
+                    StringBuilder valClause = new StringBuilder();
+                    for (String v : values) {
+                        valClause.append(",?");
+                        params.add(v);
+                    }
+                    condition.append(" AND ").append(tagAlias).append(".tag_value IN (").append(valClause.toString().replaceFirst(",", "")).append("))");
+                    first = false;
+                }
+            }
+        }
+
+        condition.append(")");
+        return condition.toString();
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagNames, HashMap<String, String[]> caseTagValues, HashMap<String, String[]> documentTagValues) {
+
+        if (caseTagValues == null && documentTagValues == null) {
+            return searchEnhanced(query, withArchive, tagName, documentTagNames);
+        }
+
+        if (query == null) {
+            query = "";
+        }
+
+        query = query.trim();
+
+        ArrayList<String> allowedCases = null;
+        try {
+            allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
+        } catch (Exception ex) {
+            log.error("Unable to determine allowed cases for user " + context.getCallerPrincipal().getName(), ex);
+            throw new EJBException("Akten für Nutzer " + context.getCallerPrincipal().getName() + "' konnten nicht ermittelt werden.", ex);
+        }
+
+        JDBCUtils utils = new JDBCUtils();
+        Connection con = null;
+        ResultSet rs = null;
+        PreparedStatement st = null;
+
+        boolean withTag = false;
+        if (tagName != null && tagName.length > 0) {
+            if (!(tagName.length == 1 && "".equals(tagName[0]))) {
+                withTag = true;
+            }
+        }
+
+        boolean withDocumentTag = false;
+        if (documentTagNames != null && documentTagNames.length > 0) {
+            if (!(documentTagNames.length == 1 && "".equals(documentTagNames[0]))) {
+                withDocumentTag = true;
+            }
+        }
+
+        if (withTag || withDocumentTag) {
+            if (tagName == null || tagName.length == 0) {
+                tagName = new String[]{"some-non-existing-string"};
+            }
+            if (documentTagNames == null || documentTagNames.length == 0) {
+                documentTagNames = new String[]{"some-non-existing-string"};
+            }
+        }
+
+        ArrayList<ArchiveFileBean> list = new ArrayList<>();
+        try {
+            con = utils.getConnection();
+            String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
+
+            if (withTag || withDocumentTag) {
+                List<String> params = new ArrayList<>();
+                String caseTagCond = buildTagCondition("case_tags", tagName, caseTagValues, params);
+                String docTagCond = buildTagCondition("document_tags", documentTagNames, documentTagValues, params);
+
+                String archiveFilter = withArchive ? "" : "cases.archived=0 and ";
+
+                st = con.prepareStatement("select distinct(cases.id) from cases \n"
+                        + "left join case_tags on (case_tags.archiveFileKey=cases.id and " + caseTagCond + ") \n"
+                        + "left join case_documents on (case_documents.archiveFileKey=cases.id and case_documents.deleted=0) \n"
+                        + "left join document_tags on (document_tags.documentKey=case_documents.id and " + docTagCond + ") \n"
+                        + "where " + archiveFilter + "not (case_tags.tagName is null and document_tags.tagName is null) and (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(cases.custom1) like ? or ucase(cases.custom2) like ? or ucase(cases.custom3) like ? or ucase(subjectField) like ? or ucase(lawyer) like ? or ucase(assistant) like ?)");
+
+                int index = 1;
+                for (String p : params) {
+                    st.setString(index++, p);
+                }
+                for (int i = 0; i < 10; i++) {
+                    st.setString(index++, wildCard);
+                }
+            } else {
+                if (withArchive) {
+                    st = con.prepareStatement(PS_SEARCHENHANCED_2);
+                } else {
+                    st = con.prepareStatement(PS_SEARCHENHANCED_4);
+                }
+                for (int i = 1; i <= 11; i++) {
+                    st.setString(i, wildCard);
+                }
+            }
+
+            rs = st.executeQuery();
+            while (rs.next()) {
+                String id = rs.getString(1);
+                if (allowedCases.contains(id)) {
+                    ArchiveFileBean dto = this.archiveFileFacade.find(id);
+                    list.add(dto);
+                }
+            }
+        } catch (SQLException sqle) {
+            log.error("Error finding archive files", sqle);
+            throw new EJBException("Aktensuche konnte nicht ausgeführt werden.", sqle);
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Throwable t) { log.error(t); }
+            try { if (st != null) st.close(); } catch (Throwable t) { log.error(t); }
+            try { if (con != null) con.close(); } catch (Throwable t) { log.error(t); }
         }
 
         return (ArchiveFileBean[]) list.toArray(new ArchiveFileBean[list.size()]);
@@ -3612,6 +3874,102 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit, HashMap<String, String[]> caseTagValues, HashMap<String, String[]> documentTagValues) {
+
+        if (caseTagValues == null && documentTagValues == null) {
+            return getTagged(tagName, docTagName, limit);
+        }
+
+        JDBCUtils utils = new JDBCUtils();
+        ResultSet rs = null;
+        PreparedStatement st = null;
+        List<ArchiveFileBean> returnList = new ArrayList<>();
+
+        String principalId = context.getCallerPrincipal().getName();
+
+        ArrayList<String> allowedCases = null;
+        try {
+            allowedCases = SecurityUtils.getAllowedCasesForUser(principalId, this.securityFacade);
+        } catch (Exception ex) {
+            log.error("Unable to determine allowed cases for user " + principalId, ex);
+            throw new EJBException("Akten für Nutzer " + principalId + "' konnten nicht ermittelt werden.", ex);
+        }
+
+        if (tagName == null || tagName.length == 0) {
+            tagName = new String[]{"some-non-existing-string"};
+        }
+        if (docTagName == null || docTagName.length == 0) {
+            docTagName = new String[]{"some-non-existing-string"};
+        }
+
+        try (Connection con = utils.getConnection()) {
+
+            boolean empty = true;
+            if (tagName.length > 0) empty = false;
+            if (docTagName.length > 0) empty = false;
+            if (empty) return new ArrayList<>();
+
+            List<String> caseParams1 = new ArrayList<>();
+            String caseCond1 = buildTagCondition("a3", tagName, caseTagValues, caseParams1);
+
+            List<String> docParams1 = new ArrayList<>();
+            String docCond1 = buildTagCondition("a4", docTagName, documentTagValues, docParams1);
+
+            List<String> caseParams2 = new ArrayList<>();
+            String caseCond2 = buildTagCondition("a3", tagName, caseTagValues, caseParams2);
+
+            st = con.prepareStatement("select distinct(allkeys.archiveFileKey) from (\n"
+                    + "    SELECT a1.id as archiveFileKey, a1.date_changed, a1.archived from cases a1\n"
+                    + "    left join case_tags a3 on a1.id = a3.archiveFileKey\n"
+                    + "    left join case_documents a5 on a5.archiveFileKey=a1.id\n"
+                    + "    left join document_tags a4 on a4.documentKey=a5.id\n"
+                    + "    where a1.archived=0 and a5.deleted=0 and (\n"
+                    + "            (" + caseCond1 + ") or (\n"
+                    + "            (" + docCond1 + ")\n"
+                    + "        )) "
+                    + "union "
+                    + "    select a1.id as archiveFileKey, a1.date_changed, a1.archived from cases a1\n"
+                    + "    left join case_tags a3 on a1.id = a3.archiveFileKey\n"
+                    + "    where a1.archived=0 and (\n"
+                    + "            (" + caseCond2 + ")) "
+                    + "order by date_changed DESC) allkeys limit 0,?");
+
+            int index = 1;
+            for (String p : caseParams1) { st.setString(index++, p); }
+            for (String p : docParams1) { st.setString(index++, p); }
+            for (String p : caseParams2) { st.setString(index++, p); }
+            st.setInt(index, 5 * limit);
+
+            rs = st.executeQuery();
+            ArrayList<String> keyCache = new ArrayList<>();
+            while (rs.next()) {
+                String id = rs.getString(1);
+                if (!keyCache.contains(id)) {
+                    keyCache.add(id);
+                    if (allowedCases.contains(id)) {
+                        ArchiveFileBean dto = this.archiveFileFacade.find(id);
+                        returnList.add(dto);
+                    }
+                    if (returnList.size() == limit) {
+                        break;
+                    }
+                }
+            }
+
+            try { rs.close(); } catch (Exception ex) { log.error(ex); }
+
+        } catch (SQLException sqle) {
+            log.error("Error getting archive files by specific tag", sqle);
+            throw new EJBException("Markierte Akten konnten nicht ermittelt werden.", sqle);
+        } finally {
+            try { if (st != null) st.close(); } catch (Throwable t) { log.error(t); }
+        }
+
+        return returnList;
+    }
+
+    @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public boolean setDocumentDate(String id, Date date) throws Exception {
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
@@ -3729,9 +4087,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     // with archive and tag
                     //st = con.prepareStatement("select distinct case_tags.archiveFileKey, case_tags.tagName, document_tags.tagName from case_tags, case_documents, document_tags where case_tags.archiveFileKey in (" + "select cases.id from cases where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and ((case_tags.tagName in (" + inClauseCase + ") and case_tags.archiveFileKey=cases.id) or (document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id and case_documents.deleted=0)))");
                     st = con.prepareStatement("select cid, tagname from (\n"
-                            + "select case_tags.archiveFileKey cid, case_tags.tagName tagname from case_tags\n"
+                            + "select case_tags.archiveFileKey cid, IF(case_tags.tag_value IS NOT NULL, CONCAT(case_tags.tagName, ': ', case_tags.tag_value), case_tags.tagName) tagname from case_tags\n"
                             + "union \n"
-                            + "select cases.id cid, document_tags.tagName tagname from cases, document_tags, case_documents where document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id and case_documents.deleted=0\n"
+                            + "select cases.id cid, IF(document_tags.tag_value IS NOT NULL, CONCAT(document_tags.tagName, ': ', document_tags.tag_value), document_tags.tagName) tagname from cases, document_tags, case_documents where document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id and case_documents.deleted=0\n"
                             + ") alltags1\n"
                             + "where cid in (\n"
                             + "    select distinct (cid) from (\n"
@@ -3767,7 +4125,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 } else {
                     // with archive but no tag
                     threeColumns = true;
-                    st = con.prepareStatement("select archiveFileKey, tagName, tagName from case_tags where archiveFileKey in (" + PS_SEARCHENHANCED_2 + ")");
+                    st = con.prepareStatement("select archiveFileKey, IF(tag_value IS NOT NULL, CONCAT(tagName, ': ', tag_value), tagName), IF(tag_value IS NOT NULL, CONCAT(tagName, ': ', tag_value), tagName) from case_tags where archiveFileKey in (" + PS_SEARCHENHANCED_2 + ")");
                     st.setString(1, wildCard);
                     st.setString(2, wildCard);
                     st.setString(3, wildCard);
@@ -3802,9 +4160,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 //st = con.prepareStatement("select distinct case_tags.archiveFileKey, case_tags.tagName, document_tags.tagName from case_tags, case_documents, document_tags where case_tags.archiveFileKey in (" + "select cases.id from cases, case_tags where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0 and ((case_tags.tagName in (" + inClauseCase + ") and case_tags.archiveFileKey=cases.id) or (document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id)))");
                 //st = con.prepareStatement("select distinct case_tags.archiveFileKey, case_tags.tagName, document_tags.tagName from case_tags, case_documents, document_tags where case_tags.archiveFileKey in (" + "select cases.id from cases where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0 and ((case_tags.tagName in (" + inClauseCase + ") and case_tags.archiveFileKey=cases.id) or (document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id)))");
                 st = con.prepareStatement("select cid, tagname from (\n"
-                        + "select case_tags.archiveFileKey cid, case_tags.tagName tagname from case_tags\n"
+                        + "select case_tags.archiveFileKey cid, IF(case_tags.tag_value IS NOT NULL, CONCAT(case_tags.tagName, ': ', case_tags.tag_value), case_tags.tagName) tagname from case_tags\n"
                         + "union \n"
-                        + "select cases.id cid, document_tags.tagName tagname from cases, document_tags, case_documents where document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id and case_documents.deleted=0\n"
+                        + "select cases.id cid, IF(document_tags.tag_value IS NOT NULL, CONCAT(document_tags.tagName, ': ', document_tags.tag_value), document_tags.tagName) tagname from cases, document_tags, case_documents where document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id and case_documents.deleted=0\n"
                         + ") alltags1\n"
                         + "where cid in (\n"
                         + "    select distinct (cid) from (\n"
@@ -3840,7 +4198,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             } else {
                 threeColumns = true;
                 // without archive and no tag
-                st = con.prepareStatement("select archiveFileKey, tagName, tagName from case_tags where archiveFileKey in (" + PS_SEARCHENHANCED_4 + ")");
+                st = con.prepareStatement("select archiveFileKey, IF(tag_value IS NOT NULL, CONCAT(tagName, ': ', tag_value), tagName), IF(tag_value IS NOT NULL, CONCAT(tagName, ': ', tag_value), tagName) from case_tags where archiveFileKey in (" + PS_SEARCHENHANCED_4 + ")");
                 st.setString(1, wildCard);
                 st.setString(2, wildCard);
                 st.setString(3, wildCard);
@@ -3894,6 +4252,137 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             } catch (Throwable t) {
                 log.error(t);
             }
+        }
+
+        return list;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public HashMap<String, ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagNames, String[] documentTagNames, HashMap<String, String[]> caseTagValues, HashMap<String, String[]> documentTagValues) {
+
+        if (caseTagValues == null && documentTagValues == null) {
+            return searchTagsEnhanced(query, withArchive, tagNames, documentTagNames);
+        }
+
+        if (query == null) {
+            query = "";
+        }
+        query = query.trim();
+
+        JDBCUtils utils = new JDBCUtils();
+        Connection con = null;
+        ResultSet rs = null;
+        PreparedStatement st = null;
+
+        boolean withTag = false;
+        if (tagNames != null && tagNames.length > 0) {
+            if (!(tagNames.length == 1 && "".equals(tagNames[0]))) {
+                withTag = true;
+            }
+        }
+
+        boolean withDocumentTag = false;
+        if (documentTagNames != null && documentTagNames.length > 0) {
+            if (!(documentTagNames.length == 1 && "".equals(documentTagNames[0]))) {
+                withDocumentTag = true;
+            }
+        }
+
+        if (withTag || withDocumentTag) {
+            if (tagNames == null || tagNames.length == 0) {
+                tagNames = new String[]{"some-non-existing-string"};
+            }
+            if (documentTagNames == null || documentTagNames.length == 0) {
+                documentTagNames = new String[]{"some-non-existing-string"};
+            }
+        }
+
+        boolean threeColumns = false;
+        HashMap<String, ArrayList<String>> list = new HashMap<>();
+        try {
+            con = utils.getConnection();
+            String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
+
+            if (withTag || withDocumentTag) {
+                // Build tag conditions with value filtering
+                List<String> outerCaseParams = new ArrayList<>();
+                String outerCaseCond = buildTagCondition("case_tags", tagNames, caseTagValues, outerCaseParams);
+
+                List<String> outerDocParams = new ArrayList<>();
+                String outerDocCond = buildTagCondition("document_tags", documentTagNames, documentTagValues, outerDocParams);
+
+                // Inner queries for filtering (use simple IN clause, no value filtering)
+                List<String> innerCaseParams = new ArrayList<>();
+                StringBuilder innerCaseIn = new StringBuilder();
+                for (String t : tagNames) {
+                    innerCaseIn.append(",?");
+                    innerCaseParams.add(t);
+                }
+                String innerCaseInClause = innerCaseIn.toString().replaceFirst(",", "");
+
+                List<String> innerDocParams1 = new ArrayList<>();
+                StringBuilder innerDocIn1 = new StringBuilder();
+                for (String t : documentTagNames) {
+                    innerDocIn1.append(",?");
+                    innerDocParams1.add(t);
+                }
+                String innerDocInClause = innerDocIn1.toString().replaceFirst(",", "");
+
+                String archiveFilter = withArchive ? "" : "archived=0 and ";
+
+                st = con.prepareStatement("select cid, tagname from (\n"
+                        + "select case_tags.archiveFileKey cid, IF(case_tags.tag_value IS NOT NULL, CONCAT(case_tags.tagName, ': ', case_tags.tag_value), case_tags.tagName) tagname from case_tags where " + outerCaseCond + "\n"
+                        + "union \n"
+                        + "select cases.id cid, IF(document_tags.tag_value IS NOT NULL, CONCAT(document_tags.tagName, ': ', document_tags.tag_value), document_tags.tagName) tagname from cases, document_tags, case_documents where " + outerDocCond + " and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id and case_documents.deleted=0\n"
+                        + ") alltags1\n"
+                        + "where cid in (\n"
+                        + "    select distinct (cid) from (\n"
+                        + "select case_tags.archiveFileKey cid, case_tags.tagName tagname from case_tags where (case_tags.tagName in (" + innerCaseInClause + "))\n"
+                        + "union \n"
+                        + "select cases.id cid, document_tags.tagName tagname from cases, document_tags, case_documents where document_tags.tagName in (" + innerDocInClause + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id and case_documents.deleted=0\n"
+                        + ") alltags2\n"
+                        + "where cid in (select cases.id from cases where " + archiveFilter + "(ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ? or ucase(lawyer) like ? or ucase(assistant) like ?))\n"
+                        + ")");
+
+                int index = 1;
+                for (String p : outerCaseParams) { st.setString(index++, p); }
+                for (String p : outerDocParams) { st.setString(index++, p); }
+                for (String p : innerCaseParams) { st.setString(index++, p); }
+                for (String p : innerDocParams1) { st.setString(index++, p); }
+                for (int i = 0; i < 10; i++) { st.setString(index++, wildCard); }
+            } else {
+                threeColumns = true;
+                String archivePs = withArchive ? PS_SEARCHENHANCED_2 : PS_SEARCHENHANCED_4;
+                st = con.prepareStatement("select archiveFileKey, IF(tag_value IS NOT NULL, CONCAT(tagName, ': ', tag_value), tagName), IF(tag_value IS NOT NULL, CONCAT(tagName, ': ', tag_value), tagName) from case_tags where archiveFileKey in (" + archivePs + ")");
+                for (int i = 1; i <= 11; i++) { st.setString(i, wildCard); }
+            }
+
+            rs = st.executeQuery();
+            while (rs.next()) {
+                String id = rs.getString(1);
+                String tagName = rs.getString(2);
+                if (!list.containsKey(id)) {
+                    list.put(id, new ArrayList<>());
+                }
+                ArrayList<String> tagList = list.get(id);
+                if (!tagList.contains(tagName)) {
+                    tagList.add(tagName);
+                }
+                if (threeColumns) {
+                    String docTagName = rs.getString(3);
+                    if (!tagList.contains(docTagName)) {
+                        tagList.add(docTagName);
+                    }
+                }
+            }
+        } catch (SQLException sqle) {
+            log.error("Error finding archive files", sqle);
+            throw new EJBException("Aktensuche konnte nicht ausgeführt werden.", sqle);
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Throwable t) { log.error(t); }
+            try { if (st != null) st.close(); } catch (Throwable t) { log.error(t); }
+            try { if (con != null) con.close(); } catch (Throwable t) { log.error(t); }
         }
 
         return list;
@@ -4328,7 +4817,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ResultSet rs = null;
         Hashtable<String, ArrayList<String>> returnList = new Hashtable<>();
 
-        try (Connection con = utils.getConnection(); PreparedStatement st = con.prepareStatement("select docs.id, tags.tagName from case_documents docs, document_tags tags where docs.archiveFileKey=? and docs.deleted=0 and docs.id=tags.documentKey and docs.id in (select documentKey from document_tags)");) {
+        try (Connection con = utils.getConnection(); PreparedStatement st = con.prepareStatement("select docs.id, IF(tags.tag_value IS NOT NULL, CONCAT(tags.tagName, ': ', tags.tag_value), tags.tagName) from case_documents docs, document_tags tags where docs.archiveFileKey=? and docs.deleted=0 and docs.id=tags.documentKey and docs.id in (select documentKey from document_tags)");) {
 
             st.setString(1, caseId);
             rs = st.executeQuery();

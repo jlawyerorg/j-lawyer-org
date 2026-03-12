@@ -695,15 +695,83 @@ public interface AddressServiceRemote {
 
     AddressBean getAddress(String id);
 
+    /**
+     * Sets or removes a tag on a contact. For multi-value tags, the tag bean's
+     * tagValue field specifies the selected dropdown value. When active is true
+     * and the tag already exists, the tagValue is updated on the existing row.
+     * When active is false, the tag row is removed regardless of tagValue.
+     * Boolean tags have tagValue set to null.
+     *
+     * @param addressId the contact/address ID
+     * @param tag the tag bean containing tagName and optional tagValue
+     * @param active true to set/update the tag, false to remove it
+     * @throws Exception on error
+     */
     void setTag(String addressId, AddressTagsBean tag, boolean active) throws Exception;
 
     Collection<AddressTagsBean> getTags(String addressId);
 
     List<String> searchTagsInUse();
 
+    /**
+     * Renames a contact tag name in all existing contact tag rows.
+     *
+     * @param oldName the current tag name
+     * @param newName the new tag name
+     * @return number of updated rows
+     */
+    int renameContactTagName(String oldName, String newName);
+
+    /**
+     * Renames a contact tag value in all existing contact tag rows with the given tag name.
+     *
+     * @param tagName the tag name to match
+     * @param oldValue the current value
+     * @param newValue the new value
+     * @return number of updated rows
+     */
+    int renameContactTagValue(String tagName, String oldValue, String newValue);
+
+    /**
+     * Deletes all contact tag rows matching the given tag name and tag value.
+     *
+     * @param tagName the tag name
+     * @param tagValue the tag value
+     * @return number of deleted rows
+     */
+    int deleteContactTagsByNameAndValue(String tagName, String tagValue);
+
+    /**
+     * Deletes all contact tag rows matching the given tag name.
+     *
+     * @param tagName the tag name
+     * @return number of deleted rows
+     */
+    int deleteContactTagsByName(String tagName);
+
     AddressBean[] searchEnhanced(String query, String[] tagName);
 
+    /**
+     * Searches for contacts with optional tag-value filtering for multi-value tags.
+     *
+     * @param query search text
+     * @param tagName tag names to filter by
+     * @param tagValues optional map of tag name to selected values for multi-value tag filtering
+     * @return matching contacts
+     */
+    AddressBean[] searchEnhanced(String query, String[] tagName, HashMap<String, String[]> tagValues);
+
     Map<String,ArrayList<String>> searchTagsEnhanced(String query, String[] tagName);
+
+    /**
+     * Searches for contact tag associations with optional tag-value filtering for multi-value tags.
+     *
+     * @param query search text
+     * @param tagName tag names to filter by
+     * @param tagValues optional map of tag name to selected values for multi-value tag filtering
+     * @return map of contact ID to list of tag display strings
+     */
+    Map<String,ArrayList<String>> searchTagsEnhanced(String query, String[] tagName, HashMap<String, String[]> tagValues);
 
     void renameTag(String fromName, String toName) throws Exception;
 

@@ -759,6 +759,8 @@ import com.jdimension.jlawyer.ui.folders.DocumentEntryPanel;
 import com.jdimension.jlawyer.ui.tagging.ArchiveFileTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.DocumentTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.TagSelectedAction;
+import com.jdimension.jlawyer.server.constants.OptionConstants;
+import com.jdimension.jlawyer.ui.tagging.MultiValueTag;
 import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import com.jdimension.jlawyer.ui.tagging.WrapLayout;
@@ -1354,11 +1356,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 ArrayList<String> activeTags = new ArrayList<>();
                 ArrayList<String> sortedTags = new ArrayList<>();
                 HashMap<String, Date> tagDates = new HashMap<>();
+                HashMap<String, String> activeTagValues = new HashMap<>();
                 for (Object t : tags) {
                     DocumentTagsBean tag = (DocumentTagsBean) t;
                     activeTags.add(tag.getTagName());
                     sortedTags.add(tag.getTagName());
                     tagDates.put(tag.getTagName(), tag.getDateSet());
+                    if (tag.getTagValue() != null) {
+                        activeTagValues.put(tag.getTagName(), tag.getTagValue());
+                    }
                 }
 
                 AppOptionGroupBean[] tagOptions = settings.getDocumentTagDtos();
@@ -1371,7 +1377,60 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                 StringUtils.sortIgnoreCase(sortedTags);
 
+                // collect multi-value tag names
+                HashMap<String, AppOptionGroupBean[]> mvTagDefs = settings.getDocumentMvTagDefs();
+                ArrayList<String> mvTagNames = new ArrayList<>();
+                if (mvTagDefs != null) {
+                    for (String groupName : mvTagDefs.keySet()) {
+                        mvTagNames.add(groupName.substring(OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX.length()));
+                    }
+                }
+
+                // add multi-value document tags first
+                if (mvTagDefs != null) {
+                    ArrayList<String> mvTagNamesSorted = new ArrayList<>(mvTagNames);
+                    StringUtils.sortIgnoreCase(mvTagNamesSorted);
+                    for (String mvTagName : mvTagNamesSorted) {
+                        AppOptionGroupBean[] values = mvTagDefs.get(OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX + mvTagName);
+                        String[] valueStrings = new String[values != null ? values.length : 0];
+                        if (values != null) {
+                            for (int i = 0; i < values.length; i++) {
+                                valueStrings[i] = values[i].getValue();
+                            }
+                            java.util.Arrays.sort(valueStrings, String.CASE_INSENSITIVE_ORDER);
+                        }
+                        MultiValueTag mvTag = new MultiValueTag(mvTagName, valueStrings);
+                        if (activeTagValues.containsKey(mvTagName)) {
+                            mvTag.setSelectedValue(activeTagValues.get(mvTagName));
+                        }
+                        mvTag.setEnabled(!this.readOnly);
+                        final String docId = selectedDoc.getId();
+                        final ArchiveFilePanel panel = this;
+                        mvTag.addValueChangeListener(e -> {
+                            try {
+                                if (docId == null) {
+                                    return;
+                                }
+                                DocumentTagsBean tagBean = new DocumentTagsBean();
+                                tagBean.setTagName(mvTag.getTagName());
+                                String selectedValue = mvTag.getSelectedValue();
+                                tagBean.setTagValue(selectedValue);
+                                boolean active = selectedValue != null;
+                                remote.setDocumentTag(docId, tagBean, active);
+                                panel.updateDocumentTagsOverview();
+                            } catch (Exception ex) {
+                                log.error("Error setting multi-value document tag", ex);
+                            }
+                        });
+                        this.documentTagPanel.add(mvTag);
+                    }
+                }
+
+                // add boolean tags
                 for (String tagString : sortedTags) {
+                    if (mvTagNames.contains(tagString)) {
+                        continue;
+                    }
                     TagToggleButton tb = new TagToggleButton(tagString, tagDates.get(tagString));
                     if (activeTags.contains(tagString)) {
                         tb.setSelected(true);
@@ -1380,9 +1439,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     }
                     tb.setEnabled(!this.readOnly);
                     tb.addActionListener(new DocumentTagActionListener(selectedDoc.getId(), remote, this));
-                    //ThreadUtils.addComponent(documentTagPanel, tb);
                     this.documentTagPanel.add(tb);
                 }
+
                 this.documentTagPanel.revalidate();
                 this.documentTagPanel.repaint();
             } else if (selectedDocs.size() > 1) {
@@ -1773,7 +1832,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             txtSearchDocumentNamesKeyReleased(null);
         };
 
-        TagUtils.populateTags(ClientSettings.getInstance().getDocumentTagsInUse(), this.cmdDocumentTagFilter, this.popDocumentTagFilter, tagAction);
+        TagUtils.populateTags(ClientSettings.getInstance().getDocumentTagsInUse(), this.cmdDocumentTagFilter, this.popDocumentTagFilter, tagAction, ClientSettings.getInstance().getDocumentMvTagDefs(), com.jdimension.jlawyer.server.constants.OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX);
         log.info("[AKTE-LOAD] setArchiveFileDTO ENDE: ArchiveFileDetailLoadAction gestartet");
 
     }

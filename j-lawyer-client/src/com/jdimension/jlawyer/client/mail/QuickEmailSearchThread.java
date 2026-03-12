@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
+import java.util.HashMap;
 import javax.swing.JTable;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -687,7 +688,8 @@ public class QuickEmailSearchThread implements Runnable {
     private Component owner;
     private JTable target;
     private String[] tag;
-    
+    private HashMap<String, String[]> tagValues;
+
     /** Creates a new instance of QuickEmailSearchThread
      * @param owner
      * @param query
@@ -700,6 +702,11 @@ public class QuickEmailSearchThread implements Runnable {
         this.tag=tag;
     }
 
+    public QuickEmailSearchThread(Component owner, String query, String[] tag, JTable target, HashMap<String, String[]> tagValues) {
+        this(owner, query, tag, target);
+        this.tagValues = tagValues;
+    }
+
     @Override
     public void run() {
         AddressBean[] dtos=null;
@@ -707,7 +714,11 @@ public class QuickEmailSearchThread implements Runnable {
             ClientSettings settings=ClientSettings.getInstance();
             JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             AddressServiceRemote addressService = locator.lookupAddressServiceRemote();
-            dtos=addressService.searchEnhanced(query, tag);
+            if (tagValues != null) {
+                dtos=addressService.searchEnhanced(query, tag, tagValues);
+            } else {
+                dtos=addressService.searchEnhanced(query, tag);
+            }
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);

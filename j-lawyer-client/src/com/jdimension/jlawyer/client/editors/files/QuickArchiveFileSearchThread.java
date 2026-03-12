@@ -698,6 +698,8 @@ public class QuickArchiveFileSearchThread implements Runnable {
     private final String[] documentTag;
     private List<String> caseIdsSyncedForUser;
     private ProgressableActionCallback callback=null;
+    private HashMap<String, String[]> caseTagValues=null;
+    private HashMap<String, String[]> documentTagValues=null;
 
     
     public QuickArchiveFileSearchThread(Component owner, String query, boolean withArchive, String[] tag, String[] documentTag, List<String> caseIdsSyncedForUser, JTable target, ProgressableActionCallback callback) {
@@ -731,6 +733,18 @@ public class QuickArchiveFileSearchThread implements Runnable {
         this.documentTag=documentTag;
     }
 
+    public QuickArchiveFileSearchThread(Component owner, String query, boolean withArchive, String[] tag, String[] documentTag, List<String> caseIdsSyncedForUser, JTable target, HashMap<String, String[]> caseTagValues, HashMap<String, String[]> documentTagValues) {
+        this(owner, query, withArchive, tag, documentTag, caseIdsSyncedForUser, target);
+        this.caseTagValues = caseTagValues;
+        this.documentTagValues = documentTagValues;
+    }
+
+    public QuickArchiveFileSearchThread(Component owner, String query, boolean withArchive, String[] tag, String[] documentTag, List<String> caseIdsSyncedForUser, JTable target, ProgressableActionCallback callback, HashMap<String, String[]> caseTagValues, HashMap<String, String[]> documentTagValues) {
+        this(owner, query, withArchive, tag, documentTag, caseIdsSyncedForUser, target, callback);
+        this.caseTagValues = caseTagValues;
+        this.documentTagValues = documentTagValues;
+    }
+
     @Override
     public void run() {
         
@@ -744,8 +758,13 @@ public class QuickArchiveFileSearchThread implements Runnable {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            dtos = fileService.searchEnhanced(query, withArchive, tag, documentTag);
-            tags = fileService.searchTagsEnhanced(query, withArchive, tag, documentTag);
+            if (caseTagValues != null || documentTagValues != null) {
+                dtos = fileService.searchEnhanced(query, withArchive, tag, documentTag, caseTagValues, documentTagValues);
+                tags = fileService.searchTagsEnhanced(query, withArchive, tag, documentTag, caseTagValues, documentTagValues);
+            } else {
+                dtos = fileService.searchEnhanced(query, withArchive, tag, documentTag);
+                tags = fileService.searchTagsEnhanced(query, withArchive, tag, documentTag);
+            }
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             ThreadUtils.setDefaultCursor(this.owner);
