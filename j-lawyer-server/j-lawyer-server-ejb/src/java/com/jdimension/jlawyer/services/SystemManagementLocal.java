@@ -732,6 +732,8 @@ public interface SystemManagementLocal {
      */
     HashMap<String, AppOptionGroupBean[]> getOptionGroups(List<String> optionGroups);
 
+    HashMap<String, AppOptionGroupBean[]> getOptionGroupsByPrefix(String prefix);
+
     GenericNode getAllTemplatesTree(int templateType) throws Exception;
 
     String getTemplatesBaseDir(int templateType) throws Exception;

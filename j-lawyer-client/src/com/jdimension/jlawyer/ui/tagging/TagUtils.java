@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.ui.tagging;
 
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DateFormat;
@@ -672,9 +673,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JPopupMenu;
@@ -798,6 +801,133 @@ public class TagUtils {
             }
 
         }
+    }
+
+    public static void populateTags(List<String> tags, JButton cmdTagFilter, JPopupMenu popTagFilter, TagSelectedAction action, HashMap<String, AppOptionGroupBean[]> mvTagDefs, String mvTagPrefix) {
+        // Build expanded tag list including multi-value tag values
+        List<String> expandedTags = new ArrayList<>();
+        Set<String> mvTagNames = new HashSet<>();
+
+        if (mvTagDefs != null && mvTagPrefix != null) {
+            for (Map.Entry<String, AppOptionGroupBean[]> entry : mvTagDefs.entrySet()) {
+                String groupName = entry.getKey();
+                String tagName = groupName.substring(mvTagPrefix.length());
+                mvTagNames.add(tagName);
+                for (AppOptionGroupBean ogb : entry.getValue()) {
+                    expandedTags.add(tagName + ": " + ogb.getValue());
+                }
+            }
+        }
+
+        if (tags != null) {
+            for (String t : tags) {
+                if (!mvTagNames.contains(t) && !expandedTags.contains(t)) {
+                    expandedTags.add(t);
+                }
+            }
+        }
+
+        Collections.sort(expandedTags, String.CASE_INSENSITIVE_ORDER);
+
+        ActionListener al = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                boolean selected = false;
+                for (MenuElement me : popTagFilter.getSubElements()) {
+                    JCheckBoxMenuItem mi = ((JCheckBoxMenuItem) me.getComponent());
+                    if (mi.isSelected()) {
+                        selected = true;
+                        break;
+                    }
+                }
+                if (selected) {
+                    cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites-green.png")));
+                } else {
+                    cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png")));
+                }
+                if (action != null) {
+                    action.execute();
+                }
+            }
+        };
+
+        List<String> currentComboItems = new ArrayList<>();
+        List<String> lastFilterTags = new ArrayList<>();
+        MenuElement[] elements = popTagFilter.getSubElements();
+        for (MenuElement e : elements) {
+            currentComboItems.add(((JCheckBoxMenuItem) e.getComponent()).getText());
+            if (((JCheckBoxMenuItem) e.getComponent()).isSelected()) {
+                lastFilterTags.add(((JCheckBoxMenuItem) e.getComponent()).getText());
+            }
+        }
+        Collections.sort(currentComboItems);
+
+        if (!expandedTags.equals(currentComboItems)) {
+            popTagFilter.removeAll();
+            for (String t : expandedTags) {
+                StayOpenCheckBoxMenuItem mi = new StayOpenCheckBoxMenuItem(t);
+                // Set client properties for tag name/value extraction
+                if (mvTagNames.stream().anyMatch(mvName -> t.startsWith(mvName + ": "))) {
+                    int colonIdx = t.indexOf(": ");
+                    mi.putClientProperty("tagName", t.substring(0, colonIdx));
+                    mi.putClientProperty("tagValue", t.substring(colonIdx + 2));
+                } else {
+                    mi.putClientProperty("tagName", t);
+                    mi.putClientProperty("tagValue", null);
+                }
+                if (lastFilterTags.contains(t)) {
+                    mi.setSelected(true);
+                }
+                popTagFilter.add(mi);
+            }
+            for (MenuElement me : popTagFilter.getSubElements()) {
+                ((JCheckBoxMenuItem) me.getComponent()).addActionListener(al);
+            }
+        }
+    }
+
+    public static String[] getSelectedTags(JPopupMenu popup, boolean useClientProperties) {
+        if (!useClientProperties) {
+            return getSelectedTags(popup);
+        }
+        // Return unique tag names from selected items
+        Set<String> selectedNames = new HashSet<>();
+        MenuElement[] elements = popup.getSubElements();
+        for (MenuElement e : elements) {
+            JCheckBoxMenuItem mi = (JCheckBoxMenuItem) e.getComponent();
+            if (mi.isSelected()) {
+                Object tagName = mi.getClientProperty("tagName");
+                if (tagName != null) {
+                    selectedNames.add((String) tagName);
+                } else {
+                    selectedNames.add(mi.getText());
+                }
+            }
+        }
+        return selectedNames.toArray(new String[0]);
+    }
+
+    public static HashMap<String, String[]> getSelectedTagValues(JPopupMenu popup) {
+        HashMap<String, List<String>> valueMap = new HashMap<>();
+        MenuElement[] elements = popup.getSubElements();
+        for (MenuElement e : elements) {
+            JCheckBoxMenuItem mi = (JCheckBoxMenuItem) e.getComponent();
+            if (mi.isSelected()) {
+                Object tagValue = mi.getClientProperty("tagValue");
+                if (tagValue != null) {
+                    String tagName = (String) mi.getClientProperty("tagName");
+                    valueMap.computeIfAbsent(tagName, k -> new ArrayList<>()).add((String) tagValue);
+                }
+            }
+        }
+        if (valueMap.isEmpty()) {
+            return null;
+        }
+        HashMap<String, String[]> result = new HashMap<>();
+        for (Map.Entry<String, List<String>> entry : valueMap.entrySet()) {
+            result.put(entry.getKey(), entry.getValue().toArray(new String[0]));
+        }
+        return result;
     }
 
     public static String getDocumentTagsOverviewAsHtml(Hashtable<String, ArrayList<String>> docTags) {

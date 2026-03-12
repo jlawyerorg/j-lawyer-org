@@ -683,5 +683,7 @@ public interface ConfigurationEndpointLocalV7 {
     Response deleteOption(RestfulOptionV7 option);
     
     Response renameOption(RestfulOptionV7 option);
-    
+
+    Response getMultiValueTagDefinitions(String entityType);
+
 }

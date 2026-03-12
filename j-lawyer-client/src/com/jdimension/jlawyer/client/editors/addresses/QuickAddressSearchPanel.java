@@ -752,8 +752,8 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
 
     public void populateTags(List<String> tags) {
 
-        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter, null);
-        
+        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter, null, ClientSettings.getInstance().getAddressMvTagDefs(), com.jdimension.jlawyer.server.constants.OptionConstants.OPTIONGROUP_ADDRESSTAGS_MV_PREFIX);
+
     }
 
     public void clearInputs() {
@@ -1098,7 +1098,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         EditorsRegistry.getInstance().updateStatus("Suche Adressen...");
         ThreadUtils.setWaitCursor(this);
         
-        new Thread(new QuickAddressSearchThread(this, this.txtSearchString.getText(), TagUtils.getSelectedTags(this.popTagFilter), this.tblResults)).start();
+        new Thread(new QuickAddressSearchThread(this, this.txtSearchString.getText(), TagUtils.getSelectedTags(this.popTagFilter, true), this.tblResults, TagUtils.getSelectedTagValues(this.popTagFilter))).start();
 
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 

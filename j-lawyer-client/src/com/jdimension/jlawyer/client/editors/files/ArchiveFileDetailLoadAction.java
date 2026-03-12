@@ -681,7 +681,10 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.folders.CaseFolderPanel;
+import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
+import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.ui.tagging.ArchiveFileTagActionListener;
+import com.jdimension.jlawyer.ui.tagging.MultiValueTag;
 import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -1088,11 +1091,15 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.documentTagPanel.removeAll();
         ArrayList<String> sortedTags = new ArrayList<>();
         HashMap<String,Date> tagDates=new HashMap<>();
+        HashMap<String,String> activeTagValues=new HashMap<>();
         for (Object t : tags) {
             ArchiveFileTagsBean tag = (ArchiveFileTagsBean) t;
             activeTags.add(tag.getTagName());
             sortedTags.add(tag.getTagName());
             tagDates.put(tag.getTagName(), tag.getDateSet());
+            if (tag.getTagValue() != null) {
+                activeTagValues.put(tag.getTagName(), tag.getTagValue());
+            }
         }
 
         AppOptionGroupBean[] tagOptions = settings.getArchiveFileTagDtos();
@@ -1106,7 +1113,58 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
         StringUtils.sortIgnoreCase(sortedTags);
 
+        // collect multi-value tag names to exclude from boolean rendering
+        HashMap<String, AppOptionGroupBean[]> mvTagDefs = settings.getArchiveFileMvTagDefs();
+        ArrayList<String> mvTagNames = new ArrayList<>();
+        if (mvTagDefs != null) {
+            for (String groupName : mvTagDefs.keySet()) {
+                String tagName = groupName.substring(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS_MV_PREFIX.length());
+                mvTagNames.add(tagName);
+            }
+        }
+
+        // add multi-value tags first
+        if (mvTagDefs != null) {
+            ArrayList<String> mvTagNamesSorted = new ArrayList<>(mvTagNames);
+            StringUtils.sortIgnoreCase(mvTagNamesSorted);
+            for (String mvTagName : mvTagNamesSorted) {
+                AppOptionGroupBean[] values = mvTagDefs.get(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS_MV_PREFIX + mvTagName);
+                String[] valueStrings = new String[values != null ? values.length : 0];
+                if (values != null) {
+                    for (int vi = 0; vi < values.length; vi++) {
+                        valueStrings[vi] = values[vi].getValue();
+                    }
+                    java.util.Arrays.sort(valueStrings, String.CASE_INSENSITIVE_ORDER);
+                }
+                MultiValueTag mvTag = new MultiValueTag(mvTagName, valueStrings);
+                if (activeTagValues.containsKey(mvTagName)) {
+                    mvTag.setSelectedValue(activeTagValues.get(mvTagName));
+                }
+                mvTag.setEnabled(!readOnly && !this.caseDto.isArchived());
+                mvTag.addValueChangeListener(e -> {
+                    try {
+                        if (this.archiveFileKey == null) {
+                            return;
+                        }
+                        ArchiveFileTagsBean tagBean = new ArchiveFileTagsBean();
+                        tagBean.setTagName(mvTag.getTagName());
+                        String selectedValue = mvTag.getSelectedValue();
+                        tagBean.setTagValue(selectedValue);
+                        boolean active = selectedValue != null;
+                        fileService.setTag(this.archiveFileKey, tagBean, active);
+                    } catch (Exception ex) {
+                        log.error("Error setting multi-value tag", ex);
+                    }
+                });
+                ThreadUtils.addComponent(tagPanel, mvTag);
+            }
+        }
+
+        // add boolean tags
         for (String tagString : sortedTags) {
+            if (mvTagNames.contains(tagString)) {
+                continue;
+            }
             TagToggleButton tb = new TagToggleButton(tagString, tagDates.get(tagString));
             if (activeTags.contains(tagString)) {
                 tb.setSelected(true);

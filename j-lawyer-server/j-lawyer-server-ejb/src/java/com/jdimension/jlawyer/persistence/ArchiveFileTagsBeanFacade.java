@@ -704,5 +704,25 @@ public class ArchiveFileTagsBeanFacade extends AbstractFacade<ArchiveFileTagsBea
         List<ArchiveFileTagsBean> list = getEntityManager().createQuery("from ArchiveFileTagsBean where tagName = ?1").setParameter(1, tagName).getResultList();
         return list;
     }
-    
+
+    @Override
+    public int renameTagName(String oldName, String newName) {
+        return getEntityManager().createQuery("update ArchiveFileTagsBean set tagName = ?1 where tagName = ?2").setParameter(1, newName).setParameter(2, oldName).executeUpdate();
+    }
+
+    @Override
+    public int renameTagValue(String tagName, String oldValue, String newValue) {
+        return getEntityManager().createQuery("update ArchiveFileTagsBean set tagValue = ?1 where tagName = ?2 and tagValue = ?3").setParameter(1, newValue).setParameter(2, tagName).setParameter(3, oldValue).executeUpdate();
+    }
+
+    @Override
+    public int deleteByTagNameAndTagValue(String tagName, String tagValue) {
+        return getEntityManager().createQuery("delete from ArchiveFileTagsBean where tagName = ?1 and tagValue = ?2").setParameter(1, tagName).setParameter(2, tagValue).executeUpdate();
+    }
+
+    @Override
+    public int deleteByTagName(String tagName) {
+        return getEntityManager().createQuery("delete from ArchiveFileTagsBean where tagName = ?1").setParameter(1, tagName).executeUpdate();
+    }
+
 }

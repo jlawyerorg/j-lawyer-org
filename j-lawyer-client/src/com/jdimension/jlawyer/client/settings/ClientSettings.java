@@ -679,6 +679,7 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 import org.apache.log4j.Logger;
@@ -827,6 +828,9 @@ public class ClientSettings {
     private AppOptionGroupBean[] afTagDtos=null;
     private AppOptionGroupBean[] adrTagDtos=null;
     private AppOptionGroupBean[] docTagDtos=null;
+    private HashMap<String, AppOptionGroupBean[]> afMvTagDefs=null;
+    private HashMap<String, AppOptionGroupBean[]> docMvTagDefs=null;
+    private HashMap<String, AppOptionGroupBean[]> adrMvTagDefs=null;
     private AppOptionGroupBean[] titles=null;
     private AppOptionGroupBean[] titlesInAddress=null;
     private AppOptionGroupBean[] countries=null;
@@ -1111,6 +1115,30 @@ public class ClientSettings {
     
     public void setAddressTagsInUse(List<String> tags) {
         this.adrTagsInUse = tags;
+    }
+
+    public HashMap<String, AppOptionGroupBean[]> getArchiveFileMvTagDefs() {
+        return afMvTagDefs;
+    }
+
+    public void setArchiveFileMvTagDefs(HashMap<String, AppOptionGroupBean[]> defs) {
+        this.afMvTagDefs = defs;
+    }
+
+    public HashMap<String, AppOptionGroupBean[]> getDocumentMvTagDefs() {
+        return docMvTagDefs;
+    }
+
+    public void setDocumentMvTagDefs(HashMap<String, AppOptionGroupBean[]> defs) {
+        this.docMvTagDefs = defs;
+    }
+
+    public HashMap<String, AppOptionGroupBean[]> getAddressMvTagDefs() {
+        return adrMvTagDefs;
+    }
+
+    public void setAddressMvTagDefs(HashMap<String, AppOptionGroupBean[]> defs) {
+        this.adrMvTagDefs = defs;
     }
 
     /**

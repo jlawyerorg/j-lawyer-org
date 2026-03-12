@@ -773,11 +773,11 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     }
 
     public void populateTags(List<String> tags) {
-        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter, null);
+        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter, null, ClientSettings.getInstance().getArchiveFileMvTagDefs(), com.jdimension.jlawyer.server.constants.OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS_MV_PREFIX);
     }
 
     public void populateDocumentTags(List<String> tags) {
-        TagUtils.populateTags(tags, cmdDocumentTagFilter, popDocumentTagFilter, null);
+        TagUtils.populateTags(tags, cmdDocumentTagFilter, popDocumentTagFilter, null, ClientSettings.getInstance().getDocumentMvTagDefs(), com.jdimension.jlawyer.server.constants.OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX);
     }
 
     public void clearInputs() {
@@ -1237,7 +1237,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             EditorsRegistry.getInstance().clearStatus(false);
         }
 
-        new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString.getText(), this.chkIncludeArchive.isSelected(), TagUtils.getSelectedTags(this.popTagFilter), TagUtils.getSelectedTags(this.popDocumentTagFilter), caseIdsSyncedForUser, this.tblResults)).start();
+        new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString.getText(), this.chkIncludeArchive.isSelected(), TagUtils.getSelectedTags(this.popTagFilter, true), TagUtils.getSelectedTags(this.popDocumentTagFilter, true), caseIdsSyncedForUser, this.tblResults, TagUtils.getSelectedTagValues(this.popTagFilter), TagUtils.getSelectedTagValues(this.popDocumentTagFilter))).start();
 
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 

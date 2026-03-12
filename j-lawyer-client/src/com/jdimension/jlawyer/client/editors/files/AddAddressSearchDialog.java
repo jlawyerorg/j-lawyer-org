@@ -686,6 +686,7 @@ import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.HashMap;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
@@ -757,7 +758,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog implements ListS
         this.cmbRefType.setSelectedItem(this.targetReferenceType.getName());
 
         List<String> tags = s.getAddressTagsInUse();
-        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter, null);
+        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter, null, ClientSettings.getInstance().getAddressMvTagDefs(), com.jdimension.jlawyer.server.constants.OptionConstants.OPTIONGROUP_ADDRESSTAGS_MV_PREFIX);
 
         this.tblResults.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
         this.tblResults.getActionMap().put("Enter", new AbstractAction() {
@@ -946,7 +947,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog implements ListS
         EditorsRegistry.getInstance().updateStatus("Suche Adressen...");
         ThreadUtils.setWaitCursor(this);
 
-        new Thread(new QuickAddressSearchThread(this, this.txtSearchString.getText(), TagUtils.getSelectedTags(popTagFilter), this.tblResults)).start();
+        new Thread(new QuickAddressSearchThread(this, this.txtSearchString.getText(), TagUtils.getSelectedTags(popTagFilter, true), this.tblResults, TagUtils.getSelectedTagValues(this.popTagFilter))).start();
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 
     private void useSelection() {

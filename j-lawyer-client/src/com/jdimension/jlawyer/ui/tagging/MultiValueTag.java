@@ -676,6 +676,8 @@ import themes.colors.DefaultColorTheme;
  */
 public class MultiValueTag extends javax.swing.JPanel {
 
+    private String tagName;
+
     /**
      * Creates new form MultiValueTag
      * @param caption
@@ -683,7 +685,8 @@ public class MultiValueTag extends javax.swing.JPanel {
      */
     public MultiValueTag(String caption, String[] values) {
         initComponents();
-        
+
+        this.tagName = caption;
         this.jLabel1.setText(caption);
         this.jComboBox1.removeAllItems();
         this.jComboBox1.addItem("");
@@ -759,12 +762,10 @@ public class MultiValueTag extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addGap(3, 3, 3)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(3, 3, 3))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addContainerGap())))
+                        .addGap(3, 3, 3))))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -775,20 +776,48 @@ public class MultiValueTag extends javax.swing.JPanel {
             setBackground(Color.WHITE);
             this.jComboBox1.setBackground(Color.WHITE);
             this.jComboBox1.putClientProperty("ComboBox.buttonBackground", "#FF0000");
+            this.jComboBox1.putClientProperty("JComboBox.buttonArrowColor", null);
             this.jLabel1.setFont(this.jLabel1.getFont().deriveFont(Font.PLAIN));
             this.jLabel1.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
             this.jComboBox1.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         } else {
-            setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
-            this.jComboBox1.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
+            setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
+            this.jComboBox1.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.jComboBox1.putClientProperty("ComboBox.buttonBackground", "#ccccc8");
+            this.jComboBox1.putClientProperty("JComboBox.buttonArrowColor", Color.WHITE);
             this.jLabel1.setFont(this.jLabel1.getFont().deriveFont(Font.BOLD));
-            this.jLabel1.setForeground(Color.BLACK);
-            this.jComboBox1.setForeground(Color.BLACK);
+            this.jLabel1.setForeground(Color.WHITE);
+            this.jComboBox1.setForeground(Color.WHITE);
         }
         
     }//GEN-LAST:event_jComboBox1ActionPerformed
 
+
+    public String getTagName() {
+        return tagName;
+    }
+
+    public String getSelectedValue() {
+        Object selected = this.jComboBox1.getSelectedItem();
+        if (selected == null || "".equals(selected)) {
+            return null;
+        }
+        return (String) selected;
+    }
+
+    public void setSelectedValue(String value) {
+        if (value == null || value.isEmpty()) {
+            this.jComboBox1.setSelectedIndex(0);
+        } else {
+            this.jComboBox1.setSelectedItem(value);
+        }
+        // trigger visual update
+        jComboBox1ActionPerformed(null);
+    }
+
+    public void addValueChangeListener(java.awt.event.ActionListener listener) {
+        this.jComboBox1.addActionListener(listener);
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> jComboBox1;

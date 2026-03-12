@@ -849,6 +849,20 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
+    public HashMap<String, AppOptionGroupBean[]> getOptionGroupsByPrefix(String prefix) {
+        HashMap<String, AppOptionGroupBean[]> result = new HashMap<>();
+        List<String> allGroups = this.getAllOptionGroups();
+        for (String groupName : allGroups) {
+            if (groupName.startsWith(prefix)) {
+                AppOptionGroupBean[] values = this.appOptionGroupBeanFacade.findByOptionGroup(groupName);
+                result.put(groupName, values);
+            }
+        }
+        return result;
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
     public BankDataBean[] searchBankData(String query) {
         JDBCUtils utils = new JDBCUtils();
         ResultSet rs = null;

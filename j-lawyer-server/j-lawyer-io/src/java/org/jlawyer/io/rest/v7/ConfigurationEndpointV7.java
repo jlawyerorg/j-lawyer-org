@@ -664,8 +664,12 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package org.jlawyer.io.rest.v7;
 
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
+import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.services.SystemManagementLocal;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
@@ -679,6 +683,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v7.pojo.RestfulMultiValueTagDefinitionV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulOptionV7;
 
 /**
@@ -885,6 +890,62 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.status(Response.Status.NOT_FOUND).build();
         } catch (Exception ex) {
             log.error("can not update option " + option.getValue() + " for option group " + option.getOptionGroup(), ex);
+            return Response.serverError().build();
+        }
+
+    }
+
+    /**
+     * Returns multi-value tag definitions for a given entity type. Each
+     * definition includes the tag name and the list of available values.
+     *
+     * @param entityType the entity type: "case", "document", or "address"
+     * @return a JSON array of multi-value tag definitions
+     * @response 400 Invalid entity type
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/tags/multivalue/{entityType}")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    public Response getMultiValueTagDefinitions(@PathParam("entityType") String entityType) {
+
+        try {
+            String prefix;
+            switch (entityType) {
+                case "case":
+                    prefix = OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS_MV_PREFIX;
+                    break;
+                case "document":
+                    prefix = OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX;
+                    break;
+                case "address":
+                    prefix = OptionConstants.OPTIONGROUP_ADDRESSTAGS_MV_PREFIX;
+                    break;
+                default:
+                    return Response.status(Response.Status.BAD_REQUEST).entity("Invalid entity type: " + entityType + ". Use 'case', 'document', or 'address'.").build();
+            }
+
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            HashMap<String, AppOptionGroupBean[]> groups = system.getOptionGroupsByPrefix(prefix);
+
+            ArrayList<RestfulMultiValueTagDefinitionV7> resultList = new ArrayList<>();
+            for (Map.Entry<String, AppOptionGroupBean[]> entry : groups.entrySet()) {
+                String tagName = entry.getKey().substring(prefix.length());
+                RestfulMultiValueTagDefinitionV7 def = new RestfulMultiValueTagDefinitionV7();
+                def.setTagName(tagName);
+                List<String> values = new ArrayList<>();
+                for (AppOptionGroupBean aog : entry.getValue()) {
+                    values.add(aog.getValue());
+                }
+                def.setValues(values);
+                resultList.add(def);
+            }
+            return Response.ok(resultList).build();
+        } catch (Exception ex) {
+            log.error("can not determine multi-value tag definitions for entity type " + entityType, ex);
             return Response.serverError().build();
         }
 

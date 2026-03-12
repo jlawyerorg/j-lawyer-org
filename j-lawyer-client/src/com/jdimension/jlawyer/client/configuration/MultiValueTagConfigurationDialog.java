@@ -664,83 +664,598 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.CaseInsensitiveStringComparator;
-import com.jdimension.jlawyer.client.utils.ComponentUtils;
-import com.jdimension.jlawyer.client.utils.TableUtils;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
-import com.jdimension.jlawyer.persistence.DocumentTagRule;
-import com.jdimension.jlawyer.persistence.DocumentTagRuleCondition;
-import com.jdimension.jlawyer.server.constants.OptionConstants;
+import com.jdimension.jlawyer.services.AddressServiceRemote;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
-import java.awt.Component;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import javax.swing.BoxLayout;
+import javax.swing.DefaultListModel;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
+import javax.swing.JPopupMenu;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import org.apache.log4j.Logger;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-public class TagRulesDialog extends javax.swing.JDialog {
+public class MultiValueTagConfigurationDialog extends javax.swing.JDialog {
 
-    private static final Logger log = Logger.getLogger(TagRulesDialog.class.getName());
+    public static final String ENTITY_TYPE_CASE = "case";
+    public static final String ENTITY_TYPE_DOCUMENT = "document";
+    public static final String ENTITY_TYPE_ADDRESS = "address";
+
+    private static final Logger log = Logger.getLogger(MultiValueTagConfigurationDialog.class.getName());
+
+    private String optionGroupPrefix;
+    private String entityTypeLabel;
+    private String entityType;
+    private String booleanTagsOptionGroup;
+
+    private JPopupMenu popTagNames;
+    private JMenuItem mnuRenameTag;
+    private JMenuItem mnuDeleteTag;
+
+    private JPopupMenu popValues;
+    private JMenuItem mnuRenameValue;
+    private JMenuItem mnuDeleteValue;
 
     /**
-     * Creates new form AssistantSetupDialog
-     *
-     * @param parent
-     * @param modal
+     * Creates new form MultiValueTagConfigurationDialog
      */
-    public TagRulesDialog(java.awt.Frame parent, boolean modal) {
+    public MultiValueTagConfigurationDialog(java.awt.Frame parent, boolean modal, String optionGroupPrefix, String entityTypeLabel) {
         super(parent, modal);
+        this.optionGroupPrefix = optionGroupPrefix;
+        this.entityTypeLabel = entityTypeLabel;
         initComponents();
 
-        this.resetDetails();
-
-        this.tblTagRules.setSelectionForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            List<DocumentTagRule> rules = locator.lookupSystemManagementRemote().getAllDocumentTagRules();
-
-            this.tblTagRules.setDefaultRenderer(Object.class, new DocumentTagRuleTableCellRenderer());
-
-            for (DocumentTagRule r : rules) {
-                ((DefaultTableModel) this.tblTagRules.getModel()).addRow(new Object[]{r, r.getTagList()});
-
+        // determine entity type and boolean tags option group from prefix
+        if (optionGroupPrefix != null) {
+            if (optionGroupPrefix.startsWith("archiveFile.")) {
+                this.entityType = ENTITY_TYPE_CASE;
+                this.booleanTagsOptionGroup = "archiveFile.tags";
+            } else if (optionGroupPrefix.startsWith("document.")) {
+                this.entityType = ENTITY_TYPE_DOCUMENT;
+                this.booleanTagsOptionGroup = "document.tags";
+            } else if (optionGroupPrefix.startsWith("address.")) {
+                this.entityType = ENTITY_TYPE_ADDRESS;
+                this.booleanTagsOptionGroup = "address.tags";
             }
+        }
 
+        this.setTitle(entityTypeLabel + "-Listenetiketten bearbeiten");
+        this.jLabel1.setText(entityTypeLabel + "-Listenetiketten");
+
+        // set up tag names list
+        this.lstTagNames.setModel(new DefaultListModel<String>());
+        this.lstValues.setModel(new DefaultListModel<String>());
+
+        // disable right side initially
+        enableValueControls(false);
+
+        // context menu for tag names
+        popTagNames = new JPopupMenu();
+        mnuRenameTag = new JMenuItem("Umbenennen");
+        mnuRenameTag.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png")));
+        mnuRenameTag.addActionListener(e -> renameTagAction());
+        popTagNames.add(mnuRenameTag);
+        mnuDeleteTag = new JMenuItem("Löschen");
+        mnuDeleteTag.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png")));
+        mnuDeleteTag.addActionListener(e -> deleteTagAction());
+        popTagNames.add(mnuDeleteTag);
+
+        // context menu for values
+        popValues = new JPopupMenu();
+        mnuRenameValue = new JMenuItem("Umbenennen");
+        mnuRenameValue.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png")));
+        mnuRenameValue.addActionListener(e -> renameValueAction());
+        popValues.add(mnuRenameValue);
+        mnuDeleteValue = new JMenuItem("Löschen");
+        mnuDeleteValue.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png")));
+        mnuDeleteValue.addActionListener(e -> deleteValueAction());
+        popValues.add(mnuDeleteValue);
+
+        // mouse listeners for context menus
+        this.lstTagNames.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                if (evt.getModifiers() == InputEvent.BUTTON2_MASK || evt.getModifiers() == InputEvent.BUTTON2_DOWN_MASK || evt.getModifiers() == InputEvent.BUTTON3_MASK || evt.getModifiers() == InputEvent.BUTTON3_DOWN_MASK) {
+                    if (lstTagNames.getSelectedValue() != null) {
+                        popTagNames.show(lstTagNames, evt.getX(), evt.getY());
+                    }
+                }
+            }
+        });
+
+        this.lstValues.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                if (evt.getModifiers() == InputEvent.BUTTON2_MASK || evt.getModifiers() == InputEvent.BUTTON2_DOWN_MASK || evt.getModifiers() == InputEvent.BUTTON3_MASK || evt.getModifiers() == InputEvent.BUTTON3_DOWN_MASK) {
+                    if (lstValues.getSelectedValue() != null) {
+                        popValues.show(lstValues, evt.getX(), evt.getY());
+                    }
+                }
+            }
+        });
+
+        // selection listener for tag names - load values for selected tag
+        this.lstTagNames.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                if (!e.getValueIsAdjusting()) {
+                    loadValuesForSelectedTag();
+                }
+            }
+        });
+
+        // button listeners
+        this.cmdAddTag.addActionListener(e -> addTagAction());
+        this.cmdAddValue.addActionListener(e -> addValueAction());
+        this.cmdClose.addActionListener(e -> {
+            setVisible(false);
+            dispose();
+        });
+
+        // enter key on text fields
+        this.txtNewTagName.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+                    addTagAction();
+                }
+            }
+        });
+        this.txtNewValue.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+                    addValueAction();
+                }
+            }
+        });
+
+        // load existing multi-value tags
+        loadTagNames();
+    }
+
+    private void refreshCache() {
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
+            HashMap<String, AppOptionGroupBean[]> updatedDefs = mgmt.getOptionGroupsByPrefix(this.optionGroupPrefix);
+            if (ENTITY_TYPE_CASE.equals(this.entityType)) {
+                settings.setArchiveFileMvTagDefs(updatedDefs);
+            } else if (ENTITY_TYPE_DOCUMENT.equals(this.entityType)) {
+                settings.setDocumentMvTagDefs(updatedDefs);
+            } else if (ENTITY_TYPE_ADDRESS.equals(this.entityType)) {
+                settings.setAddressMvTagDefs(updatedDefs);
+            }
         } catch (Exception ex) {
-            log.error("Error connecting to server", ex);
+            log.error("Error refreshing multi-value tag cache", ex);
+        }
+    }
+
+    private void enableValueControls(boolean enabled) {
+        this.lstValues.setEnabled(enabled);
+        this.txtNewValue.setEnabled(enabled);
+        this.cmdAddValue.setEnabled(enabled);
+        if (!enabled) {
+            this.jLabel2.setText("Werte für gewähltes Etikett:");
+            ((DefaultListModel<String>) this.lstValues.getModel()).clear();
+        }
+    }
+
+    private void loadTagNames() {
+        DefaultListModel<String> model = (DefaultListModel<String>) this.lstTagNames.getModel();
+        model.clear();
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
+            HashMap<String, AppOptionGroupBean[]> groups = mgmt.getOptionGroupsByPrefix(this.optionGroupPrefix);
+            List<String> tagNames = new ArrayList<>();
+            for (String groupName : groups.keySet()) {
+                String tagName = groupName.substring(this.optionGroupPrefix.length());
+                tagNames.add(tagName);
+            }
+            java.util.Collections.sort(tagNames, String.CASE_INSENSITIVE_ORDER);
+            for (String tagName : tagNames) {
+                model.addElement(tagName);
+            }
+        } catch (Exception ex) {
+            log.error("Error loading multi-value tags", ex);
             JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void loadValuesForSelectedTag() {
+        String selectedTag = this.lstTagNames.getSelectedValue();
+        if (selectedTag == null) {
+            enableValueControls(false);
+            return;
+        }
+        enableValueControls(true);
+        this.jLabel2.setText("Werte für: " + selectedTag);
+        DefaultListModel<String> model = (DefaultListModel<String>) this.lstValues.getModel();
+        model.clear();
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
+            String optionGroup = this.optionGroupPrefix + selectedTag;
+            AppOptionGroupBean[] values = mgmt.getOptionGroup(optionGroup);
+            Arrays.sort(values, new AppOptionGroupBeanComparator());
+            for (AppOptionGroupBean bean : values) {
+                model.addElement(bean.getValue());
+            }
+        } catch (Exception ex) {
+            log.error("Error loading values for tag " + selectedTag, ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private boolean tagNameCollidesWithBooleanTags(String tagName) {
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
+            AppOptionGroupBean[] booleanTags = mgmt.getOptionGroup(this.booleanTagsOptionGroup);
+            for (AppOptionGroupBean bean : booleanTags) {
+                if (bean.getValue().equalsIgnoreCase(tagName)) {
+                    return true;
+                }
+            }
+        } catch (Exception ex) {
+            log.error("Error checking boolean tags", ex);
+        }
+        return false;
+    }
+
+    private void addTagAction() {
+        String newTagName = this.txtNewTagName.getText().trim();
+        if (newTagName.isEmpty()) {
             return;
         }
 
-        ComponentUtils.autoSizeColumns(tblTagRules);
-        
-        BoxLayout boxLayout = new BoxLayout(this.pnlTagRules, BoxLayout.Y_AXIS);
-        this.pnlTagRules.setLayout(boxLayout);
+        if (newTagName.contains(":") || newTagName.contains("=") || newTagName.contains(",")) {
+            JOptionPane.showMessageDialog(this, "Der Name darf keinen Doppelpunkt, kein Gleichheitszeichen und kein Komma enthalten.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // check for collision with boolean tags
+        if (tagNameCollidesWithBooleanTags(newTagName)) {
+            JOptionPane.showMessageDialog(this, "Ein Etikett mit diesem Namen existiert bereits als Ja/Nein-Etikett.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // check for duplicate in existing multi-value tags
+        DefaultListModel<String> model = (DefaultListModel<String>) this.lstTagNames.getModel();
+        for (int i = 0; i < model.getSize(); i++) {
+            if (model.getElementAt(i).equalsIgnoreCase(newTagName)) {
+                JOptionPane.showMessageDialog(this, "Ein Listenetikett mit diesem Namen existiert bereits.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+
+        // create option group (with empty initial entry is not needed - the group is created implicitly when first value is added)
+        // just add the tag name to the list - the option group will be created when the first value is added
+        model.addElement(newTagName);
+        this.txtNewTagName.setText("");
+        this.lstTagNames.setSelectedValue(newTagName, true);
+        this.txtNewValue.requestFocus();
     }
 
-    private void resetDetails() {
-        this.txtName.setText("");
-        this.txtTags.setText("");
-        this.chkCancelOnMatch.setSelected(true);
-        this.rdAnd.setSelected(false);
-        this.rdOr.setSelected(true);
-        this.pnlTagRules.removeAll();
-        this.pnlTagRules.revalidate();
+    private void addValueAction() {
+        String selectedTag = this.lstTagNames.getSelectedValue();
+        if (selectedTag == null) {
+            return;
+        }
+        String newValue = this.txtNewValue.getText().trim();
+        if (newValue.isEmpty()) {
+            return;
+        }
 
+        if (newValue.contains(":") || newValue.contains("=") || newValue.contains(",")) {
+            JOptionPane.showMessageDialog(this, "Der Wert darf keinen Doppelpunkt, kein Gleichheitszeichen und kein Komma enthalten.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // check for duplicate
+        DefaultListModel<String> model = (DefaultListModel<String>) this.lstValues.getModel();
+        for (int i = 0; i < model.getSize(); i++) {
+            if (model.getElementAt(i).equalsIgnoreCase(newValue)) {
+                JOptionPane.showMessageDialog(this, "Dieser Wert existiert bereits.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
+            String optionGroup = this.optionGroupPrefix + selectedTag;
+            AppOptionGroupBean dto = new AppOptionGroupBean();
+            dto.setOptionGroup(optionGroup);
+            dto.setValue(newValue);
+            mgmt.createOptionGroup(dto);
+            model.addElement(newValue);
+            refreshCache();
+        } catch (Exception ex) {
+            log.error("Error adding value", ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        this.txtNewValue.setText("");
+        this.txtNewValue.requestFocus();
+    }
+
+    private void renameTagAction() {
+        String selectedTag = this.lstTagNames.getSelectedValue();
+        if (selectedTag == null) {
+            return;
+        }
+
+        String newName = JOptionPane.showInputDialog(this, "Neuer Name:", selectedTag);
+        if (newName == null || newName.trim().isEmpty() || newName.trim().equals(selectedTag)) {
+            return;
+        }
+        newName = newName.trim();
+
+        if (newName.contains(":") || newName.contains("=") || newName.contains(",")) {
+            JOptionPane.showMessageDialog(this, "Der Name darf keinen Doppelpunkt, kein Gleichheitszeichen und kein Komma enthalten.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // check collision with boolean tags
+        if (tagNameCollidesWithBooleanTags(newName)) {
+            JOptionPane.showMessageDialog(this, "Ein Etikett mit diesem Namen existiert bereits als Ja/Nein-Etikett.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // check for duplicate
+        DefaultListModel<String> model = (DefaultListModel<String>) this.lstTagNames.getModel();
+        for (int i = 0; i < model.getSize(); i++) {
+            if (model.getElementAt(i).equalsIgnoreCase(newName)) {
+                JOptionPane.showMessageDialog(this, "Ein Listenetikett mit diesem Namen existiert bereits.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
+
+            // rename option group: remove all old entries and create under new group name
+            String oldGroupName = this.optionGroupPrefix + selectedTag;
+            String newGroupName = this.optionGroupPrefix + newName;
+            AppOptionGroupBean[] oldValues = mgmt.getOptionGroup(oldGroupName);
+            for (AppOptionGroupBean bean : oldValues) {
+                mgmt.removeOptionGroup(bean.getId());
+            }
+            for (AppOptionGroupBean bean : oldValues) {
+                AppOptionGroupBean dto = new AppOptionGroupBean();
+                dto.setOptionGroup(newGroupName);
+                dto.setValue(bean.getValue());
+                mgmt.createOptionGroup(dto);
+            }
+
+            // ask whether to rename in existing tag rows
+            int response = JOptionPane.showConfirmDialog(this, "Sollen vorhandene Etiketten an " + this.entityTypeLabel + " ebenfalls umbenannt werden?", "Umbenennen", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.YES_OPTION) {
+                renameTagNameInAssignments(selectedTag, newName);
+            }
+
+            int index = this.lstTagNames.getSelectedIndex();
+            model.setElementAt(newName, index);
+            this.lstTagNames.setSelectedIndex(index);
+            refreshCache();
+
+        } catch (Exception ex) {
+            log.error("Error renaming tag", ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void renameTagNameInAssignments(String oldName, String newName) throws Exception {
+        ClientSettings settings = ClientSettings.getInstance();
+        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        if (ENTITY_TYPE_CASE.equals(this.entityType)) {
+            locator.lookupArchiveFileServiceRemote().renameCaseTagName(oldName, newName);
+        } else if (ENTITY_TYPE_DOCUMENT.equals(this.entityType)) {
+            locator.lookupArchiveFileServiceRemote().renameDocumentTagName(oldName, newName);
+        } else if (ENTITY_TYPE_ADDRESS.equals(this.entityType)) {
+            locator.lookupAddressServiceRemote().renameContactTagName(oldName, newName);
+        }
+    }
+
+    private void deleteTagAction() {
+        String selectedTag = this.lstTagNames.getSelectedValue();
+        if (selectedTag == null) {
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this, "Listenetikett '" + selectedTag + "' wirklich löschen?", "Löschen", JOptionPane.YES_NO_OPTION);
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
+
+            // remove all option group entries
+            String optionGroup = this.optionGroupPrefix + selectedTag;
+            AppOptionGroupBean[] values = mgmt.getOptionGroup(optionGroup);
+            for (AppOptionGroupBean bean : values) {
+                mgmt.removeOptionGroup(bean.getId());
+            }
+
+            // ask whether to remove existing tag rows
+            int response = JOptionPane.showConfirmDialog(this, "Sollen vorhandene Etiketten an " + this.entityTypeLabel + " ebenfalls entfernt werden?", "Löschen", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.YES_OPTION) {
+                deleteTagNameInAssignments(selectedTag);
+            }
+
+            ((DefaultListModel<String>) this.lstTagNames.getModel()).removeElement(selectedTag);
+            enableValueControls(false);
+            refreshCache();
+
+        } catch (Exception ex) {
+            log.error("Error deleting tag", ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void deleteTagNameInAssignments(String tagName) throws Exception {
+        ClientSettings settings = ClientSettings.getInstance();
+        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        if (ENTITY_TYPE_CASE.equals(this.entityType)) {
+            locator.lookupArchiveFileServiceRemote().deleteCaseTagsByName(tagName);
+        } else if (ENTITY_TYPE_DOCUMENT.equals(this.entityType)) {
+            locator.lookupArchiveFileServiceRemote().deleteDocumentTagsByName(tagName);
+        } else if (ENTITY_TYPE_ADDRESS.equals(this.entityType)) {
+            locator.lookupAddressServiceRemote().deleteContactTagsByName(tagName);
+        }
+    }
+
+    private void renameValueAction() {
+        String selectedTag = this.lstTagNames.getSelectedValue();
+        String selectedValue = this.lstValues.getSelectedValue();
+        if (selectedTag == null || selectedValue == null) {
+            return;
+        }
+
+        String newValue = JOptionPane.showInputDialog(this, "Neuer Wert:", selectedValue);
+        if (newValue == null || newValue.trim().isEmpty() || newValue.trim().equals(selectedValue)) {
+            return;
+        }
+        newValue = newValue.trim();
+
+        if (newValue.contains(":") || newValue.contains("=") || newValue.contains(",")) {
+            JOptionPane.showMessageDialog(this, "Der Wert darf keinen Doppelpunkt, kein Gleichheitszeichen und kein Komma enthalten.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // check for duplicate
+        DefaultListModel<String> model = (DefaultListModel<String>) this.lstValues.getModel();
+        for (int i = 0; i < model.getSize(); i++) {
+            if (model.getElementAt(i).equalsIgnoreCase(newValue)) {
+                JOptionPane.showMessageDialog(this, "Dieser Wert existiert bereits.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
+
+            // rename in option group: remove old, create new
+            String optionGroup = this.optionGroupPrefix + selectedTag;
+            AppOptionGroupBean[] allValues = mgmt.getOptionGroup(optionGroup);
+            for (AppOptionGroupBean bean : allValues) {
+                if (bean.getValue().equals(selectedValue)) {
+                    mgmt.removeOptionGroup(bean.getId());
+                    break;
+                }
+            }
+            AppOptionGroupBean dto = new AppOptionGroupBean();
+            dto.setOptionGroup(optionGroup);
+            dto.setValue(newValue);
+            mgmt.createOptionGroup(dto);
+
+            // ask whether to rename in existing tag rows
+            int response = JOptionPane.showConfirmDialog(this, "Sollen vorhandene Werte an " + this.entityTypeLabel + " ebenfalls umbenannt werden?", "Umbenennen", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.YES_OPTION) {
+                renameTagValueInAssignments(selectedTag, selectedValue, newValue);
+            }
+
+            int index = this.lstValues.getSelectedIndex();
+            model.setElementAt(newValue, index);
+            this.lstValues.setSelectedIndex(index);
+            refreshCache();
+
+        } catch (Exception ex) {
+            log.error("Error renaming value", ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void renameTagValueInAssignments(String tagName, String oldValue, String newValue) throws Exception {
+        ClientSettings settings = ClientSettings.getInstance();
+        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        if (ENTITY_TYPE_CASE.equals(this.entityType)) {
+            locator.lookupArchiveFileServiceRemote().renameCaseTagValue(tagName, oldValue, newValue);
+        } else if (ENTITY_TYPE_DOCUMENT.equals(this.entityType)) {
+            locator.lookupArchiveFileServiceRemote().renameDocumentTagValue(tagName, oldValue, newValue);
+        } else if (ENTITY_TYPE_ADDRESS.equals(this.entityType)) {
+            locator.lookupAddressServiceRemote().renameContactTagValue(tagName, oldValue, newValue);
+        }
+    }
+
+    private void deleteValueAction() {
+        String selectedTag = this.lstTagNames.getSelectedValue();
+        String selectedValue = this.lstValues.getSelectedValue();
+        if (selectedTag == null || selectedValue == null) {
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this, "Wert '" + selectedValue + "' wirklich löschen?", "Löschen", JOptionPane.YES_NO_OPTION);
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
+
+            // remove from option group
+            String optionGroup = this.optionGroupPrefix + selectedTag;
+            AppOptionGroupBean[] allValues = mgmt.getOptionGroup(optionGroup);
+            for (AppOptionGroupBean bean : allValues) {
+                if (bean.getValue().equals(selectedValue)) {
+                    mgmt.removeOptionGroup(bean.getId());
+                    break;
+                }
+            }
+
+            // ask whether to remove existing tag rows with this value
+            int response = JOptionPane.showConfirmDialog(this, "Sollen vorhandene Etiketten mit diesem Wert an " + this.entityTypeLabel + " ebenfalls entfernt werden?", "Löschen", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.YES_OPTION) {
+                deleteTagValueInAssignments(selectedTag, selectedValue);
+            }
+
+            ((DefaultListModel<String>) this.lstValues.getModel()).removeElement(selectedValue);
+            refreshCache();
+
+        } catch (Exception ex) {
+            log.error("Error deleting value", ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void deleteTagValueInAssignments(String tagName, String tagValue) throws Exception {
+        ClientSettings settings = ClientSettings.getInstance();
+        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        if (ENTITY_TYPE_CASE.equals(this.entityType)) {
+            locator.lookupArchiveFileServiceRemote().deleteCaseTagsByNameAndValue(tagName, tagValue);
+        } else if (ENTITY_TYPE_DOCUMENT.equals(this.entityType)) {
+            locator.lookupArchiveFileServiceRemote().deleteDocumentTagsByNameAndValue(tagName, tagValue);
+        } else if (ENTITY_TYPE_ADDRESS.equals(this.entityType)) {
+            locator.lookupAddressServiceRemote().deleteContactTagsByNameAndValue(tagName, tagValue);
+        }
     }
 
     /**
@@ -752,91 +1267,40 @@ public class TagRulesDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        buttonGroup1 = new javax.swing.ButtonGroup();
+        jSplitPane1 = new javax.swing.JSplitPane();
         jPanel1 = new javax.swing.JPanel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        tblTagRules = new javax.swing.JTable();
-        cmdAdd = new javax.swing.JButton();
-        cmdRemove = new javax.swing.JButton();
-        cmdSequenceUp = new javax.swing.JButton();
-        cmdSequenceDown = new javax.swing.JButton();
-        cmdClose = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
-        txtName = new javax.swing.JTextField();
-        cmdSave = new javax.swing.JButton();
-        jLabel5 = new javax.swing.JLabel();
-        txtTags = new javax.swing.JTextField();
-        jLabel3 = new javax.swing.JLabel();
-        chkCancelOnMatch = new javax.swing.JCheckBox();
-        rdOr = new javax.swing.JRadioButton();
-        rdAnd = new javax.swing.JRadioButton();
-        jLabel6 = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        lstTagNames = new javax.swing.JList<>();
+        cmdAddTag = new javax.swing.JButton();
+        txtNewTagName = new javax.swing.JTextField();
+        jPanel2 = new javax.swing.JPanel();
+        jLabel2 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
-        pnlTagRules = new javax.swing.JPanel();
-        cmdAddRule = new javax.swing.JButton();
+        lstValues = new javax.swing.JList<>();
+        cmdAddValue = new javax.swing.JButton();
+        txtNewValue = new javax.swing.JTextField();
+        cmdClose = new javax.swing.JButton();
+        jSeparator1 = new javax.swing.JSeparator();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Etiketten-Automatik");
+        setTitle("Listenetiketten bearbeiten");
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Regeln"));
+        jSplitPane1.setResizeWeight(0.5);
 
-        tblTagRules.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
+        jLabel1.setFont(jLabel1.getFont());
+        jLabel1.setText("Listenetiketten");
 
-            },
-            new String [] {
-                "Name", "Etiketten"
-            }
-        ) {
-            boolean[] canEdit = new boolean [] {
-                false, false
-            };
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
+        lstTagNames.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+            public int getSize() { return strings.length; }
+            public String getElementAt(int i) { return strings[i]; }
         });
-        tblTagRules.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        tblTagRules.getTableHeader().setReorderingAllowed(false);
-        tblTagRules.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                tblTagRulesMouseClicked(evt);
-            }
-        });
-        tblTagRules.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                tblTagRulesKeyReleased(evt);
-            }
-        });
-        jScrollPane1.setViewportView(tblTagRules);
+        jScrollPane1.setViewportView(lstTagNames);
 
-        cmdAdd.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
-        cmdAdd.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdAddActionPerformed(evt);
-            }
-        });
-
-        cmdRemove.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png"))); // NOI18N
-        cmdRemove.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdRemoveActionPerformed(evt);
-            }
-        });
-
-        cmdSequenceUp.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_keyboard_arrow_up_blue_36dp.png"))); // NOI18N
-        cmdSequenceUp.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSequenceUpActionPerformed(evt);
-            }
-        });
-
-        cmdSequenceDown.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_keyboard_arrow_down_blue_36dp.png"))); // NOI18N
-        cmdSequenceDown.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSequenceDownActionPerformed(evt);
-            }
-        });
+        cmdAddTag.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdAddTag.setText("hinzufügen");
+        cmdAddTag.setToolTipText("Etikett hinzufügen");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -844,403 +1308,113 @@ public class TagRulesDialog extends javax.swing.JDialog {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 441, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cmdAdd)
-                    .addComponent(cmdRemove)
-                    .addComponent(cmdSequenceUp)
-                    .addComponent(cmdSequenceDown))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addComponent(txtNewTagName, javax.swing.GroupLayout.DEFAULT_SIZE, 347, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdAddTag)))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 528, Short.MAX_VALUE)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(cmdAdd)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdRemove)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(cmdSequenceUp)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdSequenceDown)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 307, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdAddTag)
+                    .addComponent(txtNewTagName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
 
-        cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        jSplitPane1.setLeftComponent(jPanel1);
+
+        jLabel2.setText("Werte für gewähltes Etikett:");
+
+        lstValues.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+            public int getSize() { return strings.length; }
+            public String getElementAt(int i) { return strings[i]; }
+        });
+        jScrollPane2.setViewportView(lstValues);
+
+        cmdAddValue.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdAddValue.setText("hinzufügen");
+        cmdAddValue.setToolTipText("Wert zur Auswahl hinzufügen");
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(jLabel2)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane2)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                        .addComponent(txtNewValue, javax.swing.GroupLayout.DEFAULT_SIZE, 236, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdAddValue)))
+                .addContainerGap())
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 307, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdAddValue)
+                    .addComponent(txtNewValue, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+
+        jSplitPane1.setRightComponent(jPanel2);
+
+        cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         cmdClose.setText("Schliessen");
-        cmdClose.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdCloseActionPerformed(evt);
-            }
-        });
-
-        jLabel1.setFont(jLabel1.getFont());
-        jLabel1.setText("Name:");
-
-        txtName.setFont(txtName.getFont());
-
-        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
-        cmdSave.setText("Übernehmen");
-        cmdSave.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSaveActionPerformed(evt);
-            }
-        });
-
-        jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() | java.awt.Font.BOLD, jLabel5.getFont().getSize()-2));
-        jLabel5.setForeground(new java.awt.Color(153, 153, 153));
-        jLabel5.setText("Regel - Konfiguration");
-
-        txtTags.setFont(txtTags.getFont());
-
-        jLabel3.setFont(jLabel3.getFont());
-        jLabel3.setText("Etiketten (kommasepariert, Listenetiketten: Name=Wert):");
-
-        chkCancelOnMatch.setFont(chkCancelOnMatch.getFont());
-        chkCancelOnMatch.setSelected(true);
-        chkCancelOnMatch.setText("bei Treffer keine weitere Regel anwenden");
-
-        buttonGroup1.add(rdOr);
-        rdOr.setFont(rdOr.getFont());
-        rdOr.setSelected(true);
-        rdOr.setText("eine Bedingung erfüllt ist");
-
-        buttonGroup1.add(rdAnd);
-        rdAnd.setFont(rdAnd.getFont());
-        rdAnd.setText("alle Bedingungen erfüllt sind");
-
-        jLabel6.setFont(jLabel6.getFont());
-        jLabel6.setText("Ausführen wenn");
-
-        javax.swing.GroupLayout pnlTagRulesLayout = new javax.swing.GroupLayout(pnlTagRules);
-        pnlTagRules.setLayout(pnlTagRulesLayout);
-        pnlTagRulesLayout.setHorizontalGroup(
-            pnlTagRulesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-        pnlTagRulesLayout.setVerticalGroup(
-            pnlTagRulesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-
-        jScrollPane2.setViewportView(pnlTagRules);
-
-        cmdAddRule.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
-        cmdAddRule.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdAddRuleActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(txtName)
-                    .addComponent(txtTags)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel6)
-                            .addComponent(jLabel1)
-                            .addComponent(jLabel3)
-                            .addComponent(jLabel5)
-                            .addComponent(chkCancelOnMatch)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(6, 6, 6)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(rdAnd)
-                                    .addComponent(rdOr))))
-                        .addGap(0, 264, Short.MAX_VALUE))
+                        .addContainerGap()
+                        .addComponent(jSplitPane1))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(12, 12, 12)
+                        .addComponent(jSeparator1))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(cmdSave)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdClose))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(jScrollPane2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdAddRule)))
+                        .addComponent(cmdClose)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel5)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jLabel3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtTags, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jLabel6)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(rdOr)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(rdAnd)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(chkCancelOnMatch)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jScrollPane2)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(cmdClose)
-                                    .addComponent(cmdSave)))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(cmdAddRule)
-                                .addGap(0, 0, Short.MAX_VALUE)))))
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 385, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(cmdClose)
                 .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-
-    private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
-        this.setVisible(false);
-        this.dispose();
-    }//GEN-LAST:event_cmdCloseActionPerformed
-
-    private void tblTagRulesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblTagRulesMouseClicked
-        if (evt.getClickCount() == 1 && !evt.isConsumed()) {
-
-            int row = this.tblTagRules.getSelectedRow();
-
-            if (row < 0) {
-                this.resetDetails();
-            } else {
-
-                DocumentTagRule r = (DocumentTagRule) this.tblTagRules.getValueAt(row, 0);
-                this.updatedUI(r);
-            }
-
-        }
-    }//GEN-LAST:event_tblTagRulesMouseClicked
-
-    private void cmdAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddActionPerformed
-        Object newNameObject = JOptionPane.showInputDialog(this, "Regelname: ", "Neue Regel für automatische Etikettierung", JOptionPane.QUESTION_MESSAGE, null, null, "");
-        if (newNameObject == null) {
-            return;
-        }
-
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            int sequenceNo=1;
-            List<DocumentTagRule> currentRules=locator.lookupSystemManagementRemote().getAllDocumentTagRules();
-            for(DocumentTagRule dtr: currentRules) {
-                if(dtr.getSequenceNumber()>=sequenceNo)
-                    sequenceNo=dtr.getSequenceNumber()+1;
-            }
-
-            DocumentTagRule r = new DocumentTagRule();
-            r.setName(newNameObject.toString());
-            r.setTagList("");
-            r.setCancelOnMatch(true);
-            r.setOperator(DocumentTagRule.OPERATOR_OR);
-            r.setRuleConditions(new ArrayList<>());
-            r.setSequenceNumber(sequenceNo);
-
-            DocumentTagRule savedRule = locator.lookupSystemManagementRemote().addDocumentTagRule(r);
-
-            ((DefaultTableModel) this.tblTagRules.getModel()).addRow(new Object[]{savedRule, savedRule.getTagList()});
-            this.tblTagRules.getSelectionModel().setSelectionInterval(this.tblTagRules.getRowCount()-1, this.tblTagRules.getRowCount()-1);
-
-        } catch (Exception ex) {
-            log.error("Error creating new rule", ex);
-            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
-
-    }//GEN-LAST:event_cmdAddActionPerformed
-
-    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
-
-        int row = this.tblTagRules.getSelectedRow();
-
-        if (row >= 0) {
-
-            // validate multi-value tags have a value specified
-            HashMap<String, AppOptionGroupBean[]> docMvTagDefs = ClientSettings.getInstance().getDocumentMvTagDefs();
-            if (docMvTagDefs != null && !this.txtTags.getText().trim().isEmpty()) {
-                for (String tagEntry : this.txtTags.getText().split(",")) {
-                    tagEntry = tagEntry.trim();
-                    if (tagEntry.isEmpty()) {
-                        continue;
-                    }
-                    String tagName = tagEntry;
-                    int eqIdx = tagEntry.indexOf('=');
-                    if (eqIdx > 0) {
-                        tagName = tagEntry.substring(0, eqIdx).trim();
-                    }
-                    String groupKey = OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX + tagName;
-                    if (docMvTagDefs.containsKey(groupKey) && eqIdx < 0) {
-                        JOptionPane.showMessageDialog(this, "'" + tagName + "' ist ein Listenetikett. Bitte einen Wert angeben (z.B. " + tagName + "=Wert).", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-                }
-            }
-
-            DocumentTagRule r = (DocumentTagRule) this.tblTagRules.getValueAt(row, 0);
-            r.setName(this.txtName.getText());
-            r.setCancelOnMatch(this.chkCancelOnMatch.isSelected());
-            r.setOperator(DocumentTagRule.OPERATOR_AND);
-            if(this.rdOr.isSelected())
-                r.setOperator(DocumentTagRule.OPERATOR_OR);
-            r.setTagList(this.txtTags.getText());
-            
-            List<DocumentTagRuleCondition> conditions=new ArrayList<>();
-            for(Component c: this.pnlTagRules.getComponents()) {
-                if(c instanceof TagRuleEntryPanel) {
-                    DocumentTagRuleCondition condition=((TagRuleEntryPanel)c).getEntry();
-                    if(!condition.getComparisonValue().trim().isEmpty())
-                        conditions.add(condition);
-                }
-            }
-            r.setRuleConditions(conditions);
-            
-            ClientSettings settings = ClientSettings.getInstance();
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-                DocumentTagRule savedRule = locator.lookupSystemManagementRemote().updateDocumentTagRule(r);
-                row = this.tblTagRules.convertRowIndexToModel(row);
-                
-                locator.lookupSystemManagementRemote().setDocumentTagRuleConditions(r.getId(), conditions);
-                savedRule.setRuleConditions(conditions);
-                
-                ((DefaultTableModel) this.tblTagRules.getModel()).setValueAt(savedRule, row, 0);
-                ((DefaultTableModel) this.tblTagRules.getModel()).setValueAt(savedRule.getTagList(), row, 1);
-
-            } catch (Exception ex) {
-                log.error("Error updating rule", ex);
-                JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            }
-        }
-
-
-    }//GEN-LAST:event_cmdSaveActionPerformed
-
-    private void cmdRemoveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveActionPerformed
-        int row = this.tblTagRules.getSelectedRow();
-
-        if (row >= 0) {
-
-            DocumentTagRule r = (DocumentTagRule) this.tblTagRules.getValueAt(row, 0);
-            ClientSettings settings = ClientSettings.getInstance();
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-                locator.lookupSystemManagementRemote().removeDocumentTagRule(r);
-                row = this.tblTagRules.convertRowIndexToModel(row);
-                ((DefaultTableModel) this.tblTagRules.getModel()).removeRow(row);
-
-                this.resetDetails();
-            } catch (Exception ex) {
-                log.error("Error removing rule", ex);
-                JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }//GEN-LAST:event_cmdRemoveActionPerformed
-
-    private void tblTagRulesKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblTagRulesKeyReleased
-        int row = this.tblTagRules.getSelectedRow();
-
-        if (row < 0) {
-            this.resetDetails();
-        } else {
-
-            DocumentTagRule r = (DocumentTagRule) this.tblTagRules.getValueAt(row, 0);
-            this.updatedUI(r);
-        }
-    }//GEN-LAST:event_tblTagRulesKeyReleased
-
-    private void cmdSequenceUpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSequenceUpActionPerformed
-        this.updateSequence(-1);
-    }//GEN-LAST:event_cmdSequenceUpActionPerformed
-
-    private void cmdSequenceDownActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSequenceDownActionPerformed
-        this.updateSequence(1);
-    }//GEN-LAST:event_cmdSequenceDownActionPerformed
-
-    private void cmdAddRuleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddRuleActionPerformed
-        TagRuleEntryPanel trep=new TagRuleEntryPanel();
-        DocumentTagRuleCondition entry= new DocumentTagRuleCondition();
-        entry.setComparisonMode(DocumentTagRuleCondition.COMPARISON_CONTAINS);
-        entry.setComparisonValue("");
-        trep.setEntry(entry);
-        this.pnlTagRules.add(trep);
-        this.pnlTagRules.revalidate();
-        
-    }//GEN-LAST:event_cmdAddRuleActionPerformed
-
-    private void updateSequence(int offset) {
-        int row = this.tblTagRules.getSelectedRow();
-        if (row < 0) {
-            return;
-        } else {
-            
-            if(offset<0)
-                TableUtils.moveUpwards(tblTagRules);
-            else
-                TableUtils.moveDownwards(tblTagRules);
-
-            ClientSettings settings = ClientSettings.getInstance();
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
-                
-                for(int r=0;r<this.tblTagRules.getRowCount();r++) {
-                    DocumentTagRule dtr = (DocumentTagRule) this.tblTagRules.getValueAt(r, 0);
-                    dtr.setSequenceNumber(r+1);
-                    DocumentTagRule savedParty = mgmt.updateDocumentTagRule(dtr);
-                }
-                
-            } catch (Exception ex) {
-                log.error("Error updating rule", ex);
-                JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-    
-    private void updatedUI(DocumentTagRule r) {
-        
-        
-
-        this.txtName.setText(r.getName());
-        this.txtTags.setText(r.getTagList());
-        this.rdOr.setSelected(r.getOperator()==DocumentTagRule.OPERATOR_OR);
-        this.rdAnd.setSelected(r.getOperator()==DocumentTagRule.OPERATOR_AND);
-        this.chkCancelOnMatch.setSelected(r.isCancelOnMatch());
-        
-        this.pnlTagRules.removeAll();
-        this.pnlTagRules.revalidate();
-        this.pnlTagRules.doLayout();
-        this.pnlTagRules.repaint();
-        for(DocumentTagRuleCondition c: r.getRuleConditions()) {
-            TagRuleEntryPanel trep = new TagRuleEntryPanel();
-            trep.setEntry(c);
-            this.pnlTagRules.add(trep);
-            this.pnlTagRules.revalidate();
-        }
-        
-    }
 
     /**
      * @param args the command line arguments
@@ -1258,64 +1432,47 @@ public class TagRulesDialog extends javax.swing.JDialog {
                     break;
                 }
             }
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(TagRulesDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(MultiValueTagConfigurationDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            java.util.logging.Logger.getLogger(MultiValueTagConfigurationDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            java.util.logging.Logger.getLogger(MultiValueTagConfigurationDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(MultiValueTagConfigurationDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
-        //</editor-fold>
-        //</editor-fold>
-        //</editor-fold>
-        //</editor-fold>
-        //</editor-fold>
-        //</editor-fold>
-        //</editor-fold>
-        //</editor-fold>
-        //</editor-fold>
-        //</editor-fold>
-        //</editor-fold>
-        //</editor-fold>
-        //</editor-fold>
-        //</editor-fold>
-        //</editor-fold>
-
-        //</editor-fold>
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(() -> {
-            TagRulesDialog dialog = new TagRulesDialog(new javax.swing.JFrame(), true);
-            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                @Override
-                public void windowClosing(java.awt.event.WindowEvent e) {
-                    System.exit(0);
-                }
-            });
-            dialog.setVisible(true);
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                MultiValueTagConfigurationDialog dialog = new MultiValueTagConfigurationDialog(new javax.swing.JFrame(), true, null, null);
+                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                    @Override
+                    public void windowClosing(java.awt.event.WindowEvent e) {
+                        System.exit(0);
+                    }
+                });
+                dialog.setVisible(true);
+            }
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.ButtonGroup buttonGroup1;
-    private javax.swing.JCheckBox chkCancelOnMatch;
-    private javax.swing.JButton cmdAdd;
-    private javax.swing.JButton cmdAddRule;
+    private javax.swing.JButton cmdAddTag;
+    private javax.swing.JButton cmdAddValue;
     private javax.swing.JButton cmdClose;
-    private javax.swing.JButton cmdRemove;
-    private javax.swing.JButton cmdSave;
-    private javax.swing.JButton cmdSequenceDown;
-    private javax.swing.JButton cmdSequenceUp;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JPanel pnlTagRules;
-    private javax.swing.JRadioButton rdAnd;
-    private javax.swing.JRadioButton rdOr;
-    private javax.swing.JTable tblTagRules;
-    private javax.swing.JTextField txtName;
-    private javax.swing.JTextField txtTags;
+    private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JSplitPane jSplitPane1;
+    private javax.swing.JList<String> lstTagNames;
+    private javax.swing.JList<String> lstValues;
+    private javax.swing.JTextField txtNewTagName;
+    private javax.swing.JTextField txtNewValue;
     // End of variables declaration//GEN-END:variables
 }

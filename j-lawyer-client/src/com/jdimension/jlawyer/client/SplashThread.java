@@ -800,6 +800,9 @@ public class SplashThread implements Runnable {
         AppUserBean[] allUsers = null;
         List<AppUserBean> loginEnabledUsers=null;
         List<AppUserBean> messagingEnabledUsers=null;
+        HashMap<String, AppOptionGroupBean[]> afMvTagDefs = null;
+        HashMap<String, AppOptionGroupBean[]> docMvTagDefs = null;
+        HashMap<String, AppOptionGroupBean[]> adrMvTagDefs = null;
         try {
             SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
@@ -849,6 +852,10 @@ public class SplashThread implements Runnable {
             professions = optionGroups.get(OptionConstants.OPTIONGROUP_PROFESSION);
             roles = optionGroups.get(OptionConstants.OPTIONGROUP_ROLE);
 
+            afMvTagDefs = mgmt.getOptionGroupsByPrefix(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS_MV_PREFIX);
+            docMvTagDefs = mgmt.getOptionGroupsByPrefix(OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX);
+            adrMvTagDefs = mgmt.getOptionGroupsByPrefix(OptionConstants.OPTIONGROUP_ADDRESSTAGS_MV_PREFIX);
+
             this.updateProgress(false, 15+this.numberOfMods, 4, "");
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.5"), true);
             settings.setCalendarEntryTemplates(locator.lookupCalendarServiceRemote().getCalendarEntryTemplates());
@@ -889,6 +896,9 @@ public class SplashThread implements Runnable {
         settings.setArchiveFileTagDtos(afTagDtos);
         settings.setAddressTagDtos(adrTagDtos);
         settings.setDocumentTagDtos(docTagDtos);
+        settings.setArchiveFileMvTagDefs(afMvTagDefs);
+        settings.setDocumentMvTagDefs(docMvTagDefs);
+        settings.setAddressMvTagDefs(adrMvTagDefs);
         settings.setTimesheetIntervals(timesheetIntervals);
         UserSettings.getInstance().setLawyerUsers(lawyerUsers);
         UserSettings.getInstance().setAssistantUsers(assistUsers);

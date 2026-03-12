@@ -690,7 +690,15 @@ public interface DocumentTagsBeanFacadeLocal {
     List<DocumentTagsBean> findByDocumentKeyAndTagName(ArchiveFileDocumentsBean documentKey, String tagName);
     
     List<DocumentTagsBean> findByTagName(String tagName);
-    
+
     int count();
-    
+
+    int renameTagName(String oldName, String newName);
+
+    int renameTagValue(String tagName, String oldValue, String newValue);
+
+    int deleteByTagNameAndTagValue(String tagName, String tagValue);
+
+    int deleteByTagName(String tagName);
+
 }

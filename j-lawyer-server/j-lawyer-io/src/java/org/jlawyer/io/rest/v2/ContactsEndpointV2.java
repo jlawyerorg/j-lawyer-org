@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.services.AddressServiceLocal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
@@ -677,6 +678,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -820,12 +823,19 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/bytag/{tag}")
     @RolesAllowed({"readAddressRole"})
-    public Response getContactsByTag(@PathParam("tag") String tag) {
+    public Response getContactsByTag(@PathParam("tag") String tag, @QueryParam("value") @DefaultValue("") String value) {
         try {
 
             InitialContext ic = new InitialContext();
             AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
-            Map<String, ArrayList<String>> ids = addresses.searchTagsEnhanced(null, new String[]{tag});
+            Map<String, ArrayList<String>> ids;
+            if (value != null && !value.isEmpty()) {
+                HashMap<String, String[]> tagValues = new HashMap<>();
+                tagValues.put(tag, new String[]{value});
+                ids = addresses.searchTagsEnhanced(null, new String[]{tag}, tagValues);
+            } else {
+                ids = addresses.searchTagsEnhanced(null, new String[]{tag});
+            }
             ArrayList<RestfulContactOverviewV1> rcoList = new ArrayList<>();
             if (ids != null) {
                 for (String contactId : ids.keySet()) {

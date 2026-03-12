@@ -685,6 +685,10 @@ public interface OptionConstants {
     public static final String OPTIONGROUP_ARCHIVEFILETAGS="archiveFile.tags";
     public static final String OPTIONGROUP_DOCUMENTTAGS="document.tags";
     public static final String OPTIONGROUP_ADDRESSTAGS="address.tags";
+
+    public static final String OPTIONGROUP_ARCHIVEFILETAGS_MV_PREFIX="archiveFile.tags.mv.";
+    public static final String OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX="document.tags.mv.";
+    public static final String OPTIONGROUP_ADDRESSTAGS_MV_PREFIX="address.tags.mv.";
     
     public static final String OPTIONGROUP_TITLES="address.title";
     public static final String OPTIONGROUP_TITLESINADDRESS="address.titleinaddress";

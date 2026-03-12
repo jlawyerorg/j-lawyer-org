@@ -703,11 +703,11 @@ public interface CasesEndpointLocalV7 {
     
     Response getCaseByExternalId(String extId);
     
-    Response getCasesByTag(String tag);
+    Response getCasesByTag(String tag, String value);
 
     Response getCasesByReference(String reference);
 
-    Response getDocumentsByTag(String tag);
+    Response getDocumentsByTag(String tag, String value);
     
     Response getDocumentByExternalId(String extId);
     

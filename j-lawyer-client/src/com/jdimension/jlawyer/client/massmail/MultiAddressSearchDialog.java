@@ -709,7 +709,7 @@ public class MultiAddressSearchDialog extends javax.swing.JDialog {
 
         ClientSettings s = ClientSettings.getInstance();
         List<String> tags = s.getAddressTagsInUse();
-        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter, null);
+        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter, null, ClientSettings.getInstance().getAddressMvTagDefs(), com.jdimension.jlawyer.server.constants.OptionConstants.OPTIONGROUP_ADDRESSTAGS_MV_PREFIX);
 
         this.tblResults.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
         this.tblResults.getActionMap().put("Enter", new AbstractAction() {
@@ -877,7 +877,7 @@ public class MultiAddressSearchDialog extends javax.swing.JDialog {
         EditorsRegistry.getInstance().updateStatus("Suche Adressen...");
         ThreadUtils.setWaitCursor(this);
 
-        new Thread(new QuickAddressSearchThread(this, this.txtSearchString.getText(), TagUtils.getSelectedTags(popTagFilter), this.tblResults)).start();
+        new Thread(new QuickAddressSearchThread(this, this.txtSearchString.getText(), TagUtils.getSelectedTags(popTagFilter, true), this.tblResults, TagUtils.getSelectedTagValues(this.popTagFilter))).start();
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 
     private void useSelection() {

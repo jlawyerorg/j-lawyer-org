@@ -694,7 +694,9 @@ public class DocumentTagsBean implements Serializable {
     @Column(name = "date_set")
     @Temporal(TemporalType.TIMESTAMP)
     private Date dateSet;
-    
+    @Column(name = "tag_value")
+    private String tagValue;
+
     public DocumentTagsBean() {
     }
 
@@ -771,5 +773,19 @@ public class DocumentTagsBean implements Serializable {
     public void setDateSet(Date dateSet) {
         this.dateSet = dateSet;
     }
-    
+
+    /**
+     * @return the tagValue
+     */
+    public String getTagValue() {
+        return tagValue;
+    }
+
+    /**
+     * @param tagValue the tagValue to set
+     */
+    public void setTagValue(String tagValue) {
+        this.tagValue = tagValue;
+    }
+
 }

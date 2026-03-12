@@ -1268,6 +1268,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuAddressOptionsBeruf = new javax.swing.JMenuItem();
         mnuAddressOptionsRole = new javax.swing.JMenuItem();
         mnuAddressTags = new javax.swing.JMenuItem();
+        mnuAddressTagsMV = new javax.swing.JMenuItem();
         mnuAddressCustomFields = new javax.swing.JMenuItem();
         mnuPartyTypes = new javax.swing.JMenuItem();
         mnuAddressBookSync = new javax.swing.JMenuItem();
@@ -1275,6 +1276,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuArchiveFileOptions = new javax.swing.JMenu();
         mnuArchiveFileOptionsSubjectFields = new javax.swing.JMenuItem();
         mnuArchiveFileTags = new javax.swing.JMenuItem();
+        mnuArchiveFileTagsMV = new javax.swing.JMenuItem();
         mnuDocumentFolderTemplates = new javax.swing.JMenuItem();
         mnuFormsManager = new javax.swing.JMenuItem();
         mnuArchiveFileOptionsCaseNumbering = new javax.swing.JMenuItem();
@@ -1285,6 +1287,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuWordProcessor = new javax.swing.JMenuItem();
         mnuPdfStamps = new javax.swing.JMenuItem();
         mnuDocumentTags = new javax.swing.JMenuItem();
+        mnuDocumentTagsMV = new javax.swing.JMenuItem();
         mnuDocumentTagRules = new javax.swing.JMenuItem();
         mnuScanOptions = new javax.swing.JMenuItem();
         mnuSearchIndex = new javax.swing.JMenuItem();
@@ -1664,13 +1667,22 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuAddressOptions.add(mnuAddressOptionsRole);
 
         mnuAddressTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
-        mnuAddressTags.setText(bundle.getString("menu.settings.addresses.tags")); // NOI18N
+        mnuAddressTags.setText("Adress-Etiketten");
         mnuAddressTags.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuAddressTagsActionPerformed(evt);
             }
         });
         mnuAddressOptions.add(mnuAddressTags);
+
+        mnuAddressTagsMV.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
+        mnuAddressTagsMV.setText("Adress-Listenetiketten");
+        mnuAddressTagsMV.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuAddressTagsMVActionPerformed(evt);
+            }
+        });
+        mnuAddressOptions.add(mnuAddressTagsMV);
 
         mnuAddressCustomFields.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
         mnuAddressCustomFields.setText(bundle.getString("menu.settings.addresses.customfields")); // NOI18N
@@ -1730,6 +1742,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuArchiveFileOptions.add(mnuArchiveFileTags);
+
+        mnuArchiveFileTagsMV.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
+        mnuArchiveFileTagsMV.setText("Akten-Listenetiketten");
+        mnuArchiveFileTagsMV.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuArchiveFileTagsMVActionPerformed(evt);
+            }
+        });
+        mnuArchiveFileOptions.add(mnuArchiveFileTagsMV);
 
         mnuDocumentFolderTemplates.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_account_tree_black_48dp.png"))); // NOI18N
         mnuDocumentFolderTemplates.setText("Dokumentordner");
@@ -1816,6 +1837,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuDocumentOptions.add(mnuDocumentTags);
+
+        mnuDocumentTagsMV.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
+        mnuDocumentTagsMV.setText("Listenetiketten konfigurieren");
+        mnuDocumentTagsMV.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDocumentTagsMVActionPerformed(evt);
+            }
+        });
+        mnuDocumentOptions.add(mnuDocumentTagsMV);
 
         mnuDocumentTagRules.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
         mnuDocumentTagRules.setText("Etiketten-Automatik");
@@ -3169,6 +3199,24 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuTimesheetInputActionPerformed
 
+    private void mnuAddressTagsMVActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressTagsMVActionPerformed
+        MultiValueTagConfigurationDialog dlg = new MultiValueTagConfigurationDialog(this, true, OptionConstants.OPTIONGROUP_ADDRESSTAGS_MV_PREFIX, "Adress");
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_mnuAddressTagsMVActionPerformed
+
+    private void mnuDocumentTagsMVActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentTagsMVActionPerformed
+        MultiValueTagConfigurationDialog dlg = new MultiValueTagConfigurationDialog(this, true, OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX, "Dokument");
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_mnuDocumentTagsMVActionPerformed
+
+    private void mnuArchiveFileTagsMVActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuArchiveFileTagsMVActionPerformed
+        MultiValueTagConfigurationDialog dlg = new MultiValueTagConfigurationDialog(this, true, OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS_MV_PREFIX, "Akten");
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_mnuArchiveFileTagsMVActionPerformed
+
     private void mnuExportSyncedCasesActionPerformed(java.awt.event.ActionEvent evt) {
         CaseExportDialog dlg = new CaseExportDialog(this, true);
         FrameUtils.centerDialog(dlg, this);
@@ -3216,6 +3264,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuAddressOptionsTitle;
     private javax.swing.JMenuItem mnuAddressOptionsTitleInAddress;
     private javax.swing.JMenuItem mnuAddressTags;
+    private javax.swing.JMenuItem mnuAddressTagsMV;
     private javax.swing.JMenuItem mnuAdminConsole;
     private javax.swing.JMenu mnuAdministration;
     private javax.swing.JMenuItem mnuArchiveFileCustomFields;
@@ -3225,6 +3274,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuArchiveFileOptionsDictateSign;
     private javax.swing.JMenuItem mnuArchiveFileOptionsSubjectFields;
     private javax.swing.JMenuItem mnuArchiveFileTags;
+    private javax.swing.JMenuItem mnuArchiveFileTagsMV;
     private javax.swing.JMenuItem mnuAssistantConfigs;
     private javax.swing.JMenuItem mnuAssistantPrompts;
     private javax.swing.JMenuItem mnuAssistantReplacements;
@@ -3250,6 +3300,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuDocumentPreview;
     private javax.swing.JMenuItem mnuDocumentTagRules;
     private javax.swing.JMenuItem mnuDocumentTags;
+    private javax.swing.JMenuItem mnuDocumentTagsMV;
     private javax.swing.JMenuItem mnuDocumentsBin;
     private javax.swing.JMenuItem mnuExit;
     private javax.swing.JMenuItem mnuExportSyncedCases;

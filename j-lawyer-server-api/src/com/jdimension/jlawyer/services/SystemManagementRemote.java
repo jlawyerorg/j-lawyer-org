@@ -742,6 +742,23 @@ public interface SystemManagementRemote {
     
     List<String> getAllOptionGroups();
 
+    /**
+     * Retrieves all option groups whose name starts with the given prefix.
+     * Useful for loading multi-value tag definitions where group names follow
+     * the pattern prefix + tag name (e.g. "archiveFile.tags.mv.Verfahrensstand").
+     * The known prefixes are defined in OptionConstants:
+     * OPTIONGROUP_ARCHIVEFILETAGS_MV_PREFIX for case tags,
+     * OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX for document tags, and
+     * OPTIONGROUP_ADDRESSTAGS_MV_PREFIX for address tags.
+     * Also exposed via REST at GET /rest/v7/configuration/tags/multivalue/{entityType}.
+     *
+     * @param prefix the prefix to match (e.g. "archiveFile.tags.mv.")
+     * @return map of matching option group names to their values, where each
+     *         key is the full option group name and the value array contains
+     *         the available options (tag values) for that group
+     */
+    HashMap<String, AppOptionGroupBean[]> getOptionGroupsByPrefix(String prefix);
+
     AppUserBean getUser(String principalId);
 
     MonitoringSnapshot getMonitoringSnapshot();
