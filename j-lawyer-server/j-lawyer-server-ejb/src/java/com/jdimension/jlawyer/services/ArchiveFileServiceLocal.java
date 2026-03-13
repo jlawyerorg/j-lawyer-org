@@ -705,7 +705,8 @@ public interface ArchiveFileServiceLocal {
     
     public ArchiveFileBean createArchiveFile(ArchiveFileBean dto) throws Exception;
     public void updateArchiveFile(ArchiveFileBean dto) throws Exception;
-    
+    public void removeArchiveFile(String id) throws Exception;
+
     public int getArchiveFileCount();
     public ArchiveFileBean getArchiveFile(String id) throws Exception;
     public ArrayList<String> getAllArchiveFileIds();

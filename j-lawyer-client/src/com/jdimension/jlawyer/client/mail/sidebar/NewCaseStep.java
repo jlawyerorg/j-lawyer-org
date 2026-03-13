@@ -795,6 +795,19 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
             }
             this.cmbGroup.setSelectedIndex(0);
 
+            // Apply default owner group
+            String defaultOwnerGroupId = UserSettings.getInstance().getSetting(
+                UserSettings.CONF_CASE_DEFAULT_OWNERGROUP, "");
+            if (!defaultOwnerGroupId.isEmpty()) {
+                for (int i = 0; i < this.cmbGroup.getItemCount(); i++) {
+                    Object item = this.cmbGroup.getItemAt(i);
+                    if (item instanceof Group && ((Group) item).getId().equals(defaultOwnerGroupId)) {
+                        this.cmbGroup.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            }
+
         } catch (Throwable t) {
             log.error("Unable to load privilege groups", t);
         }
@@ -811,6 +824,19 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
             // Add all groups to table with checkboxes initially unchecked
             for (Group g : allGroups) {
                 ((DefaultTableModel) this.tblGroups.getModel()).addRow(new Object[]{false, g});
+            }
+
+            // Apply default allowed groups
+            String[] defaultAllowedGroupIds = UserSettings.getInstance().getSettingArray(
+                UserSettings.CONF_CASE_DEFAULT_ALLOWEDGROUPS, new String[0]);
+            if (defaultAllowedGroupIds != null && defaultAllowedGroupIds.length > 0) {
+                java.util.Set<String> defaultIdSet = new java.util.HashSet<>(java.util.Arrays.asList(defaultAllowedGroupIds));
+                for (int r = 0; r < this.tblGroups.getRowCount(); r++) {
+                    Group g = (Group) this.tblGroups.getValueAt(r, 1);
+                    if (defaultIdSet.contains(g.getId())) {
+                        this.tblGroups.setValueAt(true, r, 0);
+                    }
+                }
             }
 
             ComponentUtils.autoSizeColumns(tblGroups);

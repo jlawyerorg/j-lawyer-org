@@ -724,7 +724,9 @@ public class BulkSaveEntry extends javax.swing.JPanel {
     protected BulkSaveDialog saveDialog=null;
     
     protected boolean favorite=false;
-    
+
+    private boolean hasDuplicateConflict=false;
+
     // caching for data that is required to build the file name if it contains place holders
     private List<PartyTypeBean> allPartyTypes=null;
     private Collection<String> formPlaceHolders=null;
@@ -738,9 +740,20 @@ public class BulkSaveEntry extends javax.swing.JPanel {
      */
     public BulkSaveEntry() {
         initComponents();
-        
+
         this.lblDownloaded.setText("");
         this.sepBottom.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+
+        this.txtFileNameNew.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                if (documentFilename != null) {
+                    documentFilenameNew = FileUtils.preserveExtension(documentFilename, txtFileNameNew.getText());
+                    txtFileNameNew.setText(documentFilenameNew);
+                    updateFilenameOutline();
+                }
+            }
+        });
     }
     
     public void setPlaceHoldersCache(List<PartyTypeBean> allPartyTypes, Collection<String> formPlaceHolders, HashMap<String, String> formPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, List<PartiesTriplet> parties) {
@@ -946,16 +959,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
 
     private void fileNameChanged() {
         this.documentFilenameNew=this.txtFileNameNew.getText();
-        String oldExt=FileUtils.getExtension(this.documentFilename);
-        String newExt=FileUtils.getExtension(this.documentFilenameNew);
-        if(!oldExt.equalsIgnoreCase(newExt)) {
-            int caretPosition=this.txtFileNameNew.getCaretPosition();
-            this.documentFilenameNew=FileUtils.preserveExtension(this.documentFilename, this.documentFilenameNew);
-            this.txtFileNameNew.setText(this.documentFilenameNew);
-            if(this.txtFileNameNew.getText().length()>=caretPosition)
-                this.txtFileNameNew.setCaretPosition(caretPosition);
-        }
-        
+
         // use may have typed invalid characters
         String checkedName=FileUtils.sanitizeFileName(this.documentFilenameNew);
         if(!checkedName.equals(this.txtFileNameNew.getText())) {
@@ -965,9 +969,31 @@ public class BulkSaveEntry extends javax.swing.JPanel {
             if(this.txtFileNameNew.getText().length()>=caretPosition)
                 this.txtFileNameNew.setCaretPosition(caretPosition);
         }
-        
+
         if(this.saveDialog!=null)
             this.saveDialog.checkForDuplicateFileNames();
+        else
+            this.updateFilenameOutline();
+    }
+
+    private void updateFilenameOutline() {
+        if(this.hasDuplicateConflict) {
+            this.txtFileNameNew.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_ERROR);
+            this.txtFileNameNew.setToolTipText("Dateiname ist in der Akte in Nutzung oder wurde in diesem Dialog doppelt vergeben.");
+        } else if(this.documentFilename!=null) {
+            String oldExt=FileUtils.getExtension(this.documentFilename);
+            String newExt=FileUtils.getExtension(this.txtFileNameNew.getText());
+            if(!oldExt.equalsIgnoreCase(newExt)) {
+                this.txtFileNameNew.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_WARNING);
+                this.txtFileNameNew.setToolTipText("Die Dateiendung kann nicht geändert werden und wird beim Speichern wiederhergestellt.");
+            } else {
+                this.txtFileNameNew.putClientProperty(FlatClientProperties.OUTLINE, null);
+                this.txtFileNameNew.setToolTipText(null);
+            }
+        } else {
+            this.txtFileNameNew.putClientProperty(FlatClientProperties.OUTLINE, null);
+            this.txtFileNameNew.setToolTipText(null);
+        }
     }
     
     private void txtFileNameNewKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtFileNameNewKeyReleased
@@ -1164,6 +1190,8 @@ public class BulkSaveEntry extends javax.swing.JPanel {
      * @return the documentFilenameNew
      */
     public String getDocumentFilenameNew() {
+        if(this.documentFilename!=null && this.documentFilenameNew!=null)
+            return FileUtils.preserveExtension(this.documentFilename, this.documentFilenameNew);
         return documentFilenameNew;
     }
 
@@ -1177,11 +1205,8 @@ public class BulkSaveEntry extends javax.swing.JPanel {
     }
     
     public void setDocumentFilenameNewOutline(String flatLafOutline) {
-        this.txtFileNameNew.putClientProperty(FlatClientProperties.OUTLINE, flatLafOutline);
-        if(flatLafOutline==null)
-            this.txtFileNameNew.setToolTipText(null);
-        else
-            this.txtFileNameNew.setToolTipText("Dateiname ist in der Akte in Nutzung oder wurde in diesem Dialog doppelt vergeben.");
+        this.hasDuplicateConflict=(flatLafOutline!=null);
+        this.updateFilenameOutline();
     }
 
     /**

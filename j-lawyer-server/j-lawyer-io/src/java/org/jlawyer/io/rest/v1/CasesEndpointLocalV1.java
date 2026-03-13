@@ -713,6 +713,8 @@ public interface CasesEndpointLocalV1 {
 
     Response deleteParty(String id);
 
+    Response deleteCase(String id);
+
     Response getPartyTypes();
 
     Response getCaseForms(String id);

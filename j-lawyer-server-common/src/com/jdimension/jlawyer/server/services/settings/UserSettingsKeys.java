@@ -741,6 +741,9 @@ public class UserSettingsKeys {
     // setting this to false will disable full text search within a case
     public static final String CONF_CASES_SEARCH_FULLTEXT_INCASE="user.case.search.fulltext.incase";
 
+    public static final String CONF_CASE_DEFAULT_OWNERGROUP = "user.case.default.ownergroup";
+    public static final String CONF_CASE_DEFAULT_ALLOWEDGROUPS = "user.case.default.allowedgroups";
+
     // will be used with a suffix indicating the event type (see CalendarSetup class)
     public static final String CONF_CALENDAR_LASTSELECTED = "user.calendar.lastcalsetup.";
     public static final String CONF_CALENDAR_LASTFILTERUSERS = "client.calendar.lastfilterusers";

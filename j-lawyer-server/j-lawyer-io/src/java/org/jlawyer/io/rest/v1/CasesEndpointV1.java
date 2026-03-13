@@ -1751,6 +1751,37 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
     }
 
     /**
+     * Deletes a case based on its ID
+     *
+     * @param id case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/delete")
+    @RolesAllowed({"removeArchiveFileRole"})
+    public Response deleteCase(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+
+            cases.removeArchiveFile(id);
+
+            Response res = Response.ok().build();
+
+            return res;
+        } catch (Exception ex) {
+            log.error("can not delete case " + id, ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+
+    /**
      * Lists all party types as configured in the system
      *
      * @response 401 User not authorized

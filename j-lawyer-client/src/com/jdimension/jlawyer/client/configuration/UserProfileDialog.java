@@ -667,20 +667,28 @@ import com.jdimension.jlawyer.client.desktop.DesktopPanel;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.awt.Component;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.ImageIcon;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
+import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
@@ -894,6 +902,67 @@ public class UserProfileDialog extends javax.swing.JDialog {
         
         this.chkWarnOnUnknownSenders.setSelected(uset.getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true));
 
+        // Initialize "Neue Akten" tab
+        this.cmbDefaultOwnerGroup.removeAllItems();
+        this.cmbDefaultOwnerGroup.addItem("");
+        String[] colNames = new String[]{"", "Gruppe"};
+        GroupMembershipsTableModel grpModel = new GroupMembershipsTableModel(colNames, 0);
+        this.tblDefaultAllowedGroups.setModel(grpModel);
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            Collection<Group> allGroups = locator.lookupSecurityServiceRemote().getAllGroups();
+            Collection<Group> userGroups = locator.lookupSecurityServiceRemote().getGroupsForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+
+            for (Group g : allGroups) {
+                ((DefaultTableModel) this.tblDefaultAllowedGroups.getModel()).addRow(new Object[]{false, g});
+            }
+            for (Group g : userGroups) {
+                ((DefaultComboBoxModel) this.cmbDefaultOwnerGroup.getModel()).addElement(g);
+            }
+            this.cmbDefaultOwnerGroup.setSelectedIndex(0);
+
+            // Select saved default owner group
+            String defaultOwnerGroupId = uset.getSetting(UserSettings.CONF_CASE_DEFAULT_OWNERGROUP, "");
+            if (!defaultOwnerGroupId.isEmpty()) {
+                for (int i = 0; i < this.cmbDefaultOwnerGroup.getItemCount(); i++) {
+                    Object item = this.cmbDefaultOwnerGroup.getItemAt(i);
+                    if (item instanceof Group && ((Group) item).getId().equals(defaultOwnerGroupId)) {
+                        this.cmbDefaultOwnerGroup.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            }
+
+            // Select saved default allowed groups
+            String[] defaultAllowedGroupIds = uset.getSettingArray(UserSettings.CONF_CASE_DEFAULT_ALLOWEDGROUPS, new String[0]);
+            if (defaultAllowedGroupIds != null && defaultAllowedGroupIds.length > 0) {
+                Set<String> defaultIdSet = new HashSet<>(Arrays.asList(defaultAllowedGroupIds));
+                for (int r = 0; r < this.tblDefaultAllowedGroups.getRowCount(); r++) {
+                    Group g = (Group) this.tblDefaultAllowedGroups.getValueAt(r, 1);
+                    if (defaultIdSet.contains(g.getId())) {
+                        this.tblDefaultAllowedGroups.setValueAt(true, r, 0);
+                    }
+                }
+            }
+
+            ComponentUtils.autoSizeColumns(tblDefaultAllowedGroups);
+        } catch (Throwable t) {
+            log.error("Unable to load privilege groups for default case settings", t);
+        }
+
+        this.tblDefaultAllowedGroups.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (evt.getClickCount() == 1 && tblDefaultAllowedGroups.getSelectedColumn() == 0) {
+                    int row = tblDefaultAllowedGroups.getSelectedRow();
+                    if (row >= 0) {
+                        Boolean current = (Boolean) tblDefaultAllowedGroups.getValueAt(row, 0);
+                        tblDefaultAllowedGroups.setValueAt(!current, row, 0);
+                    }
+                }
+            }
+        });
+
     }
 
     /**
@@ -930,6 +999,12 @@ public class UserProfileDialog extends javax.swing.JDialog {
         chkEventInstantMessageDone = new javax.swing.JCheckBox();
         jPanel3 = new javax.swing.JPanel();
         chkWarnOnUnknownSenders = new javax.swing.JCheckBox();
+        jPanel4 = new javax.swing.JPanel();
+        jLabel6 = new javax.swing.JLabel();
+        cmbDefaultOwnerGroup = new javax.swing.JComboBox<>();
+        jLabel7 = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblDefaultAllowedGroups = new javax.swing.JTable();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/UserProfileDialog"); // NOI18N
@@ -1110,6 +1185,61 @@ public class UserProfileDialog extends javax.swing.JDialog {
 
         jTabbedPane1.addTab("Sicherheit", jPanel3);
 
+        jLabel6.setFont(jLabel6.getFont());
+        jLabel6.setText("Standard-Eigentümergruppe:");
+
+        cmbDefaultOwnerGroup.setFont(cmbDefaultOwnerGroup.getFont());
+        cmbDefaultOwnerGroup.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        jLabel7.setFont(jLabel7.getFont());
+        jLabel7.setText("berechtigte Gruppen:");
+
+        tblDefaultAllowedGroups.setFont(tblDefaultAllowedGroups.getFont());
+        tblDefaultAllowedGroups.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        jScrollPane1.setViewportView(tblDefaultAllowedGroups);
+
+        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
+        jPanel4.setLayout(jPanel4Layout);
+        jPanel4Layout.setHorizontalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel4Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmbDefaultOwnerGroup, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel6)
+                            .addComponent(jLabel7))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 743, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        jPanel4Layout.setVerticalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel4Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel6)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmbDefaultOwnerGroup, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(jLabel7)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 350, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        jTabbedPane1.addTab("Neue Akten", jPanel4);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -1155,7 +1285,24 @@ public class UserProfileDialog extends javax.swing.JDialog {
         settings.setSettingAsBoolean(UserSettings.NOTIFICATION_SCHEDULED_WEEKLY_DIGEST, this.chkScheduledWeeklyDigest.isSelected());
         
         settings.setSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, this.chkWarnOnUnknownSenders.isSelected());
-        
+
+        // Save default case settings
+        Object selectedOwnerGroup = this.cmbDefaultOwnerGroup.getSelectedItem();
+        if (selectedOwnerGroup instanceof Group) {
+            settings.setSetting(UserSettings.CONF_CASE_DEFAULT_OWNERGROUP, ((Group) selectedOwnerGroup).getId());
+        } else {
+            settings.setSetting(UserSettings.CONF_CASE_DEFAULT_OWNERGROUP, "");
+        }
+        ArrayList<String> checkedGroupIds = new ArrayList<>();
+        for (int r = 0; r < this.tblDefaultAllowedGroups.getRowCount(); r++) {
+            Boolean checked = (Boolean) this.tblDefaultAllowedGroups.getValueAt(r, 0);
+            if (checked) {
+                Group g = (Group) this.tblDefaultAllowedGroups.getValueAt(r, 1);
+                checkedGroupIds.add(g.getId());
+            }
+        }
+        settings.setSettingArray(UserSettings.CONF_CASE_DEFAULT_ALLOWEDGROUPS, checkedGroupIds.toArray(new String[0]));
+
         try {
             Object desktop = EditorsRegistry.getInstance().getEditor(DesktopPanel.class.getName());
             ((DesktopPanel) desktop).updateUserIcon();
@@ -1263,6 +1410,7 @@ public class UserProfileDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox chkScheduledWeeklyDigest;
     private javax.swing.JCheckBox chkWarnOnUnknownSenders;
     private javax.swing.JComboBox cmbAvatar;
+    private javax.swing.JComboBox<String> cmbDefaultOwnerGroup;
     private javax.swing.JButton cmdChangePassword;
     private javax.swing.JButton cmdClose;
     private javax.swing.JButton cmdSave;
@@ -1272,12 +1420,17 @@ public class UserProfileDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
+    private javax.swing.JPanel jPanel4;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLabel lblAbbreviation;
     private javax.swing.JLabel lblEmail;
     private javax.swing.JLabel lblGroup;
+    private javax.swing.JTable tblDefaultAllowedGroups;
     // End of variables declaration//GEN-END:variables
 }

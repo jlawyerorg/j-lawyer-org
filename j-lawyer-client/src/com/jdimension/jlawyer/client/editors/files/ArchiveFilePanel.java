@@ -1992,6 +1992,32 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
             this.cmbGroup.setSelectedIndex(0);
 
+            // Apply default owner group
+            String defaultOwnerGroupId = UserSettings.getInstance().getSetting(
+                UserSettings.CONF_CASE_DEFAULT_OWNERGROUP, "");
+            if (!defaultOwnerGroupId.isEmpty()) {
+                for (int i = 0; i < this.cmbGroup.getItemCount(); i++) {
+                    Object item = this.cmbGroup.getItemAt(i);
+                    if (item instanceof Group && ((Group) item).getId().equals(defaultOwnerGroupId)) {
+                        this.cmbGroup.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            }
+
+            // Apply default allowed groups
+            String[] defaultAllowedGroupIds = UserSettings.getInstance().getSettingArray(
+                UserSettings.CONF_CASE_DEFAULT_ALLOWEDGROUPS, new String[0]);
+            if (defaultAllowedGroupIds != null && defaultAllowedGroupIds.length > 0) {
+                Set<String> defaultIdSet = new HashSet<>(Arrays.asList(defaultAllowedGroupIds));
+                for (int r = 0; r < this.tblGroups.getRowCount(); r++) {
+                    Group g = (Group) this.tblGroups.getValueAt(r, 1);
+                    if (defaultIdSet.contains(g.getId())) {
+                        this.tblGroups.setValueAt(true, r, 0);
+                    }
+                }
+            }
+
             ComponentUtils.autoSizeColumns(tblGroups);
         } catch (Throwable t) {
             log.error("Unable to load privilege groups", t);

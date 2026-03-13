@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.utils;
 
+import com.formdev.flatlaf.FlatClientProperties;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
@@ -718,12 +719,14 @@ public class NewFilenameOptionPanel extends javax.swing.JPanel {
         initComponents();
 
         initializeOptions();
+        initFilenameListeners();
     }
 
     public NewFilenameOptionPanel(ArchiveFileBean selectedCase) {
         initComponents();
 
         initializeOptions();
+        initFilenameListeners();
 
         this.selectedCase = selectedCase;
         if (this.selectedCase != null) {
@@ -824,18 +827,29 @@ public class NewFilenameOptionPanel extends javax.swing.JPanel {
         this.fileNameChanged();
     }
 
+    private void initFilenameListeners() {
+        this.txtNewName.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                if (documentFilename != null) {
+                    documentFilenameNew = FileUtils.preserveExtension(documentFilename, txtNewName.getText());
+                    txtNewName.setText(documentFilenameNew);
+                    txtNewName.putClientProperty(FlatClientProperties.OUTLINE, null);
+                    txtNewName.setToolTipText(null);
+                }
+            }
+        });
+
+        this.txtNewName.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                fileNameChanged();
+            }
+        });
+    }
+
     private void fileNameChanged() {
         this.documentFilenameNew = this.txtNewName.getText();
-        String oldExt = FileUtils.getExtension(this.documentFilename);
-        String newExt = FileUtils.getExtension(this.documentFilenameNew);
-        if (!oldExt.equalsIgnoreCase(newExt)) {
-            int caretPosition = this.txtNewName.getCaretPosition();
-            this.documentFilenameNew = FileUtils.preserveExtension(this.documentFilename, this.documentFilenameNew);
-            this.txtNewName.setText(this.documentFilenameNew);
-            if (this.txtNewName.getText().length() >= caretPosition) {
-                this.txtNewName.setCaretPosition(caretPosition);
-            }
-        }
 
         // use may have typed invalid characters
         String checkedName = FileUtils.sanitizeFileName(this.documentFilenameNew);
@@ -848,6 +862,17 @@ public class NewFilenameOptionPanel extends javax.swing.JPanel {
             }
         }
 
+        if (this.documentFilename != null) {
+            String oldExt = FileUtils.getExtension(this.documentFilename);
+            String newExt = FileUtils.getExtension(this.txtNewName.getText());
+            if (!oldExt.equalsIgnoreCase(newExt)) {
+                this.txtNewName.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_WARNING);
+                this.txtNewName.setToolTipText("Die Dateiendung kann nicht geändert werden und wird beim Speichern wiederhergestellt.");
+            } else {
+                this.txtNewName.putClientProperty(FlatClientProperties.OUTLINE, null);
+                this.txtNewName.setToolTipText(null);
+            }
+        }
     }
 
     public void setFilename(String name, Date documentDate, boolean applyNameTemplate) {
