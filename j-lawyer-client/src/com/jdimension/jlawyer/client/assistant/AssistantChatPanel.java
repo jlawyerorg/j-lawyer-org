@@ -1408,6 +1408,7 @@ public class AssistantChatPanel extends JDialog {
 
         JPanel wrapper = new JPanel(new BorderLayout());
         wrapper.setOpaque(false);
+        wrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
         // Create truncated preview panel
         String preview = content.substring(0, USER_MSG_TRUNCATE_LENGTH) + " ...";

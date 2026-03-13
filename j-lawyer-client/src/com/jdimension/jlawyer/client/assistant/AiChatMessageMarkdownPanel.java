@@ -791,10 +791,10 @@ public class AiChatMessageMarkdownPanel extends javax.swing.JPanel {
 
     @Override
     public void setPreferredSize(Dimension preferredSize) {
-        super.setMaximumSize(new Dimension(preferredSize.width, Integer.MAX_VALUE));
+        super.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
         super.setPreferredSize(null);
 
-        this.aiCalloutComponent1.setMaximumSize(new Dimension(preferredSize.width, Integer.MAX_VALUE));
+        this.aiCalloutComponent1.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
         this.aiCalloutComponent1.setPreferredSize(null);
         aiCalloutComponent1.revalidate();
         aiCalloutComponent1.repaint();
