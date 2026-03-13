@@ -57,6 +57,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
     private JTextArea taSystemPrompt;
     private JPanel pnlConfig;
     private JLabel lblDeductTokens;
+    private JLabel lblSupportsTools;
     private JTextArea taModelDescription;
     private JButton cmdAdd;
     private JButton cmdRemove;
@@ -201,28 +202,43 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
     private void updateDeductTokensLabel() {
         String selectedModelName = (String) cmbModel.getSelectedItem();
         if (selectedModelName == null || MODEL_DEFAULT.equals(selectedModelName)) {
+            lblDeductTokens.setIcon(null);
             lblDeductTokens.setText(" ");
+            lblDeductTokens.setToolTipText(null);
+            lblSupportsTools.setIcon(null);
+            lblSupportsTools.setText(" ");
+            lblSupportsTools.setToolTipText(null);
             return;
         }
         for (AiModel m : allModels) {
             if (m.getName().equals(selectedModelName)) {
-                StringBuilder info = new StringBuilder();
                 if (m.isDeductTokens()) {
-                    info.append("Nutzung wird vom Guthaben abgezogen");
+                    lblDeductTokens.setIcon(new ImageIcon(getClass().getResource("/icons16/material/generating_tokens_20dp_0E72B5.png")));
+                    lblDeductTokens.setText("verbraucht Ingo-Tokens");
+                    lblDeductTokens.setToolTipText("Nutzung wird vom Guthaben abgezogen");
                 } else {
-                    info.append("keine Guthabenabbuchung");
+                    lblDeductTokens.setIcon(new ImageIcon(getClass().getResource("/icons16/material/generating_tokens_20dp_666666.png")));
+                    lblDeductTokens.setText("verbraucht Fremd-Tokens");
+                    lblDeductTokens.setToolTipText("keine Guthabenabbuchung");
                 }
-                info.append(" | ");
                 if (m.isSupportsTools()) {
-                    info.append("unterstützt Werkzeuge");
+                    lblSupportsTools.setIcon(new ImageIcon(getClass().getResource("/icons16/material/smart_toy_20dp_0E72B5.png")));
+                    lblSupportsTools.setText("agentenfähig");
+                    lblSupportsTools.setToolTipText("unterstützt Werkzeuge");
                 } else {
-                    info.append("keine Werkzeugunterstützung");
+                    lblSupportsTools.setIcon(new ImageIcon(getClass().getResource("/icons16/material/smart_toy_20dp_666666.png")));
+                    lblSupportsTools.setText("nicht agentenfähig");
+                    lblSupportsTools.setToolTipText("keine Werkzeugunterstützung");
                 }
-                lblDeductTokens.setText(info.toString());
                 return;
             }
         }
+        lblDeductTokens.setIcon(null);
         lblDeductTokens.setText(" ");
+        lblDeductTokens.setToolTipText(null);
+        lblSupportsTools.setIcon(null);
+        lblSupportsTools.setText(" ");
+        lblSupportsTools.setToolTipText(null);
     }
 
     private void updateModelDescription() {
@@ -480,6 +496,9 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
         lblDeductTokens = new JLabel();
         lblDeductTokens.setFont(lblDeductTokens.getFont().deriveFont(lblDeductTokens.getFont().getSize() - 2f));
         lblDeductTokens.setForeground(new java.awt.Color(153, 153, 153));
+        lblSupportsTools = new JLabel();
+        lblSupportsTools.setFont(lblSupportsTools.getFont().deriveFont(lblSupportsTools.getFont().getSize() - 2f));
+        lblSupportsTools.setForeground(new java.awt.Color(153, 153, 153));
 
         JLabel jLabelModelDesc = new JLabel();
         taModelDescription = new JTextArea();
@@ -531,7 +550,10 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
                                                         .addComponent(jScrollPane3)
                                                         .addComponent(cmbRequestType, GroupLayout.Alignment.TRAILING, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                                         .addComponent(cmbModel, GroupLayout.Alignment.TRAILING, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                                        .addComponent(lblDeductTokens)
+                                                        .addGroup(layout.createSequentialGroup()
+                                                                .addComponent(lblDeductTokens)
+                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addComponent(lblSupportsTools))
                                                         .addComponent(jScrollPaneModelDesc)))
                                         .addComponent(configScrollPane)
                                         .addGroup(layout.createSequentialGroup()
@@ -565,7 +587,9 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
                                                         .addComponent(jLabelModel)
                                                         .addComponent(cmbModel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(lblDeductTokens)
+                                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                                                        .addComponent(lblDeductTokens)
+                                                        .addComponent(lblSupportsTools))
                                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                                         .addComponent(jScrollPaneModelDesc, GroupLayout.PREFERRED_SIZE, 80, GroupLayout.PREFERRED_SIZE)
