@@ -1771,13 +1771,10 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
 
             cases.removeArchiveFile(id);
 
-            Response res = Response.ok().build();
-
-            return res;
+            return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete case " + id, ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
 
