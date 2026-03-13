@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.pojo.JobStatus;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.services.SingletonServiceLocal;
 import com.jdimension.jlawyer.services.SystemManagementLocal;
+import com.jdimension.jlawyer.storage.VirtualFile;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStream;
@@ -889,7 +890,7 @@ public class AdministrationEndpointV7 implements AdministrationEndpointLocalV7 {
 
             // directories
             config.setBackupDirectory(sysman.getBackupDirectory());
-            config.setSyncTarget(getSettingValue(sysman, ServerSettingsKeys.SERVERCONF_BACKUP_SYNCTARGET, ""));
+            config.setSyncTarget(sanitizeSyncTargetForResponse(getSettingValue(sysman, ServerSettingsKeys.SERVERCONF_BACKUP_SYNCTARGET, "")));
             config.setExportTarget(getSettingValue(sysman, ServerSettingsKeys.SERVERCONF_BACKUP_EXPORTTARGET, ""));
 
             // notifications
@@ -909,7 +910,8 @@ public class AdministrationEndpointV7 implements AdministrationEndpointLocalV7 {
      * Updates the backup configuration. For string fields, null means
      * "do not change"; boolean and int fields are always applied.
      * Validates backupMode ("on"/"off"), hour (0-23), dbPort (1-65535),
-     * and that backupDirectory / exportTarget exist on the server.
+     * and that backupDirectory / exportTarget exist on the server, and
+     * syncTarget is reachable and writable.
      * Changing the encryptionPassword automatically deletes all existing
      * backup data. Returns the full updated configuration on success.
      *
@@ -971,6 +973,31 @@ public class AdministrationEndpointV7 implements AdministrationEndpointLocalV7 {
                 }
             }
 
+            // validate sync target
+            if (configuration.getSyncTarget() != null && !configuration.getSyncTarget().trim().isEmpty()) {
+                VirtualFile syncTarget = null;
+                try {
+                    String syncTargetLocation = configuration.getSyncTarget().trim();
+                    syncTarget = VirtualFile.getFile(syncTargetLocation);
+                    if (!syncTarget.exists() || !syncTarget.isDirectory()) {
+                        return Response.status(Response.Status.BAD_REQUEST).entity(errorResponse("Sync target must point to an existing directory: " + sanitizeSyncTargetForResponse(syncTargetLocation))).build();
+                    }
+                    if (!syncTarget.isReadable() || !syncTarget.isWritable()) {
+                        return Response.status(Response.Status.BAD_REQUEST).entity(errorResponse("Sync target is not readable and writable: " + sanitizeSyncTargetForResponse(syncTargetLocation))).build();
+                    }
+                } catch (Exception ex) {
+                    return Response.status(Response.Status.BAD_REQUEST).entity(errorResponse("Sync target is not reachable or invalid")).build();
+                } finally {
+                    if (syncTarget != null) {
+                        try {
+                            syncTarget.close();
+                        } catch (Exception ex) {
+                            log.warn("Could not close sync target", ex);
+                        }
+                    }
+                }
+            }
+
             // validate backupMode
             if (configuration.getBackupMode() != null) {
                 String mode = configuration.getBackupMode().trim().toLowerCase();
@@ -1024,7 +1051,7 @@ public class AdministrationEndpointV7 implements AdministrationEndpointLocalV7 {
                 sysman.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_DIRECTORY, configuration.getBackupDirectory().trim());
             }
             if (configuration.getSyncTarget() != null) {
-                sysman.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_SYNCTARGET, configuration.getSyncTarget());
+                sysman.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_SYNCTARGET, configuration.getSyncTarget().trim());
             }
             if (configuration.getExportTarget() != null) {
                 sysman.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_EXPORTTARGET, configuration.getExportTarget());
@@ -1111,6 +1138,34 @@ public class AdministrationEndpointV7 implements AdministrationEndpointLocalV7 {
         r.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
         r.setMessage(message);
         return r;
+    }
+
+    private String sanitizeSyncTargetForResponse(String syncTarget) {
+        if (syncTarget == null || syncTarget.trim().isEmpty()) {
+            return syncTarget;
+        }
+
+        String trimmed = syncTarget.trim();
+        int protocolSeparatorIndex = trimmed.indexOf("://");
+        if (protocolSeparatorIndex < 0) {
+            return trimmed;
+        }
+
+        String prefix = trimmed.substring(0, protocolSeparatorIndex + 3);
+        String remainder = trimmed.substring(protocolSeparatorIndex + 3);
+        int atIndex = remainder.indexOf('@');
+        if (atIndex < 0) {
+            return trimmed;
+        }
+
+        String userInfo = remainder.substring(0, atIndex);
+        int colonIndex = userInfo.indexOf(':');
+        if (colonIndex < 0) {
+            return trimmed;
+        }
+
+        String sanitizedUserInfo = userInfo.substring(0, colonIndex) + ":***";
+        return prefix + sanitizedUserInfo + remainder.substring(atIndex);
     }
 
 }
