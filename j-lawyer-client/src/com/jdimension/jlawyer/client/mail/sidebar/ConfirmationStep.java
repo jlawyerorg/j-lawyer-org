@@ -680,6 +680,7 @@ import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -849,6 +850,17 @@ public class ConfirmationStep extends javax.swing.JPanel implements WizardStepIn
                 tag.setArchiveFileKey(newCase);
                 tag.setTagName(t);
                 locator.lookupArchiveFileServiceRemote().setTag(newCase.getId(), tag, true);
+            }
+
+            HashMap<String, String> mvTags = (HashMap<String, String>) this.data.get("newcase.mvtags");
+            if (mvTags != null) {
+                for (String tagName : mvTags.keySet()) {
+                    ArchiveFileTagsBean mvTag = new ArchiveFileTagsBean();
+                    mvTag.setArchiveFileKey(newCase);
+                    mvTag.setTagName(tagName);
+                    mvTag.setTagValue(mvTags.get(tagName));
+                    locator.lookupArchiveFileServiceRemote().setTag(newCase.getId(), mvTag, true);
+                }
             }
 
             // Set allowed groups for permissions

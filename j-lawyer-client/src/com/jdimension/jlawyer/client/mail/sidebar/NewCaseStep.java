@@ -675,13 +675,16 @@ import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.Group;
+import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.ui.tagging.MultiValueTag;
 import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
 import com.jdimension.jlawyer.ui.tagging.WrapLayout;
 import java.awt.Component;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
@@ -766,7 +769,7 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
         ComponentUtils.addAutoComplete(this.cmbAssistant);
         
         this.tagPanel.setLayout(new WrapLayout());
-        
+
         this.tagPanel.removeAll();
         ArrayList<String> sortedTags = new ArrayList<>();
         AppOptionGroupBean[] tagOptions = ClientSettings.getInstance().getArchiveFileTagDtos();
@@ -777,7 +780,39 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
         }
         StringUtils.sortIgnoreCase(sortedTags);
 
+        // collect multi-value tag names to exclude from boolean rendering
+        HashMap<String, AppOptionGroupBean[]> mvTagDefs = ClientSettings.getInstance().getArchiveFileMvTagDefs();
+        ArrayList<String> mvTagNames = new ArrayList<>();
+        if (mvTagDefs != null) {
+            for (String groupName : mvTagDefs.keySet()) {
+                String tagName = groupName.substring(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS_MV_PREFIX.length());
+                mvTagNames.add(tagName);
+            }
+        }
+
+        // add multi-value tags first
+        if (mvTagDefs != null) {
+            ArrayList<String> mvTagNamesSorted = new ArrayList<>(mvTagNames);
+            StringUtils.sortIgnoreCase(mvTagNamesSorted);
+            for (String mvTagName : mvTagNamesSorted) {
+                AppOptionGroupBean[] values = mvTagDefs.get(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS_MV_PREFIX + mvTagName);
+                String[] valueStrings = new String[values != null ? values.length : 0];
+                if (values != null) {
+                    for (int vi = 0; vi < values.length; vi++) {
+                        valueStrings[vi] = values[vi].getValue();
+                    }
+                    java.util.Arrays.sort(valueStrings, String.CASE_INSENSITIVE_ORDER);
+                }
+                MultiValueTag mvTag = new MultiValueTag(mvTagName, valueStrings);
+                ThreadUtils.addComponent(tagPanel, mvTag);
+            }
+        }
+
+        // add boolean tags
         for (String tagString : sortedTags) {
+            if (mvTagNames.contains(tagString)) {
+                continue;
+            }
             TagToggleButton tb = new TagToggleButton(tagString, null);
             tb.setSelected(false);
             //tb.addActionListener(new ArchiveFileTagActionListener(null, null, this));
@@ -877,6 +912,18 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
             }
         }
         this.data.put("newcase.tags", tags);
+
+        HashMap<String, String> mvTags = new HashMap<>();
+        for (Component c : this.tagPanel.getComponents()) {
+            if (c instanceof MultiValueTag) {
+                MultiValueTag mvt = (MultiValueTag) c;
+                String selectedValue = mvt.getSelectedValue();
+                if (selectedValue != null) {
+                    mvTags.put(mvt.getTagName(), selectedValue);
+                }
+            }
+        }
+        this.data.put("newcase.mvtags", mvTags);
 
         // Collect allowed groups from permissions table
         ArrayList<Group> allowedGroups = new ArrayList<>();
