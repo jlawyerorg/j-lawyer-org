@@ -11,9 +11,11 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
@@ -26,12 +28,20 @@ import com.jdimension.jlawyer.persistence.InvoiceType;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.persistence.Timesheet;
 import com.jdimension.jlawyer.persistence.TimesheetPosition;
+import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.DocumentTagsBean;
+import com.jdimension.jlawyer.pojo.PartiesTriplet;
+import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
+import com.jdimension.jlawyer.services.FormsServiceRemote;
+import com.jdimension.jlawyer.services.SystemManagementRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.InvoiceServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.MessagingServiceRemote;
+import org.jlawyer.data.tree.GenericNode;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -44,6 +54,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.Collections;
 import javax.net.ssl.SSLException;
@@ -94,6 +106,7 @@ public class ToolRegistry {
     private List<InvoiceType> cachedInvoiceTypes;
     private List<InvoicePool> cachedInvoicePools;
     private List<AppUserBean> cachedUsers;
+    private List<Group> cachedMyGroups;
 
     static {
         // Existing tools
@@ -143,13 +156,19 @@ public class ToolRegistry {
         TOOLS.add(new ToolDefinition("get_parties_for_case", "Gibt alle Beteiligten einer Akte mit vollständigen Kontaktdaten zurück.",
                 Arrays.asList(new ToolParameter("caseId", "string", "Interne ID der Akte", true))));
 
-        TOOLS.add(new ToolDefinition("get_all_open_events", "Gibt alle offenen Kalenderereignisse (Wiedervorlagen, Fristen, Termine) zurück.",
-                Arrays.asList()));
+        TOOLS.add(new ToolDefinition("get_all_open_events", "Gibt alle offenen Kalenderereignisse zurück. Optional nach Typ filterbar (Wiedervorlage, Frist, Termin).",
+                Arrays.asList(
+                        new ToolParameter("eventType", "string", "Ereignistyp zum Filtern: Wiedervorlage, Frist oder Termin (optional, Standard: alle)", false))));
 
-        TOOLS.add(new ToolDefinition("get_all_open_events_between_dates", "Gibt alle offenen Kalenderereignisse zwischen zwei Daten zurück.",
+        TOOLS.add(new ToolDefinition("get_all_open_events_between_dates", "Gibt alle offenen Kalenderereignisse zwischen zwei Daten zurück. Optional nach Typ filterbar.",
                 Arrays.asList(
                         new ToolParameter("fromDate", "string", "Startdatum im ISO-8601-Format (z.B. 2025-03-01T00:00:00)", true),
-                        new ToolParameter("toDate", "string", "Enddatum im ISO-8601-Format (z.B. 2025-03-31T23:59:59)", true))));
+                        new ToolParameter("toDate", "string", "Enddatum im ISO-8601-Format (z.B. 2025-03-31T23:59:59)", true),
+                        new ToolParameter("eventType", "string", "Ereignistyp zum Filtern: Wiedervorlage, Frist oder Termin (optional, Standard: alle)", false))));
+
+        TOOLS.add(new ToolDefinition("list_event_types",
+                "Gibt die verfügbaren Kalenderereignis-Typen zurück (Wiedervorlage, Frist, Termin). Nützlich um den eventType-Parameter für get_all_open_events oder get_all_open_events_between_dates zu ermitteln.",
+                Arrays.asList()));
 
         TOOLS.add(new ToolDefinition("find_free_slots",
                 "Findet freie Zeitfenster im Kalender eines Benutzers. Gibt verfügbare Slots zurück, die für neue Termine genutzt werden können. Nur Typ 'Termin' (eventType=30) wird als blockierend betrachtet.",
@@ -212,6 +231,7 @@ public class ToolRegistry {
                         new ToolParameter("city", "string", "Stadt", true),
                         new ToolParameter("zipCode", "string", "Postleitzahl", true),
                         new ToolParameter("street", "string", "Straße (optional)", false),
+                        new ToolParameter("streetNumber", "string", "Hausnummer (optional)", false),
                         new ToolParameter("email", "string", "E-Mail (optional)", false),
                         new ToolParameter("phone", "string", "Telefon (optional)", false)),
                 ToolDefinition.RISK_MEDIUM));
@@ -260,7 +280,8 @@ public class ToolRegistry {
                         new ToolParameter("subjectField", "string", "Sachgebiet (optional)", false),
                         new ToolParameter("lawyer", "string", "Benutzername des Anwalts (optional)", false),
                         new ToolParameter("assistant", "string", "Benutzername des Sachbearbeiters (optional)", false),
-                        new ToolParameter("notice", "string", "Aktennotiz (optional)", false)),
+                        new ToolParameter("notice", "string", "Aktennotiz (optional)", false),
+                        new ToolParameter("group", "string", "Name der Gruppe für Berechtigungen (optional)", false)),
                 ToolDefinition.RISK_MEDIUM));
 
         TOOLS.add(new ToolDefinition("create_contact", "Erstellt einen neuen Kontakt. Führt keine Ähnlichkeitssuche durch — dafür gibt es create_or_get_contact.",
@@ -271,6 +292,7 @@ public class ToolRegistry {
                         new ToolParameter("salutation", "string", "Anrede (optional, z.B. Herr, Frau)", false),
                         new ToolParameter("title", "string", "Titel (optional, z.B. Dr., Prof.)", false),
                         new ToolParameter("street", "string", "Straße (optional)", false),
+                        new ToolParameter("streetNumber", "string", "Hausnummer (optional)", false),
                         new ToolParameter("zipCode", "string", "Postleitzahl (optional)", false),
                         new ToolParameter("city", "string", "Stadt (optional)", false),
                         new ToolParameter("country", "string", "Land (optional)", false),
@@ -301,6 +323,7 @@ public class ToolRegistry {
                         new ToolParameter("salutation", "string", "Neue Anrede (optional)", false),
                         new ToolParameter("title", "string", "Neuer Titel (optional)", false),
                         new ToolParameter("street", "string", "Neue Straße (optional)", false),
+                        new ToolParameter("streetNumber", "string", "Neue Hausnummer (optional)", false),
                         new ToolParameter("zipCode", "string", "Neue Postleitzahl (optional)", false),
                         new ToolParameter("city", "string", "Neue Stadt (optional)", false),
                         new ToolParameter("country", "string", "Neues Land (optional)", false),
@@ -336,6 +359,69 @@ public class ToolRegistry {
         TOOLS.add(new ToolDefinition("list_users",
                 "Listet alle Benutzer der Installation auf. Gibt Benutzername, Anzeigename und E-Mail zurück.",
                 Arrays.asList()));
+
+        TOOLS.add(new ToolDefinition("get_my_groups",
+                "Gibt die Gruppen zurück, in denen der aktuell angemeldete Benutzer Mitglied ist. Diese Gruppen steuern z.B. die Berechtigungen an Akten.",
+                Arrays.asList()));
+
+        TOOLS.add(new ToolDefinition("list_case_folders",
+                "Gibt die Ordnerstruktur einer Akte zurück. Jeder Ordner hat eine ID, einen Namen und ggf. Unterordner.",
+                Arrays.asList(
+                        new ToolParameter("caseId", "string", "ID der Akte", true))));
+
+        TOOLS.add(new ToolDefinition("move_document_to_folder",
+                "Verschiebt ein Dokument in einen Ordner innerhalb derselben Akte.",
+                Arrays.asList(
+                        new ToolParameter("documentId", "string", "ID des Dokuments", true),
+                        new ToolParameter("folderId", "string", "ID des Zielordners", true)),
+                ToolDefinition.RISK_MEDIUM));
+
+        TOOLS.add(new ToolDefinition("list_document_tags",
+                "Gibt alle verfügbaren Etiketten (Tags) für Dokumente zurück, inkl. Listenetiketten mit ihren möglichen Werten.",
+                Arrays.asList()));
+
+        TOOLS.add(new ToolDefinition("list_case_tags",
+                "Gibt alle verfügbaren Etiketten (Tags) für Akten zurück, inkl. Listenetiketten mit ihren möglichen Werten.",
+                Arrays.asList()));
+
+        TOOLS.add(new ToolDefinition("set_document_tag",
+                "Setzt ein Etikett auf ein Dokument. Für Listenetiketten muss zusätzlich ein tagValue angegeben werden. Zum Entfernen active=false setzen.",
+                Arrays.asList(
+                        new ToolParameter("documentId", "string", "ID des Dokuments", true),
+                        new ToolParameter("tagName", "string", "Name des Etiketts", true),
+                        new ToolParameter("tagValue", "string", "Wert bei Listenetiketten (optional, null für einfache Etiketten)", false),
+                        new ToolParameter("active", "string", "true zum Setzen, false zum Entfernen (Standard: true)", false)),
+                ToolDefinition.RISK_MEDIUM));
+
+        TOOLS.add(new ToolDefinition("set_case_tag",
+                "Setzt ein Etikett auf eine Akte. Für Listenetiketten muss zusätzlich ein tagValue angegeben werden. Zum Entfernen active=false setzen.",
+                Arrays.asList(
+                        new ToolParameter("caseId", "string", "ID der Akte", true),
+                        new ToolParameter("tagName", "string", "Name des Etiketts", true),
+                        new ToolParameter("tagValue", "string", "Wert bei Listenetiketten (optional, null für einfache Etiketten)", false),
+                        new ToolParameter("active", "string", "true zum Setzen, false zum Entfernen (Standard: true)", false)),
+                ToolDefinition.RISK_MEDIUM));
+
+        // Template tools
+//        TOOLS.add(new ToolDefinition("list_templates",
+//                "Listet alle verfügbaren Dokumentvorlagen und ihre Ordnerstruktur auf.",
+//                Arrays.asList()));
+
+        TOOLS.add(new ToolDefinition("search_templates",
+                "Sucht Dokumentvorlagen anhand eines Suchbegriffs (Teilübereinstimmung, Groß-/Kleinschreibung wird ignoriert). Gibt nur passende Vorlagen mit Ordnerpfad zurück.",
+                Arrays.asList(
+                        new ToolParameter("query", "string", "Suchbegriff für den Vorlagennamen", true))));
+
+        TOOLS.add(new ToolDefinition("create_document_from_template",
+                "Erstellt ein Dokument in einer Akte aus einer Dokumentvorlage. Platzhalter werden automatisch aus den Aktendaten befüllt. Verwende zuerst list_templates um verfügbare Vorlagen zu sehen.",
+                Arrays.asList(
+                        new ToolParameter("caseId", "string", "Interne ID der Akte", true),
+                        new ToolParameter("templateFolder", "string", "Ordnerpfad der Vorlage (z.B. / oder /Vertragsrecht)", true),
+                        new ToolParameter("templateName", "string", "Dateiname der Vorlage (z.B. Vollmacht.odt)", true),
+                        new ToolParameter("fileName", "string", "Dateiname des neuen Dokuments ohne Erweiterung (z.B. Vollmacht Mueller)", true),
+                        new ToolParameter("placeholders", "string", "JSON-Objekt mit Platzhalter-Schlüssel/Wert-Paaren zum Überschreiben (optional, z.B. {\"FREITEXT1\": \"Sonderwert\"})", false),
+                        new ToolParameter("generatedText", "string", "Vom Assistenten generierter Text, der als Platzhalter {{INGO_TEXT}} in die Vorlage eingefügt wird (optional)", false)),
+                ToolDefinition.RISK_MEDIUM));
 
         // Easter egg: housework tool
         TOOLS.add(new ToolDefinition("do_housework",
@@ -402,6 +488,8 @@ public class ToolRegistry {
                     return executeGetAllOpenEvents(args);
                 case "get_all_open_events_between_dates":
                     return executeGetAllOpenEventsBetweenDates(args);
+                case "list_event_types":
+                    return executeListEventTypes(args);
                 case "find_free_slots":
                     return executeFindFreeSlots(args);
                 case "get_all_open_invoices":
@@ -448,6 +536,26 @@ public class ToolRegistry {
                     return executeCreateTimesheetPosition(args);
                 case "list_users":
                     return executeListUsers(args);
+                case "get_my_groups":
+                    return executeGetMyGroups(args);
+                case "list_case_folders":
+                    return executeListCaseFolders(args);
+                case "move_document_to_folder":
+                    return executeMoveDocumentToFolder(args);
+                case "list_document_tags":
+                    return executeListDocumentTags(args);
+                case "list_case_tags":
+                    return executeListCaseTags(args);
+                case "set_document_tag":
+                    return executeSetDocumentTag(args);
+                case "set_case_tag":
+                    return executeSetCaseTag(args);
+//                case "list_templates":
+//                    return executeListTemplates(args);
+                case "search_templates":
+                    return executeSearchTemplates(args);
+                case "create_document_from_template":
+                    return executeCreateDocumentFromTemplate(args);
                 case "web_search":
                     return executeWebSearch(args);
                 case "fetch_url":
@@ -529,6 +637,8 @@ public class ToolRegistry {
                     return "Alle offenen Termine";
                 case "get_all_open_events_between_dates":
                     return "Termine: " + args.getOrDefault("fromDate", "") + " - " + args.getOrDefault("toDate", "");
+                case "list_event_types":
+                    return "Verfügbare Ereignistypen auflisten";
                 case "find_free_slots":
                     return "Freie Termine suchen: " + args.getOrDefault("fromDate", "") + " - " + args.getOrDefault("toDate", "");
                 case "get_all_open_invoices":
@@ -575,6 +685,26 @@ public class ToolRegistry {
                     return "Zeiteintrag erstellen: " + args.getOrDefault("name", "");
                 case "list_users":
                     return "Benutzer auflisten";
+                case "get_my_groups":
+                    return "Meine Gruppen auflisten";
+                case "list_case_folders":
+                    return "Ordner der Akte: " + args.getOrDefault("caseId", "");
+                case "move_document_to_folder":
+                    return "Dokument verschieben: " + args.getOrDefault("documentId", "");
+                case "list_document_tags":
+                    return "Verfügbare Dokument-Etiketten auflisten";
+                case "list_case_tags":
+                    return "Verfügbare Akten-Etiketten auflisten";
+                case "set_document_tag":
+                    return "Dokument-Etikett setzen: " + args.getOrDefault("tagName", "");
+                case "set_case_tag":
+                    return "Akten-Etikett setzen: " + args.getOrDefault("tagName", "");
+//                case "list_templates":
+//                    return "Dokumentvorlagen auflisten";
+                case "search_templates":
+                    return "Vorlagensuche: '" + args.getOrDefault("query", "") + "'";
+                case "create_document_from_template":
+                    return "Dokument aus Vorlage erstellen: " + args.getOrDefault("templateName", "");
                 case "web_search":
                     return "Websuche: '" + args.getOrDefault("query", "") + "'";
                 case "fetch_url":
@@ -626,6 +756,14 @@ public class ToolRegistry {
             cachedUsers = ToolJsonUtils.getLocator().lookupSecurityServiceRemote().getUsersHavingRole("loginRole");
         }
         return cachedUsers;
+    }
+
+    private List<Group> getCachedMyGroups() throws Exception {
+        if (cachedMyGroups == null) {
+            String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
+            cachedMyGroups = ToolJsonUtils.getLocator().lookupSecurityServiceRemote().getGroupsForUser(principalId);
+        }
+        return cachedMyGroups;
     }
 
     // =========================================================================
@@ -735,6 +873,96 @@ public class ToolRegistry {
         return sb.toString();
     }
 
+    private String executeGetMyGroups(JsonObject args) throws Exception {
+        String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
+        List<Group> groups = getCachedMyGroups();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"principalId\": \"").append(ToolJsonUtils.escapeJson(principalId)).append("\"");
+        sb.append(", \"groups\": [");
+        for (int i = 0; i < groups.size(); i++) {
+            Group g = groups.get(i);
+            if (i > 0) sb.append(", ");
+            sb.append("{\"id\": \"").append(ToolJsonUtils.escapeJson(g.getId())).append("\"");
+            sb.append(", \"name\": \"").append(ToolJsonUtils.escapeJson(g.getName())).append("\"");
+            if (g.getAbbreviation() != null) {
+                sb.append(", \"abbreviation\": \"").append(ToolJsonUtils.escapeJson(g.getAbbreviation())).append("\"");
+            }
+            sb.append("}");
+        }
+        sb.append("]}");
+        return sb.toString();
+    }
+
+    private String executeListCaseFolders(JsonObject args) throws Exception {
+        String caseId = (String) args.get("caseId");
+        if (caseId == null || caseId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Akten-ID (caseId) fehlt");
+        }
+
+        ArchiveFileServiceRemote svc = ToolJsonUtils.getLocator().lookupArchiveFileServiceRemote();
+        ArchiveFileBean caseBean = svc.getArchiveFile(caseId.trim());
+        if (caseBean == null) {
+            return ToolJsonUtils.error("Akte nicht gefunden: " + caseId);
+        }
+
+        CaseFolder root = caseBean.getRootFolder();
+        if (root == null) {
+            return "{\"caseId\": \"" + ToolJsonUtils.escapeJson(caseId) + "\", \"folders\": []}";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"caseId\": \"").append(ToolJsonUtils.escapeJson(caseId)).append("\"");
+        sb.append(", \"folders\": [");
+        appendFolderChildren(root.getChildren(), sb, true);
+        sb.append("]}");
+        return sb.toString();
+    }
+
+    private void appendFolderChildren(List<CaseFolder> folders, StringBuilder sb, boolean isFirst) {
+        if (folders == null) return;
+        for (CaseFolder f : folders) {
+            if (!isFirst) sb.append(", ");
+            isFirst = false;
+            sb.append("{\"id\": \"").append(ToolJsonUtils.escapeJson(f.getId())).append("\"");
+            sb.append(", \"name\": \"").append(ToolJsonUtils.escapeJson(f.getName())).append("\"");
+            if (f.getChildren() != null && !f.getChildren().isEmpty()) {
+                sb.append(", \"children\": [");
+                appendFolderChildren(f.getChildren(), sb, true);
+                sb.append("]");
+            }
+            sb.append("}");
+        }
+    }
+
+    private String executeMoveDocumentToFolder(JsonObject args) throws Exception {
+        String documentId = (String) args.get("documentId");
+        String folderId = (String) args.get("folderId");
+        if (documentId == null || documentId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Dokument-ID (documentId) fehlt");
+        }
+        if (folderId == null || folderId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Ordner-ID (folderId) fehlt");
+        }
+
+        ArchiveFileServiceRemote svc = ToolJsonUtils.getLocator().lookupArchiveFileServiceRemote();
+
+        ArchiveFileDocumentsBean doc = svc.getDocument(documentId.trim());
+        if (doc == null) {
+            return ToolJsonUtils.error("Dokument nicht gefunden: " + documentId);
+        }
+
+        svc.moveDocumentsToFolder(Collections.singletonList(documentId.trim()), folderId.trim());
+
+        EventBroker.getInstance().publishEvent(new DocumentRemovedEvent(doc));
+        // re-fetch document to get updated folder information
+        ArchiveFileDocumentsBean updatedDoc = svc.getDocument(documentId.trim());
+        EventBroker.getInstance().publishEvent(new DocumentAddedEvent(updatedDoc));
+
+        return "{\"success\": true, \"documentId\": \"" + ToolJsonUtils.escapeJson(documentId.trim())
+                + "\", \"folderId\": \"" + ToolJsonUtils.escapeJson(folderId.trim()) + "\"}";
+    }
+
     private String executeFindFreeSlots(JsonObject args) throws Exception {
         String fromDateStr = (String) args.get("fromDate");
         String toDateStr = (String) args.get("toDate");
@@ -763,14 +991,14 @@ public class ToolRegistry {
         if (args.get("workEndHour") != null) {
             workEndHour = ((Number) args.get("workEndHour")).intValue();
         }
-        if (workStartHour < 0) {
-            workStartHour = 0;
+        if (workStartHour < 0 || workStartHour > 23) {
+            return ToolJsonUtils.error("workStartHour muss zwischen 0 und 23 liegen, angegeben: " + workStartHour);
         }
-        if (workEndHour > 23) {
-            workEndHour = 23;
+        if (workEndHour < 0 || workEndHour > 23) {
+            return ToolJsonUtils.error("workEndHour muss zwischen 0 und 23 liegen, angegeben: " + workEndHour);
         }
         if (workStartHour >= workEndHour) {
-            return ToolJsonUtils.error("workStartHour muss kleiner als workEndHour sein");
+            return ToolJsonUtils.error("workStartHour (" + workStartHour + ") muss kleiner als workEndHour (" + workEndHour + ") sein");
         }
 
         SimpleDateFormat dateFmt = new SimpleDateFormat("yyyy-MM-dd");
@@ -1472,7 +1700,35 @@ public class ToolRegistry {
         return sb.toString();
     }
 
+    private String executeListEventTypes(JsonObject args) throws Exception {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"eventTypes\": [");
+        sb.append("{\"name\": \"Wiedervorlage\", \"value\": ").append(EventTypes.EVENTTYPE_FOLLOWUP).append("}");
+        sb.append(", {\"name\": \"Frist\", \"value\": ").append(EventTypes.EVENTTYPE_RESPITE).append("}");
+        sb.append(", {\"name\": \"Termin\", \"value\": ").append(EventTypes.EVENTTYPE_EVENT).append("}");
+        sb.append("]}");
+        return sb.toString();
+    }
+
+    private int parseEventType(String typeStr) {
+        if (typeStr == null || typeStr.trim().isEmpty()) {
+            return -1;
+        }
+        switch (typeStr.trim().toLowerCase()) {
+            case "wiedervorlage": return EventTypes.EVENTTYPE_FOLLOWUP;
+            case "frist": return EventTypes.EVENTTYPE_RESPITE;
+            case "termin": return EventTypes.EVENTTYPE_EVENT;
+            default: return -2;
+        }
+    }
+
     private String executeGetAllOpenEvents(JsonObject args) throws Exception {
+        String eventTypeStr = (String) args.get("eventType");
+        int eventTypeFilter = parseEventType(eventTypeStr);
+        if (eventTypeFilter == -2) {
+            return ToolJsonUtils.error("Unbekannter Ereignistyp: " + eventTypeStr + ". Erlaubt: Wiedervorlage, Frist, Termin");
+        }
+
         JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
         CalendarServiceRemote calSvc = locator.lookupCalendarServiceRemote();
         Collection<ArchiveFileReviewsBean> events = calSvc.getAllOpenReviews();
@@ -1480,18 +1736,20 @@ public class ToolRegistry {
         StringBuilder sb = new StringBuilder();
         sb.append("{\"events\": [");
         int count = 0;
+        int total = 0;
         for (ArchiveFileReviewsBean ev : events) {
-            if (count > 0) {
-                sb.append(",");
+            if (eventTypeFilter != -1 && ev.getEventType() != eventTypeFilter) {
+                continue;
             }
-            appendEventJson(sb, ev);
-            count++;
-            if (count >= 50) {
-                break;
+            total++;
+            if (count < 50) {
+                if (count > 0) sb.append(",");
+                appendEventJson(sb, ev);
+                count++;
             }
         }
-        sb.append("], \"totalEvents\": ").append(events.size());
-        if (events.size() > 50) {
+        sb.append("], \"totalEvents\": ").append(total);
+        if (total > 50) {
             sb.append(", \"truncated\": true");
         }
         sb.append("}");
@@ -1508,6 +1766,12 @@ public class ToolRegistry {
             return ToolJsonUtils.error("Enddatum (toDate) fehlt");
         }
 
+        String eventTypeStr = (String) args.get("eventType");
+        int eventTypeFilter = parseEventType(eventTypeStr);
+        if (eventTypeFilter == -2) {
+            return ToolJsonUtils.error("Unbekannter Ereignistyp: " + eventTypeStr + ". Erlaubt: Wiedervorlage, Frist, Termin");
+        }
+
         Date fromDate = ToolJsonUtils.parseIsoDate(fromDateStr);
         Date toDate = ToolJsonUtils.parseIsoDate(toDateStr);
         if (fromDate == null) {
@@ -1519,8 +1783,8 @@ public class ToolRegistry {
 
         JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
         CalendarServiceRemote calSvc = locator.lookupCalendarServiceRemote();
-        // status 0 = open, type -1 = all types
-        Collection<ArchiveFileReviewsBean> events = calSvc.searchReviews(0, -1, fromDate, toDate);
+        // status 0 = open, eventTypeFilter -1 = all types
+        Collection<ArchiveFileReviewsBean> events = calSvc.searchReviews(0, eventTypeFilter, fromDate, toDate);
 
         StringBuilder sb = new StringBuilder();
         sb.append("{\"fromDate\": \"").append(ToolJsonUtils.escapeJson(fromDateStr)).append("\"");
@@ -1840,6 +2104,7 @@ public class ToolRegistry {
         String city = (String) args.get("city");
         String zipCode = (String) args.get("zipCode");
         String street = (String) args.get("street");
+        String streetNumber = (String) args.get("streetNumber");
         String email = (String) args.get("email");
         String phone = (String) args.get("phone");
 
@@ -1873,6 +2138,9 @@ public class ToolRegistry {
         candidate.setZipCode(zipCode.trim());
         if (street != null && !street.trim().isEmpty()) {
             candidate.setStreet(street.trim());
+        }
+        if (streetNumber != null && !streetNumber.trim().isEmpty()) {
+            candidate.setStreetNumber(streetNumber.trim());
         }
 
         // Similarity search with 85% threshold
@@ -2211,6 +2479,7 @@ public class ToolRegistry {
         String lawyer = (String) args.get("lawyer");
         String assistant = (String) args.get("assistant");
         String notice = (String) args.get("notice");
+        String groupName = (String) args.get("group");
 
         if (name == null || name.trim().isEmpty()) {
             return ToolJsonUtils.error("Aktenbezeichnung (name) fehlt");
@@ -2260,6 +2529,28 @@ public class ToolRegistry {
             }
         }
 
+        // Validate group if provided
+        Group matchedGroup = null;
+        if (groupName != null && !groupName.trim().isEmpty()) {
+            List<Group> myGroups = getCachedMyGroups();
+            for (Group g : myGroups) {
+                if (g.getName().equalsIgnoreCase(groupName.trim())) {
+                    matchedGroup = g;
+                    break;
+                }
+            }
+            if (matchedGroup == null) {
+                StringBuilder groupNames = new StringBuilder();
+                for (Group g : myGroups) {
+                    if (groupNames.length() > 0) {
+                        groupNames.append(", ");
+                    }
+                    groupNames.append(g.getName());
+                }
+                return ToolJsonUtils.error("Gruppe nicht gefunden: " + groupName + ". Verfügbare Gruppen: " + groupNames.toString());
+            }
+        }
+
         ArchiveFileBean dto = new ArchiveFileBean();
         dto.setName(name.trim());
         if (reason != null && !reason.trim().isEmpty()) {
@@ -2276,6 +2567,9 @@ public class ToolRegistry {
         }
         if (notice != null && !notice.trim().isEmpty()) {
             dto.setNotice(notice.trim());
+        }
+        if (matchedGroup != null) {
+            dto.setGroup(matchedGroup);
         }
 
         JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
@@ -2303,6 +2597,9 @@ public class ToolRegistry {
         if (created.getNotice() != null && !created.getNotice().isEmpty()) {
             sb.append(", \"notice\": \"").append(ToolJsonUtils.escapeJson(created.getNotice())).append("\"");
         }
+        if (created.getGroup() != null) {
+            sb.append(", \"group\": \"").append(ToolJsonUtils.escapeJson(created.getGroup().getName())).append("\"");
+        }
         sb.append("}");
         return sb.toString();
     }
@@ -2314,6 +2611,7 @@ public class ToolRegistry {
         String salutation = (String) args.get("salutation");
         String title = (String) args.get("title");
         String street = (String) args.get("street");
+        String streetNumber = (String) args.get("streetNumber");
         String zipCode = (String) args.get("zipCode");
         String city = (String) args.get("city");
         String country = (String) args.get("country");
@@ -2347,6 +2645,9 @@ public class ToolRegistry {
         }
         if (street != null && !street.trim().isEmpty()) {
             candidate.setStreet(street.trim());
+        }
+        if (streetNumber != null && !streetNumber.trim().isEmpty()) {
+            candidate.setStreetNumber(streetNumber.trim());
         }
         if (zipCode != null && !zipCode.trim().isEmpty()) {
             candidate.setZipCode(zipCode.trim());
@@ -2498,6 +2799,7 @@ public class ToolRegistry {
         String salutation = (String) args.get("salutation");
         String title = (String) args.get("title");
         String street = (String) args.get("street");
+        String streetNumber = (String) args.get("streetNumber");
         String zipCode = (String) args.get("zipCode");
         String city = (String) args.get("city");
         String country = (String) args.get("country");
@@ -2525,6 +2827,9 @@ public class ToolRegistry {
         }
         if (street != null) {
             contact.setStreet(street.trim());
+        }
+        if (streetNumber != null) {
+            contact.setStreetNumber(streetNumber.trim());
         }
         if (zipCode != null) {
             contact.setZipCode(zipCode.trim());
@@ -2563,6 +2868,258 @@ public class ToolRegistry {
         sb.append(contactSb);
         sb.append("}");
         return sb.toString();
+    }
+
+    // =========================================================================
+    // Template tool implementations
+    // =========================================================================
+
+    // potentially large list, could overwhelm context window - use search of templates instead
+//    private String executeListTemplates(JsonObject args) throws Exception {
+//        SystemManagementRemote sys = ToolJsonUtils.getLocator().lookupSystemManagementRemote();
+//        GenericNode root = sys.getAllTemplatesTree(SystemManagementRemote.TEMPLATE_TYPE_BODY);
+//        String rootId = root.getId();
+//
+//        StringBuilder sb = new StringBuilder();
+//        sb.append("{\"folders\": [");
+//        boolean[] first = {true};
+//        collectTemplatesFromTree(root, rootId, sys, sb, first);
+//        sb.append("]}");
+//        return sb.toString();
+//    }
+
+    private String executeSearchTemplates(JsonObject args) throws Exception {
+        String query = (String) args.get("query");
+        if (query == null || query.trim().isEmpty()) {
+            return ToolJsonUtils.error("Suchbegriff (query) fehlt");
+        }
+        String queryLower = query.trim().toLowerCase();
+
+        SystemManagementRemote sys = ToolJsonUtils.getLocator().lookupSystemManagementRemote();
+        GenericNode root = sys.getAllTemplatesTree(SystemManagementRemote.TEMPLATE_TYPE_BODY);
+        String rootId = root.getId();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"query\": \"").append(ToolJsonUtils.escapeJson(query.trim())).append("\"");
+        sb.append(", \"results\": [");
+        boolean[] first = {true};
+        collectMatchingTemplatesFromTree(root, rootId, sys, sb, first, queryLower);
+        sb.append("]}");
+        return sb.toString();
+    }
+
+    private void collectMatchingTemplatesFromTree(GenericNode node, String rootId,
+            SystemManagementRemote sys, StringBuilder sb, boolean[] first, String queryLower) throws Exception {
+        List<String> templates = sys.getTemplatesInFolder(
+                SystemManagementRemote.TEMPLATE_TYPE_BODY, node);
+        if (templates != null) {
+            String displayPath = node.getId().replace(rootId, "");
+            if (displayPath.isEmpty()) {
+                displayPath = "/";
+            }
+            for (String tpl : templates) {
+                if (tpl.toLowerCase().contains(queryLower)) {
+                    if (!first[0]) sb.append(", ");
+                    first[0] = false;
+                    sb.append("{\"folderPath\": \"").append(ToolJsonUtils.escapeJson(displayPath)).append("\"");
+                    sb.append(", \"templateName\": \"").append(ToolJsonUtils.escapeJson(tpl)).append("\"}");
+                }
+            }
+        }
+        if (node.getChildren() != null) {
+            for (GenericNode child : node.getChildren()) {
+                collectMatchingTemplatesFromTree(child, rootId, sys, sb, first, queryLower);
+            }
+        }
+    }
+
+    private void collectTemplatesFromTree(GenericNode node, String rootId,
+            SystemManagementRemote sys, StringBuilder sb, boolean[] first) throws Exception {
+        List<String> templates = sys.getTemplatesInFolder(
+                SystemManagementRemote.TEMPLATE_TYPE_BODY, node);
+        if (templates != null && !templates.isEmpty()) {
+            if (!first[0]) sb.append(", ");
+            first[0] = false;
+            String displayPath = node.getId().replace(rootId, "");
+            if (displayPath.isEmpty()) {
+                displayPath = "/";
+            }
+            sb.append("{\"folderPath\": \"").append(ToolJsonUtils.escapeJson(displayPath)).append("\"");
+            sb.append(", \"templates\": [");
+            for (int i = 0; i < templates.size(); i++) {
+                if (i > 0) sb.append(", ");
+                sb.append("\"").append(ToolJsonUtils.escapeJson(templates.get(i))).append("\"");
+            }
+            sb.append("]}");
+        }
+        if (node.getChildren() != null) {
+            for (GenericNode child : node.getChildren()) {
+                collectTemplatesFromTree(child, rootId, sys, sb, first);
+            }
+        }
+    }
+
+    private String executeCreateDocumentFromTemplate(JsonObject args) throws Exception {
+        String caseId = (String) args.get("caseId");
+        String templateFolder = (String) args.get("templateFolder");
+        String templateName = (String) args.get("templateName");
+        String fileName = (String) args.get("fileName");
+        String placeholdersJson = (String) args.get("placeholders");
+        String generatedText = (String) args.get("generatedText");
+
+        if (caseId == null || caseId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Akten-ID (caseId) fehlt");
+        }
+        if (templateFolder == null || templateFolder.trim().isEmpty()) {
+            templateFolder = "/";
+        }
+        if (!templateFolder.startsWith("/")) {
+            templateFolder = "/" + templateFolder;
+        }
+        if (templateName == null || templateName.trim().isEmpty()) {
+            return ToolJsonUtils.error("Vorlagenname (templateName) fehlt");
+        }
+        if (fileName == null || fileName.trim().isEmpty()) {
+            return ToolJsonUtils.error("Dateiname (fileName) fehlt");
+        }
+
+        // Validate template exists by checking the template tree
+        SystemManagementRemote sys = ToolJsonUtils.getLocator().lookupSystemManagementRemote();
+        GenericNode root = sys.getAllTemplatesTree(SystemManagementRemote.TEMPLATE_TYPE_BODY);
+        String rootId = root.getId();
+        GenericNode matchedFolder = findTemplateFolder(root, rootId, templateFolder);
+        if (matchedFolder == null) {
+            return ToolJsonUtils.error("Vorlagenordner nicht gefunden: " + templateFolder + ". Verwende search_templates um verfügbare Ordner zu sehen.");
+        }
+        List<String> templatesInFolder = sys.getTemplatesInFolder(SystemManagementRemote.TEMPLATE_TYPE_BODY, matchedFolder);
+        boolean templateFound = false;
+        if (templatesInFolder != null) {
+            for (String t : templatesInFolder) {
+                if (t.equals(templateName.trim())) {
+                    templateFound = true;
+                    break;
+                }
+            }
+        }
+        if (!templateFound) {
+            StringBuilder available = new StringBuilder();
+            if (templatesInFolder != null) {
+                for (int i = 0; i < templatesInFolder.size(); i++) {
+                    if (i > 0) available.append(", ");
+                    available.append(templatesInFolder.get(i));
+                }
+            }
+            return ToolJsonUtils.error("Vorlage '" + templateName.trim() + "' nicht gefunden in Ordner " + templateFolder
+                    + ". Verfügbare Vorlagen: " + available.toString());
+        }
+
+        // Use the matched folder node (has correct server ID) for all subsequent calls
+        GenericNode folderNode = matchedFolder;
+
+        ArchiveFileServiceRemote archiveSvc = ToolJsonUtils.getLocator().lookupArchiveFileServiceRemote();
+        FormsServiceRemote formsSvc = ToolJsonUtils.getLocator().lookupFormsServiceRemote();
+
+        // Validate case exists
+        ArchiveFileBean caseBean = archiveSvc.getArchiveFile(caseId.trim());
+        if (caseBean == null) {
+            return ToolJsonUtils.error("Akte nicht gefunden: " + caseId);
+        }
+
+        // Get form placeholders for case
+        Collection<String> formPlaceHolders = formsSvc.getPlaceHoldersForCase(caseId.trim());
+        HashMap<String, String> formPlaceHolderValues = formsSvc.getPlaceHolderValuesForCase(caseId.trim());
+
+        // Get placeholders in template, filter out system placeholders
+        List<String> phInTemplate = sys.getPlaceHoldersForTemplate(
+                SystemManagementRemote.TEMPLATE_TYPE_BODY, folderNode, templateName.trim(), formPlaceHolders);
+        HashMap<String, Object> phMap = new HashMap<>();
+        if (phInTemplate != null) {
+            for (String ph : phInTemplate) {
+                if (!ph.startsWith("[[")) {
+                    phMap.put(ph, "");
+                }
+            }
+        }
+
+        // Gather parties
+        List<ArchiveFileAddressesBean> involvements = archiveSvc.getInvolvementDetailsForCase(caseId.trim());
+        List<PartiesTriplet> parties = new ArrayList<>();
+        if (involvements != null) {
+            for (ArchiveFileAddressesBean aab : involvements) {
+                parties.add(new PartiesTriplet(aab.getAddressKey(), aab.getReferenceType(), aab));
+            }
+        }
+
+        // Resolve lawyer and assistant
+        AppUserBean userLawyer = null;
+        if (caseBean.getLawyer() != null && !caseBean.getLawyer().isEmpty()) {
+            try {
+                userLawyer = sys.getUser(caseBean.getLawyer());
+            } catch (Exception e) {
+                log.warn("Could not resolve lawyer: " + caseBean.getLawyer(), e);
+            }
+        }
+        AppUserBean userAssistant = null;
+        if (caseBean.getAssistant() != null && !caseBean.getAssistant().isEmpty()) {
+            try {
+                userAssistant = sys.getUser(caseBean.getAssistant());
+            } catch (Exception e) {
+                log.warn("Could not resolve assistant: " + caseBean.getAssistant(), e);
+            }
+        }
+
+        // Resolve system placeholders
+        String ingoText = (generatedText != null && !generatedText.trim().isEmpty()) ? generatedText.trim() : null;
+        phMap = sys.getPlaceHolderValues(phMap, caseBean, parties, "", null,
+                formPlaceHolderValues, userLawyer, userAssistant, null, null, null, null, null, null, null, ingoText);
+
+        // Override with user-provided placeholders
+        if (placeholdersJson != null && !placeholdersJson.trim().isEmpty()) {
+            JsonObject customPh = (JsonObject) Jsoner.deserialize(placeholdersJson);
+            for (Map.Entry<String, Object> entry : customPh.entrySet()) {
+                String key = entry.getKey().toString();
+                if (!key.startsWith("{{")) key = "{{" + key;
+                if (!key.endsWith("}}")) key = key + "}}";
+                phMap.put(key, entry.getValue().toString());
+            }
+        }
+
+        // Create document from template
+        ArchiveFileDocumentsBean newDoc = archiveSvc.addDocumentFromTemplate(
+                caseId.trim(), fileName.trim(), null, folderNode, templateName.trim(), phMap, "", null);
+
+        EventBroker.getInstance().publishEvent(new DocumentAddedEvent(newDoc));
+
+        // Build response
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"success\": true");
+        sb.append(", \"documentId\": \"").append(ToolJsonUtils.escapeJson(newDoc.getId())).append("\"");
+        sb.append(", \"fileName\": \"").append(ToolJsonUtils.escapeJson(newDoc.getName())).append("\"");
+        sb.append(", \"caseId\": \"").append(ToolJsonUtils.escapeJson(caseId.trim())).append("\"");
+        sb.append(", \"caseFileNumber\": \"").append(ToolJsonUtils.escapeJson(caseBean.getFileNumber())).append("\"");
+        sb.append("}");
+        return sb.toString();
+    }
+
+    private GenericNode findTemplateFolder(GenericNode node, String rootId, String targetPath) {
+        String displayPath = node.getId().replace(rootId, "");
+        if (displayPath.isEmpty()) {
+            displayPath = "/";
+        } else if (!displayPath.startsWith("/")) {
+            displayPath = "/" + displayPath;
+        }
+        if (displayPath.equals(targetPath)) {
+            return node;
+        }
+        if (node.getChildren() != null) {
+            for (GenericNode child : node.getChildren()) {
+                GenericNode found = findTemplateFolder(child, rootId, targetPath);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
     }
 
     // =========================================================================
@@ -2731,6 +3288,217 @@ public class ToolRegistry {
                 + "Antworte ausschliesslich mit der ASCII-Art und einem kurzen witzigen Kommentar mit Referenz zu Jura dazu ('Wir waschen jetzt Wäsche für Ihre Akte, bis der Mandant eine reine Weste hat')."));
         sb.append("\"}");
         return sb.toString();
+    }
+
+    private String executeListDocumentTags(JsonObject args) throws Exception {
+        SystemManagementRemote sys = ToolJsonUtils.getLocator().lookupSystemManagementRemote();
+
+        AppOptionGroupBean[] boolTags = sys.getOptionGroup(OptionConstants.OPTIONGROUP_DOCUMENTTAGS);
+        HashMap<String, AppOptionGroupBean[]> mvGroups = sys.getOptionGroupsByPrefix(OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX);
+
+        return buildTagListJson(boolTags, mvGroups, OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX);
+    }
+
+    private String executeListCaseTags(JsonObject args) throws Exception {
+        SystemManagementRemote sys = ToolJsonUtils.getLocator().lookupSystemManagementRemote();
+
+        AppOptionGroupBean[] boolTags = sys.getOptionGroup(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS);
+        HashMap<String, AppOptionGroupBean[]> mvGroups = sys.getOptionGroupsByPrefix(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS_MV_PREFIX);
+
+        return buildTagListJson(boolTags, mvGroups, OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS_MV_PREFIX);
+    }
+
+    private String buildTagListJson(AppOptionGroupBean[] boolTags,
+                                    HashMap<String, AppOptionGroupBean[]> mvGroups,
+                                    String mvPrefix) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"booleanTags\": [");
+        if (boolTags != null) {
+            for (int i = 0; i < boolTags.length; i++) {
+                if (i > 0) sb.append(", ");
+                sb.append("\"").append(ToolJsonUtils.escapeJson(boolTags[i].getValue())).append("\"");
+            }
+        }
+        sb.append("], \"multiValueTags\": [");
+        if (mvGroups != null) {
+            boolean first = true;
+            for (Map.Entry<String, AppOptionGroupBean[]> entry : mvGroups.entrySet()) {
+                if (!first) sb.append(", ");
+                first = false;
+                String tagName = entry.getKey().substring(mvPrefix.length());
+                sb.append("{\"name\": \"").append(ToolJsonUtils.escapeJson(tagName)).append("\"");
+                sb.append(", \"values\": [");
+                AppOptionGroupBean[] vals = entry.getValue();
+                if (vals != null) {
+                    for (int i = 0; i < vals.length; i++) {
+                        if (i > 0) sb.append(", ");
+                        sb.append("\"").append(ToolJsonUtils.escapeJson(vals[i].getValue())).append("\"");
+                    }
+                }
+                sb.append("]}");
+            }
+        }
+        sb.append("]}");
+        return sb.toString();
+    }
+
+    private String validateTag(String tagName, String tagValue,
+                               AppOptionGroupBean[] boolTags,
+                               HashMap<String, AppOptionGroupBean[]> mvGroups,
+                               String mvPrefix) {
+        // Check if it's a boolean tag
+        if (boolTags != null) {
+            for (AppOptionGroupBean b : boolTags) {
+                if (tagName.equals(b.getValue())) {
+                    if (tagValue != null && !tagValue.trim().isEmpty()) {
+                        return "{\"error\": \"Etikett '" + ToolJsonUtils.escapeJson(tagName)
+                                + "' ist ein einfaches Etikett und akzeptiert keinen Wert (tagValue). tagValue weglassen oder null setzen.\"}";
+                    }
+                    return null;
+                }
+            }
+        }
+
+        // Check if it's a multivalue tag
+        if (mvGroups != null) {
+            String mvKey = mvPrefix + tagName;
+            AppOptionGroupBean[] allowedVals = mvGroups.get(mvKey);
+            if (allowedVals != null) {
+                if (tagValue == null || tagValue.trim().isEmpty()) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("{\"error\": \"Etikett '").append(ToolJsonUtils.escapeJson(tagName));
+                    sb.append("' ist ein Mehrwert-Etikett und benötigt einen tagValue.\", \"allowedValues\": [");
+                    for (int i = 0; i < allowedVals.length; i++) {
+                        if (i > 0) sb.append(", ");
+                        sb.append("\"").append(ToolJsonUtils.escapeJson(allowedVals[i].getValue())).append("\"");
+                    }
+                    sb.append("]}");
+                    return sb.toString();
+                }
+                for (AppOptionGroupBean v : allowedVals) {
+                    if (tagValue.trim().equals(v.getValue())) {
+                        return null;
+                    }
+                }
+                // tagValue not in allowed values
+                StringBuilder sb = new StringBuilder();
+                sb.append("{\"error\": \"Wert '").append(ToolJsonUtils.escapeJson(tagValue.trim()));
+                sb.append("' ist nicht erlaubt für Etikett '").append(ToolJsonUtils.escapeJson(tagName));
+                sb.append("'.\", \"allowedValues\": [");
+                for (int i = 0; i < allowedVals.length; i++) {
+                    if (i > 0) sb.append(", ");
+                    sb.append("\"").append(ToolJsonUtils.escapeJson(allowedVals[i].getValue())).append("\"");
+                }
+                sb.append("]}");
+                return sb.toString();
+            }
+        }
+
+        // Tag name not found at all — return available tags
+        String availableTags = buildTagListJson(boolTags, mvGroups, mvPrefix);
+        return "{\"error\": \"Etikett '" + ToolJsonUtils.escapeJson(tagName)
+                + "' existiert nicht.\", \"availableTags\": " + availableTags + "}";
+    }
+
+    private String executeSetDocumentTag(JsonObject args) throws Exception {
+        String documentId = (String) args.get("documentId");
+        String tagName = (String) args.get("tagName");
+        String tagValue = (String) args.get("tagValue");
+        String activeStr = (String) args.get("active");
+        if (documentId == null || documentId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Dokument-ID (documentId) fehlt");
+        }
+        if (tagName == null || tagName.trim().isEmpty()) {
+            return ToolJsonUtils.error("Etikett-Name (tagName) fehlt");
+        }
+        boolean active = (activeStr == null || !"false".equalsIgnoreCase(activeStr.trim()));
+
+        SystemManagementRemote sys = ToolJsonUtils.getLocator().lookupSystemManagementRemote();
+        AppOptionGroupBean[] boolTags = sys.getOptionGroup(OptionConstants.OPTIONGROUP_DOCUMENTTAGS);
+        HashMap<String, AppOptionGroupBean[]> mvGroups = sys.getOptionGroupsByPrefix(OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX);
+
+        String validationError = validateTag(tagName.trim(), tagValue, boolTags, mvGroups, OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX);
+        if (validationError != null) {
+            return validationError;
+        }
+
+        ArchiveFileServiceRemote svc = ToolJsonUtils.getLocator().lookupArchiveFileServiceRemote();
+
+        ArchiveFileDocumentsBean doc = svc.getDocument(documentId.trim());
+        if (doc == null) {
+            return ToolJsonUtils.error("Dokument nicht gefunden: " + documentId);
+        }
+
+        DocumentTagsBean tag = new DocumentTagsBean();
+        tag.setTagName(tagName.trim());
+        if (tagValue != null && !tagValue.trim().isEmpty()) {
+            tag.setTagValue(tagValue.trim());
+        }
+
+        svc.setDocumentTag(documentId.trim(), tag, active);
+
+        EventBroker.getInstance().publishEvent(new DocumentRemovedEvent(doc));
+        EventBroker.getInstance().publishEvent(new DocumentAddedEvent(doc));
+
+        StringBuilder sbResult = new StringBuilder();
+        sbResult.append("{\"success\": true, \"documentId\": \"").append(ToolJsonUtils.escapeJson(documentId.trim()));
+        sbResult.append("\", \"tagName\": \"").append(ToolJsonUtils.escapeJson(tagName.trim()));
+        sbResult.append("\", \"active\": ").append(active);
+        if (tagValue != null && !tagValue.trim().isEmpty()) {
+            sbResult.append(", \"tagValue\": \"").append(ToolJsonUtils.escapeJson(tagValue.trim())).append("\"");
+        }
+        sbResult.append("}");
+        return sbResult.toString();
+    }
+
+    private String executeSetCaseTag(JsonObject args) throws Exception {
+        String caseId = (String) args.get("caseId");
+        String tagName = (String) args.get("tagName");
+        String tagValue = (String) args.get("tagValue");
+        String activeStr = (String) args.get("active");
+        if (caseId == null || caseId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Akten-ID (caseId) fehlt");
+        }
+        if (tagName == null || tagName.trim().isEmpty()) {
+            return ToolJsonUtils.error("Etikett-Name (tagName) fehlt");
+        }
+        boolean active = (activeStr == null || !"false".equalsIgnoreCase(activeStr.trim()));
+
+        SystemManagementRemote sys = ToolJsonUtils.getLocator().lookupSystemManagementRemote();
+        AppOptionGroupBean[] boolTags = sys.getOptionGroup(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS);
+        HashMap<String, AppOptionGroupBean[]> mvGroups = sys.getOptionGroupsByPrefix(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS_MV_PREFIX);
+
+        String validationError = validateTag(tagName.trim(), tagValue, boolTags, mvGroups, OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS_MV_PREFIX);
+        if (validationError != null) {
+            return validationError;
+        }
+
+        ArchiveFileServiceRemote svc = ToolJsonUtils.getLocator().lookupArchiveFileServiceRemote();
+
+        ArchiveFileBean caseBean = svc.getArchiveFile(caseId.trim());
+        if (caseBean == null) {
+            return ToolJsonUtils.error("Akte nicht gefunden: " + caseId);
+        }
+
+        ArchiveFileTagsBean tag = new ArchiveFileTagsBean();
+        tag.setTagName(tagName.trim());
+        if (tagValue != null && !tagValue.trim().isEmpty()) {
+            tag.setTagValue(tagValue.trim());
+        }
+
+        svc.setTag(caseId.trim(), tag, active);
+
+        EventBroker.getInstance().publishEvent(new CasesChangedEvent());
+
+        StringBuilder sbResult = new StringBuilder();
+        sbResult.append("{\"success\": true, \"caseId\": \"").append(ToolJsonUtils.escapeJson(caseId.trim()));
+        sbResult.append("\", \"tagName\": \"").append(ToolJsonUtils.escapeJson(tagName.trim()));
+        sbResult.append("\", \"active\": ").append(active);
+        if (tagValue != null && !tagValue.trim().isEmpty()) {
+            sbResult.append(", \"tagValue\": \"").append(ToolJsonUtils.escapeJson(tagValue.trim())).append("\"");
+        }
+        sbResult.append("}");
+        return sbResult.toString();
     }
 
     // =========================================================================
