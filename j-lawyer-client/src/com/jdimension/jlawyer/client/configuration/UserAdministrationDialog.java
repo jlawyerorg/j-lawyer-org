@@ -974,6 +974,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         lblEpostRegistered = new javax.swing.JLabel();
         cmdRegisterEpost = new javax.swing.JButton();
         cmdSetEpostPassword = new javax.swing.JButton();
+        jLabel42 = new javax.swing.JLabel();
+        pwdDropscanToken = new javax.swing.JPasswordField();
+        jLabel43 = new javax.swing.JLabel();
+        cmdDropscanTest = new javax.swing.JButton();
         jPanel9 = new javax.swing.JPanel();
         jLabel18 = new javax.swing.JLabel();
         cmbPrimaryGroup = new javax.swing.JComboBox<>();
@@ -1483,7 +1487,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jPanel13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(77, Short.MAX_VALUE))
+                .addContainerGap(85, Short.MAX_VALUE))
         );
 
         jPanel1.getAccessibleContext().setAccessibleName("");
@@ -1682,7 +1686,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(pwdBeaCertificatePassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel16))
-                .addContainerGap(257, Short.MAX_VALUE))
+                .addContainerGap(265, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("beA", jPanel8);
@@ -1770,6 +1774,22 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             }
         });
 
+        jLabel42.setFont(jLabel42.getFont().deriveFont(jLabel42.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel42.setText("Dropscan");
+
+        pwdDropscanToken.setColumns(20);
+
+        jLabel43.setFont(jLabel43.getFont());
+        jLabel43.setText("API-Token:");
+
+        cmdDropscanTest.setFont(cmdDropscanTest.getFont());
+        cmdDropscanTest.setText("Verbindung testen");
+        cmdDropscanTest.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDropscanTestActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel11Layout = new org.jdesktop.layout.GroupLayout(jPanel11);
         jPanel11.setLayout(jPanel11Layout);
         jPanel11Layout.setHorizontalGroup(
@@ -1812,7 +1832,16 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                             .add(jPanel11Layout.createSequentialGroup()
                                 .add(pwdEpostPassword)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cmdSetEpostPassword)))))
+                                .add(cmdSetEpostPassword))))
+                    .add(jPanel11Layout.createSequentialGroup()
+                        .add(jLabel42)
+                        .add(18, 18, 18)
+                        .add(jLabel43)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(pwdDropscanToken, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdDropscanTest)
+                        .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel11Layout.setVerticalGroup(
@@ -1857,11 +1886,17 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jSeparator2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel42)
+                    .add(pwdDropscanToken, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel43)
+                    .add(cmdDropscanTest))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 32, Short.MAX_VALUE)
                 .add(jLabel26)
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
-        jTabbedPane1.addTab("Sipgate / E-POST", jPanel11);
+        jTabbedPane1.addTab("Sipgate / E-POST / Dropscan", jPanel11);
 
         jLabel18.setText("Primäre Gruppe:");
 
@@ -2150,6 +2185,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.txtEpostCustomer.setText("");
         this.pwdEpostPassword.setText("");
         this.txtEpostSecret.setText("");
+        this.pwdDropscanToken.setText("");
         this.txtEmail.setText("");
 
         txtFirstName.setText("");
@@ -2292,6 +2328,17 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     this.pwdEpostPassword.setText("");
                 }
 
+                try {
+                    if (u.getDropscanApiToken() != null && !u.getDropscanApiToken().isEmpty()) {
+                        this.pwdDropscanToken.setText(CryptoProvider.defaultCrypto().decrypt(u.getDropscanApiToken()));
+                    } else {
+                        this.pwdDropscanToken.setText("");
+                    }
+                } catch (Throwable t) {
+                    log.warn("Unable to decrypt Dropscan API token, might be empty", t);
+                    this.pwdDropscanToken.setText("");
+                }
+
                 this.txtDisplayName.setText(u.getDisplayName());
                 this.txtEmail.setText(u.getEmail());
 
@@ -2413,6 +2460,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             this.txtEpostSecret.setText("");
 
             this.pwdEpostPassword.setText("");
+            this.pwdDropscanToken.setText("");
 
             this.txtDisplayName.setText("");
             this.txtEmail.setText("");
@@ -2543,6 +2591,13 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 u.setEpostPassword(CryptoProvider.defaultCrypto().encrypt(this.pwdEpostPassword.getText().trim()));
                 u.setEpostSecret(this.txtEpostSecret.getText());
 
+                String dsToken = new String(this.pwdDropscanToken.getPassword()).trim();
+                if (!dsToken.isEmpty()) {
+                    u.setDropscanApiToken(CryptoProvider.defaultCrypto().encrypt(dsToken));
+                } else {
+                    u.setDropscanApiToken(null);
+                }
+
                 u.setDisplayName(this.txtDisplayName.getText());
                 u.setEmail(this.txtEmail.getText().trim());
 
@@ -2601,6 +2656,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.txtEpostCustomer.setText("");
         this.pwdEpostPassword.setText("");
         this.txtEpostSecret.setText("");
+        this.pwdDropscanToken.setText("");
 
         this.txtDisplayName.setText("");
         this.txtEmail.setText("");
@@ -3026,6 +3082,25 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.txtIban.setText(set.getSetting(ServerSettings.PROFILE_COMPANYACCOUNTNO, ""));
     }//GEN-LAST:event_cmdPopulateFromCompanyProfileActionPerformed
 
+    private void cmdDropscanTestActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDropscanTestActionPerformed
+        try {
+            String token = new String(this.pwdDropscanToken.getPassword()).trim();
+            if (token.isEmpty()) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Bitte API-Token eingeben.", "Dropscan", javax.swing.JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            com.jdimension.jlawyer.dropscan.DropscanApiClient client = new com.jdimension.jlawyer.dropscan.DropscanApiClient(token);
+            java.util.List<com.jdimension.jlawyer.dropscan.DropscanScanbox> scanboxes = client.getScanboxes();
+            StringBuilder sb = new StringBuilder("Verbindung erfolgreich!\n\nScanboxen:\n");
+            for (com.jdimension.jlawyer.dropscan.DropscanScanbox box : scanboxes) {
+                sb.append("  - ").append(box.getNumber()).append(" (ID: ").append(box.getId()).append(")\n");
+            }
+            javax.swing.JOptionPane.showMessageDialog(this, sb.toString(), "Dropscan", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ex) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Verbindung fehlgeschlagen: " + ex.getMessage(), "Dropscan", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdDropscanTestActionPerformed
+
     private List<AppRoleBean> getRolesFromUI(String principalId) {
         List<AppRoleBean> result = new ArrayList<>();
 
@@ -3314,6 +3389,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JComboBox<String> cmbVoipId;
     private javax.swing.JButton cmdAdd;
     private javax.swing.JButton cmdClose;
+    private javax.swing.JButton cmdDropscanTest;
     private javax.swing.JButton cmdGetVoipIds;
     private javax.swing.JButton cmdPopulateFromCompanyProfile;
     private javax.swing.JButton cmdRegisterEpost;
@@ -3357,6 +3433,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel40;
     private javax.swing.JLabel jLabel41;
+    private javax.swing.JLabel jLabel42;
+    private javax.swing.JLabel jLabel43;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
@@ -3395,6 +3473,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private com.jdimension.jlawyer.client.configuration.NextcloudConnectionPanel pnlCloudConnection;
     private javax.swing.JPopupMenu popDelete;
     private javax.swing.JPasswordField pwdBeaCertificatePassword;
+    private javax.swing.JPasswordField pwdDropscanToken;
     private javax.swing.JPasswordField pwdEpostPassword;
     private javax.swing.JTextArea taBeaCertificate;
     private javax.swing.JTextArea taRole;

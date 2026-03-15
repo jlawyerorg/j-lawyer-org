@@ -1047,6 +1047,7 @@ public class Main {
         scans.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_scanner_blue_36dp.png")));
         scans.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_scanner_green_36dp.png")));
         scans.setStatusEventType(Event.TYPE_SCANNERSTATUS);
+        scans.addAdditionalEventType(Event.TYPE_DROPSCANSTATUS);
         if(isMacOs) {
             scans.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_9, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "⌘+9");
         } else {

@@ -819,6 +819,9 @@ public class AppUserBean implements Serializable {
     @Column(name = "tax_vatid")
     private String taxVatId;
 
+    @Column(name = "dropscan_api_token")
+    private String dropscanApiToken;
+
     public AppUserBean() {
     }
 
@@ -832,6 +835,10 @@ public class AppUserBean implements Serializable {
 
     public boolean isEpostEnabled() {
         return this.epostCustomer != null && !("".equalsIgnoreCase(this.epostCustomer)) && this.epostPassword != null && !("".equalsIgnoreCase(this.epostPassword)) && this.epostSecret != null && !("".equalsIgnoreCase(this.epostSecret));
+    }
+
+    public boolean isDropscanEnabled() {
+        return this.dropscanApiToken != null && !("".equalsIgnoreCase(this.dropscanApiToken));
     }
 
     public String getPrincipalId() {
@@ -1486,6 +1493,20 @@ public class AppUserBean implements Serializable {
      */
     public void setTaxVatId(String taxVatId) {
         this.taxVatId = taxVatId;
+    }
+
+    /**
+     * @return the dropscanApiToken
+     */
+    public String getDropscanApiToken() {
+        return dropscanApiToken;
+    }
+
+    /**
+     * @param dropscanApiToken the dropscanApiToken to set
+     */
+    public void setDropscanApiToken(String dropscanApiToken) {
+        this.dropscanApiToken = dropscanApiToken;
     }
 
 }

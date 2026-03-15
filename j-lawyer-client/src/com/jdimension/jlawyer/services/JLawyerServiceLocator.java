@@ -854,6 +854,15 @@ public class JLawyerServiceLocator {
         }
     }
     
+    public DropscanServiceRemote lookupDropscanServiceRemote() {
+        try {
+            return (DropscanServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//DropscanService!com.jdimension.jlawyer.services.DropscanServiceRemote");
+        } catch (NamingException ne) {
+            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
+            throw new RuntimeException(ne);
+        }
+    }
+
     public EmailServiceRemote lookupEmailServiceRemote() {
         try {
             return (EmailServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//EmailService!com.jdimension.jlawyer.services.EmailServiceRemote");

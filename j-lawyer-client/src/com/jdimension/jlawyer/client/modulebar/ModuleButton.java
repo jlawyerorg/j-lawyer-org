@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.modulebar;
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.events.BeaStatusEvent;
+import com.jdimension.jlawyer.client.events.DropscanStatusEvent;
 import com.jdimension.jlawyer.client.events.EmailStatusEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
@@ -702,6 +703,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
     
     private String indicatorValue="";
     protected boolean resetIndicatorOnClick=false;
+    private java.util.HashMap<Integer, Integer> eventTypeCounts = new java.util.HashMap<>();
 
     /**
      * Creates new form ModuleButton
@@ -717,6 +719,9 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
         if (m.getStatusEventType() > 0) {
             EventBroker b = EventBroker.getInstance();
             b.subscribeConsumer(this, m.getStatusEventType());
+            for (Integer additionalType : m.getAdditionalEventTypes()) {
+                b.subscribeConsumer(this, additionalType);
+            }
             log.info(m.getFullName() + " is subscribed to events");
         }
 
@@ -972,23 +977,33 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
 
     @Override
     public void onEvent(Event e) {
-        if (e.getType().intValue() != this.module.getStatusEventType()) {
+        int eventType = e.getType().intValue();
+        if (eventType != this.module.getStatusEventType() && !this.module.getAdditionalEventTypes().contains(e.getType())) {
             return;
         }
 
+        int count = 0;
         if (e instanceof ScannerStatusEvent) {
-            updateIndicator(((ScannerStatusEvent) e).getFileMetadata().size());
+            count = ((ScannerStatusEvent) e).getFileMetadata().size();
+        } else if (e instanceof DropscanStatusEvent) {
+            count = ((DropscanStatusEvent) e).getMailings().size();
         } else if (e instanceof MailingStatusEvent) {
-            updateIndicator(((MailingStatusEvent) e).getMailingList().size());
+            count = ((MailingStatusEvent) e).getMailingList().size();
         } else if (e instanceof EmailStatusEvent) {
-            updateIndicator(((EmailStatusEvent) e).getUnread());
+            count = ((EmailStatusEvent) e).getUnread();
         } else if (e instanceof BeaStatusEvent) {
-            updateIndicator(((BeaStatusEvent) e).getUnread());
+            count = ((BeaStatusEvent) e).getUnread();
         } else if (e instanceof OpenMentionsEvent) {
-            updateIndicator(((OpenMentionsEvent) e).getOpenMentions());
+            count = ((OpenMentionsEvent) e).getOpenMentions();
         } else if (e instanceof MissingCalendarEntriesEvent) {
-            updateIndicator(((MissingCalendarEntriesEvent) e).getCasesWithoutEvent());
+            count = ((MissingCalendarEntriesEvent) e).getCasesWithoutEvent();
         }
+        eventTypeCounts.put(e.getType(), count);
+        int total = 0;
+        for (int c : eventTypeCounts.values()) {
+            total += c;
+        }
+        updateIndicator(total);
     }
 
     private void updateIndicator(int incomingValue) {

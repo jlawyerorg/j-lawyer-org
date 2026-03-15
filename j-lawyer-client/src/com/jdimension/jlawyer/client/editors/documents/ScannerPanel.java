@@ -668,12 +668,15 @@ import com.jdimension.jlawyer.client.editors.StatusBarProvider;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.addresses.CaseForContactEntry;
 import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentPreviewSaveCallback;
+import com.jdimension.jlawyer.client.editors.documents.viewer.GifJpegPngImagePanel;
 import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFactory;
 import com.jdimension.jlawyer.client.editors.documents.viewer.ScanPreviewProvider;
 import com.jdimension.jlawyer.client.editors.files.BulkSaveDialog;
 import com.jdimension.jlawyer.client.editors.files.BulkSaveEntry;
 import com.jdimension.jlawyer.client.editors.files.DateTimeStringComparator;
+import com.jdimension.jlawyer.client.editors.files.DropscanEntryProcessor;
 import com.jdimension.jlawyer.client.editors.files.ScanEntryProcessor;
+import com.jdimension.jlawyer.client.events.DropscanStatusEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
@@ -691,11 +694,14 @@ import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.dropscan.DropscanMailing;
+import com.jdimension.jlawyer.dropscan.DropscanScanbox;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.pojo.FileMetadata;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.DropscanServiceRemote;
 import com.jdimension.jlawyer.services.IntegrationServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.BorderLayout;
@@ -800,6 +806,19 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 log.error("Error re-selecting table row", t);
             }
             this.lastEventFileMetadata = fileMetadata;
+        } else if (e instanceof DropscanStatusEvent) {
+            DropscanStatusEvent dse = (DropscanStatusEvent) e;
+            javax.swing.SwingUtilities.invokeLater(() -> {
+                dropscanMailings = new ArrayList<>(dse.getMailings());
+                javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) tblDropscanMailings.getModel();
+                model.setRowCount(0);
+                SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMAN);
+                for (DropscanMailing m : dropscanMailings) {
+                    String dateStr = m.getReceivedAt() != null ? df.format(m.getReceivedAt()) : "";
+                    String scanboxNr = m.getScanboxNumber() != null ? m.getScanboxNumber() : String.valueOf(m.getScanboxId());
+                    model.addRow(new Object[]{scanboxNr, dateStr, m.getStatusDisplayName(), m.getReceivedViaDisplayName()});
+                }
+            });
         }
     }
 
@@ -823,6 +842,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         EventBroker eb = EventBroker.getInstance();
         eb.subscribeConsumer(this, Event.TYPE_SCANNERSTATUS);
+        eb.subscribeConsumer(this, Event.TYPE_DROPSCANSTATUS);
 
         DefaultTableCellRenderer r = new DefaultTableCellRenderer() {
             @Override
@@ -875,7 +895,12 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         Timer timer2 = new Timer();
         ScannerLocalDocumentsUploadTimerTask scannerUploadsTask = new ScannerLocalDocumentsUploadTimerTask();
         timer2.schedule(scannerUploadsTask, 9500, 15000);
-        
+
+        // Dropscan polling: initial after 30s, then every 60 minutes
+        Timer timer3 = new Timer();
+        DropscanPollingTimerTask dropscanTask = new DropscanPollingTimerTask();
+        timer3.schedule(dropscanTask, 30000, 3600000);
+
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 log.info("shutting down ScannerDocumentsTimerTask");
@@ -891,6 +916,13 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             } catch (Throwable t) {
                 log.error("Error shutting down timer", t);
             }
+            try {
+                log.info("shutting down DropscanPollingTimerTask");
+                dropscanTask.stop();
+                timer3.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
         }));
 
         ComponentUtils.restoreSplitPane(this.splitTop, this.getClass(), "splitTop");
@@ -901,6 +933,606 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
 
+        this.initDropscanPanel();
+
+        // Load Dropscan data when tab is switched to Dropscan
+        this.jTabbedPane1.addChangeListener(e -> {
+            if (jTabbedPane1.getSelectedComponent() == pnlDropscan) {
+                if (dropscanMailings.isEmpty()) {
+                    loadDropscanData();
+                }
+            }
+        });
+
+    }
+
+    // Dropscan UI components (programmatically created)
+    private javax.swing.JComboBox<String> cmbDropscanScanboxFilter;
+    private javax.swing.JComboBox<String> cmbDropscanStatusFilter;
+    private javax.swing.JButton cmdDropscanRefresh;
+    private javax.swing.JCheckBox chkDropscanDestroyAfterImport;
+    private javax.swing.JTable tblDropscanMailings;
+    private javax.swing.JPanel pnlDropscanEnvelope;
+    private javax.swing.JPanel pnlDropscanActions;
+    private javax.swing.JPanel pnlDropscanActionsChild;
+    private javax.swing.JLabel lblDropscanNoToken;
+
+    // Dropscan state
+    private List<DropscanMailing> dropscanMailings = new ArrayList<>();
+    private List<DropscanScanbox> dropscanScanboxes = new ArrayList<>();
+
+    private void initDropscanPanel() {
+        pnlDropscan.removeAll();
+        pnlDropscan.setLayout(new java.awt.BorderLayout());
+
+        // Header panel with filters and controls
+        javax.swing.JPanel pnlDropscanHeader = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 2));
+
+        javax.swing.JLabel lblScanbox = new javax.swing.JLabel("Scanbox:");
+        cmbDropscanScanboxFilter = new javax.swing.JComboBox<>();
+        cmbDropscanScanboxFilter.addItem("Alle");
+        cmbDropscanScanboxFilter.addActionListener(e -> refreshDropscanMailings());
+
+        javax.swing.JLabel lblStatus = new javax.swing.JLabel("Status:");
+        cmbDropscanStatusFilter = new javax.swing.JComboBox<>();
+        cmbDropscanStatusFilter.addItem("Alle");
+        cmbDropscanStatusFilter.addItem("Empfangen");
+        cmbDropscanStatusFilter.addItem("Gescannt");
+        cmbDropscanStatusFilter.addItem("Scan angefordert");
+        cmbDropscanStatusFilter.addItem("Vernichtet");
+        cmbDropscanStatusFilter.addItem("Weitergeleitet");
+        cmbDropscanStatusFilter.addActionListener(e -> refreshDropscanMailings());
+
+        cmdDropscanRefresh = new javax.swing.JButton();
+        cmdDropscanRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/reload.png")));
+        cmdDropscanRefresh.setToolTipText("Aktualisieren");
+        cmdDropscanRefresh.addActionListener(e -> loadDropscanData());
+
+        chkDropscanDestroyAfterImport = new javax.swing.JCheckBox("nach Zuordnung vernichten");
+        chkDropscanDestroyAfterImport.setToolTipText("Physische Post nach Übernahme in eine Akte bei Dropscan vernichten lassen");
+
+        pnlDropscanHeader.add(lblScanbox);
+        pnlDropscanHeader.add(cmbDropscanScanboxFilter);
+        pnlDropscanHeader.add(lblStatus);
+        pnlDropscanHeader.add(cmbDropscanStatusFilter);
+        pnlDropscanHeader.add(cmdDropscanRefresh);
+        pnlDropscanHeader.add(chkDropscanDestroyAfterImport);
+
+        pnlDropscan.add(pnlDropscanHeader, java.awt.BorderLayout.NORTH);
+
+        // Content area: split pane with table+envelope on left, actions on right
+        javax.swing.JSplitPane splitDropscan = new javax.swing.JSplitPane(javax.swing.JSplitPane.HORIZONTAL_SPLIT);
+        splitDropscan.setResizeWeight(0.8);
+        ComponentUtils.decorateSplitPane(splitDropscan);
+
+        // Left panel: table + envelope
+        javax.swing.JPanel pnlDropscanLeft = new javax.swing.JPanel(new java.awt.BorderLayout());
+
+        // Table
+        tblDropscanMailings = new javax.swing.JTable();
+        tblDropscanMailings.setModel(new javax.swing.table.DefaultTableModel(
+                new Object[][]{},
+                new String[]{"Scanbox", "Datum", "Status", "Zustellweg"}
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        });
+        tblDropscanMailings.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        tblDropscanMailings.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                dropscanMailingSelected();
+            }
+        });
+
+        javax.swing.JScrollPane scrollTable = new javax.swing.JScrollPane(tblDropscanMailings);
+        scrollTable.setPreferredSize(new java.awt.Dimension(500, 200));
+
+        // Envelope preview (zoomable)
+        pnlDropscanEnvelope = new javax.swing.JPanel(new java.awt.BorderLayout());
+        pnlDropscanEnvelope.setBorder(javax.swing.BorderFactory.createTitledBorder("Umschlag-Vorschau"));
+        pnlDropscanEnvelope.setPreferredSize(new java.awt.Dimension(500, 150));
+
+        javax.swing.JSplitPane splitLeftContent = new javax.swing.JSplitPane(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        splitLeftContent.setTopComponent(scrollTable);
+        splitLeftContent.setBottomComponent(pnlDropscanEnvelope);
+        splitLeftContent.setDividerLocation(200);
+        ComponentUtils.decorateSplitPane(splitLeftContent);
+
+        pnlDropscanLeft.add(splitLeftContent, java.awt.BorderLayout.CENTER);
+
+        // Action buttons below table
+        javax.swing.JPanel pnlDropscanButtons = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 2));
+        javax.swing.JButton cmdDropscanScan = new javax.swing.JButton("Scannen");
+        cmdDropscanScan.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner.png")));
+        cmdDropscanScan.addActionListener(e -> dropscanRequestScan());
+        javax.swing.JButton cmdDropscanDestroy = new javax.swing.JButton("Vernichten");
+        cmdDropscanDestroy.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/delete_forever_20dp_0E72B5.png")));
+        cmdDropscanDestroy.addActionListener(e -> dropscanRequestDestroy());
+        pnlDropscanButtons.add(cmdDropscanScan);
+        pnlDropscanButtons.add(cmdDropscanDestroy);
+        pnlDropscanLeft.add(pnlDropscanButtons, java.awt.BorderLayout.SOUTH);
+
+        splitDropscan.setLeftComponent(pnlDropscanLeft);
+
+        // Right panel: case suggestions (analog to pnlActions)
+        pnlDropscanActions = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEADING));
+        pnlDropscanActionsChild = new javax.swing.JPanel();
+        pnlDropscanActions.add(pnlDropscanActionsChild);
+        javax.swing.JScrollPane scrollActions = new javax.swing.JScrollPane(pnlDropscanActions);
+        splitDropscan.setRightComponent(scrollActions);
+
+        // No-token label (overlay, shown when no token configured)
+        lblDropscanNoToken = new javax.swing.JLabel("Dropscan API-Token muss in der Benutzerverwaltung konfiguriert werden.");
+        lblDropscanNoToken.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblDropscanNoToken.setVisible(false);
+
+        // Main content: use card-like approach
+        pnlDropscan.add(splitDropscan, java.awt.BorderLayout.CENTER);
+
+        pnlDropscan.revalidate();
+        pnlDropscan.repaint();
+    }
+
+    private void loadDropscanData() {
+        new Thread(() -> {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                DropscanServiceRemote ds = locator.lookupDropscanServiceRemote();
+
+                dropscanScanboxes = ds.getScanboxes();
+
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    String selectedScanbox = (String) cmbDropscanScanboxFilter.getSelectedItem();
+                    cmbDropscanScanboxFilter.removeAllItems();
+                    cmbDropscanScanboxFilter.addItem("Alle");
+                    for (DropscanScanbox box : dropscanScanboxes) {
+                        cmbDropscanScanboxFilter.addItem(box.getNumber() + " (ID: " + box.getId() + ")");
+                    }
+                    if (selectedScanbox != null) {
+                        cmbDropscanScanboxFilter.setSelectedItem(selectedScanbox);
+                    }
+                });
+
+                refreshDropscanMailings();
+
+            } catch (Exception ex) {
+                log.error("Failed to load Dropscan data", ex);
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    lblDropscanNoToken.setVisible(true);
+                    ((javax.swing.table.DefaultTableModel) tblDropscanMailings.getModel()).setRowCount(0);
+                });
+            }
+        }).start();
+    }
+
+    private void refreshDropscanMailings() {
+        new Thread(() -> {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                DropscanServiceRemote ds = locator.lookupDropscanServiceRemote();
+
+                String statusFilter = null;
+                String selectedStatus = (String) cmbDropscanStatusFilter.getSelectedItem();
+                if (selectedStatus != null && !"Alle".equals(selectedStatus)) {
+                    statusFilter = displayNameToStatus(selectedStatus);
+                }
+
+                int scanboxFilterIdx = cmbDropscanScanboxFilter.getSelectedIndex();
+                if (scanboxFilterIdx <= 0 || dropscanScanboxes.isEmpty()) {
+                    // "Alle" selected or no scanboxes loaded
+                    dropscanMailings = ds.getAllMailings(statusFilter);
+                } else {
+                    DropscanScanbox selectedBox = dropscanScanboxes.get(scanboxFilterIdx - 1);
+                    List<DropscanMailing> mailings = ds.getMailings(String.valueOf(selectedBox.getId()), statusFilter);
+                    for (DropscanMailing m : mailings) {
+                        m.setScanboxNumber(selectedBox.getNumber());
+                    }
+                    dropscanMailings = mailings;
+                }
+
+                // Sort by received date descending
+                dropscanMailings.sort((a, b) -> {
+                    if (a.getReceivedAt() == null && b.getReceivedAt() == null) return 0;
+                    if (a.getReceivedAt() == null) return 1;
+                    if (b.getReceivedAt() == null) return -1;
+                    return b.getReceivedAt().compareTo(a.getReceivedAt());
+                });
+
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) tblDropscanMailings.getModel();
+                    model.setRowCount(0);
+                    SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm", java.util.Locale.GERMAN);
+                    for (DropscanMailing m : dropscanMailings) {
+                        String dateStr = m.getReceivedAt() != null ? df.format(m.getReceivedAt()) : "";
+                        String scanboxNr = m.getScanboxNumber() != null ? m.getScanboxNumber() : String.valueOf(m.getScanboxId());
+                        model.addRow(new Object[]{scanboxNr, dateStr, m.getStatusDisplayName(), m.getReceivedViaDisplayName()});
+                    }
+                    lblDropscanNoToken.setVisible(false);
+                });
+
+            } catch (Exception ex) {
+                log.error("Failed to refresh Dropscan mailings", ex);
+            }
+        }).start();
+    }
+
+    private void dropscanMailingSelected() {
+        int selectedRow = tblDropscanMailings.getSelectedRow();
+        if (selectedRow < 0 || selectedRow >= dropscanMailings.size()) {
+            pnlDropscanEnvelope.removeAll();
+            pnlDropscanEnvelope.revalidate();
+            pnlDropscanEnvelope.repaint();
+            pnlDropscanActionsChild.removeAll();
+            pnlDropscanActionsChild.revalidate();
+            pnlDropscanActionsChild.repaint();
+            return;
+        }
+
+        DropscanMailing mailing = dropscanMailings.get(selectedRow);
+
+        // Load envelope image async
+        new Thread(() -> {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                DropscanServiceRemote ds = locator.lookupDropscanServiceRemote();
+                byte[] envelopeData = ds.getEnvelopeImage(String.valueOf(mailing.getScanboxId()), mailing.getUuid());
+                if (envelopeData != null && envelopeData.length > 0) {
+                    javax.swing.SwingUtilities.invokeLater(() -> {
+                        GifJpegPngImagePanel envelopeViewer = new GifJpegPngImagePanel(envelopeData);
+                        envelopeViewer.showContent(mailing.getUuid(), envelopeData);
+                        pnlDropscanEnvelope.removeAll();
+                        pnlDropscanEnvelope.setLayout(new java.awt.BorderLayout());
+                        pnlDropscanEnvelope.add(envelopeViewer, java.awt.BorderLayout.CENTER);
+                        pnlDropscanEnvelope.revalidate();
+                        pnlDropscanEnvelope.repaint();
+                    });
+                }
+            } catch (Exception ex) {
+                log.warn("Failed to load envelope image", ex);
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    pnlDropscanEnvelope.removeAll();
+                    javax.swing.JLabel lblNoPreview = new javax.swing.JLabel("Keine Vorschau verfügbar", javax.swing.SwingConstants.CENTER);
+                    pnlDropscanEnvelope.add(lblNoPreview, java.awt.BorderLayout.CENTER);
+                    pnlDropscanEnvelope.revalidate();
+                    pnlDropscanEnvelope.repaint();
+                });
+            }
+        }).start();
+
+        // Load case suggestions if mailing is scanned
+        if (mailing.isScanned()) {
+            loadDropscanCaseSuggestions(mailing);
+        } else {
+            javax.swing.SwingUtilities.invokeLater(() -> {
+                pnlDropscanActionsChild.removeAll();
+                javax.swing.JLabel lblNotScanned = new javax.swing.JLabel("  Sendung muss zuerst gescannt werden.");
+                pnlDropscanActionsChild.setLayout(new java.awt.GridLayout(1, 1));
+                pnlDropscanActionsChild.add(lblNotScanned);
+                pnlDropscanActionsChild.revalidate();
+                pnlDropscanActionsChild.repaint();
+            });
+        }
+    }
+
+    private void loadDropscanCaseSuggestions(DropscanMailing mailing) {
+        new Thread(() -> {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                DropscanServiceRemote ds = locator.lookupDropscanServiceRemote();
+                ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+
+                // Get OCR plaintext
+                String plaintext = "";
+                try {
+                    plaintext = ds.getMailingPlaintext(String.valueOf(mailing.getScanboxId()), mailing.getUuid());
+                } catch (Exception ex) {
+                    log.warn("Failed to get OCR text for mailing " + mailing.getUuid(), ex);
+                }
+
+                ArrayList<Component> actionPanelEntries = new ArrayList<>();
+
+                if (plaintext != null && !plaintext.trim().isEmpty()) {
+                    // Match file numbers against OCR text (same pattern as loadCaseSuggestionsAsync)
+                    long now = System.currentTimeMillis();
+                    if (now - lastFileNumbersUpdate > 15000) {
+                        allFileNumbers = new ArrayList<>(fileService.getAllArchiveFileNumbers(true));
+                        lastFileNumbersUpdate = now;
+                    }
+                    if (now - lastForeignFileNumbersUpdate > 15000) {
+                        allForeignFileNumbers = new ArrayList<>(fileService.getAllReferencedFileNumbers(5, true));
+                        lastForeignFileNumbersUpdate = now;
+                    }
+
+                    String textLower = plaintext.toLowerCase();
+                    List<ArchiveFileBean> textMatchedCases = new ArrayList<>();
+
+                    // Match own file numbers
+                    for (String fn : allFileNumbers) {
+                        if (textMatchedCases.size() >= 20) break;
+                        String fnLower = fn.toLowerCase();
+                        if (textLower.contains(fnLower)) {
+                            try {
+                                ArchiveFileBean af = fileService.getArchiveFileByFileNumber(fn);
+                                if (af != null) {
+                                    textMatchedCases.add(af);
+                                }
+                            } catch (Exception ex) {
+                                log.warn("Failed to look up case for file number " + fn, ex);
+                            }
+                        }
+                    }
+
+                    // Match foreign file numbers
+                    if (textMatchedCases.size() < 20) {
+                        ArrayList<String> foundFileNumbers = new ArrayList<>();
+                        for (ArchiveFileBean af : textMatchedCases) {
+                            foundFileNumbers.add(af.getFileNumber());
+                        }
+                        for (String fn : allForeignFileNumbers) {
+                            if (textMatchedCases.size() >= 20) break;
+                            String fnLower = fn.toLowerCase();
+                            if (textLower.contains(fnLower)) {
+                                try {
+                                    List<ArchiveFileAddressesBean> addrCases = fileService.getArchiveFileAddressesByReference(fn);
+                                    if (addrCases != null) {
+                                        for (ArchiveFileAddressesBean aab : addrCases) {
+                                            ArchiveFileBean af = aab.getArchiveFileKey();
+                                            if (af != null && !foundFileNumbers.contains(af.getFileNumber())) {
+                                                foundFileNumbers.add(af.getFileNumber());
+                                                textMatchedCases.add(af);
+                                            }
+                                        }
+                                    }
+                                } catch (Exception ex) {
+                                    log.warn("Failed to look up cases for reference " + fn, ex);
+                                }
+                            }
+                        }
+                    }
+
+                    if (!textMatchedCases.isEmpty()) {
+                        addDropscanCaseSuggestionsToUI(textMatchedCases, actionPanelEntries, mailing);
+                        return;
+                    }
+                }
+
+                // Fallback: recently changed cases
+                String currentUserId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
+                List<ArchiveFileBean> myCases = fileService.getLastChanged(currentUserId, true, 10);
+                List<ArchiveFileBean> othersCases = fileService.getLastChanged(currentUserId, false, 10);
+                List<ArchiveFileBean> combined = new ArrayList<>();
+                combined.addAll(myCases);
+                combined.addAll(othersCases);
+                addDropscanCaseSuggestionsToUI(combined, actionPanelEntries, mailing);
+
+            } catch (Exception ex) {
+                log.error("Failed to load case suggestions for Dropscan mailing", ex);
+            }
+        }).start();
+    }
+
+    private void addDropscanCaseSuggestionsToUI(List<ArchiveFileBean> cases, ArrayList<Component> actionPanelEntries, DropscanMailing mailing) {
+        int i = 0;
+        ArrayList<String> caseCandidates = new ArrayList<>();
+        for (ArchiveFileBean af : cases) {
+            if (!caseCandidates.contains(af.getFileNumber())) {
+                caseCandidates.add(af.getFileNumber());
+                SaveScanToCasePanel ep = getDropscanSaveToCasePanel(af, mailing);
+                if (i % 2 == 0) {
+                    ep.setBackground(ep.getBackground().darker());
+                }
+                ep.setBackground(ep.getBackground().brighter());
+                actionPanelEntries.add(ep);
+                i++;
+            }
+        }
+
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            pnlDropscanActionsChild.setLayout(new java.awt.GridLayout(Math.max(actionPanelEntries.size(), 1), 1));
+            pnlDropscanActionsChild.removeAll();
+            for (Component o : actionPanelEntries) {
+                pnlDropscanActionsChild.add(o);
+            }
+            pnlDropscanActionsChild.revalidate();
+            pnlDropscanActionsChild.repaint();
+        });
+    }
+
+    private SaveScanToCasePanel getDropscanSaveToCasePanel(ArchiveFileBean af, DropscanMailing mailing) {
+        SaveScanToCasePanel ep = new SaveScanToCasePanel(this.getClass().getName());
+        CaseForContactEntry lce = new CaseForContactEntry();
+        lce.setFileNumber(af.getFileNumber());
+        lce.setId(af.getId());
+        lce.setRole("");
+        lce.setName(af.getName());
+        lce.setReason(StringUtils.nonEmpty(af.getReason()));
+        lce.setArchived(af.isArchived());
+        // Use an anonymous SaveToCaseExecutor for Dropscan-specific import
+        ep.setEntry(lce, new SaveToCaseExecutor() {
+            @Override
+            public boolean saveToCaseCallback(String caseId, boolean withAttachments, boolean separateAttachments, boolean onlyAttachments) {
+                return dropscanSaveToCaseCallback(caseId, mailing);
+            }
+
+            @Override
+            public boolean renameCallback() {
+                return false;
+            }
+
+            @Override
+            public boolean removeCallback() {
+                return false;
+            }
+
+            @Override
+            public boolean splitPdfCallback() {
+                return false;
+            }
+        });
+        return ep;
+    }
+
+    private boolean dropscanSaveToCaseCallback(String caseId, DropscanMailing mailing) {
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            DropscanServiceRemote ds = locator.lookupDropscanServiceRemote();
+
+            // Download ZIP
+            byte[] zipData = ds.getMailingZip(String.valueOf(mailing.getScanboxId()), mailing.getUuid());
+
+            // Extract ZIP entries
+            java.util.Map<String, byte[]> extractedFiles = new java.util.LinkedHashMap<>();
+            try (java.util.zip.ZipInputStream zis = new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(zipData))) {
+                java.util.zip.ZipEntry entry;
+                while ((entry = zis.getNextEntry()) != null) {
+                    if (!entry.isDirectory()) {
+                        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                        byte[] buffer = new byte[8192];
+                        int len;
+                        while ((len = zis.read(buffer)) != -1) {
+                            baos.write(buffer, 0, len);
+                        }
+                        extractedFiles.put(entry.getName(), baos.toByteArray());
+                    }
+                    zis.closeEntry();
+                }
+            }
+
+            if (extractedFiles.isEmpty()) {
+                ThreadUtils.showErrorDialog(this, "Das ZIP-Archiv enthält keine Dokumente.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                return false;
+            }
+
+            // Use BulkSaveDialog
+            BulkSaveDialog bulkSaveDlg = new BulkSaveDialog(BulkSaveDialog.TYPE_SCAN, EditorsRegistry.getInstance().getMainWindow(), true);
+
+            // Create a simple processor that just returns the bytes already loaded
+            DropscanEntryProcessor processor = new DropscanEntryProcessor(extractedFiles);
+            bulkSaveDlg.setEntryProcessor(processor);
+
+            // Determine target case and folder
+            SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "", caseId);
+            dlg.setVisible(true);
+            ArchiveFileBean targetCase = dlg.getCaseSelection();
+            CaseFolder targetFolder = dlg.getFolderSelection();
+            CaseFolder rootFolder = dlg.getRootFolder();
+            dlg.dispose();
+
+            if (targetCase == null) {
+                return false;
+            }
+
+            bulkSaveDlg.setCaseFolder(rootFolder, targetFolder);
+            bulkSaveDlg.setSelectedCase(targetCase);
+
+            for (java.util.Map.Entry<String, byte[]> fileEntry : extractedFiles.entrySet()) {
+                BulkSaveEntry bulkEntry = new BulkSaveEntry();
+                bulkEntry.setDocumentDate(mailing.getReceivedAt() != null ? mailing.getReceivedAt() : new Date());
+                bulkEntry.setDocumentFilename(fileEntry.getKey());
+                bulkSaveDlg.addEntry(bulkEntry);
+            }
+
+            bulkSaveDlg.setVisible(true);
+
+            if (!bulkSaveDlg.isFailedOrCancelled()) {
+                // Document date is already set via BulkSaveEntry.setDocumentDate(receivedAt)
+
+                // Destroy at Dropscan if checkbox is selected
+                if (chkDropscanDestroyAfterImport.isSelected()) {
+                    try {
+                        ds.requestDestroy(String.valueOf(mailing.getScanboxId()), mailing.getUuid());
+                    } catch (Exception ex) {
+                        log.error("Failed to request destruction of mailing " + mailing.getUuid(), ex);
+                        ThreadUtils.showErrorDialog(this, "Import erfolgreich, aber Vernichtung konnte nicht angefordert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                    }
+                }
+
+                // Refresh mailing list
+                refreshDropscanMailings();
+                return true;
+            }
+
+        } catch (Exception ex) {
+            log.error("Failed to import Dropscan mailing to case", ex);
+            ThreadUtils.showErrorDialog(this, "Import fehlgeschlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+        }
+        return false;
+    }
+
+    private void dropscanRequestScan() {
+        int selectedRow = tblDropscanMailings.getSelectedRow();
+        if (selectedRow < 0 || selectedRow >= dropscanMailings.size()) {
+            return;
+        }
+        DropscanMailing mailing = dropscanMailings.get(selectedRow);
+        if (!DropscanMailing.STATUS_RECEIVED.equals(mailing.getStatus())) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Scan kann nur für empfangene Sendungen angefordert werden.", "Dropscan", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        new Thread(() -> {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                DropscanServiceRemote ds = locator.lookupDropscanServiceRemote();
+                ds.requestScan(String.valueOf(mailing.getScanboxId()), mailing.getUuid());
+                refreshDropscanMailings();
+            } catch (Exception ex) {
+                log.error("Failed to request scan", ex);
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    javax.swing.JOptionPane.showMessageDialog(ScannerPanel.this, "Scan-Anforderung fehlgeschlagen: " + ex.getMessage(), "Dropscan", javax.swing.JOptionPane.ERROR_MESSAGE);
+                });
+            }
+        }).start();
+    }
+
+    private void dropscanRequestDestroy() {
+        int selectedRow = tblDropscanMailings.getSelectedRow();
+        if (selectedRow < 0 || selectedRow >= dropscanMailings.size()) {
+            return;
+        }
+        DropscanMailing mailing = dropscanMailings.get(selectedRow);
+
+        int confirm = javax.swing.JOptionPane.showConfirmDialog(this, "Soll die Sendung bei Dropscan vernichtet werden?\nDieser Vorgang kann nicht rückgängig gemacht werden.", "Vernichtung bestätigen", javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.WARNING_MESSAGE);
+        if (confirm != javax.swing.JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        new Thread(() -> {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                DropscanServiceRemote ds = locator.lookupDropscanServiceRemote();
+                ds.requestDestroy(String.valueOf(mailing.getScanboxId()), mailing.getUuid());
+                refreshDropscanMailings();
+            } catch (Exception ex) {
+                log.error("Failed to request destruction", ex);
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    javax.swing.JOptionPane.showMessageDialog(ScannerPanel.this, "Vernichtungs-Anforderung fehlgeschlagen: " + ex.getMessage(), "Dropscan", javax.swing.JOptionPane.ERROR_MESSAGE);
+                });
+            }
+        }).start();
+    }
+
+    private static String displayNameToStatus(String displayName) {
+        if (displayName == null) return null;
+        switch (displayName) {
+            case "Empfangen": return DropscanMailing.STATUS_RECEIVED;
+            case "Scan angefordert": return DropscanMailing.STATUS_SCAN_REQUESTED;
+            case "Gescannt": return DropscanMailing.STATUS_SCANNED;
+            case "Vernichtung angefordert": return DropscanMailing.STATUS_DESTROY_REQUESTED;
+            case "Vernichtet": return DropscanMailing.STATUS_DESTROYED;
+            case "Weiterleitung angefordert": return DropscanMailing.STATUS_FORWARD_REQUESTED;
+            case "Weitergeleitet": return DropscanMailing.STATUS_FORWARDED;
+            default: return displayName;
+        }
     }
 
     private void displayLocalScanDir() {
@@ -970,9 +1602,13 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         mnuDeactivateLocalFolder = new javax.swing.JMenuItem();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
+        jTabbedPane1 = new javax.swing.JTabbedPane();
+        jPanel1 = new javax.swing.JPanel();
         cmdRefresh = new javax.swing.JButton();
         cmdLocalUploadDir = new javax.swing.JButton();
         lblLocalDir = new javax.swing.JLabel();
+        chkDeleteAfterAction = new javax.swing.JCheckBox();
+        jPanel2 = new javax.swing.JPanel();
         splitContainer = new javax.swing.JSplitPane();
         splitTop = new javax.swing.JSplitPane();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -982,7 +1618,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         pnlActionsChild = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
         pnlPreview = new javax.swing.JPanel();
-        chkDeleteAfterAction = new javax.swing.JCheckBox();
+        pnlDropscan = new javax.swing.JPanel();
 
         mnuSplitPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_splitscreen_black_48dp.png"))); // NOI18N
         mnuSplitPdf.setText("PDF splitten");
@@ -1044,7 +1680,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setText("Scans");
 
-        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_refresh_blue_36dp.png"))); // NOI18N
+        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/reload.png"))); // NOI18N
         cmdRefresh.setToolTipText("Aktualisieren");
         cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1060,8 +1696,18 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         });
 
-        lblLocalDir.setForeground(new java.awt.Color(255, 255, 255));
+        lblLocalDir.setFont(lblLocalDir.getFont());
         lblLocalDir.setText("jLabel1");
+
+        chkDeleteAfterAction.setFont(chkDeleteAfterAction.getFont());
+        chkDeleteAfterAction.setSelected(true);
+        chkDeleteAfterAction.setText("nach Zuordnung löschen");
+        chkDeleteAfterAction.setToolTipText("Dokument nach Übernahme in eine Akte aus dem Scaneingang löschen");
+        chkDeleteAfterAction.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkDeleteAfterActionActionPerformed(evt);
+            }
+        });
 
         splitTop.setMaximumSize(new java.awt.Dimension(2148, 2147483647));
 
@@ -1105,11 +1751,11 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         pnlActionsChild.setLayout(pnlActionsChildLayout);
         pnlActionsChildLayout.setHorizontalGroup(
             pnlActionsChildLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 124, Short.MAX_VALUE)
+            .add(0, 0, Short.MAX_VALUE)
         );
         pnlActionsChildLayout.setVerticalGroup(
             pnlActionsChildLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 321, Short.MAX_VALUE)
+            .add(0, 0, Short.MAX_VALUE)
         );
 
         pnlActions.add(pnlActionsChild);
@@ -1125,16 +1771,69 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         splitContainer.setRightComponent(jScrollPane4);
 
-        chkDeleteAfterAction.setFont(chkDeleteAfterAction.getFont().deriveFont(chkDeleteAfterAction.getFont().getStyle() | java.awt.Font.BOLD));
-        chkDeleteAfterAction.setForeground(new java.awt.Color(255, 255, 255));
-        chkDeleteAfterAction.setSelected(true);
-        chkDeleteAfterAction.setText("nach Zuordnung löschen");
-        chkDeleteAfterAction.setToolTipText("Dokument nach Übernahme in eine Akte aus dem Scaneingang löschen");
-        chkDeleteAfterAction.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkDeleteAfterActionActionPerformed(evt);
-            }
-        });
+        org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 0, Short.MAX_VALUE)
+            .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(splitContainer, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 880, Short.MAX_VALUE))
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 319, Short.MAX_VALUE)
+            .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(splitContainer, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 678, Short.MAX_VALUE))
+        );
+
+        org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jPanel1Layout.createSequentialGroup()
+                        .add(cmdRefresh)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 524, Short.MAX_VALUE)
+                        .add(chkDeleteAfterAction)
+                        .add(18, 18, 18)
+                        .add(lblLocalDir)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdLocalUploadDir)))
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(cmdRefresh)
+                    .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                        .add(cmdLocalUploadDir, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(lblLocalDir, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(chkDeleteAfterAction))))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        jTabbedPane1.addTab("lokale Scanner", jPanel1);
+
+        org.jdesktop.layout.GroupLayout pnlDropscanLayout = new org.jdesktop.layout.GroupLayout(pnlDropscan);
+        pnlDropscan.setLayout(pnlDropscanLayout);
+        pnlDropscanLayout.setHorizontalGroup(
+            pnlDropscanLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 892, Short.MAX_VALUE)
+        );
+        pnlDropscanLayout.setVerticalGroup(
+            pnlDropscanLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 366, Short.MAX_VALUE)
+        );
+
+        jTabbedPane1.addTab("Dropscan", pnlDropscan);
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
@@ -1143,20 +1842,11 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(splitContainer)
                     .add(layout.createSequentialGroup()
-                        .add(cmdRefresh)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jLabel18)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 828, Short.MAX_VALUE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblLocalDir)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdLocalUploadDir))
-                    .add(layout.createSequentialGroup()
-                        .add(chkDeleteAfterAction)
-                        .add(0, 0, Short.MAX_VALUE)))
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(jTabbedPane1))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1165,15 +1855,9 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jLabel18)
-                    .add(cmdRefresh)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                        .add(cmdLocalUploadDir)
-                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(lblLocalDir)))
+                    .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(chkDeleteAfterAction)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(splitContainer, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 454, Short.MAX_VALUE)
+                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 410, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1645,9 +2329,12 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JButton cmdLocalUploadDir;
     private javax.swing.JButton cmdRefresh;
     private javax.swing.JLabel jLabel18;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLabel lblLocalDir;
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JMenuItem mnuDeactivateLocalFolder;
@@ -1658,6 +2345,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JMenuItem mnuSplitPdf;
     private javax.swing.JPanel pnlActions;
     private javax.swing.JPanel pnlActionsChild;
+    private javax.swing.JPanel pnlDropscan;
     private javax.swing.JPanel pnlPreview;
     private javax.swing.JPopupMenu popActions;
     private javax.swing.JPopupMenu popConfiguration;

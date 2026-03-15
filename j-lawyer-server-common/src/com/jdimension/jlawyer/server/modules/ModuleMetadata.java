@@ -700,7 +700,8 @@ public class ModuleMetadata implements TreeNode {
     private String fullName=null;
     
     private Integer statusEventType=-1;
-    
+    private java.util.ArrayList<Integer> additionalEventTypes = new java.util.ArrayList<>();
+
     private KeyStroke hotKey=null;
     private String hotKeyName=null;
 
@@ -940,6 +941,14 @@ public class ModuleMetadata implements TreeNode {
      */
     public void setStatusEventType(Integer statusEventType) {
         this.statusEventType = statusEventType;
+    }
+
+    public void addAdditionalEventType(Integer eventType) {
+        this.additionalEventTypes.add(eventType);
+    }
+
+    public java.util.ArrayList<Integer> getAdditionalEventTypes() {
+        return additionalEventTypes;
     }
 
     /**

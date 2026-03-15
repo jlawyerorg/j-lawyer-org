@@ -663,6 +663,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.ServerSettingsBean;
+import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
+import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import javax.ejb.EJB;
@@ -690,7 +693,15 @@ public class ScheduledTasksService implements ScheduledTasksServiceLocal {
 
     @EJB
     private BeaSessionRegistry sessionRegistry;
-    
+
+    @EJB
+    private DropscanServiceLocal dropscanService;
+
+    @EJB
+    private ServerSettingsBeanFacadeLocal settingsFacade;
+
+    private long lastDropscanPollTime = 0;
+
     @Override
     @Schedule(dayOfWeek = "1-7", hour = "6", minute = "01", second = "0", persistent = false)
     @TransactionTimeout(value = 10, unit = TimeUnit.MINUTES)
@@ -726,6 +737,33 @@ public class ScheduledTasksService implements ScheduledTasksServiceLocal {
             log.error("Could not send weekly digest", ex);
         }
 
+    }
+
+    @Override
+    @Schedule(dayOfWeek = "Mon-Sat", hour = "6-20", minute = "*/1", second = "30", persistent = false)
+    public void pollDropscanMailings() {
+        try {
+            int intervalMinutes = 15;
+            try {
+                ServerSettingsBean intervalSetting = settingsFacade.find(ServerSettingsKeys.SERVERCONF_DROPSCAN_POLLINGINTERVAL);
+                if (intervalSetting != null && intervalSetting.getSettingValue() != null) {
+                    intervalMinutes = Integer.parseInt(intervalSetting.getSettingValue());
+                }
+            } catch (Exception ex) {
+                log.warn("Could not read Dropscan polling interval, using default of 15 minutes", ex);
+            }
+
+            long now = System.currentTimeMillis();
+            long intervalMs = intervalMinutes * 60L * 1000L;
+            if (now - lastDropscanPollTime < intervalMs) {
+                return;
+            }
+            lastDropscanPollTime = now;
+
+            dropscanService.pollAllUsers();
+        } catch (Exception ex) {
+            log.error("Dropscan polling failed", ex);
+        }
     }
 
     @Override

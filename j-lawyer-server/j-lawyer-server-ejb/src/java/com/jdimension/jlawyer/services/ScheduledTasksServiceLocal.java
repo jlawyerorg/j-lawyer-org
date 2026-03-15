@@ -680,4 +680,6 @@ public interface ScheduledTasksServiceLocal {
 
     void cleanupStaleBeaSessions();
 
+    void pollDropscanMailings();
+
 }

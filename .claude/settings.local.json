@@ -65,7 +65,8 @@
       "WebFetch(domain:api.sipgate.com)",
       "WebFetch(domain:www.sipgate.io)",
       "WebFetch(domain:en.sipgate.io)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.dropscan.de)"
     ],
     "deny": [],
     "ask": []
