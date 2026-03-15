@@ -1159,11 +1159,6 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                 cmdOptionsMouseReleased(evt);
             }
         });
-        cmdOptions.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdOptionsActionPerformed(evt);
-            }
-        });
 
         cmdSelectAll.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_select_all_black_48dp.png"))); // NOI18N
         cmdSelectAll.setToolTipText("alle auswählen");
@@ -1577,10 +1572,6 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     private void cmdSelectNone1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectNone1ActionPerformed
         this.selectAllDocuments(false);
     }//GEN-LAST:event_cmdSelectNone1ActionPerformed
-
-    private void cmdOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOptionsActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_cmdOptionsActionPerformed
 
     private void cmdOptionsMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdOptionsMouseReleased
         this.popFolderTemplates.show(this.cmdOptions, evt.getX(), evt.getY());

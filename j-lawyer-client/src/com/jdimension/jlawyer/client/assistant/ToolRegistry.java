@@ -30,6 +30,7 @@ import com.jdimension.jlawyer.persistence.Timesheet;
 import com.jdimension.jlawyer.persistence.TimesheetPosition;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.DocumentFolderTemplate;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
@@ -387,6 +388,17 @@ public class ToolRegistry {
                         new ToolParameter("folderId", "string", "ID des Zielordners", true)),
                 ToolDefinition.RISK_MEDIUM));
 
+        TOOLS.add(new ToolDefinition("list_folder_templates",
+                "Listet alle verfügbaren Ordnerstruktur-Vorlagen auf. Gibt die Namen und IDs der Vorlagen zurück.",
+                Arrays.asList()));
+
+        TOOLS.add(new ToolDefinition("apply_folder_template",
+                "Wendet eine Ordnerstruktur-Vorlage auf eine Akte an. Die Ordner aus der Vorlage werden zur bestehenden Ordnerstruktur hinzugefügt.",
+                Arrays.asList(
+                        new ToolParameter("caseId", "string", "Interne ID der Akte", true),
+                        new ToolParameter("templateName", "string", "Name der Ordnervorlage", true)),
+                ToolDefinition.RISK_MEDIUM));
+
         TOOLS.add(new ToolDefinition("list_document_tags",
                 "Gibt alle verfügbaren Etiketten (Tags) für Dokumente zurück, inkl. Listenetiketten mit ihren möglichen Werten.",
                 Arrays.asList()));
@@ -557,6 +569,10 @@ public class ToolRegistry {
                     return executeListCaseFolders(args);
                 case "move_document_to_folder":
                     return executeMoveDocumentToFolder(args);
+                case "list_folder_templates":
+                    return executeListFolderTemplates(args);
+                case "apply_folder_template":
+                    return executeApplyFolderTemplate(args);
                 case "list_document_tags":
                     return executeListDocumentTags(args);
                 case "list_case_tags":
@@ -710,6 +726,10 @@ public class ToolRegistry {
                     return "Ordner der Akte: " + args.getOrDefault("caseId", "");
                 case "move_document_to_folder":
                     return "Dokument in Ordner verschieben: " + args.getOrDefault("documentId", "");
+                case "list_folder_templates":
+                    return "Verfügbare Ordnervorlagen auflisten";
+                case "apply_folder_template":
+                    return "Ordnervorlage anwenden: " + args.getOrDefault("templateName", "");
                 case "list_document_tags":
                     return "Verfügbare Dokument-Etiketten auflisten";
                 case "list_case_tags":
@@ -1008,6 +1028,49 @@ public class ToolRegistry {
 
         return "{\"success\": true, \"documentId\": \"" + ToolJsonUtils.escapeJson(documentId.trim())
                 + "\", \"folderId\": \"" + ToolJsonUtils.escapeJson(folderId.trim()) + "\"}";
+    }
+
+    private String executeListFolderTemplates(JsonObject args) throws Exception {
+        ArchiveFileServiceRemote svc = ToolJsonUtils.getLocator().lookupArchiveFileServiceRemote();
+        List<DocumentFolderTemplate> templates = svc.getAllFolderTemplates();
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"folderTemplates\": [");
+        for (int i = 0; i < templates.size(); i++) {
+            DocumentFolderTemplate t = templates.get(i);
+            if (i > 0) sb.append(", ");
+            sb.append("{\"id\": \"").append(ToolJsonUtils.escapeJson(t.getId())).append("\"");
+            sb.append(", \"name\": \"").append(ToolJsonUtils.escapeJson(t.getName())).append("\"");
+            sb.append("}");
+        }
+        sb.append("]}");
+        return sb.toString();
+    }
+
+    private String executeApplyFolderTemplate(JsonObject args) throws Exception {
+        String caseId = (String) args.get("caseId");
+        String templateName = (String) args.get("templateName");
+        if (caseId == null || caseId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Akten-ID (caseId) fehlt");
+        }
+        if (templateName == null || templateName.trim().isEmpty()) {
+            return ToolJsonUtils.error("Vorlagenname (templateName) fehlt");
+        }
+
+        ArchiveFileServiceRemote svc = ToolJsonUtils.getLocator().lookupArchiveFileServiceRemote();
+        CaseFolder newRoot = svc.applyFolderTemplate(caseId.trim(), templateName.trim());
+
+        EventBroker.getInstance().publishEvent(new CasesChangedEvent());
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"success\": true");
+        sb.append(", \"caseId\": \"").append(ToolJsonUtils.escapeJson(caseId.trim())).append("\"");
+        sb.append(", \"templateName\": \"").append(ToolJsonUtils.escapeJson(templateName.trim())).append("\"");
+        if (newRoot != null) {
+            sb.append(", \"rootFolderName\": \"").append(ToolJsonUtils.escapeJson(newRoot.getName())).append("\"");
+            sb.append(", \"rootFolderId\": \"").append(ToolJsonUtils.escapeJson(newRoot.getId())).append("\"");
+        }
+        sb.append("}");
+        return sb.toString();
     }
 
     private String executeFindFreeSlots(JsonObject args) throws Exception {
