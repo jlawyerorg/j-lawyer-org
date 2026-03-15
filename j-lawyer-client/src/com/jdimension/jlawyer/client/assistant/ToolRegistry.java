@@ -180,8 +180,19 @@ public class ToolRegistry {
                         new ToolParameter("workStartHour", "integer", "Beginn der Arbeitszeit als Stunde (0-23, Standard: 8)", false),
                         new ToolParameter("workEndHour", "integer", "Ende der Arbeitszeit als Stunde (0-23, Standard: 18)", false))));
 
-        TOOLS.add(new ToolDefinition("get_all_open_invoices", "Gibt alle offenen Rechnungen zurück.",
-                Arrays.asList()));
+        TOOLS.add(new ToolDefinition("get_all_open_invoices", "Gibt alle offenen Rechnungen seitenweise zurück (20 pro Seite). Gibt totalInvoices, page, totalPages und hasMore zurück.",
+                Arrays.asList(
+                        new ToolParameter("page", "integer", "Seitennummer (1-basiert, Standard: 1)", false))));
+
+        TOOLS.add(new ToolDefinition("search_invoices", "Sucht offene Rechnungen per Textsuche (case-insensitiv, contains) in Rechnungsnummer, Name, Vorname und Firma des Kontakts. Ergebnisse auf 50 begrenzt.",
+                Arrays.asList(
+                        new ToolParameter("query", "string", "Suchbegriff", true))));
+
+        TOOLS.add(new ToolDefinition("search_invoices_by_date", "Sucht offene Rechnungen, deren Erstellungsdatum in einem Zeitraum liegt. Seitenweise Ausgabe (20 pro Seite). Gibt totalInvoices, page, totalPages und hasMore zurück.",
+                Arrays.asList(
+                        new ToolParameter("fromDate", "string", "Startdatum im Format yyyy-MM-dd", true),
+                        new ToolParameter("toDate", "string", "Enddatum im Format yyyy-MM-dd", true),
+                        new ToolParameter("page", "integer", "Seitennummer (1-basiert, Standard: 1)", false))));
 
         TOOLS.add(new ToolDefinition("get_document_content", "Gibt den Inhalt eines Dokuments als Base64-kodierten String zurück.",
                 Arrays.asList(new ToolParameter("documentId", "string", "ID des Dokuments", true))));
@@ -494,6 +505,10 @@ public class ToolRegistry {
                     return executeFindFreeSlots(args);
                 case "get_all_open_invoices":
                     return executeGetAllOpenInvoices(args);
+                case "search_invoices":
+                    return executeSearchInvoices(args);
+                case "search_invoices_by_date":
+                    return executeSearchInvoicesByDate(args);
                 case "get_document_content":
                     return executeGetDocumentContent(args);
                 case "rename_document":
@@ -642,7 +657,11 @@ public class ToolRegistry {
                 case "find_free_slots":
                     return "Freie Termine suchen: " + args.getOrDefault("fromDate", "") + " - " + args.getOrDefault("toDate", "");
                 case "get_all_open_invoices":
-                    return "Alle offenen Rechnungen";
+                    return "Offene Rechnungen (Seite " + args.getOrDefault("page", "1") + ")";
+                case "search_invoices":
+                    return "Rechnungssuche: '" + args.getOrDefault("query", "") + "'";
+                case "search_invoices_by_date":
+                    return "Rechnungssuche: " + args.getOrDefault("fromDate", "") + " - " + args.getOrDefault("toDate", "") + " (Seite " + args.getOrDefault("page", "1") + ")";
                 case "get_document_content":
                     return "Dokumentinhalt (Base64): " + args.getOrDefault("documentId", "");
                 case "rename_document":
@@ -786,7 +805,35 @@ public class ToolRegistry {
             return ToolJsonUtils.error("Dokument nicht gefunden: " + documentId);
         }
 
-        boolean success = svc.renameDocument(documentId, newName.trim());
+        // Dateiendung des Originals beibehalten
+        String originalName = doc.getName();
+        String originalExt = "";
+        int dotIdx = originalName.lastIndexOf('.');
+        if (dotIdx >= 0) {
+            originalExt = originalName.substring(dotIdx);
+        }
+
+        String trimmedNew = newName.trim();
+        String newExt = "";
+        int newDotIdx = trimmedNew.lastIndexOf('.');
+        if (newDotIdx >= 0) {
+            newExt = trimmedNew.substring(newDotIdx);
+        }
+
+        if (!originalExt.isEmpty()) {
+            if (newExt.equalsIgnoreCase(originalExt)) {
+                // Endung stimmt überein — nichts tun
+            } else if (!newExt.isEmpty()) {
+                // Falsche Endung — ersetzen
+                trimmedNew = trimmedNew.substring(0, newDotIdx) + originalExt;
+            } else {
+                // Keine Endung — anhängen
+                trimmedNew = trimmedNew + originalExt;
+            }
+        }
+        newName = trimmedNew;
+
+        boolean success = svc.renameDocument(documentId, newName);
         if (success) {
             EventBroker.getInstance().publishEvent(new DocumentRemovedEvent(doc));
             doc.setName(newName.trim());
@@ -1810,61 +1857,212 @@ public class ToolRegistry {
     }
 
     private String executeGetAllOpenInvoices(JsonObject args) throws Exception {
-        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
-        InvoiceServiceRemote invSvc = locator.lookupInvoiceServiceRemote();
-        List<Invoice> invoices = invSvc.getInvoicesByStatus(
-                Invoice.STATUS_OPEN, Invoice.STATUS_OPEN_REMINDER1, Invoice.STATUS_OPEN_REMINDER2,
-                Invoice.STATUS_OPEN_REMINDER3, Invoice.STATUS_OPEN_NONENFORCEABLE);
+        int page = 1;
+        Object pageObj = args.get("page");
+        if (pageObj != null) {
+            page = ((Number) pageObj).intValue();
+            if (page < 1) {
+                page = 1;
+            }
+        }
+        final int PAGE_SIZE = 20;
+
+        List<Invoice> invoices = getOpenInvoices();
+
+        int totalInvoices = invoices.size();
+        int totalPages = (int) Math.ceil((double) totalInvoices / PAGE_SIZE);
+        if (totalPages == 0) {
+            totalPages = 1;
+        }
+        if (page > totalPages) {
+            page = totalPages;
+        }
+
+        int fromIndex = (page - 1) * PAGE_SIZE;
+        int toIndex = Math.min(fromIndex + PAGE_SIZE, totalInvoices);
+        List<Invoice> pageInvoices = invoices.subList(fromIndex, toIndex);
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         StringBuilder sb = new StringBuilder();
         sb.append("{\"invoices\": [");
-        int limit = Math.min(invoices.size(), 50);
-        for (int i = 0; i < limit; i++) {
+        for (int i = 0; i < pageInvoices.size(); i++) {
             if (i > 0) {
                 sb.append(",");
             }
-            Invoice inv = invoices.get(i);
-            sb.append("{\"id\": \"").append(ToolJsonUtils.escapeJson(inv.getId())).append("\"");
-            if (inv.getName() != null) {
-                sb.append(", \"name\": \"").append(ToolJsonUtils.escapeJson(inv.getName())).append("\"");
+            appendInvoiceJson(sb, pageInvoices.get(i), sdf);
+        }
+        sb.append("], \"totalInvoices\": ").append(totalInvoices);
+        sb.append(", \"page\": ").append(page);
+        sb.append(", \"totalPages\": ").append(totalPages);
+        sb.append(", \"hasMore\": ").append(page < totalPages);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    private void appendInvoiceJson(StringBuilder sb, Invoice inv, SimpleDateFormat sdf) {
+        sb.append("{\"id\": \"").append(ToolJsonUtils.escapeJson(inv.getId())).append("\"");
+        if (inv.getName() != null) {
+            sb.append(", \"name\": \"").append(ToolJsonUtils.escapeJson(inv.getName())).append("\"");
+        }
+        if (inv.getInvoiceNumber() != null) {
+            sb.append(", \"invoiceNumber\": \"").append(ToolJsonUtils.escapeJson(inv.getInvoiceNumber())).append("\"");
+        }
+        sb.append(", \"status\": \"").append(ToolJsonUtils.escapeJson(inv.getStatusString())).append("\"");
+        if (inv.getTotal() != null) {
+            sb.append(", \"total\": ").append(inv.getTotal());
+        }
+        if (inv.getTotalGross() != null) {
+            sb.append(", \"totalGross\": ").append(inv.getTotalGross());
+        }
+        if (inv.getCurrency() != null) {
+            sb.append(", \"currency\": \"").append(ToolJsonUtils.escapeJson(inv.getCurrency())).append("\"");
+        }
+        if (inv.getDueDate() != null) {
+            sb.append(", \"dueDate\": \"").append(sdf.format(inv.getDueDate())).append("\"");
+        }
+        if (inv.getCreationDate() != null) {
+            sb.append(", \"creationDate\": \"").append(sdf.format(inv.getCreationDate())).append("\"");
+        }
+        if (inv.getInvoiceType() != null) {
+            sb.append(", \"invoiceType\": \"").append(ToolJsonUtils.escapeJson(inv.getInvoiceType().getDisplayName())).append("\"");
+        }
+        if (inv.getArchiveFileKey() != null) {
+            sb.append(", \"caseId\": \"").append(ToolJsonUtils.escapeJson(inv.getArchiveFileKey().getId())).append("\"");
+            sb.append(", \"caseFileNumber\": \"").append(ToolJsonUtils.escapeJson(inv.getArchiveFileKey().getFileNumber())).append("\"");
+        }
+        if (inv.getContact() != null) {
+            sb.append(", \"contactId\": \"").append(ToolJsonUtils.escapeJson(inv.getContact().getId())).append("\"");
+            sb.append(", \"contactName\": \"").append(ToolJsonUtils.escapeJson(inv.getContact().toDisplayName())).append("\"");
+        }
+        sb.append("}");
+    }
+
+    private List<Invoice> getOpenInvoices() throws Exception {
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        InvoiceServiceRemote invSvc = locator.lookupInvoiceServiceRemote();
+        return invSvc.getInvoicesByStatus(
+                Invoice.STATUS_OPEN, Invoice.STATUS_OPEN_REMINDER1, Invoice.STATUS_OPEN_REMINDER2,
+                Invoice.STATUS_OPEN_REMINDER3, Invoice.STATUS_OPEN_NONENFORCEABLE);
+    }
+
+    private String executeSearchInvoices(JsonObject args) throws Exception {
+        String query = (String) args.get("query");
+        if (query == null || query.trim().isEmpty()) {
+            return ToolJsonUtils.error("Suchbegriff fehlt");
+        }
+        String queryLower = query.trim().toLowerCase();
+
+        List<Invoice> invoices = getOpenInvoices();
+
+        List<Invoice> filtered = new ArrayList<>();
+        for (Invoice inv : invoices) {
+            if (filtered.size() >= 50) {
+                break;
             }
-            if (inv.getInvoiceNumber() != null) {
-                sb.append(", \"invoiceNumber\": \"").append(ToolJsonUtils.escapeJson(inv.getInvoiceNumber())).append("\"");
+            // search in invoice number
+            if (inv.getInvoiceNumber() != null && inv.getInvoiceNumber().toLowerCase().contains(queryLower)) {
+                filtered.add(inv);
+                continue;
             }
-            sb.append(", \"status\": \"").append(ToolJsonUtils.escapeJson(inv.getStatusString())).append("\"");
-            if (inv.getTotal() != null) {
-                sb.append(", \"total\": ").append(inv.getTotal());
-            }
-            if (inv.getTotalGross() != null) {
-                sb.append(", \"totalGross\": ").append(inv.getTotalGross());
-            }
-            if (inv.getCurrency() != null) {
-                sb.append(", \"currency\": \"").append(ToolJsonUtils.escapeJson(inv.getCurrency())).append("\"");
-            }
-            if (inv.getDueDate() != null) {
-                sb.append(", \"dueDate\": \"").append(sdf.format(inv.getDueDate())).append("\"");
-            }
-            if (inv.getCreationDate() != null) {
-                sb.append(", \"creationDate\": \"").append(sdf.format(inv.getCreationDate())).append("\"");
-            }
-            if (inv.getInvoiceType() != null) {
-                sb.append(", \"invoiceType\": \"").append(ToolJsonUtils.escapeJson(inv.getInvoiceType().getDisplayName())).append("\"");
-            }
-            if (inv.getArchiveFileKey() != null) {
-                sb.append(", \"caseId\": \"").append(ToolJsonUtils.escapeJson(inv.getArchiveFileKey().getId())).append("\"");
-                sb.append(", \"caseFileNumber\": \"").append(ToolJsonUtils.escapeJson(inv.getArchiveFileKey().getFileNumber())).append("\"");
-            }
+            // search in contact fields
             if (inv.getContact() != null) {
-                sb.append(", \"contactId\": \"").append(ToolJsonUtils.escapeJson(inv.getContact().getId())).append("\"");
-                sb.append(", \"contactName\": \"").append(ToolJsonUtils.escapeJson(inv.getContact().toDisplayName())).append("\"");
+                AddressBean contact = inv.getContact();
+                if (contact.getName() != null && contact.getName().toLowerCase().contains(queryLower)) {
+                    filtered.add(inv);
+                    continue;
+                }
+                if (contact.getFirstName() != null && contact.getFirstName().toLowerCase().contains(queryLower)) {
+                    filtered.add(inv);
+                    continue;
+                }
+                if (contact.getCompany() != null && contact.getCompany().toLowerCase().contains(queryLower)) {
+                    filtered.add(inv);
+                    continue;
+                }
             }
-            sb.append("}");
         }
-        sb.append("], \"totalInvoices\": ").append(invoices.size());
-        if (invoices.size() > limit) {
-            sb.append(", \"truncated\": true");
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"query\": \"").append(ToolJsonUtils.escapeJson(query)).append("\"");
+        sb.append(", \"invoices\": [");
+        for (int i = 0; i < filtered.size(); i++) {
+            if (i > 0) {
+                sb.append(",");
+            }
+            appendInvoiceJson(sb, filtered.get(i), sdf);
         }
+        sb.append("], \"totalInvoices\": ").append(filtered.size());
+        sb.append("}");
+        return sb.toString();
+    }
+
+    private String executeSearchInvoicesByDate(JsonObject args) throws Exception {
+        String fromDateStr = (String) args.get("fromDate");
+        String toDateStr = (String) args.get("toDate");
+        if (fromDateStr == null || fromDateStr.trim().isEmpty()) {
+            return ToolJsonUtils.error("Startdatum (fromDate) fehlt");
+        }
+        if (toDateStr == null || toDateStr.trim().isEmpty()) {
+            return ToolJsonUtils.error("Enddatum (toDate) fehlt");
+        }
+
+        Date fromDate = ToolJsonUtils.parseIsoDate(fromDateStr);
+        Date toDate = ToolJsonUtils.parseIsoDate(toDateStr);
+        if (fromDate == null) {
+            return ToolJsonUtils.error("Startdatum konnte nicht geparst werden: " + fromDateStr);
+        }
+        if (toDate == null) {
+            return ToolJsonUtils.error("Enddatum konnte nicht geparst werden: " + toDateStr);
+        }
+
+        int page = 1;
+        Object pageObj = args.get("page");
+        if (pageObj != null) {
+            page = ((Number) pageObj).intValue();
+            if (page < 1) {
+                page = 1;
+            }
+        }
+        final int PAGE_SIZE = 20;
+
+        List<Invoice> invoices = getOpenInvoices();
+
+        List<Invoice> filtered = new ArrayList<>();
+        for (Invoice inv : invoices) {
+            if (inv.getCreationDate() != null && !inv.getCreationDate().before(fromDate) && !inv.getCreationDate().after(toDate)) {
+                filtered.add(inv);
+            }
+        }
+
+        int totalInvoices = filtered.size();
+        int totalPages = (int) Math.ceil((double) totalInvoices / PAGE_SIZE);
+        if (totalPages == 0) {
+            totalPages = 1;
+        }
+        if (page > totalPages) {
+            page = totalPages;
+        }
+
+        int fromIndex = (page - 1) * PAGE_SIZE;
+        int toIndex = Math.min(fromIndex + PAGE_SIZE, totalInvoices);
+        List<Invoice> pageInvoices = filtered.subList(fromIndex, toIndex);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"fromDate\": \"").append(ToolJsonUtils.escapeJson(fromDateStr)).append("\"");
+        sb.append(", \"toDate\": \"").append(ToolJsonUtils.escapeJson(toDateStr)).append("\"");
+        sb.append(", \"invoices\": [");
+        for (int i = 0; i < pageInvoices.size(); i++) {
+            if (i > 0) {
+                sb.append(",");
+            }
+            appendInvoiceJson(sb, pageInvoices.get(i), sdf);
+        }
+        sb.append("], \"totalInvoices\": ").append(totalInvoices);
+        sb.append(", \"page\": ").append(page);
+        sb.append(", \"totalPages\": ").append(totalPages);
+        sb.append(", \"hasMore\": ").append(page < totalPages);
         sb.append("}");
         return sb.toString();
     }
