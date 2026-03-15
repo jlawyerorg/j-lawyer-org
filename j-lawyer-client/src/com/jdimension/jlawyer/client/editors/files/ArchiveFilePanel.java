@@ -9710,6 +9710,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 //i.setStringData(docText);
             } else {
                 StringBuilder docTexts = new StringBuilder();
+                if (AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType())) {
+                    docTexts.append("Nutze für die folgende Konversation die Akte mit ID ").append(dto.getId()).append(" und Aktenzeichen ").append(dto.getFileNumber()).append(".").append(System.lineSeparator()).append(System.lineSeparator());
+                }
 
                 for (ArchiveFileDocumentsBean doc : selected) {
                     docTexts.append("Dokument \"").append(doc.getName()).append("\" vom ").append(dfDay.format(doc.getCreationDate())).append(System.lineSeparator());
