@@ -17,7 +17,6 @@ import com.jdimension.jlawyer.client.assistant.AssistantAccess;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.CaseInsensitiveStringComparator;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
-import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.persistence.AssistantPrompt;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -61,6 +60,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
     private JTextArea taModelDescription;
     private JButton cmdAdd;
     private JButton cmdRemove;
+    private JButton cmdDuplicate;
     private JButton cmdSave;
     private JButton cmdClose;
 
@@ -413,6 +413,11 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
         cmdRemove.setIcon(new ImageIcon(getClass().getResource("/icons/trashcan_full.png")));
         cmdRemove.addActionListener(e -> cmdRemoveActionPerformed(e));
 
+        cmdDuplicate = new JButton();
+        cmdDuplicate.setIcon(new ImageIcon(getClass().getResource("/icons16/tooloptions.png")));
+        cmdDuplicate.setToolTipText("Prompt duplizieren");
+        cmdDuplicate.addActionListener(e -> cmdDuplicateActionPerformed(e));
+
         GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -423,7 +428,8 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                         .addComponent(cmdAdd)
-                                        .addComponent(cmdRemove))
+                                        .addComponent(cmdRemove)
+                                        .addComponent(cmdDuplicate))
                                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -436,6 +442,8 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
                                                 .addComponent(cmdAdd)
                                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                                 .addComponent(cmdRemove)
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(cmdDuplicate)
                                                 .addGap(0, 0, Short.MAX_VALUE)))
                                 .addContainerGap())
         );
@@ -739,6 +747,39 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
                 log.error("Error removing prompt", ex);
                 JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
+        }
+    }
+
+    private void cmdDuplicateActionPerformed(java.awt.event.ActionEvent evt) {
+        int row = this.tblPrompts.getSelectedRow();
+        if (row < 0) {
+            return;
+        }
+
+        AssistantPrompt source = (AssistantPrompt) this.tblPrompts.getValueAt(row, 0);
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            AssistantPrompt ap = new AssistantPrompt();
+            ap.setName(source.getName() + " (Kopie)");
+            ap.setRequestType(source.getRequestType());
+            ap.setPrompt(source.getPrompt());
+            ap.setSystemPrompt(source.getSystemPrompt());
+            ap.setModelRef(source.getModelRef());
+            ap.setConfiguration(source.getConfiguration());
+
+            AssistantPrompt savedPrompt = locator.lookupIntegrationServiceRemote().addAssistantPrompt(ap);
+            AssistantAccess.getInstance().flushCustomPrompts();
+
+            ((DefaultTableModel) this.tblPrompts.getModel()).addRow(new Object[]{savedPrompt, savedPrompt.getRequestType()});
+            this.tblPrompts.getSelectionModel().setSelectionInterval(this.tblPrompts.getRowCount() - 1, this.tblPrompts.getRowCount() - 1);
+            this.updatedUI(savedPrompt);
+
+        } catch (Exception ex) {
+            log.error("Error duplicating prompt", ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }
 
