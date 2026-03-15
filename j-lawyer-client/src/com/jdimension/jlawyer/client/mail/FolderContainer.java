@@ -670,11 +670,14 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.StoreClosedException;
 import javax.mail.UIDFolder;
+import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 
 /**
@@ -695,6 +698,16 @@ public class FolderContainer {
     private static final Logger log = Logger.getLogger(FolderContainer.class.getName());
     private static final HashMap<String, String> folderNameMapping = new HashMap<>();
 
+    private static final ExecutorService refreshExecutor =
+        Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "FolderContainer-Refresh");
+            t.setDaemon(true);
+            return t;
+        });
+
+    private Runnable onCacheRefreshed;
+    private volatile boolean asyncRefreshInProgress = false;
+
     double retentionTime = -1;
 
     private Map<Long, Message> cachedMessages = new HashMap<>();
@@ -712,8 +725,74 @@ public class FolderContainer {
         this.folder = f;
     }
 
+    public void setOnCacheRefreshed(Runnable callback) {
+        this.onCacheRefreshed = callback;
+    }
+
+    private void scheduleAsyncRefresh() {
+        if (asyncRefreshInProgress) {
+            return;
+        }
+        asyncRefreshInProgress = true;
+
+        refreshExecutor.submit(() -> {
+            boolean updated = false;
+            try {
+                if (this.folder == null) return;
+
+                if (!folder.isOpen()) {
+                    // folder closed - use best available display string to avoid null
+                    if (cachedToString == null && mappedName != null) {
+                        cachedToString = mappedName;
+                    }
+                    // prevent immediate re-scheduling
+                    this.cachedToStringUpdated = System.currentTimeMillis();
+                    this.cachedUnreadUpdated = System.currentTimeMillis();
+                    return;
+                }
+
+                try {
+                    int unread = this.folder.getUnreadMessageCount();
+                    int total = this.folder.getMessageCount();
+
+                    this.cachedUnread = unread;
+                    this.cachedTotal = total;
+                    this.cachedUnreadUpdated = System.currentTimeMillis();
+
+                    if (this.mappedName == null) {
+                        this.mappedName = this.folder.getName();
+                        for (Map.Entry<String, String> entry : folderNameMapping.entrySet()) {
+                            if (entry.getKey().equalsIgnoreCase(this.mappedName)) {
+                                this.mappedName = entry.getValue();
+                                break;
+                            }
+                        }
+                    }
+                    if (total < 0) {
+                        cachedToString = this.mappedName;
+                    } else {
+                        cachedToString = this.mappedName + " (" + total + ")";
+                    }
+                    cachedToStringUpdated = System.currentTimeMillis();
+                    updated = true;
+
+                } catch (StoreClosedException stex) {
+                    log.warn("Async refresh - store closed: " + stex.getMessage());
+                } catch (MessagingException ex) {
+                    log.error("Async refresh failed", ex);
+                }
+            } finally {
+                asyncRefreshInProgress = false;
+                if (updated && onCacheRefreshed != null) {
+                    SwingUtilities.invokeLater(onCacheRefreshed);
+                }
+            }
+        });
+    }
+
     public void resetCaches() {
         this.cachedToStringUpdated = -1;
+        this.cachedToString = null;
         this.cachedUnreadUpdated = -1;
         this.cachedTotal=-1;
         this.cachedMessages.clear();
@@ -748,7 +827,12 @@ public class FolderContainer {
                 if (!folder.isOpen()) {
                     return Math.max(this.cachedUnread, 0);
                 }
-                
+
+                if (SwingUtilities.isEventDispatchThread()) {
+                    scheduleAsyncRefresh();
+                    return Math.max(this.cachedUnread, 0);
+                }
+
                 this.cachedUnreadUpdated = System.currentTimeMillis();
                 try {
                     this.cachedUnread = this.folder.getUnreadMessageCount();
@@ -760,7 +844,7 @@ public class FolderContainer {
                     log.error("Unable to determine number of unread messages", ex);
                     return Math.max(this.cachedUnread, 0);
                 }
-                
+
             }
         }
         return cachedUnread;
@@ -770,6 +854,12 @@ public class FolderContainer {
 
         if (this.cachedTotal == -1 || ((System.currentTimeMillis() - cachedUnreadUpdated) > this.getRetentionTime())) {
             if (this.folder != null) {
+
+                if (SwingUtilities.isEventDispatchThread()) {
+                    scheduleAsyncRefresh();
+                    return Math.max(this.cachedTotal, 0);
+                }
+
                 this.cachedUnreadUpdated = System.currentTimeMillis();
                 try {
                     this.cachedUnread = this.folder.getUnreadMessageCount();
@@ -791,6 +881,24 @@ public class FolderContainer {
     public String toString() {
 
         if (this.cachedToStringUpdated == -1 || ((System.currentTimeMillis() - cachedToStringUpdated) > this.getRetentionTime())) {
+
+            if (SwingUtilities.isEventDispatchThread()) {
+                scheduleAsyncRefresh();
+                if (cachedToString != null) {
+                    return cachedToString;
+                }
+                if (this.mappedName == null) {
+                    this.mappedName = this.folder.getName();
+                    for (Map.Entry<String, String> entry : folderNameMapping.entrySet()) {
+                        if (entry.getKey().equalsIgnoreCase(this.mappedName)) {
+                            this.mappedName = entry.getValue();
+                            break;
+                        }
+                    }
+                }
+                return this.mappedName;
+            }
+
             try {
                 log.info("FolderContainer.toString#1");
                 if (this.mappedName == null) {
@@ -812,7 +920,7 @@ public class FolderContainer {
                 log.info("FolderContainer.toString#4");
                 int msgCount=this.folder.getMessageCount();
                 log.info("FolderContainer.toString#5");
-                
+
                 cachedToStringUpdated = System.currentTimeMillis();
                 if (msgCount < 0) {
                     cachedToString = this.mappedName;
@@ -824,7 +932,7 @@ public class FolderContainer {
             } catch (Exception ex) {
                 log.error(ex);
                 log.info("FolderContainer.toString#7");
-                
+
                 // only set to folder name if not initialized
                 if(cachedToString==null) {
                     if(this.mappedName==null)

@@ -1056,14 +1056,21 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     }
 
                     // Thread-safe access to shared collections
+                    Runnable treeRepaintCallback = () -> treeFolders.repaint();
+                    FolderContainer inboxContainer = new FolderContainer(inboxFolderF);
+                    inboxContainer.setOnCacheRefreshed(treeRepaintCallback);
+                    FolderContainer trashContainer = new FolderContainer(trashFolderF);
+                    trashContainer.setOnCacheRefreshed(treeRepaintCallback);
+                    FolderContainer sentContainer = new FolderContainer(sentFolderF);
+                    sentContainer.setOnCacheRefreshed(treeRepaintCallback);
                     synchronized (this.inboxFolders) {
-                        this.inboxFolders.put(ms, new FolderContainer(inboxFolderF));
+                        this.inboxFolders.put(ms, inboxContainer);
                     }
                     synchronized (this.trashFolders) {
-                        this.trashFolders.put(ms, new FolderContainer(trashFolderF));
+                        this.trashFolders.put(ms, trashContainer);
                     }
                     synchronized (this.sentFolders) {
-                        this.sentFolders.put(ms, new FolderContainer(sentFolderF));
+                        this.sentFolders.put(ms, sentContainer);
                     }
 
                     IMAPFolderObserver folderObserver = new IMAPFolderObserver(this, ms);
@@ -1180,6 +1187,12 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             boolean isHidden = MailboxSettings.getInstance().isFolderHidden(ms, fullChildPath);
             if (!isHidden) {
                 DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(childContainer);
+                childContainer.setOnCacheRefreshed(() -> {
+                    DefaultTreeModel dm = (DefaultTreeModel) treeFolders.getModel();
+                    if (dm != null) {
+                        dm.nodeChanged(childNode);
+                    }
+                });
                 // Thread-safe access to inboxFolders and inboxFolderNodes
                 synchronized (this.inboxFolders) {
                     if (this.inboxFolders.get(ms) != null && childContainer.getFolder().equals(this.inboxFolders.get(ms).getFolder())) {
@@ -1683,6 +1696,10 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         if (selNode != null && selNode.getUserObject() instanceof FolderContainer) {
             FolderContainer folderC = (FolderContainer) selNode.getUserObject();
             folderC.resetCaches();
+            DefaultTreeModel dm = (DefaultTreeModel) this.treeFolders.getModel();
+            if (dm != null) {
+                dm.nodeChanged(selNode);
+            }
         }
     }
 
@@ -2191,6 +2208,17 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
         }
         this.resetCacheForSelectedFolder(expungeFolder);
+        // also reset trash folder cache since messages were moved there
+        if (ms != null && this.trashFolders.containsKey(ms)) {
+            DefaultMutableTreeNode trashNode = this.findFolder((DefaultMutableTreeNode) this.treeFolders.getModel().getRoot(), this.trashFolders.get(ms).getFolder());
+            if (trashNode != null && trashNode.getUserObject() instanceof FolderContainer) {
+                ((FolderContainer) trashNode.getUserObject()).resetCaches();
+                DefaultTreeModel dm = (DefaultTreeModel) this.treeFolders.getModel();
+                if (dm != null) {
+                    dm.nodeChanged(trashNode);
+                }
+            }
+        }
         TreePath selectedPath = this.treeFolders.getSelectionPath();
         if (selectedPath == null) {
             DefaultMutableTreeNode selectedFolder = this.findFolder((DefaultMutableTreeNode) this.treeFolders.getModel().getRoot(), expungeFolder);
