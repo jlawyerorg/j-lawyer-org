@@ -709,7 +709,7 @@ public class ToolRegistry {
                 case "list_case_folders":
                     return "Ordner der Akte: " + args.getOrDefault("caseId", "");
                 case "move_document_to_folder":
-                    return "Dokument verschieben: " + args.getOrDefault("documentId", "");
+                    return "Dokument in Ordner verschieben: " + args.getOrDefault("documentId", "");
                 case "list_document_tags":
                     return "Verfügbare Dokument-Etiketten auflisten";
                 case "list_case_tags":
