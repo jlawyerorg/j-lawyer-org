@@ -14,26 +14,37 @@ import com.jdimension.jlawyer.ai.Configuration;
 import com.jdimension.jlawyer.ai.ConfigurationData;
 import com.jdimension.jlawyer.ai.ConfigurationUtils;
 import com.jdimension.jlawyer.client.assistant.AssistantAccess;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.mail.SendEmailFrame;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.CaseInsensitiveStringComparator;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.persistence.AssistantPrompt;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.io.File;
+import java.nio.file.Files;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import org.apache.log4j.Logger;
+import org.json.simple.JsonObject;
+import org.json.simple.Jsoner;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -61,6 +72,8 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
     private JButton cmdAdd;
     private JButton cmdRemove;
     private JButton cmdDuplicate;
+    private JButton cmdShareEmail;
+    private JButton cmdImportJson;
     private JButton cmdSave;
     private JButton cmdClose;
 
@@ -418,6 +431,16 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
         cmdDuplicate.setToolTipText("Prompt duplizieren");
         cmdDuplicate.addActionListener(e -> cmdDuplicateActionPerformed(e));
 
+        cmdShareEmail = new JButton();
+        cmdShareEmail.setIcon(new ImageIcon(getClass().getResource("/icons/mail_send.png")));
+        cmdShareEmail.setToolTipText("Prompt per E-Mail teilen");
+        cmdShareEmail.addActionListener(e -> cmdShareEmailActionPerformed(e));
+
+        cmdImportJson = new JButton();
+        cmdImportJson.setIcon(new ImageIcon(getClass().getResource("/icons/fileimport.png")));
+        cmdImportJson.setToolTipText("Prompt aus Datei importieren");
+        cmdImportJson.addActionListener(e -> cmdImportJsonActionPerformed(e));
+
         GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -429,7 +452,9 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
                                 .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                         .addComponent(cmdAdd)
                                         .addComponent(cmdRemove)
-                                        .addComponent(cmdDuplicate))
+                                        .addComponent(cmdDuplicate)
+                                        .addComponent(cmdShareEmail)
+                                        .addComponent(cmdImportJson))
                                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -444,6 +469,10 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
                                                 .addComponent(cmdRemove)
                                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                                 .addComponent(cmdDuplicate)
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(cmdShareEmail)
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(cmdImportJson)
                                                 .addGap(0, 0, Short.MAX_VALUE)))
                                 .addContainerGap())
         );
@@ -790,6 +819,134 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
         } else {
             AssistantPrompt ap = (AssistantPrompt) this.tblPrompts.getValueAt(row, 0);
             this.updatedUI(ap);
+        }
+    }
+
+    private String exportPromptToJson(AssistantPrompt ap, boolean[] apiKeyRemoved) {
+        JsonObject json = new JsonObject();
+        json.put("name", ap.getName());
+        json.put("requestType", ap.getRequestType());
+        json.put("prompt", ap.getPrompt());
+        json.put("systemPrompt", ap.getSystemPrompt());
+        json.put("modelRef", ap.getModelRef());
+
+        String configuration = ap.getConfiguration();
+        if (configuration != null && !configuration.isEmpty()) {
+            List<ConfigurationData> cfgData = ConfigurationUtils.fromProperties(configuration);
+            for (ConfigurationData cd : cfgData) {
+                if (cd.getId().toLowerCase().contains("api-key") || cd.getId().toLowerCase().contains("api key")) {
+                    cd.setValue("<BITTE EINGEBEN>");
+                    apiKeyRemoved[0] = true;
+                }
+            }
+            configuration = ConfigurationUtils.toProperties(cfgData);
+        }
+        json.put("configuration", configuration);
+
+        return Jsoner.prettyPrint(Jsoner.serialize(json));
+    }
+
+    private void cmdShareEmailActionPerformed(java.awt.event.ActionEvent evt) {
+        int row = this.tblPrompts.getSelectedRow();
+        if (row < 0) {
+            return;
+        }
+
+        AssistantPrompt ap = (AssistantPrompt) this.tblPrompts.getValueAt(row, 0);
+
+        try {
+            boolean[] apiKeyRemoved = new boolean[]{false};
+            String jsonString = exportPromptToJson(ap, apiKeyRemoved);
+
+            if (apiKeyRemoved[0]) {
+                JOptionPane.showMessageDialog(this, "Der API-Key wurde automatisch entfernt und durch <BITTE EINGEBEN> ersetzt.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+            }
+
+            String safeName = ap.getName().replaceAll("[^a-zA-Z0-9_\\-]", "_");
+            String tmpUrl = FileUtils.createTempFile("prompt_" + safeName + ".json", jsonString.getBytes("UTF-8"));
+
+            this.setVisible(false);
+            this.dispose();
+
+            SendEmailFrame dlg = new SendEmailFrame(false);
+            dlg.addAttachment(tmpUrl, "");
+            dlg.setSubject("j-lawyer - Prompt: " + ap.getName());
+            dlg.setBody("Anbei ein Prompt für den Assistenten Ingo in j-lawyer.org-Installationen. Ein Import ist im Menü \"Einstellungen\" - \"Assistent Ingo\" - \"eigene Prompts\" möglich.\n\n", "", "text/plain");
+            FrameUtils.centerFrame(dlg, null);
+            EditorsRegistry.getInstance().registerFrame(dlg);
+            dlg.setVisible(true);
+
+        } catch (Exception ex) {
+            log.error("Error sharing prompt via email", ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void cmdImportJsonActionPerformed(java.awt.event.ActionEvent evt) {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setFileFilter(new FileNameExtensionFilter("JSON-Dateien", "json"));
+        int result = chooser.showOpenDialog(this);
+        if (result != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        try {
+            File file = chooser.getSelectedFile();
+            String content = new String(Files.readAllBytes(file.toPath()), "UTF-8");
+            JsonObject json = (JsonObject) Jsoner.deserialize(content);
+
+            String name = json.getStringOrDefault(Jsoner.mintJsonKey("name", null));
+            String requestType = json.getStringOrDefault(Jsoner.mintJsonKey("requestType", null));
+            String modelRef = json.getStringOrDefault(Jsoner.mintJsonKey("modelRef", null));
+
+            if (name == null || name.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Die JSON-Datei enthält keinen gültigen Wert für 'name'.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            if (requestType == null || requestType.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Die JSON-Datei enthält keinen gültigen Wert für 'requestType'.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            if (modelRef == null || modelRef.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Die JSON-Datei enthält keinen gültigen Wert für 'modelRef'.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            AssistantPrompt ap = new AssistantPrompt();
+            ap.setName(name + " (importiert)");
+            ap.setRequestType(requestType);
+            ap.setModelRef(modelRef);
+
+            String prompt = json.getStringOrDefault(Jsoner.mintJsonKey("prompt", null));
+            if (prompt != null && !prompt.isEmpty()) {
+                ap.setPrompt(prompt);
+            }
+
+            String systemPrompt = json.getStringOrDefault(Jsoner.mintJsonKey("systemPrompt", null));
+            if (systemPrompt != null && !systemPrompt.isEmpty()) {
+                ap.setSystemPrompt(systemPrompt);
+            }
+
+            String configuration = json.getStringOrDefault(Jsoner.mintJsonKey("configuration", null));
+            if (configuration != null && !configuration.isEmpty()) {
+                ap.setConfiguration(configuration);
+            }
+
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            AssistantPrompt savedPrompt = locator.lookupIntegrationServiceRemote().addAssistantPrompt(ap);
+            AssistantAccess.getInstance().flushCustomPrompts();
+
+            ((DefaultTableModel) this.tblPrompts.getModel()).addRow(new Object[]{savedPrompt, savedPrompt.getRequestType()});
+            int modelRow = this.tblPrompts.getModel().getRowCount() - 1;
+            int viewRow = this.tblPrompts.convertRowIndexToView(modelRow);
+            this.tblPrompts.getSelectionModel().setSelectionInterval(viewRow, viewRow);
+            this.tblPrompts.scrollRectToVisible(this.tblPrompts.getCellRect(viewRow, 0, true));
+            this.updatedUI(savedPrompt);
+
+        } catch (Exception ex) {
+            log.error("Error importing prompt from JSON", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Importieren: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }
 
