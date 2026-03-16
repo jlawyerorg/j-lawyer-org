@@ -449,7 +449,6 @@ public class ToolRegistry {
                         new ToolParameter("templateFolder", "string", "Ordnerpfad der Vorlage (z.B. / oder /Vertragsrecht)", true),
                         new ToolParameter("templateName", "string", "Dateiname der Vorlage (z.B. Vollmacht.odt)", true),
                         new ToolParameter("fileName", "string", "Dateiname des neuen Dokuments ohne Erweiterung (z.B. Vollmacht Mueller)", true),
-                        new ToolParameter("placeholders", "string", "JSON-Objekt mit Platzhalter-Schlüssel/Wert-Paaren zum Überschreiben (optional, z.B. {\"FREITEXT1\": \"Sonderwert\"})", false),
                         new ToolParameter("generatedText", "string", "Vom Assistenten generierter Text, der als Platzhalter {{INGO_TEXT}} in die Vorlage eingefügt wird (optional)", false)),
                 ToolDefinition.RISK_MEDIUM));
 
@@ -3260,7 +3259,6 @@ public class ToolRegistry {
         String templateFolder = (String) args.get("templateFolder");
         String templateName = (String) args.get("templateName");
         String fileName = (String) args.get("fileName");
-        String placeholdersJson = (String) args.get("placeholders");
         String generatedText = (String) args.get("generatedText");
 
         if (caseId == null || caseId.trim().isEmpty()) {
@@ -3368,17 +3366,6 @@ public class ToolRegistry {
         String ingoText = (generatedText != null && !generatedText.trim().isEmpty()) ? generatedText.trim() : null;
         phMap = sys.getPlaceHolderValues(phMap, caseBean, parties, "", null,
                 formPlaceHolderValues, userLawyer, userAssistant, null, null, null, null, null, null, null, ingoText);
-
-        // Override with user-provided placeholders
-        if (placeholdersJson != null && !placeholdersJson.trim().isEmpty()) {
-            JsonObject customPh = (JsonObject) Jsoner.deserialize(placeholdersJson);
-            for (Map.Entry<String, Object> entry : customPh.entrySet()) {
-                String key = entry.getKey().toString();
-                if (!key.startsWith("{{")) key = "{{" + key;
-                if (!key.endsWith("}}")) key = key + "}}";
-                phMap.put(key, entry.getValue().toString());
-            }
-        }
 
         // Create document from template
         ArchiveFileDocumentsBean newDoc = archiveSvc.addDocumentFromTemplate(
