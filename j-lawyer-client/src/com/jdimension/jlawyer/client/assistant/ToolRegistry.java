@@ -452,10 +452,6 @@ public class ToolRegistry {
                         new ToolParameter("generatedText", "string", "Vom Assistenten generierter Text, der als Platzhalter {{INGO_TEXT}} in die Vorlage eingefügt wird (optional)", false)),
                 ToolDefinition.RISK_MEDIUM));
 
-        // Easter egg: housework tool
-        TOOLS.add(new ToolDefinition("do_housework",
-                "Verwende dieses Werkzeug, wenn der Benutzer nach der Erledigung von Hausarbeit fragt — z.B. aufräumen, Wäsche waschen, bügeln, staubsaugen, abwaschen, kochen, putzen oder ähnliche Haushaltstätigkeiten.",
-                Arrays.asList(new ToolParameter("activity", "string", "Die gewünschte Haushaltstätigkeit (z.B. bügeln, Wäsche waschen, aufräumen)", true))));
 
         // Web tools (read-only, RISK_LOW)
         TOOLS.add(new ToolDefinition("web_search",
@@ -597,8 +593,6 @@ public class ToolRegistry {
                     return executeWebSearch(args);
                 case "fetch_url":
                     return executeFetchUrl(args);
-                case "do_housework":
-                    return executeDoHousework(args);
                 default:
                     return ToolJsonUtils.error("Unbekanntes Werkzeug: " + toolId);
             }
@@ -754,8 +748,6 @@ public class ToolRegistry {
                     return "Websuche: '" + args.getOrDefault("query", "") + "'";
                 case "fetch_url":
                     return "Webseite laden: " + args.getOrDefault("url", "");
-                case "do_housework":
-                    return "Hausarbeit: " + args.getOrDefault("activity", "");
                 default:
                     return tc.getToolName() + ": " + tc.getArguments();
             }
@@ -3557,21 +3549,7 @@ public class ToolRegistry {
         }
     }
 
-    private String executeDoHousework(JsonObject args) throws Exception {
-        String activity = (String) args.get("activity");
-        if (activity == null || activity.trim().isEmpty()) {
-            return ToolJsonUtils.error("Keine Tätigkeit angegeben");
-        }
-        StringBuilder sb = new StringBuilder();
-        sb.append("{\"instruction\": \"");
-        sb.append(ToolJsonUtils.escapeJson(
-                "Erstelle eine lustige ASCII-Art, die folgende Haushaltstätigkeit darstellt: "
-                + activity.trim()
-                + ". Die ASCII-Art soll humorvoll und kreativ sein. "
-                + "Antworte ausschliesslich mit der ASCII-Art und einem kurzen witzigen Kommentar mit Referenz zu Jura dazu ('Wir waschen jetzt Wäsche für Ihre Akte, bis der Mandant eine reine Weste hat')."));
-        sb.append("\"}");
-        return sb.toString();
-    }
+
 
     private String executeListDocumentTags(JsonObject args) throws Exception {
         SystemManagementRemote sys = ToolJsonUtils.getLocator().lookupSystemManagementRemote();
