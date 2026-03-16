@@ -1174,26 +1174,44 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         DropscanMailing mailing = dropscanMailings.get(selectedRow);
 
-        // Load envelope image async
+        // Load preview async: PDF for scanned mailings, envelope image otherwise
         new Thread(() -> {
             try {
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 DropscanServiceRemote ds = locator.lookupDropscanServiceRemote();
-                byte[] envelopeData = ds.getEnvelopeImage(String.valueOf(mailing.getScanboxId()), mailing.getUuid());
-                if (envelopeData != null && envelopeData.length > 0) {
-                    javax.swing.SwingUtilities.invokeLater(() -> {
-                        GifJpegPngImagePanel envelopeViewer = new GifJpegPngImagePanel(envelopeData);
-                        envelopeViewer.showContent(mailing.getUuid(), envelopeData);
-                        pnlDropscanEnvelope.removeAll();
-                        pnlDropscanEnvelope.setLayout(new java.awt.BorderLayout());
-                        pnlDropscanEnvelope.add(envelopeViewer, java.awt.BorderLayout.CENTER);
-                        pnlDropscanEnvelope.revalidate();
-                        pnlDropscanEnvelope.repaint();
-                    });
+
+                if (mailing.isScanned()) {
+                    byte[] pdfData = ds.getMailingPdf(String.valueOf(mailing.getScanboxId()), mailing.getUuid());
+                    if (pdfData != null && pdfData.length > 0) {
+                        javax.swing.SwingUtilities.invokeLater(() -> {
+                            javax.swing.JComponent pdfViewer = com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFactory.getDocumentViewer(
+                                    mailing.getUuid(), mailing.getUuid() + ".pdf", true,
+                                    null, pdfData,
+                                    pnlDropscanEnvelope.getWidth(), pnlDropscanEnvelope.getHeight(), null);
+                            pnlDropscanEnvelope.removeAll();
+                            pnlDropscanEnvelope.setLayout(new java.awt.BorderLayout());
+                            pnlDropscanEnvelope.add(pdfViewer, java.awt.BorderLayout.CENTER);
+                            pnlDropscanEnvelope.revalidate();
+                            pnlDropscanEnvelope.repaint();
+                        });
+                    }
+                } else {
+                    byte[] envelopeData = ds.getEnvelopeImage(String.valueOf(mailing.getScanboxId()), mailing.getUuid());
+                    if (envelopeData != null && envelopeData.length > 0) {
+                        javax.swing.SwingUtilities.invokeLater(() -> {
+                            GifJpegPngImagePanel envelopeViewer = new GifJpegPngImagePanel(envelopeData);
+                            envelopeViewer.showContent(mailing.getUuid(), envelopeData);
+                            pnlDropscanEnvelope.removeAll();
+                            pnlDropscanEnvelope.setLayout(new java.awt.BorderLayout());
+                            pnlDropscanEnvelope.add(envelopeViewer, java.awt.BorderLayout.CENTER);
+                            pnlDropscanEnvelope.revalidate();
+                            pnlDropscanEnvelope.repaint();
+                        });
+                    }
                 }
             } catch (Exception ex) {
-                log.warn("Failed to load envelope image", ex);
+                log.warn("Failed to load preview", ex);
                 javax.swing.SwingUtilities.invokeLater(() -> {
                     pnlDropscanEnvelope.removeAll();
                     javax.swing.JLabel lblNoPreview = new javax.swing.JLabel("Keine Vorschau verfügbar", javax.swing.SwingConstants.CENTER);
@@ -1436,6 +1454,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 BulkSaveEntry bulkEntry = new BulkSaveEntry();
                 bulkEntry.setDocumentDate(mailing.getReceivedAt() != null ? mailing.getReceivedAt() : new Date());
                 bulkEntry.setDocumentFilename(fileEntry.getKey());
+                bulkEntry.setDocumentBytes(fileEntry.getValue());
                 bulkSaveDlg.addEntry(bulkEntry);
             }
 

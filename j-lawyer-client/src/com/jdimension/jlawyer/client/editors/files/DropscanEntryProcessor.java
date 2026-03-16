@@ -3,6 +3,7 @@ package com.jdimension.jlawyer.client.editors.files;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.IntegrationServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,9 @@ public class DropscanEntryProcessor extends BulkSaveEntryProcessor {
 
     @Override
     public String save(BulkSaveEntry entry, ArchiveFileBean targetCase) throws Exception {
-        // Not used - BulkSaveDialog handles saving via its own logic when isSaveProcessor() returns false
+//        ClientSettings settings = ClientSettings.getInstance();
+//        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        
         return null;
     }
 

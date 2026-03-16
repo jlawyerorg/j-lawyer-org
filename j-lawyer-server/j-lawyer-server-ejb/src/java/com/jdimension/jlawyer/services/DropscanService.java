@@ -93,6 +93,13 @@ public class DropscanService implements DropscanServiceRemote, DropscanServiceLo
 
     @Override
     @RolesAllowed({"loginRole"})
+    public byte[] getMailingPdf(String scanboxId, String mailingUuid) throws Exception {
+        DropscanApiClient client = getClientForCurrentUser();
+        return client.getMailingPdf(scanboxId, mailingUuid);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
     public String getMailingPlaintext(String scanboxId, String mailingUuid) throws Exception {
         DropscanApiClient client = getClientForCurrentUser();
         return client.getMailingPlaintext(scanboxId, mailingUuid);

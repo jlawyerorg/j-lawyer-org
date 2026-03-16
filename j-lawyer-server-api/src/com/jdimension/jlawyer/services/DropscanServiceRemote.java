@@ -64,6 +64,16 @@ public interface DropscanServiceRemote {
     byte[] getEnvelopeImage(String scanboxId, String mailingUuid) throws Exception;
 
     /**
+     * Downloads the scanned PDF for a specific mailing.
+     *
+     * @param scanboxId the scanbox ID
+     * @param mailingUuid the mailing UUID
+     * @return the scanned PDF as byte array
+     * @throws Exception if the API call fails or the mailing has not been scanned
+     */
+    byte[] getMailingPdf(String scanboxId, String mailingUuid) throws Exception;
+
+    /**
      * Retrieves the OCR plaintext for a specific mailing.
      *
      * @param scanboxId the scanbox ID
