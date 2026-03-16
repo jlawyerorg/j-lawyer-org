@@ -245,7 +245,10 @@ public class ToolRegistry {
                         new ToolParameter("street", "string", "Straße (optional)", false),
                         new ToolParameter("streetNumber", "string", "Hausnummer (optional)", false),
                         new ToolParameter("email", "string", "E-Mail (optional)", false),
-                        new ToolParameter("phone", "string", "Telefon (optional)", false)),
+                        new ToolParameter("phone", "string", "Telefon (optional)", false),
+                        new ToolParameter("gender", "string", "Geschlecht (optional, Werte: MALE, FEMALE, OTHER, LEGALENTITY, UNDEFINED)", false),
+                        new ToolParameter("salutation", "string", "Anrede (optional, z.B. Herr, Frau)", false),
+                        new ToolParameter("complimentaryClose", "string", "Grußformel (optional, z.B. Mit freundlichen Grüßen)", false)),
                 ToolDefinition.RISK_MEDIUM));
 
         TOOLS.add(new ToolDefinition("add_party_to_case", "Fügt einen bestehenden Kontakt als Beteiligten zu einer Akte hinzu.",
@@ -312,7 +315,9 @@ public class ToolRegistry {
                         new ToolParameter("phone", "string", "Telefon (optional)", false),
                         new ToolParameter("mobile", "string", "Mobiltelefon (optional)", false),
                         new ToolParameter("fax", "string", "Fax (optional)", false),
-                        new ToolParameter("website", "string", "Webseite (optional)", false)),
+                        new ToolParameter("website", "string", "Webseite (optional)", false),
+                        new ToolParameter("gender", "string", "Geschlecht (optional, Werte: MALE, FEMALE, OTHER, LEGALENTITY, UNDEFINED)", false),
+                        new ToolParameter("complimentaryClose", "string", "Grußformel (optional, z.B. Mit freundlichen Grüßen)", false)),
                 ToolDefinition.RISK_MEDIUM));
 
         TOOLS.add(new ToolDefinition("update_case", "Aktualisiert eine bestehende Akte. Nur die angegebenen Felder werden geändert.",
@@ -343,7 +348,9 @@ public class ToolRegistry {
                         new ToolParameter("phone", "string", "Neues Telefon (optional)", false),
                         new ToolParameter("mobile", "string", "Neues Mobiltelefon (optional)", false),
                         new ToolParameter("fax", "string", "Neues Fax (optional)", false),
-                        new ToolParameter("website", "string", "Neue Webseite (optional)", false)),
+                        new ToolParameter("website", "string", "Neue Webseite (optional)", false),
+                        new ToolParameter("gender", "string", "Neues Geschlecht (optional, Werte: MALE, FEMALE, OTHER, LEGALENTITY, UNDEFINED)", false),
+                        new ToolParameter("complimentaryClose", "string", "Neue Grußformel (optional, z.B. Mit freundlichen Grüßen)", false)),
                 ToolDefinition.RISK_MEDIUM));
 
         // Timesheet tools
@@ -2368,6 +2375,9 @@ public class ToolRegistry {
         String streetNumber = (String) args.get("streetNumber");
         String email = (String) args.get("email");
         String phone = (String) args.get("phone");
+        String gender = (String) args.get("gender");
+        String salutation = (String) args.get("salutation");
+        String complimentaryClose = (String) args.get("complimentaryClose");
 
         if (city == null || city.trim().isEmpty()) {
             return ToolJsonUtils.error("Stadt fehlt");
@@ -2425,6 +2435,15 @@ public class ToolRegistry {
         }
         if (phone != null && !phone.trim().isEmpty()) {
             candidate.setPhone(phone.trim());
+        }
+        if (gender != null && !gender.trim().isEmpty()) {
+            candidate.setGender(gender.trim().toUpperCase());
+        }
+        if (salutation != null && !salutation.trim().isEmpty()) {
+            candidate.setSalutation(salutation.trim());
+        }
+        if (complimentaryClose != null && !complimentaryClose.trim().isEmpty()) {
+            candidate.setComplimentaryClose(complimentaryClose.trim());
         }
 
         AddressBean created = addrSvc.createAddress(candidate);
@@ -2881,6 +2900,8 @@ public class ToolRegistry {
         String mobile = (String) args.get("mobile");
         String fax = (String) args.get("fax");
         String website = (String) args.get("website");
+        String gender = (String) args.get("gender");
+        String complimentaryClose = (String) args.get("complimentaryClose");
 
         boolean hasName = name != null && !name.trim().isEmpty();
         boolean hasCompany = company != null && !company.trim().isEmpty();
@@ -2933,6 +2954,12 @@ public class ToolRegistry {
         }
         if (website != null && !website.trim().isEmpty()) {
             candidate.setWebsite(website.trim());
+        }
+        if (gender != null && !gender.trim().isEmpty()) {
+            candidate.setGender(gender.trim().toUpperCase());
+        }
+        if (complimentaryClose != null && !complimentaryClose.trim().isEmpty()) {
+            candidate.setComplimentaryClose(complimentaryClose.trim());
         }
 
         JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
@@ -3069,6 +3096,8 @@ public class ToolRegistry {
         String mobile = (String) args.get("mobile");
         String fax = (String) args.get("fax");
         String website = (String) args.get("website");
+        String gender = (String) args.get("gender");
+        String complimentaryClose = (String) args.get("complimentaryClose");
 
         // Apply only provided fields
         if (name != null) {
@@ -3115,6 +3144,12 @@ public class ToolRegistry {
         }
         if (website != null) {
             contact.setWebsite(website.trim());
+        }
+        if (gender != null) {
+            contact.setGender(gender.trim().toUpperCase());
+        }
+        if (complimentaryClose != null) {
+            contact.setComplimentaryClose(complimentaryClose.trim());
         }
 
         addrSvc.updateAddress(contact);
