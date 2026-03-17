@@ -759,26 +759,81 @@ public class BugReportDialog extends javax.swing.JDialog {
     private void buildSystemInformation() {
         StringBuilder sb=new StringBuilder();
         sb.append("<html>");
+        this.addOverview(sb);
         this.addVersionInformation(sb);
         this.addClientProps(sb);
         this.addServerProps(sb);
         this.addMemoryInformation(sb);
-        
+
         sb.append("</html>");
         this.edSystemInfo.setText(sb.toString());
         this.edSystemInfo.setCaretPosition(0);
     }
+
+    private void addOverview(StringBuilder sb) {
+        // Client info
+        String clientOs = System.getProperty("os.name") + " " + System.getProperty("os.version") + " " + System.getProperty("os.arch");
+        String clientJava = System.getProperty("java.version") + " (" + System.getProperty("java.vendor") + ")";
+        String clientVm = System.getProperty("java.vm.name") + " " + System.getProperty("java.vm.version");
+        String clientVersion = VersionUtils.getFullClientVersion();
+        Runtime rt = Runtime.getRuntime();
+        long clientUsedPct = rt.maxMemory() > 0 ? (rt.totalMemory() - rt.freeMemory()) * 100 / rt.maxMemory() : 0;
+        int clientProcessors = rt.availableProcessors();
+
+        // Server info
+        Properties serverProps = this.locator.lookupSystemManagementRemote().getSystemProperties();
+        String serverOs = serverProps.getProperty("os.name", "?") + " " + serverProps.getProperty("os.version", "?") + " " + serverProps.getProperty("os.arch", "?");
+        String serverJava = serverProps.getProperty("java.version", "?") + " (" + serverProps.getProperty("java.vendor", "?") + ")";
+        String serverVm = serverProps.getProperty("java.vm.name", "?") + " " + serverProps.getProperty("java.vm.version", "?");
+        String serverVersion = VersionUtils.getServerVersion();
+        ServerInformation si = this.locator.lookupSystemManagementRemote().getServerInformation();
+        long serverUsedPct = si.getMaxMemory() > 0 ? (si.getTotalMemory() - si.getFreeMemory()) * 100 / si.getMaxMemory() : 0;
+        String serverProcessors = serverProps.getProperty("available.processors", null);
+
+        sb.append("<b>Systemüberblick:</b>");
+        sb.append("<table border='1' cellpadding='4' cellspacing='0'>");
+        sb.append("<tr><th></th><th>Client</th><th>Server</th></tr>");
+        sb.append("<tr><td><b>j-lawyer</b></td><td>").append(clientVersion).append("</td><td>").append(serverVersion).append("</td></tr>");
+        sb.append("<tr><td><b>Betriebssystem</b></td><td>").append(clientOs).append("</td><td>").append(serverOs).append("</td></tr>");
+        sb.append("<tr><td><b>Java</b></td><td>").append(clientJava).append("</td><td>").append(serverJava).append("</td></tr>");
+        sb.append("<tr><td><b>Java-VM</b></td><td>").append(clientVm).append("</td><td>").append(serverVm).append("</td></tr>");
+        sb.append("<tr><td><b>Memory</b></td><td>").append(memoryStatus(clientUsedPct)).append("</td><td>").append(memoryStatus(serverUsedPct)).append("</td></tr>");
+        sb.append("<tr><td><b>Prozessoren</b></td><td>").append(clientProcessors).append("</td><td>").append(serverProcessors != null ? serverProcessors : "?").append("</td></tr>");
+        sb.append("</table><br>");
+    }
     
     private void addMemoryInformation(StringBuilder sb) {
         ServerInformation si=this.locator.lookupSystemManagementRemote().getServerInformation();
-        sb.append("<b>Server Java Runtime Memory:</b>");
+        long serverUsedPct = si.getMaxMemory() > 0 ? (si.getTotalMemory() - si.getFreeMemory()) * 100 / si.getMaxMemory() : 0;
+        sb.append("<b>Server Java Runtime Memory (").append(memoryStatus(serverUsedPct)).append("):</b>");
         sb.append("<ul>");
         sb.append("<li><tt>").append("max:   ").append(si.getMaxMemory()).append("</tt></li>");
         sb.append("<li><tt>").append("total: ").append(si.getTotalMemory()).append("</tt></li>");
         sb.append("<li><tt>").append("frei:  ").append(si.getFreeMemory()).append("</tt></li>");
+        sb.append("<li><tt>").append("belegt: ").append(serverUsedPct).append("%</tt></li>");
+        sb.append("</ul>");
+
+        Runtime rt = Runtime.getRuntime();
+        long clientUsedPct = rt.maxMemory() > 0 ? (rt.totalMemory() - rt.freeMemory()) * 100 / rt.maxMemory() : 0;
+        sb.append("<b>Client Java Runtime Memory (").append(memoryStatus(clientUsedPct)).append("):</b>");
+        sb.append("<ul>");
+        sb.append("<li><tt>").append("max:   ").append(rt.maxMemory()).append("</tt></li>");
+        sb.append("<li><tt>").append("total: ").append(rt.totalMemory()).append("</tt></li>");
+        sb.append("<li><tt>").append("frei:  ").append(rt.freeMemory()).append("</tt></li>");
+        sb.append("<li><tt>").append("belegt: ").append(clientUsedPct).append("%</tt></li>");
         sb.append("</ul>");
     }
-    
+
+    private String memoryStatus(long usedPercent) {
+        if (usedPercent < 60) {
+            return "<font color='green'>" + usedPercent + "% belegt - OK</font>";
+        } else if (usedPercent < 85) {
+            return "<font color='orange'>" + usedPercent + "% belegt - erhöht</font>";
+        } else {
+            return "<font color='red'>" + usedPercent + "% belegt - kritisch</font>";
+        }
+    }
+
     private void addVersionInformation(StringBuilder sb) {
         sb.append("<b>Versionsinformation:</b>");
         sb.append("<ul>");
@@ -896,7 +951,7 @@ public class BugReportDialog extends javax.swing.JDialog {
         jScrollPane2.setViewportView(taServerLog);
 
         spnServerLines.setFont(spnServerLines.getFont());
-        spnServerLines.setModel(new javax.swing.SpinnerNumberModel(1000, 200, 5000, 100));
+        spnServerLines.setModel(new javax.swing.SpinnerNumberModel(3000, 200, 5000, 100));
 
         jLabel2.setText("Zeilen:");
 
@@ -946,7 +1001,7 @@ public class BugReportDialog extends javax.swing.JDialog {
         jScrollPane3.setViewportView(taClientLog);
 
         spnClientLines.setFont(spnClientLines.getFont());
-        spnClientLines.setModel(new javax.swing.SpinnerNumberModel(1000, 200, 5000, 100));
+        spnClientLines.setModel(new javax.swing.SpinnerNumberModel(3000, 200, 5000, 100));
 
         jLabel1.setFont(jLabel1.getFont());
         jLabel1.setText("Zeilen:");
