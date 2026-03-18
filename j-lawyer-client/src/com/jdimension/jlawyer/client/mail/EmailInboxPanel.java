@@ -909,7 +909,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     try {
                         boolean hasNew = locator.lookupEmailServiceRemote().hasNewMessages(ms.getId());
                         if (hasNew) {
-                            // Refresh the inbox folder for this mailbox
                             synchronized (this.inboxFolders) {
                                 FolderContainer fc = this.inboxFolders.get(ms);
                                 if (fc != null) {
@@ -917,6 +916,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                                 }
                             }
                             this.treeFolders.repaint();
+
+                            // Incremental table update if an inbox folder is currently selected
+                            incrementalInboxRefresh(ms, locator);
                         }
                     } catch (Exception ex) {
                         log.error("Error polling mailbox " + ms.getEmailAddress(), ex);
@@ -928,6 +930,105 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         });
         this.serverPollingTimer.setInitialDelay(30000);
         this.serverPollingTimer.start();
+    }
+
+    private void incrementalInboxRefresh(MailboxSetup ms, com.jdimension.jlawyer.services.JLawyerServiceLocator locator) {
+        try {
+            // Check if an inbox folder of this mailbox is currently selected
+            if (this.treeFolders.getSelectionPath() == null) return;
+            DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+            if (!(selNode.getUserObject() instanceof FolderContainer)) return;
+            FolderContainer selFc = (FolderContainer) selNode.getUserObject();
+            if (!selFc.isServerBased()) return;
+            if (selFc.getFolderDTO() == null || !selFc.getFolderDTO().isInbox()) return;
+            if (!ms.getId().equals(selFc.getMailboxId())) return;
+
+            // Fetch current restriction settings
+            ClientSettings cs = ClientSettings.getInstance();
+            String restriction = cs.getConfiguration(ClientSettings.CONF_MAIL_DOWNLOADRESTRICTION, "" + LoadFolderRestriction.RESTRICTION_50);
+            int top = 50;
+            java.util.Date sinceDate = null;
+            boolean unreadOnly = false;
+            try {
+                int restr = Integer.parseInt(restriction);
+                if (restr == LoadFolderRestriction.RESTRICTION_20) top = 20;
+                else if (restr == LoadFolderRestriction.RESTRICTION_100) top = 100;
+                else if (restr == LoadFolderRestriction.RESTRICTION_500) top = 500;
+                else if (restr == LoadFolderRestriction.RESTRICTION_NONE) top = 10000;
+                else if (restr == LoadFolderRestriction.RESTRICTION_UNREAD) { top = 500; unreadOnly = true; }
+                else if (restr == LoadFolderRestriction.RESTRICTION_LAST1W) { top = 500; sinceDate = new java.util.Date(System.currentTimeMillis() - (7L * 24 * 60 * 60 * 1000)); }
+                else if (restr == LoadFolderRestriction.RESTRICTION_LAST2W) { top = 500; sinceDate = new java.util.Date(System.currentTimeMillis() - (14L * 24 * 60 * 60 * 1000)); }
+                else if (restr == LoadFolderRestriction.RESTRICTION_LAST4W) { top = 500; sinceDate = new java.util.Date(System.currentTimeMillis() - (28L * 24 * 60 * 60 * 1000)); }
+                else if (restr == LoadFolderRestriction.RESTRICTION_LAST2M) { top = 1000; sinceDate = new java.util.Date(System.currentTimeMillis() - (60L * 24 * 60 * 60 * 1000)); }
+                else if (restr == LoadFolderRestriction.RESTRICTION_LAST6M) { top = 2000; sinceDate = new java.util.Date(System.currentTimeMillis() - (180L * 24 * 60 * 60 * 1000)); }
+                else if (restr == LoadFolderRestriction.RESTRICTION_LAST1Y) { top = 5000; sinceDate = new java.util.Date(System.currentTimeMillis() - (365L * 24 * 60 * 60 * 1000)); }
+            } catch (Throwable t) { }
+
+            List<com.jdimension.jlawyer.services.MailMessageDTO> serverMessages =
+                locator.lookupEmailServiceRemote().listMessages(ms.getId(), selFc.getFolderId(), top, 0, sinceDate, unreadOnly, null);
+
+            // Build set of server messageRefs
+            java.util.LinkedHashMap<String, com.jdimension.jlawyer.services.MailMessageDTO> serverMap = new java.util.LinkedHashMap<>();
+            for (com.jdimension.jlawyer.services.MailMessageDTO dto : serverMessages) {
+                serverMap.put(dto.getMessageRef(), dto);
+            }
+
+            // Build set of current table messageRefs
+            javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) this.tblMails.getModel();
+            java.util.HashSet<String> tableRefs = new java.util.HashSet<>();
+            for (int i = 0; i < model.getRowCount(); i++) {
+                Object obj = model.getValueAt(i, 2);
+                if (obj instanceof MessageContainer) {
+                    String ref = ((MessageContainer) obj).getMessageRef();
+                    if (ref != null) tableRefs.add(ref);
+                }
+            }
+
+            // Determine changes
+            java.util.Set<String> serverRefs = serverMap.keySet();
+            boolean changed = false;
+
+            // Remove rows no longer on server
+            for (int i = model.getRowCount() - 1; i >= 0; i--) {
+                Object obj = model.getValueAt(i, 2);
+                if (obj instanceof MessageContainer) {
+                    String ref = ((MessageContainer) obj).getMessageRef();
+                    if (ref != null && !serverRefs.contains(ref)) {
+                        model.removeRow(i);
+                        changed = true;
+                    } else if (ref != null && serverRefs.contains(ref)) {
+                        // Update read status if changed
+                        MessageContainer mc = (MessageContainer) obj;
+                        com.jdimension.jlawyer.services.MailMessageDTO serverDto = serverMap.get(ref);
+                        if (serverDto != null && mc.isRead() != serverDto.isRead()) {
+                            mc.getMessageDTO().setRead(serverDto.isRead());
+                            model.setValueAt(mc, i, 2);
+                            changed = true;
+                        }
+                    }
+                }
+            }
+
+            // Add new rows
+            java.text.SimpleDateFormat df = new java.text.SimpleDateFormat("dd.MM.yyyy, HH:mm");
+            for (com.jdimension.jlawyer.services.MailMessageDTO dto : serverMessages) {
+                if (!tableRefs.contains(dto.getMessageRef())) {
+                    String sentString = dto.getDate() != null ? df.format(dto.getDate()) : "";
+                    String from = dto.getFrom() != null ? dto.getFrom() : "";
+                    String toString = "";
+                    if (dto.getTo() != null && dto.getTo().length > 0) toString = dto.getTo()[0];
+                    model.insertRow(0, new Object[]{sentString, from, new MessageContainer(dto, ms.getId()), toString});
+                    changed = true;
+                }
+            }
+
+            if (changed) {
+                this.tblMails.repaint();
+            }
+
+        } catch (Exception ex) {
+            log.error("Error during incremental inbox refresh", ex);
+        }
     }
 
     private void refreshFolders(boolean showErrorDialogOnFailure) throws Exception {
