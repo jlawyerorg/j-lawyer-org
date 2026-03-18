@@ -989,6 +989,11 @@ public class BeaAccess {
         return getService().verifyMessage(safeId, messageId);
     }
 
+    public BeaMessageValidationResult validateMessage(String safeId, String messageId) throws Exception {
+        this.checkValidBeaClient();
+        return getService().validateMessage(safeId, messageId);
+    }
+
     public static ImageIcon getSignatureStatusIcon(String status) {
         if (status.equalsIgnoreCase(BeaVerificationResult.STATUS_SUCCESS)) {
             return new javax.swing.ImageIcon(BeaAccess.class.getResource("/com/jdimension/jlawyer/client/bea/signature-success.png"));
@@ -1128,6 +1133,16 @@ public class BeaAccess {
     public BeaMessage getMessage(String messageId, String safeId) throws Exception {
         this.checkValidBeaClient();
         return getService().getMessage(safeId, messageId);
+    }
+
+    public BeaMessage getMessageWithoutAttachments(String messageId, String safeId) throws Exception {
+        this.checkValidBeaClient();
+        return getService().getMessage(safeId, messageId, false);
+    }
+
+    public BeaAttachment getAttachmentContent(String safeId, String messageId, String attachmentName) throws Exception {
+        this.checkValidBeaClient();
+        return getService().getAttachmentContent(safeId, messageId, attachmentName);
     }
 
     public List<BeaMessageJournalEntry> getMessageJournal(String safeId, String messageId) throws Exception {

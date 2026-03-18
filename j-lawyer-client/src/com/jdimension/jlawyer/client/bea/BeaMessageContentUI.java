@@ -703,6 +703,7 @@ import com.jdimension.jlawyer.services.bea.rest.BeaMessageExport;
 import com.jdimension.jlawyer.services.bea.rest.BeaMessageJournalEntry;
 import com.jdimension.jlawyer.services.bea.rest.BeaProcessCard;
 import com.jdimension.jlawyer.services.bea.rest.BeaProcessCardEntry;
+import com.jdimension.jlawyer.services.bea.rest.BeaMessageValidationResult;
 import com.jdimension.jlawyer.services.bea.rest.BeaVerificationResult;
 import themes.colors.DefaultColorTheme;
 
@@ -1407,7 +1408,8 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             String selectedFolder = null;
             for (Object selected : attList.getSelectedValuesList()) {
 
-                byte[] data = ((BeaAttachment) selected).getContent();
+                BeaAttachment att = (BeaAttachment) selected;
+                byte[] data = ensureAttachmentContent(att);
 
                 String useFolder = userHome;
                 if (selectedFolder != null) {
@@ -1500,7 +1502,8 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
                 for (Object selected : attList.getSelectedValuesList()) {
 
-                    byte[] data = ((BeaAttachment) selected).getContent();
+                    BeaAttachment att = (BeaAttachment) selected;
+                    byte[] data = ensureAttachmentContent(att);
 
                     String newName = FileUtils.getNewFileName(sel, selected.toString(), true);
                     if (newName == null) {
@@ -1627,26 +1630,15 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         try {
 
-            String vHtml = "";
-            String vStatus = BeaVerificationResult.STATUS_FAILED;
-            if (StringUtils.isEmpty(this.msgContainer.getVerificationHtml()) || StringUtils.isEmpty(this.msgContainer.getVerificationStatus())) {
-
-                if (!BeaAccess.getInstance().ensureLoggedIn()) {
-                    return;
-                }
-                BeaAccess bea = BeaAccess.getInstance();
-                String safeId = bea.getLoggedInSafeId();
-                BeaVerificationResult vr = bea.verifyMessage(safeId, this.msgContainer.getId());
-                vHtml=vr.getHtml();
-                vStatus=vr.getStatus();
-            } else {
-                vHtml=this.msgContainer.getVerificationHtml();
-                vStatus=this.msgContainer.getVerificationStatus();
+            if (!BeaAccess.getInstance().ensureLoggedIn()) {
+                return;
             }
+            BeaAccess bea = BeaAccess.getInstance();
+            String safeId = bea.getLoggedInSafeId();
+            BeaMessageValidationResult valResult = bea.validateMessage(safeId, this.msgContainer.getId());
 
             BeaSignaturesVerificationDialog dlg = new BeaSignaturesVerificationDialog(EditorsRegistry.getInstance().getMainWindow(), true);
-            dlg.setHtml(vHtml);
-            dlg.setStatus(vStatus);
+            dlg.setValidationResult(valResult);
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
             dlg.setVisible(true);
 
@@ -1682,11 +1674,28 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         }
     }
     
+    private byte[] ensureAttachmentContent(BeaAttachment att) throws Exception {
+        byte[] data = att.getContent();
+        if (data == null) {
+            BeaAccess bea = BeaAccess.getInstance();
+            BeaAttachment loaded = bea.getAttachmentContent(
+                    bea.getLoggedInSafeId(), this.msgContainer.getId(), att.getName());
+            att.setContent(loaded.getContent());
+            data = att.getContent();
+        }
+        return data;
+    }
+
     private void attachmentsMouseClicked(java.awt.event.MouseEvent evt, JList attList) {
         if (evt.getClickCount() == 2 && attList.getSelectedValue() != null) {
             try {
-                byte[] data = ((BeaAttachment) attList.getSelectedValue()).getContent();
-                String fileName = ((BeaAttachment) attList.getSelectedValue()).getName();
+                BeaAttachment att = (BeaAttachment) attList.getSelectedValue();
+                byte[] data = ensureAttachmentContent(att);
+                if (data == null) {
+                    JOptionPane.showMessageDialog(this, "Anhang enthält keine Daten.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                String fileName = att.getName();
                 ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("beaattachment-" + fileName, fileName);
                 Launcher launcher = LauncherFactory.getLauncher(fileName, data, store, EditorsRegistry.getInstance().getMainWindow());
                 launcher.launch(false);

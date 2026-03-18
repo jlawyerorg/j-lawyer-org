@@ -954,8 +954,35 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
 
     @Override
     public BeaMessage getMessage(String safeId, String messageId) throws Exception {
-        String responseBody = authenticatedGet("/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId), TIMEOUT_120S);
+        return getMessage(safeId, messageId, true);
+    }
+
+    @Override
+    public BeaMessage getMessage(String safeId, String messageId, boolean includeAttachments) throws Exception {
+        String path = "/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId);
+        if (!includeAttachments) {
+            path += "?includeAttachments=false";
+        }
+        String responseBody = authenticatedGet(path, includeAttachments ? TIMEOUT_120S : TIMEOUT_30S);
         return parseMessage(parseJson(responseBody));
+    }
+
+    @Override
+    public BeaAttachment getAttachmentContent(String safeId, String messageId, String attachmentName) throws Exception {
+        String responseBody = authenticatedGet(
+                "/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId) + "/attachments/" + encode(attachmentName),
+                TIMEOUT_120S);
+        JsonObject json = parseJson(responseBody);
+        BeaAttachment a = new BeaAttachment();
+        a.setName(getStringOrNull(json, "name"));
+        a.setAlias(getStringOrNull(json, "alias"));
+        a.setType(getIntOrDefault(json, "type", BeaAttachment.TYPE_ATTACHMENT));
+        a.setSize(getLongOrDefault(json, "size", 0));
+        a.setTechnicalAttachment(getBooleanOrDefault(json, "technicalAttachment", false));
+        if (json.containsKey("content") && !json.isNull("content")) {
+            a.setContent(Base64.getDecoder().decode(json.getString("content")));
+        }
+        return a;
     }
 
     @Override
@@ -1003,8 +1030,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         }
 
         String responseBody = authenticatedPost("/api/v1/postboxes/" + encode(safeId) + "/drafts", builder.build().toString(), TIMEOUT_300S);
-        JsonObject json = parseJson(responseBody);
-        return json.getString("id", responseBody.trim());
+        return responseBody.trim();
     }
 
     @Override
@@ -1070,6 +1096,43 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         result.setXml(getStringOrNull(json, "xml"));
         result.setStatus(getStringOrNull(json, "status"));
         return result;
+    }
+
+    @Override
+    public BeaMessageValidationResult validateMessage(String safeId, String messageId) throws Exception {
+        String responseBody = authenticatedPost(
+                "/api/v1/postboxes/" + encode(safeId) + "/messages/" + encode(messageId) + "/validate",
+                null, TIMEOUT_120S);
+        JsonObject json = parseJson(responseBody);
+        BeaMessageValidationResult result = new BeaMessageValidationResult();
+        result.setMessageId(getLongOrDefault(json, "messageId", 0));
+        if (json.containsKey("pdfReport") && !json.isNull("pdfReport")) {
+            result.setPdfReport(Base64.getDecoder().decode(json.getString("pdfReport")));
+        }
+        if (json.containsKey("attachmentResults") && !json.isNull("attachmentResults")) {
+            List<BeaAttachmentValidationResult> attachmentResults = new ArrayList<>();
+            for (JsonValue v : json.getJsonArray("attachmentResults")) {
+                attachmentResults.add(parseAttachmentValidationResult(v.asJsonObject()));
+            }
+            result.setAttachmentResults(attachmentResults);
+        }
+        if (json.containsKey("vhnResult") && !json.isNull("vhnResult")) {
+            result.setVhnResult(parseAttachmentValidationResult(json.getJsonObject("vhnResult")));
+        }
+        return result;
+    }
+
+    private BeaAttachmentValidationResult parseAttachmentValidationResult(JsonObject json) {
+        BeaAttachmentValidationResult r = new BeaAttachmentValidationResult();
+        r.setAttachmentReference(getStringOrNull(json, "attachmentReference"));
+        r.setSignatureReference(getStringOrNull(json, "signatureReference"));
+        r.setValidationIndication(getStringOrNull(json, "validationIndication"));
+        r.setValidationLevel(getStringOrNull(json, "validationLevel"));
+        r.setEtsiReport(getStringOrNull(json, "etsiReport"));
+        if (json.containsKey("pdfReport") && !json.isNull("pdfReport")) {
+            r.setPdfReport(Base64.getDecoder().decode(json.getString("pdfReport")));
+        }
+        return r;
     }
 
     // ========== Identity ==========

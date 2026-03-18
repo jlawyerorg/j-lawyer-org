@@ -661,110 +661,83 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.services.bea.rest;
 
-import com.jdimension.jlawyer.services.bea.rest.*;
-import java.util.List;
-import java.util.Map;
-import javax.ejb.Local;
+import java.io.Serializable;
 
 /**
- * Local interface for server-side beA operations. Mirrors
- * {@link BeaServiceRemote} for inter-bean calls within the server.
+ * Represents the validation result for a single beA message attachment.
  *
  * @author jens
  */
-@Local
-public interface BeaServiceLocal {
+public class BeaAttachmentValidationResult implements Serializable {
 
-    BeaLoginResult login() throws Exception;
+    public static final String INDICATION_SUCCESS = "SUCCESS";
+    public static final String INDICATION_PARTIAL = "PARTIAL";
+    public static final String INDICATION_FAILED = "FAILED";
+    public static final String INDICATION_EMPTY = "EMPTY";
+    public static final String INDICATION_UNKNOWN = "UNKNOWN";
 
-    void logout() throws Exception;
+    public static final String LEVEL_QES = "QES";
+    public static final String LEVEL_FES = "FES";
+    public static final String LEVEL_NONE = "NONE";
+    public static final String LEVEL_UNKNOWN = "UNKNOWN";
 
-    String getBeaWrapperVersion() throws Exception;
+    private String attachmentReference;
+    private String signatureReference;
+    private String validationIndication;
+    private String validationLevel;
+    private String etsiReport;
+    private byte[] pdfReport;
 
-    Map<String, String> getCertificateInformation(byte[] certificate, String password) throws Exception;
+    public BeaAttachmentValidationResult() {
+    }
 
-    List<BeaPostbox> getPostboxes() throws Exception;
+    public String getAttachmentReference() {
+        return attachmentReference;
+    }
 
-    BeaPostbox getPostbox(String safeId) throws Exception;
+    public void setAttachmentReference(String attachmentReference) {
+        this.attachmentReference = attachmentReference;
+    }
 
-    List<BeaFolder> getFolders(String safeId) throws Exception;
+    public String getSignatureReference() {
+        return signatureReference;
+    }
 
-    BeaFolder getFolder(String safeId, long folderId) throws Exception;
+    public void setSignatureReference(String signatureReference) {
+        this.signatureReference = signatureReference;
+    }
 
-    BeaFolder createFolder(String safeId, String name, Long parentFolderId) throws Exception;
+    public String getValidationIndication() {
+        return validationIndication;
+    }
 
-    void deleteFolder(String safeId, long folderId) throws Exception;
+    public void setValidationIndication(String validationIndication) {
+        this.validationIndication = validationIndication;
+    }
 
-    boolean isOutboxEmpty(String safeId) throws Exception;
+    public String getValidationLevel() {
+        return validationLevel;
+    }
 
-    List<BeaMessageHeader> getMessages(String safeId, long folderId) throws Exception;
+    public void setValidationLevel(String validationLevel) {
+        this.validationLevel = validationLevel;
+    }
 
-    List<BeaMessageHeader> searchMessages(String safeId, long folderId, BeaMessageFilter filter) throws Exception;
+    public String getEtsiReport() {
+        return etsiReport;
+    }
 
-    List<String> getMessageIds(String safeId, long folderId) throws Exception;
+    public void setEtsiReport(String etsiReport) {
+        this.etsiReport = etsiReport;
+    }
 
-    List<String> searchMessageIds(String safeId, long folderId, BeaMessageFilter filter) throws Exception;
+    public byte[] getPdfReport() {
+        return pdfReport;
+    }
 
-    BeaMessageHeader getMessageHeader(String safeId, String messageId) throws Exception;
-
-    BeaMessage getMessage(String safeId, String messageId) throws Exception;
-
-    BeaMessage getMessage(String safeId, String messageId, boolean includeAttachments) throws Exception;
-
-    BeaAttachment getAttachmentContent(String safeId, String messageId, String attachmentName) throws Exception;
-
-    BeaMessage sendMessage(String safeId, BeaSendMessageRequest request) throws Exception;
-
-    String saveDraft(String safeId, BeaSaveDraftRequest request) throws Exception;
-
-    void deleteMessage(String safeId, String messageId) throws Exception;
-
-    boolean restoreMessage(String safeId, String messageId) throws Exception;
-
-    boolean moveMessage(String safeId, String messageId, long targetFolderId) throws Exception;
-
-    boolean markMessageRead(String safeId, String messageId) throws Exception;
-
-    boolean isMessageReadByIdentity(String safeId, String messageId, String targetSafeId) throws Exception;
-
-    List<BeaMessageJournalEntry> getMessageJournal(String safeId, String messageId) throws Exception;
-
-    List<BeaProcessCard> getProcessCards(String safeId, String messageId) throws Exception;
-
-    BeaVerificationResult verifyMessage(String safeId, String messageId) throws Exception;
-
-    BeaMessageValidationResult validateMessage(String safeId, String messageId) throws Exception;
-
-    BeaIdentity getIdentity(String safeId) throws Exception;
-
-    BeaIdentity getIdentity(String safeId, String zipCode) throws Exception;
-
-    List<BeaIdentity> searchIdentity(BeaIdentitySearchRequest request) throws Exception;
-
-    List<BeaListItem> getLegalAuthorities() throws Exception;
-
-    BeaListItem getDefaultLegalAuthority() throws Exception;
-
-    List<BeaListItem> getMessagePriorities() throws Exception;
-
-    boolean isEgvpPostBox(String safeId, String userName) throws Exception;
-
-    boolean isEebRequest(String xml) throws Exception;
-
-    boolean isEebResponse(String xml) throws Exception;
-
-    BeaEebRequestAttributes getEebRequestAttributes(String xml) throws Exception;
-
-    BeaEebResponseAttributes getEebResponseAttributes(String xml) throws Exception;
-
-    String renderEebHtml(String xmlRequest, String xmlResponse) throws Exception;
-
-    List<BeaListItem> getEebRejectionReasons() throws Exception;
-
-    BeaMessage sendEebConfirmation(String safeId, String messageId, String senderSafeId, String recipientSafeId, String abgabeDate) throws Exception;
-
-    BeaMessage sendEebRejection(String safeId, String messageId, String senderSafeId, String recipientSafeId, String code, String comment) throws Exception;
-
+    public void setPdfReport(byte[] pdfReport) {
+        this.pdfReport = pdfReport;
+    }
 }

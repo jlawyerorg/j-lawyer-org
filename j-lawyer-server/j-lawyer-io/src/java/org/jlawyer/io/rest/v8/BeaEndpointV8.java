@@ -440,10 +440,11 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     }
 
     /**
-     * Retrieves a full message including body and attachments.
+     * Retrieves a full message, optionally including attachment content.
      *
      * @param safeId the Safe-ID of the postbox
      * @param messageId the message ID
+     * @param includeAttachments whether to include attachment content (defaults to true)
      * @response 401 User not authorized
      * @response 403 User not authenticated
      */
@@ -452,14 +453,41 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/postboxes/{safeId}/messages/{messageId}")
     @RolesAllowed({"loginRole"})
-    public Response getMessage(@PathParam("safeId") String safeId, @PathParam("messageId") String messageId) {
+    public Response getMessage(@PathParam("safeId") String safeId, @PathParam("messageId") String messageId, @QueryParam("includeAttachments") Boolean includeAttachments) {
         try {
             InitialContext ic = new InitialContext();
             BeaServiceLocal bea = (BeaServiceLocal) ic.lookup(BEA_SERVICE_JNDI);
-            BeaMessage message = bea.getMessage(safeId, messageId);
+            boolean include = (includeAttachments == null) ? true : includeAttachments;
+            BeaMessage message = bea.getMessage(safeId, messageId, include);
             return Response.ok(message).build();
         } catch (Exception ex) {
             log.error("can not get message " + messageId + " for " + safeId, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Retrieves the content of a single attachment from a message.
+     *
+     * @param safeId the Safe-ID of the postbox
+     * @param messageId the message ID
+     * @param attachmentName the name of the attachment
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/postboxes/{safeId}/messages/{messageId}/attachments/{attachmentName}")
+    @RolesAllowed({"loginRole"})
+    public Response getAttachmentContent(@PathParam("safeId") String safeId, @PathParam("messageId") String messageId, @PathParam("attachmentName") String attachmentName) {
+        try {
+            InitialContext ic = new InitialContext();
+            BeaServiceLocal bea = (BeaServiceLocal) ic.lookup(BEA_SERVICE_JNDI);
+            BeaAttachment attachment = bea.getAttachmentContent(safeId, messageId, attachmentName);
+            return Response.ok(attachment).build();
+        } catch (Exception ex) {
+            log.error("can not get attachment " + attachmentName + " for message " + messageId + " in " + safeId, ex);
             return Response.serverError().build();
         }
     }

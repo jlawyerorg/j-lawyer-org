@@ -857,6 +857,30 @@ public interface BeaServiceRemote {
     BeaMessage getMessage(String safeId, String messageId) throws Exception;
 
     /**
+     * Retrieves a message with optional attachment content. When
+     * includeAttachments is false, attachment metadata (name, alias, type,
+     * size) is returned but content bytes are null.
+     *
+     * @param safeId the Safe-ID of the postbox
+     * @param messageId the message ID
+     * @param includeAttachments whether to include attachment content bytes
+     * @return the message
+     * @throws Exception if the query fails
+     */
+    BeaMessage getMessage(String safeId, String messageId, boolean includeAttachments) throws Exception;
+
+    /**
+     * Retrieves the content of a single attachment by name.
+     *
+     * @param safeId the Safe-ID of the postbox
+     * @param messageId the message ID
+     * @param attachmentName the attachment file name
+     * @return the attachment with content bytes loaded
+     * @throws Exception if the query fails
+     */
+    BeaAttachment getAttachmentContent(String safeId, String messageId, String attachmentName) throws Exception;
+
+    /**
      * Sends a beA message.
      *
      * @param safeId the Safe-ID of the sender's postbox
@@ -957,6 +981,18 @@ public interface BeaServiceRemote {
      * @throws Exception if verification fails
      */
     BeaVerificationResult verifyMessage(String safeId, String messageId) throws Exception;
+
+    /**
+     * Validates all signatures of a message using the KSW Validation API.
+     * Returns per-attachment validation results with signature level
+     * (QES/FES/NONE), ETSI reports, and PDF reports.
+     *
+     * @param safeId the Safe-ID of the postbox
+     * @param messageId the message ID
+     * @return the validation result with per-attachment details
+     * @throws Exception if validation fails
+     */
+    BeaMessageValidationResult validateMessage(String safeId, String messageId) throws Exception;
 
     // ========== Identity ==========
 
