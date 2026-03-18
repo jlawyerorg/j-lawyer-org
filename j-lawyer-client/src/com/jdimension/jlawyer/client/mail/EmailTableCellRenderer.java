@@ -706,15 +706,17 @@ public class EmailTableCellRenderer extends DefaultTableCellRenderer {
             log.error(t);
             return new JLabel("Fehler");
         }
-        Message msg = msgC.getMessage();
-
         Object returnRenderer = null;
-        if (msg.isExpunged()) {
-            returnRenderer = super.getTableCellRendererComponent(table, "Nachricht gelöscht", isSelected, hasFocus, row, column);
-            ((Component) returnRenderer).setFont(((Component) returnRenderer).getFont().deriveFont(Font.ITALIC));
-            ((JLabel) ((Component) returnRenderer)).setForeground(Color.RED);
-            return (Component) returnRenderer;
-        } else {
+        if (!msgC.isServerBased()) {
+            Message msg = msgC.getMessage();
+            if (msg != null && msg.isExpunged()) {
+                returnRenderer = super.getTableCellRendererComponent(table, "Nachricht gelöscht", isSelected, hasFocus, row, column);
+                ((Component) returnRenderer).setFont(((Component) returnRenderer).getFont().deriveFont(Font.ITALIC));
+                ((JLabel) ((Component) returnRenderer)).setForeground(Color.RED);
+                return (Component) returnRenderer;
+            }
+        }
+        if (returnRenderer == null) {
             returnRenderer = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             ((Component) returnRenderer).setFont(((Component) returnRenderer).getFont().deriveFont(Font.PLAIN));
             ((JLabel) ((Component) returnRenderer)).setForeground(Color.BLACK);

@@ -745,17 +745,31 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
         try {
             if (userObject instanceof FolderContainer) {
                 FolderContainer fc = (FolderContainer) userObject;
-                Folder f = fc.getFolder();
-                
-                Icon icon=this.getIconByFolder(f);
-                if(icon!=null)
-                    this.setIcon(icon);
 
-                int unread = fc.getUnreadMessageCount();
-                if (unread > 0) {
-                    this.setFont(this.boldFont);
+                if (fc.isServerBased()) {
+                    // Server-based: use DTO for icon and unread count
+                    com.jdimension.jlawyer.services.MailFolderDTO fDto = fc.getFolderDTO();
+                    if (fDto != null) {
+                        Icon icon = this.getIconByFolderName(fDto.getDisplayName(), fDto.getWellKnownName());
+                        if (icon != null) this.setIcon(icon);
+                    }
+                    int unread = fc.getUnreadMessageCount();
+                    if (unread > 0) {
+                        this.setFont(this.boldFont);
+                    } else {
+                        this.setFont(this.plainFont);
+                    }
                 } else {
-                    this.setFont(this.plainFont);
+                    Folder f = fc.getFolder();
+                    Icon icon = this.getIconByFolder(f);
+                    if (icon != null) this.setIcon(icon);
+
+                    int unread = fc.getUnreadMessageCount();
+                    if (unread > 0) {
+                        this.setFont(this.boldFont);
+                    } else {
+                        this.setFont(this.plainFont);
+                    }
                 }
             } else {
                 if (object.toString().contains("@")) {
@@ -774,6 +788,19 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
         }
         return this;
 
+    }
+
+    private Icon getIconByFolderName(String displayName, String wellKnownName) {
+        if (wellKnownName != null) {
+            if (com.jdimension.jlawyer.services.MailFolderDTO.WELL_KNOWN_INBOX.equals(wellKnownName)) return inboxIcon;
+            if (com.jdimension.jlawyer.services.MailFolderDTO.WELL_KNOWN_SENT.equals(wellKnownName)) return sentIcon;
+            if (com.jdimension.jlawyer.services.MailFolderDTO.WELL_KNOWN_TRASH.equals(wellKnownName)) return trashIcon;
+            if (com.jdimension.jlawyer.services.MailFolderDTO.WELL_KNOWN_DRAFTS.equals(wellKnownName)) return draftsIcon;
+        }
+        if (displayName != null) {
+            if ("in Akte importiert".equalsIgnoreCase(displayName)) return importedIcon;
+        }
+        return null;
     }
 
     private Icon getIconByFolder(Folder f) {

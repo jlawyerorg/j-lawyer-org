@@ -740,6 +740,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
             SystemManagementLocal sysSvc = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
             FormsServiceLocal formsSvc = (FormsServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/FormsService!com.jdimension.jlawyer.services.FormsServiceLocal");
             AddressServiceLocal adrSvc = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+            com.jdimension.jlawyer.services.EmailServiceLocal emailSvc = (com.jdimension.jlawyer.services.EmailServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/EmailService!com.jdimension.jlawyer.services.EmailServiceLocal");
             MailboxSetupFacadeLocal mailboxes = (MailboxSetupFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/MailboxSetupFacade!com.jdimension.jlawyer.persistence.MailboxSetupFacadeLocal");
             List<MailboxSetup> entries = mailboxes.findAll();
 
@@ -760,7 +761,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
                         }
                         long processingStart = System.currentTimeMillis();
                         log.info("Processing mailbox " + ms.getEmailAddress());
-                        this.processMailbox(ms, caseSvc, adrSvc, sysSvc, formsSvc, allFileNumbers, documentTags, blacklistedTypes, t, ms.isScanIgnoreInline(), ms.getScanMinAttachmentSize(), allPartyTypes, sysSvc.getDefaultDocumentNameTemplate());
+                        this.processMailboxViaService(ms, emailSvc, caseSvc, adrSvc, sysSvc, formsSvc, allFileNumbers, documentTags, blacklistedTypes, t, ms.isScanIgnoreInline(), ms.getScanMinAttachmentSize(), allPartyTypes, sysSvc.getDefaultDocumentNameTemplate());
                         log.info("Finished processing mailbox " + ms.getEmailAddress() + " in " + ((System.currentTimeMillis() - processingStart) / 1000) + " seconds");
                     } catch (Throwable ex) {
                         log.error("Error processing scanned inbox " + ms.getEmailAddress(), ex);
@@ -773,6 +774,314 @@ public class MailboxScannerTask extends java.util.TimerTask {
         }
     }
 
+    private void processMailboxViaService(MailboxSetup ms, com.jdimension.jlawyer.services.EmailServiceLocal emailSvc, ArchiveFileServiceLocal caseSvc, AddressServiceLocal adrSvc, SystemManagementLocal sysSvc, FormsServiceLocal formsSvc, ArrayList<String> allFileNumbers, List<String> tags, List<String> blacklistedFileTypes, String exclusionList, boolean ignoreInline, int minAttachmentSize, List<PartyTypeBean> allPartyTypes, DocumentNameTemplate defaultNameTemplate) {
+        try {
+            // Find inbox folder ID
+            List<com.jdimension.jlawyer.services.MailFolderDTO> folders = emailSvc.listFolders(ms.getId());
+            String inboxFolderId = null;
+            String importFolderId = null;
+            for (com.jdimension.jlawyer.services.MailFolderDTO f : folders) {
+                if (f.isInbox()) inboxFolderId = f.getFolderId();
+                if ("in Akte importiert".equalsIgnoreCase(f.getDisplayName())) importFolderId = f.getFolderId();
+            }
+            if (inboxFolderId == null) {
+                log.error("Could not find inbox folder for " + ms.getEmailAddress());
+                return;
+            }
+
+            // Create import folder if needed
+            if (importFolderId == null) {
+                try {
+                    com.jdimension.jlawyer.services.MailFolderDTO created = emailSvc.createFolder(ms.getId(), inboxFolderId, "in Akte importiert");
+                    importFolderId = created.getFolderId();
+                } catch (Exception ex) {
+                    log.error("Could not create 'in Akte importiert' folder for " + ms.getEmailAddress(), ex);
+                }
+            }
+
+            // Fetch messages from last N days
+            Calendar cal = Calendar.getInstance();
+            cal.add(Calendar.DATE, -1 * ms.getScanDays());
+            Date sinceDate = cal.getTime();
+
+            List<com.jdimension.jlawyer.services.MailMessageDTO> messages = emailSvc.listMessages(ms.getId(), inboxFolderId, 500, 0, sinceDate, false, null);
+            if (messages == null || messages.isEmpty()) {
+                return;
+            }
+
+            log.info("processing " + messages.size() + " messages in mailbox " + ms.getEmailAddress());
+            List<String> processedMessageRefs = new ArrayList<>();
+
+            for (com.jdimension.jlawyer.services.MailMessageDTO msgDto : messages) {
+
+                // Extract from address
+                String from = null;
+                if (msgDto.getFrom() != null) {
+                    from = msgDto.getFrom().toLowerCase();
+                    // Extract email from "Name <email>" format
+                    if (from.contains("<") && from.contains(">")) {
+                        from = from.substring(from.indexOf("<") + 1, from.indexOf(">"));
+                    }
+                }
+
+                // Check exclusion list
+                if (from != null && exclusionList.toLowerCase().contains(from)) {
+                    log.info("FROM address is excluded from mailscanner processing: " + from);
+                    continue;
+                }
+                boolean excludedTo = false;
+                if (msgDto.getTo() != null) {
+                    for (String toAddr : msgDto.getTo()) {
+                        String toStr = toAddr.toLowerCase();
+                        if (toStr.contains("<") && toStr.contains(">")) {
+                            toStr = toStr.substring(toStr.indexOf("<") + 1, toStr.indexOf(">"));
+                        }
+                        if (exclusionList.toLowerCase().contains(toStr)) {
+                            excludedTo = true;
+                            break;
+                        }
+                    }
+                }
+                if (excludedTo) continue;
+
+                String subject = msgDto.getSubject() != null ? msgDto.getSubject() : "";
+                log.info("processing message with subject: " + subject);
+
+                // FIRST - A: try to find matching case by file number in subject
+                boolean foundInSubject = false;
+                for (String fn : allFileNumbers) {
+                    if (subject.toLowerCase().contains(fn.toLowerCase())) {
+                        ArchiveFileBean toCase = caseSvc.getArchiveFileByFileNumberUnrestricted(fn);
+                        if (toCase.isArchived()) {
+                            log.warn("message from " + from + " with subject '" + subject + "' matched by file number in subject, but case is archived - skipping!");
+                        } else {
+                            log.info("message from " + from + " with subject '" + subject + "' matched by file number in subject");
+                            boolean saved = saveToCaseViaService(emailSvc, ms.getId(), msgDto, toCase, caseSvc, sysSvc, formsSvc, tags, blacklistedFileTypes, ignoreInline, minAttachmentSize, defaultNameTemplate, allPartyTypes);
+                            if (saved) processedMessageRefs.add(msgDto.getMessageRef());
+                            foundInSubject = true;
+                        }
+                        break;
+                    }
+                }
+                if (foundInSubject) continue;
+
+                // FIRST - B: try to find matching case by file number in body
+                com.jdimension.jlawyer.services.MailMessageDTO fullMsg = emailSvc.getMessage(ms.getId(), msgDto.getMessageRef());
+                String body = "";
+                if (fullMsg.getBody() != null) {
+                    body = fullMsg.getBody();
+                    if ("text/html".equals(fullMsg.getBodyContentType())) {
+                        body = CommonMailUtils.html2Text(body);
+                    }
+                }
+                body = body.toLowerCase();
+                boolean foundInBody = false;
+                if (body.length() > 0) {
+                    for (String fn : allFileNumbers) {
+                        if (body.contains(fn.toLowerCase())) {
+                            ArchiveFileBean toCase = caseSvc.getArchiveFileByFileNumberUnrestricted(fn);
+                            if (toCase.isArchived()) {
+                                log.warn("message from " + from + " with subject '" + subject + "' matched by file number in body, but case is archived - skipping!");
+                            } else {
+                                log.info("message from " + from + " with subject '" + subject + "' matched by file number in body");
+                                boolean saved = saveToCaseViaService(emailSvc, ms.getId(), msgDto, toCase, caseSvc, sysSvc, formsSvc, tags, blacklistedFileTypes, ignoreInline, minAttachmentSize, defaultNameTemplate, allPartyTypes);
+                                if (saved) processedMessageRefs.add(msgDto.getMessageRef());
+                                foundInBody = true;
+                            }
+                            break;
+                        }
+                    }
+                    if (foundInBody) continue;
+                }
+
+                // SECOND: try to find matching sender FROM
+                if (from != null) {
+                    AddressBean[] fromAddresses = adrSvc.searchSimpleUnrestricted(from);
+                    if (fromAddresses.length == 1) {
+                        Collection<ArchiveFileAddressesBean> parties = caseSvc.getArchiveFileAddressesForAddressUnrestricted(fromAddresses[0].getId());
+                        ArchiveFileAddressesBean uniqueCase = getUniqueCase(parties);
+                        if (uniqueCase != null) {
+                            log.info("message from " + from + " with subject '" + subject + "' matched by FROM address");
+                            boolean saved = saveToCaseViaService(emailSvc, ms.getId(), msgDto, uniqueCase.getArchiveFileKey(), caseSvc, sysSvc, formsSvc, tags, blacklistedFileTypes, ignoreInline, minAttachmentSize, defaultNameTemplate, allPartyTypes);
+                            if (saved) processedMessageRefs.add(msgDto.getMessageRef());
+                            continue;
+                        }
+                    }
+                }
+
+                // THIRD: try CC addresses
+                boolean foundInCC = false;
+                if (msgDto.getCc() != null) {
+                    for (String ccAddr : msgDto.getCc()) {
+                        String ccStr = ccAddr.toLowerCase();
+                        if (ccStr.contains("<") && ccStr.contains(">")) ccStr = ccStr.substring(ccStr.indexOf("<") + 1, ccStr.indexOf(">"));
+                        AddressBean[] ccAddresses = adrSvc.searchSimpleUnrestricted(ccStr);
+                        if (ccAddresses.length == 1) {
+                            Collection<ArchiveFileAddressesBean> parties = caseSvc.getArchiveFileAddressesForAddressUnrestricted(ccAddresses[0].getId());
+                            ArchiveFileAddressesBean uniqueCase = getUniqueCase(parties);
+                            if (uniqueCase != null) {
+                                log.info("message from " + from + " with subject '" + subject + "' matched by CC address " + ccStr);
+                                boolean saved = saveToCaseViaService(emailSvc, ms.getId(), msgDto, uniqueCase.getArchiveFileKey(), caseSvc, sysSvc, formsSvc, tags, blacklistedFileTypes, ignoreInline, minAttachmentSize, defaultNameTemplate, allPartyTypes);
+                                if (saved) processedMessageRefs.add(msgDto.getMessageRef());
+                                foundInCC = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (foundInCC) continue;
+
+                // FOURTH: try TO addresses
+                boolean foundInTo = false;
+                if (msgDto.getTo() != null) {
+                    for (String toAddr : msgDto.getTo()) {
+                        String toStr = toAddr.toLowerCase();
+                        if (toStr.contains("<") && toStr.contains(">")) toStr = toStr.substring(toStr.indexOf("<") + 1, toStr.indexOf(">"));
+                        AddressBean[] toAddresses = adrSvc.searchSimpleUnrestricted(toStr);
+                        if (toAddresses.length == 1) {
+                            Collection<ArchiveFileAddressesBean> parties = caseSvc.getArchiveFileAddressesForAddressUnrestricted(toAddresses[0].getId());
+                            ArchiveFileAddressesBean uniqueCase = getUniqueCase(parties);
+                            if (uniqueCase != null) {
+                                log.info("message from " + from + " with subject '" + subject + "' matched by TO address " + toStr);
+                                boolean saved = saveToCaseViaService(emailSvc, ms.getId(), msgDto, uniqueCase.getArchiveFileKey(), caseSvc, sysSvc, formsSvc, tags, blacklistedFileTypes, ignoreInline, minAttachmentSize, defaultNameTemplate, allPartyTypes);
+                                if (saved) processedMessageRefs.add(msgDto.getMessageRef());
+                                foundInTo = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (foundInTo) continue;
+
+                // FIFTH: default case
+                if (!ServerStringUtils.isEmpty(ms.getScanDefaultCase())) {
+                    ArchiveFileBean defaultCase = caseSvc.getArchiveFileUnrestricted(ms.getScanDefaultCase());
+                    if (defaultCase != null) {
+                        log.info("message from " + from + " with subject '" + subject + "' assigned to default case " + defaultCase.getFileNumber());
+                        boolean saved = saveToCaseViaService(emailSvc, ms.getId(), msgDto, defaultCase, caseSvc, sysSvc, formsSvc, tags, blacklistedFileTypes, ignoreInline, minAttachmentSize, defaultNameTemplate, allPartyTypes);
+                        if (saved) processedMessageRefs.add(msgDto.getMessageRef());
+                    }
+                }
+            }
+
+            // Move processed messages to import folder
+            if (!processedMessageRefs.isEmpty() && importFolderId != null) {
+                for (String ref : processedMessageRefs) {
+                    try {
+                        emailSvc.moveMessage(ms.getId(), ref, importFolderId);
+                    } catch (Exception ex) {
+                        log.error("Could not move processed message to import folder", ex);
+                    }
+                }
+            }
+
+        } catch (Exception ex) {
+            log.error("Error processing mailbox " + ms.getEmailAddress() + " via unified service", ex);
+        }
+    }
+
+    private boolean saveToCaseViaService(com.jdimension.jlawyer.services.EmailServiceLocal emailSvc, String mailboxId, com.jdimension.jlawyer.services.MailMessageDTO msgDto, ArchiveFileBean toCase, ArchiveFileServiceLocal caseSvc, SystemManagementLocal sysSvc, FormsServiceLocal formsSvc, List<String> documentTags, List<String> blacklistedFileTypes, boolean ignoreInline, int minAttachmentSize, DocumentNameTemplate nameTemplate, List<PartyTypeBean> allPartyTypes) {
+        try {
+            if (toCase == null) {
+                log.error("missing case when storing message - skipping message");
+                return false;
+            }
+
+            // Get EML via unified service (single source of truth)
+            byte[] msgData = emailSvc.getMessageAsEml(mailboxId, msgDto.getMessageRef());
+
+            ServerTemplatesUtil serverTemplates = new ServerTemplatesUtil(sysSvc, formsSvc);
+            List<ArchiveFileAddressesBean> involved = caseSvc.getInvolvementDetailsForCaseUnrestricted(toCase.getId(), false);
+            AppUserBean caseLawyer = null;
+            try { caseLawyer = sysSvc.getUserUnrestricted(toCase.getLawyer()); } catch (Exception ex) { }
+            AppUserBean caseAssistant = null;
+            try { caseAssistant = sysSvc.getUserUnrestricted(toCase.getAssistant()); } catch (Exception ex) { }
+            Collection<String> formPlaceHolders = formsSvc.getPlaceHoldersForCaseUnrestricted(toCase.getId());
+            HashMap<String, String> formPlaceHolderValues = formsSvc.getPlaceHolderValuesForCaseUnrestricted(toCase.getId());
+
+            String subject = msgDto.getSubject();
+            Date received = msgDto.getDate();
+
+            String docName = getEmailFilename(-1, subject, caseSvc, serverTemplates, received, nameTemplate, toCase, allPartyTypes, formPlaceHolders, formPlaceHolderValues, involved, caseLawyer, caseAssistant);
+            if (caseSvc.doesDocumentExistUnrestricted(toCase.getId(), docName)) {
+                int fileNameIndex = 2;
+                boolean fileNameClash = true;
+                while (fileNameClash && fileNameIndex <= 5) {
+                    docName = getEmailFilename(fileNameIndex, subject, caseSvc, serverTemplates, received, nameTemplate, toCase, allPartyTypes, formPlaceHolders, formPlaceHolderValues, involved, caseLawyer, caseAssistant);
+                    fileNameClash = caseSvc.doesDocumentExistUnrestricted(toCase.getId(), docName);
+                    fileNameIndex++;
+                    if (fileNameClash) docName = null;
+                    if (!fileNameClash) break;
+                }
+            }
+
+            if (docName == null) {
+                log.error("Naming conflict for email '" + subject + "' in case " + toCase.getFileNumber() + " - skipping");
+                return false;
+            }
+
+            ArchiveFileDocumentsBean newDoc = caseSvc.addDocumentUnrestricted(toCase.getId(), docName, msgData, "", null);
+            for (String tag : documentTags) {
+                tag = tag.trim();
+                if (!tag.isEmpty()) {
+                    DocumentTagsBean dtb = new DocumentTagsBean();
+                    dtb.setArchiveFileKey(newDoc);
+                    dtb.setTagName(tag);
+                    caseSvc.setDocumentTagUnrestricted(newDoc.getId(), dtb, true);
+                }
+            }
+
+            // Save attachments separately
+            List<com.jdimension.jlawyer.services.MailAttachmentDTO> attachments = emailSvc.getAttachments(mailboxId, msgDto.getMessageRef());
+            if (attachments != null) {
+                for (com.jdimension.jlawyer.services.MailAttachmentDTO att : attachments) {
+                    if (att.isInline() && ignoreInline) {
+                        log.warn("Attachment " + att.getName() + " is inline, skipping");
+                        continue;
+                    }
+                    boolean blacklisted = false;
+                    for (String fileType : blacklistedFileTypes) {
+                        if (att.getName() != null && att.getName().toLowerCase().endsWith("." + fileType.trim())) {
+                            blacklisted = true;
+                            break;
+                        }
+                    }
+                    if (blacklisted) {
+                        log.warn("Attachment " + att.getName() + " is blacklisted, skipping");
+                        continue;
+                    }
+                    if (att.getContent() != null && att.getContent().length < minAttachmentSize) {
+                        log.warn("Attachment " + att.getName() + " is smaller than minimum size, skipping");
+                        continue;
+                    }
+                    if (att.getContent() == null) continue;
+
+                    String newName = att.getName() != null ? att.getName() : "unbekannter Anhang";
+                    newName = ServerFileUtils.sanitizeFileName(newName);
+                    String extension = ServerFileUtils.getExtension(newName);
+                    String attDocName = caseSvc.getNewDocumentNameUnrestricted(newName, received, nameTemplate);
+                    HashMap<String, Object> placeHolders = serverTemplates.getPlaceHolderValues(attDocName, toCase, involved, null, null, allPartyTypes, formPlaceHolders, formPlaceHolderValues, caseLawyer, caseAssistant);
+                    attDocName = ServerTemplatesUtil.replacePlaceHolders(attDocName, placeHolders);
+                    attDocName = ServerFileUtils.sanitizeFileName(attDocName);
+                    attDocName = attDocName.replace("." + extension, "");
+                    attDocName = ServerFileUtils.preserveExtension(newName, attDocName);
+
+                    if (!caseSvc.doesDocumentExistUnrestricted(toCase.getId(), attDocName)) {
+                        caseSvc.addDocumentUnrestricted(toCase.getId(), attDocName, att.getContent(), "", null);
+                    } else {
+                        log.error("Document '" + attDocName + "' already exists in case " + toCase.getFileNumber() + " - skipping attachment");
+                    }
+                }
+            }
+
+        } catch (Exception ex) {
+            log.error("Unable to save message with subject '" + (msgDto.getSubject() != null ? msgDto.getSubject() : "?") + "'", ex);
+            return false;
+        }
+        return true;
+    }
+
+    // Legacy method - kept for reference, no longer called
     private void processMailbox(MailboxSetup ms, ArchiveFileServiceLocal caseSvc, AddressServiceLocal adrSvc, SystemManagementLocal sysSvc, FormsServiceLocal formsSvc, ArrayList<String> allFileNumbers, List<String> tags, List<String> blacklistedFileTypes, String exclusionList, boolean ignoreInline, int minAttachmentSize, List<PartyTypeBean> allPartyTypes, DocumentNameTemplate defaultNameTemplate) {
 
         String server = null;

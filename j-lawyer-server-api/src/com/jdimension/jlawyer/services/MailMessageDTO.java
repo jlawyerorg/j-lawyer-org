@@ -1,4 +1,5 @@
-/*                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*
+                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -660,732 +661,72 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.services;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.Serializable;
-import java.io.StringReader;
-import java.util.Properties;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.NamedQueries;
-import javax.persistence.Temporal;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-import javax.xml.bind.annotation.XmlRootElement;
-import org.apache.log4j.Logger;
+import java.util.Date;
 
-/**
- *
- * @author jens
- */
-@Entity
-@Table(name = "mailbox_setup")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "MailboxSetup.findAll", query = "SELECT p FROM MailboxSetup p"),
-    @NamedQuery(name = "MailboxSetup.findById", query = "SELECT p FROM MailboxSetup p WHERE p.id = :id"),
-    @NamedQuery(name = "MailboxSetup.findByMsExchange", query = "SELECT p FROM MailboxSetup p WHERE p.msExchange = :msExchange")})
-public class MailboxSetup implements Serializable, EventTypes {
-    
-    private static final Logger log = Logger.getLogger(MailboxSetup.class.getName());
+public class MailMessageDTO implements Serializable {
 
-    protected static long serialVersionUID = 1L;
-    private static final String ARRAY_DELIMITER = "#####";
-    
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    protected String id;
-    
-    @Column(name = "display_name")
-    protected String displayName;
-    
-    @Column(name = "emailAddress")
-    protected String emailAddress;
-    @Column(name = "emailInType")
-    protected String emailInType;
-    @Column(name = "emailInServer")
-    protected String emailInServer;
-    @Column(name = "emailInUser")
-    protected String emailInUser;
-    @Column(name = "emailInPwd")
-    protected String emailInPwd;
-    @Column(name = "emailOutServer")
-    protected String emailOutServer;
-    @Column(name = "emailOutUser")
-    protected String emailOutUser;
-    @Column(name = "emailOutPwd")
-    protected String emailOutPwd;
-    @Column(name = "emailOutPort")
-    protected String emailOutPort;
-    @Column(name = "emailSenderName")
-    protected String emailSenderName;
-    @Column(name = "emailSignature", columnDefinition = "TEXT")
-    protected String emailSignature;
-    @Column(name = "email_signature_txt")
-    protected String emailSignatureTxt;
-    @Column(name = "emailInSsl")
-    protected boolean emailInSsl;
-    @Column(name = "emailOutSsl")
-    protected boolean emailOutSsl;
-    @Column(name = "emailStartTls")
-    protected boolean emailStartTls;
-    
-    // Office 365 / Exchange
-    @Column(name = "client_id")
-    protected String clientId;
-    @Column(name = "client_secret")
-    protected String clientSecret;
-    @Column(name = "msexchange")
-    protected boolean msExchange;
-    @Column(name = "tenant_id")
-    protected String tenantId;
-    @Column(name = "token_auth")
-    private String authToken;
-    @Column(name = "token_expiry")
-    private long tokenExpiry;
-    @Column(name = "client_secret_expiry")
-    @Temporal(javax.persistence.TemporalType.DATE)
-    private java.util.Date clientSecretExpiry;
-    
-    // for mailbox scanner
-    @Column(name = "scan_inbox")
-    private boolean scanInbox=false;
-    @Column(name = "scan_documenttags")
-    private String scanDocumentTags="Posteingang";
-    @Column(name = "scan_blacklistedtypes")
-    private String scanBlacklistedTypes="bas,bat,com,exe,html,jar,jnlp,js,lnk,msi,pl,reg,vbs";
-    @Column(name = "scan_excludeadresses")
-    private String scanExclusionList="";
-    @Column(name = "scan_ignoreinline")
-    private boolean scanIgnoreInline=true;
-    @Column(name = "scan_minattachmentsize", columnDefinition = "INTEGER DEFAULT 5000")
-    private int scanMinAttachmentSize=0;
-    @Column(name = "scan_days", columnDefinition = "INTEGER DEFAULT 2")
-    private int scanDays=2;
-    @Column(name = "scan_defaultcase")
-    private String scanDefaultCase=null;
-    
-    @Column(name = "props_in")
-    private String customConfigurationsReceive="";
-    @Column(name = "props_out")
-    private String customConfigurationsSend="";
-    
-    @Transient
-    private Properties customConfigurationsReceiveProperties=null;
-    
-    @Transient
-    private Properties customConfigurationsSendProperties=null;
-    
-    
-    @Column(name = "settings", columnDefinition = "MEDIUMBLOB")
-    private byte[] settings;
+    private static final long serialVersionUID = 1L;
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (getId() != null ? getId().hashCode() : 0);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
-        if (!(object instanceof MailboxSetup)) {
-            return false;
-        }
-        MailboxSetup other = (MailboxSetup) object;
-        if ((this.getId() == null && other.getId() != null) || (this.getId() != null && !this.id.equals(other.id))) {
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        return this.getDisplayName();
-    }
-
-    /**
-     * @return the serialVersionUID
-     */
-    public static long getSerialVersionUID() {
-        return serialVersionUID;
-    }
-
-    /**
-     * @param aSerialVersionUID the serialVersionUID to set
-     */
-    public static void setSerialVersionUID(long aSerialVersionUID) {
-        serialVersionUID = aSerialVersionUID;
-    }
-
-    
-    /**
-     * @return the displayName
-     */
-    public String getDisplayName() {
-        return displayName;
-    }
-
-    /**
-     * @param displayName the displayName to set
-     */
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
-    }
-
-    /**
-     * @return the emailAddress
-     */
-    public String getEmailAddress() {
-        return emailAddress;
-    }
-
-    /**
-     * @param emailAddress the emailAddress to set
-     */
-    public void setEmailAddress(String emailAddress) {
-        this.emailAddress = emailAddress;
-    }
-
-    /**
-     * @return the emailInType
-     */
-    public String getEmailInType() {
-        return emailInType;
-    }
-
-    /**
-     * @param emailInType the emailInType to set
-     */
-    public void setEmailInType(String emailInType) {
-        this.emailInType = emailInType;
-    }
-
-    /**
-     * @return the emailInServer
-     */
-    public String getEmailInServer() {
-        return emailInServer;
-    }
-
-    /**
-     * @param emailInServer the emailInServer to set
-     */
-    public void setEmailInServer(String emailInServer) {
-        this.emailInServer = emailInServer;
-    }
-
-    /**
-     * @return the emailInUser
-     */
-    public String getEmailInUser() {
-        return emailInUser;
-    }
-
-    /**
-     * @param emailInUser the emailInUser to set
-     */
-    public void setEmailInUser(String emailInUser) {
-        this.emailInUser = emailInUser;
-    }
-
-    /**
-     * @return the emailInPwd
-     */
-    public String getEmailInPwd() {
-        return emailInPwd;
-    }
-
-    /**
-     * @param emailInPwd the emailInPwd to set
-     */
-    public void setEmailInPwd(String emailInPwd) {
-        this.emailInPwd = emailInPwd;
-    }
-
-    /**
-     * @return the emailOutServer
-     */
-    public String getEmailOutServer() {
-        return emailOutServer;
-    }
-
-    /**
-     * @param emailOutServer the emailOutServer to set
-     */
-    public void setEmailOutServer(String emailOutServer) {
-        this.emailOutServer = emailOutServer;
-    }
-
-    /**
-     * @return the emailOutUser
-     */
-    public String getEmailOutUser() {
-        return emailOutUser;
-    }
-
-    /**
-     * @param emailOutUser the emailOutUser to set
-     */
-    public void setEmailOutUser(String emailOutUser) {
-        this.emailOutUser = emailOutUser;
-    }
-
-    /**
-     * @return the emailOutPwd
-     */
-    public String getEmailOutPwd() {
-        return emailOutPwd;
-    }
-
-    /**
-     * @param emailOutPwd the emailOutPwd to set
-     */
-    public void setEmailOutPwd(String emailOutPwd) {
-        this.emailOutPwd = emailOutPwd;
-    }
-
-    /**
-     * @return the emailOutPort
-     */
-    public String getEmailOutPort() {
-        return emailOutPort;
-    }
-
-    /**
-     * @param emailOutPort the emailOutPort to set
-     */
-    public void setEmailOutPort(String emailOutPort) {
-        this.emailOutPort = emailOutPort;
-    }
-
-    /**
-     * @return the emailSenderName
-     */
-    public String getEmailSenderName() {
-        return emailSenderName;
-    }
-
-    /**
-     * @param emailSenderName the emailSenderName to set
-     */
-    public void setEmailSenderName(String emailSenderName) {
-        this.emailSenderName = emailSenderName;
-    }
-
-    /**
-     * @return the emailSignature
-     */
-    public String getEmailSignature() {
-        return emailSignature;
-    }
-
-    /**
-     * @param emailSignature the emailSignature to set
-     */
-    public void setEmailSignature(String emailSignature) {
-        this.emailSignature = emailSignature;
-    }
-
-    /**
-     * @return the emailInSsl
-     */
-    public boolean isEmailInSsl() {
-        return emailInSsl;
-    }
-
-    /**
-     * @param emailInSsl the emailInSsl to set
-     */
-    public void setEmailInSsl(boolean emailInSsl) {
-        this.emailInSsl = emailInSsl;
-    }
-
-    /**
-     * @return the emailOutSsl
-     */
-    public boolean isEmailOutSsl() {
-        return emailOutSsl;
-    }
-
-    /**
-     * @param emailOutSsl the emailOutSsl to set
-     */
-    public void setEmailOutSsl(boolean emailOutSsl) {
-        this.emailOutSsl = emailOutSsl;
-    }
-
-    /**
-     * @return the emailStartTls
-     */
-    public boolean isEmailStartTls() {
-        return emailStartTls;
-    }
-
-    /**
-     * @param emailStartTls the emailStartTls to set
-     */
-    public void setEmailStartTls(boolean emailStartTls) {
-        this.emailStartTls = emailStartTls;
-    }
-
-    /**
-     * @return the clientId
-     */
-    public String getClientId() {
-        return clientId;
-    }
-
-    /**
-     * @param clientId the clientId to set
-     */
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    /**
-     * @return the clientSecret
-     */
-    public String getClientSecret() {
-        return clientSecret;
-    }
-
-    /**
-     * @param clientSecret the clientSecret to set
-     */
-    public void setClientSecret(String clientSecret) {
-        this.clientSecret = clientSecret;
-    }
-
-    /**
-     * @return the msExchange
-     */
-    public boolean isMsExchange() {
-        return msExchange;
-    }
-
-    /**
-     * @param msExchange the msExchange to set
-     */
-    public void setMsExchange(boolean msExchange) {
-        this.msExchange = msExchange;
-    }
-
-    /**
-     * @return the tenantId
-     */
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    /**
-     * @param tenantId the tenantId to set
-     */
-    public void setTenantId(String tenantId) {
-        this.tenantId = tenantId;
-    }
-
-    /**
-     * @return the scanInbox
-     */
-    public boolean isScanInbox() {
-        return scanInbox;
-    }
-
-    /**
-     * @param scanInbox the scanInbox to set
-     */
-    public void setScanInbox(boolean scanInbox) {
-        this.scanInbox = scanInbox;
-    }
-
-    /**
-     * @return the scanDocumentTags
-     */
-    public String getScanDocumentTags() {
-        return scanDocumentTags;
-    }
-    
-    public String[] getScanDocumentTagsArray() {
-        if (scanDocumentTags == null) {
-            scanDocumentTags="";
-        }
-
-        return scanDocumentTags.split(ARRAY_DELIMITER);
-
-    }
-
-    /**
-     * @param scanDocumentTags the scanDocumentTags to set
-     */
-    public void setScanDocumentTags(String scanDocumentTags) {
-        this.scanDocumentTags = scanDocumentTags;
-    }
-    
-    public void setScanDocumentTagsArray(String[] value) {
-        StringBuilder sb = new StringBuilder();
-        if (value == null) {
-            value = new String[]{""};
-        }
-        for (String v : value) {
-            sb.append(v).append(ARRAY_DELIMITER);
-        }
-        this.scanDocumentTags=sb.toString();
-    }
-
-    /**
-     * @return the scanBlacklistedTypes
-     */
-    public String getScanBlacklistedTypes() {
-        if(scanBlacklistedTypes==null)
-            scanBlacklistedTypes="";
-        return scanBlacklistedTypes;
-    }
-
-    /**
-     * @param scanBlacklistedTypes the scanBlacklistedTypes to set
-     */
-    public void setScanBlacklistedTypes(String scanBlacklistedTypes) {
-        this.scanBlacklistedTypes = scanBlacklistedTypes;
-    }
-
-    /**
-     * @return the scanExclusionList
-     */
-    public String getScanExclusionList() {
-        return scanExclusionList;
-    }
-
-    /**
-     * @param scanExclusionList the scanExclusionList to set
-     */
-    public void setScanExclusionList(String scanExclusionList) {
-        this.scanExclusionList = scanExclusionList;
-    }
-
-    /**
-     * @return the scanIgnoreInline
-     */
-    public boolean isScanIgnoreInline() {
-        return scanIgnoreInline;
-    }
-
-    /**
-     * @param scanIgnoreInline the scanIgnoreInline to set
-     */
-    public void setScanIgnoreInline(boolean scanIgnoreInline) {
-        this.scanIgnoreInline = scanIgnoreInline;
-    }
-
-    /**
-     * @return the minAttachmentSize
-     */
-    public int getScanMinAttachmentSize() {
-        return scanMinAttachmentSize;
-    }
-
-    /**
-     * @param minAttachmentSize the minAttachmentSize to set
-     */
-    public void setScanMinAttachmentSize(int minAttachmentSize) {
-        this.scanMinAttachmentSize = minAttachmentSize;
-    }
-
-    /**
-     * @return the settings
-     */
-    public byte[] getSettings() {
-        if(this.settings==null)
-            this.settings=emptySettings();
-        return settings;
-    }
-
-    /**
-     * @param settings the settings to set
-     */
-    public void setSettings(byte[] settings) {
-        this.settings = settings;
-    }
-    
-    private byte[] emptySettings() {
-        if(this.settings==null) {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            try {
-                new Properties().store(out, "updated " + new java.util.Date().toString());
-                out.flush();
-                out.close();
-            } catch (IOException ioe) {
-                // no logging
-            }
-            this.settings = out.toByteArray();
-        }
-        return this.settings;
-    }
-
-    /**
-     * @return the authToken
-     */
-    public String getAuthToken() {
-        return authToken;
-    }
-
-    /**
-     * @param authToken the authToken to set
-     */
-    public void setAuthToken(String authToken) {
-        this.authToken = authToken;
-    }
+    private String messageRef;
+    private String messageId;
+    private String subject;
+    private String from;
+    private String[] to;
+    private String[] cc;
+    private Date date;
+    private boolean read;
+    private boolean hasAttachments;
+    private String body;
+    private String bodyContentType;
+    private String inReplyTo;
+    private String references;
+    private boolean readReceiptRequested;
 
-    /**
-     * @return the tokenExpiry
-     */
-    public long getTokenExpiry() {
-        return tokenExpiry;
+    public MailMessageDTO() {
     }
 
-    /**
-     * @param tokenExpiry the tokenExpiry to set
-     */
-    public void setTokenExpiry(long tokenExpiry) {
-        this.tokenExpiry = tokenExpiry;
-    }
-
-    /**
-     * @return the clientSecretExpiry
-     */
-    public java.util.Date getClientSecretExpiry() {
-        return clientSecretExpiry;
-    }
-
-    /**
-     * @param clientSecretExpiry the clientSecretExpiry to set
-     */
-    public void setClientSecretExpiry(java.util.Date clientSecretExpiry) {
-        this.clientSecretExpiry = clientSecretExpiry;
-    }
+    public String getMessageRef() { return messageRef; }
+    public void setMessageRef(String messageRef) { this.messageRef = messageRef; }
 
-    /**
-     * @return the customConfigurationsReceive
-     */
-    public String getCustomConfigurationsReceive() {
-        return customConfigurationsReceive;
-    }
+    public String getMessageId() { return messageId; }
+    public void setMessageId(String messageId) { this.messageId = messageId; }
 
-    /**
-     * @param customConfigurationsReceive the customConfigurationsReceive to set
-     */
-    public void setCustomConfigurationsReceive(String customConfigurationsReceive) {
-        this.customConfigurationsReceive = customConfigurationsReceive;
-        this.customConfigurationsReceiveProperties=null;
-    }
+    public String getSubject() { return subject; }
+    public void setSubject(String subject) { this.subject = subject; }
 
-    /**
-     * @return the customConfigurationsSend
-     */
-    public String getCustomConfigurationsSend() {
-        return customConfigurationsSend;
-    }
+    public String getFrom() { return from; }
+    public void setFrom(String from) { this.from = from; }
 
-    /**
-     * @param customConfigurationsSend the customConfigurationsSend to set
-     */
-    public void setCustomConfigurationsSend(String customConfigurationsSend) {
-        this.customConfigurationsSend = customConfigurationsSend;
-        this.customConfigurationsSendProperties=null;
-    }
+    public String[] getTo() { return to; }
+    public void setTo(String[] to) { this.to = to; }
 
-    /**
-     * @return the customConfigurationsReceiveProperties
-     */
-    public Properties customConfigurationsReceiveProperties() {
-        if(this.customConfigurationsReceiveProperties==null) {
-            this.customConfigurationsReceiveProperties=new Properties();
-            try (StringReader r=new StringReader(this.customConfigurationsReceive)) {
-                this.customConfigurationsReceiveProperties.load(r);
-            } catch (Exception ex) {
-                log.error("unable to load custom receive properties for mailbox " + this.displayName);
-            }
-        }
-        return customConfigurationsReceiveProperties;
-    }
+    public String[] getCc() { return cc; }
+    public void setCc(String[] cc) { this.cc = cc; }
 
-    /**
-     * @return the customConfigurationsSendProperties
-     */
-    public Properties customConfigurationsSendProperties() {
-        if(this.customConfigurationsSendProperties==null) {
-            this.customConfigurationsSendProperties=new Properties();
-            try (StringReader r=new StringReader(this.customConfigurationsSend)) {
-                this.customConfigurationsSendProperties.load(r);
-            } catch (Exception ex) {
-                log.error("unable to load custom send properties for mailbox " + this.displayName);
-            }
-        }
-        return customConfigurationsSendProperties;
-    }
-    
-    public void applyCustomProperties(Properties customProps, Properties targetProps) {
-        for(Object k: customProps.keySet()) {
-            targetProps.setProperty(k.toString(), customProps.getProperty(k.toString()));
-        }
-    }
+    public Date getDate() { return date; }
+    public void setDate(Date date) { this.date = date; }
 
-    /**
-     * @return the scanDays
-     */
-    public int getScanDays() {
-        return scanDays;
-    }
+    public boolean isRead() { return read; }
+    public void setRead(boolean read) { this.read = read; }
 
-    /**
-     * @param scanDays the scanDays to set
-     */
-    public void setScanDays(int scanDays) {
-        this.scanDays = scanDays;
-    }
+    public boolean isHasAttachments() { return hasAttachments; }
+    public void setHasAttachments(boolean hasAttachments) { this.hasAttachments = hasAttachments; }
 
-    /**
-     * @return the emailSignatureTxt
-     */
-    public String getEmailSignatureTxt() {
-        return emailSignatureTxt;
-    }
+    public String getBody() { return body; }
+    public void setBody(String body) { this.body = body; }
 
-    /**
-     * @param emailSignatureTxt the emailSignatureTxt to set
-     */
-    public void setEmailSignatureTxt(String emailSignatureTxt) {
-        this.emailSignatureTxt = emailSignatureTxt;
-    }
+    public String getBodyContentType() { return bodyContentType; }
+    public void setBodyContentType(String bodyContentType) { this.bodyContentType = bodyContentType; }
 
-    /**
-     * @return the scanDefaultCase
-     */
-    public String getScanDefaultCase() {
-        return scanDefaultCase;
-    }
+    public String getInReplyTo() { return inReplyTo; }
+    public void setInReplyTo(String inReplyTo) { this.inReplyTo = inReplyTo; }
 
-    /**
-     * @param scanDefaultCase the scanDefaultCase to set
-     */
-    public void setScanDefaultCase(String scanDefaultCase) {
-        this.scanDefaultCase = scanDefaultCase;
-    }
+    public String getReferences() { return references; }
+    public void setReferences(String references) { this.references = references; }
 
-    
+    public boolean isReadReceiptRequested() { return readReceiptRequested; }
+    public void setReadReceiptRequested(boolean readReceiptRequested) { this.readReceiptRequested = readReceiptRequested; }
 }

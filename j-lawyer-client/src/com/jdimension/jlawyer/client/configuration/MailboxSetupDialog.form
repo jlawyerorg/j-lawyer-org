@@ -397,7 +397,7 @@
                                       <Group type="103" groupAlignment="0" attributes="0">
                                           <Group type="102" alignment="0" attributes="0">
                                               <Group type="103" groupAlignment="0" attributes="0">
-                                                  <Component id="txtOutServer" pref="262" max="32767" attributes="0"/>
+                                                  <Component id="txtOutServer" pref="211" max="32767" attributes="0"/>
                                                   <Component id="txtOutUsername" max="32767" attributes="0"/>
                                               </Group>
                                               <EmptySpace type="separate" min="-2" max="-2" attributes="0"/>
@@ -409,7 +409,7 @@
                                               <Group type="103" groupAlignment="0" attributes="0">
                                                   <Group type="102" attributes="0">
                                                       <Component id="txtOutPort" min="-2" pref="109" max="-2" attributes="0"/>
-                                                      <EmptySpace min="0" pref="182" max="32767" attributes="0"/>
+                                                      <EmptySpace min="0" pref="131" max="32767" attributes="0"/>
                                                   </Group>
                                                   <Component id="pwdOutPassword" max="32767" attributes="0"/>
                                               </Group>
@@ -440,12 +440,22 @@
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="txtClientSecret" max="32767" attributes="0"/>
-                                  <Component id="txtTenantId" max="32767" attributes="0"/>
-                                  <Component id="txtClientId" max="32767" attributes="0"/>
+                                  <Group type="102" attributes="0">
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Component id="txtTenantId" max="32767" attributes="0"/>
+                                          <Component id="txtClientId" max="32767" attributes="0"/>
+                                      </Group>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="cmdO365Coupling" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Group type="102" attributes="0">
+                                      <Component id="txtClientSecret" max="32767" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="txtSecretExpiry" min="-2" pref="120" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="cmdSecretExpiry" min="-2" max="-2" attributes="0"/>
+                                  </Group>
                               </Group>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="cmdO365Coupling" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
@@ -505,7 +515,7 @@
                           <Component id="chkEmailStartTls" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="chkEmailOutSsl" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="jLabel24" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
@@ -518,7 +528,11 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="txtClientSecret" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Group type="103" alignment="0" groupAlignment="3" attributes="0">
+                              <Component id="txtClientSecret" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="cmdSecretExpiry" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="txtSecretExpiry" alignment="3" min="-2" max="-2" attributes="0"/>
+                          </Group>
                           <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
@@ -533,7 +547,7 @@
                           <Component id="cmdTestMail" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="lblTestProgress" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace max="32767" attributes="0"/>
+                      <EmptySpace pref="150" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -710,6 +724,19 @@
                   <Color blue="99" green="99" red="99" type="rgb"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Office 365"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JButton" name="cmdSecretExpiry">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons/clicknrungrey.png"/>
+                </Property>
+                <Property name="toolTipText" type="java.lang.String" value="Ablaufdatum - bei Eintragung wird eine Warnung vor Ablauf erscheinen"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JTextField" name="txtSecretExpiry">
+              <Properties>
+                <Property name="toolTipText" type="java.lang.String" value="Ablaufdatum - bei Eintragung wird eine Warnung vor Ablauf erscheinen"/>
               </Properties>
             </Component>
           </SubComponents>

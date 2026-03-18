@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.webview.WebViewHtmlEditorPanel;
 import com.jdimension.jlawyer.client.mail.EmailUtils;
@@ -733,6 +734,11 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             }
         });
 
+        this.cmdSecretExpiry.addActionListener(e -> {
+            MultiCalDialog dlg = new MultiCalDialog(this.txtSecretExpiry, this, true, false);
+            dlg.setVisible(true);
+        });
+
         this.lblTestProgress.setText("");
 
         this.resetDetails();
@@ -787,6 +793,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         this.txtClientId.setText("");
         this.txtClientSecret.setText("");
         this.txtTenantId.setText("");
+        this.txtSecretExpiry.setText("");
 
         this.chkScanInbox.setSelected(false);
         this.txtScanBlacklist.setText("");
@@ -919,6 +926,8 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         lblTestProgress = new javax.swing.JLabel();
         cmdO365Coupling = new javax.swing.JButton();
         jLabel24 = new javax.swing.JLabel();
+        cmdSecretExpiry = new javax.swing.JButton();
+        txtSecretExpiry = new javax.swing.JTextField();
         jPanel4 = new javax.swing.JPanel();
         jPanel9 = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
@@ -1164,7 +1173,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         lblTestProgress.setText("jLabel21");
 
         cmdO365Coupling.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/link_24dp_0E72B5_FILL0_wght400_GRAD0_opsz24.png"))); // NOI18N
-        cmdO365Coupling.setToolTipText("Postfach koppeln");
+        cmdO365Coupling.setToolTipText("Authentifizierung zurücksetzen");
         cmdO365Coupling.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdO365CouplingActionPerformed(evt);
@@ -1174,6 +1183,11 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         jLabel24.setFont(jLabel24.getFont().deriveFont(jLabel24.getFont().getStyle() | java.awt.Font.BOLD, jLabel24.getFont().getSize()-2));
         jLabel24.setForeground(new java.awt.Color(153, 153, 153));
         jLabel24.setText("Office 365");
+
+        cmdSecretExpiry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrungrey.png"))); // NOI18N
+        cmdSecretExpiry.setToolTipText("Ablaufdatum - bei Eintragung wird eine Warnung vor Ablauf erscheinen");
+
+        txtSecretExpiry.setToolTipText("Ablaufdatum - bei Eintragung wird eine Warnung vor Ablauf erscheinen");
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -1218,7 +1232,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(jPanel3Layout.createSequentialGroup()
                                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(txtOutServer, javax.swing.GroupLayout.DEFAULT_SIZE, 262, Short.MAX_VALUE)
+                                            .addComponent(txtOutServer, javax.swing.GroupLayout.DEFAULT_SIZE, 211, Short.MAX_VALUE)
                                             .addComponent(txtOutUsername))
                                         .addGap(18, 18, 18)
                                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1228,7 +1242,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addGroup(jPanel3Layout.createSequentialGroup()
                                                 .addComponent(txtOutPort, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addGap(0, 182, Short.MAX_VALUE))
+                                                .addGap(0, 131, Short.MAX_VALUE))
                                             .addComponent(pwdOutPassword)))
                                     .addGroup(jPanel3Layout.createSequentialGroup()
                                         .addComponent(chkEmailStartTls)
@@ -1249,11 +1263,18 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                             .addComponent(jLabel18))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txtClientSecret)
-                            .addComponent(txtTenantId)
-                            .addComponent(txtClientId))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdO365Coupling)))
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(txtTenantId)
+                                    .addComponent(txtClientId))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdO365Coupling))
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addComponent(txtClientSecret)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtSecretExpiry, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdSecretExpiry)))))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
@@ -1299,7 +1320,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(chkEmailStartTls)
                     .addComponent(chkEmailOutSsl))
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel24)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1310,7 +1331,10 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                     .addComponent(cmdO365Coupling, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(txtClientSecret, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(txtClientSecret, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(cmdSecretExpiry)
+                        .addComponent(txtSecretExpiry, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(jLabel3))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -1322,7 +1346,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdTestMail)
                     .addComponent(lblTestProgress))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(150, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Verbindung", jPanel3);
@@ -1703,6 +1727,17 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             ms.setClientId(this.txtClientId.getText());
             ms.setClientSecret(this.txtClientSecret.getText());
             ms.setTenantId(this.txtTenantId.getText());
+            String expiryText = this.txtSecretExpiry.getText();
+            if (expiryText != null && !expiryText.trim().isEmpty()) {
+                try {
+                    ms.setClientSecretExpiry(new java.text.SimpleDateFormat("dd.MM.yyyy").parse(expiryText.trim()));
+                } catch (Exception ex) {
+                    log.warn("Could not parse secret expiry date: " + expiryText);
+                    ms.setClientSecretExpiry(null);
+                }
+            } else {
+                ms.setClientSecretExpiry(null);
+            }
 
             ms.setScanInbox(this.chkScanInbox.isSelected());
             ms.setScanBlacklistedTypes(this.txtScanBlacklist.getText());
@@ -1775,45 +1810,31 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
 
     private void cmdTestMailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTestMailActionPerformed
 
-        String authToken = null;
-        if (this.chkMsExchange.isSelected()) {
-
+        {
+            // Use server-side test connection for all mailboxes
             try {
+                this.cmdSaveActionPerformed(evt);
                 int row = this.tblMailboxes.getSelectedRow();
                 MailboxSetup ms = null;
                 if (row >= 0) {
                     ms = (MailboxSetup) this.tblMailboxes.getValueAt(row, 0);
-                    authToken = EmailUtils.getOffice365AuthToken(ms.getId());
                 } else {
                     return;
                 }
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                String result = locator.lookupEmailServiceRemote().testConnection(ms.getId());
+                if (result == null) {
+                    JOptionPane.showMessageDialog(this, "Verbindungstest erfolgreich!", "Verbindungstest", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Verbindungstest fehlgeschlagen: " + result, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
             } catch (Exception ex) {
-                log.error("Error getting access token", ex);
+                log.error("Error testing connection", ex);
                 JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
+            return;
         }
-
-        ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-        pi.setShowCancelButton(false);
-
-        Properties customSendProps = new Properties();
-        Properties customReceiveProps = new Properties();
-        try {
-            StringReader sr = new StringReader(this.taCustomConfigOut.getText());
-            customSendProps.load(sr);
-            sr.close();
-
-            sr = new StringReader(this.taCustomConfigIn.getText());
-            customReceiveProps.load(sr);
-            sr.close();
-        } catch (Exception ex) {
-            log.error("Error reading custom properties", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Lesen der erweiterten Konfiguration: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
-
-        MailSettingsTestAction a = new MailSettingsTestAction(pi, this, this.cmdTestMail, this.txtEmailAddress.getText(), this.txtOutServer.getText(), this.txtOutPort.getText(), this.txtOutUsername.getText(), new String(this.pwdOutPassword.getPassword()), this.chkEmailOutSsl.isSelected(), this.chkEmailStartTls.isSelected(), this.txtInServer.getText(), this.txtInUser.getText(), new String(this.pwdInPassword.getPassword()), this.chkEmailInSsl.isSelected(), this.cmbAccountType.getSelectedItem().toString(), this.chkMsExchange.isSelected(), authToken, customSendProps, customReceiveProps);
-
-        a.start();
 
     }//GEN-LAST:event_cmdTestMailActionPerformed
 
@@ -1838,9 +1859,33 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                 return;
             }
 
-            O365OAuthCouplingDialog dlg = new O365OAuthCouplingDialog(this, ms);
-            FrameUtils.centerDialog(dlg, this);
-            dlg.setVisible(true);
+            // Reset authentication: invalidate cached token and request a new one
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                // Force token expiry to 0 so a new token is fetched
+                ms.setTokenExpiry(0);
+                locator.lookupSecurityServiceRemote().updateMailboxSetup(ms);
+                // Immediately request a new token
+                boolean success = locator.lookupEmailServiceRemote().updateAuthToken(ms.getId());
+                if (success) {
+                    JOptionPane.showMessageDialog(this,
+                        "Authentifizierung erfolgreich zurückgesetzt.\nNeuer Token wurde ausgestellt.",
+                        "Authentifizierung zurücksetzen",
+                        JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                        "Token konnte nicht ausgestellt werden.\nPrüfen Sie Tenant-ID, Client-ID und Client-Secret.",
+                        "Authentifizierung zurücksetzen",
+                        JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception ex) {
+                log.error("Error resetting authentication", ex);
+                JOptionPane.showMessageDialog(this,
+                    "Fehler beim Zurücksetzen: " + ex.getMessage(),
+                    com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
+                    JOptionPane.ERROR_MESSAGE);
+            }
         }
 
 
@@ -1889,6 +1934,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             duplicate.setClientId(selectedMailbox.getClientId());
             duplicate.setClientSecret(selectedMailbox.getClientSecret());
             duplicate.setTenantId(selectedMailbox.getTenantId());
+            duplicate.setClientSecretExpiry(selectedMailbox.getClientSecretExpiry());
 
             // Copy scanner settings
             duplicate.setScanInbox(false);
@@ -1996,6 +2042,29 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         this.txtClientId.setText(ms.getClientId());
         this.txtClientSecret.setText(ms.getClientSecret());
         this.txtTenantId.setText(ms.getTenantId());
+        if (ms.getClientSecretExpiry() != null) {
+            this.txtSecretExpiry.setText(new java.text.SimpleDateFormat("dd.MM.yyyy").format(ms.getClientSecretExpiry()));
+        } else {
+            this.txtSecretExpiry.setText("");
+        }
+
+        // Client Secret expiry warning
+        if (ms.isMsExchange() && ms.getClientSecretExpiry() != null) {
+            long daysUntilExpiry = (ms.getClientSecretExpiry().getTime() - System.currentTimeMillis()) / (1000L * 60L * 60L * 24L);
+            if (daysUntilExpiry < 0) {
+                JOptionPane.showMessageDialog(this,
+                    "Das Client Secret für dieses Postfach ist abgelaufen!\n"
+                    + "Bitte erneuern Sie es im Azure Portal und aktualisieren Sie die Einstellungen.",
+                    "Client Secret abgelaufen",
+                    JOptionPane.ERROR_MESSAGE);
+            } else if (daysUntilExpiry <= 30) {
+                JOptionPane.showMessageDialog(this,
+                    "Das Client Secret für dieses Postfach läuft in " + daysUntilExpiry + " Tagen ab.\n"
+                    + "Bitte erneuern Sie es rechtzeitig im Azure Portal.",
+                    "Client Secret läuft bald ab",
+                    JOptionPane.WARNING_MESSAGE);
+            }
+        }
 
         this.chkScanInbox.setSelected(ms.isScanInbox());
         this.txtScanBlacklist.setText(ms.getScanBlacklistedTypes());
@@ -2084,6 +2153,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdScanTags;
     private javax.swing.JButton cmdSearchCase;
+    private javax.swing.JButton cmdSecretExpiry;
     private javax.swing.JButton cmdTestMail;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
@@ -2154,6 +2224,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private javax.swing.JTextField txtOutUsername;
     private javax.swing.JTextField txtScanBlacklist;
     private javax.swing.JTextField txtScanExclusionList;
+    private javax.swing.JTextField txtSecretExpiry;
     private javax.swing.JTextField txtTenantId;
     // End of variables declaration//GEN-END:variables
 }

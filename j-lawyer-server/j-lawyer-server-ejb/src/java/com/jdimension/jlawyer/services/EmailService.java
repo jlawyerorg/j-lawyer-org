@@ -667,22 +667,51 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jdimension.jlawyer.persistence.MailboxAccessFacadeLocal;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.persistence.MailboxSetupFacadeLocal;
+import com.jdimension.jlawyer.persistence.ServerSettingsBean;
+import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Resource;
+import javax.activation.DataHandler;
+import javax.activation.DataSource;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
 import javax.ejb.Schedule;
-import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
+import javax.mail.Address;
+import javax.mail.Authenticator;
+import javax.mail.BodyPart;
+import javax.mail.Flags;
+import javax.mail.Folder;
+import javax.mail.Message;
+import javax.mail.Multipart;
+import javax.mail.Part;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
+import javax.mail.Store;
+import javax.mail.Transport;
+import javax.mail.UIDFolder;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
+import javax.mail.util.ByteArrayDataSource;
+import javax.naming.InitialContext;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -690,47 +719,86 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.log4j.Logger;
 import org.jboss.ejb3.annotation.TransactionTimeout;
 
-/**
- *
- * @author jens
- */
 @Stateless
 public class EmailService implements EmailServiceRemote, EmailServiceLocal {
 
     private static final Logger log = Logger.getLogger(EmailService.class.getName());
+    private static final String GRAPH_BASE = "https://graph.microsoft.com/v1.0";
+    private static final String IMAP_REF_PREFIX = "imap:";
+    private static final ConcurrentHashMap<String, Boolean> newMessageFlags = new ConcurrentHashMap<>();
+    // Connection cache: reuse IMAP connections across operations for the same mailbox
+    private static final ConcurrentHashMap<String, Store> imapStoreCache = new ConcurrentHashMap<>();
+    // Message list cache per mailbox+folder
+    private static final ConcurrentHashMap<String, CachedMessages> messageCache = new ConcurrentHashMap<>();
+    private static final long INBOX_CACHE_TTL = 30L * 1000L; // 30 seconds
+    private static final long FOLDER_CACHE_TTL = 5L * 60L * 1000L; // 5 minutes
 
-    @Resource
-    private SessionContext sessionContext;
+    private static class CachedMessages {
+        final List<MailMessageDTO> messages;
+        final long timestamp;
+        final int queryHash;
+        final boolean isInbox;
 
-    @EJB
-    private MailboxAccessFacadeLocal mailboxAccessFacade;
+        CachedMessages(List<MailMessageDTO> messages, int queryHash, boolean isInbox) {
+            this.messages = messages;
+            this.timestamp = System.currentTimeMillis();
+            this.queryHash = queryHash;
+            this.isInbox = isInbox;
+        }
+
+        boolean isExpired() {
+            long ttl = isInbox ? INBOX_CACHE_TTL : FOLDER_CACHE_TTL;
+            return (System.currentTimeMillis() - timestamp) > ttl;
+        }
+    }
+
+    private static String messageCacheKey(String mailboxId, String folderId) {
+        return mailboxId + ":" + folderId;
+    }
+
+    private static int queryHash(int top, int offset, Date sinceDate, boolean unreadOnly, String searchTerm) {
+        int hash = 17;
+        hash = 31 * hash + top;
+        hash = 31 * hash + offset;
+        hash = 31 * hash + (sinceDate != null ? sinceDate.hashCode() : 0);
+        hash = 31 * hash + (unreadOnly ? 1 : 0);
+        hash = 31 * hash + (searchTerm != null ? searchTerm.hashCode() : 0);
+        return hash;
+    }
+
+    private void invalidateMessageCache(String mailboxId, String folderId) {
+        messageCache.remove(messageCacheKey(mailboxId, folderId));
+    }
+
+    private void invalidateAllFolderCaches(String mailboxId) {
+        messageCache.keySet().removeIf(k -> k.startsWith(mailboxId + ":"));
+    }
 
     @EJB
     private MailboxSetupFacadeLocal mailboxSetupFacade;
 
+    @EJB
+    private MailboxAccessFacadeLocal mailboxAccessFacade;
+
+    // ==================== Token Management ====================
+
     @Override
     @PermitAll
     public String getAuthToken(String mailboxId) throws Exception {
-
         MailboxSetup ms = this.mailboxSetupFacade.find(mailboxId);
         if (ms != null) {
             return ms.getAuthToken();
-        } else {
-            log.error("Auth token requested for a non-existing mailbox with id " + mailboxId);
         }
-
+        log.error("Auth token requested for a non-existing mailbox with id " + mailboxId);
         return null;
     }
 
     @Schedule(hour = "*", minute = "*/5", persistent = false)
     @TransactionTimeout(value = 3, unit = TimeUnit.MINUTES)
     public void refreshAuthTokens() {
-
         List<MailboxSetup> mailboxes = this.mailboxSetupFacade.findByMsExchange(true);
         for (MailboxSetup ms : mailboxes) {
-
             try {
-
                 boolean success = this.updateAuthTokenForMailbox(ms);
                 if (!success) {
                     log.error("failed to update tokens for " + ms.getEmailAddress());
@@ -740,82 +808,57 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             } catch (Exception ex) {
                 log.error("failed to retrieve new access token for mailbox " + ms.getEmailAddress(), ex);
             }
-
         }
-
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public boolean updateAuthToken(String mailboxId) throws Exception {
-
         MailboxSetup ms = this.mailboxSetupFacade.find(mailboxId);
         if (ms != null) {
             return this.updateAuthTokenForMailbox(ms);
-        } else {
-            log.error("Auth token update requested for a non-existing mailbox with id " + mailboxId);
-            return false;
         }
-
+        log.error("Auth token update requested for a non-existing mailbox with id " + mailboxId);
+        return false;
     }
 
     private boolean updateAuthTokenForMailbox(MailboxSetup mailbox) throws Exception {
-
-        if (mailbox.getTokenExpiry() == 0 || ((mailbox.getTokenExpiry() - System.currentTimeMillis()) < (6l * 60l * 1000l))) {
-
+        if (mailbox.getTokenExpiry() == 0 || ((mailbox.getTokenExpiry() - System.currentTimeMillis()) < (6L * 60L * 1000L))) {
             log.info("attempting to update tokens for " + mailbox.getEmailAddress());
-
             if (ServerStringUtils.isEmpty(mailbox.getTenantId())) {
                 log.error("Tenant ID is empty when updating access token for " + mailbox.getEmailAddress());
                 return false;
             }
-
             if (ServerStringUtils.isEmpty(mailbox.getClientId())) {
                 log.error("Client ID is empty when updating access token for " + mailbox.getEmailAddress());
                 return false;
             }
-
-            if (ServerStringUtils.isEmpty(mailbox.getRefreshToken())) {
-                log.error("Refresh token is empty when updating access token for " + mailbox.getEmailAddress());
+            if (ServerStringUtils.isEmpty(mailbox.getClientSecret())) {
+                log.error("Client Secret is empty when updating access token for " + mailbox.getEmailAddress());
                 return false;
             }
 
-            String TOKEN_ENDPOINT = "https://login.microsoftonline.com/" + mailbox.getTenantId() + "/oauth2/v2.0/token";
-
+            String tokenEndpoint = "https://login.microsoftonline.com/" + mailbox.getTenantId() + "/oauth2/v2.0/token";
             try (CloseableHttpClient client = HttpClients.createDefault()) {
-                HttpPost post = new HttpPost(TOKEN_ENDPOINT);
-
-                // Create URL-encoded body
-                String body = "grant_type=" + URLEncoder.encode("refresh_token", StandardCharsets.UTF_8)
-                        + "&refresh_token=" + URLEncoder.encode(mailbox.getRefreshToken(), StandardCharsets.UTF_8)
-                        + "&client_id=" + URLEncoder.encode(mailbox.getClientId(), StandardCharsets.UTF_8);
-                //"&client_secret=" + URLEncoder.encode(CLIENT_SECRET, StandardCharsets.UTF_8);
-
+                HttpPost post = new HttpPost(tokenEndpoint);
+                String body = "grant_type=" + URLEncoder.encode("client_credentials", StandardCharsets.UTF_8)
+                        + "&client_id=" + URLEncoder.encode(mailbox.getClientId(), StandardCharsets.UTF_8)
+                        + "&client_secret=" + URLEncoder.encode(mailbox.getClientSecret(), StandardCharsets.UTF_8)
+                        + "&scope=" + URLEncoder.encode("https://graph.microsoft.com/.default", StandardCharsets.UTF_8);
                 post.setEntity(new StringEntity(body));
                 post.setHeader("Content-Type", "application/x-www-form-urlencoded");
 
-                ObjectMapper objectMapper = new ObjectMapper();
                 try (CloseableHttpResponse response = client.execute(post)) {
                     if (response.getStatusLine().getStatusCode() == 200) {
-                        Map<String, Object> responseBody = objectMapper.readValue(
-                                response.getEntity().getContent(),
-                                Map.class
-                        );
-
+                        Map<String, Object> responseBody = new ObjectMapper().readValue(response.getEntity().getContent(), Map.class);
                         String accessToken = (String) responseBody.get("access_token");
-                        String refreshToken = (String) responseBody.get("refresh_token");
                         int expiresIn = (int) responseBody.get("expires_in");
-                        // Calculate token expiry time (current time + expires_in seconds)
-                        long tokenExpiryTime = System.currentTimeMillis() + (expiresIn * 1000l);
-
                         mailbox.setAuthToken(accessToken);
-                        mailbox.setRefreshToken(refreshToken);
-                        mailbox.setTokenExpiry(tokenExpiryTime);
+                        mailbox.setTokenExpiry(System.currentTimeMillis() + (expiresIn * 1000L));
                         this.mailboxSetupFacade.edit(mailbox);
                         return true;
                     } else {
-                        log.error("failed to retrieve new access token for mailbox " + mailbox.getEmailAddress() + ", response was HTTP " + response.getStatusLine().getStatusCode() + " with content:");
-                        log.error(response.getEntity().getContent());
+                        log.error("failed to retrieve access token for mailbox " + mailbox.getEmailAddress() + ", HTTP " + response.getStatusLine().getStatusCode());
                         return false;
                     }
                 }
@@ -824,45 +867,142 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         return true;
     }
 
+    // ==================== Unified Service Methods ====================
+
     @Override
     @RolesAllowed({"loginRole"})
-    public String[] requestDeviceCode(String mailboxId) throws Exception {
+    public List<MailFolderDTO> listFolders(String mailboxId) throws Exception {
+        MailboxSetup ms = getMailboxOrThrow(mailboxId);
+        return ms.isMsExchange() ? graphListFolders(ms) : imapListFolders(ms);
+    }
 
-        MailboxSetup ms = this.mailboxSetupFacade.find(mailboxId);
-        if (ms == null) {
-            throw new Exception("No mailbox with ID " + mailboxId);
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<MailMessageDTO> listMessages(String mailboxId, String folderId, int top, int offset) throws Exception {
+        return listMessages(mailboxId, folderId, top, offset, null, false);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<MailMessageDTO> listMessages(String mailboxId, String folderId, int top, int offset, Date sinceDate, boolean unreadOnly) throws Exception {
+        return listMessages(mailboxId, folderId, top, offset, sinceDate, unreadOnly, null);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<MailMessageDTO> listMessages(String mailboxId, String folderId, int top, int offset, Date sinceDate, boolean unreadOnly, String searchTerm) throws Exception {
+        MailboxSetup ms = getMailboxOrThrow(mailboxId);
+        newMessageFlags.put(mailboxId, Boolean.FALSE);
+
+        // Check cache
+        String cacheKey = messageCacheKey(mailboxId, folderId);
+        int qHash = queryHash(top, offset, sinceDate, unreadOnly, searchTerm);
+        CachedMessages cached = messageCache.get(cacheKey);
+        if (cached != null && !cached.isExpired() && cached.queryHash == qHash) {
+            return cached.messages;
         }
 
-        String DEVICE_CODE_URL = "https://login.microsoftonline.com/" + ms.getTenantId() + "/oauth2/v2.0/devicecode";
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
-            HttpPost post = new HttpPost(DEVICE_CODE_URL);
+        // Cache miss — fetch from backend
+        List<MailMessageDTO> result;
+        if (ms.isMsExchange()) {
+            result = graphListMessages(ms, folderId, top, offset, sinceDate, unreadOnly, searchTerm);
+        } else {
+            result = imapListMessages(ms, folderId, top, offset, sinceDate, unreadOnly, searchTerm);
+        }
 
-//            String body = "client_id=" + ms.getClientId()
-//                    + "&scope=https%3A%2F%2Fgraph.microsoft.com%2Fmail.read%20offline_access";
-            String body = "client_id=" + URLEncoder.encode(ms.getClientId(), StandardCharsets.UTF_8)
-                    + "&scope=https%3A%2F%2Foutlook.office365.com%2FIMAP.AccessAsUser.All%20"
-                    + "https%3A%2F%2Foutlook.office365.com%2FSMTP.Send%20"
-                    + "offline_access";
+        // Inbox detection: IMAP uses "INBOX", Graph API inbox ID is resolved separately
+        boolean isInbox = "INBOX".equalsIgnoreCase(folderId);
 
-            post.setEntity(new StringEntity(body));
-            post.setHeader("Content-Type", "application/x-www-form-urlencoded");
+        messageCache.put(cacheKey, new CachedMessages(result, qHash, isInbox));
+        return result;
+    }
 
-            try (CloseableHttpResponse response = client.execute(post)) {
-                if (response.getStatusLine().getStatusCode() == 200) {
-                    Map<String, Object> responseBody = new ObjectMapper().readValue(
-                            response.getEntity().getContent(), Map.class);
+    @Override
+    @RolesAllowed({"loginRole"})
+    public MailMessageDTO getMessage(String mailboxId, String messageRef) throws Exception {
+        MailboxSetup ms = getMailboxOrThrow(mailboxId);
+        return ms.isMsExchange() ? graphGetMessage(ms, messageRef) : imapGetMessage(ms, messageRef);
+    }
 
-                    String[] reply = new String[3];
-                    // url the user needs to open
-                    reply[0] = responseBody.get("verification_uri").toString();
-                    // code the user needs to enter
-                    reply[1] = responseBody.get("user_code").toString();
-                    reply[2] = responseBody.get("device_code").toString();
-                    return reply;
-                } else {
-                    log.error("Failed to request device code. HTTP Status: " + response.getStatusLine().getStatusCode());
-                    log.error(response.getEntity().getContent());
-                    throw new Exception("Failed to request device code. HTTP Status: " + response.getStatusLine().getStatusCode());
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<MailAttachmentDTO> getAttachments(String mailboxId, String messageRef) throws Exception {
+        MailboxSetup ms = getMailboxOrThrow(mailboxId);
+        return ms.isMsExchange() ? graphGetAttachments(ms, messageRef) : imapGetAttachments(ms, messageRef);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public void sendMail(String mailboxId, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, String priority, boolean readReceipt, String inReplyTo, String references) throws Exception {
+        MailboxSetup ms = getMailboxOrThrow(mailboxId);
+        if (ms.isMsExchange()) {
+            graphSendMail(ms, to, cc, bcc, subject, body, contentType, attachments, priority, readReceipt, inReplyTo, references);
+        } else {
+            smtpSendMail(ms, to, cc, bcc, subject, body, contentType, attachments, priority, readReceipt, inReplyTo, references);
+        }
+        // Invalidate sent folder cache
+        invalidateAllFolderCaches(mailboxId);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public void moveMessage(String mailboxId, String messageRef, String targetFolderId) throws Exception {
+        MailboxSetup ms = getMailboxOrThrow(mailboxId);
+        // Determine source folder for cache invalidation
+        String sourceFolderId = null;
+        if (!ms.isMsExchange()) {
+            try { sourceFolderId = parseImapRefFolder(messageRef); } catch (Exception ignored) { }
+        }
+        if (ms.isMsExchange()) {
+            graphMoveMessage(ms, messageRef, targetFolderId);
+        } else {
+            imapMoveMessage(ms, messageRef, targetFolderId);
+        }
+        // Invalidate source and target folder caches
+        if (sourceFolderId != null) invalidateMessageCache(mailboxId, sourceFolderId);
+        invalidateMessageCache(mailboxId, targetFolderId);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public void deleteMessage(String mailboxId, String messageRef) throws Exception {
+        MailboxSetup ms = getMailboxOrThrow(mailboxId);
+        String sourceFolderId = null;
+        if (!ms.isMsExchange()) {
+            try { sourceFolderId = parseImapRefFolder(messageRef); } catch (Exception ignored) { }
+        }
+        if (ms.isMsExchange()) {
+            graphDeleteMessage(ms, messageRef);
+        } else {
+            imapDeleteMessage(ms, messageRef);
+        }
+        // Invalidate source folder + trash cache
+        if (sourceFolderId != null) invalidateMessageCache(mailboxId, sourceFolderId);
+        invalidateAllFolderCaches(mailboxId); // trash target unknown, invalidate all
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public void markAsRead(String mailboxId, String messageRef, boolean read) throws Exception {
+        MailboxSetup ms = getMailboxOrThrow(mailboxId);
+        if (ms.isMsExchange()) {
+            graphMarkAsRead(ms, messageRef, read);
+        } else {
+            imapMarkAsRead(ms, messageRef, read);
+        }
+        // Update cached entry in-place if possible
+        String folderId = null;
+        if (!ms.isMsExchange()) {
+            try { folderId = parseImapRefFolder(messageRef); } catch (Exception ignored) { }
+        }
+        if (folderId != null) {
+            CachedMessages cm = messageCache.get(messageCacheKey(mailboxId, folderId));
+            if (cm != null) {
+                for (MailMessageDTO dto : cm.messages) {
+                    if (messageRef.equals(dto.getMessageRef())) {
+                        dto.setRead(read);
+                        break;
+                    }
                 }
             }
         }
@@ -870,78 +1010,1347 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
 
     @Override
     @RolesAllowed({"loginRole"})
-    public boolean pollForTokens(String mailboxId, String deviceCode) throws Exception {
+    public boolean hasNewMessages(String mailboxId) throws Exception {
+        getMailboxOrThrow(mailboxId);
+        Boolean flag = newMessageFlags.get(mailboxId);
+        return flag != null && flag;
+    }
 
+    @Override
+    @RolesAllowed({"loginRole"})
+    public String testConnection(String mailboxId) throws Exception {
+        getMailboxOrThrow(mailboxId);
+        try {
+            List<MailFolderDTO> folders = listFolders(mailboxId);
+            if (folders == null || folders.isEmpty()) {
+                return "Connection successful but no folders found";
+            }
+            return null;
+        } catch (Exception ex) {
+            return ex.getMessage();
+        }
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public MailFolderDTO createFolder(String mailboxId, String parentFolderId, String folderName) throws Exception {
+        MailboxSetup ms = getMailboxOrThrow(mailboxId);
+        if (ms.isMsExchange()) {
+            return graphCreateFolder(ms, parentFolderId, folderName);
+        } else {
+            return imapCreateFolder(ms, parentFolderId, folderName);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public void deleteFolder(String mailboxId, String folderId) throws Exception {
+        MailboxSetup ms = getMailboxOrThrow(mailboxId);
+        if (ms.isMsExchange()) {
+            graphDeleteFolder(ms, folderId);
+        } else {
+            imapDeleteFolder(ms, folderId);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public void emptyTrash(String mailboxId, String trashFolderId) throws Exception {
+        MailboxSetup ms = getMailboxOrThrow(mailboxId);
+        if (ms.isMsExchange()) {
+            graphEmptyTrash(ms, trashFolderId);
+        } else {
+            imapEmptyTrash(ms, trashFolderId);
+        }
+        invalidateMessageCache(mailboxId, trashFolderId);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public void invalidateCaches(String mailboxId) throws Exception {
+        getMailboxOrThrow(mailboxId);
+        invalidateAllFolderCaches(mailboxId);
+        imapInvalidateCache(mailboxId);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public void appendToFolder(String mailboxId, String folderId, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, boolean markAsRead) throws Exception {
+        MailboxSetup ms = getMailboxOrThrow(mailboxId);
+        if (ms.isMsExchange()) {
+            graphAppendToFolder(ms, folderId, to, cc, bcc, subject, body, contentType, attachments, markAsRead);
+        } else {
+            imapAppendToFolder(ms, folderId, to, cc, bcc, subject, body, contentType, attachments, markAsRead);
+        }
+        invalidateMessageCache(mailboxId, folderId);
+    }
+
+    // ==================== Polling ====================
+
+    @Schedule(hour = "*", minute = "*", second = "*/30", persistent = false)
+    public void pollForNewMessages() {
+        List<MailboxSetup> allMailboxes = this.mailboxSetupFacade.findAll();
+        for (MailboxSetup ms : allMailboxes) {
+            try {
+                // Only poll mailboxes that are assigned to at least one user
+                List<com.jdimension.jlawyer.persistence.MailboxAccess> access = this.mailboxAccessFacade.findByMailbox(ms.getId());
+                if (access == null || access.isEmpty()) {
+                    continue;
+                }
+
+                // Only check inbox for new messages to minimize API calls
+                int unread = getInboxUnreadCount(ms);
+                if (unread > 0) {
+                    newMessageFlags.put(ms.getId(), Boolean.TRUE);
+                    // Invalidate inbox cache so next listMessages fetches fresh data
+                    invalidateMessageCache(ms.getId(), "INBOX");
+                }
+            } catch (Exception ex) {
+                log.error("Error polling mailbox " + ms.getEmailAddress(), ex);
+            }
+        }
+    }
+
+    private MailboxSetup getMailboxOrThrow(String mailboxId) throws Exception {
         MailboxSetup ms = this.mailboxSetupFacade.find(mailboxId);
         if (ms == null) {
             throw new Exception("No mailbox with ID " + mailboxId);
         }
+        return ms;
+    }
 
-        String TOKEN_ENDPOINT = "https://login.microsoftonline.com/" + ms.getTenantId() + "/oauth2/v2.0/token";
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
-
-            HttpPost post = new HttpPost(TOKEN_ENDPOINT);
-
-            // Include client_secret in the body
-            String body = "client_id=" + URLEncoder.encode(ms.getClientId(), StandardCharsets.UTF_8)
-                    + "&client_secret=" + URLEncoder.encode(ms.getClientSecret(), StandardCharsets.UTF_8)
-                    + "&grant_type=urn:ietf:params:oauth:grant-type:device_code"
-                    + "&device_code=" + URLEncoder.encode(deviceCode, StandardCharsets.UTF_8);
-            post.setEntity(new StringEntity(body));
-            post.setHeader("Content-Type", "application/x-www-form-urlencoded");
-
-            try (CloseableHttpResponse response = client.execute(post)) {
-                if (response.getStatusLine().getStatusCode() == 200) {
-                    // Successful response
-                    Map<String, Object> responseBody = new ObjectMapper().readValue(
-                            response.getEntity().getContent(), Map.class);
-                    String accessToken = responseBody.get("access_token").toString();
-                    String refreshToken = responseBody.get("refresh_token").toString();
-
-                    log.info("succesfully retrieved initial access token for mailbox " + ms.getEmailAddress());
-
-                    ms.setAuthToken(accessToken);
-                    ms.setRefreshToken(refreshToken);
-                    ms.setTokenExpiry(System.currentTimeMillis() + 10l * 60l * 1000l);
-                    this.mailboxSetupFacade.edit(ms);
-                    return true;
-
-                } else if (response.getStatusLine().getStatusCode() == 400) {
-                    Map<String, Object> errorResponse = new ObjectMapper().readValue(
-                            response.getEntity().getContent(), Map.class);
-                    if ("authorization_pending".equals(errorResponse.get("error"))) {
-                        log.info("Waiting for user authorization for mailbox " + ms.getEmailAddress());
-                    } else {
-                        log.error("Unexpected error when polling for tokens for " + ms.getEmailAddress() + ": " + response.getStatusLine().getStatusCode());
-                        log.error(response.getEntity().getContent());
-                    }
-                    return false;
-                } else {
-                    log.error("Unexpected HTTP Status when polling for tokens for " + ms.getEmailAddress() + ": " + response.getStatusLine().getStatusCode());
-                    try {
-                        InputStream is = response.getEntity().getContent();
-                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-
-                        // Copy content from InputStream to ByteArrayOutputStream
-                        is.transferTo(byteArrayOutputStream);
-
-                        // Get the resulting byte array (if needed)
-                        byte[] byteArray = byteArrayOutputStream.toByteArray();
-
-                        // Close the streams
-                        is.close();
-                        byteArrayOutputStream.close();
-                        
-                        log.error(new String(byteArrayOutputStream.toByteArray()));
-                        
-                    } catch (Exception ex) {
-                        log.error("Error reading response", ex);
-                    }
-                    return false;
+    @SuppressWarnings("unchecked")
+    private int getInboxUnreadCount(MailboxSetup ms) throws Exception {
+        if (ms.isMsExchange()) {
+            // Graph API: query inbox folder directly by well-known name
+            this.updateAuthTokenForMailbox(ms);
+            String url = GRAPH_BASE + "/users/" + URLEncoder.encode(ms.getEmailAddress(), StandardCharsets.UTF_8)
+                    + "/mailFolders/Inbox?$select=unreadItemCount";
+            String json = graphGet(ms, url);
+            Map<String, Object> response = new ObjectMapper().readValue(json, Map.class);
+            return response.get("unreadItemCount") != null ? ((Number) response.get("unreadItemCount")).intValue() : 0;
+        } else {
+            // IMAP: open inbox, get unread count, close
+            Store store = imapConnect(ms);
+            try {
+                Folder inbox = store.getFolder("INBOX");
+                inbox.open(Folder.READ_ONLY);
+                try {
+                    return inbox.getUnreadMessageCount();
+                } finally {
+                    inbox.close(false);
                 }
+            } finally {
+                // store kept open in cache for reuse
             }
-
         }
     }
 
+    // ==================== IMAP Backend ====================
+
+    private void imapInvalidateCache(String mailboxId) {
+        Store old = imapStoreCache.remove(mailboxId);
+        if (old != null) {
+            try { old.close(); } catch (Exception ignored) { }
+        }
+    }
+
+    private Store imapConnect(MailboxSetup ms) throws Exception {
+        // Try to reuse cached connection
+        String cacheKey = ms.getId();
+        Store cached = imapStoreCache.get(cacheKey);
+        if (cached != null) {
+            try {
+                if (cached.isConnected()) {
+                    // Quick health check: try to get default folder
+                    cached.getDefaultFolder();
+                    return cached;
+                }
+            } catch (Exception ex) {
+                log.info("Cached IMAP connection for " + ms.getEmailAddress() + " is stale, reconnecting");
+            }
+            imapInvalidateCache(cacheKey);
+        }
+
+        Properties props = new Properties();
+        String server = ms.getEmailInServer();
+        String protocol = ms.getEmailInType();
+        if (protocol == null || protocol.isEmpty()) {
+            protocol = ms.isEmailInSsl() ? "imaps" : "imap";
+        }
+        if (ms.isEmailInSsl() && "imap".equals(protocol)) {
+            protocol = "imaps";
+        }
+        props.setProperty("mail.imap.partialfetch", "false");
+        props.setProperty("mail.imaps.partialfetch", "false");
+        props.setProperty("mail.store.protocol", protocol);
+        props.setProperty("mail.imaps.host", server);
+        props.setProperty("mail.imap.host", server);
+        if (ms.isEmailInSsl()) {
+            props.setProperty("mail." + protocol + ".ssl.enable", "true");
+        }
+        try {
+            InitialContext ic = new InitialContext();
+            ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
+            ServerSettingsBean trustedServers = settings.find("mail.imaps.ssl.trust");
+            if (trustedServers != null) {
+                props.put("mail.imaps.ssl.trust", trustedServers.getSettingValue());
+            }
+        } catch (Exception ex) {
+            log.warn("Could not look up trusted servers setting", ex);
+        }
+        ms.applyCustomProperties(ms.customConfigurationsReceiveProperties(), props);
+        final String user = ms.getEmailInUser();
+        final String pwd = com.jdimension.jlawyer.security.CryptoProvider.newCrypto().decrypt(ms.getEmailInPwd());
+        Session session = Session.getInstance(props, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(user, pwd);
+            }
+        });
+        Store store = session.getStore();
+        store.connect();
+        imapStoreCache.put(cacheKey, store);
+        return store;
+    }
+
+    private String buildImapRef(String folderName, long uid, long uidValidity) {
+        return IMAP_REF_PREFIX + uidValidity + ":" + uid + ":" + folderName;
+    }
+
+    private long[] parseImapRef(String messageRef) throws Exception {
+        if (!messageRef.startsWith(IMAP_REF_PREFIX)) {
+            throw new Exception("Invalid IMAP message reference: " + messageRef);
+        }
+        String ref = messageRef.substring(IMAP_REF_PREFIX.length());
+        int firstColon = ref.indexOf(':');
+        int secondColon = ref.indexOf(':', firstColon + 1);
+        long uidValidity = Long.parseLong(ref.substring(0, firstColon));
+        long uid = Long.parseLong(ref.substring(firstColon + 1, secondColon));
+        return new long[]{uidValidity, uid};
+    }
+
+    private String parseImapRefFolder(String messageRef) throws Exception {
+        if (!messageRef.startsWith(IMAP_REF_PREFIX)) {
+            throw new Exception("Invalid IMAP message reference: " + messageRef);
+        }
+        String ref = messageRef.substring(IMAP_REF_PREFIX.length());
+        int firstColon = ref.indexOf(':');
+        int secondColon = ref.indexOf(':', firstColon + 1);
+        return ref.substring(secondColon + 1);
+    }
+
+    private List<MailFolderDTO> imapListFolders(MailboxSetup ms) throws Exception {
+        Store store = imapConnect(ms);
+        try {
+            List<MailFolderDTO> result = new ArrayList<>();
+            Folder[] folders = store.getDefaultFolder().list("*");
+            // Determine folder separator from first folder
+            char separator = '.';
+            if (folders.length > 0) {
+                try {
+                    separator = folders[0].getSeparator();
+                } catch (Exception ex) {
+                    log.warn("Could not determine folder separator, using '.'");
+                }
+            }
+            for (Folder f : folders) {
+                if ((f.getType() & Folder.HOLDS_MESSAGES) != 0) {
+                    MailFolderDTO dto = new MailFolderDTO();
+                    String fullName = f.getFullName();
+                    dto.setFolderId(fullName);
+                    dto.setDisplayName(f.getName());
+                    f.open(Folder.READ_ONLY);
+                    dto.setTotalCount(f.getMessageCount());
+                    dto.setUnreadCount(f.getUnreadMessageCount());
+                    f.close(false);
+                    // Derive parent folder ID from full name
+                    int lastSep = fullName.lastIndexOf(separator);
+                    if (lastSep > 0) {
+                        dto.setParentFolderId(fullName.substring(0, lastSep));
+                    }
+                    // Set well-known name based on IMAP folder name
+                    String fname = fullName.toLowerCase();
+                    if ("inbox".equals(fname)) {
+                        dto.setWellKnownName(MailFolderDTO.WELL_KNOWN_INBOX);
+                    } else if (fname.contains("sent")) {
+                        dto.setWellKnownName(MailFolderDTO.WELL_KNOWN_SENT);
+                    } else if (fname.contains("trash") || fname.contains("deleted")) {
+                        dto.setWellKnownName(MailFolderDTO.WELL_KNOWN_TRASH);
+                    } else if (fname.contains("draft")) {
+                        dto.setWellKnownName(MailFolderDTO.WELL_KNOWN_DRAFTS);
+                    }
+                    result.add(dto);
+                }
+            }
+            return result;
+        } finally {
+            // store kept open in cache for reuse
+        }
+    }
+
+    private List<MailMessageDTO> imapListMessages(MailboxSetup ms, String folderId, int top, int offset, Date sinceDate, boolean unreadOnly, String searchTerm) throws Exception {
+        Store store = imapConnect(ms);
+        try {
+            Folder folder = store.getFolder(folderId);
+            folder.open(Folder.READ_ONLY);
+            try {
+                Message[] messages;
+                if (sinceDate != null || unreadOnly || (searchTerm != null && !searchTerm.isEmpty())) {
+                    // Use IMAP search for server-side filtering
+                    javax.mail.search.SearchTerm term = null;
+                    if (sinceDate != null) {
+                        term = new javax.mail.search.SentDateTerm(javax.mail.search.ComparisonTerm.GT, sinceDate);
+                    }
+                    if (unreadOnly) {
+                        javax.mail.search.SearchTerm unreadTerm = new javax.mail.search.FlagTerm(new Flags(Flags.Flag.SEEN), false);
+                        term = (term != null) ? new javax.mail.search.AndTerm(term, unreadTerm) : unreadTerm;
+                    }
+                    if (searchTerm != null && !searchTerm.isEmpty()) {
+                        javax.mail.search.SearchTerm searchOrTerm = new javax.mail.search.OrTerm(
+                            new javax.mail.search.SearchTerm[]{
+                                new javax.mail.search.SubjectTerm(searchTerm),
+                                new javax.mail.search.FromStringTerm(searchTerm),
+                                new javax.mail.search.RecipientStringTerm(Message.RecipientType.TO, searchTerm),
+                                new javax.mail.search.BodyTerm(searchTerm)
+                            }
+                        );
+                        term = (term != null) ? new javax.mail.search.AndTerm(term, searchOrTerm) : searchOrTerm;
+                    }
+                    messages = folder.search(term);
+                    // Apply top limit
+                    if (messages.length > top) {
+                        Message[] limited = new Message[top];
+                        System.arraycopy(messages, messages.length - top, limited, 0, top);
+                        messages = limited;
+                    }
+                } else {
+                    int total = folder.getMessageCount();
+                    if (total == 0) return new ArrayList<>();
+                    int end = total - offset;
+                    int start = Math.max(1, end - top + 1);
+                    if (end < 1) return new ArrayList<>();
+                    messages = folder.getMessages(start, end);
+                }
+                // Batch-fetch headers to avoid per-message roundtrips
+                javax.mail.FetchProfile fp = new javax.mail.FetchProfile();
+                fp.add(javax.mail.FetchProfile.Item.ENVELOPE);
+                fp.add(javax.mail.FetchProfile.Item.FLAGS);
+                fp.add(javax.mail.UIDFolder.FetchProfileItem.UID);
+                folder.fetch(messages, fp);
+
+                UIDFolder uidFolder = (UIDFolder) folder;
+                long uidValidity = uidFolder.getUIDValidity();
+                List<MailMessageDTO> result = new ArrayList<>();
+                for (int i = messages.length - 1; i >= 0; i--) {
+                    Message msg = messages[i];
+                    MailMessageDTO dto = new MailMessageDTO();
+                    long uid = uidFolder.getUID(msg);
+                    dto.setMessageRef(buildImapRef(folderId, uid, uidValidity));
+                    dto.setSubject(msg.getSubject());
+                    dto.setDate(msg.getSentDate());
+                    dto.setRead(msg.isSet(Flags.Flag.SEEN));
+                    // Skip hasAttachments check in list view - too expensive (requires body parsing)
+                    String[] msgIdHeader = msg.getHeader("Message-ID");
+                    if (msgIdHeader != null && msgIdHeader.length > 0) dto.setMessageId(msgIdHeader[0]);
+                    Address[] fromAddrs = msg.getFrom();
+                    if (fromAddrs != null && fromAddrs.length > 0) dto.setFrom(fromAddrs[0].toString());
+                    dto.setTo(addressesToStrings(msg.getRecipients(Message.RecipientType.TO)));
+                    dto.setCc(addressesToStrings(msg.getRecipients(Message.RecipientType.CC)));
+                    result.add(dto);
+                }
+                return result;
+            } finally {
+                folder.close(false);
+            }
+        } finally {
+            // store kept open in cache for reuse
+        }
+    }
+
+    private MailMessageDTO imapGetMessage(MailboxSetup ms, String messageRef) throws Exception {
+        String folderName = parseImapRefFolder(messageRef);
+        long[] parsed = parseImapRef(messageRef);
+        Store store = imapConnect(ms);
+        try {
+            Folder folder = store.getFolder(folderName);
+            folder.open(Folder.READ_ONLY);
+            try {
+                UIDFolder uidFolder = (UIDFolder) folder;
+                if (uidFolder.getUIDValidity() != parsed[0]) {
+                    throw new Exception("UIDVALIDITY mismatch - folder may have been rebuilt. Please refresh the folder listing.");
+                }
+                Message msg = uidFolder.getMessageByUID(parsed[1]);
+                if (msg == null) throw new Exception("Message not found for reference: " + messageRef);
+                MailMessageDTO dto = new MailMessageDTO();
+                dto.setMessageRef(messageRef);
+                dto.setSubject(msg.getSubject());
+                dto.setDate(msg.getSentDate());
+                dto.setRead(msg.isSet(Flags.Flag.SEEN));
+                dto.setHasAttachments(hasAttachments(msg));
+                String[] h = msg.getHeader("Message-ID");
+                if (h != null && h.length > 0) dto.setMessageId(h[0]);
+                h = msg.getHeader("In-Reply-To");
+                if (h != null && h.length > 0) dto.setInReplyTo(h[0]);
+                h = msg.getHeader("References");
+                if (h != null && h.length > 0) dto.setReferences(h[0]);
+                h = msg.getHeader("Disposition-Notification-To");
+                String[] h2 = msg.getHeader("Return-Receipt-To");
+                dto.setReadReceiptRequested((h != null && h.length > 0) || (h2 != null && h2.length > 0));
+                Address[] fromAddrs = msg.getFrom();
+                if (fromAddrs != null && fromAddrs.length > 0) dto.setFrom(fromAddrs[0].toString());
+                dto.setTo(addressesToStrings(msg.getRecipients(Message.RecipientType.TO)));
+                dto.setCc(addressesToStrings(msg.getRecipients(Message.RecipientType.CC)));
+                String[] bodyResult = extractBody(msg);
+                dto.setBody(bodyResult[0]);
+                dto.setBodyContentType(bodyResult[1]);
+                return dto;
+            } finally {
+                folder.close(false);
+            }
+        } finally {
+            // store kept open in cache for reuse
+        }
+    }
+
+    private List<MailAttachmentDTO> imapGetAttachments(MailboxSetup ms, String messageRef) throws Exception {
+        String folderName = parseImapRefFolder(messageRef);
+        long[] parsed = parseImapRef(messageRef);
+        Store store = imapConnect(ms);
+        try {
+            Folder folder = store.getFolder(folderName);
+            folder.open(Folder.READ_ONLY);
+            try {
+                UIDFolder uidFolder = (UIDFolder) folder;
+                if (uidFolder.getUIDValidity() != parsed[0]) throw new Exception("UIDVALIDITY mismatch");
+                Message msg = uidFolder.getMessageByUID(parsed[1]);
+                if (msg == null) throw new Exception("Message not found");
+                List<MailAttachmentDTO> result = new ArrayList<>();
+                extractAttachments(msg, result);
+                return result;
+            } finally {
+                folder.close(false);
+            }
+        } finally {
+            // store kept open in cache for reuse
+        }
+    }
+
+    private void extractAttachments(Part part, List<MailAttachmentDTO> result) throws Exception {
+        if (part.isMimeType("multipart/*")) {
+            Multipart multipart = (Multipart) part.getContent();
+            for (int i = 0; i < multipart.getCount(); i++) {
+                extractAttachments(multipart.getBodyPart(i), result);
+            }
+        } else {
+            String disposition = part.getDisposition();
+            String fileName = part.getFileName();
+            String contentId = null;
+            boolean isInline = Part.INLINE.equalsIgnoreCase(disposition);
+
+            if (part instanceof MimeBodyPart) {
+                contentId = ((MimeBodyPart) part).getContentID();
+                if (contentId != null) contentId = contentId.replaceAll("[<>]", "");
+            }
+
+            // Skip body text parts (plain/html without filename and without content-id)
+            if ((part.isMimeType("text/plain") || part.isMimeType("text/html"))
+                    && fileName == null && contentId == null) {
+                return;
+            }
+
+            // Include if: has disposition, has content-id, or has filename
+            if (disposition != null || contentId != null || fileName != null) {
+                if (fileName == null && contentId != null) fileName = contentId;
+                MailAttachmentDTO att = new MailAttachmentDTO();
+                att.setAttachmentId(fileName != null ? fileName : String.valueOf(result.size()));
+                att.setName(fileName != null ? fileName : "inline_" + result.size());
+                att.setContentType(part.getContentType());
+                att.setInline(isInline || (contentId != null && disposition == null));
+                att.setContentId(contentId);
+                att.setSize(part.getSize());
+                InputStream is = part.getInputStream();
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                byte[] buf = new byte[4096];
+                int len;
+                while ((len = is.read(buf)) != -1) bos.write(buf, 0, len);
+                att.setContent(bos.toByteArray());
+                result.add(att);
+            }
+        }
+    }
+
+    private void smtpSendMail(MailboxSetup ms, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, String priority, boolean readReceipt, String inReplyTo, String references) throws Exception {
+        Properties props = new Properties();
+        String server = ms.getEmailOutServer();
+        final String user = ms.getEmailOutUser();
+        final String pwd = com.jdimension.jlawyer.security.CryptoProvider.newCrypto().decrypt(ms.getEmailOutPwd());
+        props.put("mail.smtp.host", server);
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtps.host", server);
+        props.put("mail.smtps.auth", "true");
+        if (ms.isEmailOutSsl()) props.put("mail.smtp.ssl.enable", "true");
+        if (ms.isEmailStartTls()) props.put("mail.smtp.starttls.enable", "true");
+        String port = ms.getEmailOutPort();
+        if (port != null && !port.isEmpty()) {
+            props.put("mail.smtp.port", port);
+            props.put("mail.smtps.port", port);
+        }
+        ms.applyCustomProperties(ms.customConfigurationsSendProperties(), props);
+        Session session = Session.getInstance(props, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(user, pwd);
+            }
+        });
+        MimeMessage msg = new MimeMessage(session);
+        String senderName = ms.getEmailSenderName();
+        if (senderName != null && !senderName.isEmpty()) {
+            msg.setFrom(new InternetAddress(ms.getEmailAddress(), senderName));
+        } else {
+            msg.setFrom(new InternetAddress(ms.getEmailAddress()));
+        }
+        if (to != null && !to.isEmpty()) msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
+        if (cc != null && !cc.isEmpty()) msg.setRecipients(Message.RecipientType.CC, InternetAddress.parse(cc));
+        if (bcc != null && !bcc.isEmpty()) msg.setRecipients(Message.RecipientType.BCC, InternetAddress.parse(bcc));
+        msg.setSubject(subject);
+        msg.setSentDate(new Date());
+        String prio = normalizePriority(priority);
+        if ("high".equals(prio)) {
+            msg.setHeader("X-Priority", "1"); msg.setHeader("Priority", "Urgent"); msg.setHeader("Importance", "high");
+        } else if ("low".equals(prio)) {
+            msg.setHeader("X-Priority", "5"); msg.setHeader("Priority", "Non-Urgent"); msg.setHeader("Importance", "low");
+        } else {
+            msg.setHeader("X-Priority", "3"); msg.setHeader("Priority", "Normal"); msg.setHeader("Importance", "normal");
+        }
+        if (inReplyTo != null && !inReplyTo.isEmpty()) msg.setHeader("In-Reply-To", inReplyTo);
+        if (references != null && !references.isEmpty()) msg.setHeader("References", references);
+        if (readReceipt) {
+            msg.setHeader("Disposition-Notification-To", ms.getEmailAddress());
+            msg.setHeader("Return-Receipt-To", ms.getEmailAddress());
+        }
+        MimeMultipart multipart = new MimeMultipart();
+        MimeBodyPart bodyPart = new MimeBodyPart();
+        bodyPart.setContent(body, contentType != null ? contentType : "text/plain");
+        multipart.addBodyPart(bodyPart);
+        if (attachments != null) {
+            for (MailAttachmentDTO att : attachments) {
+                MimeBodyPart attachPart = new MimeBodyPart();
+                DataSource ds = new ByteArrayDataSource(att.getContent(), att.getContentType());
+                attachPart.setDataHandler(new DataHandler(ds));
+                attachPart.setFileName(att.getName());
+                if (att.isInline() && att.getContentId() != null) {
+                    attachPart.setDisposition(Part.INLINE);
+                    attachPart.setContentID("<" + att.getContentId() + ">");
+                }
+                multipart.addBodyPart(attachPart);
+            }
+        }
+        msg.setContent(multipart);
+        msg.saveChanges();
+        Transport.send(msg);
+    }
+
+    private void imapMoveMessage(MailboxSetup ms, String messageRef, String targetFolderId) throws Exception {
+        String folderName = parseImapRefFolder(messageRef);
+        long[] parsed = parseImapRef(messageRef);
+        Store store = imapConnect(ms);
+        try {
+            Folder sourceFolder = store.getFolder(folderName);
+            sourceFolder.open(Folder.READ_WRITE);
+            try {
+                UIDFolder uidFolder = (UIDFolder) sourceFolder;
+                if (uidFolder.getUIDValidity() != parsed[0]) throw new Exception("UIDVALIDITY mismatch");
+                Message msg = uidFolder.getMessageByUID(parsed[1]);
+                if (msg == null) throw new Exception("Message not found");
+                Folder targetFolder = store.getFolder(targetFolderId);
+                if (!targetFolder.exists()) targetFolder.create(Folder.HOLDS_MESSAGES);
+                sourceFolder.copyMessages(new Message[]{msg}, targetFolder);
+                msg.setFlag(Flags.Flag.DELETED, true);
+                sourceFolder.expunge();
+            } finally {
+                sourceFolder.close(false);
+            }
+        } finally {
+            // store kept open in cache for reuse
+        }
+    }
+
+    private void imapDeleteMessage(MailboxSetup ms, String messageRef) throws Exception {
+        String folderName = parseImapRefFolder(messageRef);
+        long[] parsed = parseImapRef(messageRef);
+        Store store = imapConnect(ms);
+        try {
+            Folder folder = store.getFolder(folderName);
+            folder.open(Folder.READ_WRITE);
+            try {
+                UIDFolder uidFolder = (UIDFolder) folder;
+                if (uidFolder.getUIDValidity() != parsed[0]) throw new Exception("UIDVALIDITY mismatch");
+                Message msg = uidFolder.getMessageByUID(parsed[1]);
+                if (msg == null) throw new Exception("Message not found");
+                msg.setFlag(Flags.Flag.DELETED, true);
+                folder.expunge();
+            } finally {
+                folder.close(false);
+            }
+        } finally {
+            // store kept open in cache for reuse
+        }
+    }
+
+    private void imapMarkAsRead(MailboxSetup ms, String messageRef, boolean read) throws Exception {
+        String folderName = parseImapRefFolder(messageRef);
+        long[] parsed = parseImapRef(messageRef);
+        Store store = imapConnect(ms);
+        try {
+            Folder folder = store.getFolder(folderName);
+            folder.open(Folder.READ_WRITE);
+            try {
+                UIDFolder uidFolder = (UIDFolder) folder;
+                if (uidFolder.getUIDValidity() != parsed[0]) throw new Exception("UIDVALIDITY mismatch");
+                Message msg = uidFolder.getMessageByUID(parsed[1]);
+                if (msg == null) throw new Exception("Message not found");
+                msg.setFlag(Flags.Flag.SEEN, read);
+            } finally {
+                folder.close(false);
+            }
+        } finally {
+            // store kept open in cache for reuse
+        }
+    }
+
+    // ==================== Graph API Backend ====================
+
+    private String graphGet(MailboxSetup ms, String url) throws Exception {
+        this.updateAuthTokenForMailbox(ms);
+        try (CloseableHttpClient client = HttpClients.createDefault()) {
+            HttpGet get = new HttpGet(url);
+            get.setHeader("Authorization", "Bearer " + ms.getAuthToken());
+            get.setHeader("Content-Type", "application/json");
+            try (CloseableHttpResponse response = client.execute(get)) {
+                int status = response.getStatusLine().getStatusCode();
+                byte[] responseBytes = readResponseBytes(response);
+                if (status >= 200 && status < 300) {
+                    return new String(responseBytes, StandardCharsets.UTF_8);
+                }
+                throw new Exception("Graph API error " + status + ": " + new String(responseBytes, StandardCharsets.UTF_8));
+            }
+        }
+    }
+
+    private String graphPost(MailboxSetup ms, String url, String jsonBody) throws Exception {
+        this.updateAuthTokenForMailbox(ms);
+        try (CloseableHttpClient client = HttpClients.createDefault()) {
+            HttpPost post = new HttpPost(url);
+            post.setHeader("Authorization", "Bearer " + ms.getAuthToken());
+            post.setHeader("Content-Type", "application/json");
+            if (jsonBody != null) post.setEntity(new StringEntity(jsonBody, StandardCharsets.UTF_8));
+            try (CloseableHttpResponse response = client.execute(post)) {
+                int status = response.getStatusLine().getStatusCode();
+                byte[] responseBytes = readResponseBytes(response);
+                if (status >= 200 && status < 300) {
+                    return new String(responseBytes, StandardCharsets.UTF_8);
+                }
+                throw new Exception("Graph API error " + status + ": " + new String(responseBytes, StandardCharsets.UTF_8));
+            }
+        }
+    }
+
+    private void graphDelete(MailboxSetup ms, String url) throws Exception {
+        this.updateAuthTokenForMailbox(ms);
+        try (CloseableHttpClient client = HttpClients.createDefault()) {
+            HttpDelete delete = new HttpDelete(url);
+            delete.setHeader("Authorization", "Bearer " + ms.getAuthToken());
+            try (CloseableHttpResponse response = client.execute(delete)) {
+                int status = response.getStatusLine().getStatusCode();
+                if (status < 200 || status >= 300) {
+                    byte[] responseBytes = readResponseBytes(response);
+                    throw new Exception("Graph API error " + status + ": " + new String(responseBytes, StandardCharsets.UTF_8));
+                }
+            }
+        }
+    }
+
+    private void graphPatch(MailboxSetup ms, String url, String jsonBody) throws Exception {
+        this.updateAuthTokenForMailbox(ms);
+        try (CloseableHttpClient client = HttpClients.createDefault()) {
+            HttpPatch patch = new HttpPatch(url);
+            patch.setHeader("Authorization", "Bearer " + ms.getAuthToken());
+            patch.setHeader("Content-Type", "application/json");
+            patch.setEntity(new StringEntity(jsonBody, StandardCharsets.UTF_8));
+            try (CloseableHttpResponse response = client.execute(patch)) {
+                int status = response.getStatusLine().getStatusCode();
+                if (status < 200 || status >= 300) {
+                    byte[] responseBytes = readResponseBytes(response);
+                    throw new Exception("Graph API error " + status + ": " + new String(responseBytes, StandardCharsets.UTF_8));
+                }
+            }
+        }
+    }
+
+    private byte[] readResponseBytes(CloseableHttpResponse response) throws Exception {
+        if (response.getEntity() == null) return new byte[0];
+        try (InputStream is = response.getEntity().getContent()) {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            byte[] buf = new byte[4096];
+            int len;
+            while ((len = is.read(buf)) != -1) bos.write(buf, 0, len);
+            return bos.toByteArray();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<MailFolderDTO> graphListFolders(MailboxSetup ms) throws Exception {
+        String userBase = GRAPH_BASE + "/users/" + URLEncoder.encode(ms.getEmailAddress(), StandardCharsets.UTF_8);
+
+        // Resolve well-known folder IDs via dedicated API calls
+        HashMap<String, String> wellKnownIdMap = new HashMap<>();
+        String[] wellKnownNames = {"Inbox", "SentItems", "DeletedItems", "Drafts"};
+        String[] wellKnownKeys = {MailFolderDTO.WELL_KNOWN_INBOX, MailFolderDTO.WELL_KNOWN_SENT, MailFolderDTO.WELL_KNOWN_TRASH, MailFolderDTO.WELL_KNOWN_DRAFTS};
+        for (int i = 0; i < wellKnownNames.length; i++) {
+            try {
+                String wkJson = graphGet(ms, userBase + "/mailFolders/" + wellKnownNames[i] + "?$select=id");
+                Map<String, Object> wkResponse = new ObjectMapper().readValue(wkJson, Map.class);
+                String wkId = (String) wkResponse.get("id");
+                if (wkId != null) {
+                    wellKnownIdMap.put(wkId, wellKnownKeys[i]);
+                }
+            } catch (Exception ex) {
+                log.warn("Could not resolve well-known folder " + wellKnownNames[i] + " for " + ms.getEmailAddress());
+            }
+        }
+
+        // List all folders including child folders recursively
+        List<MailFolderDTO> result = new ArrayList<>();
+        graphListFoldersRecursive(ms, userBase + "/mailFolders?$top=100", wellKnownIdMap, result, null);
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void graphListFoldersRecursive(MailboxSetup ms, String url, HashMap<String, String> wellKnownIdMap, List<MailFolderDTO> result, String parentId) throws Exception {
+        String json = graphGet(ms, url);
+        Map<String, Object> response = new ObjectMapper().readValue(json, Map.class);
+        List<Map<String, Object>> value = (List<Map<String, Object>>) response.get("value");
+        if (value != null) {
+            for (Map<String, Object> f : value) {
+                MailFolderDTO dto = new MailFolderDTO();
+                String folderId = (String) f.get("id");
+                dto.setFolderId(folderId);
+                dto.setDisplayName((String) f.get("displayName"));
+                dto.setUnreadCount(f.get("unreadItemCount") != null ? ((Number) f.get("unreadItemCount")).intValue() : 0);
+                dto.setTotalCount(f.get("totalItemCount") != null ? ((Number) f.get("totalItemCount")).intValue() : 0);
+                if (wellKnownIdMap.containsKey(folderId)) {
+                    dto.setWellKnownName(wellKnownIdMap.get(folderId));
+                }
+                dto.setParentFolderId(parentId);
+                result.add(dto);
+
+                // Recurse into child folders
+                int childCount = f.get("childFolderCount") != null ? ((Number) f.get("childFolderCount")).intValue() : 0;
+                if (childCount > 0) {
+                    String childUrl = GRAPH_BASE + "/users/" + URLEncoder.encode(ms.getEmailAddress(), StandardCharsets.UTF_8)
+                            + "/mailFolders/" + folderId + "/childFolders?$top=100";
+                    graphListFoldersRecursive(ms, childUrl, wellKnownIdMap, result, folderId);
+                }
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<MailMessageDTO> graphListMessages(MailboxSetup ms, String folderId, int top, int offset, Date sinceDate, boolean unreadOnly, String searchTerm) throws Exception {
+        boolean hasSearch = searchTerm != null && !searchTerm.isEmpty();
+        StringBuilder urlBuilder = new StringBuilder();
+        urlBuilder.append(GRAPH_BASE).append("/users/").append(URLEncoder.encode(ms.getEmailAddress(), StandardCharsets.UTF_8))
+                .append("/mailFolders/").append(URLEncoder.encode(folderId, StandardCharsets.UTF_8))
+                .append("/messages?$top=").append(top)
+                .append("&$select=id,subject,from,toRecipients,ccRecipients,receivedDateTime,isRead,hasAttachments,internetMessageId");
+
+        // Graph API: $search cannot be combined with $skip or $orderby
+        if (hasSearch) {
+            urlBuilder.append("&$search=%22").append(URLEncoder.encode(searchTerm, StandardCharsets.UTF_8)).append("%22");
+        } else {
+            if (offset > 0) urlBuilder.append("&$skip=").append(offset);
+            urlBuilder.append("&$orderby=receivedDateTime%20desc");
+        }
+
+        // Build $filter for server-side filtering
+        StringBuilder filter = new StringBuilder();
+        if (sinceDate != null) {
+            String isoDate = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").format(sinceDate);
+            filter.append("receivedDateTime ge ").append(isoDate);
+        }
+        if (unreadOnly) {
+            if (filter.length() > 0) filter.append(" and ");
+            filter.append("isRead eq false");
+        }
+        if (filter.length() > 0) {
+            urlBuilder.append("&$filter=").append(URLEncoder.encode(filter.toString(), StandardCharsets.UTF_8));
+        }
+
+        String url = urlBuilder.toString();
+        String json = graphGet(ms, url);
+        Map<String, Object> response = new ObjectMapper().readValue(json, Map.class);
+        List<Map<String, Object>> value = (List<Map<String, Object>>) response.get("value");
+        List<MailMessageDTO> result = new ArrayList<>();
+        if (value != null) {
+            for (Map<String, Object> m : value) {
+                MailMessageDTO dto = new MailMessageDTO();
+                dto.setMessageRef((String) m.get("id"));
+                dto.setMessageId((String) m.get("internetMessageId"));
+                dto.setSubject((String) m.get("subject"));
+                dto.setRead(Boolean.TRUE.equals(m.get("isRead")));
+                dto.setHasAttachments(Boolean.TRUE.equals(m.get("hasAttachments")));
+                String receivedDateTime = (String) m.get("receivedDateTime");
+                if (receivedDateTime != null) {
+                    try { dto.setDate(parseGraphDateTime(receivedDateTime)); } catch (Exception e) { }
+                }
+                Map<String, Object> from = (Map<String, Object>) m.get("from");
+                if (from != null) {
+                    Map<String, Object> ea = (Map<String, Object>) from.get("emailAddress");
+                    if (ea != null) {
+                        String name = (String) ea.get("name");
+                        String addr = (String) ea.get("address");
+                        dto.setFrom(name != null && !name.isEmpty() ? name + " <" + addr + ">" : addr);
+                    }
+                }
+                dto.setTo(graphRecipientsToStrings((List<Map<String, Object>>) m.get("toRecipients")));
+                dto.setCc(graphRecipientsToStrings((List<Map<String, Object>>) m.get("ccRecipients")));
+                result.add(dto);
+            }
+        }
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private MailMessageDTO graphGetMessage(MailboxSetup ms, String messageRef) throws Exception {
+        String url = GRAPH_BASE + "/users/" + URLEncoder.encode(ms.getEmailAddress(), StandardCharsets.UTF_8)
+                + "/messages/" + messageRef
+                + "?$select=id,subject,from,toRecipients,ccRecipients,receivedDateTime,isRead,hasAttachments,body,internetMessageId,internetMessageHeaders";
+        String json = graphGet(ms, url);
+        Map<String, Object> m = new ObjectMapper().readValue(json, Map.class);
+        MailMessageDTO dto = new MailMessageDTO();
+        dto.setMessageRef((String) m.get("id"));
+        dto.setMessageId((String) m.get("internetMessageId"));
+        dto.setSubject((String) m.get("subject"));
+        dto.setRead(Boolean.TRUE.equals(m.get("isRead")));
+        dto.setHasAttachments(Boolean.TRUE.equals(m.get("hasAttachments")));
+        String receivedDateTime = (String) m.get("receivedDateTime");
+        if (receivedDateTime != null) {
+            try { dto.setDate(parseGraphDateTime(receivedDateTime)); } catch (Exception e) { }
+        }
+        Map<String, Object> from = (Map<String, Object>) m.get("from");
+        if (from != null) {
+            Map<String, Object> ea = (Map<String, Object>) from.get("emailAddress");
+            if (ea != null) {
+                String name = (String) ea.get("name");
+                String addr = (String) ea.get("address");
+                dto.setFrom(name != null && !name.isEmpty() ? name + " <" + addr + ">" : addr);
+            }
+        }
+        dto.setTo(graphRecipientsToStrings((List<Map<String, Object>>) m.get("toRecipients")));
+        dto.setCc(graphRecipientsToStrings((List<Map<String, Object>>) m.get("ccRecipients")));
+        Map<String, Object> bodyMap = (Map<String, Object>) m.get("body");
+        if (bodyMap != null) {
+            dto.setBody((String) bodyMap.get("content"));
+            dto.setBodyContentType("html".equalsIgnoreCase((String) bodyMap.get("contentType")) ? "text/html" : "text/plain");
+        }
+        List<Map<String, String>> headers = (List<Map<String, String>>) m.get("internetMessageHeaders");
+        if (headers != null) {
+            for (Map<String, String> header : headers) {
+                String headerName = header.get("name");
+                if ("In-Reply-To".equalsIgnoreCase(headerName)) dto.setInReplyTo(header.get("value"));
+                else if ("References".equalsIgnoreCase(headerName)) dto.setReferences(header.get("value"));
+                else if ("Disposition-Notification-To".equalsIgnoreCase(headerName) || "Return-Receipt-To".equalsIgnoreCase(headerName)) dto.setReadReceiptRequested(true);
+            }
+        }
+        return dto;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<MailAttachmentDTO> graphGetAttachments(MailboxSetup ms, String messageRef) throws Exception {
+        String url = GRAPH_BASE + "/users/" + URLEncoder.encode(ms.getEmailAddress(), StandardCharsets.UTF_8)
+                + "/messages/" + messageRef + "/attachments";
+        String json = graphGet(ms, url);
+        Map<String, Object> response = new ObjectMapper().readValue(json, Map.class);
+        List<Map<String, Object>> value = (List<Map<String, Object>>) response.get("value");
+        List<MailAttachmentDTO> result = new ArrayList<>();
+        if (value != null) {
+            for (Map<String, Object> a : value) {
+                if (!"#microsoft.graph.fileAttachment".equals(a.get("@odata.type"))) continue;
+                MailAttachmentDTO att = new MailAttachmentDTO();
+                att.setAttachmentId((String) a.get("id"));
+                att.setName((String) a.get("name"));
+                att.setContentType((String) a.get("contentType"));
+                att.setSize(a.get("size") != null ? ((Number) a.get("size")).longValue() : 0);
+                att.setInline(Boolean.TRUE.equals(a.get("isInline")));
+                att.setContentId((String) a.get("contentId"));
+                String contentBytes = (String) a.get("contentBytes");
+                if (contentBytes != null) att.setContent(java.util.Base64.getDecoder().decode(contentBytes));
+                result.add(att);
+            }
+        }
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void graphSendMail(MailboxSetup ms, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, String priority, boolean readReceipt, String inReplyTo, String references) throws Exception {
+        String url = GRAPH_BASE + "/users/" + URLEncoder.encode(ms.getEmailAddress(), StandardCharsets.UTF_8) + "/sendMail";
+        Map<String, Object> message = new HashMap<>();
+        message.put("subject", subject);
+        Map<String, String> bodyMap = new HashMap<>();
+        bodyMap.put("contentType", contentType != null && contentType.contains("html") ? "html" : "text");
+        bodyMap.put("content", body);
+        message.put("body", bodyMap);
+        if (to != null && !to.isEmpty()) message.put("toRecipients", parseRecipientsForGraph(to));
+        if (cc != null && !cc.isEmpty()) message.put("ccRecipients", parseRecipientsForGraph(cc));
+        if (bcc != null && !bcc.isEmpty()) message.put("bccRecipients", parseRecipientsForGraph(bcc));
+        String graphPrio = normalizePriority(priority);
+        message.put("importance", graphPrio);
+        if (readReceipt) {
+            message.put("isReadReceiptRequested", true);
+        }
+
+        // Build internetMessageHeaders for priority, threading, etc.
+        List<Map<String, String>> hdrs = new ArrayList<>();
+        // Priority headers for non-Outlook recipients
+        if ("high".equals(graphPrio)) {
+            hdrs.add(createHeader("X-Priority", "1"));
+            hdrs.add(createHeader("Priority", "Urgent"));
+            hdrs.add(createHeader("Importance", "high"));
+        } else if ("low".equals(graphPrio)) {
+            hdrs.add(createHeader("X-Priority", "5"));
+            hdrs.add(createHeader("Priority", "Non-Urgent"));
+            hdrs.add(createHeader("Importance", "low"));
+        }
+        // Threading headers
+        if (inReplyTo != null && !inReplyTo.isEmpty()) {
+            hdrs.add(createHeader("In-Reply-To", inReplyTo));
+        }
+        if (references != null && !references.isEmpty()) {
+            hdrs.add(createHeader("References", references));
+        }
+        if (!hdrs.isEmpty()) {
+            message.put("internetMessageHeaders", hdrs);
+        }
+        if (attachments != null && !attachments.isEmpty()) {
+            List<Map<String, Object>> atts = new ArrayList<>();
+            for (MailAttachmentDTO att : attachments) {
+                Map<String, Object> a = new HashMap<>();
+                a.put("@odata.type", "#microsoft.graph.fileAttachment");
+                a.put("name", att.getName());
+                a.put("contentType", att.getContentType());
+                a.put("contentBytes", java.util.Base64.getEncoder().encodeToString(att.getContent()));
+                if (att.isInline()) {
+                    a.put("isInline", true);
+                    if (att.getContentId() != null) a.put("contentId", att.getContentId());
+                }
+                atts.add(a);
+            }
+            message.put("attachments", atts);
+        }
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("message", message);
+        payload.put("saveToSentItems", "true");
+        graphPost(ms, url, new ObjectMapper().writeValueAsString(payload));
+    }
+
+    private void graphMoveMessage(MailboxSetup ms, String messageRef, String targetFolderId) throws Exception {
+        String url = GRAPH_BASE + "/users/" + URLEncoder.encode(ms.getEmailAddress(), StandardCharsets.UTF_8)
+                + "/messages/" + messageRef + "/move";
+        graphPost(ms, url, "{\"destinationId\":\"" + targetFolderId + "\"}");
+    }
+
+    private void graphDeleteMessage(MailboxSetup ms, String messageRef) throws Exception {
+        // Move to Deleted Items instead of permanent delete
+        String url = GRAPH_BASE + "/users/" + URLEncoder.encode(ms.getEmailAddress(), StandardCharsets.UTF_8)
+                + "/messages/" + messageRef + "/move";
+        graphPost(ms, url, "{\"destinationId\":\"deleteditems\"}");
+    }
+
+    private void graphMarkAsRead(MailboxSetup ms, String messageRef, boolean read) throws Exception {
+        String url = GRAPH_BASE + "/users/" + URLEncoder.encode(ms.getEmailAddress(), StandardCharsets.UTF_8)
+                + "/messages/" + messageRef;
+        graphPatch(ms, url, "{\"isRead\":" + read + "}");
+    }
+
+    // ==================== Utility Methods ====================
+
+    private String[] addressesToStrings(Address[] addresses) {
+        if (addresses == null) return new String[0];
+        String[] result = new String[addresses.length];
+        for (int i = 0; i < addresses.length; i++) result[i] = addresses[i].toString();
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private String[] graphRecipientsToStrings(List<Map<String, Object>> recipients) {
+        if (recipients == null) return new String[0];
+        String[] result = new String[recipients.size()];
+        for (int i = 0; i < recipients.size(); i++) {
+            Map<String, Object> ea = (Map<String, Object>) recipients.get(i).get("emailAddress");
+            if (ea != null) {
+                String name = (String) ea.get("name");
+                String addr = (String) ea.get("address");
+                result[i] = name != null && !name.isEmpty() ? name + " <" + addr + ">" : addr;
+            }
+        }
+        return result;
+    }
+
+    private List<Map<String, Object>> parseRecipientsForGraph(String recipients) throws Exception {
+        List<Map<String, Object>> result = new ArrayList<>();
+        InternetAddress[] addresses = InternetAddress.parse(recipients);
+        for (InternetAddress addr : addresses) {
+            Map<String, Object> recipient = new HashMap<>();
+            Map<String, String> ea = new HashMap<>();
+            ea.put("address", addr.getAddress());
+            if (addr.getPersonal() != null) ea.put("name", addr.getPersonal());
+            recipient.put("emailAddress", ea);
+            result.add(recipient);
+        }
+        return result;
+    }
+
+    // ==================== EML Generation ====================
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public byte[] getMessageAsEml(String mailboxId, String messageRef) throws Exception {
+        MailboxSetup ms = getMailboxOrThrow(mailboxId);
+        if (ms.isMsExchange()) {
+            return graphGetMessageAsEml(ms, messageRef);
+        } else {
+            return imapGetMessageAsEml(ms, messageRef);
+        }
+    }
+
+    private byte[] imapGetMessageAsEml(MailboxSetup ms, String messageRef) throws Exception {
+        String folderName = parseImapRefFolder(messageRef);
+        long[] parsed = parseImapRef(messageRef);
+        Store store = imapConnect(ms);
+        Folder folder = store.getFolder(folderName);
+        folder.open(Folder.READ_ONLY);
+        try {
+            UIDFolder uidFolder = (UIDFolder) folder;
+            if (uidFolder.getUIDValidity() != parsed[0]) {
+                throw new Exception("UIDVALIDITY mismatch");
+            }
+            Message msg = uidFolder.getMessageByUID(parsed[1]);
+            if (msg == null) {
+                throw new Exception("Message not found for reference: " + messageRef);
+            }
+            // Original MIME structure preserved via writeTo
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            msg.writeTo(bos);
+            bos.close();
+            return bos.toByteArray();
+        } finally {
+            folder.close(false);
+        }
+    }
+
+    private byte[] graphGetMessageAsEml(MailboxSetup ms, String messageRef) throws Exception {
+        // Get full message and attachments, build MimeMessage
+        MailMessageDTO dto = graphGetMessage(ms, messageRef);
+        List<MailAttachmentDTO> atts = graphGetAttachments(ms, messageRef);
+
+        Properties emlProps = new Properties();
+        Session emlSession = Session.getInstance(emlProps);
+        MimeMessage emlMsg = new MimeMessage(emlSession);
+        if (dto.getFrom() != null) emlMsg.setFrom(new InternetAddress(dto.getFrom()));
+        if (dto.getTo() != null) emlMsg.setRecipients(Message.RecipientType.TO, String.join(", ", dto.getTo()));
+        if (dto.getCc() != null && dto.getCc().length > 0) emlMsg.setRecipients(Message.RecipientType.CC, String.join(", ", dto.getCc()));
+        emlMsg.setSubject(dto.getSubject() != null ? dto.getSubject() : "", "UTF-8");
+        if (dto.getDate() != null) emlMsg.setSentDate(dto.getDate());
+        if (dto.getMessageId() != null) emlMsg.setHeader("Message-ID", dto.getMessageId());
+        if (dto.getInReplyTo() != null) emlMsg.setHeader("In-Reply-To", dto.getInReplyTo());
+        if (dto.getReferences() != null) emlMsg.setHeader("References", dto.getReferences());
+
+        String ct = dto.getBodyContentType() != null ? dto.getBodyContentType() : "text/plain";
+        MimeMultipart multipart = new MimeMultipart();
+        MimeBodyPart bodyPart = new MimeBodyPart();
+        bodyPart.setContent(dto.getBody() != null ? dto.getBody() : "", ct + "; charset=UTF-8");
+        multipart.addBodyPart(bodyPart);
+
+        if (atts != null) {
+            for (MailAttachmentDTO att : atts) {
+                if (att.getContent() != null) {
+                    MimeBodyPart attPart = new MimeBodyPart();
+                    javax.activation.DataSource ds = new javax.mail.util.ByteArrayDataSource(
+                            att.getContent(), att.getContentType() != null ? att.getContentType() : "application/octet-stream");
+                    attPart.setDataHandler(new javax.activation.DataHandler(ds));
+                    attPart.setFileName(att.getName());
+                    if (att.isInline() && att.getContentId() != null) {
+                        attPart.setDisposition(javax.mail.Part.INLINE);
+                        attPart.setContentID("<" + att.getContentId() + ">");
+                    }
+                    multipart.addBodyPart(attPart);
+                }
+            }
+        }
+
+        emlMsg.setContent(multipart);
+        emlMsg.saveChanges();
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        emlMsg.writeTo(bos);
+        bos.close();
+        return bos.toByteArray();
+    }
+
+    // ==================== Append to Folder ====================
+
+    private void imapAppendToFolder(MailboxSetup ms, String folderId, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, boolean markAsRead) throws Exception {
+        Store store = imapConnect(ms);
+        Folder folder = store.getFolder(folderId);
+        if (!folder.exists()) {
+            folder.create(Folder.HOLDS_MESSAGES);
+        }
+        folder.open(Folder.READ_WRITE);
+        try {
+            // Build MimeMessage
+            Session session = Session.getInstance(new Properties());
+            MimeMessage msg = new MimeMessage(session);
+            msg.setFrom(new InternetAddress(ms.getEmailAddress(), ms.getEmailSenderName()));
+            if (to != null && !to.isEmpty()) msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
+            if (cc != null && !cc.isEmpty()) msg.setRecipients(Message.RecipientType.CC, InternetAddress.parse(cc));
+            if (bcc != null && !bcc.isEmpty()) msg.setRecipients(Message.RecipientType.BCC, InternetAddress.parse(bcc));
+            msg.setSubject(subject, "UTF-8");
+            msg.setSentDate(new Date());
+
+            MimeMultipart multipart = new MimeMultipart();
+            MimeBodyPart bodyPart = new MimeBodyPart();
+            bodyPart.setContent(body != null ? body : "", (contentType != null ? contentType : "text/plain") + "; charset=UTF-8");
+            multipart.addBodyPart(bodyPart);
+            if (attachments != null) {
+                for (MailAttachmentDTO att : attachments) {
+                    MimeBodyPart attPart = new MimeBodyPart();
+                    javax.activation.DataSource ds = new javax.mail.util.ByteArrayDataSource(att.getContent(), att.getContentType() != null ? att.getContentType() : "application/octet-stream");
+                    attPart.setDataHandler(new javax.activation.DataHandler(ds));
+                    attPart.setFileName(att.getName());
+                    multipart.addBodyPart(attPart);
+                }
+            }
+            msg.setContent(multipart);
+            msg.setFlag(Flags.Flag.SEEN, markAsRead);
+            msg.saveChanges();
+
+            folder.appendMessages(new Message[]{msg});
+        } finally {
+            folder.close(false);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void graphAppendToFolder(MailboxSetup ms, String folderId, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, boolean markAsRead) throws Exception {
+        // Graph API: create a draft message in the folder, then don't send it
+        String url = GRAPH_BASE + "/users/" + URLEncoder.encode(ms.getEmailAddress(), StandardCharsets.UTF_8)
+                + "/mailFolders/" + URLEncoder.encode(folderId, StandardCharsets.UTF_8) + "/messages";
+
+        Map<String, Object> message = new HashMap<>();
+        message.put("subject", subject);
+        Map<String, String> bodyMap = new HashMap<>();
+        bodyMap.put("contentType", contentType != null && contentType.contains("html") ? "html" : "text");
+        bodyMap.put("content", body != null ? body : "");
+        message.put("body", bodyMap);
+        if (to != null && !to.isEmpty()) message.put("toRecipients", parseRecipientsForGraph(to));
+        if (cc != null && !cc.isEmpty()) message.put("ccRecipients", parseRecipientsForGraph(cc));
+        if (bcc != null && !bcc.isEmpty()) message.put("bccRecipients", parseRecipientsForGraph(bcc));
+        message.put("isRead", markAsRead);
+        message.put("isDraft", false);
+
+        if (attachments != null && !attachments.isEmpty()) {
+            List<Map<String, Object>> atts = new ArrayList<>();
+            for (MailAttachmentDTO att : attachments) {
+                Map<String, Object> a = new HashMap<>();
+                a.put("@odata.type", "#microsoft.graph.fileAttachment");
+                a.put("name", att.getName());
+                a.put("contentType", att.getContentType());
+                a.put("contentBytes", java.util.Base64.getEncoder().encodeToString(att.getContent()));
+                atts.add(a);
+            }
+            message.put("attachments", atts);
+        }
+
+        graphPost(ms, url, new ObjectMapper().writeValueAsString(message));
+    }
+
+    // ==================== Folder Management ====================
+
+    private MailFolderDTO imapCreateFolder(MailboxSetup ms, String parentFolderId, String folderName) throws Exception {
+        Store store = imapConnect(ms);
+        try {
+            Folder parent = store.getFolder(parentFolderId);
+            Folder newFolder = parent.getFolder(folderName);
+            if (!newFolder.exists()) {
+                newFolder.create(Folder.HOLDS_MESSAGES);
+            }
+            MailFolderDTO dto = new MailFolderDTO();
+            dto.setFolderId(newFolder.getFullName());
+            dto.setDisplayName(newFolder.getName());
+            dto.setTotalCount(0);
+            dto.setUnreadCount(0);
+            return dto;
+        } finally {
+            // store kept open in cache for reuse
+        }
+    }
+
+    private void imapDeleteFolder(MailboxSetup ms, String folderId) throws Exception {
+        Store store = imapConnect(ms);
+        try {
+            Folder folder = store.getFolder(folderId);
+            if (folder.isOpen()) {
+                folder.close(false);
+            }
+            folder.delete(true);
+        } finally {
+            // store kept open in cache for reuse
+        }
+    }
+
+    private void imapEmptyTrash(MailboxSetup ms, String trashFolderId) throws Exception {
+        Store store = imapConnect(ms);
+        try {
+            Folder trash = store.getFolder(trashFolderId);
+            trash.open(Folder.READ_WRITE);
+            try {
+                Message[] messages = trash.getMessages();
+                for (Message m : messages) {
+                    m.setFlag(Flags.Flag.DELETED, true);
+                }
+                trash.expunge();
+            } finally {
+                trash.close(false);
+            }
+        } finally {
+            // store kept open in cache for reuse
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private MailFolderDTO graphCreateFolder(MailboxSetup ms, String parentFolderId, String folderName) throws Exception {
+        String url = GRAPH_BASE + "/users/" + URLEncoder.encode(ms.getEmailAddress(), StandardCharsets.UTF_8)
+                + "/mailFolders/" + URLEncoder.encode(parentFolderId, StandardCharsets.UTF_8)
+                + "/childFolders";
+        String jsonBody = "{\"displayName\":\"" + folderName.replace("\"", "\\\"") + "\"}";
+        String responseJson = graphPost(ms, url, jsonBody);
+        Map<String, Object> response = new ObjectMapper().readValue(responseJson, Map.class);
+        MailFolderDTO dto = new MailFolderDTO();
+        dto.setFolderId((String) response.get("id"));
+        dto.setDisplayName((String) response.get("displayName"));
+        dto.setTotalCount(0);
+        dto.setUnreadCount(0);
+        return dto;
+    }
+
+    private void graphDeleteFolder(MailboxSetup ms, String folderId) throws Exception {
+        String url = GRAPH_BASE + "/users/" + URLEncoder.encode(ms.getEmailAddress(), StandardCharsets.UTF_8)
+                + "/mailFolders/" + folderId;
+        graphDelete(ms, url);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void graphEmptyTrash(MailboxSetup ms, String trashFolderId) throws Exception {
+        // Graph API: list all messages in trash, then delete each
+        String url = GRAPH_BASE + "/users/" + URLEncoder.encode(ms.getEmailAddress(), StandardCharsets.UTF_8)
+                + "/mailFolders/" + URLEncoder.encode(trashFolderId, StandardCharsets.UTF_8)
+                + "/messages?$top=999&$select=id";
+        String json = graphGet(ms, url);
+        Map<String, Object> response = new ObjectMapper().readValue(json, Map.class);
+        List<Map<String, Object>> messages = (List<Map<String, Object>>) response.get("value");
+        if (messages != null) {
+            for (Map<String, Object> m : messages) {
+                String msgId = (String) m.get("id");
+                String deleteUrl = GRAPH_BASE + "/users/" + URLEncoder.encode(ms.getEmailAddress(), StandardCharsets.UTF_8)
+                        + "/messages/" + msgId;
+                graphDelete(ms, deleteUrl);
+            }
+        }
+    }
+
+    private Map<String, String> createHeader(String name, String value) {
+        Map<String, String> h = new HashMap<>();
+        h.put("name", name);
+        h.put("value", value);
+        return h;
+    }
+
+    private String normalizePriority(String priority) {
+        if (priority == null) return "normal";
+        String p = priority.toLowerCase().trim();
+        if ("high".equals(p) || "hoch".equals(p) || "hoch (high)".equals(p)) return "high";
+        if ("low".equals(p) || "niedrig".equals(p) || "niedrig (low)".equals(p)) return "low";
+        return "normal";
+    }
+
+    private boolean hasAttachments(Part part) throws Exception {
+        if (part.isMimeType("multipart/*")) {
+            Multipart mp = (Multipart) part.getContent();
+            for (int i = 0; i < mp.getCount(); i++) {
+                BodyPart bp = mp.getBodyPart(i);
+                if (Part.ATTACHMENT.equalsIgnoreCase(bp.getDisposition())) return true;
+                if (bp.getFileName() != null) return true;
+            }
+        }
+        return false;
+    }
+
+    private Date parseGraphDateTime(String dateTime) throws Exception {
+        // Graph API returns ISO 8601 format in UTC: 2024-01-15T10:30:00Z
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        if (dateTime.endsWith("Z")) {
+            sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+            String cleaned = dateTime.substring(0, dateTime.length() - 1);
+            if (cleaned.length() > 19) cleaned = cleaned.substring(0, 19);
+            return sdf.parse(cleaned);
+        }
+        if (dateTime.length() > 19) dateTime = dateTime.substring(0, 19);
+        return sdf.parse(dateTime);
+    }
+
+    private String[] extractBody(Part part) throws Exception {
+        if (part.isMimeType("text/html")) {
+            Object content = part.getContent();
+            if (content instanceof InputStream) {
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                byte[] buf = new byte[4096];
+                int len;
+                while ((len = ((InputStream) content).read(buf)) != -1) bos.write(buf, 0, len);
+                return new String[]{new String(bos.toByteArray(), StandardCharsets.UTF_8), "text/html"};
+            }
+            return new String[]{content.toString(), "text/html"};
+        }
+        if (part.isMimeType("text/plain")) {
+            Object content = part.getContent();
+            if (content instanceof InputStream) {
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                byte[] buf = new byte[4096];
+                int len;
+                while ((len = ((InputStream) content).read(buf)) != -1) bos.write(buf, 0, len);
+                return new String[]{new String(bos.toByteArray(), StandardCharsets.UTF_8), "text/plain"};
+            }
+            return new String[]{content.toString(), "text/plain"};
+        }
+        if (part.isMimeType("multipart/*")) {
+            Multipart mp = (Multipart) part.getContent();
+            String htmlBody = null;
+            String plainText = null;
+            for (int i = 0; i < mp.getCount(); i++) {
+                String[] result = extractBody(mp.getBodyPart(i));
+                if (result[0] != null) {
+                    if ("text/html".equals(result[1]) && htmlBody == null) {
+                        htmlBody = result[0];
+                    }
+                    if ("text/plain".equals(result[1]) && plainText == null) {
+                        plainText = result[0];
+                    }
+                }
+            }
+            // Prefer HTML over plain text
+            if (htmlBody != null) return new String[]{htmlBody, "text/html"};
+            if (plainText != null) return new String[]{plainText, "text/plain"};
+        }
+        return new String[]{null, null};
+    }
 }

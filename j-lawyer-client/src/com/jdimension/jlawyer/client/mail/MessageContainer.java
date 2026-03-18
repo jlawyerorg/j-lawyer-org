@@ -663,6 +663,9 @@
  */
 package com.jdimension.jlawyer.client.mail;
 
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.MailMessageDTO;
 import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.Message;
@@ -670,69 +673,132 @@ import javax.mail.MessagingException;
 import org.apache.log4j.Logger;
 
 /**
+ * Wraps either a MailMessageDTO (server-side unified service) or a legacy
+ * javax.mail.Message for display in the mail table. New code should use
+ * the DTO-based constructor and getMessageDTO()/getMessageRef()/getMailboxId().
  *
  * @author jens
  */
 public class MessageContainer {
-    
+
     private static final Logger log = Logger.getLogger(MessageContainer.class.getName());
-    private Message message;
+    private MailMessageDTO messageDTO;
+    private String mailboxId;
+    private Message message; // legacy - will be removed after full client migration
     private boolean read = true;
-    private String subject =null;
-    
+    private String subject = null;
+
+    /**
+     * New DTO-based constructor. Use this for server-side unified mail service.
+     */
+    public MessageContainer(MailMessageDTO dto, String mailboxId) {
+        this.messageDTO = dto;
+        this.mailboxId = mailboxId;
+        this.message = null;
+        this.read = dto.isRead();
+        this.subject = dto.getSubject();
+    }
+
+    /**
+     * Legacy constructor for backward compatibility during migration.
+     * @deprecated Use the DTO-based constructor instead.
+     */
+    @Deprecated
     public MessageContainer(Message msg, String subject, boolean seen) {
         this.message = msg;
+        this.messageDTO = null;
+        this.mailboxId = null;
         this.read = seen;
-        this.subject=subject;
+        this.subject = subject;
     }
-    
+
     @Override
     public String toString() {
         return this.subject;
     }
 
     /**
-     * @return the message
+     * @return the message DTO, or null if this is a legacy container
      */
+    public MailMessageDTO getMessageDTO() {
+        return messageDTO;
+    }
+
+    /**
+     * Updates the message DTO, e.g. after loading the full message body.
+     * @param messageDTO the updated DTO
+     */
+    public void setMessageDTO(MailMessageDTO messageDTO) {
+        this.messageDTO = messageDTO;
+    }
+
+    /**
+     * @return the opaque message reference for server operations
+     */
+    public String getMessageRef() {
+        return messageDTO != null ? messageDTO.getMessageRef() : null;
+    }
+
+    /**
+     * @return the mailbox ID, or null if this is a legacy container
+     */
+    public String getMailboxId() {
+        return mailboxId;
+    }
+
+    /**
+     * @return true if this container uses the new DTO-based model
+     */
+    public boolean isServerBased() {
+        return messageDTO != null;
+    }
+
+    /**
+     * Legacy method for backward compatibility during migration.
+     * @deprecated Use getMessageDTO() and server EJB calls instead.
+     * @return the javax.mail.Message, or null if this is a DTO-based container
+     */
+    @Deprecated
     public Message getMessage() {
         return message;
     }
 
     /**
-     * @param message the message to set
-     */
-    public void setMessage(Message message) {
-        this.message = message;
-    }
-
-    /**
-     * @return the read
+     * @return the read status
      */
     public boolean isRead() {
         return read;
     }
 
     /**
-     * @param read the read to set
+     * Marks the message as read or unread. Uses the server EJB for DTO-based
+     * containers, or direct IMAP flag manipulation for legacy containers.
      */
     public void setRead(boolean read) throws MessagingException {
-
-        
+        if (isServerBased()) {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                locator.lookupEmailServiceRemote().markAsRead(this.mailboxId, getMessageRef(), read);
+                this.read = read;
+            } catch (Exception ex) {
+                log.error("Failed to mark message as read/unread", ex);
+                throw new MessagingException("Failed to mark message as read/unread", ex);
+            }
+        } else {
+            // Legacy path
             if (!this.message.getFolder().isOpen()) {
-                System.out.println("open 33");
                 this.message.getFolder().open(Folder.READ_WRITE);
             }
             this.message.setFlag(Flags.Flag.SEEN, read);
             this.read = read;
-            
-                if(this.message.getFolder().isOpen() && !EmailUtils.isInbox(this.message.getFolder())) {
-                    try {
-                        EmailUtils.closeIfIMAP(this.message.getFolder());
-                    } catch (Exception ex) {
-                        log.error(ex);
-                    }
+            if (this.message.getFolder().isOpen() && !EmailUtils.isInbox(this.message.getFolder())) {
+                try {
+                    EmailUtils.closeIfIMAP(this.message.getFolder());
+                } catch (Exception ex) {
+                    log.error(ex);
                 }
-            
-
+            }
+        }
     }
 }

@@ -804,6 +804,8 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     private volatile boolean autoSaveInProgress = false;
 
     private String contextDictateSign = null;
+    private String threadingInReplyTo = null;
+    private String threadingReferences = null;
     private TextEditorPanel tp;
     private WebViewHtmlEditorPanel hp;
 
@@ -1720,6 +1722,19 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             this.popRecipientsBcc.add(mi3);
 
         }
+    }
+
+    public void setThreadingHeaders(String inReplyTo, String references) {
+        this.threadingInReplyTo = inReplyTo;
+        this.threadingReferences = references;
+    }
+
+    public String getThreadingInReplyTo() {
+        return threadingInReplyTo;
+    }
+
+    public String getThreadingReferences() {
+        return threadingReferences;
     }
 
     public void setContentType(String contentType) {
@@ -3003,155 +3018,46 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
     private void cmdSaveDraftActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveDraftActionPerformed
         try {
-
             MailboxSetup ms = this.getSelectedMailbox();
-            String inPwd = "";
-            if (ms.isMsExchange()) {
-                inPwd = EmailUtils.getOffice365AuthToken(ms.getId());
-            } else {
-                try {
-                    inPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailInPwd());
-                } catch (Throwable t) {
-                    log.error(t);
+
+            // Build attachment DTOs
+            java.util.List<com.jdimension.jlawyer.services.MailAttachmentDTO> attDTOs = new java.util.ArrayList<>();
+            for (String url : this.attachments.values()) {
+                java.io.File f = new java.io.File(url);
+                if (f.exists()) {
+                    com.jdimension.jlawyer.services.MailAttachmentDTO att = new com.jdimension.jlawyer.services.MailAttachmentDTO();
+                    att.setName(f.getName());
+                    att.setContentType(java.nio.file.Files.probeContentType(f.toPath()));
+                    if (att.getContentType() == null) att.setContentType("application/octet-stream");
+                    att.setContent(java.nio.file.Files.readAllBytes(f.toPath()));
+                    att.setSize(f.length());
+                    attDTOs.add(att);
                 }
             }
 
-            Properties imapProps = new Properties();
-            boolean authenticateImap = true;
-            try {
-                if (StringUtils.isEmpty(ms.getEmailInUser()) && StringUtils.isEmpty(inPwd)) {
-                    authenticateImap = false;
-                }
-            } catch (Throwable t) {
-                log.error("Could not decrypt IMAP password", t);
-            }
-            imapProps.setProperty("mail.imap.partialfetch", "false");
-            imapProps.setProperty("mail.imaps.partialfetch", "false");
-            imapProps.setProperty("mail.store.protocol", ms.getEmailInType());
-            imapProps.put("mail.from", ms.getEmailAddress());
-
-            if (authenticateImap) {
-                imapProps.put("mail.password", inPwd);
-            }
-
-            Store store = null;
-            Session session = null;
-            if (ms.isMsExchange()) {
-                imapProps.put("mail.imaps.sasl.enable", "true");
-                imapProps.put("mail.imaps.port", "993");
-
-                imapProps.put("mail.imaps.auth.mechanisms", "XOAUTH2");
-                imapProps.put("mail.imaps.sasl.mechanisms", "XOAUTH2");
-
-                imapProps.put("mail.imaps.auth.login.disable", "true");
-                imapProps.put("mail.imaps.auth.plain.disable", "true");
-
-                imapProps.setProperty("mail.imaps.socketFactory.class", SSL_FACTORY);
-                imapProps.setProperty("mail.imaps.socketFactory.fallback", "false");
-                imapProps.setProperty("mail.imaps.socketFactory.port", "993");
-                imapProps.setProperty("mail.imaps.starttls.enable", "true");
-
-                String authToken = EmailUtils.getOffice365AuthToken(ms.getId());
-
-                session = Session.getInstance(imapProps);
-                store = session.getStore("imaps");
-                store.connect(ms.getEmailInServer(), ms.getEmailInUser(), authToken);
-
-            } else {
-
-                imapProps.setProperty("mail.imaps.host", ms.getEmailInServer());
-                imapProps.setProperty("mail.imap.host", ms.getEmailInServer());
-
-                if (ms.isEmailInSsl()) {
-                    imapProps.setProperty("mail.store.protocol", "imaps");
-                }
-
-                imapProps.setProperty("mail.store.protocol", ms.getEmailInType());
-                if (ms.isEmailInSsl()) {
-                    imapProps.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
-                }
-                ServerSettings sset = ServerSettings.getInstance();
-                String trustedServers = sset.getSetting("mail.imaps.ssl.trust", "");
-                if (trustedServers.length() > 0) {
-                    imapProps.put("mail.imaps.ssl.trust", trustedServers);
-                }
-
-                if (authenticateImap) {
-                    final String imapPwd = inPwd;
-                    session = Session.getInstance(imapProps, new Authenticator() {
-                        @Override
-                        protected PasswordAuthentication getPasswordAuthentication() {
-                            return new PasswordAuthentication(ms.getEmailInUser(), imapPwd);
-                        }
-                    });
-                } else {
-                    session = Session.getInstance(imapProps);
-                }
-
-                store = session.getStore();
-                store.connect();
-            }
-
-            MimeMessage msg = new MimeMessage(session);
-
-            msg.setFrom(new InternetAddress(ms.getEmailAddress(), ms.getEmailSenderName()));
-
-            if (this.chkReadReceipt.isSelected()) {
-                msg.setHeader("Disposition-Notification-To", ms.getEmailAddress());
-                msg.setHeader("Return-Receipt-To", ms.getEmailAddress());
-            }
-
-            msg.setRecipients(javax.mail.Message.RecipientType.TO, EmailUtils.parseAndEncodeRecipients(this.txtTo.getText()));
-            msg.setRecipients(javax.mail.Message.RecipientType.CC, EmailUtils.parseAndEncodeRecipients(this.txtCc.getText()));
-            msg.setRecipients(javax.mail.Message.RecipientType.BCC, EmailUtils.parseAndEncodeRecipients(this.txtBcc.getText()));
-
-            msg.setSubject(MimeUtility.encodeText(this.txtSubject.getText(), "utf-8", "B"));
-            ZonedDateTime zdt = ZonedDateTime.now(ZoneId.of("Europe/Berlin"));
-            msg.setSentDate(Date.from(zdt.toInstant()));
-
-            Multipart multiPart = new MimeMultipart();
-
-            MimeBodyPart messageText = new MimeBodyPart();
             EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
             String contentType = ed.getContentType();
             waitForHtmlContentOnMac(ed);
             String editorContent = ed.getText();
-            editorContent = editorContent.replaceAll("<p>[\\s ]*</p>", "<p>&nbsp;</p>");
-            editorContent = editorContent.replaceAll("<div>[\\s ]*</div>", "<div>&nbsp;</div>");
-            ed.setText(editorContent);
-            //messageText.setContent(ed.getText(), contentType + "; charset=UTF-8");
-            messageText.setContent(editorContent, contentType + "; charset=UTF-8");
-            multiPart.addBodyPart(messageText);
 
-            String attachmentNames = "";
-            for (String url : this.attachments.values()) {
-                MimeBodyPart att = new MimeBodyPart();
-                FileDataSource attFile = new FileDataSource(url);
-                att.attachFile(url);
-                att.setDisposition(Part.ATTACHMENT);
-                att.setFileName(attFile.getName());
-                attachmentNames = attachmentNames + attFile.getName() + " ";
-                multiPart.addBodyPart(att);
-            }
-            msg.setContent(multiPart);
-            msg.saveChanges();
-
-            Folder drafts = EmailUtils.getDraftsFolder(store);
-            if (drafts != null) {
-                if (!drafts.isOpen()) {
-                    drafts.open(Folder.READ_WRITE);
+            // Determine drafts folder ID
+            String draftsFolderId = ms.isMsExchange() ? "Drafts" : "Drafts"; // IMAP: folder name, Graph: well-known name
+            // Try to find the actual drafts folder
+            com.jdimension.jlawyer.client.settings.ClientSettings settings = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
+            com.jdimension.jlawyer.services.JLawyerServiceLocator locator = com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            java.util.List<com.jdimension.jlawyer.services.MailFolderDTO> folders = locator.lookupEmailServiceRemote().listFolders(ms.getId());
+            for (com.jdimension.jlawyer.services.MailFolderDTO folder : folders) {
+                if (folder.isDrafts()) {
+                    draftsFolderId = folder.getFolderId();
+                    break;
                 }
-                msg.setFlag(Flags.Flag.SEEN, false);
-                drafts.appendMessages(new javax.mail.Message[]{msg});
-                EmailUtils.closeIfIMAP(drafts);
-
-            } else {
-                log.error("Unable to determine 'Drafts' folder for mailbox");
             }
 
-            store.close();
+            locator.lookupEmailServiceRemote().appendToFolder(ms.getId(), draftsFolderId,
+                this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(),
+                this.txtSubject.getText(), editorContent, contentType, attDTOs, false);
 
-            JOptionPane.showMessageDialog(this, "Nachricht im Ordner '" + drafts.getName() + "' gespeichert.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Nachricht im Entwürfe-Ordner gespeichert.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
 
             setVisible(false);
             dispose();

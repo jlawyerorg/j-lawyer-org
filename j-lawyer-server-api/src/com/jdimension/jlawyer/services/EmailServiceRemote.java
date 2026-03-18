@@ -663,18 +663,218 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import java.util.List;
 import javax.ejb.Remote;
 
 /**
+ * Remote interface for the unified mail service. Provides backend-agnostic
+ * mail operations for both IMAP/SMTP and Microsoft Graph API mailboxes.
  *
  * @author jens
  */
 @Remote
 public interface EmailServiceRemote {
 
+    /**
+     * Returns the cached OAuth access token for the given mailbox.
+     * @param mailboxId the mailbox ID
+     * @return the access token, or null if not available
+     * @throws Exception if the mailbox does not exist
+     */
     String getAuthToken(String mailboxId) throws Exception;
+
+    /**
+     * Forces a refresh of the OAuth access token for the given mailbox.
+     * @param mailboxId the mailbox ID
+     * @return true if the token was successfully refreshed
+     * @throws Exception if the mailbox does not exist or token refresh fails
+     */
     boolean updateAuthToken(String mailboxId) throws Exception;
-    String[] requestDeviceCode(String mailboxId) throws Exception;
-    boolean pollForTokens(String mailboxId, String deviceCode) throws Exception;
-    
+
+    /**
+     * Lists all mail folders for the given mailbox.
+     * @param mailboxId the mailbox ID
+     * @return list of mail folders with metadata
+     * @throws Exception if the mailbox does not exist or access fails
+     */
+    List<MailFolderDTO> listFolders(String mailboxId) throws Exception;
+
+    /**
+     * Lists messages in a folder with pagination support.
+     * @param mailboxId the mailbox ID
+     * @param folderId the folder ID
+     * @param top maximum number of messages to return
+     * @param offset number of messages to skip
+     * @return list of message metadata
+     * @throws Exception if access fails
+     */
+    List<MailMessageDTO> listMessages(String mailboxId, String folderId, int top, int offset) throws Exception;
+
+    /**
+     * Lists messages in a folder with pagination and filtering support.
+     * @param mailboxId the mailbox ID
+     * @param folderId the folder ID
+     * @param top maximum number of messages to return
+     * @param offset number of messages to skip
+     * @param sinceDate only return messages received after this date (null for no filter)
+     * @param unreadOnly if true, only return unread messages
+     * @return list of message metadata
+     * @throws Exception if access fails
+     */
+    List<MailMessageDTO> listMessages(String mailboxId, String folderId, int top, int offset, java.util.Date sinceDate, boolean unreadOnly) throws Exception;
+
+    /**
+     * Lists messages in a folder with pagination, filtering, and search support.
+     * @param mailboxId the mailbox ID
+     * @param folderId the folder ID
+     * @param top maximum number of messages to return
+     * @param offset number of messages to skip
+     * @param sinceDate only return messages received after this date (null for no filter)
+     * @param unreadOnly if true, only return unread messages
+     * @param searchTerm search in subject, from, to, body (null for no search)
+     * @return list of message metadata
+     * @throws Exception if access fails
+     */
+    List<MailMessageDTO> listMessages(String mailboxId, String folderId, int top, int offset, java.util.Date sinceDate, boolean unreadOnly, String searchTerm) throws Exception;
+
+    /**
+     * Retrieves a full message by its opaque reference.
+     * @param mailboxId the mailbox ID
+     * @param messageRef opaque message reference
+     * @return full message with body content
+     * @throws Exception if the message is not found or access fails
+     */
+    MailMessageDTO getMessage(String mailboxId, String messageRef) throws Exception;
+
+    /**
+     * Retrieves attachments for a message.
+     * @param mailboxId the mailbox ID
+     * @param messageRef opaque message reference
+     * @return list of attachments with content
+     * @throws Exception if the message is not found or access fails
+     */
+    List<MailAttachmentDTO> getAttachments(String mailboxId, String messageRef) throws Exception;
+
+    /**
+     * Sends an email through the appropriate backend.
+     * @param mailboxId the mailbox ID
+     * @param to comma-separated recipient addresses
+     * @param cc comma-separated CC addresses
+     * @param bcc comma-separated BCC addresses
+     * @param subject the email subject
+     * @param body the email body
+     * @param contentType the body content type (text/plain or text/html)
+     * @param attachments list of attachments to include
+     * @param priority email priority (high, normal, low)
+     * @param readReceipt whether to request a read receipt
+     * @param inReplyTo Message-ID of the message being replied to
+     * @param references References header for threading
+     * @throws Exception if sending fails
+     */
+    void sendMail(String mailboxId, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, String priority, boolean readReceipt, String inReplyTo, String references) throws Exception;
+
+    /**
+     * Moves a message to another folder.
+     * @param mailboxId the mailbox ID
+     * @param messageRef opaque message reference
+     * @param targetFolderId the target folder ID
+     * @throws Exception if the operation fails
+     */
+    void moveMessage(String mailboxId, String messageRef, String targetFolderId) throws Exception;
+
+    /**
+     * Deletes a message.
+     * @param mailboxId the mailbox ID
+     * @param messageRef opaque message reference
+     * @throws Exception if the operation fails
+     */
+    void deleteMessage(String mailboxId, String messageRef) throws Exception;
+
+    /**
+     * Marks a message as read or unread.
+     * @param mailboxId the mailbox ID
+     * @param messageRef opaque message reference
+     * @param read true to mark as read, false to mark as unread
+     * @throws Exception if the operation fails
+     */
+    void markAsRead(String mailboxId, String messageRef, boolean read) throws Exception;
+
+    /**
+     * Checks whether new messages have been detected for a mailbox since the
+     * last listMessages() call. This method reads from server RAM only and
+     * does not trigger any backend calls.
+     * @param mailboxId the mailbox ID
+     * @return true if new messages are available
+     * @throws Exception if the mailbox does not exist
+     */
+    boolean hasNewMessages(String mailboxId) throws Exception;
+
+    /**
+     * Tests the connection to a mailbox by attempting to authenticate and
+     * list folders.
+     * @param mailboxId the mailbox ID
+     * @return null on success, or a descriptive error message on failure
+     * @throws Exception if the mailbox does not exist
+     */
+    String testConnection(String mailboxId) throws Exception;
+
+    /**
+     * Creates a new mail folder as a child of the given parent folder.
+     * @param mailboxId the mailbox ID
+     * @param parentFolderId the parent folder ID
+     * @param folderName the name of the new folder
+     * @return the created folder as DTO
+     * @throws Exception if creation fails
+     */
+    MailFolderDTO createFolder(String mailboxId, String parentFolderId, String folderName) throws Exception;
+
+    /**
+     * Deletes a mail folder.
+     * @param mailboxId the mailbox ID
+     * @param folderId the folder ID to delete
+     * @throws Exception if deletion fails
+     */
+    void deleteFolder(String mailboxId, String folderId) throws Exception;
+
+    /**
+     * Empties the trash folder by deleting all messages in it.
+     * @param mailboxId the mailbox ID
+     * @param trashFolderId the trash folder ID
+     * @throws Exception if the operation fails
+     */
+    void emptyTrash(String mailboxId, String trashFolderId) throws Exception;
+
+    /**
+     * Invalidates all server-side message caches for the given mailbox.
+     * @param mailboxId the mailbox ID
+     * @throws Exception if the mailbox does not exist
+     */
+    void invalidateCaches(String mailboxId) throws Exception;
+
+    /**
+     * Appends a message to a specific folder (e.g. Sent or Drafts).
+     * @param mailboxId the mailbox ID
+     * @param folderId the target folder ID (or well-known name like "SentItems", "Drafts")
+     * @param to comma-separated recipient addresses
+     * @param cc comma-separated CC addresses
+     * @param bcc comma-separated BCC addresses
+     * @param subject the email subject
+     * @param body the email body
+     * @param contentType the body content type
+     * @param attachments list of attachments
+     * @param markAsRead whether to mark the appended message as read
+     * @throws Exception if the operation fails
+     */
+    void appendToFolder(String mailboxId, String folderId, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, boolean markAsRead) throws Exception;
+
+    /**
+     * Returns the message as a complete EML (RFC 822) byte array.
+     * For IMAP, uses the original MIME structure via Message.writeTo().
+     * For Graph API, builds a proper MimeMessage from the API data.
+     * @param mailboxId the mailbox ID
+     * @param messageRef opaque message reference
+     * @return the EML bytes
+     * @throws Exception if the message is not found or access fails
+     */
+    byte[] getMessageAsEml(String mailboxId, String messageRef) throws Exception;
 }

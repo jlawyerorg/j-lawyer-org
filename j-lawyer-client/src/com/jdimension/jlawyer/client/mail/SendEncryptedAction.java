@@ -1108,87 +1108,37 @@ public class SendEncryptedAction extends ProgressableAction {
 
                 bus.close();
 
-                this.progress("Suche Ordner 'Gesendet'...");
-                Properties imapProps = new Properties();
-                boolean authenticateImap = true;
+                // Copy sent message to Sent folder via server
+                this.progress("Kopiere Nachricht in 'Gesendet'...");
                 try {
-                    if (StringUtils.isEmpty(ms.getEmailInUser()) && StringUtils.isEmpty(inPwd)) {
-                        authenticateImap = false;
+                    ClientSettings csettings = ClientSettings.getInstance();
+                    JLawyerServiceLocator loc = JLawyerServiceLocator.getInstance(csettings.getLookupProperties());
+                    // Find Sent folder ID
+                    String sentFolderId = ms.isMsExchange() ? "SentItems" : "Sent";
+                    java.util.List<com.jdimension.jlawyer.services.MailFolderDTO> folders = loc.lookupEmailServiceRemote().listFolders(ms.getId());
+                    for (com.jdimension.jlawyer.services.MailFolderDTO folder : folders) {
+                        if (folder.isSent()) {
+                            sentFolderId = folder.getFolderId();
+                            break;
+                        }
                     }
-                } catch (Throwable t) {
-                    log.error("Could not decrypt IMAP password", t);
+                    // Build attachment DTOs from encrypted files
+                    java.util.List<com.jdimension.jlawyer.services.MailAttachmentDTO> sentAtts = new java.util.ArrayList<>();
+                    for (String url : encryptedAttachments) {
+                        java.io.File f = new java.io.File(url);
+                        if (f.exists()) {
+                            com.jdimension.jlawyer.services.MailAttachmentDTO a = new com.jdimension.jlawyer.services.MailAttachmentDTO();
+                            a.setName(f.getName());
+                            a.setContentType("application/octet-stream");
+                            a.setContent(java.nio.file.Files.readAllBytes(f.toPath()));
+                            sentAtts.add(a);
+                        }
+                    }
+                    loc.lookupEmailServiceRemote().appendToFolder(ms.getId(), sentFolderId,
+                        fullRecipient, null, null, subject, body, this.contentType, sentAtts, true);
+                } catch (Exception ex) {
+                    log.error("Could not copy sent message to Sent folder via server", ex);
                 }
-                imapProps.setProperty("mail.imap.partialfetch", "false");
-                imapProps.setProperty("mail.imaps.partialfetch", "false");
-                imapProps.setProperty("mail.store.protocol", ms.getEmailInType());
-                imapProps.put("mail.from", ms.getEmailAddress());
-
-                if (authenticateImap) {
-                    imapProps.put("mail.password", inPwd);
-                }
-
-                Store store = null;
-                if (ms.isMsExchange()) {
-                    ms.applyCustomProperties(ms.customConfigurationsReceiveProperties(), imapProps);
-                    String authToken = EmailUtils.getOffice365AuthToken(ms.getId());
-
-                    session = Session.getInstance(imapProps);
-                    store = session.getStore("imaps");
-                    store.connect(ms.getEmailInServer(), ms.getEmailInUser(), authToken);
-
-                } else {
-
-                    imapProps.setProperty("mail.imaps.host", ms.getEmailInServer());
-                    imapProps.setProperty("mail.imap.host", ms.getEmailInServer());
-
-                    if (ms.isEmailInSsl()) {
-                        imapProps.setProperty("mail.store.protocol", "imaps");
-                    }
-
-                    imapProps.setProperty("mail.store.protocol", ms.getEmailInType());
-                    if (ms.isEmailInSsl()) {
-                        imapProps.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
-                    }
-                    ServerSettings sset = ServerSettings.getInstance();
-                    String trustedServers = sset.getSetting("mail.imaps.ssl.trust", "");
-                    if (trustedServers.length() > 0) {
-                        imapProps.put("mail.imaps.ssl.trust", trustedServers);
-                    }
-                    ms.applyCustomProperties(ms.customConfigurationsReceiveProperties(), imapProps);
-
-                    if (authenticateImap) {
-                        final String imapPwd = inPwd;
-                        session = Session.getInstance(imapProps, new Authenticator() {
-                            @Override
-                            protected PasswordAuthentication getPasswordAuthentication() {
-                                return new PasswordAuthentication(ms.getEmailInUser(), imapPwd);
-                            }
-                        });
-                    } else {
-                        session = Session.getInstance(imapProps);
-                    }
-
-                    store = session.getStore();
-                    //store.connect(ms.getEmailInServer(), ms.getEmailInUser(), Crypto.decrypt(ms.getEmailInPwd()));
-                    store.connect();
-                }
-
-                Folder sent = EmailUtils.getSentFolder(store);
-                if (sent != null) {
-                    this.progress("Kopiere Nachricht in 'Gesendet'...");
-                    if (!sent.isOpen()) {
-                        System.out.println("open 39");
-                        sent.open(Folder.READ_WRITE);
-                    }
-                    msg.setFlag(Flags.Flag.SEEN, true);
-                    sent.appendMessages(new Message[]{msg});
-                    EmailUtils.closeIfIMAP(sent);
-
-                } else {
-                    log.error("Unable to determine 'Sent' folder for mailbox");
-                }
-
-                store.close();
 
                 for (String url : cleanUpAttachments) {
                     File f = new File(url);
