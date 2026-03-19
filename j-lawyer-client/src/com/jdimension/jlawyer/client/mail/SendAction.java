@@ -1242,8 +1242,8 @@ public class SendAction extends ProgressableAction {
                     com.jdimension.jlawyer.services.ArchiveFileServiceRemote caseSvc = locator.lookupArchiveFileServiceRemote();
                     String docName = FileUtils.sanitizeFileName(this.subject);
                     if (!docName.toLowerCase().endsWith(".eml")) docName += ".eml";
-                    byte[] emlContent = buildEmlBytes();
-                    if (emlContent != null) {
+                    byte[] emlContent = EmailUtils.buildEmlBytes(ms.getEmailAddress(), ms.getEmailSenderName(), this.to, this.cc, this.bcc, this.subject, this.body, this.contentType, attDTOs);
+                    if (emlContent != null && emlContent.length > 0) {
                         ArchiveFileDocumentsBean newDoc = caseSvc.addDocument(this.archiveFile.getId(), docName, emlContent, "", null);
                         if (this.documentTag != null && !this.documentTag.isEmpty() && newDoc != null) {
                             caseSvc.setDocumentTag(newDoc.getId(), new com.jdimension.jlawyer.persistence.DocumentTagsBean(newDoc.getId(), this.documentTag), true);
@@ -1281,26 +1281,4 @@ public class SendAction extends ProgressableAction {
         return true;
     }
 
-    private byte[] buildEmlBytes() {
-        try {
-            java.util.Properties emlProps = new java.util.Properties();
-            javax.mail.Session emlSession = javax.mail.Session.getInstance(emlProps);
-            javax.mail.internet.MimeMessage emlMsg = new javax.mail.internet.MimeMessage(emlSession);
-            emlMsg.setFrom(new javax.mail.internet.InternetAddress(ms.getEmailAddress()));
-            if (this.to != null && !this.to.isEmpty()) emlMsg.setRecipients(javax.mail.Message.RecipientType.TO, javax.mail.internet.InternetAddress.parse(this.to));
-            if (this.cc != null && !this.cc.isEmpty()) emlMsg.setRecipients(javax.mail.Message.RecipientType.CC, javax.mail.internet.InternetAddress.parse(this.cc));
-            if (this.bcc != null && !this.bcc.isEmpty()) emlMsg.setRecipients(javax.mail.Message.RecipientType.BCC, javax.mail.internet.InternetAddress.parse(this.bcc));
-            emlMsg.setSubject(this.subject, "UTF-8");
-            emlMsg.setSentDate(new java.util.Date());
-            emlMsg.setContent(this.body, this.contentType + "; charset=UTF-8");
-            emlMsg.saveChanges();
-            java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
-            emlMsg.writeTo(bos);
-            bos.close();
-            return bos.toByteArray();
-        } catch (Exception ex) {
-            log.error("Error building EML", ex);
-            return null;
-        }
-    }
 }

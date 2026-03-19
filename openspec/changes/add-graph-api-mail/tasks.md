@@ -74,4 +74,62 @@
 
 ## 11. Validation & Testing
 
-- [ ] 11.1–11.9 Manual testing required
+### IMAP-Mailbox
+
+- [x] 11.1 Ordnerbaum wird korrekt geladen (Inbox, Sent, Trash, Unterordner)
+- [x] 11.2 Nachrichten in INBOX auflisten — Betreff, Absender, Datum korrekt
+- [x] 11.3 Nachricht anklicken — Body (plain + HTML) wird angezeigt
+- [x] 11.4 Nachricht mit Anhängen — Attachment-Liste wird angezeigt, Download funktioniert
+- [x] 11.5 Nachricht mit Inline-Bildern (CID) — Bilder werden im HTML-Body angezeigt
+- [x] 11.6 E-Mail senden (plain text) — kommt beim Empfänger an
+- [x] 11.7 E-Mail senden (HTML + Anhänge) — Anhänge korrekt, Copy-to-Sent funktioniert
+- [x] 11.8 Antworten / Weiterleiten — Threading-Header (`In-Reply-To`, `References`) korrekt
+- [x] 11.9 Nachricht in anderen Ordner verschieben — verschwindet aus Quellordner, erscheint in Zielordner
+- [x] 11.10 Nachricht löschen — wandert in Papierkorb
+- [x] 11.11 Papierkorb leeren — Nachrichten werden endgültig gelöscht
+- [x] 11.12 Als gelesen / ungelesen markieren — Status wird korrekt gesetzt und in Ordnerbaum aktualisiert
+- [x] 11.13 Neuen Ordner anlegen — erscheint im Baum
+- [x] 11.14 Ordner löschen — verschwindet aus dem Baum
+- [x] 11.15 Polling: neue Nachricht im externen Client senden → erscheint nach ~30s in j-lawyer
+- [x] 11.16 Entwurf speichern — landet im Drafts-Ordner
+- [x] 11.17 Verbindungstest-Button — meldet Erfolg bei korrekten Einstellungen, Fehler bei falschen
+- [x] 11.18 MailboxScanner: eingehende Mail wird automatisch der Akte zugeordnet (Absender-Match)
+
+### O365 / Graph API Mailbox
+
+- [x] 11.19 Ordnerbaum wird korrekt geladen (Inbox, Sent Items, Deleted Items, Unterordner)
+- [x] 11.20 INBOX-Ordner wird korrekt als Inbox erkannt (opaque GUID, nicht "INBOX")
+- [x] 11.21 Nachrichten in INBOX auflisten — Betreff, Absender, Datum korrekt
+- [x] 11.22 Nachricht anklicken — Body (HTML) wird angezeigt
+- [x] 11.23 Nachricht mit Anhängen — Attachment-Liste wird angezeigt, Download funktioniert
+- [x] 11.24 Nachricht mit Inline-Bildern — Bilder werden im HTML-Body angezeigt
+- [x] 11.25 E-Mail senden (HTML + Anhänge) — kommt beim Empfänger an
+- [x] 11.26 Antworten / Weiterleiten — Threading korrekt
+- [x] 11.27 Nachricht verschieben — Quell- und Zielordner korrekt aktualisiert
+- [x] 11.28 Nachricht löschen — wandert in Deleted Items
+- [x] 11.29 Papierkorb leeren
+- [x] 11.30 Als gelesen / ungelesen markieren
+- [x] 11.31 Neuen Ordner anlegen
+- [x] 11.32 Ordner löschen
+- [x] 11.33 Polling: neue Nachricht → erscheint nach ~30s
+- [x] 11.34 Entwurf speichern — landet im Drafts-Ordner
+- [x] 11.35 Verbindungstest-Button — meldet Erfolg / Fehler
+- [x] 11.36 Client Credentials Token-Refresh funktioniert (Token läuft nach ~60min ab)
+- [x] 11.37 Client Secret Expiry-Warnung wird in Mailbox-Konfiguration angezeigt (wenn < 30 Tage)
+- [x] 11.38 MailboxScanner: eingehende Mail wird automatisch der Akte zugeordnet
+
+### Pre-Fetch (IMAP + O365)
+
+- [x] 11.39 INBOX öffnen → Server-Log zeigt Pre-Fetch der Top 5 Nachrichten
+- [x] 11.40 Top-5-Nachricht anklicken → Body erscheint sofort (kein getMessage-Call im Log)
+- [x] 11.41 Nachricht außerhalb Top 5 anklicken → normaler getMessage-Call (Fallback)
+- [x] 11.42 Cache-Invalidierung: nach Nachricht löschen/verschieben wird Pre-Fetch bei nächstem INBOX-Load neu getriggert
+
+### Übergreifend
+
+- [x] 11.43 Mehrere Mailboxen (IMAP + O365 gemischt) — beide erscheinen im Ordnerbaum, unabhängig bedienbar
+- [x] 11.44 Nachricht zur Akte speichern (Drag & Drop oder Button) — .eml wird korrekt in der Akte abgelegt
+- [x] 11.45 Empfangsbestätigung (Read Receipt) senden — funktioniert über EJB
+- [x] 11.46 Verschlüsselte E-Mail senden (`SendEncryptedAction`) — PDF-Verschlüsselung + Copy-to-Sent via EJB
+- [x] 11.47 Ordner ausblenden (MailboxSettings) — ausgeblendete Ordner erscheinen nicht im Baum
+- [x] 11.48 Suche in Ordner — Suchergebnisse werden korrekt angezeigt

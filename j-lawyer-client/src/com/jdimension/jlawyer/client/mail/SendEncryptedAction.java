@@ -671,9 +671,7 @@ import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
-import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
@@ -681,7 +679,6 @@ import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
-import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -689,13 +686,10 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
-import javax.activation.FileDataSource;
 import javax.mail.*;
 import javax.mail.internet.*;
 import javax.swing.JDialog;
@@ -709,7 +703,6 @@ import org.apache.log4j.Logger;
 public class SendEncryptedAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(SendEncryptedAction.class.getName());
-    private static final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
 
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
     private List<String> attachments = null;
@@ -812,141 +805,9 @@ public class SendEncryptedAction extends ProgressableAction {
     @Override
     public boolean execute() throws Exception {
 
-        this.progress("Verbinde...");
-
-        String inPwd = "";
-        if (ms.isMsExchange()) {
-            inPwd = EmailUtils.getOffice365AuthToken(ms.getId());
-        } else {
-            try {
-                inPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailInPwd());
-            } catch (Throwable t) {
-                log.error(t);
-            }
-        }
-        
-        String outPwd = "";
-        if (ms.isMsExchange()) {
-            outPwd = inPwd;
-        } else {
-            try {
-                outPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailOutPwd());
-            } catch (Throwable t) {
-                log.error(t);
-            }
-        }
-
-        
-        
-        Properties smtpProps = new Properties();
-        boolean authenticateSmtp=true;
         try {
-            if(StringUtils.isEmpty(ms.getEmailOutUser()) && StringUtils.isEmpty(outPwd))
-                authenticateSmtp=false;
-        } catch (Throwable t) {
-            log.error("Could not decrypt outgoing password", t);
-        }
-
-        if (ms.isEmailOutSsl()) {
-            smtpProps.put("mail.smtp.ssl.enable", "true");
-        }
-
-        if (ms.getEmailOutPort() != null && !("".equalsIgnoreCase(ms.getEmailOutPort()))) {
-            try {
-                int testInt = Integer.parseInt(ms.getEmailOutPort());
-                smtpProps.put("mail.smtp.port", ms.getEmailOutPort());
-                smtpProps.put("mail.smtps.port", ms.getEmailOutPort());
-            } catch (Throwable t) {
-                log.error("Invalid SMTP port: " + ms.getEmailOutPort());
-            }
-        }
-
-        smtpProps.put("mail.from", ms.getEmailAddress());
-        smtpProps.put("mail.smtp.host", ms.getEmailOutServer());
-        smtpProps.put("mail.smtp.user", ms.getEmailOutUser());
-        smtpProps.put("mail.smtp.auth", true);
-        smtpProps.put("mail.smtps.host", ms.getEmailOutServer());
-        if (ms.isEmailStartTls()) {
-            smtpProps.put("mail.smtp.starttls.enable", "true");
-        }
-        Session session = null;
-        if (!authenticateSmtp) {
-            smtpProps.put("mail.smtps.auth", false);
-            smtpProps.put("mail.smtp.auth", false);
-            ms.applyCustomProperties(ms.customConfigurationsSendProperties(), smtpProps);
-            session = Session.getInstance(smtpProps);
-        } else {
-            smtpProps.put("mail.smtps.auth", true);
-            smtpProps.put("mail.smtp.auth", true);
-            smtpProps.put("mail.smtp.user", ms.getEmailOutUser());
-            smtpProps.put("mail.smtps.user", ms.getEmailOutUser());
-            smtpProps.put("mail.password", outPwd);
-            ms.applyCustomProperties(ms.customConfigurationsSendProperties(), smtpProps);
-
-            final String smtpPwd=outPwd;
-            javax.mail.Authenticator auth = new javax.mail.Authenticator() {
-
-                @Override
-                public PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication(ms.getEmailOutUser(), smtpPwd);
-                }
-            };
-            session = Session.getInstance(smtpProps, auth);
-        }
-
-        smtpProps.put("mail.password", outPwd);
-
-        // add outbox properties for storing in "sent"
-        if (ms.isMsExchange()) {
-            smtpProps.put("mail.imaps.sasl.enable", "true");
-            smtpProps.put("mail.imaps.port", "993");
-
-            smtpProps.put("mail.imaps.auth.mechanisms", "XOAUTH2");
-            smtpProps.put("mail.imaps.sasl.mechanisms", "XOAUTH2");
-
-            smtpProps.put("mail.smtp.auth.mechanisms", "XOAUTH2");
-            smtpProps.put("mail.smtps.auth.mechanisms", "XOAUTH2");
-            
-
-            smtpProps.put("mail.imaps.auth.login.disable", "true");
-            smtpProps.put("mail.imaps.auth.plain.disable", "true");
-
-            smtpProps.setProperty("mail.imaps.socketFactory.class", SSL_FACTORY);
-            smtpProps.setProperty("mail.imaps.socketFactory.fallback", "false");
-            smtpProps.setProperty("mail.imaps.socketFactory.port", "993");
-            smtpProps.setProperty("mail.imaps.starttls.enable", "true");
-        } else {
-
-            smtpProps.setProperty("mail.imaps.host", ms.getEmailInServer());
-            smtpProps.setProperty("mail.imap.host", ms.getEmailInServer());
-
-            if (ms.isEmailInSsl()) {
-                smtpProps.setProperty("mail.store.protocol", "imaps");
-            }
-
-            smtpProps.setProperty("mail.store.protocol", ms.getEmailInType());
-            if (ms.isEmailInSsl()) {
-                smtpProps.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
-            }
-            ServerSettings sset = ServerSettings.getInstance();
-            String trustedServers = sset.getSetting("mail.imaps.ssl.trust", "");
-            if (trustedServers.length() > 0) {
-                smtpProps.put("mail.imaps.ssl.trust", trustedServers);
-            }
-
-        }
-
-        try {
-            Transport bus = session.getTransport("smtp");
-
-            // Connect only once here
-            // Transport.send() disconnects after each send
-            // Usually, no username and password is required for SMTP
-            if (authenticateSmtp) {
-                bus.connect(ms.getEmailOutServer(), ms.getEmailOutUser(), outPwd);
-            } else {
-                bus.connect(ms.getEmailOutServer(), null, null);
-            }
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
             Throwable storeException = null;
             for (String currentRecipientMail : mails) {
@@ -954,8 +815,6 @@ public class SendEncryptedAction extends ProgressableAction {
                 ArrayList<String> encryptedAttachments = new ArrayList<>();
                 ArrayList<String> cleanUpAttachments = new ArrayList<>();
                 for (String unencrypted : this.attachments) {
-                    ClientSettings settings = ClientSettings.getInstance();
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     AddressServiceRemote adr = locator.lookupAddressServiceRemote();
                     AddressBean[] found = adr.searchSimple(currentRecipientMail);
                     if (found != null && found.length > 0 && EmailUtils.sameCryptoPassword(found) && found[0].supportsCrypto()) {
@@ -968,79 +827,48 @@ public class SendEncryptedAction extends ProgressableAction {
                         encryptedAttachments.add(unencrypted);
                     }
                 }
-                this.progress("Erstelle Nachricht an " + currentRecipientMail + "...");
-                MimeMessage msg = new MimeMessage(session);
 
-                msg.setFrom(new InternetAddress(ms.getEmailAddress(), ms.getEmailSenderName()));
-
-                if (this.readReceipt) {
-                    msg.setHeader("Disposition-Notification-To", ms.getEmailAddress());
-                    msg.setHeader("Return-Receipt-To", ms.getEmailAddress());
-                }
-
-                String fullRecipient = this.mailToRecipientMap.getOrDefault(currentRecipientMail, currentRecipientMail);
-                msg.setRecipients(Message.RecipientType.TO, EmailUtils.parseAndEncodeRecipients(fullRecipient));
-
-                msg.setSubject(MimeUtility.encodeText(subject, "utf-8", "B"));
-                ZonedDateTime zdt = ZonedDateTime.now(ZoneId.of("Europe/Berlin"));
-                msg.setSentDate(Date.from(zdt.toInstant()));
-
-                // Set priority headers
-                if (this.priority != null) {
-                    if (this.priority.startsWith("Hoch")) {
-                        msg.setHeader("X-Priority", "1");
-                        msg.setHeader("Priority", "Urgent");
-                        msg.setHeader("Importance", "high");
-                    } else if (this.priority.startsWith("Niedrig")) {
-                        msg.setHeader("X-Priority", "5");
-                        msg.setHeader("Priority", "Non-Urgent");
-                        msg.setHeader("Importance", "low");
-                    } else {
-                        // Normal priority
-                        msg.setHeader("X-Priority", "3");
-                        msg.setHeader("Priority", "Normal");
-                        msg.setHeader("Importance", "normal");
+                // Build attachment DTOs from (possibly encrypted) files
+                java.util.List<com.jdimension.jlawyer.services.MailAttachmentDTO> attDTOs = new java.util.ArrayList<>();
+                String attachmentNames = "";
+                for (String url : encryptedAttachments) {
+                    java.io.File f = new java.io.File(url);
+                    if (f.exists()) {
+                        com.jdimension.jlawyer.services.MailAttachmentDTO att = new com.jdimension.jlawyer.services.MailAttachmentDTO();
+                        att.setName(f.getName());
+                        String ct = java.nio.file.Files.probeContentType(f.toPath());
+                        if (ct == null) ct = "application/octet-stream";
+                        att.setContentType(ct);
+                        att.setContent(java.nio.file.Files.readAllBytes(f.toPath()));
+                        att.setSize(f.length());
+                        attDTOs.add(att);
+                        attachmentNames = attachmentNames + f.getName() + " ";
                     }
                 }
 
-                Multipart multiPart = new MimeMultipart();
-
-                MimeBodyPart messageText = new MimeBodyPart();
-                messageText.setContent(body, this.contentType + "; charset=UTF-8");
-                multiPart.addBodyPart(messageText);
-
-                String attachmentNames = "";
-                for (String url : encryptedAttachments) {
-
-                    MimeBodyPart att = new MimeBodyPart();
-                    FileDataSource attFile = new FileDataSource(url);
-                    att.attachFile(url);
-                    att.setDisposition(Part.ATTACHMENT);
-                    att.setFileName(attFile.getName());
-                    attachmentNames = attachmentNames + attFile.getName() + " ";
-                    multiPart.addBodyPart(att);
+                // Normalize priority for server API
+                String serverPriority = "normal";
+                if (this.priority != null) {
+                    if (this.priority.startsWith("Hoch")) serverPriority = "high";
+                    else if (this.priority.startsWith("Niedrig")) serverPriority = "low";
                 }
 
-                msg.setContent(multiPart);
+                String fullRecipient = this.mailToRecipientMap.getOrDefault(currentRecipientMail, currentRecipientMail);
 
                 this.progress("Sende an " + currentRecipientMail + "...");
-                msg.saveChanges();
-                bus.send(msg);
+                locator.lookupEmailServiceRemote().sendMail(
+                    ms.getId(), fullRecipient, null, null, subject, body,
+                    this.contentType, attDTOs, serverPriority, this.readReceipt, null, null);
 
+                // Save to case
                 try {
                     if (this.archiveFile != null) {
-
-                        ClientSettings settings = ClientSettings.getInstance();
-                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                         ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
 
                         this.progress("Speichern in Akte " + this.archiveFile.getFileNumber());
-                        ByteArrayOutputStream bOut = new ByteArrayOutputStream();
-                        msg.writeTo(bOut);
-                        bOut.close();
-                        byte[] data = bOut.toByteArray();
+                        byte[] data = EmailUtils.buildEmlBytes(ms.getEmailAddress(), ms.getEmailSenderName(), fullRecipient, null, null, subject, body, this.contentType, attDTOs);
 
-                        String newName = currentRecipientMail + " - " + msg.getSubject();
+                        String newName = currentRecipientMail + " - " + subject;
                         if (attachmentNames.trim().length() > 0) {
                             newName = currentRecipientMail + " - " + attachmentNames.trim() + " per E-Mail";
                         }
@@ -1088,7 +916,7 @@ public class SendEncryptedAction extends ProgressableAction {
 
                             ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();
                             historyDto.setChangeDate(new Date());
-                            historyDto.setChangeDescription("E-Mail gesendet an " + currentRecipientMail + ": " + msg.getSubject());
+                            historyDto.setChangeDescription("E-Mail gesendet an " + currentRecipientMail + ": " + subject);
                             afs.addHistory(this.archiveFile.getId(), historyDto);
 
                             if (caseFolder != null) {
@@ -1104,40 +932,6 @@ public class SendEncryptedAction extends ProgressableAction {
                 } catch (Throwable t) {
                     log.error("Could not save message to archive file", t);
                     storeException = t;
-                }
-
-                bus.close();
-
-                // Copy sent message to Sent folder via server
-                this.progress("Kopiere Nachricht in 'Gesendet'...");
-                try {
-                    ClientSettings csettings = ClientSettings.getInstance();
-                    JLawyerServiceLocator loc = JLawyerServiceLocator.getInstance(csettings.getLookupProperties());
-                    // Find Sent folder ID
-                    String sentFolderId = ms.isMsExchange() ? "SentItems" : "Sent";
-                    java.util.List<com.jdimension.jlawyer.services.MailFolderDTO> folders = loc.lookupEmailServiceRemote().listFolders(ms.getId());
-                    for (com.jdimension.jlawyer.services.MailFolderDTO folder : folders) {
-                        if (folder.isSent()) {
-                            sentFolderId = folder.getFolderId();
-                            break;
-                        }
-                    }
-                    // Build attachment DTOs from encrypted files
-                    java.util.List<com.jdimension.jlawyer.services.MailAttachmentDTO> sentAtts = new java.util.ArrayList<>();
-                    for (String url : encryptedAttachments) {
-                        java.io.File f = new java.io.File(url);
-                        if (f.exists()) {
-                            com.jdimension.jlawyer.services.MailAttachmentDTO a = new com.jdimension.jlawyer.services.MailAttachmentDTO();
-                            a.setName(f.getName());
-                            a.setContentType("application/octet-stream");
-                            a.setContent(java.nio.file.Files.readAllBytes(f.toPath()));
-                            sentAtts.add(a);
-                        }
-                    }
-                    loc.lookupEmailServiceRemote().appendToFolder(ms.getId(), sentFolderId,
-                        fullRecipient, null, null, subject, body, this.contentType, sentAtts, true);
-                } catch (Exception ex) {
-                    log.error("Could not copy sent message to Sent folder via server", ex);
                 }
 
                 for (String url : cleanUpAttachments) {
@@ -1160,8 +954,6 @@ public class SendEncryptedAction extends ProgressableAction {
             if (this.draftDocumentId != null && this.archiveFile != null) {
                 try {
                     this.progress("Lösche Entwurf...");
-                    ClientSettings settings = ClientSettings.getInstance();
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
 
                     // Fetch document before deletion to publish event
@@ -1192,4 +984,5 @@ public class SendEncryptedAction extends ProgressableAction {
         return true;
 
     }
+
 }

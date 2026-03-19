@@ -894,11 +894,21 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
 
     // ==================== Unified Service Methods ====================
 
+    private List<MailFolderDTO> doListFolders(String mailboxId) throws Exception {
+        MailboxSetup ms = getMailboxOrThrow(mailboxId);
+        return ms.isMsExchange() ? graphListFolders(ms) : imapListFolders(ms);
+    }
+
     @Override
     @RolesAllowed({"loginRole"})
     public List<MailFolderDTO> listFolders(String mailboxId) throws Exception {
-        MailboxSetup ms = getMailboxOrThrow(mailboxId);
-        return ms.isMsExchange() ? graphListFolders(ms) : imapListFolders(ms);
+        return doListFolders(mailboxId);
+    }
+
+    @Override
+    @PermitAll
+    public List<MailFolderDTO> listFoldersInternal(String mailboxId) throws Exception {
+        return doListFolders(mailboxId);
     }
 
     @Override
@@ -913,9 +923,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         return listMessages(mailboxId, folderId, top, offset, sinceDate, unreadOnly, null);
     }
 
-    @Override
-    @RolesAllowed({"loginRole"})
-    public List<MailMessageDTO> listMessages(String mailboxId, String folderId, int top, int offset, Date sinceDate, boolean unreadOnly, String searchTerm) throws Exception {
+    private List<MailMessageDTO> doListMessages(String mailboxId, String folderId, int top, int offset, Date sinceDate, boolean unreadOnly, String searchTerm) throws Exception {
         MailboxSetup ms = getMailboxOrThrow(mailboxId);
         newMessageFlags.put(mailboxId, Boolean.FALSE);
 
@@ -962,13 +970,35 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
 
     @Override
     @RolesAllowed({"loginRole"})
-    public MailMessageDTO getMessage(String mailboxId, String messageRef) throws Exception {
+    public List<MailMessageDTO> listMessages(String mailboxId, String folderId, int top, int offset, Date sinceDate, boolean unreadOnly, String searchTerm) throws Exception {
+        return doListMessages(mailboxId, folderId, top, offset, sinceDate, unreadOnly, searchTerm);
+    }
+
+    @Override
+    @PermitAll
+    public List<MailMessageDTO> listMessagesInternal(String mailboxId, String folderId, int top, int offset, Date sinceDate, boolean unreadOnly, String searchTerm) throws Exception {
+        return doListMessages(mailboxId, folderId, top, offset, sinceDate, unreadOnly, searchTerm);
+    }
+
+    private MailMessageDTO doGetMessage(String mailboxId, String messageRef) throws Exception {
         MailMessageDTO prefetched = prefetchCache.remove(messageRef);
         if (prefetched != null) {
             return prefetched;
         }
         MailboxSetup ms = getMailboxOrThrow(mailboxId);
         return ms.isMsExchange() ? graphGetMessage(ms, messageRef) : imapGetMessage(ms, messageRef);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public MailMessageDTO getMessage(String mailboxId, String messageRef) throws Exception {
+        return doGetMessage(mailboxId, messageRef);
+    }
+
+    @Override
+    @PermitAll
+    public MailMessageDTO getMessageInternal(String mailboxId, String messageRef) throws Exception {
+        return doGetMessage(mailboxId, messageRef);
     }
 
     @Override
@@ -1025,11 +1055,21 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 : imapGetSingleAttachment(ms, messageRef, attachmentId);
     }
 
+    private List<MailAttachmentDTO> doGetAttachments(String mailboxId, String messageRef) throws Exception {
+        MailboxSetup ms = getMailboxOrThrow(mailboxId);
+        return ms.isMsExchange() ? graphGetAttachments(ms, messageRef) : imapGetAttachments(ms, messageRef);
+    }
+
     @Override
     @RolesAllowed({"loginRole"})
     public List<MailAttachmentDTO> getAttachments(String mailboxId, String messageRef) throws Exception {
-        MailboxSetup ms = getMailboxOrThrow(mailboxId);
-        return ms.isMsExchange() ? graphGetAttachments(ms, messageRef) : imapGetAttachments(ms, messageRef);
+        return doGetAttachments(mailboxId, messageRef);
+    }
+
+    @Override
+    @PermitAll
+    public List<MailAttachmentDTO> getAttachmentsInternal(String mailboxId, String messageRef) throws Exception {
+        return doGetAttachments(mailboxId, messageRef);
     }
 
     @Override
@@ -1045,9 +1085,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         invalidateAllFolderCaches(mailboxId);
     }
 
-    @Override
-    @RolesAllowed({"loginRole"})
-    public void moveMessage(String mailboxId, String messageRef, String targetFolderId) throws Exception {
+    private void doMoveMessage(String mailboxId, String messageRef, String targetFolderId) throws Exception {
         MailboxSetup ms = getMailboxOrThrow(mailboxId);
         // Determine source folder for cache invalidation
         String sourceFolderId = null;
@@ -1062,6 +1100,18 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         // Invalidate source and target folder caches
         if (sourceFolderId != null) invalidateMessageCache(mailboxId, sourceFolderId);
         invalidateMessageCache(mailboxId, targetFolderId);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public void moveMessage(String mailboxId, String messageRef, String targetFolderId) throws Exception {
+        doMoveMessage(mailboxId, messageRef, targetFolderId);
+    }
+
+    @Override
+    @PermitAll
+    public void moveMessageInternal(String mailboxId, String messageRef, String targetFolderId) throws Exception {
+        doMoveMessage(mailboxId, messageRef, targetFolderId);
     }
 
     @Override
@@ -1120,27 +1170,85 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public String testConnection(String mailboxId) throws Exception {
-        getMailboxOrThrow(mailboxId);
+        MailboxSetup ms = getMailboxOrThrow(mailboxId);
+        // Force fresh connection — cached connections may use stale credentials
+        imapInvalidateCache(mailboxId);
+        invalidateAllFolderCaches(mailboxId);
+
+        StringBuilder errors = new StringBuilder();
+
+        // Test receive (IMAP or Graph API)
         try {
             List<MailFolderDTO> folders = listFolders(mailboxId);
             if (folders == null || folders.isEmpty()) {
-                return "Connection successful but no folders found";
+                errors.append("Empfang: Verbindung erfolgreich, aber keine Ordner gefunden. ");
             }
-            return null;
         } catch (Exception ex) {
-            return ex.getMessage();
+            errors.append("Empfang: ").append(ex.getMessage()).append(" ");
+        }
+
+        // Test send (SMTP) — only for non-Exchange mailboxes (Graph API send uses same token as receive)
+        if (!ms.isMsExchange()) {
+            try {
+                testSmtpConnection(ms);
+            } catch (Exception ex) {
+                errors.append("Versand: ").append(ex.getMessage());
+            }
+        }
+
+        return errors.length() == 0 ? null : errors.toString().trim();
+    }
+
+    private void testSmtpConnection(MailboxSetup ms) throws Exception {
+        Properties props = new Properties();
+        String server = ms.getEmailOutServer();
+        final String user = ms.getEmailOutUser();
+        final String pwd = com.jdimension.jlawyer.security.CryptoProvider.newCrypto().decrypt(ms.getEmailOutPwd());
+        props.put("mail.smtp.host", server);
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtps.host", server);
+        props.put("mail.smtps.auth", "true");
+        if (ms.isEmailOutSsl()) props.put("mail.smtp.ssl.enable", "true");
+        if (ms.isEmailStartTls()) props.put("mail.smtp.starttls.enable", "true");
+        String port = ms.getEmailOutPort();
+        if (port != null && !port.isEmpty()) {
+            props.put("mail.smtp.port", port);
+            props.put("mail.smtps.port", port);
+        }
+        ms.applyCustomProperties(ms.customConfigurationsSendProperties(), props);
+        Session session = Session.getInstance(props, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(user, pwd);
+            }
+        });
+        Transport transport = session.getTransport("smtp");
+        try {
+            transport.connect();
+        } finally {
+            transport.close();
         }
     }
 
-    @Override
-    @RolesAllowed({"loginRole"})
-    public MailFolderDTO createFolder(String mailboxId, String parentFolderId, String folderName) throws Exception {
+    private MailFolderDTO doCreateFolder(String mailboxId, String parentFolderId, String folderName) throws Exception {
         MailboxSetup ms = getMailboxOrThrow(mailboxId);
         if (ms.isMsExchange()) {
             return graphCreateFolder(ms, parentFolderId, folderName);
         } else {
             return imapCreateFolder(ms, parentFolderId, folderName);
         }
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public MailFolderDTO createFolder(String mailboxId, String parentFolderId, String folderName) throws Exception {
+        return doCreateFolder(mailboxId, parentFolderId, folderName);
+    }
+
+    @Override
+    @PermitAll
+    public MailFolderDTO createFolderInternal(String mailboxId, String parentFolderId, String folderName) throws Exception {
+        return doCreateFolder(mailboxId, parentFolderId, folderName);
     }
 
     @Override
@@ -1203,8 +1311,11 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 int unread = getInboxUnreadCount(ms);
                 if (unread > 0) {
                     newMessageFlags.put(ms.getId(), Boolean.TRUE);
-                    // Invalidate inbox cache so next listMessages fetches fresh data
-                    invalidateMessageCache(ms.getId(), "INBOX");
+                    // Invalidate all folder caches for this mailbox so next
+                    // listMessages fetches fresh data. Using invalidateAll instead
+                    // of just "INBOX" because Graph API uses opaque GUIDs as
+                    // folder IDs, and the mapping may not yet be available.
+                    invalidateAllFolderCaches(ms.getId());
                 }
             } catch (Exception ex) {
                 log.error("Error polling mailbox " + ms.getEmailAddress(), ex);
@@ -1735,7 +1846,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         if (to != null && !to.isEmpty()) msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
         if (cc != null && !cc.isEmpty()) msg.setRecipients(Message.RecipientType.CC, InternetAddress.parse(cc));
         if (bcc != null && !bcc.isEmpty()) msg.setRecipients(Message.RecipientType.BCC, InternetAddress.parse(bcc));
-        msg.setSubject(subject);
+        msg.setSubject(subject, "UTF-8");
         msg.setSentDate(new Date());
         String prio = normalizePriority(priority);
         if ("high".equals(prio)) {
@@ -1753,7 +1864,11 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         }
         MimeMultipart multipart = new MimeMultipart();
         MimeBodyPart bodyPart = new MimeBodyPart();
-        bodyPart.setContent(body, contentType != null ? contentType : "text/plain");
+        String ct = contentType != null ? contentType : "text/plain";
+        if (!ct.toLowerCase().contains("charset")) {
+            ct += "; charset=UTF-8";
+        }
+        bodyPart.setContent(body, ct);
         multipart.addBodyPart(bodyPart);
         if (attachments != null) {
             for (MailAttachmentDTO att : attachments) {
@@ -2297,15 +2412,25 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
 
     // ==================== EML Generation ====================
 
-    @Override
-    @RolesAllowed({"loginRole"})
-    public byte[] getMessageAsEml(String mailboxId, String messageRef) throws Exception {
+    private byte[] doGetMessageAsEml(String mailboxId, String messageRef) throws Exception {
         MailboxSetup ms = getMailboxOrThrow(mailboxId);
         if (ms.isMsExchange()) {
             return graphGetMessageAsEml(ms, messageRef);
         } else {
             return imapGetMessageAsEml(ms, messageRef);
         }
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public byte[] getMessageAsEml(String mailboxId, String messageRef) throws Exception {
+        return doGetMessageAsEml(mailboxId, messageRef);
+    }
+
+    @Override
+    @PermitAll
+    public byte[] getMessageAsEmlInternal(String mailboxId, String messageRef) throws Exception {
+        return doGetMessageAsEml(mailboxId, messageRef);
     }
 
     private byte[] imapGetMessageAsEml(MailboxSetup ms, String messageRef) throws Exception {

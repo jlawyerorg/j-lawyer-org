@@ -821,4 +821,76 @@ public interface EmailServiceLocal {
      */
     @javax.ejb.Asynchronous
     void prefetchInboxMessages(String mailboxId, String folderId, List<String> messageRefs);
+
+    // ==================== Internal methods (no security check) ====================
+    // These are intended for server-internal callers like MailboxScannerTask
+    // that run without a security context.
+
+    /**
+     * Lists all mail folders for the given mailbox. No security check.
+     * @param mailboxId the mailbox ID
+     * @return list of mail folders with metadata
+     * @throws Exception if the mailbox does not exist or access fails
+     */
+    List<MailFolderDTO> listFoldersInternal(String mailboxId) throws Exception;
+
+    /**
+     * Lists messages in a folder. No security check.
+     * @param mailboxId the mailbox ID
+     * @param folderId the folder ID
+     * @param top maximum number of messages to return
+     * @param offset number of messages to skip
+     * @param sinceDate only return messages since this date (may be null)
+     * @param unreadOnly only return unread messages
+     * @param searchTerm search term to filter messages (may be null)
+     * @return list of message metadata
+     * @throws Exception if access fails
+     */
+    List<MailMessageDTO> listMessagesInternal(String mailboxId, String folderId, int top, int offset, java.util.Date sinceDate, boolean unreadOnly, String searchTerm) throws Exception;
+
+    /**
+     * Retrieves a full message by its opaque reference. No security check.
+     * @param mailboxId the mailbox ID
+     * @param messageRef opaque message reference
+     * @return full message with body content
+     * @throws Exception if the message is not found or access fails
+     */
+    MailMessageDTO getMessageInternal(String mailboxId, String messageRef) throws Exception;
+
+    /**
+     * Retrieves attachments with content for a message. No security check.
+     * @param mailboxId the mailbox ID
+     * @param messageRef opaque message reference
+     * @return list of attachments with content
+     * @throws Exception if the message is not found or access fails
+     */
+    List<MailAttachmentDTO> getAttachmentsInternal(String mailboxId, String messageRef) throws Exception;
+
+    /**
+     * Moves a message to another folder. No security check.
+     * @param mailboxId the mailbox ID
+     * @param messageRef opaque message reference
+     * @param targetFolderId the target folder ID
+     * @throws Exception if the operation fails
+     */
+    void moveMessageInternal(String mailboxId, String messageRef, String targetFolderId) throws Exception;
+
+    /**
+     * Creates a new mail folder. No security check.
+     * @param mailboxId the mailbox ID
+     * @param parentFolderId the parent folder ID (may be null for top-level)
+     * @param folderName the name of the new folder
+     * @return the created folder
+     * @throws Exception if the operation fails
+     */
+    MailFolderDTO createFolderInternal(String mailboxId, String parentFolderId, String folderName) throws Exception;
+
+    /**
+     * Returns the raw EML bytes for a message. No security check.
+     * @param mailboxId the mailbox ID
+     * @param messageRef opaque message reference
+     * @return EML content as byte array
+     * @throws Exception if the message is not found or access fails
+     */
+    byte[] getMessageAsEmlInternal(String mailboxId, String messageRef) throws Exception;
 }

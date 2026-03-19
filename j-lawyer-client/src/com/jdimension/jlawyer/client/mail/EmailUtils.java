@@ -711,6 +711,70 @@ public class EmailUtils extends CommonMailUtils {
 
     private static final Logger log = Logger.getLogger(EmailUtils.class.getName());
 
+    /**
+     * Builds an EML byte array from the given message parameters including attachments.
+     *
+     * @param from sender email address
+     * @param senderName display name for sender (may be null)
+     * @param to comma-separated TO recipients (may be null)
+     * @param cc comma-separated CC recipients (may be null)
+     * @param bcc comma-separated BCC recipients (may be null)
+     * @param subject the email subject
+     * @param body the email body
+     * @param contentType content type for the body (e.g. "text/html")
+     * @param attachments list of attachment DTOs (may be null)
+     * @return the EML as byte array, or empty array on error
+     */
+    public static byte[] buildEmlBytes(String from, String senderName, String to, String cc, String bcc, String subject, String body, String contentType, java.util.List<com.jdimension.jlawyer.services.MailAttachmentDTO> attachments) {
+        try {
+            Properties emlProps = new Properties();
+            Session emlSession = Session.getInstance(emlProps);
+            javax.mail.internet.MimeMessage emlMsg = new javax.mail.internet.MimeMessage(emlSession);
+            if (senderName != null && !senderName.isEmpty()) {
+                emlMsg.setFrom(new javax.mail.internet.InternetAddress(from, senderName));
+            } else {
+                emlMsg.setFrom(new javax.mail.internet.InternetAddress(from));
+            }
+            if (to != null && !to.isEmpty()) emlMsg.setRecipients(Message.RecipientType.TO, javax.mail.internet.InternetAddress.parse(to));
+            if (cc != null && !cc.isEmpty()) emlMsg.setRecipients(Message.RecipientType.CC, javax.mail.internet.InternetAddress.parse(cc));
+            if (bcc != null && !bcc.isEmpty()) emlMsg.setRecipients(Message.RecipientType.BCC, javax.mail.internet.InternetAddress.parse(bcc));
+            emlMsg.setSubject(subject, "UTF-8");
+            emlMsg.setSentDate(new Date());
+
+            javax.mail.internet.MimeMultipart multipart = new javax.mail.internet.MimeMultipart();
+            javax.mail.internet.MimeBodyPart bodyPart = new javax.mail.internet.MimeBodyPart();
+            String ct = contentType != null ? contentType : "text/plain";
+            if (!ct.toLowerCase().contains("charset")) {
+                ct += "; charset=UTF-8";
+            }
+            bodyPart.setContent(body != null ? body : "", ct);
+            multipart.addBodyPart(bodyPart);
+
+            if (attachments != null) {
+                for (com.jdimension.jlawyer.services.MailAttachmentDTO att : attachments) {
+                    if (att.getContent() != null) {
+                        javax.mail.internet.MimeBodyPart attPart = new javax.mail.internet.MimeBodyPart();
+                        javax.activation.DataSource ds = new javax.mail.util.ByteArrayDataSource(
+                                att.getContent(), att.getContentType() != null ? att.getContentType() : "application/octet-stream");
+                        attPart.setDataHandler(new javax.activation.DataHandler(ds));
+                        attPart.setFileName(att.getName());
+                        multipart.addBodyPart(attPart);
+                    }
+                }
+            }
+
+            emlMsg.setContent(multipart);
+            emlMsg.saveChanges();
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            emlMsg.writeTo(bos);
+            bos.close();
+            return bos.toByteArray();
+        } catch (Exception ex) {
+            log.error("Error building EML", ex);
+            return new byte[0];
+        }
+    }
+
     public static String getOffice365AuthToken(String mailboxId) throws Exception {
         ClientSettings settings = ClientSettings.getInstance();
         try {

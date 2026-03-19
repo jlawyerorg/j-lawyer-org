@@ -777,7 +777,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
     private void processMailboxViaService(MailboxSetup ms, com.jdimension.jlawyer.services.EmailServiceLocal emailSvc, ArchiveFileServiceLocal caseSvc, AddressServiceLocal adrSvc, SystemManagementLocal sysSvc, FormsServiceLocal formsSvc, ArrayList<String> allFileNumbers, List<String> tags, List<String> blacklistedFileTypes, String exclusionList, boolean ignoreInline, int minAttachmentSize, List<PartyTypeBean> allPartyTypes, DocumentNameTemplate defaultNameTemplate) {
         try {
             // Find inbox folder ID
-            List<com.jdimension.jlawyer.services.MailFolderDTO> folders = emailSvc.listFolders(ms.getId());
+            List<com.jdimension.jlawyer.services.MailFolderDTO> folders = emailSvc.listFoldersInternal(ms.getId());
             String inboxFolderId = null;
             String importFolderId = null;
             for (com.jdimension.jlawyer.services.MailFolderDTO f : folders) {
@@ -792,7 +792,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
             // Create import folder if needed
             if (importFolderId == null) {
                 try {
-                    com.jdimension.jlawyer.services.MailFolderDTO created = emailSvc.createFolder(ms.getId(), inboxFolderId, "in Akte importiert");
+                    com.jdimension.jlawyer.services.MailFolderDTO created = emailSvc.createFolderInternal(ms.getId(), inboxFolderId, "in Akte importiert");
                     importFolderId = created.getFolderId();
                 } catch (Exception ex) {
                     log.error("Could not create 'in Akte importiert' folder for " + ms.getEmailAddress(), ex);
@@ -804,7 +804,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
             cal.add(Calendar.DATE, -1 * ms.getScanDays());
             Date sinceDate = cal.getTime();
 
-            List<com.jdimension.jlawyer.services.MailMessageDTO> messages = emailSvc.listMessages(ms.getId(), inboxFolderId, 500, 0, sinceDate, false, null);
+            List<com.jdimension.jlawyer.services.MailMessageDTO> messages = emailSvc.listMessagesInternal(ms.getId(), inboxFolderId, 500, 0, sinceDate, false, null);
             if (messages == null || messages.isEmpty()) {
                 return;
             }
@@ -866,7 +866,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
                 if (foundInSubject) continue;
 
                 // FIRST - B: try to find matching case by file number in body
-                com.jdimension.jlawyer.services.MailMessageDTO fullMsg = emailSvc.getMessage(ms.getId(), msgDto.getMessageRef());
+                com.jdimension.jlawyer.services.MailMessageDTO fullMsg = emailSvc.getMessageInternal(ms.getId(), msgDto.getMessageRef());
                 String body = "";
                 if (fullMsg.getBody() != null) {
                     body = fullMsg.getBody();
@@ -968,7 +968,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
             if (!processedMessageRefs.isEmpty() && importFolderId != null) {
                 for (String ref : processedMessageRefs) {
                     try {
-                        emailSvc.moveMessage(ms.getId(), ref, importFolderId);
+                        emailSvc.moveMessageInternal(ms.getId(), ref, importFolderId);
                     } catch (Exception ex) {
                         log.error("Could not move processed message to import folder", ex);
                     }
@@ -988,7 +988,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
             }
 
             // Get EML via unified service (single source of truth)
-            byte[] msgData = emailSvc.getMessageAsEml(mailboxId, msgDto.getMessageRef());
+            byte[] msgData = emailSvc.getMessageAsEmlInternal(mailboxId, msgDto.getMessageRef());
 
             ServerTemplatesUtil serverTemplates = new ServerTemplatesUtil(sysSvc, formsSvc);
             List<ArchiveFileAddressesBean> involved = caseSvc.getInvolvementDetailsForCaseUnrestricted(toCase.getId(), false);
@@ -1032,7 +1032,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
             }
 
             // Save attachments separately
-            List<com.jdimension.jlawyer.services.MailAttachmentDTO> attachments = emailSvc.getAttachments(mailboxId, msgDto.getMessageRef());
+            List<com.jdimension.jlawyer.services.MailAttachmentDTO> attachments = emailSvc.getAttachmentsInternal(mailboxId, msgDto.getMessageRef());
             if (attachments != null) {
                 for (com.jdimension.jlawyer.services.MailAttachmentDTO att : attachments) {
                     if (att.isInline() && ignoreInline) {
