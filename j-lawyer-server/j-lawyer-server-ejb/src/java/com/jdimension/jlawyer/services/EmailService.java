@@ -1335,7 +1335,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     private int getInboxUnreadCount(MailboxSetup ms) throws Exception {
         if (ms.isMsExchange()) {
             // Graph API: query inbox folder directly by well-known name
-            this.updateAuthTokenForMailbox(ms);
+            if (!this.updateAuthTokenForMailbox(ms)) {
+                throw new Exception("Failed to obtain access token for " + ms.getEmailAddress());
+            }
             String url = GRAPH_BASE + "/users/" + URLEncoder.encode(ms.getEmailAddress(), StandardCharsets.UTF_8)
                     + "/mailFolders/Inbox?$select=unreadItemCount";
             String json = graphGet(ms, url);
@@ -1959,7 +1961,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     // ==================== Graph API Backend ====================
 
     private String graphGet(MailboxSetup ms, String url) throws Exception {
-        this.updateAuthTokenForMailbox(ms);
+        if (!this.updateAuthTokenForMailbox(ms)) {
+            throw new Exception("Failed to obtain access token for " + ms.getEmailAddress());
+        }
         try (CloseableHttpClient client = HttpClients.createDefault()) {
             HttpGet get = new HttpGet(url);
             get.setHeader("Authorization", "Bearer " + ms.getAuthToken());
@@ -1976,7 +1980,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     }
 
     private String graphPost(MailboxSetup ms, String url, String jsonBody) throws Exception {
-        this.updateAuthTokenForMailbox(ms);
+        if (!this.updateAuthTokenForMailbox(ms)) {
+            throw new Exception("Failed to obtain access token for " + ms.getEmailAddress());
+        }
         try (CloseableHttpClient client = HttpClients.createDefault()) {
             HttpPost post = new HttpPost(url);
             post.setHeader("Authorization", "Bearer " + ms.getAuthToken());
@@ -1994,7 +2000,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     }
 
     private void graphDelete(MailboxSetup ms, String url) throws Exception {
-        this.updateAuthTokenForMailbox(ms);
+        if (!this.updateAuthTokenForMailbox(ms)) {
+            throw new Exception("Failed to obtain access token for " + ms.getEmailAddress());
+        }
         try (CloseableHttpClient client = HttpClients.createDefault()) {
             HttpDelete delete = new HttpDelete(url);
             delete.setHeader("Authorization", "Bearer " + ms.getAuthToken());
@@ -2009,7 +2017,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     }
 
     private void graphPatch(MailboxSetup ms, String url, String jsonBody) throws Exception {
-        this.updateAuthTokenForMailbox(ms);
+        if (!this.updateAuthTokenForMailbox(ms)) {
+            throw new Exception("Failed to obtain access token for " + ms.getEmailAddress());
+        }
         try (CloseableHttpClient client = HttpClients.createDefault()) {
             HttpPatch patch = new HttpPatch(url);
             patch.setHeader("Authorization", "Bearer " + ms.getAuthToken());

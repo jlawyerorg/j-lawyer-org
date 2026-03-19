@@ -1066,8 +1066,10 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
         MailboxSetup existing=this.mailboxSetupFacade.find(ms.getId());
         
         // do not override existing tokens with empty values
-        if(existing!=null && !ServerStringUtils.isEmpty(existing.getAuthToken()) && ServerStringUtils.isEmpty(ms.getAuthToken()))
+        if(existing!=null && !ServerStringUtils.isEmpty(existing.getAuthToken()) && ServerStringUtils.isEmpty(ms.getAuthToken())) {
             ms.setAuthToken(existing.getAuthToken());
+            ms.setTokenExpiry(existing.getTokenExpiry());
+        }
         
         this.mailboxSetupFacade.edit(ms);
         return this.mailboxSetupFacade.find(ms.getId());
