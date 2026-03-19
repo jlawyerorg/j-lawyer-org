@@ -25,8 +25,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.SystemUtils;
 
 /**
@@ -148,6 +148,9 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
 
     /** Optional callback to execute when the editor becomes ready. */
     private Runnable onEditorReadyCallback = null;
+
+    /** Optional callback invoked when a link is clicked inside the editor content. */
+    private Consumer<String> onLinkClickedCallback = null;
 
     /**
      * Content to be set when the editor becomes ready.
@@ -1342,7 +1345,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
 
         /**
          * Called by JavaScript when a link is clicked inside the editor content.
-         * Opens the URL in the system browser instead of navigating the WebView.
+         * Delegates to the registered callback if one is set.
          *
          * @param href the URL of the clicked link
          */
@@ -1351,9 +1354,11 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                 return;
             }
             log.debug("Link clicked in editor: " + href);
-            SwingUtilities.invokeLater(() -> {
-                DesktopUtils.openBrowser(href);
-            });
+            if (onLinkClickedCallback != null) {
+                SwingUtilities.invokeLater(() -> {
+                    onLinkClickedCallback.accept(href);
+                });
+            }
         }
 
         /**
@@ -1509,6 +1514,18 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
      */
     public void setOnEditorReadyCallback(Runnable callback) {
         this.onEditorReadyCallback = callback;
+    }
+
+    /**
+     * Sets a callback to be invoked when a link is clicked inside the editor content.
+     * When set, link clicks are intercepted (the WebView will not navigate away),
+     * and the callback receives the href value on the EDT.
+     * When not set, links behave as default (WebView navigates to the URL).
+     *
+     * @param callback Consumer that receives the href of the clicked link (runs on EDT)
+     */
+    public void setOnLinkClickedCallback(Consumer<String> callback) {
+        this.onLinkClickedCallback = callback;
     }
 
     /**

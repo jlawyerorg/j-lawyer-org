@@ -712,6 +712,9 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
 
         tp = new TextEditorPanel();
         hp = new WebViewHtmlEditorPanel();
+        hp.setOnLinkClickedCallback(href -> {
+            com.jdimension.jlawyer.client.utils.DesktopUtils.openBrowser(href);
+        });
 
         this.contentPanel.add(tp);
         tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
