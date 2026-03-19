@@ -687,7 +687,9 @@ public interface SecurityServiceLocal {
     List<Group> getGroupsForUser(String principalId) throws Exception;
     
     public List<MailboxSetup> getAllMailboxSetups();
-    
+
+    List<MailboxSetup> getMailboxesForUser(String principalId) throws Exception;
+
     boolean addUserToCalendar(String principalId, String calendarId) throws Exception;
 
     boolean addUserToInvoicePool(String principalId, String poolId) throws Exception;

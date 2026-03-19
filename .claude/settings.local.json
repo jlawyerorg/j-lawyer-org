@@ -67,7 +67,9 @@
       "WebFetch(domain:en.sipgate.io)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:api.dropscan.de)",
-      "Bash(./build-fast.sh)"
+      "Bash(./build-fast.sh)",
+      "Bash(for v:*)",
+      "Bash(do echo:*)"
     ],
     "deny": [],
     "ask": []
