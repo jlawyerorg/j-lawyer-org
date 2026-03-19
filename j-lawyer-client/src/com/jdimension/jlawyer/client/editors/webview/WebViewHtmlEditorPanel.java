@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.SystemUtils;
 
 /**
@@ -517,6 +518,31 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
 
             // Pass instance ID to JavaScript for debugging
             webEngine.executeScript("window._javaInstanceId = " + instanceId);
+
+            // Install a delegated click handler on the editor element to intercept link clicks.
+            // Links clicked inside the editor content are opened in the system browser
+            // instead of navigating the WebView away from the editor.
+            webEngine.executeScript(
+                "(function() {" +
+                "  var wysiwyg = document.querySelector('.se-wrapper-wysiwyg') || document.querySelector('.sun-editor-editable');" +
+                "  if (wysiwyg) {" +
+                "    wysiwyg.addEventListener('click', function(e) {" +
+                "      var target = e.target;" +
+                "      while (target && target !== wysiwyg) {" +
+                "        if (target.tagName === 'A' && target.getAttribute('href')) {" +
+                "          e.preventDefault();" +
+                "          e.stopPropagation();" +
+                "          if (window.javaConnector && window.javaConnector.onLinkClicked) {" +
+                "            window.javaConnector.onLinkClicked(target.getAttribute('href'));" +
+                "          }" +
+                "          return;" +
+                "        }" +
+                "        target = target.parentNode;" +
+                "      }" +
+                "    }, true);" +
+                "  }" +
+                "})();"
+            );
 
             log.debug("[Instance " + instanceId + "] SunEditor loaded successfully");
 
@@ -1312,6 +1338,22 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
          */
         public void log(String message) {
             log.debug("[JS] " + message);
+        }
+
+        /**
+         * Called by JavaScript when a link is clicked inside the editor content.
+         * Opens the URL in the system browser instead of navigating the WebView.
+         *
+         * @param href the URL of the clicked link
+         */
+        public void onLinkClicked(String href) {
+            if (href == null || href.isEmpty()) {
+                return;
+            }
+            log.debug("Link clicked in editor: " + href);
+            SwingUtilities.invokeLater(() -> {
+                DesktopUtils.openBrowser(href);
+            });
         }
 
         /**
