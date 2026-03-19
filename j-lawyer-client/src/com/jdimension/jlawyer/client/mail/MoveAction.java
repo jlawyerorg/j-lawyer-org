@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.mail;
 
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -739,22 +740,33 @@ public class MoveAction extends ProgressableAction {
             this.i.setMax(selectedRows.length);
 
             for (int i = selectedRows.length - 1; i > -1; i--) {
-                //Message dropMsg=(Message)no;
-                //current.add(new DefaultMutableTreeNode(cno));
                 if (this.isCancelled()) {
                     return true;
                 }
                 this.progress("Verschiebe Nachricht " + (i + 1) + " von " + selectedRows.length);
                 final int sel = selectedRows[i];
                 MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(sel, 0);
-                Folder origin = msgC.getMessage().getFolder();
 
-                Message[] copyMsg = new Message[1];
-                copyMsg[0] = msgC.getMessage();
-                origin.copyMessages(copyMsg, targetFolder);
-                origin.setFlags(copyMsg,
-                        new Flags(Flags.Flag.DELETED),
-                        true);
+                if (msgC.isServerBased()) {
+                    // Server-based path
+                    try {
+                        ClientSettings settings = ClientSettings.getInstance();
+                        com.jdimension.jlawyer.services.JLawyerServiceLocator locator =
+                            com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                        FolderContainer targetFc = (FolderContainer) current.getUserObject();
+                        String targetFolderId = targetFc.getFolderId();
+                        locator.lookupEmailServiceRemote().moveMessage(msgC.getMailboxId(), msgC.getMessageRef(), targetFolderId);
+                    } catch (Exception ex) {
+                        log.error("Error moving message via server", ex);
+                    }
+                } else {
+                    // Legacy IMAP path
+                    Folder origin = msgC.getMessage().getFolder();
+                    Message[] copyMsg = new Message[1];
+                    copyMsg[0] = msgC.getMessage();
+                    origin.copyMessages(copyMsg, targetFolder);
+                    origin.setFlags(copyMsg, new Flags(Flags.Flag.DELETED), true);
+                }
 
                 // change: only expunge in LoadFolderAction before loading messages
                 //origin.expunge();

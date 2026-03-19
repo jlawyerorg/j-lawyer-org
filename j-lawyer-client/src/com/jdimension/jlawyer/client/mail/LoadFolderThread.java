@@ -737,6 +737,12 @@ public class LoadFolderThread implements Runnable {
 
     @Override
     public void run() {
+        // Server-based path: use unified EmailService for all mail operations
+        if (f.isServerBased()) {
+            runServerBased();
+            return;
+        }
+
         try {
             if (!(f.getFolder().isOpen())) {
                 System.out.println("open 24");
@@ -1021,6 +1027,94 @@ public class LoadFolderThread implements Runnable {
                     log.error(t);
                 }
             }).start();
+        }
+    }
+
+    /**
+     * Server-based message loading via unified EmailService.
+     */
+    private void runServerBased() {
+        try {
+            ClientSettings cs = ClientSettings.getInstance();
+            String restriction = cs.getConfiguration(ClientSettings.CONF_MAIL_DOWNLOADRESTRICTION, "" + LoadFolderRestriction.RESTRICTION_50);
+            int top = 50;
+            java.util.Date sinceDate = null;
+            boolean unreadOnly = false;
+            try {
+                int restr = Integer.parseInt(restriction);
+                if (restr == LoadFolderRestriction.RESTRICTION_20) top = 20;
+                else if (restr == LoadFolderRestriction.RESTRICTION_100) top = 100;
+                else if (restr == LoadFolderRestriction.RESTRICTION_500) top = 500;
+                else if (restr == LoadFolderRestriction.RESTRICTION_NONE) top = 10000;
+                else if (restr == LoadFolderRestriction.RESTRICTION_UNREAD) { top = 500; unreadOnly = true; }
+                else if (restr == LoadFolderRestriction.RESTRICTION_LAST1W) { top = 500; sinceDate = new java.util.Date(System.currentTimeMillis() - (7L * 24 * 60 * 60 * 1000)); }
+                else if (restr == LoadFolderRestriction.RESTRICTION_LAST2W) { top = 500; sinceDate = new java.util.Date(System.currentTimeMillis() - (14L * 24 * 60 * 60 * 1000)); }
+                else if (restr == LoadFolderRestriction.RESTRICTION_LAST4W) { top = 500; sinceDate = new java.util.Date(System.currentTimeMillis() - (28L * 24 * 60 * 60 * 1000)); }
+                else if (restr == LoadFolderRestriction.RESTRICTION_LAST2M) { top = 1000; sinceDate = new java.util.Date(System.currentTimeMillis() - (60L * 24 * 60 * 60 * 1000)); }
+                else if (restr == LoadFolderRestriction.RESTRICTION_LAST6M) { top = 2000; sinceDate = new java.util.Date(System.currentTimeMillis() - (180L * 24 * 60 * 60 * 1000)); }
+                else if (restr == LoadFolderRestriction.RESTRICTION_LAST1Y) { top = 5000; sinceDate = new java.util.Date(System.currentTimeMillis() - (365L * 24 * 60 * 60 * 1000)); }
+            } catch (Throwable t) {
+                // default
+            }
+
+            com.jdimension.jlawyer.services.JLawyerServiceLocator locator =
+                com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(cs.getLookupProperties());
+            java.util.List<com.jdimension.jlawyer.services.MailMessageDTO> messages =
+                locator.lookupEmailServiceRemote().listMessages(f.getMailboxId(), f.getFolderId(), top, 0, sinceDate, unreadOnly, this.searchTerm);
+
+            this.messageCount = messages.size();
+
+            ArrayList<Object[]> tableRows = new ArrayList<>();
+            for (int i = 0; i < messages.size(); i++) {
+                com.jdimension.jlawyer.services.MailMessageDTO msg = messages.get(i);
+
+                String sentString = "";
+                if (msg.getDate() != null) {
+                    sentString = df.format(msg.getDate());
+                }
+
+                String from = msg.getFrom() != null ? msg.getFrom() : "";
+                String toString = "";
+                if (msg.getTo() != null && msg.getTo().length > 0) {
+                    toString = msg.getTo()[0];
+                }
+
+                Object[] newRow = new Object[]{sentString, from, new MessageContainer(msg, f.getMailboxId()), toString};
+                tableRows.add(newRow);
+
+                if (((i % 100) == 0 && i > 0) || i == (messages.size() - 1)) {
+                    final int currentIndex = i;
+                    final ArrayList<Object[]> tableRowsClone = (ArrayList<Object[]>) tableRows.clone();
+                    tableRows.clear();
+                    final int msgSize = messages.size();
+                    javax.swing.SwingUtilities.invokeLater(() -> {
+                        try {
+                            for (Object[] rowObject : tableRowsClone) {
+                                ((javax.swing.table.DefaultTableModel) table.getModel()).addRow(rowObject);
+                            }
+                            if (scrollToRow > 0 && currentIndex == (msgSize - 1)) {
+                                if (table.getRowCount() > scrollToRow) {
+                                    table.scrollRectToVisible(new java.awt.Rectangle(table.getCellRect(scrollToRow, 0, true)));
+                                }
+                            }
+                        } catch (Throwable t) {
+                            log.error(t);
+                        }
+                    });
+                }
+            }
+
+            // Always sort by date column (0) descending for server-based loading
+            javax.swing.SwingUtilities.invokeLater(() -> {
+                try {
+                    int col = this.sortCol >= 0 ? this.sortCol : 0;
+                    table.getRowSorter().toggleSortOrder(col);
+                } catch (Throwable t) {
+                    log.error("Error sorting mails by column...", t);
+                }
+            });
+        } catch (Throwable t) {
+            log.error("Error loading messages via server", t);
         }
     }
 }

@@ -711,6 +711,70 @@ public class EmailUtils extends CommonMailUtils {
 
     private static final Logger log = Logger.getLogger(EmailUtils.class.getName());
 
+    /**
+     * Builds an EML byte array from the given message parameters including attachments.
+     *
+     * @param from sender email address
+     * @param senderName display name for sender (may be null)
+     * @param to comma-separated TO recipients (may be null)
+     * @param cc comma-separated CC recipients (may be null)
+     * @param bcc comma-separated BCC recipients (may be null)
+     * @param subject the email subject
+     * @param body the email body
+     * @param contentType content type for the body (e.g. "text/html")
+     * @param attachments list of attachment DTOs (may be null)
+     * @return the EML as byte array, or empty array on error
+     */
+    public static byte[] buildEmlBytes(String from, String senderName, String to, String cc, String bcc, String subject, String body, String contentType, java.util.List<com.jdimension.jlawyer.services.MailAttachmentDTO> attachments) {
+        try {
+            Properties emlProps = new Properties();
+            Session emlSession = Session.getInstance(emlProps);
+            javax.mail.internet.MimeMessage emlMsg = new javax.mail.internet.MimeMessage(emlSession);
+            if (senderName != null && !senderName.isEmpty()) {
+                emlMsg.setFrom(new javax.mail.internet.InternetAddress(from, senderName));
+            } else {
+                emlMsg.setFrom(new javax.mail.internet.InternetAddress(from));
+            }
+            if (to != null && !to.isEmpty()) emlMsg.setRecipients(Message.RecipientType.TO, javax.mail.internet.InternetAddress.parse(to));
+            if (cc != null && !cc.isEmpty()) emlMsg.setRecipients(Message.RecipientType.CC, javax.mail.internet.InternetAddress.parse(cc));
+            if (bcc != null && !bcc.isEmpty()) emlMsg.setRecipients(Message.RecipientType.BCC, javax.mail.internet.InternetAddress.parse(bcc));
+            emlMsg.setSubject(subject, "UTF-8");
+            emlMsg.setSentDate(new Date());
+
+            javax.mail.internet.MimeMultipart multipart = new javax.mail.internet.MimeMultipart();
+            javax.mail.internet.MimeBodyPart bodyPart = new javax.mail.internet.MimeBodyPart();
+            String ct = contentType != null ? contentType : "text/plain";
+            if (!ct.toLowerCase().contains("charset")) {
+                ct += "; charset=UTF-8";
+            }
+            bodyPart.setContent(body != null ? body : "", ct);
+            multipart.addBodyPart(bodyPart);
+
+            if (attachments != null) {
+                for (com.jdimension.jlawyer.services.MailAttachmentDTO att : attachments) {
+                    if (att.getContent() != null) {
+                        javax.mail.internet.MimeBodyPart attPart = new javax.mail.internet.MimeBodyPart();
+                        javax.activation.DataSource ds = new javax.mail.util.ByteArrayDataSource(
+                                att.getContent(), att.getContentType() != null ? att.getContentType() : "application/octet-stream");
+                        attPart.setDataHandler(new javax.activation.DataHandler(ds));
+                        attPart.setFileName(att.getName());
+                        multipart.addBodyPart(attPart);
+                    }
+                }
+            }
+
+            emlMsg.setContent(multipart);
+            emlMsg.saveChanges();
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            emlMsg.writeTo(bos);
+            bos.close();
+            return bos.toByteArray();
+        } catch (Exception ex) {
+            log.error("Error building EML", ex);
+            return new byte[0];
+        }
+    }
+
     public static String getOffice365AuthToken(String mailboxId) throws Exception {
         ClientSettings settings = ClientSettings.getInstance();
         try {
@@ -1377,109 +1441,14 @@ public class EmailUtils extends CommonMailUtils {
     }
 
     public static void sendReceipt(final MailboxSetup ms, String subject, String to) {
-        Properties props = new Properties();
-
-        boolean authenticate = true;
         try {
-            if (StringUtils.isEmpty(ms.getEmailOutUser()) && StringUtils.isEmpty(CryptoProvider.defaultCrypto().decrypt(ms.getEmailOutPwd()))) {
-                authenticate = false;
-            }
-        } catch (Throwable t) {
-            log.error("Could not decrypt outgoing password", t);
-        }
-
-        if (ms.isEmailOutSsl()) {
-            props.put("mail.smtp.ssl.enable", "true");
-        }
-
-        if (ms.isEmailStartTls()) {
-            props.put("mail.smtp.starttls.enable", "true");
-        }
-
-        if (ms.getEmailOutPort() != null && !("".equalsIgnoreCase(ms.getEmailOutPort()))) {
-            try {
-                int testInt = Integer.parseInt(ms.getEmailOutPort());
-                props.put("mail.smtp.port", ms.getEmailOutPort());
-                props.put("mail.smtps.port", ms.getEmailOutPort());
-            } catch (Throwable t) {
-                log.error("Invalid SMTP port: " + ms.getEmailOutPort());
-            }
-        }
-
-        props.put("mail.smtp.host", ms.getEmailOutServer());
-        props.put("mail.smtps.host", ms.getEmailOutServer());
-        props.put("mail.from", ms.getEmailAddress());
-
-        Session session = null;
-        if (!authenticate) {
-            props.put("mail.smtps.auth", false);
-            props.put("mail.smtp.auth", false);
-            ms.applyCustomProperties(ms.customConfigurationsSendProperties(), props);
-            session = Session.getInstance(props);
-        } else {
-            props.put("mail.smtps.auth", true);
-            props.put("mail.smtp.auth", true);
-            props.put("mail.smtp.user", ms.getEmailOutUser());
-            props.put("mail.smtps.user", ms.getEmailOutUser());
-            String outPwd = "";
-            try {
-                outPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailOutPwd());
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            props.put("mail.password", outPwd);
-            ms.applyCustomProperties(ms.customConfigurationsSendProperties(), props);
-
-            javax.mail.Authenticator auth = new javax.mail.Authenticator() {
-
-                @Override
-                public PasswordAuthentication getPasswordAuthentication() {
-                    String outPwd = "";
-                    try {
-                        outPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailOutPwd());
-                    } catch (Throwable t) {
-                        log.error(t);
-                    }
-                    return new PasswordAuthentication(ms.getEmailOutUser(), outPwd);
-                }
-            };
-            session = Session.getInstance(props, auth);
-        }
-
-        try {
-            Transport bus = session.getTransport("smtp");
-
-            // Connect only once here
-            // Transport.send() disconnects after each send
-            // Usually, no username and password is required for SMTP
-            if (authenticate) {
-                bus.connect(ms.getEmailOutServer(), ms.getEmailOutUser(), CryptoProvider.defaultCrypto().decrypt(ms.getEmailOutPwd()));
-            } else {
-                bus.connect(ms.getEmailOutServer(), null, null);
-            }
-
-            MimeMessage msg = new MimeMessage(session);
-
-            msg.setFrom(new InternetAddress(ms.getEmailAddress(), ms.getEmailSenderName()));
-
-            msg.setRecipients(Message.RecipientType.TO, to);
-
-            msg.setSubject(MimeUtility.encodeText("Gelesen: " + subject, "utf-8", "B"));
-            ZonedDateTime zdt = ZonedDateTime.now(ZoneId.of("Europe/Berlin"));
-            msg.setSentDate(Date.from(zdt.toInstant()));
-
-            Multipart multiPart = new MimeMultipart();
-
-            MimeBodyPart messageText = new MimeBodyPart();
             SimpleDateFormat df = new SimpleDateFormat("HH:mm dd.MM.yyyy");
-            messageText.setContent("Ihre Nachricht wurde gelesen (" + df.format(new Date()) + ").", "text/plain; charset=UTF-8");
-            multiPart.addBodyPart(messageText);
+            String receiptBody = "Ihre Nachricht wurde gelesen (" + df.format(new Date()) + ").";
+            String receiptSubject = "Gelesen: " + subject;
 
-            msg.setContent(multiPart);
-
-            msg.saveChanges();
-            bus.send(msg);
-            bus.close();
+            com.jdimension.jlawyer.client.settings.ClientSettings settings = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
+            com.jdimension.jlawyer.services.JLawyerServiceLocator locator = com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupEmailServiceRemote().sendMail(ms.getId(), to, null, null, receiptSubject, receiptBody, "text/plain", null, "normal", false, null, null);
         } catch (Throwable t) {
             log.error("Could not send read receipt", t);
         }
@@ -1644,6 +1613,74 @@ public class EmailUtils extends CommonMailUtils {
             log.error(ex);
         }
 
+        return dlg;
+    }
+
+    /**
+     * DTO-based reply method for server-side unified mail service.
+     */
+    public static SendEmailFrame reply(com.jdimension.jlawyer.services.MailMessageDTO msg, String mailboxId, String prependContent, String content, String contentType) {
+        SendEmailFrame dlg = new SendEmailFrame(true);
+        try {
+            boolean sentByCurrentUser = false;
+            UserSettings usettings = UserSettings.getInstance();
+            AppUserBean cu = usettings.getCurrentUser();
+            List<MailboxSetup> allInboxes = usettings.getMailboxes(cu.getPrincipalId());
+            String msgFrom = msg.getFrom() != null ? msg.getFrom().toLowerCase() : "";
+            for (MailboxSetup mbx : allInboxes) {
+                if (msgFrom.contains(mbx.getEmailAddress().toLowerCase())) {
+                    sentByCurrentUser = true;
+                    break;
+                }
+            }
+
+            // Set from mailbox
+            for (MailboxSetup mbx : allInboxes) {
+                if (mbx.getId().equals(mailboxId)) {
+                    dlg.setFrom(mbx);
+                    break;
+                }
+            }
+
+            StringBuilder toString = new StringBuilder();
+            if (sentByCurrentUser && msg.getTo() != null) {
+                for (String to : msg.getTo()) {
+                    if (toString.length() > 0) toString.append(", ");
+                    toString.append(to);
+                }
+            } else {
+                toString.append(msgFrom);
+            }
+            dlg.setTo(toString.toString());
+
+            String subject = msg.getSubject() != null ? msg.getSubject() : "";
+            if (!subject.startsWith("Re: ")) subject = "Re: " + subject;
+            dlg.setSubject(subject);
+
+            // Set In-Reply-To and References for threading
+            String inReplyTo = msg.getMessageId();
+            String references = msg.getReferences();
+            if (references != null && inReplyTo != null) {
+                references = references + " " + inReplyTo;
+            } else if (inReplyTo != null) {
+                references = inReplyTo;
+            }
+            dlg.setThreadingHeaders(inReplyTo, references);
+
+            dlg.setContentType(contentType);
+            if (prependContent == null) prependContent = "";
+            else prependContent = prependContent + System.lineSeparator() + System.lineSeparator();
+
+            if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
+                dlg.setBody(prependContent, EmailUtils.getQuotedBody(EmailUtils.html2Text(content), ContentTypes.TEXT_PLAIN, toString.toString(), msg.getDate()), ContentTypes.TEXT_PLAIN);
+            } else {
+                dlg.setBody(prependContent, EmailUtils.getQuotedBody(content, ContentTypes.TEXT_PLAIN, toString.toString(), msg.getDate()), ContentTypes.TEXT_PLAIN);
+            }
+            dlg.setBody(prependContent, EmailUtils.getQuotedBody(content, ContentTypes.TEXT_HTML, toString.toString(), msg.getDate()), ContentTypes.TEXT_HTML);
+
+        } catch (Exception ex) {
+            log.error(ex);
+        }
         return dlg;
     }
 

@@ -663,234 +663,88 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
-import java.util.List;
-import javax.ejb.Local;
+import java.io.Serializable;
 
-/**
- * Local interface for the unified mail service. Provides backend-agnostic
- * mail operations for both IMAP/SMTP and Microsoft Graph API mailboxes.
- *
- * @author jens
- */
-@Local
-public interface EmailServiceLocal {
+public class MailFolderDTO implements Serializable {
 
-    /**
-     * Returns the cached OAuth access token for the given mailbox.
-     * @param mailboxId the mailbox ID
-     * @return the access token, or null if not available
-     * @throws Exception if the mailbox does not exist
-     */
-    String getAuthToken(String mailboxId) throws Exception;
+    private static final long serialVersionUID = 1L;
 
-    /**
-     * Forces a refresh of the OAuth access token for the given mailbox.
-     * @param mailboxId the mailbox ID
-     * @return true if the token was successfully refreshed
-     * @throws Exception if the mailbox does not exist or token refresh fails
-     */
-    boolean updateAuthToken(String mailboxId) throws Exception;
+    public static final String WELL_KNOWN_INBOX = "inbox";
+    public static final String WELL_KNOWN_SENT = "sentitems";
+    public static final String WELL_KNOWN_TRASH = "deleteditems";
+    public static final String WELL_KNOWN_DRAFTS = "drafts";
 
-    /**
-     * Lists all mail folders for the given mailbox.
-     * @param mailboxId the mailbox ID
-     * @return list of mail folders with metadata
-     * @throws Exception if the mailbox does not exist or access fails
-     */
-    List<MailFolderDTO> listFolders(String mailboxId) throws Exception;
+    private String folderId;
+    private String parentFolderId;
+    private String displayName;
+    private String wellKnownName;
+    private int unreadCount;
+    private int totalCount;
 
-    /**
-     * Lists messages in a folder with pagination support.
-     * @param mailboxId the mailbox ID
-     * @param folderId the folder ID
-     * @param top maximum number of messages to return
-     * @param offset number of messages to skip
-     * @return list of message metadata
-     * @throws Exception if access fails
-     */
-    List<MailMessageDTO> listMessages(String mailboxId, String folderId, int top, int offset) throws Exception;
+    public MailFolderDTO() {
+    }
 
-    List<MailMessageDTO> listMessages(String mailboxId, String folderId, int top, int offset, java.util.Date sinceDate, boolean unreadOnly) throws Exception;
+    public String getFolderId() {
+        return folderId;
+    }
 
-    List<MailMessageDTO> listMessages(String mailboxId, String folderId, int top, int offset, java.util.Date sinceDate, boolean unreadOnly, String searchTerm) throws Exception;
+    public void setFolderId(String folderId) {
+        this.folderId = folderId;
+    }
 
-    /**
-     * Retrieves a full message by its opaque reference.
-     * @param mailboxId the mailbox ID
-     * @param messageRef opaque message reference
-     * @return full message with body content
-     * @throws Exception if the message is not found or access fails
-     */
-    MailMessageDTO getMessage(String mailboxId, String messageRef) throws Exception;
+    public String getDisplayName() {
+        return displayName;
+    }
 
-    MailMessageDTO getMessage(String mailboxId, String messageRef, boolean includeAttachmentMetadata) throws Exception;
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
 
-    MailAttachmentDTO getAttachmentContent(String mailboxId, String messageRef, String attachmentId) throws Exception;
+    public int getUnreadCount() {
+        return unreadCount;
+    }
 
-    /**
-     * Retrieves attachments for a message.
-     * @param mailboxId the mailbox ID
-     * @param messageRef opaque message reference
-     * @return list of attachments with content
-     * @throws Exception if the message is not found or access fails
-     */
-    List<MailAttachmentDTO> getAttachments(String mailboxId, String messageRef) throws Exception;
+    public void setUnreadCount(int unreadCount) {
+        this.unreadCount = unreadCount;
+    }
 
-    /**
-     * Sends an email through the appropriate backend.
-     * @param mailboxId the mailbox ID
-     * @param to comma-separated recipient addresses
-     * @param cc comma-separated CC addresses
-     * @param bcc comma-separated BCC addresses
-     * @param subject the email subject
-     * @param body the email body
-     * @param contentType the body content type (text/plain or text/html)
-     * @param attachments list of attachments to include
-     * @param priority email priority (high, normal, low)
-     * @param readReceipt whether to request a read receipt
-     * @param inReplyTo Message-ID of the message being replied to
-     * @param references References header for threading
-     * @throws Exception if sending fails
-     */
-    void sendMail(String mailboxId, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, String priority, boolean readReceipt, String inReplyTo, String references) throws Exception;
+    public int getTotalCount() {
+        return totalCount;
+    }
 
-    /**
-     * Moves a message to another folder.
-     * @param mailboxId the mailbox ID
-     * @param messageRef opaque message reference
-     * @param targetFolderId the target folder ID
-     * @throws Exception if the operation fails
-     */
-    void moveMessage(String mailboxId, String messageRef, String targetFolderId) throws Exception;
+    public void setTotalCount(int totalCount) {
+        this.totalCount = totalCount;
+    }
 
-    /**
-     * Deletes a message.
-     * @param mailboxId the mailbox ID
-     * @param messageRef opaque message reference
-     * @throws Exception if the operation fails
-     */
-    void deleteMessage(String mailboxId, String messageRef) throws Exception;
+    public String getParentFolderId() {
+        return parentFolderId;
+    }
 
-    /**
-     * Marks a message as read or unread.
-     * @param mailboxId the mailbox ID
-     * @param messageRef opaque message reference
-     * @param read true to mark as read, false to mark as unread
-     * @throws Exception if the operation fails
-     */
-    void markAsRead(String mailboxId, String messageRef, boolean read) throws Exception;
+    public void setParentFolderId(String parentFolderId) {
+        this.parentFolderId = parentFolderId;
+    }
 
-    /**
-     * Checks whether new messages have been detected for a mailbox since the
-     * last listMessages() call. This method reads from server RAM only and
-     * does not trigger any backend calls.
-     * @param mailboxId the mailbox ID
-     * @return true if new messages are available
-     * @throws Exception if the mailbox does not exist
-     */
-    boolean hasNewMessages(String mailboxId) throws Exception;
+    public String getWellKnownName() {
+        return wellKnownName;
+    }
 
-    /**
-     * Tests the connection to a mailbox by attempting to authenticate and
-     * list folders.
-     * @param mailboxId the mailbox ID
-     * @return null on success, or a descriptive error message on failure
-     * @throws Exception if the mailbox does not exist
-     */
-    String testConnection(String mailboxId) throws Exception;
+    public void setWellKnownName(String wellKnownName) {
+        this.wellKnownName = wellKnownName;
+    }
 
-    MailFolderDTO createFolder(String mailboxId, String parentFolderId, String folderName) throws Exception;
+    public boolean isInbox() {
+        return WELL_KNOWN_INBOX.equals(wellKnownName);
+    }
 
-    void deleteFolder(String mailboxId, String folderId) throws Exception;
+    public boolean isSent() {
+        return WELL_KNOWN_SENT.equals(wellKnownName);
+    }
 
-    void emptyTrash(String mailboxId, String trashFolderId) throws Exception;
+    public boolean isTrash() {
+        return WELL_KNOWN_TRASH.equals(wellKnownName);
+    }
 
-    void invalidateCaches(String mailboxId) throws Exception;
-
-    void appendToFolder(String mailboxId, String folderId, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, boolean markAsRead) throws Exception;
-
-    byte[] getMessageAsEml(String mailboxId, String messageRef) throws Exception;
-
-    /**
-     * Asynchronously pre-fetches full message data (body + attachment metadata)
-     * for the given message references. Results are stored in an internal cache
-     * and returned by subsequent getMessage() calls.
-     * @param mailboxId the mailbox ID
-     * @param folderId the folder ID (for cache invalidation tracking)
-     * @param messageRefs list of message references to pre-fetch
-     */
-    @javax.ejb.Asynchronous
-    void prefetchInboxMessages(String mailboxId, String folderId, List<String> messageRefs);
-
-    // ==================== Internal methods (no security check) ====================
-    // These are intended for server-internal callers like MailboxScannerTask
-    // that run without a security context.
-
-    /**
-     * Lists all mail folders for the given mailbox. No security check.
-     * @param mailboxId the mailbox ID
-     * @return list of mail folders with metadata
-     * @throws Exception if the mailbox does not exist or access fails
-     */
-    List<MailFolderDTO> listFoldersInternal(String mailboxId) throws Exception;
-
-    /**
-     * Lists messages in a folder. No security check.
-     * @param mailboxId the mailbox ID
-     * @param folderId the folder ID
-     * @param top maximum number of messages to return
-     * @param offset number of messages to skip
-     * @param sinceDate only return messages since this date (may be null)
-     * @param unreadOnly only return unread messages
-     * @param searchTerm search term to filter messages (may be null)
-     * @return list of message metadata
-     * @throws Exception if access fails
-     */
-    List<MailMessageDTO> listMessagesInternal(String mailboxId, String folderId, int top, int offset, java.util.Date sinceDate, boolean unreadOnly, String searchTerm) throws Exception;
-
-    /**
-     * Retrieves a full message by its opaque reference. No security check.
-     * @param mailboxId the mailbox ID
-     * @param messageRef opaque message reference
-     * @return full message with body content
-     * @throws Exception if the message is not found or access fails
-     */
-    MailMessageDTO getMessageInternal(String mailboxId, String messageRef) throws Exception;
-
-    /**
-     * Retrieves attachments with content for a message. No security check.
-     * @param mailboxId the mailbox ID
-     * @param messageRef opaque message reference
-     * @return list of attachments with content
-     * @throws Exception if the message is not found or access fails
-     */
-    List<MailAttachmentDTO> getAttachmentsInternal(String mailboxId, String messageRef) throws Exception;
-
-    /**
-     * Moves a message to another folder. No security check.
-     * @param mailboxId the mailbox ID
-     * @param messageRef opaque message reference
-     * @param targetFolderId the target folder ID
-     * @throws Exception if the operation fails
-     */
-    void moveMessageInternal(String mailboxId, String messageRef, String targetFolderId) throws Exception;
-
-    /**
-     * Creates a new mail folder. No security check.
-     * @param mailboxId the mailbox ID
-     * @param parentFolderId the parent folder ID (may be null for top-level)
-     * @param folderName the name of the new folder
-     * @return the created folder
-     * @throws Exception if the operation fails
-     */
-    MailFolderDTO createFolderInternal(String mailboxId, String parentFolderId, String folderName) throws Exception;
-
-    /**
-     * Returns the raw EML bytes for a message. No security check.
-     * @param mailboxId the mailbox ID
-     * @param messageRef opaque message reference
-     * @return EML content as byte array
-     * @throws Exception if the message is not found or access fails
-     */
-    byte[] getMessageAsEmlInternal(String mailboxId, String messageRef) throws Exception;
+    public boolean isDrafts() {
+        return WELL_KNOWN_DRAFTS.equals(wellKnownName);
+    }
 }

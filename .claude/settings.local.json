@@ -67,8 +67,7 @@
       "WebFetch(domain:en.sipgate.io)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:api.dropscan.de)",
-      "Bash(LICENSE_FILE=/home/jens/dev/j-lawyer-org/j-lawyer-server-api/src/com/jdimension/jlawyer/services/bea/rest/BeaVerificationResult.java)",
-      "Read(//home/jens/dev/j-lawyer-org/**)"
+      "Bash(./build-fast.sh)"
     ],
     "deny": [],
     "ask": []

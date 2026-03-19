@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.mail;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.launcher.ObservedDocument;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
@@ -841,8 +842,12 @@ public class ViewEmailFrame extends javax.swing.JFrame {
         SendEmailFrame dlg = null;
         if (this.emlMsg != null) {
             MessageContainer msgC = this.emlMsg;
-            Message m = msgC.getMessage();
-            dlg = EmailUtils.reply(m, this.content.getBody(), this.content.getContentType());
+            if (msgC.isServerBased()) {
+                dlg = EmailUtils.reply(msgC.getMessageDTO(), msgC.getMailboxId(), null, this.content.getBody(), this.content.getContentType());
+            } else {
+                Message m = msgC.getMessage();
+                dlg = EmailUtils.reply(m, this.content.getBody(), this.content.getContentType());
+            }
         } else {
             dlg = EmailUtils.reply(this.outlookMsg, this.content.getBody(), this.content.getContentType());
         }
@@ -870,6 +875,39 @@ public class ViewEmailFrame extends javax.swing.JFrame {
         if (this.emlMsg != null) {
             MessageContainer msgC = this.emlMsg;
             try {
+                if (msgC.isServerBased()) {
+                    // Server-based reply-all
+                    com.jdimension.jlawyer.services.MailMessageDTO dto = msgC.getMessageDTO();
+                    for (MailboxSetup mbx : UserSettings.getInstance().getMailboxes(UserSettings.getInstance().getCurrentUser().getPrincipalId())) {
+                        if (mbx.getId().equals(msgC.getMailboxId())) { dlg.setFrom(mbx); break; }
+                    }
+                    StringBuilder toSb = new StringBuilder();
+                    if (dto.getFrom() != null) toSb.append(dto.getFrom());
+                    if (dto.getTo() != null) for (String t : dto.getTo()) { if (toSb.length() > 0) toSb.append(", "); toSb.append(t); }
+                    dlg.setTo(toSb.toString());
+                    if (dto.getCc() != null) {
+                        StringBuilder ccSb = new StringBuilder();
+                        for (String c : dto.getCc()) { if (ccSb.length() > 0) ccSb.append(", "); ccSb.append(c); }
+                        dlg.setCC(ccSb.toString());
+                    }
+                    String subject = dto.getSubject() != null ? dto.getSubject() : "";
+                    if (!subject.startsWith("Re: ")) subject = "Re: " + subject;
+                    dlg.setSubject(subject);
+                    String decodedTo = dto.getFrom() != null ? dto.getFrom() : "";
+                    String contentType = this.content.getContentType();
+                    dlg.setContentType(contentType);
+                    if (contentType.toLowerCase().startsWith("text/html")) {
+                        dlg.setBody("", EmailUtils.getQuotedBody(EmailUtils.html2Text(this.content.getBody()), "text/plain", decodedTo, dto.getDate()), "text/plain");
+                    } else {
+                        dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), "text/plain", decodedTo, dto.getDate()), "text/plain");
+                    }
+                    dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), "text/html", decodedTo, dto.getDate()), "text/html");
+                    if (dto.getMessageId() != null) {
+                        String refs = dto.getReferences() != null ? dto.getReferences() + " " + dto.getMessageId() : dto.getMessageId();
+                        dlg.setThreadingHeaders(dto.getMessageId(), refs);
+                    }
+                } else {
+                // Legacy reply-all
                 Message origM = msgC.getMessage();
                 MailboxSetup ms = EmailUtils.getMailboxSetup(origM);
                 if (ms != null) {
@@ -926,6 +964,7 @@ public class ViewEmailFrame extends javax.swing.JFrame {
                     dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
                 }
                 dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_HTML, decodedTo, origM.getSentDate()), ContentTypes.TEXT_HTML);
+                } // end legacy else
 
             } catch (Exception ex) {
                 log.error(ex);
@@ -983,6 +1022,39 @@ public class ViewEmailFrame extends javax.swing.JFrame {
         if (this.emlMsg != null) {
             MessageContainer msgC = this.emlMsg;
             try {
+                if (msgC.isServerBased()) {
+                    com.jdimension.jlawyer.services.MailMessageDTO dto = msgC.getMessageDTO();
+                    for (MailboxSetup mbx : UserSettings.getInstance().getMailboxes(UserSettings.getInstance().getCurrentUser().getPrincipalId())) {
+                        if (mbx.getId().equals(msgC.getMailboxId())) { dlg.setFrom(mbx); break; }
+                    }
+                    String subject = dto.getSubject() != null ? dto.getSubject() : "";
+                    if (!subject.startsWith("Fw: ")) subject = "Fw: " + subject;
+                    dlg.setSubject(subject);
+                    String decodedFrom = dto.getFrom() != null ? dto.getFrom() : "";
+                    String contentType = this.content.getContentType();
+                    dlg.setContentType(contentType);
+                    if (contentType.toLowerCase().startsWith("text/html")) {
+                        dlg.setBody("", EmailUtils.getQuotedBody(EmailUtils.html2Text(this.content.getBody()), "text/plain", decodedFrom, dto.getDate()), "text/plain");
+                    } else {
+                        dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), "text/plain", decodedFrom, dto.getDate()), "text/plain");
+                    }
+                    dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), "text/html", decodedFrom, dto.getDate()), "text/html");
+                    try {
+                        com.jdimension.jlawyer.client.settings.ClientSettings settings = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
+                        com.jdimension.jlawyer.services.JLawyerServiceLocator locator = com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                        java.util.List<com.jdimension.jlawyer.services.MailAttachmentDTO> atts = locator.lookupEmailServiceRemote().getAttachments(msgC.getMailboxId(), msgC.getMessageRef());
+                        if (atts != null) {
+                            for (com.jdimension.jlawyer.services.MailAttachmentDTO att : atts) {
+                                if (!att.isInline() && att.getContent() != null) {
+                                    String attachmentUrl = FileUtils.createTempFile(att.getName(), att.getContent());
+                                    new java.io.File(attachmentUrl).deleteOnExit();
+                                    dlg.addAttachment(attachmentUrl, "");
+                                }
+                            }
+                        }
+                    } catch (Throwable t) { log.error("Error forwarding attachments", t); }
+                    if (dto.getMessageId() != null) dlg.setThreadingHeaders(dto.getMessageId(), null);
+                } else {
                 Message m = msgC.getMessage();
                 MailboxSetup ms = EmailUtils.getMailboxSetup(m);
                 if (ms != null) {
@@ -1041,6 +1113,7 @@ public class ViewEmailFrame extends javax.swing.JFrame {
                 } catch (Throwable t) {
                     log.error("Error forwarding attachments", t);
                 }
+                } // end legacy else for cmdForward
 
             } catch (Exception ex) {
                 log.error(ex);
@@ -1116,18 +1189,27 @@ public class ViewEmailFrame extends javax.swing.JFrame {
         if (this.emlMsg != null) {
             MessageContainer msgC = this.emlMsg;
             try {
+                if (msgC.isServerBased()) {
+                    com.jdimension.jlawyer.services.MailMessageDTO dto = msgC.getMessageDTO();
+                    for (MailboxSetup mbx : UserSettings.getInstance().getMailboxes(UserSettings.getInstance().getCurrentUser().getPrincipalId())) {
+                        if (mbx.getId().equals(msgC.getMailboxId())) { dlg.setFrom(mbx); break; }
+                    }
+                    dlg.setSubject(dto.getSubject() != null ? dto.getSubject() : "");
+                    if (dto.getTo() != null) dlg.setTo(String.join(", ", dto.getTo()));
+                    if (dto.getCc() != null) dlg.setCC(String.join(", ", dto.getCc()));
+                } else {
                 Message m = msgC.getMessage();
                 MailboxSetup ms = EmailUtils.getMailboxSetup(m);
                 if (ms != null) {
                     dlg.setFrom(ms);
                 }
-                
+
                 String subject = m.getSubject();
                 if (subject == null) {
                     subject = "";
                 }
                 dlg.setSubject(subject);
-                
+
                 try {
                     Address[] to = m.getRecipients(Message.RecipientType.TO);
                     String toString = EmailUtils.getAddressesAsList(to);
@@ -1182,6 +1264,7 @@ public class ViewEmailFrame extends javax.swing.JFrame {
                 } catch (Throwable t) {
                     log.error("Error forwarding attachments", t);
                 }
+                } // end legacy else for resend
 
             } catch (Exception ex) {
                 log.error(ex);

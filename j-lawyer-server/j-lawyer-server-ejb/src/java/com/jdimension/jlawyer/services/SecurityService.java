@@ -1069,9 +1069,6 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
         if(existing!=null && !ServerStringUtils.isEmpty(existing.getAuthToken()) && ServerStringUtils.isEmpty(ms.getAuthToken()))
             ms.setAuthToken(existing.getAuthToken());
         
-        if(existing!=null && !ServerStringUtils.isEmpty(existing.getRefreshToken()) && ServerStringUtils.isEmpty(ms.getRefreshToken()))
-            ms.setRefreshToken(existing.getRefreshToken());
-        
         this.mailboxSetupFacade.edit(ms);
         return this.mailboxSetupFacade.find(ms.getId());
     }

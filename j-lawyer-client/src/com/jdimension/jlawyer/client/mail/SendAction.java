@@ -788,9 +788,13 @@ public class SendAction extends ProgressableAction {
     public boolean execute() throws Exception {
 
         this.progress("Verbinde...");
-        
+
+        // Server-based path: send via unified EmailService for all mailboxes
+        return executeServerBased();
+
+        /* Legacy SMTP send path - removed, all sending goes through server
         String inPwd = "";
-        if (ms.isMsExchange()) {
+        if (false) { // msExchange path moved to executeServerBased()
             inPwd = EmailUtils.getOffice365AuthToken(ms.getId());
         } else {
             try {
@@ -1198,6 +1202,83 @@ public class SendAction extends ProgressableAction {
             throw new Exception("Fehler beim Senden: " + mex.getMessage());
         }
         return true;
-
+        */
     }
+
+    private boolean executeServerBased() throws Exception {
+        try {
+            this.progress("Sende über Server...");
+
+            // Build attachment DTOs
+            java.util.List<com.jdimension.jlawyer.services.MailAttachmentDTO> attDTOs = new java.util.ArrayList<>();
+            if (this.attachments != null) {
+                for (String url : this.attachments) {
+                    java.io.File f = new java.io.File(url);
+                    if (f.exists()) {
+                        com.jdimension.jlawyer.services.MailAttachmentDTO att = new com.jdimension.jlawyer.services.MailAttachmentDTO();
+                        att.setName(f.getName());
+                        att.setContentType(java.nio.file.Files.probeContentType(f.toPath()));
+                        if (att.getContentType() == null) att.setContentType("application/octet-stream");
+                        att.setContent(java.nio.file.Files.readAllBytes(f.toPath()));
+                        att.setSize(f.length());
+                        attDTOs.add(att);
+                    }
+                }
+            }
+
+            this.progress("Sende...");
+            ClientSettings settings = ClientSettings.getInstance();
+            com.jdimension.jlawyer.services.JLawyerServiceLocator locator =
+                com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupEmailServiceRemote().sendMail(
+                ms.getId(), this.to, this.cc, this.bcc, this.subject, this.body,
+                this.contentType, attDTOs, this.priority, this.readReceipt, null, null);
+
+            this.progress("Speichere in Akte...");
+
+            // Store sent email as document in case (same logic as legacy path)
+            if (this.archiveFile != null) {
+                try {
+                    com.jdimension.jlawyer.services.ArchiveFileServiceRemote caseSvc = locator.lookupArchiveFileServiceRemote();
+                    String docName = FileUtils.sanitizeFileName(this.subject);
+                    if (!docName.toLowerCase().endsWith(".eml")) docName += ".eml";
+                    byte[] emlContent = EmailUtils.buildEmlBytes(ms.getEmailAddress(), ms.getEmailSenderName(), this.to, this.cc, this.bcc, this.subject, this.body, this.contentType, attDTOs);
+                    if (emlContent != null && emlContent.length > 0) {
+                        ArchiveFileDocumentsBean newDoc = caseSvc.addDocument(this.archiveFile.getId(), docName, emlContent, "", null);
+                        if (this.documentTag != null && !this.documentTag.isEmpty() && newDoc != null) {
+                            caseSvc.setDocumentTag(newDoc.getId(), new com.jdimension.jlawyer.persistence.DocumentTagsBean(newDoc.getId(), this.documentTag), true);
+                        }
+                    }
+                } catch (Exception ex) {
+                    log.error("Error storing sent mail in case", ex);
+                }
+            }
+
+            // Cleanup temp files
+            this.progress("Aufräumen...");
+            if (this.attachments != null) {
+                for (String url : this.attachments) {
+                    java.io.File f = new java.io.File(url);
+                    if (f.exists()) {
+                        com.jdimension.jlawyer.client.launcher.LauncherFactory.cleanupTempFile(url);
+                    }
+                }
+            }
+
+            // Delete draft if applicable
+            if (this.draftDocumentId != null && this.archiveFile != null) {
+                try {
+                    locator.lookupArchiveFileServiceRemote().removeDocument(this.draftDocumentId);
+                } catch (Exception ex) {
+                    log.error("Error removing draft document", ex);
+                }
+            }
+
+        } catch (Exception ex) {
+            log.error(ex);
+            throw new Exception("Fehler beim Senden: " + ex.getMessage());
+        }
+        return true;
+    }
+
 }

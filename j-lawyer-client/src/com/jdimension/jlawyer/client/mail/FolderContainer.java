@@ -720,9 +720,68 @@ public class FolderContainer {
     }
 
     private Folder folder;
+    private com.jdimension.jlawyer.services.MailFolderDTO folderDTO;
+    private String mailboxId;
 
     public FolderContainer(Folder f) {
         this.folder = f;
+        this.folderDTO = null;
+        this.mailboxId = null;
+    }
+
+    /**
+     * New DTO-based constructor for server-side unified mail service.
+     */
+    public FolderContainer(com.jdimension.jlawyer.services.MailFolderDTO dto, String mailboxId) {
+        this.folder = null;
+        this.folderDTO = dto;
+        this.mailboxId = mailboxId;
+        this.cachedUnread = dto.getUnreadCount();
+        this.cachedTotal = dto.getTotalCount();
+        this.cachedUnreadUpdated = System.currentTimeMillis();
+        this.mappedName = dto.getDisplayName();
+        for (Map.Entry<String, String> entry : folderNameMapping.entrySet()) {
+            if (entry.getKey().equalsIgnoreCase(this.mappedName)) {
+                this.mappedName = entry.getValue();
+                break;
+            }
+        }
+        if (this.cachedTotal < 0) {
+            this.cachedToString = this.mappedName;
+        } else {
+            this.cachedToString = this.mappedName + " (" + this.cachedTotal + ")";
+        }
+        this.cachedToStringUpdated = System.currentTimeMillis();
+    }
+
+    /**
+     * @return true if this container uses the new DTO-based model
+     */
+    public boolean isServerBased() {
+        return folderDTO != null;
+    }
+
+    /**
+     * @return the folder DTO, or null if this is a legacy container
+     */
+    public com.jdimension.jlawyer.services.MailFolderDTO getFolderDTO() {
+        return folderDTO;
+    }
+
+    /**
+     * @return the folder ID (from DTO or IMAP folder full name)
+     */
+    public String getFolderId() {
+        if (folderDTO != null) return folderDTO.getFolderId();
+        if (folder != null) return folder.getFullName();
+        return null;
+    }
+
+    /**
+     * @return the mailbox ID, or null if this is a legacy container
+     */
+    public String getMailboxId() {
+        return mailboxId;
     }
 
     public void setOnCacheRefreshed(Runnable callback) {

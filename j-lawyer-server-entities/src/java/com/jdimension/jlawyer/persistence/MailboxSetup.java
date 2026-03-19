@@ -672,6 +672,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.NamedQueries;
+import javax.persistence.Temporal;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import javax.persistence.Transient;
@@ -746,10 +747,11 @@ public class MailboxSetup implements Serializable, EventTypes {
     protected String tenantId;
     @Column(name = "token_auth")
     private String authToken;
-    @Column(name = "token_refresh")
-    private String refreshToken;
     @Column(name = "token_expiry")
     private long tokenExpiry;
+    @Column(name = "client_secret_expiry")
+    @Temporal(javax.persistence.TemporalType.DATE)
+    private java.util.Date clientSecretExpiry;
     
     // for mailbox scanner
     @Column(name = "scan_inbox")
@@ -1250,20 +1252,6 @@ public class MailboxSetup implements Serializable, EventTypes {
     }
 
     /**
-     * @return the refreshToken
-     */
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    /**
-     * @param refreshToken the refreshToken to set
-     */
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
-    }
-
-    /**
      * @return the tokenExpiry
      */
     public long getTokenExpiry() {
@@ -1275,6 +1263,20 @@ public class MailboxSetup implements Serializable, EventTypes {
      */
     public void setTokenExpiry(long tokenExpiry) {
         this.tokenExpiry = tokenExpiry;
+    }
+
+    /**
+     * @return the clientSecretExpiry
+     */
+    public java.util.Date getClientSecretExpiry() {
+        return clientSecretExpiry;
+    }
+
+    /**
+     * @param clientSecretExpiry the clientSecretExpiry to set
+     */
+    public void setClientSecretExpiry(java.util.Date clientSecretExpiry) {
+        this.clientSecretExpiry = clientSecretExpiry;
     }
 
     /**
