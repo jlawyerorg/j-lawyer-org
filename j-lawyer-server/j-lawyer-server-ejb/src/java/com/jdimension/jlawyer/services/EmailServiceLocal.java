@@ -723,6 +723,10 @@ public interface EmailServiceLocal {
      */
     MailMessageDTO getMessage(String mailboxId, String messageRef) throws Exception;
 
+    MailMessageDTO getMessage(String mailboxId, String messageRef, boolean includeAttachmentMetadata) throws Exception;
+
+    MailAttachmentDTO getAttachmentContent(String mailboxId, String messageRef, String attachmentId) throws Exception;
+
     /**
      * Retrieves attachments for a message.
      * @param mailboxId the mailbox ID
@@ -806,4 +810,15 @@ public interface EmailServiceLocal {
     void appendToFolder(String mailboxId, String folderId, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, boolean markAsRead) throws Exception;
 
     byte[] getMessageAsEml(String mailboxId, String messageRef) throws Exception;
+
+    /**
+     * Asynchronously pre-fetches full message data (body + attachment metadata)
+     * for the given message references. Results are stored in an internal cache
+     * and returned by subsequent getMessage() calls.
+     * @param mailboxId the mailbox ID
+     * @param folderId the folder ID (for cache invalidation tracking)
+     * @param messageRefs list of message references to pre-fetch
+     */
+    @javax.ejb.Asynchronous
+    void prefetchInboxMessages(String mailboxId, String folderId, List<String> messageRefs);
 }

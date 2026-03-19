@@ -702,6 +702,7 @@ import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.Keyword;
+import com.jdimension.jlawyer.services.MailMessageDTO;
 import com.sun.mail.pop3.POP3Folder;
 import java.awt.Color;
 import java.awt.Component;
@@ -723,6 +724,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Hashtable;
 import java.util.Set;
 import java.util.List;
@@ -786,6 +788,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     private long lastForeignFileNumbersUpdate=0l;
     private ArrayList<String> allFileNumbers=new ArrayList<>();
     private long lastFileNumbersUpdate=0l;
+    private volatile long actionPanelLoadId = 0;
 
     /**
      * Creates new form EmailInboxPanel
@@ -1111,11 +1114,29 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                                 dtoMap.put(f.getFolderId(), f);
                             }
 
-                            // First pass: create nodes for non-hidden folders
+                            // Collect hidden folder IDs (including children of hidden folders)
+                            java.util.HashSet<String> hiddenFolderIds = new java.util.HashSet<>();
                             for (com.jdimension.jlawyer.services.MailFolderDTO f : folders) {
-                                // Build full path for hidden-check
                                 String fullFolderPath = buildDtoFolderPath(f, dtoMap);
                                 if (MailboxSettings.getInstance().isFolderHidden(ms, fullFolderPath)) {
+                                    hiddenFolderIds.add(f.getFolderId());
+                                }
+                            }
+                            // Also hide children of hidden folders
+                            boolean changed = true;
+                            while (changed) {
+                                changed = false;
+                                for (com.jdimension.jlawyer.services.MailFolderDTO f : folders) {
+                                    if (!hiddenFolderIds.contains(f.getFolderId()) && f.getParentFolderId() != null && hiddenFolderIds.contains(f.getParentFolderId())) {
+                                        hiddenFolderIds.add(f.getFolderId());
+                                        changed = true;
+                                    }
+                                }
+                            }
+
+                            // First pass: create nodes for non-hidden folders
+                            for (com.jdimension.jlawyer.services.MailFolderDTO f : folders) {
+                                if (hiddenFolderIds.contains(f.getFolderId())) {
                                     continue;
                                 }
                                 FolderContainer fc = new FolderContainer(f, ms.getId());
@@ -1133,13 +1154,14 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                                 if (!nodeMap.containsKey(f.getFolderId())) continue; // was hidden
                                 DefaultMutableTreeNode node = nodeMap.get(f.getFolderId());
                                 if (f.getParentFolderId() != null && nodeMap.containsKey(f.getParentFolderId())) {
-                                    // Add as child of parent folder
                                     nodeMap.get(f.getParentFolderId()).add(node);
                                 } else {
-                                    // Top-level folder or parent was hidden: add to mailbox root
                                     mailboxRootNode.add(node);
                                 }
                             }
+
+                            // Third pass: sort children of each node alphabetically
+                            sortTreeNodeChildren(mailboxRootNode);
 
                         } catch (Exception ex) {
                             log.error("Error initializing server-based mailbox " + ms.getEmailAddress(), ex);
@@ -2130,11 +2152,19 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
             this.mailContentUI.clear();
             this.pnlActionsChild.removeAll();
+            // Remember position for re-selection
+            int firstSelected = selected[0];
             // Remove deleted rows from table
             for (int i = selected.length - 1; i >= 0; i--) {
                 try {
                     ((javax.swing.table.DefaultTableModel) this.tblMails.getModel()).removeRow(this.tblMails.convertRowIndexToModel(selected[i]));
                 } catch (Throwable t) { log.error(t); }
+            }
+            // Select next row (or previous if at end)
+            if (this.tblMails.getRowCount() > 0) {
+                int newSelection = Math.min(firstSelected, this.tblMails.getRowCount() - 1);
+                this.tblMails.setRowSelectionInterval(newSelection, newSelection);
+                this.displayMessage();
             }
             return;
         }
@@ -2413,6 +2443,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         if (this.tblMails.getSelectedRowCount() == 1 && (evt.getKeyCode() == KeyEvent.VK_DOWN || evt.getKeyCode() == KeyEvent.VK_UP)) {
             this.displayMessage();
         }
+        if (evt.getKeyCode() == KeyEvent.VK_DELETE && this.tblMails.getSelectedRowCount() > 0) {
+            this.cmdDeleteActionPerformed(null);
+        }
     }//GEN-LAST:event_tblMailsKeyReleased
 
     private void mnuSearchSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchSaveActionPerformed
@@ -2635,31 +2668,38 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     private void mnuOpenInExternalMailerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuOpenInExternalMailerActionPerformed
         if (this.tblMails.getSelectedRowCount() == 1) {
             try {
-
                 MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 2);
-                Message m = msgC.getMessage();
-                Folder f = m.getFolder();
-                boolean closed = !f.isOpen();
-                if (closed) {
-                    System.out.println("open 13");
-                    f.open(Folder.READ_WRITE);
-                }
-                ByteArrayOutputStream bOut = new ByteArrayOutputStream();
-                m.writeTo(bOut);
-                bOut.close();
-                byte[] data = bOut.toByteArray();
 
-                String newName = m.getSubject().replaceAll("[:\\\\/*?|<> \"]", "_");
-                newName = newName + ".eml";
+                byte[] data;
+                String subject;
+                if (msgC.isServerBased()) {
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    data = locator.lookupEmailServiceRemote().getMessageAsEml(msgC.getMailboxId(), msgC.getMessageRef());
+                    subject = msgC.getMessageDTO().getSubject();
+                } else {
+                    Message m = msgC.getMessage();
+                    Folder f = m.getFolder();
+                    boolean closed = !f.isOpen();
+                    if (closed) {
+                        f.open(Folder.READ_WRITE);
+                    }
+                    ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+                    m.writeTo(bOut);
+                    bOut.close();
+                    data = bOut.toByteArray();
+                    subject = m.getSubject();
+                    if (closed) {
+                        EmailUtils.closeIfIMAP(f);
+                    }
+                }
+
+                String newName = (subject != null ? subject : "email").replaceAll("[:\\\\/*?|<> \"]", "_") + ".eml";
                 newName = FileUtils.sanitizeFileName(newName);
 
                 ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("externalmaillaunch-" + newName, newName);
                 Launcher launcher = LauncherFactory.getLauncher(newName, data, store, EditorsRegistry.getInstance().getMainWindow());
                 launcher.launch(true);
-
-                if (closed) {
-                    EmailUtils.closeIfIMAP(f);
-                }
 
             } catch (Exception ex) {
                 log.error(ex);
@@ -2843,6 +2883,31 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }
 
     // returns the full path including the mailboxes mail adress as root
+    private void sortTreeNodeChildren(DefaultMutableTreeNode parent) {
+        if (parent.getChildCount() <= 1) return;
+
+        // Collect children
+        java.util.List<DefaultMutableTreeNode> children = new java.util.ArrayList<>();
+        for (int i = 0; i < parent.getChildCount(); i++) {
+            children.add((DefaultMutableTreeNode) parent.getChildAt(i));
+        }
+
+        // Sort case-insensitive by display name
+        children.sort((a, b) -> {
+            String nameA = a.getUserObject() != null ? a.getUserObject().toString() : "";
+            String nameB = b.getUserObject() != null ? b.getUserObject().toString() : "";
+            return nameA.compareToIgnoreCase(nameB);
+        });
+
+        // Re-add in sorted order
+        parent.removeAllChildren();
+        for (DefaultMutableTreeNode child : children) {
+            parent.add(child);
+            // Recursively sort children of each child
+            sortTreeNodeChildren(child);
+        }
+    }
+
     private String buildDtoFolderPath(com.jdimension.jlawyer.services.MailFolderDTO dto, HashMap<String, com.jdimension.jlawyer.services.MailFolderDTO> dtoMap) {
         java.util.LinkedList<String> parts = new java.util.LinkedList<>();
         com.jdimension.jlawyer.services.MailFolderDTO current = dto;
@@ -2910,8 +2975,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(selectionIndex, 2);
 
         this.pnlActionsChild.removeAll();
-        ArrayList<Component> actionPanelEntries = new ArrayList<>();
-        ClientSettings settings = ClientSettings.getInstance();
+        this.pnlActions.revalidate();
         try {
             DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
             MailboxSetup ms = this.getMailboxSetup(selNode);
@@ -2926,13 +2990,55 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 }
             }
 
+            final long currentActionLoadId = ++this.actionPanelLoadId;
+
+            if (msgC.isServerBased()) {
+                // Server-based: run action panel population in background thread
+                // Body is loaded asynchronously by MailContentUI, so we need to
+                // wait for it or load it ourselves to avoid race conditions
+                new Thread(() -> {
+                    populateActionPanel(msgC, currentActionLoadId, selectionIndex);
+                }).start();
+            } else {
+                // Legacy path: local data, body is available synchronously
+                populateActionPanel(msgC, currentActionLoadId, selectionIndex);
+            }
+
+        } catch (Throwable t) {
+            log.error("Error displaying message", t);
+        }
+    }
+
+    private void populateActionPanel(MessageContainer msgC, long loadId, int selectionIndex) {
+        ArrayList<Component> actionPanelEntries = new ArrayList<>();
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             AddressServiceRemote ads = locator.lookupAddressServiceRemote();
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
 
+            // For server-based messages, get body from DTO (may need to wait for it to load)
+            String body;
+            if (msgC.isServerBased()) {
+                MailMessageDTO dto = msgC.getMessageDTO();
+                // Wait for body to become available (loaded by MailContentUI's background thread)
+                int waitCount = 0;
+                while (dto.getBody() == null && waitCount < 100) {
+                    Thread.sleep(50);
+                    waitCount++;
+                    dto = msgC.getMessageDTO();
+                    if (loadId != this.actionPanelLoadId) return;
+                }
+                body = dto.getBody() != null ? dto.getBody() : "";
+            } else {
+                body = this.mailContentUI.getBody();
+            }
+
+            if (loadId != this.actionPanelLoadId) return;
+
             ArrayList<String> phoneNumbers = new ArrayList<>();
             try {
-                Collection<Keyword> keywords = afs.extractKeywordsFromText(this.mailContentUI.getBody());
+                Collection<Keyword> keywords = afs.extractKeywordsFromText(body);
                 for (Keyword w : keywords) {
                     if (w.getType() == Keyword.TYPE_PHONENR) {
                         phoneNumbers.add(w.getValue());
@@ -2942,61 +3048,62 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 log.error("Could not extract keywords from email", t);
             }
 
+            if (loadId != this.actionPanelLoadId) return;
+
             // find any potential cases by looking for file numbers in subject and body
-            if((System.currentTimeMillis()-this.lastFileNumbersUpdate)>15000l) {
+            if ((System.currentTimeMillis() - this.lastFileNumbersUpdate) > 15000l) {
                 this.allFileNumbers = afs.getAllArchiveFileNumbers(true);
-                this.lastFileNumbersUpdate=System.currentTimeMillis();
+                this.lastFileNumbersUpdate = System.currentTimeMillis();
             }
             ArrayList<ArchiveFileBean> subjectBodyCases = new ArrayList<>();
-            
+
             String subject = msgC.isServerBased() ? (msgC.getMessageDTO().getSubject() != null ? msgC.getMessageDTO().getSubject().toLowerCase() : "") : msgC.getMessage().getSubject().toLowerCase();
-            String body = this.mailContentUI.getBody().toLowerCase();
-            
+            String bodyLower = body.toLowerCase();
+
+            // Deduplicate: collect matching file numbers first, then do one lookup per unique match
+            Set<String> matchedFileNumbers = new LinkedHashSet<>();
             for (String fn : allFileNumbers) {
                 String fnLower = fn.toLowerCase();
-                if (subject.contains(fnLower)) {
-                    ArchiveFileBean a = afs.getArchiveFileByFileNumber(fn);
-                    if (a != null) {
-                        subjectBodyCases.add(a);
-                    }
-                } else if (body.contains(fnLower)) {
-                    ArchiveFileBean a = afs.getArchiveFileByFileNumber(fn);
-                    if (a != null) {
-                        subjectBodyCases.add(a);
-                    }
+                if (subject.contains(fnLower) || bodyLower.contains(fnLower)) {
+                    matchedFileNumbers.add(fn);
                 }
             }
-            
-            // find by foreign file numbers
-            if((System.currentTimeMillis()-this.lastForeignFileNumbersUpdate)>15000l) {
-                this.allForeignFileNumbers = afs.getAllReferencedFileNumbers(5, true);
-                this.lastForeignFileNumbersUpdate=System.currentTimeMillis();
+            for (String fn : matchedFileNumbers) {
+                ArchiveFileBean a = afs.getArchiveFileByFileNumber(fn);
+                if (a != null) {
+                    subjectBodyCases.add(a);
+                }
             }
+
+            if (loadId != this.actionPanelLoadId) return;
+
+            // find by foreign file numbers (deduplicated)
+            if ((System.currentTimeMillis() - this.lastForeignFileNumbersUpdate) > 15000l) {
+                this.allForeignFileNumbers = afs.getAllReferencedFileNumbers(5, true);
+                this.lastForeignFileNumbersUpdate = System.currentTimeMillis();
+            }
+            Set<String> matchedForeignFileNumbers = new LinkedHashSet<>();
             for (String fn : allForeignFileNumbers) {
                 String fnLower = fn.toLowerCase();
                 if (!StringUtils.isEmpty(fnLower)) {
-                    if (subject.contains(fnLower)) {
-                        List<ArchiveFileAddressesBean> a = afs.getArchiveFileAddressesByReference(fn);
-                        if (a != null) {
-                            for (ArchiveFileAddressesBean aab : a) {
-                                subjectBodyCases.add(aab.getArchiveFileKey());
-                            }
-                        }
-                        if(subjectBodyCases.size()>20)
-                            break;
-                    } else if (body.contains(fnLower)) {
-                        List<ArchiveFileAddressesBean> a = afs.getArchiveFileAddressesByReference(fn);
-                        if (a != null) {
-                            for (ArchiveFileAddressesBean aab : a) {
-                                subjectBodyCases.add(aab.getArchiveFileKey());
-                            }
-                        }
-                        if(subjectBodyCases.size()>20)
-                            break;
+                    if (subject.contains(fnLower) || bodyLower.contains(fnLower)) {
+                        matchedForeignFileNumbers.add(fn);
                     }
                 }
             }
-            
+            for (String fn : matchedForeignFileNumbers) {
+                List<ArchiveFileAddressesBean> a = afs.getArchiveFileAddressesByReference(fn);
+                if (a != null) {
+                    for (ArchiveFileAddressesBean aab : a) {
+                        subjectBodyCases.add(aab.getArchiveFileKey());
+                    }
+                }
+                if (subjectBodyCases.size() > 20)
+                    break;
+            }
+
+            if (loadId != this.actionPanelLoadId) return;
+
             AddressBean[] relevantAddresses = null;
             String senderName = "";
             String senderAddress = "";
@@ -3025,6 +3132,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     }
                 }
             }
+
+            if (loadId != this.actionPanelLoadId) return;
 
             String subjectForCase = msgC.isServerBased() ? (msgC.getMessageDTO().getSubject() != null ? msgC.getMessageDTO().getSubject() : "") : (msgC.getMessage() != null ? msgC.getMessage().getSubject() : "");
             CreateNewCasePanel cncp = new CreateNewCasePanel(this.getClass().getName(), this, relevantAddresses, subjectForCase, this.mailContentUI, senderName, senderAddress);
@@ -3147,7 +3256,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     actionPanelEntries.add(pnp);
                 }
             }
-            
+
             // die spezifischeren Ergebnisse sollen oben stehen
             List<ArchiveFileBean> orderedCases = new ArrayList<>();
             if (subjectBodyCases.size() >= addressRelatedCases.size()) {
@@ -3178,22 +3287,35 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 i++;
             }
 
-            this.pnlActionsChild.setLayout(new GridLayout(actionPanelEntries.size(), 1));
-            for (Component o : actionPanelEntries) {
-                this.pnlActionsChild.add(o);
-            }
+            if (loadId != this.actionPanelLoadId) return;
 
-            this.jSplitPane3.setDividerLocation(0.8f);
+            // Update UI on EDT
+            final ArrayList<Component> finalEntries = actionPanelEntries;
+            SwingUtilities.invokeLater(() -> {
+                if (loadId != this.actionPanelLoadId) return;
+
+                this.pnlActionsChild.removeAll();
+                this.pnlActionsChild.setLayout(new GridLayout(finalEntries.size(), 1));
+                for (Component o : finalEntries) {
+                    this.pnlActionsChild.add(o);
+                }
+
+                this.jSplitPane3.setDividerLocation(0.8f);
+                this.pnlActionsChild.revalidate();
+                this.pnlActionsChild.repaint();
+
+                // Update table row to reflect read status
+                if (selectionIndex >= 0 && selectionIndex < tblMails.getRowCount()) {
+                    tblMails.setValueAt(msgC, selectionIndex, 2);
+                    for (int j = 1; j < tblMails.getColumnCount(); j++) {
+                        tblMails.setValueAt(tblMails.getValueAt(selectionIndex, j), selectionIndex, j);
+                    }
+                }
+            });
 
         } catch (Throwable t) {
-
+            log.error("Error populating action panel", t);
         }
-
-        this.tblMails.setValueAt(msgC, selectionIndex, 2);
-        for (int i = 1; i < this.tblMails.getColumnCount(); i++) {
-            this.tblMails.setValueAt(this.tblMails.getValueAt(selectionIndex, i), selectionIndex, i);
-        }
-
     }
 
     @Override

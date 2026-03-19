@@ -747,6 +747,35 @@ public interface EmailServiceRemote {
     MailMessageDTO getMessage(String mailboxId, String messageRef) throws Exception;
 
     /**
+     * Retrieves a full message by its opaque reference, optionally including
+     * attachment metadata. When includeAttachmentMetadata is true, the returned
+     * DTO contains a list of MailAttachmentDTO with metadata (name, size, contentType,
+     * etc.) populated. Inline attachments (CID images) and calendar files (.ics /
+     * text/calendar) have their content bytes included for immediate rendering.
+     * Regular attachment content bytes are null and must be fetched on demand via
+     * {@link #getAttachmentContent(String, String, String)}.
+     *
+     * @param mailboxId the mailbox ID
+     * @param messageRef opaque message reference
+     * @param includeAttachmentMetadata if true, populate attachments list with metadata
+     * @return full message with body content and optionally attachment metadata
+     * @throws Exception if the message is not found or access fails
+     */
+    MailMessageDTO getMessage(String mailboxId, String messageRef, boolean includeAttachmentMetadata) throws Exception;
+
+    /**
+     * Retrieves the content bytes for a single attachment identified by its ID.
+     * This is used for on-demand (lazy) loading of attachment data.
+     *
+     * @param mailboxId the mailbox ID
+     * @param messageRef opaque message reference
+     * @param attachmentId the attachment ID as returned in MailAttachmentDTO.getAttachmentId()
+     * @return the attachment with content bytes populated
+     * @throws Exception if the attachment is not found or access fails
+     */
+    MailAttachmentDTO getAttachmentContent(String mailboxId, String messageRef, String attachmentId) throws Exception;
+
+    /**
      * Retrieves attachments for a message.
      * @param mailboxId the mailbox ID
      * @param messageRef opaque message reference

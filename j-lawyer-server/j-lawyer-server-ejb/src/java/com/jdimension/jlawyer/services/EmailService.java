@@ -684,10 +684,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
+import javax.annotation.Resource;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
 import javax.ejb.Schedule;
+import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import javax.mail.Address;
 import javax.mail.Authenticator;
@@ -732,6 +734,12 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     private static final ConcurrentHashMap<String, CachedMessages> messageCache = new ConcurrentHashMap<>();
     private static final long INBOX_CACHE_TTL = 30L * 1000L; // 30 seconds
     private static final long FOLDER_CACHE_TTL = 5L * 60L * 1000L; // 5 minutes
+    // Pre-fetch cache for top inbox messages (body + attachment metadata)
+    private static final ConcurrentHashMap<String, MailMessageDTO> prefetchCache = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, List<String>> prefetchKeysByFolder = new ConcurrentHashMap<>();
+    private static final int PREFETCH_COUNT = 5;
+    // Folder ID to well-known name mapping (for Graph API inbox detection)
+    private static final ConcurrentHashMap<String, String> folderWellKnownNames = new ConcurrentHashMap<>();
 
     private static class CachedMessages {
         final List<MailMessageDTO> messages;
@@ -767,12 +775,29 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     }
 
     private void invalidateMessageCache(String mailboxId, String folderId) {
-        messageCache.remove(messageCacheKey(mailboxId, folderId));
+        String key = messageCacheKey(mailboxId, folderId);
+        messageCache.remove(key);
+        List<String> refs = prefetchKeysByFolder.remove(key);
+        if (refs != null) {
+            refs.forEach(prefetchCache::remove);
+        }
     }
 
     private void invalidateAllFolderCaches(String mailboxId) {
-        messageCache.keySet().removeIf(k -> k.startsWith(mailboxId + ":"));
+        String prefix = mailboxId + ":";
+        messageCache.keySet().removeIf(k -> k.startsWith(prefix));
+        prefetchKeysByFolder.keySet().removeIf(k -> {
+            if (k.startsWith(prefix)) {
+                List<String> refs = prefetchKeysByFolder.get(k);
+                if (refs != null) refs.forEach(prefetchCache::remove);
+                return true;
+            }
+            return false;
+        });
     }
+
+    @Resource
+    private SessionContext context;
 
     @EJB
     private MailboxSetupFacadeLocal mailboxSetupFacade;
@@ -910,18 +935,94 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             result = imapListMessages(ms, folderId, top, offset, sinceDate, unreadOnly, searchTerm);
         }
 
-        // Inbox detection: IMAP uses "INBOX", Graph API inbox ID is resolved separately
-        boolean isInbox = "INBOX".equalsIgnoreCase(folderId);
+        // Inbox detection: IMAP uses "INBOX", Graph API uses opaque GUID resolved via wellKnownNames
+        boolean isInbox = "INBOX".equalsIgnoreCase(folderId)
+                || MailFolderDTO.WELL_KNOWN_INBOX.equals(folderWellKnownNames.get(folderId));
 
         messageCache.put(cacheKey, new CachedMessages(result, qHash, isInbox));
+
+        // Async pre-fetch top inbox messages (body + attachment metadata)
+        if (isInbox && !result.isEmpty()) {
+            List<String> refsToFetch = new ArrayList<>();
+            int limit = Math.min(PREFETCH_COUNT, result.size());
+            for (int i = 0; i < limit; i++) {
+                String ref = result.get(i).getMessageRef();
+                if (!prefetchCache.containsKey(ref)) {
+                    refsToFetch.add(ref);
+                }
+            }
+            if (!refsToFetch.isEmpty()) {
+                EmailServiceLocal self = context.getBusinessObject(EmailServiceLocal.class);
+                self.prefetchInboxMessages(mailboxId, folderId, refsToFetch);
+            }
+        }
+
         return result;
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public MailMessageDTO getMessage(String mailboxId, String messageRef) throws Exception {
+        MailMessageDTO prefetched = prefetchCache.remove(messageRef);
+        if (prefetched != null) {
+            return prefetched;
+        }
         MailboxSetup ms = getMailboxOrThrow(mailboxId);
         return ms.isMsExchange() ? graphGetMessage(ms, messageRef) : imapGetMessage(ms, messageRef);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public MailMessageDTO getMessage(String mailboxId, String messageRef, boolean includeAttachmentMetadata) throws Exception {
+        MailMessageDTO prefetched = prefetchCache.remove(messageRef);
+        if (prefetched != null) {
+            return prefetched;
+        }
+        MailMessageDTO dto = getMessage(mailboxId, messageRef);
+        if (includeAttachmentMetadata) {
+            MailboxSetup ms = getMailboxOrThrow(mailboxId);
+            List<MailAttachmentDTO> attachments = ms.isMsExchange()
+                    ? graphGetAttachmentsMetadata(ms, messageRef)
+                    : imapGetAttachmentsMetadata(ms, messageRef);
+            dto.setAttachments(attachments);
+        }
+        return dto;
+    }
+
+    @Override
+    @javax.ejb.Asynchronous
+    @PermitAll
+    public void prefetchInboxMessages(String mailboxId, String folderId, List<String> messageRefs) {
+        String folderKey = messageCacheKey(mailboxId, folderId);
+        List<String> prefetchedRefs = new ArrayList<>();
+        try {
+            MailboxSetup ms = getMailboxOrThrow(mailboxId);
+            for (String ref : messageRefs) {
+                try {
+                    MailMessageDTO dto = ms.isMsExchange() ? graphGetMessage(ms, ref) : imapGetMessage(ms, ref);
+                    List<MailAttachmentDTO> atts = ms.isMsExchange()
+                            ? graphGetAttachmentsMetadata(ms, ref)
+                            : imapGetAttachmentsMetadata(ms, ref);
+                    dto.setAttachments(atts);
+                    prefetchCache.put(ref, dto);
+                    prefetchedRefs.add(ref);
+                } catch (Exception e) {
+                    log.warn("Pre-fetch failed for message " + ref, e);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Pre-fetch failed for mailbox " + mailboxId, e);
+        }
+        prefetchKeysByFolder.put(folderKey, prefetchedRefs);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public MailAttachmentDTO getAttachmentContent(String mailboxId, String messageRef, String attachmentId) throws Exception {
+        MailboxSetup ms = getMailboxOrThrow(mailboxId);
+        return ms.isMsExchange()
+                ? graphGetSingleAttachment(ms, messageRef, attachmentId)
+                : imapGetSingleAttachment(ms, messageRef, attachmentId);
     }
 
     @Override
@@ -1453,6 +1554,24 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 if (contentId != null) contentId = contentId.replaceAll("[<>]", "");
             }
 
+            // Extract text/calendar parts as attachments (e.g. Teams meeting invitations)
+            if (part.isMimeType("text/calendar")) {
+                MailAttachmentDTO att = new MailAttachmentDTO();
+                att.setAttachmentId(fileName != null ? fileName : "meeting.ics");
+                att.setName(fileName != null ? fileName : "meeting.ics");
+                att.setContentType(part.getContentType());
+                att.setInline(false);
+                att.setSize(part.getSize());
+                InputStream calIs = part.getInputStream();
+                ByteArrayOutputStream calBos = new ByteArrayOutputStream();
+                byte[] calBuf = new byte[4096];
+                int calLen;
+                while ((calLen = calIs.read(calBuf)) != -1) calBos.write(calBuf, 0, calLen);
+                att.setContent(calBos.toByteArray());
+                result.add(att);
+                return;
+            }
+
             // Skip body text parts (plain/html without filename and without content-id)
             if ((part.isMimeType("text/plain") || part.isMimeType("text/html"))
                     && fileName == null && contentId == null) {
@@ -1478,6 +1597,109 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 result.add(att);
             }
         }
+    }
+
+    private List<MailAttachmentDTO> imapGetAttachmentsMetadata(MailboxSetup ms, String messageRef) throws Exception {
+        String folderName = parseImapRefFolder(messageRef);
+        long[] parsed = parseImapRef(messageRef);
+        Store store = imapConnect(ms);
+        try {
+            Folder folder = store.getFolder(folderName);
+            folder.open(Folder.READ_ONLY);
+            try {
+                UIDFolder uidFolder = (UIDFolder) folder;
+                if (uidFolder.getUIDValidity() != parsed[0]) throw new Exception("UIDVALIDITY mismatch");
+                Message msg = uidFolder.getMessageByUID(parsed[1]);
+                if (msg == null) throw new Exception("Message not found");
+                List<MailAttachmentDTO> result = new ArrayList<>();
+                extractAttachmentsMetadata(msg, result);
+                return result;
+            } finally {
+                folder.close(false);
+            }
+        } finally {
+            // store kept open in cache for reuse
+        }
+    }
+
+    private void extractAttachmentsMetadata(Part part, List<MailAttachmentDTO> result) throws Exception {
+        if (part.isMimeType("multipart/*")) {
+            Multipart multipart = (Multipart) part.getContent();
+            for (int i = 0; i < multipart.getCount(); i++) {
+                extractAttachmentsMetadata(multipart.getBodyPart(i), result);
+            }
+        } else {
+            String disposition = part.getDisposition();
+            String fileName = part.getFileName();
+            String contentId = null;
+            boolean isInline = Part.INLINE.equalsIgnoreCase(disposition);
+
+            if (part instanceof MimeBodyPart) {
+                contentId = ((MimeBodyPart) part).getContentID();
+                if (contentId != null) contentId = contentId.replaceAll("[<>]", "");
+            }
+
+            // text/calendar parts: always include bytes (calendar rendering)
+            if (part.isMimeType("text/calendar")) {
+                MailAttachmentDTO att = new MailAttachmentDTO();
+                att.setAttachmentId(fileName != null ? fileName : "meeting.ics");
+                att.setName(fileName != null ? fileName : "meeting.ics");
+                att.setContentType(part.getContentType());
+                att.setInline(false);
+                att.setSize(part.getSize());
+                InputStream calIs = part.getInputStream();
+                ByteArrayOutputStream calBos = new ByteArrayOutputStream();
+                byte[] calBuf = new byte[4096];
+                int calLen;
+                while ((calLen = calIs.read(calBuf)) != -1) calBos.write(calBuf, 0, calLen);
+                att.setContent(calBos.toByteArray());
+                result.add(att);
+                return;
+            }
+
+            // Skip body text parts (plain/html without filename and without content-id)
+            if ((part.isMimeType("text/plain") || part.isMimeType("text/html"))
+                    && fileName == null && contentId == null) {
+                return;
+            }
+
+            // Include if: has disposition, has content-id, or has filename
+            if (disposition != null || contentId != null || fileName != null) {
+                if (fileName == null && contentId != null) fileName = contentId;
+                MailAttachmentDTO att = new MailAttachmentDTO();
+                att.setAttachmentId(fileName != null ? fileName : String.valueOf(result.size()));
+                att.setName(fileName != null ? fileName : "inline_" + result.size());
+                att.setContentType(part.getContentType());
+                att.setInline(isInline || (contentId != null && disposition == null));
+                att.setContentId(contentId);
+                att.setSize(part.getSize());
+
+                // Eagerly load bytes for: inline with contentId (CID images), or .ics files
+                boolean eagerLoad = (att.isInline() && contentId != null)
+                        || (fileName != null && fileName.toLowerCase().endsWith(".ics"));
+                if (eagerLoad) {
+                    InputStream is = part.getInputStream();
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    byte[] buf = new byte[4096];
+                    int len;
+                    while ((len = is.read(buf)) != -1) bos.write(buf, 0, len);
+                    att.setContent(bos.toByteArray());
+                }
+                // else: content stays null (lazy)
+
+                result.add(att);
+            }
+        }
+    }
+
+    private MailAttachmentDTO imapGetSingleAttachment(MailboxSetup ms, String messageRef, String attachmentId) throws Exception {
+        List<MailAttachmentDTO> all = imapGetAttachments(ms, messageRef);
+        for (MailAttachmentDTO att : all) {
+            if (attachmentId.equals(att.getAttachmentId())) {
+                return att;
+            }
+        }
+        throw new Exception("Attachment not found: " + attachmentId);
     }
 
     private void smtpSendMail(MailboxSetup ms, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, String priority, boolean readReceipt, String inReplyTo, String references) throws Exception {
@@ -1740,7 +1962,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 dto.setUnreadCount(f.get("unreadItemCount") != null ? ((Number) f.get("unreadItemCount")).intValue() : 0);
                 dto.setTotalCount(f.get("totalItemCount") != null ? ((Number) f.get("totalItemCount")).intValue() : 0);
                 if (wellKnownIdMap.containsKey(folderId)) {
-                    dto.setWellKnownName(wellKnownIdMap.get(folderId));
+                    String wkName = wellKnownIdMap.get(folderId);
+                    dto.setWellKnownName(wkName);
+                    folderWellKnownNames.put(folderId, wkName);
                 }
                 dto.setParentFolderId(parentId);
                 result.add(dto);
@@ -1890,6 +2114,66 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             }
         }
         return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<MailAttachmentDTO> graphGetAttachmentsMetadata(MailboxSetup ms, String messageRef) throws Exception {
+        // Request metadata only — no contentBytes — except for inline and .ics attachments
+        String url = GRAPH_BASE + "/users/" + URLEncoder.encode(ms.getEmailAddress(), StandardCharsets.UTF_8)
+                + "/messages/" + messageRef + "/attachments"
+                + "?$select=id,name,contentType,size,isInline";
+        String json = graphGet(ms, url);
+        Map<String, Object> response = new ObjectMapper().readValue(json, Map.class);
+        List<Map<String, Object>> value = (List<Map<String, Object>>) response.get("value");
+        List<MailAttachmentDTO> result = new ArrayList<>();
+        if (value != null) {
+            for (Map<String, Object> a : value) {
+                if (!"#microsoft.graph.fileAttachment".equals(a.get("@odata.type"))) continue;
+                MailAttachmentDTO att = new MailAttachmentDTO();
+                att.setAttachmentId((String) a.get("id"));
+                att.setName((String) a.get("name"));
+                att.setContentType((String) a.get("contentType"));
+                att.setSize(a.get("size") != null ? ((Number) a.get("size")).longValue() : 0);
+                att.setInline(Boolean.TRUE.equals(a.get("isInline")));
+                att.setContentId((String) a.get("contentId"));
+
+                // Eagerly load bytes for: inline with contentId (CID images), text/calendar, or .ics files
+                String attName = att.getName();
+                String ct = att.getContentType() != null ? att.getContentType().toLowerCase() : "";
+                boolean eagerLoad = (att.isInline() && att.getContentId() != null)
+                        || ct.startsWith("text/calendar")
+                        || (attName != null && attName.toLowerCase().endsWith(".ics"));
+                if (eagerLoad) {
+                    try {
+                        MailAttachmentDTO full = graphGetSingleAttachment(ms, messageRef, att.getAttachmentId());
+                        att.setContent(full.getContent());
+                    } catch (Exception e) {
+                        // best effort — content stays null
+                    }
+                }
+
+                result.add(att);
+            }
+        }
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private MailAttachmentDTO graphGetSingleAttachment(MailboxSetup ms, String messageRef, String attachmentId) throws Exception {
+        String url = GRAPH_BASE + "/users/" + URLEncoder.encode(ms.getEmailAddress(), StandardCharsets.UTF_8)
+                + "/messages/" + messageRef + "/attachments/" + attachmentId;
+        String json = graphGet(ms, url);
+        Map<String, Object> a = new ObjectMapper().readValue(json, Map.class);
+        MailAttachmentDTO att = new MailAttachmentDTO();
+        att.setAttachmentId((String) a.get("id"));
+        att.setName((String) a.get("name"));
+        att.setContentType((String) a.get("contentType"));
+        att.setSize(a.get("size") != null ? ((Number) a.get("size")).longValue() : 0);
+        att.setInline(Boolean.TRUE.equals(a.get("isInline")));
+        att.setContentId((String) a.get("contentId"));
+        String contentBytes = (String) a.get("contentBytes");
+        if (contentBytes != null) att.setContent(java.util.Base64.getDecoder().decode(contentBytes));
+        return att;
     }
 
     @SuppressWarnings("unchecked")

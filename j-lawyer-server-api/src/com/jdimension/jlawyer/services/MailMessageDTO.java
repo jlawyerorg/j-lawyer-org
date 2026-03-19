@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.services;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 public class MailMessageDTO implements Serializable {
 
@@ -684,6 +685,7 @@ public class MailMessageDTO implements Serializable {
     private String inReplyTo;
     private String references;
     private boolean readReceiptRequested;
+    private List<MailAttachmentDTO> attachments;
 
     public MailMessageDTO() {
     }
@@ -729,4 +731,7 @@ public class MailMessageDTO implements Serializable {
 
     public boolean isReadReceiptRequested() { return readReceiptRequested; }
     public void setReadReceiptRequested(boolean readReceiptRequested) { this.readReceiptRequested = readReceiptRequested; }
+
+    public List<MailAttachmentDTO> getAttachments() { return attachments; }
+    public void setAttachments(List<MailAttachmentDTO> attachments) { this.attachments = attachments; }
 }

@@ -800,6 +800,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             + "        "
             + "</body></html>";
     private MessageContainer emlMsgContainer = null;
+    private volatile long serverBasedLoadId = 0;
+    private java.util.List<com.jdimension.jlawyer.services.MailAttachmentDTO> serverAttachments = null;
     private OutlookMessage outlookMsgContainer = null;
     private ArchiveFileBean caseContext = null;
     private String cachedHtml = null;
@@ -964,6 +966,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
     public void clear() {
         this.emlMsgContainer = null;
+        this.serverAttachments = null;
 
         this.lblSentDate.setText(" ");
         this.lblSubject.setText(" ");
@@ -1020,7 +1023,17 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             }
 
             byte[] data = null;
-            if (this.emlMsgContainer != null) {
+            if (this.emlMsgContainer != null && this.emlMsgContainer.isServerBased()) {
+                // ICS bytes are eagerly loaded — look in cached serverAttachments
+                if (this.serverAttachments != null) {
+                    for (com.jdimension.jlawyer.services.MailAttachmentDTO att : this.serverAttachments) {
+                        if (icsAttachmentName.equals(att.getName()) && att.getContent() != null) {
+                            data = att.getContent();
+                            break;
+                        }
+                    }
+                }
+            } else if (this.emlMsgContainer != null) {
                 data = EmailUtils.getAttachmentBytes(icsAttachmentName, this.emlMsgContainer);
             } else if (this.outlookMsgContainer != null) {
                 for (OutlookFileAttachment ofa : this.outlookMsgContainer.fetchTrueAttachments()) {
@@ -1220,7 +1233,13 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         // Server-based path: load message and attachments via EJB
         if (msgC.isServerBased()) {
-            return setMessageServerBased(msgC);
+            // Increment load ID to invalidate any in-flight background loads
+            final long thisLoadId = ++serverBasedLoadId;
+            // Run server calls in background thread to avoid blocking EDT
+            new Thread(() -> {
+                setMessageServerBased(msgC, thisLoadId);
+            }).start();
+            return true;
         }
 
         try {
@@ -2126,20 +2145,10 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             try {
                 byte[] data = null;
                 if (this.emlMsgContainer != null && this.emlMsgContainer.isServerBased()) {
-                    // Server-based: fetch attachment by name from server
+                    // Server-based: fetch single attachment content on demand
                     String attName = this.lstAttachments.getSelectedValue().toString();
                     try {
-                        com.jdimension.jlawyer.client.settings.ClientSettings settings = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
-                        com.jdimension.jlawyer.services.JLawyerServiceLocator locator = com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                        java.util.List<com.jdimension.jlawyer.services.MailAttachmentDTO> atts = locator.lookupEmailServiceRemote().getAttachments(this.emlMsgContainer.getMailboxId(), this.emlMsgContainer.getMessageRef());
-                        if (atts != null) {
-                            for (com.jdimension.jlawyer.services.MailAttachmentDTO att : atts) {
-                                if (attName.equals(att.getName())) {
-                                    data = att.getContent();
-                                    break;
-                                }
-                            }
-                        }
+                        data = loadSingleAttachmentContent(attName);
                     } catch (Exception ex2) {
                         log.error("Error fetching attachment from server", ex2);
                     }
@@ -2187,14 +2196,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 byte[] data = null;
                 if (this.emlMsgContainer != null && this.emlMsgContainer.isServerBased()) {
                     try {
-                        com.jdimension.jlawyer.client.settings.ClientSettings csettings = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
-                        com.jdimension.jlawyer.services.JLawyerServiceLocator loc = com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(csettings.getLookupProperties());
-                        java.util.List<com.jdimension.jlawyer.services.MailAttachmentDTO> atts = loc.lookupEmailServiceRemote().getAttachments(this.emlMsgContainer.getMailboxId(), this.emlMsgContainer.getMessageRef());
-                        if (atts != null) {
-                            for (com.jdimension.jlawyer.services.MailAttachmentDTO att : atts) {
-                                if (selected.toString().equals(att.getName())) { data = att.getContent(); break; }
-                            }
-                        }
+                        data = loadSingleAttachmentContent(selected.toString());
                     } catch (Exception ex2) { log.error("Error fetching attachment from server", ex2); }
                 } else if (this.emlMsgContainer != null) {
                     data = EmailUtils.getAttachmentBytes(selected.toString(), this.emlMsgContainer);
@@ -2292,7 +2294,11 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 for (Object selected : this.lstAttachments.getSelectedValuesList()) {
 
                     byte[] data = null;
-                    if (this.emlMsgContainer != null) {
+                    if (this.emlMsgContainer != null && this.emlMsgContainer.isServerBased()) {
+                        try {
+                            data = loadSingleAttachmentContent(selected.toString());
+                        } catch (Exception ex2) { log.error("Error fetching attachment from server", ex2); }
+                    } else if (this.emlMsgContainer != null) {
                         data = EmailUtils.getAttachmentBytes(selected.toString(), this.emlMsgContainer);
                     } else {
                         for (OutlookFileAttachment ofa : this.outlookMsgContainer.fetchTrueAttachments()) {
@@ -2683,117 +2689,243 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
     }
 
-    private boolean setMessageServerBased(MessageContainer msgC) {
+    private void checkForCalendarEntry(java.util.List<com.jdimension.jlawyer.services.MailAttachmentDTO> attachments) {
+        try {
+            if (attachments == null) return;
+
+            byte[] icsData = null;
+            String icsName = null;
+            for (com.jdimension.jlawyer.services.MailAttachmentDTO att : attachments) {
+                if (att.getName() != null && att.getName().toLowerCase().endsWith(".ics") && att.getContent() != null) {
+                    icsData = att.getContent();
+                    icsName = att.getName();
+                    break;
+                }
+            }
+            if (icsData == null) return;
+
+            net.fortuna.ical4j.data.CalendarBuilder builder = new net.fortuna.ical4j.data.CalendarBuilder();
+            net.fortuna.ical4j.model.Calendar calendar = builder.build(new java.io.ByteArrayInputStream(icsData));
+            net.fortuna.ical4j.model.component.VEvent event = (net.fortuna.ical4j.model.component.VEvent) calendar.getComponents().getComponent(net.fortuna.ical4j.model.Component.VEVENT);
+            if (event == null) return;
+
+            net.fortuna.ical4j.model.Property summaryProp = event.getProperties().getProperty(net.fortuna.ical4j.model.Property.SUMMARY);
+            if (summaryProp != null) this.icsSummary = summaryProp.getValue();
+            net.fortuna.ical4j.model.Property descProp = event.getProperties().getProperty(net.fortuna.ical4j.model.Property.DESCRIPTION);
+            if (descProp != null) this.icsDescription = descProp.getValue();
+            net.fortuna.ical4j.model.Property locProp = event.getProperties().getProperty(net.fortuna.ical4j.model.Property.LOCATION);
+            if (locProp != null) this.icsLocation = locProp.getValue();
+            if (event.getStartDate() != null) this.icsStartDate = event.getStartDate().getDate();
+            if (event.getEndDate() != null) this.icsEndDate = event.getEndDate().getDate();
+
+            String displaySummary = this.icsSummary != null ? this.icsSummary : icsName;
+            String hexBlue = String.format("#%02x%02x%02x", DefaultColorTheme.COLOR_LOGO_BLUE.getRed(), DefaultColorTheme.COLOR_LOGO_BLUE.getGreen(), DefaultColorTheme.COLOR_LOGO_BLUE.getBlue());
+
+            StringBuilder dateInfo = new StringBuilder();
+            java.text.SimpleDateFormat dfLabel = new java.text.SimpleDateFormat("dd.MM.yyyy HH:mm");
+            if (this.icsStartDate != null) {
+                dateInfo.append(dfLabel.format(this.icsStartDate));
+                if (this.icsEndDate != null) {
+                    dateInfo.append(" - ").append(dfLabel.format(this.icsEndDate));
+                }
+            }
+
+            StringBuilder labelHtml = new StringBuilder();
+            labelHtml.append("<html><table cellpadding='0' cellspacing='0'><tr>");
+            labelHtml.append("<td><table cellpadding='2' cellspacing='0'><tr><td style='color:white; background-color:").append(hexBlue).append(";'>&nbsp;Kalendereinladung&nbsp;</td></tr></table></td>");
+            labelHtml.append("<td>&nbsp;&nbsp;<b>").append(displaySummary).append("</b>");
+            if (dateInfo.length() > 0) {
+                labelHtml.append("&nbsp;&nbsp;<font color='#888888'>").append(dateInfo).append("</font>");
+            }
+            if (this.icsLocation != null && !this.icsLocation.isEmpty()) {
+                labelHtml.append("&nbsp;&nbsp;<font color='#888888'>").append(this.icsLocation).append("</font>");
+            }
+            labelHtml.append("</td></tr></table></html>");
+
+            this.lblCalendarEntry.setText(labelHtml.toString());
+            this.lblCalendarEntry.setToolTipText(this.icsDescription);
+            this.lblCalendarEntry.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+
+        } catch (Exception ex) {
+            log.error("Error checking for calendar entry", ex);
+        }
+    }
+
+    private byte[] loadSingleAttachmentContent(String attName) throws Exception {
+        // First check if bytes are already present in cached metadata (inline / .ics)
+        if (this.serverAttachments != null) {
+            for (com.jdimension.jlawyer.services.MailAttachmentDTO att : this.serverAttachments) {
+                if (attName.equals(att.getName()) && att.getContent() != null) {
+                    return att.getContent();
+                }
+            }
+            // Fetch single attachment on demand by attachmentId
+            for (com.jdimension.jlawyer.services.MailAttachmentDTO att : this.serverAttachments) {
+                if (attName.equals(att.getName())) {
+                    com.jdimension.jlawyer.client.settings.ClientSettings settings = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
+                    com.jdimension.jlawyer.services.JLawyerServiceLocator locator = com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    com.jdimension.jlawyer.services.MailAttachmentDTO full = locator.lookupEmailServiceRemote().getAttachmentContent(
+                            this.emlMsgContainer.getMailboxId(), this.emlMsgContainer.getMessageRef(), att.getAttachmentId());
+                    // Cache the loaded bytes for subsequent access
+                    att.setContent(full.getContent());
+                    return full.getContent();
+                }
+            }
+        }
+        // Fallback: load all attachments (legacy path)
+        com.jdimension.jlawyer.client.settings.ClientSettings settings = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
+        com.jdimension.jlawyer.services.JLawyerServiceLocator locator = com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        java.util.List<com.jdimension.jlawyer.services.MailAttachmentDTO> atts = locator.lookupEmailServiceRemote().getAttachments(this.emlMsgContainer.getMailboxId(), this.emlMsgContainer.getMessageRef());
+        if (atts != null) {
+            for (com.jdimension.jlawyer.services.MailAttachmentDTO att : atts) {
+                if (attName.equals(att.getName())) {
+                    return att.getContent();
+                }
+            }
+        }
+        return null;
+    }
+
+    private boolean setMessageServerBased(MessageContainer msgC, long loadId) {
+        // This method runs in a background thread (called from setMessage via new Thread)
+        // All server calls happen here, UI updates are dispatched to EDT
+        // loadId is checked before UI updates to discard stale results
         try {
             com.jdimension.jlawyer.services.MailMessageDTO dto = msgC.getMessageDTO();
             if (dto == null) return true;
 
             boolean wasUnread = !msgC.isRead();
 
-            // Load full message from server if body not yet loaded
+            // Load full message with attachment metadata from server (background)
+            com.jdimension.jlawyer.client.settings.ClientSettings settings = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
+            com.jdimension.jlawyer.services.JLawyerServiceLocator locator =
+                com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             if (dto.getBody() == null) {
-                com.jdimension.jlawyer.client.settings.ClientSettings settings = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
-                com.jdimension.jlawyer.services.JLawyerServiceLocator locator =
-                    com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                dto = locator.lookupEmailServiceRemote().getMessage(msgC.getMailboxId(), msgC.getMessageRef());
+                dto = locator.lookupEmailServiceRemote().getMessage(msgC.getMailboxId(), msgC.getMessageRef(), true);
                 msgC.setMessageDTO(dto);
+            } else if (dto.getAttachments() == null) {
+                // Body already cached but no attachment metadata yet
+                com.jdimension.jlawyer.services.MailMessageDTO fullDto = locator.lookupEmailServiceRemote().getMessage(msgC.getMailboxId(), msgC.getMessageRef(), true);
+                dto.setAttachments(fullDto.getAttachments());
             }
 
-            // Mark as read AFTER loading full message (so receipt check works)
+            // Check if user has already navigated to another message
+            if (loadId != serverBasedLoadId) return false;
+
+            // Mark as read (background)
             if (wasUnread) {
-                msgC.setRead(true);
-            }
-
-            // Check for read receipt request (only for previously unread messages)
-            if (dto.isReadReceiptRequested() && wasUnread) {
-                // Find mailbox setup for sending the receipt
-                MailboxSetup receiptMs = null;
-                for (MailboxSetup mbx : UserSettings.getInstance().getMailboxes(UserSettings.getInstance().getCurrentUser().getPrincipalId())) {
-                    if (mbx.getId().equals(msgC.getMailboxId())) { receiptMs = mbx; break; }
-                }
-                if (receiptMs != null) {
-                    final MailboxSetup finalMs = receiptMs;
-                    final String receiptSubject = dto.getSubject() != null ? dto.getSubject() : "";
-                    final String receiptTo = dto.getFrom() != null ? dto.getFrom() : "";
-                    int response = JOptionPane.showConfirmDialog(this, "Der Absender hat eine Lesebestätigung angefordert - jetzt senden?", "Lesebestätigung", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-                    if (response == JOptionPane.YES_OPTION) {
-                        try {
-                            com.jdimension.jlawyer.client.settings.ClientSettings cs = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
-                            com.jdimension.jlawyer.services.JLawyerServiceLocator loc = com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(cs.getLookupProperties());
-                            loc.lookupEmailServiceRemote().sendMail(finalMs.getId(), receiptTo, null, null, "Lesebestätigung: " + receiptSubject, "Ihre Nachricht \"" + receiptSubject + "\" wurde gelesen.", "text/plain", null, "normal", false, null, null);
-                        } catch (Exception ex2) {
-                            log.error("Could not send read receipt", ex2);
-                        }
-                    }
+                try {
+                    msgC.setRead(true);
+                } catch (Exception ex) {
+                    log.error("Error marking message as read", ex);
                 }
             }
 
-            // Set header labels
-            this.lblSubject.setText(dto.getSubject() != null ? dto.getSubject() : "");
-            this.lblSubject.setToolTipText(dto.getSubject());
-            this.lblFrom.setText(dto.getFrom() != null ? dto.getFrom() : "");
-            this.lblFrom.setToolTipText(dto.getFrom());
-            if (dto.getDate() != null) {
-                this.lblSentDate.setText(new java.text.SimpleDateFormat("dd.MM.yyyy, HH:mm").format(dto.getDate()));
-            } else {
-                this.lblSentDate.setText("");
-            }
-            if (dto.getTo() != null) {
-                String toStr = String.join(", ", dto.getTo());
-                this.lblTo.setText(toStr);
-                this.lblTo.setToolTipText(toStr);
-            } else {
-                this.lblTo.setText("");
-            }
-            if (dto.getCc() != null && dto.getCc().length > 0) {
-                String ccStr = String.join(", ", dto.getCc());
-                this.lblCC.setText(ccStr);
-                this.lblCC.setToolTipText(ccStr);
-            } else {
-                this.lblCC.setText("");
-            }
-
-            // Set attachment list
-            this.lstAttachments.setModel(new javax.swing.DefaultListModel<>());
-
-            // Populate CID cache from attachments
+            // Use attachment metadata from getMessage (lazy-loaded, inline bytes already present)
             com.jdimension.jlawyer.client.editors.documents.viewer.html.cid.CidCache cids =
                 com.jdimension.jlawyer.client.editors.documents.viewer.html.cid.CidCache.getInstance();
             cids.clear();
 
-            com.jdimension.jlawyer.client.settings.ClientSettings settings = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
-            com.jdimension.jlawyer.services.JLawyerServiceLocator locator =
-                com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            java.util.List<com.jdimension.jlawyer.services.MailAttachmentDTO> attachments =
-                locator.lookupEmailServiceRemote().getAttachments(msgC.getMailboxId(), msgC.getMessageRef());
+            java.util.List<com.jdimension.jlawyer.services.MailAttachmentDTO> attachments = dto.getAttachments();
 
-            // Populate CID cache and attachment list
             javax.swing.DefaultListModel<String> attModel = new javax.swing.DefaultListModel<>();
             if (attachments != null) {
                 for (com.jdimension.jlawyer.services.MailAttachmentDTO att : attachments) {
                     if (att.isInline() && att.getContentId() != null) {
                         cids.put(att.getContentId(), att.getContent());
                     }
-                    if (!att.isInline() || att.getName() != null) {
+                    // Skip pure inline CID images — they are not relevant for the user
+                    if (att.isInline() && att.getContentId() != null) {
+                        continue;
+                    }
+                    if (att.getName() != null) {
                         attModel.addElement(att.getName());
                     }
                 }
             }
 
-            // Update attachment list in UI
-            this.lstAttachments.setModel(attModel);
+            // Check again if user has navigated away during attachment loading
+            if (loadId != serverBasedLoadId) return false;
 
-            // Set content in UI
-            String body = dto.getBody() != null ? dto.getBody() : "";
-            String contentType = dto.getBodyContentType() != null ? dto.getBodyContentType() : "text/plain";
+            // Store attachments for on-demand content loading
+            this.serverAttachments = attachments;
 
-            // Display using the web view
-            this.setBody(body, contentType);
+            // All data loaded — now update UI on EDT
+            final com.jdimension.jlawyer.services.MailMessageDTO finalDto = dto;
+            final javax.swing.DefaultListModel<String> finalAttModel = attModel;
+            final java.util.List<com.jdimension.jlawyer.services.MailAttachmentDTO> finalAttachments = attachments;
+            final boolean finalWasUnread = wasUnread;
+            final MessageContainer finalMsgC = msgC;
+
+            javax.swing.SwingUtilities.invokeLater(() -> {
+                // Set header labels
+                this.lblSubject.setText(finalDto.getSubject() != null ? finalDto.getSubject() : "");
+                this.lblSubject.setToolTipText(finalDto.getSubject());
+                this.lblFrom.setText(finalDto.getFrom() != null ? finalDto.getFrom() : "");
+                this.lblFrom.setToolTipText(finalDto.getFrom());
+                if (finalDto.getDate() != null) {
+                    this.lblSentDate.setText(new java.text.SimpleDateFormat("dd.MM.yyyy, HH:mm").format(finalDto.getDate()));
+                } else {
+                    this.lblSentDate.setText("");
+                }
+                if (finalDto.getTo() != null) {
+                    String toStr = String.join(", ", finalDto.getTo());
+                    this.lblTo.setText(toStr);
+                    this.lblTo.setToolTipText(toStr);
+                } else {
+                    this.lblTo.setText("");
+                }
+                if (finalDto.getCc() != null && finalDto.getCc().length > 0) {
+                    String ccStr = String.join(", ", finalDto.getCc());
+                    this.lblCC.setText(ccStr);
+                    this.lblCC.setToolTipText(ccStr);
+                } else {
+                    this.lblCC.setText("");
+                }
+
+                // Update attachment list
+                this.lstAttachments.setModel(finalAttModel);
+
+                // Display body
+                String body = finalDto.getBody() != null ? finalDto.getBody() : "";
+                String contentType = finalDto.getBodyContentType() != null ? finalDto.getBodyContentType() : "text/plain";
+                this.setBody(body, contentType);
+
+                // Check for ICS calendar entries in attachments
+                checkForCalendarEntry(finalAttachments);
+
+                // Check for read receipt request (on EDT for dialog)
+                if (finalDto.isReadReceiptRequested() && finalWasUnread) {
+                    MailboxSetup receiptMs = null;
+                    try {
+                        for (MailboxSetup mbx : UserSettings.getInstance().getMailboxes(UserSettings.getInstance().getCurrentUser().getPrincipalId())) {
+                            if (mbx.getId().equals(finalMsgC.getMailboxId())) { receiptMs = mbx; break; }
+                        }
+                    } catch (Exception ex) { log.error(ex); }
+                    if (receiptMs != null) {
+                        final MailboxSetup finalMs = receiptMs;
+                        final String receiptSubject = finalDto.getSubject() != null ? finalDto.getSubject() : "";
+                        final String receiptTo = finalDto.getFrom() != null ? finalDto.getFrom() : "";
+                        int response = JOptionPane.showConfirmDialog(this, "Der Absender hat eine Lesebestätigung angefordert - jetzt senden?", "Lesebestätigung", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                        if (response == JOptionPane.YES_OPTION) {
+                            new Thread(() -> {
+                                try {
+                                    com.jdimension.jlawyer.client.settings.ClientSettings cs = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
+                                    com.jdimension.jlawyer.services.JLawyerServiceLocator loc = com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(cs.getLookupProperties());
+                                    loc.lookupEmailServiceRemote().sendMail(finalMs.getId(), receiptTo, null, null, "Lesebestätigung: " + receiptSubject, "Ihre Nachricht \"" + receiptSubject + "\" wurde gelesen.", "text/plain", null, "normal", false, null, null);
+                                } catch (Exception ex2) {
+                                    log.error("Could not send read receipt", ex2);
+                                }
+                            }).start();
+                        }
+                    }
+                }
+            });
 
             return true;
 
         } catch (Exception ex) {
-            org.apache.log4j.Logger.getLogger(MailContentUI.class.getName()).error("Error loading server-based message", ex);
+            log.error("Error loading server-based message", ex);
             return false;
         }
     }
