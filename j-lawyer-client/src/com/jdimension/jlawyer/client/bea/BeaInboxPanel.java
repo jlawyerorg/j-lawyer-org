@@ -3062,6 +3062,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                     if (tn == null) {
                         log.error("last path component of source folder is null");
+                        return true;
                     }
                     BeaFolder sourceFolder = (BeaFolder) tn.getUserObject();
                     if (sourceFolder == null) {

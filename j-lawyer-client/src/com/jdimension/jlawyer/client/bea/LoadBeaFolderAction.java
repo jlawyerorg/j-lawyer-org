@@ -812,7 +812,9 @@ public class LoadBeaFolderAction extends ProgressableAction {
                 });
                 try {
                     if (i == (messageIds.size() - 1) || i == (messageIds.size() / 2)) {
-                        ComponentUtils.autoSizeColumns(table);
+                        SwingUtilities.invokeLater(() -> {
+                            ComponentUtils.autoSizeColumns(table);
+                        });
                     }
                 } catch (Throwable t) {
                     log.error(t);
@@ -821,7 +823,13 @@ public class LoadBeaFolderAction extends ProgressableAction {
             }
 
             try {
-                table.getRowSorter().toggleSortOrder(this.sortCol);
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        table.getRowSorter().toggleSortOrder(this.sortCol);
+                    } catch (Throwable t) {
+                        log.error("Error sorting beA messages", t);
+                    }
+                });
 
             } catch (Throwable t) {
                 log.error("Error sorting beA messages", t);
@@ -838,7 +846,7 @@ public class LoadBeaFolderAction extends ProgressableAction {
         } catch (Exception ex) {
             log.error(ex);
             EditorsRegistry.getInstance().clearStatus();
-            return false;
+            throw ex;
         }
         return true;
     }
