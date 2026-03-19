@@ -9820,6 +9820,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         protected void processDrag(DropTargetDragEvent dtde) {
             if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
                 dtde.acceptDrag(DnDConstants.ACTION_COPY);
+            } else if (OutlookDropHelper.isOutlookDrop(dtde.getCurrentDataFlavors())) {
+                dtde.acceptDrag(DnDConstants.ACTION_COPY);
             } else {
                 dtde.rejectDrag();
             }
@@ -9883,6 +9885,28 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                 } catch (Exception ex) {
                     log.error("file drop error", ex);
+                }
+            } else if (OutlookDropHelper.isOutlookDrop(transferable.getTransferDataFlavors())) {
+                dtde.acceptDrop(dtde.getDropAction());
+                try {
+                    List<File> tempFiles = OutlookDropHelper.extractOutlookFiles(transferable);
+                    if (!tempFiles.isEmpty()) {
+                        ThreadUtils.setWaitCursor(p);
+
+                        ArrayList<File> files = new ArrayList<>(tempFiles);
+                        ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+                        pi.setShowCancelButton(true);
+                        UploadDocumentsAction a = new UploadDocumentsAction(pi, p, dto, caseFolderPanel1, files, caseFolderPanel1.getFoldersListPanel().getRootFolder(), null);
+
+                        a.start();
+                        dtde.dropComplete(true);
+                    } else {
+                        log.error("Outlook drop: no files could be extracted");
+                        dtde.dropComplete(false);
+                    }
+                } catch (Exception ex) {
+                    log.error("Outlook drop error", ex);
+                    dtde.dropComplete(false);
                 }
             } else {
 
