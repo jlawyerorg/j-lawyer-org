@@ -718,6 +718,13 @@ public class MacMicrosoftOfficeLauncher extends OfficeLauncher {
                     
                     p = Runtime.getRuntime().exec(new String[]{"open", "-a", binary, url});
                     log.debug("using " + binary + " for " + odoc.getName() + " at url " + url);
+
+                    // tell the app to run in foreground / with focus
+                    try {
+                        Runtime.getRuntime().exec(new String[]{"osascript", "-e", "tell application \"" + binary + "\" to activate"});
+                    } catch (Throwable ta) {
+                        log.error("could not activate " + binary + " via osascript: " + ta.getMessage());
+                    }
                     
                 } catch (Throwable ex) {
                     log.error("error starting winword" + ex.getMessage());
