@@ -2379,9 +2379,14 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     this.taBeaCertificate.setText("kein Zertifikat hinterlegt");
                 } else {
                     this.taBeaCertificate.setText("");
-                    Map<String,String> ht = BeaAccess.getCertificateInformation(u.getBeaCertificate(), CryptoProvider.defaultCrypto().decrypt(u.getBeaCertificatePassword()));
-                    for (Object key : ht.keySet()) {
-                        this.taBeaCertificate.setText(this.taBeaCertificate.getText() + key.toString() + ": " + ht.get(key) + System.getProperty("line.separator"));
+                    try {
+                        Map<String, String> ht = BeaAccess.getCertificateInformation(u.getBeaCertificate(), CryptoProvider.defaultCrypto().decrypt(u.getBeaCertificatePassword()));
+                        for (Object key : ht.keySet()) {
+                            this.taBeaCertificate.setText(this.taBeaCertificate.getText() + key.toString() + ": " + ht.get(key) + System.getProperty("line.separator"));
+                        }
+                    } catch (Throwable t) {
+                        log.warn("Unable to get beA certificate information", t);
+                        this.taBeaCertificate.setText("Zertifikatsinformationen können nicht ermittelt werden: " + t.getMessage());
                     }
                 }
 

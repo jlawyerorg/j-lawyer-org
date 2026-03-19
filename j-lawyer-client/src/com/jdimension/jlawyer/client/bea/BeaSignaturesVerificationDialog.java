@@ -663,16 +663,28 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.bea;
 
+import com.jdimension.jlawyer.client.editors.documents.viewer.PdfImageScrollingPanel;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
+import com.jdimension.jlawyer.services.bea.rest.BeaAttachmentValidationResult;
+import com.jdimension.jlawyer.services.bea.rest.BeaMessageValidationResult;
+import com.jdimension.jlawyer.services.bea.rest.BeaVerificationResult;
+import java.awt.BorderLayout;
+import java.util.List;
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.text.StyledEditorKit;
 import javax.swing.text.html.HTMLDocument;
-import com.jdimension.jlawyer.services.bea.rest.BeaVerificationResult;
 
 /**
  *
  * @author jens
  */
 public class BeaSignaturesVerificationDialog extends javax.swing.JDialog {
+
+    private BeaMessageValidationResult validationResult;
 
     /**
      * Creates new form BeaEebDisplayDialog
@@ -683,7 +695,248 @@ public class BeaSignaturesVerificationDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
     }
-    
+
+    public void setValidationResult(BeaMessageValidationResult result) {
+        this.validationResult = result;
+
+        populateSummary(result);
+        populateAttachmentsTable(result);
+        populateVhnPanel(result);
+        populatePdfReport(result);
+
+        String overallStatus = deriveOverallStatus(result);
+        setStatus(overallStatus);
+    }
+
+    public BeaMessageValidationResult getValidationResult() {
+        return this.validationResult;
+    }
+
+    private void populateSummary(BeaMessageValidationResult result) {
+        StringBuilder html = new StringBuilder();
+        html.append("<html><head><style>");
+        html.append("body { font-family: sans-serif; margin: 8px; }");
+        html.append("table { border-collapse: collapse; width: 100%; margin-top: 8px; }");
+        html.append("th { text-align: left; padding: 6px 10px; background-color: #4a6fa5; color: #ffffff; }");
+        html.append("td { padding: 5px 10px; border-bottom: 1px solid #dddddd; }");
+        html.append(".success { color: #2e7d32; font-weight: bold; }");
+        html.append(".failed { color: #c62828; font-weight: bold; }");
+        html.append(".partial { color: #ef6c00; font-weight: bold; }");
+        html.append(".section { margin-top: 16px; margin-bottom: 4px; font-size: 1.1em; font-weight: bold; }");
+        html.append("</style></head><body>");
+
+        List<BeaAttachmentValidationResult> atts = result.getAttachmentResults();
+        if (atts != null && !atts.isEmpty()) {
+            html.append("<div class='section'>Validierungsergebnisse (").append(atts.size()).append(" Anh\u00e4nge)</div>");
+            html.append("<table><tr><th>Anhang</th><th>Signaturlevel</th><th>Validierung</th></tr>");
+            for (BeaAttachmentValidationResult att : atts) {
+                html.append("<tr>");
+                html.append("<td>").append(safe(att.getAttachmentReference())).append("</td>");
+                html.append("<td>").append(friendlyLevel(att.getValidationLevel())).append("</td>");
+                html.append("<td class='").append(indicationCssClass(att.getValidationIndication())).append("'>");
+                html.append(friendlyIndication(att.getValidationIndication()));
+                html.append("</td>");
+                html.append("</tr>");
+            }
+            html.append("</table>");
+        } else {
+            html.append("<div class='section'>Keine Anh\u00e4nge zur Validierung vorhanden.</div>");
+        }
+
+        if (result.getVhnResult() != null) {
+            BeaAttachmentValidationResult vhn = result.getVhnResult();
+            html.append("<div class='section'>Vertrauensw\u00fcrdiger Herkunftsnachweis (VHN)</div>");
+            html.append("<table><tr><th>Eigenschaft</th><th>Wert</th></tr>");
+            html.append("<tr><td>Validierung</td><td class='").append(indicationCssClass(vhn.getValidationIndication())).append("'>");
+            html.append(friendlyIndication(vhn.getValidationIndication())).append("</td></tr>");
+            html.append("<tr><td>Signaturlevel</td><td>").append(friendlyLevel(vhn.getValidationLevel())).append("</td></tr>");
+            html.append("</table>");
+        }
+
+        html.append("</body></html>");
+        setHtml(html.toString());
+    }
+
+    private static String friendlyIndication(String indication) {
+        if (indication == null) return "unbekannt";
+        switch (indication) {
+            case BeaAttachmentValidationResult.INDICATION_SUCCESS: return "g\u00fcltig";
+            case BeaAttachmentValidationResult.INDICATION_FAILED: return "ung\u00fcltig";
+            case BeaAttachmentValidationResult.INDICATION_PARTIAL: return "teilweise g\u00fcltig";
+            case BeaAttachmentValidationResult.INDICATION_EMPTY: return "keine Signatur";
+            default: return "unbekannt";
+        }
+    }
+
+    private static String friendlyLevel(String level) {
+        if (level == null) return "unbekannt";
+        switch (level) {
+            case BeaAttachmentValidationResult.LEVEL_QES: return "qualifizierte elektronische Signatur (QES)";
+            case BeaAttachmentValidationResult.LEVEL_FES: return "fortgeschrittene elektronische Signatur (FES)";
+            case BeaAttachmentValidationResult.LEVEL_NONE: return "keine Signatur";
+            default: return "unbekannt";
+        }
+    }
+
+    private static String indicationCssClass(String indication) {
+        if (indication == null) return "partial";
+        switch (indication) {
+            case BeaAttachmentValidationResult.INDICATION_SUCCESS: return "success";
+            case BeaAttachmentValidationResult.INDICATION_FAILED: return "failed";
+            default: return "partial";
+        }
+    }
+
+    private void populateAttachmentsTable(BeaMessageValidationResult result) {
+        List<BeaAttachmentValidationResult> atts = result.getAttachmentResults();
+        if (atts == null || atts.isEmpty()) {
+            String[] columns = {"Hinweis"};
+            Object[][] data = {{"Die Anh\u00e4nge dieser Nachricht enthalten keine Signaturen."}};
+            DefaultTableModel emptyModel = new DefaultTableModel(data, columns) {
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false;
+                }
+            };
+            tblAttachments.setModel(emptyModel);
+            tblAttachments.setRowHeight(24);
+            return;
+        }
+
+        String[] columns = {"", "Anhang", "Signatur", "Ergebnis", "Level"};
+        Object[][] data = new Object[atts.size()][5];
+        for (int i = 0; i < atts.size(); i++) {
+            BeaAttachmentValidationResult att = atts.get(i);
+            data[i][0] = getIndicationIcon(att.getValidationIndication());
+            data[i][1] = safe(att.getAttachmentReference());
+            data[i][2] = safe(att.getSignatureReference());
+            data[i][3] = friendlyIndication(att.getValidationIndication());
+            data[i][4] = friendlyLevel(att.getValidationLevel());
+        }
+        DefaultTableModel model = new DefaultTableModel(data, columns) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+
+            @Override
+            public Class<?> getColumnClass(int columnIndex) {
+                if (columnIndex == 0) {
+                    return ImageIcon.class;
+                }
+                return String.class;
+            }
+        };
+        tblAttachments.setModel(model);
+        tblAttachments.setRowHeight(24);
+        tblAttachments.getColumnModel().getColumn(0).setMaxWidth(30);
+        tblAttachments.getColumnModel().getColumn(0).setMinWidth(30);
+
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        tblAttachments.getColumnModel().getColumn(3).setCellRenderer(centerRenderer);
+        tblAttachments.getColumnModel().getColumn(4).setCellRenderer(centerRenderer);
+    }
+
+    private void populateVhnPanel(BeaMessageValidationResult result) {
+        pnlVhn.removeAll();
+        BeaAttachmentValidationResult vhn = result.getVhnResult();
+        if (vhn == null) {
+            pnlVhn.setLayout(new BorderLayout());
+            pnlVhn.add(new JLabel("  Kein VHN vorhanden"), BorderLayout.NORTH);
+            tabsValidation.setEnabledAt(2, false);
+        } else {
+            pnlVhn.setLayout(new BorderLayout());
+            String[] columns = {"", "Eigenschaft", "Wert"};
+            Object[][] data = {
+                {getIndicationIcon(vhn.getValidationIndication()), "Ergebnis", safe(vhn.getValidationIndication())},
+                {null, "Level", safe(vhn.getValidationLevel())},
+                {null, "Anhang", safe(vhn.getAttachmentReference())},
+                {null, "Signatur", safe(vhn.getSignatureReference())}
+            };
+            DefaultTableModel model = new DefaultTableModel(data, columns) {
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false;
+                }
+
+                @Override
+                public Class<?> getColumnClass(int columnIndex) {
+                    if (columnIndex == 0) {
+                        return ImageIcon.class;
+                    }
+                    return String.class;
+                }
+            };
+            JTable tblVhn = new JTable(model);
+            tblVhn.setRowHeight(24);
+            tblVhn.getColumnModel().getColumn(0).setMaxWidth(30);
+            tblVhn.getColumnModel().getColumn(0).setMinWidth(30);
+            javax.swing.JScrollPane sp = new javax.swing.JScrollPane(tblVhn);
+            pnlVhn.add(sp, BorderLayout.CENTER);
+        }
+        pnlVhn.revalidate();
+        pnlVhn.repaint();
+    }
+
+    private void populatePdfReport(BeaMessageValidationResult result) {
+        jPanel1.removeAll();
+        if (result.getPdfReport() != null && result.getPdfReport().length > 0) {
+            jPanel1.setLayout(new BorderLayout());
+            PdfImageScrollingPanel pdfPanel = new PdfImageScrollingPanel(true, "pruefprotokoll.pdf", result.getPdfReport(), null);
+            pdfPanel.showContent(result.getPdfReport());
+            jPanel1.add(pdfPanel, BorderLayout.CENTER);
+        } else {
+            jPanel1.setLayout(new BorderLayout());
+            jPanel1.add(new JLabel("  Kein PDF-Report vorhanden"), BorderLayout.NORTH);
+            tabsValidation.setEnabledAt(3, false);
+        }
+        jPanel1.revalidate();
+        jPanel1.repaint();
+    }
+
+    private String deriveOverallStatus(BeaMessageValidationResult result) {
+        String overallStatus = BeaVerificationResult.STATUS_SUCCESS;
+        if (result.getAttachmentResults() != null) {
+            for (BeaAttachmentValidationResult att : result.getAttachmentResults()) {
+                String ind = att.getValidationIndication();
+                if (BeaAttachmentValidationResult.INDICATION_FAILED.equals(ind)) {
+                    overallStatus = BeaVerificationResult.STATUS_FAILED;
+                    break;
+                } else if (BeaAttachmentValidationResult.INDICATION_PARTIAL.equals(ind)
+                        || BeaAttachmentValidationResult.INDICATION_UNKNOWN.equals(ind)
+                        || BeaAttachmentValidationResult.INDICATION_EMPTY.equals(ind)) {
+                    overallStatus = BeaVerificationResult.STATUS_PARTIAL;
+                }
+            }
+        }
+        if (result.getVhnResult() != null) {
+            String vhnInd = result.getVhnResult().getValidationIndication();
+            if (BeaAttachmentValidationResult.INDICATION_FAILED.equals(vhnInd)) {
+                overallStatus = BeaVerificationResult.STATUS_FAILED;
+            } else if (!BeaAttachmentValidationResult.INDICATION_SUCCESS.equals(vhnInd)
+                    && !BeaVerificationResult.STATUS_FAILED.equals(overallStatus)) {
+                overallStatus = BeaVerificationResult.STATUS_PARTIAL;
+            }
+        }
+        return overallStatus;
+    }
+
+    private ImageIcon getIndicationIcon(String indication) {
+        if (BeaAttachmentValidationResult.INDICATION_SUCCESS.equals(indication)) {
+            return new ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/bea/signature-success.png"));
+        } else if (BeaAttachmentValidationResult.INDICATION_FAILED.equals(indication)) {
+            return new ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/bea/signature-fail.png"));
+        } else if (BeaAttachmentValidationResult.INDICATION_PARTIAL.equals(indication)) {
+            return new ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/bea/signature-partial.png"));
+        }
+        return new ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/bea/signature-unknown.png"));
+    }
+
+    private static String safe(String s) {
+        return s != null ? s : "";
+    }
+
     public void setStatus(String status) {
         lblStatus.setIcon(BeaAccess.getSignatureStatusIcon(status));
         lblStatus.setText("Status der Signaturprüfungen unbekannt");
@@ -723,16 +976,21 @@ public class BeaSignaturesVerificationDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane1 = new javax.swing.JScrollPane();
-        editorPane = new javax.swing.JEditorPane();
         cmdClose = new javax.swing.JButton();
         lblStatus = new javax.swing.JLabel();
+        tabsValidation = new javax.swing.JTabbedPane();
+        pnlSummary = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        editorPane = new javax.swing.JEditorPane();
+        jPanel2 = new javax.swing.JPanel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        tblAttachments = new javax.swing.JTable();
+        pnlVhn = new javax.swing.JPanel();
+        jPanel1 = new javax.swing.JPanel();
+        cmdDownloadPdf = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("beA Signaturprüfung");
-
-        editorPane.setContentType("text/html"); // NOI18N
-        jScrollPane1.setViewportView(editorPane);
 
         cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         cmdClose.setText("Schliessen");
@@ -745,6 +1003,96 @@ public class BeaSignaturesVerificationDialog extends javax.swing.JDialog {
         lblStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/bea/signature-unknown.png"))); // NOI18N
         lblStatus.setText("Status der Signaturprüfungen unbekannt");
 
+        editorPane.setContentType("text/html"); // NOI18N
+        jScrollPane1.setViewportView(editorPane);
+
+        javax.swing.GroupLayout pnlSummaryLayout = new javax.swing.GroupLayout(pnlSummary);
+        pnlSummary.setLayout(pnlSummaryLayout);
+        pnlSummaryLayout.setHorizontalGroup(
+            pnlSummaryLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 788, Short.MAX_VALUE)
+            .addGroup(pnlSummaryLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(pnlSummaryLayout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 776, Short.MAX_VALUE)
+                    .addContainerGap()))
+        );
+        pnlSummaryLayout.setVerticalGroup(
+            pnlSummaryLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 616, Short.MAX_VALUE)
+            .addGroup(pnlSummaryLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(pnlSummaryLayout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 610, Short.MAX_VALUE)))
+        );
+
+        tabsValidation.addTab("Zusammenfassung", pnlSummary);
+
+        tblAttachments.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        jScrollPane2.setViewportView(tblAttachments);
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 776, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 610, Short.MAX_VALUE))
+        );
+
+        tabsValidation.addTab("Anhänge", jPanel2);
+
+        javax.swing.GroupLayout pnlVhnLayout = new javax.swing.GroupLayout(pnlVhn);
+        pnlVhn.setLayout(pnlVhnLayout);
+        pnlVhnLayout.setHorizontalGroup(
+            pnlVhnLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 788, Short.MAX_VALUE)
+        );
+        pnlVhnLayout.setVerticalGroup(
+            pnlVhnLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 616, Short.MAX_VALUE)
+        );
+
+        tabsValidation.addTab("VHN", pnlVhn);
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 788, Short.MAX_VALUE)
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 616, Short.MAX_VALUE)
+        );
+
+        tabsValidation.addTab("PDF-Report", jPanel1);
+
+        cmdDownloadPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_pdf.png"))); // NOI18N
+        cmdDownloadPdf.setText("PDF anzeigen / speichern");
+        cmdDownloadPdf.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDownloadPdfActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -752,9 +1100,11 @@ public class BeaSignaturesVerificationDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1)
+                    .addComponent(tabsValidation)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 456, Short.MAX_VALUE)
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdDownloadPdf)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdClose))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblStatus)
@@ -767,9 +1117,11 @@ public class BeaSignaturesVerificationDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addComponent(lblStatus)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 610, Short.MAX_VALUE)
+                .addComponent(tabsValidation)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdClose)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdClose)
+                    .addComponent(cmdDownloadPdf))
                 .addContainerGap())
         );
 
@@ -780,6 +1132,22 @@ public class BeaSignaturesVerificationDialog extends javax.swing.JDialog {
         this.setVisible(false);
         dispose();
     }//GEN-LAST:event_cmdCloseActionPerformed
+
+    private void cmdDownloadPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDownloadPdfActionPerformed
+        if (this.validationResult == null || this.validationResult.getPdfReport() == null || this.validationResult.getPdfReport().length == 0) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Kein PDF-Report vorhanden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        try {
+            byte[] pdf = this.validationResult.getPdfReport();
+            String fileName = "pruefprotokoll.pdf";
+            com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore store = new com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore("bea-validation-" + fileName, fileName);
+            com.jdimension.jlawyer.client.launcher.Launcher launcher = com.jdimension.jlawyer.client.launcher.LauncherFactory.getLauncher(fileName, pdf, store, com.jdimension.jlawyer.client.editors.EditorsRegistry.getInstance().getMainWindow());
+            launcher.launch(false);
+        } catch (Exception ex) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des PDF-Reports: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdDownloadPdfActionPerformed
 
     /**
      * @param args the command line arguments
@@ -824,8 +1192,16 @@ public class BeaSignaturesVerificationDialog extends javax.swing.JDialog {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdClose;
+    private javax.swing.JButton cmdDownloadPdf;
     private javax.swing.JEditorPane editorPane;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JLabel lblStatus;
+    private javax.swing.JPanel pnlSummary;
+    private javax.swing.JPanel pnlVhn;
+    private javax.swing.JTabbedPane tabsValidation;
+    private javax.swing.JTable tblAttachments;
     // End of variables declaration//GEN-END:variables
 }

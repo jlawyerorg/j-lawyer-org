@@ -1873,7 +1873,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     EditorsRegistry.getInstance().updateStatus("Lade Nachrichtendetails...");
 
                     BeaAccess bea = BeaAccess.getInstance();
-                    msg = bea.getMessage(mh.getId(), bea.getLoggedInSafeId());
+                    msg = bea.getMessageWithoutAttachments(mh.getId(), bea.getLoggedInSafeId());
 
                     if (!isCancelled()) {
                         String senderSafeId = msg.getSenderSafeId();
@@ -2074,7 +2074,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     EditorsRegistry.getInstance().updateStatus("Lade Empfängerdaten...");
 
                     BeaAccess bea = BeaAccess.getInstance();
-                    msg = bea.getMessage(mh.getId(), bea.getLoggedInSafeId());
+                    msg = bea.getMessageWithoutAttachments(mh.getId(), bea.getLoggedInSafeId());
 
                     if (!isCancelled()) {
                         List<BeaRecipient> to = msg.getRecipients();
@@ -2365,7 +2365,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             protected BeaMessage doInBackground() {
                 try {
                     BeaAccess bea = BeaAccess.getInstance();
-                    BeaMessage msg = bea.getMessage(msgh.getId(), bea.getLoggedInSafeId());
+                    BeaMessage msg = bea.getMessageWithoutAttachments(msgh.getId(), bea.getLoggedInSafeId());
 
                     try {
                         bea.getProcessCards(bea.getLoggedInSafeId(), msg.getId());
