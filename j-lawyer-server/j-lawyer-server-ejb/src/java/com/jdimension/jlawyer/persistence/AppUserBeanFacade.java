@@ -669,6 +669,7 @@ import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+import org.apache.log4j.Logger;
 
 /**
  * 
@@ -676,6 +677,9 @@ import javax.persistence.PersistenceContext;
  */
 @Stateless
 public class AppUserBeanFacade extends AbstractFacade<AppUserBean> implements AppUserBeanFacadeLocal {
+
+    private static final Logger log = Logger.getLogger(AppUserBeanFacade.class.getName());
+
     @PersistenceContext(unitName = "j-lawyer-server-ejbPU")
     private EntityManager em;
 
@@ -691,18 +695,22 @@ public class AppUserBeanFacade extends AbstractFacade<AppUserBean> implements Ap
     @Override
     @RolesAllowed("loginRole")
     public AppUserBean findByPrincipalId(String principalId) {
-        AppUserBean u=(AppUserBean)em.createNamedQuery("AppUserBean.findByPrincipalId").setParameter("principalId", principalId).getSingleResult();
-        
-        
-        return u;
+        try {
+            return (AppUserBean)em.createNamedQuery("AppUserBean.findByPrincipalId").setParameter("principalId", principalId).getSingleResult();
+        } catch (NoResultException nre) {
+            log.info("no user found for principal id: " + principalId);
+            return null;
+        }
     }
     
     @Override
     public AppUserBean findByPrincipalIdUnrestricted(String principalId) {
-        AppUserBean u=(AppUserBean)em.createNamedQuery("AppUserBean.findByPrincipalId").setParameter("principalId", principalId).getSingleResult();
-        
-        
-        return u;
+        try {
+            return (AppUserBean)em.createNamedQuery("AppUserBean.findByPrincipalId").setParameter("principalId", principalId).getSingleResult();
+        } catch (NoResultException nre) {
+            log.info("no user found for principal id: " + principalId);
+            return null;
+        }
     }
     
     
