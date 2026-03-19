@@ -99,6 +99,18 @@
                 <pathelement path="${basedir}/build/web/WEB-INF/classes"/>
             </classpath>
         </java>
+        <java classname="org.jlawyer.io.rest.tools.AddSwaggerTagsToJson"
+                  fork="true"
+                  failonerror="true"
+                  maxmemory="256m"
+                  output="addswaggertags.log"
+                  error="addswaggertags-error.log">
+            <arg line="${basedir}/build/web/swagger-ui/swagger.json"/>
+            <classpath>
+                <pathelement path="${java.class.path}"/>
+                <pathelement path="${basedir}/build/web/WEB-INF/classes"/>
+            </classpath>
+        </java>
     </target>
     
 </project>
