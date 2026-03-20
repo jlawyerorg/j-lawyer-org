@@ -1626,9 +1626,10 @@ public class EmailUtils extends CommonMailUtils {
             UserSettings usettings = UserSettings.getInstance();
             AppUserBean cu = usettings.getCurrentUser();
             List<MailboxSetup> allInboxes = usettings.getMailboxes(cu.getPrincipalId());
-            String msgFrom = msg.getFrom() != null ? msg.getFrom().toLowerCase() : "";
+            String msgFrom = msg.getFrom() != null ? msg.getFrom() : "";
+            String msgFromLower = msgFrom.toLowerCase();
             for (MailboxSetup mbx : allInboxes) {
-                if (msgFrom.contains(mbx.getEmailAddress().toLowerCase())) {
+                if (msgFromLower.contains(mbx.getEmailAddress().toLowerCase())) {
                     sentByCurrentUser = true;
                     break;
                 }
