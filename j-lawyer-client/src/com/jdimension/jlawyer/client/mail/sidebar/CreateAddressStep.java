@@ -847,6 +847,8 @@ public class CreateAddressStep extends javax.swing.JPanel implements WizardStepI
         });
 
         cmdExtract.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
+        cmdExtract.setText("Text analysieren");
+        cmdExtract.setToolTipText("der Text wird von Ingo analysiert und es wird ein Vorschlag für die Datenübernahme gemacht");
         cmdExtract.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdExtractActionPerformed(evt);
@@ -863,8 +865,9 @@ public class CreateAddressStep extends javax.swing.JPanel implements WizardStepI
                     .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 876, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(chkGenerateAddress)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(cmdExtract))
+                        .addGap(18, 18, 18)
+                        .addComponent(cmdExtract)
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(jSplitPane1))
                 .addContainerGap())
         );
@@ -873,12 +876,12 @@ public class CreateAddressStep extends javax.swing.JPanel implements WizardStepI
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(13, 13, 13)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(chkGenerateAddress)
                     .addComponent(cmdExtract))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 522, Short.MAX_VALUE)
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 519, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents

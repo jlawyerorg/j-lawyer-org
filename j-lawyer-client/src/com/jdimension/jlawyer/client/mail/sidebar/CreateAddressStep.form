@@ -25,8 +25,9 @@
                   <Component id="jLabel1" pref="876" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="chkGenerateAddress" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="32767" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="cmdExtract" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
                   <Component id="jSplitPane1" alignment="0" max="32767" attributes="0"/>
               </Group>
@@ -39,13 +40,13 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="13" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="chkGenerateAddress" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdExtract" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jSplitPane1" pref="522" max="32767" attributes="0"/>
+              <Component id="jSplitPane1" pref="519" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -136,6 +137,8 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons16/material/j-lawyer-ai.png"/>
         </Property>
+        <Property name="text" type="java.lang.String" value="Text analysieren"/>
+        <Property name="toolTipText" type="java.lang.String" value="der Text wird von Ingo analysiert und es wird ein Vorschlag f&#xfc;r die Daten&#xfc;bernahme gemacht"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdExtractActionPerformed"/>
