@@ -2690,6 +2690,15 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     }
 
     private void checkForCalendarEntry(java.util.List<com.jdimension.jlawyer.services.MailAttachmentDTO> attachments) {
+        this.icsSummary = null;
+        this.icsDescription = null;
+        this.icsLocation = null;
+        this.icsStartDate = null;
+        this.icsEndDate = null;
+        this.lblCalendarEntry.setText("");
+        this.lblCalendarEntry.setToolTipText(null);
+        this.lblCalendarEntry.setCursor(null);
+
         try {
             if (attachments == null) return;
 
