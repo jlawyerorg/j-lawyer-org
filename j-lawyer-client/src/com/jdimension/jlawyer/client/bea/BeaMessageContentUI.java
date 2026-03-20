@@ -1504,8 +1504,9 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
                     BeaAttachment att = (BeaAttachment) selected;
                     byte[] data = ensureAttachmentContent(att);
-
+                    
                     String newName = FileUtils.getNewFileName(sel, selected.toString(), true);
+                    newName=FileUtils.preserveExtension(att.getName(), newName);
                     if (newName == null) {
                         return;
                     }
