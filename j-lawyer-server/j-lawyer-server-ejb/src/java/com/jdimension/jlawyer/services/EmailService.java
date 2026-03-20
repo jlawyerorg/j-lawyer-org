@@ -716,6 +716,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.log4j.Logger;
@@ -864,7 +865,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             }
 
             String tokenEndpoint = "https://login.microsoftonline.com/" + mailbox.getTenantId() + "/oauth2/v2.0/token";
-            try (CloseableHttpClient client = HttpClients.createDefault()) {
+            try (CloseableHttpClient client = createHttpClient()) {
                 HttpPost post = new HttpPost(tokenEndpoint);
                 String body = "grant_type=" + URLEncoder.encode("client_credentials", StandardCharsets.UTF_8)
                         + "&client_id=" + URLEncoder.encode(mailbox.getClientId(), StandardCharsets.UTF_8)
@@ -1397,6 +1398,10 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         }
         props.setProperty("mail.imap.partialfetch", "false");
         props.setProperty("mail.imaps.partialfetch", "false");
+        props.setProperty("mail.imap.connectiontimeout", "15000");
+        props.setProperty("mail.imaps.connectiontimeout", "15000");
+        props.setProperty("mail.imap.timeout", "30000");
+        props.setProperty("mail.imaps.timeout", "30000");
         props.setProperty("mail.store.protocol", protocol);
         props.setProperty("mail.imaps.host", server);
         props.setProperty("mail.imap.host", server);
@@ -1958,13 +1963,27 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         }
     }
 
+    private static final int GRAPH_CONNECT_TIMEOUT_MS = 15000;
+    private static final int GRAPH_SOCKET_TIMEOUT_MS = 30000;
+
+    private CloseableHttpClient createHttpClient() {
+        RequestConfig config = RequestConfig.custom()
+                .setConnectTimeout(GRAPH_CONNECT_TIMEOUT_MS)
+                .setSocketTimeout(GRAPH_SOCKET_TIMEOUT_MS)
+                .setConnectionRequestTimeout(GRAPH_CONNECT_TIMEOUT_MS)
+                .build();
+        return HttpClients.custom()
+                .setDefaultRequestConfig(config)
+                .build();
+    }
+
     // ==================== Graph API Backend ====================
 
     private String graphGet(MailboxSetup ms, String url) throws Exception {
         if (!this.updateAuthTokenForMailbox(ms)) {
             throw new Exception("Failed to obtain access token for " + ms.getEmailAddress());
         }
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
+        try (CloseableHttpClient client = createHttpClient()) {
             HttpGet get = new HttpGet(url);
             get.setHeader("Authorization", "Bearer " + ms.getAuthToken());
             get.setHeader("Content-Type", "application/json");
@@ -1983,7 +2002,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         if (!this.updateAuthTokenForMailbox(ms)) {
             throw new Exception("Failed to obtain access token for " + ms.getEmailAddress());
         }
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
+        try (CloseableHttpClient client = createHttpClient()) {
             HttpPost post = new HttpPost(url);
             post.setHeader("Authorization", "Bearer " + ms.getAuthToken());
             post.setHeader("Content-Type", "application/json");
@@ -2003,7 +2022,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         if (!this.updateAuthTokenForMailbox(ms)) {
             throw new Exception("Failed to obtain access token for " + ms.getEmailAddress());
         }
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
+        try (CloseableHttpClient client = createHttpClient()) {
             HttpDelete delete = new HttpDelete(url);
             delete.setHeader("Authorization", "Bearer " + ms.getAuthToken());
             try (CloseableHttpResponse response = client.execute(delete)) {
@@ -2020,7 +2039,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         if (!this.updateAuthTokenForMailbox(ms)) {
             throw new Exception("Failed to obtain access token for " + ms.getEmailAddress());
         }
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
+        try (CloseableHttpClient client = createHttpClient()) {
             HttpPatch patch = new HttpPatch(url);
             patch.setHeader("Authorization", "Bearer " + ms.getAuthToken());
             patch.setHeader("Content-Type", "application/json");

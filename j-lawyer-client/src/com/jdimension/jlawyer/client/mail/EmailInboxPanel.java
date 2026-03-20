@@ -869,12 +869,14 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         }
         log.info("initialized UI: " + (System.currentTimeMillis() - start));
 
-        try {
-            this.refreshFolders(false);
-            log.info("loaded mailboxes: " + (System.currentTimeMillis() - start));
-        } catch (Exception ex) {
-            log.error(ex);
-        }
+        new Thread(() -> {
+            try {
+                this.refreshFolders(false);
+                log.info("loaded mailboxes: " + (System.currentTimeMillis() - start));
+            } catch (Exception ex) {
+                log.error(ex);
+            }
+        }, "InitMailFolders").start();
 
         this.treeFolders.setDropMode(DropMode.ON);
 
@@ -1189,6 +1191,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             log.error("error loading mailboxes", t);
         }
         log.info("Parallel mailbox initialization took " + (System.currentTimeMillis() - initStart) + "ms");
+
+        // Sort mailboxes alphabetically by email address
+        sortTreeNodeChildren(rootNode);
 
         Runnable r = () -> {
             try {
@@ -1669,23 +1674,28 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
-        try {
-            // Invalidate server-side caches for all mailboxes
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            UserSettings uset = UserSettings.getInstance();
-            List<MailboxSetup> mailboxes = uset.getMailboxes(uset.getCurrentUser().getPrincipalId());
-            for (MailboxSetup ms : mailboxes) {
-                try {
-                    locator.lookupEmailServiceRemote().invalidateCaches(ms.getId());
-                } catch (Exception ex) {
-                    log.error("Error invalidating caches for " + ms.getEmailAddress(), ex);
+        cmdRefresh.setEnabled(false);
+        new Thread(() -> {
+            try {
+                // Invalidate server-side caches for all mailboxes
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                UserSettings uset = UserSettings.getInstance();
+                List<MailboxSetup> mailboxes = uset.getMailboxes(uset.getCurrentUser().getPrincipalId());
+                for (MailboxSetup ms : mailboxes) {
+                    try {
+                        locator.lookupEmailServiceRemote().invalidateCaches(ms.getId());
+                    } catch (Exception ex) {
+                        log.error("Error invalidating caches for " + ms.getEmailAddress(), ex);
+                    }
                 }
+                this.refreshFolders(true);
+            } catch (Exception ex) {
+                log.error(ex);
+            } finally {
+                SwingUtilities.invokeLater(() -> cmdRefresh.setEnabled(true));
             }
-            this.refreshFolders(true);
-        } catch (Exception ex) {
-            log.error(ex);
-        }
+        }, "RefreshMailFolders").start();
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
     private void treeFoldersValueChanged(javax.swing.event.TreeSelectionEvent evt) {//GEN-FIRST:event_treeFoldersValueChanged
