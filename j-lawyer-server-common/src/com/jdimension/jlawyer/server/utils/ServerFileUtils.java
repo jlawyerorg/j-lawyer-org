@@ -726,7 +726,7 @@ public class ServerFileUtils {
             currentExt = ".xml";
         } else if (currentFileName.toLowerCase().endsWith(".pkcs7")) {
             currentExt = ".pkcs7";
-        } else if (currentFileName.toLowerCase().endsWith(".ps7s")) {
+        } else if (currentFileName.toLowerCase().endsWith(".p7s")) {
             currentExt = ".p7s";
         } else if (currentFileName.toLowerCase().endsWith(".zip")) {
             currentExt = ".zip";
