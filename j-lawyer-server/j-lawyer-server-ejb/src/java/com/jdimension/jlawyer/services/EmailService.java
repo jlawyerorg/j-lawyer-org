@@ -708,6 +708,7 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
+import javax.mail.internet.MimeUtility;
 import javax.mail.util.ByteArrayDataSource;
 import javax.naming.InitialContext;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -1573,7 +1574,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                     String[] msgIdHeader = msg.getHeader("Message-ID");
                     if (msgIdHeader != null && msgIdHeader.length > 0) dto.setMessageId(msgIdHeader[0]);
                     Address[] fromAddrs = msg.getFrom();
-                    if (fromAddrs != null && fromAddrs.length > 0) dto.setFrom(fromAddrs[0].toString());
+                    if (fromAddrs != null && fromAddrs.length > 0) dto.setFrom(decodeAddress(fromAddrs[0]));
                     dto.setTo(addressesToStrings(msg.getRecipients(Message.RecipientType.TO)));
                     dto.setCc(addressesToStrings(msg.getRecipients(Message.RecipientType.CC)));
                     result.add(dto);
@@ -1617,7 +1618,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 String[] h2 = msg.getHeader("Return-Receipt-To");
                 dto.setReadReceiptRequested((h != null && h.length > 0) || (h2 != null && h2.length > 0));
                 Address[] fromAddrs = msg.getFrom();
-                if (fromAddrs != null && fromAddrs.length > 0) dto.setFrom(fromAddrs[0].toString());
+                if (fromAddrs != null && fromAddrs.length > 0) dto.setFrom(decodeAddress(fromAddrs[0]));
                 dto.setTo(addressesToStrings(msg.getRecipients(Message.RecipientType.TO)));
                 dto.setCc(addressesToStrings(msg.getRecipients(Message.RecipientType.CC)));
                 String[] bodyResult = extractBody(msg);
@@ -2403,10 +2404,31 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
 
     // ==================== Utility Methods ====================
 
+    private String decodeAddress(Address address) {
+        if (address instanceof InternetAddress) {
+            InternetAddress ia = (InternetAddress) address;
+            try {
+                String personal = ia.getPersonal();
+                if (personal != null && !personal.isEmpty()) {
+                    personal = MimeUtility.decodeText(personal);
+                    return "\"" + personal + "\" <" + ia.getAddress() + ">";
+                }
+                return ia.getAddress();
+            } catch (Exception e) {
+                // fall through to toString
+            }
+        }
+        try {
+            return MimeUtility.decodeText(address.toString());
+        } catch (Exception e) {
+            return address.toString();
+        }
+    }
+
     private String[] addressesToStrings(Address[] addresses) {
         if (addresses == null) return new String[0];
         String[] result = new String[addresses.length];
-        for (int i = 0; i < addresses.length; i++) result[i] = addresses[i].toString();
+        for (int i = 0; i < addresses.length; i++) result[i] = decodeAddress(addresses[i]);
         return result;
     }
 
