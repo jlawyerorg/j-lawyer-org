@@ -1534,10 +1534,15 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
         if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_PLAIN)) {
             if (ms != null) {
+                String sep = System.lineSeparator();
                 if (useSignature) {
-                    this.tp.setText(preSignature + ms.getEmailSignatureTxt() + postSignature);
+                    String pre = preSignature.isEmpty() ? "" : preSignature + sep;
+                    String post = postSignature.isEmpty() ? "" : sep + postSignature;
+                    this.tp.setText(pre + ms.getEmailSignatureTxt() + post);
                 } else {
-                    this.tp.setText(preSignature + postSignature);
+                    String pre = preSignature.isEmpty() ? "" : preSignature + sep;
+                    String post = postSignature.isEmpty() ? "" : sep + postSignature;
+                    this.tp.setText(pre + post);
                 }
                 this.tp.setCaretPosition(0);
             }
@@ -1557,9 +1562,9 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 if (body != null) {
                     // Insert preSignature and sig at the beginning of the body
                     if (useSignature) {
-                        body.prepend("<div>" + preSignature + "</div><div>" + sig + "</div><br/>");
+                        body.prepend("<div>" + preSignature + "</div><div>" + sig + "</div>");
                     } else {
-                        body.prepend("<div>" + preSignature + "</div><br/>");
+                        body.prepend("<div>" + preSignature + "</div>");
                     }
                 }
 
@@ -3406,7 +3411,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
                         if (!this.replyOrForward) {
                             // initial mail - adjust the html vs text setting of the mail according to the selected template
-                            this.tp.setText(t + System.getProperty("line.separator") + System.getProperty("line.separator") + StringUtils.nonEmpty(ms.getEmailSignatureTxt()));
+                            this.tp.setText(t + System.lineSeparator() + StringUtils.nonEmpty(ms.getEmailSignatureTxt()));
                             this.tp.setCaretPosition(Math.max(0, cursorIndex));
                             this.hp.setText("");
                             this.text.setSelected(true);
@@ -3420,7 +3425,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                                 Document doc = Jsoup.parse(this.initialPostSignatureHtml);
                                 Element body = doc.body();
                                 if (body != null) {
-                                    body.prepend(EmailUtils.text2Html(t) + "<br/><br/>" + this.initialPreSignatureHtml + "<br/><br/>" + StringUtils.nonEmpty(ms.getEmailSignature()) + "<br/><br/>");
+                                    body.prepend(EmailUtils.text2Html(t) + "<br/>" + this.initialPreSignatureHtml + "<br/>" + StringUtils.nonEmpty(ms.getEmailSignature()) + "<br/>");
                                 }
                                 this.hp.setText(doc.html());
                                 this.hp.setCaretPosition(Math.max(0, cursorIndex));
@@ -3430,7 +3435,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                                 this.hp.requestFocus();
                             } else {
                                 // picked a text template when replying to a text mail
-                                this.tp.setText(t + System.lineSeparator() + System.lineSeparator() + this.initialPreSignatureTxt + System.lineSeparator() + StringUtils.nonEmpty(ms.getEmailSignatureTxt()) + this.initialPostSignatureTxt);
+                                this.tp.setText(t + System.lineSeparator() + this.initialPreSignatureTxt + System.lineSeparator() + StringUtils.nonEmpty(ms.getEmailSignatureTxt()) + System.lineSeparator() + this.initialPostSignatureTxt);
                                 this.tp.setCaretPosition(Math.max(0, cursorIndex));
                                 this.hp.setText("");
                                 this.text.setSelected(true);
@@ -3449,7 +3454,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                         }
                         if (!this.replyOrForward) {
                             // initial mail - adjust the html vs text setting of the mail according to the selected template
-                            this.hp.setText(t + "<br/><br/>" + HtmlUtils.stripHeadAndBodyTags(StringUtils.nonEmpty(ms.getEmailSignature())));
+                            this.hp.setText(t + "<br/>" + HtmlUtils.stripHeadAndBodyTags(StringUtils.nonEmpty(ms.getEmailSignature())));
                             this.hp.setCaretPosition(Math.max(0, cursorIndex));
                             this.tp.setText("");
                             this.html.setSelected(true);
@@ -3462,7 +3467,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                                 Document doc = Jsoup.parse(this.initialPostSignatureHtml);
                                 Element body = doc.body();
                                 if (body != null) {
-                                    body.prepend(t + "<br/><br/>" + this.initialPreSignatureHtml + "<br/><br/>" + HtmlUtils.stripHeadAndBodyTags(StringUtils.nonEmpty(ms.getEmailSignature())));
+                                    body.prepend(t + "<br/>" + this.initialPreSignatureHtml + "<br/>" + HtmlUtils.stripHeadAndBodyTags(StringUtils.nonEmpty(ms.getEmailSignature())));
                                 }
                                 this.hp.setText(doc.html());
                                 this.hp.setCaretPosition(Math.max(0, cursorIndex));
@@ -3472,7 +3477,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                                 this.hp.requestFocus();
                             } else {
                                 // picked an HTML template when replying to a text mail
-                                this.tp.setText(EmailUtils.html2Text(t + "<br/><br/>") + this.initialPreSignatureHtml + System.lineSeparator() + StringUtils.nonEmpty(ms.getEmailSignatureTxt()) + System.lineSeparator() + this.initialPostSignatureTxt);
+                                this.tp.setText(EmailUtils.html2Text(t + "<br/>") + this.initialPreSignatureHtml + System.lineSeparator() + StringUtils.nonEmpty(ms.getEmailSignatureTxt()) + System.lineSeparator() + this.initialPostSignatureTxt);
                                 this.tp.setCaretPosition(Math.max(0, cursorIndex));
                                 this.hp.setText("");
                                 this.text.setSelected(true);
