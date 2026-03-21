@@ -1894,6 +1894,33 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         msg.setContent(multipart);
         msg.saveChanges();
         Transport.send(msg);
+
+        // Copy sent message to IMAP "Sent" folder
+        try {
+            Store store = imapConnect(ms);
+            List<MailFolderDTO> folders = imapListFolders(ms);
+            String sentFolderId = null;
+            for (MailFolderDTO f : folders) {
+                if (f.isSent()) {
+                    sentFolderId = f.getFolderId();
+                    break;
+                }
+            }
+            if (sentFolderId != null) {
+                Folder sentFolder = store.getFolder(sentFolderId);
+                sentFolder.open(Folder.READ_WRITE);
+                try {
+                    msg.setFlag(Flags.Flag.SEEN, true);
+                    sentFolder.appendMessages(new Message[]{msg});
+                } finally {
+                    sentFolder.close(false);
+                }
+            } else {
+                log.warn("Unable to determine 'Sent' folder for mailbox " + ms.getEmailAddress());
+            }
+        } catch (Exception ex) {
+            log.error("Error copying sent message to 'Sent' folder for mailbox " + ms.getEmailAddress(), ex);
+        }
     }
 
     private void imapMoveMessage(MailboxSetup ms, String messageRef, String targetFolderId) throws Exception {

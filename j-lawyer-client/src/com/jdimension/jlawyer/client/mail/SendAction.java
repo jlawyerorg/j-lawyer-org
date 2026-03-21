@@ -1239,14 +1239,46 @@ public class SendAction extends ProgressableAction {
             // Store sent email as document in case (same logic as legacy path)
             if (this.archiveFile != null) {
                 try {
-                    com.jdimension.jlawyer.services.ArchiveFileServiceRemote caseSvc = locator.lookupArchiveFileServiceRemote();
+                    ArchiveFileServiceRemote caseSvc = locator.lookupArchiveFileServiceRemote();
                     String docName = FileUtils.sanitizeFileName(this.subject);
+                    if (docName.length() > 228) {
+                        docName = docName.substring(0, 227);
+                    }
                     if (!docName.toLowerCase().endsWith(".eml")) docName += ".eml";
-                    byte[] emlContent = EmailUtils.buildEmlBytes(ms.getEmailAddress(), ms.getEmailSenderName(), this.to, this.cc, this.bcc, this.subject, this.body, this.contentType, attDTOs);
-                    if (emlContent != null && emlContent.length > 0) {
-                        ArchiveFileDocumentsBean newDoc = caseSvc.addDocument(this.archiveFile.getId(), docName, emlContent, "", null);
-                        if (this.documentTag != null && !this.documentTag.isEmpty() && newDoc != null) {
-                            caseSvc.setDocumentTag(newDoc.getId(), new com.jdimension.jlawyer.persistence.DocumentTagsBean(newDoc.getId(), this.documentTag), true);
+
+                    boolean documentExists = caseSvc.doesDocumentExist(this.archiveFile.getId(), docName);
+                    while (documentExists) {
+                        docName = FileUtils.getNewFileName(this.archiveFile, docName, new Date(), true, this.indicator, "Datei benennen");
+                        if (docName == null || "".equals(docName)) {
+                            break;
+                        }
+                        documentExists = caseSvc.doesDocumentExist(this.archiveFile.getId(), docName);
+                    }
+
+                    if (docName != null && !docName.isEmpty()) {
+                        byte[] emlContent = EmailUtils.buildEmlBytes(ms.getEmailAddress(), ms.getEmailSenderName(), this.to, this.cc, this.bcc, this.subject, this.body, this.contentType, attDTOs);
+                        if (emlContent != null && emlContent.length > 0) {
+                            ArchiveFileDocumentsBean newDoc = caseSvc.addDocument(this.archiveFile.getId(), docName, emlContent, "", null);
+                            if (this.documentTag != null && !this.documentTag.isEmpty() && newDoc != null) {
+                                caseSvc.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);
+                            }
+
+                            if (newDoc != null && this.caseFolder != null) {
+                                ArrayList<String> docList = new ArrayList<>();
+                                docList.add(newDoc.getId());
+                                caseSvc.moveDocumentsToFolder(docList, caseFolder.getId());
+                                newDoc.setFolder(caseFolder);
+                            }
+
+                            if (newDoc != null) {
+                                ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();
+                                historyDto.setChangeDate(new Date());
+                                historyDto.setChangeDescription("E-Mail gesendet an " + to + ": " + this.subject);
+                                caseSvc.addHistory(this.archiveFile.getId(), historyDto);
+
+                                EventBroker eb = EventBroker.getInstance();
+                                eb.publishEvent(new DocumentAddedEvent(newDoc));
+                            }
                         }
                     }
                 } catch (Exception ex) {
