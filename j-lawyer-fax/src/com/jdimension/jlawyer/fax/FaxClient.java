@@ -674,48 +674,51 @@ public class FaxClient {
      */
     public static void main(String[] args) {
         try {
-            SipgateAPI sg=new SipgateAPI(System.getenv("sipuser"), System.getenv("sippassword"));
-            //System.out.println(sg.getTypesOfService());
-            System.out.println(sg.getOwnUris("w0"));
-            System.out.println(sg.getBalance());
-            //System.out.println(sg.initiateSession("text", "sip:1404811@sipgate.de", "sip:491723654916@sipgate.de", "Nachricht über Sipgate"));
-            sg.initiateSms("sip:1404811@sipgate.de", "sip:491723654916@sipgate.de", "Nachricht über Sipgate");            
-            //System.out.println(sg.initiateFax("sip:1404811@sipgate.de", "sip:493525733880@sipgate.de", new File("/home/jens/temp/agb.pdf")));
-            //System.out.println(sg.initiateCall("sip:1404811@sipgate.de", "sip:491723654916@sipgate.de"));
-            // session id: FAX1_229b69a7d65a7ad17382e8fcc25a3c40
-            System.out.println("Status: " + sg.getFaxStatus("FAX1_96170c65027d16748ed173c641ce2fe4"));
-            // #Sendebericht: https://secure.sipgate.de/user/fax/report.php?sid=41e761ae7b5303cf71032fa805917927
             
-//                        result = client.execute("system.listMethods", new Vector());
-//                        m1=(HashMap)result;
-//			status=m1.get("StatusCode").toString();
-//                        statusMsg=m1.get("StatusString").toString();
-//                        Object[] listMethods=(Object[])m1.get("listMethods");
-//                        
-//                        System.out.println("listMethods: " + status + ", " + statusMsg);
-//                        for(Object o: listMethods) {
-//                            System.out.println(o.toString());
-//                        }
-//                        
-//                        
-//                        
-//                        // send fax
-//                        TreeMap<Object, Object> faxParams = new TreeMap<Object, Object>();
-//			faxParams.put("RemoteUri", "sip:491723654916@sipgate.net");
-//			faxParams.put("TOS", "fax");
-//			faxParams.put("Content", "pdf base64");
-//
-//			Object[] faxParams2 = new Object[] { faxParams };
-//			result = client.execute("samurai.SessionInitiate", faxParams2);
-//                        m1=(HashMap)result;
-//                        status=m1.get("StatusCode").toString();
-//                        statusMsg=m1.get("StatusString").toString();
-//                        String sessionId=m1.get("SessionID").toString();
-                        
-                        // You may use this ID to reference the request in other XMLRPC methods, e.g. 'samurai.SessionStatusGet' to obtain the status of the sending process.\n";
+            
+            //SipgateAPI sg=new SipgateAPI(System.getenv("sipuser"), System.getenv("sippassword"));
+            
+            SipgateAPI sg=new SipgateAPI("token-5JBUY6", "a3481d58-9e56-45ae-a10a-c657ccfa5ae0");
 
-                        
-                        
+            // --- neo API migration tests ---
+
+            // 1. GET /channels - replaces /{userId}/phonelines
+            System.out.println("=== getOwnUris (channels + faxlines + sms + numbers) ===");
+            java.util.ArrayList<SipUri> uris = sg.getOwnUris("w0");
+            for (SipUri u : uris) {
+                System.out.println("  uri=" + u.getUri()
+                        + "  deviceId=" + u.getDeviceId()
+                        + "  desc=" + u.getDescription()
+                        + "  outgoing=" + u.getOutgoingNumber()
+                        + "  tos=" + u.getTypeOfService());
+            }
+
+            // 2. find first voice URI for call test
+            SipUri voiceUri = null;
+            for (SipUri u : uris) {
+                if (u.getTypeOfService().contains(com.jdimension.jlawyer.sip.SipUtils.TOS_VOICE)) {
+                    voiceUri = u;
+                    break;
+                }
+            }
+            if (voiceUri != null) {
+                System.out.println("=== first voice URI ===");
+                System.out.println("  channelId (uri)=" + voiceUri.getUri());
+                System.out.println("  deviceId=" + voiceUri.getDeviceId());
+                System.out.println("  outgoingNumber=" + voiceUri.getOutgoingNumber());
+
+                // 3. POST /calls - replaces /sessions/calls
+                // uncomment to actually place a call:
+                //String callSid = sg.initiateCall(voiceUri.getDeviceId(), "+4915799912345", voiceUri.getOutgoingNumber(), voiceUri.getUri());
+                //System.out.println("  callSid=" + callSid);
+            } else {
+                System.out.println("No voice URI found in channels response.");
+            }
+
+            // 4. balance - unchanged, sanity check
+            System.out.println("=== balance ===");
+            System.out.println("  " + sg.getBalance().getTotal() + " " + sg.getBalance().getCurrency());
+
 		} catch (SipgateException e) {
 			e.printStackTrace();
 		}

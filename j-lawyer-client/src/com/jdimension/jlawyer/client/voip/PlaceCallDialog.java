@@ -954,7 +954,7 @@ public class PlaceCallDialog extends javax.swing.JDialog {
             SipUri localUri=(SipUri)this.cmbOwnUris.getSelectedItem();
             String remoteUri=this.txtE164.getText();
             
-            locator.lookupVoipServiceRemote().initiateCall(localUri.getUri(), remoteUri, localUri.getOutgoingNumber());
+            locator.lookupVoipServiceRemote().initiateCall(localUri.getDeviceId(), remoteUri, localUri.getOutgoingNumber(), localUri.getUri());
             settings.setConfiguration(ClientSettings.CONF_VOIP_LASTSIPVOICE, localUri.getUri());
             
             this.setVisible(false);

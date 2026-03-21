@@ -780,7 +780,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
 
     @Override
     @RolesAllowed({"loginRole"})
-    public String initiateCall(String localUri, String remoteUri, String callerId) throws SipgateException {
+    public String initiateCall(String deviceId, String targetNumber, String callerId, String channelId) throws SipgateException {
         AppUserBean currentUser=this.sysMan.getUser(context.getCallerPrincipal().getName());
         if (!currentUser.isVoipEnabled()) {
 
@@ -788,7 +788,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         }
 
         SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword());
-        return sip.initiateCall(localUri, remoteUri, callerId);
+        return sip.initiateCall(deviceId, targetNumber, callerId, channelId);
     }
 
     @Override

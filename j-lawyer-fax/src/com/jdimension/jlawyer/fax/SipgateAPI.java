@@ -664,29 +664,24 @@
 package com.jdimension.jlawyer.fax;
 
 import com.jdimension.jlawyer.fax.utils.Base64;
+import com.jdimension.jlawyer.sip.SipUtils;
 import java.io.File;
 import java.io.FileInputStream;
-import java.net.URL;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import javax.ws.rs.core.Response;
+import java.util.List;
+import org.apache.log4j.Logger;
 import org.json.simple.JsonKey;
 import org.json.simple.JsonObject;
 import org.json.simple.Jsoner;
-import com.jdimension.jlawyer.sip.SipUtils;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.net.URLConnection;
-import java.util.Collections;
-import java.util.List;
-import javax.ws.rs.core.MediaType;
-import org.apache.log4j.Logger;
-import org.glassfish.jersey.client.JerseyClient;
-import org.glassfish.jersey.client.JerseyClientBuilder;
-import org.glassfish.jersey.client.JerseyWebTarget;
 
 /**
  *
@@ -696,9 +691,6 @@ public class SipgateAPI {
 
     public static final String STATUS_OK = "200";
 
-    private static final String AUTH_HEADERNAME = "Authorization";
-    private static final String AUTH_HEADERPREFIX = "Basic ";
-
     private static final String MIMETYPE_JSON = "application/json";
     private static final String JSON_ITEMS = "items";
     private static final String JSON_ALIAS = "alias";
@@ -706,13 +698,14 @@ public class SipgateAPI {
     private static final String API_BASE = "https://api.sipgate.com/v2/";
 
     private static final Logger log = Logger.getLogger(SipgateAPI.class.getName());
-    private String user;
-    private String password;
+    private final String user;
+    private final String password;
+    private final HttpClient httpClient;
 
     public SipgateAPI(String user, String password) throws SipgateException {
         this.user = user;
         this.password = password;
-
+        this.httpClient = HttpClient.newHttpClient();
     }
 
     private String getAuthString() {
@@ -721,21 +714,38 @@ public class SipgateAPI {
         return encoder.encode(authString.getBytes());
     }
 
+    private HttpRequest.Builder jsonGetRequest(String url) {
+        return HttpRequest.newBuilder(URI.create(url))
+                .header("Authorization", "Basic " + getAuthString())
+                .header("Accept", MIMETYPE_JSON)
+                .GET();
+    }
+
+    private HttpRequest.Builder jsonPostRequest(String url, String jsonBody) {
+        return HttpRequest.newBuilder(URI.create(url))
+                .header("Authorization", "Basic " + getAuthString())
+                .header("Content-Type", MIMETYPE_JSON)
+                .header("Accept", MIMETYPE_JSON)
+                .POST(HttpRequest.BodyPublishers.ofString(jsonBody));
+    }
+
+    private HttpResponse<String> sendRequest(HttpRequest request) throws Exception {
+        return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<byte[]> sendBytesRequest(HttpRequest request) throws Exception {
+        return httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
+    }
+
     public List<SipUser> getUsers() throws SipgateException {
-        String baseUri = "https://api.sipgate.com/v2/users";
-        String authStringEnc = this.getAuthString();
-
-        JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
-        JerseyWebTarget webTarget = restClient.target(baseUri);
-
         ArrayList<SipUser> userList = new ArrayList<>();
         try {
-
-            Response response = webTarget.request(MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
-            String returnValue = response.readEntity(String.class);
-            if (response.getStatus() != 200) {
-                log.error("Could not get Sipgate user information information: " + returnValue + " [" + response.getStatus() + "]");
-                throw new SipgateException("Could not get Sipgate user information: " + returnValue + " [" + response.getStatus() + "]");
+            HttpRequest request = jsonGetRequest(API_BASE + "users").build();
+            HttpResponse<String> response = sendRequest(request);
+            String returnValue = response.body();
+            if (response.statusCode() != 200) {
+                log.error("Could not get Sipgate user information: " + returnValue + " [" + response.statusCode() + "]");
+                throw new SipgateException("Could not get Sipgate user information: " + returnValue + " [" + response.statusCode() + "]");
             }
 
             Object jsonOutput = Jsoner.deserialize(returnValue);
@@ -759,12 +769,9 @@ public class SipgateAPI {
                 }
 
             }
-            response.close();
         } catch (Exception ex) {
             log.error("Could not get Sipgate users", ex);
             throw new SipgateException(ex.getMessage(), ex);
-        } finally {
-            restClient.close();
         }
         return userList;
     }
@@ -778,23 +785,17 @@ public class SipgateAPI {
             throw new SipgateException("Sipgate internal user id must not be null");
         }
 
-        String authStringEnc = this.getAuthString();
-
         HashMap<String, SipUri> allUris = new HashMap<>();
 
-        String baseUri = API_BASE + internalUserId + "/faxlines";
-        
-        JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
-        JerseyWebTarget webTarget = restClient.target(baseUri);
-        
+        // faxlines
         try {
-            
-            Response response = webTarget.request(MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
-            String returnValue = response.readEntity(String.class);
+            HttpRequest request = jsonGetRequest(API_BASE + internalUserId + "/faxlines").build();
+            HttpResponse<String> response = sendRequest(request);
+            String returnValue = response.body();
             // {"items":[{"id":"f0","alias":"Fax","tagline":"","canSend":true,"canReceive":false}]}
-            if (response.getStatus() != 200) {
-                log.error("Could not get Sipgate faxlines information: " + returnValue + " [" + response.getStatus() + "]");
-                throw new SipgateException("Could not get Sipgate faxlines device information: " + returnValue + " [" + response.getStatus() + "]");
+            if (response.statusCode() != 200) {
+                log.error("Could not get Sipgate faxlines information: " + returnValue + " [" + response.statusCode() + "]");
+                throw new SipgateException("Could not get Sipgate faxlines device information: " + returnValue + " [" + response.statusCode() + "]");
             }
 
             Object jsonOutput = Jsoner.deserialize(returnValue);
@@ -827,27 +828,23 @@ public class SipgateAPI {
                     if (!(uri.getTypeOfService().contains(SipUtils.TOS_FAX))) {
                         uri.getTypeOfService().add(SipUtils.TOS_FAX);
                     }
-                    //uri.setDefaultUri(true);
-                    //uri.setOutgoingNumber(clientName);
                 }
 
             }
-            response.close();
         } catch (Exception ex) {
             log.error("Could not get Sipgate faxlines device information", ex);
             throw new SipgateException(ex.getMessage(), ex);
         }
 
-        baseUri = API_BASE + internalUserId + "/sms";
-        webTarget = restClient.target(baseUri);
+        // sms
         try {
-            Response response = webTarget.request(MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
-            String returnValue = response.readEntity(String.class);
+            HttpRequest request = jsonGetRequest(API_BASE + internalUserId + "/sms").build();
+            HttpResponse<String> response = sendRequest(request);
+            String returnValue = response.body();
             // {"items":[{"id":"s0","alias":"Sms","callerId":"sipgate"}]}
-            if (response.getStatus() != 200) {
-                response.close();
-                log.error("Could not get Sipgate sms information: " + returnValue + " [" + response.getStatus() + "]");
-                throw new SipgateException("Could not get Sipgate sms device information: " + returnValue + " [" + response.getStatus() + "]");
+            if (response.statusCode() != 200) {
+                log.error("Could not get Sipgate sms information: " + returnValue + " [" + response.statusCode() + "]");
+                throw new SipgateException("Could not get Sipgate sms device information: " + returnValue + " [" + response.statusCode() + "]");
             }
 
             Object jsonOutput = Jsoner.deserialize(returnValue);
@@ -878,26 +875,23 @@ public class SipgateAPI {
                     if (!(uri.getTypeOfService().contains(SipUtils.TOS_TEXT))) {
                         uri.getTypeOfService().add(SipUtils.TOS_TEXT);
                     }
-                    //uri.setDefaultUri(true);
-                    //uri.setOutgoingNumber(clientName);
                 }
 
             }
-            response.close();
         } catch (Exception ex) {
             log.error("Could not get Sipgate sms device information", ex);
             throw new SipgateException(ex.getMessage(), ex);
         }
 
-        baseUri = API_BASE + internalUserId + "/phonelines";
-        webTarget = restClient.target(baseUri);
+        // sipgate neo: use /channels instead of /{userId}/phonelines
         try {
-            Response response = webTarget.request(MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
-            String returnValue = response.readEntity(String.class);
-            // {"items":[{"id":"p0","alias":"VoIP-Telefon von Jens Kutschke","blockAnonymousUrl":"https://api.sipgate.com/v2/w0/phonelines/p0/blockanonymous","devicesUrl":"https://api.sipgate.com/v2/w0/phonelines/p0/devices","forwardingsUrl":"https://api.sipgate.com/v2/w0/phonelines/p0/forwardings","numbersUrl":"https://api.sipgate.com/v2/w0/phonelines/p0/numbers","parallelForwardingsUrl":"https://api.sipgate.com/v2/w0/phonelines/p0/parallelforwardings","voicemailsUrl":"https://api.sipgate.com/v2/w0/phonelines/p0/voicemails"}]}
-            if (response.getStatus() != 200) {
-                log.error("Could not get Sipgate balance information: " + returnValue + " [" + response.getStatus() + "]");
-                throw new SipgateException("Could not get Sipgate phonelines device information: " + returnValue + " [" + response.getStatus() + "]");
+            HttpRequest request = jsonGetRequest(API_BASE + "channels").build();
+            HttpResponse<String> response = sendRequest(request);
+            String returnValue = response.body();
+            // {"items":[{"id":"<uuid>","name":"Channel Name","users":[{"userId":"w0","deviceIds":["e0"]}],"settings":{...}}]}
+            if (response.statusCode() != 200) {
+                log.error("Could not get Sipgate channels information: " + returnValue + " [" + response.statusCode() + "]");
+                throw new SipgateException("Could not get Sipgate channels information: " + returnValue + " [" + response.statusCode() + "]");
             }
 
             Object jsonOutput = Jsoner.deserialize(returnValue);
@@ -909,43 +903,56 @@ public class SipgateAPI {
                 while (itemIt.hasNext()) {
                     JsonObject item0 = (JsonObject) itemIt.next();
                     JsonKey idKey = Jsoner.mintJsonKey("id", null);
-                    String id = item0.getString(idKey);
-                    if (!allUris.containsKey(id)) {
-                        SipUri uri = new SipUri();
-                        uri.setUri(id);
+                    String channelId = item0.getString(idKey);
 
-                        allUris.put(id, uri);
+                    // extract first deviceId from users array for the authenticated user
+                    String firstDeviceId = null;
+                    JsonKey usersKey = Jsoner.mintJsonKey("users", null);
+                    Collection users = item0.getCollection(usersKey);
+                    if (users != null) {
+                        Iterator userIt = users.iterator();
+                        while (userIt.hasNext()) {
+                            JsonObject userObj = (JsonObject) userIt.next();
+                            JsonKey deviceIdsKey = Jsoner.mintJsonKey("deviceIds", null);
+                            Collection deviceIds = userObj.getCollection(deviceIdsKey);
+                            if (deviceIds != null && !deviceIds.isEmpty()) {
+                                firstDeviceId = deviceIds.iterator().next().toString();
+                                break;
+                            }
+                        }
                     }
-                    SipUri uri = allUris.get(id);
 
-                    JsonKey aliasKey = Jsoner.mintJsonKey(JSON_ALIAS, null);
-                    String alias = item0.getString(aliasKey);
-                    StringBuilder description = new StringBuilder();
-                    description.append(alias);
-                    uri.setDescription(description.toString());
+                    if (!allUris.containsKey(channelId)) {
+                        SipUri uri = new SipUri();
+                        uri.setUri(channelId);
+                        uri.setDeviceId(firstDeviceId);
+                        allUris.put(channelId, uri);
+                    }
+                    SipUri uri = allUris.get(channelId);
+
+                    JsonKey nameKey = Jsoner.mintJsonKey("name", null);
+                    String name = item0.getString(nameKey);
+                    uri.setDescription(name);
                     if (!(uri.getTypeOfService().contains(SipUtils.TOS_VOICE))) {
                         uri.getTypeOfService().add(SipUtils.TOS_VOICE);
                     }
-                    //uri.setDefaultUri(true);
-                    //uri.setOutgoingNumber(clientName);
                 }
 
             }
-            response.close();
         } catch (Exception ex) {
-            log.error("Could not get Sipgate phonelines device information", ex);
+            log.error("Could not get Sipgate channels information", ex);
             throw new SipgateException(ex.getMessage(), ex);
         }
 
-        baseUri = API_BASE + internalUserId + "/numbers";
-        webTarget = restClient.target(baseUri);
+        // numbers
         try {
-            Response response = webTarget.request(MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
-            String returnValue = response.readEntity(String.class);
-            // {"items":[{"id":"9104380","number":"+4935243188822","localized":"035243-188822","type":"LANDLINE","endpointId":"p0","endpointAlias":"VoIP-Telefon von Jens Kutschke","endpointUrl":"https://api.sipgate.com/v2/w0/phonelines/p0"},{"id":"9104381","number":"+493524344116","localized":"035243-44116","type":"LANDLINE","endpointId":"p0","endpointAlias":"VoIP-Telefon von Jens Kutschke","endpointUrl":"https://api.sipgate.com/v2/w0/phonelines/p0"}]}
-            if (response.getStatus() != 200) {
-                log.error("Could not get Sipgate numbers information: " + returnValue + " [" + response.getStatus() + "]");
-                throw new SipgateException("Could not get Sipgate numbers information: " + returnValue + " [" + response.getStatus() + "]");
+            HttpRequest request = jsonGetRequest(API_BASE + internalUserId + "/numbers").build();
+            HttpResponse<String> response = sendRequest(request);
+            String returnValue = response.body();
+            // {"items":[{"id":"9104380","number":"+4935243188822","localized":"035243-188822","type":"LANDLINE","endpointId":"p0","endpointAlias":"VoIP-Telefon von Jens Kutschke","endpointUrl":"https://api.sipgate.com/v2/w0/phonelines/p0"}]}
+            if (response.statusCode() != 200) {
+                log.error("Could not get Sipgate numbers information: " + returnValue + " [" + response.statusCode() + "]");
+                throw new SipgateException("Could not get Sipgate numbers information: " + returnValue + " [" + response.statusCode() + "]");
             }
 
             Object jsonOutput = Jsoner.deserialize(returnValue);
@@ -962,7 +969,7 @@ public class SipgateAPI {
                     JsonKey numberKey = Jsoner.mintJsonKey("number", null);
                     String number = item0.getString(numberKey);
 
-                    //  there may be multiple number per id, need tu use id+callerid as key for the hashmap
+                    //  there may be multiple number per id, need to use id+callerid as key for the hashmap
                     if (!allUris.containsKey(id)) {
                         SipUri uri = new SipUri();
                         uri.setUri(id);
@@ -980,20 +987,15 @@ public class SipgateAPI {
                     StringBuilder description = new StringBuilder();
                     description.append(alias);
                     uri.setDescription(description.toString());
-                    uri.getTypeOfService().add(com.jdimension.jlawyer.sip.SipUtils.TOS_VOICE);
-                    //uri.setDefaultUri(true);
-                    //uri.setOutgoingNumber(clientName);
+                    uri.getTypeOfService().add(SipUtils.TOS_VOICE);
                     uri.setOutgoingNumber(number);
 
                 }
 
             }
-            response.close();
         } catch (Exception ex) {
             log.error("Could not get Sipgate numbers information", ex);
             throw new SipgateException(ex.getMessage(), ex);
-        } finally {
-            restClient.close();
         }
 
         ArrayList<SipUri> unsorted = new ArrayList<>(allUris.values());
@@ -1001,22 +1003,22 @@ public class SipgateAPI {
             if (obj1 == null) {
                 return -1;
             }
-            
+
             if (obj2 == null) {
                 return -1;
             }
-            
+
             if (!(obj1 instanceof SipUri)) {
                 return -1;
             }
-            
+
             if (!(obj2 instanceof SipUri)) {
                 return -1;
             }
-            
+
             SipUri dto1 = (SipUri) obj1;
             SipUri dto2 = (SipUri) obj2;
-            
+
             String d1 = dto1.toString();
             String d2 = dto2.toString();
             if (d1 != null) {
@@ -1025,7 +1027,7 @@ public class SipgateAPI {
                 } else {
                     return -1;
                 }
-                
+
             } else {
                 return -1;
             }
@@ -1037,24 +1039,19 @@ public class SipgateAPI {
 
         log.info("Requesting Sipgate balance information");
 
-        String baseUri = "https://api.sipgate.com/v2/balance";
-        String authStringEnc = this.getAuthString();
-        
-        JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
-        JerseyWebTarget webTarget = restClient.target(baseUri);
-
         BalanceInformation retValue = new BalanceInformation();
         try {
-            Response response = webTarget.request(MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
-            String returnValue = response.readEntity(String.class);
-            if (response.getStatus() == 403) {
+            HttpRequest request = jsonGetRequest(API_BASE + "balance").build();
+            HttpResponse<String> response = sendRequest(request);
+            String returnValue = response.body();
+            if (response.statusCode() == 403) {
                 // likely, only admin users may query the balance
                 log.warn("unable to query sipgate balance - user not authorized");
                 retValue.setValid(new Date());
                 return retValue;
-            } else if (response.getStatus() != 200) {
-                log.error("Could not get Sipgate balance information: " + returnValue + " [" + response.getStatus() + "]");
-                throw new SipgateException("Could not get Sipgate balance information: " + returnValue + " [" + response.getStatus() + "]");
+            } else if (response.statusCode() != 200) {
+                log.error("Could not get Sipgate balance information: " + returnValue + " [" + response.statusCode() + "]");
+                throw new SipgateException("Could not get Sipgate balance information: " + returnValue + " [" + response.statusCode() + "]");
             }
 
             Object jsonOutput = Jsoner.deserialize(returnValue);
@@ -1071,12 +1068,9 @@ public class SipgateAPI {
                 retValue.setValid(new Date());
 
             }
-            response.close();
         } catch (Exception ex) {
             log.error("Could not get Sipgate balance information", ex);
             throw new SipgateException(ex.getMessage(), ex);
-        } finally {
-            restClient.close();
         }
 
         return retValue;
@@ -1086,103 +1080,66 @@ public class SipgateAPI {
 
         log.info("Initiating SMS via Sipgate: " + remoteUri);
 
-        // {
-        //  "smsId": "s0",
-        //  "recipient": "+4915799912345",
-        //  "message": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.",
-        //  "sendAt": 1546850272
-        // }
-        String baseUri = "https://api.sipgate.com/v2/sessions/sms";
-        String authStringEnc = this.getAuthString();
-        
-        JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
-        JerseyWebTarget webTarget = restClient.target(baseUri);
-
         String jsonQuery = "{\n"
                 + "  \"smsId\": \"" + localUri + "\",\n"
                 + "  \"recipient\": \"" + remoteUri + "\",\n"
-                //+ "  \"message\": \"" + content + "\",\n"
                 + "  \"message\": \"" + content + "\"\n"
-                + //"  \"sendAt\": 1546850272\n" +
-                "}";
+                + "}";
 
         try {
-            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).post(javax.ws.rs.client.Entity.entity(jsonQuery, javax.ws.rs.core.MediaType.APPLICATION_JSON));
-            String returnValue = response.readEntity(String.class);
-            if (response.getStatus() != 200 && response.getStatus() != 204) {
-                response.close();
-                log.error("Could not send SMS: " + returnValue + " [" + response.getStatus() + "]");
-                throw new SipgateException("Could not send SMS: " + returnValue + " [" + response.getStatus() + "]");
+            HttpRequest request = jsonPostRequest(API_BASE + "sessions/sms", jsonQuery).build();
+            HttpResponse<String> response = sendRequest(request);
+            String returnValue = response.body();
+            if (response.statusCode() != 200 && response.statusCode() != 204) {
+                log.error("Could not send SMS: " + returnValue + " [" + response.statusCode() + "]");
+                throw new SipgateException("Could not send SMS: " + returnValue + " [" + response.statusCode() + "]");
             }
-            response.close();
         } catch (Exception ex) {
             log.error("Could not send SMS", ex);
             throw new SipgateException(ex.getMessage(), ex);
-        } finally {
-            restClient.close();
         }
     }
 
-    public String initiateCall(String localUri, String remoteUri, String callerId) throws SipgateException {
-        log.info("Initiating call via Sipgate: " + remoteUri);
+    public String initiateCall(String deviceId, String targetNumber, String callerId, String channelId) throws SipgateException {
+        log.info("Initiating call via Sipgate: " + targetNumber);
 
-        //   "{\n" +
-        //"  \"deviceId\": \"e0\",\n" +
-        //"  \"caller\": \"e0\",\n" +
-        //"  \"callee\": \"+4915799912345\",\n" +
-        //"  \"callerId\": \"+4915799912345\"\n" +
-        //"}"
-        String baseUri = "https://api.sipgate.com/v2/sessions/calls";
-        String authStringEnc = this.getAuthString();
-        
-        JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
-        JerseyWebTarget webTarget = restClient.target(baseUri);
-        
-        String jsonQuery = null;
-        if (callerId == null || callerId.isEmpty()) {
-            jsonQuery = "{\n"
-                    //+ "  \"deviceId\": \"" + localUri + "\",\n"
-                    + "  \"caller\": \"" + localUri + "\",\n"
-                    //+ "  \"callee\": \"+4915799912345\",\n"
-                    + "  \"callee\": \"" + remoteUri + "\"\n"
-                    //+ "  \"callerId\": \"+4915799912345\"\n"
-                    + "}";
-        } else {
-
-            jsonQuery = "{\n"
-                    //+ "  \"deviceId\": \"" + localUri + "\",\n"
-                    + "  \"caller\": \"" + localUri + "\",\n"
-                    //+ "  \"callee\": \"+4915799912345\",\n"
-                    + "  \"callee\": \"" + remoteUri + "\",\n"
-                    + "  \"callerId\": \"" + callerId + "\"\n"
-                    + "}";
+        // sipgate neo: POST /calls with deviceId, targetNumber, callerId, channelId
+        StringBuilder jsonBuilder = new StringBuilder();
+        jsonBuilder.append("{\n");
+        jsonBuilder.append("  \"deviceId\": \"").append(deviceId).append("\",\n");
+        jsonBuilder.append("  \"targetNumber\": \"").append(targetNumber).append("\"");
+        if (callerId != null && !callerId.isEmpty()) {
+            jsonBuilder.append(",\n  \"callerId\": \"").append(callerId).append("\"");
         }
+        if (channelId != null && !channelId.isEmpty()) {
+            jsonBuilder.append(",\n  \"channelId\": \"").append(channelId).append("\"");
+        }
+        jsonBuilder.append("\n}");
+        String jsonQuery = jsonBuilder.toString();
 
-        String sessionId = null;
+        String callSid = null;
         try {
-            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).post(javax.ws.rs.client.Entity.entity(jsonQuery, javax.ws.rs.core.MediaType.APPLICATION_JSON));
-            String returnValue = response.readEntity(String.class);
-            if (response.getStatus() != 200) {
-                log.error("Could not initiate call: " + returnValue + " [" + response.getStatus() + "]");
-                throw new SipgateException("Could not initiate call: " + returnValue + " [" + response.getStatus() + "]");
+            HttpRequest request = jsonPostRequest(API_BASE + "calls", jsonQuery).build();
+            HttpResponse<String> response = sendRequest(request);
+            String returnValue = response.body();
+            if (response.statusCode() != 200) {
+                log.error("Could not initiate call: " + returnValue + " [" + response.statusCode() + "]");
+                throw new SipgateException("Could not initiate call: " + returnValue + " [" + response.statusCode() + "]");
             }
 
             Object jsonOutput = Jsoner.deserialize(returnValue);
             if (jsonOutput instanceof JsonObject) {
                 JsonObject result = (JsonObject) jsonOutput;
-                JsonKey sessionKey = Jsoner.mintJsonKey("sessionId", null);
-                sessionId = result.getString(sessionKey);
+                JsonKey callSidKey = Jsoner.mintJsonKey("callSid", null);
+                callSid = result.getString(callSidKey);
 
             }
-            response.close();
 
         } catch (Exception ex) {
             log.error("Could not initiate call", ex);
             throw new SipgateException(ex.getMessage(), ex);
-        } finally {
-            restClient.close();
         }
-        return sessionId;
+        return callSid;
     }
 
     public String initiateFax(String localUri, String remoteUri, byte[] pdfData, String fileName) throws SipgateException {
@@ -1205,18 +1162,6 @@ public class SipgateAPI {
             throw new SipgateException("PDF konnte nicht nach Base64 kodiert werden: " + t.getMessage(), t);
         }
 
-//        "{\n"
-//        "  \"faxlineId\": \"f0\",\n"
-//        "  \"recipient\": \"+4921112345678\",\n"
-//        "  \"filename\": \"fax.pdf\",\n"
-//        "  \"base64Content\": \"TWF5IHRoZSBmb3VydGggYmUgd2l0aCB5b3U=\"\n"
-//        "}"
-        String baseUri = "https://api.sipgate.com/v2/sessions/fax";
-        String authStringEnc = this.getAuthString();
-        
-        JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
-        JerseyWebTarget webTarget = restClient.target(baseUri);
-
         String jsonQuery = "{\n"
                 + "  \"faxlineId\": \"" + localUri + "\",\n"
                 + "  \"recipient\": \"" + remoteUri + "\",\n"
@@ -1226,11 +1171,12 @@ public class SipgateAPI {
 
         String sessionId = null;
         try {
-            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).post(javax.ws.rs.client.Entity.entity(jsonQuery, javax.ws.rs.core.MediaType.APPLICATION_JSON));
-            String returnValue = response.readEntity(String.class);
-            if (response.getStatus() != 200) {
-                log.error("Could not send fax: " + returnValue + " [" + response.getStatus() + "]");
-                throw new SipgateException("Could not send fax: " + returnValue + " [" + response.getStatus() + "]");
+            HttpRequest request = jsonPostRequest(API_BASE + "sessions/fax", jsonQuery).build();
+            HttpResponse<String> response = sendRequest(request);
+            String returnValue = response.body();
+            if (response.statusCode() != 200) {
+                log.error("Could not send fax: " + returnValue + " [" + response.statusCode() + "]");
+                throw new SipgateException("Could not send fax: " + returnValue + " [" + response.statusCode() + "]");
             }
 
             Object jsonOutput = Jsoner.deserialize(returnValue);
@@ -1240,13 +1186,10 @@ public class SipgateAPI {
                 sessionId = result.getString(sessionKey);
 
             }
-            response.close();
 
         } catch (Exception ex) {
             log.error("Could not send fax", ex);
             throw new SipgateException(ex.getMessage(), ex);
-        } finally {
-            restClient.close();
         }
         return sessionId;
     }
@@ -1283,18 +1226,13 @@ public class SipgateAPI {
     public byte[] getFaxReport(String sessionId) throws SipgateException {
         log.info("Requesting Sipgate fax report");
 
-        String baseUri = "https://api.sipgate.com/v2/history/" + sessionId;
-        String authStringEnc = this.getAuthString();
-
-        JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
-        JerseyWebTarget webTarget = restClient.target(baseUri);
-
         try {
-            Response response = webTarget.request(MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
-            String returnValue = response.readEntity(String.class);
-            if (response.getStatus() != 200) {
-                log.error("Could not get Sipgate session information: " + returnValue + " [" + response.getStatus() + "]");
-                throw new SipgateException("Could not get Sipgate session information: " + returnValue + " [" + response.getStatus() + "]");
+            HttpRequest request = jsonGetRequest(API_BASE + "history/" + sessionId).build();
+            HttpResponse<String> response = sendRequest(request);
+            String returnValue = response.body();
+            if (response.statusCode() != 200) {
+                log.error("Could not get Sipgate session information: " + returnValue + " [" + response.statusCode() + "]");
+                throw new SipgateException("Could not get Sipgate session information: " + returnValue + " [" + response.statusCode() + "]");
             }
 
             Object jsonOutput = Jsoner.deserialize(returnValue);
@@ -1307,51 +1245,34 @@ public class SipgateAPI {
                 }
 
             }
-            response.close();
         } catch (Exception ex) {
             log.error("Could not get Sipgate fax report", ex);
             throw new SipgateException(ex.getMessage(), ex);
-        } finally {
-            restClient.close();
         }
 
         return null;
     }
 
     private byte[] downloadReport(String downloadUrl) throws Exception {
-        URL updateURL = new URL(downloadUrl);
-        URLConnection urlCon = updateURL.openConnection();
-        urlCon.setRequestProperty("User-Agent", "j-lawyer.org Sipgate integration");
-
-        ByteArrayOutputStream bOut;
-        try ( InputStream is = urlCon.getInputStream()) {
-            bOut = new ByteArrayOutputStream();
-            byte[] buffer = new byte[1024];
-            int len = 0;
-            while ((len = is.read(buffer)) > -1) {
-                bOut.write(buffer, 0, len);
-            }
-        }
-        bOut.close();
-        return bOut.toByteArray();
+        HttpRequest request = HttpRequest.newBuilder(URI.create(downloadUrl))
+                .header("User-Agent", "j-lawyer.org Sipgate integration")
+                .GET()
+                .build();
+        HttpResponse<byte[]> response = sendBytesRequest(request);
+        return response.body();
     }
 
     public String getFaxStatus(String sessionId) throws SipgateException {
         log.info("Requesting Sipgate session status for fax " + sessionId);
 
-        String baseUri = "https://api.sipgate.com/v2/history/" + sessionId;
-        String authStringEnc = this.getAuthString();
-        
-        JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
-        JerseyWebTarget webTarget = restClient.target(baseUri);
-
         String status = null;
         try {
-            Response response = webTarget.request(MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
-            String returnValue = response.readEntity(String.class);
-            if (response.getStatus() != 200) {
-                log.error("Could not get Sipgate session information: " + returnValue + " [" + response.getStatus() + "]");
-                throw new SipgateException("Could not get Sipgate session information: " + returnValue + " [" + response.getStatus() + "]");
+            HttpRequest request = jsonGetRequest(API_BASE + "history/" + sessionId).build();
+            HttpResponse<String> response = sendRequest(request);
+            String returnValue = response.body();
+            if (response.statusCode() != 200) {
+                log.error("Could not get Sipgate session information: " + returnValue + " [" + response.statusCode() + "]");
+                throw new SipgateException("Could not get Sipgate session information: " + returnValue + " [" + response.statusCode() + "]");
             }
 
             Object jsonOutput = Jsoner.deserialize(returnValue);
@@ -1361,12 +1282,9 @@ public class SipgateAPI {
                 status = result.getString(statusKey);
 
             }
-            response.close();
         } catch (Exception ex) {
-            log.error("Could not get Sipgate balance information", ex);
+            log.error("Could not get Sipgate session information", ex);
             throw new SipgateException(ex.getMessage(), ex);
-        } finally {
-            restClient.close();
         }
 
         return status;

@@ -690,7 +690,17 @@ public interface VoipServiceRemote {
 
     void initiateSms(String localUri, String remoteUri, String content) throws SipgateException;
 
-    String initiateCall(String localUri, String remoteUri, String callerId) throws SipgateException;
+    /**
+     * Initiates a voice call via the sipgate neo API (POST /calls).
+     *
+     * @param deviceId the device identifier for the calling device
+     * @param targetNumber the remote phone number in E.164 format
+     * @param callerId the caller ID to display, may be null
+     * @param channelId the channel to route the call through, may be null
+     * @return the call SID returned by sipgate
+     * @throws SipgateException if the call could not be initiated
+     */
+    String initiateCall(String deviceId, String targetNumber, String callerId, String channelId) throws SipgateException;
 
     String initiateFax(String localUri, String remoteUri, String remoteName, String pdfName, byte[] pdfData, String archiveFileId) throws SipgateException;
 

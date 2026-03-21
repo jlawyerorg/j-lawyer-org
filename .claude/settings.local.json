@@ -71,7 +71,8 @@
       "Bash(for v:*)",
       "Bash(do echo:*)",
       "WebFetch(domain:help.sipgate.de)",
-      "WebFetch(domain:developer.sipgate.io)"
+      "WebFetch(domain:developer.sipgate.io)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "ask": []

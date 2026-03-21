@@ -676,9 +676,10 @@ public class SipUri implements Serializable {
     
     private String uri=null;
     private ArrayList<String> typeOfService=new ArrayList<>();
-    private boolean defaultUri=false; 
+    private boolean defaultUri=false;
     private String outgoingNumber=null;
     protected String description=null;
+    private String deviceId=null;
     
     public SipUri() {
         
@@ -766,7 +767,19 @@ public class SipUri implements Serializable {
     public void setDescription(String description) {
         this.description = description;
     }
-    
-    
-    
+
+    /**
+     * @return the deviceId
+     */
+    public String getDeviceId() {
+        return deviceId;
+    }
+
+    /**
+     * @param deviceId the deviceId to set
+     */
+    public void setDeviceId(String deviceId) {
+        this.deviceId = deviceId;
+    }
+
 }
