@@ -691,6 +691,7 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JMenuItem;
@@ -1805,7 +1806,6 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         this.pnlDocumentEntries.removeAll();
         BoxLayout boxLayout = new BoxLayout(this.pnlDocumentEntries, BoxLayout.Y_AXIS);
         this.pnlDocumentEntries.setLayout(boxLayout);
-        double prefHeight = 0;
         for (int i = 0; i < docsInSelectedFolders.size(); i++) {
             ArchiveFileDocumentsBean d = docsInSelectedFolders.get(i);
             DocumentEntryPanel p = new DocumentEntryPanel(this.caseContainer, this, d, this.linkedInvoices.get(d.getId()), this.readonly, dateDisplayMode);
@@ -1821,14 +1821,10 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                 p.setSearchMatches(this.matchingDocumentHits.get(d.getId()).getText());
             else
                 p.setSearchMatches("");
+            p.setMaximumSize(new Dimension(Integer.MAX_VALUE, p.getPreferredSize().height));
             this.pnlDocumentEntries.add(p);
-            prefHeight = prefHeight + p.getPreferredSize().getHeight();
         }
-        if (prefHeight < this.pnlDocumentEntries.getHeight()) {
-            JPanel glue = new JPanel();
-            glue.setPreferredSize(new Dimension(3, (this.pnlDocumentEntries.getHeight() - (int) prefHeight)));
-            this.pnlDocumentEntries.add(glue);
-        }
+        this.pnlDocumentEntries.add(Box.createVerticalGlue());
         
         this.pnlDocumentEntries.revalidate();
         this.pnlDocumentEntries.repaint();
