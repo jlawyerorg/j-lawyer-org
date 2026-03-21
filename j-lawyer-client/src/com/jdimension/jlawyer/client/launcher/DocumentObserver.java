@@ -663,9 +663,12 @@
  */
 package com.jdimension.jlawyer.client.launcher;
 
+import com.jdimension.jlawyer.client.events.DocumentUpdatedEvent;
+import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.CaseUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.ArrayList;
 import org.apache.log4j.Logger;
@@ -790,6 +793,19 @@ public class DocumentObserver {
                 }
 
                 doc.getStore().documentChanged(doc.getPath());
+
+                if (doc.getStore() instanceof CaseDocumentStore) {
+                    try {
+                        ClientSettings settings = ClientSettings.getInstance();
+                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                        ArchiveFileDocumentsBean updatedDoc = locator.lookupArchiveFileServiceRemote().getDocument(doc.getStore().getDocumentIdentifier());
+                        if (updatedDoc != null) {
+                            EventBroker.getInstance().publishEvent(new DocumentUpdatedEvent(updatedDoc));
+                        }
+                    } catch (Throwable t) {
+                        log.error("Could not fire DocumentUpdatedEvent for document " + doc.getStore().getDocumentIdentifier(), t);
+                    }
+                }
             }
 
             if (closed) {

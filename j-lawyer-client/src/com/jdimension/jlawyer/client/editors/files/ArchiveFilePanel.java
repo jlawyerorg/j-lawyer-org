@@ -703,6 +703,7 @@ import com.jdimension.jlawyer.client.encryption.PDFEncryptionDialog;
 import com.jdimension.jlawyer.client.events.CasesChangedEvent;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.DocumentRemovedEvent;
+import com.jdimension.jlawyer.client.events.DocumentUpdatedEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.InstantMessageDeletedEvent;
@@ -1197,6 +1198,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         EventBroker b = EventBroker.getInstance();
         b.subscribeConsumer(this, Event.TYPE_DOCUMENTADDED);
         b.subscribeConsumer(this, Event.TYPE_DOCUMENTREMOVED);
+        b.subscribeConsumer(this, Event.TYPE_DOCUMENTUPDATED);
         b.subscribeConsumer(this, Event.TYPE_REVIEWADDED);
         b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_MESSAGEDELETED);
         b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_NEWMESSAGES);
@@ -5851,6 +5853,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
 
     public void updateDocumentPreview() {
+        updateDocumentPreview(false);
+    }
+
+    public void updateDocumentPreview(boolean forceReload) {
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
 
         if (selectedDocs.isEmpty()) {
@@ -5908,7 +5914,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         if (target != null) {
             ArchiveFileDocumentsBean value = target;
-            new Thread(new LoadDocumentPreviewThread(this.dto, value, this.readOnly, this.pnlPreview, false, this)).start();
+            new Thread(new LoadDocumentPreviewThread(this.dto, value, this.readOnly, this.pnlPreview, false, this, forceReload)).start();
         } else {
             this.clearDocumentPreview("Vorschau nicht verfügbar");
         }
@@ -9510,6 +9516,18 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     ArchiveFileDocumentsBean eventDoc = ((DocumentRemovedEvent) e).getDocument();
                     if (this.dto.getId().equals(eventDoc.getArchiveFileKey().getId())) {
                         caseFolderPanel1.removeDocument(eventDoc);
+                    }
+                }
+            }
+        } else if (e instanceof DocumentUpdatedEvent) {
+            if (this.dto != null) {
+                if (this.dto.getId() != null) {
+                    ArchiveFileDocumentsBean eventDoc = ((DocumentUpdatedEvent) e).getDocument();
+                    if (this.dto.getId().equals(eventDoc.getArchiveFileKey().getId())) {
+                        caseFolderPanel1.updateDocument(eventDoc);
+                        if (eventDoc.getId().equals(lastPreviewDocId)) {
+                            updateDocumentPreview(true);
+                        }
                     }
                 }
             }

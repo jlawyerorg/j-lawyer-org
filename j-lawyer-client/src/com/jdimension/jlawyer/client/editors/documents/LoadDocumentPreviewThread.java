@@ -710,6 +710,7 @@ public class LoadDocumentPreviewThread implements Runnable {
     ArchiveFileDocumentsBean docDto = null;
     private boolean forceAnyDocumentSize = false;
     private DocumentPreviewSaveCallback saveCallback = null;
+    private boolean forceReload = false;
 
     public LoadDocumentPreviewThread(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, JPanel pnlPreview, boolean forceAnyDocumentSize, DocumentPreviewSaveCallback saveCallback) {
         this.docDto = value;
@@ -718,6 +719,11 @@ public class LoadDocumentPreviewThread implements Runnable {
         this.caseDto = caseDto;
         this.forceAnyDocumentSize = forceAnyDocumentSize;
         this.saveCallback = saveCallback;
+    }
+
+    public LoadDocumentPreviewThread(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, JPanel pnlPreview, boolean forceAnyDocumentSize, DocumentPreviewSaveCallback saveCallback, boolean forceReload) {
+        this(caseDto, value, readOnly, pnlPreview, forceAnyDocumentSize, saveCallback);
+        this.forceReload = forceReload;
     }
 
     public static boolean isRunning() {
@@ -734,7 +740,7 @@ public class LoadDocumentPreviewThread implements Runnable {
             if (pnlPreview.getComponentCount() > 0) {
                 Component child = pnlPreview.getComponent(0);
                 if (child instanceof PreviewPanel) {
-                    if (((PreviewPanel) child).getDocumentId() != null && this.docDto.getId().equals(((PreviewPanel) child).getDocumentId())) {
+                    if (!this.forceReload && ((PreviewPanel) child).getDocumentId() != null && this.docDto.getId().equals(((PreviewPanel) child).getDocumentId())) {
                         // a preview was requested for a document that is already displayed
                         running = false;
                         return;
