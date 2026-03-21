@@ -757,7 +757,7 @@ public class CustomLauncher extends Launcher {
                                         break;
                                     }
                                 } else {
-                                    if (!found || "1".equalsIgnoreCase(defaultLauncher) || "true".equalsIgnoreCase(defaultLauncher)) {
+                                    if ("1".equalsIgnoreCase(defaultLauncher) || "true".equalsIgnoreCase(defaultLauncher)) {
                                         found = true;
                                         executable = settings.getConfiguration(launcherKey + CL_SUFFIX_EXE, "");
                                         String paramsRw = settings.getConfiguration(launcherKey + CL_SUFFIX_RW, "");
@@ -769,15 +769,17 @@ public class CustomLauncher extends Launcher {
                                         if (store.isReadOnly()) {
                                             params = paramsRo;
                                         }
-
-                                        if ("1".equalsIgnoreCase(defaultLauncher) || "true".equalsIgnoreCase(defaultLauncher)) {
-                                            break;
-                                        }
+                                        break;
                                     }
                                 }
                             }
 
                         }
+                    }
+
+                    if (!found) {
+                        odoc.setClosed(true);
+                        return;
                     }
 
                     // doing this before split causes issues when url contains spaces!
@@ -873,5 +875,31 @@ public class CustomLauncher extends Launcher {
 
     public static boolean hasCustomLauncher(String extension) {
         return (!(getCustomLauncherNames(extension).isEmpty()));
+    }
+
+    public static boolean hasDefaultCustomLauncher(String extension) {
+        if (extension == null || "".equals(extension)) {
+            return false;
+        }
+        ClientSettings settings = ClientSettings.getInstance();
+        Properties all = settings.getAllConfigurations();
+        Enumeration keys = all.propertyNames();
+        while (keys.hasMoreElements()) {
+            String key = keys.nextElement().toString();
+            if (key.startsWith(CL_PREFIX + ".") && key.endsWith("." + CL_SUFFIX_EXTENSION)) {
+                String ext = settings.getConfiguration(key, "none");
+                String launcherKey = key.substring(0, key.lastIndexOf(".") + 1);
+                for (String singleExt : ext.split("\\s*,\\s*")) {
+                    if (extension.equalsIgnoreCase(singleExt.trim())) {
+                        String defaultLauncher = settings.getConfiguration(launcherKey + CL_SUFFIX_DEFAULT, "");
+                        if ("1".equalsIgnoreCase(defaultLauncher) || "true".equalsIgnoreCase(defaultLauncher)) {
+                            return true;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        return false;
     }
 }

@@ -749,22 +749,22 @@ public class LauncherFactory implements FileTypes {
         }
 
         if (lowerFileName.endsWith(".eml") && !(store.getDocumentIdentifier().startsWith("externalmaillaunch-"))) {
-            
+
             String extension = FileUtils.getExtension(lowerFileName);
-            if (CustomLauncher.hasCustomLauncher(extension)) {
+            if (CustomLauncher.hasDefaultCustomLauncher(extension)) {
                 return new CustomLauncher(url, store);
             }
-            
+
             return new EMLInternalLauncher(url, store, parent);
         }
-        
+
         if (lowerFileName.endsWith(".msg") && !(store.getDocumentIdentifier().startsWith("externalmaillaunch-"))) {
-            
+
             String extension = FileUtils.getExtension(lowerFileName);
-            if (CustomLauncher.hasCustomLauncher(extension)) {
+            if (CustomLauncher.hasDefaultCustomLauncher(extension)) {
                 return new CustomLauncher(url, store);
             }
-            
+
             return new OutlookMsgInternalLauncher(url, store, parent);
         }
 
@@ -777,9 +777,9 @@ public class LauncherFactory implements FileTypes {
             return new CustomLauncher(url, store, customLauncherName);
         }
 
-        // then for custom launchers
+        // then for custom launchers marked as default
         String extension = FileUtils.getExtension(lowerFileName);
-        if (CustomLauncher.hasCustomLauncher(extension)) {
+        if (CustomLauncher.hasDefaultCustomLauncher(extension)) {
             return new CustomLauncher(url, store);
         }
 
