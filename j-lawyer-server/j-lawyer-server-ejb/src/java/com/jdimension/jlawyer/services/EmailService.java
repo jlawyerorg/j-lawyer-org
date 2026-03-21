@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jdimension.jlawyer.email.CommonMailUtils;
 import com.jdimension.jlawyer.persistence.MailboxAccessFacadeLocal;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.persistence.MailboxSetupFacadeLocal;
@@ -1489,15 +1490,15 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                     if (lastSep > 0) {
                         dto.setParentFolderId(fullName.substring(0, lastSep));
                     }
-                    // Set well-known name based on IMAP folder name
-                    String fname = fullName.toLowerCase();
-                    if ("inbox".equals(fname)) {
+                    // Set well-known name based on IMAP folder name using CommonMailUtils aliases
+                    String folderDisplayName = f.getName();
+                    if (CommonMailUtils.isInbox(folderDisplayName)) {
                         dto.setWellKnownName(MailFolderDTO.WELL_KNOWN_INBOX);
-                    } else if (fname.contains("sent")) {
+                    } else if (CommonMailUtils.isSent(folderDisplayName)) {
                         dto.setWellKnownName(MailFolderDTO.WELL_KNOWN_SENT);
-                    } else if (fname.contains("trash") || fname.contains("deleted")) {
+                    } else if (CommonMailUtils.isTrash(folderDisplayName)) {
                         dto.setWellKnownName(MailFolderDTO.WELL_KNOWN_TRASH);
-                    } else if (fname.contains("draft")) {
+                    } else if (CommonMailUtils.isDrafts(folderDisplayName)) {
                         dto.setWellKnownName(MailFolderDTO.WELL_KNOWN_DRAFTS);
                     }
                     result.add(dto);

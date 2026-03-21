@@ -723,6 +723,7 @@ public class CommonMailUtils {
         draftAliases.add("Entwürfe");
         draftAliases.add("Drafts");
         draftAliases.add("Entwuerfe");
+        draftAliases.add("Concepten");
 
         defaultAliases = new ArrayList<>();
 
