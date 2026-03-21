@@ -678,6 +678,15 @@ import javax.swing.table.DefaultTableCellRenderer;
 public class ReportTableCellRenderer extends DefaultTableCellRenderer {
 
     private DecimalFormat decFormat=new DecimalFormat("0.00");
+    private boolean bold=false;
+
+    public ReportTableCellRenderer() {
+        this(false);
+    }
+
+    public ReportTableCellRenderer(boolean bold) {
+        this.bold=bold;
+    }
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
@@ -686,7 +695,7 @@ public class ReportTableCellRenderer extends DefaultTableCellRenderer {
         Object returnRenderer = null;
 
         returnRenderer = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        ((Component) returnRenderer).setFont(((Component) returnRenderer).getFont().deriveFont(Font.PLAIN));
+        ((Component) returnRenderer).setFont(((Component) returnRenderer).getFont().deriveFont(this.bold ? Font.BOLD : Font.PLAIN));
 
         if(value instanceof Float || value instanceof Double || value instanceof BigDecimal) {
             ((JLabel)((Component)returnRenderer)).setText(decFormat.format(value));

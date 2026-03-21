@@ -685,6 +685,12 @@ import java.text.DecimalFormat;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
+import javax.swing.JTable;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.TableColumnModelEvent;
+import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
 import org.jlawyer.reporting.ReportResultTable;
@@ -696,7 +702,9 @@ import org.jlawyer.reporting.ReportResultTable;
 public class DynamicTablePanel extends javax.swing.JPanel {
     
     private static final Logger log=Logger.getLogger(DynamicTablePanel.class.getName());
-    
+
+    private static final int SUM_ROW_COUNT = 3;
+
     private DecimalFormat decFormat=new DecimalFormat("0.00");
     private ReportResultTable resultTable=null;
 
@@ -706,21 +714,72 @@ public class DynamicTablePanel extends javax.swing.JPanel {
      */
     public DynamicTablePanel(ReportResultTable table) {
         initComponents();
-        
+
         this.resultTable=table;
         this.tblResult.setDefaultRenderer(Object.class, new ReportTableCellRenderer());
-        
+
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
-        
+
         DefaultTableModel model2 = new DefaultTableModel(table.getColumnNames(), 0);
         this.tblResult.setModel(model2);
-        
+
+        int dataRowCount = table.getValues() != null ? table.getValues().size() : 0;
+        if (table.isHasSumRows() && dataRowCount > SUM_ROW_COUNT) {
+            dataRowCount -= SUM_ROW_COUNT;
+        }
+
         if (table.getValues() != null) {
-            for (int i = 0; i < table.getValues().size(); i++) {
+            for (int i = 0; i < dataRowCount; i++) {
                 model2.addRow(table.getValues().get(i));
             }
         }
         ComponentUtils.autoSizeColumns(tblResult);
+
+        if (table.isHasSumRows() && table.getValues() != null && table.getValues().size() > SUM_ROW_COUNT) {
+            DefaultTableModel footerModel = new DefaultTableModel(table.getColumnNames(), 0);
+            for (int i = dataRowCount; i < table.getValues().size(); i++) {
+                Object[] row = table.getValues().get(i);
+                boolean allEmpty = true;
+                for (Object cell : row) {
+                    if (cell != null && !cell.toString().trim().isEmpty()) {
+                        allEmpty = false;
+                        break;
+                    }
+                }
+                if (!allEmpty) {
+                    footerModel.addRow(row);
+                }
+            }
+            this.tblFooter.setModel(footerModel);
+            this.tblFooter.setTableHeader(null);
+            this.tblFooter.setEnabled(false);
+            this.tblFooter.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+            this.tblFooter.setDefaultRenderer(Object.class, new ReportTableCellRenderer(true));
+            this.jScrollPaneFooter.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+            this.jScrollPaneFooter.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            this.jScrollPaneFooter.getHorizontalScrollBar().setModel(
+                    jScrollPane1.getHorizontalScrollBar().getModel());
+            syncColumnWidths();
+            tblResult.getColumnModel().addColumnModelListener(new TableColumnModelListener() {
+                @Override
+                public void columnMarginChanged(ChangeEvent e) {
+                    syncColumnWidths();
+                }
+                @Override
+                public void columnMoved(TableColumnModelEvent e) {
+                    syncColumnWidths();
+                }
+                @Override
+                public void columnAdded(TableColumnModelEvent e) {}
+                @Override
+                public void columnRemoved(TableColumnModelEvent e) {}
+                @Override
+                public void columnSelectionChanged(ListSelectionEvent e) {}
+            });
+            this.jScrollPaneFooter.setVisible(true);
+        } else {
+            this.jScrollPaneFooter.setVisible(false);
+        }
 
         // Hide first column if it contains case_id
         if (table.isHasCaseIdColumn()) {
@@ -759,6 +818,8 @@ public class DynamicTablePanel extends javax.swing.JPanel {
                 }
             });
         }
+        
+        tblResult.getTableHeader().setReorderingAllowed(false);
 
     }
     
@@ -774,6 +835,8 @@ public class DynamicTablePanel extends javax.swing.JPanel {
         cmdExportTable = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblResult = new javax.swing.JTable();
+        jScrollPaneFooter = new javax.swing.JScrollPane();
+        tblFooter = new javax.swing.JTable();
 
         cmdExportTable.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calc.png"))); // NOI18N
         cmdExportTable.setToolTipText("Daten exportieren");
@@ -797,6 +860,19 @@ public class DynamicTablePanel extends javax.swing.JPanel {
         ));
         jScrollPane1.setViewportView(tblResult);
 
+        tblFooter.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        jScrollPaneFooter.setViewportView(tblFooter);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -804,10 +880,11 @@ public class DynamicTablePanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 433, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(cmdExportTable)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 433, Short.MAX_VALUE))
+                    .addComponent(jScrollPaneFooter, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -816,7 +893,9 @@ public class DynamicTablePanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addComponent(cmdExportTable)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 307, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 216, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPaneFooter, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -824,12 +903,32 @@ public class DynamicTablePanel extends javax.swing.JPanel {
     private void cmdExportTableActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportTableActionPerformed
         try {
             String fileName=FileUtils.sanitizeFileName(this.resultTable.getTableName() + ".csv");
-            TableUtils.exportAndLaunch(fileName, this.tblResult, this.decFormat);
+            if (this.resultTable.isHasSumRows() && this.jScrollPaneFooter.isVisible()) {
+                // export from original data so the empty separator row is included
+                DefaultTableModel exportModel = new DefaultTableModel(this.resultTable.getColumnNames(), 0);
+                for (Object[] row : this.resultTable.getValues()) {
+                    exportModel.addRow(row);
+                }
+                JTable exportTable = new JTable(exportModel);
+                TableUtils.exportAndLaunch(fileName, exportTable, this.decFormat);
+            } else {
+                TableUtils.exportAndLaunch(fileName, this.tblResult, this.decFormat);
+            }
         } catch (Exception ex) {
             log.error("Error exporting table to CSV", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Export: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdExportTableActionPerformed
+
+    private void syncColumnWidths() {
+        int colCount = Math.min(tblResult.getColumnCount(), tblFooter.getColumnCount());
+        for (int i = 0; i < colCount; i++) {
+            int width = tblResult.getColumnModel().getColumn(i).getWidth();
+            tblFooter.getColumnModel().getColumn(i).setMinWidth(width);
+            tblFooter.getColumnModel().getColumn(i).setMaxWidth(width);
+            tblFooter.getColumnModel().getColumn(i).setPreferredWidth(width);
+        }
+    }
 
     private void openCase() {
         int selectedRow = tblResult.getSelectedRow();
@@ -895,6 +994,8 @@ public class DynamicTablePanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdExportTable;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPaneFooter;
+    private javax.swing.JTable tblFooter;
     private javax.swing.JTable tblResult;
     // End of variables declaration//GEN-END:variables
 }
