@@ -667,8 +667,10 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.Invoice;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Point;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
@@ -696,43 +698,63 @@ public class TableUtils {
         int numRows = table.getRowCount();
         int numCols = table.getColumnCount();
 
-        StringBuilder excelStr = new StringBuilder();
-
+        String[] headers = new String[numCols];
         for (int i = 0; i < numCols; i++) {
-            excelStr.append(escape(table.getColumnName(i)));
-            if (i < numCols - 1) {
-                excelStr.append(CELL_BREAK);
-            }
+            headers[i] = table.getColumnName(i);
         }
-        excelStr.append(LINE_BREAK);
 
+        // track which columns contain only numeric values (or null/empty)
+        boolean[] numericColumns = new boolean[numCols];
+        for (int j = 0; j < numCols; j++) {
+            numericColumns[j] = true;
+        }
+
+        String[][] data = new String[numRows][numCols];
         for (int i = 0; i < numRows; i++) {
             for (int j = 0; j < numCols; j++) {
                 Object cellValue = table.getValueAt(i, j);
                 if (cellValue instanceof Boolean) {
-                    if ((Boolean) cellValue == false) {
-                        cellValue = "nein";
-                    } else {
-                        cellValue = "ja";
+                    data[i][j] = ((Boolean) cellValue) ? "ja" : "nein";
+                    numericColumns[j] = false;
+                } else if (cellValue instanceof Float || cellValue instanceof Double || cellValue instanceof BigDecimal) {
+                    // use raw toString() for parseable numeric format
+                    data[i][j] = cellValue.toString();
+                } else if (cellValue instanceof AddressBean) {
+                    data[i][j] = ((AddressBean) cellValue).toDisplayName();
+                    numericColumns[j] = false;
+                } else if (cellValue instanceof Invoice) {
+                    data[i][j] = ((Invoice) cellValue).getInvoiceNumber();
+                    numericColumns[j] = false;
+                } else {
+                    data[i][j] = escape(cellValue);
+                    if (cellValue != null && cellValue.toString() != null && !cellValue.toString().trim().isEmpty()) {
+                        numericColumns[j] = false;
                     }
-                } else if(cellValue instanceof Float || cellValue instanceof Double || cellValue instanceof BigDecimal) {
-                    if(df!=null)
-                        cellValue=df.format(cellValue);
-                } else if(cellValue instanceof AddressBean) {
-                    cellValue=((AddressBean)cellValue).toDisplayName();
-                } else if(cellValue instanceof Invoice) {
-                    cellValue=((Invoice)cellValue).getInvoiceNumber();
-                }
-                excelStr.append(escape(cellValue));
-                if (j < numCols - 1) {
-                    excelStr.append(CELL_BREAK);
                 }
             }
-            excelStr.append(LINE_BREAK);
         }
 
-        ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("jtableexport-" + fileName, fileName);
-        Launcher launcher = LauncherFactory.getLauncher(fileName, excelStr.toString().getBytes(), store, EditorsRegistry.getInstance().getMainWindow());
+        ClientSettings settings = ClientSettings.getInstance();
+        String wordProcessor = settings.getConfiguration(
+                ClientSettings.CONF_APPS_WORDPROCESSOR_KEY,
+                ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO);
+        boolean msOffice = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO.equalsIgnoreCase(wordProcessor);
+
+        String format = msOffice ? "xlsx" : "ods";
+        String extension = msOffice ? ".xlsx" : ".ods";
+
+        String adjustedFileName = fileName;
+        if (adjustedFileName.toLowerCase().endsWith(".csv")) {
+            adjustedFileName = adjustedFileName.substring(0, adjustedFileName.length() - 4) + extension;
+        } else {
+            adjustedFileName = adjustedFileName + extension;
+        }
+
+        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        byte[] spreadsheetBytes = locator.lookupReportServiceRemote().generateSpreadsheet(format, headers, data, numericColumns);
+
+        ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("jtableexport-" + adjustedFileName, adjustedFileName);
+        Launcher launcher = LauncherFactory.getLauncher(adjustedFileName, spreadsheetBytes, store, EditorsRegistry.getInstance().getMainWindow());
         launcher.launch(false);
 
     }

@@ -685,4 +685,20 @@ public interface ReportServiceRemote {
      */
     List<ReportMetadata> getAvailableReports();
 
+    /**
+     * Generates a spreadsheet file (XLSX or ODS) from the given tabular data.
+     * Columns flagged as numeric will be typed as number cells in the
+     * spreadsheet, allowing sum formulas and other numeric operations.
+     *
+     * @param format the desired format, either "xlsx" or "ods"
+     * @param headers column header names
+     * @param data two-dimensional array of cell values (rows x columns)
+     * @param numericColumns flags per column indicating whether the column
+     *                       contains exclusively numeric values and should be
+     *                       typed as a number column in the spreadsheet
+     * @return the spreadsheet file content as a byte array
+     * @throws Exception if the format is unsupported or generation fails
+     */
+    byte[] generateSpreadsheet(String format, String[] headers, String[][] data, boolean[] numericColumns) throws Exception;
+
 }

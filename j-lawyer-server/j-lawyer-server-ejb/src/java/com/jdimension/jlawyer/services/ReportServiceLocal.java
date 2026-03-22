@@ -679,4 +679,6 @@ public interface ReportServiceLocal {
 
     List<ReportMetadata> getAvailableReports();
 
+    byte[] generateSpreadsheet(String format, String[] headers, String[][] data, boolean[] numericColumns) throws Exception;
+
 }

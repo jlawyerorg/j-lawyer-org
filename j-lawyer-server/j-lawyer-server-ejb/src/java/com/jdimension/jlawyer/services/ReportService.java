@@ -1810,4 +1810,98 @@ public class ReportService implements ReportServiceRemote, ReportServiceLocal {
         return ReportCatalog.getAllReports();
     }
 
+    @Override
+    @RolesAllowed({"loginRole"})
+    public byte[] generateSpreadsheet(String format, String[] headers, String[][] data, boolean[] numericColumns) throws Exception {
+        if ("xlsx".equalsIgnoreCase(format)) {
+            return generateXlsx(headers, data, numericColumns);
+        } else if ("ods".equalsIgnoreCase(format)) {
+            return generateOds(headers, data, numericColumns);
+        } else {
+            throw new Exception("Unsupported spreadsheet format: " + format);
+        }
+    }
+
+    private boolean isNumericColumn(boolean[] numericColumns, int col) {
+        return numericColumns != null && col < numericColumns.length && numericColumns[col];
+    }
+
+    private byte[] generateXlsx(String[] headers, String[][] data, boolean[] numericColumns) throws Exception {
+        try (org.apache.poi.xssf.usermodel.XSSFWorkbook workbook = new org.apache.poi.xssf.usermodel.XSSFWorkbook()) {
+            org.apache.poi.xssf.usermodel.XSSFSheet sheet = workbook.createSheet("Export");
+
+            org.apache.poi.ss.usermodel.CellStyle headerStyle = workbook.createCellStyle();
+            org.apache.poi.ss.usermodel.Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+
+            org.apache.poi.ss.usermodel.Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < headers.length; i++) {
+                org.apache.poi.ss.usermodel.Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i] != null ? headers[i] : "");
+                cell.setCellStyle(headerStyle);
+            }
+
+            for (int r = 0; r < data.length; r++) {
+                org.apache.poi.ss.usermodel.Row row = sheet.createRow(r + 1);
+                for (int c = 0; c < data[r].length; c++) {
+                    org.apache.poi.ss.usermodel.Cell cell = row.createCell(c);
+                    String value = data[r][c];
+                    if (isNumericColumn(numericColumns, c) && value != null && !value.isEmpty()) {
+                        try {
+                            cell.setCellValue(Double.parseDouble(value));
+                        } catch (NumberFormatException nfe) {
+                            cell.setCellValue(value);
+                        }
+                    } else {
+                        cell.setCellValue(value != null ? value : "");
+                    }
+                }
+            }
+
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            java.io.ByteArrayOutputStream bout = new java.io.ByteArrayOutputStream();
+            workbook.write(bout);
+            return bout.toByteArray();
+        }
+    }
+
+    private byte[] generateOds(String[] headers, String[][] data, boolean[] numericColumns) throws Exception {
+        org.odftoolkit.simple.SpreadsheetDocument ods = org.odftoolkit.simple.SpreadsheetDocument.newSpreadsheetDocument();
+        org.odftoolkit.simple.table.Table sheet = ods.getSheetByIndex(0);
+        sheet.setTableName("Export");
+
+        org.odftoolkit.simple.table.Row headerRow = sheet.getRowByIndex(0);
+        for (int i = 0; i < headers.length; i++) {
+            org.odftoolkit.simple.table.Cell cell = headerRow.getCellByIndex(i);
+            cell.setStringValue(headers[i] != null ? headers[i] : "");
+            cell.getFont().setFontStyle(org.odftoolkit.simple.style.StyleTypeDefinitions.FontStyle.BOLD);
+        }
+
+        for (int r = 0; r < data.length; r++) {
+            org.odftoolkit.simple.table.Row row = sheet.getRowByIndex(r + 1);
+            for (int c = 0; c < data[r].length; c++) {
+                org.odftoolkit.simple.table.Cell cell = row.getCellByIndex(c);
+                String value = data[r][c];
+                if (isNumericColumn(numericColumns, c) && value != null && !value.isEmpty()) {
+                    try {
+                        cell.setDoubleValue(Double.parseDouble(value));
+                    } catch (NumberFormatException nfe) {
+                        cell.setStringValue(value);
+                    }
+                } else {
+                    cell.setStringValue(value != null ? value : "");
+                }
+            }
+        }
+
+        java.io.ByteArrayOutputStream bout = new java.io.ByteArrayOutputStream();
+        ods.save(bout);
+        ods.close();
+        return bout.toByteArray();
+    }
+
 }
