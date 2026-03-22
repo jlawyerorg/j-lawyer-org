@@ -664,36 +664,22 @@
 package com.jdimension.jlawyer.client.mail;
 
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
-import com.jdimension.jlawyer.client.events.DocumentRemovedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
-import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
-import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
-import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Properties;
-import javax.activation.FileDataSource;
-import javax.mail.*;
-import javax.mail.internet.*;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import org.apache.log4j.Logger;
@@ -705,7 +691,6 @@ import org.apache.log4j.Logger;
 public class SendAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(SendAction.class.getName());
-    private static final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
 
     private List<String> attachments = null;
     private MailboxSetup ms = null;

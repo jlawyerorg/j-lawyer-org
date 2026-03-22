@@ -910,9 +910,9 @@ public class DynamicTablePanel extends javax.swing.JPanel {
                     exportModel.addRow(row);
                 }
                 JTable exportTable = new JTable(exportModel);
-                TableUtils.exportAndLaunch(fileName, exportTable, this.decFormat);
+                TableUtils.exportAndLaunch(fileName, exportTable);
             } else {
-                TableUtils.exportAndLaunch(fileName, this.tblResult, this.decFormat);
+                TableUtils.exportAndLaunch(fileName, this.tblResult);
             }
         } catch (Exception ex) {
             log.error("Error exporting table to CSV", ex);

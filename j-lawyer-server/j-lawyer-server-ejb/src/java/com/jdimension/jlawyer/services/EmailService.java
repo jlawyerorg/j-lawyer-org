@@ -729,6 +729,8 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
 
     private static final Logger log = Logger.getLogger(EmailService.class.getName());
     private static final String GRAPH_BASE = "https://graph.microsoft.com/v1.0";
+    private static final String HEADER_X_PRIORITY = "X-Priority";
+    private static final String HEADER_IMPORTANCE = "Importance";
     private static final String IMAP_REF_PREFIX = "imap:";
     private static final ConcurrentHashMap<String, Boolean> newMessageFlags = new ConcurrentHashMap<>();
     // Connection cache: reuse IMAP connections across operations for the same mailbox
@@ -1855,15 +1857,15 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         if (to != null && !to.isEmpty()) msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
         if (cc != null && !cc.isEmpty()) msg.setRecipients(Message.RecipientType.CC, InternetAddress.parse(cc));
         if (bcc != null && !bcc.isEmpty()) msg.setRecipients(Message.RecipientType.BCC, InternetAddress.parse(bcc));
-        msg.setSubject(subject, "UTF-8");
+        msg.setSubject(subject, StandardCharsets.UTF_8.name());
         msg.setSentDate(new Date());
         String prio = normalizePriority(priority);
         if ("high".equals(prio)) {
-            msg.setHeader("X-Priority", "1"); msg.setHeader("Priority", "Urgent"); msg.setHeader("Importance", "high");
+            msg.setHeader(HEADER_X_PRIORITY, "1"); msg.setHeader("Priority", "Urgent"); msg.setHeader(HEADER_IMPORTANCE, "high");
         } else if ("low".equals(prio)) {
-            msg.setHeader("X-Priority", "5"); msg.setHeader("Priority", "Non-Urgent"); msg.setHeader("Importance", "low");
+            msg.setHeader(HEADER_X_PRIORITY, "5"); msg.setHeader("Priority", "Non-Urgent"); msg.setHeader(HEADER_IMPORTANCE, "low");
         } else {
-            msg.setHeader("X-Priority", "3"); msg.setHeader("Priority", "Normal"); msg.setHeader("Importance", "normal");
+            msg.setHeader(HEADER_X_PRIORITY, "3"); msg.setHeader("Priority", "Normal"); msg.setHeader(HEADER_IMPORTANCE, "normal");
         }
         if (inReplyTo != null && !inReplyTo.isEmpty()) msg.setHeader("In-Reply-To", inReplyTo);
         if (references != null && !references.isEmpty()) msg.setHeader("References", references);
@@ -2371,13 +2373,13 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         List<Map<String, String>> hdrs = new ArrayList<>();
         // Priority headers for non-Outlook recipients
         if ("high".equals(graphPrio)) {
-            hdrs.add(createHeader("X-Priority", "1"));
+            hdrs.add(createHeader(HEADER_X_PRIORITY, "1"));
             hdrs.add(createHeader("Priority", "Urgent"));
-            hdrs.add(createHeader("Importance", "high"));
+            hdrs.add(createHeader(HEADER_IMPORTANCE, "high"));
         } else if ("low".equals(graphPrio)) {
-            hdrs.add(createHeader("X-Priority", "5"));
+            hdrs.add(createHeader(HEADER_X_PRIORITY, "5"));
             hdrs.add(createHeader("Priority", "Non-Urgent"));
-            hdrs.add(createHeader("Importance", "low"));
+            hdrs.add(createHeader(HEADER_IMPORTANCE, "low"));
         }
         // Threading headers
         if (inReplyTo != null && !inReplyTo.isEmpty()) {
@@ -2548,7 +2550,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         if (dto.getFrom() != null) emlMsg.setFrom(new InternetAddress(dto.getFrom()));
         if (dto.getTo() != null) emlMsg.setRecipients(Message.RecipientType.TO, String.join(", ", dto.getTo()));
         if (dto.getCc() != null && dto.getCc().length > 0) emlMsg.setRecipients(Message.RecipientType.CC, String.join(", ", dto.getCc()));
-        emlMsg.setSubject(dto.getSubject() != null ? dto.getSubject() : "", "UTF-8");
+        emlMsg.setSubject(dto.getSubject() != null ? dto.getSubject() : "", StandardCharsets.UTF_8.name());
         if (dto.getDate() != null) emlMsg.setSentDate(dto.getDate());
         if (dto.getMessageId() != null) emlMsg.setHeader("Message-ID", dto.getMessageId());
         if (dto.getInReplyTo() != null) emlMsg.setHeader("In-Reply-To", dto.getInReplyTo());
@@ -2603,7 +2605,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             if (to != null && !to.isEmpty()) msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
             if (cc != null && !cc.isEmpty()) msg.setRecipients(Message.RecipientType.CC, InternetAddress.parse(cc));
             if (bcc != null && !bcc.isEmpty()) msg.setRecipients(Message.RecipientType.BCC, InternetAddress.parse(bcc));
-            msg.setSubject(subject, "UTF-8");
+            msg.setSubject(subject, StandardCharsets.UTF_8.name());
             msg.setSentDate(new Date());
 
             MimeMultipart multipart = new MimeMultipart();

@@ -2089,7 +2089,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
     private void cmdExportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportActionPerformed
         try {
-            TableUtils.exportAndLaunch("aktenkonto-export.csv", this.tblLedger, this.accountEntryFormat);
+            TableUtils.exportAndLaunch("aktenkonto-export.csv", this.tblLedger);
         } catch (Exception ex) {
             log.error("Error exporting table to CSV", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Export: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -2156,7 +2156,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
     private void cmdExportSummaryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportSummaryActionPerformed
         try {
-            TableUtils.exportAndLaunch("aktenkonto-aufstellung.csv", this.tblSummary, this.accountEntryFormat);
+            TableUtils.exportAndLaunch("aktenkonto-aufstellung.csv", this.tblSummary);
         } catch (Exception ex) {
             log.error("Error exporting table to CSV", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Export: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);

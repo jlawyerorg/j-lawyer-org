@@ -2896,9 +2896,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 this.lstAttachments.setModel(finalAttModel);
 
                 // Display body
-                String body = finalDto.getBody() != null ? finalDto.getBody() : "";
-                String contentType = finalDto.getBodyContentType() != null ? finalDto.getBodyContentType() : "text/plain";
-                this.setBody(body, contentType);
+                String mailBody = finalDto.getBody() != null ? finalDto.getBody() : "";
+                String mailContentType = finalDto.getBodyContentType() != null ? finalDto.getBodyContentType() : "text/plain";
+                this.setBody(mailBody, mailContentType);
 
                 // Check for ICS calendar entries in attachments
                 checkForCalendarEntry(finalAttachments);

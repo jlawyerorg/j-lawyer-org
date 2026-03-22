@@ -675,7 +675,6 @@ import java.awt.Point;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
@@ -690,10 +689,6 @@ public class TableUtils {
     private static String LINE_BREAK = System.getProperty("line.separator");
 
     public static void exportAndLaunch(String fileName, JTable table) throws Exception {
-        exportAndLaunch(fileName, table, null);
-    }
-    
-    public static void exportAndLaunch(String fileName, JTable table, DecimalFormat df) throws Exception {
 
         int numRows = table.getRowCount();
         int numCols = table.getColumnCount();

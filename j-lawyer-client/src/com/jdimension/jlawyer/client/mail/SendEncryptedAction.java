@@ -826,7 +826,7 @@ public class SendEncryptedAction extends ProgressableAction {
 
                 // Build attachment DTOs from (possibly encrypted) files
                 java.util.List<com.jdimension.jlawyer.services.MailAttachmentDTO> attDTOs = new java.util.ArrayList<>();
-                String attachmentNames = "";
+                StringBuilder attachmentNames = new StringBuilder();
                 for (String url : encryptedAttachments) {
                     java.io.File f = new java.io.File(url);
                     if (f.exists()) {
@@ -838,7 +838,7 @@ public class SendEncryptedAction extends ProgressableAction {
                         att.setContent(java.nio.file.Files.readAllBytes(f.toPath()));
                         att.setSize(f.length());
                         attDTOs.add(att);
-                        attachmentNames = attachmentNames + f.getName() + " ";
+                        attachmentNames.append(f.getName()).append(" ");
                     }
                 }
 
@@ -865,8 +865,8 @@ public class SendEncryptedAction extends ProgressableAction {
                         byte[] data = EmailUtils.buildEmlBytes(ms.getEmailAddress(), ms.getEmailSenderName(), fullRecipient, null, null, subject, body, this.contentType, attDTOs);
 
                         String newName = currentRecipientMail + " - " + subject;
-                        if (attachmentNames.trim().length() > 0) {
-                            newName = currentRecipientMail + " - " + attachmentNames.trim() + " per E-Mail";
+                        if (attachmentNames.toString().trim().length() > 0) {
+                            newName = currentRecipientMail + " - " + attachmentNames.toString().trim() + " per E-Mail";
                         }
                         if (newName.length() > 200) {
                             newName = newName.substring(0, 199);

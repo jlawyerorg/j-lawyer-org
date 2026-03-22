@@ -8366,7 +8366,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void cmdExportAccountEntriesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportAccountEntriesActionPerformed
         try {
-            TableUtils.exportAndLaunch("aktenkonto-export.csv", this.tblAccountEntries, this.accountEntryFormat);
+            TableUtils.exportAndLaunch("aktenkonto-export.csv", this.tblAccountEntries);
         } catch (Exception ex) {
             log.error("Error exporting table to CSV", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Export: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
