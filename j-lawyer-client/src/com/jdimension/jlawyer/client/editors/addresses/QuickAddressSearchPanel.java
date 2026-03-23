@@ -691,8 +691,12 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import javax.swing.AbstractAction;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
@@ -808,7 +812,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         jScrollPane1 = new javax.swing.JScrollPane();
         tblResults = new javax.swing.JTable();
         jScrollPane2 = new javax.swing.JScrollPane();
-        lblSummary = new javax.swing.JLabel();
+        pnlCasesForContact = new javax.swing.JPanel();
 
         mnuOpenSelectedAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png"))); // NOI18N
         mnuOpenSelectedAddress.setText("öffnen");
@@ -926,8 +930,18 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
 
         jSplitPane1.setLeftComponent(jScrollPane1);
 
-        lblSummary.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-        jScrollPane2.setViewportView(lblSummary);
+        org.jdesktop.layout.GroupLayout pnlCasesForContactLayout = new org.jdesktop.layout.GroupLayout(pnlCasesForContact);
+        pnlCasesForContact.setLayout(pnlCasesForContactLayout);
+        pnlCasesForContactLayout.setHorizontalGroup(
+            pnlCasesForContactLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 611, Short.MAX_VALUE)
+        );
+        pnlCasesForContactLayout.setVerticalGroup(
+            pnlCasesForContactLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 209, Short.MAX_VALUE)
+        );
+
+        jScrollPane2.setViewportView(pnlCasesForContact);
 
         jSplitPane1.setRightComponent(jScrollPane2);
 
@@ -1066,22 +1080,17 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
                     ClientSettings settings = ClientSettings.getInstance();
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     ArchiveFileServiceRemote afRem = locator.lookupArchiveFileServiceRemote();
-                    Collection col = afRem.getArchiveFileAddressesForAddress(id.getAddressDTO().getId());
-                    List<ArchiveFileBean> partyFiles = new ArrayList<>();
-                    for (Object o : col) {
-                        ArchiveFileAddressesBean afb = (ArchiveFileAddressesBean) o;
-                            partyFiles.add(afb.getArchiveFileKey());
-                        
-                    }
-                    String html = AddressPanel.getArchiveFilesAsHTML(partyFiles);
-                    this.lblSummary.setText(html);
+                    Collection<ArchiveFileAddressesBean> col = afRem.getArchiveFileAddressesForAddress(id.getAddressDTO().getId());
+                    this.fillCasesForContactPanel(col);
                 } catch (Exception ex) {
                     log.error("Error getting archive files for address", ex);
                     JOptionPane.showMessageDialog(this, "Fehler beim Laden der Akten zur Adresse: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                     EditorsRegistry.getInstance().clearStatus();
                 }
             } else {
-                this.lblSummary.setText("");
+                this.pnlCasesForContact.removeAll();
+                this.pnlCasesForContact.revalidate();
+                this.pnlCasesForContact.repaint();
             }
         }
 
@@ -1112,21 +1121,16 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afRem = locator.lookupArchiveFileServiceRemote();
                 Collection<ArchiveFileAddressesBean> col = afRem.getArchiveFileAddressesForAddress(id.getAddressDTO().getId());
-                List<ArchiveFileBean> partyFiles = new ArrayList<>();
-                for (Object o : col) {
-                    ArchiveFileAddressesBean afb = (ArchiveFileAddressesBean) o;
-                        partyFiles.add(afb.getArchiveFileKey());
-                    
-                }
-                String html = AddressPanel.getArchiveFilesAsHTML(partyFiles);
-                this.lblSummary.setText(html);
+                this.fillCasesForContactPanel(col);
             } catch (Exception ex) {
                 log.error("Error getting archive files for address", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Laden der Akten zur Adresse: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 EditorsRegistry.getInstance().clearStatus();
             }
         } else {
-            this.lblSummary.setText("");
+            this.pnlCasesForContact.removeAll();
+            this.pnlCasesForContact.revalidate();
+            this.pnlCasesForContact.repaint();
         }
     }//GEN-LAST:event_tblResultsKeyReleased
 
@@ -1207,6 +1211,49 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         }
     }//GEN-LAST:event_mnuDuplicateSelectedAddressActionPerformed
 
+    private void fillCasesForContactPanel(Collection<ArchiveFileAddressesBean> allCases) {
+        this.pnlCasesForContact.removeAll();
+
+        List<ArchiveFileAddressesBean> allCasesList = new ArrayList<>(allCases);
+        Collections.sort(allCasesList, (ArchiveFileAddressesBean o1, ArchiveFileAddressesBean o2) -> {
+            ArchiveFileBean c1 = o1.getArchiveFileKey();
+            ArchiveFileBean c2 = o2.getArchiveFileKey();
+            if (c1 != null && c2 != null) {
+                Date d1 = c1.getDateCreated();
+                Date d2 = c2.getDateCreated();
+                if (d1 != null && d2 != null) {
+                    return d2.compareTo(d1);
+                }
+            }
+            return 1;
+        });
+
+        this.pnlCasesForContact.setLayout(new BoxLayout(pnlCasesForContact, BoxLayout.Y_AXIS));
+        int i = 0;
+        for (ArchiveFileAddressesBean aFile : allCasesList) {
+            CaseForContactEntryPanel ep = new CaseForContactEntryPanel(this.getClass().getName());
+            if (i % 2 == 0) {
+                ep.setBackground(ep.getBackground().brighter());
+            }
+            CaseForContactEntry lce = new CaseForContactEntry();
+            lce.setFileNumber(aFile.getArchiveFileKey().getFileNumber());
+            lce.setId(aFile.getArchiveFileKey().getId());
+            lce.setRole(aFile.getReferenceType().getName());
+            lce.setRoleForeground(new Color(aFile.getReferenceType().getColor()));
+            lce.setName(aFile.getArchiveFileKey().getName());
+            lce.setReason(StringUtils.nonEmpty(aFile.getArchiveFileKey().getReason()));
+            lce.setArchived(aFile.getArchiveFileKey().isArchived());
+            lce.setOwnReference(aFile.getReference());
+            ep.setEntry(lce);
+            ep.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, ep.getPreferredSize().height));
+            this.pnlCasesForContact.add(ep);
+            i++;
+        }
+        this.pnlCasesForContact.add(Box.createVerticalGlue());
+
+        this.pnlCasesForContact.revalidate();
+        this.pnlCasesForContact.repaint();
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdExport;
@@ -1218,10 +1265,10 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSplitPane jSplitPane1;
     protected javax.swing.JLabel lblPanelTitle;
-    private javax.swing.JLabel lblSummary;
     private javax.swing.JMenuItem mnuDeleteSelectedAddresses;
     private javax.swing.JMenuItem mnuDuplicateSelectedAddress;
     private javax.swing.JMenuItem mnuOpenSelectedAddress;
+    private javax.swing.JPanel pnlCasesForContact;
     private javax.swing.JPopupMenu popTagFilter;
     private javax.swing.JPopupMenu popupAddressActions;
     private javax.swing.JTable tblResults;
