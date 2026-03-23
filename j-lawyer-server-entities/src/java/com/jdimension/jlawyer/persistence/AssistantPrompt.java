@@ -687,13 +687,13 @@ public class AssistantPrompt implements Serializable {
     private String name;
     @Column(name = "request_type")
     private String requestType;
-    @Column(name = "prompt_text")
+    @Column(name = "prompt_text", columnDefinition = "TEXT")
     private String prompt;
     @Column(name = "model_ref")
     private String modelRef;
     @Column(name = "configuration")
     private String configuration;
-    @Column(name = "system_prompt")
+    @Column(name = "system_prompt", columnDefinition = "TEXT")
     private String systemPrompt;
 
     public AssistantPrompt() {

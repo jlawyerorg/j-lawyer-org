@@ -1232,10 +1232,7 @@ public class SendAction extends ProgressableAction {
                     if (!docName.toLowerCase().endsWith(".eml")) docName += ".eml";
 
                     docName = FileUtils.getNewFileName(this.archiveFile, docName, new Date(), true, this.indicator, "Datei benennen");
-                    if (docName == null) {
-                        break;
-                    }
-                    if (docName.trim().length() == 0) {
+                    if (docName != null && docName.trim().length() == 0) {
                         docName = "E-Mail";
                     }
                     if (!docName.toLowerCase().endsWith(".eml")) {

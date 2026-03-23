@@ -1,0 +1,5 @@
+ALTER TABLE assistant_prompts MODIFY prompt_text TEXT DEFAULT NULL;
+ALTER TABLE assistant_prompts MODIFY system_prompt TEXT DEFAULT NULL;
+
+insert into server_settings(settingKey, settingValue) values('jlawyer.server.database.version','3.5.0.12') ON DUPLICATE KEY UPDATE settingValue     = '3.5.0.12';
+commit;
