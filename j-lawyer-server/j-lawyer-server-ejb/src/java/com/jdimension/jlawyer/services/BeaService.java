@@ -1417,7 +1417,16 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         if (token != null) {
             builder.header("Authorization", "Bearer " + token);
         }
-        return httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
+        HttpRequest request = builder.build();
+        try {
+            return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (IOException e) {
+            if (e.getMessage() != null && e.getMessage().contains("GOAWAY")) {
+                log.warn("HTTP/2 GOAWAY received, retrying request to " + path);
+                return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            }
+            throw e;
+        }
     }
 
     private HttpResponse<String> sendPostRequest(String path, String jsonBody, String token, Duration timeout) throws Exception {
@@ -1435,7 +1444,16 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         if (token != null) {
             builder.header("Authorization", "Bearer " + token);
         }
-        return httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
+        HttpRequest request = builder.build();
+        try {
+            return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (IOException e) {
+            if (e.getMessage() != null && e.getMessage().contains("GOAWAY")) {
+                log.warn("HTTP/2 GOAWAY received, retrying request to " + path);
+                return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            }
+            throw e;
+        }
     }
 
     private HttpResponse<String> sendPutRequest(String path, String jsonBody, String token, Duration timeout) throws Exception {
@@ -1453,7 +1471,16 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         if (token != null) {
             builder.header("Authorization", "Bearer " + token);
         }
-        return httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
+        HttpRequest request = builder.build();
+        try {
+            return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (IOException e) {
+            if (e.getMessage() != null && e.getMessage().contains("GOAWAY")) {
+                log.warn("HTTP/2 GOAWAY received, retrying request to " + path);
+                return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            }
+            throw e;
+        }
     }
 
     private HttpResponse<String> sendDeleteRequest(String path, String token, Duration timeout) throws Exception {
@@ -1467,7 +1494,16 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         if (token != null) {
             builder.header("Authorization", "Bearer " + token);
         }
-        return httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
+        HttpRequest request = builder.build();
+        try {
+            return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (IOException e) {
+            if (e.getMessage() != null && e.getMessage().contains("GOAWAY")) {
+                log.warn("HTTP/2 GOAWAY received, retrying request to " + path);
+                return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            }
+            throw e;
+        }
     }
 
     // ========== JSON Parsing Helpers ==========
