@@ -1633,6 +1633,10 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         h.setId(getStringOrNull(json, "id"));
         h.setSubject(getStringOrNull(json, "subject"));
         h.setSender(getStringOrNull(json, "sender"));
+        // fallback: getMessageHeader endpoint returns MessageDto which has senderName instead of sender
+        if (h.getSender() == null) {
+            h.setSender(getStringOrNull(json, "senderName"));
+        }
         h.setReceptionTime(parseDateOrNull(json, "receptionTime"));
         h.setSentTime(parseDateOrNull(json, "sentTime"));
         h.setPermanentDeletion(parseDateOrNull(json, "permanentDeletion"));
