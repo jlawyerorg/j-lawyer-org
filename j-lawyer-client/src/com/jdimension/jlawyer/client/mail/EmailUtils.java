@@ -735,9 +735,9 @@ public class EmailUtils extends CommonMailUtils {
             } else {
                 emlMsg.setFrom(new javax.mail.internet.InternetAddress(from));
             }
-            if (to != null && !to.isEmpty()) emlMsg.setRecipients(Message.RecipientType.TO, javax.mail.internet.InternetAddress.parse(to));
-            if (cc != null && !cc.isEmpty()) emlMsg.setRecipients(Message.RecipientType.CC, javax.mail.internet.InternetAddress.parse(cc));
-            if (bcc != null && !bcc.isEmpty()) emlMsg.setRecipients(Message.RecipientType.BCC, javax.mail.internet.InternetAddress.parse(bcc));
+            if (to != null && !to.isEmpty()) emlMsg.setRecipients(Message.RecipientType.TO, parseAndEncodeRecipients(to));
+            if (cc != null && !cc.isEmpty()) emlMsg.setRecipients(Message.RecipientType.CC, parseAndEncodeRecipients(cc));
+            if (bcc != null && !bcc.isEmpty()) emlMsg.setRecipients(Message.RecipientType.BCC, parseAndEncodeRecipients(bcc));
             emlMsg.setSubject(subject, "UTF-8");
             emlMsg.setSentDate(new Date());
 

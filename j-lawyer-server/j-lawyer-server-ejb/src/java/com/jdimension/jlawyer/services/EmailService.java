@@ -672,6 +672,8 @@ import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import java.io.ByteArrayOutputStream;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -1854,9 +1856,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         } else {
             msg.setFrom(new InternetAddress(ms.getEmailAddress()));
         }
-        if (to != null && !to.isEmpty()) msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
-        if (cc != null && !cc.isEmpty()) msg.setRecipients(Message.RecipientType.CC, InternetAddress.parse(cc));
-        if (bcc != null && !bcc.isEmpty()) msg.setRecipients(Message.RecipientType.BCC, InternetAddress.parse(bcc));
+        if (to != null && !to.isEmpty()) msg.setRecipients(Message.RecipientType.TO, parseAndEncodeRecipients(to));
+        if (cc != null && !cc.isEmpty()) msg.setRecipients(Message.RecipientType.CC, parseAndEncodeRecipients(cc));
+        if (bcc != null && !bcc.isEmpty()) msg.setRecipients(Message.RecipientType.BCC, parseAndEncodeRecipients(bcc));
         msg.setSubject(subject, StandardCharsets.UTF_8.name());
         msg.setSentDate(new Date());
         String prio = normalizePriority(priority);
@@ -2491,6 +2493,80 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         return result;
     }
 
+    /**
+     * Parses a comma-separated string of email recipients and returns properly
+     * MIME-encoded InternetAddress objects. Handles recipients in formats like
+     * "Name" &lt;email@example.com&gt;, Name &lt;email@example.com&gt; (unquoted),
+     * and plain email addresses. Non-ASCII characters in display names (e.g.
+     * umlauts) are Base64-encoded per RFC 2047.
+     */
+    private InternetAddress[] parseAndEncodeRecipients(String recipients) throws Exception {
+        if (recipients == null || recipients.trim().isEmpty()) {
+            return new InternetAddress[0];
+        }
+
+        List<InternetAddress> result = new ArrayList<>();
+        List<String> parts = splitRecipients(recipients);
+        Pattern nameEmailPattern = Pattern.compile("^\"?(.+?)\"?\\s*<(.+?)>$");
+
+        for (String part : parts) {
+            if (part.isEmpty()) {
+                continue;
+            }
+            Matcher matcher = nameEmailPattern.matcher(part);
+            if (matcher.matches()) {
+                String name = matcher.group(1).trim();
+                String email = matcher.group(2).trim();
+                InternetAddress addr = new InternetAddress(email);
+                addr.setPersonal(name, "utf-8");
+                result.add(addr);
+            } else {
+                result.add(new InternetAddress(part.trim()));
+            }
+        }
+        return result.toArray(new InternetAddress[0]);
+    }
+
+    /**
+     * Splits a comma-separated recipient string, respecting commas inside
+     * quoted names and angle brackets.
+     */
+    private List<String> splitRecipients(String recipients) {
+        List<String> result = new ArrayList<>();
+        if (recipients == null || recipients.trim().isEmpty()) {
+            return result;
+        }
+        StringBuilder current = new StringBuilder();
+        boolean inQuotes = false;
+        boolean inAngleBrackets = false;
+        for (int i = 0; i < recipients.length(); i++) {
+            char c = recipients.charAt(i);
+            if (c == '"') {
+                inQuotes = !inQuotes;
+                current.append(c);
+            } else if (c == '<' && !inQuotes) {
+                inAngleBrackets = true;
+                current.append(c);
+            } else if (c == '>' && !inQuotes) {
+                inAngleBrackets = false;
+                current.append(c);
+            } else if (c == ',' && !inQuotes && !inAngleBrackets) {
+                String part = current.toString().trim();
+                if (!part.isEmpty()) {
+                    result.add(part);
+                }
+                current.setLength(0);
+            } else {
+                current.append(c);
+            }
+        }
+        String part = current.toString().trim();
+        if (!part.isEmpty()) {
+            result.add(part);
+        }
+        return result;
+    }
+
     // ==================== EML Generation ====================
 
     private byte[] doGetMessageAsEml(String mailboxId, String messageRef) throws Exception {
@@ -2602,9 +2678,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             Session session = Session.getInstance(new Properties());
             MimeMessage msg = new MimeMessage(session);
             msg.setFrom(new InternetAddress(ms.getEmailAddress(), ms.getEmailSenderName()));
-            if (to != null && !to.isEmpty()) msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
-            if (cc != null && !cc.isEmpty()) msg.setRecipients(Message.RecipientType.CC, InternetAddress.parse(cc));
-            if (bcc != null && !bcc.isEmpty()) msg.setRecipients(Message.RecipientType.BCC, InternetAddress.parse(bcc));
+            if (to != null && !to.isEmpty()) msg.setRecipients(Message.RecipientType.TO, parseAndEncodeRecipients(to));
+            if (cc != null && !cc.isEmpty()) msg.setRecipients(Message.RecipientType.CC, parseAndEncodeRecipients(cc));
+            if (bcc != null && !bcc.isEmpty()) msg.setRecipients(Message.RecipientType.BCC, parseAndEncodeRecipients(bcc));
             msg.setSubject(subject, StandardCharsets.UTF_8.name());
             msg.setSentDate(new Date());
 
