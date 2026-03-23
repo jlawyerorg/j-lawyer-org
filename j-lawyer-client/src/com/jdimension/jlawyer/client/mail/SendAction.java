@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.mail;
 
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
+import com.jdimension.jlawyer.client.events.DocumentRemovedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
@@ -1293,7 +1294,17 @@ public class SendAction extends ProgressableAction {
             // Delete draft if applicable
             if (this.draftDocumentId != null && this.archiveFile != null) {
                 try {
-                    locator.lookupArchiveFileServiceRemote().removeDocument(this.draftDocumentId);
+                    ArchiveFileServiceRemote caseSvc2 = locator.lookupArchiveFileServiceRemote();
+
+                    // Fetch document before deletion to publish event
+                    ArchiveFileDocumentsBean draftDoc = caseSvc2.getDocument(this.draftDocumentId);
+
+                    caseSvc2.removeDocument(this.draftDocumentId);
+                    log.info("Draft document deleted after successful send: " + this.draftDocumentId);
+
+                    // Publish event for UI update
+                    EventBroker eb = EventBroker.getInstance();
+                    eb.publishEvent(new DocumentRemovedEvent(draftDoc));
                 } catch (Exception ex) {
                     log.error("Error removing draft document", ex);
                 }
