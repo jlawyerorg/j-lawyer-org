@@ -846,6 +846,7 @@ public class AssistantGenericPanel extends JDialog {
 
                 progress.setIndeterminate(false);
                 progress.setVisible(false);
+                taPrompt.setText("");
 
                 cmdSubmit.setVisible(true);
                 cmdInterrupt.setVisible(false);
