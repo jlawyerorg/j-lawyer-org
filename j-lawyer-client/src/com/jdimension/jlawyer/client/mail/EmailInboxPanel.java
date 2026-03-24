@@ -3414,9 +3414,13 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }
 
     public void reloadInboxNode(MailboxSetup ms) {
+        DefaultMutableTreeNode inboxNode = this.inboxFolderNodes.get(ms);
+        if (inboxNode == null) {
+            return;
+        }
         DefaultTreeModel dm = (DefaultTreeModel) this.treeFolders.getModel();
-        ThreadUtils.updateTreeNode(dm, this.inboxFolderNodes.get(ms));
-        Object inboxFolder = this.inboxFolderNodes.get(ms).getUserObject();
+        ThreadUtils.updateTreeNode(dm, inboxNode);
+        Object inboxFolder = inboxNode.getUserObject();
         if (inboxFolder != null) {
             if (inboxFolder instanceof FolderContainer) {
                 ((FolderContainer) inboxFolder).resetCaches();
@@ -3426,7 +3430,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         if (this.treeFolders.getSelectionPath() != null) {
             DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
             // check if this inbox is currently displayed, if so - reload it
-            if (selectedNode.equals(this.inboxFolderNodes.get(ms))) {
+            if (selectedNode.equals(inboxNode)) {
                 int sortCol = -1;
                 List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
                 if (sortKeys != null) {
