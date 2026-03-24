@@ -672,6 +672,8 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.TableUtils;
+import com.jdimension.jlawyer.client.processing.ProgressIndicator;
+import com.jdimension.jlawyer.client.processing.ProgressableActionCallback;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AddressTagsBean;
@@ -693,7 +695,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.swing.AbstractAction;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -994,44 +998,36 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
             return;
         }
 
-        ThreadUtils.setWaitCursor(this, false);
         int[] selectedIndices = this.tblResults.getSelectedRows();
-        Arrays.sort(selectedIndices);
         ArrayList<String> ids = new ArrayList<>();
         for (int i = 0; i < selectedIndices.length; i++) {
             QuickAddressSearchRowIdentifier id = (QuickAddressSearchRowIdentifier) this.tblResults.getValueAt(selectedIndices[i], 0);
             ids.add(id.getAddressDTO().getId());
         }
 
-        EditorsRegistry.getInstance().updateStatus("Lösche " + ids.size() + " Adresse(n)...", false);
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-            AddressServiceRemote addressService = locator.lookupAddressServiceRemote();
-            int failedDeletions=0;
-            for (int i = ids.size() - 1; i > -1; i--) {
-                try {
-                    addressService.removeAddress(ids.get(i));
-                    QuickAddressSearchTableModel model = (QuickAddressSearchTableModel) this.tblResults.getModel();
-                    model.removeRow(this.tblResults.convertRowIndexToModel(selectedIndices[i]));
-                } catch (Exception ex) {
-                    log.error("Error deleting address", ex);
-                    failedDeletions++;
+        ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+        pi.setShowCancelButton(true);
+        RemoveAddressesAction action = new RemoveAddressesAction(pi, ids, 100);
+        action.setCallback(new ProgressableActionCallback() {
+            @Override
+            public void actionFinished() {
+                List<String> failedIds = action.getFailedIds();
+                Set<String> failedSet = new HashSet<>(failedIds);
+                QuickAddressSearchTableModel model = (QuickAddressSearchTableModel) tblResults.getModel();
+                for (int i = model.getRowCount() - 1; i >= 0; i--) {
+                    QuickAddressSearchRowIdentifier rowId = (QuickAddressSearchRowIdentifier) model.getValueAt(i, 0);
+                    String addressId = rowId.getAddressDTO().getId();
+                    if (ids.contains(addressId) && !failedSet.contains(addressId)) {
+                        model.removeRow(i);
+                    }
                 }
+                if (!failedIds.isEmpty()) {
+                    JOptionPane.showMessageDialog(QuickAddressSearchPanel.this, "" + failedIds.size() + " Adresse(n) konnten nicht gelöscht werden, bspw. weil sie noch als Beteiligte in Nutzung sind.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
+                EditorsRegistry.getInstance().clearStatus(false);
             }
-            if(failedDeletions>0)
-                JOptionPane.showMessageDialog(this, "" + failedDeletions + " Adresse(n) konnten nicht gelöscht werden, bspw. weil sie noch als Beteiligte in Nutzung sind.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-
-            EditorsRegistry.getInstance().clearStatus(false);
-
-        } catch (Exception ex) {
-            log.error("Error deleting address", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Löschen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            EditorsRegistry.getInstance().clearStatus(false);
-        } finally {
-            ThreadUtils.setDefaultCursor(this, false);
-        }
+        });
+        action.start();
     }//GEN-LAST:event_mnuDeleteSelectedAddressesActionPerformed
 
     private void useSelection() {

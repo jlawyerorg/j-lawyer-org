@@ -687,6 +687,18 @@ public interface AddressServiceRemote {
 
     void removeAddress(String id);
 
+    /**
+     * Removes multiple addresses in a single batch operation. Each address is
+     * processed individually so that a failure on one (e.g. still referenced
+     * in a case) does not prevent the others from being deleted. Cloud sync
+     * and removal events are fired for each successfully deleted address.
+     *
+     * @param ids list of address IDs to delete
+     * @return list of address IDs that could not be deleted (e.g. still
+     *         referenced in a case); an empty list means all deletions succeeded
+     */
+    List<String> removeAddresses(List<String> ids);
+
     AddressBean[] searchSimple(String query);
 
     void createAddress(AddressBean dto, String id);

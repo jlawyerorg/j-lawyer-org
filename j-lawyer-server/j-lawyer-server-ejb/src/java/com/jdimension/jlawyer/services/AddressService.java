@@ -820,6 +820,21 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     }
 
     @Override
+    @RolesAllowed({"removeAddressRole"})
+    public List<String> removeAddresses(List<String> ids) {
+        List<String> failedIds = new ArrayList<>();
+        for (String id : ids) {
+            try {
+                this.removeAddress(id);
+            } catch (Exception ex) {
+                log.error("Error removing address " + id, ex);
+                failedIds.add(id);
+            }
+        }
+        return failedIds;
+    }
+
+    @Override
     @RolesAllowed({"readAddressRole"})
     public AddressBean[] searchSimple(String query) {
         return this.searchSimpleUnrestricted(query);

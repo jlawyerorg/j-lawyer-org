@@ -695,7 +695,8 @@ public interface AddressServiceLocal {
     
     public void updateAddress(AddressBean dto);
     public void removeAddress(String id);
-    
+    public List<String> removeAddresses(List<String> ids);
+
     Collection<AddressTagsBean> getTags(String addressId);
     
     void setTag(String addressId, AddressTagsBean tag, boolean active) throws Exception;
