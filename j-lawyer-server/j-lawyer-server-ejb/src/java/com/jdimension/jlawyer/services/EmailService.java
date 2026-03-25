@@ -1714,7 +1714,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             String fileName = part.getFileName();
             if (fileName != null) {
                 try {
-                    fileName = MimeUtility.decodeText(fileName.replaceAll("x-unknown", "iso-8859-1"));
+                    fileName = MimeUtility.decodeText(fileName.replace("x-unknown", "iso-8859-1"));
                 } catch (Exception ex) {
                     // keep original fileName
                 }
@@ -1818,7 +1818,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             String fileName = part.getFileName();
             if (fileName != null) {
                 try {
-                    fileName = MimeUtility.decodeText(fileName.replaceAll("x-unknown", "iso-8859-1"));
+                    fileName = MimeUtility.decodeText(fileName.replace("x-unknown", "iso-8859-1"));
                 } catch (Exception ex) {
                     // keep original fileName
                 }
