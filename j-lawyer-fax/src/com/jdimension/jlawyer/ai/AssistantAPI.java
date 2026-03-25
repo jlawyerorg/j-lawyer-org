@@ -699,6 +699,7 @@ public class AssistantAPI {
     private String password = null;
     private int connectTimeout=5;
     private int readTimeout=60;
+    private final JerseyClient restClient;
 
     public AssistantAPI(String baseUri, String user, String password, int connectTimeout, int readTimeout) {
         this.baseUri = baseUri;
@@ -709,6 +710,9 @@ public class AssistantAPI {
         this.password = password;
         this.connectTimeout=connectTimeout;
         this.readTimeout=readTimeout;
+        this.restClient = (JerseyClient) JerseyClientBuilder.createClient();
+        this.restClient.property(ClientProperties.CONNECT_TIMEOUT, this.connectTimeout*1000);
+        this.restClient.property(ClientProperties.READ_TIMEOUT, this.readTimeout*1000);
     }
 
     private String getAuthString() {
@@ -728,10 +732,7 @@ public class AssistantAPI {
             endpoint = endpoint + "-async";
         }
 
-        JerseyClient restClient = (JerseyClient) JerseyClientBuilder.createClient();
-        restClient.property(ClientProperties.CONNECT_TIMEOUT, this.connectTimeout*1000);
-        restClient.property(ClientProperties.READ_TIMEOUT, this.readTimeout*1000);
-        JerseyWebTarget webTarget = restClient.target(baseUri + endpoint);
+        JerseyWebTarget webTarget = this.restClient.target(baseUri + endpoint);
 
         JsonObject jsonQuery = new JsonObject();
         if (actionId != null) {
@@ -962,10 +963,7 @@ public class AssistantAPI {
     }
 
     public List<AiCapability> getCapabilities() throws AssistantException {
-        JerseyClient restClient = (JerseyClient) JerseyClientBuilder.createClient();
-        restClient.property(ClientProperties.CONNECT_TIMEOUT, this.connectTimeout*1000);
-        restClient.property(ClientProperties.READ_TIMEOUT, this.readTimeout*1000);
-        JerseyWebTarget webTarget = restClient.target(baseUri + "j-lawyer-ai/v2/actions");
+        JerseyWebTarget webTarget = this.restClient.target(baseUri + "j-lawyer-ai/v2/actions");
         List<AiCapability> allCapabilities = new ArrayList<>();
         try {
             Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + this.getAuthString()).accept(MIMETYPE_JSON).get();
@@ -1093,10 +1091,7 @@ public class AssistantAPI {
     }
     
     public List<AiModel> getModels() throws AssistantException {
-        JerseyClient restClient = (JerseyClient) JerseyClientBuilder.createClient();
-        restClient.property(ClientProperties.CONNECT_TIMEOUT, this.connectTimeout*1000);
-        restClient.property(ClientProperties.READ_TIMEOUT, this.readTimeout*1000);
-        JerseyWebTarget webTarget = restClient.target(baseUri + "j-lawyer-ai/v2/models");
+        JerseyWebTarget webTarget = this.restClient.target(baseUri + "j-lawyer-ai/v2/models");
         List<AiModel> allModels = new ArrayList<>();
         try {
             Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + this.getAuthString()).accept(MIMETYPE_JSON).get();
@@ -1157,10 +1152,7 @@ public class AssistantAPI {
     }
 
     public AiUser getUserInformation() throws AssistantException {
-        JerseyClient restClient = (JerseyClient) JerseyClientBuilder.createClient();
-        restClient.property(ClientProperties.CONNECT_TIMEOUT, this.connectTimeout*1000);
-        restClient.property(ClientProperties.READ_TIMEOUT, this.readTimeout*1000);
-        JerseyWebTarget webTarget = restClient.target(baseUri + "j-lawyer-ai/v1/user-info");
+        JerseyWebTarget webTarget = this.restClient.target(baseUri + "j-lawyer-ai/v1/user-info");
         AiUser userInfo=new AiUser();
         try {
             Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + this.getAuthString()).accept(MIMETYPE_JSON).get();
@@ -1200,10 +1192,7 @@ public class AssistantAPI {
     }
     
     public List<AiRequestLog> getUserRequestLog() throws AssistantException {
-        JerseyClient restClient = (JerseyClient) JerseyClientBuilder.createClient();
-        restClient.property(ClientProperties.CONNECT_TIMEOUT, this.connectTimeout*1000);
-        restClient.property(ClientProperties.READ_TIMEOUT, this.readTimeout*1000);
-        JerseyWebTarget webTarget = restClient.target(baseUri + "j-lawyer-ai/v1/user-info/history");
+        JerseyWebTarget webTarget = this.restClient.target(baseUri + "j-lawyer-ai/v1/user-info/history");
         List<AiRequestLog> resultList=new ArrayList<>();
         try {
             Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + this.getAuthString()).accept(MIMETYPE_JSON).get();
@@ -1263,10 +1252,7 @@ public class AssistantAPI {
     }
 
     public AiResponse getRequestStatus(String requestId) throws AssistantException {
-        JerseyClient restClient = (JerseyClient) JerseyClientBuilder.createClient();
-        restClient.property(ClientProperties.CONNECT_TIMEOUT, this.connectTimeout*1000);
-        restClient.property(ClientProperties.READ_TIMEOUT, this.readTimeout*1000);
-        JerseyWebTarget webTarget = restClient.target(baseUri + "j-lawyer-ai/v2/request-status/" + requestId);
+        JerseyWebTarget webTarget = this.restClient.target(baseUri + "j-lawyer-ai/v2/request-status/" + requestId);
 
         AiResponse resp = new AiResponse();
         resp.setRequestId(requestId);

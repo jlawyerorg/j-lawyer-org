@@ -727,6 +727,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
     private BeaSessionRegistry sessionRegistry;
 
     private final HttpClient httpClient = HttpClient.newBuilder()
+            .cookieHandler(new java.net.CookieManager())
             .connectTimeout(Duration.ofSeconds(30))
             .build();
 
