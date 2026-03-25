@@ -828,7 +828,6 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
         popPositions = new javax.swing.JPopupMenu();
         mnuSelect = new javax.swing.JMenuItem();
         mnuDeselect = new javax.swing.JMenuItem();
-        popTimesheets = new javax.swing.JPopupMenu();
         cmdCancel = new javax.swing.JButton();
         cmdBilling = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -1183,7 +1182,6 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
     private javax.swing.JMenuItem mnuDeselect;
     private javax.swing.JMenuItem mnuSelect;
     private javax.swing.JPopupMenu popPositions;
-    private javax.swing.JPopupMenu popTimesheets;
     private javax.swing.JTable tblPositions;
     // End of variables declaration//GEN-END:variables
 }
