@@ -66,6 +66,7 @@ import com.jdimension.jlawyer.client.events.ContactUpdatedEvent;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.DocumentRemovedEvent;
 import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
+import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
 import com.jdimension.jlawyer.client.events.InvoicePositionAddedEvent;
 import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
 import org.apache.log4j.Logger;
@@ -229,6 +230,17 @@ public class ToolRegistry {
                         new ToolParameter("location", "string", "Ort (optional)", false)),
                 ToolDefinition.RISK_MEDIUM));
 
+        TOOLS.add(new ToolDefinition("update_event", "Aktualisiert ein bestehendes Kalenderereignis. Nur summary, beginDate, endDate, assignee, description und location können geändert werden.",
+                Arrays.asList(
+                        new ToolParameter("eventId", "string", "ID des zu ändernden Ereignisses", true),
+                        new ToolParameter("summary", "string", "Neue Zusammenfassung/Betreff (optional)", false),
+                        new ToolParameter("beginDate", "string", "Neues Startdatum im ISO-8601-Format (optional)", false),
+                        new ToolParameter("endDate", "string", "Neues Enddatum im ISO-8601-Format (optional)", false),
+                        new ToolParameter("assignee", "string", "Neuer Verantwortlicher Benutzername (optional)", false),
+                        new ToolParameter("description", "string", "Neue Beschreibung (optional)", false),
+                        new ToolParameter("location", "string", "Neuer Ort (optional)", false)),
+                ToolDefinition.RISK_MEDIUM));
+
         TOOLS.add(new ToolDefinition("create_note", "Erstellt eine Aktennotiz als HTML-Dokument in einer Akte.",
                 Arrays.asList(
                         new ToolParameter("caseId", "string", "Interne ID der Akte", true),
@@ -388,6 +400,14 @@ public class ToolRegistry {
                 Arrays.asList(
                         new ToolParameter("caseId", "string", "ID der Akte", true))));
 
+        TOOLS.add(new ToolDefinition("create_case_folder",
+                "Erstellt einen neuen Ordner in einer Akte. Ohne parentFolderId wird der Ordner auf oberster Ebene erstellt. Für Unterordner zuerst list_case_folders aufrufen, um die parentFolderId zu ermitteln.",
+                Arrays.asList(
+                        new ToolParameter("caseId", "string", "ID der Akte", true),
+                        new ToolParameter("parentFolderId", "string", "ID des übergeordneten Ordners (optional, ohne Angabe wird der Ordner auf oberster Ebene erstellt)", false),
+                        new ToolParameter("name", "string", "Name des neuen Ordners", true)),
+                ToolDefinition.RISK_MEDIUM));
+
         TOOLS.add(new ToolDefinition("move_document_to_folder",
                 "Verschiebt ein Dokument in einen Ordner innerhalb derselben Akte.",
                 Arrays.asList(
@@ -533,6 +553,8 @@ public class ToolRegistry {
                     return executeListCalendars(args);
                 case "create_event":
                     return executeCreateEvent(args);
+                case "update_event":
+                    return executeUpdateEvent(args);
                 case "create_note":
                     return executeCreateNote(args);
                 case "create_or_get_contact":
@@ -569,6 +591,8 @@ public class ToolRegistry {
                     return executeGetMyGroups(args);
                 case "list_case_folders":
                     return executeListCaseFolders(args);
+                case "create_case_folder":
+                    return executeCreateCaseFolder(args);
                 case "move_document_to_folder":
                     return executeMoveDocumentToFolder(args);
                 case "list_folder_templates":
@@ -688,6 +712,8 @@ public class ToolRegistry {
                     return "Verfügbare Kalender auflisten";
                 case "create_event":
                     return "Termin erstellen: " + args.getOrDefault("summary", "");
+                case "update_event":
+                    return "Termin aktualisieren: " + args.getOrDefault("eventId", "");
                 case "create_note":
                     return "Notiz erstellen in Akte: " + args.getOrDefault("caseId", "");
                 case "create_or_get_contact":
@@ -724,6 +750,8 @@ public class ToolRegistry {
                     return "Meine Gruppen auflisten";
                 case "list_case_folders":
                     return "Ordner der Akte: " + args.getOrDefault("caseId", "");
+                case "create_case_folder":
+                    return "Ordner erstellen: " + args.getOrDefault("name", "");
                 case "move_document_to_folder":
                     return "Dokument in Ordner verschieben: " + args.getOrDefault("documentId", "");
                 case "list_folder_templates":
@@ -998,6 +1026,64 @@ public class ToolRegistry {
             }
             sb.append("}");
         }
+    }
+
+    private String executeCreateCaseFolder(JsonObject args) throws Exception {
+        String caseId = (String) args.get("caseId");
+        String parentFolderId = (String) args.get("parentFolderId");
+        String name = (String) args.get("name");
+        if (caseId == null || caseId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Akten-ID (caseId) fehlt");
+        }
+        if (name == null || name.trim().isEmpty()) {
+            return ToolJsonUtils.error("Ordnername (name) fehlt");
+        }
+
+        ArchiveFileServiceRemote svc = ToolJsonUtils.getLocator().lookupArchiveFileServiceRemote();
+        ArchiveFileBean caseBean = svc.getArchiveFile(caseId.trim());
+        if (caseBean == null) {
+            return ToolJsonUtils.error("Akte nicht gefunden: " + caseId);
+        }
+
+        CaseFolder root = caseBean.getRootFolder();
+        if (root == null) {
+            return ToolJsonUtils.error("Akte hat keine Ordnerstruktur");
+        }
+
+        // Ohne parentFolderId wird der Root-Ordner verwendet
+        String effectiveParentId;
+        if (parentFolderId != null && !parentFolderId.trim().isEmpty()) {
+            if (!folderExistsInTree(root, parentFolderId.trim())) {
+                return ToolJsonUtils.error("Übergeordneter Ordner nicht gefunden: " + parentFolderId + ". Ordner-IDs können über list_case_folders ermittelt werden.");
+            }
+            effectiveParentId = parentFolderId.trim();
+        } else {
+            effectiveParentId = root.getId();
+        }
+
+        CaseFolder created = svc.createCaseFolder(effectiveParentId, name.trim());
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"success\": true");
+        sb.append(", \"id\": \"").append(ToolJsonUtils.escapeJson(created.getId())).append("\"");
+        sb.append(", \"name\": \"").append(ToolJsonUtils.escapeJson(created.getName())).append("\"");
+        sb.append(", \"parentFolderId\": \"").append(ToolJsonUtils.escapeJson(parentFolderId.trim())).append("\"");
+        sb.append("}");
+        return sb.toString();
+    }
+
+    private boolean folderExistsInTree(CaseFolder folder, String folderId) {
+        if (folder.getId().equals(folderId)) {
+            return true;
+        }
+        if (folder.getChildren() != null) {
+            for (CaseFolder child : folder.getChildren()) {
+                if (folderExistsInTree(child, folderId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private String executeMoveDocumentToFolder(JsonObject args) throws Exception {
@@ -2308,6 +2394,100 @@ public class ToolRegistry {
             sb.append(", \"calendar\": \"").append(ToolJsonUtils.escapeJson(created.getCalendarSetup().getDisplayName())).append("\"");
         }
         sb.append(", \"caseFileNumber\": \"").append(ToolJsonUtils.escapeJson(caseBean.getFileNumber())).append("\"");
+        sb.append("}");
+        return sb.toString();
+    }
+
+    private String executeUpdateEvent(JsonObject args) throws Exception {
+        String eventId = (String) args.get("eventId");
+        if (eventId == null || eventId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Ereignis-ID fehlt");
+        }
+
+        String summary = (String) args.get("summary");
+        String beginDateStr = (String) args.get("beginDate");
+        String endDateStr = (String) args.get("endDate");
+        String assignee = (String) args.get("assignee");
+        String description = (String) args.get("description");
+        String location = (String) args.get("location");
+
+        // Mindestens ein Feld muss angegeben sein
+        boolean hasUpdate = (summary != null && !summary.trim().isEmpty())
+                || (beginDateStr != null && !beginDateStr.trim().isEmpty())
+                || (endDateStr != null && !endDateStr.trim().isEmpty())
+                || (assignee != null && !assignee.trim().isEmpty())
+                || (description != null)
+                || (location != null);
+        if (!hasUpdate) {
+            return ToolJsonUtils.error("Mindestens ein zu änderndes Feld muss angegeben werden (summary, beginDate, endDate, assignee, description, location)");
+        }
+
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        CalendarServiceRemote calSvc = locator.lookupCalendarServiceRemote();
+
+        // Bestehendes Event laden
+        ArchiveFileReviewsBean review = calSvc.getReview(eventId);
+        if (review == null) {
+            return ToolJsonUtils.error("Ereignis nicht gefunden: " + eventId);
+        }
+
+        // Alte Daten merken fuer ReviewUpdatedEvent
+        Date oldBeginDate = review.getBeginDate();
+        Date oldEndDate = review.getEndDate();
+
+        // Felder aktualisieren
+        if (summary != null && !summary.trim().isEmpty()) {
+            review.setSummary(summary.trim());
+        }
+        if (beginDateStr != null && !beginDateStr.trim().isEmpty()) {
+            Date beginDate = ToolJsonUtils.parseIsoDate(beginDateStr);
+            if (beginDate == null) {
+                return ToolJsonUtils.error("Startdatum konnte nicht geparst werden: " + beginDateStr);
+            }
+            review.setBeginDate(beginDate);
+        }
+        if (endDateStr != null && !endDateStr.trim().isEmpty()) {
+            Date endDate = ToolJsonUtils.parseIsoDate(endDateStr);
+            if (endDate == null) {
+                return ToolJsonUtils.error("Enddatum konnte nicht geparst werden: " + endDateStr);
+            }
+            review.setEndDate(endDate);
+        }
+        if (assignee != null && !assignee.trim().isEmpty()) {
+            boolean found = false;
+            for (AppUserBean u : getCachedUsers()) {
+                if (u.getPrincipalId().equalsIgnoreCase(assignee.trim())) {
+                    assignee = u.getPrincipalId();
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                StringBuilder userNames = new StringBuilder();
+                for (AppUserBean u : getCachedUsers()) {
+                    if (userNames.length() > 0) {
+                        userNames.append(", ");
+                    }
+                    userNames.append(u.getPrincipalId());
+                }
+                return ToolJsonUtils.error("Benutzer nicht gefunden: " + assignee + ". Verfügbare Benutzer: " + userNames.toString());
+            }
+            review.setAssignee(assignee);
+        }
+        if (description != null) {
+            review.setDescription(description.trim());
+        }
+        if (location != null) {
+            review.setLocation(location.trim());
+        }
+
+        String archiveFileId = review.getArchiveFileKey().getId();
+        ArchiveFileReviewsBean updated = calSvc.updateReview(archiveFileId, review);
+        EventBroker.getInstance().publishEvent(new ReviewUpdatedEvent(oldBeginDate, oldEndDate, updated));
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"success\": true, \"event\": ");
+        appendEventJson(sb, updated);
         sb.append("}");
         return sb.toString();
     }
