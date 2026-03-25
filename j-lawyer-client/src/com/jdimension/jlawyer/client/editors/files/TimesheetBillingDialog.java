@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.editors.files;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.InvoicePositionAddedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.FilterablePopupDialog;
 import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.InvoicePosition;
@@ -1083,10 +1084,11 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
 
     private void cmdTransferPositionsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdTransferPositionsMousePressed
         ClientSettings settings = ClientSettings.getInstance();
-        this.popTimesheets.removeAll();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+
+            FilterablePopupDialog popup = new FilterablePopupDialog(javax.swing.SwingUtilities.getWindowAncestor(this));
 
             List<Timesheet> sheets = afs.getOpenTimesheets();
             for (Timesheet t : sheets) {
@@ -1095,9 +1097,8 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
                     continue;
                 }
 
-                JMenuItem mi = new JMenuItem();
-                mi.setText(t.getName() + " (" + t.getArchiveFileKey().getFileNumber() + " " + t.getArchiveFileKey().getName() + ")");
-                mi.addActionListener((ActionEvent arg0) -> {
+                String label = t.getName() + " (" + t.getArchiveFileKey().getFileNumber() + " " + t.getArchiveFileKey().getName() + ")";
+                popup.addItem(label, (ActionEvent arg0) -> {
                     try {
                         String newSheetId = t.getId();
                         List<String> positionIds = new ArrayList<>();
@@ -1120,15 +1121,16 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
                         log.error("Error transferring timesheet positions", ex);
                         JOptionPane.showMessageDialog(this, "Fehler beim Verschieben der Zeiterfassungseinträge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                     }
+                    popup.dispose();
                 });
-                this.popTimesheets.add(mi);
             }
+
+            popup.showAt(cmdTransferPositions, evt.getX(), evt.getY());
 
         } catch (Exception ex) {
             log.error("Error determining open timesheet positions", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der offenen Zeiterfassungseinträge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-        this.popTimesheets.show(cmdTransferPositions, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdTransferPositionsMousePressed
 
     /**
