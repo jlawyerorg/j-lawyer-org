@@ -750,6 +750,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     private static final ConcurrentHashMap<String, String> folderWellKnownNames = new ConcurrentHashMap<>();
 
     private static class CachedMessages {
+
         final List<MailMessageDTO> messages;
         final long timestamp;
         final int queryHash;
@@ -797,7 +798,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         prefetchKeysByFolder.keySet().removeIf(k -> {
             if (k.startsWith(prefix)) {
                 List<String> refs = prefetchKeysByFolder.get(k);
-                if (refs != null) refs.forEach(prefetchCache::remove);
+                if (refs != null) {
+                    refs.forEach(prefetchCache::remove);
+                }
                 return true;
             }
             return false;
@@ -814,7 +817,6 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     private MailboxAccessFacadeLocal mailboxAccessFacade;
 
     // ==================== Token Management ====================
-
     @Override
     @PermitAll
     public String getAuthToken(String mailboxId) throws Exception {
@@ -901,7 +903,6 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     }
 
     // ==================== Unified Service Methods ====================
-
     private List<MailFolderDTO> doListFolders(String mailboxId) throws Exception {
         MailboxSetup ms = getMailboxOrThrow(mailboxId);
         return ms.isMsExchange() ? graphListFolders(ms) : imapListFolders(ms);
@@ -1098,7 +1099,10 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         // Determine source folder for cache invalidation
         String sourceFolderId = null;
         if (!ms.isMsExchange()) {
-            try { sourceFolderId = parseImapRefFolder(messageRef); } catch (Exception ignored) { }
+            try {
+                sourceFolderId = parseImapRefFolder(messageRef);
+            } catch (Exception ignored) {
+            }
         }
         if (ms.isMsExchange()) {
             graphMoveMessage(ms, messageRef, targetFolderId);
@@ -1106,7 +1110,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             imapMoveMessage(ms, messageRef, targetFolderId);
         }
         // Invalidate source and target folder caches
-        if (sourceFolderId != null) invalidateMessageCache(mailboxId, sourceFolderId);
+        if (sourceFolderId != null) {
+            invalidateMessageCache(mailboxId, sourceFolderId);
+        }
         invalidateMessageCache(mailboxId, targetFolderId);
     }
 
@@ -1128,7 +1134,10 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         MailboxSetup ms = getMailboxOrThrow(mailboxId);
         String sourceFolderId = null;
         if (!ms.isMsExchange()) {
-            try { sourceFolderId = parseImapRefFolder(messageRef); } catch (Exception ignored) { }
+            try {
+                sourceFolderId = parseImapRefFolder(messageRef);
+            } catch (Exception ignored) {
+            }
         }
         if (ms.isMsExchange()) {
             graphDeleteMessage(ms, messageRef);
@@ -1136,7 +1145,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             imapDeleteMessage(ms, messageRef);
         }
         // Invalidate source folder + trash cache
-        if (sourceFolderId != null) invalidateMessageCache(mailboxId, sourceFolderId);
+        if (sourceFolderId != null) {
+            invalidateMessageCache(mailboxId, sourceFolderId);
+        }
         invalidateAllFolderCaches(mailboxId); // trash target unknown, invalidate all
     }
 
@@ -1152,7 +1163,10 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         // Update cached entry in-place if possible
         String folderId = null;
         if (!ms.isMsExchange()) {
-            try { folderId = parseImapRefFolder(messageRef); } catch (Exception ignored) { }
+            try {
+                folderId = parseImapRefFolder(messageRef);
+            } catch (Exception ignored) {
+            }
         }
         if (folderId != null) {
             CachedMessages cm = messageCache.get(messageCacheKey(mailboxId, folderId));
@@ -1216,8 +1230,12 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtps.host", server);
         props.put("mail.smtps.auth", "true");
-        if (ms.isEmailOutSsl()) props.put("mail.smtp.ssl.enable", "true");
-        if (ms.isEmailStartTls()) props.put("mail.smtp.starttls.enable", "true");
+        if (ms.isEmailOutSsl()) {
+            props.put("mail.smtp.ssl.enable", "true");
+        }
+        if (ms.isEmailStartTls()) {
+            props.put("mail.smtp.starttls.enable", "true");
+        }
         String port = ms.getEmailOutPort();
         if (port != null && !port.isEmpty()) {
             props.put("mail.smtp.port", port);
@@ -1303,7 +1321,6 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     }
 
     // ==================== Polling ====================
-
     @Schedule(hour = "*", minute = "*", second = "*/30", persistent = false)
     public void pollForNewMessages() {
         List<MailboxSetup> allMailboxes = this.mailboxSetupFacade.findAll();
@@ -1369,11 +1386,13 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     }
 
     // ==================== IMAP Backend ====================
-
     private void imapInvalidateCache(String mailboxId) {
         Store old = imapStoreCache.remove(mailboxId);
         if (old != null) {
-            try { old.close(); } catch (Exception ignored) { }
+            try {
+                old.close();
+            } catch (Exception ignored) {
+            }
         }
     }
 
@@ -1534,12 +1553,12 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                     }
                     if (searchTerm != null && !searchTerm.isEmpty()) {
                         javax.mail.search.SearchTerm searchOrTerm = new javax.mail.search.OrTerm(
-                            new javax.mail.search.SearchTerm[]{
-                                new javax.mail.search.SubjectTerm(searchTerm),
-                                new javax.mail.search.FromStringTerm(searchTerm),
-                                new javax.mail.search.RecipientStringTerm(Message.RecipientType.TO, searchTerm),
-                                new javax.mail.search.BodyTerm(searchTerm)
-                            }
+                                new javax.mail.search.SearchTerm[]{
+                                    new javax.mail.search.SubjectTerm(searchTerm),
+                                    new javax.mail.search.FromStringTerm(searchTerm),
+                                    new javax.mail.search.RecipientStringTerm(Message.RecipientType.TO, searchTerm),
+                                    new javax.mail.search.BodyTerm(searchTerm)
+                                }
                         );
                         term = (term != null) ? new javax.mail.search.AndTerm(term, searchOrTerm) : searchOrTerm;
                     }
@@ -1552,10 +1571,14 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                     }
                 } else {
                     int total = folder.getMessageCount();
-                    if (total == 0) return new ArrayList<>();
+                    if (total == 0) {
+                        return new ArrayList<>();
+                    }
                     int end = total - offset;
                     int start = Math.max(1, end - top + 1);
-                    if (end < 1) return new ArrayList<>();
+                    if (end < 1) {
+                        return new ArrayList<>();
+                    }
                     messages = folder.getMessages(start, end);
                 }
                 // Batch-fetch headers to avoid per-message roundtrips
@@ -1578,9 +1601,13 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                     dto.setRead(msg.isSet(Flags.Flag.SEEN));
                     // Skip hasAttachments check in list view - too expensive (requires body parsing)
                     String[] msgIdHeader = msg.getHeader("Message-ID");
-                    if (msgIdHeader != null && msgIdHeader.length > 0) dto.setMessageId(msgIdHeader[0]);
+                    if (msgIdHeader != null && msgIdHeader.length > 0) {
+                        dto.setMessageId(msgIdHeader[0]);
+                    }
                     Address[] fromAddrs = msg.getFrom();
-                    if (fromAddrs != null && fromAddrs.length > 0) dto.setFrom(decodeAddress(fromAddrs[0]));
+                    if (fromAddrs != null && fromAddrs.length > 0) {
+                        dto.setFrom(decodeAddress(fromAddrs[0]));
+                    }
                     dto.setTo(addressesToStrings(msg.getRecipients(Message.RecipientType.TO)));
                     dto.setCc(addressesToStrings(msg.getRecipients(Message.RecipientType.CC)));
                     result.add(dto);
@@ -1607,7 +1634,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                     throw new Exception("UIDVALIDITY mismatch - folder may have been rebuilt. Please refresh the folder listing.");
                 }
                 Message msg = uidFolder.getMessageByUID(parsed[1]);
-                if (msg == null) throw new Exception("Message not found for reference: " + messageRef);
+                if (msg == null) {
+                    throw new Exception("Message not found for reference: " + messageRef);
+                }
                 MailMessageDTO dto = new MailMessageDTO();
                 dto.setMessageRef(messageRef);
                 dto.setSubject(msg.getSubject());
@@ -1615,16 +1644,24 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 dto.setRead(msg.isSet(Flags.Flag.SEEN));
                 dto.setHasAttachments(hasAttachments(msg));
                 String[] h = msg.getHeader("Message-ID");
-                if (h != null && h.length > 0) dto.setMessageId(h[0]);
+                if (h != null && h.length > 0) {
+                    dto.setMessageId(h[0]);
+                }
                 h = msg.getHeader("In-Reply-To");
-                if (h != null && h.length > 0) dto.setInReplyTo(h[0]);
+                if (h != null && h.length > 0) {
+                    dto.setInReplyTo(h[0]);
+                }
                 h = msg.getHeader("References");
-                if (h != null && h.length > 0) dto.setReferences(h[0]);
+                if (h != null && h.length > 0) {
+                    dto.setReferences(h[0]);
+                }
                 h = msg.getHeader("Disposition-Notification-To");
                 String[] h2 = msg.getHeader("Return-Receipt-To");
                 dto.setReadReceiptRequested((h != null && h.length > 0) || (h2 != null && h2.length > 0));
                 Address[] fromAddrs = msg.getFrom();
-                if (fromAddrs != null && fromAddrs.length > 0) dto.setFrom(decodeAddress(fromAddrs[0]));
+                if (fromAddrs != null && fromAddrs.length > 0) {
+                    dto.setFrom(decodeAddress(fromAddrs[0]));
+                }
                 dto.setTo(addressesToStrings(msg.getRecipients(Message.RecipientType.TO)));
                 dto.setCc(addressesToStrings(msg.getRecipients(Message.RecipientType.CC)));
                 String[] bodyResult = extractBody(msg);
@@ -1648,9 +1685,13 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             folder.open(Folder.READ_ONLY);
             try {
                 UIDFolder uidFolder = (UIDFolder) folder;
-                if (uidFolder.getUIDValidity() != parsed[0]) throw new Exception("UIDVALIDITY mismatch");
+                if (uidFolder.getUIDValidity() != parsed[0]) {
+                    throw new Exception("UIDVALIDITY mismatch");
+                }
                 Message msg = uidFolder.getMessageByUID(parsed[1]);
-                if (msg == null) throw new Exception("Message not found");
+                if (msg == null) {
+                    throw new Exception("Message not found");
+                }
                 List<MailAttachmentDTO> result = new ArrayList<>();
                 extractAttachments(msg, result);
                 return result;
@@ -1677,55 +1718,64 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 } catch (Exception ex) {
                     // keep original fileName
                 }
-            String contentId = null;
-            boolean isInline = Part.INLINE.equalsIgnoreCase(disposition);
+                String contentId = null;
+                boolean isInline = Part.INLINE.equalsIgnoreCase(disposition);
 
-            if (part instanceof MimeBodyPart) {
-                contentId = ((MimeBodyPart) part).getContentID();
-                if (contentId != null) contentId = contentId.replaceAll("[<>]", "");
-            }
+                if (part instanceof MimeBodyPart) {
+                    contentId = ((MimeBodyPart) part).getContentID();
+                    if (contentId != null) {
+                        contentId = contentId.replaceAll("[<>]", "");
+                    }
+                }
 
-            // Extract text/calendar parts as attachments (e.g. Teams meeting invitations)
-            if (part.isMimeType("text/calendar")) {
-                MailAttachmentDTO att = new MailAttachmentDTO();
-                att.setAttachmentId(fileName != null ? fileName : "meeting.ics");
-                att.setName(fileName != null ? fileName : "meeting.ics");
-                att.setContentType(part.getContentType());
-                att.setInline(false);
-                att.setSize(part.getSize());
-                InputStream calIs = part.getInputStream();
-                ByteArrayOutputStream calBos = new ByteArrayOutputStream();
-                byte[] calBuf = new byte[4096];
-                int calLen;
-                while ((calLen = calIs.read(calBuf)) != -1) calBos.write(calBuf, 0, calLen);
-                att.setContent(calBos.toByteArray());
-                result.add(att);
-                return;
-            }
+                // Extract text/calendar parts as attachments (e.g. Teams meeting invitations)
+                if (part.isMimeType("text/calendar")) {
+                    MailAttachmentDTO att = new MailAttachmentDTO();
+                    att.setAttachmentId(fileName != null ? fileName : "meeting.ics");
+                    att.setName(fileName != null ? fileName : "meeting.ics");
+                    att.setContentType(part.getContentType());
+                    att.setInline(false);
+                    att.setSize(part.getSize());
+                    InputStream calIs = part.getInputStream();
+                    ByteArrayOutputStream calBos = new ByteArrayOutputStream();
+                    byte[] calBuf = new byte[4096];
+                    int calLen;
+                    while ((calLen = calIs.read(calBuf)) != -1) {
+                        calBos.write(calBuf, 0, calLen);
+                    }
+                    att.setContent(calBos.toByteArray());
+                    result.add(att);
+                    return;
+                }
 
-            // Skip body text parts (plain/html without filename and without content-id)
-            if ((part.isMimeType("text/plain") || part.isMimeType("text/html"))
-                    && fileName == null && contentId == null) {
-                return;
-            }
+                // Skip body text parts (plain/html without filename and without content-id)
+                if ((part.isMimeType("text/plain") || part.isMimeType("text/html"))
+                        && fileName == null && contentId == null) {
+                    return;
+                }
 
-            // Include if: has disposition, has content-id, or has filename
-            if (disposition != null || contentId != null || fileName != null) {
-                if (fileName == null && contentId != null) fileName = contentId;
-                MailAttachmentDTO att = new MailAttachmentDTO();
-                att.setAttachmentId(fileName != null ? fileName : String.valueOf(result.size()));
-                att.setName(fileName != null ? fileName : "inline_" + result.size());
-                att.setContentType(part.getContentType());
-                att.setInline(isInline || (contentId != null && disposition == null));
-                att.setContentId(contentId);
-                att.setSize(part.getSize());
-                InputStream is = part.getInputStream();
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                byte[] buf = new byte[4096];
-                int len;
-                while ((len = is.read(buf)) != -1) bos.write(buf, 0, len);
-                att.setContent(bos.toByteArray());
-                result.add(att);
+                // Include if: has disposition, has content-id, or has filename
+                if (disposition != null || contentId != null || fileName != null) {
+                    if (fileName == null && contentId != null) {
+                        fileName = contentId;
+                    }
+                    MailAttachmentDTO att = new MailAttachmentDTO();
+                    att.setAttachmentId(fileName != null ? fileName : String.valueOf(result.size()));
+                    att.setName(fileName != null ? fileName : "inline_" + result.size());
+                    att.setContentType(part.getContentType());
+                    att.setInline(isInline || (contentId != null && disposition == null));
+                    att.setContentId(contentId);
+                    att.setSize(part.getSize());
+                    InputStream is = part.getInputStream();
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    byte[] buf = new byte[4096];
+                    int len;
+                    while ((len = is.read(buf)) != -1) {
+                        bos.write(buf, 0, len);
+                    }
+                    att.setContent(bos.toByteArray());
+                    result.add(att);
+                }
             }
         }
     }
@@ -1739,9 +1789,13 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             folder.open(Folder.READ_ONLY);
             try {
                 UIDFolder uidFolder = (UIDFolder) folder;
-                if (uidFolder.getUIDValidity() != parsed[0]) throw new Exception("UIDVALIDITY mismatch");
+                if (uidFolder.getUIDValidity() != parsed[0]) {
+                    throw new Exception("UIDVALIDITY mismatch");
+                }
                 Message msg = uidFolder.getMessageByUID(parsed[1]);
-                if (msg == null) throw new Exception("Message not found");
+                if (msg == null) {
+                    throw new Exception("Message not found");
+                }
                 List<MailAttachmentDTO> result = new ArrayList<>();
                 extractAttachmentsMetadata(msg, result);
                 return result;
@@ -1768,66 +1822,77 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 } catch (Exception ex) {
                     // keep original fileName
                 }
-            String contentId = null;
-            boolean isInline = Part.INLINE.equalsIgnoreCase(disposition);
+                String contentId = null;
+                boolean isInline = Part.INLINE.equalsIgnoreCase(disposition);
 
-            if (part instanceof MimeBodyPart) {
-                contentId = ((MimeBodyPart) part).getContentID();
-                if (contentId != null) contentId = contentId.replaceAll("[<>]", "");
-            }
-
-            // text/calendar parts: always include bytes (calendar rendering)
-            if (part.isMimeType("text/calendar")) {
-                MailAttachmentDTO att = new MailAttachmentDTO();
-                att.setAttachmentId(fileName != null ? fileName : "meeting.ics");
-                att.setName(fileName != null ? fileName : "meeting.ics");
-                att.setContentType(part.getContentType());
-                att.setInline(false);
-                att.setSize(part.getSize());
-                InputStream calIs = part.getInputStream();
-                ByteArrayOutputStream calBos = new ByteArrayOutputStream();
-                byte[] calBuf = new byte[4096];
-                int calLen;
-                while ((calLen = calIs.read(calBuf)) != -1) calBos.write(calBuf, 0, calLen);
-                att.setContent(calBos.toByteArray());
-                result.add(att);
-                return;
-            }
-
-            // Skip body text parts (plain/html without filename and without content-id)
-            if ((part.isMimeType("text/plain") || part.isMimeType("text/html"))
-                    && fileName == null && contentId == null) {
-                return;
-            }
-
-            // Include if: has disposition, has content-id, or has filename
-            if (disposition != null || contentId != null || fileName != null) {
-                if (fileName == null && contentId != null) fileName = contentId;
-                MailAttachmentDTO att = new MailAttachmentDTO();
-                att.setAttachmentId(fileName != null ? fileName : String.valueOf(result.size()));
-                att.setName(fileName != null ? fileName : "inline_" + result.size());
-                att.setContentType(part.getContentType());
-                att.setInline(isInline || (contentId != null && disposition == null));
-                att.setContentId(contentId);
-                att.setSize(part.getSize());
-
-                // Eagerly load bytes for: inline with contentId (CID images), or .ics files
-                boolean eagerLoad = (att.isInline() && contentId != null)
-                        || (fileName != null && fileName.toLowerCase().endsWith(".ics"));
-                if (eagerLoad) {
-                    InputStream is = part.getInputStream();
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    byte[] buf = new byte[4096];
-                    int len;
-                    while ((len = is.read(buf)) != -1) bos.write(buf, 0, len);
-                    att.setContent(bos.toByteArray());
+                if (part instanceof MimeBodyPart) {
+                    contentId = ((MimeBodyPart) part).getContentID();
+                    if (contentId != null) {
+                        contentId = contentId.replaceAll("[<>]", "");
+                    }
                 }
-                // else: content stays null (lazy)
 
-                result.add(att);
+                // text/calendar parts: always include bytes (calendar rendering)
+                if (part.isMimeType("text/calendar")) {
+                    MailAttachmentDTO att = new MailAttachmentDTO();
+                    att.setAttachmentId(fileName != null ? fileName : "meeting.ics");
+                    att.setName(fileName != null ? fileName : "meeting.ics");
+                    att.setContentType(part.getContentType());
+                    att.setInline(false);
+                    att.setSize(part.getSize());
+                    InputStream calIs = part.getInputStream();
+                    ByteArrayOutputStream calBos = new ByteArrayOutputStream();
+                    byte[] calBuf = new byte[4096];
+                    int calLen;
+                    while ((calLen = calIs.read(calBuf)) != -1) {
+                        calBos.write(calBuf, 0, calLen);
+                    }
+                    att.setContent(calBos.toByteArray());
+                    result.add(att);
+                    return;
+                }
+
+                // Skip body text parts (plain/html without filename and without content-id)
+                if ((part.isMimeType("text/plain") || part.isMimeType("text/html"))
+                        && fileName == null && contentId == null) {
+                    return;
+                }
+
+                // Include if: has disposition, has content-id, or has filename
+                if (disposition != null || contentId != null || fileName != null) {
+                    if (fileName == null && contentId != null) {
+                        fileName = contentId;
+                    }
+                    MailAttachmentDTO att = new MailAttachmentDTO();
+                    att.setAttachmentId(fileName != null ? fileName : String.valueOf(result.size()));
+                    att.setName(fileName != null ? fileName : "inline_" + result.size());
+                    att.setContentType(part.getContentType());
+                    att.setInline(isInline || (contentId != null && disposition == null));
+                    att.setContentId(contentId);
+                    att.setSize(part.getSize());
+
+                    // Eagerly load bytes for: inline with contentId (CID images), or .ics files
+                    boolean eagerLoad = (att.isInline() && contentId != null)
+                            || (fileName != null && fileName.toLowerCase().endsWith(".ics"));
+                    if (eagerLoad) {
+                        InputStream is = part.getInputStream();
+                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                        byte[] buf = new byte[4096];
+                        int len;
+                        while ((len = is.read(buf)) != -1) {
+                            bos.write(buf, 0, len);
+                        }
+                        att.setContent(bos.toByteArray());
+                    }
+                    // else: content stays null (lazy)
+
+                    result.add(att);
+                }
             }
         }
     }
+
+    
 
     private MailAttachmentDTO imapGetSingleAttachment(MailboxSetup ms, String messageRef, String attachmentId) throws Exception {
         List<MailAttachmentDTO> all = imapGetAttachments(ms, messageRef);
@@ -1848,8 +1913,12 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtps.host", server);
         props.put("mail.smtps.auth", "true");
-        if (ms.isEmailOutSsl()) props.put("mail.smtp.ssl.enable", "true");
-        if (ms.isEmailStartTls()) props.put("mail.smtp.starttls.enable", "true");
+        if (ms.isEmailOutSsl()) {
+            props.put("mail.smtp.ssl.enable", "true");
+        }
+        if (ms.isEmailStartTls()) {
+            props.put("mail.smtp.starttls.enable", "true");
+        }
         String port = ms.getEmailOutPort();
         if (port != null && !port.isEmpty()) {
             props.put("mail.smtp.port", port);
@@ -1869,21 +1938,37 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         } else {
             msg.setFrom(new InternetAddress(ms.getEmailAddress()));
         }
-        if (to != null && !to.isEmpty()) msg.setRecipients(Message.RecipientType.TO, parseAndEncodeRecipients(to));
-        if (cc != null && !cc.isEmpty()) msg.setRecipients(Message.RecipientType.CC, parseAndEncodeRecipients(cc));
-        if (bcc != null && !bcc.isEmpty()) msg.setRecipients(Message.RecipientType.BCC, parseAndEncodeRecipients(bcc));
+        if (to != null && !to.isEmpty()) {
+            msg.setRecipients(Message.RecipientType.TO, parseAndEncodeRecipients(to));
+        }
+        if (cc != null && !cc.isEmpty()) {
+            msg.setRecipients(Message.RecipientType.CC, parseAndEncodeRecipients(cc));
+        }
+        if (bcc != null && !bcc.isEmpty()) {
+            msg.setRecipients(Message.RecipientType.BCC, parseAndEncodeRecipients(bcc));
+        }
         msg.setSubject(subject, StandardCharsets.UTF_8.name());
         msg.setSentDate(new Date());
         String prio = normalizePriority(priority);
         if ("high".equals(prio)) {
-            msg.setHeader(HEADER_X_PRIORITY, "1"); msg.setHeader(HEADER_PRIORITY, "Urgent"); msg.setHeader(HEADER_IMPORTANCE, "high");
+            msg.setHeader(HEADER_X_PRIORITY, "1");
+            msg.setHeader(HEADER_PRIORITY, "Urgent");
+            msg.setHeader(HEADER_IMPORTANCE, "high");
         } else if ("low".equals(prio)) {
-            msg.setHeader(HEADER_X_PRIORITY, "5"); msg.setHeader(HEADER_PRIORITY, "Non-Urgent"); msg.setHeader(HEADER_IMPORTANCE, "low");
+            msg.setHeader(HEADER_X_PRIORITY, "5");
+            msg.setHeader(HEADER_PRIORITY, "Non-Urgent");
+            msg.setHeader(HEADER_IMPORTANCE, "low");
         } else {
-            msg.setHeader(HEADER_X_PRIORITY, "3"); msg.setHeader(HEADER_PRIORITY, "Normal"); msg.setHeader(HEADER_IMPORTANCE, "normal");
+            msg.setHeader(HEADER_X_PRIORITY, "3");
+            msg.setHeader(HEADER_PRIORITY, "Normal");
+            msg.setHeader(HEADER_IMPORTANCE, "normal");
         }
-        if (inReplyTo != null && !inReplyTo.isEmpty()) msg.setHeader("In-Reply-To", inReplyTo);
-        if (references != null && !references.isEmpty()) msg.setHeader("References", references);
+        if (inReplyTo != null && !inReplyTo.isEmpty()) {
+            msg.setHeader("In-Reply-To", inReplyTo);
+        }
+        if (references != null && !references.isEmpty()) {
+            msg.setHeader("References", references);
+        }
         if (readReceipt) {
             msg.setHeader("Disposition-Notification-To", ms.getEmailAddress());
             msg.setHeader("Return-Receipt-To", ms.getEmailAddress());
@@ -1950,11 +2035,17 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             sourceFolder.open(Folder.READ_WRITE);
             try {
                 UIDFolder uidFolder = (UIDFolder) sourceFolder;
-                if (uidFolder.getUIDValidity() != parsed[0]) throw new Exception("UIDVALIDITY mismatch");
+                if (uidFolder.getUIDValidity() != parsed[0]) {
+                    throw new Exception("UIDVALIDITY mismatch");
+                }
                 Message msg = uidFolder.getMessageByUID(parsed[1]);
-                if (msg == null) throw new Exception("Message not found");
+                if (msg == null) {
+                    throw new Exception("Message not found");
+                }
                 Folder targetFolder = store.getFolder(targetFolderId);
-                if (!targetFolder.exists()) targetFolder.create(Folder.HOLDS_MESSAGES);
+                if (!targetFolder.exists()) {
+                    targetFolder.create(Folder.HOLDS_MESSAGES);
+                }
                 sourceFolder.copyMessages(new Message[]{msg}, targetFolder);
                 msg.setFlag(Flags.Flag.DELETED, true);
                 sourceFolder.expunge();
@@ -1975,9 +2066,13 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             folder.open(Folder.READ_WRITE);
             try {
                 UIDFolder uidFolder = (UIDFolder) folder;
-                if (uidFolder.getUIDValidity() != parsed[0]) throw new Exception("UIDVALIDITY mismatch");
+                if (uidFolder.getUIDValidity() != parsed[0]) {
+                    throw new Exception("UIDVALIDITY mismatch");
+                }
                 Message msg = uidFolder.getMessageByUID(parsed[1]);
-                if (msg == null) throw new Exception("Message not found");
+                if (msg == null) {
+                    throw new Exception("Message not found");
+                }
                 msg.setFlag(Flags.Flag.DELETED, true);
                 folder.expunge();
             } finally {
@@ -1997,9 +2092,13 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             folder.open(Folder.READ_WRITE);
             try {
                 UIDFolder uidFolder = (UIDFolder) folder;
-                if (uidFolder.getUIDValidity() != parsed[0]) throw new Exception("UIDVALIDITY mismatch");
+                if (uidFolder.getUIDValidity() != parsed[0]) {
+                    throw new Exception("UIDVALIDITY mismatch");
+                }
                 Message msg = uidFolder.getMessageByUID(parsed[1]);
-                if (msg == null) throw new Exception("Message not found");
+                if (msg == null) {
+                    throw new Exception("Message not found");
+                }
                 msg.setFlag(Flags.Flag.SEEN, read);
             } finally {
                 folder.close(false);
@@ -2024,7 +2123,6 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     }
 
     // ==================== Graph API Backend ====================
-
     private String graphGet(MailboxSetup ms, String url) throws Exception {
         if (!this.updateAuthTokenForMailbox(ms)) {
             throw new Exception("Failed to obtain access token for " + ms.getEmailAddress());
@@ -2052,7 +2150,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             HttpPost post = new HttpPost(url);
             post.setHeader("Authorization", "Bearer " + ms.getAuthToken());
             post.setHeader("Content-Type", "application/json");
-            if (jsonBody != null) post.setEntity(new StringEntity(jsonBody, StandardCharsets.UTF_8));
+            if (jsonBody != null) {
+                post.setEntity(new StringEntity(jsonBody, StandardCharsets.UTF_8));
+            }
             try (CloseableHttpResponse response = client.execute(post)) {
                 int status = response.getStatusLine().getStatusCode();
                 byte[] responseBytes = readResponseBytes(response);
@@ -2101,12 +2201,16 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     }
 
     private byte[] readResponseBytes(CloseableHttpResponse response) throws Exception {
-        if (response.getEntity() == null) return new byte[0];
+        if (response.getEntity() == null) {
+            return new byte[0];
+        }
         try (InputStream is = response.getEntity().getContent()) {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             byte[] buf = new byte[4096];
             int len;
-            while ((len = is.read(buf)) != -1) bos.write(buf, 0, len);
+            while ((len = is.read(buf)) != -1) {
+                bos.write(buf, 0, len);
+            }
             return bos.toByteArray();
         }
     }
@@ -2183,7 +2287,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         if (hasSearch) {
             urlBuilder.append("&$search=%22").append(URLEncoder.encode(searchTerm, StandardCharsets.UTF_8)).append("%22");
         } else {
-            if (offset > 0) urlBuilder.append("&$skip=").append(offset);
+            if (offset > 0) {
+                urlBuilder.append("&$skip=").append(offset);
+            }
             urlBuilder.append("&$orderby=receivedDateTime%20desc");
         }
 
@@ -2194,7 +2300,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             filter.append("receivedDateTime ge ").append(isoDate);
         }
         if (unreadOnly) {
-            if (filter.length() > 0) filter.append(" and ");
+            if (filter.length() > 0) {
+                filter.append(" and ");
+            }
             filter.append("isRead eq false");
         }
         if (filter.length() > 0) {
@@ -2216,7 +2324,10 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 dto.setHasAttachments(Boolean.TRUE.equals(m.get("hasAttachments")));
                 String receivedDateTime = (String) m.get("receivedDateTime");
                 if (receivedDateTime != null) {
-                    try { dto.setDate(parseGraphDateTime(receivedDateTime)); } catch (Exception e) { }
+                    try {
+                        dto.setDate(parseGraphDateTime(receivedDateTime));
+                    } catch (Exception e) {
+                    }
                 }
                 Map<String, Object> from = (Map<String, Object>) m.get("from");
                 if (from != null) {
@@ -2250,7 +2361,10 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         dto.setHasAttachments(Boolean.TRUE.equals(m.get("hasAttachments")));
         String receivedDateTime = (String) m.get("receivedDateTime");
         if (receivedDateTime != null) {
-            try { dto.setDate(parseGraphDateTime(receivedDateTime)); } catch (Exception e) { }
+            try {
+                dto.setDate(parseGraphDateTime(receivedDateTime));
+            } catch (Exception e) {
+            }
         }
         Map<String, Object> from = (Map<String, Object>) m.get("from");
         if (from != null) {
@@ -2272,9 +2386,13 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         if (headers != null) {
             for (Map<String, String> header : headers) {
                 String headerName = header.get("name");
-                if ("In-Reply-To".equalsIgnoreCase(headerName)) dto.setInReplyTo(header.get("value"));
-                else if ("References".equalsIgnoreCase(headerName)) dto.setReferences(header.get("value"));
-                else if ("Disposition-Notification-To".equalsIgnoreCase(headerName) || "Return-Receipt-To".equalsIgnoreCase(headerName)) dto.setReadReceiptRequested(true);
+                if ("In-Reply-To".equalsIgnoreCase(headerName)) {
+                    dto.setInReplyTo(header.get("value"));
+                } else if ("References".equalsIgnoreCase(headerName)) {
+                    dto.setReferences(header.get("value"));
+                } else if ("Disposition-Notification-To".equalsIgnoreCase(headerName) || "Return-Receipt-To".equalsIgnoreCase(headerName)) {
+                    dto.setReadReceiptRequested(true);
+                }
             }
         }
         return dto;
@@ -2290,7 +2408,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         List<MailAttachmentDTO> result = new ArrayList<>();
         if (value != null) {
             for (Map<String, Object> a : value) {
-                if (!"#microsoft.graph.fileAttachment".equals(a.get("@odata.type"))) continue;
+                if (!"#microsoft.graph.fileAttachment".equals(a.get("@odata.type"))) {
+                    continue;
+                }
                 MailAttachmentDTO att = new MailAttachmentDTO();
                 att.setAttachmentId((String) a.get("id"));
                 att.setName((String) a.get("name"));
@@ -2299,7 +2419,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 att.setInline(Boolean.TRUE.equals(a.get("isInline")));
                 att.setContentId((String) a.get("contentId"));
                 String contentBytes = (String) a.get("contentBytes");
-                if (contentBytes != null) att.setContent(java.util.Base64.getDecoder().decode(contentBytes));
+                if (contentBytes != null) {
+                    att.setContent(java.util.Base64.getDecoder().decode(contentBytes));
+                }
                 result.add(att);
             }
         }
@@ -2318,7 +2440,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         List<MailAttachmentDTO> result = new ArrayList<>();
         if (value != null) {
             for (Map<String, Object> a : value) {
-                if (!"#microsoft.graph.fileAttachment".equals(a.get("@odata.type"))) continue;
+                if (!"#microsoft.graph.fileAttachment".equals(a.get("@odata.type"))) {
+                    continue;
+                }
                 MailAttachmentDTO att = new MailAttachmentDTO();
                 att.setAttachmentId((String) a.get("id"));
                 att.setName((String) a.get("name"));
@@ -2362,7 +2486,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         att.setInline(Boolean.TRUE.equals(a.get("isInline")));
         att.setContentId((String) a.get("contentId"));
         String contentBytes = (String) a.get("contentBytes");
-        if (contentBytes != null) att.setContent(java.util.Base64.getDecoder().decode(contentBytes));
+        if (contentBytes != null) {
+            att.setContent(java.util.Base64.getDecoder().decode(contentBytes));
+        }
         return att;
     }
 
@@ -2375,9 +2501,15 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         bodyMap.put("contentType", contentType != null && contentType.contains("html") ? "html" : "text");
         bodyMap.put("content", body);
         message.put("body", bodyMap);
-        if (to != null && !to.isEmpty()) message.put("toRecipients", parseRecipientsForGraph(to));
-        if (cc != null && !cc.isEmpty()) message.put("ccRecipients", parseRecipientsForGraph(cc));
-        if (bcc != null && !bcc.isEmpty()) message.put("bccRecipients", parseRecipientsForGraph(bcc));
+        if (to != null && !to.isEmpty()) {
+            message.put("toRecipients", parseRecipientsForGraph(to));
+        }
+        if (cc != null && !cc.isEmpty()) {
+            message.put("ccRecipients", parseRecipientsForGraph(cc));
+        }
+        if (bcc != null && !bcc.isEmpty()) {
+            message.put("bccRecipients", parseRecipientsForGraph(bcc));
+        }
         String graphPrio = normalizePriority(priority);
         message.put("importance", graphPrio);
         if (readReceipt) {
@@ -2416,7 +2548,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 a.put("contentBytes", java.util.Base64.getEncoder().encodeToString(att.getContent()));
                 if (att.isInline()) {
                     a.put("isInline", true);
-                    if (att.getContentId() != null) a.put("contentId", att.getContentId());
+                    if (att.getContentId() != null) {
+                        a.put("contentId", att.getContentId());
+                    }
                 }
                 atts.add(a);
             }
@@ -2448,7 +2582,6 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     }
 
     // ==================== Utility Methods ====================
-
     private String decodeAddress(Address address) {
         if (address instanceof InternetAddress) {
             InternetAddress ia = (InternetAddress) address;
@@ -2471,15 +2604,21 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     }
 
     private String[] addressesToStrings(Address[] addresses) {
-        if (addresses == null) return new String[0];
+        if (addresses == null) {
+            return new String[0];
+        }
         String[] result = new String[addresses.length];
-        for (int i = 0; i < addresses.length; i++) result[i] = decodeAddress(addresses[i]);
+        for (int i = 0; i < addresses.length; i++) {
+            result[i] = decodeAddress(addresses[i]);
+        }
         return result;
     }
 
     @SuppressWarnings("unchecked")
     private String[] graphRecipientsToStrings(List<Map<String, Object>> recipients) {
-        if (recipients == null) return new String[0];
+        if (recipients == null) {
+            return new String[0];
+        }
         String[] result = new String[recipients.size()];
         for (int i = 0; i < recipients.size(); i++) {
             Map<String, Object> ea = (Map<String, Object>) recipients.get(i).get("emailAddress");
@@ -2499,7 +2638,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             Map<String, Object> recipient = new HashMap<>();
             Map<String, String> ea = new HashMap<>();
             ea.put("address", addr.getAddress());
-            if (addr.getPersonal() != null) ea.put("name", addr.getPersonal());
+            if (addr.getPersonal() != null) {
+                ea.put("name", addr.getPersonal());
+            }
             recipient.put("emailAddress", ea);
             result.add(recipient);
         }
@@ -2509,9 +2650,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     /**
      * Parses a comma-separated string of email recipients and returns properly
      * MIME-encoded InternetAddress objects. Handles recipients in formats like
-     * "Name" &lt;email@example.com&gt;, Name &lt;email@example.com&gt; (unquoted),
-     * and plain email addresses. Non-ASCII characters in display names (e.g.
-     * umlauts) are Base64-encoded per RFC 2047.
+     * "Name" &lt;email@example.com&gt;, Name &lt;email@example.com&gt;
+     * (unquoted), and plain email addresses. Non-ASCII characters in display
+     * names (e.g. umlauts) are Base64-encoded per RFC 2047.
      */
     private InternetAddress[] parseAndEncodeRecipients(String recipients) throws Exception {
         if (recipients == null || recipients.trim().isEmpty()) {
@@ -2581,7 +2722,6 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     }
 
     // ==================== EML Generation ====================
-
     private byte[] doGetMessageAsEml(String mailboxId, String messageRef) throws Exception {
         MailboxSetup ms = getMailboxOrThrow(mailboxId);
         if (ms.isMsExchange()) {
@@ -2636,14 +2776,28 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         Properties emlProps = new Properties();
         Session emlSession = Session.getInstance(emlProps);
         MimeMessage emlMsg = new MimeMessage(emlSession);
-        if (dto.getFrom() != null) emlMsg.setFrom(new InternetAddress(dto.getFrom()));
-        if (dto.getTo() != null) emlMsg.setRecipients(Message.RecipientType.TO, String.join(", ", dto.getTo()));
-        if (dto.getCc() != null && dto.getCc().length > 0) emlMsg.setRecipients(Message.RecipientType.CC, String.join(", ", dto.getCc()));
+        if (dto.getFrom() != null) {
+            emlMsg.setFrom(new InternetAddress(dto.getFrom()));
+        }
+        if (dto.getTo() != null) {
+            emlMsg.setRecipients(Message.RecipientType.TO, String.join(", ", dto.getTo()));
+        }
+        if (dto.getCc() != null && dto.getCc().length > 0) {
+            emlMsg.setRecipients(Message.RecipientType.CC, String.join(", ", dto.getCc()));
+        }
         emlMsg.setSubject(dto.getSubject() != null ? dto.getSubject() : "", StandardCharsets.UTF_8.name());
-        if (dto.getDate() != null) emlMsg.setSentDate(dto.getDate());
-        if (dto.getMessageId() != null) emlMsg.setHeader("Message-ID", dto.getMessageId());
-        if (dto.getInReplyTo() != null) emlMsg.setHeader("In-Reply-To", dto.getInReplyTo());
-        if (dto.getReferences() != null) emlMsg.setHeader("References", dto.getReferences());
+        if (dto.getDate() != null) {
+            emlMsg.setSentDate(dto.getDate());
+        }
+        if (dto.getMessageId() != null) {
+            emlMsg.setHeader("Message-ID", dto.getMessageId());
+        }
+        if (dto.getInReplyTo() != null) {
+            emlMsg.setHeader("In-Reply-To", dto.getInReplyTo());
+        }
+        if (dto.getReferences() != null) {
+            emlMsg.setHeader("References", dto.getReferences());
+        }
 
         String ct = dto.getBodyContentType() != null ? dto.getBodyContentType() : "text/plain";
         MimeMultipart multipart = new MimeMultipart();
@@ -2678,7 +2832,6 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     }
 
     // ==================== Append to Folder ====================
-
     private void imapAppendToFolder(MailboxSetup ms, String folderId, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, boolean markAsRead) throws Exception {
         Store store = imapConnect(ms);
         Folder folder = store.getFolder(folderId);
@@ -2691,9 +2844,15 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             Session session = Session.getInstance(new Properties());
             MimeMessage msg = new MimeMessage(session);
             msg.setFrom(new InternetAddress(ms.getEmailAddress(), ms.getEmailSenderName()));
-            if (to != null && !to.isEmpty()) msg.setRecipients(Message.RecipientType.TO, parseAndEncodeRecipients(to));
-            if (cc != null && !cc.isEmpty()) msg.setRecipients(Message.RecipientType.CC, parseAndEncodeRecipients(cc));
-            if (bcc != null && !bcc.isEmpty()) msg.setRecipients(Message.RecipientType.BCC, parseAndEncodeRecipients(bcc));
+            if (to != null && !to.isEmpty()) {
+                msg.setRecipients(Message.RecipientType.TO, parseAndEncodeRecipients(to));
+            }
+            if (cc != null && !cc.isEmpty()) {
+                msg.setRecipients(Message.RecipientType.CC, parseAndEncodeRecipients(cc));
+            }
+            if (bcc != null && !bcc.isEmpty()) {
+                msg.setRecipients(Message.RecipientType.BCC, parseAndEncodeRecipients(bcc));
+            }
             msg.setSubject(subject, StandardCharsets.UTF_8.name());
             msg.setSentDate(new Date());
 
@@ -2732,9 +2891,15 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         bodyMap.put("contentType", contentType != null && contentType.contains("html") ? "html" : "text");
         bodyMap.put("content", body != null ? body : "");
         message.put("body", bodyMap);
-        if (to != null && !to.isEmpty()) message.put("toRecipients", parseRecipientsForGraph(to));
-        if (cc != null && !cc.isEmpty()) message.put("ccRecipients", parseRecipientsForGraph(cc));
-        if (bcc != null && !bcc.isEmpty()) message.put("bccRecipients", parseRecipientsForGraph(bcc));
+        if (to != null && !to.isEmpty()) {
+            message.put("toRecipients", parseRecipientsForGraph(to));
+        }
+        if (cc != null && !cc.isEmpty()) {
+            message.put("ccRecipients", parseRecipientsForGraph(cc));
+        }
+        if (bcc != null && !bcc.isEmpty()) {
+            message.put("bccRecipients", parseRecipientsForGraph(bcc));
+        }
         message.put("isRead", markAsRead);
         message.put("isDraft", false);
 
@@ -2755,7 +2920,6 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     }
 
     // ==================== Folder Management ====================
-
     private MailFolderDTO imapCreateFolder(MailboxSetup ms, String parentFolderId, String folderName) throws Exception {
         Store store = imapConnect(ms);
         try {
@@ -2856,10 +3020,16 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     }
 
     private String normalizePriority(String priority) {
-        if (priority == null) return "normal";
+        if (priority == null) {
+            return "normal";
+        }
         String p = priority.toLowerCase().trim();
-        if ("high".equals(p) || "hoch".equals(p) || "hoch (high)".equals(p)) return "high";
-        if ("low".equals(p) || "niedrig".equals(p) || "niedrig (low)".equals(p)) return "low";
+        if ("high".equals(p) || "hoch".equals(p) || "hoch (high)".equals(p)) {
+            return "high";
+        }
+        if ("low".equals(p) || "niedrig".equals(p) || "niedrig (low)".equals(p)) {
+            return "low";
+        }
         return "normal";
     }
 
@@ -2868,8 +3038,12 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             Multipart mp = (Multipart) part.getContent();
             for (int i = 0; i < mp.getCount(); i++) {
                 BodyPart bp = mp.getBodyPart(i);
-                if (Part.ATTACHMENT.equalsIgnoreCase(bp.getDisposition())) return true;
-                if (bp.getFileName() != null) return true;
+                if (Part.ATTACHMENT.equalsIgnoreCase(bp.getDisposition())) {
+                    return true;
+                }
+                if (bp.getFileName() != null) {
+                    return true;
+                }
             }
         }
         return false;
@@ -2881,10 +3055,14 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         if (dateTime.endsWith("Z")) {
             sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
             String cleaned = dateTime.substring(0, dateTime.length() - 1);
-            if (cleaned.length() > 19) cleaned = cleaned.substring(0, 19);
+            if (cleaned.length() > 19) {
+                cleaned = cleaned.substring(0, 19);
+            }
             return sdf.parse(cleaned);
         }
-        if (dateTime.length() > 19) dateTime = dateTime.substring(0, 19);
+        if (dateTime.length() > 19) {
+            dateTime = dateTime.substring(0, 19);
+        }
         return sdf.parse(dateTime);
     }
 
@@ -2895,7 +3073,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
                 byte[] buf = new byte[4096];
                 int len;
-                while ((len = ((InputStream) content).read(buf)) != -1) bos.write(buf, 0, len);
+                while ((len = ((InputStream) content).read(buf)) != -1) {
+                    bos.write(buf, 0, len);
+                }
                 return new String[]{new String(bos.toByteArray(), StandardCharsets.UTF_8), "text/html"};
             }
             return new String[]{content.toString(), "text/html"};
@@ -2906,7 +3086,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
                 byte[] buf = new byte[4096];
                 int len;
-                while ((len = ((InputStream) content).read(buf)) != -1) bos.write(buf, 0, len);
+                while ((len = ((InputStream) content).read(buf)) != -1) {
+                    bos.write(buf, 0, len);
+                }
                 return new String[]{new String(bos.toByteArray(), StandardCharsets.UTF_8), "text/plain"};
             }
             return new String[]{content.toString(), "text/plain"};
@@ -2927,8 +3109,12 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 }
             }
             // Prefer HTML over plain text
-            if (htmlBody != null) return new String[]{htmlBody, "text/html"};
-            if (plainText != null) return new String[]{plainText, "text/plain"};
+            if (htmlBody != null) {
+                return new String[]{htmlBody, "text/html"};
+            }
+            if (plainText != null) {
+                return new String[]{plainText, "text/plain"};
+            }
         }
         return new String[]{null, null};
     }
