@@ -681,7 +681,6 @@ import java.awt.Component;
 import java.awt.Image;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.text.DecimalFormat;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -705,7 +704,6 @@ public class DynamicTablePanel extends javax.swing.JPanel {
 
     private static final int SUM_ROW_COUNT = 3;
 
-    private DecimalFormat decFormat=new DecimalFormat("0.00");
     private ReportResultTable resultTable=null;
 
     /**

@@ -733,6 +733,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     private static final String GRAPH_BASE = "https://graph.microsoft.com/v1.0";
     private static final String HEADER_X_PRIORITY = "X-Priority";
     private static final String HEADER_IMPORTANCE = "Importance";
+    private static final String HEADER_PRIORITY = HEADER_PRIORITY;
     private static final String IMAP_REF_PREFIX = "imap:";
     private static final ConcurrentHashMap<String, Boolean> newMessageFlags = new ConcurrentHashMap<>();
     // Connection cache: reuse IMAP connections across operations for the same mailbox
@@ -1863,11 +1864,11 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         msg.setSentDate(new Date());
         String prio = normalizePriority(priority);
         if ("high".equals(prio)) {
-            msg.setHeader(HEADER_X_PRIORITY, "1"); msg.setHeader("Priority", "Urgent"); msg.setHeader(HEADER_IMPORTANCE, "high");
+            msg.setHeader(HEADER_X_PRIORITY, "1"); msg.setHeader(HEADER_PRIORITY, "Urgent"); msg.setHeader(HEADER_IMPORTANCE, "high");
         } else if ("low".equals(prio)) {
-            msg.setHeader(HEADER_X_PRIORITY, "5"); msg.setHeader("Priority", "Non-Urgent"); msg.setHeader(HEADER_IMPORTANCE, "low");
+            msg.setHeader(HEADER_X_PRIORITY, "5"); msg.setHeader(HEADER_PRIORITY, "Non-Urgent"); msg.setHeader(HEADER_IMPORTANCE, "low");
         } else {
-            msg.setHeader(HEADER_X_PRIORITY, "3"); msg.setHeader("Priority", "Normal"); msg.setHeader(HEADER_IMPORTANCE, "normal");
+            msg.setHeader(HEADER_X_PRIORITY, "3"); msg.setHeader(HEADER_PRIORITY, "Normal"); msg.setHeader(HEADER_IMPORTANCE, "normal");
         }
         if (inReplyTo != null && !inReplyTo.isEmpty()) msg.setHeader("In-Reply-To", inReplyTo);
         if (references != null && !references.isEmpty()) msg.setHeader("References", references);
@@ -2376,11 +2377,11 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         // Priority headers for non-Outlook recipients
         if ("high".equals(graphPrio)) {
             hdrs.add(createHeader(HEADER_X_PRIORITY, "1"));
-            hdrs.add(createHeader("Priority", "Urgent"));
+            hdrs.add(createHeader(HEADER_PRIORITY, "Urgent"));
             hdrs.add(createHeader(HEADER_IMPORTANCE, "high"));
         } else if ("low".equals(graphPrio)) {
             hdrs.add(createHeader(HEADER_X_PRIORITY, "5"));
-            hdrs.add(createHeader("Priority", "Non-Urgent"));
+            hdrs.add(createHeader(HEADER_PRIORITY, "Non-Urgent"));
             hdrs.add(createHeader(HEADER_IMPORTANCE, "low"));
         }
         // Threading headers

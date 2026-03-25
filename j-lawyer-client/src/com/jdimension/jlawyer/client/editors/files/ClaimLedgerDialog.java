@@ -723,7 +723,6 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private static final Logger log = Logger.getLogger(ClaimLedgerDialog.class.getName());
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
     private final DecimalFormat cf = new DecimalFormat(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.numberFormat", "#,##0.00"));
-    private final DecimalFormat accountEntryFormat = new DecimalFormat("#,##0.00");
     private final DecimalFormat percentageFormat = new DecimalFormat("0.0");
 
     private ClaimLedger currentEntry = null;
