@@ -733,7 +733,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     private static final String GRAPH_BASE = "https://graph.microsoft.com/v1.0";
     private static final String HEADER_X_PRIORITY = "X-Priority";
     private static final String HEADER_IMPORTANCE = "Importance";
-    private static final String HEADER_PRIORITY = HEADER_PRIORITY;
+    private static final String HEADER_PRIORITY = "Priority";
     private static final String IMAP_REF_PREFIX = "imap:";
     private static final ConcurrentHashMap<String, Boolean> newMessageFlags = new ConcurrentHashMap<>();
     // Connection cache: reuse IMAP connections across operations for the same mailbox

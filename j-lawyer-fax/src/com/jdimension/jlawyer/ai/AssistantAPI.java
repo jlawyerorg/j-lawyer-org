@@ -835,6 +835,19 @@ public class AssistantAPI {
             String returnValue = response.readEntity(String.class);
             int httpStatus = response.getStatus();
 
+            if (returnValue == null || returnValue.isEmpty()) {
+                response.close();
+                throw new AssistantException("j-lawyer.AI returned an empty response with HTTP status " + httpStatus);
+            }
+
+            String trimmed = returnValue.trim();
+            if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) {
+                response.close();
+                String preview = returnValue.length() > 500 ? returnValue.substring(0, 500) + "..." : returnValue;
+                log.error("j-lawyer.AI returned non-JSON response (HTTP " + httpStatus + "): " + preview);
+                throw new AssistantException("j-lawyer.AI returned non-JSON response (HTTP " + httpStatus + "). Check if the AI service URL is correct and the service is running.");
+            }
+
             Object jsonOutput = Jsoner.deserialize(returnValue);
             AiRequestStatus status = new AiRequestStatus();
             if (jsonOutput instanceof JsonObject) {
