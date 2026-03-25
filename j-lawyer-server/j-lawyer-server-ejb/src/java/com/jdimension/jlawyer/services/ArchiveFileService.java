@@ -4013,6 +4013,58 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void setDocumentMetadata(String id, Date date, String folderId, Boolean favorite) throws Exception {
+        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
+        if (db == null) {
+            throw new Exception("Dokument existiert nicht!");
+        }
+        String aId = db.getArchiveFileKey().getId();
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), db.getArchiveFileKey(), this.securityFacade, this.getAllowedGroups(aId));
+
+        boolean changed = false;
+        boolean dateChanged = false;
+        StringGenerator idGen = new StringGenerator();
+
+        if (date != null) {
+            db.setCreationDate(date);
+            dateChanged = true;
+            changed = true;
+            this.addCaseHistory(idGen.getID().toString(), db.getArchiveFileKey(), "Dokumentdatum geändert: " + db.getName());
+        }
+
+        if (folderId != null) {
+            CaseFolder target = this.caseFolderFacade.find(folderId);
+            if (target == null) {
+                throw new Exception("Ordner existiert nicht!");
+            }
+            CaseFolder rootFolder = db.getArchiveFileKey().getRootFolder();
+            if (!containsFolder(rootFolder, folderId)) {
+                throw new Exception("Akte " + db.getArchiveFileKey().getFileNumber() + " enthält keinen Ordner mit ID " + folderId);
+            }
+            db.setFolder(target);
+            changed = true;
+            this.addCaseHistory(idGen.getID().toString(), db.getArchiveFileKey(), "Dokument " + db.getName() + " in den Ordner " + target.getName() + " verschoben");
+        }
+
+        if (favorite != null && db.isFavorite() != favorite) {
+            db.setFavorite(favorite);
+            changed = true;
+        }
+
+        if (changed) {
+            db.bumpVersion(dateChanged);
+            this.archiveFileDocumentsFacade.edit(db);
+
+            DocumentUpdatedEvent evt = new DocumentUpdatedEvent();
+            evt.setDocumentId(id);
+            evt.setCaseId(aId);
+            evt.setDocumentName(db.getName());
+            this.updatedDocumentEvent.fireAsync(evt);
+        }
+    }
+
+    @Override
     @RolesAllowed({"readArchiveFileRole"})
     public HashMap<String, ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagNames, String[] documentTagNames) {
 

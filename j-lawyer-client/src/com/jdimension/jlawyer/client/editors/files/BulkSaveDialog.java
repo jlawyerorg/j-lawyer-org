@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import java.util.concurrent.CompletableFuture;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.fonts.inter.FlatInterFont;
@@ -1247,22 +1248,26 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
                                 getEntryProcessor().postSave(e);
                             }
 
-                            if (e.getDocumentDate() != null) {
-                                afs.setDocumentDate(newDocId, e.getDocumentDate());
-                            }
-                            if (e.getSelectedCaseFolder() != null) {
-                                ArrayList<String> docList = new ArrayList<>();
-                                docList.add(newDocId);
-                                afs.moveDocumentsToFolder(docList, e.getSelectedCaseFolder().getId());
+                            final String docId = newDocId;
+
+                            // set date, folder and favorite in a single server call
+                            String folderId = e.getSelectedCaseFolder() != null ? e.getSelectedCaseFolder().getId() : null;
+                            Boolean favorite = e.isFavorite() ? Boolean.TRUE : null;
+                            if (e.getDocumentDate() != null || folderId != null || favorite != null) {
+                                afs.setDocumentMetadata(docId, e.getDocumentDate(), folderId, favorite);
                             }
 
-                            if (e.isFavorite()) {
-                                afs.setDocumentFavorite(newDocId, true);
-                            }
-
+                            // tags are in a separate table - safe to run in parallel
                             List<String> tags = e.getDocumentTags();
-                            for (String docTag : tags) {
-                                afs.setDocumentTag(newDocId, new DocumentTagsBean(newDocId, docTag), true);
+                            if (!tags.isEmpty()) {
+                                List<CompletableFuture<Void>> tagFutures = new ArrayList<>();
+                                for (String docTag : tags) {
+                                    tagFutures.add(CompletableFuture.runAsync(() -> {
+                                        try { afs.setDocumentTag(docId, new DocumentTagsBean(docId, docTag), true); }
+                                        catch (Exception ex2) { throw new RuntimeException(ex2); }
+                                    }));
+                                }
+                                CompletableFuture.allOf(tagFutures.toArray(new CompletableFuture[0])).join();
                             }
                             SwingUtilities.invokeAndWait(() -> {
                                 e.setDownloadSuccess(true, null);

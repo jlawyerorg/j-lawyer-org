@@ -903,8 +903,20 @@ public interface ArchiveFileServiceRemote {
     List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit, HashMap<String, String[]> caseTagValues, HashMap<String, String[]> documentTagValues);
 
     boolean setDocumentDate(String id, Date date) throws Exception;
-    
+
     boolean setDocumentFavorite(String id, boolean favorite) throws Exception;
+
+    /**
+     * Sets multiple metadata attributes on a document in a single operation,
+     * avoiding race conditions from separate load-modify-save cycles.
+     *
+     * @param id the document ID
+     * @param date the document date to set, or null to leave unchanged
+     * @param folderId the target folder ID, or null to leave unchanged
+     * @param favorite whether to mark the document as favorite, or null to leave unchanged
+     * @throws Exception if the document does not exist or the user lacks permissions
+     */
+    void setDocumentMetadata(String id, Date date, String folderId, Boolean favorite) throws Exception;
 
     HashMap<String,ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName);
 
