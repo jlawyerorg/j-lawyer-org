@@ -1671,6 +1671,12 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         } else {
             String disposition = part.getDisposition();
             String fileName = part.getFileName();
+            if (fileName != null) {
+                try {
+                    fileName = MimeUtility.decodeText(fileName.replaceAll("x-unknown", "iso-8859-1"));
+                } catch (Exception ex) {
+                    // keep original fileName
+                }
             String contentId = null;
             boolean isInline = Part.INLINE.equalsIgnoreCase(disposition);
 
@@ -1756,6 +1762,12 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         } else {
             String disposition = part.getDisposition();
             String fileName = part.getFileName();
+            if (fileName != null) {
+                try {
+                    fileName = MimeUtility.decodeText(fileName.replaceAll("x-unknown", "iso-8859-1"));
+                } catch (Exception ex) {
+                    // keep original fileName
+                }
             String contentId = null;
             boolean isInline = Part.INLINE.equalsIgnoreCase(disposition);
 
