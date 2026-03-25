@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.iradraconis.shrinkify.ShrinkifyGui;
+import java.util.concurrent.CompletableFuture;
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiModel;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
@@ -5765,8 +5766,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void newDocumentActionPerformedImpl(StyledCalculationTable rvgTable, Invoice invoice, AppUserBean invoiceSender, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable, StyledCalculationTable timesheetSummaryTable, byte[] giroCode, String ingoText) {
 
         // save all forms to have the latest data available for document creation
-        this.saveFormData();
-        this.saveInvolvements(this.dto.getId());
+        CompletableFuture<Void> formDataFuture = CompletableFuture.runAsync(() -> this.saveFormData());
+        CompletableFuture<Void> involvementsFuture = CompletableFuture.runAsync(() -> this.saveInvolvements(this.dto.getId()));
+        CompletableFuture.allOf(formDataFuture, involvementsFuture).join();
 
         List<ArchiveFileAddressesBean> involved = new ArrayList<>();
 

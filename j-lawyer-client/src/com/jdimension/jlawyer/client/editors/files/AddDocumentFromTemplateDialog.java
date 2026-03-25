@@ -664,6 +664,9 @@
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
+import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
@@ -775,6 +778,88 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         
         this.casePanel = casePanel;
 
+        // start all server calls in parallel while UI initializes
+        ClientSettings settings = ClientSettings.getInstance();
+        Properties settingsProps = settings.getLookupProperties();
+
+        CompletableFuture<List<PartyTypeBean>> partyTypesFuture = CompletableFuture.supplyAsync(() -> {
+            try {
+                return JLawyerServiceLocator.getInstance(settingsProps).lookupSystemManagementRemote().getPartyTypes();
+            } catch (Exception ex) {
+                throw new CompletionException(ex);
+            }
+        });
+
+        CompletableFuture<List<String>> headTemplatesFuture = CompletableFuture.supplyAsync(() -> {
+            try {
+                return JLawyerServiceLocator.getInstance(settingsProps).lookupSystemManagementRemote().getTemplatesInFolder(SystemManagementRemote.TEMPLATE_TYPE_HEAD, new GenericNode(null, null, "/"));
+            } catch (Exception ex) {
+                throw new CompletionException(ex);
+            }
+        });
+
+        CompletableFuture<Collection<String>> formPlaceHoldersFuture = CompletableFuture.supplyAsync(() -> {
+            try {
+                return JLawyerServiceLocator.getInstance(settingsProps).lookupFormsServiceRemote().getPlaceHoldersForCase(aFile.getId());
+            } catch (Exception ex) {
+                throw new CompletionException(ex);
+            }
+        });
+
+        CompletableFuture<HashMap<String, String>> formPlaceHolderValuesFuture = CompletableFuture.supplyAsync(() -> {
+            try {
+                return JLawyerServiceLocator.getInstance(settingsProps).lookupFormsServiceRemote().getPlaceHolderValuesForCase(aFile.getId());
+            } catch (Exception ex) {
+                throw new CompletionException(ex);
+            }
+        });
+
+        CompletableFuture<AppUserBean> caseLawyerFuture = aFile != null
+            ? CompletableFuture.supplyAsync(() -> {
+                try {
+                    return JLawyerServiceLocator.getInstance(settingsProps).lookupSystemManagementRemote().getUser(aFile.getLawyer());
+                } catch (Exception ex) {
+                    log.warn("Unable to load lawyer with id " + aFile.getLawyer());
+                    return null;
+                }
+            })
+            : CompletableFuture.completedFuture(null);
+
+        CompletableFuture<AppUserBean> caseAssistantFuture = aFile != null
+            ? CompletableFuture.supplyAsync(() -> {
+                try {
+                    return JLawyerServiceLocator.getInstance(settingsProps).lookupSystemManagementRemote().getUser(aFile.getAssistant());
+                } catch (Exception ex) {
+                    log.warn("Unable to load assistant with id " + aFile.getAssistant());
+                    return null;
+                }
+            })
+            : CompletableFuture.completedFuture(null);
+
+        CompletableFuture<List<DocumentNameTemplate>> allNameTemplatesFuture = CompletableFuture.supplyAsync(() -> {
+            try {
+                return JLawyerServiceLocator.getInstance(settingsProps).lookupSystemManagementRemote().getDocumentNameTemplates();
+            } catch (Exception ex) {
+                throw new CompletionException(ex);
+            }
+        });
+
+        CompletableFuture<DocumentNameTemplate> defaultNameTemplateFuture = CompletableFuture.supplyAsync(() -> {
+            try {
+                return JLawyerServiceLocator.getInstance(settingsProps).lookupSystemManagementRemote().getDefaultDocumentNameTemplate();
+            } catch (Exception ex) {
+                throw new CompletionException(ex);
+            }
+        });
+
+        CompletableFuture<GenericNode> templateTreeFuture = CompletableFuture.supplyAsync(() -> {
+            try {
+                return JLawyerServiceLocator.getInstance(settingsProps).lookupSystemManagementRemote().getAllTemplatesTree(SystemManagementRemote.TEMPLATE_TYPE_BODY);
+            } catch (Exception ex) {
+                throw new CompletionException(ex);
+            }
+        });
+
         initComponents();
 
         this.quickDateSelectionPanel.setTarget(this.txtReviewDateField);
@@ -789,7 +874,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         ArchiveFileTemplatePlaceHoldersTableModel model = new ArchiveFileTemplatePlaceHoldersTableModel(colNames, 0);
         ThreadUtils.setTableModel(this.tblPlaceHolders, model);
 
-        ClientSettings settings = ClientSettings.getInstance();
         EditorsRegistry.getInstance().updateStatus("Lade Dokumentvorlagen...");
 
         this.cmdAdd.setEnabled(false);
@@ -826,7 +910,22 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         renderer.setLeafIcon(renderer.getClosedIcon());
         this.treeFolders.setCellRenderer(renderer);
 
-        this.refreshTree();
+        // collect template tree future (replaces this.refreshTree() to avoid redundant server call)
+        try {
+            GenericNode templateTree = templateTreeFuture.join();
+            DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(templateTree);
+            this.traverseFolders(templateTree, rootNode);
+            DefaultTreeModel tm = new DefaultTreeModel(rootNode);
+            this.treeFolders.setModel(tm);
+            JTreeUtils.expandToLevel(this.treeFolders, 1);
+            this.treeFolders.setSelectionRow(0);
+        } catch (CompletionException ex) {
+            log.error(ex.getCause());
+            ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Vorlagen: " + ex.getCause().getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+        } catch (Exception ex) {
+            log.error(ex);
+            ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Vorlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+        }
 
         FrameUtils.fitDialogToScreen(this, 85f);
 
@@ -840,35 +939,21 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         ComponentUtils.persistSplitPane(splitMain, this.getClass(), "splitMain");
         ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
 
+        // collect remaining server call futures
         List<String> headTemplates = new ArrayList<>();
-        
         try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            this.allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
-            headTemplates = locator.lookupSystemManagementRemote().getTemplatesInFolder(SystemManagementRemote.TEMPLATE_TYPE_HEAD, new GenericNode(null, null, "/"));
-            this.formPlaceHolders = locator.lookupFormsServiceRemote().getPlaceHoldersForCase(aFile.getId());
-            this.formPlaceHolderValues = locator.lookupFormsServiceRemote().getPlaceHolderValuesForCase(aFile.getId());
-            
-        } catch (Exception ex) {
-            log.error("Error getting all party types", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Beteiligtentypen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            this.allPartyTypes = partyTypesFuture.join();
+            headTemplates = headTemplatesFuture.join();
+            this.formPlaceHolders = formPlaceHoldersFuture.join();
+            this.formPlaceHolderValues = formPlaceHolderValuesFuture.join();
+        } catch (CompletionException ex) {
+            log.error("Error getting all party types", ex.getCause());
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Beteiligtentypen: " + ex.getCause().getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();
         }
-        
-        if (aFile != null) {
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                this.caseLawyer = locator.lookupSystemManagementRemote().getUser(aFile.getLawyer());
-            } catch (Exception ex) {
-                log.warn("Unable to load lawyer with id " + aFile.getLawyer());
-            }
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                this.caseAssistant = locator.lookupSystemManagementRemote().getUser(aFile.getAssistant());
-            } catch (Exception ex) {
-                log.warn("Unable to load assistant with id " + aFile.getAssistant());
-            }
-        }
+
+        this.caseLawyer = caseLawyerFuture.join();
+        this.caseAssistant = caseAssistantFuture.join();
 
         this.cmbLetterHeads.removeAllItems();
         this.cmbLetterHeads.addItem("");
@@ -884,9 +969,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         this.calendarSelectionButton1.setEnabled(false);
 
         try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            List<DocumentNameTemplate> allNameTemplates = locator.lookupSystemManagementRemote().getDocumentNameTemplates();
-            DocumentNameTemplate defaultNameTemplate = locator.lookupSystemManagementRemote().getDefaultDocumentNameTemplate();
+            List<DocumentNameTemplate> allNameTemplates = allNameTemplatesFuture.join();
+            DocumentNameTemplate defaultNameTemplate = defaultNameTemplateFuture.join();
 
             this.popNameTemplates.removeAll();
 
@@ -900,8 +984,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
             }
             this.nameTemplate = defaultNameTemplate;
-        } catch (Exception ex) {
-            log.error("Error connecting to server", ex);
+        } catch (CompletionException ex) {
+            log.error("Error connecting to server", ex.getCause());
             ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Dateinamenvorlagen", "Dateinamen");
         }
         
