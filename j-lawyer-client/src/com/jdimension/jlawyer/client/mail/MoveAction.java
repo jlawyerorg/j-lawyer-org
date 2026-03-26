@@ -739,6 +739,17 @@ public class MoveAction extends ProgressableAction {
 
             this.i.setMax(selectedRows.length);
 
+            // Prevent cross-mailbox moves which would cause data loss
+            String targetMailboxId = target.getMailboxId();
+            for (int i = 0; i < selectedRows.length; i++) {
+                MessageContainer mc = (MessageContainer) this.tblMails.getValueAt(selectedRows[i], 0);
+                if (mc != null && mc.isServerBased() && !mc.getMailboxId().equals(targetMailboxId)) {
+                    log.warn("Cannot move messages between different mailboxes");
+                    javax.swing.JOptionPane.showMessageDialog(null, "Nachrichten können nicht zwischen verschiedenen Postfächern verschoben werden.", "Verschieben nicht möglich", javax.swing.JOptionPane.WARNING_MESSAGE);
+                    return true;
+                }
+            }
+
             for (int i = selectedRows.length - 1; i > -1; i--) {
                 if (this.isCancelled()) {
                     return true;

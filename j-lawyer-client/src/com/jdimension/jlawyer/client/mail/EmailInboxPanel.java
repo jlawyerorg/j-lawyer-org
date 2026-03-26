@@ -3499,6 +3499,17 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             // Check if first message is server-based
             MessageContainer firstMsgCheck = (MessageContainer) this.tblMails.getValueAt(selectedRows[0], 2);
             if (firstMsgCheck != null && firstMsgCheck.isServerBased()) {
+                // Prevent cross-mailbox moves which would cause data loss
+                String targetMailboxId = target.getMailboxId();
+                for (int i = 0; i < selectedRows.length; i++) {
+                    MessageContainer mc = (MessageContainer) this.tblMails.getValueAt(selectedRows[i], 2);
+                    if (mc != null && mc.isServerBased() && !mc.getMailboxId().equals(targetMailboxId)) {
+                        log.warn("Cannot move messages between different mailboxes");
+                        javax.swing.JOptionPane.showMessageDialog(this, "Nachrichten können nicht zwischen verschiedenen Postfächern verschoben werden.", "Verschieben nicht möglich", javax.swing.JOptionPane.WARNING_MESSAGE);
+                        dtde.dropComplete(true);
+                        return;
+                    }
+                }
                 // Server-based drag & drop move
                 try {
                     ClientSettings settings = ClientSettings.getInstance();
