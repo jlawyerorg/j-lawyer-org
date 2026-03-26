@@ -45,7 +45,7 @@ public class ToolApprovalDialog extends JDialog {
             String riskLevel, ToolDefinition toolDef, String argumentsJson) {
         super(parent, "Werkzeugaufruf genehmigen", true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setMinimumSize(new Dimension(680, 500));
+        setMinimumSize(new Dimension(850, 600));
 
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
@@ -115,7 +115,7 @@ public class ToolApprovalDialog extends JDialog {
         JPanel summaryPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 14, 4));
         summaryPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         summaryPanel.setOpaque(false);
-        JLabel summaryLabel = new JLabel("<html><body style='width:600px'>" + displayText + "</body></html>");
+        JLabel summaryLabel = new JLabel("<html><body style='width:780px'>" + displayText + "</body></html>");
         summaryLabel.setFont(summaryLabel.getFont().deriveFont(Font.BOLD, summaryLabel.getFont().getSize2D() + 2f));
         summaryPanel.add(summaryLabel);
         summaryPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, summaryPanel.getPreferredSize().height));
@@ -188,13 +188,13 @@ public class ToolApprovalDialog extends JDialog {
 
         // Fixed width, height adapts to content but never exceeds screen
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        int dialogWidth = Math.min(680, screenSize.width - 40);
+        int dialogWidth = Math.min(850, screenSize.width - 40);
         // Layout at target width to get proper wrapped height
-        setSize(dialogWidth, 600);
+        setSize(dialogWidth, 700);
         validate();
         int contentHeight = contentPanel.getPreferredSize().height
                 + getInsets().top + getInsets().bottom + 40;
-        int dialogHeight = Math.max(400, Math.min(contentHeight, screenSize.height - 80));
+        int dialogHeight = Math.max(600, Math.min(contentHeight, screenSize.height - 80));
         setSize(dialogWidth, dialogHeight);
         setLocationRelativeTo(parent);
     }
