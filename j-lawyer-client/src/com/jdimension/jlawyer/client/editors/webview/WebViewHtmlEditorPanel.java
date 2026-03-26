@@ -27,7 +27,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.SystemUtils;
+import java.util.LinkedHashMap;
 
 /**
  * HTML editor implementation using SunEditor embedded in JavaFX WebView.
@@ -239,6 +241,70 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
         {"FONT_LIBERATION_MONO_ITALIC", "LiberationMono-Italic.woff2"},
         {"FONT_LIBERATION_MONO_BOLDITALIC", "LiberationMono-BoldItalic.woff2"}
     };
+
+    private static final String DEFAULT_FONT_FAMILY = "Arial";
+    private static final String DEFAULT_FONT_SIZE = "12";
+
+    private static final LinkedHashMap<String, String> FONT_FAMILY_MAP = new LinkedHashMap<>();
+    static {
+        FONT_FAMILY_MAP.put("Liberation Sans",      "'Liberation Sans', Arial, sans-serif");
+        FONT_FAMILY_MAP.put("Liberation Serif",      "'Liberation Serif', 'Times New Roman', serif");
+        FONT_FAMILY_MAP.put("Liberation Mono",       "'Liberation Mono', 'Courier New', monospace");
+        FONT_FAMILY_MAP.put("Arial",                 "Arial, 'Liberation Sans', sans-serif");
+        FONT_FAMILY_MAP.put("Arial Black",           "'Arial Black', Gadget, sans-serif");
+        FONT_FAMILY_MAP.put("Calibri",               "Calibri, 'Liberation Sans', sans-serif");
+        FONT_FAMILY_MAP.put("Cambria",               "Cambria, 'Liberation Serif', serif");
+        FONT_FAMILY_MAP.put("Comic Sans MS",         "'Comic Sans MS', cursive");
+        FONT_FAMILY_MAP.put("Courier New",           "'Courier New', 'Liberation Mono', monospace");
+        FONT_FAMILY_MAP.put("Georgia",               "Georgia, 'Liberation Serif', serif");
+        FONT_FAMILY_MAP.put("Helvetica",             "Helvetica, Arial, 'Liberation Sans', sans-serif");
+        FONT_FAMILY_MAP.put("Impact",                "Impact, Charcoal, sans-serif");
+        FONT_FAMILY_MAP.put("Lucida Console",        "'Lucida Console', Monaco, monospace");
+        FONT_FAMILY_MAP.put("Lucida Sans Unicode",   "'Lucida Sans Unicode', 'Lucida Grande', sans-serif");
+        FONT_FAMILY_MAP.put("Palatino Linotype",     "'Palatino Linotype', 'Book Antiqua', Palatino, serif");
+        FONT_FAMILY_MAP.put("Tahoma",                "Tahoma, Geneva, sans-serif");
+        FONT_FAMILY_MAP.put("Times New Roman",       "'Times New Roman', 'Liberation Serif', serif");
+        FONT_FAMILY_MAP.put("Trebuchet MS",          "'Trebuchet MS', Helvetica, sans-serif");
+        FONT_FAMILY_MAP.put("Verdana",               "Verdana, Geneva, sans-serif");
+    }
+
+    private static final String[] AVAILABLE_FONT_SIZES = {
+        "8", "9", "10", "11", "12", "13", "14", "16", "18", "20", "24", "28", "32", "36", "48", "72"
+    };
+
+    public static String[] getAvailableFontNames() {
+        return FONT_FAMILY_MAP.keySet().toArray(new String[0]);
+    }
+
+    public static String[] getAvailableFontSizes() {
+        return AVAILABLE_FONT_SIZES.clone();
+    }
+
+    /**
+     * Builds the CSS defaultStyle string from a font display name and font size.
+     * Falls back to Arial 12px for null or unrecognized values.
+     *
+     * @param fontDisplayName human-readable font name (e.g. "Liberation Serif"), or null for default
+     * @param fontSize font size in px without unit (e.g. "14"), or null for default
+     * @return CSS defaultStyle string for SunEditor
+     */
+    public static String buildDefaultStyle(String fontDisplayName, String fontSize) {
+        String family = (fontDisplayName != null)
+            ? FONT_FAMILY_MAP.getOrDefault(fontDisplayName, FONT_FAMILY_MAP.get(DEFAULT_FONT_FAMILY))
+            : FONT_FAMILY_MAP.get(DEFAULT_FONT_FAMILY);
+
+        String size = DEFAULT_FONT_SIZE;
+        if (fontSize != null) {
+            for (String s : AVAILABLE_FONT_SIZES) {
+                if (s.equals(fontSize)) {
+                    size = fontSize;
+                    break;
+                }
+            }
+        }
+
+        return "font-family: " + family + "; font-size: " + size + "px;";
+    }
 
     /**
      * Creates a new WebViewHtmlEditorPanel.
@@ -463,6 +529,14 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                     log.warn("Could not load font: " + filename + " - " + e.getMessage());
                 }
             }
+
+            // Replace default font style placeholder with user's configured font
+            String userFontName = UserSettings.getInstance().getSetting(
+                UserSettings.CONF_EDITOR_DEFAULT_HTML_FONT, null);
+            String userFontSize = UserSettings.getInstance().getSetting(
+                UserSettings.CONF_EDITOR_DEFAULT_HTML_FONTSIZE, null);
+            String defaultStyle = buildDefaultStyle(userFontName, userFontSize);
+            htmlContent = htmlContent.replace("DEFAULT_FONT_STYLE", defaultStyle);
 
             // Load the HTML content
             webEngine.loadContent(htmlContent);

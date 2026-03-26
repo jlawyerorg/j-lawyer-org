@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.editors.webview.WebViewHtmlEditorPanel;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
@@ -963,6 +964,24 @@ public class UserProfileDialog extends javax.swing.JDialog {
             }
         });
 
+        // Populate default HTML font combobox
+        String[] fontNames = WebViewHtmlEditorPanel.getAvailableFontNames();
+        this.cmbDefaultHtmlFont.setModel(new DefaultComboBoxModel<>(fontNames));
+        String savedFont = uset.getSetting(UserSettings.CONF_EDITOR_DEFAULT_HTML_FONT, "Arial");
+        this.cmbDefaultHtmlFont.setSelectedItem(savedFont);
+        if (this.cmbDefaultHtmlFont.getSelectedIndex() < 0) {
+            this.cmbDefaultHtmlFont.setSelectedItem("Arial");
+        }
+
+        // Populate default HTML font size combobox
+        String[] fontSizes = WebViewHtmlEditorPanel.getAvailableFontSizes();
+        this.cmbDefaultHtmlFontSize.setModel(new DefaultComboBoxModel<>(fontSizes));
+        String savedSize = uset.getSetting(UserSettings.CONF_EDITOR_DEFAULT_HTML_FONTSIZE, "12");
+        this.cmbDefaultHtmlFontSize.setSelectedItem(savedSize);
+        if (this.cmbDefaultHtmlFontSize.getSelectedIndex() < 0) {
+            this.cmbDefaultHtmlFontSize.setSelectedItem("12");
+        }
+
     }
 
     /**
@@ -1005,6 +1024,10 @@ public class UserProfileDialog extends javax.swing.JDialog {
         jLabel7 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblDefaultAllowedGroups = new javax.swing.JTable();
+        jPanel5 = new javax.swing.JPanel();
+        jLabel8 = new javax.swing.JLabel();
+        cmbDefaultHtmlFont = new javax.swing.JComboBox<>();
+        cmbDefaultHtmlFontSize = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/UserProfileDialog"); // NOI18N
@@ -1240,6 +1263,40 @@ public class UserProfileDialog extends javax.swing.JDialog {
 
         jTabbedPane1.addTab("Neue Akten", jPanel4);
 
+        jLabel8.setText("Standardschriftart für formatierte E-Mails:");
+
+        cmbDefaultHtmlFont.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        cmbDefaultHtmlFontSize.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+        jPanel5.setLayout(jPanel5Layout);
+        jPanel5Layout.setHorizontalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel8)
+                    .addGroup(jPanel5Layout.createSequentialGroup()
+                        .addComponent(cmbDefaultHtmlFont, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmbDefaultHtmlFontSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(426, Short.MAX_VALUE))
+        );
+        jPanel5Layout.setVerticalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel8)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmbDefaultHtmlFont, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmbDefaultHtmlFontSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(403, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("Formatierungen", jPanel5);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -1302,6 +1359,16 @@ public class UserProfileDialog extends javax.swing.JDialog {
             }
         }
         settings.setSettingArray(UserSettings.CONF_CASE_DEFAULT_ALLOWEDGROUPS, checkedGroupIds.toArray(new String[0]));
+
+        // Save default HTML font and size
+        String selectedFont = (String) this.cmbDefaultHtmlFont.getSelectedItem();
+        if (selectedFont != null) {
+            settings.setSetting(UserSettings.CONF_EDITOR_DEFAULT_HTML_FONT, selectedFont);
+        }
+        String selectedSize = (String) this.cmbDefaultHtmlFontSize.getSelectedItem();
+        if (selectedSize != null) {
+            settings.setSetting(UserSettings.CONF_EDITOR_DEFAULT_HTML_FONTSIZE, selectedSize);
+        }
 
         try {
             Object desktop = EditorsRegistry.getInstance().getEditor(DesktopPanel.class.getName());
@@ -1410,6 +1477,8 @@ public class UserProfileDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox chkScheduledWeeklyDigest;
     private javax.swing.JCheckBox chkWarnOnUnknownSenders;
     private javax.swing.JComboBox cmbAvatar;
+    private javax.swing.JComboBox<String> cmbDefaultHtmlFont;
+    private javax.swing.JComboBox<String> cmbDefaultHtmlFontSize;
     private javax.swing.JComboBox<String> cmbDefaultOwnerGroup;
     private javax.swing.JButton cmdChangePassword;
     private javax.swing.JButton cmdClose;
@@ -1422,10 +1491,12 @@ public class UserProfileDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
+    private javax.swing.JPanel jPanel5;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLabel lblAbbreviation;

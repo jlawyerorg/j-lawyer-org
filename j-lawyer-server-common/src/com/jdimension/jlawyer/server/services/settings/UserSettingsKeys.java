@@ -774,7 +774,9 @@ public class UserSettingsKeys {
     
     public static final String NOTIFICATION_SCHEDULED_DAILY_AGENDA="notify.sched.daily.agenda";
     public static final String NOTIFICATION_SCHEDULED_WEEKLY_DIGEST="notify.sched.weekly.digest";
-    
-    
-    
+
+    public static final String CONF_EDITOR_DEFAULT_HTML_FONT = "user.editor.defaulthtmlfont";
+    public static final String CONF_EDITOR_DEFAULT_HTML_FONTSIZE = "user.editor.defaulthtmlfontsize";
+
+
 }
