@@ -495,7 +495,7 @@
                               <Component id="cmbDefaultHtmlFontSize" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
-                      <EmptySpace pref="426" max="32767" attributes="0"/>
+                      <EmptySpace pref="328" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -517,7 +517,7 @@
           <SubComponents>
             <Component class="javax.swing.JLabel" name="jLabel8">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Standardschriftart f&#xfc;r formatierte E-Mails:"/>
+                <Property name="text" type="java.lang.String" value="Standardschriftart f&#xfc;r formatierte E-Mails und Notizen:"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JComboBox" name="cmbDefaultHtmlFont">

@@ -1263,7 +1263,7 @@ public class UserProfileDialog extends javax.swing.JDialog {
 
         jTabbedPane1.addTab("Neue Akten", jPanel4);
 
-        jLabel8.setText("Standardschriftart für formatierte E-Mails:");
+        jLabel8.setText("Standardschriftart für formatierte E-Mails und Notizen:");
 
         cmbDefaultHtmlFont.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
@@ -1281,7 +1281,7 @@ public class UserProfileDialog extends javax.swing.JDialog {
                         .addComponent(cmbDefaultHtmlFont, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmbDefaultHtmlFontSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(426, Short.MAX_VALUE))
+                .addContainerGap(328, Short.MAX_VALUE))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
