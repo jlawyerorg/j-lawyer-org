@@ -693,14 +693,14 @@ public class MoveAction extends ProgressableAction {
     private DropTargetDropEvent dtde = null;
     private JTree treeFolders = null;
     private JTable tblMails = null;
-    private ProgressIndicator i = null;
+    private ProgressIndicator pIndicator = null;
 
     public MoveAction(ProgressIndicator i, JTree treeFolders, JTable tblMails, DropTargetDropEvent dtde) {
         super(i, false);
         this.dtde = dtde;
         this.treeFolders = treeFolders;
         this.tblMails = tblMails;
-        this.i = i;
+        this.pIndicator = i;
 
     }
 
@@ -737,7 +737,7 @@ public class MoveAction extends ProgressableAction {
                 targetFolder.open(Folder.READ_WRITE);
             }
 
-            this.i.setMax(selectedRows.length);
+            this.pIndicator.setMax(selectedRows.length);
 
             // Prevent cross-mailbox moves which would cause data loss
             String targetMailboxId = target.getMailboxId();
