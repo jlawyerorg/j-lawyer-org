@@ -752,7 +752,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
         }
 
         this.lblIndicator.setText("");
-        this.lblIndicator.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+        this.lblIndicator.setIcon(null);
 
 
     }
@@ -1007,28 +1007,25 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
     }
 
     private void updateIndicator(int incomingValue) {
-        
+
         SwingUtilities.invokeLater(() -> {
             String currentValue = indicatorValue;
             int cVal = 0;
             try {
                 cVal = Integer.parseInt(currentValue);
             } catch (Throwable t) {
-                lblIndicator.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
-                lblIndicator.setText("<html><table><tr><td>" + "<p style=\"color:white; background-color:#0E72B5; \">&nbsp;" + cVal +"&nbsp;</p></td></tr></table></html>");
+                // cVal remains 0
             }
+            lblIndicator.setText("");
             if (incomingValue > cVal) {
-                lblIndicator.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
-                lblIndicator.setText("<html><table><tr><td>" + "<p style=\"color:white; background-color:#DE313B; \">&nbsp;" + incomingValue +"&nbsp;</p></td></tr></table></html>");
+                lblIndicator.setIcon(new BadgeIcon(String.valueOf(incomingValue), DefaultColorTheme.COLOR_LOGO_RED, lblIndicator.getFont()));
                 setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
-            } else if (incomingValue==0) {
-                lblIndicator.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
-                lblIndicator.setText("");
+            } else if (incomingValue == 0) {
+                lblIndicator.setIcon(null);
             } else {
-                lblIndicator.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
-                lblIndicator.setText("<html><table><tr><td>" + "<p style=\"color:white; background-color:#0E72B5; \">&nbsp;" + incomingValue +"&nbsp;</p></td></tr></table></html>");
+                lblIndicator.setIcon(new BadgeIcon(String.valueOf(incomingValue), DefaultColorTheme.COLOR_LOGO_BLUE, lblIndicator.getFont()));
             }
-            indicatorValue=""+incomingValue;
+            indicatorValue = "" + incomingValue;
         });
 
     }
