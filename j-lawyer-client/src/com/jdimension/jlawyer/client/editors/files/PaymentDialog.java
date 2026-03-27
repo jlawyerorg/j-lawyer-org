@@ -1189,10 +1189,12 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
         try {
             UserSettings.getInstance().setSetting(UserSettings.INVOICE_LASTUSEDCURRENCY, this.cmbCurrency.getSelectedItem().toString());
 
-            boolean newEntry = (this.currentEntry == null);
+            boolean newEntry = (this.currentEntry == null || this.currentEntry.getId() == null);
             if (newEntry) {
                 // create
-                this.currentEntry = new Payment();
+                if (this.currentEntry == null) {
+                    this.currentEntry = new Payment();
+                }
                 this.fillCurrentEntry();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 this.currentEntry=locator.lookupArchiveFileServiceRemote().addPayment(this.caseDto.getId(), this.currentEntry);
