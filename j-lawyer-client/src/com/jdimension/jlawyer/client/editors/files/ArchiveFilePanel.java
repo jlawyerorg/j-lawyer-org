@@ -9107,10 +9107,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
 
-        PaymentEntryPanel pep = new PaymentEntryPanel(this);
-        pep.setEntry(this.dto, dlg.getEntry(), this.pnlInvolvedParties.getInvolvedPartiesAddress());
-        this.pnlPayments.add(pep, 0);
-        this.pnlPayments.revalidate();
+        if (!dlg.isCancelled() && dlg.getEntry() != null && dlg.getEntry().getId() != null) {
+            PaymentEntryPanel pep = new PaymentEntryPanel(this);
+            pep.setEntry(this.dto, dlg.getEntry(), this.pnlInvolvedParties.getInvolvedPartiesAddress());
+            this.pnlPayments.add(pep, 0);
+            this.pnlPayments.revalidate();
+        }
     }//GEN-LAST:event_cmdNewPaymentActionPerformed
 
     private void cmdPaymentFromAccountEntryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPaymentFromAccountEntryActionPerformed
