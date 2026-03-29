@@ -984,7 +984,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             this.paymentsPanel.removeAll();
             for(Payment pay: payments) {
                 PaymentEntryPanel pp=new PaymentEntryPanel(this.owner);
-                pp.setEntry(this.caseDto, pay, addressesForCase);
+                pp.setEntry(this.caseDto, pay, involvementForCase);
                 this.paymentsPanel.add(pp);
             }
             this.timesheetsPanel.removeAll();
