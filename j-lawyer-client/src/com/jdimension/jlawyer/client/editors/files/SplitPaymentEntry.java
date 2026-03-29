@@ -664,10 +664,14 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.math.BigDecimal;
 import java.util.List;
 import javax.swing.JMenuItem;
+import org.java.sepaxml.validator.SEPAValidatorIBAN;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -685,19 +689,45 @@ public class SplitPaymentEntry extends javax.swing.JPanel {
      * @param parentDlg
      * @param addresses
      */
-    public SplitPaymentEntry(SplitPaymentDialog parentDlg, List<AddressBean> addresses) {
+    public SplitPaymentEntry(SplitPaymentDialog parentDlg, List<ArchiveFileAddressesBean> involvements) {
         initComponents();
         this.parentDlg=parentDlg;
         this.txtTotal.setValue(0f);
-        
-        for (AddressBean ad : addresses) {
+
+        JMenuItem miReset = new JMenuItem();
+        miReset.setText("Empfänger zurücksetzen");
+        miReset.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
+        miReset.addActionListener((ActionEvent e) -> {
+            lblRecipient.setText("");
+            lblRecipient.setIcon(null);
+            lblRecipient.setToolTipText(null);
+            recipientAddress = null;
+        });
+        this.popRecipients.add(miReset);
+        this.popRecipients.addSeparator();
+
+        for (ArchiveFileAddressesBean afab : involvements) {
+            AddressBean ad = afab.getAddressKey();
+            PartyTypeBean ptb = afab.getReferenceType();
             JMenuItem mi = new JMenuItem();
-            mi.setText(ad.toDisplayName());
+            mi.setText(ad.toDisplayName() + " (" + ptb.getName() + ")");
             mi.setToolTipText(ad.toDisplayName() + " als Belegempfänger verwenden");
+            mi.setBackground(new Color(ptb.getColor()));
+            mi.setOpaque(true);
             mi.addActionListener((ActionEvent e) -> {
                 lblRecipient.setText(ad.toDisplayName());
-                lblRecipient.setIcon(null);
                 recipientAddress = ad;
+                String iban = ad.getBankAccount();
+                if (iban == null || iban.trim().isEmpty()) {
+                    lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
+                    lblRecipient.setToolTipText("Keine IBAN hinterlegt");
+                } else if (!SEPAValidatorIBAN.isValid(iban.replaceAll("\\s", ""))) {
+                    lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
+                    lblRecipient.setToolTipText("Ungültige IBAN: " + iban);
+                } else {
+                    lblRecipient.setIcon(null);
+                    lblRecipient.setToolTipText(null);
+                }
             });
             this.popRecipients.add(mi);
         }

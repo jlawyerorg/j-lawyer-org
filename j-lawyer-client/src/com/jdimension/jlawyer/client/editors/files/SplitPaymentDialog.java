@@ -667,8 +667,10 @@ import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseAccountEntry;
 import com.jdimension.jlawyer.persistence.Payment;
@@ -695,7 +697,7 @@ public class SplitPaymentDialog extends javax.swing.JDialog {
     private ArchiveFileBean dto = null;
     private CaseAccountEntry entry = null;
     private BigDecimal entryValue = null;
-    private List<AddressBean> addresses = null;
+    private List<ArchiveFileAddressesBean> addresses = null;
     // result of the split
     List<Payment> payments = null;
 
@@ -708,7 +710,7 @@ public class SplitPaymentDialog extends javax.swing.JDialog {
      * @param entry
      * @param addresses
      */
-    public SplitPaymentDialog(java.awt.Frame parent, boolean modal, ArchiveFileBean dto, CaseAccountEntry entry, List<AddressBean> addresses) {
+    public SplitPaymentDialog(java.awt.Frame parent, boolean modal, ArchiveFileBean dto, CaseAccountEntry entry, List<ArchiveFileAddressesBean> addresses) {
         super(parent, modal);
         initComponents();
         this.entry = entry;
@@ -736,7 +738,11 @@ public class SplitPaymentDialog extends javax.swing.JDialog {
         OptionsComboBoxModel userModel = new OptionsComboBoxModel(userItems);
         this.cmbPaymentSender.setModel(userModel);
         this.cmbPaymentSender.setRenderer(new UserListCellRenderer());
-        this.cmbPaymentSender.setSelectedItem(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+        if (this.dto != null && this.dto.getLawyer() != null && ComponentUtils.containsItem(cmbPaymentSender, this.dto.getLawyer())) {
+            this.cmbPaymentSender.setSelectedItem(this.dto.getLawyer());
+        } else {
+            this.cmbPaymentSender.setSelectedItem(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+        }
 
         this.updateTotal();
 
@@ -748,13 +754,18 @@ public class SplitPaymentDialog extends javax.swing.JDialog {
             SplitPaymentEntry pe = (SplitPaymentEntry) e;
             total = total.add(pe.getTotal());
         }
-        DecimalFormat df = new DecimalFormat("0.00");
-        this.lblTotal.setText("" + df.format(total) + " von insgesamt " + df.format(this.entryValue));
-        if (total.compareTo(this.entryValue) == 0) {
+        DecimalFormat df = new DecimalFormat("#,##0.00");
+        String text = df.format(total) + " von insgesamt " + df.format(this.entryValue);
+        int cmp = total.compareTo(this.entryValue);
+        if (cmp == 0) {
             this.lblTotal.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
-        } else {
+        } else if (cmp > 0) {
             this.lblTotal.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+        } else {
+            this.lblTotal.setForeground(java.awt.Color.BLACK);
+            text = text + ", übrig: " + df.format(this.entryValue.subtract(total));
         }
+        this.lblTotal.setText(text);
     }
 
     /**
@@ -1012,22 +1023,23 @@ public class SplitPaymentDialog extends javax.swing.JDialog {
     }
 
     private BigDecimal findValue(CaseAccountEntry entry) {
-        if (entry.getEscrowIn() != null && !BigDecimal.ZERO.equals(entry.getEscrowIn())) {
+        if (entry.getEscrowIn() != null && !(BigDecimal.ZERO.compareTo(entry.getEscrowIn()) == 0)) {
             return entry.getEscrowIn();
         }
-        if (entry.getEscrowOut() != null && !BigDecimal.ZERO.equals(entry.getEscrowOut())) {
-            return entry.getEscrowOut();
-        }
-        if (entry.getExpendituresIn() != null && !BigDecimal.ZERO.equals(entry.getExpendituresIn())) {
+        if (entry.getExpendituresIn() != null && BigDecimal.ZERO.compareTo(entry.getExpendituresIn()) != 0) {
             return entry.getExpendituresIn();
         }
-        if (entry.getExpendituresOut() != null && !BigDecimal.ZERO.equals(entry.getExpendituresOut())) {
-            return entry.getExpendituresOut();
-        }
-        if (entry.getEarnings() != null && !BigDecimal.ZERO.equals(entry.getEarnings())) {
+        if (entry.getEarnings() != null && BigDecimal.ZERO.compareTo(entry.getEarnings()) != 0) {
             return entry.getEarnings();
         }
-        if (entry.getSpendings() != null && !BigDecimal.ZERO.equals(entry.getSpendings())) {
+        
+        if (entry.getEscrowOut() != null && BigDecimal.ZERO.compareTo(entry.getEscrowOut()) != 0) {
+            return entry.getEscrowOut();
+        }
+        if (entry.getExpendituresOut() != null && BigDecimal.ZERO.compareTo(entry.getExpendituresOut()) != 0) {
+            return entry.getExpendituresOut();
+        }
+        if (entry.getSpendings() != null && BigDecimal.ZERO.compareTo(entry.getSpendings()) != 0) {
             return entry.getSpendings();
         }
 
