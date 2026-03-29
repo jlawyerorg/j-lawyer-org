@@ -731,7 +731,7 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
 
                 for (Payment p : openPayments) {
                     PaymentMgmtEntryPanel pmep = new PaymentMgmtEntryPanel();
-                    pmep.setEntry(p.getArchiveFileKey(), p, locator.lookupArchiveFileServiceRemote().getAddressesForCase(p.getArchiveFileKey().getId()));
+                    pmep.setEntry(p.getArchiveFileKey(), p, locator.lookupArchiveFileServiceRemote().getInvolvementDetailsForCase(p.getArchiveFileKey().getId()));
                     this.pnlPayments.add(pmep);
                 }
 

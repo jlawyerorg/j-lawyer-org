@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Payment;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -700,7 +701,7 @@ public class PaymentMgmtEntryPanel extends javax.swing.JPanel {
 
     private ArchiveFileBean caseDto = null;
     private Payment payment = null;
-    private List<AddressBean> addresses = null;
+    private List<ArchiveFileAddressesBean> addresses = null;
 
     private BigDecimal paid = BigDecimal.ZERO;
 
@@ -736,7 +737,7 @@ public class PaymentMgmtEntryPanel extends javax.swing.JPanel {
             this.lblError.setText(success);
     }
 
-    public void setEntry(ArchiveFileBean caseDto, Payment payment, List<AddressBean> addresses) {
+    public void setEntry(ArchiveFileBean caseDto, Payment payment, List<ArchiveFileAddressesBean> addresses) {
         this.caseDto = caseDto;
         this.payment = payment;
         this.addresses = addresses;

@@ -676,10 +676,13 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.persistence.Payment;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
@@ -691,6 +694,7 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
+import org.java.sepaxml.validator.SEPAValidatorIBAN;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -722,7 +726,7 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
      * @param modal
      * @param addresses
      */
-    public PaymentDialog(Payment entry, ArchiveFileBean caseDto, java.awt.Frame parent, boolean modal, List<AddressBean> addresses) {
+    public PaymentDialog(Payment entry, ArchiveFileBean caseDto, java.awt.Frame parent, boolean modal, List<ArchiveFileAddressesBean> involvements) {
         super(parent, modal);
         this.caseDto = caseDto;
         initComponents();
@@ -753,19 +757,43 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
             this.cmbStatus.addItem(s);
         }
 
-        for (AddressBean ad : addresses) {
+        JMenuItem miReset = new JMenuItem();
+        miReset.setText("Empfänger zurücksetzen");
+        miReset.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
+        miReset.addActionListener((ActionEvent e) -> {
+            lblRecipient.setText("");
+            lblRecipient.setIcon(null);
+            lblRecipient.setToolTipText(null);
+            recipientAddress = null;
+        });
+        this.popRecipients.add(miReset);
+        this.popRecipients.addSeparator();
+
+        for (ArchiveFileAddressesBean afab : involvements) {
+            AddressBean ad = afab.getAddressKey();
+            PartyTypeBean ptb = afab.getReferenceType();
             JMenuItem mi = new JMenuItem();
-            mi.setText(ad.toDisplayName());
+            mi.setText(ad.toDisplayName() + " (" + ptb.getName() + ")");
             mi.setToolTipText(ad.toDisplayName() + " als Belegempfänger verwenden");
+            mi.setBackground(new Color(ptb.getColor()));
+            mi.setOpaque(true);
             mi.addActionListener((ActionEvent e) -> {
                 lblRecipient.setText(ad.toDisplayName());
-                lblRecipient.setIcon(null);
                 recipientAddress = ad;
+                String iban = ad.getBankAccount();
+                if (iban == null || iban.trim().isEmpty()) {
+                    lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
+                    lblRecipient.setToolTipText("Keine IBAN hinterlegt");
+                } else if (!SEPAValidatorIBAN.isValid(iban.replaceAll("\\s", ""))) {
+                    lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
+                    lblRecipient.setToolTipText("Ungültige IBAN: " + iban);
+                } else {
+                    lblRecipient.setIcon(null);
+                    lblRecipient.setToolTipText(null);
+                }
             });
             this.popRecipients.add(mi);
         }
-
-        this.setEntry(entry);
 
         List<AppUserBean> allUsers = UserSettings.getInstance().getLoginEnabledUsers();
         List<String> l2 = new ArrayList<>();
@@ -781,6 +809,8 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
         this.cmbPaymentSender.addActionListener((ActionEvent e) -> {
             this.updatePaymentMethodsForSender(UserSettings.getInstance().getUser(this.cmbPaymentSender.getSelectedItem().toString()));
         });
+
+        this.setEntry(entry);
 
     }
 
@@ -799,8 +829,6 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
 
     public final void setEntry(Payment payment) {
 
-        this.cmbPaymentSender.setSelectedItem(UserSettings.getInstance().getCurrentUser().getPrincipalId());
-
         this.currentEntry = payment;
 
         if (payment == null) {
@@ -811,11 +839,12 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
             this.taDescription.setText("");
             this.txtReason.setText("");
             this.cmbStatus.setSelectedItem("");
-            this.dtTarget.setText("");
+            this.dtTarget.setText(df.format(new Date()));
             this.dtCreated.setText(df.format(new Date()));
             this.txtTotal.setValue(0f);
             this.lblRecipient.setText("");
-            this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
+            this.lblRecipient.setIcon(null);
+            this.lblRecipient.setToolTipText(null);
             this.cmbPaymentType.removeAllItems();
 
         } else {
@@ -843,15 +872,34 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
             this.recipientAddress = payment.getContact();
             if (payment.getContact() != null) {
                 this.lblRecipient.setText(payment.getContact().toDisplayName());
-                this.lblRecipient.setIcon(null);
+                String iban = payment.getContact().getBankAccount();
+                if (iban == null || iban.trim().isEmpty()) {
+                    this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
+                    this.lblRecipient.setToolTipText("Keine IBAN hinterlegt");
+                } else if (!SEPAValidatorIBAN.isValid(iban.replaceAll("\\s", ""))) {
+                    this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
+                    this.lblRecipient.setToolTipText("Ungültige IBAN: " + iban);
+                } else {
+                    this.lblRecipient.setIcon(null);
+                    this.lblRecipient.setToolTipText(null);
+                }
             } else {
                 this.lblRecipient.setText("");
                 this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
+                this.lblRecipient.setToolTipText(null);
             }
             this.updatePaymentMethodsForSender(UserSettings.getInstance().getUser(payment.getSender()));
             this.cmbPaymentType.setSelectedItem(Payment.paymentTypeDisplayValueForType(payment.getPaymentType()));
             this.cmbCurrency.setSelectedItem(payment.getCurrency());
 
+        }
+
+        if (payment == null || payment.getSender() == null) {
+            if (this.caseDto != null && this.caseDto.getLawyer() != null && ComponentUtils.containsItem(cmbPaymentSender, this.caseDto.getLawyer())) {
+                this.cmbPaymentSender.setSelectedItem(this.caseDto.getLawyer());
+            } else {
+                this.cmbPaymentSender.setSelectedItem(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            }
         }
 
     }
@@ -1072,22 +1120,22 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
                             .addComponent(jLabel6))
                         .addGap(73, 73, 73)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cmbPaymentSender, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(cmbPaymentType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(0, 0, Short.MAX_VALUE))
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(lblRecipient, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdSearchRecipient))))
+                                .addComponent(cmdSearchRecipient))
+                            .addComponent(cmbPaymentSender, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
                             .addComponent(jLabel2))
                         .addGap(53, 53, 53)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane1)
-                            .addComponent(txtName))))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(txtName)
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 786, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(

@@ -1298,7 +1298,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         PaymentEntryPanel pep = new PaymentEntryPanel(this);
-        pep.setEntry(this.dto, newPayment, this.pnlInvolvedParties.getInvolvedPartiesAddress());
+        pep.setEntry(this.dto, newPayment, this.pnlInvolvedParties.getInvolvedParties());
         this.pnlPayments.add(pep, 0);
         this.pnlPayments.revalidate();
 
@@ -1324,7 +1324,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             Payment paymentCopy = locator.lookupArchiveFileServiceRemote().copyPayment(paymentId, caseId);
             if (this.dto.getId().equals(caseId)) {
                 PaymentEntryPanel pp = new PaymentEntryPanel(this);
-                pp.setEntry(this.dto, paymentCopy, this.getInvolvedAddresses());
+                pp.setEntry(this.dto, paymentCopy, this.pnlInvolvedParties.getInvolvedParties());
                 this.pnlPayments.add(pp);
                 this.pnlPayments.revalidate();
             }
@@ -9103,13 +9103,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
 
     private void cmdNewPaymentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewPaymentActionPerformed
-        PaymentDialog dlg = new PaymentDialog(null, this.dto, EditorsRegistry.getInstance().getMainWindow(), true, this.pnlInvolvedParties.getInvolvedPartiesAddress());
+        PaymentDialog dlg = new PaymentDialog(null, this.dto, EditorsRegistry.getInstance().getMainWindow(), true, this.pnlInvolvedParties.getInvolvedParties());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
 
         if (!dlg.isCancelled() && dlg.getEntry() != null && dlg.getEntry().getId() != null) {
             PaymentEntryPanel pep = new PaymentEntryPanel(this);
-            pep.setEntry(this.dto, dlg.getEntry(), this.pnlInvolvedParties.getInvolvedPartiesAddress());
+            pep.setEntry(this.dto, dlg.getEntry(), this.pnlInvolvedParties.getInvolvedParties());
             this.pnlPayments.add(pep, 0);
             this.pnlPayments.revalidate();
         }
@@ -9130,7 +9130,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if (dlg.getSplitPayments() != null) {
             for (Payment p : dlg.getSplitPayments()) {
                 PaymentEntryPanel pep = new PaymentEntryPanel(this);
-                pep.setEntry(this.dto, p, this.pnlInvolvedParties.getInvolvedPartiesAddress());
+                pep.setEntry(this.dto, p, this.pnlInvolvedParties.getInvolvedParties());
                 this.pnlPayments.add(pep, 0);
                 this.pnlPayments.revalidate();
             }
