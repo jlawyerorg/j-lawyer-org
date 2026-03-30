@@ -2073,6 +2073,18 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 if (msg == null) {
                     throw new Exception("Message not found");
                 }
+                // Move to trash folder first (unless already in trash)
+                if (!CommonMailUtils.isTrash(folder.getName())) {
+                    Folder trashFolder = imapFindTrashFolder(store);
+                    if (trashFolder != null) {
+                        trashFolder.open(Folder.READ_WRITE);
+                        try {
+                            folder.copyMessages(new Message[]{msg}, trashFolder);
+                        } finally {
+                            trashFolder.close(false);
+                        }
+                    }
+                }
                 msg.setFlag(Flags.Flag.DELETED, true);
                 folder.expunge();
             } finally {
@@ -2081,6 +2093,16 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         } finally {
             // store kept open in cache for reuse
         }
+    }
+
+    private Folder imapFindTrashFolder(Store store) throws Exception {
+        Folder[] folders = store.getDefaultFolder().list("*");
+        for (Folder f : folders) {
+            if ((f.getType() & Folder.HOLDS_MESSAGES) != 0 && CommonMailUtils.isTrash(f.getName())) {
+                return f;
+            }
+        }
+        return null;
     }
 
     private void imapMarkAsRead(MailboxSetup ms, String messageRef, boolean read) throws Exception {
