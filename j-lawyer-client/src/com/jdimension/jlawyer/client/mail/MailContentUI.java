@@ -1442,27 +1442,12 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 sb.append("</html>");
                 String html = sb.toString();
 
-                final String fxHtml = html;
-                Platform.setImplicitExit(false);
-                Platform.runLater(() -> {
-                    try {
-                        WebViewRegister reg = WebViewRegister.getInstance();
-                        WebView webView1 = reg.get(webViewId);
-                        webView1.getEngine().loadContent(fxHtml, ContentTypes.TEXT_HTML);
-                    } catch (Throwable t) {
-                        log.error("Unable to display mail content", t);
-                    }
-                });
-
-                html = html.replaceAll("<body>", "<p>");
-                html = html.replaceAll("</body>", "</p>");
-                html = html.replaceAll("<body ", "<p ");
-
                 contentUI.setContentType(ContentTypes.TEXT_HTML);
 
                 html = html.replaceAll("font-size:.{1,7}pt", "font-size:13pt");
 
-                boolean warn = UserSettings.getInstance().getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true);
+                // skip HTML warning for document previews (no folder) - the file is already saved in the case
+                boolean warn = msg.getFolder() != null && UserSettings.getInstance().getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true);
                 if (warn) {
                     ClientSettings s = ClientSettings.getInstance();
                     String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
@@ -1675,18 +1660,6 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         }
 
         if (htmlContent != null) {
-
-            final String fxHtml = htmlContent;
-            Platform.setImplicitExit(false);
-            Platform.runLater(() -> {
-                try {
-                    WebViewRegister reg = WebViewRegister.getInstance();
-                    WebView webView1 = reg.get(webViewId);
-                    webView1.getEngine().loadContent(fxHtml, ContentTypes.TEXT_HTML);
-                } catch (Throwable t) {
-                    log.error("Unable to display mail content", t);
-                }
-            });
 
             contentUI.setContentType(ContentTypes.TEXT_HTML);
 
@@ -2898,7 +2871,22 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 // Display body
                 String mailBody = finalDto.getBody() != null ? finalDto.getBody() : "";
                 String mailContentType = finalDto.getBodyContentType() != null ? finalDto.getBodyContentType() : "text/plain";
-                this.setBody(mailBody, mailContentType);
+
+                boolean warn = mailContentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)
+                        && UserSettings.getInstance().getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true);
+                if (warn && finalDto.getFrom() != null) {
+                    ClientSettings s = ClientSettings.getInstance();
+                    String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
+                    if (whitelist.indexOf(finalDto.getFrom()) > -1) {
+                        warn = false;
+                    }
+                }
+                if (!warn) {
+                    this.setBody(mailBody, mailContentType);
+                } else {
+                    this.setCachedHtml(mailBody);
+                    this.setBody(HTML_WARNING, ContentTypes.TEXT_HTML);
+                }
 
                 // Check for ICS calendar entries in attachments
                 checkForCalendarEntry(finalAttachments);
