@@ -752,8 +752,7 @@ public class BeaAccess {
         return restr == LoadFolderRestriction.RESTRICTION_20
                 || restr == LoadFolderRestriction.RESTRICTION_50
                 || restr == LoadFolderRestriction.RESTRICTION_100
-                || restr == LoadFolderRestriction.RESTRICTION_500
-                || restr == LoadFolderRestriction.RESTRICTION_NONE;
+                || restr == LoadFolderRestriction.RESTRICTION_500;
     }
 
     public static BeaMessageFilter getFilter(String folderType) {
@@ -783,9 +782,6 @@ public class BeaAccess {
                 break;
             case LoadFolderRestriction.RESTRICTION_UNREAD:
                 filter.setOnlyNew(true);
-                break;
-            case LoadFolderRestriction.RESTRICTION_NONE:
-                filter.setLimit(1000);
                 break;
             case LoadFolderRestriction.RESTRICTION_LAST1W: {
                 Calendar cal = Calendar.getInstance();
