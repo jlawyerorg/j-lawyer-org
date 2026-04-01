@@ -1286,7 +1286,10 @@ public class BeaAccess {
 
     public List<String> getFolderOverviewMessageIdsWithoutCache(BeaFolder folder, BeaMessageFilter filter) throws Exception {
         this.checkValidBeaClient();
-        String safeId = this.getLoggedInSafeId();
+        String safeId = folder.getSafeId();
+        if (safeId == null || safeId.isEmpty()) {
+            safeId = this.getLoggedInSafeId();
+        }
         List<BeaMessageHeader> headers = getService().searchMessages(safeId, folder.getId(), filter);
         List<String> ids = new java.util.ArrayList<>();
         for (BeaMessageHeader h : headers) {
