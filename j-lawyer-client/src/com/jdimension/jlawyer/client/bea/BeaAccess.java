@@ -678,6 +678,7 @@ import com.lowagie.text.Paragraph;
 import com.lowagie.text.pdf.PdfWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -691,6 +692,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.transform.stream.StreamSource;
 import org.apache.log4j.Logger;
 
 /**
@@ -1466,6 +1468,12 @@ public class BeaAccess {
 
     private static BeaMessage xmlToMessage(byte[] xml) throws Exception {
         Unmarshaller u = getBeaMessageJaxbContext().createUnmarshaller();
-        return (BeaMessage) u.unmarshal(new ByteArrayInputStream(xml));
+        try {
+            return (BeaMessage) u.unmarshal(new ByteArrayInputStream(xml));
+        } catch (javax.xml.bind.UnmarshalException ex) {
+            // fallback: data may be encoded in ISO-8859-1 instead of UTF-8
+            InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(xml), "ISO-8859-1");
+            return (BeaMessage) u.unmarshal(new StreamSource(reader));
+        }
     }
 }
