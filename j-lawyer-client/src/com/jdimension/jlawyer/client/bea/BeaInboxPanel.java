@@ -3456,8 +3456,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 return 100;
             case LoadFolderRestriction.RESTRICTION_500:
                 return 500;
-            case LoadFolderRestriction.RESTRICTION_NONE:
-                return 1000;
             default:
                 return -1;
         }

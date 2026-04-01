@@ -959,7 +959,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 if (restr == LoadFolderRestriction.RESTRICTION_20) top = 20;
                 else if (restr == LoadFolderRestriction.RESTRICTION_100) top = 100;
                 else if (restr == LoadFolderRestriction.RESTRICTION_500) top = 500;
-                else if (restr == LoadFolderRestriction.RESTRICTION_NONE) top = 10000;
                 else if (restr == LoadFolderRestriction.RESTRICTION_UNREAD) { top = 500; unreadOnly = true; }
                 else if (restr == LoadFolderRestriction.RESTRICTION_LAST1W) { top = 500; sinceDate = new java.util.Date(System.currentTimeMillis() - (7L * 24 * 60 * 60 * 1000)); }
                 else if (restr == LoadFolderRestriction.RESTRICTION_LAST2W) { top = 500; sinceDate = new java.util.Date(System.currentTimeMillis() - (14L * 24 * 60 * 60 * 1000)); }

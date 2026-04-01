@@ -682,7 +682,6 @@ public class LoadFolderRestriction {
     public static final int RESTRICTION_LAST2M = 64;
     public static final int RESTRICTION_LAST6M = 65;
     public static final int RESTRICTION_LAST1Y = 66;
-    public static final int RESTRICTION_NONE = 10;
 
     private int restriction = RESTRICTION_50;
 
@@ -701,7 +700,6 @@ public class LoadFolderRestriction {
         ALL_RESTRICTIONS.add(new LoadFolderRestriction(RESTRICTION_LAST2M));
         ALL_RESTRICTIONS.add(new LoadFolderRestriction(RESTRICTION_LAST6M));
         ALL_RESTRICTIONS.add(new LoadFolderRestriction(RESTRICTION_LAST1Y));
-        ALL_RESTRICTIONS.add(new LoadFolderRestriction(RESTRICTION_NONE));
     }
 
     public LoadFolderRestriction() {
