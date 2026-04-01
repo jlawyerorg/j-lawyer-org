@@ -1528,10 +1528,19 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 return;
             }
 
+            
+            
             BeaMessageHeader msgC = (BeaMessageHeader) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 1);
             BeaMessage msg = null;
             try {
-                msg = BeaAccess.getInstance().getMessage(msgC.getId(), BeaAccess.getInstance().getLoggedInSafeId());
+                DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+                BeaFolder tf = (BeaFolder) tn.getUserObject();
+                String safeId = tf.getSafeId();
+                if (StringUtils.isEmpty(safeId)) {
+                    safeId = BeaAccess.getInstance().getLoggedInSafeId();
+                }
+
+                msg = BeaAccess.getInstance().getMessage(msgC.getId(), safeId);
             } catch (Exception ex) {
                 log.error(ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Laden der Nachricht: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1873,7 +1882,15 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     EditorsRegistry.getInstance().updateStatus("Lade Nachrichtendetails...");
 
                     BeaAccess bea = BeaAccess.getInstance();
-                    msg = bea.getMessageWithoutAttachments(mh.getId(), bea.getLoggedInSafeId());
+                    
+                    DefaultMutableTreeNode tn = (DefaultMutableTreeNode) treeFolders.getSelectionPath().getLastPathComponent();
+                    BeaFolder tf = (BeaFolder) tn.getUserObject();
+                    
+                    String safeId=tf.getSafeId();
+                    if(StringUtils.isEmpty(safeId))
+                        safeId=bea.getLoggedInSafeId();
+                    
+                    msg = bea.getMessageWithoutAttachments(mh.getId(), safeId);
 
                     if (!isCancelled()) {
                         String senderSafeId = msg.getSenderSafeId();
@@ -1981,7 +1998,15 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     EditorsRegistry.getInstance().updateStatus("Lade Nachricht und Anhänge...");
 
                     BeaAccess bea = BeaAccess.getInstance();
-                    msg = bea.getMessage(mh.getId(), bea.getLoggedInSafeId());
+                    
+                    DefaultMutableTreeNode tn = (DefaultMutableTreeNode) treeFolders.getSelectionPath().getLastPathComponent();
+                    BeaFolder tf = (BeaFolder) tn.getUserObject();
+
+                    String safeId = tf.getSafeId();
+                    if (StringUtils.isEmpty(safeId))
+                        safeId = bea.getLoggedInSafeId();
+                    
+                    msg = bea.getMessage(mh.getId(), safeId);
 
                     if (!isCancelled()) {
                         // Load attachments - this can be slow for large files
@@ -2074,7 +2099,15 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     EditorsRegistry.getInstance().updateStatus("Lade Empfängerdaten...");
 
                     BeaAccess bea = BeaAccess.getInstance();
-                    msg = bea.getMessageWithoutAttachments(mh.getId(), bea.getLoggedInSafeId());
+                    
+                    DefaultMutableTreeNode tn = (DefaultMutableTreeNode) treeFolders.getSelectionPath().getLastPathComponent();
+                    BeaFolder tf = (BeaFolder) tn.getUserObject();
+                    
+                    String safeId=tf.getSafeId();
+                    if(StringUtils.isEmpty(safeId))
+                        safeId=bea.getLoggedInSafeId();
+                    
+                    msg = bea.getMessageWithoutAttachments(mh.getId(), safeId);
 
                     if (!isCancelled()) {
                         List<BeaRecipient> to = msg.getRecipients();
@@ -2254,12 +2287,19 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 try {
                     setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
                     EditorsRegistry.getInstance().updateStatus("Markiere Nachrichten als gelesen...");
+                    
+                    DefaultMutableTreeNode tn = (DefaultMutableTreeNode) treeFolders.getSelectionPath().getLastPathComponent();
+                    BeaFolder tf = (BeaFolder) tn.getUserObject();
+                    
+                    String safeId=tf.getSafeId();
+                    if(StringUtils.isEmpty(safeId))
+                        safeId=BeaAccess.getInstance().getLoggedInSafeId();
 
                     for (BeaMessageHeader mh : headers) {
                         if (isCancelled()) {
                             break;
                         }
-                        BeaAccess.getInstance().setMessageReadByUser(BeaAccess.getInstance().getLoggedInSafeId(), mh);
+                        BeaAccess.getInstance().setMessageReadByUser(safeId, mh);
                         mh.setRead(true);
                     }
                 } catch (Exception ex) {
@@ -2861,7 +2901,15 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             try {
                 BeaMessageHeader mh = (BeaMessageHeader) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 1);
                 BeaAccess bea = BeaAccess.getInstance();
-                String safeId = bea.getLoggedInSafeId();
+
+                DefaultMutableTreeNode tnode = (DefaultMutableTreeNode) treeFolders.getSelectionPath().getLastPathComponent();
+                BeaFolder tf = (BeaFolder) tnode.getUserObject();
+
+                String safeId = tf.getSafeId();
+                if (StringUtils.isEmpty(safeId)) {
+                    safeId = bea.getLoggedInSafeId();
+                }
+
                 BeaMessage m = bea.getMessage(mh.getId(), safeId);
                 BeaMessageExport export = null;
                 byte[] data = null;
@@ -3163,7 +3211,14 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     return false;
                 }
 
-                BeaMessage m = BeaAccess.getInstance().getMessage(mh.getId(), BeaAccess.getInstance().getLoggedInSafeId());
+                DefaultMutableTreeNode tn = (DefaultMutableTreeNode) treeFolders.getSelectionPath().getLastPathComponent();
+                BeaFolder tf = (BeaFolder) tn.getUserObject();
+
+                String safeId = tf.getSafeId();
+                if (StringUtils.isEmpty(safeId))
+                    safeId = BeaAccess.getInstance().getLoggedInSafeId();
+                
+                BeaMessage m = BeaAccess.getInstance().getMessage(mh.getId(), safeId);
                 log.info("eEB ID of the incoming message from " + m.getSenderSafeId() + " / " + m.getSenderName() + " is : " + m.getEebId());
                 if (m.getEebId() == null || "".equals(m.getEebId())) {
                     JOptionPane.showMessageDialog(this, "Eingehende eEB-ID ist leer - eEB bitte über beA im Browser abgeben!", "eEB abgeben", JOptionPane.WARNING_MESSAGE);
@@ -3232,7 +3287,14 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     comment = dlg.getRejectionComment();
                 }
 
-                BeaMessage m = BeaAccess.getInstance().getMessage(mh.getId(), BeaAccess.getInstance().getLoggedInSafeId());
+                DefaultMutableTreeNode tn = (DefaultMutableTreeNode) treeFolders.getSelectionPath().getLastPathComponent();
+                BeaFolder tf = (BeaFolder) tn.getUserObject();
+
+                String safeId = tf.getSafeId();
+                if (StringUtils.isEmpty(safeId))
+                    safeId = BeaAccess.getInstance().getLoggedInSafeId();
+                
+                BeaMessage m = BeaAccess.getInstance().getMessage(mh.getId(), safeId);
 
                 BeaMessage sentMessage = BeaAccess.getInstance().sendEebRejection(senderSafeId, m.getId(), m.getSenderSafeId(), code, comment);
                 this.saveEebResponse(sentMessage, mh, "Ablehnung");
@@ -3297,7 +3359,16 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                 BeaMessageHeader mh = (BeaMessageHeader) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 1);
                 BeaAccess beaAccess = BeaAccess.getInstance();
-                BeaMessage m = beaAccess.getMessage(mh.getId(), beaAccess.getLoggedInSafeId());
+
+                DefaultMutableTreeNode tn = (DefaultMutableTreeNode) treeFolders.getSelectionPath().getLastPathComponent();
+                BeaFolder tf = (BeaFolder) tn.getUserObject();
+
+                String safeId = tf.getSafeId();
+                if (StringUtils.isEmpty(safeId)) {
+                    safeId = beaAccess.getLoggedInSafeId();
+                }
+
+                BeaMessage m = beaAccess.getMessage(mh.getId(), safeId);
                 for (BeaAttachment att : m.getAttachments()) {
                     if (att.getName().equalsIgnoreCase("xjustiz_nachricht.xml")) {
                         String xjustiz = new String(att.getContent());
@@ -3436,7 +3507,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 java.util.List<BeaMessageHeader> headers = new java.util.ArrayList<>();
                 try {
                     BeaAccess bea = BeaAccess.getInstance();
-                    String safeId = bea.getLoggedInSafeId();
+                    String safeId = folder.getSafeId();
+                    if(StringUtils.isEmpty(safeId))
+                        safeId=bea.getLoggedInSafeId();
 
                     if (folder != currentFolder) {
                         return headers;

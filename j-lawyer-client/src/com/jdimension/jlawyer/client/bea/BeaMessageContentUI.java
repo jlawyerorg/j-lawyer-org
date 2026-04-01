@@ -1545,7 +1545,9 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 return;
             }
             BeaAccess bea = BeaAccess.getInstance();
-            String safeId = bea.getLoggedInSafeId();
+            String safeId = bea.findOwnSafeId(bea.getInvolvedSafeIds(msgContainer));
+            if(StringUtils.isEmpty(safeId))
+                    safeId=bea.getLoggedInSafeId();
             ArrayList<BeaMessageJournalEntry> journal = new ArrayList<>(bea.getMessageJournal(safeId, this.msgContainer.getId()));
             this.msgContainer.setJournal(journal);
             if (this.documentId != null) {
@@ -1635,7 +1637,10 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 return;
             }
             BeaAccess bea = BeaAccess.getInstance();
-            String safeId = bea.getLoggedInSafeId();
+            String safeId = bea.findOwnSafeId(bea.getInvolvedSafeIds(msgContainer));
+            if(StringUtils.isEmpty(safeId))
+                    safeId=bea.getLoggedInSafeId();
+            
             BeaMessageValidationResult valResult = bea.validateMessage(safeId, this.msgContainer.getId());
 
             BeaSignaturesVerificationDialog dlg = new BeaSignaturesVerificationDialog(EditorsRegistry.getInstance().getMainWindow(), true);

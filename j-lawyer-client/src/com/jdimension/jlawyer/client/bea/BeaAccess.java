@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.services.BeaServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -1042,6 +1043,36 @@ public class BeaAccess {
             }
         }
         return this.inboxes;
+    }
+    
+    public String findOwnSafeId(List<String> safeIds) throws Exception {
+        List<BeaPostbox> postboxes=this.getPostBoxes();
+        for(BeaPostbox pb: postboxes) {
+            for(String s: safeIds) {
+                if(StringUtils.isEmpty(s))
+                    continue;
+                if(s.equalsIgnoreCase(pb.getSafeId()))
+                    return pb.getSafeId();
+            }
+        }
+        return this.getLoggedInSafeId();
+    }
+    
+    public ArrayList<String> getRecipientSafeIds(List<BeaRecipient> recipients) {
+        ArrayList<String> safeIds=new ArrayList<>();
+        for(BeaRecipient r: recipients) {
+            if(!StringUtils.isEmpty(beaEnabledVersions)) {
+                safeIds.add(r.getSafeId());
+            }
+        }
+        return safeIds;
+    }
+    
+    public ArrayList<String> getInvolvedSafeIds(BeaMessage msg) {
+        ArrayList<String> safeIds=new ArrayList<>();
+        safeIds.addAll(this.getRecipientSafeIds(msg.getRecipients()));
+        safeIds.add(msg.getSenderSafeId());
+        return safeIds;
     }
 
     public boolean isOutboxEmpty(String safeId) throws Exception {

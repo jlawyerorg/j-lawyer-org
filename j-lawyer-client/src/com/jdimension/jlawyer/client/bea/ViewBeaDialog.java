@@ -669,10 +669,10 @@ import com.jdimension.jlawyer.client.mail.EmailUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -1016,8 +1016,14 @@ public class ViewBeaDialog extends javax.swing.JDialog {
 
         SendBeaMessageFrame dlg = new SendBeaMessageFrame();
         dlg.setArchiveFile(this.contextArchiveFile);
+        
+        
+        
         try {
-            dlg.setDraftInfo(BeaAccess.getInstance().getLoggedInSafeId(), this.msg.getId());
+            String safeId=BeaAccess.getInstance().findOwnSafeId(BeaAccess.getInstance().getInvolvedSafeIds(this.msg));
+            if(StringUtils.isEmpty(safeId))
+                safeId=BeaAccess.getInstance().getLoggedInSafeId();
+            dlg.setDraftInfo(safeId, this.msg.getId());
         } catch (Exception ex) {
             log.error("Could not populate draft information in SendBeaMessageFrame - draft will not be deleter after it was sent", ex);
         }
