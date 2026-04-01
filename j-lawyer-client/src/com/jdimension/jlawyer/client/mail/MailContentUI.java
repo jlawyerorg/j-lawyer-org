@@ -1207,7 +1207,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         this.outlookMsgContainer = om;
 
         try {
-            setOutlookMessageImpl(this, om, lblSubject, lblSentDate, lblTo, lblCC, lblBCC, lblFrom, lstAttachments, webViewId);
+            setOutlookMessageImpl(this, om, lblSubject, lblSentDate, lblTo, lblCC, lblBCC, lblFrom, lstAttachments);
             this.detectAndShowIcsAttachment();
 
         } catch (Exception ex) {
@@ -1272,11 +1272,11 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 dlg.setInfinite(true);
                 DecimalFormat df = new DecimalFormat("###0.00");
                 dlg.progress("Lade E-Mail... (" + df.format(msg.getSize() / 1024 / 1024) + "MB)");
-                LoadEmailAction lea = new LoadEmailAction(dlg, this, msg, ms, this.lblSubject, this.lblSentDate, this.lblTo, this.lblCC, this.lblBCC, this.lblFrom, this.lstAttachments, this.fxContainer, this.webViewId);
+                LoadEmailAction lea = new LoadEmailAction(dlg, this, msg, ms, this.lblSubject, this.lblSentDate, this.lblTo, this.lblCC, this.lblBCC, this.lblFrom, this.lstAttachments, this.fxContainer);
                 lea.start();
                 return true;
             } else {
-                MailContentUI.setMessageImpl(this, msg, ms, this.lblSubject, this.lblSentDate, this.lblTo, this.lblCC, this.lblBCC, this.lblFrom, this.lstAttachments, false, this.fxContainer, this.webViewId);
+                MailContentUI.setMessageImpl(this, msg, ms, this.lblSubject, this.lblSentDate, this.lblTo, this.lblCC, this.lblBCC, this.lblFrom, this.lstAttachments, false, this.fxContainer);
                 this.detectAndShowIcsAttachment();
             }
 
@@ -1299,7 +1299,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         return true;
     }
 
-    public static void setMessageImpl(MailContentUI contentUI, Message msg, MailboxSetup ms, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblCC, JLabel lblBCC, JLabel lblFrom, JList lstAttachments, boolean edt, JPanel fxContainer, String webViewId) throws Exception {
+    public static void setMessageImpl(MailContentUI contentUI, Message msg, MailboxSetup ms, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblCC, JLabel lblBCC, JLabel lblFrom, JList lstAttachments, boolean edt, JPanel fxContainer) throws Exception {
         // we copy the message to avoid the "Unable to load BODYSTRUCTURE" issue
 
         boolean closed = false;
@@ -1586,7 +1586,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         return true;
     }
 
-    public static void setOutlookMessageImpl(MailContentUI contentUI, OutlookMessage msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblCC, JLabel lblBCC, JLabel lblFrom, JList lstAttachments, String webViewId) throws Exception {
+    public static void setOutlookMessageImpl(MailContentUI contentUI, OutlookMessage msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblCC, JLabel lblBCC, JLabel lblFrom, JList lstAttachments) throws Exception {
 
         CidCache cids = CidCache.getInstance();
         cids.clear();

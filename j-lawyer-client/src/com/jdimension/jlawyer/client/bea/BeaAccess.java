@@ -680,6 +680,7 @@ import com.lowagie.text.pdf.PdfWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1503,7 +1504,7 @@ public class BeaAccess {
             return (BeaMessage) u.unmarshal(new ByteArrayInputStream(xml));
         } catch (javax.xml.bind.UnmarshalException ex) {
             // fallback: data may be encoded in ISO-8859-1 instead of UTF-8
-            InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(xml), "ISO-8859-1");
+            InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(xml), StandardCharsets.ISO_8859_1);
             return (BeaMessage) u.unmarshal(new StreamSource(reader));
         }
     }

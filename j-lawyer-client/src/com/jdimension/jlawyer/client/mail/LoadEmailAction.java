@@ -686,14 +686,12 @@ public class LoadEmailAction extends ProgressableAction {
     JLabel lblCC;
     JLabel lblBCC;
     JLabel lblFrom;
-    //JEditorPane editBody;
     JList lstAttachments;
     ProgressIndicator i;
     MailboxSetup ms;
     JPanel fxContainer;
-    String webViewId;
 
-    public LoadEmailAction(ProgressIndicator i, MailContentUI contentUI, Message msg, MailboxSetup ms, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblCC, JLabel lblBCC, JLabel lblFrom, JList lstAttachments, JPanel fxContainer, String webViewId) {
+    public LoadEmailAction(ProgressIndicator i, MailContentUI contentUI, Message msg, MailboxSetup ms, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblCC, JLabel lblBCC, JLabel lblFrom, JList lstAttachments, JPanel fxContainer) {
         super(i, false);
         this.i = i;
         this.contentUI = contentUI;
@@ -705,10 +703,8 @@ public class LoadEmailAction extends ProgressableAction {
         this.lblCC = lblCC;
         this.lblBCC = lblBCC;
         this.lblFrom = lblFrom;
-        //this.editBody = editBody;
         this.lstAttachments = lstAttachments;
         this.fxContainer=fxContainer;
-        this.webViewId=webViewId;
     }
 
     @Override
@@ -730,7 +726,6 @@ public class LoadEmailAction extends ProgressableAction {
                     try {
                         i.setVisible(true);
                         i.repaint();
-                        //MailContentUI.setMessageImpl(contentUI, msg, lblSubject, lblSentDate, lblTo, lblCC, lblFrom, editBody, lstAttachments, cmdShowHtml, true);
                     } catch (Throwable t) {
                         log.error(t);
                     }
@@ -743,7 +738,7 @@ public class LoadEmailAction extends ProgressableAction {
                 try {
                     i.setVisible(true);
                     i.repaint();
-                    MailContentUI.setMessageImpl(contentUI, msg, ms, lblSubject, lblSentDate, lblTo, lblCC, lblBCC, lblFrom, lstAttachments, true, fxContainer, webViewId);
+                    MailContentUI.setMessageImpl(contentUI, msg, ms, lblSubject, lblSentDate, lblTo, lblCC, lblBCC, lblFrom, lstAttachments, true, fxContainer);
                     contentUI.detectAndShowIcsAttachment();
                 } catch (Throwable t) {
                     log.error(t);
