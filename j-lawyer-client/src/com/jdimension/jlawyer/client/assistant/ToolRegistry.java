@@ -14,6 +14,8 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
+import com.jdimension.jlawyer.persistence.FormTypeBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
@@ -50,6 +52,7 @@ import java.net.SocketTimeoutException;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -481,6 +484,29 @@ public class ToolRegistry {
         TOOLS.add(new ToolDefinition("fetch_url",
                 "Lädt den Textinhalt einer Webseite herunter. Gibt den extrahierten Text ohne HTML-Tags zurück. Nützlich um Details einer Webseite zu lesen, die z.B. aus einer Websuche stammt.",
                 Arrays.asList(new ToolParameter("url", "string", "Die URL der Webseite", true))));
+
+        TOOLS.add(new ToolDefinition("search_instant_messages",
+                "Sucht Sofortnachrichten/Verfügungen. Mindestens caseId oder fromDate muss angegeben werden. Ergebnisse auf 100 begrenzt.",
+                Arrays.asList(
+                        new ToolParameter("caseId", "string", "Interne ID der Akte (optional)", false),
+                        new ToolParameter("sender", "string", "Benutzername des Absenders (optional)", false),
+                        new ToolParameter("fromDate", "string", "Startdatum im ISO-Format yyyy-MM-dd (optional)", false),
+                        new ToolParameter("toDate", "string", "Enddatum im ISO-Format yyyy-MM-dd (optional)", false)
+                )));
+
+        TOOLS.add(new ToolDefinition("list_form_types",
+                "Listet alle verfügbaren/installierten Falldatenblätter (Formulare) auf. Gibt ID, Name, Platzhalterpräfix und Version zurück.",
+                Arrays.asList()));
+
+        TOOLS.add(new ToolDefinition("create_case_form",
+                "Erstellt ein Falldatenblatt in einer Akte. Der Platzhalterpräfix muss innerhalb der Akte eindeutig sein.",
+                Arrays.asList(
+                        new ToolParameter("caseId", "string", "Interne ID der Akte", true),
+                        new ToolParameter("formTypeId", "string", "ID des Falldatenblatt-Typs (aus list_form_types)", true),
+                        new ToolParameter("placeHolder", "string", "Platzhalterpräfix für die Formularfelder (aus list_form_types, muss in der Akte eindeutig sein)", true),
+                        new ToolParameter("description", "string", "Beschreibung des Falldatenblatts", false)
+                ),
+                ToolDefinition.RISK_MEDIUM));
     }
 
     public List<ToolDefinition> getToolDefinitions() {
@@ -617,6 +643,12 @@ public class ToolRegistry {
                     return executeWebSearch(args);
                 case "fetch_url":
                     return executeFetchUrl(args);
+                case "search_instant_messages":
+                    return executeSearchInstantMessages(args);
+                case "list_form_types":
+                    return executeListFormTypes(args);
+                case "create_case_form":
+                    return executeCreateCaseForm(args);
                 default:
                     return ToolJsonUtils.error("Unbekanntes Werkzeug: " + toolId);
             }
@@ -776,12 +808,188 @@ public class ToolRegistry {
                     return "Websuche: '" + args.getOrDefault("query", "") + "'";
                 case "fetch_url":
                     return "Webseite laden: " + args.getOrDefault("url", "");
+                case "search_instant_messages":
+                    return "Sofortnachrichten suchen" + (args.containsKey("caseId") ? " (Akte: " + args.get("caseId") + ")" : "") + (args.containsKey("sender") ? " (Absender: " + args.get("sender") + ")" : "");
+                case "list_form_types":
+                    return "Verfügbare Falldatenblätter auflisten";
+                case "create_case_form":
+                    return "Falldatenblatt erstellen: " + args.getOrDefault("placeHolder", "");
                 default:
                     return tc.getToolName() + ": " + tc.getArguments();
             }
         } catch (Exception ex) {
             return tc.getToolName() + ": " + tc.getArguments();
         }
+    }
+
+    private String executeSearchInstantMessages(JsonObject args) throws Exception {
+        String caseId = (String) args.get("caseId");
+        String sender = (String) args.get("sender");
+        String fromDateStr = (String) args.get("fromDate");
+        String toDateStr = (String) args.get("toDate");
+
+        boolean hasCaseId = caseId != null && !caseId.trim().isEmpty();
+        boolean hasFromDate = fromDateStr != null && !fromDateStr.trim().isEmpty();
+
+        if (!hasCaseId && !hasFromDate) {
+            return ToolJsonUtils.error("Mindestens caseId oder fromDate muss angegeben werden");
+        }
+
+        Date fromDate = hasFromDate ? ToolJsonUtils.parseIsoDate(fromDateStr) : null;
+        Date toDate = toDateStr != null && !toDateStr.trim().isEmpty() ? ToolJsonUtils.parseIsoDate(toDateStr) : null;
+        if (hasFromDate && fromDate == null) {
+            return ToolJsonUtils.error("fromDate konnte nicht geparst werden: " + fromDateStr);
+        }
+        if (toDate != null) {
+            // set toDate to end of day
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(toDate);
+            cal.set(Calendar.HOUR_OF_DAY, 23);
+            cal.set(Calendar.MINUTE, 59);
+            cal.set(Calendar.SECOND, 59);
+            toDate = cal.getTime();
+        }
+
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        MessagingServiceRemote msgSvc = locator.lookupMessagingServiceRemote();
+
+        List<InstantMessage> messages;
+        if (hasCaseId) {
+            messages = msgSvc.getMessagesForCase(caseId.trim());
+            if (messages == null) {
+                messages = new ArrayList<>();
+            }
+            // client-side date filtering
+            if (fromDate != null || toDate != null) {
+                Date fDate = fromDate;
+                Date tDate = toDate;
+                messages.removeIf(m -> {
+                    if (m.getSent() == null) return true;
+                    if (fDate != null && m.getSent().before(fDate)) return true;
+                    if (tDate != null && m.getSent().after(tDate)) return true;
+                    return false;
+                });
+            }
+        } else {
+            messages = msgSvc.getMessagesSince(fromDate);
+            if (messages == null) {
+                messages = new ArrayList<>();
+            }
+            if (toDate != null) {
+                Date tDate = toDate;
+                messages.removeIf(m -> m.getSent() == null || m.getSent().after(tDate));
+            }
+        }
+
+        // client-side sender filtering
+        if (sender != null && !sender.trim().isEmpty()) {
+            String senderFilter = sender.trim();
+            messages.removeIf(m -> m.getSender() == null || !m.getSender().equalsIgnoreCase(senderFilter));
+        }
+
+        int total = messages.size();
+        int limit = Math.min(total, 100);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"results\": [");
+        for (int i = 0; i < limit; i++) {
+            if (i > 0) sb.append(",");
+            InstantMessage m = messages.get(i);
+            sb.append("{\"id\": \"").append(ToolJsonUtils.escapeJson(m.getId())).append("\"");
+            sb.append(", \"sender\": \"").append(ToolJsonUtils.escapeJson(m.getSender())).append("\"");
+            sb.append(", \"sent\": \"").append(ToolJsonUtils.formatDate(m.getSent())).append("\"");
+            sb.append(", \"content\": \"").append(ToolJsonUtils.escapeJson(m.getContent())).append("\"");
+            if (m.getCaseContext() != null) {
+                sb.append(", \"caseId\": \"").append(ToolJsonUtils.escapeJson(m.getCaseContext().getId())).append("\"");
+                sb.append(", \"caseFileNumber\": \"").append(ToolJsonUtils.escapeJson(m.getCaseContext().getFileNumber())).append("\"");
+            }
+            sb.append("}");
+        }
+        sb.append("], \"totalResults\": ").append(total);
+        if (total > limit) {
+            sb.append(", \"truncated\": true");
+        }
+        sb.append("}");
+        return sb.toString();
+    }
+
+    private String executeListFormTypes(JsonObject args) throws Exception {
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        FormsServiceRemote formsSvc = locator.lookupFormsServiceRemote();
+        List<FormTypeBean> formTypes = formsSvc.getAllFormTypes();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"results\": [");
+        for (int i = 0; i < formTypes.size(); i++) {
+            if (i > 0) sb.append(",");
+            FormTypeBean ft = formTypes.get(i);
+            sb.append("{\"id\": \"").append(ToolJsonUtils.escapeJson(ft.getId())).append("\"");
+            sb.append(", \"name\": \"").append(ToolJsonUtils.escapeJson(ft.getName())).append("\"");
+            sb.append(", \"placeHolder\": \"").append(ToolJsonUtils.escapeJson(ft.getPlaceHolder())).append("\"");
+            if (ft.getVersion() != null) {
+                sb.append(", \"version\": \"").append(ToolJsonUtils.escapeJson(ft.getVersion())).append("\"");
+            }
+            sb.append("}");
+        }
+        sb.append("], \"totalResults\": ").append(formTypes.size()).append("}");
+        return sb.toString();
+    }
+
+    private String executeCreateCaseForm(JsonObject args) throws Exception {
+        String caseId = (String) args.get("caseId");
+        String formTypeId = (String) args.get("formTypeId");
+        String placeHolder = (String) args.get("placeHolder");
+        String description = (String) args.get("description");
+
+        if (caseId == null || caseId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Akten-ID fehlt");
+        }
+        if (formTypeId == null || formTypeId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Falldatenblatt-Typ-ID fehlt");
+        }
+        if (placeHolder == null || placeHolder.trim().isEmpty()) {
+            return ToolJsonUtils.error("Platzhalterpräfix fehlt");
+        }
+
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+
+        ArchiveFileServiceRemote afSvc = locator.lookupArchiveFileServiceRemote();
+        ArchiveFileBean caseBean = afSvc.getArchiveFile(caseId);
+        if (caseBean == null) {
+            return ToolJsonUtils.error("Akte nicht gefunden: " + caseId);
+        }
+
+        FormsServiceRemote formsSvc = locator.lookupFormsServiceRemote();
+        List<FormTypeBean> formTypes = formsSvc.getAllFormTypes();
+        FormTypeBean matchedType = null;
+        for (FormTypeBean ft : formTypes) {
+            if (ft.getId().equals(formTypeId.trim())) {
+                matchedType = ft;
+                break;
+            }
+        }
+        if (matchedType == null) {
+            return ToolJsonUtils.error("Falldatenblatt-Typ nicht gefunden: " + formTypeId);
+        }
+
+        ArchiveFileFormsBean affb = new ArchiveFileFormsBean();
+        affb.setFormType(matchedType);
+        affb.setArchiveFileKey(caseBean);
+        affb.setPlaceHolder(placeHolder.trim());
+        if (description != null && !description.trim().isEmpty()) {
+            affb.setDescription(description.trim());
+        }
+
+        affb = formsSvc.addForm(caseId, affb);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"success\": true");
+        sb.append(", \"id\": \"").append(ToolJsonUtils.escapeJson(affb.getId())).append("\"");
+        sb.append(", \"formTypeName\": \"").append(ToolJsonUtils.escapeJson(matchedType.getName())).append("\"");
+        sb.append(", \"placeHolder\": \"").append(ToolJsonUtils.escapeJson(affb.getPlaceHolder())).append("\"");
+        sb.append(", \"creationDate\": \"").append(ToolJsonUtils.formatDate(affb.getCreationDate())).append("\"");
+        sb.append("}");
+        return sb.toString();
     }
 
     // =========================================================================
