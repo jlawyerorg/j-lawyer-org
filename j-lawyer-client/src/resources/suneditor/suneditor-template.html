@@ -658,6 +658,9 @@
                     .replace(/&/g, '&amp;')
                     .replace(/</g, '&lt;')
                     .replace(/>/g, '&gt;')
+                    .replace(/ {2,}/g, function(m) {
+                        return m.split('').map(function(c, i) { return i % 2 ? '&nbsp;' : ' '; }).join('');
+                    })
                     .replace(/\n\n+/g, '</p><p>')
                     .replace(/\n/g, '<br>') + '</p>';
             } else {
@@ -792,8 +795,8 @@
             // LibreOffice uses <font color="#xxx"> which SunEditor doesn't preserve
             html = convertFontTagsToStyles(html);
 
-            // Remove empty tags
-            html = html.replace(/<(\w+)[^>]*>\s*<\/\1>/gi, '');
+            // Remove empty tags (but keep tags that contain whitespace - those may be intentional spacers)
+            html = html.replace(/<(\w+)[^>]*><\/\1>/gi, '');
 
             // CRITICAL: Convert plain newlines to <br> tags BEFORE removing duplicate spaces
             // This preserves line breaks from plain text sources that wrap content in minimal HTML
@@ -807,9 +810,15 @@
                 html = html.replace(/\r\n/g, '<br>').replace(/\n/g, '<br>').replace(/\r/g, '<br>');
             }
 
-            // Remove duplicate spaces (but NOT newlines - we've already handled those)
-            // Only collapse multiple spaces, not all whitespace
-            html = html.replace(/  +/g, ' ');
+            // Preserve multiple spaces by converting to alternating space/&nbsp; sequences
+            // This prevents HTML rendering from collapsing them to a single space
+            html = html.replace(/ {2,}/g, function(match) {
+                var result = '';
+                for (var i = 0; i < match.length; i++) {
+                    result += (i % 2 === 0) ? ' ' : '&nbsp;';
+                }
+                return result;
+            });
 
             log('Cleaned HTML, final length: ' + html.length);
             return html;
