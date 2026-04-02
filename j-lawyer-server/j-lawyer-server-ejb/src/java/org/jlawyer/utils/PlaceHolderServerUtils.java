@@ -1011,6 +1011,9 @@ public class PlaceHolderServerUtils extends PlaceHolders {
             if (placeHolders.containsKey(AKTE_WEGEN)) {
                 placeHolders.put(AKTE_WEGEN, val(aFile.getReason()));
             }
+            if (placeHolders.containsKey(AKTE_SACHGEBIET)) {
+                placeHolders.put(AKTE_SACHGEBIET, val(aFile.getSubjectField()));
+            }
             if (placeHolders.containsKey(AKTE_ANWALT)) {
                 placeHolders.put(AKTE_ANWALT, val(aFile.getLawyer()));
             }
