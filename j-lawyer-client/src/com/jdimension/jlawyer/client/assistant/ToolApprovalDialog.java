@@ -45,7 +45,7 @@ public class ToolApprovalDialog extends JDialog {
             String riskLevel, ToolDefinition toolDef, String argumentsJson) {
         super(parent, "Werkzeugaufruf genehmigen", true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setMinimumSize(new Dimension(850, 600));
+        setMinimumSize(new Dimension(950, 600));
 
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
@@ -164,7 +164,6 @@ public class ToolApprovalDialog extends JDialog {
         buttonPanel.add(btnSession);
         buttonPanel.add(btnAlways);
         buttonPanel.add(btnDeny);
-        buttonPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, buttonPanel.getPreferredSize().height));
         contentPanel.add(buttonPanel);
 
         // Wrap in a scroll pane for tools with many parameters
@@ -188,7 +187,7 @@ public class ToolApprovalDialog extends JDialog {
 
         // Fixed width, height adapts to content but never exceeds screen
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        int dialogWidth = Math.min(850, screenSize.width - 40);
+        int dialogWidth = Math.min(950, screenSize.width - 40);
         // Layout at target width to get proper wrapped height
         setSize(dialogWidth, 700);
         validate();
