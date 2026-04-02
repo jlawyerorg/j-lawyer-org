@@ -29,6 +29,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
+import javax.swing.Scrollable;
 import javax.swing.ScrollPaneConstants;
 import org.json.simple.JsonObject;
 import org.json.simple.Jsoner;
@@ -47,7 +48,8 @@ public class ToolApprovalDialog extends JDialog {
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setMinimumSize(new Dimension(950, 600));
 
-        JPanel contentPanel = new JPanel();
+        // Use Scrollable panel so width always tracks the viewport (shrinks back when dialog is narrowed)
+        JPanel contentPanel = new ScrollablePanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         contentPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
@@ -115,7 +117,7 @@ public class ToolApprovalDialog extends JDialog {
         JPanel summaryPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 14, 4));
         summaryPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         summaryPanel.setOpaque(false);
-        JLabel summaryLabel = new JLabel("<html><body style='width:780px'>" + displayText + "</body></html>");
+        JLabel summaryLabel = new JLabel("<html><body>" + displayText + "</body></html>");
         summaryLabel.setFont(summaryLabel.getFont().deriveFont(Font.BOLD, summaryLabel.getFont().getSize2D() + 2f));
         summaryPanel.add(summaryLabel);
         summaryPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, summaryPanel.getPreferredSize().height));
@@ -130,9 +132,15 @@ public class ToolApprovalDialog extends JDialog {
             contentPanel.add(Box.createVerticalStrut(10));
         }
 
-        // --- Buttons ---
+        // Wrap in a scroll pane for tools with many parameters
+        JScrollPane scrollPane = new JScrollPane(contentPanel);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        getContentPane().add(scrollPane, BorderLayout.CENTER);
+
+        // --- Buttons (outside scroll pane, fixed at bottom) ---
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 8));
-        buttonPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JButton btnAllow = new JButton("Erlauben");
         btnAllow.setBackground(new Color(76, 175, 80));
@@ -164,14 +172,7 @@ public class ToolApprovalDialog extends JDialog {
         buttonPanel.add(btnSession);
         buttonPanel.add(btnAlways);
         buttonPanel.add(btnDeny);
-        contentPanel.add(buttonPanel);
-
-        // Wrap in a scroll pane for tools with many parameters
-        JScrollPane scrollPane = new JScrollPane(contentPanel);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        getContentPane().add(scrollPane, BorderLayout.CENTER);
+        getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
         // Default button and key bindings
         getRootPane().setDefaultButton(btnAllow);
@@ -284,5 +285,37 @@ public class ToolApprovalDialog extends JDialog {
 
     public String getApprovalResult() {
         return approvalResult;
+    }
+
+    /**
+     * A JPanel that implements Scrollable to track the viewport width,
+     * preventing the panel from staying wider than the scroll pane after resizing.
+     */
+    private static class ScrollablePanel extends JPanel implements Scrollable {
+
+        @Override
+        public Dimension getPreferredScrollableViewportSize() {
+            return getPreferredSize();
+        }
+
+        @Override
+        public int getScrollableUnitIncrement(java.awt.Rectangle visibleRect, int orientation, int direction) {
+            return 16;
+        }
+
+        @Override
+        public int getScrollableBlockIncrement(java.awt.Rectangle visibleRect, int orientation, int direction) {
+            return visibleRect.height;
+        }
+
+        @Override
+        public boolean getScrollableTracksViewportWidth() {
+            return true;
+        }
+
+        @Override
+        public boolean getScrollableTracksViewportHeight() {
+            return false;
+        }
     }
 }

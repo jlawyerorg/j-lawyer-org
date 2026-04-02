@@ -1,6 +1,7 @@
 package com.jdimension.jlawyer.client.assistant;
 
 import com.jdimension.jlawyer.ai.AiCapability;
+import com.jdimension.jlawyer.ai.AiModel;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.AiResponse;
 import com.jdimension.jlawyer.ai.ConfigurationData;
@@ -45,6 +46,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicReference;
 import java.awt.event.ActionEvent;
@@ -120,6 +122,10 @@ public class AssistantGenericPanel extends JDialog {
     private List<PartiesTriplet> parties = new ArrayList<>();
     private ArchiveFileBean selectedCase = null;
 
+    // model capabilities
+    private boolean modelSupportsTools = false;
+    private static Map<AssistantConfig, List<AiModel>> cachedModels = null;
+
     // Gray-tone bubble colors (consistent with AssistantChatPanel)
     private static final Color ASSISTANT_BUBBLE_BG = new Color(245, 245, 245);
     private static final Color BUBBLE_BORDER_COLOR = new Color(215, 215, 215);
@@ -144,6 +150,8 @@ public class AssistantGenericPanel extends JDialog {
     private JButton cmdClose;
     private JButton cmdProcessOutput;
     private JButton cmdCopy;
+    private JLabel lblSupportsTools;
+    private JPanel pnlPlaceholder;
     private JPanel bottomPanel;
     private JPopupMenu popInputText;
 
@@ -170,6 +178,30 @@ public class AssistantGenericPanel extends JDialog {
         this.config = config;
         this.capability = c;
         this.inputAdapter = inputAdapter;
+
+        // Check if selected model supports tool calling
+        if (AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType()) && c.getModelRef() != null) {
+            try {
+                if (cachedModels == null) {
+                    ClientSettings cs = ClientSettings.getInstance();
+                    JLawyerServiceLocator loc = JLawyerServiceLocator.getInstance(cs.getLookupProperties());
+                    cachedModels = loc.lookupIntegrationServiceRemote().getAssistantModels();
+                }
+                for (List<AiModel> models : cachedModels.values()) {
+                    for (AiModel m : models) {
+                        if (m.getName().equals(c.getModelRef()) && m.isSupportsTools()) {
+                            this.modelSupportsTools = true;
+                            break;
+                        }
+                    }
+                    if (this.modelSupportsTools) {
+                        break;
+                    }
+                }
+            } catch (Exception ex) {
+                log.warn("Could not check model tool support", ex);
+            }
+        }
 
         this.selectedCase = selectedCase;
         if (this.selectedCase != null) {
@@ -231,6 +263,45 @@ public class AssistantGenericPanel extends JDialog {
         }
 
         this.lblRequestType.setText(c.getName() + " (" + c.getDescription() + ")");
+
+        this.lblSupportsTools.setIcon(new ImageIcon(getClass().getResource("/icons16/material/smart_toy_20dp_DE313B_FILL0_wght400_GRAD0_opsz20.png")));
+        this.lblSupportsTools.setText("nicht agentenfähig");
+        this.lblSupportsTools.setToolTipText("keine Werkzeugunterstützung");
+
+        if (AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType()) && c.getModelRef() != null) {
+            if (this.modelSupportsTools) {
+                this.lblSupportsTools.setIcon(new ImageIcon(getClass().getResource("/icons16/material/smart_toy_20dp_97BF0D_FILL0_wght400_GRAD0_opsz20.png")));
+                this.lblSupportsTools.setText("agentenfähig");
+                this.lblSupportsTools.setToolTipText("unterstützt Werkzeuge");
+            }
+        }
+        this.lblSupportsTools.revalidate();
+        this.lblSupportsTools.repaint();
+
+        if (this.modelSupportsTools) {
+            pnlPlaceholder = new JPanel(new GridBagLayout());
+            pnlPlaceholder.setBackground(Color.WHITE);
+            pnlPlaceholder.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+            pnlPlaceholder.setAlignmentX(0.5f);
+            JLabel lblPlaceholder = new JLabel(
+                "<html><center>"
+                + "<span style='font-size:24pt;color:#787878;'>"
+                + "Ingo erledigt Routinearbeiten - einfach ausprobieren:<br>"
+                + "<i>\"Welche Funktionen kannst Du aufrufen?\"</i>"
+                + "<br><br>"
+                + "Beispiel:<br>"
+                + "<i>\"Ermittle die heutigen offenen Termine und Fristen<br>"
+                + "und erstelle mir eine Agenda.<br>"
+                + "Priorisiere anhand der Formulierungen.\"</i>"
+                + "</span>"
+                + "</center></html>"
+            );
+            lblPlaceholder.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+            pnlPlaceholder.add(lblPlaceholder, new GridBagConstraints());
+            pnlMessages.add(Box.createVerticalGlue());
+            pnlMessages.add(pnlPlaceholder);
+            pnlMessages.add(Box.createVerticalGlue());
+        }
 
         this.lstInputFiles.setCellRenderer(new AttachmentListCellRenderer());
         this.lstInputFiles.setModel(new DefaultListModel());
@@ -353,7 +424,19 @@ public class AssistantGenericPanel extends JDialog {
         lblRequestType.setFont(lblRequestType.getFont().deriveFont(lblRequestType.getFont().getStyle() | java.awt.Font.BOLD, lblRequestType.getFont().getSize() + 2));
         lblRequestType.setForeground(Color.WHITE);
         lblRequestType.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 0));
-        pnlTitle.add(lblRequestType, BorderLayout.CENTER);
+
+        lblSupportsTools = new JLabel();
+        lblSupportsTools.setFont(lblSupportsTools.getFont().deriveFont(lblSupportsTools.getFont().getSize() - 2f));
+        lblSupportsTools.setForeground(new Color(153, 153, 153));
+        lblSupportsTools.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
+
+        JPanel pnlCenterTitle = new JPanel();
+        pnlCenterTitle.setOpaque(false);
+        pnlCenterTitle.setLayout(new BoxLayout(pnlCenterTitle, BoxLayout.X_AXIS));
+        pnlCenterTitle.add(lblRequestType);
+        pnlCenterTitle.add(lblSupportsTools);
+        pnlCenterTitle.add(Box.createHorizontalGlue());
+        pnlTitle.add(pnlCenterTitle, BorderLayout.CENTER);
 
         JPanel pnlTitleButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
         pnlTitleButtons.setOpaque(false);
@@ -652,6 +735,13 @@ public class AssistantGenericPanel extends JDialog {
 
     // ==================== Business Logic (ported from AssistantGenericDialog) ====================
 
+    private void removePlaceholder() {
+        if (pnlPlaceholder != null) {
+            pnlMessages.removeAll();
+            pnlPlaceholder = null;
+        }
+    }
+
     private void cmdSubmitActionPerformed(java.awt.event.ActionEvent evt) {
         SwingUtilities.invokeLater(this::startBackgroundTask);
     }
@@ -707,6 +797,7 @@ public class AssistantGenericPanel extends JDialog {
 
                         incomingMsgPanel.setPreferredSize(maxSize);
                         incomingMsgPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                        removePlaceholder();
                         pnlMessages.add(incomingMsgPanel);
                         incomingMsgPanel.revalidate();
                         incomingMsgPanel.repaint();

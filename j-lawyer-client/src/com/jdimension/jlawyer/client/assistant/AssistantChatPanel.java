@@ -184,6 +184,7 @@ public class AssistantChatPanel extends JDialog {
     private JButton cmdNewDocument;
     private JButton cmdCopy;
     private JLabel lblSupportsTools;
+    private JPanel pnlPlaceholder;
     private JPopupMenu popAssistant;
     private JPanel bottomPanel;
 
@@ -301,14 +302,44 @@ public class AssistantChatPanel extends JDialog {
 
         this.lblRequestType.setText(c.getName() + " (" + c.getDescription() + ")");
 
+        this.lblSupportsTools.setIcon(new ImageIcon(getClass().getResource("/icons16/material/smart_toy_20dp_DE313B_FILL0_wght400_GRAD0_opsz20.png")));
+        this.lblSupportsTools.setText("nicht agentenfähig");
+        this.lblSupportsTools.setToolTipText("keine Werkzeugunterstützung");
+        
+        if (AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType()) && c.getModelRef() != null) {
+            if (this.modelSupportsTools) {
+                this.lblSupportsTools.setIcon(new ImageIcon(getClass().getResource("/icons16/material/smart_toy_20dp_97BF0D_FILL0_wght400_GRAD0_opsz20.png")));
+                this.lblSupportsTools.setText("agentenfähig");
+                this.lblSupportsTools.setToolTipText("unterstützt Werkzeuge");
+            }
+            
+        }
+        this.lblSupportsTools.revalidate();
+        this.lblSupportsTools.repaint();
+
         if (this.modelSupportsTools) {
-            this.lblSupportsTools.setIcon(new ImageIcon(getClass().getResource("/icons16/material/smart_toy_20dp_0E72B5.png")));
-            this.lblSupportsTools.setText("agentenfähig");
-            this.lblSupportsTools.setToolTipText("unterstützt Werkzeuge");
-        } else {
-            this.lblSupportsTools.setIcon(new ImageIcon(getClass().getResource("/icons16/material/smart_toy_20dp_666666.png")));
-            this.lblSupportsTools.setText("nicht agentenfähig");
-            this.lblSupportsTools.setToolTipText("keine Werkzeugunterstützung");
+            pnlPlaceholder = new JPanel(new GridBagLayout());
+            pnlPlaceholder.setBackground(Color.WHITE);
+            pnlPlaceholder.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+            pnlPlaceholder.setAlignmentX(0.5f);
+            JLabel lblPlaceholder = new JLabel(
+                "<html><center>"
+                + "<span style='font-size:24pt;color:#787878;'>"
+                + "Ingo erledigt Routinearbeiten - einfach ausprobieren:<br>"
+                + "<i>\"Welche Funktionen kannst Du aufrufen?\"</i>"
+                + "<br><br>"
+                + "Beispiel:<br>"
+                + "<i>\"Ermittle die heutigen offenen Termine und Fristen<br>"
+                + "und erstelle mir eine Agenda.<br>"
+                + "Priorisiere anhand der Formulierungen.\"</i>"
+                + "</span>"
+                + "</center></html>"
+            );
+            lblPlaceholder.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+            pnlPlaceholder.add(lblPlaceholder, new GridBagConstraints());
+            pnlMessages.add(Box.createVerticalGlue());
+            pnlMessages.add(pnlPlaceholder);
+            pnlMessages.add(Box.createVerticalGlue());
         }
 
         this.taInputString.setText("");
@@ -749,6 +780,8 @@ public class AssistantChatPanel extends JDialog {
                         maxSize.setSize(pnlMessages.getWidth(), maxSize.getHeight());
                         outGoingMsgPanel.setPreferredSize(maxSize);
 
+                        // Remove placeholder hint on first message
+                        removePlaceholder();
                         // Add spacing before this message pair
                         if (pnlMessages.getComponentCount() > 0) {
                             pnlMessages.add(Box.createRigidArea(new Dimension(0, 12)));
@@ -1017,6 +1050,7 @@ public class AssistantChatPanel extends JDialog {
                         maxSize.setSize(pnlMessages.getWidth(), maxSize.getHeight());
                         msgPanel.setPreferredSize(maxSize);
                         msgPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                        removePlaceholder();
                         if (pnlMessages.getComponentCount() > 0) {
                             pnlMessages.add(Box.createRigidArea(new Dimension(0, 12)));
                         }
@@ -1294,6 +1328,13 @@ public class AssistantChatPanel extends JDialog {
         styleMessageBubble(panel, Message.ROLE_USER.equals(panel.getMessage().getRole()));
     }
 
+    private void removePlaceholder() {
+        if (pnlPlaceholder != null) {
+            pnlMessages.removeAll();
+            pnlPlaceholder = null;
+        }
+    }
+
     private void scrollToBottom() {
         SwingUtilities.invokeLater(() -> {
             JScrollBar bar = scrollMessages.getVerticalScrollBar();
@@ -1340,6 +1381,7 @@ public class AssistantChatPanel extends JDialog {
 
         toolPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         toolPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, toolPanel.getPreferredSize().height + 8));
+        removePlaceholder();
         pnlMessages.add(toolPanel);
         pnlMessages.revalidate();
         pnlMessages.repaint();
