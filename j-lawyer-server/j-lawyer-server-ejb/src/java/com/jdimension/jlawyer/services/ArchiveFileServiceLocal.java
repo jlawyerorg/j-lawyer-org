@@ -886,5 +886,6 @@ public interface ArchiveFileServiceLocal {
     TimesheetPosition timesheetPositionSave(String timesheetId, TimesheetPosition position) throws Exception;
     TimesheetPosition timesheetPositionAdd(String timesheetId, TimesheetPosition position) throws Exception;
     int hasOpenTimesheetPositions(String principal) throws Exception;
+    void removeTimesheetPosition(String timesheetId, TimesheetPosition position) throws Exception;
 
 }
