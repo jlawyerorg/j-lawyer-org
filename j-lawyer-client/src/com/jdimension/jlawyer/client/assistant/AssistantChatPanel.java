@@ -145,6 +145,9 @@ public class AssistantChatPanel extends JDialog {
     private final ToolRegistry toolRegistry = new ToolRegistry();
     private boolean modelSupportsTools = false;
 
+    // static cache for assistant models to avoid repeated server calls
+    private static Map<AssistantConfig, List<AiModel>> cachedModels = null;
+
     private String initialPrompt = "";
 
     // tracks whether the first message has been sent (to include input data)
@@ -180,6 +183,7 @@ public class AssistantChatPanel extends JDialog {
     private JButton cmdProcessOutput;
     private JButton cmdNewDocument;
     private JButton cmdCopy;
+    private JLabel lblSupportsTools;
     private JPopupMenu popAssistant;
     private JPanel bottomPanel;
 
@@ -210,10 +214,12 @@ public class AssistantChatPanel extends JDialog {
         // Check if selected model supports tool calling
         if (AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType()) && c.getModelRef() != null) {
             try {
-                ClientSettings cs = ClientSettings.getInstance();
-                JLawyerServiceLocator loc = JLawyerServiceLocator.getInstance(cs.getLookupProperties());
-                Map<AssistantConfig, List<AiModel>> modelsMap = loc.lookupIntegrationServiceRemote().getAssistantModels();
-                for (List<AiModel> models : modelsMap.values()) {
+                if (cachedModels == null) {
+                    ClientSettings cs = ClientSettings.getInstance();
+                    JLawyerServiceLocator loc = JLawyerServiceLocator.getInstance(cs.getLookupProperties());
+                    cachedModels = loc.lookupIntegrationServiceRemote().getAssistantModels();
+                }
+                for (List<AiModel> models : cachedModels.values()) {
                     for (AiModel m : models) {
                         if (m.getName().equals(c.getModelRef()) && m.isSupportsTools()) {
                             this.modelSupportsTools = true;
@@ -294,6 +300,16 @@ public class AssistantChatPanel extends JDialog {
         }
 
         this.lblRequestType.setText(c.getName() + " (" + c.getDescription() + ")");
+
+        if (this.modelSupportsTools) {
+            this.lblSupportsTools.setIcon(new ImageIcon(getClass().getResource("/icons16/material/smart_toy_20dp_0E72B5.png")));
+            this.lblSupportsTools.setText("agentenfähig");
+            this.lblSupportsTools.setToolTipText("unterstützt Werkzeuge");
+        } else {
+            this.lblSupportsTools.setIcon(new ImageIcon(getClass().getResource("/icons16/material/smart_toy_20dp_666666.png")));
+            this.lblSupportsTools.setText("nicht agentenfähig");
+            this.lblSupportsTools.setToolTipText("keine Werkzeugunterstützung");
+        }
 
         this.taInputString.setText("");
         boolean hasInputData = false;
@@ -377,7 +393,19 @@ public class AssistantChatPanel extends JDialog {
         lblRequestType.setFont(lblRequestType.getFont().deriveFont(lblRequestType.getFont().getStyle() | java.awt.Font.BOLD, lblRequestType.getFont().getSize() + 2));
         lblRequestType.setForeground(Color.WHITE);
         lblRequestType.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 0));
-        pnlTitle.add(lblRequestType, BorderLayout.CENTER);
+
+        lblSupportsTools = new JLabel();
+        lblSupportsTools.setFont(lblSupportsTools.getFont().deriveFont(lblSupportsTools.getFont().getSize() - 2f));
+        lblSupportsTools.setForeground(new Color(153, 153, 153));
+        lblSupportsTools.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
+
+        JPanel pnlCenterTitle = new JPanel();
+        pnlCenterTitle.setOpaque(false);
+        pnlCenterTitle.setLayout(new BoxLayout(pnlCenterTitle, BoxLayout.X_AXIS));
+        pnlCenterTitle.add(lblRequestType);
+        pnlCenterTitle.add(lblSupportsTools);
+        pnlCenterTitle.add(Box.createHorizontalGlue());
+        pnlTitle.add(pnlCenterTitle, BorderLayout.CENTER);
 
         JPanel pnlTitleButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
         pnlTitleButtons.setOpaque(false);
