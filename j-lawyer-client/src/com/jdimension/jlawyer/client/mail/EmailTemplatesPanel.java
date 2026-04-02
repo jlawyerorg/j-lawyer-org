@@ -680,6 +680,7 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import javax.swing.*;
@@ -735,7 +736,9 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
                 placeHolders.add(ptb.getPlaceHolder());
             }
 
-            for (String s : PlaceHolders.getAllPlaceHolders(placeHolders, new ArrayList<>())) {
+            ArrayList<String> allPlaceHolders = PlaceHolders.getAllPlaceHolders(placeHolders, new ArrayList<>());
+            Collections.sort(allPlaceHolders);
+            for (String s : allPlaceHolders) {
                 ((DefaultListModel) this.lstPlaceHolders.getModel()).addElement(s);
             }
         } catch (Exception ex) {
