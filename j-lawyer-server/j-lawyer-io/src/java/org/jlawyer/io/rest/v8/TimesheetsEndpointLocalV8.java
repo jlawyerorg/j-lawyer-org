@@ -29,4 +29,6 @@ public interface TimesheetsEndpointLocalV8 {
 
     Response updatePosition(String timesheetId, String positionId, RestfulTimesheetPositionV8 position);
 
+    Response deletePosition(String timesheetId, String positionId);
+
 }

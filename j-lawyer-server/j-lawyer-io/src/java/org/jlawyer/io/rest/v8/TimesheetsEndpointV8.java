@@ -11,6 +11,7 @@ import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -381,6 +382,39 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(RestfulTimesheetPositionV8.fromTimesheetPosition(result)).build();
         } catch (Exception ex) {
             log.error("can not update timesheet position " + positionId, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Deletes an existing timesheet position
+     *
+     * @param timesheetId timesheet ID
+     * @param positionId position ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/{timesheetId}/positions/{positionId}")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response deletePosition(@PathParam("timesheetId") String timesheetId, @PathParam("positionId") String positionId) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            Timesheet ts = cases.getTimesheet(timesheetId);
+            if (ts == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            TimesheetPosition pos = new TimesheetPosition();
+            pos.setId(positionId);
+            cases.removeTimesheetPosition(timesheetId, pos);
+
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not delete timesheet position " + positionId, ex);
             return Response.serverError().build();
         }
     }
