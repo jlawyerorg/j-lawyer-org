@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.persistence.DocumentTagRule;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.MappingTable;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import java.util.HashMap;
 import java.util.List;
@@ -748,5 +749,21 @@ public interface SystemManagementLocal {
     DocumentNameTemplate getDefaultDocumentNameTemplate() throws Exception;
 
     List<DocumentTagRule> getAllDocumentTagRules();
+    
+    ServerSettingsBean getSetting(String key);
+    
+    boolean setSetting(String key, String value);
+    
+    void clearCurrentBackup();
+    
+    /**
+     * Returns the configured backup directory path. If a custom directory has
+     * been configured via server settings, that path is returned. Otherwise,
+     * the default path (sibling "backups" directory of the server base directory)
+     * is returned.
+     *
+     * @return the absolute path to the backup directory
+     */
+    String getBackupDirectory();
     
 }

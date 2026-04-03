@@ -663,10 +663,15 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest.v7;
 
+import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.pojo.JobStatus;
+import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.services.SingletonServiceLocal;
+import com.jdimension.jlawyer.services.SystemManagementLocal;
+import com.jdimension.jlawyer.storage.VirtualFile;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -674,19 +679,24 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v7.pojo.RestfulBackupConfigurationV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulCredentials;
 import org.jlawyer.io.rest.v7.pojo.RestfulJobStatusV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulStatusResponseV7;
 
 /**
  *
@@ -700,6 +710,7 @@ public class AdministrationEndpointV7 implements AdministrationEndpointLocalV7 {
 
     private static final Logger log = Logger.getLogger(AdministrationEndpointV7.class.getName());
     private static final String LOOKUP_SINGLETON = "java:global/j-lawyer-server/j-lawyer-server-ejb/SingletonService!com.jdimension.jlawyer.services.SingletonServiceLocal";
+    private static final String LOOKUP_SYSMAN = "java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal";
 
     /**
      * Triggers a backup run and returns its status. The job ID may be used to
@@ -829,6 +840,332 @@ public class AdministrationEndpointV7 implements AdministrationEndpointLocalV7 {
             return res;
         }
 
+    }
+
+    /**
+     * Returns the current backup configuration including scheduling,
+     * database connection, encryption, directories, and notification
+     * settings. Passwords are never included in the response (write-only).
+     *
+     * @return backup configuration
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/backup/configuration")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"loginRole"})
+    public Response getBackupConfiguration() {
+
+        try {
+
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal sysman = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+
+            RestfulBackupConfigurationV7 config = new RestfulBackupConfigurationV7();
+
+            // scheduling
+            config.setBackupMode(getSettingValue(sysman, ServerSettingsKeys.SERVERCONF_BACKUP_MODE, "off"));
+            config.setHour(getSettingInt(sysman, ServerSettingsKeys.SERVERCONF_BACKUP_HOUR, 22));
+            config.setMonday(getSettingBoolean(sysman, ServerSettingsKeys.SERVERCONF_BACKUP_MONDAY));
+            config.setTuesday(getSettingBoolean(sysman, ServerSettingsKeys.SERVERCONF_BACKUP_TUESDAY));
+            config.setWednesday(getSettingBoolean(sysman, ServerSettingsKeys.SERVERCONF_BACKUP_WEDNESDAY));
+            config.setThursday(getSettingBoolean(sysman, ServerSettingsKeys.SERVERCONF_BACKUP_THURSDAY));
+            config.setFriday(getSettingBoolean(sysman, ServerSettingsKeys.SERVERCONF_BACKUP_FRIDAY));
+            config.setSaturday(getSettingBoolean(sysman, ServerSettingsKeys.SERVERCONF_BACKUP_SATURDAY));
+            config.setSunday(getSettingBoolean(sysman, ServerSettingsKeys.SERVERCONF_BACKUP_SUNDAY));
+
+            // database (passwords excluded)
+            config.setDbHost(getSettingValue(sysman, ServerSettingsKeys.SERVERCONF_BACKUP_DBHOST, "localhost"));
+            config.setDbPort(getSettingValue(sysman, ServerSettingsKeys.SERVERCONF_BACKUP_DBPORT, "3306"));
+            config.setDbName(getSettingValue(sysman, ServerSettingsKeys.SERVERCONF_BACKUP_DBNAME, "jlawyerdb"));
+            config.setDbUser(getSettingValue(sysman, ServerSettingsKeys.SERVERCONF_BACKUP_DBUSER, "root"));
+            config.setDbPassword(null);
+
+            // encryption (password excluded, only flag)
+            String encPwd = getSettingValue(sysman, ServerSettingsKeys.SERVERCONF_BACKUP_ENCRYPTPWD, "");
+            config.setEncryptionEnabled(encPwd != null && !encPwd.isEmpty());
+            config.setEncryptionPassword(null);
+
+            // directories
+            config.setBackupDirectory(sysman.getBackupDirectory());
+            config.setSyncTarget(sanitizeSyncTargetForResponse(getSettingValue(sysman, ServerSettingsKeys.SERVERCONF_BACKUP_SYNCTARGET, "")));
+            config.setExportTarget(getSettingValue(sysman, ServerSettingsKeys.SERVERCONF_BACKUP_EXPORTTARGET, ""));
+
+            // notifications
+            config.setNotifyOnSuccess(getSettingBoolean(sysman, ServerSettingsKeys.SERVERCONF_MONITOR_NOTIFY_BACKUPSUCCESS));
+            config.setNotifyOnFailure(getSettingBoolean(sysman, ServerSettingsKeys.SERVERCONF_MONITOR_NOTIFY_BACKUPFAILURE));
+
+            return Response.ok(config).build();
+
+        } catch (Exception ex) {
+            log.error("Could not get backup configuration", ex);
+            return Response.serverError().build();
+        }
+
+    }
+
+    /**
+     * Updates the backup configuration. For string fields, null means
+     * "do not change"; boolean and int fields are always applied.
+     * Validates backupMode ("on"/"off"), hour (0-23), dbPort (1-65535),
+     * and that backupDirectory / exportTarget exist on the server, and
+     * syncTarget is reachable and writable.
+     * Changing the encryptionPassword automatically deletes all existing
+     * backup data. Returns the full updated configuration on success.
+     *
+     * @param configuration the backup configuration to apply
+     * @return the updated backup configuration
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 400 Validation error (e.g. invalid port, non-existent directory)
+     */
+    @Override
+    @Path("/backup/configuration")
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    public Response updateBackupConfiguration(RestfulBackupConfigurationV7 configuration) {
+
+        try {
+
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal sysman = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+
+            // validate port
+            if (configuration.getDbPort() != null) {
+                try {
+                    int port = Integer.parseInt(configuration.getDbPort());
+                    if (port < 1 || port > 65535) {
+                        return Response.status(Response.Status.BAD_REQUEST).entity(errorResponse("dbPort must be between 1 and 65535")).build();
+                    }
+                } catch (NumberFormatException nfe) {
+                    return Response.status(Response.Status.BAD_REQUEST).entity(errorResponse("dbPort must be a valid integer")).build();
+                }
+            }
+
+            // validate hour
+            if (configuration.getHour() < 0 || configuration.getHour() > 23) {
+                return Response.status(Response.Status.BAD_REQUEST).entity(errorResponse("hour must be between 0 and 23")).build();
+            }
+
+            // validate backup directory
+            if (configuration.getBackupDirectory() != null && !configuration.getBackupDirectory().trim().isEmpty()) {
+                File backupDirFile = new File(configuration.getBackupDirectory().trim());
+                if (!backupDirFile.exists()) {
+                    return Response.status(Response.Status.BAD_REQUEST).entity(errorResponse("Backup directory does not exist: " + configuration.getBackupDirectory())).build();
+                }
+                if (!backupDirFile.isDirectory()) {
+                    return Response.status(Response.Status.BAD_REQUEST).entity(errorResponse("Backup directory path is not a directory: " + configuration.getBackupDirectory())).build();
+                }
+                if (!backupDirFile.canWrite()) {
+                    return Response.status(Response.Status.BAD_REQUEST).entity(errorResponse("Backup directory is not writable: " + configuration.getBackupDirectory())).build();
+                }
+            }
+
+            // validate export target
+            if (configuration.getExportTarget() != null && !configuration.getExportTarget().trim().isEmpty()) {
+                File exportDirFile = new File(configuration.getExportTarget().trim());
+                if (!exportDirFile.exists() || !exportDirFile.isDirectory()) {
+                    return Response.status(Response.Status.BAD_REQUEST).entity(errorResponse("Export target directory does not exist or is not a directory: " + configuration.getExportTarget())).build();
+                }
+            }
+
+            // validate sync target
+            if (configuration.getSyncTarget() != null && !configuration.getSyncTarget().trim().isEmpty()) {
+                VirtualFile syncTarget = null;
+                try {
+                    String syncTargetLocation = configuration.getSyncTarget().trim();
+                    syncTarget = VirtualFile.getFile(syncTargetLocation);
+                    if (!syncTarget.exists() || !syncTarget.isDirectory()) {
+                        return Response.status(Response.Status.BAD_REQUEST).entity(errorResponse("Sync target must point to an existing directory: " + sanitizeSyncTargetForResponse(syncTargetLocation))).build();
+                    }
+                    if (!syncTarget.isReadable() || !syncTarget.isWritable()) {
+                        return Response.status(Response.Status.BAD_REQUEST).entity(errorResponse("Sync target is not readable and writable: " + sanitizeSyncTargetForResponse(syncTargetLocation))).build();
+                    }
+                } catch (Exception ex) {
+                    return Response.status(Response.Status.BAD_REQUEST).entity(errorResponse("Sync target is not reachable or invalid")).build();
+                } finally {
+                    if (syncTarget != null) {
+                        try {
+                            syncTarget.close();
+                        } catch (Exception ex) {
+                            log.warn("Could not close sync target", ex);
+                        }
+                    }
+                }
+            }
+
+            // validate backupMode
+            if (configuration.getBackupMode() != null) {
+                String mode = configuration.getBackupMode().trim().toLowerCase();
+                if (!"on".equals(mode) && !"off".equals(mode)) {
+                    return Response.status(Response.Status.BAD_REQUEST).entity(errorResponse("backupMode must be 'on' or 'off'")).build();
+                }
+            }
+
+            // apply settings
+            if (configuration.getBackupMode() != null) {
+                sysman.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_MODE, configuration.getBackupMode().trim().toLowerCase());
+            }
+            sysman.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_HOUR, String.valueOf(configuration.getHour()));
+            sysman.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_MONDAY, String.valueOf(configuration.isMonday()));
+            sysman.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_TUESDAY, String.valueOf(configuration.isTuesday()));
+            sysman.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_WEDNESDAY, String.valueOf(configuration.isWednesday()));
+            sysman.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_THURSDAY, String.valueOf(configuration.isThursday()));
+            sysman.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_FRIDAY, String.valueOf(configuration.isFriday()));
+            sysman.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_SATURDAY, String.valueOf(configuration.isSaturday()));
+            sysman.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_SUNDAY, String.valueOf(configuration.isSunday()));
+
+            // database settings
+            if (configuration.getDbHost() != null) {
+                sysman.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_DBHOST, configuration.getDbHost());
+            }
+            if (configuration.getDbPort() != null) {
+                sysman.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_DBPORT, configuration.getDbPort());
+            }
+            if (configuration.getDbName() != null) {
+                sysman.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_DBNAME, configuration.getDbName());
+            }
+            if (configuration.getDbUser() != null) {
+                sysman.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_DBUSER, configuration.getDbUser());
+            }
+            if (configuration.getDbPassword() != null) {
+                sysman.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_DBPWD, configuration.getDbPassword());
+            }
+
+            // encryption password - if changed, clear existing backups
+            if (configuration.getEncryptionPassword() != null) {
+                String currentEncPwd = getSettingValue(sysman, ServerSettingsKeys.SERVERCONF_BACKUP_ENCRYPTPWD, "");
+                if (!configuration.getEncryptionPassword().equals(currentEncPwd)) {
+                    sysman.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_ENCRYPTPWD, configuration.getEncryptionPassword());
+                    // clearCurrentBackup is @Asynchronous, runs in background
+                    sysman.clearCurrentBackup();
+                }
+            }
+
+            // directories
+            if (configuration.getBackupDirectory() != null) {
+                sysman.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_DIRECTORY, configuration.getBackupDirectory().trim());
+            }
+            if (configuration.getSyncTarget() != null) {
+                sysman.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_SYNCTARGET, configuration.getSyncTarget().trim());
+            }
+            if (configuration.getExportTarget() != null) {
+                sysman.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_EXPORTTARGET, configuration.getExportTarget());
+            }
+
+            // notifications
+            sysman.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_NOTIFY_BACKUPSUCCESS, String.valueOf(configuration.isNotifyOnSuccess()));
+            sysman.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_NOTIFY_BACKUPFAILURE, String.valueOf(configuration.isNotifyOnFailure()));
+
+            // return current state
+            return this.getBackupConfiguration();
+
+        } catch (Exception ex) {
+            log.error("Could not update backup configuration", ex);
+            return Response.serverError().build();
+        }
+
+    }
+
+    /**
+     * Deletes all existing backup data in the configured backup directory on
+     * the server. Runs asynchronously - the response confirms initiation,
+     * not completion. Same operation that is triggered when the encryption
+     * password is changed via PUT. Does not affect the HTML export directory
+     * or the sync target.
+     *
+     * @return status response
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/backup/data")
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    public Response deleteBackupData() {
+
+        try {
+
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal sysman = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+
+            // clearCurrentBackup is @Asynchronous
+            sysman.clearCurrentBackup();
+
+            RestfulStatusResponseV7 status = new RestfulStatusResponseV7();
+            status.setStatus(RestfulStatusResponseV7.STATUS_OK);
+            status.setMessage("Backup data deletion initiated. The operation runs asynchronously in the background.");
+            return Response.ok(status).build();
+
+        } catch (Exception ex) {
+            log.error("Could not delete backup data", ex);
+            return Response.serverError().build();
+        }
+
+    }
+
+    // --- helper methods ---
+
+    private String getSettingValue(SystemManagementLocal sysman, String key, String defaultValue) {
+        ServerSettingsBean bean = sysman.getSetting(key);
+        if (bean != null && bean.getSettingValue() != null) {
+            return bean.getSettingValue();
+        }
+        return defaultValue;
+    }
+
+    private boolean getSettingBoolean(SystemManagementLocal sysman, String key) {
+        String value = getSettingValue(sysman, key, "false");
+        return "true".equalsIgnoreCase(value);
+    }
+
+    private int getSettingInt(SystemManagementLocal sysman, String key, int defaultValue) {
+        String value = getSettingValue(sysman, key, String.valueOf(defaultValue));
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
+    private RestfulStatusResponseV7 errorResponse(String message) {
+        RestfulStatusResponseV7 r = new RestfulStatusResponseV7();
+        r.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
+        r.setMessage(message);
+        return r;
+    }
+
+    private String sanitizeSyncTargetForResponse(String syncTarget) {
+        if (syncTarget == null || syncTarget.trim().isEmpty()) {
+            return syncTarget;
+        }
+
+        String trimmed = syncTarget.trim();
+        int protocolSeparatorIndex = trimmed.indexOf("://");
+        if (protocolSeparatorIndex < 0) {
+            return trimmed;
+        }
+
+        String prefix = trimmed.substring(0, protocolSeparatorIndex + 3);
+        String remainder = trimmed.substring(protocolSeparatorIndex + 3);
+        int atIndex = remainder.indexOf('@');
+        if (atIndex < 0) {
+            return trimmed;
+        }
+
+        String userInfo = remainder.substring(0, atIndex);
+        int colonIndex = userInfo.indexOf(':');
+        if (colonIndex < 0) {
+            return trimmed;
+        }
+
+        String sanitizedUserInfo = userInfo.substring(0, colonIndex) + ":***";
+        return prefix + sanitizedUserInfo + remainder.substring(atIndex);
     }
 
 }

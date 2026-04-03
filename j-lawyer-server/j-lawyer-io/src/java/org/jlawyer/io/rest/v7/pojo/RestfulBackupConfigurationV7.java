@@ -661,145 +661,384 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.server.services.settings;
+package org.jlawyer.io.rest.v7.pojo;
 
 /**
+ * DTO for backup configuration settings exposed via the REST API.
  *
- * @author jens
+ * Passwords (dbPassword, encryptionPassword) are write-only: GET responses
+ * always return null for these fields. In PUT requests, null means "do not
+ * change the current password".
+ *
+ * Scheduling:
+ *   backupMode - "on" or "off"; controls whether scheduled backups are active.
+ *   hour - hour of day for scheduled backups (0-23, default 22).
+ *   monday..sunday - which weekdays the scheduled backup should run.
+ *
+ * Database:
+ *   dbHost - hostname of the database server (default "localhost").
+ *   dbPort - TCP port as string, valid range 1-65535 (default "3306").
+ *   dbName - database / schema name (default "jlawyerdb").
+ *   dbUser - database user (default "root").
+ *   dbPassword - write-only; never returned in GET, null in PUT leaves unchanged.
+ *
+ * Encryption:
+ *   encryptionEnabled - read-only flag, true if an encryption password is set.
+ *   encryptionPassword - write-only; never returned in GET, null in PUT leaves
+ *     unchanged. Changing this value triggers deletion of all existing backup data.
+ *
+ * Directories:
+ *   backupDirectory - absolute server-side path where backup data is stored.
+ *     Must exist and be writable. Defaults to parent-of-basedirectory/backups/.
+ *   exportTarget - absolute server-side path for the HTML export. When non-empty,
+ *     every backup run also creates a browser-viewable HTML export of all cases
+ *     (incremental, only modified cases are re-exported). Empty string disables.
+ *   syncTarget - remote sync URL for FTP/SFTP/SMB
+ *     (e.g. "sftp://user:pass@host/path"). Empty string disables.
+ *
+ * Notifications:
+ *   notifyOnSuccess - send email when backup completes successfully.
+ *   notifyOnFailure - send email when backup fails.
+ *
+ * @author max
  */
-public class ServerSettingsKeys {
-    
-    public static final String PROFILE_COMPANYNAME="profile.company.name";
-    public static final String PROFILE_COMPANYSTREET="profile.company.street";
-    public static final String PROFILE_COMPANYSTREET2="profile.company.street2";
-    public static final String PROFILE_COMPANYZIP="profile.company.zip";
-    public static final String PROFILE_COMPANYCITY="profile.company.city";
-    public static final String PROFILE_COMPANYCOUNTRY="profile.company.country";
-    
-    public static final String PROFILE_COMPANYPHONE="profile.company.phone";
-    public static final String PROFILE_COMPANYFAX="profile.company.fax";
-    public static final String PROFILE_COMPANYMOBILE="profile.company.mobile";
-    
-    public static final String PROFILE_COMPANYEMAIL="profile.company.email";
-    public static final String PROFILE_COMPANYWWW="profile.company.www";
-    
-    public static final String PROFILE_COMPANYTAXID="profile.company.taxid";
-    public static final String PROFILE_COMPANYUSTID="profile.company.ustid";
-    public static final String PROFILE_COMPANYBANK="profile.company.bank";
-    public static final String PROFILE_COMPANYBANKCODE="profile.company.bankcode";
-    public static final String PROFILE_COMPANYACCOUNTNO="profile.company.accountno";
-    
-    public static final String PROFILE_COMPANYBANK_AK="profile.company.ak.bank";
-    public static final String PROFILE_COMPANYBANKCODE_AK="profile.company.ak.bankcode";
-    public static final String PROFILE_COMPANYACCOUNTNO_AK="profile.company.ak.accountno";
-    
-    public static final String SERVERCONF_BEAMODE="jlawyer.server.bea.beamode";
-    public static final String SERVERCONF_BEAENDPOINT="jlawyer.server.bea.beaendpoint";
-    public static final String SERVERCONF_BEAENABLEDVERSIONS="jlawyer.global.bea.enabledversions";
-    
-    public static final String SERVERCONF_BACKUP_MODE="jlawyer.server.backup.backupmode";
-    public static final String SERVERCONF_BACKUP_DBUSER="jlawyer.server.backup.dbuser";
-    public static final String SERVERCONF_BACKUP_DBPWD="jlawyer.server.backup.dbpassword";
-    public static final String SERVERCONF_BACKUP_DBPORT="jlawyer.server.backup.dbport";
-    public static final String SERVERCONF_BACKUP_DBHOST="jlawyer.server.backup.dbhost";
-    public static final String SERVERCONF_BACKUP_DBNAME="jlawyer.server.backup.dbname";
-    public static final String SERVERCONF_BACKUP_HOUR="jlawyer.server.backup.hour";
-    public static final String SERVERCONF_BACKUP_MONDAY="jlawyer.server.backup.monday";
-    public static final String SERVERCONF_BACKUP_TUESDAY="jlawyer.server.backup.tuesday";
-    public static final String SERVERCONF_BACKUP_WEDNESDAY="jlawyer.server.backup.wednesday";
-    public static final String SERVERCONF_BACKUP_THURSDAY="jlawyer.server.backup.thursday";
-    public static final String SERVERCONF_BACKUP_FRIDAY="jlawyer.server.backup.friday";
-    public static final String SERVERCONF_BACKUP_SATURDAY="jlawyer.server.backup.saturday";
-    public static final String SERVERCONF_BACKUP_SUNDAY="jlawyer.server.backup.sunday";
-    public static final String SERVERCONF_BACKUP_ENCRYPTPWD="jlawyer.server.backup.encryptionpwd";
-    
-    public static final String SERVERCONF_BACKUP_SYNCTARGET="jlawyer.server.backup.synctarget";
-    public static final String SERVERCONF_BACKUP_EXPORTTARGET="jlawyer.server.backup.exporttarget";
-    public static final String SERVERCONF_BACKUP_DIRECTORY="jlawyer.server.backup.directory";
-    
-    public static final String SERVERCONF_REPLICATION_ISTARGET="jlawyer.server.replication.istarget";
-    
-    public static final String SERVERCONF_MONITOR_CPUWARN="jlawyer.server.monitor.cpuwarn";
-    public static final String SERVERCONF_MONITOR_CPUERROR="jlawyer.server.monitor.cpuerror";
-    public static final String SERVERCONF_MONITOR_MEMWARN="jlawyer.server.monitor.memwarn";
-    public static final String SERVERCONF_MONITOR_MEMERROR="jlawyer.server.monitor.memerror";
-    public static final String SERVERCONF_MONITOR_DISKWARN="jlawyer.server.monitor.diskwarn";
-    public static final String SERVERCONF_MONITOR_DISKERROR="jlawyer.server.monitor.diskerror";
-    public static final String SERVERCONF_MONITOR_VMWARN="jlawyer.server.monitor.vmwarn";
-    public static final String SERVERCONF_MONITOR_VMERROR="jlawyer.server.monitor.vmerror";
-    public static final String SERVERCONF_MONITOR_NOTIFY="jlawyer.server.monitor.notify";
-    public static final String SERVERCONF_MONITOR_NOTIFY_BACKUPSUCCESS="jlawyer.server.monitor.notify.backupsuccess";
-    public static final String SERVERCONF_MONITOR_NOTIFY_BACKUPFAILURE="jlawyer.server.monitor.notify.backupfailure";
-    public static final String SERVERCONF_MONITOR_SMTPSERVER="jlawyer.server.monitor.smtpserver";
-    public static final String SERVERCONF_MONITOR_SMTPPORT="jlawyer.server.monitor.smtpport";
-    public static final String SERVERCONF_MONITOR_SMTPUSER="jlawyer.server.monitor.smtpuser";
-    public static final String SERVERCONF_MONITOR_SMTPPASSWORD="jlawyer.server.monitor.smtppwd";
-    public static final String SERVERCONF_MONITOR_SMTPSENDERNAME="jlawyer.server.monitor.smtpsendername";
-    public static final String SERVERCONF_MONITOR_SMTPTO="jlawyer.server.monitor.smtpto";
-    public static final String SERVERCONF_MONITOR_SMTPSSL="jlawyer.server.monitor.smtpssl";
-    public static final String SERVERCONF_MONITOR_SMTPSTARTTLS="jlawyer.server.monitor.smtpstarttls";
-    
-    public static final String SERVERCONF_MONITOR_ENABLED_CPU="jlawyer.server.monitor.enabled.cpu";
-    public static final String SERVERCONF_MONITOR_ENABLED_RAM="jlawyer.server.monitor.enabled.ram";
-    public static final String SERVERCONF_MONITOR_ENABLED_DISK="jlawyer.server.monitor.enabled.disk";
-    public static final String SERVERCONF_MONITOR_ENABLED_JAVA="jlawyer.server.monitor.enabled.java";
-    
-    public static final String SERVERCONF_CASENUMBERING_PATTERN="jlawyer.server.numbering.pattern";
-    public static final String SERVERCONF_CASENUMBERING_STARTFROM="jlawyer.server.numbering.startfrom";
-    public static final String SERVERCONF_CASENUMBERING_INCREMENT="jlawyer.server.numbering.increment";
-    
-    public static final String SERVERCONF_CASENUMBERING_EXT_ENABLED="jlawyer.server.numbering.ext.enabled";
-    public static final String SERVERCONF_CASENUMBERING_EXT_DIVIDER_MAIN="jlawyer.server.numbering.ext.divider.main";
-    public static final String SERVERCONF_CASENUMBERING_EXT_DIVIDER_EXT="jlawyer.server.numbering.ext.divider.ext";
-    public static final String SERVERCONF_CASENUMBERING_EXT_PREFIX_ENABLED="jlawyer.server.numbering.ext.prefix.enabled";
-    public static final String SERVERCONF_CASENUMBERING_EXT_PREFIX="jlawyer.server.numbering.ext.prefix";
-    public static final String SERVERCONF_CASENUMBERING_EXT_SUFFIX_ENABLED="jlawyer.server.numbering.ext.suffix.enabled";
-    public static final String SERVERCONF_CASENUMBERING_EXT_SUFFIX="jlawyer.server.numbering.ext.suffix";
-    public static final String SERVERCONF_CASENUMBERING_EXT_GROUP_ENABLED="jlawyer.server.numbering.ext.group.enabled";
-    public static final String SERVERCONF_CASENUMBERING_EXT_LAWYER_ENABLED="jlawyer.server.numbering.ext.lawyer.enabled";
-    
-    public static final String SERVERCONF_SCANNER_SERVERDIR="jlawyer.server.observe.directory";
-    public static final String SERVERCONF_SCANNER_OCRCMD="jlawyer.server.observe.ocrcmd";
-    
-    public static final String DATA_CUSTOMFIELD_ADDRESS_PREFIX="data.customfields.address.";
-    public static final String DATA_CUSTOMFIELD_ARCHIVEFILE_PREFIX="data.customfields.archivefile.";
-    public static final String DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX="data.customfields.archivefile.involved.";
-    
-    public static final String SERVERCONF_DOCUMENTS_WAITFOR_MAC="jlawyer.server.documents.waitforprocess.mac";
-    
-    public static final String SERVERCONF_DOCUMENTS_BIN_RETENTIONDAYS="jlawyer.server.documents.bin.retentiondays";
-    
-    public static final String SERVERCONF_SECURITY_FORCE_PASSWORDCOMPLEXITY="jlawyer.server.security.forcepasswordcomplexity";
-    
-    public static final String SERVERCONF_FINANCE_GIROCODEPX="jlawyer.server.finance.girocodepx";
-    
-    public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_ENABLED="jlawyer.server.cloudsync.addressbook.enabled";
-    public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_BIRTHDAYSYNC="jlawyer.server.cloudsync.addressbook.birthdaysync";
-    public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_HOST="jlawyer.server.cloudsync.addressbook.host";
-    public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PORT="jlawyer.server.cloudsync.addressbook.port";
-    public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_SSL="jlawyer.server.cloudsync.addressbook.ssl";
-    public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PATH="jlawyer.server.cloudsync.addressbook.path";
-    public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_USER="jlawyer.server.cloudsync.addressbook.user";
-    public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD="jlawyer.server.cloudsync.addressbook.pwd";
-    public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_HREF="jlawyer.server.cloudsync.addressbook.href";
-    
-    public static final String SERVERCONF_CLOUDSYNC_CALENDAR_FULLSYNC="jlawyer.server.cloudsync.calendar.fullsync";
-    
-    public static final String SERVERCONF_CALENDAR_CONFLICTCHECK="jlawyer.server.calendar.conflictcheck";
-    
-    public static final String SERVERCONF_USAGELIMIT_MAXUSERS="jlawyer.server.usagelimit.maxusers";
-    
-    public static final String SERVERCONF_TIMESHEET_PARALLELLOGS_WARNING="jlawyer.server.timesheets.parallellogswarning";
-    // can have values "minutes", "hours", "reject"
-    public static final String SERVERCONF_TIMESHEET_NUMERICINPUT="jlawyer.server.timesheets.numericinput";
-    
-    public static final String SERVERCONF_INSTANTMESSAGING_POLLING_ENABLED="jlawyer.server.instantmessaging.polling.enabled";
-    
-    public static final String SERVERCONF_INSTALLATION_ID="jlawyer.server.installation.id";
-    public static final String SERVERCONF_EPOSTVENDORID_ENCRYPTED="jlawyer.server.epost.vendorid";
-    
-    public static final String SERVERCONF_STIRLINGPDF_ENDPOINT="jlawyer.server.stirlingpdf.endpoint";
+public class RestfulBackupConfigurationV7 {
 
-    public static final String SERVERCONF_DROPSCAN_POLLINGINTERVAL="jlawyer.server.dropscan.pollinginterval";
+    // scheduling
+    private String backupMode = null;
+    private int hour = 22;
+    private boolean monday = false;
+    private boolean tuesday = false;
+    private boolean wednesday = false;
+    private boolean thursday = false;
+    private boolean friday = false;
+    private boolean saturday = false;
+    private boolean sunday = false;
+
+    // database
+    private String dbHost = null;
+    private String dbPort = null;
+    private String dbName = null;
+    private String dbUser = null;
+    private String dbPassword = null;
+
+    // encryption
+    private String encryptionPassword = null;
+    private boolean encryptionEnabled = false;
+
+    // directories
+    private String backupDirectory = null;
+    private String syncTarget = null;
+    private String exportTarget = null;
+
+    // notifications
+    private boolean notifyOnSuccess = false;
+    private boolean notifyOnFailure = false;
+
+    public RestfulBackupConfigurationV7() {
+
+    }
+
+    /**
+     * @return "on" or "off" indicating whether scheduled backups are active
+     */
+    public String getBackupMode() {
+        return backupMode;
+    }
+
+    /**
+     * @param backupMode the backupMode to set
+     */
+    public void setBackupMode(String backupMode) {
+        this.backupMode = backupMode;
+    }
+
+    /**
+     * @return hour of day for scheduled backups (0-23)
+     */
+    public int getHour() {
+        return hour;
+    }
+
+    /**
+     * @param hour the hour to set
+     */
+    public void setHour(int hour) {
+        this.hour = hour;
+    }
+
+    /**
+     * @return the monday
+     */
+    public boolean isMonday() {
+        return monday;
+    }
+
+    /**
+     * @param monday the monday to set
+     */
+    public void setMonday(boolean monday) {
+        this.monday = monday;
+    }
+
+    /**
+     * @return the tuesday
+     */
+    public boolean isTuesday() {
+        return tuesday;
+    }
+
+    /**
+     * @param tuesday the tuesday to set
+     */
+    public void setTuesday(boolean tuesday) {
+        this.tuesday = tuesday;
+    }
+
+    /**
+     * @return the wednesday
+     */
+    public boolean isWednesday() {
+        return wednesday;
+    }
+
+    /**
+     * @param wednesday the wednesday to set
+     */
+    public void setWednesday(boolean wednesday) {
+        this.wednesday = wednesday;
+    }
+
+    /**
+     * @return the thursday
+     */
+    public boolean isThursday() {
+        return thursday;
+    }
+
+    /**
+     * @param thursday the thursday to set
+     */
+    public void setThursday(boolean thursday) {
+        this.thursday = thursday;
+    }
+
+    /**
+     * @return the friday
+     */
+    public boolean isFriday() {
+        return friday;
+    }
+
+    /**
+     * @param friday the friday to set
+     */
+    public void setFriday(boolean friday) {
+        this.friday = friday;
+    }
+
+    /**
+     * @return the saturday
+     */
+    public boolean isSaturday() {
+        return saturday;
+    }
+
+    /**
+     * @param saturday the saturday to set
+     */
+    public void setSaturday(boolean saturday) {
+        this.saturday = saturday;
+    }
+
+    /**
+     * @return the sunday
+     */
+    public boolean isSunday() {
+        return sunday;
+    }
+
+    /**
+     * @param sunday the sunday to set
+     */
+    public void setSunday(boolean sunday) {
+        this.sunday = sunday;
+    }
+
+    /**
+     * @return hostname of the database server (default "localhost")
+     */
+    public String getDbHost() {
+        return dbHost;
+    }
+
+    /**
+     * @param dbHost the dbHost to set
+     */
+    public void setDbHost(String dbHost) {
+        this.dbHost = dbHost;
+    }
+
+    /**
+     * @return TCP port of the database server as string, 1-65535 (default "3306")
+     */
+    public String getDbPort() {
+        return dbPort;
+    }
+
+    /**
+     * @param dbPort the dbPort to set
+     */
+    public void setDbPort(String dbPort) {
+        this.dbPort = dbPort;
+    }
+
+    /**
+     * @return database / schema name (default "jlawyerdb")
+     */
+    public String getDbName() {
+        return dbName;
+    }
+
+    /**
+     * @param dbName the dbName to set
+     */
+    public void setDbName(String dbName) {
+        this.dbName = dbName;
+    }
+
+    /**
+     * @return database user (default "root")
+     */
+    public String getDbUser() {
+        return dbUser;
+    }
+
+    /**
+     * @param dbUser the dbUser to set
+     */
+    public void setDbUser(String dbUser) {
+        this.dbUser = dbUser;
+    }
+
+    /**
+     * @return always null in GET responses (write-only); in PUT, set to
+     *         change the database password, null to leave unchanged
+     */
+    public String getDbPassword() {
+        return dbPassword;
+    }
+
+    /**
+     * @param dbPassword the dbPassword to set
+     */
+    public void setDbPassword(String dbPassword) {
+        this.dbPassword = dbPassword;
+    }
+
+    /**
+     * @return always null in GET responses (write-only); in PUT, set to
+     *         change the encryption password, null to leave unchanged.
+     *         Changing this value triggers deletion of all existing backup data
+     */
+    public String getEncryptionPassword() {
+        return encryptionPassword;
+    }
+
+    /**
+     * @param encryptionPassword the encryptionPassword to set
+     */
+    public void setEncryptionPassword(String encryptionPassword) {
+        this.encryptionPassword = encryptionPassword;
+    }
+
+    /**
+     * @return true if an encryption password is currently configured
+     *         (read-only, ignored in PUT)
+     */
+    public boolean isEncryptionEnabled() {
+        return encryptionEnabled;
+    }
+
+    /**
+     * @param encryptionEnabled the encryptionEnabled to set
+     */
+    public void setEncryptionEnabled(boolean encryptionEnabled) {
+        this.encryptionEnabled = encryptionEnabled;
+    }
+
+    /**
+     * @return absolute server-side path where backup data is stored; defaults
+     *         to parent-of-basedirectory/backups/ when not configured
+     */
+    public String getBackupDirectory() {
+        return backupDirectory;
+    }
+
+    /**
+     * @param backupDirectory the backupDirectory to set
+     */
+    public void setBackupDirectory(String backupDirectory) {
+        this.backupDirectory = backupDirectory;
+    }
+
+    /**
+     * @return remote sync URL (e.g. "sftp://user:pass@host/path") for
+     *         synchronizing the backup to external storage, empty means disabled
+     */
+    public String getSyncTarget() {
+        return syncTarget;
+    }
+
+    /**
+     * @param syncTarget the syncTarget to set
+     */
+    public void setSyncTarget(String syncTarget) {
+        this.syncTarget = syncTarget;
+    }
+
+    /**
+     * @return absolute server-side path for the HTML export; when non-empty,
+     *         every backup also creates a browser-viewable HTML export of all
+     *         cases (incremental), empty means disabled
+     */
+    public String getExportTarget() {
+        return exportTarget;
+    }
+
+    /**
+     * @param exportTarget the exportTarget to set
+     */
+    public void setExportTarget(String exportTarget) {
+        this.exportTarget = exportTarget;
+    }
+
+    /**
+     * @return true if a notification email is sent on successful backup
+     */
+    public boolean isNotifyOnSuccess() {
+        return notifyOnSuccess;
+    }
+
+    /**
+     * @param notifyOnSuccess the notifyOnSuccess to set
+     */
+    public void setNotifyOnSuccess(boolean notifyOnSuccess) {
+        this.notifyOnSuccess = notifyOnSuccess;
+    }
+
+    /**
+     * @return true if a notification email is sent on backup failure
+     */
+    public boolean isNotifyOnFailure() {
+        return notifyOnFailure;
+    }
+
+    /**
+     * @param notifyOnFailure the notifyOnFailure to set
+     */
+    public void setNotifyOnFailure(boolean notifyOnFailure) {
+        this.notifyOnFailure = notifyOnFailure;
+    }
 
 }
