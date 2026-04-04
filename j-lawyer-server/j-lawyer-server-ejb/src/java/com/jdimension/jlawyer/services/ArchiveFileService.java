@@ -9166,39 +9166,54 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             return BigDecimal.ZERO;
         }
 
-        BigDecimal totalInterest = BigDecimal.ZERO;
+        // Basiszinsänderungen und Principal-Änderungen im Zeitraum ermitteln
+        List<LocalDate> changeDates = getBaseRateChangeDatesBetween(startDate, endDate);
+        List<LocalDate> principalChangeDates = getPrincipalChangeDatesBetween(cmp, startDate, endDate);
+        for (LocalDate principalChangeDate : principalChangeDates) {
+            if (!changeDates.contains(principalChangeDate)) {
+                changeDates.add(principalChangeDate);
+            }
+        }
+        Collections.sort(changeDates);
 
-        // Iteriere über alle InterestRules, die für das Startdatum gültig sind
-        for (InterestRule rule : cmp.getInterestRules()) {
-            LocalDate ruleStart = rule.getValidFrom().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            if (endDate.isBefore(ruleStart)) {
+        // Teilzeiträume erstellen
+        List<ClaimInterestPeriod> periods = new ArrayList<>();
+        LocalDate periodStart = startDate;
+        for (LocalDate changeDate : changeDates) {
+            if (!changeDate.isAfter(periodStart)) {
                 continue;
             }
+            periods.add(new ClaimInterestPeriod(periodStart, changeDate));
+            periodStart = changeDate;
+        }
+        periods.add(new ClaimInterestPeriod(periodStart, endDate));
 
-            // Zeitraum für diese Rule = max(startDate, ruleStart) bis endDate
-            LocalDate interestStart = startDate.isAfter(ruleStart) ? startDate : ruleStart;
-            long days = ChronoUnit.DAYS.between(interestStart, endDate);
+        BigDecimal totalInterest = BigDecimal.ZERO;
+
+        // Für jeden Teilzeitraum Zinsen berechnen
+        for (ClaimInterestPeriod p : periods) {
+            long days = ChronoUnit.DAYS.between(p.getStart(), p.getEnd());
             if (days <= 0) {
                 continue;
             }
 
-            // Dynamischer Principal: berücksichtigt Zahlungen und Anpassungen bis zum Start des Zinszeitraums
-            BigDecimal principal = calculateDynamicPrincipal(cmp, Date.from(interestStart.atStartOfDay(ZoneId.systemDefault()).toInstant()));
-
-            // Ermittle den Basiszinssatz zum Startdatum der Rule
-            BigDecimal baseRate = null;
-            if (rule.getInterestType() == InterestType.BASIS_RELATED) {
-                Date ruleStartDate = Date.from(interestStart.atStartOfDay(ZoneId.systemDefault()).toInstant());
-                baseRate = this.baseInterestFacade.findRateByDate(ruleStartDate);
-                if (baseRate == null) {
-                    log.error("kein Basiszinssatz gefunden für Datum " + ruleStartDate);
-                    baseRate = BigDecimal.ZERO; // Fallback, falls kein Basiszinssatz gefunden
+            // Finde die für diesen Zeitraum gültige InterestRule
+            InterestRule effectiveRule = null;
+            for (InterestRule rule : cmp.getInterestRules()) {
+                LocalDate ruleStart = rule.getValidFrom().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                if (p.getStart().isBefore(ruleStart)) {
+                    continue;
+                } else {
+                    effectiveRule = rule;
                 }
-            } else {
-                baseRate = BigDecimal.ZERO; // Für FIXED wird baseRate nicht benötigt
+            }
+            if (effectiveRule == null) {
+                continue;
             }
 
-            BigDecimal rate = rule.getEffectiveRate(baseRate); // Basis + Marge zum Startdatum der Rule
+            BigDecimal principal = calculateDynamicPrincipal(cmp, Date.from(p.getStart().atStartOfDay(ZoneId.systemDefault()).toInstant()));
+
+            BigDecimal rate = effectiveRule.getEffectiveRate(getBaseRateForDate(p.getStart()));
 
             BigDecimal interest = principal
                     .multiply(rate)

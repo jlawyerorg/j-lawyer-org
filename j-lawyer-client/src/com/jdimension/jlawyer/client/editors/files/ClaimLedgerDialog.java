@@ -797,6 +797,11 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
         // Update balance chart
         this.updateBalanceChart();
+
+        // Aufstellungs-Tab aktualisieren, falls aktiv
+        if (jTabbedPane1.getSelectedIndex() == 3) {
+            refreshSummaryTable();
+        }
     }
 
     private void refreshSummaryTable() {
@@ -1794,7 +1799,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
                 List<ClaimLedgerEntry> initialEntries = locator.lookupArchiveFileServiceRemote().addClaimLedgerEntry(initialEntry, this.currentEntry.getId());
                 for (ClaimLedgerEntry cle : initialEntries) {
-                    ((LedgerTableModel) this.tblLedger.getModel()).addEntry(initialEntry);
+                    ((LedgerTableModel) this.tblLedger.getModel()).addEntry(cle);
                 }
 
             } catch (Exception ex) {
@@ -1962,6 +1967,19 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                     "Keine Auswahl",
                     JOptionPane.INFORMATION_MESSAGE);
             return;
+        }
+
+        // Initiale Buchungen (Hauptforderung/Kosten) dürfen nicht direkt gelöscht werden
+        for (int sel = 0; sel < selected.length; sel++) {
+            int modelIndex = this.tblLedger.convertRowIndexToModel(selected[sel]);
+            ClaimLedgerEntry entry = ((LedgerTableModel) this.tblLedger.getModel()).getEntryAt(modelIndex);
+            if (entry.getType() == LedgerEntryType.MAIN_CLAIM || entry.getType() == LedgerEntryType.COST) {
+                JOptionPane.showMessageDialog(this,
+                        "Forderungs- und Kostenbuchungen können nicht direkt gelöscht werden. Bitte löschen Sie die zugehörige Position im Tab \"Positionen\".",
+                        "Löschen nicht möglich",
+                        JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
         }
 
         // Sicherheitsabfrage
@@ -2166,15 +2184,14 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         StyledCalculationTable ct = new StyledCalculationTable();
         ct.addHeaders("Datum", "Bezeichnung", "Zahlung", "unverz. Kosten", "verz. Kosten", "Zinsen", "Forderung");
 
-        DecimalFormat decf = new DecimalFormat("0.00");
         for (int r = 0; r < this.tblSummary.getRowCount(); r++) {
             String datum = tblSummary.getValueAt(r, 0) != null ? tblSummary.getValueAt(r, 0).toString() : "";
             String bezeichnung = tblSummary.getValueAt(r, 1) != null ? tblSummary.getValueAt(r, 1).toString() : "";
-            String zahlung = tblSummary.getValueAt(r, 2) != null ? decf.format((Number) tblSummary.getValueAt(r, 2)) : "";
-            String unverzKosten = tblSummary.getValueAt(r, 3) != null ? decf.format((Number) tblSummary.getValueAt(r, 3)) : "";
-            String verzKosten = tblSummary.getValueAt(r, 4) != null ? decf.format((Number) tblSummary.getValueAt(r, 4)) : "";
-            String zinsen = tblSummary.getValueAt(r, 5) != null ? decf.format((Number) tblSummary.getValueAt(r, 5)) : "";
-            String forderung = tblSummary.getValueAt(r, 6) != null ? decf.format((Number) tblSummary.getValueAt(r, 6)) : "";
+            String zahlung = tblSummary.getValueAt(r, 2) != null ? cf.format((Number) tblSummary.getValueAt(r, 2)) : "";
+            String unverzKosten = tblSummary.getValueAt(r, 3) != null ? cf.format((Number) tblSummary.getValueAt(r, 3)) : "";
+            String verzKosten = tblSummary.getValueAt(r, 4) != null ? cf.format((Number) tblSummary.getValueAt(r, 4)) : "";
+            String zinsen = tblSummary.getValueAt(r, 5) != null ? cf.format((Number) tblSummary.getValueAt(r, 5)) : "";
+            String forderung = tblSummary.getValueAt(r, 6) != null ? cf.format((Number) tblSummary.getValueAt(r, 6)) : "";
             ct.addRow(datum, bezeichnung, zahlung, unverzKosten, verzKosten, zinsen, forderung);
         }
 

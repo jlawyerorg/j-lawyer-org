@@ -1835,6 +1835,9 @@ public class ReportService implements ReportServiceRemote, ReportServiceLocal {
             headerFont.setBold(true);
             headerStyle.setFont(headerFont);
 
+            org.apache.poi.ss.usermodel.CellStyle numericStyle = workbook.createCellStyle();
+            numericStyle.setDataFormat(workbook.createDataFormat().getFormat("#,##0.00"));
+
             org.apache.poi.ss.usermodel.Row headerRow = sheet.createRow(0);
             for (int i = 0; i < headers.length; i++) {
                 org.apache.poi.ss.usermodel.Cell cell = headerRow.createCell(i);
@@ -1850,6 +1853,7 @@ public class ReportService implements ReportServiceRemote, ReportServiceLocal {
                     if (isNumericColumn(numericColumns, c) && value != null && !value.isEmpty()) {
                         try {
                             cell.setCellValue(Double.parseDouble(value));
+                            cell.setCellStyle(numericStyle);
                         } catch (NumberFormatException nfe) {
                             cell.setCellValue(value);
                         }
@@ -1889,6 +1893,7 @@ public class ReportService implements ReportServiceRemote, ReportServiceLocal {
                 if (isNumericColumn(numericColumns, c) && value != null && !value.isEmpty()) {
                     try {
                         cell.setDoubleValue(Double.parseDouble(value));
+                        cell.setFormatString("#,##0.00");
                     } catch (NumberFormatException nfe) {
                         cell.setStringValue(value);
                     }
