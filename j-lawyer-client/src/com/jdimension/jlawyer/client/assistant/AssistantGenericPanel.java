@@ -12,6 +12,7 @@ import com.jdimension.jlawyer.ai.OutputData;
 import com.jdimension.jlawyer.ai.Parameter;
 import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.AttachmentListCellRenderer;
 import com.jdimension.jlawyer.client.utils.AudioUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
@@ -283,19 +284,37 @@ public class AssistantGenericPanel extends JDialog {
             pnlPlaceholder.setBackground(Color.WHITE);
             pnlPlaceholder.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
             pnlPlaceholder.setAlignmentX(0.5f);
-            JLabel lblPlaceholder = new JLabel(
-                "<html><center>"
-                + "<span style='font-size:24pt;color:#787878;'>"
-                + "Ingo erledigt Routinearbeiten - einfach ausprobieren:<br>"
-                + "<i>\"Welche Funktionen kannst Du aufrufen?\"</i>"
-                + "<br><br>"
-                + "Beispiel:<br>"
-                + "<i>\"Ermittle die heutigen offenen Termine und Fristen<br>"
-                + "und erstelle mir eine Agenda.<br>"
-                + "Priorisiere anhand der Formulierungen.\"</i>"
-                + "</span>"
-                + "</center></html>"
-            );
+
+            boolean hasAiRole = UserSettings.getInstance().getUserRoles(
+                    UserSettings.getInstance().getCurrentUser().getPrincipalId()
+            ).contains("aiAgentRole");
+
+            JLabel lblPlaceholder;
+            if (hasAiRole) {
+                lblPlaceholder = new JLabel(
+                    "<html><center>"
+                    + "<span style='font-size:24pt;color:#787878;'>"
+                    + "Ingo erledigt Routinearbeiten - einfach ausprobieren:<br>"
+                    + "<i>\"Welche Funktionen kannst Du aufrufen?\"</i>"
+                    + "<br><br>"
+                    + "Beispiel:<br>"
+                    + "<i>\"Ermittle die heutigen offenen Termine und Fristen<br>"
+                    + "und erstelle mir eine Agenda.<br>"
+                    + "Priorisiere anhand der Formulierungen.\"</i>"
+                    + "</span>"
+                    + "</center></html>"
+                );
+            } else {
+                lblPlaceholder = new JLabel(
+                    "<html><center>"
+                    + "<span style='font-size:24pt;color:#DE313B;'>"
+                    + "Keine Berechtigung für KI-Agentenfunktionen.<br>"
+                    + "Bitte wenden Sie sich an Ihren Administrator."
+                    + "</span>"
+                    + "</center></html>"
+                );
+            }
+
             lblPlaceholder.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
             pnlPlaceholder.add(lblPlaceholder, new GridBagConstraints());
             pnlMessages.add(Box.createVerticalGlue());

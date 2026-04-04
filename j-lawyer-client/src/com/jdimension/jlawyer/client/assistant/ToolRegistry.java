@@ -509,7 +509,16 @@ public class ToolRegistry {
                 ToolDefinition.RISK_MEDIUM));
     }
 
+    public boolean hasAiAgentRole() {
+        String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
+        List<String> roles = UserSettings.getInstance().getUserRoles(principalId);
+        return roles.contains("aiAgentRole");
+    }
+
     public List<ToolDefinition> getToolDefinitions() {
+        if (!hasAiAgentRole()) {
+            return Collections.emptyList();
+        }
         return TOOLS;
     }
 
@@ -528,6 +537,9 @@ public class ToolRegistry {
     }
 
     public String execute(String toolId, String argumentsJson) {
+        if (!hasAiAgentRole()) {
+            return "{\"error\": \"Zugriff verweigert: Keine Berechtigung für KI-Agentenfunktionen.\"}";
+        }
         try {
             JsonObject args = (JsonObject) Jsoner.deserialize(argumentsJson);
             switch (toolId) {
