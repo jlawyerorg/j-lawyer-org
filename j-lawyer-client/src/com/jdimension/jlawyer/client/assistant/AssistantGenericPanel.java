@@ -37,6 +37,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.event.MouseEvent;
@@ -614,32 +615,26 @@ public class AssistantGenericPanel extends JDialog {
         scrollPrompt.setBorder(new FlatLineBorder(new Insets(6, 10, 6, 10), new Color(190, 190, 190), 1, 16));
 
         taPrompt.getDocument().addDocumentListener(new DocumentListener() {
-            private void adjustRows() {
-                // Defer to allow layout to complete first (getLineCount needs valid width)
-                SwingUtilities.invokeLater(() -> {
-                    int newRows = Math.max(1, Math.min(taPrompt.getLineCount(), 5));
-                    if (taPrompt.getRows() != newRows) {
-                        taPrompt.setRows(newRows);
-                        bottomPanel.revalidate();
-                        getContentPane().revalidate();
-                        getContentPane().repaint();
-                    }
-                });
-            }
-
             @Override
             public void insertUpdate(DocumentEvent e) {
-                adjustRows();
+                adjustPromptRows();
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
-                adjustRows();
+                adjustPromptRows();
             }
 
             @Override
             public void changedUpdate(DocumentEvent e) {
-                adjustRows();
+                adjustPromptRows();
+            }
+        });
+
+        taPrompt.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                adjustPromptRows();
             }
         });
 
@@ -1249,5 +1244,33 @@ public class AssistantGenericPanel extends JDialog {
             log.error("Error during transcription", ex);
             ThreadUtils.showErrorDialog(this, "Transkriptionsfehler: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
         }
+    }
+
+    private void adjustPromptRows() {
+        SwingUtilities.invokeLater(() -> {
+            int visibleLines = 1;
+            try {
+                int docLen = taPrompt.getDocument().getLength();
+                if (docLen > 0) {
+                    Rectangle first = taPrompt.modelToView(0);
+                    Rectangle last = taPrompt.modelToView(docLen);
+                    if (first != null && last != null) {
+                        int lineHeight = taPrompt.getFontMetrics(taPrompt.getFont()).getHeight();
+                        if (lineHeight > 0) {
+                            visibleLines = (last.y - first.y) / lineHeight + 1;
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                // fallback to 1
+            }
+            int newRows = Math.max(1, Math.min(visibleLines, 5));
+            if (taPrompt.getRows() != newRows) {
+                taPrompt.setRows(newRows);
+                bottomPanel.revalidate();
+                getContentPane().revalidate();
+                getContentPane().repaint();
+            }
+        });
     }
 }

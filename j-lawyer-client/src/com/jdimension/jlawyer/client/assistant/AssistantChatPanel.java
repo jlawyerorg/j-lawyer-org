@@ -48,6 +48,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -579,32 +580,26 @@ public class AssistantChatPanel extends JDialog {
         scrollPrompt.setBorder(new FlatLineBorder(new Insets(6, 10, 6, 10), new Color(190, 190, 190), 1, 16));
 
         taPrompt.getDocument().addDocumentListener(new DocumentListener() {
-            private void adjustRows() {
-                // Defer to allow layout to complete first (getLineCount needs valid width)
-                SwingUtilities.invokeLater(() -> {
-                    int newRows = Math.max(1, Math.min(taPrompt.getLineCount(), 5));
-                    if (taPrompt.getRows() != newRows) {
-                        taPrompt.setRows(newRows);
-                        bottomPanel.revalidate();
-                        getContentPane().revalidate();
-                        getContentPane().repaint();
-                    }
-                });
-            }
-
             @Override
             public void insertUpdate(DocumentEvent e) {
-                adjustRows();
+                adjustPromptRows();
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
-                adjustRows();
+                adjustPromptRows();
             }
 
             @Override
             public void changedUpdate(DocumentEvent e) {
-                adjustRows();
+                adjustPromptRows();
+            }
+        });
+
+        taPrompt.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                adjustPromptRows();
             }
         });
 
@@ -963,8 +958,12 @@ public class AssistantChatPanel extends JDialog {
 
                                 final String displayResult = toolSummary + " — Ergebnis erhalten";
                                 final JPanel tp = toolPanel;
+                                final List<String[]> docRefs = extractDocumentReferences(toolResult);
                                 SwingUtilities.invokeAndWait(() -> {
                                     updateToolStatusMessage(tp, displayResult);
+                                    if (!docRefs.isEmpty()) {
+                                        addDocumentButton(tp, docRefs);
+                                    }
                                 });
                             } else {
                                 toolResultMsg.setContent("{\"denied\": true, \"message\": \"Der Benutzer hat diesen Werkzeugaufruf abgelehnt.\"}");
@@ -1270,6 +1269,34 @@ public class AssistantChatPanel extends JDialog {
         this.interrupted = true;
     }
 
+    private void adjustPromptRows() {
+        SwingUtilities.invokeLater(() -> {
+            int visibleLines = 1;
+            try {
+                int docLen = taPrompt.getDocument().getLength();
+                if (docLen > 0) {
+                    Rectangle first = taPrompt.modelToView(0);
+                    Rectangle last = taPrompt.modelToView(docLen);
+                    if (first != null && last != null) {
+                        int lineHeight = taPrompt.getFontMetrics(taPrompt.getFont()).getHeight();
+                        if (lineHeight > 0) {
+                            visibleLines = (last.y - first.y) / lineHeight + 1;
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                // fallback to 1
+            }
+            int newRows = Math.max(1, Math.min(visibleLines, 5));
+            if (taPrompt.getRows() != newRows) {
+                taPrompt.setRows(newRows);
+                bottomPanel.revalidate();
+                getContentPane().revalidate();
+                getContentPane().repaint();
+            }
+        });
+    }
+
     private void cmdResetChatActionPerformed(java.awt.event.ActionEvent evt) {
         this.messages.clear();
         this.pnlMessages.removeAll();
@@ -1417,6 +1444,95 @@ public class AssistantChatPanel extends JDialog {
                 break;
             }
         }
+    }
+
+    private List<String[]> extractDocumentReferences(String toolResult) {
+        List<String[]> docs = new ArrayList<>();
+        try {
+            org.json.simple.JsonObject json = (org.json.simple.JsonObject) org.json.simple.Jsoner.deserialize(toolResult);
+
+            // Array format: list_case_documents, list_case_documents_by_date, search_case_documents
+            Object documentsObj = json.get("documents");
+            if (documentsObj instanceof org.json.simple.JsonArray) {
+                org.json.simple.JsonArray arr = (org.json.simple.JsonArray) documentsObj;
+                for (Object item : arr) {
+                    if (item instanceof org.json.simple.JsonObject) {
+                        org.json.simple.JsonObject docObj = (org.json.simple.JsonObject) item;
+                        String id = (String) docObj.get("id");
+                        String name = (String) docObj.get("name");
+                        if (id != null && name != null) {
+                            docs.add(new String[]{id, name});
+                        }
+                    }
+                }
+            }
+
+            // Single document format: get_document_text, get_document_content
+            if (docs.isEmpty()) {
+                String docId = (String) json.get("documentId");
+                String docName = (String) json.get("name");
+                if (docId != null && docName != null) {
+                    docs.add(new String[]{docId, docName});
+                }
+            }
+        } catch (Exception ex) {
+            log.debug("Could not parse document references from tool result", ex);
+        }
+        return docs;
+    }
+
+    private void addDocumentButton(JPanel toolPanel, List<String[]> docs) {
+        JButton btnDocs = new JButton(docs.size() + " Dok.");
+        btnDocs.setFont(btnDocs.getFont().deriveFont(btnDocs.getFont().getSize2D() - 2f));
+        btnDocs.setMargin(new Insets(1, 4, 1, 4));
+        btnDocs.setToolTipText("Dokumente öffnen");
+        btnDocs.addActionListener((ActionEvent e) -> {
+            JPopupMenu popup = new JPopupMenu();
+            for (String[] doc : docs) {
+                String docId = doc[0];
+                String docName = doc[1];
+                JMenuItem item = new JMenuItem(docName);
+                item.addActionListener((ActionEvent ae) -> {
+                    openDocumentById(docId);
+                });
+                popup.add(item);
+            }
+            popup.show(btnDocs, 0, btnDocs.getHeight());
+        });
+        toolPanel.add(btnDocs);
+        toolPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, toolPanel.getPreferredSize().height + 8));
+        toolPanel.revalidate();
+        toolPanel.repaint();
+    }
+
+    private void openDocumentById(String documentId) {
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() {
+                try {
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    ArchiveFileServiceRemote svc = locator.lookupArchiveFileServiceRemote();
+                    ArchiveFileDocumentsBean docBean = svc.getDocument(documentId);
+                    if (docBean == null) {
+                        log.error("Document not found: " + documentId);
+                        return null;
+                    }
+                    ArchiveFileBean caseDto = svc.getArchiveFile(docBean.getArchiveFileKey().getId());
+                    if (caseDto == null) {
+                        log.error("Case not found for document: " + documentId);
+                        return null;
+                    }
+                    com.jdimension.jlawyer.client.utils.CaseUtils.openDocument(caseDto, docBean, false, AssistantChatPanel.this);
+                } catch (Exception ex) {
+                    log.error("Error opening document: " + documentId, ex);
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(AssistantChatPanel.this, "Dokument konnte nicht geöffnet werden: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                    });
+                }
+                return null;
+            }
+        }.execute();
     }
 
     private String formatParamTooltip(String argumentsJson) {
