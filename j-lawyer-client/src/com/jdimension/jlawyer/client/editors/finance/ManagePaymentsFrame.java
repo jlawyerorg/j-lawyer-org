@@ -905,7 +905,7 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
                                         StringUtils.sanitizeForSepa(recipientName)
                                 ),
                                 p.getTotal().setScale(2, RoundingMode.HALF_UP),
-                                StringUtils.sanitizeForSepa(p.getPaymentNumber() + " " + p.getReason()),
+                                StringUtils.sanitizeForSepaReference(p.getPaymentNumber() + " " + p.getReason()),
                                 SEPATransaction.Currency.EUR
                         ));
                     } catch (Exception ex) {

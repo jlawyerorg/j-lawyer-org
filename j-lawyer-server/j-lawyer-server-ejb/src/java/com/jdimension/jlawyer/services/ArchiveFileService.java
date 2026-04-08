@@ -7956,7 +7956,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             // use file number as identifier, remove special characters because it may cause issues in banking
             //String paymentNumberPrefix=ServerFileUtils.sanitizeFileName(aFile.getFileNumber()) + "-" + new SimpleDateFormat("yyyyMMdd").format(new Date())+"-";
-            String paymentNumberPrefix = ServerFileUtils.sanitizeFileName(aFile.getFileNumber()) + "-";
+            String paymentNumberPrefix = "Z" + ServerStringUtils.sanitizeForSepaReference(aFile.getFileNumber()) + "-";
             int i = 0;
             boolean paymentNumberExists = true;
             String paymentNumber = null;
