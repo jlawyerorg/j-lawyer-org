@@ -14,11 +14,18 @@ import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.ai.ToolCall;
 import com.jdimension.jlawyer.ai.ToolDefinition;
 import com.jdimension.jlawyer.persistence.AssistantPrompt;
+import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
+import com.jdimension.jlawyer.client.desktop.DesktopPanel;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
+import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
+import com.jdimension.jlawyer.client.editors.files.ViewArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.AudioUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.TemplatesUtil;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
@@ -43,6 +50,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Image;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -1488,14 +1496,24 @@ public class AssistantChatPanel extends JDialog {
         btnDocs.setToolTipText("Dokumente öffnen");
         btnDocs.addActionListener((ActionEvent e) -> {
             JPopupMenu popup = new JPopupMenu();
-            for (String[] doc : docs) {
-                String docId = doc[0];
-                String docName = doc[1];
-                JMenuItem item = new JMenuItem(docName);
-                item.addActionListener((ActionEvent ae) -> {
+            for (int i = 0; i < docs.size(); i++) {
+                String docId = docs.get(i)[0];
+                String docName = docs.get(i)[1];
+                if (i > 0) {
+                    popup.addSeparator();
+                }
+                JMenuItem itemOpen = new JMenuItem(docName + " öffnen");
+                itemOpen.setIcon(FileUtils.getInstance().getFileTypeIcon(docName));
+                itemOpen.addActionListener((ActionEvent ae) -> {
                     openDocumentById(docId);
                 });
-                popup.add(item);
+                popup.add(itemOpen);
+                JMenuItem itemCase = new JMenuItem(docName + " in Akte anzeigen");
+                itemCase.setIcon(new ImageIcon(getClass().getResource("/icons/folder.png")));
+                itemCase.addActionListener((ActionEvent ae) -> {
+                    showDocumentInCase(docId);
+                });
+                popup.add(itemCase);
             }
             popup.show(btnDocs, 0, btnDocs.getHeight());
         });
@@ -1528,6 +1546,60 @@ public class AssistantChatPanel extends JDialog {
                     log.error("Error opening document: " + documentId, ex);
                     SwingUtilities.invokeLater(() -> {
                         JOptionPane.showMessageDialog(AssistantChatPanel.this, "Dokument konnte nicht geöffnet werden: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                    });
+                }
+                return null;
+            }
+        }.execute();
+    }
+
+    private void showDocumentInCase(String documentId) {
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() {
+                try {
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    ArchiveFileServiceRemote svc = locator.lookupArchiveFileServiceRemote();
+                    ArchiveFileDocumentsBean docBean = svc.getDocument(documentId);
+                    if (docBean == null) {
+                        log.error("Document not found: " + documentId);
+                        return null;
+                    }
+                    ArchiveFileBean caseDto = svc.getArchiveFile(docBean.getArchiveFileKey().getId());
+                    if (caseDto == null) {
+                        log.error("Case not found for document: " + documentId);
+                        return null;
+                    }
+                    String docName = docBean.getName();
+                    SwingUtilities.invokeLater(() -> {
+                        try {
+                            Object editor;
+                            if (UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
+                                editor = EditorsRegistry.getInstance().getEditor(EditArchiveFileDetailsPanel.class.getName());
+                            } else {
+                                editor = EditorsRegistry.getInstance().getEditor(ViewArchiveFileDetailsPanel.class.getName());
+                            }
+                            Object desktop = EditorsRegistry.getInstance().getEditor(DesktopPanel.class.getName());
+                            Image bgi = ((DesktopPanel) desktop).getBackgroundImage();
+                            if (editor instanceof ThemeableEditor) {
+                                ((ThemeableEditor) editor).setBackgroundImage(bgi);
+                            }
+                            if (editor instanceof PopulateOptionsEditor) {
+                                ((PopulateOptionsEditor) editor).populateOptions();
+                            }
+                            ((ArchiveFilePanel) editor).setArchiveFileDTO(caseDto, docName);
+                            ((ArchiveFilePanel) editor).setOpenedFromEditorClass(DesktopPanel.class.getName());
+                            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
+                        } catch (Exception ex) {
+                            log.error("Error opening case editor", ex);
+                            JOptionPane.showMessageDialog(AssistantChatPanel.this, "Akte konnte nicht geöffnet werden: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                        }
+                    });
+                } catch (Exception ex) {
+                    log.error("Error loading document/case: " + documentId, ex);
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(AssistantChatPanel.this, "Akte konnte nicht geöffnet werden: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
                     });
                 }
                 return null;

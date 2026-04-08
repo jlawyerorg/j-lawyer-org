@@ -418,6 +418,15 @@ public class ToolRegistry {
                         new ToolParameter("folderId", "string", "ID des Zielordners", true)),
                 ToolDefinition.RISK_MEDIUM));
 
+        TOOLS.add(new ToolDefinition("move_document_to_case",
+                "Verschiebt ein Dokument in eine andere Akte. Das Dokument wird mit allen Etiketten in die Zielakte kopiert und aus der Quellakte gelöscht. Optional kann ein Zielordner und ein neuer Dateiname angegeben werden.",
+                Arrays.asList(
+                        new ToolParameter("documentId", "string", "ID des Dokuments", true),
+                        new ToolParameter("targetCaseId", "string", "ID der Zielakte", true),
+                        new ToolParameter("targetFolderId", "string", "ID des Zielordners in der Zielakte (optional)", false),
+                        new ToolParameter("newFileName", "string", "Neuer Dateiname (optional, ohne Angabe wird der bisherige Name verwendet)", false)),
+                ToolDefinition.RISK_HIGH));
+
         TOOLS.add(new ToolDefinition("list_folder_templates",
                 "Listet alle verfügbaren Ordnerstruktur-Vorlagen auf. Gibt die Namen und IDs der Vorlagen zurück.",
                 Arrays.asList()));
@@ -633,6 +642,8 @@ public class ToolRegistry {
                     return executeCreateCaseFolder(args);
                 case "move_document_to_folder":
                     return executeMoveDocumentToFolder(args);
+                case "move_document_to_case":
+                    return executeMoveDocumentToCase(args);
                 case "list_folder_templates":
                     return executeListFolderTemplates(args);
                 case "apply_folder_template":
@@ -1332,6 +1343,73 @@ public class ToolRegistry {
 
         return "{\"success\": true, \"documentId\": \"" + ToolJsonUtils.escapeJson(documentId.trim())
                 + "\", \"folderId\": \"" + ToolJsonUtils.escapeJson(folderId.trim()) + "\"}";
+    }
+
+    private String executeMoveDocumentToCase(JsonObject args) throws Exception {
+        String documentId = (String) args.get("documentId");
+        String targetCaseId = (String) args.get("targetCaseId");
+        String targetFolderId = (String) args.get("targetFolderId");
+        String newFileName = (String) args.get("newFileName");
+
+        if (documentId == null || documentId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Dokument-ID (documentId) fehlt");
+        }
+        if (targetCaseId == null || targetCaseId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Zielakten-ID (targetCaseId) fehlt");
+        }
+
+        ArchiveFileServiceRemote svc = ToolJsonUtils.getLocator().lookupArchiveFileServiceRemote();
+
+        ArchiveFileDocumentsBean doc = svc.getDocument(documentId.trim());
+        if (doc == null) {
+            return ToolJsonUtils.error("Dokument nicht gefunden: " + documentId);
+        }
+
+        ArchiveFileBean targetCase = svc.getArchiveFile(targetCaseId.trim());
+        if (targetCase == null) {
+            return ToolJsonUtils.error("Zielakte nicht gefunden: " + targetCaseId);
+        }
+
+        if (targetCase.isArchived()) {
+            return ToolJsonUtils.error("Zielakte ist archiviert (abgelegt). Bitte die Akte zuerst reaktivieren.");
+        }
+
+        if (doc.getArchiveFileKey() != null && targetCaseId.trim().equals(doc.getArchiveFileKey().getId())) {
+            return ToolJsonUtils.error("Das Dokument befindet sich bereits in der Zielakte. Verwende move_document_to_folder um es innerhalb der Akte zu verschieben.");
+        }
+
+        String fileName = (newFileName != null && !newFileName.trim().isEmpty()) ? newFileName.trim() : doc.getName();
+
+        byte[] content = svc.getDocumentContent(documentId.trim());
+        if (content == null) {
+            return ToolJsonUtils.error("Dokumentinhalt konnte nicht gelesen werden: " + documentId);
+        }
+
+        ArchiveFileDocumentsBean newDoc = svc.addDocument(targetCaseId.trim(), fileName, content, doc.getDictateSign(), null);
+
+        if (targetFolderId != null && !targetFolderId.trim().isEmpty()) {
+            ArrayList<String> docList = new ArrayList<>();
+            docList.add(newDoc.getId());
+            svc.moveDocumentsToFolder(docList, targetFolderId.trim());
+        }
+
+        Collection<DocumentTagsBean> docTags = svc.getDocumentTags(documentId.trim());
+        if (docTags != null) {
+            for (DocumentTagsBean dtb : docTags) {
+                svc.setDocumentTag(newDoc.getId(), dtb, true);
+            }
+        }
+
+        svc.removeDocument(documentId.trim());
+
+        EventBroker.getInstance().publishEvent(new DocumentRemovedEvent(doc));
+        ArchiveFileDocumentsBean updatedNewDoc = svc.getDocument(newDoc.getId());
+        EventBroker.getInstance().publishEvent(new DocumentAddedEvent(updatedNewDoc != null ? updatedNewDoc : newDoc));
+
+        return "{\"success\": true, \"oldDocumentId\": \"" + ToolJsonUtils.escapeJson(documentId.trim())
+                + "\", \"newDocumentId\": \"" + ToolJsonUtils.escapeJson(newDoc.getId())
+                + "\", \"targetCaseId\": \"" + ToolJsonUtils.escapeJson(targetCaseId.trim())
+                + "\", \"fileName\": \"" + ToolJsonUtils.escapeJson(fileName) + "\"}";
     }
 
     private String executeListFolderTemplates(JsonObject args) throws Exception {
