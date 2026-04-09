@@ -1035,6 +1035,9 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
 
         }
 
+        this.pnlPayments.revalidate();
+        this.pnlPayments.repaint();
+
         return allValid;
     }
 
