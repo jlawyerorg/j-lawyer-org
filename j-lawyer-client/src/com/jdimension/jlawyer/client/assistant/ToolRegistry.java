@@ -458,23 +458,26 @@ public class ToolRegistry {
                 ToolDefinition.RISK_MEDIUM));
 
         // Template tools
-//        TOOLS.add(new ToolDefinition("list_templates",
-//                "Listet alle verfügbaren Dokumentvorlagen und ihre Ordnerstruktur auf.",
-//                Arrays.asList()));
 
         TOOLS.add(new ToolDefinition("search_templates",
                 "Sucht Dokumentvorlagen anhand eines Suchbegriffs (Teilübereinstimmung, Groß-/Kleinschreibung wird ignoriert). Gibt nur passende Vorlagen mit Ordnerpfad zurück.",
                 Arrays.asList(
                         new ToolParameter("query", "string", "Suchbegriff für den Vorlagennamen", true))));
 
+        TOOLS.add(new ToolDefinition("list_letter_heads",
+                "Listet alle verfügbaren Briefköpfe auf.",
+                Arrays.asList(),
+                ToolDefinition.RISK_LOW));
+
         TOOLS.add(new ToolDefinition("create_document_from_template",
-                "Erstellt ein Dokument in einer Akte aus einer Dokumentvorlage. Platzhalter werden automatisch aus den Aktendaten befüllt. Verwende zuerst list_templates um verfügbare Vorlagen zu sehen.",
+                "Erstellt ein Dokument in einer Akte aus einer Dokumentvorlage. Platzhalter werden automatisch aus den Aktendaten befüllt. Verwende zuerst search_templates um verfügbare Vorlagen zu sehen.",
                 Arrays.asList(
                         new ToolParameter("caseId", "string", "Interne ID der Akte", true),
                         new ToolParameter("templateFolder", "string", "Ordnerpfad der Vorlage (z.B. / oder /Vertragsrecht)", true),
                         new ToolParameter("templateName", "string", "Dateiname der Vorlage (z.B. Vollmacht.odt)", true),
                         new ToolParameter("fileName", "string", "Dateiname des neuen Dokuments ohne Erweiterung (z.B. Vollmacht Mueller)", true),
-                        new ToolParameter("generatedText", "string", "Vom Assistenten generierter Text, der als Platzhalter {{INGO_TEXT}} in die Vorlage eingefügt wird (optional)", false)),
+                        new ToolParameter("generatedText", "string", "Vom Assistenten generierter Text, der als Platzhalter {{INGO_TEXT}} in die Vorlage eingefügt wird (optional)", false),
+                        new ToolParameter("letterHead", "string", "Name des Briefkopfs (optional). Verwende list_letter_heads um verfügbare Briefköpfe zu sehen.", false)),
                 ToolDefinition.RISK_MEDIUM));
 
 
@@ -647,10 +650,10 @@ public class ToolRegistry {
                     return executeSetDocumentTag(args);
                 case "set_case_tag":
                     return executeSetCaseTag(args);
-//                case "list_templates":
-//                    return executeListTemplates(args);
                 case "search_templates":
                     return executeSearchTemplates(args);
+                case "list_letter_heads":
+                    return executeListLetterHeads(args);
                 case "create_document_from_template":
                     return executeCreateDocumentFromTemplate(args);
                 case "web_search":
@@ -812,10 +815,10 @@ public class ToolRegistry {
                     return "Dokument-Etikett setzen: " + args.getOrDefault("tagName", "");
                 case "set_case_tag":
                     return "Akten-Etikett setzen: " + args.getOrDefault("tagName", "");
-//                case "list_templates":
-//                    return "Dokumentvorlagen auflisten";
                 case "search_templates":
                     return "Vorlagensuche: '" + args.getOrDefault("query", "") + "'";
+                case "list_letter_heads":
+                    return "Verfügbare Briefköpfe auflisten";
                 case "create_document_from_template":
                     return "Dokument aus Vorlage erstellen: " + args.getOrDefault("templateName", "");
                 case "web_search":
@@ -3573,20 +3576,6 @@ public class ToolRegistry {
     // Template tool implementations
     // =========================================================================
 
-    // potentially large list, could overwhelm context window - use search of templates instead
-//    private String executeListTemplates(JsonObject args) throws Exception {
-//        SystemManagementRemote sys = ToolJsonUtils.getLocator().lookupSystemManagementRemote();
-//        GenericNode root = sys.getAllTemplatesTree(SystemManagementRemote.TEMPLATE_TYPE_BODY);
-//        String rootId = root.getId();
-//
-//        StringBuilder sb = new StringBuilder();
-//        sb.append("{\"folders\": [");
-//        boolean[] first = {true};
-//        collectTemplatesFromTree(root, rootId, sys, sb, first);
-//        sb.append("]}");
-//        return sb.toString();
-//    }
-
     private String executeSearchTemplates(JsonObject args) throws Exception {
         String query = (String) args.get("query");
         if (query == null || query.trim().isEmpty()) {
@@ -3658,12 +3647,29 @@ public class ToolRegistry {
         }
     }
 
+    private String executeListLetterHeads(JsonObject args) throws Exception {
+        SystemManagementRemote sys = ToolJsonUtils.getLocator().lookupSystemManagementRemote();
+        List<String> heads = sys.getTemplatesInFolder(SystemManagementRemote.TEMPLATE_TYPE_HEAD, new GenericNode(null, null, "/"));
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"letterHeads\": [");
+        if (heads != null) {
+            for (int i = 0; i < heads.size(); i++) {
+                if (i > 0) sb.append(", ");
+                sb.append("\"").append(ToolJsonUtils.escapeJson(heads.get(i))).append("\"");
+            }
+        }
+        sb.append("]}");
+        return sb.toString();
+    }
+
     private String executeCreateDocumentFromTemplate(JsonObject args) throws Exception {
         String caseId = (String) args.get("caseId");
         String templateFolder = (String) args.get("templateFolder");
         String templateName = (String) args.get("templateName");
         String fileName = (String) args.get("fileName");
         String generatedText = (String) args.get("generatedText");
+        String letterHead = (String) args.get("letterHead");
 
         if (caseId == null || caseId.trim().isEmpty()) {
             return ToolJsonUtils.error("Akten-ID (caseId) fehlt");
@@ -3709,6 +3715,33 @@ public class ToolRegistry {
             }
             return ToolJsonUtils.error("Vorlage '" + templateName.trim() + "' nicht gefunden in Ordner " + templateFolder
                     + ". Verfügbare Vorlagen: " + available.toString());
+        }
+
+        // Validate letterHead if provided
+        if (letterHead != null && !letterHead.trim().isEmpty()) {
+            letterHead = letterHead.trim();
+            List<String> availableHeads = sys.getTemplatesInFolder(SystemManagementRemote.TEMPLATE_TYPE_HEAD, new GenericNode(null, null, "/"));
+            boolean headFound = false;
+            if (availableHeads != null) {
+                for (String h : availableHeads) {
+                    if (h.equals(letterHead)) {
+                        headFound = true;
+                        break;
+                    }
+                }
+            }
+            if (!headFound) {
+                StringBuilder availHeads = new StringBuilder();
+                if (availableHeads != null) {
+                    for (int i = 0; i < availableHeads.size(); i++) {
+                        if (i > 0) availHeads.append(", ");
+                        availHeads.append(availableHeads.get(i));
+                    }
+                }
+                return ToolJsonUtils.error("Briefkopf '" + letterHead + "' nicht gefunden. Verfügbare Briefköpfe: " + availHeads.toString());
+            }
+        } else {
+            letterHead = null;
         }
 
         // Use the matched folder node (has correct server ID) for all subsequent calls
@@ -3773,7 +3806,7 @@ public class ToolRegistry {
 
         // Create document from template
         ArchiveFileDocumentsBean newDoc = archiveSvc.addDocumentFromTemplate(
-                caseId.trim(), fileName.trim(), null, folderNode, templateName.trim(), phMap, "", null);
+                caseId.trim(), fileName.trim(), letterHead, folderNode, templateName.trim(), phMap, "", null);
 
         EventBroker.getInstance().publishEvent(new DocumentAddedEvent(newDoc));
 
