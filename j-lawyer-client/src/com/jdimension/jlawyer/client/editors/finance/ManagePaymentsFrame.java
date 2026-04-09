@@ -874,7 +874,9 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
                 String senderIban = null;
                 if (sender != null) {
                     senderIban = sender.getBankIban();
-                    senderIban = senderIban.replace(" ", "");
+                    if (senderIban != null) {
+                        senderIban = senderIban.replace(" ", "");
+                    }
                 }
 
                 if (!paymentsBySender.containsKey(senderIban)) {
@@ -892,7 +894,9 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
                         String recipientIban = null;
                         if (p.getContact() != null) {
                             recipientIban = p.getContact().getBankAccount();
-                            recipientIban = recipientIban.replace(" ", "");
+                            if (recipientIban != null) {
+                                recipientIban = recipientIban.replace(" ", "");
+                            }
                         }
 
                         String recipientName = (p.getContact().getBankAccountOwner() != null && !p.getContact().getBankAccountOwner().trim().isEmpty())
@@ -1001,7 +1005,9 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
                 String senderIban = null;
                 if (sender != null) {
                     senderIban = sender.getBankIban();
-                    senderIban = senderIban.replace(" ", "");
+                    if (senderIban != null) {
+                        senderIban = senderIban.replace(" ", "");
+                    }
                 }
                 if (senderIban == null || !SEPAValidatorIBAN.isValid(senderIban)) {
                     pmep.setError("Ungültige Sender-IBAN: " + senderIban);
@@ -1012,7 +1018,9 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
                 String recipientIban = null;
                 if (p.getContact() != null) {
                     recipientIban = p.getContact().getBankAccount();
-                    recipientIban = recipientIban.replace(" ", "");
+                    if (recipientIban != null) {
+                        recipientIban = recipientIban.replace(" ", "");
+                    }
                 }
                 if (recipientIban == null || !SEPAValidatorIBAN.isValid(recipientIban)) {
                     pmep.setError("Ungültige Empfänger-IBAN: " + recipientIban);
