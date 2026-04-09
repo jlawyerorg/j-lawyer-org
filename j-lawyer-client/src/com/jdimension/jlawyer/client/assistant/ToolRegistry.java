@@ -161,15 +161,17 @@ public class ToolRegistry {
         TOOLS.add(new ToolDefinition("get_parties_for_case", "Gibt alle Beteiligten einer Akte mit vollständigen Kontaktdaten zurück.",
                 Arrays.asList(new ToolParameter("caseId", "string", "Interne ID der Akte", true))));
 
-        TOOLS.add(new ToolDefinition("get_all_open_events", "Gibt alle offenen Kalenderereignisse zurück. Optional nach Typ filterbar (Wiedervorlage, Frist, Termin).",
+        TOOLS.add(new ToolDefinition("get_all_open_events", "Gibt alle offenen Kalenderereignisse zurück. Optional nach Typ und/oder Verantwortlichem filterbar.",
                 Arrays.asList(
-                        new ToolParameter("eventType", "string", "Ereignistyp zum Filtern: Wiedervorlage, Frist oder Termin (optional, Standard: alle)", false))));
+                        new ToolParameter("eventType", "string", "Ereignistyp zum Filtern: Wiedervorlage, Frist oder Termin (optional, Standard: alle)", false),
+                        new ToolParameter("assignee", "string", "Benutzername des Verantwortlichen zum Filtern (optional, Standard: alle)", false))));
 
-        TOOLS.add(new ToolDefinition("get_all_open_events_between_dates", "Gibt alle offenen Kalenderereignisse zwischen zwei Daten zurück. Optional nach Typ filterbar.",
+        TOOLS.add(new ToolDefinition("get_all_open_events_between_dates", "Gibt alle offenen Kalenderereignisse zwischen zwei Daten zurück. Optional nach Typ und/oder Verantwortlichem filterbar.",
                 Arrays.asList(
                         new ToolParameter("fromDate", "string", "Startdatum im ISO-8601-Format (z.B. 2025-03-01T00:00:00)", true),
                         new ToolParameter("toDate", "string", "Enddatum im ISO-8601-Format (z.B. 2025-03-31T23:59:59)", true),
-                        new ToolParameter("eventType", "string", "Ereignistyp zum Filtern: Wiedervorlage, Frist oder Termin (optional, Standard: alle)", false))));
+                        new ToolParameter("eventType", "string", "Ereignistyp zum Filtern: Wiedervorlage, Frist oder Termin (optional, Standard: alle)", false),
+                        new ToolParameter("assignee", "string", "Benutzername des Verantwortlichen zum Filtern (optional, Standard: alle)", false))));
 
         TOOLS.add(new ToolDefinition("list_event_types",
                 "Gibt die verfügbaren Kalenderereignis-Typen zurück (Wiedervorlage, Frist, Termin). Nützlich um den eventType-Parameter für get_all_open_events oder get_all_open_events_between_dates zu ermitteln.",
@@ -2143,6 +2145,8 @@ public class ToolRegistry {
             return ToolJsonUtils.error("Unbekannter Ereignistyp: " + eventTypeStr + ". Erlaubt: Wiedervorlage, Frist, Termin");
         }
 
+        String assigneeFilter = (String) args.get("assignee");
+
         JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
         CalendarServiceRemote calSvc = locator.lookupCalendarServiceRemote();
         Collection<ArchiveFileReviewsBean> events = calSvc.getAllOpenReviews();
@@ -2153,6 +2157,9 @@ public class ToolRegistry {
         int total = 0;
         for (ArchiveFileReviewsBean ev : events) {
             if (eventTypeFilter != -1 && ev.getEventType() != eventTypeFilter) {
+                continue;
+            }
+            if (assigneeFilter != null && !assigneeFilter.trim().isEmpty() && !assigneeFilter.trim().equalsIgnoreCase(ev.getAssignee())) {
                 continue;
             }
             total++;
@@ -2186,6 +2193,8 @@ public class ToolRegistry {
             return ToolJsonUtils.error("Unbekannter Ereignistyp: " + eventTypeStr + ". Erlaubt: Wiedervorlage, Frist, Termin");
         }
 
+        String assigneeFilter = (String) args.get("assignee");
+
         Date fromDate = ToolJsonUtils.parseIsoDate(fromDateStr);
         Date toDate = ToolJsonUtils.parseIsoDate(toDateStr);
         if (fromDate == null) {
@@ -2206,6 +2215,9 @@ public class ToolRegistry {
         sb.append(", \"events\": [");
         int count = 0;
         for (ArchiveFileReviewsBean ev : events) {
+            if (assigneeFilter != null && !assigneeFilter.trim().isEmpty() && !assigneeFilter.trim().equalsIgnoreCase(ev.getAssignee())) {
+                continue;
+            }
             if (count > 0) {
                 sb.append(",");
             }
