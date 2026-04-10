@@ -940,7 +940,7 @@ public class MessagePanel extends javax.swing.JPanel {
                 } else {
                     ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile);
                 }
-                ((ArchiveFilePanel) editor).setOpenedFromEditorClass(MessagingCenterPanel.class.getName());
+                ((ArchiveFilePanel) editor).setOpenedFromEditorClass(EditorsRegistry.getInstance().getCurrentEditor().getClass().getName());
                 EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
             } catch (Exception ex) {
                 log.error("Error creating editor from class " + this.getClass().getName(), ex);

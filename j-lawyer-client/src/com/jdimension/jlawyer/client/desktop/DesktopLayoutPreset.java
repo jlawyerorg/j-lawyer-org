@@ -81,6 +81,8 @@ public enum DesktopLayoutPreset {
     public static final String PANEL_LASTCHANGED = "lastchanged";
     public static final String PANEL_DUE = "due";
     public static final String PANEL_TAGGED = "tagged";
+    public static final String PANEL_MESSAGES_TO_ME = "messagestome";
+    public static final String PANEL_MESSAGES_TO_OTHERS = "messagestoothers";
 
     private final String displayName;
     private final int rows;

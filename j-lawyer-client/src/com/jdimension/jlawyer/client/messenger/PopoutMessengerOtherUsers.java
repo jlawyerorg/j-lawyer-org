@@ -683,6 +683,7 @@ import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBoxMenuItem;
@@ -780,6 +781,7 @@ public class PopoutMessengerOtherUsers extends javax.swing.JDialog implements Ev
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             List<InstantMessage> initialMessages = locator.lookupMessagingServiceRemote().getMessagesWithOpenMentions(al);
             if (initialMessages != null) {
+                initialMessages.sort(Comparator.comparing(InstantMessage::getSent, Comparator.nullsLast(Comparator.reverseOrder())));
                 for (InstantMessage m : initialMessages) {
                     for (String principal : al) {
                         if (m.hasMentionFor(principal)) {

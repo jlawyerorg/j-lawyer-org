@@ -2902,7 +2902,12 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 BeaMessageHeader mh = (BeaMessageHeader) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 1);
                 BeaAccess bea = BeaAccess.getInstance();
 
-                DefaultMutableTreeNode tnode = (DefaultMutableTreeNode) treeFolders.getSelectionPath().getLastPathComponent();
+                TreePath selPath = treeFolders.getSelectionPath();
+                if (selPath == null) {
+                    JOptionPane.showMessageDialog(this, "Bitte zunächst einen Ordner im Postfach auswählen.", "Hinweis", JOptionPane.WARNING_MESSAGE);
+                    return false;
+                }
+                DefaultMutableTreeNode tnode = (DefaultMutableTreeNode) selPath.getLastPathComponent();
                 BeaFolder tf = (BeaFolder) tnode.getUserObject();
 
                 String safeId = tf.getSafeId();
