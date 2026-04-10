@@ -217,8 +217,10 @@ public class DesktopGridConfiguration {
      * @param lastChangedVisible visibility for last changed panel
      * @param dueVisible visibility for due panel
      * @param taggedVisible visibility for tagged panel
+     * @param messagesToMeVisible visibility for messages to me panel
+     * @param messagesToOthersVisible visibility for messages to others panel
      */
-    public void applyVisibility(boolean lastChangedVisible, boolean dueVisible, boolean taggedVisible) {
+    public void applyVisibility(boolean lastChangedVisible, boolean dueVisible, boolean taggedVisible, boolean messagesToMeVisible, boolean messagesToOthersVisible) {
         GridPosition pos = panelPositions.get(DesktopLayoutPreset.PANEL_LASTCHANGED);
         if (pos != null) {
             pos.setVisible(lastChangedVisible);
@@ -230,6 +232,14 @@ public class DesktopGridConfiguration {
         pos = panelPositions.get(DesktopLayoutPreset.PANEL_TAGGED);
         if (pos != null) {
             pos.setVisible(taggedVisible);
+        }
+        pos = panelPositions.get(DesktopLayoutPreset.PANEL_MESSAGES_TO_ME);
+        if (pos != null) {
+            pos.setVisible(messagesToMeVisible);
+        }
+        pos = panelPositions.get(DesktopLayoutPreset.PANEL_MESSAGES_TO_OTHERS);
+        if (pos != null) {
+            pos.setVisible(messagesToOthersVisible);
         }
     }
 

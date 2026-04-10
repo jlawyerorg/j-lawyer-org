@@ -171,7 +171,9 @@ public class DesktopLayoutManager {
         for (String panelId : new String[]{
                 DesktopLayoutPreset.PANEL_LASTCHANGED,
                 DesktopLayoutPreset.PANEL_DUE,
-                DesktopLayoutPreset.PANEL_TAGGED}) {
+                DesktopLayoutPreset.PANEL_TAGGED,
+                DesktopLayoutPreset.PANEL_MESSAGES_TO_ME,
+                DesktopLayoutPreset.PANEL_MESSAGES_TO_OTHERS}) {
             if (isPanelVisible(panelId) && panelContents.containsKey(panelId)) {
                 visiblePanelIds.add(panelId);
             }
@@ -270,8 +272,12 @@ public class DesktopLayoutManager {
                     settings.getSetting(UserSettingsKeys.CONF_DESKTOP_SECTION_DUE_VISIBLE, "true"));
             boolean taggedVisible = !"false".equals(
                     settings.getSetting(UserSettingsKeys.CONF_DESKTOP_SECTION_TAGGED_VISIBLE, "true"));
+            boolean messagesToMeVisible = !"false".equals(
+                    settings.getSetting(UserSettingsKeys.CONF_DESKTOP_SECTION_MESSAGES_TO_ME_VISIBLE, "true"));
+            boolean messagesToOthersVisible = !"false".equals(
+                    settings.getSetting(UserSettingsKeys.CONF_DESKTOP_SECTION_MESSAGES_TO_OTHERS_VISIBLE, "true"));
 
-            config.applyVisibility(lastChangedVisible, dueVisible, taggedVisible);
+            config.applyVisibility(lastChangedVisible, dueVisible, taggedVisible, messagesToMeVisible, messagesToOthersVisible);
         } catch (Exception e) {
             log.error("Error loading visibility settings", e);
         }
@@ -305,6 +311,18 @@ public class DesktopLayoutManager {
             pos = configuration.getPanelPosition(DesktopLayoutPreset.PANEL_TAGGED);
             if (pos != null) {
                 settings.setSetting(UserSettingsKeys.CONF_DESKTOP_SECTION_TAGGED_VISIBLE,
+                        String.valueOf(pos.isVisible()));
+            }
+
+            pos = configuration.getPanelPosition(DesktopLayoutPreset.PANEL_MESSAGES_TO_ME);
+            if (pos != null) {
+                settings.setSetting(UserSettingsKeys.CONF_DESKTOP_SECTION_MESSAGES_TO_ME_VISIBLE,
+                        String.valueOf(pos.isVisible()));
+            }
+
+            pos = configuration.getPanelPosition(DesktopLayoutPreset.PANEL_MESSAGES_TO_OTHERS);
+            if (pos != null) {
+                settings.setSetting(UserSettingsKeys.CONF_DESKTOP_SECTION_MESSAGES_TO_OTHERS_VISIBLE,
                         String.valueOf(pos.isVisible()));
             }
         } catch (Exception e) {

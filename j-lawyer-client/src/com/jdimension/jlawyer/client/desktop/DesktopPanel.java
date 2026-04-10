@@ -684,14 +684,18 @@ import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
 import com.jdimension.jlawyer.client.events.FormPluginUpdateEvent;
+import com.jdimension.jlawyer.client.events.InstantMessageDeletedEvent;
+import com.jdimension.jlawyer.client.events.InstantMessageMentionChangedEvent;
 import com.jdimension.jlawyer.client.events.MailingFailedEvent;
 import com.jdimension.jlawyer.client.events.MailingStatusEvent;
+import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
 import com.jdimension.jlawyer.client.events.NewsEvent;
 import com.jdimension.jlawyer.client.events.OpenMentionsEvent;
 import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
 import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.client.launcher.DocumentObserverTask;
+import com.jdimension.jlawyer.client.messenger.MessagePanel;
 import com.jdimension.jlawyer.client.messenger.MessagingCenterPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
@@ -703,6 +707,8 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.voip.MailingQueueEntry;
 import com.jdimension.jlawyer.client.voip.MailingStatusPanel;
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.InstantMessage;
+import com.jdimension.jlawyer.persistence.InstantMessageMention;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
@@ -734,8 +740,12 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSeparator;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
 import javax.swing.MenuElement;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
@@ -762,6 +772,14 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private JPopupMenu popLayoutMenu;
     private UpdateDocumentTagsTask tagsTask3=null;
     private transient Timer timer11=null;
+
+    // Messaging desktop panels
+    private JPanel pnlDesktopMessagesToMe;
+    private JPanel pnlDesktopMessagesToMeContent;
+    private JScrollPane scrollDesktopMessagesToMe;
+    private JPanel pnlDesktopMessagesToOthers;
+    private JPanel pnlDesktopMessagesToOthersContent;
+    private JScrollPane scrollDesktopMessagesToOthers;
 
     // Cache for due entries - used for client-side search filtering
     private ArrayList<ReviewDueEntry> cachedDueEntries = new ArrayList<>();
@@ -832,6 +850,9 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         b.subscribeConsumer(this, Event.TYPE_MAILSTATUS);
         b.subscribeConsumer(this, Event.TYPE_BEASTATUS);
         b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_OPENMENTIONS);
+        b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_NEWMESSAGES);
+        b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_MENTIONCHANGED);
+        b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_MESSAGEDELETED);
         b.subscribeConsumer(this, Event.TYPE_REVIEWADDED);
         b.subscribeConsumer(this, Event.TYPE_REVIEWUPDATED);
         b.subscribeConsumer(this, Event.TYPE_CASESCHANGED);
@@ -1017,15 +1038,46 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 log.error("Error shutting down timer", t);
             }
         }));
-        
 
-        
+        // Create messaging desktop panels programmatically
+        initMessagingDesktopPanels();
+
+        // Initial load of messages for desktop panels (one-time, in background)
+        Timer messagingInitTimer = new Timer();
+        messagingInitTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    String restriction = settings.getConfiguration(ClientSettings.CONF_INSTANTMESSAGES_DOWNLOADRESTRICTION, "30");
+                    long numOfDays = 30;
+                    try {
+                        numOfDays = Long.parseLong(restriction);
+                    } catch (Throwable t) {
+                        log.error("Cannot parse instant message number of days: " + restriction, t);
+                    }
+                    List<InstantMessage> allMessages = locator.lookupMessagingServiceRemote().getMessagesSince(new java.util.Date(System.currentTimeMillis() - (numOfDays * 24l * 60 * 60 * 1000)));
+                    if (allMessages != null && !allMessages.isEmpty()) {
+                        SwingUtilities.invokeLater(() -> {
+                            for (InstantMessage msg : allMessages) {
+                                addToDesktopMessagingPanels(msg);
+                            }
+                        });
+                    }
+                } catch (Exception ex) {
+                    log.error("Error loading initial messages for desktop panels", ex);
+                }
+            }
+        }, 3000);
 
         // Initialize layout manager and apply visibility settings
         this.layoutManager = new DesktopLayoutManager(this.getClass());
         this.layoutManager.registerPanel(DesktopLayoutPreset.PANEL_LASTCHANGED, "Zuletzt geändert", this.jPanel1);
         this.layoutManager.registerPanel(DesktopLayoutPreset.PANEL_DUE, "Fällig", this.jPanel2);
         this.layoutManager.registerPanel(DesktopLayoutPreset.PANEL_TAGGED, "Nach Etikett", this.jPanel3);
+        this.layoutManager.registerPanel(DesktopLayoutPreset.PANEL_MESSAGES_TO_ME, "Nachrichten an mich", this.pnlDesktopMessagesToMe);
+        this.layoutManager.registerPanel(DesktopLayoutPreset.PANEL_MESSAGES_TO_OTHERS, "Nachrichten an andere", this.pnlDesktopMessagesToOthers);
 
         // Build layout context menu
         buildLayoutContextMenu();
@@ -1121,6 +1173,16 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         chkTagged.addActionListener(e -> togglePanelVisibility(DesktopLayoutPreset.PANEL_TAGGED, chkTagged));
         menuVisibility.add(chkTagged);
 
+        JCheckBoxMenuItem chkMessagesToMe = new JCheckBoxMenuItem("Nachrichten an mich");
+        chkMessagesToMe.setSelected(layoutManager.isPanelVisible(DesktopLayoutPreset.PANEL_MESSAGES_TO_ME));
+        chkMessagesToMe.addActionListener(e -> togglePanelVisibility(DesktopLayoutPreset.PANEL_MESSAGES_TO_ME, chkMessagesToMe));
+        menuVisibility.add(chkMessagesToMe);
+
+        JCheckBoxMenuItem chkMessagesToOthers = new JCheckBoxMenuItem("Nachrichten an andere");
+        chkMessagesToOthers.setSelected(layoutManager.isPanelVisible(DesktopLayoutPreset.PANEL_MESSAGES_TO_OTHERS));
+        chkMessagesToOthers.addActionListener(e -> togglePanelVisibility(DesktopLayoutPreset.PANEL_MESSAGES_TO_OTHERS, chkMessagesToOthers));
+        menuVisibility.add(chkMessagesToOthers);
+
         popLayoutMenu.add(menuVisibility);
     }
 
@@ -1152,6 +1214,10 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             return DesktopLayoutPreset.PANEL_DUE;
         } else if ("Nach Etikett".equals(text)) {
             return DesktopLayoutPreset.PANEL_TAGGED;
+        } else if ("Nachrichten an mich".equals(text)) {
+            return DesktopLayoutPreset.PANEL_MESSAGES_TO_ME;
+        } else if ("Nachrichten an andere".equals(text)) {
+            return DesktopLayoutPreset.PANEL_MESSAGES_TO_OTHERS;
         }
         return null;
     }
@@ -2769,7 +2835,215 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         } else if(e instanceof CasesChangedEvent) {
             TimerTask lastChangedTask = new LastChangedTimerTask(this.pnlLastChanged, true);
             this.lastChangedTimer.schedule(lastChangedTask, 10);
+        } else if (e instanceof NewInstantMessagesEvent) {
+            SwingUtilities.invokeLater(() -> {
+                List<InstantMessage> newMessages = ((NewInstantMessagesEvent) e).getNewMessages();
+                if (newMessages != null) {
+                    for (InstantMessage msg : newMessages) {
+                        addToDesktopMessagingPanels(msg);
+                    }
+                }
+            });
+        } else if (e instanceof InstantMessageMentionChangedEvent) {
+            SwingUtilities.invokeLater(() -> {
+                InstantMessageMentionChangedEvent mentionEvent = (InstantMessageMentionChangedEvent) e;
+                updateDesktopMentionStatus(pnlDesktopMessagesToMeContent, mentionEvent);
+                updateDesktopMentionStatus(pnlDesktopMessagesToOthersContent, mentionEvent);
+                if (mentionEvent.isDone()) {
+                    scheduleDesktopRemovalFromMessagesToMe(mentionEvent.getMessageId(), mentionEvent.getMentionId());
+                }
+            });
+        } else if (e instanceof InstantMessageDeletedEvent) {
+            SwingUtilities.invokeLater(() -> {
+                String messageId = ((InstantMessageDeletedEvent) e).getMessageId();
+                removeMessageFromDesktopPanel(pnlDesktopMessagesToMeContent, messageId);
+                removeMessageFromDesktopPanel(pnlDesktopMessagesToOthersContent, messageId);
+            });
         }
     }
 
+    private void initMessagingDesktopPanels() {
+        // "Nachrichten an mich" panel
+        pnlDesktopMessagesToMe = new JPanel();
+        pnlDesktopMessagesToMe.setOpaque(false);
+        pnlDesktopMessagesToMe.setLayout(new java.awt.BorderLayout());
+
+        JLabel lblMessagesToMeTitle = new JLabel("Nachrichten an mich");
+        lblMessagesToMeTitle.setFont(lblMessagesToMeTitle.getFont().deriveFont(lblMessagesToMeTitle.getFont().getStyle() | java.awt.Font.BOLD, lblMessagesToMeTitle.getFont().getSize() + 2));
+        lblMessagesToMeTitle.setForeground(java.awt.Color.white);
+        JPanel headerToMe = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT));
+        headerToMe.setOpaque(false);
+        headerToMe.add(lblMessagesToMeTitle);
+        pnlDesktopMessagesToMe.add(headerToMe, java.awt.BorderLayout.NORTH);
+
+        pnlDesktopMessagesToMeContent = new JPanel();
+        pnlDesktopMessagesToMeContent.setOpaque(false);
+        pnlDesktopMessagesToMeContent.setLayout(new BoxLayout(pnlDesktopMessagesToMeContent, BoxLayout.Y_AXIS));
+        JLabel lblLoadingToMe = new JLabel("Nachrichten werden geladen...");
+        lblLoadingToMe.setForeground(java.awt.Color.white);
+        pnlDesktopMessagesToMeContent.add(lblLoadingToMe);
+
+        scrollDesktopMessagesToMe = new JScrollPane(pnlDesktopMessagesToMeContent);
+        scrollDesktopMessagesToMe.setBorder(null);
+        scrollDesktopMessagesToMe.setOpaque(false);
+        scrollDesktopMessagesToMe.getViewport().setOpaque(false);
+        scrollDesktopMessagesToMe.getVerticalScrollBar().setUnitIncrement(16);
+        pnlDesktopMessagesToMe.add(scrollDesktopMessagesToMe, java.awt.BorderLayout.CENTER);
+
+        // "Nachrichten an andere" panel
+        pnlDesktopMessagesToOthers = new JPanel();
+        pnlDesktopMessagesToOthers.setOpaque(false);
+        pnlDesktopMessagesToOthers.setLayout(new java.awt.BorderLayout());
+
+        JLabel lblMessagesToOthersTitle = new JLabel("Nachrichten an andere");
+        lblMessagesToOthersTitle.setFont(lblMessagesToOthersTitle.getFont().deriveFont(lblMessagesToOthersTitle.getFont().getStyle() | java.awt.Font.BOLD, lblMessagesToOthersTitle.getFont().getSize() + 2));
+        lblMessagesToOthersTitle.setForeground(java.awt.Color.white);
+        JPanel headerToOthers = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT));
+        headerToOthers.setOpaque(false);
+        headerToOthers.add(lblMessagesToOthersTitle);
+        pnlDesktopMessagesToOthers.add(headerToOthers, java.awt.BorderLayout.NORTH);
+
+        pnlDesktopMessagesToOthersContent = new JPanel();
+        pnlDesktopMessagesToOthersContent.setOpaque(false);
+        pnlDesktopMessagesToOthersContent.setLayout(new BoxLayout(pnlDesktopMessagesToOthersContent, BoxLayout.Y_AXIS));
+        JLabel lblLoadingToOthers = new JLabel("Nachrichten werden geladen...");
+        lblLoadingToOthers.setForeground(java.awt.Color.white);
+        pnlDesktopMessagesToOthersContent.add(lblLoadingToOthers);
+
+        scrollDesktopMessagesToOthers = new JScrollPane(pnlDesktopMessagesToOthersContent);
+        scrollDesktopMessagesToOthers.setBorder(null);
+        scrollDesktopMessagesToOthers.setOpaque(false);
+        scrollDesktopMessagesToOthers.getViewport().setOpaque(false);
+        scrollDesktopMessagesToOthers.getVerticalScrollBar().setUnitIncrement(16);
+        pnlDesktopMessagesToOthers.add(scrollDesktopMessagesToOthers, java.awt.BorderLayout.CENTER);
+    }
+
+    private boolean isMessageAlreadyInPanel(JPanel panel, String messageId) {
+        for (int i = 0; i < panel.getComponentCount(); i++) {
+            if (panel.getComponent(i) instanceof MessagePanel) {
+                InstantMessage existing = ((MessagePanel) panel.getComponent(i)).getMessage();
+                if (existing != null && existing.getId() != null && existing.getId().equals(messageId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private void addToDesktopMessagingPanels(InstantMessage msg) {
+        if (msg.getMentions() == null || msg.getMentions().isEmpty()) {
+            return;
+        }
+
+        // Skip duplicates
+        if (msg.getId() != null && (isMessageAlreadyInPanel(pnlDesktopMessagesToMeContent, msg.getId()) || isMessageAlreadyInPanel(pnlDesktopMessagesToOthersContent, msg.getId()))) {
+            return;
+        }
+
+        String currentUser = UserSettings.getInstance().getCurrentUser().getPrincipalId();
+
+        // Remove loading hint on first message
+        clearLoadingHint(pnlDesktopMessagesToMeContent);
+        clearLoadingHint(pnlDesktopMessagesToOthersContent);
+
+        if (msg.hasOpenMentions() && currentUser.equalsIgnoreCase(msg.getSender())) {
+            // Message sent by current user with open mentions
+            InstantMessageMention mention = msg.getMentionFor(currentUser);
+            if (mention != null && !mention.isDone()) {
+                // Sent to self
+                addMessageToDesktopContainer(msg, pnlDesktopMessagesToMeContent, scrollDesktopMessagesToMe);
+            } else {
+                // Sent to others
+                addMessageToDesktopContainer(msg, pnlDesktopMessagesToOthersContent, scrollDesktopMessagesToOthers);
+            }
+        } else {
+            // Check for messages with open mention for current user
+            InstantMessageMention mention = msg.getMentionFor(currentUser);
+            if (mention != null && !mention.isDone()) {
+                addMessageToDesktopContainer(msg, pnlDesktopMessagesToMeContent, scrollDesktopMessagesToMe);
+            }
+        }
+    }
+
+    private void clearLoadingHint(JPanel contentPanel) {
+        if (contentPanel.getComponentCount() == 1 && contentPanel.getComponent(0) instanceof JLabel) {
+            JLabel lbl = (JLabel) contentPanel.getComponent(0);
+            if ("Nachrichten werden geladen...".equals(lbl.getText())) {
+                contentPanel.removeAll();
+            }
+        }
+    }
+
+    private void addMessageToDesktopContainer(InstantMessage msg, JPanel targetPanel, JScrollPane targetScroll) {
+        MessagePanel mp = new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), UserSettings.getInstance().getCurrentUser().getPrincipalId(), UserSettings.getInstance().getCurrentUser().getPrincipalId().equalsIgnoreCase(msg.getSender()), msg);
+        mp.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+        // Insert at correct position: newer messages on top
+        int insertIndex = 0;
+        if (msg.getSent() != null) {
+            for (int i = 0; i < targetPanel.getComponentCount(); i++) {
+                if (targetPanel.getComponent(i) instanceof MessagePanel) {
+                    InstantMessage existing = ((MessagePanel) targetPanel.getComponent(i)).getMessage();
+                    if (existing != null && existing.getSent() != null && msg.getSent().before(existing.getSent())) {
+                        insertIndex = i + 1;
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+        targetPanel.add(mp, insertIndex);
+        targetPanel.revalidate();
+        targetPanel.repaint();
+    }
+
+    private void updateDesktopMentionStatus(JPanel messagesPanel, InstantMessageMentionChangedEvent e) {
+        for (int i = 0; i < messagesPanel.getComponentCount(); i++) {
+            if (messagesPanel.getComponent(i) instanceof MessagePanel) {
+                ((MessagePanel) messagesPanel.getComponent(i)).mentionUpdated(e.getMessageId(), e.getMentionId(), e.isDone());
+            }
+        }
+    }
+
+    private void scheduleDesktopRemovalFromMessagesToMe(String messageId, String mentionId) {
+        String currentUser = UserSettings.getInstance().getCurrentUser().getPrincipalId();
+
+        for (int i = 0; i < pnlDesktopMessagesToMeContent.getComponentCount(); i++) {
+            if (pnlDesktopMessagesToMeContent.getComponent(i) instanceof MessagePanel) {
+                MessagePanel mp = (MessagePanel) pnlDesktopMessagesToMeContent.getComponent(i);
+                InstantMessage msg = mp.getMessage();
+                if (msg != null && msg.getId() != null && msg.getId().equals(messageId)) {
+                    InstantMessageMention mention = msg.getMentionFor(currentUser);
+                    if (mention != null && mention.getId() != null && mention.getId().equals(mentionId)) {
+                        Timer removalTimer = new Timer();
+                        removalTimer.schedule(new TimerTask() {
+                            @Override
+                            public void run() {
+                                SwingUtilities.invokeLater(() -> {
+                                    removeMessageFromDesktopPanel(pnlDesktopMessagesToMeContent, messageId);
+                                });
+                            }
+                        }, 3000);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    private void removeMessageFromDesktopPanel(JPanel panel, String messageId) {
+        boolean removed = false;
+        for (int i = 0; i < panel.getComponentCount(); i++) {
+            if (panel.getComponent(i) instanceof MessagePanel) {
+                if (((MessagePanel) panel.getComponent(i)).getMessage().getId().equals(messageId)) {
+                    panel.remove(panel.getComponent(i));
+                    removed = true;
+                    break;
+                }
+            }
+        }
+        if (removed) {
+            panel.revalidate();
+            panel.doLayout();
+        }
+    }
 }
