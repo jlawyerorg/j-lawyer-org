@@ -689,8 +689,11 @@ import javax.json.JsonReader;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import com.jdimension.jlawyer.client.utils.CompoundIcon;
 import org.apache.log4j.Logger;
 
 /**
@@ -707,6 +710,9 @@ public class AssistantAccess {
     // request type to list of custom prompts
     private Map<String, List<AssistantPrompt>> customPrompts = new HashMap<>();
 
+    // cache for compound icons: key = "requestType|modelRef"
+    private final Map<String, Icon> compoundIconCache = new HashMap<>();
+
     private AssistantAccess() {
 
     }
@@ -716,6 +722,63 @@ public class AssistantAccess {
             instance = new AssistantAccess();
         }
         return instance;
+    }
+
+    private static Icon loadIcon(String path) {
+        java.net.URL url = AssistantAccess.class.getResource(path);
+        return url != null ? new ImageIcon(url) : null;
+    }
+
+    /**
+     * Maps a modelRef string to a provider icon filename using case-insensitive contains matching.
+     */
+    private static String getProviderIconName(String modelRef) {
+        if (modelRef == null || modelRef.isEmpty()) {
+            return "unknown.png";
+        }
+        String lower = modelRef.toLowerCase();
+        if (lower.contains("j-lawyer.cloud") || lower.contains("ingo")) {
+            return "jlawyerorg.png";
+        } else if (lower.contains("anthropic")) {
+            return "anthropic.png";
+        } else if (lower.contains("deepseek")) {
+            return "deepseek.png";
+        } else if (lower.contains("openai")) {
+            return "openai.png";
+        } else if (lower.contains("langdock")) {
+            return "langdock.png";
+        } else if (lower.contains("mistral")) {
+            return "mistral.png";
+        } else if (lower.contains("google")) {
+            return "google.png";
+        }
+        return "unknown.png";
+    }
+
+    /**
+     * Returns the 16x16 provider icon for a given modelRef.
+     */
+    public static Icon getProviderIcon(String modelRef) {
+        return loadIcon("/icons16/llmprovider/" + getProviderIconName(modelRef));
+    }
+
+    /**
+     * Returns the 32x32 provider icon for a given modelRef.
+     */
+    public static Icon getProviderIcon32(String modelRef) {
+        return loadIcon("/icons32/llmprovider/" + getProviderIconName(modelRef));
+    }
+
+    /**
+     * Returns a cached compound icon combining a requestType icon (left) and a provider icon (right).
+     */
+    public Icon getCompoundIcon(String requestType, String modelRef) {
+        String key = requestType + "|" + (modelRef != null ? modelRef : "");
+        return compoundIconCache.computeIfAbsent(key, k -> {
+            Icon typeIcon = loadIcon("/icons16/material/" + requestType + ".png");
+            Icon providerIcon = getProviderIcon(modelRef);
+            return new CompoundIcon(typeIcon, providerIcon);
+        });
     }
 
     public void flushCustomPrompts() {
@@ -872,7 +935,7 @@ public class AssistantAccess {
             for (AiCapability c : capabilities.get(config)) {
                 JMenuItem mi = new JMenuItem();
                 mi.setText(c.getName());
-                mi.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/" + c.getRequestType() + ".png")));
+                mi.setIcon(getCompoundIcon(c.getRequestType(), c.getModelRef()));
                 mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
                 mi.addActionListener((ActionEvent e) -> {
                     ClientSettings settings = ClientSettings.getInstance();
@@ -915,7 +978,7 @@ public class AssistantAccess {
             for (AiCapability c : capabilities.get(config)) {
                 JMenuItem mi = new JMenuItem();
                 mi.setText(c.getName());
-                mi.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/" + c.getRequestType() + ".png")));
+                mi.setIcon(getCompoundIcon(c.getRequestType(), c.getModelRef()));
                 mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
                 mi.addActionListener((ActionEvent e) -> {
                     if(AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType())) {
@@ -938,7 +1001,7 @@ public class AssistantAccess {
             for (AiCapability c : capabilities.get(config)) {
                 JMenuItem mi = new JMenuItem();
                 mi.setText(c.getName());
-                mi.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/" + c.getRequestType() + ".png")));
+                mi.setIcon(getCompoundIcon(c.getRequestType(), c.getModelRef()));
                 mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
                 mi.addActionListener((ActionEvent e) -> {
                     if(AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType())) {
@@ -961,7 +1024,7 @@ public class AssistantAccess {
             for (AiCapability c : capabilities.get(config)) {
                 JMenuItem mi = new JMenuItem();
                 mi.setText(c.getName());
-                mi.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/" + c.getRequestType() + ".png")));
+                mi.setIcon(getCompoundIcon(c.getRequestType(), c.getModelRef()));
                 mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
                 mi.addActionListener((ActionEvent e) -> {
                     if(AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType())) {

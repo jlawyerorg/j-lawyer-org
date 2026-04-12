@@ -724,7 +724,12 @@ public class AiChatMessageMarkdownPanel extends javax.swing.JPanel {
         if (Message.ROLE_USER.equals(aiMessage.getRole())) {
             this.lblUser.setIcon(UserSettings.getInstance().getCurrentUserBigIcon());
         } else {
-            this.lblUser.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/j-lawyer-ai.png")));
+            javax.swing.Icon providerIcon = AssistantAccess.getProviderIcon32(aiMessage.getModelRef());
+            if (providerIcon != null) {
+                this.lblUser.setIcon(providerIcon);
+            } else {
+                this.lblUser.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/j-lawyer-ai.png")));
+            }
         }
         this.lblUser.setText("");
         //this.lblUser.setToolTipText("von: " + aiMessage.getSender());

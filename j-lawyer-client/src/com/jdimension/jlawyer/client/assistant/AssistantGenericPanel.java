@@ -134,6 +134,7 @@ public class AssistantGenericPanel extends JDialog {
 
     // UI components
     private JPanel pnlTitle;
+    private JLabel lblIcon;
     private JLabel lblRequestType;
     private JComboBox<String> cmbDevices;
     private JLabel lblContextToggle;
@@ -180,6 +181,11 @@ public class AssistantGenericPanel extends JDialog {
         this.config = config;
         this.capability = c;
         this.inputAdapter = inputAdapter;
+
+        javax.swing.Icon providerIcon = AssistantAccess.getProviderIcon32(c.getModelRef());
+        if (providerIcon != null) {
+            this.lblIcon.setIcon(providerIcon);
+        }
 
         // Check if selected model supports tool calling
         if (AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType()) && c.getModelRef() != null) {
@@ -437,7 +443,7 @@ public class AssistantGenericPanel extends JDialog {
         pnlTitle.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
         pnlTitle.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
 
-        JLabel lblIcon = new JLabel(new ImageIcon(getClass().getResource("/icons32/material/j-lawyer-ai.png")));
+        lblIcon = new JLabel(new ImageIcon(getClass().getResource("/icons32/material/j-lawyer-ai.png")));
         pnlTitle.add(lblIcon, BorderLayout.WEST);
 
         lblRequestType = new JLabel("Transkribieren");
@@ -799,6 +805,7 @@ public class AssistantGenericPanel extends JDialog {
                 ClientSettings settings = ClientSettings.getInstance();
                 Message incomingMsg = new Message();
                 incomingMsg.setRole(Message.ROLE_ASSISTANT);
+                incomingMsg.setModelRef(capability.getModelRef());
                 incomingMsg.setContent("...");
                 AiChatMessageMarkdownPanel incomingMsgPanel = new AiChatMessageMarkdownPanel(incomingMsg, owner);
                 styleMessageBubble(incomingMsgPanel);

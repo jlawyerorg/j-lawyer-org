@@ -1247,6 +1247,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
 
                 Message incomingMsg = new Message();
                 incomingMsg.setRole(Message.ROLE_ASSISTANT);
+                incomingMsg.setModelRef(capability.getModelRef());
                 incomingMsg.setContent("...");
                 AiChatMessageMarkdownPanel incomingMsgPanel = new AiChatMessageMarkdownPanel(incomingMsg, owner);
                 try {
@@ -1375,6 +1376,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                         Message errorMsg = new Message();
                         errorMsg.setContent(status.getStatus() + ": " + status.getStatusDetails());
                         errorMsg.setRole(Message.ROLE_ASSISTANT);
+                        errorMsg.setModelRef(capability.getModelRef());
                         AiChatMessageMarkdownPanel msgPanel = new AiChatMessageMarkdownPanel(errorMsg, owner);
                         Dimension maxSize = msgPanel.getPreferredSize();
                         maxSize.setSize(pnlMessages.getWidth(), maxSize.getHeight());
@@ -1578,6 +1580,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
             for (AssistantPrompt p : customPrompts) {
                 JMenuItem mi = new JMenuItem();
                 mi.setText(p.getName());
+                mi.setIcon(ingo.getCompoundIcon(AiCapability.REQUESTTYPE_CHAT, p.getModelRef()));
                 mi.addActionListener((ActionEvent e) -> {
                     if (!p.getPrompt().contains("{{")) {
                         // no placeholders in prompt

@@ -528,6 +528,16 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
         cmbRequestType.setModel(new DefaultComboBoxModel<>(new String[]{"Item 1", "Item 2", "Item 3", "Item 4"}));
 
         cmbModel = new JComboBox<>();
+        cmbModel.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public java.awt.Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof String) {
+                    setIcon(AssistantAccess.getProviderIcon((String) value));
+                }
+                return this;
+            }
+        });
         cmbModel.addItem(MODEL_DEFAULT);
 
         lblDeductTokens = new JLabel();

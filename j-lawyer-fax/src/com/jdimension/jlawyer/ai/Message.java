@@ -23,6 +23,7 @@ public class Message implements Serializable {
     private String role=ROLE_USER;
     private String toolCallId=null;
     private String toolName=null;
+    private String modelRef=null;
 
     public Message() {
     }
@@ -81,6 +82,20 @@ public class Message implements Serializable {
      */
     public void setToolName(String toolName) {
         this.toolName = toolName;
+    }
+
+    /**
+     * @return the modelRef
+     */
+    public String getModelRef() {
+        return modelRef;
+    }
+
+    /**
+     * @param modelRef the modelRef to set
+     */
+    public void setModelRef(String modelRef) {
+        this.modelRef = modelRef;
     }
 
 }

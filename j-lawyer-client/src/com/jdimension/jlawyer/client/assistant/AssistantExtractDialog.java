@@ -1075,6 +1075,7 @@ public class AssistantExtractDialog extends javax.swing.JDialog {
                 ClientSettings settings = ClientSettings.getInstance();
                 Message incomingMsg = new Message();
                 incomingMsg.setRole(Message.ROLE_ASSISTANT);
+                incomingMsg.setModelRef(capability.getModelRef());
                 incomingMsg.setContent("...");
                 AiChatMessageMarkdownPanel incomingMsgPanel = new AiChatMessageMarkdownPanel(incomingMsg, owner);
                 try {

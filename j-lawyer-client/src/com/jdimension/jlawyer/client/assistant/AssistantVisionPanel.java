@@ -618,6 +618,7 @@ public class AssistantVisionPanel extends JDialog {
 
                 Message incomingMsg = new Message();
                 incomingMsg.setRole(Message.ROLE_ASSISTANT);
+                incomingMsg.setModelRef(capability.getModelRef());
                 incomingMsg.setContent("...");
                 AiChatMessageMarkdownPanel incomingMsgPanel = createStyledMessagePanel(incomingMsg, owner);
                 try {
@@ -740,6 +741,7 @@ public class AssistantVisionPanel extends JDialog {
                         Message errorMsg = new Message();
                         errorMsg.setContent(status.getStatus() + ": " + status.getStatusDetails());
                         errorMsg.setRole(Message.ROLE_ASSISTANT);
+                        errorMsg.setModelRef(capability.getModelRef());
                         AiChatMessageMarkdownPanel msgPanel = createStyledMessagePanel(errorMsg, owner);
                         Dimension maxSize = msgPanel.getPreferredSize();
                         maxSize.setSize(pnlMessages.getWidth(), maxSize.getHeight());

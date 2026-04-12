@@ -193,6 +193,7 @@ public class AssistantChatPanel extends JDialog {
     private JButton cmdNewDocument;
     private JButton cmdCopy;
     private JLabel lblSupportsTools;
+    private JLabel lblIcon;
     private JPanel pnlPlaceholder;
     private JPopupMenu popAssistant;
     private JPanel bottomPanel;
@@ -220,6 +221,11 @@ public class AssistantChatPanel extends JDialog {
         this.config = config;
         this.capability = c;
         this.inputAdapter = inputAdapter;
+
+        javax.swing.Icon providerIcon = AssistantAccess.getProviderIcon32(c.getModelRef());
+        if (providerIcon != null) {
+            this.lblIcon.setIcon(providerIcon);
+        }
 
         // Check if selected model supports tool calling
         if (AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType()) && c.getModelRef() != null) {
@@ -444,7 +450,7 @@ public class AssistantChatPanel extends JDialog {
         pnlTitle.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
         pnlTitle.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
 
-        JLabel lblIcon = new JLabel(new ImageIcon(getClass().getResource("/icons32/material/j-lawyer-ai.png")));
+        lblIcon = new JLabel(new ImageIcon(getClass().getResource("/icons32/material/j-lawyer-ai.png")));
         pnlTitle.add(lblIcon, BorderLayout.WEST);
 
         lblRequestType = new JLabel("Transkribieren");
@@ -770,6 +776,7 @@ public class AssistantChatPanel extends JDialog {
 
                 Message incomingMsg = new Message();
                 incomingMsg.setRole(Message.ROLE_ASSISTANT);
+                incomingMsg.setModelRef(capability.getModelRef());
                 incomingMsg.setContent("...");
                 AiChatMessageMarkdownPanel incomingMsgPanel = createStyledMessagePanel(incomingMsg, owner);
                 try {
@@ -1070,6 +1077,7 @@ public class AssistantChatPanel extends JDialog {
                         Message errorMsg = new Message();
                         errorMsg.setContent(status.getStatus() + ": " + status.getStatusDetails());
                         errorMsg.setRole(Message.ROLE_ASSISTANT);
+                        errorMsg.setModelRef(capability.getModelRef());
                         AiChatMessageMarkdownPanel msgPanel = createStyledMessagePanel(errorMsg, owner);
                         Dimension maxSize = msgPanel.getPreferredSize();
                         maxSize.setSize(pnlMessages.getWidth(), maxSize.getHeight());
@@ -1345,6 +1353,7 @@ public class AssistantChatPanel extends JDialog {
             for (AssistantPrompt p : customPrompts) {
                 JMenuItem mi = new JMenuItem();
                 mi.setText(p.getName());
+                mi.setIcon(ingo.getCompoundIcon(AiCapability.REQUESTTYPE_CHAT, p.getModelRef()));
                 mi.addActionListener((ActionEvent e) -> {
                     if (!p.getPrompt().contains("{{")) {
                         this.taPrompt.setText(p.getPrompt());

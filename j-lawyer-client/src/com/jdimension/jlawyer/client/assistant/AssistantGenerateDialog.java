@@ -1169,8 +1169,9 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
             for (AssistantPrompt p : customPrompts) {
                 JMenuItem mi = new JMenuItem();
                 mi.setText(p.getName());
+                mi.setIcon(ingo.getCompoundIcon(AiCapability.REQUESTTYPE_GENERATE, p.getModelRef()));
                 mi.addActionListener((ActionEvent e) -> {
-                    
+
                     if (!p.getPrompt().contains("{{")) {
                         // no placeholders in prompt
                         this.taPrompt.setText(p.getPrompt());
