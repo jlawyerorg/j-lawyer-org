@@ -663,8 +663,13 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.plugins.form;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.util.Hashtable;
+import javax.swing.RowFilter;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 
 /**
  *
@@ -680,6 +685,23 @@ public class FormPluginPlaceholderDialog extends javax.swing.JDialog {
     public FormPluginPlaceholderDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+
+        this.txtSearchPlaceHolder.putClientProperty("JTextField.showClearButton", true);
+        this.txtSearchPlaceHolder.putClientProperty("JTextField.placeholderText", "Suche...");
+        this.txtSearchPlaceHolder.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                filterPlaceholders(txtSearchPlaceHolder.getText());
+            }
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                filterPlaceholders(txtSearchPlaceHolder.getText());
+            }
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                filterPlaceholders(txtSearchPlaceHolder.getText());
+            }
+        });
     }
     
     public void setPlaceHolders(Hashtable placeHolders, Hashtable descriptions) {
@@ -709,6 +731,8 @@ public class FormPluginPlaceholderDialog extends javax.swing.JDialog {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         tblPlaceHolders = new javax.swing.JTable();
+        cmdCopyPlaceholder = new javax.swing.JButton();
+        txtSearchPlaceHolder = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Falldatenblatt-Platzhalter");
@@ -739,25 +763,66 @@ public class FormPluginPlaceholderDialog extends javax.swing.JDialog {
         });
         jScrollPane1.setViewportView(tblPlaceHolders);
 
+        cmdCopyPlaceholder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/editpaste.png"))); // NOI18N
+        cmdCopyPlaceholder.setText("Platzhalter kopieren");
+        cmdCopyPlaceholder.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCopyPlaceholderActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 676, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 676, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdCopyPlaceholder))
+                    .addComponent(txtSearchPlaceHolder))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 337, Short.MAX_VALUE)
+                .addComponent(txtSearchPlaceHolder, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 464, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdCopyPlaceholder)
                 .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void filterPlaceholders(String searchText) {
+        TableRowSorter<DefaultTableModel> sorter = (TableRowSorter<DefaultTableModel>) tblPlaceHolders.getRowSorter();
+        if (searchText == null || searchText.isEmpty()) {
+            sorter.setRowFilter(null);
+        } else {
+            sorter.setRowFilter(RowFilter.regexFilter("(?i)" + java.util.regex.Pattern.quote(searchText)));
+        }
+        if (tblPlaceHolders.getRowCount() > 0) {
+            tblPlaceHolders.setRowSelectionInterval(0, 0);
+        }
+    }
+
+    private void cmdCopyPlaceholderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyPlaceholderActionPerformed
+        int selectedRow = tblPlaceHolders.getSelectedRow();
+        if (selectedRow >= 0) {
+            int modelRow = tblPlaceHolders.convertRowIndexToModel(selectedRow);
+            String value = "{{" + tblPlaceHolders.getModel().getValueAt(modelRow, 0).toString() + "}}";
+            Toolkit toolkit = Toolkit.getDefaultToolkit();
+            Clipboard clipboard = toolkit.getSystemClipboard();
+            StringSelection strSel = new StringSelection(value);
+            clipboard.setContents(strSel, null);
+        }
+    }//GEN-LAST:event_cmdCopyPlaceholderActionPerformed
 
     /**
      * @param args the command line arguments
@@ -800,7 +865,9 @@ public class FormPluginPlaceholderDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdCopyPlaceholder;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable tblPlaceHolders;
+    private javax.swing.JTextField txtSearchPlaceHolder;
     // End of variables declaration//GEN-END:variables
 }
