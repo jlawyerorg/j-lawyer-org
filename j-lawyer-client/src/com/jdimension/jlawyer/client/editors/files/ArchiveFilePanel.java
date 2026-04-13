@@ -5763,7 +5763,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }
 
-    private void newDocumentActionPerformedImpl(StyledCalculationTable rvgTable, Invoice invoice, AppUserBean invoiceSender, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable, StyledCalculationTable timesheetSummaryTable, byte[] giroCode, String ingoText) {
+    private void newDocumentActionPerformedImpl(StyledCalculationTable rvgTable, Invoice invoice, boolean linkAsInvoiceDocument, AppUserBean invoiceSender, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable, StyledCalculationTable timesheetSummaryTable, byte[] giroCode, String ingoText) {
 
         // save all forms to have the latest data available for document creation
         CompletableFuture<Void> formDataFuture = CompletableFuture.runAsync(() -> this.saveFormData());
@@ -5790,7 +5790,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
-        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this, this.caseFolderPanel1, this.dto, involved, rvgTable, invoice, invoiceSender, invoiceTable, timesheetsTable, timesheetSummaryTable, giroCode, ingoText);
+        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this, this.caseFolderPanel1, this.dto, involved, rvgTable, invoice, linkAsInvoiceDocument, invoiceSender, invoiceTable, timesheetsTable, timesheetSummaryTable, giroCode, ingoText);
         dlg.setTitle("Dokument hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
@@ -5799,7 +5799,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void cmdNewDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewDocumentActionPerformed
 
-        this.newDocumentActionPerformedImpl(null, null, null, null, null, null, null, null);
+        this.newDocumentActionPerformedImpl(null, null, false, null, null, null, null, null, null);
 
     }//GEN-LAST:event_cmdNewDocumentActionPerformed
 
