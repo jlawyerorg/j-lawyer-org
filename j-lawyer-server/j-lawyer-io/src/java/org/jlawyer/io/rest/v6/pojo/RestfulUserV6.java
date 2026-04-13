@@ -699,6 +699,7 @@ public class RestfulUserV6 {
     private String bankIban;
     private String taxNr;
     private String taxVatId;
+    private boolean autoLockDocuments = false;
 
     public RestfulUserV6() {
 
@@ -733,6 +734,7 @@ public class RestfulUserV6 {
         au.setBankIban(bankIban);
         au.setTaxNr(taxNr);
         au.setTaxVatId(taxVatId);
+        au.setAutoLockDocuments(autoLockDocuments);
 
         return au;
 
@@ -767,6 +769,7 @@ public class RestfulUserV6 {
         u.setBankIban(au.getBankIban());
         u.setTaxNr(au.getTaxNr());
         u.setTaxVatId(au.getTaxVatId());
+        u.setAutoLockDocuments(au.isAutoLockDocuments());
 
         return u;
     }
@@ -1133,6 +1136,20 @@ public class RestfulUserV6 {
      */
     public void setTaxVatId(String taxVatId) {
         this.taxVatId = taxVatId;
+    }
+
+    /**
+     * @return the autoLockDocuments
+     */
+    public boolean isAutoLockDocuments() {
+        return autoLockDocuments;
+    }
+
+    /**
+     * @param autoLockDocuments the autoLockDocuments to set
+     */
+    public void setAutoLockDocuments(boolean autoLockDocuments) {
+        this.autoLockDocuments = autoLockDocuments;
     }
 
 }

@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest.v6;
 
+import com.jdimension.jlawyer.persistence.AppRoleBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.services.SecurityServiceLocal;
@@ -670,11 +671,13 @@ import com.jdimension.jlawyer.services.SystemManagementLocal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -683,6 +686,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
+import org.jlawyer.io.rest.v6.pojo.RestfulRoleV6;
 import org.jlawyer.io.rest.v6.pojo.RestfulUserV6;
 
 /**
@@ -826,7 +830,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     }
     
     /**
-     * Creates a new user. No permissions will be granted. Does currently not support all attributes.
+     * Creates a new user. No permissions will be granted.
      *
      * @param userData user data
      * @response 401 User not authorized
@@ -862,6 +866,160 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
             return Response.ok(userData).build();
         } catch (Exception ex) {
             log.error("can not create new user " + userData.getPrincipalId(), ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates an existing user. Roles/permissions are preserved and cannot
+     * be changed via this endpoint. The principalId in the request body
+     * identifies the user to update.
+     *
+     * @param userData user data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 No user found with the given principalId
+     */
+    @Override
+    @POST
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/users/update")
+    @RolesAllowed({"adminRole"})
+    public Response updateUser(RestfulUserV6 userData) {
+
+        try {
+
+            if (userData.getPrincipalId() == null || "".equals(userData.getPrincipalId())) {
+                log.error("Can not update user - no principal ID given");
+                return Response.serverError().build();
+            }
+
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+
+            AppUserBean existing = system.getUser(userData.getPrincipalId());
+            if (existing == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            List<AppRoleBean> currentRoles = system.getRoles(userData.getPrincipalId());
+
+            existing = userData.toAppUserBean(existing);
+
+            existing = system.updateUser(existing, currentRoles);
+
+            userData = RestfulUserV6.fromAppUserBean(existing);
+
+            return Response.ok(userData).build();
+        } catch (Exception ex) {
+            log.error("can not update user " + userData.getPrincipalId(), ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns all available roles with their descriptions
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/roles")
+    @RolesAllowed({"loginRole"})
+    public Response listAllRoles() {
+        try {
+            ArrayList<RestfulRoleV6> resultList = new ArrayList<>();
+            for (Map.Entry<String, String> entry : RestfulRoleV6.getAllRoleDescriptions().entrySet()) {
+                resultList.add(RestfulRoleV6.fromRoleName(entry.getKey()));
+            }
+            return Response.ok(resultList).build();
+        } catch (Exception ex) {
+            log.error("can not list all roles", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns all roles assigned to a specific user
+     *
+     * @param principalId the users principal ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 No user found with the given principalId
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/roles/{principalId}")
+    @RolesAllowed({"adminRole"})
+    public Response getUserRoles(@PathParam("principalId") String principalId) {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+
+            AppUserBean user = system.getUser(principalId);
+            if (user == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            List<AppRoleBean> roles = system.getRoles(principalId);
+            ArrayList<RestfulRoleV6> resultList = new ArrayList<>();
+            for (AppRoleBean arb : roles) {
+                resultList.add(RestfulRoleV6.fromAppRoleBean(arb));
+            }
+            return Response.ok(resultList).build();
+        } catch (Exception ex) {
+            log.error("can not get roles for user " + principalId, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates the roles of a specific user. The provided list of roles
+     * replaces all existing roles. User attributes are preserved.
+     *
+     * @param principalId the users principal ID
+     * @param roles list of roles to assign
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 No user found with the given principalId
+     */
+    @Override
+    @POST
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/roles/{principalId}")
+    @RolesAllowed({"adminRole"})
+    public Response updateUserRoles(@PathParam("principalId") String principalId, List<RestfulRoleV6> roles) {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+
+            AppUserBean user = system.getUser(principalId);
+            if (user == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            ArrayList<AppRoleBean> roleBeans = new ArrayList<>();
+            for (RestfulRoleV6 r : roles) {
+                AppRoleBean arb = new AppRoleBean();
+                arb.setPrincipalId(principalId);
+                arb.setRole(r.getRole());
+                arb.setRoleGroup("Roles");
+                roleBeans.add(arb);
+            }
+
+            system.updateUser(user, roleBeans);
+
+            List<AppRoleBean> updatedRoles = system.getRoles(principalId);
+            ArrayList<RestfulRoleV6> resultList = new ArrayList<>();
+            for (AppRoleBean arb : updatedRoles) {
+                resultList.add(RestfulRoleV6.fromAppRoleBean(arb));
+            }
+            return Response.ok(resultList).build();
+        } catch (Exception ex) {
+            log.error("can not update roles for user " + principalId, ex);
             return Response.serverError().build();
         }
     }

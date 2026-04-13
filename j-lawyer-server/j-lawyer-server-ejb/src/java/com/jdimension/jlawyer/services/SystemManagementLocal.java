@@ -711,6 +711,10 @@ public interface SystemManagementLocal {
     
     AppUserBean createUser(AppUserBean user, List<AppRoleBean> roles) throws Exception;
 
+    AppUserBean updateUser(AppUserBean user, List<AppRoleBean> roles) throws Exception;
+
+    List<AppRoleBean> getRoles(String principalId);
+
     List<MappingTable> getMappingTables();
 
     MappingTable addMappingTable(MappingTable table) throws Exception;
