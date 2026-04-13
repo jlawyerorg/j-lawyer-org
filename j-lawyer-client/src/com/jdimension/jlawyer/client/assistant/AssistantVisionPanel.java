@@ -909,7 +909,7 @@ public class AssistantVisionPanel extends JDialog {
         if (this.caseView != null) {
             AiChatMessageMarkdownPanel p = findLastMessagePanel();
             if (p != null) {
-                this.caseView.newDocumentDialog(null, null, null, null, null, null, null, p.getMessage().getContent());
+                this.caseView.newDocumentDialog(null, null, false, null, null, null, null, null, p.getMessage().getContent());
             }
         }
     }

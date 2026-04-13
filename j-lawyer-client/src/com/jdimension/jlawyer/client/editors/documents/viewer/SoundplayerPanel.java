@@ -944,7 +944,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
     private void cmdNewDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewDocumentActionPerformed
         if (this.saveCallback != null) {
             if (this.saveCallback instanceof EditArchiveFileDetailsPanel) {
-                ((EditArchiveFileDetailsPanel) this.saveCallback).newDocumentDialog(null, null, null, null, null, null, null, this.taTranscription.getText());
+                ((EditArchiveFileDetailsPanel) this.saveCallback).newDocumentDialog(null, null, false, null, null, null, null, null, this.taTranscription.getText());
             }
         }
     }//GEN-LAST:event_cmdNewDocumentActionPerformed

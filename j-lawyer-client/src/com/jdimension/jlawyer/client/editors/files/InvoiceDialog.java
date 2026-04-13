@@ -2835,7 +2835,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                     JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
 
-                ArchiveFileDocumentsBean invoiceDoc = this.caseView.newDocumentDialog(null, currentEntry, senderUser, this.getInvoicePositionsAsTable(this.cmbTableHeadersLanguage.getSelectedItem().toString()), timesheetPosTable, timesheetSummaryTable, giroCode, null);
+                ArchiveFileDocumentsBean invoiceDoc = this.caseView.newDocumentDialog(null, currentEntry, true, senderUser, this.getInvoicePositionsAsTable(this.cmbTableHeadersLanguage.getSelectedItem().toString()), timesheetPosTable, timesheetSummaryTable, giroCode, null);
                 if (invoiceDoc != null && this.currentEntry != null) {
                     this.save();
                     try {
@@ -3093,7 +3093,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 JOptionPane.showMessageDialog(this, "Fehler beim Laden Zeiterfassungspositionen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
 
-            ArchiveFileDocumentsBean timesheetDoc = this.caseView.newDocumentDialog(null, currentEntry, senderUser, this.getInvoicePositionsAsTable(this.cmbTableHeadersLanguage.getSelectedItem().toString()), timesheetPosTable, timesheetSummaryTable, null, null);
+            ArchiveFileDocumentsBean timesheetDoc = this.caseView.newDocumentDialog(null, currentEntry, false, senderUser, this.getInvoicePositionsAsTable(this.cmbTableHeadersLanguage.getSelectedItem().toString()), timesheetPosTable, timesheetSummaryTable, null, null);
 
         }
     }//GEN-LAST:event_cmdCreateTimesheetDocumentActionPerformed

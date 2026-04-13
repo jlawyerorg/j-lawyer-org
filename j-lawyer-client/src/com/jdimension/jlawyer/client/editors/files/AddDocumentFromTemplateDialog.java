@@ -724,6 +724,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     
     private GenericCalculationTable calculationTable = null;
     private Invoice invoice = null;
+    private boolean linkAsInvoiceDocument = false;
     private AppUserBean invoiceSender = null;
     private StyledCalculationTable invoiceTable = null;
     private byte[] giroCode = null;
@@ -741,7 +742,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private DocumentNameTemplate nameTemplate = null;
 
     public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved) {
-        this(parent, modal, casePanel, targetTable, aFile, involved, null, null, null, null, null, null, null, null);
+        this(parent, modal, casePanel, targetTable, aFile, involved, null, null, false, null, null, null, null, null, null);
     }
 
     /**
@@ -761,11 +762,12 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
      * @param giroCode
      * @param ingoText
      */
-    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, GenericCalculationTable calculationTable, Invoice invoice, AppUserBean invoiceSender, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable, StyledCalculationTable timesheetSummaryTable, byte[] giroCode, String ingoText) {
+    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, GenericCalculationTable calculationTable, Invoice invoice, boolean linkAsInvoiceDocument, AppUserBean invoiceSender, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable, StyledCalculationTable timesheetSummaryTable, byte[] giroCode, String ingoText) {
         super(parent, modal);
 
         this.calculationTable = calculationTable;
         this.invoice = invoice;
+        this.linkAsInvoiceDocument = linkAsInvoiceDocument;
         this.invoiceSender = invoiceSender;
         this.giroCode = giroCode;
         this.ingoText = ingoText;
@@ -1603,7 +1605,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             return;
         }
 
-        if (this.invoice != null) {
+        if (this.invoice != null && this.linkAsInvoiceDocument) {
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 locator.lookupArchiveFileServiceRemote().linkInvoiceDocument(db.getId(), this.invoice.getId());
