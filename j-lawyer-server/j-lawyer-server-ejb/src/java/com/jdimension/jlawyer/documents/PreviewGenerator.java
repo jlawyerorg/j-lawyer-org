@@ -831,7 +831,7 @@ public class PreviewGenerator {
                 try {
                     pdfPreviewBytes=this.pdfApi.convertToPdf(fileName, ServerFileUtils.readFile(fSrcFile));
                 } catch (Exception ex) {
-                    log.error("Could not create Stirling PDF preview for file " + fileName + " with ID " + docId);
+                    log.error("Could not create Stirling PDF preview for file " + fileName + " with ID " + docId, ex);
                     return new DocumentPreview("");
                 }
                 if(pdfPreviewBytes==null || pdfPreviewBytes.length==0) {
