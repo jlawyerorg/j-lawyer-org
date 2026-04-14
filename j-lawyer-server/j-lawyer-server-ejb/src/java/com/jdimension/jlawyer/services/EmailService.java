@@ -2357,7 +2357,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                     if (ea != null) {
                         String name = (String) ea.get("name");
                         String addr = (String) ea.get("address");
-                        dto.setFrom(name != null && !name.isEmpty() ? name + " <" + addr + ">" : addr);
+                        dto.setFrom(name != null && !name.isEmpty() ? quoteDisplayName(name) + " <" + addr + ">" : addr);
                     }
                 }
                 dto.setTo(graphRecipientsToStrings((List<Map<String, Object>>) m.get("toRecipients")));
@@ -2394,7 +2394,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             if (ea != null) {
                 String name = (String) ea.get("name");
                 String addr = (String) ea.get("address");
-                dto.setFrom(name != null && !name.isEmpty() ? name + " <" + addr + ">" : addr);
+                dto.setFrom(name != null && !name.isEmpty() ? quoteDisplayName(name) + " <" + addr + ">" : addr);
             }
         }
         dto.setTo(graphRecipientsToStrings((List<Map<String, Object>>) m.get("toRecipients")));
@@ -2636,6 +2636,16 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         return result;
     }
 
+    private String quoteDisplayName(String name) {
+        if (name == null || name.isEmpty()) {
+            return name;
+        }
+        if (name.contains(",") || name.contains(";") || name.contains("<") || name.contains(">") || name.contains("\"") || name.contains("@") || name.contains("\\")) {
+            return "\"" + name.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+        }
+        return name;
+    }
+
     @SuppressWarnings("unchecked")
     private String[] graphRecipientsToStrings(List<Map<String, Object>> recipients) {
         if (recipients == null) {
@@ -2647,7 +2657,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             if (ea != null) {
                 String name = (String) ea.get("name");
                 String addr = (String) ea.get("address");
-                result[i] = name != null && !name.isEmpty() ? name + " <" + addr + ">" : addr;
+                result[i] = name != null && !name.isEmpty() ? quoteDisplayName(name) + " <" + addr + ">" : addr;
             }
         }
         return result;
