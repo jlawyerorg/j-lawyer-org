@@ -690,6 +690,8 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.swing.table.DefaultTableModel;
+import com.jdimension.jlawyer.ai.ToolDefinition;
+import com.jdimension.jlawyer.client.assistant.ToolRegistry;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
@@ -982,6 +984,66 @@ public class UserProfileDialog extends javax.swing.JDialog {
             this.cmbDefaultHtmlFontSize.setSelectedItem("12");
         }
 
+        // Initialize AI tool permissions tab
+        String[] aiColNames = new String[]{"Erlaubt", "Werkzeug", "Risikostufe", "Beschreibung"};
+        DefaultTableModel aiModel = new DefaultTableModel(aiColNames, 0) {
+            @Override
+            public Class<?> getColumnClass(int columnIndex) {
+                if (columnIndex == 0) {
+                    return Boolean.class;
+                }
+                return String.class;
+            }
+
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 0;
+            }
+        };
+        this.tblAiToolPermissions.setModel(aiModel);
+
+        // Bold renderer for "Werkzeug" column
+        this.tblAiToolPermissions.getColumnModel().getColumn(1).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                java.awt.Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                c.setFont(c.getFont().deriveFont(java.awt.Font.BOLD));
+                return c;
+            }
+        });
+
+        // Risk level renderer with background color
+        this.tblAiToolPermissions.getColumnModel().getColumn(2).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                java.awt.Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (!isSelected && value != null) {
+                    String risk = value.toString();
+                    if (ToolDefinition.RISK_HIGH.equals(risk)) {
+                        c.setBackground(new java.awt.Color(255, 240, 240));
+                        c.setForeground(new java.awt.Color(244, 67, 54));
+                    } else if (ToolDefinition.RISK_MEDIUM.equals(risk)) {
+                        c.setBackground(new java.awt.Color(255, 248, 220));
+                        c.setForeground(new java.awt.Color(255, 152, 0));
+                    } else {
+                        c.setBackground(new java.awt.Color(240, 255, 240));
+                        c.setForeground(new java.awt.Color(76, 175, 80));
+                    }
+                }
+                return c;
+            }
+        });
+
+        ToolRegistry toolReg = new ToolRegistry();
+        java.util.List<ToolDefinition> allTools = toolReg.getToolDefinitions();
+        for (ToolDefinition td : allTools) {
+            if (toolReg.requiresApproval(td.getId())) {
+                boolean alwaysApproved = toolReg.isAlwaysApproved(td.getId());
+                aiModel.addRow(new Object[]{alwaysApproved, td.getId(), td.getRiskLevel(), td.getDescription()});
+            }
+        }
+        ComponentUtils.autoSizeColumns(tblAiToolPermissions);
+
     }
 
     /**
@@ -1028,6 +1090,11 @@ public class UserProfileDialog extends javax.swing.JDialog {
         jLabel8 = new javax.swing.JLabel();
         cmbDefaultHtmlFont = new javax.swing.JComboBox<>();
         cmbDefaultHtmlFontSize = new javax.swing.JComboBox<>();
+        pnlAiToolPermissions = new javax.swing.JPanel();
+        lblAiToolPermissionsHeader = new javax.swing.JLabel();
+        scrollAiToolPermissions = new javax.swing.JScrollPane();
+        tblAiToolPermissions = new javax.swing.JTable();
+        cmdRevokeAllToolPermissions = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/UserProfileDialog"); // NOI18N
@@ -1090,7 +1157,7 @@ public class UserProfileDialog extends javax.swing.JDialog {
                     .addComponent(lblAbbreviation)
                     .addComponent(lblGroup)
                     .addComponent(cmbAvatar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(497, Short.MAX_VALUE))
+                .addContainerGap(520, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1156,7 +1223,7 @@ public class UserProfileDialog extends javax.swing.JDialog {
                     .addComponent(chkScheduledDailyAgenda)
                     .addComponent(chkScheduledWeeklyDigest)
                     .addComponent(chkEventInstantMessageDone))
-                .addContainerGap(169, Short.MAX_VALUE))
+                .addContainerGap(227, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1181,7 +1248,7 @@ public class UserProfileDialog extends javax.swing.JDialog {
                 .addComponent(chkScheduledDailyAgenda)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(chkScheduledWeeklyDigest)
-                .addContainerGap(143, Short.MAX_VALUE))
+                .addContainerGap(104, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Benachrichtigungen", jPanel2);
@@ -1196,14 +1263,14 @@ public class UserProfileDialog extends javax.swing.JDialog {
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(chkWarnOnUnknownSenders)
-                .addContainerGap(237, Short.MAX_VALUE))
+                .addContainerGap(287, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(chkWarnOnUnknownSenders)
-                .addContainerGap(437, Short.MAX_VALUE))
+                .addContainerGap(425, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Sicherheit", jPanel3);
@@ -1244,7 +1311,7 @@ public class UserProfileDialog extends javax.swing.JDialog {
                             .addComponent(jLabel6)
                             .addComponent(jLabel7))
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 743, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 766, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -1257,7 +1324,7 @@ public class UserProfileDialog extends javax.swing.JDialog {
                 .addGap(18, 18, 18)
                 .addComponent(jLabel7)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 350, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1281,7 +1348,7 @@ public class UserProfileDialog extends javax.swing.JDialog {
                         .addComponent(cmbDefaultHtmlFont, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmbDefaultHtmlFontSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(328, Short.MAX_VALUE))
+                .addContainerGap(351, Short.MAX_VALUE))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1292,10 +1359,73 @@ public class UserProfileDialog extends javax.swing.JDialog {
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmbDefaultHtmlFont, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmbDefaultHtmlFontSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(403, Short.MAX_VALUE))
+                .addContainerGap(394, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Formatierungen", jPanel5);
+
+        lblAiToolPermissionsHeader.setText("Dauerhaft erteilte Genehmigungen für KI-Werkzeuge:");
+
+        tblAiToolPermissions.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Erlaubt", "Werkzeug", "Risikostufe", "Beschreibung"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Boolean.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
+            };
+            boolean[] canEdit = new boolean [] {
+                true, false, false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        scrollAiToolPermissions.setViewportView(tblAiToolPermissions);
+
+        cmdRevokeAllToolPermissions.setText("Alle widerrufen");
+        cmdRevokeAllToolPermissions.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRevokeAllToolPermissionsActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout pnlAiToolPermissionsLayout = new javax.swing.GroupLayout(pnlAiToolPermissions);
+        pnlAiToolPermissions.setLayout(pnlAiToolPermissionsLayout);
+        pnlAiToolPermissionsLayout.setHorizontalGroup(
+            pnlAiToolPermissionsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlAiToolPermissionsLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(pnlAiToolPermissionsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(scrollAiToolPermissions, javax.swing.GroupLayout.DEFAULT_SIZE, 766, Short.MAX_VALUE)
+                    .addGroup(pnlAiToolPermissionsLayout.createSequentialGroup()
+                        .addGroup(pnlAiToolPermissionsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lblAiToolPermissionsHeader)
+                            .addComponent(cmdRevokeAllToolPermissions))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        pnlAiToolPermissionsLayout.setVerticalGroup(
+            pnlAiToolPermissionsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlAiToolPermissionsLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(lblAiToolPermissionsHeader)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(scrollAiToolPermissions, javax.swing.GroupLayout.DEFAULT_SIZE, 382, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdRevokeAllToolPermissions)
+                .addContainerGap())
+        );
+
+        jTabbedPane1.addTab("KI-Werkzeuge", pnlAiToolPermissions);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -1316,8 +1446,8 @@ public class UserProfileDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 513, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 541, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdClose)
                     .addComponent(cmdSave))
@@ -1360,6 +1490,18 @@ public class UserProfileDialog extends javax.swing.JDialog {
         }
         settings.setSettingArray(UserSettings.CONF_CASE_DEFAULT_ALLOWEDGROUPS, checkedGroupIds.toArray(new String[0]));
 
+        // Save AI tool permissions
+        ToolRegistry toolReg = new ToolRegistry();
+        for (int r = 0; r < this.tblAiToolPermissions.getRowCount(); r++) {
+            Boolean allowed = (Boolean) this.tblAiToolPermissions.getValueAt(r, 0);
+            String toolId = (String) this.tblAiToolPermissions.getValueAt(r, 1);
+            if (allowed) {
+                toolReg.approveAlways(toolId);
+            } else {
+                toolReg.revokeAlways(toolId);
+            }
+        }
+
         // Save default HTML font and size
         String selectedFont = (String) this.cmbDefaultHtmlFont.getSelectedItem();
         if (selectedFont != null) {
@@ -1380,6 +1522,12 @@ public class UserProfileDialog extends javax.swing.JDialog {
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdSaveActionPerformed
+
+    private void cmdRevokeAllToolPermissionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRevokeAllToolPermissionsActionPerformed
+        for (int r = 0; r < this.tblAiToolPermissions.getRowCount(); r++) {
+            this.tblAiToolPermissions.setValueAt(false, r, 0);
+        }
+    }//GEN-LAST:event_cmdRevokeAllToolPermissionsActionPerformed
 
     private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
         this.setVisible(false);
@@ -1482,6 +1630,7 @@ public class UserProfileDialog extends javax.swing.JDialog {
     private javax.swing.JComboBox<String> cmbDefaultOwnerGroup;
     private javax.swing.JButton cmdChangePassword;
     private javax.swing.JButton cmdClose;
+    private javax.swing.JButton cmdRevokeAllToolPermissions;
     private javax.swing.JButton cmdSave;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel16;
@@ -1500,8 +1649,12 @@ public class UserProfileDialog extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLabel lblAbbreviation;
+    private javax.swing.JLabel lblAiToolPermissionsHeader;
     private javax.swing.JLabel lblEmail;
     private javax.swing.JLabel lblGroup;
+    private javax.swing.JPanel pnlAiToolPermissions;
+    private javax.swing.JScrollPane scrollAiToolPermissions;
+    private javax.swing.JTable tblAiToolPermissions;
     private javax.swing.JTable tblDefaultAllowedGroups;
     // End of variables declaration//GEN-END:variables
 }

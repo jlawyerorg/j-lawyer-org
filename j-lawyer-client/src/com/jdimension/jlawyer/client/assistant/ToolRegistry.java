@@ -702,6 +702,24 @@ public class ToolRegistry {
         UserSettings.getInstance().setSetting(SETTINGS_PREFIX + toolId, "true");
     }
 
+    /**
+     * Revokes the "always allow" permission for the given tool.
+     * @param toolId the tool identifier
+     */
+    public void revokeAlways(String toolId) {
+        UserSettings.getInstance().removeSetting(SETTINGS_PREFIX + toolId);
+    }
+
+    /**
+     * Checks whether the given tool has been permanently approved (not just for the current session).
+     * @param toolId the tool identifier
+     * @return true if the tool has been permanently approved
+     */
+    public boolean isAlwaysApproved(String toolId) {
+        String setting = UserSettings.getInstance().getSetting(SETTINGS_PREFIX + toolId, "false");
+        return "true".equalsIgnoreCase(setting);
+    }
+
     public String getToolDisplayName(String toolId) {
         for (ToolDefinition td : TOOLS) {
             if (td.getId().equals(toolId)) {
