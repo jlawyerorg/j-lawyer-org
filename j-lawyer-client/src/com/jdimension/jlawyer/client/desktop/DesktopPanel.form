@@ -361,6 +361,9 @@
               <SubComponents>
                 <Component class="javax.swing.JLabel" name="jLabel7">
                   <Properties>
+                    <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
+                      <Color blue="ff" green="ff" red="ff" type="rgb"/>
+                    </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="com/jdimension/jlawyer/client/desktop/DesktopPanel.properties" key="label.lastchanged.loading" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
                     </Property>
@@ -630,6 +633,9 @@
                   <SubComponents>
                     <Component class="javax.swing.JLabel" name="jLabel10">
                       <Properties>
+                        <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
+                          <Color blue="ff" green="ff" red="ff" type="rgb"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                           <ResourceString bundle="com/jdimension/jlawyer/client/desktop/DesktopPanel.properties" key="label.lastchanged.loading" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
                         </Property>
@@ -686,10 +692,8 @@
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" max="-2" attributes="0">
                   <Component id="desktopWidgetPanel2" max="32767" attributes="0"/>
-                  <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
-                      <Component id="lblDay" alignment="0" max="32767" attributes="0"/>
-                      <Component id="messagesWidget" alignment="0" max="32767" attributes="0"/>
-                  </Group>
+                  <Component id="lblDay" alignment="0" max="32767" attributes="0"/>
+                  <Component id="messagesWidget" alignment="0" max="32767" attributes="0"/>
                   <Component id="lblUserIcon" alignment="0" max="32767" attributes="0"/>
                   <Component id="lblUserName" alignment="0" max="32767" attributes="0"/>
               </Group>
@@ -752,7 +756,7 @@
                           <Component id="lblMailingStatus" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
-                  <EmptySpace min="0" pref="1" max="32767" attributes="0"/>
+                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>

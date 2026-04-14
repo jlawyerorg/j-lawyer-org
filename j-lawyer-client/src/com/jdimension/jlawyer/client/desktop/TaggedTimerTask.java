@@ -706,6 +706,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
     private JTabbedPane tagsPane = null;
     
     private volatile boolean stopped = false;
+    private volatile boolean dataLoaded = false;
 
     public void stop() {
         stopped = true;
@@ -844,9 +845,9 @@ public class TaggedTimerTask extends java.util.TimerTask {
         }
 
         running = true;
-        
+
         if (stopped) return;
-        
+
         String selectedTabTitle=null;
         if(this.tagsPane.getSelectedIndex()>-1)
             selectedTabTitle=this.tagsPane.getTitleAt(this.tagsPane.getSelectedIndex());
@@ -925,7 +926,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
             }
 
             EditorsRegistry reg = EditorsRegistry.getInstance();
-            if (reg.isEditorActive(DesktopPanel.class.getName()) && resultUI.getComponentCount() > 0) {
+            if (reg.isEditorActive(DesktopPanel.class.getName()) && dataLoaded) {
                 if (!this.ignoreCurrentEditor) {
                     // do not refresh if desktop is active - this might interrupt user interactions
                     running = false;
@@ -1225,7 +1226,8 @@ public class TaggedTimerTask extends java.util.TimerTask {
                             if(selectTabIndex>-1) {
                                 tagsPane.setSelectedIndex(selectTabIndex);
                             }
-                            
+
+                            dataLoaded = true;
                             running = false;
                         }
 

@@ -691,6 +691,7 @@ public class LastChangedTimerTask extends java.util.TimerTask {
     private boolean ignoreCurrentEditor = false;
     
     private volatile boolean stopped = false;
+    private volatile boolean dataLoaded = false;
 
     public void stop() {
         stopped = true;
@@ -715,14 +716,14 @@ public class LastChangedTimerTask extends java.util.TimerTask {
     public void run() {
 
         if (stopped) return;
-        
+
         List<ArchiveFileBean> myNewList = new ArrayList<>();
         List<ArchiveFileBean> filteredList = new ArrayList<>();
         HashMap<String, List<ArchiveFileTagsBean>> tags = new HashMap<>();
         try {
 
             EditorsRegistry reg = EditorsRegistry.getInstance();
-            if (reg.isEditorActive(DesktopPanel.class.getName()) && resultUI.getComponentCount() > 0) {
+            if (reg.isEditorActive(DesktopPanel.class.getName()) && dataLoaded) {
                 if (!this.ignoreCurrentEditor) {
                     // do not refresh if desktop is active - this might interrupt user interactions
                     return;
@@ -799,9 +800,11 @@ public class LastChangedTimerTask extends java.util.TimerTask {
                     resultUI.add(ep);
                     i++;
                     if (i == 25) {
+                        dataLoaded = true;
                         return;
                     }
                 }
+                dataLoaded = true;
 
             });
         } catch (Throwable t) {

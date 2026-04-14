@@ -888,7 +888,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.pnlLastChanged.setLayout(boxLayout);
         this.lastChangedTimer = new Timer();
         final LastChangedTimerTask lastChangedTask = new LastChangedTimerTask(this.pnlLastChanged);
-        this.lastChangedTimer.schedule(lastChangedTask, 1000, 15l*59000l);
+        this.lastChangedTimer.schedule(lastChangedTask, 1500, 15l*59000l);
 
         Timer timer3 = new Timer();
         AutoUpdateTimerTask autoUpdateTask = new AutoUpdateTimerTask(this);
@@ -908,7 +908,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.pnlTagged.setLayout(boxLayout2);
         final Timer timer5 = new Timer();
         final TaggedTimerTask taggedTask = new TaggedTimerTask(this, this.tabPaneTagged, this.pnlTagged, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter);
-        timer5.schedule(taggedTask, 1000, 3l*63000l);
+        timer5.schedule(taggedTask, 2000, 3l*63000l);
 
         Timer timer6 = new Timer();
         DocumentObserverTask docObserverTask = new DocumentObserverTask();
@@ -1681,6 +1681,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         pnlLastChanged.setOpaque(false);
 
+        jLabel7.setForeground(new java.awt.Color(255, 255, 255));
         jLabel7.setText(bundle.getString("label.lastchanged.loading")); // NOI18N
 
         org.jdesktop.layout.GroupLayout pnlLastChangedLayout = new org.jdesktop.layout.GroupLayout(pnlLastChanged);
@@ -1821,6 +1822,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         pnlTagged.setOpaque(false);
 
+        jLabel10.setForeground(new java.awt.Color(255, 255, 255));
         jLabel10.setText(bundle.getString("label.lastchanged.loading")); // NOI18N
 
         org.jdesktop.layout.GroupLayout pnlTaggedLayout = new org.jdesktop.layout.GroupLayout(pnlTagged);
@@ -1975,7 +1977,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(lblUnreadMail)
                         .add(lblScans)
                         .add(lblMailingStatus)))
-                .add(0, 1, Short.MAX_VALUE))
+                .add(0, 0, Short.MAX_VALUE))
         );
 
         lblArchiveFileCount.setFont(lblArchiveFileCount.getFont().deriveFont(lblArchiveFileCount.getFont().getStyle() | java.awt.Font.BOLD));
@@ -2143,9 +2145,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                     .add(desktopWidgetPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblDay, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, messagesWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(lblDay, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(messagesWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(lblUserIcon, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(lblUserName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)

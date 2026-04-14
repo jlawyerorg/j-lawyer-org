@@ -694,6 +694,7 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
     private java.util.function.Consumer<ArrayList<ReviewDueEntry>> entriesCallback = null;
 
     private volatile boolean stopped = false;
+    private volatile boolean dataLoaded = false;
 
     public void stop() {
         stopped = true;
@@ -750,7 +751,7 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
         try {
 
             EditorsRegistry reg = EditorsRegistry.getInstance();
-            if (reg.isEditorActive(DesktopPanel.class.getName()) && resultUI.getComponentCount() > 0) {
+            if (reg.isEditorActive(DesktopPanel.class.getName()) && dataLoaded) {
                 if (!this.ignoreCurrentEditor) {
                     // do not refresh if desktop is active - this might interrupt user interactions
                     return;
@@ -891,6 +892,7 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                     entriesCallback.accept(entriesCopy);
                 }
                 desktopPanel.renderDueEntries(list, compactView);
+                dataLoaded = true;
             });
         }
 
