@@ -2951,16 +2951,16 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             InstantMessageMention mention = msg.getMentionFor(currentUser);
             if (mention != null && !mention.isDone()) {
                 // Sent to self
-                addMessageToDesktopContainer(msg, pnlDesktopMessagesToMeContent, scrollDesktopMessagesToMe);
+                addMessageToDesktopContainer(msg, pnlDesktopMessagesToMeContent);
             } else {
                 // Sent to others
-                addMessageToDesktopContainer(msg, pnlDesktopMessagesToOthersContent, scrollDesktopMessagesToOthers);
+                addMessageToDesktopContainer(msg, pnlDesktopMessagesToOthersContent);
             }
         } else {
             // Check for messages with open mention for current user
             InstantMessageMention mention = msg.getMentionFor(currentUser);
             if (mention != null && !mention.isDone()) {
-                addMessageToDesktopContainer(msg, pnlDesktopMessagesToMeContent, scrollDesktopMessagesToMe);
+                addMessageToDesktopContainer(msg, pnlDesktopMessagesToMeContent);
             }
         }
     }
@@ -2974,7 +2974,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         }
     }
 
-    private void addMessageToDesktopContainer(InstantMessage msg, JPanel targetPanel, JScrollPane targetScroll) {
+    private void addMessageToDesktopContainer(InstantMessage msg, JPanel targetPanel) {
         MessagePanel mp = new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), UserSettings.getInstance().getCurrentUser().getPrincipalId(), UserSettings.getInstance().getCurrentUser().getPrincipalId().equalsIgnoreCase(msg.getSender()), msg);
         mp.setAlignmentX(JPanel.LEFT_ALIGNMENT);
         // Insert at correct position: newer messages on top
