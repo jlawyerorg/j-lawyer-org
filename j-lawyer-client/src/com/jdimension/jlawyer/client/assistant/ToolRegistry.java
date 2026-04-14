@@ -3333,13 +3333,37 @@ public class ToolRegistry {
             }
         }
 
-        ArchiveFileBean dto = new ArchiveFileBean();
-        dto.setName(name.trim());
-        if (reason != null && !reason.trim().isEmpty()) {
-            dto.setReason(reason.trim());
+        // truncate to database column sizes
+        name = name.trim();
+        if (name.length() > 250) {
+            name = name.substring(0, 250);
         }
-        if (subjectField != null && !subjectField.trim().isEmpty()) {
-            dto.setSubjectField(subjectField.trim());
+        if (reason != null) {
+            reason = reason.trim();
+            if (reason.length() > 250) {
+                reason = reason.substring(0, 250);
+            }
+        }
+        if (subjectField != null) {
+            subjectField = subjectField.trim();
+            if (subjectField.length() > 100) {
+                subjectField = subjectField.substring(0, 100);
+            }
+        }
+        if (notice != null) {
+            notice = notice.trim();
+            if (notice.length() > 2500) {
+                notice = notice.substring(0, 2500);
+            }
+        }
+
+        ArchiveFileBean dto = new ArchiveFileBean();
+        dto.setName(name);
+        if (reason != null && !reason.isEmpty()) {
+            dto.setReason(reason);
+        }
+        if (subjectField != null && !subjectField.isEmpty()) {
+            dto.setSubjectField(subjectField);
         }
         if (lawyer != null && !lawyer.trim().isEmpty()) {
             dto.setLawyer(lawyer);
@@ -3347,8 +3371,8 @@ public class ToolRegistry {
         if (assistant != null && !assistant.trim().isEmpty()) {
             dto.setAssistant(assistant);
         }
-        if (notice != null && !notice.trim().isEmpty()) {
-            dto.setNotice(notice.trim());
+        if (notice != null && !notice.isEmpty()) {
+            dto.setNotice(notice);
         }
         if (matchedGroup != null) {
             dto.setGroup(matchedGroup);
