@@ -880,24 +880,6 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
             log.error("Could not initialize users popup", ex);
         }
 
-//        addButton = new JButton("Hinzufügen");
-//        removeButton = new JButton("Löschen");
-//        addButton = new JButton("Hinzufügen");
-//        addButton.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
-//        removeButton = new JButton("Löschen");
-//        removeButton.setBackground(DefaultColorTheme.COLOR_LOGO_RED);
-//        Image addImg = null;
-//        Image removeImg = null;
-//        try {
-//            addImg = ImageIO.read(getClass().getResource("/icons/edit_add.png"));
-//            removeImg = ImageIO.read(getClass().getResource("/icons/editdelete.png"));
-//            addButton.setIcon(new ImageIcon(addImg));
-//            removeButton.setIcon(new ImageIcon(removeImg));
-//        } catch (final Exception e) {
-//
-//        }
-//        toolBar.add(addButton);
-//        toolBar.add(removeButton);
         JMenuItem mnuOpenCase = new JMenuItem("Akte bearbeiten");
         mnuOpenCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png")));
         mnuOpenCase.setToolTipText("gewählte Akte bearbeiten");
@@ -1040,7 +1022,53 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
                         return;
                     }
 
-                    log.info("Marked vent " + ce.getEventId() + " as done");
+                    log.info("Marked event " + ce.getEventId() + " as done");
+
+                }
+            }
+        });
+        
+        JMenuItem mnuDeleteEvent = new JMenuItem("löschen");
+        mnuDeleteEvent.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
+        mnuDeleteEvent.setToolTipText("Kalendereintrag löschen");
+        mnuDeleteEvent.addActionListener((java.awt.event.ActionEvent evt) -> {
+            Collection<CalendarEvent> selected = this.jCalendar.getSelectedCalendarEvents();
+            if (!selected.isEmpty()) {
+                CalendarEvent ce = selected.iterator().next();
+
+                if (ce.getEventId() == null) {
+                    JOptionPane.showMessageDialog(this, "Der Kalendereintrag ist ungültig und kann nicht bearbeitet werden (unbekannter Bezeichner).", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                int response = JOptionPane.showConfirmDialog(this,
+                        "Möchten Sie dieses Ereignis wirklich löschen?",
+                        "Bestätigung",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE);
+
+                if (response == JOptionPane.YES_OPTION) {
+                    this.jCalendar.removeCalendarEvent(ce);
+
+                    ClientSettings settings = ClientSettings.getInstance();
+                    try {
+                        // mark event as done on the server
+                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                        CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+                        calService.removeReview(ce.getEventId());
+
+                        // publish a notification so the desktop can automatically refresh
+                        ArchiveFileReviewsBean updatedEvent = calService.getReview(ce.getEventId());
+                        EventBroker eb = EventBroker.getInstance();
+                        eb.publishEvent(new ReviewUpdatedEvent(null, null, updatedEvent));
+                    } catch (Exception ex) {
+                        log.error("Error updating review", ex);
+                        JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                        EditorsRegistry.getInstance().clearStatus();
+                        return;
+                    }
+
+                    log.info("Marked event " + ce.getEventId() + " as done");
 
                 }
             }
@@ -1050,6 +1078,7 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
         popup.add(mnuOpenCase);
         popup.add(mnuEditEvent);
         popup.add(mnuMarkEventAsDone);
+        popup.add(mnuDeleteEvent);
 
         jCalendar = new JCalendar();
         jCalendar.setPreferredSize(new Dimension(1024, 768));
