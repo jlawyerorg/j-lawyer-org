@@ -84,6 +84,38 @@ public class GraphicsUtil {
 	 * @param y
 	 * @param width
 	 */
+	/**
+	 * Measures the total height the text would occupy when drawn with word wrapping
+	 * within the given width. Uses the same wrapping logic as drawString.
+	 */
+	public static int measureTextHeight(Graphics g, String s, int width) {
+		FontMetrics fm = g.getFontMetrics();
+		int lineHeight = fm.getHeight();
+		int curX = 0;
+		int totalHeight = lineHeight;
+
+		String[] words = s.split(" ");
+
+		for (String word : words) {
+			int wordWidth = fm.stringWidth(word + " ");
+
+			if (curX + wordWidth >= width) {
+				totalHeight += lineHeight;
+				curX = 0;
+			}
+			int charIdx = word.length();
+			while (charIdx > 0 && wordWidth >= width) {
+				charIdx -= 1;
+				word = word.substring(0, charIdx);
+				wordWidth = fm.stringWidth(word + " ");
+			}
+
+			curX += wordWidth;
+		}
+
+		return totalHeight;
+	}
+
 	public static void drawTrimmedString(Graphics g, String s, int x, int y, int width) {
 		// FontMetrics gives us information about the width,
 		// height, etc. of the current Graphics object's Font.

@@ -612,11 +612,17 @@ public class DayContentPanel extends JPanel {
                 RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 graphics2d.setRenderingHints(hints);
 
+                int textWidth = (getWidth() - 4) / maxColumns - 3;
+                int textHeight = GraphicsUtil.measureTextHeight(graphics2d, eventString, textWidth);
+                int ascent = graphics2d.getFontMetrics().getAscent();
+                int minY = eventStart + ascent;
+                int centeredY = eventStart + (rectHeight - textHeight) / 2 + ascent;
+                if (centeredY < minY) {
+                    centeredY = minY;
+                }
                 GraphicsUtil.drawString(graphics2d, eventString, column
                                 * (getWidth() - 4) / maxColumns + 3,
-                        eventStart + 15, (getWidth() - 4)
-                                / maxColumns - 3, eventYEnd
-                                - eventStart);
+                        centeredY, textWidth, eventYEnd - centeredY + ascent);
 
             }
         }
