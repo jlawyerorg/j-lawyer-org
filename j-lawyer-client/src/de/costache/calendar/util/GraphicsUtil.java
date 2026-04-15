@@ -77,16 +77,12 @@ public class GraphicsUtil {
 	}
 
 	/**
+	 * Measures the total height the text would occupy when drawn with word wrapping
+	 * within the given width. Uses the same wrapping logic as drawString.
 	 * 
 	 * @param g
 	 * @param s
-	 * @param x
-	 * @param y
 	 * @param width
-	 */
-	/**
-	 * Measures the total height the text would occupy when drawn with word wrapping
-	 * within the given width. Uses the same wrapping logic as drawString.
 	 */
 	public static int measureTextHeight(Graphics g, String s, int width) {
 		FontMetrics fm = g.getFontMetrics();
