@@ -7,5 +7,6 @@ package com.jdimension.jlawyer.ai;
 import java.io.Serializable;
 
 public class FileOutput extends Output implements Serializable {
+    protected static long serialVersionUID = 1L;
     // Implement if needed
 }

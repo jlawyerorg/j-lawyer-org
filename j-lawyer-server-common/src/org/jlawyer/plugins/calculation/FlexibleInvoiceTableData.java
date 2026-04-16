@@ -11,6 +11,8 @@ import java.util.HashMap;
  */
 public class FlexibleInvoiceTableData implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     private ArrayList<HashMap<String, String>> positions = new ArrayList<>();
     private ArrayList<HashMap<String, String>> taxRates = new ArrayList<>();
     private String netTotal = "";

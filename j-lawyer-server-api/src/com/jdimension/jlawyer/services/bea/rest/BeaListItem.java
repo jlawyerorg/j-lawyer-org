@@ -673,6 +673,8 @@ import java.io.Serializable;
  */
 public class BeaListItem implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     private String code;
     private String name;
 

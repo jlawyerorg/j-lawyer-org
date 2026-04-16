@@ -671,6 +671,8 @@ import java.io.Serializable;
  */
 public class SearchException extends Exception implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     /**
      * Creates a new instance of
      * <code>SearchException</code> without detail message.

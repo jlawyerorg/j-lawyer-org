@@ -672,6 +672,8 @@ import java.util.ArrayList;
  */
 public class GenericNode implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     private String name;
     private String id;
 

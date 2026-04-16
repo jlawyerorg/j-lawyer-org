@@ -671,6 +671,8 @@ import java.io.Serializable;
  */
 public class FTPConnectionInfo implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     private String host="localhost";
     private int port=21;
     private String user="anonymous";

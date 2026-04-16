@@ -671,6 +671,8 @@ import java.io.Serializable;
  */
 public class CalendarRegion implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     private String regionName;
 
     public String getCountryId() {

@@ -672,6 +672,8 @@ import java.util.ArrayList;
  */
 public class CalculationTable extends GenericCalculationTable implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     public static final int ALIGNMENT_LEFT = 10;
     public static final int ALIGNMENT_RIGHT = 20;
     public static final int ALIGNMENT_CENTER = 30;

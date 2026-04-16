@@ -670,7 +670,9 @@ import java.io.Serializable;
  * @author jens
  */
 public class Keyword implements Serializable {
-    
+
+    protected static long serialVersionUID = 1L;
+
     public static final int TYPE_UNDEFINED=-1;
     public static final int TYPE_PHONENR=1;
     

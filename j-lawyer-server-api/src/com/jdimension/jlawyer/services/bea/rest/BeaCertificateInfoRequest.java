@@ -672,6 +672,8 @@ import java.io.Serializable;
  */
 public class BeaCertificateInfoRequest implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     private byte[] certificate;
     private String password;
 

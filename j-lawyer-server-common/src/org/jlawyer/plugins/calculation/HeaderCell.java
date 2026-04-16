@@ -671,6 +671,8 @@ import java.io.Serializable;
  */
 public class HeaderCell extends Cell implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     public HeaderCell() {
         super();
         this.setBold(true);

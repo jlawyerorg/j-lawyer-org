@@ -684,6 +684,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class BeaMessage implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     public static final String MESSAGETYPE_ALLGEMEINE_NACHRICHT = "allgemeine_nachricht";
     public static final String MESSAGETYPE_TESTNACHRICHT = "testnachricht";
     public static final String MESSAGETYPE_MAHN_ANTRAG = "mahn_antrag";

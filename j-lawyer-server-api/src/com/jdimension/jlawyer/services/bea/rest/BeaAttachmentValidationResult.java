@@ -672,6 +672,8 @@ import java.io.Serializable;
  */
 public class BeaAttachmentValidationResult implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     public static final String INDICATION_SUCCESS = "SUCCESS";
     public static final String INDICATION_PARTIAL = "PARTIAL";
     public static final String INDICATION_FAILED = "FAILED";

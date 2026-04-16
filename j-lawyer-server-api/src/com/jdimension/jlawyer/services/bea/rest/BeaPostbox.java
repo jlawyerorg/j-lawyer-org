@@ -672,6 +672,8 @@ import java.io.Serializable;
  */
 public class BeaPostbox implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     private String safeId;
     private String userName;
     private String displayName;

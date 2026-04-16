@@ -672,6 +672,8 @@ import java.io.Serializable;
  */
 public class BeaVerificationResult implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     public static final String STATUS_SUCCESS = "SUCCESS";
     public static final String STATUS_PARTIAL = "PARTIAL";
     public static final String STATUS_FAILED = "FAILED";

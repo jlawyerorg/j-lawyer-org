@@ -674,6 +674,8 @@ import java.util.List;
  */
 public class BeaSaveDraftRequest implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     private String subject;
     private String body;
     private String referenceNumber;

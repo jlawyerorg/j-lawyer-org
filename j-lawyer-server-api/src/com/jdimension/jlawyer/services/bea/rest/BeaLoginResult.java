@@ -674,6 +674,8 @@ import java.util.List;
  */
 public class BeaLoginResult implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     private List<BeaPostbox> postboxes = new ArrayList<>();
 
     public BeaLoginResult() {

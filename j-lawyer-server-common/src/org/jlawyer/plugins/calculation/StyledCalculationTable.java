@@ -674,6 +674,8 @@ import java.util.Hashtable;
  */
 public class StyledCalculationTable extends GenericCalculationTable implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     private ArrayList<ArrayList<Cell>> data = new ArrayList<>();
     private boolean lineBorder=false;
     private Color borderColor=Color.BLACK;

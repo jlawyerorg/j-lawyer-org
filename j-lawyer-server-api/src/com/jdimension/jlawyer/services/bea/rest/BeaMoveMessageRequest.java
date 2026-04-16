@@ -672,6 +672,8 @@ import java.io.Serializable;
  */
 public class BeaMoveMessageRequest implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     private long targetFolderId;
 
     public BeaMoveMessageRequest() {

@@ -672,6 +672,8 @@ import java.io.Serializable;
  */
 public class BeaEebResponseAttributes implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     private String code;
     private String description;
     private String ownMessageId;

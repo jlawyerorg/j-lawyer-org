@@ -680,6 +680,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class BeaRecipient implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     private String name;
     @XmlAttribute
     private String safeId;

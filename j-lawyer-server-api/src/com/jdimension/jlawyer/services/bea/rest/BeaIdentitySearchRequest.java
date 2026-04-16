@@ -672,6 +672,8 @@ import java.io.Serializable;
  */
 public class BeaIdentitySearchRequest implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     private String firstName;
     private String surName;
     private String userName;

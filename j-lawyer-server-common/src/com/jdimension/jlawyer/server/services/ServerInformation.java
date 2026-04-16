@@ -670,7 +670,9 @@ import java.io.Serializable;
  * @author jens
  */
 public class ServerInformation implements Serializable {
-    
+
+    protected static long serialVersionUID = 1L;
+
     private long totalMemory=0;
     private long maxMemory=0;
     private long freeMemory=0;

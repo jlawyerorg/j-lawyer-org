@@ -672,6 +672,8 @@ import java.util.Date;
  */
 public class MonitoringSnapshot implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     private Date taken;
     private double cpuAverage = 1d;
     private long diskUse = 1l;

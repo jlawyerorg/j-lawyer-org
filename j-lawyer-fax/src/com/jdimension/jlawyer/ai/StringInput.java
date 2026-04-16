@@ -7,6 +7,7 @@ package com.jdimension.jlawyer.ai;
 import java.io.Serializable;
 
 class StringInput extends Input implements Serializable {
+    protected static long serialVersionUID = 1L;
     // Implement if needed
     
     

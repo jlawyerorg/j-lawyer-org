@@ -673,6 +673,8 @@ import java.util.Date;
  */
 public class BeaMessageFilter implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     private boolean onlyNew;
     private Integer limit;
     private Integer offset;

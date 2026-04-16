@@ -672,6 +672,8 @@ import java.util.Date;
  */
 public class HolidayDescriptor implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     private String regionName;
     private String holidayName;
     private Date date;

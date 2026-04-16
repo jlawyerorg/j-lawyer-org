@@ -680,6 +680,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class BeaAttachment implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     public static final int TYPE_ATTACHMENT = 10;
     public static final int TYPE_SCHRIFTSATZ = 20;
     public static final int TYPE_STRUKTURDATENSATZ = 30;

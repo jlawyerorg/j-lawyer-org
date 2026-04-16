@@ -672,6 +672,8 @@ import java.io.Serializable;
  */
 public class BeaFolder implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     public static final String TYPE_INBOX = "INBOX";
     public static final String TYPE_SENT = "SENT";
     public static final String TYPE_DRAFT = "DRAFT";

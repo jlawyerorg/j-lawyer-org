@@ -671,7 +671,9 @@ import java.io.Serializable;
  * @author jens
  */
 public class Cell implements Serializable {
-    
+
+    protected static long serialVersionUID = 1L;
+
     public static int ALIGNMENT_LEFT = 10;
     public static int ALIGNMENT_RIGHT = 20;
     public static int ALIGNMENT_CENTER = 30;

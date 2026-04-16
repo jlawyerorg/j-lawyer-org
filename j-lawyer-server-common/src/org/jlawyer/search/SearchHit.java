@@ -670,7 +670,9 @@ import java.io.Serializable;
  * @author jens
  */
 public class SearchHit implements Serializable {
-    
+
+    protected static long serialVersionUID = 1L;
+
     private String id=null;
     private String fileName=null;
     private String archiveFileId=null;

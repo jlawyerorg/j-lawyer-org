@@ -673,6 +673,8 @@ import java.util.Date;
  */
 public class BeaMessageHeader implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     private String id;
     private String subject;
     private String sender;

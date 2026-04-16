@@ -674,6 +674,8 @@ import java.util.List;
  */
 public class BeaMessageValidationResult implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     private long messageId;
     private List<BeaAttachmentValidationResult> attachmentResults;
     private BeaAttachmentValidationResult vhnResult;

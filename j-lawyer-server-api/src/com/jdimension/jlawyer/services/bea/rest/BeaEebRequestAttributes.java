@@ -674,6 +674,8 @@ import java.util.List;
  */
 public class BeaEebRequestAttributes implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     private String sender;
     private String recipient;
     private String referenceNumber;

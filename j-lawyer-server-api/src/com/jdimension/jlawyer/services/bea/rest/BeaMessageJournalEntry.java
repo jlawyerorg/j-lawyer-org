@@ -681,6 +681,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class BeaMessageJournalEntry implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     @XmlAttribute
     private String journalType;
     @XmlAttribute

@@ -672,6 +672,8 @@ import java.util.ArrayList;
  */
 public class StyledCalculationTable2 extends GenericCalculationTable implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     private ArrayList<ArrayList<Cell>> headers = new ArrayList<ArrayList<Cell>>();
     private ArrayList<ArrayList<Cell>> data = new ArrayList<ArrayList<Cell>>();
 

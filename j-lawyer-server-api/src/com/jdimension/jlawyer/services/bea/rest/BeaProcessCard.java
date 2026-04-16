@@ -683,6 +683,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class BeaProcessCard implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     @XmlAttribute
     private long messageId;
     @XmlElement(name = "processCardEntry")

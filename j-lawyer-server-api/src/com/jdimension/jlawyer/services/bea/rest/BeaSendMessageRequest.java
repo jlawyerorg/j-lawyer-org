@@ -674,6 +674,8 @@ import java.util.List;
  */
 public class BeaSendMessageRequest implements Serializable {
 
+    protected static long serialVersionUID = 1L;
+
     private String recipientSafeId;
     private String subject;
     private String body;
