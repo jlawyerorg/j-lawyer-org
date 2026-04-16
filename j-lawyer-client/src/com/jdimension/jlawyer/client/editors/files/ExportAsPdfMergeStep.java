@@ -1076,7 +1076,7 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
                     metaStream.beginText();
                     metaStream.setLeading(14.5f);
                     metaStream.newLineAtOffset(50, 750);
-                    metaStream.showText(caseDto.getFileNumber() + " " + caseDto.getName() + " (" + new SimpleDateFormat("dd.MM.yyyy").format(new Date()) + ")");
+                    metaStream.showText(filterTextForWinAnsi(caseDto.getFileNumber() + " " + caseDto.getName() + " (" + new SimpleDateFormat("dd.MM.yyyy").format(new Date()) + ")"));
                     metaStream.newLine();
                     metaStream.newLine();
                     metaStream.endText();
@@ -1088,17 +1088,17 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
                     metaStream.newLineAtOffset(50, 710);
 
                     // Add additional lines of text
-                    metaStream.showText("wegen: " + caseDto.getReason());
+                    metaStream.showText(filterTextForWinAnsi("wegen: " + caseDto.getReason()));
                     metaStream.newLine();
-                    metaStream.showText("Sachgebiet: " + caseDto.getSubjectField());
+                    metaStream.showText(filterTextForWinAnsi("Sachgebiet: " + caseDto.getSubjectField()));
                     metaStream.newLine();
-                    metaStream.showText("Anwalt / Anwältin: " + caseDto.getLawyer());
+                    metaStream.showText(filterTextForWinAnsi("Anwalt / Anwältin: " + caseDto.getLawyer()));
                     metaStream.newLine();
-                    metaStream.showText("Sachbearbeiter(-in): " + caseDto.getAssistant());
+                    metaStream.showText(filterTextForWinAnsi("Sachbearbeiter(-in): " + caseDto.getAssistant()));
                     metaStream.newLine();
-                    metaStream.showText("erstellt: " + new SimpleDateFormat("dd.MM.yyyy").format(caseDto.getDateCreated()));
+                    metaStream.showText(filterTextForWinAnsi("erstellt: " + new SimpleDateFormat("dd.MM.yyyy").format(caseDto.getDateCreated())));
                     metaStream.newLine();
-                    metaStream.showText("geändert: " + new SimpleDateFormat("dd.MM.yyyy").format(caseDto.getDateChanged()));
+                    metaStream.showText(filterTextForWinAnsi("geändert: " + new SimpleDateFormat("dd.MM.yyyy").format(caseDto.getDateChanged())));
                     metaStream.endText();
                 }
 
@@ -1265,7 +1265,7 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
         contentStream.beginText();
         contentStream.setLeading(14.5f);
         contentStream.newLineAtOffset(50, 750);
-        contentStream.showText(caseDto.getFileNumber() + " " + caseDto.getName() + " (" + new SimpleDateFormat("dd.MM.yyyy").format(new Date()) + ")");
+        contentStream.showText(filterTextForWinAnsi(caseDto.getFileNumber() + " " + caseDto.getName() + " (" + new SimpleDateFormat("dd.MM.yyyy").format(new Date()) + ")"));
         contentStream.newLine();
         contentStream.newLine();
 

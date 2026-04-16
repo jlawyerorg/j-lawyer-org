@@ -696,6 +696,7 @@ public class ExportAsPdfConversionStep extends javax.swing.JPanel implements Wiz
     private WizardMainPanel wizard = null;
 
     private ArrayList<File> pdfFiles = new ArrayList<>();
+    private volatile boolean cancelled = false;
 
     /**
      * Creates new form ExportAsPdfConversionStep
@@ -719,7 +720,7 @@ public class ExportAsPdfConversionStep extends javax.swing.JPanel implements Wiz
 
     @Override
     public void cancelledEvent() {
-        return;
+        this.cancelled = true;
     }
 
     @Override
@@ -822,6 +823,10 @@ public class ExportAsPdfConversionStep extends javax.swing.JPanel implements Wiz
             int successes = 0;
             ThreadUtils.updateLabelIcon(lblFile, new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
             for (ArchiveFileDocumentsBean d : docs) {
+
+                if (cancelled) {
+                    break;
+                }
 
                 try {
                     ThreadUtils.updateLabel(lblFile, d.getName());
