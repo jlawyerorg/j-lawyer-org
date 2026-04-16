@@ -1019,6 +1019,7 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
                             JOptionPane.WARNING_MESSAGE
                         );
                     }
+
                 });
 
             } catch (Exception e) {
@@ -1148,9 +1149,11 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
                     merger.appendDocument(mergedDoc, doc);
                     mergeSuccessful = true;
                     currentPageCount += doc.getNumberOfPages();
-                } catch (StackOverflowError soe) {
+                } catch (StackOverflowError | IOException mergeEx) {
                     // Fallback: merge pages individually to avoid circular reference issues
-                    log.warn("StackOverflowError during merge of " + file.getName() + ", using alternative merge strategy", soe);
+                    // StackOverflowError: circular references in PDF structure
+                    // IOException: e.g. PDFBox 2.0.x bug with tagged PDFs containing unexpected types in parent tree
+                    log.warn(mergeEx.getClass().getSimpleName() + " during merge of " + file.getName() + ", using alternative merge strategy", mergeEx);
 
                     // Remove any pages that were already added by the failed appendDocument call
                     int pageCountAfterFailedMerge = mergedDoc.getNumberOfPages();
@@ -1164,11 +1167,23 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
 
                 // If standard merge failed, use page-by-page import
                 if (!mergeSuccessful) {
-                    int pageCount = doc.getNumberOfPages();
-                    for (int i = 0; i < pageCount; i++) {
-                        mergedDoc.importPage(doc.getPage(i));
+                    try {
+                        int pageCount = doc.getNumberOfPages();
+                        for (int i = 0; i < pageCount; i++) {
+                            mergedDoc.importPage(doc.getPage(i));
+                        }
+                        currentPageCount += pageCount;
+                    } catch (Exception fallbackEx) {
+                        log.error("Fallback merge also failed for " + file.getName() + ", skipping", fallbackEx);
+                        // Remove any pages that were partially added by the fallback
+                        int pageCountAfterFallback = mergedDoc.getNumberOfPages();
+                        if (pageCountAfterFallback > pageCountBeforeMerge) {
+                            for (int i = pageCountAfterFallback - 1; i >= pageCountBeforeMerge; i--) {
+                                mergedDoc.removePage(i);
+                            }
+                        }
+                        skippedFiles.add(file.getName());
                     }
-                    currentPageCount += pageCount;
                 }
             }
 
