@@ -47,6 +47,7 @@ public class DesktopGridLayoutDialog extends JDialog {
     private static final String PANEL_TAGGED_LABEL = "Nach Etikett";
     private static final String PANEL_MESSAGES_TO_ME_LABEL = "Nachrichten an mich";
     private static final String PANEL_MESSAGES_TO_OTHERS_LABEL = "Nachrichten an andere";
+    private static final String PANEL_INVOICES_LABEL = "Offene Rechnungen";
 
     private final DesktopLayoutManager layoutManager;
     private final Runnable onLayoutChanged;
@@ -86,16 +87,18 @@ public class DesktopGridLayoutDialog extends JDialog {
         panelIdToLabel.put(DesktopLayoutPreset.PANEL_TAGGED, PANEL_TAGGED_LABEL);
         panelIdToLabel.put(DesktopLayoutPreset.PANEL_MESSAGES_TO_ME, PANEL_MESSAGES_TO_ME_LABEL);
         panelIdToLabel.put(DesktopLayoutPreset.PANEL_MESSAGES_TO_OTHERS, PANEL_MESSAGES_TO_OTHERS_LABEL);
+        panelIdToLabel.put(DesktopLayoutPreset.PANEL_INVOICES, PANEL_INVOICES_LABEL);
         labelToPanelId.put(PANEL_LASTCHANGED_LABEL, DesktopLayoutPreset.PANEL_LASTCHANGED);
         labelToPanelId.put(PANEL_DUE_LABEL, DesktopLayoutPreset.PANEL_DUE);
         labelToPanelId.put(PANEL_TAGGED_LABEL, DesktopLayoutPreset.PANEL_TAGGED);
         labelToPanelId.put(PANEL_MESSAGES_TO_ME_LABEL, DesktopLayoutPreset.PANEL_MESSAGES_TO_ME);
         labelToPanelId.put(PANEL_MESSAGES_TO_OTHERS_LABEL, DesktopLayoutPreset.PANEL_MESSAGES_TO_OTHERS);
+        labelToPanelId.put(PANEL_INVOICES_LABEL, DesktopLayoutPreset.PANEL_INVOICES);
 
         initComponents();
         loadCurrentSettings();
 
-        setSize(580, 400);
+        setSize(700, 450);
         setMinimumSize(new Dimension(580, 350));
         FrameUtils.centerDialog(this, parent);
     }
@@ -235,6 +238,7 @@ public class DesktopGridLayoutDialog extends JDialog {
                 cmbPanel.addItem(PANEL_TAGGED_LABEL);
                 cmbPanel.addItem(PANEL_MESSAGES_TO_ME_LABEL);
                 cmbPanel.addItem(PANEL_MESSAGES_TO_OTHERS_LABEL);
+                cmbPanel.addItem(PANEL_INVOICES_LABEL);
                 cmbPanel.setSelectedItem(EMPTY_CELL);
                 cmbPanel.addActionListener(e -> {
                     if (!updatingComboBoxes) {
@@ -268,7 +272,8 @@ public class DesktopGridLayoutDialog extends JDialog {
                     DesktopLayoutPreset.PANEL_DUE,
                     DesktopLayoutPreset.PANEL_TAGGED,
                     DesktopLayoutPreset.PANEL_MESSAGES_TO_ME,
-                    DesktopLayoutPreset.PANEL_MESSAGES_TO_OTHERS
+                    DesktopLayoutPreset.PANEL_MESSAGES_TO_OTHERS,
+                    DesktopLayoutPreset.PANEL_INVOICES
             };
 
             for (String panelId : panelIds) {
@@ -360,7 +365,8 @@ public class DesktopGridLayoutDialog extends JDialog {
                 DesktopLayoutPreset.PANEL_DUE,
                 DesktopLayoutPreset.PANEL_TAGGED,
                 DesktopLayoutPreset.PANEL_MESSAGES_TO_ME,
-                DesktopLayoutPreset.PANEL_MESSAGES_TO_OTHERS
+                DesktopLayoutPreset.PANEL_MESSAGES_TO_OTHERS,
+                DesktopLayoutPreset.PANEL_INVOICES
         };
         for (String panelId : allPanelIds) {
             if (config.getPanelPosition(panelId) == null) {

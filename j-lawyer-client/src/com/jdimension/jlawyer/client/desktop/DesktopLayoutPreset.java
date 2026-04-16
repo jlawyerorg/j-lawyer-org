@@ -83,6 +83,7 @@ public enum DesktopLayoutPreset {
     public static final String PANEL_TAGGED = "tagged";
     public static final String PANEL_MESSAGES_TO_ME = "messagestome";
     public static final String PANEL_MESSAGES_TO_OTHERS = "messagestoothers";
+    public static final String PANEL_INVOICES = "invoices";
 
     private final String displayName;
     private final int rows;

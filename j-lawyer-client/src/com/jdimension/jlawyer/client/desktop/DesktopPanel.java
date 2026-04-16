@@ -773,6 +773,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private UpdateDocumentTagsTask tagsTask3=null;
     private transient Timer timer11=null;
 
+    // Invoices desktop panel
+    private InvoicesOpenPanel pnlDesktopInvoices;
+    private transient Timer invoicesTimer;
+    private InvoicesOpenTimerTask invoicesTask;
+
     // Messaging desktop panels
     private JPanel pnlDesktopMessagesToMe;
     private JPanel pnlDesktopMessagesToMeContent;
@@ -1037,10 +1042,20 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             } catch (Throwable t) {
                 log.error("Error shutting down timer", t);
             }
+            try {
+                log.info("shutting down InvoicesOpenTimerTask");
+                if (invoicesTask != null) invoicesTask.stop();
+                if (invoicesTimer != null) invoicesTimer.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
         }));
 
         // Create messaging desktop panels programmatically
         initMessagingDesktopPanels();
+
+        // Create invoices desktop panel
+        initInvoicesDesktopPanel();
 
         // Initial load of messages for desktop panels (one-time, in background)
         Timer messagingInitTimer = new Timer();
@@ -1071,6 +1086,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         }, 3000);
 
+        // Schedule invoices panel refresh (after all other panels, 1h interval)
+        invoicesTask = new InvoicesOpenTimerTask(pnlDesktopInvoices);
+        invoicesTimer = new Timer();
+        invoicesTimer.schedule(invoicesTask, 8000, 3600000l);
+
         // Initialize layout manager and apply visibility settings
         this.layoutManager = new DesktopLayoutManager(this.getClass());
         this.layoutManager.registerPanel(DesktopLayoutPreset.PANEL_LASTCHANGED, "Zuletzt geändert", this.jPanel1);
@@ -1078,6 +1098,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.layoutManager.registerPanel(DesktopLayoutPreset.PANEL_TAGGED, "Nach Etikett", this.jPanel3);
         this.layoutManager.registerPanel(DesktopLayoutPreset.PANEL_MESSAGES_TO_ME, "Nachrichten an mich", this.pnlDesktopMessagesToMe);
         this.layoutManager.registerPanel(DesktopLayoutPreset.PANEL_MESSAGES_TO_OTHERS, "Nachrichten an andere", this.pnlDesktopMessagesToOthers);
+        this.layoutManager.registerPanel(DesktopLayoutPreset.PANEL_INVOICES, "Offene Rechnungen", this.pnlDesktopInvoices);
 
         // Build layout context menu
         buildLayoutContextMenu();
@@ -1183,6 +1204,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         chkMessagesToOthers.addActionListener(e -> togglePanelVisibility(DesktopLayoutPreset.PANEL_MESSAGES_TO_OTHERS, chkMessagesToOthers));
         menuVisibility.add(chkMessagesToOthers);
 
+        JCheckBoxMenuItem chkInvoices = new JCheckBoxMenuItem("Offene Rechnungen");
+        chkInvoices.setSelected(layoutManager.isPanelVisible(DesktopLayoutPreset.PANEL_INVOICES));
+        chkInvoices.addActionListener(e -> togglePanelVisibility(DesktopLayoutPreset.PANEL_INVOICES, chkInvoices));
+        menuVisibility.add(chkInvoices);
+
         popLayoutMenu.add(menuVisibility);
     }
 
@@ -1218,6 +1244,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             return DesktopLayoutPreset.PANEL_MESSAGES_TO_ME;
         } else if ("Nachrichten an andere".equals(text)) {
             return DesktopLayoutPreset.PANEL_MESSAGES_TO_OTHERS;
+        } else if ("Offene Rechnungen".equals(text)) {
+            return DesktopLayoutPreset.PANEL_INVOICES;
         }
         return null;
     }
@@ -2917,6 +2945,15 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         scrollDesktopMessagesToOthers.getViewport().setOpaque(false);
         scrollDesktopMessagesToOthers.getVerticalScrollBar().setUnitIncrement(16);
         pnlDesktopMessagesToOthers.add(scrollDesktopMessagesToOthers, java.awt.BorderLayout.CENTER);
+    }
+
+    private void initInvoicesDesktopPanel() {
+        pnlDesktopInvoices = new InvoicesOpenPanel();
+        pnlDesktopInvoices.getRefreshButton().addActionListener(e -> {
+            Timer timer = new Timer();
+            InvoicesOpenTimerTask task = new InvoicesOpenTimerTask(pnlDesktopInvoices);
+            timer.schedule(task, 10);
+        });
     }
 
     private boolean isMessageAlreadyInPanel(JPanel panel, String messageId) {

@@ -712,6 +712,70 @@ public class InvoiceFacade extends AbstractFacade<Invoice> implements InvoiceFac
     }
     
     @Override
+    public List<InvoiceStatusSummary> findSummaryByStatus(int... status) {
+        List<InvoiceStatusSummary> result = new java.util.ArrayList<>();
+        java.util.Date today = truncateToDay(new java.util.Date());
+        for (int s : status) {
+            if (s == Invoice.STATUS_OPEN) {
+                // Split STATUS_OPEN into not-yet-due and overdue
+                Object[] notDueRow;
+                try {
+                    notDueRow = (Object[]) em.createQuery(
+                            "SELECT COUNT(a), COALESCE(SUM(a.totalGross), 0) FROM Invoice a WHERE a.status = :status AND a.invoiceType.turnOver = true AND (a.dueDate IS NULL OR a.dueDate >= :today)")
+                            .setParameter("status", s)
+                            .setParameter("today", today, javax.persistence.TemporalType.DATE)
+                            .getSingleResult();
+                } catch (Exception ex) {
+                    notDueRow = new Object[]{0L, java.math.BigDecimal.ZERO};
+                }
+                // Use STATUS_OPEN for not-yet-due
+                result.add(toSummary(Invoice.STATUS_OPEN, notDueRow));
+
+                Object[] overdueRow;
+                try {
+                    overdueRow = (Object[]) em.createQuery(
+                            "SELECT COUNT(a), COALESCE(SUM(a.totalGross), 0) FROM Invoice a WHERE a.status = :status AND a.invoiceType.turnOver = true AND a.dueDate IS NOT NULL AND a.dueDate < :today")
+                            .setParameter("status", s)
+                            .setParameter("today", today, javax.persistence.TemporalType.DATE)
+                            .getSingleResult();
+                } catch (Exception ex) {
+                    overdueRow = new Object[]{0L, java.math.BigDecimal.ZERO};
+                }
+                // Use -STATUS_OPEN as marker for overdue subset of STATUS_OPEN
+                result.add(toSummary(-Invoice.STATUS_OPEN, overdueRow));
+            } else {
+                Object[] row;
+                try {
+                    row = (Object[]) em.createQuery(
+                            "SELECT COUNT(a), COALESCE(SUM(a.totalGross), 0) FROM Invoice a WHERE a.status = :status AND a.invoiceType.turnOver = true")
+                            .setParameter("status", s)
+                            .getSingleResult();
+                } catch (Exception ex) {
+                    row = new Object[]{0L, java.math.BigDecimal.ZERO};
+                }
+                result.add(toSummary(s, row));
+            }
+        }
+        return result;
+    }
+
+    private InvoiceStatusSummary toSummary(int status, Object[] row) {
+        long count = (row[0] != null) ? (Long) row[0] : 0L;
+        java.math.BigDecimal total = (row[1] != null) ? (java.math.BigDecimal) row[1] : java.math.BigDecimal.ZERO;
+        return new InvoiceStatusSummary(status, count, total);
+    }
+
+    private java.util.Date truncateToDay(java.util.Date date) {
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.setTime(date);
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        cal.set(java.util.Calendar.MINUTE, 0);
+        cal.set(java.util.Calendar.SECOND, 0);
+        cal.set(java.util.Calendar.MILLISECOND, 0);
+        return cal.getTime();
+    }
+
+    @Override
     public Invoice findByInvoiceNumber(String invoiceNumber) {
         try {
             return (Invoice) em.createNamedQuery("Invoice.findByInvoiceNumber").setParameter("invoiceNumber", invoiceNumber).getSingleResult();

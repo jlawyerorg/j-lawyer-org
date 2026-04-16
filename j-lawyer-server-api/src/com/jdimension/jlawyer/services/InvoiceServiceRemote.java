@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.persistence.BankStatementsCSVConfig;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePositionTemplate;
+import com.jdimension.jlawyer.persistence.InvoiceStatusSummary;
 import com.jdimension.jlawyer.persistence.InvoiceType;
 import java.math.BigDecimal;
 import java.util.List;
@@ -707,6 +708,16 @@ public interface InvoiceServiceRemote {
     byte[] getGiroCode(String senderPrincipalId, BigDecimal amount, String purpose) throws Exception;
     
     List<Invoice> getInvoicesByStatus(int... status) throws Exception;
+
+    /**
+     * Returns aggregated invoice summaries (count and total gross) for each given status.
+     * Only invoices with turnover-relevant invoice types are included.
+     *
+     * @param status one or more invoice status codes to query
+     * @return list of summaries, one per requested status
+     * @throws Exception on server errors
+     */
+    List<InvoiceStatusSummary> getInvoicesSummaryByStatus(int... status) throws Exception;
 
     BankStatementsCSVConfig addBankStatementsCSVConfiguration(BankStatementsCSVConfig csv) throws Exception;
     

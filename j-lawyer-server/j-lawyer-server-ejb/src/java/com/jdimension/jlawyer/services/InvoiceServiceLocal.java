@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.InvoicePool;
+import com.jdimension.jlawyer.persistence.InvoiceStatusSummary;
 import com.jdimension.jlawyer.persistence.InvoiceType;
 import java.math.BigDecimal;
 import java.util.List;
@@ -681,6 +682,8 @@ public interface InvoiceServiceLocal {
     List<InvoiceType> getAllInvoiceTypes() throws Exception;
     
     List<Invoice> getInvoicesByStatus(int... status) throws Exception;
+
+    List<InvoiceStatusSummary> getInvoicesSummaryByStatus(int... status) throws Exception;
 
     String nextInvoiceNumber(InvoicePool pool) throws Exception;
 

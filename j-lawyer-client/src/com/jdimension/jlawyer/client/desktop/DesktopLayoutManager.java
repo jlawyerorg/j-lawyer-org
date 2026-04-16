@@ -84,6 +84,7 @@ public class DesktopLayoutManager {
     public void setConfiguration(DesktopGridConfiguration configuration) {
         this.configuration = configuration;
         saveConfiguration();
+        saveVisibilitySettings();
     }
 
     /**
@@ -173,7 +174,8 @@ public class DesktopLayoutManager {
                 DesktopLayoutPreset.PANEL_DUE,
                 DesktopLayoutPreset.PANEL_TAGGED,
                 DesktopLayoutPreset.PANEL_MESSAGES_TO_ME,
-                DesktopLayoutPreset.PANEL_MESSAGES_TO_OTHERS}) {
+                DesktopLayoutPreset.PANEL_MESSAGES_TO_OTHERS,
+                DesktopLayoutPreset.PANEL_INVOICES}) {
             if (isPanelVisible(panelId) && panelContents.containsKey(panelId)) {
                 visiblePanelIds.add(panelId);
             }
@@ -248,6 +250,11 @@ public class DesktopLayoutManager {
                 config = DesktopGridConfiguration.fromJsonString(layoutJson);
             }
 
+            // Ensure invoices panel has a position (migration for existing configs)
+            if (config.getPanelPosition(DesktopLayoutPreset.PANEL_INVOICES) == null) {
+                config.setPanelPosition(DesktopLayoutPreset.PANEL_INVOICES, new GridPosition(0, 0, 1, 1, false));
+            }
+
             // Apply visibility from individual settings
             applyVisibilityFromSettings(config);
 
@@ -276,8 +283,10 @@ public class DesktopLayoutManager {
                     settings.getSetting(UserSettingsKeys.CONF_DESKTOP_SECTION_MESSAGES_TO_ME_VISIBLE, "true"));
             boolean messagesToOthersVisible = !"false".equals(
                     settings.getSetting(UserSettingsKeys.CONF_DESKTOP_SECTION_MESSAGES_TO_OTHERS_VISIBLE, "true"));
+            boolean invoicesVisible = !"false".equals(
+                    settings.getSetting(UserSettingsKeys.CONF_DESKTOP_SECTION_INVOICES_VISIBLE, "true"));
 
-            config.applyVisibility(lastChangedVisible, dueVisible, taggedVisible, messagesToMeVisible, messagesToOthersVisible);
+            config.applyVisibility(lastChangedVisible, dueVisible, taggedVisible, messagesToMeVisible, messagesToOthersVisible, invoicesVisible);
         } catch (Exception e) {
             log.error("Error loading visibility settings", e);
         }
@@ -323,6 +332,12 @@ public class DesktopLayoutManager {
             pos = configuration.getPanelPosition(DesktopLayoutPreset.PANEL_MESSAGES_TO_OTHERS);
             if (pos != null) {
                 settings.setSetting(UserSettingsKeys.CONF_DESKTOP_SECTION_MESSAGES_TO_OTHERS_VISIBLE,
+                        String.valueOf(pos.isVisible()));
+            }
+
+            pos = configuration.getPanelPosition(DesktopLayoutPreset.PANEL_INVOICES);
+            if (pos != null) {
+                settings.setSetting(UserSettingsKeys.CONF_DESKTOP_SECTION_INVOICES_VISIBLE,
                         String.valueOf(pos.isVisible()));
             }
         } catch (Exception e) {

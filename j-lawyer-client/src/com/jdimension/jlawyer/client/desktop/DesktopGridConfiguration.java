@@ -219,8 +219,9 @@ public class DesktopGridConfiguration {
      * @param taggedVisible visibility for tagged panel
      * @param messagesToMeVisible visibility for messages to me panel
      * @param messagesToOthersVisible visibility for messages to others panel
+     * @param invoicesVisible visibility for open invoices panel
      */
-    public void applyVisibility(boolean lastChangedVisible, boolean dueVisible, boolean taggedVisible, boolean messagesToMeVisible, boolean messagesToOthersVisible) {
+    public void applyVisibility(boolean lastChangedVisible, boolean dueVisible, boolean taggedVisible, boolean messagesToMeVisible, boolean messagesToOthersVisible, boolean invoicesVisible) {
         GridPosition pos = panelPositions.get(DesktopLayoutPreset.PANEL_LASTCHANGED);
         if (pos != null) {
             pos.setVisible(lastChangedVisible);
@@ -240,6 +241,10 @@ public class DesktopGridConfiguration {
         pos = panelPositions.get(DesktopLayoutPreset.PANEL_MESSAGES_TO_OTHERS);
         if (pos != null) {
             pos.setVisible(messagesToOthersVisible);
+        }
+        pos = panelPositions.get(DesktopLayoutPreset.PANEL_INVOICES);
+        if (pos != null) {
+            pos.setVisible(invoicesVisible);
         }
     }
 

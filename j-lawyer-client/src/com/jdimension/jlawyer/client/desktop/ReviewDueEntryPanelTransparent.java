@@ -860,10 +860,12 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         if (due == null) {
             due = new Date(now.getTime() - (25 * 60 * 60 * 1000));
         }
+        boolean overdueRespite = false;
         if (!DateUtils.isToday(due)) {
             // not today, must be overdue
             if (this.e.getType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
-                this.lblDescription.setForeground(OVERDUE_RESPITE_COLOR);
+                this.lblDescription.setForeground(Color.WHITE);
+                overdueRespite = true;
             } else {
                 this.lblDescription.setForeground(OVERDUE_REVIEW_COLOR);
             }
@@ -895,6 +897,9 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         if (e.getType() == ArchiveFileConstants.REVIEWTYPE_EVENT) {
             this.unDoneDescription = "<html><b>" + dueDate + reason + "</b></html>";
             this.doneDescription = "<html><s><b>" + dueDate + reason + "</b></s></html>";
+        } else if (overdueRespite) {
+            this.unDoneDescription = "<html><b>!!! überfällig: " + reason + "</b></html>";
+            this.doneDescription = "<html><s><b>!!! überfällig: " + reason + "</b></s></html>";
         } else {
             this.unDoneDescription = "<html><b>" + reason + "</b></html>";
             this.doneDescription = "<html><s><b>" + reason + "</b></s></html>";
@@ -922,7 +927,7 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         if (UserSettings.getInstance().getCurrentUser().getPrincipalId().equals(e.getResponsible())) {
             this.lblResponsible.setFont(this.lblResponsible.getFont().deriveFont(Font.BOLD));
             if (this.e.getType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
-                this.lblResponsible.setForeground(OVERDUE_RESPITE_COLOR);
+                this.lblResponsible.setForeground(Color.WHITE);
             } else {
                 this.lblResponsible.setForeground(OVERDUE_REVIEW_COLOR);
             }

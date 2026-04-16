@@ -679,6 +679,7 @@ import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePoolAccess;
 import com.jdimension.jlawyer.persistence.InvoicePoolAccessFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoicePoolFacadeLocal;
+import com.jdimension.jlawyer.persistence.InvoiceStatusSummary;
 import com.jdimension.jlawyer.persistence.InvoicePositionTemplate;
 import com.jdimension.jlawyer.persistence.InvoicePositionTemplateFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoiceType;
@@ -1072,6 +1073,12 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
             invoicesList.addAll(invoices.findByStatus(s));
         }
         return invoicesList;
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<InvoiceStatusSummary> getInvoicesSummaryByStatus(int... status) throws Exception {
+        return this.invoices.findSummaryByStatus(status);
     }
 
     private void publishOutgoingMailRequest(OutgoingMailRequest req) {
