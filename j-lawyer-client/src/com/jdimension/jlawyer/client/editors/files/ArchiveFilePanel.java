@@ -957,6 +957,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         });
 
         this.jScrollPane9.getVerticalScrollBar().setUnitIncrement(16);
+        this.jScrollPane8.getVerticalScrollBar().setUnitIncrement(16);
 
         this.cmdCopyCaseNumber.setText("");
         this.cmdEditCaseNumber.setText("");

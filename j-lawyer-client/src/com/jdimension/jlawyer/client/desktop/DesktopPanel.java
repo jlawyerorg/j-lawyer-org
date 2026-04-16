@@ -1089,7 +1089,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         // Schedule invoices panel refresh (after all other panels, 1h interval)
         invoicesTask = new InvoicesOpenTimerTask(pnlDesktopInvoices);
         invoicesTimer = new Timer();
-        invoicesTimer.schedule(invoicesTask, 8000, 3600000l);
+        invoicesTimer.schedule(invoicesTask, 3500, 3600000l);
 
         // Initialize layout manager and apply visibility settings
         this.layoutManager = new DesktopLayoutManager(this.getClass());
