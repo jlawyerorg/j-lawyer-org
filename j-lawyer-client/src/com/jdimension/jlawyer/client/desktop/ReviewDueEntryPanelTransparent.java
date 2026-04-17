@@ -860,12 +860,12 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         if (due == null) {
             due = new Date(now.getTime() - (25 * 60 * 60 * 1000));
         }
-        boolean overdueRespite = false;
+        boolean overdue = false;
         if (!DateUtils.isToday(due)) {
             // not today, must be overdue
+            overdue = true;
             if (this.e.getType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
                 this.lblDescription.setForeground(Color.WHITE);
-                overdueRespite = true;
             } else {
                 this.lblDescription.setForeground(OVERDUE_REVIEW_COLOR);
             }
@@ -894,15 +894,13 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         this.lblDescription.setToolTipText(tooltip.toString());
 
         // Case info (number, name, reason) and tags are now shown in the group header
+        String overduePrefix = overdue ? "!!! " : "";
         if (e.getType() == ArchiveFileConstants.REVIEWTYPE_EVENT) {
-            this.unDoneDescription = "<html><b>" + dueDate + reason + "</b></html>";
-            this.doneDescription = "<html><s><b>" + dueDate + reason + "</b></s></html>";
-        } else if (overdueRespite) {
-            this.unDoneDescription = "<html><b>!!! überfällig: " + reason + "</b></html>";
-            this.doneDescription = "<html><s><b>!!! überfällig: " + reason + "</b></s></html>";
+            this.unDoneDescription = "<html><b>" + overduePrefix + dueDate + reason + "</b></html>";
+            this.doneDescription = "<html><s><b>" + overduePrefix + dueDate + reason + "</b></s></html>";
         } else {
-            this.unDoneDescription = "<html><b>" + reason + "</b></html>";
-            this.doneDescription = "<html><s><b>" + reason + "</b></s></html>";
+            this.unDoneDescription = "<html><b>" + overduePrefix + reason + "</b></html>";
+            this.doneDescription = "<html><s><b>" + overduePrefix + reason + "</b></s></html>";
         }
         
 
