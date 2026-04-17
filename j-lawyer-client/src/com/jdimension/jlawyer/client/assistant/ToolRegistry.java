@@ -1518,6 +1518,7 @@ public class ToolRegistry {
 
         SimpleDateFormat dateFmt = new SimpleDateFormat("yyyy-MM-dd");
         SimpleDateFormat timeFmt = new SimpleDateFormat("HH:mm");
+        SimpleDateFormat weekdayFmt = new SimpleDateFormat("EEEE", java.util.Locale.GERMAN);
         Date fromDate = dateFmt.parse(fromDateStr);
         Date toDate = dateFmt.parse(toDateStr);
 
@@ -1601,6 +1602,7 @@ public class ToolRegistry {
                         }
                         first = false;
                         sb.append("{\"date\": \"").append(dateFmt.format(new Date(cursor))).append("\"");
+                        sb.append(", \"weekday\": \"").append(ToolJsonUtils.escapeJson(weekdayFmt.format(new Date(cursor)))).append("\"");
                         sb.append(", \"start\": \"").append(timeFmt.format(new Date(cursor))).append("\"");
                         sb.append(", \"end\": \"").append(timeFmt.format(new Date(busy[0]))).append("\"");
                         sb.append(", \"durationMinutes\": ").append(gapMinutes);
@@ -1618,6 +1620,7 @@ public class ToolRegistry {
                     }
                     first = false;
                     sb.append("{\"date\": \"").append(dateFmt.format(new Date(cursor))).append("\"");
+                    sb.append(", \"weekday\": \"").append(ToolJsonUtils.escapeJson(weekdayFmt.format(new Date(cursor)))).append("\"");
                     sb.append(", \"start\": \"").append(timeFmt.format(new Date(cursor))).append("\"");
                     sb.append(", \"end\": \"").append(timeFmt.format(workEnd)).append("\"");
                     sb.append(", \"durationMinutes\": ").append(gapMinutes);
