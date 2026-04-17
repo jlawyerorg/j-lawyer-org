@@ -661,625 +661,137 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.desktop;
+package com.jdimension.jlawyer.client.utils;
 
-import com.jdimension.jlawyer.client.calendar.CalendarUtils;
-import com.jdimension.jlawyer.client.components.MultiCalDialog;
-import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.events.EventBroker;
-import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
-import com.jdimension.jlawyer.client.editors.ThemeableEditor;
-import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
-import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
-import com.jdimension.jlawyer.client.editors.files.ViewArchiveFileDetailsPanel;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.client.utils.ColorUtils;
-import com.jdimension.jlawyer.client.utils.DateUtils;
-import com.jdimension.jlawyer.client.utils.StringUtils;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
-import com.jdimension.jlawyer.persistence.EventTypes;
-import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
-import com.jdimension.jlawyer.services.CalendarServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
-import java.awt.Component;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.Window;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import javax.swing.Icon;
-import javax.swing.JOptionPane;
-import javax.swing.JProgressBar;
-import javax.swing.JTextField;
-import javax.swing.Timer;
-import org.apache.log4j.Logger;
-import org.jdesktop.swingx.util.WindowUtils;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
+public final class ColorUtils {
 
-    private static final Logger log = Logger.getLogger(ReviewDueEntryPanelTransparent.class.getName());
+    private static final Color[] SIGNAL_PALETTE_LIGHT = new Color[]{
+        new Color(0xFF, 0xB3, 0xB3),
+        new Color(0xFF, 0xC3, 0x70),
+        new Color(0xFF, 0xE0, 0x66)
+    };
 
-    private static final String HTML_BR = "<br/>";
+    private static final Color[] SIGNAL_PALETTE_MEDIUM = new Color[]{
+        new Color(0xFF, 0x6B, 0x6B),
+        new Color(0xFF, 0x8A, 0x3D),
+        new Color(0xFF, 0xC1, 0x07)
+    };
 
-    private ReviewDueEntry e = null;
+    private static final Color[] SIGNAL_PALETTE_DEEP = new Color[]{
+        new Color(0xD3, 0x2F, 0x2F),
+        new Color(0xE6, 0x51, 0x00),
+        new Color(0xF9, 0xA8, 0x25)
+    };
 
-    private String doneDescription = "";
-    private String unDoneDescription = "";
-    
-    private static final Color DEFAULT_HIGHLIGHT_COLOR = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 220).darker().darker();
-    private static final Color DEFAULT_NORMAL_COLOR = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 190).darker().darker();
+    private static final double AA_CONTRAST = 4.5d;
 
-    private static final int NORMAL_ALPHA = 160;
-    private static final int HIGHLIGHT_ALPHA = 200;
-
-    private Color normalColor = DEFAULT_NORMAL_COLOR;
-    private Color highlightColor = DEFAULT_HIGHLIGHT_COLOR;
-
-    private static final int REFRESH_DELAY_MS = 3000;
-    private static final int PROGRESS_UPDATE_INTERVAL_MS = 50;
-    private JProgressBar progressBar;
-    private Timer progressTimer;
-    private Icon originalPostponeIcon;
-    private boolean countdownActive = false;
-
-    /**
-     * Creates new form ReviewDueEntryPanelTransparent
-     */
-    public ReviewDueEntryPanelTransparent() {
-        initComponents();
-        initProgressBar();
-
-        this.jPanel1.setBackground(normalColor);
-
-        this.setOpaque(false);
-        this.lblResponsible.setOpaque(false);
-        this.lblDescription.setOpaque(false);
-        this.lblResponsible.setForeground(DefaultColorTheme.COLOR_LIGHT_GREY);
-        
-    }
-
-    @Override
-     protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        Graphics2D graphics = (Graphics2D) g;
-       
-        if(this.e!=null && this.e.getCalendarSetupColor()!=Integer.MIN_VALUE) {
-            graphics.setColor(new Color(this.e.getCalendarSetupColor()));
-            // Draw vertical bar on left edge spanning full height
-            int barWidth = 4;
-            graphics.fillRect(0, 0, barWidth, getHeight());
-        }
-
-     }
-
-    private void initProgressBar() {
-        progressBar = new JProgressBar(0, REFRESH_DELAY_MS);
-        progressBar.setVisible(false);
-        progressBar.setBorderPainted(false);
-        progressBar.setOpaque(true);
-        progressBar.setBackground(normalColor);
-    }
-
-    private void startRefreshCountdown(ArchiveFileReviewsBean updatedReview, Date oldBeginDate, Date oldEndDate) {
-        // Save original icon and show cancel icon (button stays enabled for cancellation)
-        originalPostponeIcon = cmdPostpone.getIcon();
-        cmdPostpone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
-        cmdPostpone.setToolTipText("Aktualisierung abbrechen");
-        countdownActive = true;
-
-        // Show progress bar at bottom of this panel with calendar color
-        progressBar.setValue(0);
-        if (this.e != null && this.e.getCalendarSetupColor() != Integer.MIN_VALUE) {
-            progressBar.setForeground(new Color(this.e.getCalendarSetupColor()));
-        } else {
-            progressBar.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
-        }
-        progressBar.setBounds(0, getHeight() - 3, getWidth(), 3);
-        progressBar.setVisible(true);
-        add(progressBar);
-        setComponentZOrder(progressBar, 0);
-
-        // Animation timer for progress bar
-        final long startTime = System.currentTimeMillis();
-        progressTimer = new Timer(PROGRESS_UPDATE_INTERVAL_MS, null);
-        progressTimer.addActionListener(evt -> {
-            long elapsed = System.currentTimeMillis() - startTime;
-            if (elapsed >= REFRESH_DELAY_MS) {
-                progressTimer.stop();
-                progressBar.setVisible(false);
-                countdownActive = false;
-
-                // Restore button icon and tooltip
-                cmdPostpone.setIcon(originalPostponeIcon);
-                cmdPostpone.setToolTipText("auf einen späteren Termin verschieben");
-
-                // Publish event to trigger refresh of the entire "Fällig" section
-                EventBroker eb = EventBroker.getInstance();
-                eb.publishEvent(new ReviewUpdatedEvent(oldBeginDate, oldEndDate, updatedReview, true));
-            } else {
-                progressBar.setValue((int) elapsed);
-                progressBar.repaint();
-            }
-        });
-        progressTimer.start();
-    }
-
-    private void cancelRefreshCountdown() {
-        if (progressTimer != null && progressTimer.isRunning()) {
-            progressTimer.stop();
-        }
-        progressBar.setVisible(false);
-        countdownActive = false;
-
-        // Restore button icon and tooltip
-        cmdPostpone.setIcon(originalPostponeIcon);
-        cmdPostpone.setToolTipText("auf einen späteren Termin verschieben");
-    }
-
-    public void setEntry(ReviewDueEntry entry) {
-        this.e = entry;
-
-        String reason = e.getReviewReason();
-        if (reason == null) {
-            reason = "";
-        }
-
-        if ("".equals(e.getReviewReason())) {
-            reason = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("followup.nodescription");
-        }
-
-        if (reason.length() > 45) {
-            reason = reason.substring(0, 45) + "...";
-        }
-
-        String caseNumber = e.getArchiveFileNumber();
-        if (caseNumber == null) {
-            caseNumber = "";
-        }
-
-        String dueDate = e.getReview().toString() + ": ";
-
-        Date now = new Date();
-        Date due = e.getDue();
-        if (due == null) {
-            due = new Date(now.getTime() - (25 * 60 * 60 * 1000));
-        }
-        boolean overdue = !DateUtils.isToday(due);
-
-        StringBuilder tooltip = new StringBuilder();
-        tooltip.append("<html>");
-        if (this.e.getType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
-            String respiteCaption = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("caption.respite");
-            tooltip.append("<b><i><u>! ").append(respiteCaption).append(" !</u></i></b><br/>");
-        } else {
-            String followUpCaption = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("caption.followup");
-            tooltip.append("<b><i><u>").append(followUpCaption).append("</u></i></b><br/>");
-        }
-        String dueCaption = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("caption.due");
-        tooltip.append("<b>").append(dueCaption).append(": ").append(dueDate).append("</b><br/>").append(StringUtils.nonEmpty(e.getReviewReason()));
-        if(!StringUtils.isEmpty(e.getReview().getDescription()))
-            tooltip.append(HTML_BR).append(e.getReview().getDescription());
-        String caseCaption = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("caption.case");
-        tooltip.append(HTML_BR).append(caseCaption).append(": ").append(caseNumber).append(" ").append(e.getArchiveFileName());
-        String responsibleCaption = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("caption.responsible");
-        tooltip.append(HTML_BR).append(responsibleCaption).append(": ").append(StringUtils.nonEmpty(e.getResponsible()));
-        tooltip.append("<html>");
-        this.lblDescription.setToolTipText(tooltip.toString());
-
-        // Case info (number, name, reason) and tags are now shown in the group header
-        String overduePrefix = overdue ? "!!! " : "";
-        if (e.getType() == ArchiveFileConstants.REVIEWTYPE_EVENT) {
-            this.unDoneDescription = "<html><b>" + overduePrefix + dueDate + reason + "</b></html>";
-            this.doneDescription = "<html><s><b>" + overduePrefix + dueDate + reason + "</b></s></html>";
-        } else {
-            this.unDoneDescription = "<html><b>" + overduePrefix + reason + "</b></html>";
-            this.doneDescription = "<html><s><b>" + overduePrefix + reason + "</b></s></html>";
-        }
-        
-
-        this.lblDescription.setText(unDoneDescription);
-        this.lblResponsible.setText(e.getResponsible());
-        if (e.getResponsible() != null && !("".equalsIgnoreCase(e.getResponsible()))) {
-            this.lblResponsible.setIcon(UserSettings.getInstance().getUserSmallIcon(e.getResponsible()));
-        }
-
-        this.chkDescription.setSelected(false);
-
-        this.cmdPostpone.setEnabled(true);
-        if (e.getType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
-            this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/notifications_important_20dp_white.png")));
-            this.cmdPostpone.setEnabled(false);
-        } else if (e.getType() == ArchiveFileConstants.REVIEWTYPE_EVENT) {
-            this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/notifications_calendar_20dp_white.png")));
-        } else {
-            this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/notifications_20dp_white.png")));
-        }
-
-        // Set background color based on calendar setup color
-        if (this.e.getCalendarSetupColor() != Integer.MIN_VALUE) {
-            Color baseColor = new Color(this.e.getCalendarSetupColor());
-            this.normalColor = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), NORMAL_ALPHA);
-            this.highlightColor = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), HIGHLIGHT_ALPHA);
-        } else {
-            this.normalColor = DEFAULT_NORMAL_COLOR;
-            this.highlightColor = DEFAULT_HIGHLIGHT_COLOR;
-        }
-        this.jPanel1.setBackground(normalColor);
-
-        Color foreground = overdue ? ColorUtils.readableSignalColor(this.normalColor) : Color.WHITE;
-        this.lblDescription.setForeground(foreground);
-        if (UserSettings.getInstance().getCurrentUser().getPrincipalId().equals(e.getResponsible())) {
-            this.lblResponsible.setFont(this.lblResponsible.getFont().deriveFont(Font.BOLD));
-            this.lblResponsible.setForeground(foreground);
-        }
-
-        this.repaint();
-
+    private ColorUtils() {
     }
 
     /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
+     * Computes the WCAG 2.x relative luminance of a color in the range 0..1.
      */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
-
-        jPanel1 = new javax.swing.JPanel();
-        lblResponsible = new javax.swing.JLabel();
-        lblIcon = new javax.swing.JLabel();
-        chkDescription = new javax.swing.JCheckBox();
-        lblDescription = new javax.swing.JLabel();
-        cmdPostpone = new javax.swing.JButton();
-
-        setOpaque(false);
-        addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                formMouseEntered(evt);
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                formMouseExited(evt);
-            }
-        });
-
-        lblResponsible.setFont(lblResponsible.getFont().deriveFont((lblResponsible.getFont().getStyle() | java.awt.Font.ITALIC) & ~java.awt.Font.BOLD));
-        lblResponsible.setText("user");
-
-        lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrungrey.png"))); // NOI18N
-
-        chkDescription.setText(" ");
-        chkDescription.setToolTipText("als erledigt markieren");
-        chkDescription.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                chkDescriptionStateChanged(evt);
-            }
-        });
-        chkDescription.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                chkDescriptionMouseClicked(evt);
-            }
-        });
-
-        lblDescription.setFont(lblDescription.getFont());
-        lblDescription.setForeground(new java.awt.Color(255, 255, 255));
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel"); // NOI18N
-        lblDescription.setText(bundle.getString("label.followup")); // NOI18N
-        lblDescription.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        lblDescription.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                lblDescriptionMouseClicked(evt);
-            }
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                lblDescriptionMouseEntered(evt);
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                lblDescriptionMouseExited(evt);
-            }
-        });
-
-        cmdPostpone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
-        cmdPostpone.setToolTipText("auf einen späteren Termin verschieben");
-        cmdPostpone.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdPostponeActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(chkDescription)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblIcon)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, 173, Short.MAX_VALUE)
-                .addGap(18, 18, 18)
-                .addComponent(lblResponsible)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdPostpone)
-                .addContainerGap())
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(chkDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addComponent(lblIcon, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(lblDescription, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(lblResponsible, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(cmdPostpone, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 29, Short.MAX_VALUE))))
-        );
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0))
-        );
-    }// </editor-fold>//GEN-END:initComponents
-
-    private void lblDescriptionMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseClicked
-        try {
-            Object editor = null;
-            if (UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
-                editor = EditorsRegistry.getInstance().getEditor(EditArchiveFileDetailsPanel.class.getName());
-            } else {
-                editor = EditorsRegistry.getInstance().getEditor(ViewArchiveFileDetailsPanel.class.getName());
-            }
-            Object desktop = EditorsRegistry.getInstance().getEditor(DesktopPanel.class.getName());
-            Image bgi = ((DesktopPanel) desktop).getBackgroundImage();
-
-            if (editor instanceof ThemeableEditor) {
-                // inherit the background to newly created child editors
-                ((ThemeableEditor) editor).setBackgroundImage(bgi);
-            }
-
-            if (editor instanceof PopulateOptionsEditor) {
-                ((PopulateOptionsEditor) editor).populateOptions();
-            }
-
-            ArchiveFileBean aFile = null;
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-                ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-
-                aFile = fileService.getArchiveFile(this.e.getArchiveFileId());
-            } catch (Exception ex) {
-                log.error("Error loading archive file from server", ex);
-                JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("dialog.error.loadingcase"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
-            }
-
-            if (aFile == null) {
-                return;
-            }
-
-            ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile);
-            ((ArchiveFilePanel) editor).setOpenedFromEditorClass(DesktopPanel.class.getName());
-            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
-        } catch (Exception ex) {
-            log.error("Error creating editor from class " + this.getClass().getName(), ex);
-            JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("dialog.error.loadingeditor"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
-        }
-    }//GEN-LAST:event_lblDescriptionMouseClicked
-
-    private void lblDescriptionMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseEntered
-        highlight(true);
-    }//GEN-LAST:event_lblDescriptionMouseEntered
-
-    private void lblDescriptionMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseExited
-        highlight(false);
-    }//GEN-LAST:event_lblDescriptionMouseExited
-
-    private void chkDescriptionStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_chkDescriptionStateChanged
-
-    }//GEN-LAST:event_chkDescriptionStateChanged
-
-    private void chkDescriptionMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_chkDescriptionMouseClicked
-        boolean done = false;
-        if (this.chkDescription.isSelected()) {
-            if (this.e.getType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
-                int response = JOptionPane.showConfirmDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("dialog.confirm.setdone"), new Object[]{this.e.getReviewReason()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("dialog.confirm.setdone.title"), JOptionPane.YES_NO_OPTION);
-                if (response == JOptionPane.NO_OPTION) {
-                    this.chkDescription.setSelected(false);
-                    return;
-
-                } else {
-                    done = true;
-                }
-
-            } else {
-                done = true;
-            }
-            // Last-open warning for all event types when setting to done
-            if (done) {
-                try {
-                    ClientSettings settingsCheck = ClientSettings.getInstance();
-                    JLawyerServiceLocator locatorCheck = JLawyerServiceLocator.getInstance(settingsCheck.getLookupProperties());
-                    CalendarServiceRemote calServiceCheck = locatorCheck.lookupCalendarServiceRemote();
-                    Collection<ArchiveFileReviewsBean> open = calServiceCheck.getReviews(this.e.getArchiveFileId(), false);
-                    if (open != null && open.size() == 1) {
-                        String caseNumber = this.e.getArchiveFileNumber();
-                        if (caseNumber == null) {
-                            caseNumber = "";
-                        }
-                        String caseName = this.e.getArchiveFileName();
-                        if (caseName == null) {
-                            caseName = "";
-                        }
-                        String msg = java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("dialog.confirm.lastopen"), new Object[]{caseNumber, caseName});
-                        String title = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("dialog.confirm.lastopen.title");
-                        int r = JOptionPane.showConfirmDialog(this, msg, title, JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-                        if (r == JOptionPane.NO_OPTION) {
-                            this.chkDescription.setSelected(false);
-                            return;
-                        }
-                    }
-                } catch (Exception ex) {
-                    // On failure to check, proceed without last-open warning
-                    log.warn("Could not check for last-open review warning", ex);
-                }
-            }
-        } else {
-            done = false;
-        }
-
-        ArchiveFileReviewsBean reviewDto = this.e.getReview();
-        reviewDto.setDone(done);
-
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
-            calService.updateReview(this.e.getArchiveFileId(), reviewDto);
-        } catch (Exception ex) {
-            log.error("Error updating review", ex);
-            JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("dialog.error.saving"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        if (done) {
-            this.lblDescription.setText(this.doneDescription);
-        } else {
-            this.lblDescription.setText(this.unDoneDescription);
-        }
-
-    }//GEN-LAST:event_chkDescriptionMouseClicked
-
-    private void cmdPostponeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPostponeActionPerformed
-        // If countdown is active, cancel it and allow user to select a new date
-        if (countdownActive) {
-            cancelRefreshCountdown();
-            return;
-        }
-
-        JTextField hiddenField = new JTextField();
-        MultiCalDialog dlg = new MultiCalDialog(hiddenField, EditorsRegistry.getInstance().getMainWindow(), true);
-        dlg.setVisible(true);
-        Date d = null;
-        try {
-            SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-            d = df.parse(hiddenField.getText());
-        } catch (Throwable t) {
-            return;
-        }
-        this.e.setDue(d);
-
-        // update data
-        EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird aktualisiert...");
-        ArchiveFileReviewsBean arb = e.getReview();
-
-        // Store old dates for the event notification
-        Date oldBeginDate = arb.getBeginDate();
-        Date oldEndDate = arb.getEndDate();
-
-        if (arb.getEventType() == EventTypes.EVENTTYPE_EVENT) {
-            Calendar evCal = Calendar.getInstance();
-            evCal.setTime(arb.getBeginDate());
-            int hour = evCal.get(Calendar.HOUR_OF_DAY);
-            int minute = evCal.get(Calendar.MINUTE);
-            evCal.setTime(d);
-            evCal.set(Calendar.HOUR_OF_DAY, hour);
-            evCal.set(Calendar.MINUTE, minute);
-            long diff = evCal.getTime().getTime() - arb.getBeginDate().getTime();
-            arb.setBeginDate(evCal.getTime());
-            if (arb.getEndDate() != null) {
-                arb.setEndDate(new Date(arb.getEndDate().getTime() + diff));
-            }
-        } else {
-            arb.setBeginDate(d);
-        }
-        ClientSettings settings = ClientSettings.getInstance();
-        JLawyerServiceLocator locator = null;
-        Window parentWindow = WindowUtils.findWindow(this);
-        if (CalendarUtils.checkForConflicts(parentWindow, arb)) {
-            try {
-                locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
-                calService.updateReview(arb.getArchiveFileKey().getId(), arb);
-            } catch (Exception ex) {
-                log.error("Error updating review", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Bearbeiten der Wiedervorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                EditorsRegistry.getInstance().clearStatus();
-                return;
-            }
-
-            // Update local UI immediately
-            boolean postPonedDone = this.chkDescription.isSelected();
-            this.setEntry(e);
-            this.chkDescription.setSelected(postPonedDone);
-
-            // Show the new date in the label so user can verify their selection
-            SimpleDateFormat dfDisplay = new SimpleDateFormat("dd.MM.yyyy");
-            String newDateStr = dfDisplay.format(d);
-            String reason = e.getReviewReason();
-            if (reason == null || reason.isEmpty()) {
-                reason = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("followup.nodescription");
-            }
-            if (reason.length() > 35) {
-                reason = reason.substring(0, 35) + "...";
-            }
-            this.lblDescription.setText("<html><b>" + newDateStr + ": " + reason + "</b></html>");
-
-            // Start countdown and trigger full refresh after 3 seconds
-            startRefreshCountdown(arb, oldBeginDate, oldEndDate);
-        }
-        EditorsRegistry.getInstance().clearStatus();
-
-
-    }//GEN-LAST:event_cmdPostponeActionPerformed
-
-    private void formMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseEntered
-        highlight(true);
-    }//GEN-LAST:event_formMouseEntered
-
-    private void formMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseExited
-        highlight(false);
-    }//GEN-LAST:event_formMouseExited
-
-    private void highlight(boolean highlight) {
-        Color c = normalColor;
-        if (highlight) {
-            c = highlightColor;
-        }
-        this.jPanel1.setBackground(c);
-        this.repaint();
+    public static double relativeLuminance(Color c) {
+        double r = channelLuminance(c.getRed() / 255.0d);
+        double g = channelLuminance(c.getGreen() / 255.0d);
+        double b = channelLuminance(c.getBlue() / 255.0d);
+        return 0.2126d * r + 0.7152d * g + 0.0722d * b;
     }
-    
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox chkDescription;
-    private javax.swing.JButton cmdPostpone;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JLabel lblDescription;
-    private javax.swing.JLabel lblIcon;
-    private javax.swing.JLabel lblResponsible;
-    // End of variables declaration//GEN-END:variables
+
+    /**
+     * Computes the WCAG contrast ratio between two colors in the range 1..21.
+     */
+    public static double contrastRatio(Color a, Color b) {
+        double la = relativeLuminance(a);
+        double lb = relativeLuminance(b);
+        double lighter = Math.max(la, lb);
+        double darker = Math.min(la, lb);
+        return (lighter + 0.05d) / (darker + 0.05d);
+    }
+
+    /**
+     * Picks a warm "signal" foreground color (red / orange / yellow family) that
+     * is readable on the given background. Selection criteria:
+     * <ol>
+     *   <li>WCAG contrast ratio >= 4.5:1 (AA for normal text).</li>
+     *   <li>Largest hue distance from the background, so a red background does
+     *       not get red text but shifts toward amber/yellow.</li>
+     * </ol>
+     * If no palette entry meets the contrast threshold, returns the entry with
+     * the highest contrast (readability wins over aesthetic harmony).
+     */
+    public static Color readableSignalColor(Color background) {
+        Color[] preferred;
+        Color[] fallback;
+        if (relativeLuminance(background) < 0.5d) {
+            preferred = SIGNAL_PALETTE_LIGHT;
+            fallback = SIGNAL_PALETTE_MEDIUM;
+        } else {
+            preferred = SIGNAL_PALETTE_DEEP;
+            fallback = SIGNAL_PALETTE_MEDIUM;
+        }
+
+        Color best = pickByHueDistance(background, preferred, AA_CONTRAST);
+        if (best != null) {
+            return best;
+        }
+        best = pickByHueDistance(background, fallback, AA_CONTRAST);
+        if (best != null) {
+            return best;
+        }
+        return pickByMaxContrast(background, preferred, fallback);
+    }
+
+    private static Color pickByHueDistance(Color bg, Color[] candidates, double minContrast) {
+        Color chosen = null;
+        double bestHueDist = -1d;
+        float bgHue = hue(bg);
+        for (Color c : candidates) {
+            if (contrastRatio(bg, c) < minContrast) {
+                continue;
+            }
+            double d = hueDistance(bgHue, hue(c));
+            if (d > bestHueDist) {
+                bestHueDist = d;
+                chosen = c;
+            }
+        }
+        return chosen;
+    }
+
+    private static Color pickByMaxContrast(Color bg, Color[] a, Color[] b) {
+        Color chosen = a[0];
+        double bestContrast = contrastRatio(bg, chosen);
+        for (Color[] palette : new Color[][]{a, b}) {
+            for (Color c : palette) {
+                double r = contrastRatio(bg, c);
+                if (r > bestContrast) {
+                    bestContrast = r;
+                    chosen = c;
+                }
+            }
+        }
+        return chosen;
+    }
+
+    private static float hue(Color c) {
+        float[] hsb = Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), null);
+        return hsb[0];
+    }
+
+    private static double hueDistance(float h1, float h2) {
+        double d = Math.abs(h1 - h2);
+        return Math.min(d, 1.0d - d);
+    }
+
+    private static double channelLuminance(double v) {
+        return (v <= 0.03928d) ? v / 12.92d : Math.pow((v + 0.055d) / 1.055d, 2.4d);
+    }
+
 }
