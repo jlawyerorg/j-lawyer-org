@@ -795,6 +795,7 @@ public class ServerSettingsKeys {
     public static final String SERVERCONF_INSTANTMESSAGING_POLLING_ENABLED="jlawyer.server.instantmessaging.polling.enabled";
     
     public static final String SERVERCONF_INSTALLATION_ID="jlawyer.server.installation.id";
+    public static final String SERVERCONF_INSTALLATION_TYPE="jlawyer.server.installation.type";
     public static final String SERVERCONF_EPOSTVENDORID_ENCRYPTED="jlawyer.server.epost.vendorid";
     
     public static final String SERVERCONF_STIRLINGPDF_ENDPOINT="jlawyer.server.stirlingpdf.endpoint";

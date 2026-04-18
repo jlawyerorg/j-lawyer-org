@@ -74,7 +74,8 @@
       "WebFetch(domain:developer.sipgate.io)",
       "Bash(git show:*)",
       "Bash(identify /home/jens/dev/j-lawyer-org/j-lawyer-client/src/icons16/material/baseline_chat_blue_48dp.png)",
-      "Bash(python3 -c \"from PIL import Image; img = Image.open\\('/home/jens/dev/j-lawyer-org/j-lawyer-client/src/icons16/material/baseline_chat_blue_48dp.png'\\); print\\(f'{img.width}x{img.height}'\\)\")"
+      "Bash(python3 -c \"from PIL import Image; img = Image.open\\('/home/jens/dev/j-lawyer-org/j-lawyer-client/src/icons16/material/baseline_chat_blue_48dp.png'\\); print\\(f'{img.width}x{img.height}'\\)\")",
+      "Bash(mysql *)"
     ],
     "deny": [],
     "ask": []

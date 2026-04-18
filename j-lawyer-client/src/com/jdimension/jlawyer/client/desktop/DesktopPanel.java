@@ -1073,15 +1073,21 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         log.error("Cannot parse instant message number of days: " + restriction, t);
                     }
                     List<InstantMessage> allMessages = locator.lookupMessagingServiceRemote().getMessagesSince(new java.util.Date(System.currentTimeMillis() - (numOfDays * 24l * 60 * 60 * 1000)));
-                    if (allMessages != null && !allMessages.isEmpty()) {
-                        SwingUtilities.invokeLater(() -> {
+                    SwingUtilities.invokeLater(() -> {
+                        if (allMessages != null) {
                             for (InstantMessage msg : allMessages) {
                                 addToDesktopMessagingPanels(msg);
                             }
-                        });
-                    }
+                        }
+                        showEmptyHintIfNoMessages(pnlDesktopMessagesToMeContent);
+                        showEmptyHintIfNoMessages(pnlDesktopMessagesToOthersContent);
+                    });
                 } catch (Exception ex) {
                     log.error("Error loading initial messages for desktop panels", ex);
+                    SwingUtilities.invokeLater(() -> {
+                        showEmptyHintIfNoMessages(pnlDesktopMessagesToMeContent);
+                        showEmptyHintIfNoMessages(pnlDesktopMessagesToOthersContent);
+                    });
                 }
             }
         }, 3000);
@@ -3006,10 +3012,25 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private void clearLoadingHint(JPanel contentPanel) {
         if (contentPanel.getComponentCount() == 1 && contentPanel.getComponent(0) instanceof JLabel) {
             JLabel lbl = (JLabel) contentPanel.getComponent(0);
-            if ("Nachrichten werden geladen...".equals(lbl.getText())) {
+            if ("Nachrichten werden geladen...".equals(lbl.getText())
+                    || "Keine aktuellen Nachrichten vorhanden.".equals(lbl.getText())) {
                 contentPanel.removeAll();
             }
         }
+    }
+
+    private void showEmptyHintIfNoMessages(JPanel contentPanel) {
+        for (int i = 0; i < contentPanel.getComponentCount(); i++) {
+            if (contentPanel.getComponent(i) instanceof MessagePanel) {
+                return;
+            }
+        }
+        contentPanel.removeAll();
+        JLabel lblEmpty = new JLabel("Keine aktuellen Nachrichten vorhanden.");
+        lblEmpty.setForeground(java.awt.Color.white);
+        contentPanel.add(lblEmpty);
+        contentPanel.revalidate();
+        contentPanel.repaint();
     }
 
     private void addMessageToDesktopContainer(InstantMessage msg, JPanel targetPanel) {

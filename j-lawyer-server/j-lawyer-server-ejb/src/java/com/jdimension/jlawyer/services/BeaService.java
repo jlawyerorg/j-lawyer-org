@@ -711,7 +711,6 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
 
     private static final Logger log = Logger.getLogger(BeaService.class.getName());
     private static final String DEFAULT_BEASTIE_URL = "http://localhost:7080";
-    private static final String CLIENT_ID_PREFIX = "j-lawyer-org";
     private String cachedClientId = null;
 
     @Resource
@@ -1399,11 +1398,17 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
         if (cachedClientId != null) {
             return cachedClientId;
         }
+        
+        String installationType="j-lawyer-org";
+        ServerSettingsBean installationTypeSetting = settingsFacade.find(ServerSettingsKeys.SERVERCONF_INSTALLATION_TYPE);
+        if(installationTypeSetting!=null && installationTypeSetting.getSettingValue()!= null && !installationTypeSetting.getSettingValue().isEmpty())
+            installationType=installationTypeSetting.getSettingValue();
+        
         ServerSettingsBean installationId = settingsFacade.find(ServerSettingsKeys.SERVERCONF_INSTALLATION_ID);
         if (installationId != null && installationId.getSettingValue() != null && !installationId.getSettingValue().isEmpty()) {
-            cachedClientId = CLIENT_ID_PREFIX + "-" + installationId.getSettingValue();
+            cachedClientId = installationType + "-" + installationId.getSettingValue();
         } else {
-            cachedClientId = CLIENT_ID_PREFIX;
+            cachedClientId = installationType;
         }
         return cachedClientId;
     }
