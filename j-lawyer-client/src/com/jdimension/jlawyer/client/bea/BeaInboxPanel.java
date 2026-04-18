@@ -770,6 +770,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     private BeaFolder currentFolder = null;
     private javax.swing.event.ChangeListener scrollListener = null;
 
+    private volatile boolean suppressFolderSelectionEvents = false;
+
     /**
      * Creates new form BeaInboxPanel
      */
@@ -923,6 +925,28 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     public void refreshFolders(boolean showErrorDialogOnFailure) throws Exception {
 
+        final long[] prevFolderId = {-1L};
+        final String[] prevSafeId = {null};
+        Runnable captureSelection = () -> {
+            TreePath sp = treeFolders.getSelectionPath();
+            if (sp != null) {
+                Object last = sp.getLastPathComponent();
+                if (last instanceof DefaultMutableTreeNode) {
+                    Object uo = ((DefaultMutableTreeNode) last).getUserObject();
+                    if (uo instanceof BeaFolder) {
+                        BeaFolder f = (BeaFolder) uo;
+                        prevFolderId[0] = f.getId();
+                        prevSafeId[0] = f.getSafeId();
+                    }
+                }
+            }
+        };
+        if (SwingUtilities.isEventDispatchThread()) {
+            captureSelection.run();
+        } else {
+            SwingUtilities.invokeAndWait(captureSelection);
+        }
+
         BeaAccess bea = BeaAccess.getInstance();
         EditorsRegistry.getInstance().updateStatus("beA-Postfächer werden geladen...");
         DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("beA-Postfächer");
@@ -964,18 +988,30 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         if (!SwingUtilities.isEventDispatchThread()) {
             SwingUtilities.invokeAndWait(() -> {
-                DefaultTreeModel tm = new DefaultTreeModel(rootNode);
-                treeFolders.setModel(tm);
-                JTreeUtils.expandAll(treeFolders);
+                suppressFolderSelectionEvents = true;
+                try {
+                    DefaultTreeModel tm = new DefaultTreeModel(rootNode);
+                    treeFolders.setModel(tm);
+                    JTreeUtils.expandAll(treeFolders);
 
-                treeFolders.setCellRenderer(renderer);
+                    treeFolders.setCellRenderer(renderer);
+                } finally {
+                    suppressFolderSelectionEvents = false;
+                }
+                restoreFolderSelection((DefaultTreeModel) treeFolders.getModel(), prevFolderId[0], prevSafeId[0]);
             });
         } else {
-            DefaultTreeModel tm = new DefaultTreeModel(rootNode);
-            this.treeFolders.setModel(tm);
-            JTreeUtils.expandAll(this.treeFolders);
+            suppressFolderSelectionEvents = true;
+            try {
+                DefaultTreeModel tm = new DefaultTreeModel(rootNode);
+                this.treeFolders.setModel(tm);
+                JTreeUtils.expandAll(this.treeFolders);
 
-            this.treeFolders.setCellRenderer(this.renderer);
+                this.treeFolders.setCellRenderer(this.renderer);
+            } finally {
+                suppressFolderSelectionEvents = false;
+            }
+            restoreFolderSelection((DefaultTreeModel) this.treeFolders.getModel(), prevFolderId[0], prevSafeId[0]);
 
         }
 
@@ -1419,6 +1455,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     }//GEN-LAST:event_treeFoldersValueChanged
 
     private void treeFoldersValueChangedImpl(javax.swing.event.TreeSelectionEvent evt, int sortCol, int scrollToRow) {
+        if (this.suppressFolderSelectionEvents) {
+            return;
+        }
         if (!BeaAccess.hasInstance()) {
             return;
         }
@@ -3143,6 +3182,18 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             }
         }
         return false;
+    }
+
+    private void restoreFolderSelection(DefaultTreeModel tm, long folderId, String safeId) {
+        if (safeId == null) {
+            return;
+        }
+        DefaultMutableTreeNode restored = findFolder((DefaultMutableTreeNode) tm.getRoot(), folderId, safeId);
+        if (restored != null) {
+            TreePath rp = new TreePath(restored.getPath());
+            treeFolders.setSelectionPath(rp);
+            treeFolders.scrollPathToVisible(rp);
+        }
     }
 
     private DefaultMutableTreeNode findFolder(DefaultMutableTreeNode node, long folderId, String safeId) {
