@@ -281,6 +281,20 @@
             charCounter: false,    // Disable character counter
             maxCharCount: null,     // No character limit
 
+            // Preserve style attribute (incl. font-family, font-size, margin, etc.)
+            // on all tags so inline formatting survives getContents() serialization.
+            // Without this, SunEditor strips most CSS properties from block elements
+            // (<p>, <div>), which drops font information from outgoing emails.
+            attributesWhitelist: {
+                'all': 'style|class|id'
+            },
+
+            // Allow <font> and additional inline tags to survive sanitization.
+            addTagsWhitelist: 'font|mark|u|s',
+
+            // When pasting, keep a broad tag whitelist rather than collapsing to text.
+            pasteTagsWhitelist: 'p|div|span|font|br|a|ul|ol|li|table|tr|td|th|thead|tbody|tfoot|h[1-6]|blockquote|pre|strong|em|b|i|u|s|mark|img|hr',
+
             // Default style for editor content
             defaultStyle: "DEFAULT_FONT_STYLE"
         });
