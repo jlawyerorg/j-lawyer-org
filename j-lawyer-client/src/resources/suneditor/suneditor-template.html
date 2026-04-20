@@ -795,6 +795,13 @@
             // LibreOffice uses <font color="#xxx"> which SunEditor doesn't preserve
             html = convertFontTagsToStyles(html);
 
+            // SunEditor's inline-element style whitelist only accepts "background-color",
+            // not the CSS shorthand "background". LibreOffice highlights paste as
+            // "background: #ffff00", which SunEditor silently strips on the next
+            // code-view roundtrip or on serialization. Rewrite the shorthand (when its
+            // value is a plain color) so the highlight survives.
+            html = html.replace(/background\s*:\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)|[a-zA-Z]+)(\s*[;"'])/g, 'background-color: $1$2');
+
             // Remove empty tags (but keep tags that contain whitespace - those may be intentional spacers)
             html = html.replace(/<(\w+)[^>]*><\/\1>/gi, '');
 
@@ -808,6 +815,22 @@
                 // Convert newlines to <br> tags
                 log('No block structure detected - converting newlines to <br>');
                 html = html.replace(/\r\n/g, '<br>').replace(/\n/g, '<br>').replace(/\r/g, '<br>');
+            } else {
+                // HTML spec says newlines inside block content collapse to a single space,
+                // but several mail clients and HTML-to-text converters strip them without
+                // substitution, producing missing spaces at tag boundaries
+                // (e.g. "hier\n<b>einen</b>" -> "hiereinen"). Normalize newlines to a single
+                // space outside of <pre>/<code> where whitespace is significant.
+                const preservedBlocks = [];
+                html = html.replace(/<(pre|code)\b[^>]*>[\s\S]*?<\/\1>/gi, function(match) {
+                    preservedBlocks.push(match);
+                    return '__SUNED_PRESERVE_' + (preservedBlocks.length - 1) + '__';
+                });
+                html = html.replace(/[\r\n]+/g, ' ');
+                html = html.replace(/__SUNED_PRESERVE_(\d+)__/g, function(_, i) {
+                    return preservedBlocks[parseInt(i, 10)];
+                });
+                log('Block structure detected - normalized newlines to spaces outside pre/code');
             }
 
             // Preserve multiple spaces by converting to alternating space/&nbsp; sequences
