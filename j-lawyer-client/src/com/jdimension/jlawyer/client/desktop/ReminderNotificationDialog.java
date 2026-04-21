@@ -60,7 +60,7 @@ public class ReminderNotificationDialog extends JDialog {
             log.warn("Could not load window icon", ex);
         }
 
-        setSize(450, 400);
+        setSize(550, 400);
         setMinimumSize(new Dimension(350, 200));
         getContentPane().setBackground(Color.WHITE);
 
