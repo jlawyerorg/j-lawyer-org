@@ -920,8 +920,23 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
         
         log.info("getting directories...");
         File directoryToZip = new File(System.getProperty("jlawyer.server.basedirectory").trim());
-        String backupDir = directoryToZip.getParentFile().getPath() + System.getProperty("file.separator") + "backups";
         String dataDir = directoryToZip.getParentFile().getPath() + System.getProperty("file.separator") + "j-lawyer-data";
+        
+        // check for custom backup directory setting, fall back to default
+        String backupDir = null;
+        try {
+            InitialContext icDir = new InitialContext();
+            ServerSettingsBeanFacadeLocal dirSettings = (ServerSettingsBeanFacadeLocal) icDir.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
+            ServerSettingsBean backupDirSetting = dirSettings.find("jlawyer.server.backup.directory");
+            if (backupDirSetting != null && backupDirSetting.getSettingValue() != null && !backupDirSetting.getSettingValue().trim().isEmpty()) {
+                backupDir = backupDirSetting.getSettingValue().trim();
+            }
+        } catch (Exception ex) {
+            log.warn("Could not read backup directory setting, using default", ex);
+        }
+        if (backupDir == null) {
+            backupDir = directoryToZip.getParentFile().getPath() + System.getProperty("file.separator") + "backups";
+        }
 
         
         log.info("initializing backup executor");
