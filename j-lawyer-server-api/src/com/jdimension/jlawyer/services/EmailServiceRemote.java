@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.services;
 
 import java.util.List;
+import java.util.Map;
 import javax.ejb.Remote;
 
 /**
@@ -837,6 +838,17 @@ public interface EmailServiceRemote {
      * @throws Exception if the mailbox does not exist
      */
     boolean hasNewMessages(String mailboxId) throws Exception;
+
+    /**
+     * Returns the most recent inbox unread-message counts for the given
+     * mailboxes. Values are read from server RAM, populated by the periodic
+     * polling task; no backend calls (Graph / IMAP) are triggered here.
+     * Mailboxes that have not been polled yet are returned with a count of 0.
+     * @param mailboxIds the list of mailbox IDs to query
+     * @return a map from mailbox ID to the cached inbox unread count
+     * @throws Exception on unexpected failure
+     */
+    Map<String, Integer> getInboxUnreadCounts(List<String> mailboxIds) throws Exception;
 
     /**
      * Tests the connection to a mailbox by attempting to authenticate and

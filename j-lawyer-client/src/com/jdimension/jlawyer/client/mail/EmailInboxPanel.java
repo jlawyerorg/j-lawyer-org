@@ -783,6 +783,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
     private boolean initializing = true;
     private boolean statusBarNotified = false;
+    private volatile int lastPublishedUnread = -1;
     
     private ArrayList<String> allForeignFileNumbers=new ArrayList<>();
     private long lastForeignFileNumbersUpdate=0l;
@@ -929,6 +930,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                         log.error("Error polling mailbox " + ms.getEmailAddress(), ex);
                     }
                 }
+                publishInboxUnreadBadge(true);
             } catch (Exception ex) {
                 log.error("Error during server polling", ex);
             }
@@ -2146,6 +2148,36 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         // Server-based path
         MessageContainer firstMsgC = (MessageContainer) this.tblMails.getValueAt(selected[0], 2);
         if (firstMsgC != null && firstMsgC.isServerBased()) {
+            // Determine whether the currently selected folder is an inbox, so that
+            // we can decrement its cached unread count by the number of deleted
+            // unread messages — the badge must reflect the change immediately
+            // (the server-side inbox unread cache is only refreshed on the next
+            // polling tick).
+            FolderContainer inboxFc = null;
+            try {
+                if (this.treeFolders.getSelectionPath() != null) {
+                    DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+                    if (selNode.getUserObject() instanceof FolderContainer) {
+                        FolderContainer selFc = (FolderContainer) selNode.getUserObject();
+                        if (selFc.isServerBased() && selFc.getFolderDTO() != null && selFc.getFolderDTO().isInbox()) {
+                            inboxFc = selFc;
+                        }
+                    }
+                }
+            } catch (Throwable t) {
+                log.error("Error determining current inbox folder for badge update", t);
+            }
+            int unreadDeletedCount = 0;
+            if (inboxFc != null) {
+                for (int i = 0; i < selected.length; i++) {
+                    try {
+                        MessageContainer mc = (MessageContainer) this.tblMails.getValueAt(selected[i], 2);
+                        if (mc != null && mc.isServerBased() && !mc.isRead()) {
+                            unreadDeletedCount++;
+                        }
+                    } catch (Throwable t) { /* ignore */ }
+                }
+            }
             try {
                 ClientSettings settings = ClientSettings.getInstance();
                 com.jdimension.jlawyer.services.JLawyerServiceLocator locator =
@@ -2159,6 +2191,11 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             } catch (Exception ex) {
                 log.error("Error deleting messages via server", ex);
             }
+            if (inboxFc != null && unreadDeletedCount > 0) {
+                int current = inboxFc.getUnreadMessageCount();
+                inboxFc.setCachedUnread(Math.max(current - unreadDeletedCount, 0));
+            }
+            publishInboxUnreadBadge(false);
             this.mailContentUI.clear();
             this.pnlActionsChild.removeAll();
             // Remember position for re-selection
@@ -3332,32 +3369,11 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         if (this.statusBarNotified) {
             return;
         }
-
-        final Object root = this.treeFolders.getModel().getRoot();
         try {
             new Thread(() -> {
                 try {
                     Thread.sleep(5000);
-                    if (root instanceof DefaultMutableTreeNode) {
-                        UserSettings uset = UserSettings.getInstance();
-                        List<MailboxSetup> mailboxes = uset.getMailboxes(uset.getCurrentUser().getPrincipalId());
-                        int unread = 0;
-                        for (MailboxSetup ms : mailboxes) {
-
-                            Object userObject = inboxFolders.get(ms);
-                            if (userObject instanceof FolderContainer) {
-                                FolderContainer fc = (FolderContainer) userObject;
-                                unread = unread + fc.getUnreadMessageCount();
-                            } else {
-                                log.warn("Email root folder is not of correct type during #notifyStatusBarReady");
-                            }
-                        }
-                        EventBroker eb = EventBroker.getInstance();
-                        eb.publishEvent(new EmailStatusEvent(unread));
-                        statusBarNotified = true;
-                        log.info(unread + " unread emails event has been published");
-
-                    }
+                    publishInboxUnreadBadge(true);
                 } catch (Throwable ex) {
                     log.error("Error checking for unread mails", ex);
                 }
@@ -3365,7 +3381,75 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         } catch (Exception ex) {
             log.error(ex);
         }
+    }
 
+    /**
+     * Recomputes the total unread count across all inbox folders (server-based
+     * FolderContainers only — other folders are ignored) and publishes an
+     * EmailStatusEvent if the value has changed since the last publish.
+     *
+     * @param refreshFromServer if true, first fetch fresh unread counts for all
+     *   configured mailboxes via the bulk remote call getInboxUnreadCounts() and
+     *   update each inbox FolderContainer's cached value before summing. If
+     *   false, only the current local cached values are summed (used when the
+     *   caller has already adjusted cachedUnread itself, e.g. after a local
+     *   delete).
+     */
+    private void publishInboxUnreadBadge(final boolean refreshFromServer) {
+        new Thread(() -> {
+            try {
+                if (refreshFromServer) {
+                    java.util.List<String> mbIds = new java.util.ArrayList<>();
+                    synchronized (this.inboxFolders) {
+                        for (MailboxSetup ms : this.inboxFolders.keySet()) {
+                            if (ms != null && ms.getId() != null) {
+                                mbIds.add(ms.getId());
+                            }
+                        }
+                    }
+                    if (!mbIds.isEmpty()) {
+                        try {
+                            ClientSettings cs = ClientSettings.getInstance();
+                            com.jdimension.jlawyer.services.JLawyerServiceLocator locator =
+                                com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(cs.getLookupProperties());
+                            java.util.Map<String, Integer> counts =
+                                locator.lookupEmailServiceRemote().getInboxUnreadCounts(mbIds);
+                            if (counts != null) {
+                                synchronized (this.inboxFolders) {
+                                    for (java.util.Map.Entry<MailboxSetup, FolderContainer> e : this.inboxFolders.entrySet()) {
+                                        FolderContainer fc = e.getValue();
+                                        if (fc == null || e.getKey() == null) continue;
+                                        Integer c = counts.get(e.getKey().getId());
+                                        if (c != null) {
+                                            fc.setCachedUnread(c);
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (Exception ex) {
+                            log.error("Error fetching inbox unread counts from server", ex);
+                        }
+                    }
+                }
+
+                int total = 0;
+                synchronized (this.inboxFolders) {
+                    for (FolderContainer fc : this.inboxFolders.values()) {
+                        if (fc != null) {
+                            total = total + Math.max(fc.getUnreadMessageCount(), 0);
+                        }
+                    }
+                }
+                if (total != this.lastPublishedUnread) {
+                    this.lastPublishedUnread = total;
+                    EventBroker.getInstance().publishEvent(new EmailStatusEvent(total));
+                    this.statusBarNotified = true;
+                    log.info(total + " unread emails event has been published");
+                }
+            } catch (Throwable ex) {
+                log.error("Error publishing inbox unread badge", ex);
+            }
+        }).start();
     }
 
     public int getInboxUnread() {

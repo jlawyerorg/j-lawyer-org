@@ -736,6 +736,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     private static final String HEADER_PRIORITY = "Priority";
     private static final String IMAP_REF_PREFIX = "imap:";
     private static final ConcurrentHashMap<String, Boolean> newMessageFlags = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, Integer> inboxUnreadCounts = new ConcurrentHashMap<>();
     // Connection cache: reuse IMAP connections across operations for the same mailbox
     private static final ConcurrentHashMap<String, Store> imapStoreCache = new ConcurrentHashMap<>();
     // Message list cache per mailbox+folder
@@ -1191,6 +1192,21 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
 
     @Override
     @RolesAllowed({"loginRole"})
+    public java.util.Map<String, Integer> getInboxUnreadCounts(java.util.List<String> mailboxIds) throws Exception {
+        java.util.Map<String, Integer> result = new java.util.HashMap<>();
+        if (mailboxIds == null) {
+            return result;
+        }
+        for (String id : mailboxIds) {
+            if (id == null) continue;
+            Integer cached = inboxUnreadCounts.get(id);
+            result.put(id, cached != null ? cached : 0);
+        }
+        return result;
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
     public String testConnection(String mailboxId) throws Exception {
         MailboxSetup ms = getMailboxOrThrow(mailboxId);
         // Force fresh connection — cached connections may use stale credentials
@@ -1334,6 +1350,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
 
                 // Only check inbox for new messages to minimize API calls
                 int unread = getInboxUnreadCount(ms);
+                inboxUnreadCounts.put(ms.getId(), unread);
                 if (unread > 0) {
                     newMessageFlags.put(ms.getId(), Boolean.TRUE);
                     // Invalidate all folder caches for this mailbox so next

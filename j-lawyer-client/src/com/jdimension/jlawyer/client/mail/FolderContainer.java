@@ -857,6 +857,11 @@ public class FolderContainer {
         this.cachedMessages.clear();
     }
 
+    public void setCachedUnread(int unread) {
+        this.cachedUnread = Math.max(unread, 0);
+        this.cachedUnreadUpdated = System.currentTimeMillis();
+    }
+
     private double getRetentionTime() {
 
         if (this.retentionTime == -1) {
