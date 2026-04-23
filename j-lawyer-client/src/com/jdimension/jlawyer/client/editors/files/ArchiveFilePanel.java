@@ -2166,6 +2166,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuSetReviewOpen = new javax.swing.JMenuItem();
         mnuDuplicateReview = new javax.swing.JMenuItem();
         mnuPostponeReview = new javax.swing.JMenuItem();
+        mnuMoveReviewToOtherCase = new javax.swing.JMenuItem();
         mnuEditReview = new javax.swing.JMenuItem();
         mnuRemoveReview = new javax.swing.JMenuItem();
         documentsPopup = new javax.swing.JPopupMenu();
@@ -2434,13 +2435,22 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         reviewsPopup.add(mnuDuplicateReview);
 
         mnuPostponeReview.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
-        mnuPostponeReview.setText("verschieben");
+        mnuPostponeReview.setText("zeitlich verschieben");
         mnuPostponeReview.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuPostponeReviewActionPerformed(evt);
             }
         });
         reviewsPopup.add(mnuPostponeReview);
+
+        mnuMoveReviewToOtherCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editmove.png"))); // NOI18N
+        mnuMoveReviewToOtherCase.setText("in andere Akte verschieben");
+        mnuMoveReviewToOtherCase.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuMoveReviewToOtherCaseActionPerformed(evt);
+            }
+        });
+        reviewsPopup.add(mnuMoveReviewToOtherCase);
 
         mnuEditReview.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
         mnuEditReview.setText("bearbeiten");
@@ -9305,6 +9315,80 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_cmdIngoChatActionPerformed
 
+    private void mnuMoveReviewToOtherCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuMoveReviewToOtherCaseActionPerformed
+
+        int[] selectedRows = this.tblReviewReasons.getSelectedRows();
+        if (selectedRows.length == 0) {
+            return;
+        }
+
+        SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null);
+        dlg.setVisible(true);
+        ArchiveFileBean target = dlg.getCaseSelection();
+        dlg.dispose();
+
+        if (target == null) {
+            return;
+        }
+
+        if (this.dto != null && target.getId() != null && target.getId().equals(this.dto.getId())) {
+            JOptionPane.showMessageDialog(this, "Quell- und Zielakte sind identisch - es wurde nichts verschoben.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        ClientSettings settings = ClientSettings.getInstance();
+        CalendarServiceRemote calService;
+        try {
+            CaseUtils.optionalUnarchiveCase(target, this);
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            calService = locator.lookupCalendarServiceRemote();
+        } catch (Exception ex) {
+            log.error("Error moving review", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Verschieben: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            EditorsRegistry.getInstance().clearStatus();
+            return;
+        }
+
+        EditorsRegistry.getInstance().updateStatus("Kalendereinträge werden verschoben...");
+
+        ArchiveFileReviewReasonsTableModel tModel = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
+        ArchiveFileReviewsBean relevantEvent = null;
+        int moved = 0;
+
+        for (int i = selectedRows.length - 1; i > -1; i--) {
+            ArchiveFileReviewsBean source = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
+
+            ArchiveFileReviewsBean copy = (ArchiveFileReviewsBean) source.getClone();
+            copy.setId(null);
+            copy.setArchiveFileKey(null);
+
+            try {
+                calService.addReview(target.getId(), copy);
+                calService.removeReview(source.getId());
+
+                if (DateUtils.containsToday(source.getBeginDate(), source.getEndDate()) && relevantEvent == null) {
+                    relevantEvent = source;
+                }
+
+                tModel.removeRow(this.tblReviewReasons.convertRowIndexToModel(selectedRows[i]));
+                moved++;
+            } catch (Exception ex) {
+                log.error("Error moving review " + source.getId() + " to case " + target.getId(), ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Verschieben des Kalendereintrags: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+        EditorsRegistry.getInstance().updateStatus(moved + " Kalendereintrag/-einträge verschoben.", 5000);
+
+        if (relevantEvent != null) {
+            EventBroker eb = EventBroker.getInstance();
+            eb.publishEvent(new ReviewUpdatedEvent(null, null, relevantEvent));
+        }
+
+        recomputeConflictsAsync();
+
+    }//GEN-LAST:event_mnuMoveReviewToOtherCaseActionPerformed
+
     public void exportSelectedDocumentsAsPdf() {
 
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
@@ -10108,6 +10192,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JMenuItem mnuEditReview;
     private javax.swing.JMenuItem mnuMergeToPdf;
     private javax.swing.JMenuItem mnuMoveDocumentToOtherCase;
+    private javax.swing.JMenuItem mnuMoveReviewToOtherCase;
     private javax.swing.JMenuItem mnuOcr;
     private javax.swing.JMenuItem mnuOpenDocument;
     private javax.swing.JMenuItem mnuOpenDocumentLibreOffice;
