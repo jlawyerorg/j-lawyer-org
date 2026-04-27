@@ -713,6 +713,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
@@ -727,6 +728,7 @@ import javax.jms.JMSConnectionFactory;
 import javax.jms.JMSContext;
 import javax.jms.ObjectMessage;
 import org.apache.log4j.Logger;
+import org.jboss.ejb3.annotation.TransactionTimeout;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.data.tree.TreeNodeUtils;
 import org.jlawyer.databucket.DataBucketUtils;
@@ -2190,6 +2192,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
+    @TransactionTimeout(value = 15, unit = TimeUnit.MINUTES)
     public boolean performOcr(String docId) throws Exception {
 
         ArchiveFileDocumentsBean doc = this.archiveFileDocumentsFacade.find(docId);
