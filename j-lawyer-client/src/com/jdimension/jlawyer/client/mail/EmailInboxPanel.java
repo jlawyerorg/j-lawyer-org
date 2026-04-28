@@ -1137,12 +1137,20 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                                 }
                             }
 
-                            // First pass: create nodes for non-hidden folders
+                            // First pass: create nodes for non-hidden folders.
+                            // The inbox node MUST share its FolderContainer instance with
+                            // inboxFolders so local decrements (e.g. on delete) feed into
+                            // the badge total computed in publishInboxUnreadBadge.
                             for (com.jdimension.jlawyer.services.MailFolderDTO f : folders) {
                                 if (hiddenFolderIds.contains(f.getFolderId())) {
                                     continue;
                                 }
-                                FolderContainer fc = new FolderContainer(f, ms.getId());
+                                FolderContainer fc;
+                                if (inboxContainer != null && inboxContainer.getFolderDTO() == f) {
+                                    fc = inboxContainer;
+                                } else {
+                                    fc = new FolderContainer(f, ms.getId());
+                                }
                                 DefaultMutableTreeNode node = new DefaultMutableTreeNode(fc);
                                 nodeMap.put(f.getFolderId(), node);
                                 if (f.isInbox()) {
@@ -2182,10 +2190,25 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 ClientSettings settings = ClientSettings.getInstance();
                 com.jdimension.jlawyer.services.JLawyerServiceLocator locator =
                     com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                for (int i = selected.length - 1; i >= 0; i--) {
+                // Group refs by mailbox so we can issue one bulk delete per mailbox
+                // (the table normally holds messages from a single mailbox/folder,
+                // but we group defensively in case future code paths mix them).
+                java.util.Map<String, java.util.List<String>> refsByMailbox = new java.util.HashMap<>();
+                for (int i = 0; i < selected.length; i++) {
                     MessageContainer mc = (MessageContainer) this.tblMails.getValueAt(selected[i], 2);
                     if (mc != null && mc.isServerBased()) {
-                        locator.lookupEmailServiceRemote().deleteMessage(mc.getMailboxId(), mc.getMessageRef());
+                        java.util.List<String> list = refsByMailbox.get(mc.getMailboxId());
+                        if (list == null) {
+                            list = new java.util.ArrayList<>();
+                            refsByMailbox.put(mc.getMailboxId(), list);
+                        }
+                        list.add(mc.getMessageRef());
+                    }
+                }
+                for (java.util.Map.Entry<String, java.util.List<String>> entry : refsByMailbox.entrySet()) {
+                    java.util.List<String> failed = locator.lookupEmailServiceRemote().deleteMessages(entry.getKey(), entry.getValue());
+                    if (failed != null && !failed.isEmpty()) {
+                        log.warn("Failed to delete " + failed.size() + " of " + entry.getValue().size() + " message(s) in mailbox " + entry.getKey());
                     }
                 }
             } catch (Exception ex) {

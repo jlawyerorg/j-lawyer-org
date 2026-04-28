@@ -1132,24 +1132,123 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public void deleteMessage(String mailboxId, String messageRef) throws Exception {
+        List<String> single = new ArrayList<>();
+        single.add(messageRef);
+        List<String> failed = deleteMessages(mailboxId, single);
+        if (!failed.isEmpty()) {
+            throw new Exception("Failed to delete message: " + messageRef);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<String> deleteMessages(String mailboxId, List<String> messageRefs) throws Exception {
+        List<String> failed = new ArrayList<>();
+        if (messageRefs == null || messageRefs.isEmpty()) {
+            return failed;
+        }
         MailboxSetup ms = getMailboxOrThrow(mailboxId);
-        String sourceFolderId = null;
-        if (!ms.isMsExchange()) {
-            try {
-                sourceFolderId = parseImapRefFolder(messageRef);
-            } catch (Exception ignored) {
+
+        if (ms.isMsExchange()) {
+            for (String ref : messageRefs) {
+                try {
+                    graphDeleteMessage(ms, ref);
+                } catch (Exception ex) {
+                    log.error("Failed to delete Graph message " + ref + " in mailbox " + ms.getEmailAddress(), ex);
+                    failed.add(ref);
+                }
+            }
+        } else {
+            // Group refs by source folder so each folder is opened and expunged
+            // at most once per batch.
+            Map<String, List<String>> byFolder = new HashMap<>();
+            for (String ref : messageRefs) {
+                try {
+                    String folderName = parseImapRefFolder(ref);
+                    List<String> list = byFolder.get(folderName);
+                    if (list == null) {
+                        list = new ArrayList<>();
+                        byFolder.put(folderName, list);
+                    }
+                    list.add(ref);
+                } catch (Exception ex) {
+                    log.error("Failed to parse IMAP ref " + ref, ex);
+                    failed.add(ref);
+                }
+            }
+
+            Store store = imapConnect(ms);
+            for (Map.Entry<String, List<String>> entry : byFolder.entrySet()) {
+                String folderName = entry.getKey();
+                List<String> refsInFolder = entry.getValue();
+                try {
+                    Folder folder = store.getFolder(folderName);
+                    folder.open(Folder.READ_WRITE);
+                    try {
+                        UIDFolder uidFolder = (UIDFolder) folder;
+                        List<Message> toDelete = new ArrayList<>();
+                        for (String ref : refsInFolder) {
+                            try {
+                                long[] parsed = parseImapRef(ref);
+                                if (uidFolder.getUIDValidity() != parsed[0]) {
+                                    failed.add(ref);
+                                    continue;
+                                }
+                                Message msg = uidFolder.getMessageByUID(parsed[1]);
+                                if (msg == null) {
+                                    failed.add(ref);
+                                    continue;
+                                }
+                                toDelete.add(msg);
+                            } catch (Exception ex) {
+                                log.error("Failed to resolve IMAP ref " + ref, ex);
+                                failed.add(ref);
+                            }
+                        }
+                        if (!toDelete.isEmpty()) {
+                            Message[] msgs = toDelete.toArray(new Message[0]);
+                            if (!CommonMailUtils.isTrash(folder.getName())) {
+                                Folder trashFolder = imapFindTrashFolder(store);
+                                if (trashFolder != null) {
+                                    trashFolder.open(Folder.READ_WRITE);
+                                    try {
+                                        folder.copyMessages(msgs, trashFolder);
+                                    } finally {
+                                        trashFolder.close(false);
+                                    }
+                                }
+                            }
+                            folder.setFlags(msgs, new Flags(Flags.Flag.DELETED), true);
+                            folder.expunge();
+                        }
+                    } finally {
+                        folder.close(false);
+                    }
+                    invalidateMessageCache(mailboxId, folderName);
+                } catch (Exception ex) {
+                    log.error("Failed to delete messages in folder " + folderName, ex);
+                    for (String ref : refsInFolder) {
+                        if (!failed.contains(ref)) {
+                            failed.add(ref);
+                        }
+                    }
+                }
             }
         }
-        if (ms.isMsExchange()) {
-            graphDeleteMessage(ms, messageRef);
-        } else {
-            imapDeleteMessage(ms, messageRef);
-        }
-        // Invalidate source folder + trash cache
-        if (sourceFolderId != null) {
-            invalidateMessageCache(mailboxId, sourceFolderId);
-        }
+
         invalidateAllFolderCaches(mailboxId); // trash target unknown, invalidate all
+
+        // Refresh inbox unread count once after the batch so the badge reflects
+        // the change on the next client poll, without waiting for the scheduled
+        // pollForNewMessages tick.
+        try {
+            int unread = getInboxUnreadCount(ms);
+            inboxUnreadCounts.put(mailboxId, unread);
+        } catch (Exception ex) {
+            log.error("Failed to refresh inbox unread count after batch delete for " + ms.getEmailAddress(), ex);
+        }
+
+        return failed;
     }
 
     @Override
@@ -2068,44 +2167,6 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 sourceFolder.expunge();
             } finally {
                 sourceFolder.close(false);
-            }
-        } finally {
-            // store kept open in cache for reuse
-        }
-    }
-
-    private void imapDeleteMessage(MailboxSetup ms, String messageRef) throws Exception {
-        String folderName = parseImapRefFolder(messageRef);
-        long[] parsed = parseImapRef(messageRef);
-        Store store = imapConnect(ms);
-        try {
-            Folder folder = store.getFolder(folderName);
-            folder.open(Folder.READ_WRITE);
-            try {
-                UIDFolder uidFolder = (UIDFolder) folder;
-                if (uidFolder.getUIDValidity() != parsed[0]) {
-                    throw new Exception("UIDVALIDITY mismatch");
-                }
-                Message msg = uidFolder.getMessageByUID(parsed[1]);
-                if (msg == null) {
-                    throw new Exception("Message not found");
-                }
-                // Move to trash folder first (unless already in trash)
-                if (!CommonMailUtils.isTrash(folder.getName())) {
-                    Folder trashFolder = imapFindTrashFolder(store);
-                    if (trashFolder != null) {
-                        trashFolder.open(Folder.READ_WRITE);
-                        try {
-                            folder.copyMessages(new Message[]{msg}, trashFolder);
-                        } finally {
-                            trashFolder.close(false);
-                        }
-                    }
-                }
-                msg.setFlag(Flags.Flag.DELETED, true);
-                folder.expunge();
-            } finally {
-                folder.close(false);
             }
         } finally {
             // store kept open in cache for reuse

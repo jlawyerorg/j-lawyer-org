@@ -772,6 +772,25 @@ public interface EmailServiceLocal {
     void deleteMessage(String mailboxId, String messageRef) throws Exception;
 
     /**
+     * Bulk-deletes a set of messages from a single mailbox. References may
+     * point to different source folders; the server groups them internally
+     * so each IMAP folder is opened and expunged at most once per batch.
+     * For Microsoft 365 (Graph API) mailboxes, deletes are issued one by one
+     * because the Graph API has no native bulk-delete endpoint, but cache
+     * invalidation and the inbox unread-count refresh happen exactly once
+     * for the whole batch.
+     * <p>
+     * Individual failures do not abort the batch. The returned list contains
+     * the references that could not be deleted; an empty list indicates full
+     * success.
+     * @param mailboxId the mailbox ID
+     * @param messageRefs opaque message references; may be empty
+     * @return the list of references that could not be deleted (empty on success)
+     * @throws Exception if the mailbox cannot be resolved or a fatal error occurs
+     */
+    List<String> deleteMessages(String mailboxId, List<String> messageRefs) throws Exception;
+
+    /**
      * Marks a message as read or unread.
      * @param mailboxId the mailbox ID
      * @param messageRef opaque message reference
