@@ -741,6 +741,9 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
     protected String ownPrincipal = null;
     protected int read = READ_NOTAPPLICABLE;
 
+    private int lastPreferredWidth = -1;
+    private int lastPreferredHeight = -1;
+
     private SimpleDateFormat dfSent = new SimpleDateFormat("dd.MM.yyyy HH:mm");
 
     private String tooltipText="";
@@ -1264,7 +1267,16 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
             log.error("Error painting reply icon", t);
         }
 
-        this.setPreferredSize(new Dimension(parentWidth, totalHeight));
+        // Only update preferredSize when it actually changes, otherwise the
+        // setPreferredSize call from inside paintComponent triggers a
+        // revalidate -> layout -> paint loop that can flicker (the loop is
+        // self-amplifying when a vertical scrollbar appears/disappears and
+        // changes the available width, which changes the wrapped text height).
+        if (parentWidth != lastPreferredWidth || totalHeight != lastPreferredHeight) {
+            lastPreferredWidth = parentWidth;
+            lastPreferredHeight = totalHeight;
+            this.setPreferredSize(new Dimension(parentWidth, totalHeight));
+        }
     }
 
     /**
