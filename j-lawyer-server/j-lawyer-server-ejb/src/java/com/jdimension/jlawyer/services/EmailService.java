@@ -737,6 +737,49 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     private static final String IMAP_REF_PREFIX = "imap:";
     private static final ConcurrentHashMap<String, Boolean> newMessageFlags = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, Integer> inboxUnreadCounts = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, InboxSnapshot> inboxSnapshots = new ConcurrentHashMap<>();
+
+    /**
+     * Snapshot of inbox state captured by the server-side poll. Used to detect
+     * actual changes (new arrival, deletion, read-state change) instead of just
+     * "unread > 0", which would re-trigger client refreshes forever as long as
+     * any unread mail exists.
+     */
+    private static final class InboxSnapshot {
+        final int unreadCount;
+        final int totalCount;
+        final String latestRef;
+
+        InboxSnapshot(int unreadCount, int totalCount, String latestRef) {
+            this.unreadCount = unreadCount;
+            this.totalCount = totalCount;
+            this.latestRef = latestRef == null ? "" : latestRef;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof InboxSnapshot)) return false;
+            InboxSnapshot other = (InboxSnapshot) o;
+            return this.unreadCount == other.unreadCount
+                    && this.totalCount == other.totalCount
+                    && this.latestRef.equals(other.latestRef);
+        }
+
+        @Override
+        public int hashCode() {
+            int h = 17;
+            h = 31 * h + unreadCount;
+            h = 31 * h + totalCount;
+            h = 31 * h + latestRef.hashCode();
+            return h;
+        }
+
+        @Override
+        public String toString() {
+            return "unread=" + unreadCount + ",total=" + totalCount + ",latest=" + latestRef;
+        }
+    }
     // Connection cache: reuse IMAP connections across operations for the same mailbox
     private static final ConcurrentHashMap<String, Store> imapStoreCache = new ConcurrentHashMap<>();
     // Message list cache per mailbox+folder
@@ -1447,10 +1490,16 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                     continue;
                 }
 
-                // Only check inbox for new messages to minimize API calls
-                int unread = getInboxUnreadCount(ms);
-                inboxUnreadCounts.put(ms.getId(), unread);
-                if (unread > 0) {
+                // Snapshot the inbox state and only flag the mailbox as "changed"
+                // when the snapshot actually differs from the previous tick.
+                InboxSnapshot snapshot = getInboxSnapshot(ms);
+                inboxUnreadCounts.put(ms.getId(), snapshot.unreadCount);
+
+                InboxSnapshot previous = inboxSnapshots.put(ms.getId(), snapshot);
+                if (previous == null || !snapshot.equals(previous)) {
+                    log.info("inbox snapshot changed for " + ms.getEmailAddress()
+                            + ": prev=[" + (previous == null ? "<none>" : previous.toString()) + "]"
+                            + " new=[" + snapshot.toString() + "]");
                     newMessageFlags.put(ms.getId(), Boolean.TRUE);
                     // Invalidate all folder caches for this mailbox so next
                     // listMessages fetches fresh data. Using invalidateAll instead
@@ -1473,30 +1522,64 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     }
 
     @SuppressWarnings("unchecked")
-    private int getInboxUnreadCount(MailboxSetup ms) throws Exception {
+    private InboxSnapshot getInboxSnapshot(MailboxSetup ms) throws Exception {
         if (ms.isMsExchange()) {
-            // Graph API: query inbox folder directly by well-known name
+            // Graph API: query inbox folder for unread + total counts, then
+            // pull the id of the most recently received message as the
+            // "latest reference" for change detection.
             if (!this.updateAuthTokenForMailbox(ms)) {
                 throw new Exception("Failed to obtain access token for " + ms.getEmailAddress());
             }
-            String url = GRAPH_BASE + "/users/" + URLEncoder.encode(ms.getEmailAddress(), StandardCharsets.UTF_8)
-                    + "/mailFolders/Inbox?$select=unreadItemCount";
-            String json = graphGet(ms, url);
-            Map<String, Object> response = new ObjectMapper().readValue(json, Map.class);
-            return response.get("unreadItemCount") != null ? ((Number) response.get("unreadItemCount")).intValue() : 0;
-        } else {
-            // IMAP: open inbox, get unread count, close
-            Store store = imapConnect(ms);
-            try {
-                Folder inbox = store.getFolder("INBOX");
-                inbox.open(Folder.READ_ONLY);
-                try {
-                    return inbox.getUnreadMessageCount();
-                } finally {
-                    inbox.close(false);
+            String emailEncoded = URLEncoder.encode(ms.getEmailAddress(), StandardCharsets.UTF_8);
+            String folderUrl = GRAPH_BASE + "/users/" + emailEncoded
+                    + "/mailFolders/Inbox?$select=unreadItemCount,totalItemCount";
+            String folderJson = graphGet(ms, folderUrl);
+            Map<String, Object> folderResponse = new ObjectMapper().readValue(folderJson, Map.class);
+            int unread = folderResponse.get("unreadItemCount") != null ? ((Number) folderResponse.get("unreadItemCount")).intValue() : 0;
+            int total = folderResponse.get("totalItemCount") != null ? ((Number) folderResponse.get("totalItemCount")).intValue() : 0;
+
+            String latestRef = "";
+            if (total > 0) {
+                // Use receivedDateTime instead of "id": Graph REST IDs are not
+                // guaranteed to be stable between requests (would require the
+                // "Prefer: IdType=ImmutableId" header), whereas receivedDateTime
+                // is a stable property that only changes when a new message arrives.
+                String latestUrl = GRAPH_BASE + "/users/" + emailEncoded
+                        + "/mailFolders/Inbox/messages?$top=1&$orderby=receivedDateTime%20desc&$select=receivedDateTime";
+                String latestJson = graphGet(ms, latestUrl);
+                Map<String, Object> latestResponse = new ObjectMapper().readValue(latestJson, Map.class);
+                Object value = latestResponse.get("value");
+                if (value instanceof List && !((List<?>) value).isEmpty()) {
+                    Object first = ((List<?>) value).get(0);
+                    if (first instanceof Map) {
+                        Object received = ((Map<?, ?>) first).get("receivedDateTime");
+                        if (received != null) {
+                            latestRef = received.toString();
+                        }
+                    }
                 }
+            }
+            return new InboxSnapshot(unread, total, latestRef);
+        } else {
+            // IMAP: open inbox, capture unread/total counts and the UID of the
+            // newest message (prefixed with UIDVALIDITY so a mailbox reset is
+            // detected as a change).
+            Store store = imapConnect(ms);
+            Folder inbox = store.getFolder("INBOX");
+            inbox.open(Folder.READ_ONLY);
+            try {
+                int unread = inbox.getUnreadMessageCount();
+                int total = inbox.getMessageCount();
+                String latestRef = "";
+                if (total > 0 && inbox instanceof UIDFolder) {
+                    UIDFolder uidFolder = (UIDFolder) inbox;
+                    long uidValidity = uidFolder.getUIDValidity();
+                    long latestUid = uidFolder.getUID(inbox.getMessage(total));
+                    latestRef = uidValidity + ":" + latestUid;
+                }
+                return new InboxSnapshot(unread, total, latestRef);
             } finally {
-                // store kept open in cache for reuse
+                inbox.close(false);
             }
         }
     }

@@ -780,6 +780,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
     private DragSource dragSource = null;
     private javax.swing.Timer serverPollingTimer = null;
+    private final java.util.concurrent.atomic.AtomicBoolean pollingInProgress = new java.util.concurrent.atomic.AtomicBoolean(false);
 
     private boolean initializing = true;
     private boolean statusBarNotified = false;
@@ -904,36 +905,58 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             this.serverPollingTimer.stop();
         }
         this.serverPollingTimer = new javax.swing.Timer(30000, (java.awt.event.ActionEvent e) -> {
-            try {
-                com.jdimension.jlawyer.client.settings.ClientSettings settings = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
-                com.jdimension.jlawyer.services.JLawyerServiceLocator locator =
-                    com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                UserSettings usettings = UserSettings.getInstance();
-                AppUserBean cu = usettings.getCurrentUser();
-                List<MailboxSetup> mailboxes = usettings.getMailboxes(cu.getPrincipalId());
-                for (MailboxSetup ms : mailboxes) {
-                    try {
-                        boolean hasNew = locator.lookupEmailServiceRemote().hasNewMessages(ms.getId());
-                        if (hasNew) {
-                            synchronized (this.inboxFolders) {
-                                FolderContainer fc = this.inboxFolders.get(ms);
-                                if (fc != null) {
-                                    fc.resetCaches();
-                                }
-                            }
-                            this.treeFolders.repaint();
-
-                            // Incremental table update if an inbox folder is currently selected
-                            incrementalInboxRefresh(ms, locator);
-                        }
-                    } catch (Exception ex) {
-                        log.error("Error polling mailbox " + ms.getEmailAddress(), ex);
-                    }
-                }
-                publishInboxUnreadBadge(true);
-            } catch (Exception ex) {
-                log.error("Error during server polling", ex);
+            // Skip this tick if a previous poll is still running — prevents
+            // overlapping EJB calls when a fetch takes longer than the interval.
+            if (!this.pollingInProgress.compareAndSet(false, true)) {
+                return;
             }
+            Thread worker = new Thread(() -> {
+                long tickStart = System.currentTimeMillis();
+                int mailboxesProcessed = 0;
+                int mailboxesWithNew = 0;
+                try {
+                    com.jdimension.jlawyer.client.settings.ClientSettings settings = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
+                    com.jdimension.jlawyer.services.JLawyerServiceLocator locator =
+                        com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    UserSettings usettings = UserSettings.getInstance();
+                    AppUserBean cu = usettings.getCurrentUser();
+                    List<MailboxSetup> mailboxes = usettings.getMailboxes(cu.getPrincipalId());
+                    for (MailboxSetup ms : mailboxes) {
+                        try {
+                            mailboxesProcessed++;
+                            long hasNewStart = System.currentTimeMillis();
+                            boolean hasNew = locator.lookupEmailServiceRemote().hasNewMessages(ms.getId());
+                            log.info("polling: hasNewMessages(" + ms.getEmailAddress() + ")="
+                                    + hasNew + " in " + (System.currentTimeMillis() - hasNewStart) + " ms");
+                            if (hasNew) {
+                                mailboxesWithNew++;
+                                synchronized (this.inboxFolders) {
+                                    FolderContainer fc = this.inboxFolders.get(ms);
+                                    if (fc != null) {
+                                        fc.resetCaches();
+                                    }
+                                }
+                                javax.swing.SwingUtilities.invokeLater(this.treeFolders::repaint);
+
+                                // Incremental table update if an inbox folder is currently selected
+                                incrementalInboxRefresh(ms, locator);
+                            }
+                        } catch (Exception ex) {
+                            log.error("Error polling mailbox " + ms.getEmailAddress(), ex);
+                        }
+                    }
+                    publishInboxUnreadBadge(true);
+                } catch (Exception ex) {
+                    log.error("Error during server polling", ex);
+                } finally {
+                    log.info("polling tick finished: " + mailboxesProcessed + " mailboxes processed, "
+                            + mailboxesWithNew + " with new messages, total "
+                            + (System.currentTimeMillis() - tickStart) + " ms");
+                    this.pollingInProgress.set(false);
+                }
+            }, "EmailInboxPolling");
+            worker.setDaemon(true);
+            worker.start();
         });
         this.serverPollingTimer.setInitialDelay(30000);
         this.serverPollingTimer.start();
@@ -941,11 +964,26 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
     private void incrementalInboxRefresh(MailboxSetup ms, com.jdimension.jlawyer.services.JLawyerServiceLocator locator) {
         try {
-            // Check if an inbox folder of this mailbox is currently selected
-            if (this.treeFolders.getSelectionPath() == null) return;
-            DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
-            if (!(selNode.getUserObject() instanceof FolderContainer)) return;
-            FolderContainer selFc = (FolderContainer) selNode.getUserObject();
+            // Snapshot the currently selected folder on the EDT so the heavy
+            // listMessages call below can run off-EDT without touching Swing state.
+            final FolderContainer[] selFcRef = new FolderContainer[1];
+            try {
+                javax.swing.SwingUtilities.invokeAndWait(() -> {
+                    if (this.treeFolders.getSelectionPath() == null) return;
+                    DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+                    if (selNode.getUserObject() instanceof FolderContainer) {
+                        selFcRef[0] = (FolderContainer) selNode.getUserObject();
+                    }
+                });
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                return;
+            } catch (java.lang.reflect.InvocationTargetException ite) {
+                log.error("Error reading current folder selection", ite);
+                return;
+            }
+            final FolderContainer selFc = selFcRef[0];
+            if (selFc == null) return;
             if (!selFc.isServerBased()) return;
             if (selFc.getFolderDTO() == null || !selFc.getFolderDTO().isInbox()) return;
             if (!ms.getId().equals(selFc.getMailboxId())) return;
@@ -970,67 +1008,98 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 else if (restr == LoadFolderRestriction.RESTRICTION_LAST1Y) { top = 5000; sinceDate = new java.util.Date(System.currentTimeMillis() - (365L * 24 * 60 * 60 * 1000)); }
             } catch (Throwable t) { }
 
-            List<com.jdimension.jlawyer.services.MailMessageDTO> serverMessages =
+            // Heavy server call — runs on the polling worker thread, not the EDT.
+            long listStart = System.currentTimeMillis();
+            final List<com.jdimension.jlawyer.services.MailMessageDTO> serverMessages =
                 locator.lookupEmailServiceRemote().listMessages(ms.getId(), selFc.getFolderId(), top, 0, sinceDate, unreadOnly, null);
+            log.info("polling: listMessages(" + ms.getEmailAddress() + ") returned "
+                    + (serverMessages != null ? serverMessages.size() : 0) + " messages in "
+                    + (System.currentTimeMillis() - listStart) + " ms");
 
-            // Build set of server messageRefs
-            java.util.LinkedHashMap<String, com.jdimension.jlawyer.services.MailMessageDTO> serverMap = new java.util.LinkedHashMap<>();
+            // Build set of server messageRefs (off-EDT)
+            final java.util.LinkedHashMap<String, com.jdimension.jlawyer.services.MailMessageDTO> serverMap = new java.util.LinkedHashMap<>();
             for (com.jdimension.jlawyer.services.MailMessageDTO dto : serverMessages) {
                 serverMap.put(dto.getMessageRef(), dto);
             }
 
-            // Build set of current table messageRefs
-            javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) this.tblMails.getModel();
-            java.util.HashSet<String> tableRefs = new java.util.HashSet<>();
-            for (int i = 0; i < model.getRowCount(); i++) {
-                Object obj = model.getValueAt(i, 2);
-                if (obj instanceof MessageContainer) {
-                    String ref = ((MessageContainer) obj).getMessageRef();
-                    if (ref != null) tableRefs.add(ref);
-                }
-            }
+            final String capturedMailboxId = ms.getId();
+            final String capturedFolderId = selFc.getFolderId();
+            final String capturedMailboxLabel = ms.getEmailAddress();
 
-            // Determine changes
-            java.util.Set<String> serverRefs = serverMap.keySet();
-            boolean changed = false;
+            // Apply diff to the table model on the EDT — re-validate the
+            // selection because the user may have switched folders during the fetch.
+            javax.swing.SwingUtilities.invokeLater(() -> {
+                long edtStart = System.currentTimeMillis();
+                try {
+                    if (this.treeFolders.getSelectionPath() == null) return;
+                    DefaultMutableTreeNode selNode2 = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+                    if (!(selNode2.getUserObject() instanceof FolderContainer)) return;
+                    FolderContainer selFc2 = (FolderContainer) selNode2.getUserObject();
+                    if (!selFc2.isServerBased()) return;
+                    if (selFc2.getFolderDTO() == null || !selFc2.getFolderDTO().isInbox()) return;
+                    if (!capturedMailboxId.equals(selFc2.getMailboxId())) return;
+                    if (capturedFolderId == null || !capturedFolderId.equals(selFc2.getFolderId())) return;
 
-            // Remove rows no longer on server
-            for (int i = model.getRowCount() - 1; i >= 0; i--) {
-                Object obj = model.getValueAt(i, 2);
-                if (obj instanceof MessageContainer) {
-                    String ref = ((MessageContainer) obj).getMessageRef();
-                    if (ref != null && !serverRefs.contains(ref)) {
-                        model.removeRow(i);
-                        changed = true;
-                    } else if (ref != null && serverRefs.contains(ref)) {
-                        // Update read status if changed
-                        MessageContainer mc = (MessageContainer) obj;
-                        com.jdimension.jlawyer.services.MailMessageDTO serverDto = serverMap.get(ref);
-                        if (serverDto != null && mc.isRead() != serverDto.isRead()) {
-                            mc.getMessageDTO().setRead(serverDto.isRead());
-                            model.setValueAt(mc, i, 2);
-                            changed = true;
+                    javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) this.tblMails.getModel();
+                    java.util.HashSet<String> tableRefs = new java.util.HashSet<>();
+                    for (int i = 0; i < model.getRowCount(); i++) {
+                        Object obj = model.getValueAt(i, 2);
+                        if (obj instanceof MessageContainer) {
+                            String ref = ((MessageContainer) obj).getMessageRef();
+                            if (ref != null) tableRefs.add(ref);
                         }
                     }
-                }
-            }
 
-            // Add new rows
-            java.text.SimpleDateFormat df = new java.text.SimpleDateFormat("dd.MM.yyyy, HH:mm");
-            for (com.jdimension.jlawyer.services.MailMessageDTO dto : serverMessages) {
-                if (!tableRefs.contains(dto.getMessageRef())) {
-                    String sentString = dto.getDate() != null ? df.format(dto.getDate()) : "";
-                    String from = dto.getFrom() != null ? dto.getFrom() : "";
-                    String toString = "";
-                    if (dto.getTo() != null && dto.getTo().length > 0) toString = dto.getTo()[0];
-                    model.insertRow(0, new Object[]{sentString, from, new MessageContainer(dto, ms.getId()), toString});
-                    changed = true;
-                }
-            }
+                    java.util.Set<String> serverRefs = serverMap.keySet();
+                    int removed = 0;
+                    int updated = 0;
+                    int added = 0;
 
-            if (changed) {
-                this.tblMails.repaint();
-            }
+                    // Remove rows no longer on server
+                    for (int i = model.getRowCount() - 1; i >= 0; i--) {
+                        Object obj = model.getValueAt(i, 2);
+                        if (obj instanceof MessageContainer) {
+                            String ref = ((MessageContainer) obj).getMessageRef();
+                            if (ref != null && !serverRefs.contains(ref)) {
+                                model.removeRow(i);
+                                removed++;
+                            } else if (ref != null && serverRefs.contains(ref)) {
+                                // Update read status if changed
+                                MessageContainer mc = (MessageContainer) obj;
+                                com.jdimension.jlawyer.services.MailMessageDTO serverDto = serverMap.get(ref);
+                                if (serverDto != null && mc.isRead() != serverDto.isRead()) {
+                                    mc.getMessageDTO().setRead(serverDto.isRead());
+                                    model.setValueAt(mc, i, 2);
+                                    updated++;
+                                }
+                            }
+                        }
+                    }
+
+                    // Add new rows
+                    java.text.SimpleDateFormat df = new java.text.SimpleDateFormat("dd.MM.yyyy, HH:mm");
+                    for (com.jdimension.jlawyer.services.MailMessageDTO dto : serverMessages) {
+                        if (!tableRefs.contains(dto.getMessageRef())) {
+                            String sentString = dto.getDate() != null ? df.format(dto.getDate()) : "";
+                            String from = dto.getFrom() != null ? dto.getFrom() : "";
+                            String toString = "";
+                            if (dto.getTo() != null && dto.getTo().length > 0) toString = dto.getTo()[0];
+                            model.insertRow(0, new Object[]{sentString, from, new MessageContainer(dto, capturedMailboxId), toString});
+                            added++;
+                        }
+                    }
+
+                    boolean changed = (removed + updated + added) > 0;
+                    if (changed) {
+                        this.tblMails.repaint();
+                    }
+                    log.info("polling: inbox diff applied for " + capturedMailboxLabel
+                            + " (added=" + added + ", removed=" + removed + ", updated=" + updated
+                            + ") in " + (System.currentTimeMillis() - edtStart) + " ms on EDT");
+                } catch (Exception ex) {
+                    log.error("Error applying incremental inbox diff", ex);
+                }
+            });
 
         } catch (Exception ex) {
             log.error("Error during incremental inbox refresh", ex);

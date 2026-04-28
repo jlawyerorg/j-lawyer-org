@@ -837,7 +837,7 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
         }
 
         try {
-            Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSCRIBE, AiCapability.INPUTTYPE_FILE);
+            Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSCRIBE, AiCapability.INPUTTYPE_FILE, AiCapability.USAGETYPE_AUTOMATED);
             if (capabilities.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Die angebundenen Assistenten unterstützen keine Transkription", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return;
