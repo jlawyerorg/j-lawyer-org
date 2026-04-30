@@ -945,8 +945,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"sysAdminRole"})
     public void clearCurrentBackup() {
         // needs to be called e.g. when encryption password has changed
-        File directoryToZip = new File(System.getProperty("jlawyer.server.basedirectory").trim());
-        File backupDir = new File(directoryToZip.getParentFile().getPath() + System.getProperty("file.separator") + "backups");
+        File backupDir = new File(this.getBackupDirectory());
         backupDir.mkdirs();
 
         for (File child : backupDir.listFiles()) {
@@ -962,6 +961,18 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             }
 
         }
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public String getBackupDirectory() {
+        ServerSettingsBean dirSetting = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_BACKUP_DIRECTORY);
+        if (dirSetting != null && dirSetting.getSettingValue() != null && !dirSetting.getSettingValue().trim().isEmpty()) {
+            return dirSetting.getSettingValue().trim();
+        }
+        // default: sibling "backups" directory of the server base directory
+        File baseDir = new File(System.getProperty("jlawyer.server.basedirectory").trim());
+        return baseDir.getParentFile().getPath() + File.separator + "backups";
     }
 
     @Override
