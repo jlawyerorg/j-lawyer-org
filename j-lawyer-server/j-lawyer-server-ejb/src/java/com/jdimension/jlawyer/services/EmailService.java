@@ -1818,64 +1818,70 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 } catch (Exception ex) {
                     // keep original fileName
                 }
-                String contentId = null;
-                boolean isInline = Part.INLINE.equalsIgnoreCase(disposition);
+            }
+            String contentId = null;
+            boolean isInline = Part.INLINE.equalsIgnoreCase(disposition);
 
-                if (part instanceof MimeBodyPart) {
-                    contentId = ((MimeBodyPart) part).getContentID();
-                    if (contentId != null) {
-                        contentId = contentId.replaceAll("[<>]", "");
-                    }
+            if (part instanceof MimeBodyPart) {
+                contentId = ((MimeBodyPart) part).getContentID();
+                if (contentId != null) {
+                    contentId = contentId.replaceAll("[<>]", "");
                 }
+            }
 
-                // Extract text/calendar parts as attachments (e.g. Teams meeting invitations)
-                if (part.isMimeType("text/calendar")) {
-                    MailAttachmentDTO att = new MailAttachmentDTO();
-                    att.setAttachmentId(fileName != null ? fileName : "meeting.ics");
-                    att.setName(fileName != null ? fileName : "meeting.ics");
-                    att.setContentType(part.getContentType());
-                    att.setInline(false);
-                    att.setSize(part.getSize());
-                    InputStream calIs = part.getInputStream();
-                    ByteArrayOutputStream calBos = new ByteArrayOutputStream();
-                    byte[] calBuf = new byte[4096];
-                    int calLen;
-                    while ((calLen = calIs.read(calBuf)) != -1) {
-                        calBos.write(calBuf, 0, calLen);
-                    }
-                    att.setContent(calBos.toByteArray());
-                    result.add(att);
-                    return;
-                }
+            // Forwarded message/rfc822 parts (e.g. Outlook "Forward as Attachment")
+            // often carry no filename — synthesize one so they appear as attachments.
+            if (fileName == null && part.isMimeType("message/rfc822")) {
+                fileName = "Nachricht_" + part.getSize() + ".eml";
+            }
 
-                // Skip body text parts (plain/html without filename and without content-id)
-                if ((part.isMimeType("text/plain") || part.isMimeType("text/html"))
-                        && fileName == null && contentId == null) {
-                    return;
+            // Extract text/calendar parts as attachments (e.g. Teams meeting invitations)
+            if (part.isMimeType("text/calendar")) {
+                MailAttachmentDTO att = new MailAttachmentDTO();
+                att.setAttachmentId(fileName != null ? fileName : "meeting.ics");
+                att.setName(fileName != null ? fileName : "meeting.ics");
+                att.setContentType(part.getContentType());
+                att.setInline(false);
+                att.setSize(part.getSize());
+                InputStream calIs = part.getInputStream();
+                ByteArrayOutputStream calBos = new ByteArrayOutputStream();
+                byte[] calBuf = new byte[4096];
+                int calLen;
+                while ((calLen = calIs.read(calBuf)) != -1) {
+                    calBos.write(calBuf, 0, calLen);
                 }
+                att.setContent(calBos.toByteArray());
+                result.add(att);
+                return;
+            }
 
-                // Include if: has disposition, has content-id, or has filename
-                if (disposition != null || contentId != null || fileName != null) {
-                    if (fileName == null && contentId != null) {
-                        fileName = contentId;
-                    }
-                    MailAttachmentDTO att = new MailAttachmentDTO();
-                    att.setAttachmentId(fileName != null ? fileName : String.valueOf(result.size()));
-                    att.setName(fileName != null ? fileName : "inline_" + result.size());
-                    att.setContentType(part.getContentType());
-                    att.setInline(isInline || (contentId != null && disposition == null));
-                    att.setContentId(contentId);
-                    att.setSize(part.getSize());
-                    InputStream is = part.getInputStream();
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    byte[] buf = new byte[4096];
-                    int len;
-                    while ((len = is.read(buf)) != -1) {
-                        bos.write(buf, 0, len);
-                    }
-                    att.setContent(bos.toByteArray());
-                    result.add(att);
+            // Skip body text parts (plain/html without filename and without content-id)
+            if ((part.isMimeType("text/plain") || part.isMimeType("text/html"))
+                    && fileName == null && contentId == null) {
+                return;
+            }
+
+            // Include if: has disposition, has content-id, or has filename
+            if (disposition != null || contentId != null || fileName != null) {
+                if (fileName == null && contentId != null) {
+                    fileName = contentId;
                 }
+                MailAttachmentDTO att = new MailAttachmentDTO();
+                att.setAttachmentId(fileName != null ? fileName : String.valueOf(result.size()));
+                att.setName(fileName != null ? fileName : "inline_" + result.size());
+                att.setContentType(part.getContentType());
+                att.setInline(isInline || (contentId != null && disposition == null));
+                att.setContentId(contentId);
+                att.setSize(part.getSize());
+                InputStream is = part.getInputStream();
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                byte[] buf = new byte[4096];
+                int len;
+                while ((len = is.read(buf)) != -1) {
+                    bos.write(buf, 0, len);
+                }
+                att.setContent(bos.toByteArray());
+                result.add(att);
             }
         }
     }
@@ -1922,72 +1928,78 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 } catch (Exception ex) {
                     // keep original fileName
                 }
-                String contentId = null;
-                boolean isInline = Part.INLINE.equalsIgnoreCase(disposition);
+            }
+            String contentId = null;
+            boolean isInline = Part.INLINE.equalsIgnoreCase(disposition);
 
-                if (part instanceof MimeBodyPart) {
-                    contentId = ((MimeBodyPart) part).getContentID();
-                    if (contentId != null) {
-                        contentId = contentId.replaceAll("[<>]", "");
-                    }
+            if (part instanceof MimeBodyPart) {
+                contentId = ((MimeBodyPart) part).getContentID();
+                if (contentId != null) {
+                    contentId = contentId.replaceAll("[<>]", "");
                 }
+            }
 
-                // text/calendar parts: always include bytes (calendar rendering)
-                if (part.isMimeType("text/calendar")) {
-                    MailAttachmentDTO att = new MailAttachmentDTO();
-                    att.setAttachmentId(fileName != null ? fileName : "meeting.ics");
-                    att.setName(fileName != null ? fileName : "meeting.ics");
-                    att.setContentType(part.getContentType());
-                    att.setInline(false);
-                    att.setSize(part.getSize());
-                    InputStream calIs = part.getInputStream();
-                    ByteArrayOutputStream calBos = new ByteArrayOutputStream();
-                    byte[] calBuf = new byte[4096];
-                    int calLen;
-                    while ((calLen = calIs.read(calBuf)) != -1) {
-                        calBos.write(calBuf, 0, calLen);
-                    }
-                    att.setContent(calBos.toByteArray());
-                    result.add(att);
-                    return;
+            // Forwarded message/rfc822 parts (e.g. Outlook "Forward as Attachment")
+            // often carry no filename — synthesize one so they appear as attachments.
+            if (fileName == null && part.isMimeType("message/rfc822")) {
+                fileName = "Nachricht_" + part.getSize() + ".eml";
+            }
+
+            // text/calendar parts: always include bytes (calendar rendering)
+            if (part.isMimeType("text/calendar")) {
+                MailAttachmentDTO att = new MailAttachmentDTO();
+                att.setAttachmentId(fileName != null ? fileName : "meeting.ics");
+                att.setName(fileName != null ? fileName : "meeting.ics");
+                att.setContentType(part.getContentType());
+                att.setInline(false);
+                att.setSize(part.getSize());
+                InputStream calIs = part.getInputStream();
+                ByteArrayOutputStream calBos = new ByteArrayOutputStream();
+                byte[] calBuf = new byte[4096];
+                int calLen;
+                while ((calLen = calIs.read(calBuf)) != -1) {
+                    calBos.write(calBuf, 0, calLen);
                 }
+                att.setContent(calBos.toByteArray());
+                result.add(att);
+                return;
+            }
 
-                // Skip body text parts (plain/html without filename and without content-id)
-                if ((part.isMimeType("text/plain") || part.isMimeType("text/html"))
-                        && fileName == null && contentId == null) {
-                    return;
+            // Skip body text parts (plain/html without filename and without content-id)
+            if ((part.isMimeType("text/plain") || part.isMimeType("text/html"))
+                    && fileName == null && contentId == null) {
+                return;
+            }
+
+            // Include if: has disposition, has content-id, or has filename
+            if (disposition != null || contentId != null || fileName != null) {
+                if (fileName == null && contentId != null) {
+                    fileName = contentId;
                 }
+                MailAttachmentDTO att = new MailAttachmentDTO();
+                att.setAttachmentId(fileName != null ? fileName : String.valueOf(result.size()));
+                att.setName(fileName != null ? fileName : "inline_" + result.size());
+                att.setContentType(part.getContentType());
+                att.setInline(isInline || (contentId != null && disposition == null));
+                att.setContentId(contentId);
+                att.setSize(part.getSize());
 
-                // Include if: has disposition, has content-id, or has filename
-                if (disposition != null || contentId != null || fileName != null) {
-                    if (fileName == null && contentId != null) {
-                        fileName = contentId;
+                // Eagerly load bytes for: inline with contentId (CID images), or .ics files
+                boolean eagerLoad = (att.isInline() && contentId != null)
+                        || (fileName != null && fileName.toLowerCase().endsWith(".ics"));
+                if (eagerLoad) {
+                    InputStream is = part.getInputStream();
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    byte[] buf = new byte[4096];
+                    int len;
+                    while ((len = is.read(buf)) != -1) {
+                        bos.write(buf, 0, len);
                     }
-                    MailAttachmentDTO att = new MailAttachmentDTO();
-                    att.setAttachmentId(fileName != null ? fileName : String.valueOf(result.size()));
-                    att.setName(fileName != null ? fileName : "inline_" + result.size());
-                    att.setContentType(part.getContentType());
-                    att.setInline(isInline || (contentId != null && disposition == null));
-                    att.setContentId(contentId);
-                    att.setSize(part.getSize());
-
-                    // Eagerly load bytes for: inline with contentId (CID images), or .ics files
-                    boolean eagerLoad = (att.isInline() && contentId != null)
-                            || (fileName != null && fileName.toLowerCase().endsWith(".ics"));
-                    if (eagerLoad) {
-                        InputStream is = part.getInputStream();
-                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                        byte[] buf = new byte[4096];
-                        int len;
-                        while ((len = is.read(buf)) != -1) {
-                            bos.write(buf, 0, len);
-                        }
-                        att.setContent(bos.toByteArray());
-                    }
-                    // else: content stays null (lazy)
-
-                    result.add(att);
+                    att.setContent(bos.toByteArray());
                 }
+                // else: content stays null (lazy)
+
+                result.add(att);
             }
         }
     }
