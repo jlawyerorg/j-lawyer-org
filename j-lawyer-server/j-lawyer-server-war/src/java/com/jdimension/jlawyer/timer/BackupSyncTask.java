@@ -736,8 +736,17 @@ public class BackupSyncTask extends java.util.TimerTask {
                 }
             }
 
+            // check for custom backup directory setting, fall back to default
             File baseDirectory = new File(System.getProperty("jlawyer.server.basedirectory").trim());
-            File backupDir = new File(baseDirectory.getParentFile().getPath() + System.getProperty("file.separator") + "backups");
+            String backupDirPath = null;
+            ServerSettingsBean backupDirSetting = settings.find("jlawyer.server.backup.directory");
+            if (backupDirSetting != null && backupDirSetting.getSettingValue() != null && !backupDirSetting.getSettingValue().trim().isEmpty()) {
+                backupDirPath = backupDirSetting.getSettingValue().trim();
+            }
+            if (backupDirPath == null) {
+                backupDirPath = baseDirectory.getParentFile().getPath() + System.getProperty("file.separator") + "backups";
+            }
+            File backupDir = new File(backupDirPath);
             backupDir.mkdirs();
 
             if (syncLocation.length() > 0) {

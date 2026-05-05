@@ -715,6 +715,7 @@ public class ServerSettingsKeys {
     
     public static final String SERVERCONF_BACKUP_SYNCTARGET="jlawyer.server.backup.synctarget";
     public static final String SERVERCONF_BACKUP_EXPORTTARGET="jlawyer.server.backup.exporttarget";
+    public static final String SERVERCONF_BACKUP_DIRECTORY="jlawyer.server.backup.directory";
     
     public static final String SERVERCONF_REPLICATION_ISTARGET="jlawyer.server.replication.istarget";
     
