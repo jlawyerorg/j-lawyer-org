@@ -1690,7 +1690,7 @@ public class ToolRegistry {
         ArchiveFileBean[] results = svc.searchEnhanced(fileNumber, false, new String[]{}, new String[]{});
         ArchiveFileBean caseBean = null;
         for (ArchiveFileBean r : results) {
-            if (fileNumber.equals(r.getFileNumber())) {
+            if (fileNumber.equals(r.getFileNumber()) || fileNumber.equals(r.getFileNumberMain())) {
                 caseBean = r;
                 break;
             }
@@ -1751,7 +1751,7 @@ public class ToolRegistry {
         ArchiveFileBean[] results = svc.searchEnhanced(fileNumber, false, new String[]{}, new String[]{});
         ArchiveFileBean caseBean = null;
         for (ArchiveFileBean r : results) {
-            if (fileNumber.equals(r.getFileNumber())) {
+            if (fileNumber.equals(r.getFileNumber()) || fileNumber.equals(r.getFileNumberMain())) {
                 caseBean = r;
                 break;
             }
@@ -1857,7 +1857,7 @@ public class ToolRegistry {
         ArchiveFileBean[] results = svc.searchEnhanced(fileNumber, false, new String[]{}, new String[]{});
         ArchiveFileBean caseBean = null;
         for (ArchiveFileBean r : results) {
-            if (fileNumber.equals(r.getFileNumber())) {
+            if (fileNumber.equals(r.getFileNumber()) || fileNumber.equals(r.getFileNumberMain())) {
                 caseBean = r;
                 break;
             }
@@ -1946,7 +1946,7 @@ public class ToolRegistry {
         ArchiveFileBean[] results = svc.searchEnhanced(fileNumber, false, new String[]{}, new String[]{});
         ArchiveFileBean caseBean = null;
         for (ArchiveFileBean r : results) {
-            if (fileNumber.equals(r.getFileNumber())) {
+            if (fileNumber.equals(r.getFileNumber()) || fileNumber.equals(r.getFileNumberMain())) {
                 caseBean = r;
                 break;
             }
