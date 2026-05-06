@@ -775,7 +775,7 @@ public class MultiValueTag extends javax.swing.JPanel {
         if(this.jComboBox1.getSelectedItem()==null || "".equals(this.jComboBox1.getSelectedItem())) {
             setBackground(Color.WHITE);
             this.jComboBox1.setBackground(Color.WHITE);
-            this.jComboBox1.putClientProperty(FlatClientProperties.STYLE, "buttonBackground: #0000; buttonArrowColor: null");
+            this.jComboBox1.putClientProperty(FlatClientProperties.STYLE, "buttonBackground: #0000; buttonArrowColor: " + String.format("#%06x", DefaultColorTheme.COLOR_DARK_GREY.getRGB() & 0xFFFFFF));
             this.jLabel1.setFont(this.jLabel1.getFont().deriveFont(Font.PLAIN));
             this.jLabel1.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
             this.jComboBox1.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
