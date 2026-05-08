@@ -1281,10 +1281,13 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
 
     private void highlight(boolean highlight) {
         Color c = normalColor;
+        Color cPanel2 = DEFAULT_NORMAL_COLOR;
         if (highlight) {
             c = highlightColor;
+            cPanel2 = DEFAULT_HIGHLIGHT_COLOR;
         }
         this.jPanel1.setBackground(c);
+        this.jPanel2.setBackground(cPanel2);
         this.repaint();
     }
     
