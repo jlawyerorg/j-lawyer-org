@@ -751,6 +751,8 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         this.lblDescription.setOpaque(false);
         this.lblResponsible.setForeground(DefaultColorTheme.COLOR_LIGHT_GREY);
 
+        ((javax.swing.GroupLayout) this.getLayout()).linkSize(javax.swing.SwingConstants.VERTICAL, this.jPanel1, this.jPanel2);
+
     }
 
     @Override
@@ -942,10 +944,10 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
     private void initComponents() {
 
         jPanel1 = new javax.swing.JPanel();
-        lblIcon = new javax.swing.JLabel();
         chkDescription = new javax.swing.JCheckBox();
-        jPanel2 = new javax.swing.JPanel();
         cmdPostpone = new javax.swing.JButton();
+        lblIcon = new javax.swing.JLabel();
+        jPanel2 = new javax.swing.JPanel();
         lblResponsible = new javax.swing.JLabel();
         lblDescription = new javax.swing.JLabel();
 
@@ -958,9 +960,6 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
                 formMouseExited(evt);
             }
         });
-
-        lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrungrey.png"))); // NOI18N
-        lblIcon.setText(" ");
 
         chkDescription.setText(" ");
         chkDescription.setToolTipText("als erledigt markieren");
@@ -975,6 +974,17 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
             }
         });
 
+        cmdPostpone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
+        cmdPostpone.setToolTipText("auf einen späteren Termin verschieben");
+        cmdPostpone.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdPostponeActionPerformed(evt);
+            }
+        });
+
+        lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrungrey.png"))); // NOI18N
+        lblIcon.setText(" ");
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -983,22 +993,20 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
                 .addContainerGap()
                 .addComponent(chkDescription)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdPostpone)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblIcon)
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(chkDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(lblIcon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(chkDescription, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 35, Short.MAX_VALUE)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGap(3, 3, 3)
+                .addComponent(cmdPostpone)
+                .addGap(3, 3, 3))
         );
-
-        cmdPostpone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
-        cmdPostpone.setToolTipText("auf einen späteren Termin verschieben");
-        cmdPostpone.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdPostponeActionPerformed(evt);
-            }
-        });
 
         lblResponsible.setFont(lblResponsible.getFont().deriveFont((lblResponsible.getFont().getStyle() | java.awt.Font.ITALIC) & ~java.awt.Font.BOLD));
         lblResponsible.setText("user");
@@ -1025,18 +1033,16 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
                 .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(lblResponsible)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdPostpone)
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(cmdPostpone, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(lblResponsible, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -1045,7 +1051,7 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(0, 0, 0)
                 .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
