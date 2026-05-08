@@ -744,12 +744,13 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         initProgressBar();
 
         this.jPanel1.setBackground(normalColor);
+        this.jPanel2.setBackground(DEFAULT_NORMAL_COLOR);
 
         this.setOpaque(false);
         this.lblResponsible.setOpaque(false);
         this.lblDescription.setOpaque(false);
         this.lblResponsible.setForeground(DefaultColorTheme.COLOR_LIGHT_GREY);
-        
+
     }
 
     @Override
@@ -858,7 +859,7 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         if (due == null) {
             due = new Date(now.getTime() - (25 * 60 * 60 * 1000));
         }
-        boolean overdue = !DateUtils.isToday(due);
+        boolean overdue = !DateUtils.isToday(due) && due.before(now);
 
         StringBuilder tooltip = new StringBuilder();
         tooltip.append("<html>");
@@ -883,11 +884,11 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         // Case info (number, name, reason) and tags are now shown in the group header
         String overduePrefix = overdue ? "!!! " : "";
         if (e.getType() == ArchiveFileConstants.REVIEWTYPE_EVENT) {
-            this.unDoneDescription = "<html><b>" + overduePrefix + dueDate + reason + "</b></html>";
-            this.doneDescription = "<html><s><b>" + overduePrefix + dueDate + reason + "</b></s></html>";
+            this.unDoneDescription = "<html>" + overduePrefix + dueDate + reason + "</html>";
+            this.doneDescription = "<html><s>" + overduePrefix + dueDate + reason + "</s></html>";
         } else {
-            this.unDoneDescription = "<html><b>" + overduePrefix + reason + "</b></html>";
-            this.doneDescription = "<html><s><b>" + overduePrefix + reason + "</b></s></html>";
+            this.unDoneDescription = "<html>" + overduePrefix + reason + "</html>";
+            this.doneDescription = "<html><s>" + overduePrefix + reason + "</s></html>";
         }
         
 
@@ -941,11 +942,12 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
     private void initComponents() {
 
         jPanel1 = new javax.swing.JPanel();
-        lblResponsible = new javax.swing.JLabel();
         lblIcon = new javax.swing.JLabel();
         chkDescription = new javax.swing.JCheckBox();
-        lblDescription = new javax.swing.JLabel();
+        jPanel2 = new javax.swing.JPanel();
         cmdPostpone = new javax.swing.JButton();
+        lblResponsible = new javax.swing.JLabel();
+        lblDescription = new javax.swing.JLabel();
 
         setOpaque(false);
         addMouseListener(new java.awt.event.MouseAdapter() {
@@ -957,10 +959,8 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
             }
         });
 
-        lblResponsible.setFont(lblResponsible.getFont().deriveFont((lblResponsible.getFont().getStyle() | java.awt.Font.ITALIC) & ~java.awt.Font.BOLD));
-        lblResponsible.setText("user");
-
         lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrungrey.png"))); // NOI18N
+        lblIcon.setText(" ");
 
         chkDescription.setText(" ");
         chkDescription.setToolTipText("als erledigt markieren");
@@ -974,6 +974,34 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
                 chkDescriptionMouseClicked(evt);
             }
         });
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(chkDescription)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblIcon)
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(lblIcon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(chkDescription, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 35, Short.MAX_VALUE)
+        );
+
+        cmdPostpone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
+        cmdPostpone.setToolTipText("auf einen späteren Termin verschieben");
+        cmdPostpone.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdPostponeActionPerformed(evt);
+            }
+        });
+
+        lblResponsible.setFont(lblResponsible.getFont().deriveFont((lblResponsible.getFont().getStyle() | java.awt.Font.ITALIC) & ~java.awt.Font.BOLD));
+        lblResponsible.setText("user");
 
         lblDescription.setFont(lblDescription.getFont());
         lblDescription.setForeground(new java.awt.Color(255, 255, 255));
@@ -992,42 +1020,23 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
             }
         });
 
-        cmdPostpone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
-        cmdPostpone.setToolTipText("auf einen späteren Termin verschieben");
-        cmdPostpone.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdPostponeActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(chkDescription)
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblIcon)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, 173, Short.MAX_VALUE)
-                .addGap(18, 18, 18)
                 .addComponent(lblResponsible)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdPostpone)
                 .addContainerGap())
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(chkDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addComponent(lblIcon, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(lblDescription, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(lblResponsible, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(cmdPostpone, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 29, Short.MAX_VALUE))))
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(cmdPostpone, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(lblResponsible, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -1035,15 +1044,14 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0))
+            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -1247,7 +1255,7 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
             if (reason.length() > 35) {
                 reason = reason.substring(0, 35) + "...";
             }
-            this.lblDescription.setText("<html><b>" + newDateStr + ": " + reason + "</b></html>");
+            this.lblDescription.setText("<html>" + newDateStr + ": " + reason + "</html>");
 
             // Start countdown and trigger full refresh after 3 seconds
             startRefreshCountdown(arb, oldBeginDate, oldEndDate);
@@ -1278,6 +1286,7 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
     private javax.swing.JCheckBox chkDescription;
     private javax.swing.JButton cmdPostpone;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
     private javax.swing.JLabel lblDescription;
     private javax.swing.JLabel lblIcon;
     private javax.swing.JLabel lblResponsible;
