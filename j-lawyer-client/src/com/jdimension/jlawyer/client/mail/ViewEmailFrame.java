@@ -702,32 +702,34 @@ public class ViewEmailFrame extends javax.swing.JFrame {
     private ArchiveFileBean contextArchiveFile = null;
     private CaseFolder contextFolder = null;
     private ObservedDocument odoc = null;
-    
+
     /**
      * Creates new form ViewEmailFrame
+     *
      * @param contextArchiveFile
      * @param contextFolder
      */
     public ViewEmailFrame(ArchiveFileBean contextArchiveFile, CaseFolder contextFolder) {
         this(contextArchiveFile, contextFolder, null);
     }
-    
+
     /**
      * Creates new form ViewEmailFrame
+     *
      * @param contextArchiveFile
      * @param contextFolder
      * @param odoc
      */
     public ViewEmailFrame(ArchiveFileBean contextArchiveFile, CaseFolder contextFolder, ObservedDocument odoc) {
         initComponents();
-        
+
         this.contextArchiveFile = contextArchiveFile;
         this.contextFolder = contextFolder;
         this.odoc = odoc;
 
         ComponentUtils.restoreFrameSize(this);
     }
-    
+
     public void setMessage(MessageContainer msgC, MailboxSetup ms) {
         this.content.setMessage(msgC, ms);
         this.emlMsg = msgC;
@@ -862,7 +864,7 @@ public class ViewEmailFrame extends javax.swing.JFrame {
         }
         this.setVisible(false);
         this.dispose();
-        
+
         dlg.toFront();
         dlg.requestFocus();
     }//GEN-LAST:event_cmdReplyActionPerformed
@@ -879,19 +881,38 @@ public class ViewEmailFrame extends javax.swing.JFrame {
                     // Server-based reply-all
                     com.jdimension.jlawyer.services.MailMessageDTO dto = msgC.getMessageDTO();
                     for (MailboxSetup mbx : UserSettings.getInstance().getMailboxes(UserSettings.getInstance().getCurrentUser().getPrincipalId())) {
-                        if (mbx.getId().equals(msgC.getMailboxId())) { dlg.setFrom(mbx); break; }
+                        if (mbx.getId().equals(msgC.getMailboxId())) {
+                            dlg.setFrom(mbx);
+                            break;
+                        }
                     }
                     StringBuilder toSb = new StringBuilder();
-                    if (dto.getFrom() != null) toSb.append(dto.getFrom());
-                    if (dto.getTo() != null) for (String t : dto.getTo()) { if (toSb.length() > 0) toSb.append(", "); toSb.append(t); }
+                    if (dto.getFrom() != null) {
+                        toSb.append(dto.getFrom());
+                    }
+                    if (dto.getTo() != null) {
+                        for (String t : dto.getTo()) {
+                            if (toSb.length() > 0) {
+                                toSb.append(", ");
+                            }
+                            toSb.append(t);
+                        }
+                    }
                     dlg.setTo(toSb.toString());
                     if (dto.getCc() != null) {
                         StringBuilder ccSb = new StringBuilder();
-                        for (String c : dto.getCc()) { if (ccSb.length() > 0) ccSb.append(", "); ccSb.append(c); }
+                        for (String c : dto.getCc()) {
+                            if (ccSb.length() > 0) {
+                                ccSb.append(", ");
+                            }
+                            ccSb.append(c);
+                        }
                         dlg.setCC(ccSb.toString());
                     }
                     String subject = dto.getSubject() != null ? dto.getSubject() : "";
-                    if (!subject.startsWith("Re: ")) subject = "Re: " + subject;
+                    if (!subject.startsWith("Re: ")) {
+                        subject = "Re: " + subject;
+                    }
                     dlg.setSubject(subject);
                     String decodedTo = dto.getFrom() != null ? dto.getFrom() : "";
                     String contentType = this.content.getContentType();
@@ -907,63 +928,66 @@ public class ViewEmailFrame extends javax.swing.JFrame {
                         dlg.setThreadingHeaders(dto.getMessageId(), refs);
                     }
                 } else {
-                // Legacy reply-all
-                Message origM = msgC.getMessage();
-                MailboxSetup ms = EmailUtils.getMailboxSetup(origM);
-                if (ms != null) {
-                    dlg.setFrom(ms);
-                }
+                    // Legacy reply-all
+                    Message origM = msgC.getMessage();
+                    MailboxSetup ms = EmailUtils.getMailboxSetup(origM);
+                    if (ms != null) {
+                        dlg.setFrom(ms);
+                    }
 
-                Message m = origM.reply(true);
+                    Message m = origM.reply(true);
 
-                try {
-                    Address[] to = m.getRecipients(Message.RecipientType.TO);
-                    if(ms!=null)
-                        to=EmailUtils.filterOut(to, ms.getEmailAddress());
-                    String toString = EmailUtils.getAddressesAsList(to);
+                    try {
+                        Address[] to = m.getRecipients(Message.RecipientType.TO);
+                        if (ms != null) {
+                            to = EmailUtils.filterOut(to, ms.getEmailAddress());
+                        }
+                        String toString = EmailUtils.getAddressesAsList(to);
 
-                    Address[] cc = m.getRecipients(Message.RecipientType.CC);
-                    if(ms!=null)
-                        cc=EmailUtils.filterOut(cc, ms.getEmailAddress());
-                    String ccString = EmailUtils.getAddressesAsList(cc);
+                        Address[] cc = m.getRecipients(Message.RecipientType.CC);
+                        if (ms != null) {
+                            cc = EmailUtils.filterOut(cc, ms.getEmailAddress());
+                        }
+                        String ccString = EmailUtils.getAddressesAsList(cc);
 
-                    Address[] bcc = m.getRecipients(Message.RecipientType.BCC);
-                    if(ms!=null)
-                        bcc=EmailUtils.filterOut(bcc, ms.getEmailAddress());
-                    String bccString = EmailUtils.getAddressesAsList(bcc);
+                        Address[] bcc = m.getRecipients(Message.RecipientType.BCC);
+                        if (ms != null) {
+                            bcc = EmailUtils.filterOut(bcc, ms.getEmailAddress());
+                        }
+                        String bccString = EmailUtils.getAddressesAsList(bcc);
 
-                    dlg.setTo(toString);
-                    dlg.setCC(ccString);
-                    dlg.setBCC(bccString);
+                        dlg.setTo(toString);
+                        dlg.setCC(ccString);
+                        dlg.setBCC(bccString);
 
-                } catch (Throwable t) {
-                    log.error(t);
-                    dlg.setTo(m.getRecipients(Message.RecipientType.TO)[0].toString());
-                }
+                    } catch (Throwable t) {
+                        log.error(t);
+                        dlg.setTo(m.getRecipients(Message.RecipientType.TO)[0].toString());
+                    }
 
-                String subject = m.getSubject();
-                if (subject == null) {
-                    subject = "";
-                }
-                if (!subject.startsWith("Re: ")) {
-                    subject = "Re: " + subject;
-                }
-                dlg.setSubject(subject);
+                    String subject = m.getSubject();
+                    if (subject == null) {
+                        subject = "";
+                    }
+                    if (!subject.startsWith("Re: ")) {
+                        subject = "Re: " + subject;
+                    }
+                    dlg.setSubject(subject);
 
-                String decodedTo = origM.getFrom()[0].toString();
-                try {
-                    decodedTo = MimeUtility.decodeText(origM.getFrom()[0].toString());
-                } catch (Throwable t) {
-                    log.error(t);
-                }
-                String contentType = this.content.getContentType();
-                dlg.setContentType(contentType);
-                if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-                    dlg.setBody("", EmailUtils.getQuotedBody(EmailUtils.html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
-                } else {
-                    dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
-                }
-                dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_HTML, decodedTo, origM.getSentDate()), ContentTypes.TEXT_HTML);
+                    String decodedTo = origM.getFrom()[0].toString();
+                    try {
+                        decodedTo = MimeUtility.decodeText(origM.getFrom()[0].toString());
+                    } catch (Throwable t) {
+                        log.error(t);
+                    }
+                    String contentType = this.content.getContentType();
+                    dlg.setContentType(contentType);
+                    if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
+                        dlg.setBody("", EmailUtils.getQuotedBody(EmailUtils.html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
+                    } else {
+                        dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
+                    }
+                    dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_HTML, decodedTo, origM.getSentDate()), ContentTypes.TEXT_HTML);
                 } // end legacy else
 
             } catch (Exception ex) {
@@ -1009,7 +1033,7 @@ public class ViewEmailFrame extends javax.swing.JFrame {
         }
         this.setVisible(false);
         this.dispose();
-        
+
         dlg.toFront();
         dlg.requestFocus();
     }//GEN-LAST:event_cmdReplyAllActionPerformed
@@ -1025,10 +1049,15 @@ public class ViewEmailFrame extends javax.swing.JFrame {
                 if (msgC.isServerBased()) {
                     com.jdimension.jlawyer.services.MailMessageDTO dto = msgC.getMessageDTO();
                     for (MailboxSetup mbx : UserSettings.getInstance().getMailboxes(UserSettings.getInstance().getCurrentUser().getPrincipalId())) {
-                        if (mbx.getId().equals(msgC.getMailboxId())) { dlg.setFrom(mbx); break; }
+                        if (mbx.getId().equals(msgC.getMailboxId())) {
+                            dlg.setFrom(mbx);
+                            break;
+                        }
                     }
                     String subject = dto.getSubject() != null ? dto.getSubject() : "";
-                    if (!subject.startsWith("Fw: ")) subject = "Fw: " + subject;
+                    if (!subject.startsWith("Fw: ")) {
+                        subject = "Fw: " + subject;
+                    }
                     dlg.setSubject(subject);
                     String decodedFrom = dto.getFrom() != null ? dto.getFrom() : "";
                     String contentType = this.content.getContentType();
@@ -1052,67 +1081,71 @@ public class ViewEmailFrame extends javax.swing.JFrame {
                                 }
                             }
                         }
-                    } catch (Throwable t) { log.error("Error forwarding attachments", t); }
-                    if (dto.getMessageId() != null) dlg.setThreadingHeaders(dto.getMessageId(), null);
+                    } catch (Throwable t) {
+                        log.error("Error forwarding attachments", t);
+                    }
+                    if (dto.getMessageId() != null) {
+                        dlg.setThreadingHeaders(dto.getMessageId(), null);
+                    }
                 } else {
-                Message m = msgC.getMessage();
-                MailboxSetup ms = EmailUtils.getMailboxSetup(m);
-                if (ms != null) {
-                    dlg.setFrom(ms);
-                }
-                Address from = m.getFrom()[0];
-
-                String subject = m.getSubject();
-                if (subject == null) {
-                    subject = "";
-                }
-                if (!subject.startsWith("Fw: ")) {
-                    subject = "Fw: " + subject;
-                }
-                dlg.setSubject(subject);
-
-                String decodedFrom = from.toString();
-                try {
-                    decodedFrom = MimeUtility.decodeText(from.toString());
-                } catch (Throwable t) {
-                    log.error(t);
-                }
-                String contentType = this.content.getContentType();
-                dlg.setContentType(contentType);
-                if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-                    dlg.setBody("", EmailUtils.getQuotedBody(EmailUtils.html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
-                } else {
-                    dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
-                }
-                dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_HTML, decodedFrom, m.getSentDate()), ContentTypes.TEXT_HTML);
-
-                try {
-                    // try forwarding attachments
-                    if (m.getFolder() != null) {
-                        if (!m.getFolder().isOpen()) {
-                            System.out.println("open 40");
-                            m.getFolder().open(Folder.READ_WRITE);
-                        }
+                    Message m = msgC.getMessage();
+                    MailboxSetup ms = EmailUtils.getMailboxSetup(m);
+                    if (ms != null) {
+                        dlg.setFrom(ms);
                     }
-                    ArrayList<String> attachmentNames = EmailUtils.getAttachmentNames(m.getContent());
-                    for (String attName : attachmentNames) {
-                        byte[] data = EmailUtils.getAttachmentBytes(attName, msgC);
-                        if (data != null) {
-                            String attachmentUrl = FileUtils.createTempFile(attName, data);
-                            new File(attachmentUrl).deleteOnExit();
-                            dlg.addAttachment(attachmentUrl, "");
-                        }
-                    }
+                    Address from = m.getFrom()[0];
 
-                    if (m.getFolder() != null && !EmailUtils.isInbox(m.getFolder())) {
-                        if (m.getFolder().isOpen()) {
-                            EmailUtils.closeIfIMAP(m.getFolder());
-                        }
+                    String subject = m.getSubject();
+                    if (subject == null) {
+                        subject = "";
                     }
+                    if (!subject.startsWith("Fw: ")) {
+                        subject = "Fw: " + subject;
+                    }
+                    dlg.setSubject(subject);
 
-                } catch (Throwable t) {
-                    log.error("Error forwarding attachments", t);
-                }
+                    String decodedFrom = from.toString();
+                    try {
+                        decodedFrom = MimeUtility.decodeText(from.toString());
+                    } catch (Throwable t) {
+                        log.error(t);
+                    }
+                    String contentType = this.content.getContentType();
+                    dlg.setContentType(contentType);
+                    if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
+                        dlg.setBody("", EmailUtils.getQuotedBody(EmailUtils.html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
+                    } else {
+                        dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
+                    }
+                    dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_HTML, decodedFrom, m.getSentDate()), ContentTypes.TEXT_HTML);
+
+                    try {
+                        // try forwarding attachments
+                        if (m.getFolder() != null) {
+                            if (!m.getFolder().isOpen()) {
+                                System.out.println("open 40");
+                                m.getFolder().open(Folder.READ_WRITE);
+                            }
+                        }
+                        ArrayList<String> attachmentNames = EmailUtils.getAttachmentNames(m.getContent());
+                        for (String attName : attachmentNames) {
+                            byte[] data = EmailUtils.getAttachmentBytes(attName, msgC);
+                            if (data != null) {
+                                String attachmentUrl = FileUtils.createTempFile(attName, data);
+                                new File(attachmentUrl).deleteOnExit();
+                                dlg.addAttachment(attachmentUrl, "");
+                            }
+                        }
+
+                        if (m.getFolder() != null && !EmailUtils.isInbox(m.getFolder())) {
+                            if (m.getFolder().isOpen()) {
+                                EmailUtils.closeIfIMAP(m.getFolder());
+                            }
+                        }
+
+                    } catch (Throwable t) {
+                        log.error("Error forwarding attachments", t);
+                    }
                 } // end legacy else for cmdForward
 
             } catch (Exception ex) {
@@ -1149,9 +1182,10 @@ public class ViewEmailFrame extends javax.swing.JFrame {
                     for (OutlookFileAttachment ofa : attachments) {
                         byte[] data = ofa.getData();
                         if (data != null) {
-                            String fileName=ofa.getFilename();
-                            if(StringUtils.isEmpty(fileName))
-                                fileName=ofa.getLongFilename();
+                            String fileName = ofa.getFilename();
+                            if (StringUtils.isEmpty(fileName)) {
+                                fileName = ofa.getLongFilename();
+                            }
                             String attachmentUrl = FileUtils.createTempFile(fileName, data);
                             new File(attachmentUrl).deleteOnExit();
                             dlg.addAttachment(attachmentUrl, "");
@@ -1176,7 +1210,7 @@ public class ViewEmailFrame extends javax.swing.JFrame {
         }
         this.setVisible(false);
         this.dispose();
-        
+
         dlg.toFront();
         dlg.requestFocus();
     }//GEN-LAST:event_cmdForwardActionPerformed
@@ -1192,78 +1226,111 @@ public class ViewEmailFrame extends javax.swing.JFrame {
                 if (msgC.isServerBased()) {
                     com.jdimension.jlawyer.services.MailMessageDTO dto = msgC.getMessageDTO();
                     for (MailboxSetup mbx : UserSettings.getInstance().getMailboxes(UserSettings.getInstance().getCurrentUser().getPrincipalId())) {
-                        if (mbx.getId().equals(msgC.getMailboxId())) { dlg.setFrom(mbx); break; }
+                        if (mbx.getId().equals(msgC.getMailboxId())) {
+                            dlg.setFrom(mbx);
+                            break;
+                        }
                     }
                     dlg.setSubject(dto.getSubject() != null ? dto.getSubject() : "");
-                    if (dto.getTo() != null) dlg.setTo(String.join(", ", dto.getTo()));
-                    if (dto.getCc() != null) dlg.setCC(String.join(", ", dto.getCc()));
+                    if (dto.getTo() != null) {
+                        dlg.setTo(String.join(", ", dto.getTo()));
+                    }
+                    if (dto.getCc() != null) {
+                        dlg.setCC(String.join(", ", dto.getCc()));
+                    }
+
+                    String contentType = this.content.getContentType();
+                    dlg.setContentType(contentType);
+                    if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
+                        dlg.setBody("", this.content.getBody(), ContentTypes.TEXT_PLAIN, false);
+                    } else {
+                        dlg.setBody("", this.content.getBody(), ContentTypes.TEXT_PLAIN, false);
+                    }
+                    dlg.setBody("", this.content.getBody(), ContentTypes.TEXT_HTML, false);
+
+                    try {
+                        ClientSettings settings = ClientSettings.getInstance();
+                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                        java.util.List<com.jdimension.jlawyer.services.MailAttachmentDTO> atts = locator.lookupEmailServiceRemote().getAttachments(msgC.getMailboxId(), msgC.getMessageRef());
+                        if (atts != null) {
+                            for (com.jdimension.jlawyer.services.MailAttachmentDTO att : atts) {
+                                if (!att.isInline() && att.getContent() != null) {
+                                    String attachmentUrl = FileUtils.createTempFile(att.getName(), att.getContent());
+                                    new File(attachmentUrl).deleteOnExit();
+                                    dlg.addAttachment(attachmentUrl, "");
+                                }
+                            }
+                        }
+                    } catch (Throwable t) {
+                        log.error("Error attaching draft attachments", t);
+                    }
                 } else {
-                Message m = msgC.getMessage();
-                MailboxSetup ms = EmailUtils.getMailboxSetup(m);
-                if (ms != null) {
-                    dlg.setFrom(ms);
-                }
-
-                String subject = m.getSubject();
-                if (subject == null) {
-                    subject = "";
-                }
-                dlg.setSubject(subject);
-
-                try {
-                    Address[] to = m.getRecipients(Message.RecipientType.TO);
-                    String toString = EmailUtils.getAddressesAsList(to);
-
-                    Address[] cc = m.getRecipients(Message.RecipientType.CC);
-                    String ccString = EmailUtils.getAddressesAsList(cc);
-
-                    Address[] bcc = m.getRecipients(Message.RecipientType.BCC);
-                    String bccString = EmailUtils.getAddressesAsList(bcc);
-
-                    dlg.setTo(toString);
-                    dlg.setCC(ccString);
-                    dlg.setBCC(bccString);
-
-                } catch (Throwable t) {
-                    log.error(t);
-                    dlg.setTo(m.getRecipients(Message.RecipientType.TO)[0].toString());
-                }
-
-                String contentType = this.content.getContentType();
-                dlg.setContentType(contentType);
-                if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-                    dlg.setBody("", this.content.getBody(), ContentTypes.TEXT_PLAIN, false);
-                } else {
-                    dlg.setBody("", this.content.getBody(), ContentTypes.TEXT_PLAIN, false);
-                }
-                dlg.setBody("", this.content.getBody(), ContentTypes.TEXT_HTML, false);
-
-                try {
-                    // try forwarding attachments
-                    if (m.getFolder() != null) {
-                        if (!m.getFolder().isOpen()) {
-                            m.getFolder().open(Folder.READ_WRITE);
-                        }
-                    }
-                    ArrayList<String> attachmentNames = EmailUtils.getAttachmentNames(m.getContent());
-                    for (String attName : attachmentNames) {
-                        byte[] data = EmailUtils.getAttachmentBytes(attName, msgC);
-                        if (data != null) {
-                            String attachmentUrl = FileUtils.createTempFile(attName, data);
-                            new File(attachmentUrl).deleteOnExit();
-                            dlg.addAttachment(attachmentUrl, "");
-                        }
+                    Message m = msgC.getMessage();
+                    MailboxSetup ms = EmailUtils.getMailboxSetup(m);
+                    if (ms != null) {
+                        dlg.setFrom(ms);
                     }
 
-                    if (m.getFolder() != null && !EmailUtils.isInbox(m.getFolder())) {
-                        if (m.getFolder().isOpen()) {
-                            EmailUtils.closeIfIMAP(m.getFolder());
-                        }
+                    String subject = m.getSubject();
+                    if (subject == null) {
+                        subject = "";
+                    }
+                    dlg.setSubject(subject);
+
+                    try {
+                        Address[] to = m.getRecipients(Message.RecipientType.TO);
+                        String toString = EmailUtils.getAddressesAsList(to);
+
+                        Address[] cc = m.getRecipients(Message.RecipientType.CC);
+                        String ccString = EmailUtils.getAddressesAsList(cc);
+
+                        Address[] bcc = m.getRecipients(Message.RecipientType.BCC);
+                        String bccString = EmailUtils.getAddressesAsList(bcc);
+
+                        dlg.setTo(toString);
+                        dlg.setCC(ccString);
+                        dlg.setBCC(bccString);
+
+                    } catch (Throwable t) {
+                        log.error(t);
+                        dlg.setTo(m.getRecipients(Message.RecipientType.TO)[0].toString());
                     }
 
-                } catch (Throwable t) {
-                    log.error("Error forwarding attachments", t);
-                }
+                    String contentType = this.content.getContentType();
+                    dlg.setContentType(contentType);
+                    if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
+                        dlg.setBody("", this.content.getBody(), ContentTypes.TEXT_PLAIN, false);
+                    } else {
+                        dlg.setBody("", this.content.getBody(), ContentTypes.TEXT_PLAIN, false);
+                    }
+                    dlg.setBody("", this.content.getBody(), ContentTypes.TEXT_HTML, false);
+
+                    try {
+                        // try forwarding attachments
+                        if (m.getFolder() != null) {
+                            if (!m.getFolder().isOpen()) {
+                                m.getFolder().open(Folder.READ_WRITE);
+                            }
+                        }
+                        ArrayList<String> attachmentNames = EmailUtils.getAttachmentNames(m.getContent());
+                        for (String attName : attachmentNames) {
+                            byte[] data = EmailUtils.getAttachmentBytes(attName, msgC);
+                            if (data != null) {
+                                String attachmentUrl = FileUtils.createTempFile(attName, data);
+                                new File(attachmentUrl).deleteOnExit();
+                                dlg.addAttachment(attachmentUrl, "");
+                            }
+                        }
+
+                        if (m.getFolder() != null && !EmailUtils.isInbox(m.getFolder())) {
+                            if (m.getFolder().isOpen()) {
+                                EmailUtils.closeIfIMAP(m.getFolder());
+                            }
+                        }
+
+                    } catch (Throwable t) {
+                        log.error("Error forwarding attachments", t);
+                    }
                 } // end legacy else for resend
 
             } catch (Exception ex) {
@@ -1276,7 +1343,7 @@ public class ViewEmailFrame extends javax.swing.JFrame {
                     dlg.setFrom(ms);
                 }
                 String from = this.outlookMsg.getFromEmail();
-                
+
                 try {
                     String toString = EmailUtils.getAddressesAsList(this.outlookMsg.getToRecipients());
                     String ccString = EmailUtils.getAddressesAsList(this.outlookMsg.getCcRecipients());
@@ -1310,9 +1377,10 @@ public class ViewEmailFrame extends javax.swing.JFrame {
                     for (OutlookFileAttachment ofa : attachments) {
                         byte[] data = ofa.getData();
                         if (data != null) {
-                            String fileName=ofa.getFilename();
-                            if(StringUtils.isEmpty(fileName))
-                                fileName=ofa.getLongFilename();
+                            String fileName = ofa.getFilename();
+                            if (StringUtils.isEmpty(fileName)) {
+                                fileName = ofa.getLongFilename();
+                            }
                             String attachmentUrl = FileUtils.createTempFile(fileName, data);
                             new File(attachmentUrl).deleteOnExit();
                             dlg.addAttachment(attachmentUrl, "");
@@ -1368,7 +1436,7 @@ public class ViewEmailFrame extends javax.swing.JFrame {
             }
         }
     }
-    
+
     /**
      * @param args the command line arguments
      */
