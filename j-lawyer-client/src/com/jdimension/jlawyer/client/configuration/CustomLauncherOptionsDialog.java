@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.FileChooserUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -1052,11 +1053,12 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
             return;
         }
 
-        JFileChooser chooser = new JFileChooser();
+        JFileChooser chooser = FileChooserUtils.createFileChooser();
         ExtensionFilter filter = new ExtensionFilter(this.txtExtension.getText());
         chooser.setFileFilter(filter);
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
+            FileChooserUtils.rememberDirectory(chooser);
 
             try {
                 String url = chooser.getSelectedFile().getCanonicalPath();
@@ -1120,9 +1122,10 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
             return;
         }
 
-        JFileChooser chooser = new JFileChooser();
+        JFileChooser chooser = FileChooserUtils.createFileChooser();
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
+            FileChooserUtils.rememberDirectory(chooser);
 
             try {
                 this.txtExecutable.setText(chooser.getSelectedFile().getCanonicalPath());

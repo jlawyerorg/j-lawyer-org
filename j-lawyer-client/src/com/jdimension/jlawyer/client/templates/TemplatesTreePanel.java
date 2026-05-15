@@ -674,6 +674,7 @@ import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileConverter;
+import com.jdimension.jlawyer.client.utils.FileChooserUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.JTreeUtils;
@@ -1187,10 +1188,11 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
     }//GEN-LAST:event_cmdNewODSActionPerformed
 
     private void cmdAddExistingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddExistingActionPerformed
-        JFileChooser chooser = new JFileChooser();
+        JFileChooser chooser = FileChooserUtils.createFileChooser();
         chooser.setMultiSelectionEnabled(true);
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
+            FileChooserUtils.rememberDirectory(chooser);
             try {
                 File[] fileArray = chooser.getSelectedFiles();
                 ArrayList<File> files = new ArrayList<>();

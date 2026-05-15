@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.FileChooserUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.pojo.imports.ImportLogEntry;
@@ -839,12 +840,13 @@ public class ImportFromSheetsDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdCloseActionPerformed
 
     private void downloadOrExport(boolean export) {
-        JFileChooser chooser = new JFileChooser(System.getProperty("user.home"));
+        JFileChooser chooser = FileChooserUtils.createFileChooser();
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         chooser.setAcceptAllFileFilterUsed(false);
         chooser.setDialogTitle("Verzeichnis wählen");
         chooser.setApproveButtonText("Auswählen");
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            FileChooserUtils.rememberDirectory(chooser);
             
             String destFileName = null;
             if(export)
@@ -880,11 +882,12 @@ public class ImportFromSheetsDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdDownloadTemplateActionPerformed
 
     private void cmdUploadSheetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUploadSheetActionPerformed
-        JFileChooser fc = new JFileChooser();
+        JFileChooser fc = FileChooserUtils.createFileChooser();
         fc.setFileFilter(new ODSFileFilter());
         fc.setMultiSelectionEnabled(false);
 
         if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            FileChooserUtils.rememberDirectory(fc);
             try {
                 this.taLog.setText("");
                 ClientSettings settings = ClientSettings.getInstance();

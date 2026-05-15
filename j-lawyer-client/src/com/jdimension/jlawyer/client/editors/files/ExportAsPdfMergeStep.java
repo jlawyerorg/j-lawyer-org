@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.FileChooserUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.wizard.*;
@@ -750,30 +751,14 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
             uset.setSettingAsBoolean(UserSettings.CONF_CASES_EXPORT_TOCASE, this.chkSaveToCase.isSelected());
             if (this.chkSaveLocally.isSelected()) {
                 
-                String lastDir = s.getConfiguration(ClientSettings.CONF_CASES_EXPORT_LASTDIR, System.getProperty("user.home"));
-                if (!lastDir.endsWith(File.separator)) {
-                    lastDir = lastDir + File.separator;
-                }
-
-                if (!(new File(lastDir).exists())) {
-                    lastDir = System.getProperty("user.home");
-                    if (!lastDir.endsWith(File.separator)) {
-                        lastDir = lastDir + File.separator;
-                    }
-                }
-
-                JFileChooser chooser = new JFileChooser(lastDir);
+                JFileChooser chooser = FileChooserUtils.createFileChooser(ClientSettings.CONF_CASES_EXPORT_LASTDIR);
                 chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                 chooser.setAcceptAllFileFilterUsed(false);
                 chooser.setDialogTitle("Verzeichnis wählen");
                 chooser.setApproveButtonText("Speichern");
                 if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+                    FileChooserUtils.rememberDirectory(ClientSettings.CONF_CASES_EXPORT_LASTDIR, chooser);
                     File dir = chooser.getSelectedFile();
-                    try {
-                        s.setConfiguration(ClientSettings.CONF_CASES_EXPORT_LASTDIR, dir.getCanonicalPath());
-                    } catch (Throwable t) {
-                        log.error("can not get canonical path during html export", t);
-                    }
 
                     String fullResultFile = dir.getAbsolutePath() + File.separator + new File(resultFile).getName();
                     if (new File(fullResultFile).exists()) {

@@ -1401,26 +1401,16 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         }
 
         try {
-            String userHome = System.getProperty("user.home");
-            if (!userHome.endsWith(File.separator)) {
-                userHome = userHome + File.separator;
-            }
-            String selectedFolder = null;
             for (Object selected : attList.getSelectedValuesList()) {
 
                 BeaAttachment att = (BeaAttachment) selected;
                 byte[] data = ensureAttachmentContent(att);
 
-                String useFolder = userHome;
-                if (selectedFolder != null) {
-                    useFolder = selectedFolder;
-                }
-
                 boolean validName = false;
                 File f = null;
                 boolean skipToNext = false;
                 while (!validName) {
-                    JFileChooser chooser = new JFileChooser(useFolder);
+                    JFileChooser chooser = FileChooserUtils.createFileChooser();
                     chooser.setSelectedFile(new File(selected.toString()));
                     int result = chooser.showSaveDialog(this);
                     if (result == JFileChooser.CANCEL_OPTION) {
@@ -1432,6 +1422,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                     if (f == null) {
                         return;
                     }
+                    FileChooserUtils.rememberDirectory(chooser);
 
                     if (f.exists()) {
                         int response = JOptionPane.showConfirmDialog(this, "Die Datei existiert bereits. Überschreiben?", "Datei überschreiben", JOptionPane.YES_NO_OPTION);

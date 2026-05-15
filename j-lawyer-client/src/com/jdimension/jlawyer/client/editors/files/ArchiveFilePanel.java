@@ -5979,22 +5979,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_cmdUploadDocumentActionPerformed
 
     public boolean uploadDocument(Invoice invoice) {
-        JFileChooser chooser = new JFileChooser();
+        JFileChooser chooser = FileChooserUtils.createFileChooser(ClientSettings.CONF_CASE_LASTUPLOADDIR);
         chooser.setMultiSelectionEnabled(invoice == null);
-
-        ClientSettings settings = ClientSettings.getInstance();
-        String lastUploadDir = settings.getConfiguration(ClientSettings.CONF_CASE_LASTUPLOADDIR, null);
-        if (lastUploadDir != null) {
-            File lud = new File(lastUploadDir);
-            if (lud.exists()) {
-                if (lud.isDirectory()) {
-                    chooser.setCurrentDirectory(lud);
-                }
-            }
-        }
 
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
+            FileChooserUtils.rememberDirectory(ClientSettings.CONF_CASE_LASTUPLOADDIR, chooser);
             try {
                 File[] fileArray = null;
                 if (chooser.isMultiSelectionEnabled()) {
@@ -6004,17 +5994,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     fileArray[0] = chooser.getSelectedFile();
                 }
                 ArrayList<File> files = new ArrayList<>();
-                boolean lastUploadSaved = false;
                 for (File f : fileArray) {
                     files.add(f);
-
-                    if (f.isFile() && !lastUploadSaved) {
-                        String parent = f.getParent();
-                        if (parent != null) {
-                            settings.setConfiguration(ClientSettings.CONF_CASE_LASTUPLOADDIR, parent);
-                            lastUploadSaved = true;
-                        }
-                    }
                 }
 
                 if (invoice == null) {
@@ -6462,32 +6443,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void cmdExportHtmlActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportHtmlActionPerformed
 
-        ClientSettings s = ClientSettings.getInstance();
-        String lastDir = s.getConfiguration(ClientSettings.CONF_CASES_EXPORT_LASTDIR, System.getProperty("user.home"));
-
-        if (!lastDir.endsWith(File.separator)) {
-            lastDir = lastDir + File.separator;
-        }
-
-        if (!(new File(lastDir).exists())) {
-            lastDir = System.getProperty("user.home");
-            if (!lastDir.endsWith(File.separator)) {
-                lastDir = lastDir + File.separator;
-            }
-        }
-
-        JFileChooser chooser = new JFileChooser(lastDir);
+        JFileChooser chooser = FileChooserUtils.createFileChooser(ClientSettings.CONF_CASES_EXPORT_LASTDIR);
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         chooser.setAcceptAllFileFilterUsed(false);
         chooser.setDialogTitle("Verzeichnis wählen");
         chooser.setApproveButtonText("Auswählen");
         if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            FileChooserUtils.rememberDirectory(ClientSettings.CONF_CASES_EXPORT_LASTDIR, chooser);
             File dir = chooser.getSelectedFile();
-            try {
-                s.setConfiguration(ClientSettings.CONF_CASES_EXPORT_LASTDIR, dir.getCanonicalPath());
-            } catch (Throwable t) {
-                log.error("can not get canonical path during html export", t);
-            }
 
             ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
             dlg.setShowCancelButton(true);

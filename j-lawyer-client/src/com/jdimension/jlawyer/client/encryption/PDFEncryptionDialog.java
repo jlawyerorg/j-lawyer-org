@@ -665,8 +665,8 @@ package com.jdimension.jlawyer.client.encryption;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.FileChooserUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
-import java.io.File;
 import java.util.ArrayList;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -695,20 +695,7 @@ public class PDFEncryptionDialog extends javax.swing.JDialog {
         initComponents();
         this.cmbRecipient.removeAllItems();
 
-        ClientSettings settings = ClientSettings.getInstance();
-        String lastDir = settings.getConfiguration("client.archivefiles.encryptedpdf.lastdir", System.getProperty("user.home"));
-        if (!lastDir.endsWith(File.separator)) {
-            lastDir = lastDir + File.separator;
-        }
-
-        if (!(new File(lastDir).exists())) {
-            lastDir = System.getProperty("user.home");
-            if (!lastDir.endsWith(File.separator)) {
-                lastDir = lastDir + File.separator;
-            }
-        }
-
-        this.txtLastDir.setText(lastDir);
+        this.txtLastDir.setText(FileChooserUtils.getStartDirectoryPath("client.archivefiles.encryptedpdf.lastdir"));
 
     }
 
@@ -853,6 +840,7 @@ public class PDFEncryptionDialog extends javax.swing.JDialog {
         chooser.setDialogTitle("Verzeichnis wählen");
         chooser.setApproveButtonText("Auswählen");
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            FileChooserUtils.rememberDirectory("client.archivefiles.encryptedpdf.lastdir", chooser);
             this.txtLastDir.setText(chooser.getSelectedFile().getAbsolutePath());
         }
     }//GEN-LAST:event_cmdBrowseActionPerformed

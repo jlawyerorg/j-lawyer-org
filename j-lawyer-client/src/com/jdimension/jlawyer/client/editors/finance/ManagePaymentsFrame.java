@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.editors.finance;
 import com.jdimension.jlawyer.client.editors.files.PaymentMgmtEntryPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.FileChooserUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.Payment;
@@ -930,28 +931,14 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
                 sepaString = sepaString.replace("CstmrCdtTrfInitn xmlns=\"\"", "CstmrCdtTrfInitn");
                 sepaString = sepaString.replace("<BtchBookg>true</BtchBookg>", "<BtchBookg>false</BtchBookg>");
 
-                String lastDir = settings.getConfiguration(ClientSettings.CONF_FINANCE_SEPAXML_LASTDIR, System.getProperty("user.home"));
-                if (!lastDir.endsWith(File.separator)) {
-                    lastDir = lastDir + File.separator;
-                }
-                if (!(new File(lastDir).exists())) {
-                    lastDir = System.getProperty("user.home");
-                    if (!lastDir.endsWith(File.separator)) {
-                        lastDir = lastDir + File.separator;
-                    }
-                }
-                JFileChooser chooser = new JFileChooser(lastDir);
+                JFileChooser chooser = FileChooserUtils.createFileChooser(ClientSettings.CONF_FINANCE_SEPAXML_LASTDIR);
                 chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                 chooser.setAcceptAllFileFilterUsed(false);
                 chooser.setDialogTitle("Verzeichnis wählen");
                 chooser.setApproveButtonText("Auswählen");
                 if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+                    FileChooserUtils.rememberDirectory(ClientSettings.CONF_FINANCE_SEPAXML_LASTDIR, chooser);
                     File dir = chooser.getSelectedFile();
-                    try {
-                        settings.setConfiguration(ClientSettings.CONF_FINANCE_SEPAXML_LASTDIR, dir.getCanonicalPath());
-                    } catch (Throwable t) {
-                        log.error("can not get canonical path during sepa export", t);
-                    }
 
                     String fileName = dir.getPath() + File.separator + new SimpleDateFormat("yyyyMMdd_HHmm_").format(new Date()) + "_SEPA-Export_" + iban + ".xml";
                     FileWriter fw = new FileWriter(fileName);

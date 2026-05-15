@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.FileChooserUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
@@ -865,11 +866,12 @@ public class ImportContactsDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdCloseActionPerformed
 
     private void cmdChooseVCardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdChooseVCardActionPerformed
-        JFileChooser fc = new JFileChooser();
+        JFileChooser fc = FileChooserUtils.createFileChooser();
         fc.setFileFilter(new VCardFileFilter());
         fc.setMultiSelectionEnabled(false);
 
         if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            FileChooserUtils.rememberDirectory(fc);
             try {
                 this.taLog.setText("");
                 ClientSettings settings = ClientSettings.getInstance();

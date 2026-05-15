@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.DateUtils;
+import com.jdimension.jlawyer.client.utils.FileChooserUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
@@ -1182,17 +1183,10 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdCsvUploadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCsvUploadActionPerformed
-        JFileChooser chooser = new JFileChooser();
-        ClientSettings cs = ClientSettings.getInstance();
-        String lastDir = cs.getConfiguration(ClientSettings.CONF_BANKSTATEMENT_CSV_LASTDIR, null);
-        if (lastDir != null) {
-            File dir = new File(lastDir);
-            if (dir.exists() && dir.isDirectory()) {
-                chooser.setCurrentDirectory(dir);
-            }
-        }
+        JFileChooser chooser = FileChooserUtils.createFileChooser(ClientSettings.CONF_BANKSTATEMENT_CSV_LASTDIR);
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
+            FileChooserUtils.rememberDirectory(ClientSettings.CONF_BANKSTATEMENT_CSV_LASTDIR, chooser);
 
             BankStatementsCSVConfig csvConfig = null;
             for (BankStatementsCSVConfig c : this.csvConfigs) {
@@ -1217,7 +1211,6 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
                 String url = chooser.getSelectedFile().getCanonicalPath();
                 File f = new File(url);
-                cs.setConfiguration(ClientSettings.CONF_BANKSTATEMENT_CSV_LASTDIR, f.getParent());
 
                 // Create a DecimalFormat with German locale (comma as decimal separator)
                 DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.forLanguageTag(csvConfig.getLocale()));
