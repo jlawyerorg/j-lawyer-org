@@ -682,6 +682,7 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.zip.ZipFile;
 import junit.framework.Assert;
 import org.apache.tika.Tika;
 import org.junit.After;
@@ -817,6 +818,34 @@ public class LibreOfficeODFTest {
         Assert.assertEquals(109, content.indexOf("hans otto 2"));
         Assert.assertTrue(!content.contains("MANDANT_ANREDE"));
 
+    }
+
+    @Test
+    public void setIngoTextPreservesParagraphsInOdt() {
+        File f = null;
+        try {
+            f = File.createTempFile("j-lawyer-ingo-text-", ".odt");
+            TextDocument document = TextDocument.newTextDocument();
+            document.addParagraph("{{INGO_TEXT}}. ");
+            document.save(f);
+            document.close();
+
+            HashMap<String,Object> ph = new HashMap<>();
+            ph.put("{{INGO_TEXT}}", "First paragraph\n\nSecond paragraph\n\nThird paragraph");
+
+            LibreOfficeAccess.setPlaceHolders("", f.getAbsolutePath(), f.getName(), ph, null);
+
+            String contentXml = readZipEntry(f, "content.xml");
+            Assert.assertFalse(contentXml.contains("<text:line-break"));
+            Assert.assertTrue(java.util.regex.Pattern.compile("(?s).*First paragraph</text:p><text:p[^>]*>Second paragraph</text:p><text:p[^>]*>Third paragraph\\..*").matcher(contentXml).matches());
+        } catch (Throwable t) {
+            t.printStackTrace();
+            Assert.fail(t.getMessage());
+        } finally {
+            if (f != null) {
+                f.delete();
+            }
+        }
     }
 
     @Test
@@ -1391,6 +1420,17 @@ public class LibreOfficeODFTest {
             int length;
             while ((length = is.read(buffer)) > 0) {
                 os.write(buffer, 0, length);
+            }
+        }
+    }
+
+    private static String readZipEntry(File file, String entryName) throws IOException {
+        try ( ZipFile zip = new ZipFile(file)) {
+            if (zip.getEntry(entryName) == null) {
+                throw new IOException("ZIP entry not found: " + entryName);
+            }
+            try ( InputStream is = zip.getInputStream(zip.getEntry(entryName))) {
+                return new String(is.readAllBytes(), "UTF-8");
             }
         }
     }
