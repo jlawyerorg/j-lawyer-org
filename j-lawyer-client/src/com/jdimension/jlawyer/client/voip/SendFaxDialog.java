@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.editors.files.AddressBeanListCellRenderer;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileConverter;
+import com.jdimension.jlawyer.client.utils.FileChooserUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.fax.BalanceInformation;
@@ -1117,12 +1118,13 @@ public class SendFaxDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmbOwnUrisActionPerformed
 
     private void cmdBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdBrowseActionPerformed
-        JFileChooser chooser = new JFileChooser();
+        JFileChooser chooser = FileChooserUtils.createFileChooser();
         chooser.setMultiSelectionEnabled(false);
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-                this.file=chooser.getSelectedFile();
-                this.txtFile.setText(this.file.toString());
+            FileChooserUtils.rememberDirectory(chooser);
+            this.file=chooser.getSelectedFile();
+            this.txtFile.setText(this.file.toString());
 
         }
     }//GEN-LAST:event_cmdBrowseActionPerformed
