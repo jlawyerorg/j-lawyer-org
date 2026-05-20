@@ -2844,6 +2844,21 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         waitForHtmlContentOnMac(ed);
         String editorContent = ed.getText();
 
+        // Wrap the HTML body in a div carrying the user's configured default font-family and font-size.
+        // SunEditor may emit paragraphs that only carry font-size but no font-family (e.g. for lines
+        // typed into a template). Inside the editor this is invisible because Java/WebView falls back
+        // to a sans-serif default, but receiving mail clients like Thunderbird default to a serif font
+        // (Times), making the inserted text look different and larger than the surrounding template
+        // content. The outer div provides a baseline that elements without their own font styling
+        // inherit; elements with explicit inline font-family/font-size still override it via CSS
+        // specificity, so existing styled signature blocks render unchanged.
+        if ("text/html".equalsIgnoreCase(contentType)) {
+            String defaultStyle = WebViewHtmlEditorPanel.buildDefaultStyle(
+                    UserSettings.getInstance().getSetting(UserSettings.CONF_EDITOR_DEFAULT_HTML_FONT, "Arial"),
+                    UserSettings.getInstance().getSetting(UserSettings.CONF_EDITOR_DEFAULT_HTML_FONTSIZE, "12"));
+            editorContent = "<div style=\"" + defaultStyle + "\">" + editorContent + "</div>";
+        }
+
         if (mails.isEmpty()) {
             ThreadUtils.showErrorDialog(this, "Liste der Empfänger kann nicht leer sein.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             return;
