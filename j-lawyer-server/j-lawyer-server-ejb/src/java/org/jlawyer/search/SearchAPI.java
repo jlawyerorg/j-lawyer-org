@@ -690,6 +690,7 @@ import org.apache.lucene.search.highlight.TextFragment;
 import org.apache.lucene.search.highlight.TokenSources;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.util.Version;
 
 /**
@@ -708,14 +709,18 @@ public class SearchAPI {
     private static final String FIELD_DEFAULT = FIELD_TEXT;
     private static final Logger log = Logger.getLogger(SearchAPI.class.getName());
     private static final int SEARCHER_REFRESH_INTERVAL_SECONDS = 10;
+    private static final long INIT_RETRY_COOLDOWN_MS = 30_000L;
+    private static final long WRITE_LOCK_TIMEOUT_MS = 60_000L;
 
     private IndexWriter writer = null;
     private Directory directory = null;
     private Analyzer analyzer = null;
     private SearcherManager searcherManager = null;
     private ScheduledExecutorService refreshScheduler = null;
-    private boolean initialized = false;
+    private volatile boolean initialized = false;
     private Throwable initError = null;
+    private long lastInitAttemptMs = 0L;
+    private final Object initLock = new Object();
 
     private SearchAPI() {
 
@@ -729,6 +734,8 @@ public class SearchAPI {
     }
 
     private void openWriterAndDirectory() {
+        this.lastInitAttemptMs = System.currentTimeMillis();
+
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
         localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
@@ -741,11 +748,23 @@ public class SearchAPI {
         this.analyzer = new GermanAnalyzer(Version.LUCENE_47);
 
         try {
-
-            // To store an index on disk, use this instead:
             this.directory = FSDirectory.open(dstDir);
-            IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_CURRENT, analyzer);
-            this.writer = new IndexWriter(directory, config);
+
+            try {
+                this.writer = openIndexWriter(this.directory);
+            } catch (LockObtainFailedException lofe) {
+                log.warn("Could not obtain Lucene write lock after " + WRITE_LOCK_TIMEOUT_MS
+                        + " ms — assuming stale lock and clearing it. "
+                        + "WARNING: this is unsafe if a second JVM writes to the same index directory.", lofe);
+                try {
+                    IndexWriter.unlock(this.directory);
+                } catch (Throwable unlockErr) {
+                    log.error("Failed to clear stale Lucene write.lock", unlockErr);
+                    throw lofe;
+                }
+                this.writer = openIndexWriter(this.directory);
+                log.warn("Recovered Lucene index after clearing stale write.lock");
+            }
 
             // Initialize SearcherManager for non-blocking searches
             this.searcherManager = new SearcherManager(this.writer, true, null);
@@ -765,18 +784,82 @@ public class SearchAPI {
             }, SEARCHER_REFRESH_INTERVAL_SECONDS, SEARCHER_REFRESH_INTERVAL_SECONDS, TimeUnit.SECONDS);
 
             this.initialized = true;
+            this.initError = null;
         } catch (Throwable t) {
             log.error("Error initializing Lucene Writer", t);
             this.initialized = false;
             this.initError = t;
+            closeQuietly();
         }
 
     }
 
-    public void addToIndex(String docId, String fileName, String text, String archiveFileId, String archiveFileName, String archiveFileNumber) throws SearchException {
-        if (!this.initialized) {
-            throw new SearchException("Search Index is not initialized: " + this.initError.getMessage());
+    private IndexWriter openIndexWriter(Directory dir) throws IOException {
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_CURRENT, analyzer);
+        config.setWriteLockTimeout(WRITE_LOCK_TIMEOUT_MS);
+        return new IndexWriter(dir, config);
+    }
+
+    private void closeQuietly() {
+        if (this.refreshScheduler != null) {
+            try {
+                this.refreshScheduler.shutdownNow();
+            } catch (Throwable ignore) {
+                // best effort
+            }
+            this.refreshScheduler = null;
         }
+        if (this.searcherManager != null) {
+            try {
+                this.searcherManager.close();
+            } catch (Throwable ignore) {
+                // best effort
+            }
+            this.searcherManager = null;
+        }
+        if (this.writer != null) {
+            try {
+                this.writer.close();
+            } catch (Throwable ignore) {
+                // best effort
+            }
+            this.writer = null;
+        }
+        if (this.directory != null) {
+            try {
+                this.directory.close();
+            } catch (Throwable ignore) {
+                // best effort
+            }
+            this.directory = null;
+        }
+    }
+
+    private void ensureInitialized() throws SearchException {
+        if (this.initialized) {
+            return;
+        }
+        synchronized (initLock) {
+            if (this.initialized) {
+                return;
+            }
+            long now = System.currentTimeMillis();
+            if (now - this.lastInitAttemptMs < INIT_RETRY_COOLDOWN_MS) {
+                String cause = (this.initError != null) ? this.initError.getMessage() : "unknown cause";
+                throw new SearchException("Search Index not initialized (cooldown active): " + cause);
+            }
+            log.info("Re-attempting Lucene index initialization after previous failure");
+            openWriterAndDirectory();
+            if (!this.initialized) {
+                String cause = (this.initError != null) ? this.initError.getMessage() : "unknown cause";
+                throw new SearchException("Search Index re-init failed: " + cause);
+            }
+            log.info("Lucene index recovered, initialization successful");
+        }
+    }
+
+    public void addToIndex(String docId, String fileName, String text, String archiveFileId, String archiveFileName, String archiveFileNumber) throws SearchException {
+        ensureInitialized();
 
         Document doc = new Document();
         doc.add(new Field(SearchAPI.FIELD_ID, docId, TextField.TYPE_STORED));
@@ -807,10 +890,6 @@ public class SearchAPI {
     }
 
     public void close() {
-        if (!this.initialized) {
-            return;
-        }
-
         try {
             // Shutdown refresh scheduler first
             if (this.refreshScheduler != null) {
@@ -830,17 +909,19 @@ public class SearchAPI {
                 this.searcherManager.close();
             }
 
-            this.writer.close();
-            this.directory.close();
+            if (this.writer != null) {
+                this.writer.close();
+            }
+            if (this.directory != null) {
+                this.directory.close();
+            }
         } catch (Throwable t) {
             log.error("Error closing Lucene Writer and Directory", t);
         }
     }
 
     public void updateInIndex(String docId, String fileName, String text, String archiveFileId, String archiveFileName, String archiveFileNumber) throws SearchException {
-        if (!this.initialized) {
-            throw new SearchException("Search Index is not initialized: " + this.initError.getMessage());
-        }
+        ensureInitialized();
 
         Document doc = new Document();
         doc.add(new Field(SearchAPI.FIELD_ID, docId, TextField.TYPE_STORED));
@@ -871,9 +952,7 @@ public class SearchAPI {
     }
 
     public void removeFromIndex(String docId) throws SearchException {
-        if (!this.initialized) {
-            throw new SearchException("Search Index is not initialized: " + this.initError.getMessage());
-        }
+        ensureInitialized();
 
         try {
             this.writer.deleteDocuments(new Term(SearchAPI.FIELD_ID, docId));
@@ -885,44 +964,51 @@ public class SearchAPI {
     }
 
     public void reOpen() throws SearchException {
-        if (!this.initialized) {
-            throw new SearchException("Search Index is not initialized: " + this.initError.getMessage());
-        }
-
-        try {
-            // Shutdown refresh scheduler first
-            if (this.refreshScheduler != null) {
-                this.refreshScheduler.shutdown();
-                try {
-                    if (!this.refreshScheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+        synchronized (initLock) {
+            try {
+                // Shutdown refresh scheduler first
+                if (this.refreshScheduler != null) {
+                    this.refreshScheduler.shutdown();
+                    try {
+                        if (!this.refreshScheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                            this.refreshScheduler.shutdownNow();
+                        }
+                    } catch (InterruptedException e) {
                         this.refreshScheduler.shutdownNow();
+                        Thread.currentThread().interrupt();
                     }
-                } catch (InterruptedException e) {
-                    this.refreshScheduler.shutdownNow();
-                    Thread.currentThread().interrupt();
+                    this.refreshScheduler = null;
                 }
+
+                // Close SearcherManager before writer
+                if (this.searcherManager != null) {
+                    this.searcherManager.close();
+                    this.searcherManager = null;
+                }
+
+                if (this.writer != null) {
+                    this.writer.close();
+                    this.writer = null;
+                }
+                if (this.directory != null) {
+                    this.directory.close();
+                    this.directory = null;
+                }
+            } catch (Throwable t) {
+                log.error("Error closing Lucene Writer / Index during reOpen, continuing...", t);
             }
 
-            // Close SearcherManager before writer
-            if (this.searcherManager != null) {
-                this.searcherManager.close();
+            this.initialized = false;
+            this.openWriterAndDirectory();
+            if (!this.initialized) {
+                String cause = (this.initError != null) ? this.initError.getMessage() : "unknown cause";
+                throw new SearchException("Search Index re-open failed: " + cause);
             }
-
-            this.writer.close();
-            this.directory.close();
-        } catch (Throwable t) {
-            log.error("Error closing Lucene Writer / Index during reOpen, continuing...", t);
-
         }
-
-        this.openWriterAndDirectory();
-
     }
 
     public void deleteAll() throws SearchException {
-        if (!this.initialized) {
-            throw new SearchException("Search Index is not initialized: " + this.initError.getMessage());
-        }
+        ensureInitialized();
         try {
             this.writer.deleteAll();
         } catch (IOException ex) {
@@ -932,6 +1018,7 @@ public class SearchAPI {
     }
 
     public int getNumberOfDocs() throws SearchException {
+        ensureInitialized();
         try {
             DirectoryReader reader = DirectoryReader.open(writer, true);
             int returnValue = reader.numDocs();
@@ -945,9 +1032,7 @@ public class SearchAPI {
     }
 
     public ArrayList<SearchHit> search(String queryString, int maxDocs) throws SearchException {
-        if (!this.initialized) {
-            throw new SearchException("Search Index is not initialized: " + this.initError.getMessage());
-        }
+        ensureInitialized();
 
         queryString=QueryParser.escape(queryString);
 
