@@ -701,6 +701,11 @@ import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentPreviewSav
 import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFactory;
 import com.jdimension.jlawyer.client.editors.documents.viewer.FixedStringPreviewProvider;
 import com.jdimension.jlawyer.client.encryption.PDFEncryptionDialog;
+import com.jdimension.jlawyer.client.macros.DocumentMacro;
+import com.jdimension.jlawyer.client.macros.DocumentMacroExecutor;
+import com.jdimension.jlawyer.client.macros.DocumentMacroExecutionResult;
+import com.jdimension.jlawyer.client.macros.DocumentMacroManager;
+import com.jdimension.jlawyer.client.macros.DocumentMacroSettingsDialog;
 import com.jdimension.jlawyer.client.events.CasesChangedEvent;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.DocumentRemovedEvent;
@@ -797,6 +802,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.AdjustmentListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.math.BigDecimal;
@@ -858,6 +864,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private boolean groupPrivilegesChanged = false;
 
     private boolean readOnly = false;
+    private boolean documentMacroExecutionRunning = false;
 
     // if ENTER is used to confirm a dialog / JOptionPane, the ENTER is routed to the checkbox of this panel again, causing the document to be opened
     // workaround: remember when last popup has been closed and compare timestamps to decide whether or not to open the document
@@ -889,6 +896,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.dto = null;
         this.initializing = true;
         initComponents();
+        this.cmdDocumentMacros.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent evt) {
+                showDocumentMacroMenuIfPopupTrigger(evt);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent evt) {
+                showDocumentMacroMenuIfPopupTrigger(evt);
+            }
+        });
 
         this.txtFilterParties.putClientProperty("JTextField.placeholderText", "Beteiligte filtern...");
         this.txtFilterParties.putClientProperty("JTextField.showClearButton", true);
@@ -1663,6 +1681,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.txtReason.setEnabled(!readOnly && !archived);
 
         this.cmdNewDocument.setEnabled(!readOnly && !archived);
+        this.cmdDocumentMacros.setEnabled(!readOnly && !archived);
         this.cmdAddNote.setEnabled(!readOnly && !archived);
         this.cmdHeaderAddNote.setEnabled(!readOnly && !archived);
         this.cmdTimesheetLog.setEnabled(!readOnly && !archived);
@@ -2276,6 +2295,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         tabDocuments = new javax.swing.JPanel();
         jPanel7 = new javax.swing.JPanel();
         cmdNewDocument = new javax.swing.JButton();
+        cmdDocumentMacros = new javax.swing.JButton();
         cmdUploadDocument = new javax.swing.JButton();
         txtSearchDocumentNames = new javax.swing.JTextField();
         lblDocumentHits = new javax.swing.JLabel();
@@ -3280,6 +3300,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
+        cmdDocumentMacros.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_webhook_black_48dp.png"))); // NOI18N
+        cmdDocumentMacros.setText("Makro");
+        cmdDocumentMacros.setToolTipText("Dokumentenmakro ausführen");
+        cmdDocumentMacros.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDocumentMacrosActionPerformed(evt);
+            }
+        });
+
         cmdUploadDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_new.png"))); // NOI18N
         cmdUploadDocument.setText("Hinzufügen");
         cmdUploadDocument.setToolTipText("vorhandene Datei hinzuladen");
@@ -3410,8 +3439,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(cmdClearSearch)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblDocumentHits)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 301, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 250, Short.MAX_VALUE)
                         .add(cmdNewDocument)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdDocumentMacros)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdUploadDocument)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -3431,6 +3462,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(cmdUploadDocument)
                         .add(cmdNewDocument)
+                        .add(cmdDocumentMacros)
                         .add(txtSearchDocumentNames, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(lblDocumentHits)
                         .add(cmdClearSearch)
@@ -5813,6 +5845,157 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.newDocumentActionPerformedImpl(null, null, false, null, null, null, null, null, null);
 
     }//GEN-LAST:event_cmdNewDocumentActionPerformed
+
+    private void cmdDocumentMacrosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDocumentMacrosActionPerformed
+        showDocumentMacroMenu();
+    }//GEN-LAST:event_cmdDocumentMacrosActionPerformed
+
+    private void showDocumentMacroMenu() {
+        if (this.dto == null || this.dto.getId() == null) {
+            JOptionPane.showMessageDialog(this, "Bitte speichern Sie die Akte vor dem Ausführen eines Dokumentenmakros.", "Dokumentenmakros", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        JPopupMenu menu = new JPopupMenu();
+        try {
+            List<DocumentMacro> macros = DocumentMacroManager.getInstance().getEnabledMacros();
+            if (macros.isEmpty()) {
+                JMenuItem empty = new JMenuItem("Keine aktiven Makros");
+                empty.setEnabled(false);
+                menu.add(empty);
+            } else {
+                for (DocumentMacro macro : macros) {
+                    JMenuItem item = new JMenuItem(nonEmpty(macro.getName(), "Unbenanntes Makro"));
+                    Icon icon = loadDocumentMacroMenuIcon("/icons/baseline_webhook_black_48dp.png");
+                    if (icon != null) {
+                        item.setIcon(icon);
+                    }
+                    item.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            executeDocumentMacros(Collections.singletonList(macro));
+                        }
+                    });
+                    menu.add(item);
+                }
+            }
+            menu.addSeparator();
+            JMenuItem settings = new JMenuItem("Makros verwalten...");
+            settings.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png")));
+            settings.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    openDocumentMacroSettingsDialog();
+                }
+            });
+            menu.add(settings);
+            menu.show(cmdDocumentMacros, 0, cmdDocumentMacros.getHeight());
+        } catch (Exception ex) {
+            log.error("Could not build document macro menu", ex);
+            JOptionPane.showMessageDialog(this, "Dokumentenmakros konnten nicht geladen werden: " + getMessage(ex), DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private Icon loadDocumentMacroMenuIcon(String resourcePath) {
+        java.net.URL resource = getClass().getResource(resourcePath);
+        if (resource == null) {
+            log.warn("Document macro menu icon resource not found: " + resourcePath);
+            return null;
+        }
+        return new javax.swing.ImageIcon(resource);
+    }
+
+    private void showDocumentMacroMenuIfPopupTrigger(MouseEvent evt) {
+        if (evt != null && evt.isPopupTrigger() && cmdDocumentMacros.isEnabled()) {
+            showDocumentMacroMenu();
+            evt.consume();
+        }
+    }
+
+    private void openDocumentMacroSettingsDialog() {
+        try {
+            DocumentMacroSettingsDialog dlg = new DocumentMacroSettingsDialog(EditorsRegistry.getInstance().getMainWindow());
+            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+            dlg.setVisible(true);
+        } catch (Exception ex) {
+            log.error("Could not open document macro settings dialog", ex);
+            JOptionPane.showMessageDialog(this, "Makroeinstellungen konnten nicht geöffnet werden: " + getMessage(ex), DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void executeDocumentMacros(List<DocumentMacro> macros) {
+        if (macros == null || macros.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Bitte mindestens ein Makro auswählen.", "Dokumentenmakros", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        if (documentMacroExecutionRunning) {
+            log.warn("Document macro execution ignored because another execution is still running. Case=" + (dto == null ? "null" : dto.getFileNumber()));
+            JOptionPane.showMessageDialog(this, "Es läuft bereits eine Makroausführung.", "Dokumentenmakros", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        documentMacroExecutionRunning = true;
+        cmdDocumentMacros.setEnabled(false);
+        javax.swing.SwingWorker<DocumentMacroExecutionResult, Void> worker = new javax.swing.SwingWorker<DocumentMacroExecutionResult, Void>() {
+            @Override
+            protected DocumentMacroExecutionResult doInBackground() {
+                DocumentMacroExecutor executor = new DocumentMacroExecutor(dto, createDocumentMacroCallback());
+                return executor.execute(macros);
+            }
+
+            @Override
+            protected void done() {
+                documentMacroExecutionRunning = false;
+                cmdDocumentMacros.setEnabled(!readOnly && (dto == null || !dto.isArchived()));
+                try {
+                    showDocumentMacroExecutionResult(get());
+                } catch (Exception ex) {
+                    log.error("Document macro execution failed", ex);
+                    JOptionPane.showMessageDialog(ArchiveFilePanel.this, "Makroausführung fehlgeschlagen: " + getMessage(ex), "Dokumentenmakros", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        };
+        worker.execute();
+    }
+
+    private DocumentMacroExecutor.DocumentCreatedCallback createDocumentMacroCallback() {
+        return new DocumentMacroExecutor.DocumentCreatedCallback() {
+            @Override
+            public void documentCreated(ArchiveFileDocumentsBean document) {
+                // The executor publishes a DocumentAddedEvent, which updates this panel.
+            }
+
+            @Override
+            public void convertToPdf(ArchiveFileDocumentsBean document) throws Exception {
+                ArchiveFilePanel.this.convertDocumentToPdf(document);
+            }
+        };
+    }
+
+    private void showDocumentMacroExecutionResult(DocumentMacroExecutionResult result) {
+        String message = result.getDocumentsCreated() + " Dokument(e), " + result.getDueDatesCreated() + " Fälligkeit(en) erstellt.";
+        if (result.hasWarnings()) {
+            message += "\n\nHinweise:\n" + String.join("\n", result.getWarnings());
+        }
+        if (result.hasErrors()) {
+            message += "\n\nFehler:\n" + String.join("\n", result.getErrors());
+            JOptionPane.showMessageDialog(this, message, "Dokumentenmakros", JOptionPane.WARNING_MESSAGE);
+        } else if (result.hasWarnings()) {
+            JOptionPane.showMessageDialog(this, message, "Dokumentenmakros", JOptionPane.WARNING_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, message, "Dokumentenmakros", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    private String getMessage(Exception ex) {
+        if (ex.getMessage() != null && !ex.getMessage().trim().isEmpty()) {
+            return ex.getMessage();
+        }
+        return ex.getClass().getSimpleName();
+    }
+
+    private String nonEmpty(String value, String fallback) {
+        return value == null || value.trim().isEmpty() ? fallback : value;
+    }
 
     public void openSelectedDocument(ArchiveFileDocumentsBean value) {
         try {
@@ -10052,6 +10235,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdClearSearch;
     private javax.swing.JButton cmdCopyCaseNumber;
     private javax.swing.JButton cmdDocumentTagFilter;
+    private javax.swing.JButton cmdDocumentMacros;
     private javax.swing.JButton cmdDuplicateAccountEntry;
     private javax.swing.JButton cmdEditAccountEntry;
     private javax.swing.JButton cmdEditCaseNumber;

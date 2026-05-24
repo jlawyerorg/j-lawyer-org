@@ -691,6 +691,7 @@ import com.jdimension.jlawyer.client.events.ServicesEvent;
 import com.jdimension.jlawyer.client.events.SystemStatusEvent;
 import com.jdimension.jlawyer.client.launcher.DocumentMonitorDialog;
 import com.jdimension.jlawyer.client.launcher.DocumentObserver;
+import com.jdimension.jlawyer.client.macros.DocumentMacroSettingsDialog;
 import com.jdimension.jlawyer.client.plugins.calculation.CalculationPlugin;
 import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginDialog;
 import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginUtil;
@@ -763,6 +764,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         this.initialized = System.currentTimeMillis();
         // for some reason, initComponents resets the bounds
         initComponents();
+        setupDocumentMacroSettingsMenu();
 
         this.initializing = false;
 
@@ -902,6 +904,34 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         }));
         
+    }
+
+    private void setupDocumentMacroSettingsMenu() {
+        JMenuItem item = new JMenuItem("Dokumentenmakros");
+        Icon icon = loadMenuIcon("/icons/baseline_webhook_black_48dp.png");
+        if (icon != null) {
+            item.setIcon(icon);
+        }
+        item.addActionListener((ActionEvent evt) -> {
+            try {
+                DocumentMacroSettingsDialog dlg = new DocumentMacroSettingsDialog(this);
+                FrameUtils.centerDialog(dlg, this);
+                dlg.setVisible(true);
+            } catch (Exception ex) {
+                log.error("Could not open document macro settings", ex);
+                JOptionPane.showMessageDialog(this, "Dokumentenmakros konnten nicht geöffnet werden: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        this.mnuDocumentOptions.add(item);
+    }
+
+    private Icon loadMenuIcon(String resourcePath) {
+        java.net.URL resource = getClass().getResource(resourcePath);
+        if (resource == null) {
+            log.warn("Menu icon resource not found: " + resourcePath);
+            return null;
+        }
+        return new ImageIcon(resource);
     }
 
     public void restoreWindowSize() {
