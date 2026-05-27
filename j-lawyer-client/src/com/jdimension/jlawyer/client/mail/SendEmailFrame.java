@@ -2963,10 +2963,6 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, this.contextArchiveFile, createDocumentTag, this.contextArchiveFileFolder, this.currentDraftDocumentId, (String) this.cmbPriority.getSelectedItem());
             }
 
-            // Reset draft document ID as it will be deleted by SendAction/SendEncryptedAction after successful send
-            // Auto-save timer is already stopped, so no new draft will be created
-            this.currentDraftDocumentId = null;
-
         } else if (this.chkEncryption.isSelected()) {
             int crypto = 0;
             try {
@@ -2985,6 +2981,20 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         } else {
             a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, createDocumentTag, (String) this.cmbPriority.getSelectedItem());
         }
+
+        // Hand the auto-saved draft id to the send action so it gets deleted after a
+        // successful send - regardless of whether the mail is stored as a document in
+        // the case. Reset the field so handleWindowClosing() won't ask about it and no
+        // new draft is created (the auto-save timer is already stopped above).
+        if (a != null && this.currentDraftDocumentId != null) {
+            if (a instanceof SendAction) {
+                ((SendAction) a).setDraftDocumentId(this.currentDraftDocumentId);
+            } else if (a instanceof SendEncryptedAction) {
+                ((SendEncryptedAction) a).setDraftDocumentId(this.currentDraftDocumentId);
+            }
+        }
+        this.currentDraftDocumentId = null;
+
         a.start();
 
         UserSettings uset = UserSettings.getInstance();
