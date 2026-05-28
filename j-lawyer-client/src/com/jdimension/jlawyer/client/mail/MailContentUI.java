@@ -1663,22 +1663,20 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
             contentUI.setContentType(ContentTypes.TEXT_HTML);
 
-            if (msg.getFromEmail() != null) {
-                boolean warn = UserSettings.getInstance().getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true);
-                if (warn) {
-                    ClientSettings s = ClientSettings.getInstance();
-                    String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
-                    int index = whitelist.indexOf(msg.getFromEmail());
-                    if (index > -1) {
-                        warn = false;
-                    }
+            boolean warn = UserSettings.getInstance().getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true);
+            if (warn && msg.getFromEmail() != null) {
+                ClientSettings s = ClientSettings.getInstance();
+                String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
+                int index = whitelist.indexOf(msg.getFromEmail());
+                if (index > -1) {
+                    warn = false;
                 }
-                if (!warn) {
-                    contentUI.setBody(htmlContent, ContentTypes.TEXT_HTML);
-                } else {
-                    contentUI.setCachedHtml(htmlContent);
-                    contentUI.setBody(HTML_WARNING, ContentTypes.TEXT_HTML);
-                }
+            }
+            if (!warn) {
+                contentUI.setBody(htmlContent, ContentTypes.TEXT_HTML);
+            } else {
+                contentUI.setCachedHtml(htmlContent);
+                contentUI.setBody(HTML_WARNING, ContentTypes.TEXT_HTML);
             }
 
         } else {
