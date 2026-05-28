@@ -79,7 +79,8 @@
       "Bash(awk -F: '{if \\($1 < 6609\\) print}')",
       "Read(//home/jens/.claude/**)",
       "Read(//usr/lib/jvm/**)",
-      "Bash(find / -name javap -type f)"
+      "Bash(find / -name javap -type f)",
+      "Bash(openspec spec *)"
     ],
     "deny": [],
     "ask": []

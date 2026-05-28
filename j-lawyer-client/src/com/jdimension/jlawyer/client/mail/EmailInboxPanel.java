@@ -691,6 +691,7 @@ import com.jdimension.jlawyer.client.utils.*;
 import com.jdimension.jlawyer.email.CommonMailUtils;
 import static com.jdimension.jlawyer.email.CommonMailUtils.SSL_FACTORY;
 import com.jdimension.jlawyer.persistence.AddressBean;
+import com.formdev.flatlaf.FlatClientProperties;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
@@ -709,10 +710,8 @@ import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Image;
-import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.awt.dnd.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.ByteArrayOutputStream;
@@ -726,6 +725,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Hashtable;
+import java.util.Map;
 import java.util.Set;
 import java.util.List;
 import java.util.Properties;
@@ -745,10 +745,13 @@ import javax.mail.internet.MimeUtility;
 import javax.mail.util.SharedByteArrayInputStream;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DropMode;
+import javax.swing.JComponent;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JTree;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.SwingUtilities;
+import javax.swing.TransferHandler;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
@@ -757,12 +760,13 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import org.apache.log4j.Logger;
+import org.jlawyer.themes.ServerColorTheme;
 
 /**
  *
  * @author jens
  */
-public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExecutor, ThemeableEditor, StatusBarProvider, DropTargetListener, DragGestureListener {
+public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExecutor, ThemeableEditor, StatusBarProvider {
 
     private static final Logger log = Logger.getLogger(EmailInboxPanel.class.getName());
 
@@ -778,7 +782,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
     private HashMap<MailboxSetup, DefaultMutableTreeNode> inboxFolderNodes = new HashMap<>();
 
-    private DragSource dragSource = null;
     private javax.swing.Timer serverPollingTimer = null;
     private final java.util.concurrent.atomic.AtomicBoolean pollingInProgress = new java.util.concurrent.atomic.AtomicBoolean(false);
 
@@ -881,17 +884,157 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         }, "InitMailFolders").start();
 
         this.treeFolders.setDropMode(DropMode.ON);
+        this.treeFolders.putClientProperty(FlatClientProperties.STYLE,
+                Map.of("dropCellForeground", ServerColorTheme.COLOR_LOGO_GREEN));
 
         Runtime.getRuntime().addShutdownHook(new Thread(new EmailObjectsCleanUp(this.idleThreads, this.stores)));
 
-        DropTarget dt = new DropTarget(this.treeFolders, this);
+        this.tblMails.setDragEnabled(true);
+        this.tblMails.setTransferHandler(new TransferHandler() {
+            @Override
+            public int getSourceActions(JComponent c) {
+                return MOVE;
+            }
 
-        this.dragSource = new DragSource();
-        DragGestureRecognizer dgr
-                = dragSource.createDefaultDragGestureRecognizer(
-                        this.tblMails,
-                        DnDConstants.ACTION_MOVE,
-                        this);
+            @Override
+            protected Transferable createTransferable(JComponent c) {
+                return new MessagesTransferable(tblMails.getSelectedRows());
+            }
+        });
+
+        this.treeFolders.setTransferHandler(new TransferHandler() {
+            @Override
+            public boolean canImport(TransferSupport support) {
+                if (!support.isDrop()) {
+                    return false;
+                }
+                JTree.DropLocation dl = (JTree.DropLocation) support.getDropLocation();
+                TreePath path = dl.getPath();
+                if (path == null) {
+                    return false;
+                }
+                DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
+                return node.getUserObject() instanceof FolderContainer;
+            }
+
+            @Override
+            public boolean importData(TransferSupport support) {
+                if (!canImport(support)) {
+                    return false;
+                }
+                int scrollToRow = -1;
+                try {
+                    Transferable tr = support.getTransferable();
+                    Object transferred = tr.getTransferData(DataFlavor.stringFlavor);
+                    int[] selectedRows = (int[]) transferred;
+
+                    JTree.DropLocation dl = (JTree.DropLocation) support.getDropLocation();
+                    DefaultMutableTreeNode current = (DefaultMutableTreeNode) dl.getPath().getLastPathComponent();
+                    if (!(current.getUserObject() instanceof FolderContainer)) {
+                        log.warn("dropping a mail on a node with user object of invalid type");
+                        return true;
+                    }
+                    FolderContainer target = (FolderContainer) current.getUserObject();
+
+                    // Check if first message is server-based
+                    MessageContainer firstMsgCheck = (MessageContainer) tblMails.getValueAt(selectedRows[0], 2);
+                    if (firstMsgCheck != null && firstMsgCheck.isServerBased()) {
+                        // Prevent cross-mailbox moves which would cause data loss
+                        String targetMailboxId = target.getMailboxId();
+                        for (int i = 0; i < selectedRows.length; i++) {
+                            MessageContainer mc = (MessageContainer) tblMails.getValueAt(selectedRows[i], 2);
+                            if (mc != null && mc.isServerBased() && !mc.getMailboxId().equals(targetMailboxId)) {
+                                log.warn("Cannot move messages between different mailboxes");
+                                javax.swing.JOptionPane.showMessageDialog(EmailInboxPanel.this, "Nachrichten können nicht zwischen verschiedenen Postfächern verschoben werden.", "Verschieben nicht möglich", javax.swing.JOptionPane.WARNING_MESSAGE);
+                                return true;
+                            }
+                        }
+                        // Server-based drag & drop move
+                        try {
+                            ClientSettings settings = ClientSettings.getInstance();
+                            com.jdimension.jlawyer.services.JLawyerServiceLocator locator =
+                                com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                            for (int i = selectedRows.length - 1; i >= 0; i--) {
+                                MessageContainer mc = (MessageContainer) tblMails.getValueAt(selectedRows[i], 2);
+                                if (mc != null && mc.isServerBased()) {
+                                    locator.lookupEmailServiceRemote().moveMessage(mc.getMailboxId(), mc.getMessageRef(), target.getFolderId());
+                                }
+                            }
+                        } catch (Exception ex) {
+                            log.error("Error moving messages via server", ex);
+                        }
+                        scrollToRow = tblMails.getSelectedRow();
+                        for (int i = selectedRows.length - 1; i >= 0; i--) {
+                            try {
+                                ((javax.swing.table.DefaultTableModel) tblMails.getModel()).removeRow(tblMails.convertRowIndexToModel(selectedRows[i]));
+                            } catch (Throwable t) { log.error(t); }
+                        }
+                        return true;
+                    }
+
+                    // Legacy IMAP path
+                    Folder targetFolder = target.getFolder();
+                    if (!targetFolder.isOpen()) {
+                        System.out.println("open 16");
+                        targetFolder.open(Folder.READ_WRITE);
+                    }
+
+                    Message[] copyMsg = new Message[selectedRows.length];
+                    for (int i = selectedRows.length - 1; i > -1; i--) {
+                        int sel = selectedRows[i];
+                        MessageContainer msgC = (MessageContainer) tblMails.getValueAt(sel, 2);
+                        copyMsg[i] = msgC.getMessage();
+                    }
+                    Folder origin = copyMsg[0].getFolder();
+                    if (!origin.isOpen()) {
+                        System.out.println("open 17");
+                        origin.open(Folder.READ_WRITE);
+                    }
+                    origin.copyMessages(copyMsg, targetFolder);
+                    origin.setFlags(copyMsg,
+                            new Flags(Flags.Flag.DELETED),
+                            true);
+
+                    scrollToRow = tblMails.getSelectedRow();
+                    for (int i = selectedRows.length - 1; i > -1; i--) {
+
+                        try {
+
+                            int sel = selectedRows[i];
+                            ((DefaultTableModel) tblMails.getModel()).removeRow(tblMails.convertRowIndexToModel(sel));
+
+                        } catch (Throwable t) {
+                            log.error("unable to move mail, skipping...", t);
+                        }
+                    }
+
+                    ((DefaultTreeModel) treeFolders.getModel()).nodeStructureChanged(current);
+
+                    try {
+                        if (!EmailUtils.isInbox(targetFolder)) {
+                            EmailUtils.closeIfIMAP(targetFolder);
+                        }
+                    } catch (Throwable t) {
+                        log.error(t);
+                    }
+
+                    int sortCol = -1;
+                    List<? extends SortKey> sortKeys = tblMails.getRowSorter().getSortKeys();
+                    if (sortKeys != null) {
+                        if (!sortKeys.isEmpty()) {
+                            sortCol = sortKeys.get(0).getColumn();
+                        }
+                    }
+                    target.resetCaches();
+                    treeFoldersValueChangedImpl(new TreeSelectionEvent(tblMails, treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow, null, false);
+
+                    return true;
+                } catch (Exception e) {
+                    log.error(e);
+                    return false;
+                }
+            }
+        });
 
         this.initializing = false;
         log.info("finished initialization: " + (System.currentTimeMillis() - start));
@@ -3593,166 +3736,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, tblMails.getSelectedRow(), null, true);
             }
         }
-    }
-
-    @Override
-    public void dragEnter(DropTargetDragEvent dtde) {
-//        Point p=dtde.getLocation();
-//        //TreePath tp=this.treeFolders.getPathForLocation(p.x, p.y);
-//
-//        int row = treeFolders.getRowForLocation(p.x, p.y);
-//        JTree.DropLocation dropLocation = treeFolders.getDropLocation();
-//        if (dropLocation != null
-//                && dropLocation.getChildIndex() == -1
-//                && treeFolders.getRowForPath(dropLocation.getPath()) == row) {
-//            // this row represents the current drop location
-//            // so render it specially, perhaps with a different color
-//            treeFolders.getComponentAt(p.x, p.y).setForeground(Color.GREEN);
-//
-//        }
-
-    }
-
-    @Override
-    public void dragOver(DropTargetDragEvent dtde) {
-
-    }
-
-    @Override
-    public void dropActionChanged(DropTargetDragEvent dtde) {
-        //System.out.println("Drop Action Changed");
-    }
-
-    @Override
-    public void dragExit(DropTargetEvent dte) {
-        //System.out.println("Drag Exit");
-    }
-
-    @Override
-    public void drop(DropTargetDropEvent dtde) {
-
-        int scrollToRow = -1;
-        try {
-            // Ok, get the dropped object and try to figure out what it is
-            Transferable tr = dtde.getTransferable();
-            Object transferred = tr.getTransferData(DataFlavor.stringFlavor);
-            dtde.acceptDrop(DnDConstants.ACTION_MOVE);
-            int[] selectedRows = (int[]) transferred;
-
-            Point p = dtde.getLocation();
-            DefaultMutableTreeNode current = (DefaultMutableTreeNode) this.treeFolders.getClosestPathForLocation(p.x, p.y).getLastPathComponent();
-            if (!(current.getUserObject() instanceof FolderContainer)) {
-                log.warn("dropping a mail on a node with user object of invalid type");
-                dtde.dropComplete(true);
-                return;
-            }
-            FolderContainer target = (FolderContainer) current.getUserObject();
-
-            // Check if first message is server-based
-            MessageContainer firstMsgCheck = (MessageContainer) this.tblMails.getValueAt(selectedRows[0], 2);
-            if (firstMsgCheck != null && firstMsgCheck.isServerBased()) {
-                // Prevent cross-mailbox moves which would cause data loss
-                String targetMailboxId = target.getMailboxId();
-                for (int i = 0; i < selectedRows.length; i++) {
-                    MessageContainer mc = (MessageContainer) this.tblMails.getValueAt(selectedRows[i], 2);
-                    if (mc != null && mc.isServerBased() && !mc.getMailboxId().equals(targetMailboxId)) {
-                        log.warn("Cannot move messages between different mailboxes");
-                        javax.swing.JOptionPane.showMessageDialog(this, "Nachrichten können nicht zwischen verschiedenen Postfächern verschoben werden.", "Verschieben nicht möglich", javax.swing.JOptionPane.WARNING_MESSAGE);
-                        dtde.dropComplete(true);
-                        return;
-                    }
-                }
-                // Server-based drag & drop move
-                try {
-                    ClientSettings settings = ClientSettings.getInstance();
-                    com.jdimension.jlawyer.services.JLawyerServiceLocator locator =
-                        com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    for (int i = selectedRows.length - 1; i >= 0; i--) {
-                        MessageContainer mc = (MessageContainer) this.tblMails.getValueAt(selectedRows[i], 2);
-                        if (mc != null && mc.isServerBased()) {
-                            locator.lookupEmailServiceRemote().moveMessage(mc.getMailboxId(), mc.getMessageRef(), target.getFolderId());
-                        }
-                    }
-                } catch (Exception ex) {
-                    log.error("Error moving messages via server", ex);
-                }
-                scrollToRow = tblMails.getSelectedRow();
-                for (int i = selectedRows.length - 1; i >= 0; i--) {
-                    try {
-                        ((javax.swing.table.DefaultTableModel) this.tblMails.getModel()).removeRow(this.tblMails.convertRowIndexToModel(selectedRows[i]));
-                    } catch (Throwable t) { log.error(t); }
-                }
-                dtde.dropComplete(true);
-                return;
-            }
-
-            // Legacy IMAP path
-            Folder targetFolder = target.getFolder();
-            if (!targetFolder.isOpen()) {
-                System.out.println("open 16");
-                targetFolder.open(Folder.READ_WRITE);
-            }
-
-            Message[] copyMsg = new Message[selectedRows.length];
-            for (int i = selectedRows.length - 1; i > -1; i--) {
-                int sel = selectedRows[i];
-                MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(sel, 2);
-                copyMsg[i] = msgC.getMessage();
-            }
-            Folder origin = copyMsg[0].getFolder();
-            if (!origin.isOpen()) {
-                System.out.println("open 17");
-                origin.open(Folder.READ_WRITE);
-            }
-            origin.copyMessages(copyMsg, targetFolder);
-            origin.setFlags(copyMsg,
-                    new Flags(Flags.Flag.DELETED),
-                    true);
-
-            scrollToRow = tblMails.getSelectedRow();
-            for (int i = selectedRows.length - 1; i > -1; i--) {
-
-                try {
-
-                    int sel = selectedRows[i];
-                    ((DefaultTableModel) this.tblMails.getModel()).removeRow(this.tblMails.convertRowIndexToModel(sel));
-
-                } catch (Throwable t) {
-                    log.error("unable to move mail, skipping...", t);
-                }
-            }
-
-            ((DefaultTreeModel) this.treeFolders.getModel()).nodeStructureChanged(current);
-            dtde.dropComplete(true);
-
-            try {
-                if (!EmailUtils.isInbox(targetFolder)) {
-                    EmailUtils.closeIfIMAP(targetFolder);
-                }
-            } catch (Throwable t) {
-                log.error(t);
-            }
-
-            int sortCol = -1;
-            List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
-            if (sortKeys != null) {
-                if (!sortKeys.isEmpty()) {
-                    sortCol = sortKeys.get(0).getColumn();
-                }
-            }
-            target.resetCaches();
-            this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow, null, false);
-
-        } catch (Exception e) {
-            log.error(e);
-            dtde.rejectDrop();
-        }
-    }
-
-    @Override
-    public void dragGestureRecognized(DragGestureEvent dge) {
-        int[] sel = this.tblMails.getSelectedRows();
-        this.dragSource.startDrag(dge, null, new MessagesTransferable(sel), null);
     }
 
     @Override
