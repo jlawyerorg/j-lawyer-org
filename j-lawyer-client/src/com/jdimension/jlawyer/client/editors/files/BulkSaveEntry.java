@@ -674,6 +674,7 @@ import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.TemplatesUtil;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
@@ -1056,8 +1057,31 @@ public class BulkSaveEntry extends javax.swing.JPanel {
             this.lblDownloaded.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/lassists.png")));
     }
     
-    public void setDocumentTags(List<String> tagsInUse) {
-        this.buildPopup(this.cmdDocTags, this.popDocTags, tagsInUse, this.lblSelectedTags);
+    private final java.util.Set<String> docMvTagNames = new java.util.HashSet<>();
+
+    public void setDocumentTags(List<String> tagsInUse, HashMap<String, AppOptionGroupBean[]> mvTagDefs, String mvTagPrefix) {
+        // expand multi-value (list) tags into per-value entries "tagName: value", mixed with the regular tags
+        List<String> expandedTags = new ArrayList<>();
+        this.docMvTagNames.clear();
+        if (mvTagDefs != null && mvTagPrefix != null) {
+            for (java.util.Map.Entry<String, AppOptionGroupBean[]> entry : mvTagDefs.entrySet()) {
+                String tagName = entry.getKey().substring(mvTagPrefix.length());
+                this.docMvTagNames.add(tagName);
+                if (entry.getValue() != null) {
+                    for (AppOptionGroupBean ogb : entry.getValue()) {
+                        expandedTags.add(tagName + ": " + ogb.getValue());
+                    }
+                }
+            }
+        }
+        if (tagsInUse != null) {
+            for (String t : tagsInUse) {
+                if (!this.docMvTagNames.contains(t) && !expandedTags.contains(t)) {
+                    expandedTags.add(t);
+                }
+            }
+        }
+        this.buildPopup(this.cmdDocTags, this.popDocTags, expandedTags, this.lblSelectedTags);
     }
     
     public List<String> getDocumentTags() {
@@ -1096,6 +1120,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
                 allValues.setText(ComponentUtils.getSelectedPopupMenuItemsAsString(popup));
             });
             ((JCheckBoxMenuItem) me.getComponent()).addActionListener((ActionEvent e) -> {
+                BulkSaveDialog.deselectListTagSiblings(popup, e.getSource(), this.docMvTagNames);
                 boolean selected = false;
                 for (MenuElement me1 : popup.getSubElements()) {
                     JCheckBoxMenuItem mi = (JCheckBoxMenuItem) me1.getComponent();
