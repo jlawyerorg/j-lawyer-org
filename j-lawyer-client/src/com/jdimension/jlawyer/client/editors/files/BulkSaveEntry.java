@@ -748,7 +748,8 @@ public class BulkSaveEntry extends javax.swing.JPanel {
             @Override
             public void focusLost(java.awt.event.FocusEvent evt) {
                 if (documentFilename != null) {
-                    documentFilenameNew = FileUtils.preserveExtension(documentFilename, txtFileNameNew.getText());
+                    String committed = FileUtils.sanitizeFileName(txtFileNameNew.getText());
+                    documentFilenameNew = FileUtils.preserveExtension(documentFilename, committed);
                     txtFileNameNew.setText(documentFilenameNew);
                     updateFilenameOutline();
                 }
@@ -960,8 +961,9 @@ public class BulkSaveEntry extends javax.swing.JPanel {
     private void fileNameChanged() {
         this.documentFilenameNew=this.txtFileNameNew.getText();
 
-        // use may have typed invalid characters
-        String checkedName=FileUtils.sanitizeFileName(this.documentFilenameNew);
+        // use may have typed invalid characters - lenient variant keeps spaces
+        // intact while typing; final trim/collapse runs on focus loss / save
+        String checkedName=FileUtils.sanitizeFileNameForInput(this.documentFilenameNew);
         if(!checkedName.equals(this.txtFileNameNew.getText())) {
             int caretPosition=this.txtFileNameNew.getCaretPosition();
             this.txtFileNameNew.setText(checkedName);
@@ -1191,7 +1193,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
      */
     public String getDocumentFilenameNew() {
         if(this.documentFilename!=null && this.documentFilenameNew!=null)
-            return FileUtils.preserveExtension(this.documentFilename, this.documentFilenameNew);
+            return FileUtils.preserveExtension(this.documentFilename, FileUtils.sanitizeFileName(this.documentFilenameNew));
         return documentFilenameNew;
     }
 
