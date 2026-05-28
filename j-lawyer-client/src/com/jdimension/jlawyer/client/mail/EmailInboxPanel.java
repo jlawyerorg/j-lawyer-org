@@ -691,7 +691,6 @@ import com.jdimension.jlawyer.client.utils.*;
 import com.jdimension.jlawyer.email.CommonMailUtils;
 import static com.jdimension.jlawyer.email.CommonMailUtils.SSL_FACTORY;
 import com.jdimension.jlawyer.persistence.AddressBean;
-import com.formdev.flatlaf.FlatClientProperties;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
@@ -725,7 +724,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Hashtable;
-import java.util.Map;
 import java.util.Set;
 import java.util.List;
 import java.util.Properties;
@@ -884,8 +882,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         }, "InitMailFolders").start();
 
         this.treeFolders.setDropMode(DropMode.ON);
-        this.treeFolders.putClientProperty(FlatClientProperties.STYLE,
-                Map.of("dropCellForeground", ServerColorTheme.COLOR_LOGO_GREEN));
 
         Runtime.getRuntime().addShutdownHook(new Thread(new EmailObjectsCleanUp(this.idleThreads, this.stores)));
 
