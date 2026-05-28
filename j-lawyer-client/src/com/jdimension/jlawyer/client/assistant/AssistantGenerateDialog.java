@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.assistant;
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.AiResponse;
+import com.jdimension.jlawyer.ai.Configuration;
 import com.jdimension.jlawyer.ai.ConfigurationData;
 import com.jdimension.jlawyer.ai.ConfigurationUtils;
 import com.jdimension.jlawyer.ai.InputData;
@@ -827,9 +828,26 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                 JOptionPane.showMessageDialog(this, "Die angebundenen Assistenten unterstützen keine Übersetzungen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            // use first capability that can transcribe
-            this.translateCapability = capabilities.get(capabilities.keySet().iterator().next()).get(0);
-            this.translateConfig = capabilities.keySet().iterator().next();
+            // there may be more than one capability that can translate (e.g. one
+            // based on DeepL and one based on an LLM). Prefer a capability that does
+            // not require a DEEPL_TOKEN configuration; fall back to the first one.
+            for (AssistantConfig config : capabilities.keySet()) {
+                for (AiCapability cap : capabilities.get(config)) {
+                    if (this.translateCapability == null) {
+                        // first capability serves as fallback
+                        this.translateCapability = cap;
+                        this.translateConfig = config;
+                    }
+                    if (!hasDeeplTokenConfiguration(cap)) {
+                        this.translateCapability = cap;
+                        this.translateConfig = config;
+                        break;
+                    }
+                }
+                if (this.translateCapability != null && !hasDeeplTokenConfiguration(this.translateCapability)) {
+                    break;
+                }
+            }
 
         } catch (Exception ex) {
             log.error(ex);
@@ -883,6 +901,25 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
         ComponentUtils.decorateSplitPane(this.jSplitPane1);
         ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
         ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
+    }
+
+    /**
+     * Checks whether the given capability requires a DeepL token configuration,
+     * i.e. it carries a configuration entry with the id "DEEPL_TOKEN".
+     *
+     * @param capability the capability to inspect
+     * @return true if the capability has a DEEPL_TOKEN configuration
+     */
+    private boolean hasDeeplTokenConfiguration(AiCapability capability) {
+        if (capability == null || capability.getConfigurations() == null) {
+            return false;
+        }
+        for (Configuration config : capability.getConfigurations()) {
+            if ("DEEPL_TOKEN".equals(config.getId())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
