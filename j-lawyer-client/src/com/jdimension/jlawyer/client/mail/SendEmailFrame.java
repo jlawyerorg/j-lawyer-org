@@ -2855,7 +2855,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         if ("text/html".equalsIgnoreCase(contentType)) {
             String defaultStyle = WebViewHtmlEditorPanel.buildDefaultStyle(
                     UserSettings.getInstance().getSetting(UserSettings.CONF_EDITOR_DEFAULT_HTML_FONT, "Arial"),
-                    UserSettings.getInstance().getSetting(UserSettings.CONF_EDITOR_DEFAULT_HTML_FONTSIZE, "12"));
+                    UserSettings.getInstance().getSetting(UserSettings.CONF_EDITOR_DEFAULT_HTML_FONTSIZE, WebViewHtmlEditorPanel.DEFAULT_FONT_SIZE));
             editorContent = "<div style=\"" + defaultStyle + "\">" + editorContent + "</div>";
         }
 

@@ -243,7 +243,10 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
     };
 
     private static final String DEFAULT_FONT_FAMILY = "Arial";
-    private static final String DEFAULT_FONT_SIZE = "12";
+    // SunEditor and buildDefaultStyle operate in px (see suneditor-template.html fontSize list).
+    // 16px is roughly equivalent to the 12pt users expect from word processors; the previous
+    // 12px default rendered like ~9pt and looked too small.
+    public static final String DEFAULT_FONT_SIZE = "16";
 
     private static final LinkedHashMap<String, String> FONT_FAMILY_MAP = new LinkedHashMap<>();
     static {
