@@ -905,10 +905,15 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
             return;
         }
         
+        String name = this.cmbTemplates.getSelectedItem().toString();
+        int response = JOptionPane.showConfirmDialog(this, "Ordnerstruktur '" + name + "' wird gelöscht. Fortfahren?", "Dokumentordner löschen", JOptionPane.YES_NO_OPTION);
+        if (response == JOptionPane.NO_OPTION) {
+            return;
+        }
+        
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            String name = this.cmbTemplates.getSelectedItem().toString();
             locator.lookupArchiveFileServiceRemote().removeFolderTemplate(name);
             this.cmbTemplates.removeItem(name);
 
