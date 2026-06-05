@@ -919,10 +919,11 @@ public class ViewEmailFrame extends javax.swing.JFrame {
                     dlg.setContentType(contentType);
                     if (contentType.toLowerCase().startsWith("text/html")) {
                         dlg.setBody("", EmailUtils.getQuotedBody(EmailUtils.html2Text(this.content.getBody()), "text/plain", decodedTo, dto.getDate()), "text/plain");
+                        dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), "text/html", decodedTo, dto.getDate()), "text/html");
                     } else {
                         dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), "text/plain", decodedTo, dto.getDate()), "text/plain");
+                        dlg.setBody("", EmailUtils.getQuotedBody(EmailUtils.text2Html(this.content.getBody()), "text/html", decodedTo, dto.getDate()), "text/html");
                     }
-                    dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), "text/html", decodedTo, dto.getDate()), "text/html");
                     if (dto.getMessageId() != null) {
                         String refs = dto.getReferences() != null ? dto.getReferences() + " " + dto.getMessageId() : dto.getMessageId();
                         dlg.setThreadingHeaders(dto.getMessageId(), refs);
@@ -984,10 +985,11 @@ public class ViewEmailFrame extends javax.swing.JFrame {
                     dlg.setContentType(contentType);
                     if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
                         dlg.setBody("", EmailUtils.getQuotedBody(EmailUtils.html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
+                        dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_HTML, decodedTo, origM.getSentDate()), ContentTypes.TEXT_HTML);
                     } else {
                         dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
+                        dlg.setBody("", EmailUtils.getQuotedBody(EmailUtils.text2Html(this.content.getBody()), ContentTypes.TEXT_HTML, decodedTo, origM.getSentDate()), ContentTypes.TEXT_HTML);
                     }
-                    dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_HTML, decodedTo, origM.getSentDate()), ContentTypes.TEXT_HTML);
                 } // end legacy else
 
             } catch (Exception ex) {
@@ -1014,10 +1016,11 @@ public class ViewEmailFrame extends javax.swing.JFrame {
                 dlg.setContentType(contentType);
                 if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
                     dlg.setBody("", EmailUtils.getQuotedBody(EmailUtils.html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedTo, this.outlookMsg.getDate()), ContentTypes.TEXT_PLAIN);
+                    dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_HTML, decodedTo, this.outlookMsg.getDate()), ContentTypes.TEXT_HTML);
                 } else {
                     dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, decodedTo, this.outlookMsg.getDate()), ContentTypes.TEXT_PLAIN);
+                    dlg.setBody("", EmailUtils.getQuotedBody(EmailUtils.text2Html(this.content.getBody()), ContentTypes.TEXT_HTML, decodedTo, this.outlookMsg.getDate()), ContentTypes.TEXT_HTML);
                 }
-                dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_HTML, decodedTo, this.outlookMsg.getDate()), ContentTypes.TEXT_HTML);
 
             } catch (Exception ex) {
                 log.error(ex);
@@ -1064,10 +1067,11 @@ public class ViewEmailFrame extends javax.swing.JFrame {
                     dlg.setContentType(contentType);
                     if (contentType.toLowerCase().startsWith("text/html")) {
                         dlg.setBody("", EmailUtils.getQuotedBody(EmailUtils.html2Text(this.content.getBody()), "text/plain", decodedFrom, dto.getDate()), "text/plain");
+                        dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), "text/html", decodedFrom, dto.getDate()), "text/html");
                     } else {
                         dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), "text/plain", decodedFrom, dto.getDate()), "text/plain");
+                        dlg.setBody("", EmailUtils.getQuotedBody(EmailUtils.text2Html(this.content.getBody()), "text/html", decodedFrom, dto.getDate()), "text/html");
                     }
-                    dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), "text/html", decodedFrom, dto.getDate()), "text/html");
                     try {
                         com.jdimension.jlawyer.client.settings.ClientSettings settings = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
                         com.jdimension.jlawyer.services.JLawyerServiceLocator locator = com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -1114,10 +1118,11 @@ public class ViewEmailFrame extends javax.swing.JFrame {
                     dlg.setContentType(contentType);
                     if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
                         dlg.setBody("", EmailUtils.getQuotedBody(EmailUtils.html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
+                        dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_HTML, decodedFrom, m.getSentDate()), ContentTypes.TEXT_HTML);
                     } else {
                         dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
+                        dlg.setBody("", EmailUtils.getQuotedBody(EmailUtils.text2Html(this.content.getBody()), ContentTypes.TEXT_HTML, decodedFrom, m.getSentDate()), ContentTypes.TEXT_HTML);
                     }
-                    dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_HTML, decodedFrom, m.getSentDate()), ContentTypes.TEXT_HTML);
 
                     try {
                         // try forwarding attachments
@@ -1172,10 +1177,11 @@ public class ViewEmailFrame extends javax.swing.JFrame {
                 dlg.setContentType(contentType);
                 if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
                     dlg.setBody("", EmailUtils.getQuotedBody(EmailUtils.html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, from, this.outlookMsg.getDate()), ContentTypes.TEXT_PLAIN);
+                    dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_HTML, from, this.outlookMsg.getDate()), ContentTypes.TEXT_HTML);
                 } else {
                     dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, from, this.outlookMsg.getDate()), ContentTypes.TEXT_PLAIN);
+                    dlg.setBody("", EmailUtils.getQuotedBody(EmailUtils.text2Html(this.content.getBody()), ContentTypes.TEXT_HTML, from, this.outlookMsg.getDate()), ContentTypes.TEXT_HTML);
                 }
-                dlg.setBody("", EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_HTML, from, this.outlookMsg.getDate()), ContentTypes.TEXT_HTML);
 
                 try {
                     List<OutlookFileAttachment> attachments = this.outlookMsg.fetchTrueAttachments();
