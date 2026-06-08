@@ -9823,7 +9823,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
 
                 for (ArchiveFileDocumentsBean doc : selected) {
-                    docTexts.append("Dokument \"").append(doc.getName()).append("\" vom ").append(dfDay.format(doc.getCreationDate())).append(System.lineSeparator());
+                    docTexts.append("Dokument \"").append(doc.getName()).append("\" (ID ").append(doc.getId()).append(") vom ").append(dfDay.format(doc.getCreationDate())).append(System.lineSeparator());
                     docTexts.append("************************").append(System.lineSeparator()).append(System.lineSeparator());
                     docTexts.append(remote.getDocumentPreview(doc.getId(), DocumentPreview.TYPE_TEXT).getText());
                     docTexts.append(System.lineSeparator()).append(System.lineSeparator());
