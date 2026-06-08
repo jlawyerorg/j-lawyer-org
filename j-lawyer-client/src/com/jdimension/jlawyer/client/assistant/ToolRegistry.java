@@ -143,7 +143,9 @@ public class ToolRegistry {
                         new ToolParameter("page", "integer", "Seitennummer (1-basiert, Standard: 1)", false))));
 
         TOOLS.add(new ToolDefinition("get_document_text", "Extrahiert den Textinhalt eines Dokuments (PDF oder Textdatei).",
-                Arrays.asList(new ToolParameter("documentId", "string", "ID des Dokuments. Es darf kein Dokumentname als Parameter übergeben werden.", true))));
+                Arrays.asList(
+                        new ToolParameter("documentId", "string", "ID des Dokuments. Es darf kein Dokumentname als Parameter übergeben werden.", true),
+                        new ToolParameter("maxChars", "integer", "Optional: maximale Anzahl der vom Dokumentanfang zurückzugebenden Zeichen. Nützlich, wenn nur der Anfang benötigt wird (z. B. Kontaktdaten von Seite 1). Standard und Obergrenze: 30000.", false))));
 
         // New read-only tools
         TOOLS.add(new ToolDefinition("get_case_by_id", "Ruft Details einer Akte anhand der internen ID ab.",
@@ -2031,10 +2033,19 @@ public class ToolRegistry {
 
         String text = svc.getDocumentPreview(documentId, DocumentPreview.TYPE_TEXT).getText();
 
-        int maxLength = 30000;
+        final int HARD_CAP = 30000;
+        int effectiveMax = HARD_CAP;
+        if (args.get("maxChars") != null) {
+            int maxChars = ((Number) args.get("maxChars")).intValue();
+            if (maxChars <= 0) {
+                return ToolJsonUtils.error("maxChars muss größer als 0 sein, angegeben: " + maxChars);
+            }
+            effectiveMax = Math.min(maxChars, HARD_CAP);
+        }
+
         boolean truncated = false;
-        if (text.length() > maxLength) {
-            text = text.substring(0, maxLength);
+        if (text.length() > effectiveMax) {
+            text = text.substring(0, effectiveMax);
             truncated = true;
         }
 

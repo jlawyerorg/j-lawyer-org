@@ -1484,7 +1484,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) tp.getLastPathComponent();
 
         if (selNode.getUserObject() != null && selNode.getUserObject() instanceof BeaFolder) {
-            mainSplitter.setRightComponent(this.splitterFolderDetails);
+            int mainSplitterPosition = mainSplitter.getDividerLocation();
+            if (mainSplitter.getRightComponent() != this.splitterFolderDetails) {
+                mainSplitter.setRightComponent(this.splitterFolderDetails);
+            }
             BeaFolder folder = (BeaFolder) selNode.getUserObject();
             log.info("treeFoldersValueChangedImpl called for folder: " + folder.getName() + " (id=" + folder.getId() + "), thread: " + Thread.currentThread().getName());
 
@@ -1506,7 +1509,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 this.tblMails.setDefaultRenderer(Object.class, new BeaMessageTableCellRenderer());
 
                 ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-                LoadBeaFolderAction a = new LoadBeaFolderAction(dlg, folder, tblMails, sortCol, scrollToRow, this.mainSplitter);
+                LoadBeaFolderAction a = new LoadBeaFolderAction(dlg, folder, tblMails, sortCol, scrollToRow, this.mainSplitter, mainSplitterPosition);
 
                 final int currentSortCol = sortCol;
                 a.setCallback(() -> {

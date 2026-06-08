@@ -76,7 +76,11 @@
       "Bash(identify /home/jens/dev/j-lawyer-org/j-lawyer-client/src/icons16/material/baseline_chat_blue_48dp.png)",
       "Bash(python3 -c \"from PIL import Image; img = Image.open\\('/home/jens/dev/j-lawyer-org/j-lawyer-client/src/icons16/material/baseline_chat_blue_48dp.png'\\); print\\(f'{img.width}x{img.height}'\\)\")",
       "Bash(mysql *)",
-      "Bash(awk -F: '{if \\($1 < 6609\\) print}')"
+      "Bash(awk -F: '{if \\($1 < 6609\\) print}')",
+      "Read(//home/jens/.claude/**)",
+      "Read(//usr/lib/jvm/**)",
+      "Bash(find / -name javap -type f)",
+      "Bash(openspec spec *)"
     ],
     "deny": [],
     "ask": []

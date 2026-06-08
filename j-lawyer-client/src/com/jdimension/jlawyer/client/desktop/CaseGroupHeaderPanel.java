@@ -127,7 +127,7 @@ public class CaseGroupHeaderPanel extends javax.swing.JPanel {
             UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, true);
 
         StringBuilder displayText = new StringBuilder();
-        displayText.append("<html><b>").append(dateStr).append("</b> | ").append(caseNumber).append(" - ").append(caseName);
+        displayText.append("<html><b>").append(dateStr).append(" | ").append(caseNumber).append(" - ").append(caseName).append("</b>");
         if (!compactView && !caseReason.isEmpty()) {
             displayText.append("<br/>").append(caseReason);
         }
@@ -264,10 +264,7 @@ public class CaseGroupHeaderPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

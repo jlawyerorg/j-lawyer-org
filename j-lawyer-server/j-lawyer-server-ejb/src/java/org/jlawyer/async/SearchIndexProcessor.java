@@ -852,7 +852,7 @@ public class SearchIndexProcessor implements MessageListener {
             }
 
         } catch (Throwable t) {
-            log.error("Could not process search index request: " + message.toString(), t);
+            log.error("Could not process search index request — message will be DROPPED: " + message.toString(), t);
 
         }
 

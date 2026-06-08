@@ -1118,7 +1118,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
         } catch (Exception ex) {
             log.error("Could not submit instant message to server", ex);
-            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Nachricht konnte nicht gesendet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Nachrichten konnten nicht geladen werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -1557,6 +1557,16 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
     }
 
     private void scheduleRemovalFromMessagesToMe(String messageId, String mentionId) {
+        // Skip auto-removal while the user is actively looking at the "an mich" tab:
+        // otherwise the BoxLayout shifts under the cursor while the user is marking
+        // several messages as done in a row, causing the wrong message to be hit.
+        // The "an mich" tab is then only updated via explicit cmdRefresh.
+        boolean panelInForeground = EditorsRegistry.getInstance().getCurrentEditor() instanceof MessagingCenterPanel;
+        boolean toMeTabActive = this.tabsPane.getSelectedComponent() == this.jScrollPane2;
+        if (panelInForeground && toMeTabActive) {
+            return;
+        }
+
         // Check if the mention belongs to the current user
         String currentUser = UserSettings.getInstance().getCurrentUser().getPrincipalId();
 

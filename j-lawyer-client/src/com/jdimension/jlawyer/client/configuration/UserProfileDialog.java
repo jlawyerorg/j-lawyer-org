@@ -978,10 +978,10 @@ public class UserProfileDialog extends javax.swing.JDialog {
         // Populate default HTML font size combobox
         String[] fontSizes = WebViewHtmlEditorPanel.getAvailableFontSizes();
         this.cmbDefaultHtmlFontSize.setModel(new DefaultComboBoxModel<>(fontSizes));
-        String savedSize = uset.getSetting(UserSettings.CONF_EDITOR_DEFAULT_HTML_FONTSIZE, "12");
+        String savedSize = uset.getSetting(UserSettings.CONF_EDITOR_DEFAULT_HTML_FONTSIZE, WebViewHtmlEditorPanel.DEFAULT_FONT_SIZE);
         this.cmbDefaultHtmlFontSize.setSelectedItem(savedSize);
         if (this.cmbDefaultHtmlFontSize.getSelectedIndex() < 0) {
-            this.cmbDefaultHtmlFontSize.setSelectedItem("12");
+            this.cmbDefaultHtmlFontSize.setSelectedItem(WebViewHtmlEditorPanel.DEFAULT_FONT_SIZE);
         }
 
         // Initialize AI tool permissions tab

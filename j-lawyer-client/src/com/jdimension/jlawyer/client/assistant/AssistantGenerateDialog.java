@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.assistant;
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.AiResponse;
+import com.jdimension.jlawyer.ai.Configuration;
 import com.jdimension.jlawyer.ai.ConfigurationData;
 import com.jdimension.jlawyer.ai.ConfigurationUtils;
 import com.jdimension.jlawyer.ai.InputData;
@@ -735,9 +736,9 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
 
     private AiCapability generateCapability = null;
     private AssistantConfig generateConfig = null;
-    
-    private boolean interrupted=false;
-    
+
+    private boolean interrupted = false;
+
     // variables used for placeholder support in prompts
     private List<PartyTypeBean> allPartyTypes = null;
     private Collection<String> formPlaceHolders = null;
@@ -746,9 +747,9 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
     private AppUserBean caseAssistant = null;
     private List<PartiesTriplet> parties = new ArrayList<>();
     private ArchiveFileBean selectedCase = null;
-    
+
     // used for calling document creation dialog
-    private ArchiveFilePanel caseView=null;
+    private ArchiveFilePanel caseView = null;
 
     /**
      * Creates new form AssistantGenerateDialog
@@ -764,23 +765,23 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
         FrameUtils.centerDialog(this, parent);
 
     }
-    
+
     public AssistantGenerateDialog(ArchiveFilePanel caseView, ArchiveFileBean selectedCase, JDialog parent, boolean modal) {
         super(parent, modal);
         this.initialize(caseView, selectedCase);
         FrameUtils.centerDialog(this, parent);
 
     }
-    
+
     private void initialize(ArchiveFilePanel caseView, ArchiveFileBean selectedCase) {
         initComponents();
 
         this.progress.setIndeterminate(false);
         this.progress.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
-        
-        this.caseView=caseView;
-        this.cmdNewDocument.setEnabled(this.caseView!=null);
-        
+
+        this.caseView = caseView;
+        this.cmdNewDocument.setEnabled(this.caseView != null);
+
         this.selectedCase = selectedCase;
         if (this.selectedCase != null) {
             try {
@@ -815,7 +816,6 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
         }
 
         ComponentUtils.restoreDialogSize(this);
-        
 
         this.cmbDevices.removeAllItems();
         AudioUtils.populateMicrophoneDevices(this.cmbDevices);
@@ -827,9 +827,26 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                 JOptionPane.showMessageDialog(this, "Die angebundenen Assistenten unterstützen keine Übersetzungen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            // use first capability that can transcribe
-            this.translateCapability = capabilities.get(capabilities.keySet().iterator().next()).get(0);
-            this.translateConfig = capabilities.keySet().iterator().next();
+            // there may be more than one capability that can translate (e.g. one
+            // based on DeepL and one based on an LLM). Prefer a capability that does
+            // not require a DEEPL_TOKEN configuration; fall back to the first one.
+            for (AssistantConfig config : capabilities.keySet()) {
+                for (AiCapability cap : capabilities.get(config)) {
+                    if (this.translateCapability == null) {
+                        // first capability serves as fallback
+                        this.translateCapability = cap;
+                        this.translateConfig = config;
+                    }
+                    if (!hasDeeplTokenConfiguration(cap)) {
+                        this.translateCapability = cap;
+                        this.translateConfig = config;
+                        break;
+                    }
+                }
+                if (this.translateCapability != null && !hasDeeplTokenConfiguration(this.translateCapability)) {
+                    break;
+                }
+            }
 
         } catch (Exception ex) {
             log.error(ex);
@@ -883,6 +900,25 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
         ComponentUtils.decorateSplitPane(this.jSplitPane1);
         ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
         ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
+    }
+
+    /**
+     * Checks whether the given capability requires a DeepL token configuration,
+     * i.e. it carries a configuration entry with the id "DEEPL_TOKEN".
+     *
+     * @param capability the capability to inspect
+     * @return true if the capability has a DEEPL_TOKEN configuration
+     */
+    private boolean hasDeeplTokenConfiguration(AiCapability capability) {
+        if (capability == null || capability.getConfigurations() == null) {
+            return false;
+        }
+        for (Configuration config : capability.getConfigurations()) {
+            if ("DEEPL_TOKEN".equals(config.getId())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -1196,11 +1232,11 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
         AssistantAccess ingo = AssistantAccess.getInstance();
         try {
 
-            this.interrupted=false;
-        
+            this.interrupted = false;
+
             this.cmdExecutePrompt.setEnabled(false);
             this.cmdInterrupt.setEnabled(true);
-            
+
             List<ParameterData> params = new ArrayList<>();
             if (transcribeCapability.getParameters() != null && !transcribeCapability.getParameters().isEmpty()) {
                 params = getParameters(transcribeCapability);
@@ -1209,9 +1245,9 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
             final List<ParameterData> fParams = params;
 
             this.progress.setIndeterminate(true);
-            
-            String taResultString=this.taResult.getText();
-            int insertPosition=this.taResult.getCaretPosition();
+
+            String taResultString = this.taResult.getText();
+            int insertPosition = this.taResult.getCaretPosition();
 
             AtomicReference<AiRequestStatus> resultRef = new AtomicReference<>();
 
@@ -1246,8 +1282,9 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                                 }
                                 taResult.setText(taResultString);
                                 taResult.insert(resultString.toString(), insertPosition);
-                                if(interrupted)
+                                if (interrupted) {
                                     break;
+                                }
                             }
                             status.setStatus(res.getStatus());
                             status.setStatusDetails(res.getStatusMessage());
@@ -1328,7 +1365,8 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                     try {
                         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(translateConfig, translateCapability.getRequestType(), translateCapability.getActionId(), translateCapability.getModelRef(), taPrompt.getText(), null, translateCapability.isAsyncRecommended(), fParams, inputs, null, null, null);
+                        //AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(translateConfig, translateCapability.getRequestType(), translateCapability.getActionId(), translateCapability.getModelRef(), taPrompt.getText(), null, translateCapability.isAsyncRecommended(), fParams, inputs, null, null, null);
+                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(translateConfig, translateCapability.getRequestType(), translateCapability.getActionId(), translateCapability.getModelRef(), taPrompt.getText(), null, false, fParams, inputs, null, null, null);
                         resultRef.set(status);
 
                     } catch (Throwable t) {
@@ -1346,11 +1384,13 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                             taResult.insert(status.getStatus() + ": " + status.getStatusDetails(), taResult.getCaretPosition());
                         } else {
                             StringBuilder resultString = new StringBuilder();
-                            for (OutputData o : status.getResponse().getOutputData()) {
-                                if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
-                                    resultString.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
-                                }
+                            if (status.getResponse() != null) {
+                                for (OutputData o : status.getResponse().getOutputData()) {
+                                    if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
+                                        resultString.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
+                                    }
 
+                                }
                             }
                             taResult.insert(resultString.toString(), taResult.getCaretPosition());
                         }
@@ -1369,11 +1409,11 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
     }//GEN-LAST:event_cmdTranslateActionPerformed
 
     private void cmdInterruptActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdInterruptActionPerformed
-        this.interrupted=true;
+        this.interrupted = true;
     }//GEN-LAST:event_cmdInterruptActionPerformed
 
     private void cmdNewDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewDocumentActionPerformed
-        if(this.caseView!=null)
+        if (this.caseView != null)
             this.caseView.newDocumentDialog(null, null, false, null, null, null, null, null, this.taResult.getText());
     }//GEN-LAST:event_cmdNewDocumentActionPerformed
 
@@ -1610,6 +1650,6 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
 
     @Override
     public void processOutput(Map<String, String> output) {
-        
+
     }
 }

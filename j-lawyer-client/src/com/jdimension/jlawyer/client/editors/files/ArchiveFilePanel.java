@@ -799,6 +799,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -9822,7 +9823,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
 
                 for (ArchiveFileDocumentsBean doc : selected) {
-                    docTexts.append("Dokument \"").append(doc.getName()).append("\" vom ").append(dfDay.format(doc.getCreationDate())).append(System.lineSeparator());
+                    docTexts.append("Dokument \"").append(doc.getName()).append("\" (ID ").append(doc.getId()).append(") vom ").append(dfDay.format(doc.getCreationDate())).append(System.lineSeparator());
                     docTexts.append("************************").append(System.lineSeparator()).append(System.lineSeparator());
                     docTexts.append(remote.getDocumentPreview(doc.getId(), DocumentPreview.TYPE_TEXT).getText());
                     docTexts.append(System.lineSeparator()).append(System.lineSeparator());
@@ -9925,9 +9926,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         protected void processDrag(DropTargetDragEvent dtde) {
-            if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+            if (OutlookDropHelper.isOutlookDrop(dtde.getCurrentDataFlavors())) {
                 dtde.acceptDrag(DnDConstants.ACTION_COPY);
-            } else if (OutlookDropHelper.isOutlookDrop(dtde.getCurrentDataFlavors())) {
+            } else if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
                 dtde.acceptDrag(DnDConstants.ACTION_COPY);
             } else {
                 dtde.rejectDrag();
@@ -9961,7 +9962,29 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         public void drop(DropTargetDropEvent dtde) {
 
             Transferable transferable = dtde.getTransferable();
-            if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+            if (OutlookDropHelper.isOutlookDrop(transferable.getTransferDataFlavors())) {
+                dtde.acceptDrop(dtde.getDropAction());
+                try {
+                    List<File> tempFiles = OutlookDropHelper.extractOutlookFiles(transferable);
+                    if (!tempFiles.isEmpty()) {
+                        ThreadUtils.setWaitCursor(p);
+
+                        ArrayList<File> files = new ArrayList<>(tempFiles);
+                        ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+                        pi.setShowCancelButton(true);
+                        UploadDocumentsAction a = new UploadDocumentsAction(pi, p, dto, caseFolderPanel1, files, caseFolderPanel1.getFoldersListPanel().getRootFolder(), null);
+
+                        a.start();
+                        dtde.dropComplete(true);
+                    } else {
+                        log.error("Outlook drop: no files could be extracted");
+                        dtde.dropComplete(false);
+                    }
+                } catch (Exception ex) {
+                    log.error("Outlook drop error", ex);
+                    dtde.dropComplete(false);
+                }
+            } else if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
                 dtde.acceptDrop(dtde.getDropAction());
                 try {
 
@@ -9991,29 +10014,23 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     }
 
                 } catch (Exception ex) {
-                    log.error("file drop error", ex);
-                }
-            } else if (OutlookDropHelper.isOutlookDrop(transferable.getTransferDataFlavors())) {
-                dtde.acceptDrop(dtde.getDropAction());
-                try {
-                    List<File> tempFiles = OutlookDropHelper.extractOutlookFiles(transferable);
-                    if (!tempFiles.isEmpty()) {
-                        ThreadUtils.setWaitCursor(p);
-
-                        ArrayList<File> files = new ArrayList<>(tempFiles);
-                        ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-                        pi.setShowCancelButton(true);
-                        UploadDocumentsAction a = new UploadDocumentsAction(pi, p, dto, caseFolderPanel1, files, caseFolderPanel1.getFoldersListPanel().getRootFolder(), null);
-
-                        a.start();
-                        dtde.dropComplete(true);
+                    if (isVirtualFileDropFailure(ex, transferable)) {
+                        log.warn("Drop aborted: source advertised javaFileListFlavor but did not deliver any native data (typical for New Outlook for Windows, Outlook Web App, RDP/Citrix sessions, or drags from email reading pane)");
+                        javax.swing.JOptionPane.showMessageDialog(p,
+                                "Die Quellanwendung hat einen Drag & Drop signalisiert, aber keine verwertbaren Datei-Inhalte mitgesendet.\n\n"
+                                + "Mögliche Ursachen:\n"
+                                + "    • \"Neues Outlook für Windows\" (statt klassischem Outlook)\n"
+                                + "    • Outlook im Webbrowser (Outlook Web App)\n"
+                                + "    • Outlook über RDP / Citrix / Terminalserver\n"
+                                + "    • Drag aus dem Lesebereich statt aus der Nachrichtenliste\n\n"
+                                + "Workaround: Bitte ziehen Sie die E-Mail oder Datei zunächst auf den Desktop oder in einen Ordner\n"
+                                + "und von dort nach j-lawyer.",
+                                com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT,
+                                javax.swing.JOptionPane.WARNING_MESSAGE);
                     } else {
-                        log.error("Outlook drop: no files could be extracted");
-                        dtde.dropComplete(false);
+                        log.error("file drop error", ex);
+                        logTransferFlavors("file drop error - offered flavors:", transferable);
                     }
-                } catch (Exception ex) {
-                    log.error("Outlook drop error", ex);
-                    dtde.dropComplete(false);
                 }
             } else {
 
@@ -10029,6 +10046,47 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     log.error("Error determining transferable flavor", th);
                 }
                 dtde.rejectDrop();
+            }
+        }
+
+        private boolean isVirtualFileDropFailure(Exception ex, Transferable transferable) {
+            if (!(ex instanceof IOException)) {
+                return false;
+            }
+            String msg = ex.getMessage();
+            if (msg == null || !msg.toLowerCase().contains("no native data")) {
+                return false;
+            }
+            DataFlavor[] flavors = transferable.getTransferDataFlavors();
+            if (flavors == null) {
+                return false;
+            }
+            if (OutlookDropHelper.isOutlookDrop(flavors)) {
+                return false;
+            }
+            for (DataFlavor f : flavors) {
+                String name = f.getHumanPresentableName();
+                if (name != null && name.toLowerCase().contains("file-list")) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private void logTransferFlavors(String message, Transferable transferable) {
+            try {
+                DataFlavor[] flavors = transferable.getTransferDataFlavors();
+                log.error(message + " count=" + (flavors == null ? 0 : flavors.length));
+                if (flavors != null) {
+                    for (int i = 0; i < flavors.length; i++) {
+                        DataFlavor df = flavors[i];
+                        log.error("  [" + i + "] name='" + df.getHumanPresentableName()
+                                + "' repr=" + df.getDefaultRepresentationClassAsString()
+                                + " mime=" + df.getMimeType());
+                    }
+                }
+            } catch (Throwable th) {
+                log.error("Error logging transferable flavors", th);
             }
         }
     }

@@ -788,6 +788,17 @@ public class SendEncryptedAction extends ProgressableAction {
         this.draftDocumentId = draftDocumentId;
     }
 
+    /**
+     * Sets the id of the auto-saved draft document that should be removed from
+     * the case after this mail has been sent successfully. May be {@code null}
+     * if no draft exists.
+     *
+     * @param draftDocumentId the draft document id, or {@code null}
+     */
+    public void setDraftDocumentId(String draftDocumentId) {
+        this.draftDocumentId = draftDocumentId;
+    }
+
     @Override
     public int getMax() {
         return this.mails.size() * 7;
@@ -946,8 +957,11 @@ public class SendEncryptedAction extends ProgressableAction {
                 }
             }
 
-            // Delete draft document after all emails have been sent successfully
-            if (this.draftDocumentId != null && this.archiveFile != null) {
+            // Delete draft document after all emails have been sent successfully -
+            // independent of whether the sent mail is stored as a document in the
+            // case (auto-save creates the draft regardless of that option, so it
+            // must be cleaned up regardless too)
+            if (this.draftDocumentId != null) {
                 try {
                     this.progress("Lösche Entwurf...");
                     ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();

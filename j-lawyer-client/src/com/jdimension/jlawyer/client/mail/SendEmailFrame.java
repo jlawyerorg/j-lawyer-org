@@ -1556,6 +1556,11 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                     }
                 }
 
+                // Disable pretty-printing: otherwise Jsoup inserts newlines/indentation between
+                // block elements, which the HTML editor (SunEditor) turns into empty <p> </p>
+                // paragraphs, producing excessive spacing.
+                doc.outputSettings().prettyPrint(false);
+
                 // Set the updated HTML in JEditorPane
                 this.hp.setText(doc.html());
 
@@ -2844,6 +2849,21 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         waitForHtmlContentOnMac(ed);
         String editorContent = ed.getText();
 
+        // Wrap the HTML body in a div carrying the user's configured default font-family and font-size.
+        // SunEditor may emit paragraphs that only carry font-size but no font-family (e.g. for lines
+        // typed into a template). Inside the editor this is invisible because Java/WebView falls back
+        // to a sans-serif default, but receiving mail clients like Thunderbird default to a serif font
+        // (Times), making the inserted text look different and larger than the surrounding template
+        // content. The outer div provides a baseline that elements without their own font styling
+        // inherit; elements with explicit inline font-family/font-size still override it via CSS
+        // specificity, so existing styled signature blocks render unchanged.
+        if ("text/html".equalsIgnoreCase(contentType)) {
+            String defaultStyle = WebViewHtmlEditorPanel.buildDefaultStyle(
+                    UserSettings.getInstance().getSetting(UserSettings.CONF_EDITOR_DEFAULT_HTML_FONT, "Arial"),
+                    UserSettings.getInstance().getSetting(UserSettings.CONF_EDITOR_DEFAULT_HTML_FONTSIZE, WebViewHtmlEditorPanel.DEFAULT_FONT_SIZE));
+            editorContent = "<div style=\"" + defaultStyle + "\">" + editorContent + "</div>";
+        }
+
         if (mails.isEmpty()) {
             ThreadUtils.showErrorDialog(this, "Liste der Empfänger kann nicht leer sein.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             return;
@@ -2948,10 +2968,6 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, this.contextArchiveFile, createDocumentTag, this.contextArchiveFileFolder, this.currentDraftDocumentId, (String) this.cmbPriority.getSelectedItem());
             }
 
-            // Reset draft document ID as it will be deleted by SendAction/SendEncryptedAction after successful send
-            // Auto-save timer is already stopped, so no new draft will be created
-            this.currentDraftDocumentId = null;
-
         } else if (this.chkEncryption.isSelected()) {
             int crypto = 0;
             try {
@@ -2970,6 +2986,20 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         } else {
             a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, createDocumentTag, (String) this.cmbPriority.getSelectedItem());
         }
+
+        // Hand the auto-saved draft id to the send action so it gets deleted after a
+        // successful send - regardless of whether the mail is stored as a document in
+        // the case. Reset the field so handleWindowClosing() won't ask about it and no
+        // new draft is created (the auto-save timer is already stopped above).
+        if (a != null && this.currentDraftDocumentId != null) {
+            if (a instanceof SendAction) {
+                ((SendAction) a).setDraftDocumentId(this.currentDraftDocumentId);
+            } else if (a instanceof SendEncryptedAction) {
+                ((SendEncryptedAction) a).setDraftDocumentId(this.currentDraftDocumentId);
+            }
+        }
+        this.currentDraftDocumentId = null;
+
         a.start();
 
         UserSettings uset = UserSettings.getInstance();
@@ -3415,6 +3445,10 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                                 if (body != null) {
                                     body.prepend(EmailUtils.text2Html(t) + "<br/>" + this.initialPreSignatureHtml + "<br/>" + StringUtils.nonEmpty(ms.getEmailSignature()) + "<br/>");
                                 }
+                                // Disable pretty-printing: otherwise Jsoup inserts newlines/indentation between
+                                // block elements, which the HTML editor (SunEditor) turns into empty <p> </p>
+                                // paragraphs, producing excessive spacing.
+                                doc.outputSettings().prettyPrint(false);
                                 this.hp.setText(doc.html());
                                 this.hp.setCaretPosition(Math.max(0, cursorIndex));
                                 this.tp.setText("");
@@ -3457,6 +3491,10 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                                 if (body != null) {
                                     body.prepend(t + "<br/>" + this.initialPreSignatureHtml + "<br/>" + HtmlUtils.stripHeadAndBodyTags(StringUtils.nonEmpty(ms.getEmailSignature())));
                                 }
+                                // Disable pretty-printing: otherwise Jsoup inserts newlines/indentation between
+                                // block elements, which the HTML editor (SunEditor) turns into empty <p> </p>
+                                // paragraphs, producing excessive spacing.
+                                doc.outputSettings().prettyPrint(false);
                                 this.hp.setText(doc.html());
                                 this.hp.setCaretPosition(Math.max(0, cursorIndex));
                                 this.tp.setText("");
