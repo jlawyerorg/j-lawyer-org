@@ -1225,6 +1225,10 @@ public class EmailUtils extends CommonMailUtils {
 
             // Parse the original HTML body
             Document doc = Jsoup.parse(body);
+            // Disable pretty-printing so html() below does not inject newlines/indentation
+            // between block elements; that whitespace survives the re-parse into replyDoc
+            // and the HTML editor (SunEditor) would turn it into empty <p> </p> paragraphs.
+            doc.outputSettings().prettyPrint(false);
 
             // Extract the <body> content
             Element bodyElement = doc.body();
@@ -1240,6 +1244,11 @@ public class EmailUtils extends CommonMailUtils {
 
             replyBody.append("<br/><br/>*** " + decodedTo + (dateString != null ? " schrieb am " + dateString : " schrieb") + ": ***<br/><br/>");
             replyBody.append(quotedBlock);
+
+            // Disable pretty-printing: otherwise Jsoup inserts newlines/indentation between
+            // block elements, which the HTML editor (SunEditor) turns into empty <p> </p>
+            // paragraphs, producing excessive spacing in replies/forwards.
+            replyDoc.outputSettings().prettyPrint(false);
 
             return replyDoc.outerHtml();
         } else {

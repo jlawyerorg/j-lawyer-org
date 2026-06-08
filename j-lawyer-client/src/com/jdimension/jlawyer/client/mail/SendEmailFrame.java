@@ -1556,6 +1556,11 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                     }
                 }
 
+                // Disable pretty-printing: otherwise Jsoup inserts newlines/indentation between
+                // block elements, which the HTML editor (SunEditor) turns into empty <p> </p>
+                // paragraphs, producing excessive spacing.
+                doc.outputSettings().prettyPrint(false);
+
                 // Set the updated HTML in JEditorPane
                 this.hp.setText(doc.html());
 
@@ -3440,6 +3445,10 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                                 if (body != null) {
                                     body.prepend(EmailUtils.text2Html(t) + "<br/>" + this.initialPreSignatureHtml + "<br/>" + StringUtils.nonEmpty(ms.getEmailSignature()) + "<br/>");
                                 }
+                                // Disable pretty-printing: otherwise Jsoup inserts newlines/indentation between
+                                // block elements, which the HTML editor (SunEditor) turns into empty <p> </p>
+                                // paragraphs, producing excessive spacing.
+                                doc.outputSettings().prettyPrint(false);
                                 this.hp.setText(doc.html());
                                 this.hp.setCaretPosition(Math.max(0, cursorIndex));
                                 this.tp.setText("");
@@ -3482,6 +3491,10 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                                 if (body != null) {
                                     body.prepend(t + "<br/>" + this.initialPreSignatureHtml + "<br/>" + HtmlUtils.stripHeadAndBodyTags(StringUtils.nonEmpty(ms.getEmailSignature())));
                                 }
+                                // Disable pretty-printing: otherwise Jsoup inserts newlines/indentation between
+                                // block elements, which the HTML editor (SunEditor) turns into empty <p> </p>
+                                // paragraphs, producing excessive spacing.
+                                doc.outputSettings().prettyPrint(false);
                                 this.hp.setText(doc.html());
                                 this.hp.setCaretPosition(Math.max(0, cursorIndex));
                                 this.tp.setText("");
