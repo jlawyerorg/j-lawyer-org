@@ -81,3 +81,6 @@
 
 # maven-shade generated artifact
 **/dependency-reduced-pom.xml
+
+# built EAR artifacts must never be committed
+*.ear
