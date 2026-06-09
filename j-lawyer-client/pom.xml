@@ -627,8 +627,21 @@
         <dependency><groupId>org.jlawyer</groupId><artifactId>j-lawyer-server-entities</artifactId></dependency>
         <dependency><groupId>org.jlawyer</groupId><artifactId>j-lawyer-server-api</artifactId></dependency>
         <dependency><groupId>org.jlawyer</groupId><artifactId>j-lawyer-fax</artifactId></dependency>
-        <dependency><groupId>org.jlawyer.cloud</groupId><artifactId>j-lawyer-cloud</artifactId></dependency>
-        <dependency><groupId>org.jlawyer.invoicing</groupId><artifactId>j-lawyer-invoicing</artifactId></dependency>
+        <dependency>
+            <groupId>org.jlawyer.cloud</groupId>
+            <artifactId>j-lawyer-cloud</artifactId>
+        </dependency>
+        <!-- invoicing is a self-contained shaded fat jar with mustang + a relocated
+             shaded.org.apache.pdfbox. Depend on the classified fat jar (so NetBeans uses the
+             real jar, not the thin reactor target/classes) and exclude all transitive deps so
+             mustang's pdfbox 3.x cannot leak and clash with the client's own pdfbox 2.0.24. -->
+        <dependency>
+            <groupId>org.jlawyer.invoicing</groupId>
+            <artifactId>j-lawyer-invoicing</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <classifier>shaded</classifier>
+            <exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions>
+        </dependency>
         <!-- proprietary beA wrapper (in-project file repo) -->
         <dependency>
             <groupId>jlawyer.thirdparty</groupId>
