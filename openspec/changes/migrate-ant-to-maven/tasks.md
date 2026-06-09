@@ -39,7 +39,7 @@
 - [x] 6.9 `scripts/finalize-swagger.py` applies the cross-cutting envelope (basicAuth + description, global security, per-op 401/403/500/400/404, default→200, strips generator int64 formats).
 - [x] 6.10 Equivalence gate **PASSES**: generated+finalized swagger.json is semantically identical to the golden (paths, params, bodies, models, response schemas, security, tags). The served `swagger-ui/swagger.json` is now the generated output; `mvn -Pswagger-regen` regenerates it and fails on contract drift.
 - [x] 6.11 Retired `tools/jaxrs-analyzer.jar` and the `org.jlawyer.io.rest.tools` post-processor classes.
-- [ ] 6.12 Optional follow-up: reimplement finalize/gate in Java (currently python3 via exec in the `swagger-regen` profile) to drop the python build dependency.
+- [x] 6.12 finalize/gate reimplemented in Java: `SwaggerFinalizer` (exec java goal in `swagger-regen`) + `SwaggerEquivalenceTest` (JUnit, runs every test build). Python build dependency dropped; the two python build scripts removed.
 
 ## 7. Desktop client
 - [x] 7.1 Standard Maven layout (`src/main/java`), `.java`+`.form` co-located (292 forms excluded from jar)
@@ -54,8 +54,8 @@
 ## 9. Scripts, cleanup, verification
 - [x] 9.1 `build-fast.sh`/`build.sh`/`clean.sh` rewritten to drive Maven (single root build; seeds maven-repo on first run)
 - [x] 9.2 `deploy.sh` points at `j-lawyer-server/j-lawyer-server-ear/target/j-lawyer-server.ear`
-- [ ] 9.3 Remove per-module `nbproject/`, `build.xml`, `build-impl.xml`, redundant `lib/` jars — deferred until after deploy verification (kept for now as a safety net / rollback reference)
-- [x] 9.4 `.gitignore` updated (`**/target/`; maven-repo committed). CLAUDE.md / project.md build sections: pending doc refresh.
+- [x] 9.3 Removed per-module `nbproject/`, `build.xml`, `build-impl.xml` and Ant manifest templates (so NetBeans treats modules as Maven). The committed `lib/` jars are intentionally kept as the seed source for the in-project `maven-repo`.
+- [x] 9.4 `.gitignore` updated (`**/target/`, `/maven-repo/`, shade artifact). CLAUDE.md and openspec/project.md build/NetBeans/Java-version sections refreshed to Maven/Java 17.
 - [x] 9.5 Full `mvn clean install` green on Java 17 (all 13 modules; EAR + client + backupmgr produced). `build-fast.sh` ~71s.
 - [x] 9.5b EAR deploys to WildFly 26.1.3 without errors; client launches (incl. JavaFX) via NetBeans/Maven Run; Swagger UI serves the (golden) spec. (Flyway stopper was a DB-state/out-of-order issue, resolved with a matching/fresh DB — not a build problem.)
 - [x] 9.6 EJB remote interfaces compile unchanged; server deploys cleanly (remote bindings active)

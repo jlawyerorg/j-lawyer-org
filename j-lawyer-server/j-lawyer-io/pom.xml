@@ -20,6 +20,21 @@
             <artifactId>swagger-annotations</artifactId>
             <version>1.6.14</version>
         </dependency>
+        <!-- used by the build-time swagger tooling (SwaggerFinalizer) and the equivalence
+             test; provided by WildFly at runtime, so not bundled in the WAR -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.16.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- canonical coordinates so Surefire auto-detects the JUnit 4 provider -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
+        </dependency>
         <!-- reactor libraries (bundled by the EAR, provided at compile time) -->
         <dependency>
             <groupId>org.jlawyer</groupId>
@@ -561,9 +576,9 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!-- finalize the generated spec (security + error-response envelope)
-                         into the served swagger.json, then assert semantic equivalence
-                         with the committed golden contract baseline. -->
+                    <!-- finalize the generated spec (security + uniform error envelope) into the
+                         served swagger.json. Pure Java (no python). The semantic-equivalence gate
+                         runs as SwaggerEquivalenceTest in the normal test phase on every build. -->
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
@@ -572,26 +587,13 @@
                             <execution>
                                 <id>finalize-swagger</id>
                                 <phase>process-classes</phase>
-                                <goals><goal>exec</goal></goals>
+                                <goals><goal>java</goal></goals>
                                 <configuration>
-                                    <executable>python3</executable>
+                                    <mainClass>org.jlawyer.io.rest.tools.SwaggerFinalizer</mainClass>
+                                    <classpathScope>compile</classpathScope>
                                     <arguments>
-                                        <argument>${maven.multiModuleProjectDirectory}/scripts/finalize-swagger.py</argument>
                                         <argument>${project.build.directory}/swagger-gen/swagger.json</argument>
                                         <argument>${project.basedir}/src/main/webapp/swagger-ui/swagger.json</argument>
-                                    </arguments>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>verify-swagger-equivalence</id>
-                                <phase>process-classes</phase>
-                                <goals><goal>exec</goal></goals>
-                                <configuration>
-                                    <executable>python3</executable>
-                                    <arguments>
-                                        <argument>${maven.multiModuleProjectDirectory}/scripts/swagger-equivalence-check.py</argument>
-                                        <argument>${project.basedir}/src/main/webapp/swagger-ui/swagger.json</argument>
-                                        <argument>${project.basedir}/src/test/resources/swagger.golden.json</argument>
                                     </arguments>
                                 </configuration>
                             </execution>

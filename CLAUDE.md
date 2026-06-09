@@ -27,64 +27,66 @@ j-lawyer.org is a legal practice management system built on Java EE architecture
 
 ## Build Commands
 
-### Full Build
-```bash
-./build.sh
-```
-Builds all modules in dependency order with tests. Requires:
-- Java 11+ (for most modules)
-- Java 8 (for j-lawyer-backupmgr)
-- openjfx package
-- Sipgate credentials (optional, for j-lawyer-fax tests)
-- FTP/SFTP credentials (optional, for j-lawyer-server-common tests)
+The whole project is a single **Maven reactor** built with **Java 17**
+(`/home/jens/bin/jdk-17.0.9-full/`). Dependencies that are not on Maven Central are
+resolved from an in-project file repository (`maven-repo/`, git-ignored) that is seeded
+on first build from the committed `lib/` jars by `scripts/seed-maven-repo.sh`. The
+server targets **WildFly 26.1.3** (`/home/jens/bin/wildfly-26.1.3.Final/`).
 
-### Fast Build (Skip Tests)
+### Full Build (with tests)
 ```bash
-./build-fast.sh
+./build.sh        # mvn clean install  (seeds maven-repo on first run)
 ```
-Builds all modules without running tests. Uses specific Java versions configured in the script.
+Optional integration-test credentials (Sipgate, FTP/SFTP) can be exported beforehand;
+they are skipped if unset.
 
-### Clean Build
+### Fast Build (skip tests)
 ```bash
-./clean.sh
+./build-fast.sh   # mvn -Dmaven.test.skip=true clean install
 ```
-Cleans all build artifacts from all modules.
+
+### Clean
+```bash
+./clean.sh        # mvn clean   (keeps the in-project maven-repo)
+```
 
 ### Individual Module Build
 ```bash
-# Server modules (require -Dj2ee.server.home=/path/to/jboss)
-ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server-entities/build.xml default
-ant -buildfile j-lawyer-server-api/build.xml default
-ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server/build.xml default test
-ant -buildfile j-lawyer-server-common/build.xml default
-
-# Client and common modules
-ant -buildfile j-lawyer-client/build.xml default
-ant -buildfile j-lawyer-io-common/build.xml default
-ant -buildfile j-lawyer-fax/build.xml default
-
-# Maven modules
-mvn -f j-lawyer-cloud/pom.xml install
-mvn -f j-lawyer-backupmgr/pom.xml clean package test
-mvn -f j-lawyer-invoicing/pom.xml install
+export JAVA_HOME=/home/jens/bin/jdk-17.0.9-full
+mvn -pl j-lawyer-server/j-lawyer-server-ejb -am install        # a module + its deps
+mvn -pl j-lawyer-client install                                # the desktop client
+mvn -pl j-lawyer-server/j-lawyer-server-ear -am install        # the deployable EAR
 ```
 
 ### Running Tests
 ```bash
-# Server EJB tests
-ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server/build.xml test
-
-# Individual module tests
-ant -buildfile j-lawyer-fax/build.xml default
-ant -buildfile j-lawyer-server-common/build.xml default
+mvn test                       # whole reactor
+mvn -pl j-lawyer-fax test      # a single module
 ```
+Test classes follow the pattern `*Test.java` (under `src/test/java`).
 
-Tests are located in `test/` directories within each module. Test classes follow the pattern `*Test.java`.
+### REST API spec (swagger.json)
+The served `j-lawyer-io` swagger.json is generated from swagger-core annotations and
+committed. After changing REST endpoints, regenerate and re-baseline it:
+```bash
+mvn -Pswagger-regen -pl j-lawyer-server/j-lawyer-io process-classes   # regenerate served spec
+# review the diff, then if intended, copy it over the golden baseline:
+cp j-lawyer-server/j-lawyer-io/src/main/webapp/swagger-ui/swagger.json \
+   j-lawyer-server/j-lawyer-io/src/test/resources/swagger.golden.json
+```
+`SwaggerEquivalenceTest` (runs in the normal test phase) fails the build if the served
+spec drifts from the golden baseline.
 
 ### Deployment
 ```bash
-./deploy.sh  # Copies j-lawyer-server.ear to WildFly deployments directory
+./deploy.sh  # copies j-lawyer-server/j-lawyer-server-ear/target/j-lawyer-server.ear to WildFly
 ```
+
+### NetBeans
+Open the root `pom.xml` as a Maven project. The Swing GUI Builder still works on the
+`.form` files (now under `src/main/java`). The former Ant `build.xml`/`nbproject/`
+files have been removed; if NetBeans recreates them it still has the project open as Ant
+— close it and reopen the `pom.xml`.
 
 ## Architecture
 
@@ -153,20 +155,19 @@ Tests are located in `test/` directories within each module. Test classes follow
 - **JAX-RS (RESTEasy)**: REST API implementation
 - **Java Swing**: Desktop UI framework
 - **FlatLaf**: Modern look and feel
-- **Build Tools**: Apache Ant (primary), Maven (select modules)
+- **Build Tools**: Apache Maven (single reactor, Java 17)
 
 ### Build Order
 
-Modules must be built in this order due to dependencies:
-1. j-lawyer-cloud (Maven)
-2. j-lawyer-fax (Ant)
-3. j-lawyer-server-common (Ant)
-4. j-lawyer-server-entities (Ant)
-5. j-lawyer-server-api (Ant)
-6. j-lawyer-server (Ant) - produces j-lawyer-server.ear
-7. j-lawyer-io-common (Ant)
-8. j-lawyer-client (Ant)
-9. j-lawyer-backupmgr (Maven)
+All modules build in one Maven reactor; the order is derived automatically from the
+declared inter-module dependencies (no manual ordering). The rough dependency order is:
+1. j-lawyer-fax, j-lawyer-server-common, j-lawyer-io-common (leaf libraries)
+2. j-lawyer-cloud, j-lawyer-invoicing (shaded Maven jars)
+3. j-lawyer-server-entities → j-lawyer-server-api
+4. j-lawyer-server (EAR aggregator): j-lawyer-server-ejb, j-lawyer-server-war,
+   j-lawyer-server-io, j-lawyer-io → j-lawyer-server-ear (produces j-lawyer-server.ear)
+5. j-lawyer-client
+6. j-lawyer-backupmgr (Java 17 + OpenJFX)
 
 ### Client-Server Communication
 
@@ -217,10 +218,14 @@ sh run.sh
 
 ### NetBeans Project Structure
 
-This codebase is developed using NetBeans IDE. Each module contains:
-- `build.xml`: Custom Ant build file
-- `nbproject/`: NetBeans project configuration
-- `nbproject/build-impl.xml`: Generated build implementation (imported by build.xml)
+This codebase is developed using NetBeans IDE as a **Maven** project (open the root
+`pom.xml`). Each module is a standard Maven module:
+- `pom.xml`: module build definition
+- `src/main/java`, `src/main/resources`, `src/test/java`: standard layout
+- Swing GUI Builder `.form` files live next to their `.java` under `src/main/java`
+- NetBeans Run/Debug for the client is mapped via `j-lawyer-client/nbactions.xml`
+
+The former Ant artifacts (`build.xml`, `nbproject/`) have been removed.
 
 ### Code Organization
 
