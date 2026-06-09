@@ -578,7 +578,6 @@
                                     <arguments>
                                         <argument>${maven.multiModuleProjectDirectory}/scripts/finalize-swagger.py</argument>
                                         <argument>${project.build.directory}/swagger-gen/swagger.json</argument>
-                                        <argument>${project.basedir}/src/test/resources/swagger.golden.json</argument>
                                         <argument>${project.basedir}/src/main/webapp/swagger-ui/swagger.json</argument>
                                     </arguments>
                                 </configuration>

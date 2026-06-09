@@ -814,6 +814,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Path("/users/byexternalid/{extId}")
     @RolesAllowed({"loginRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulUserV6.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response getUserByExternalId(@PathParam("extId") String extId) {
         try {
             InitialContext ic = new InitialContext();
@@ -892,6 +893,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Path("/users/update")
     @RolesAllowed({"adminRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulUserV6.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response updateUser(@io.swagger.annotations.ApiParam RestfulUserV6 userData) {
 
         try {
@@ -963,6 +965,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Path("/roles/{principalId}")
     @RolesAllowed({"adminRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulRoleV6.class, responseContainer="List")
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response getUserRoles(@PathParam("principalId") String principalId) {
         try {
             InitialContext ic = new InitialContext();
@@ -1001,6 +1004,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Path("/roles/{principalId}")
     @RolesAllowed({"adminRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulRoleV6.class, responseContainer="List")
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response updateUserRoles(@PathParam("principalId") String principalId, @io.swagger.annotations.ApiParam List<RestfulRoleV6> roles) {
         try {
             InitialContext ic = new InitialContext();

@@ -744,6 +744,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
     @Path("/byexternalid/{extIdIndex}/{extId}")
     @RolesAllowed({"readAddressRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v2.pojo.RestfulContactV2.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response getContactByExternalId(@PathParam("extIdIndex") int extIdIndex, @PathParam("extId") String extId) {
         try {
 
@@ -797,6 +798,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
     @Path("/byexternalid/{extId}")
     @RolesAllowed({"readAddressRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v2.pojo.RestfulContactV2.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response getContactByAnyExternalId(@PathParam("extId") String extId) {
         try {
 
@@ -913,6 +915,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
     @Path("/{id}/delete")
     @RolesAllowed({"removeAddressRole"})
     @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response deleteContact(@PathParam("id") String id) {
         try {
 

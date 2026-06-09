@@ -442,7 +442,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
     @Produces("message/rfc822")
     @Path("/mailboxes/{mailboxId}/messages/{messageRef}/eml")
     @RolesAllowed({"loginRole"})
-    @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiOperation(value="", response=byte[].class)
     public Response getMessageAsEml(@PathParam("mailboxId") String mailboxId, @PathParam("messageRef") String messageRef) {
         try {
             InitialContext ic = new InitialContext();

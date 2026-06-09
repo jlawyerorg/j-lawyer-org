@@ -805,7 +805,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/documents/{folder}/{template}/{caseId}")
     @RolesAllowed({"loginRole"})
-    @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiOperation(value="", response=String.class, responseContainer="List")
     public Response getPlaceHoldersForTemplate(@PathParam("folder") String folder, @PathParam("template") String template, @PathParam("caseId") String caseId) {
         try {
             InitialContext ic = new InitialContext();
@@ -947,7 +947,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
     @Path("email")
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @RolesAllowed({"loginRole"})
-    @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiOperation(value="", response=String.class, responseContainer="List")
     public Response listEmailTemplates() {
         try {
             InitialContext ic = new InitialContext();
@@ -999,6 +999,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @RolesAllowed({"loginRole"})
     @io.swagger.annotations.ApiOperation(value="", response=Object.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response getEmailFromTemplate(@PathParam("templateName") String templateName, @PathParam("caseId") String caseId) {
         try {
             InitialContext ic = new InitialContext();

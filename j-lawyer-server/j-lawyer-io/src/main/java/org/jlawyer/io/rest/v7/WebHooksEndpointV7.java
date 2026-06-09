@@ -750,6 +750,7 @@ public class WebHooksEndpointV7 implements WebHooksEndpointLocalV7 {
     @Path("/{hookId}")
     @RolesAllowed({"loginRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulIntegrationHookLog.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response getHookLog(@PathParam("hookId") String hookId) {
 
         try {

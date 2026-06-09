@@ -85,6 +85,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Path("/{timesheetId}")
     @RolesAllowed({"readArchiveFileRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetV8.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response getTimesheet(@PathParam("timesheetId") String timesheetId) {
         try {
             InitialContext ic = new InitialContext();
@@ -270,6 +271,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Path("/{timesheetId}/positions/start")
     @RolesAllowed({"writeArchiveFileRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response startPosition(@PathParam("timesheetId") String timesheetId, @io.swagger.annotations.ApiParam RestfulTimesheetPositionV8 position) {
         try {
             InitialContext ic = new InitialContext();
@@ -308,6 +310,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Path("/{timesheetId}/positions/{positionId}/stop")
     @RolesAllowed({"writeArchiveFileRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response stopPosition(@PathParam("timesheetId") String timesheetId, @PathParam("positionId") String positionId, @io.swagger.annotations.ApiParam RestfulTimesheetPositionV8 position) {
         try {
             InitialContext ic = new InitialContext();
@@ -343,6 +346,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Path("/{timesheetId}/positions")
     @RolesAllowed({"writeArchiveFileRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response addPosition(@PathParam("timesheetId") String timesheetId, @io.swagger.annotations.ApiParam RestfulTimesheetPositionV8 position) {
         try {
             InitialContext ic = new InitialContext();
@@ -378,6 +382,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Path("/{timesheetId}/positions/{positionId}")
     @RolesAllowed({"writeArchiveFileRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response updatePosition(@PathParam("timesheetId") String timesheetId, @PathParam("positionId") String positionId, @io.swagger.annotations.ApiParam RestfulTimesheetPositionV8 position) {
         try {
             InitialContext ic = new InitialContext();
@@ -412,6 +417,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Path("/{timesheetId}/positions/{positionId}")
     @RolesAllowed({"writeArchiveFileRole"})
     @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response deletePosition(@PathParam("timesheetId") String timesheetId, @PathParam("positionId") String positionId) {
         try {
             InitialContext ic = new InitialContext();

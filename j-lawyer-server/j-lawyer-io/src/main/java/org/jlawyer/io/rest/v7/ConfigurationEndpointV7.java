@@ -844,6 +844,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @Path("/options/delete")
     @RolesAllowed({"deleteOptionGroupRole"})
     @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response deleteOption(@io.swagger.annotations.ApiParam RestfulOptionV7 option) {
 
         try {
@@ -880,6 +881,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @Path("/options/update")
     @RolesAllowed({"createOptionGroupRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulOptionV7.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response renameOption(@io.swagger.annotations.ApiParam RestfulOptionV7 option) {
 
         try {
@@ -916,6 +918,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @GET
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulMultiValueTagDefinitionV7.class, responseContainer="List")
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=400, message="Bad Request")})
     public Response getMultiValueTagDefinitions(@PathParam("entityType") String entityType) {
 
         try {

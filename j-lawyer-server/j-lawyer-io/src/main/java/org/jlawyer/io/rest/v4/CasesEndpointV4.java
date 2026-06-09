@@ -839,6 +839,7 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
     @Path("/duedates/range")
     @RolesAllowed({"loginRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulDueDateV6.class, responseContainer="List")
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=400, message="Bad Request")})
     public Response getDueDatesInRange(
             @QueryParam("from") String from,
             @QueryParam("to") String to,

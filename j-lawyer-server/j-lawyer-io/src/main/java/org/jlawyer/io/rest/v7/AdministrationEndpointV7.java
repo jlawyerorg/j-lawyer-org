@@ -778,6 +778,7 @@ public class AdministrationEndpointV7 implements AdministrationEndpointLocalV7 {
     @GET
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulJobStatusV7.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response getJobStatus(@PathParam("jobId") String jobId) {
 
         try {

@@ -743,6 +743,7 @@ public class ReportsEndpointV7 implements ReportsEndpointLocalV7 {
     @Path("/invoke")
     @RolesAllowed({"commonReportRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulReportResultV7.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=400, message="Bad Request")})
     public Response invokeReport(@io.swagger.annotations.ApiParam RestfulReportRequestV7 request) {
         try {
 

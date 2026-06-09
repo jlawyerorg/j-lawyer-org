@@ -399,7 +399,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -649,7 +649,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -780,7 +780,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -1508,7 +1508,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -1653,6 +1653,10 @@
           "403": {
             "description": "User not authenticated",
             "headers": {}
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "headers": {}
           }
         }
       }
@@ -1682,6 +1686,9 @@
           }
         ],
         "responses": {
+          "default": {
+            "description": "successful operation"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
@@ -1806,7 +1813,8 @@
             "name": "extIdIndex",
             "in": "path",
             "required": true,
-            "type": "integer"
+            "type": "integer",
+            "format": "int32"
           },
           {
             "name": "extId",
@@ -1822,16 +1830,15 @@
               "$ref": "#/definitions/RestfulContactV2"
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -1870,16 +1877,15 @@
               "$ref": "#/definitions/RestfulContactV2"
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -2101,8 +2107,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "successful operation"
+          "404": {
+            "description": "Not Found"
           },
           "401": {
             "description": "User not authorized",
@@ -2110,10 +2116,6 @@
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -2190,10 +2192,6 @@
             "schema": {
               "$ref": "#/definitions/RestfulCaseFolderV3"
             }
-          },
-          "204": {
-            "description": "No Content",
-            "headers": {}
           },
           "401": {
             "description": "User not authorized",
@@ -2291,7 +2289,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -2515,19 +2513,22 @@
             "name": "eventType",
             "in": "query",
             "required": false,
-            "type": "integer"
+            "type": "integer",
+            "format": "int32"
           },
           {
             "name": "status",
             "in": "query",
             "required": false,
-            "type": "integer"
+            "type": "integer",
+            "format": "int32"
           },
           {
             "name": "limit",
             "in": "query",
             "required": false,
-            "type": "integer"
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "responses": {
@@ -2541,11 +2542,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "headers": {},
-            "schema": {
-              "type": "string"
-            }
+            "description": "Bad Request"
           },
           "401": {
             "description": "User not authorized",
@@ -2679,7 +2676,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -2728,7 +2725,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -2818,7 +2815,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -2859,7 +2856,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -2955,7 +2952,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -2996,7 +2993,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -3137,7 +3134,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -3410,7 +3407,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -3584,16 +3581,15 @@
               }
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -3644,16 +3640,15 @@
               }
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -3731,16 +3726,15 @@
               "$ref": "#/definitions/RestfulUserV6"
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -3866,16 +3860,15 @@
               "$ref": "#/definitions/RestfulUserV6"
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -4007,7 +4000,13 @@
         ],
         "responses": {
           "200": {
-            "description": "successful operation"
+            "description": "successful operation",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           },
           "401": {
             "description": "User not authorized",
@@ -4113,7 +4112,13 @@
         ],
         "responses": {
           "200": {
-            "description": "successful operation"
+            "description": "successful operation",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           },
           "401": {
             "description": "User not authorized",
@@ -4165,6 +4170,9 @@
               "type": "object"
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
@@ -4172,13 +4180,6 @@
           "403": {
             "description": "User not authenticated",
             "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
-            "headers": {},
-            "schema": {
-              "type": "string"
-            }
           },
           "500": {
             "description": "Internal Server Error",
@@ -4301,16 +4302,15 @@
               "$ref": "#/definitions/RestfulJobStatusV7"
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -4349,16 +4349,15 @@
               "$ref": "#/definitions/RestfulCaseAccountEntryV7"
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -4389,8 +4388,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "successful operation"
+          "404": {
+            "description": "Not Found"
           },
           "401": {
             "description": "User not authorized",
@@ -4398,10 +4397,6 @@
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -4448,16 +4443,15 @@
               "$ref": "#/definitions/RestfulCaseAccountEntryV7"
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -4496,16 +4490,15 @@
               "$ref": "#/definitions/RestfulCaseV2"
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -4644,6 +4637,14 @@
               "$ref": "#/definitions/RestfulDocumentV1"
             }
           },
+          "401": {
+            "description": "User not authorized",
+            "headers": {}
+          },
+          "403": {
+            "description": "User not authenticated",
+            "headers": {}
+          },
           "500": {
             "description": "Internal Server Error",
             "headers": {}
@@ -4681,11 +4682,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "headers": {},
-            "schema": {
-              "$ref": "#/definitions/RestfulStatusResponseV7"
-            }
+            "description": "Bad Request"
           },
           "401": {
             "description": "User not authorized",
@@ -4697,10 +4694,7 @@
           },
           "500": {
             "description": "Internal Server Error",
-            "headers": {},
-            "schema": {
-              "$ref": "#/definitions/RestfulStatusResponseV7"
-            }
+            "headers": {}
           }
         }
       }
@@ -4735,11 +4729,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "headers": {},
-            "schema": {
-              "$ref": "#/definitions/RestfulStatusResponseV7"
-            }
+            "description": "Bad Request"
           },
           "401": {
             "description": "User not authorized",
@@ -4751,10 +4741,7 @@
           },
           "500": {
             "description": "Internal Server Error",
-            "headers": {},
-            "schema": {
-              "$ref": "#/definitions/RestfulStatusResponseV7"
-            }
+            "headers": {}
           }
         }
       }
@@ -4796,6 +4783,14 @@
                 "$ref": "#/definitions/RestfulDocumentV1"
               }
             }
+          },
+          "401": {
+            "description": "User not authorized",
+            "headers": {}
+          },
+          "403": {
+            "description": "User not authenticated",
+            "headers": {}
           },
           "500": {
             "description": "Internal Server Error",
@@ -4912,15 +4907,11 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "successful operation"
-          },
           "400": {
-            "description": "Bad Request",
-            "headers": {},
-            "schema": {
-              "type": "string"
-            }
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
           },
           "401": {
             "description": "User not authorized",
@@ -4930,19 +4921,9 @@
             "description": "User not authenticated",
             "headers": {}
           },
-          "404": {
-            "description": "Not Found",
-            "headers": {},
-            "schema": {
-              "type": "string"
-            }
-          },
           "500": {
             "description": "Internal Server Error",
-            "headers": {},
-            "schema": {
-              "type": "string"
-            }
+            "headers": {}
           }
         }
       }
@@ -4985,11 +4966,10 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "headers": {},
-            "schema": {
-              "type": "string"
-            }
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
           },
           "401": {
             "description": "User not authorized",
@@ -4999,19 +4979,9 @@
             "description": "User not authenticated",
             "headers": {}
           },
-          "404": {
-            "description": "Not Found",
-            "headers": {},
-            "schema": {
-              "type": "string"
-            }
-          },
           "500": {
             "description": "Internal Server Error",
-            "headers": {},
-            "schema": {
-              "type": "string"
-            }
+            "headers": {}
           }
         }
       }
@@ -5039,15 +5009,11 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "successful operation"
-          },
           "400": {
-            "description": "Bad Request",
-            "headers": {},
-            "schema": {
-              "type": "string"
-            }
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
           },
           "401": {
             "description": "User not authorized",
@@ -5057,19 +5023,9 @@
             "description": "User not authenticated",
             "headers": {}
           },
-          "404": {
-            "description": "Not Found",
-            "headers": {},
-            "schema": {
-              "type": "string"
-            }
-          },
           "500": {
             "description": "Internal Server Error",
-            "headers": {},
-            "schema": {
-              "type": "string"
-            }
+            "headers": {}
           }
         }
       }
@@ -5111,16 +5067,15 @@
               "$ref": "#/definitions/RestfulInvoiceV7"
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -5162,16 +5117,15 @@
               }
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -5218,16 +5172,15 @@
               "$ref": "#/definitions/RestfulInvoicePositionV7"
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -5274,16 +5227,15 @@
               "$ref": "#/definitions/RestfulInvoiceV7"
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -5379,11 +5331,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "headers": {},
-            "schema": {
-              "type": "string"
-            }
+            "description": "Bad Request"
           },
           "401": {
             "description": "User not authorized",
@@ -5630,7 +5578,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -5946,8 +5894,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "successful operation"
+          "404": {
+            "description": "Not Found"
           },
           "401": {
             "description": "User not authorized",
@@ -5955,10 +5903,6 @@
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -5999,16 +5943,15 @@
               "$ref": "#/definitions/RestfulOptionV7"
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -6051,11 +5994,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "headers": {},
-            "schema": {
-              "type": "string"
-            }
+            "description": "Bad Request"
           },
           "401": {
             "description": "User not authorized",
@@ -6134,7 +6073,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -6142,7 +6081,7 @@
             "headers": {}
           },
           "403": {
-            "description": "Forbidden",
+            "description": "User not authenticated",
             "headers": {}
           },
           "500": {
@@ -6189,7 +6128,7 @@
             "headers": {}
           },
           "403": {
-            "description": "Forbidden",
+            "description": "User not authenticated",
             "headers": {}
           },
           "500": {
@@ -6239,7 +6178,7 @@
             "headers": {}
           },
           "403": {
-            "description": "Forbidden",
+            "description": "User not authenticated",
             "headers": {}
           },
           "500": {
@@ -6278,7 +6217,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -6286,7 +6225,7 @@
             "headers": {}
           },
           "403": {
-            "description": "Forbidden",
+            "description": "User not authenticated",
             "headers": {}
           },
           "500": {
@@ -6333,7 +6272,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -6341,7 +6280,7 @@
             "headers": {}
           },
           "403": {
-            "description": "Forbidden",
+            "description": "User not authenticated",
             "headers": {}
           },
           "500": {
@@ -6383,14 +6322,16 @@
             "in": "query",
             "required": false,
             "type": "integer",
-            "default": 50
+            "default": 50,
+            "format": "int32"
           },
           {
             "name": "offset",
             "in": "query",
             "required": false,
             "type": "integer",
-            "default": 0
+            "default": 0,
+            "format": "int32"
           },
           {
             "name": "sinceDate",
@@ -6427,7 +6368,7 @@
             "headers": {}
           },
           "403": {
-            "description": "Forbidden",
+            "description": "User not authenticated",
             "headers": {}
           },
           "500": {
@@ -6466,7 +6407,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -6474,7 +6415,7 @@
             "headers": {}
           },
           "403": {
-            "description": "Forbidden",
+            "description": "User not authenticated",
             "headers": {}
           },
           "500": {
@@ -6531,7 +6472,7 @@
             "headers": {}
           },
           "403": {
-            "description": "Forbidden",
+            "description": "User not authenticated",
             "headers": {}
           },
           "500": {
@@ -6568,7 +6509,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -6576,7 +6517,7 @@
             "headers": {}
           },
           "403": {
-            "description": "Forbidden",
+            "description": "User not authenticated",
             "headers": {}
           },
           "500": {
@@ -6633,7 +6574,7 @@
             "headers": {}
           },
           "403": {
-            "description": "Forbidden",
+            "description": "User not authenticated",
             "headers": {}
           },
           "500": {
@@ -6673,14 +6614,21 @@
         ],
         "responses": {
           "200": {
-            "description": "successful operation"
+            "description": "successful operation",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "byte"
+              }
+            }
           },
           "401": {
             "description": "User not authorized",
             "headers": {}
           },
           "403": {
-            "description": "Forbidden",
+            "description": "User not authenticated",
             "headers": {}
           },
           "500": {
@@ -6725,7 +6673,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -6733,7 +6681,7 @@
             "headers": {}
           },
           "403": {
-            "description": "Forbidden",
+            "description": "User not authenticated",
             "headers": {}
           },
           "500": {
@@ -6779,7 +6727,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -6787,7 +6735,7 @@
             "headers": {}
           },
           "403": {
-            "description": "Forbidden",
+            "description": "User not authenticated",
             "headers": {}
           },
           "500": {
@@ -6828,7 +6776,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -6836,7 +6784,7 @@
             "headers": {}
           },
           "403": {
-            "description": "Forbidden",
+            "description": "User not authenticated",
             "headers": {}
           },
           "500": {
@@ -6880,7 +6828,7 @@
             "headers": {}
           },
           "403": {
-            "description": "Forbidden",
+            "description": "User not authenticated",
             "headers": {}
           },
           "500": {
@@ -6991,7 +6939,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -7028,7 +6976,8 @@
             "name": "seconds",
             "in": "path",
             "required": true,
-            "type": "integer"
+            "type": "integer",
+            "format": "int32"
           },
           {
             "name": "includeArchived",
@@ -7088,6 +7037,9 @@
           }
         ],
         "responses": {
+          "default": {
+            "description": "successful operation"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
@@ -7126,7 +7078,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -7176,11 +7128,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "headers": {},
-            "schema": {
-              "type": "string"
-            }
+            "description": "Bad Request"
           },
           "401": {
             "description": "User not authorized",
@@ -7304,16 +7252,15 @@
               "$ref": "#/definitions/RestfulIntegrationHookLog"
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -7863,7 +7810,7 @@
           "application/json;charset=utf-8"
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -8175,7 +8122,8 @@
             "name": "folderId",
             "in": "path",
             "required": true,
-            "type": "integer"
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "responses": {
@@ -8223,11 +8171,12 @@
             "name": "folderId",
             "in": "path",
             "required": true,
-            "type": "integer"
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -8270,7 +8219,8 @@
             "name": "folderId",
             "in": "path",
             "required": true,
-            "type": "integer"
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "responses": {
@@ -8323,7 +8273,8 @@
             "name": "folderId",
             "in": "path",
             "required": true,
-            "type": "integer"
+            "type": "integer",
+            "format": "int64"
           },
           {
             "in": "body",
@@ -8384,7 +8335,8 @@
             "name": "folderId",
             "in": "path",
             "required": true,
-            "type": "integer"
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "responses": {
@@ -8437,7 +8389,8 @@
             "name": "folderId",
             "in": "path",
             "required": true,
-            "type": "integer"
+            "type": "integer",
+            "format": "int64"
           },
           {
             "in": "body",
@@ -8660,7 +8613,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "default": {
             "description": "successful operation"
           },
           "401": {
@@ -9541,16 +9494,15 @@
               "$ref": "#/definitions/RestfulTimesheetV8"
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -9642,16 +9594,15 @@
               "$ref": "#/definitions/RestfulTimesheetPositionV8"
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -9698,16 +9649,15 @@
               "$ref": "#/definitions/RestfulTimesheetPositionV8"
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -9760,16 +9710,15 @@
               "$ref": "#/definitions/RestfulTimesheetPositionV8"
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -9806,8 +9755,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "successful operation"
+          "404": {
+            "description": "Not Found"
           },
           "401": {
             "description": "User not authorized",
@@ -9815,10 +9764,6 @@
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {
@@ -9871,16 +9816,15 @@
               "$ref": "#/definitions/RestfulTimesheetPositionV8"
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "401": {
             "description": "User not authorized",
             "headers": {}
           },
           "403": {
             "description": "User not authenticated",
-            "headers": {}
-          },
-          "404": {
-            "description": "Not Found",
             "headers": {}
           },
           "500": {

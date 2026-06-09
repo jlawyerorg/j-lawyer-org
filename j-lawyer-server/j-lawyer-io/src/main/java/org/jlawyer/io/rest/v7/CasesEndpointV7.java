@@ -913,6 +913,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Path("/invoices/{id}/positions")
     @RolesAllowed({"readArchiveFileRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionV7.class, responseContainer="List")
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response getInvoicePositions(@PathParam("id") String id) {
         try {
 
@@ -1064,6 +1065,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Path("/invoices/{id}/update")
     @RolesAllowed({"writeArchiveFileRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response updateInvoice(@PathParam("id") String id, @io.swagger.annotations.ApiParam RestfulInvoiceV7 invoice) {
         try {
             InitialContext ic = new InitialContext();
@@ -1190,6 +1192,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Path("/invoices/{id}/positions/create")
     @RolesAllowed({"writeArchiveFileRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionV7.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response createInvoicePosition(@PathParam("id") String id, @io.swagger.annotations.ApiParam RestfulInvoicePositionV7 invoicePos) {
         try {
 
@@ -1237,6 +1240,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Path("/invoices/positions/{positionId}/update")
     @RolesAllowed({"writeArchiveFileRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionV7.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=400, message="Bad Request"), @io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response updateInvoicePosition(@PathParam("positionId") String positionId, @io.swagger.annotations.ApiParam RestfulInvoicePositionV7 restfulPosition) {
         try {
             if (positionId == null || positionId.isEmpty()) {
@@ -1310,6 +1314,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Path("/invoices/positions/{positionId}")
     @RolesAllowed({"writeArchiveFileRole"})
     @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=400, message="Bad Request"), @io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response deleteInvoicePosition(@PathParam("positionId") String positionId) {
         try {
             if (positionId == null || positionId.isEmpty()) {
@@ -1365,6 +1370,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Path("/invoices/{id}")
     @RolesAllowed({"writeArchiveFileRole"})
     @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=400, message="Bad Request"), @io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response deleteInvoice(@PathParam("id") String id) {
         try {
             if (id == null || id.isEmpty()) {
@@ -1415,6 +1421,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Path("/invoices/{id}/duplicate")
     @RolesAllowed({"writeArchiveFileRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response duplicateInvoice(@PathParam("id") String id, @io.swagger.annotations.ApiParam RestfulInvoiceDuplicateRequestV7 request) {
         try {
             InitialContext ic = new InitialContext();
@@ -1501,6 +1508,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Path("/byexternalid/{extId}")
     @RolesAllowed({"readArchiveFileRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulCaseV2.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response getCaseByExternalId(@PathParam("extId") String extId) {
 
         try {
@@ -1631,6 +1639,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Path("/search")
     @RolesAllowed({"readArchiveFileRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1.class, responseContainer="List")
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=400, message="Bad Request")})
     public Response searchCases(@QueryParam("searchString") String searchString,
                                  @QueryParam("includeArchived") Boolean includeArchived) {
 
@@ -1816,6 +1825,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Path("/document/{id}/restore")
     @RolesAllowed({"writeArchiveFileRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulStatusResponseV7.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=400, message="Bad Request")})
     public Response restoreDocumentFromRecycleBin(@PathParam("id") String documentId) {
         RestfulStatusResponseV7 response = new RestfulStatusResponseV7();
         try {
@@ -1855,6 +1865,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Path("/document/{id}/permanent")
     @RolesAllowed({"writeArchiveFileRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulStatusResponseV7.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=400, message="Bad Request")})
     public Response removeDocumentFromRecycleBin(@PathParam("id") String documentId) {
         RestfulStatusResponseV7 response = new RestfulStatusResponseV7();
         try {
@@ -2067,6 +2078,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Path("/accountentries/{id}")
     @RolesAllowed({"readArchiveFileRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulCaseAccountEntryV7.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response getAccountEntry(@PathParam("id") String id) {
         try {
 
@@ -2099,6 +2111,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Path("/accountentries/{id}/update")
     @RolesAllowed({"writeArchiveFileRole"})
     @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulCaseAccountEntryV7.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response updateAccountEntry(@PathParam("id") String id, @io.swagger.annotations.ApiParam RestfulCaseAccountEntryV7 accountEntry) {
         try {
 
@@ -2165,6 +2178,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Path("/accountentries/{id}")
     @RolesAllowed({"writeArchiveFileRole"})
     @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response deleteAccountEntry(@PathParam("id") String id) {
         try {
 
