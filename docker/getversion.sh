@@ -5,7 +5,7 @@
 
 # Determine the directory of the script
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-target_dir="$script_dir/../j-lawyer-server-entities/src/java/db/migration"
+target_dir="$script_dir/../j-lawyer-server-entities/src/main/resources/db/migration"
 
 # Extract version numbers, convert to dotted format, sort, and get the highest
 highest_version=$(
