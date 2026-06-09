@@ -709,6 +709,7 @@ public class CalendarEndpointV4 implements CalendarEndpointLocalV4 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/list")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v4.pojo.RestfulCalendarV4.class, responseContainer="List")
     public Response getAllCalendars() {
         try {
 
@@ -756,6 +757,7 @@ public class CalendarEndpointV4 implements CalendarEndpointLocalV4 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/list/{principalId}")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v4.pojo.RestfulCalendarV4.class, responseContainer="List")
     public Response getAllCalendarsForUser(@PathParam("principalId") String principalId) {
         try {
 

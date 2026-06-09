@@ -714,6 +714,7 @@ public class MessagingEndpointV7 implements MessagingEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/mentions/{id}/done")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="")
     public Response markMentionDone(@PathParam("id") String id) {
         try {
             InitialContext ic = new InitialContext();
@@ -740,7 +741,8 @@ public class MessagingEndpointV7 implements MessagingEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/submit")
     @RolesAllowed({"loginRole"})
-    public Response submitMessage(RestfulInstantMessageV7 msg) {
+    @io.swagger.annotations.ApiOperation(value="")
+    public Response submitMessage(@io.swagger.annotations.ApiParam RestfulInstantMessageV7 msg) {
 
         try {
             if (msg.getSender() == null || "".equals(msg.getSender())) {
@@ -802,6 +804,7 @@ public class MessagingEndpointV7 implements MessagingEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/delete")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="")
     public Response deleteMessage(@PathParam("id") String id) {
         try {
 
@@ -834,6 +837,7 @@ public class MessagingEndpointV7 implements MessagingEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/since/{seconds}")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulInstantMessageV7.class, responseContainer="List")
     public Response getMessagesSince(@PathParam("seconds") int seconds,
                                      @QueryParam("includeArchived") @DefaultValue("true") boolean includeArchived) {
         try {

@@ -767,7 +767,8 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{id}/documents/validate")
     @RolesAllowed({"readArchiveFileRole"})
-    public Response validateDocumentName(@PathParam("id") String id, RestfulDocumentValidationRequestV7 request) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulStatusResponseV7.class)
+    public Response validateDocumentName(@PathParam("id") String id, @io.swagger.annotations.ApiParam RestfulDocumentValidationRequestV7 request) {
         try {
             InitialContext ic = new InitialContext();
 
@@ -830,6 +831,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/messages")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulInstantMessageV7.class, responseContainer="List")
     public Response getCaseMessages(@PathParam("id") String id) {
         try {
 
@@ -870,6 +872,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/invoices")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7.class, responseContainer="List")
     public Response getCaseInvoices(@PathParam("id") String id) {
         try {
 
@@ -909,6 +912,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/invoices/{id}/positions")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionV7.class, responseContainer="List")
     public Response getInvoicePositions(@PathParam("id") String id) {
         try {
 
@@ -950,7 +954,8 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/invoices/create")
     @RolesAllowed({"writeArchiveFileRole"})
-    public Response createInvoice(RestfulInvoiceV7 invoice) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7.class)
+    public Response createInvoice(@io.swagger.annotations.ApiParam RestfulInvoiceV7 invoice) {
         try {
 
             InitialContext ic = new InitialContext();
@@ -1058,7 +1063,8 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/invoices/{id}/update")
     @RolesAllowed({"writeArchiveFileRole"})
-    public Response updateInvoice(@PathParam("id") String id, RestfulInvoiceV7 invoice) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7.class)
+    public Response updateInvoice(@PathParam("id") String id, @io.swagger.annotations.ApiParam RestfulInvoiceV7 invoice) {
         try {
             InitialContext ic = new InitialContext();
             InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
@@ -1183,7 +1189,8 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/invoices/{id}/positions/create")
     @RolesAllowed({"writeArchiveFileRole"})
-    public Response createInvoicePosition(@PathParam("id") String id, RestfulInvoicePositionV7 invoicePos) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionV7.class)
+    public Response createInvoicePosition(@PathParam("id") String id, @io.swagger.annotations.ApiParam RestfulInvoicePositionV7 invoicePos) {
         try {
 
             InitialContext ic = new InitialContext();
@@ -1229,7 +1236,8 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/invoices/positions/{positionId}/update")
     @RolesAllowed({"writeArchiveFileRole"})
-    public Response updateInvoicePosition(@PathParam("positionId") String positionId, RestfulInvoicePositionV7 restfulPosition) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionV7.class)
+    public Response updateInvoicePosition(@PathParam("positionId") String positionId, @io.swagger.annotations.ApiParam RestfulInvoicePositionV7 restfulPosition) {
         try {
             if (positionId == null || positionId.isEmpty()) {
                 log.error("Position ID is required");
@@ -1301,6 +1309,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/invoices/positions/{positionId}")
     @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="")
     public Response deleteInvoicePosition(@PathParam("positionId") String positionId) {
         try {
             if (positionId == null || positionId.isEmpty()) {
@@ -1355,6 +1364,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/invoices/{id}")
     @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="")
     public Response deleteInvoice(@PathParam("id") String id) {
         try {
             if (id == null || id.isEmpty()) {
@@ -1404,7 +1414,8 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/invoices/{id}/duplicate")
     @RolesAllowed({"writeArchiveFileRole"})
-    public Response duplicateInvoice(@PathParam("id") String id, RestfulInvoiceDuplicateRequestV7 request) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7.class)
+    public Response duplicateInvoice(@PathParam("id") String id, @io.swagger.annotations.ApiParam RestfulInvoiceDuplicateRequestV7 request) {
         try {
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
@@ -1454,6 +1465,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/invoices")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7.class, responseContainer="List")
     public Response getAllInvoices() {
         //http://localhost:8080/j-lawyer-io/rest/cases/0c79112f7f000101327bf357f0b6010c/duedates
         try {
@@ -1488,6 +1500,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/byexternalid/{extId}")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulCaseV2.class)
     public Response getCaseByExternalId(@PathParam("extId") String extId) {
 
         try {
@@ -1519,6 +1532,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/bytag/{tag}")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1.class, responseContainer="List")
     public Response getCasesByTag(@PathParam("tag") String tag, @QueryParam("value") @DefaultValue("") String value) {
 
         try {
@@ -1566,6 +1580,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/byreference/{reference}")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1.class, responseContainer="List")
     public Response getCasesByReference(@PathParam("reference") String reference) {
 
         try {
@@ -1615,6 +1630,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/search")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1.class, responseContainer="List")
     public Response searchCases(@QueryParam("searchString") String searchString,
                                  @QueryParam("includeArchived") Boolean includeArchived) {
 
@@ -1671,6 +1687,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/document/byexternalid/{extId}")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1.class)
     public Response getDocumentByExternalId(@PathParam("extId") String extId) {
 
         try {
@@ -1710,6 +1727,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/documents/bytag/{tag}")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1.class, responseContainer="List")
     public Response getDocumentsByTag(@PathParam("tag") String tag, @QueryParam("value") @DefaultValue("") String value) {
         try {
             InitialContext ic = new InitialContext();
@@ -1757,6 +1775,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/recyclebin")
     @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulRecycleBinDocumentV7.class, responseContainer="List")
     public Response getRecycleBin(@QueryParam("caseId") @DefaultValue("") String caseId) {
         try {
             InitialContext ic = new InitialContext();
@@ -1796,6 +1815,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/document/{id}/restore")
     @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulStatusResponseV7.class)
     public Response restoreDocumentFromRecycleBin(@PathParam("id") String documentId) {
         RestfulStatusResponseV7 response = new RestfulStatusResponseV7();
         try {
@@ -1834,6 +1854,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/document/{id}/permanent")
     @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulStatusResponseV7.class)
     public Response removeDocumentFromRecycleBin(@PathParam("id") String documentId) {
         RestfulStatusResponseV7 response = new RestfulStatusResponseV7();
         try {
@@ -1873,7 +1894,8 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/groups")
     @RolesAllowed({"writeArchiveFileRole"})
-    public Response updateAllowedGroups(@PathParam("id") String id, Collection<RestfulGroupV6> allowedGroups) {
+    @io.swagger.annotations.ApiOperation(value="")
+    public Response updateAllowedGroups(@PathParam("id") String id, @io.swagger.annotations.ApiParam Collection<RestfulGroupV6> allowedGroups) {
         try {
 
             InitialContext ic = new InitialContext();
@@ -1905,6 +1927,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/groups")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulGroupV6.class, responseContainer="List")
     public Response getAllowedGroups(@PathParam("id") String id) {
         try {
 
@@ -1934,6 +1957,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{id}/accountentries")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulCaseAccountEntryV7.class, responseContainer="List")
     public Response getCaseAccountEntries(@PathParam("id") String id) {
         try {
 
@@ -1974,7 +1998,8 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/accountentries/create")
     @RolesAllowed({"writeArchiveFileRole"})
-    public Response createAccountEntry(@PathParam("id") String id, RestfulCaseAccountEntryV7 accountEntry) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulCaseAccountEntryV7.class)
+    public Response createAccountEntry(@PathParam("id") String id, @io.swagger.annotations.ApiParam RestfulCaseAccountEntryV7 accountEntry) {
         try {
 
             InitialContext ic = new InitialContext();
@@ -2041,6 +2066,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/accountentries/{id}")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulCaseAccountEntryV7.class)
     public Response getAccountEntry(@PathParam("id") String id) {
         try {
 
@@ -2072,7 +2098,8 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/accountentries/{id}/update")
     @RolesAllowed({"writeArchiveFileRole"})
-    public Response updateAccountEntry(@PathParam("id") String id, RestfulCaseAccountEntryV7 accountEntry) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulCaseAccountEntryV7.class)
+    public Response updateAccountEntry(@PathParam("id") String id, @io.swagger.annotations.ApiParam RestfulCaseAccountEntryV7 accountEntry) {
         try {
 
             InitialContext ic = new InitialContext();
@@ -2137,6 +2164,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/accountentries/{id}")
     @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="")
     public Response deleteAccountEntry(@PathParam("id") String id) {
         try {
 
@@ -2168,6 +2196,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{id}/timesheets")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetV8.class, responseContainer="List")
     public Response getCaseTimesheets(@PathParam("id") String id) {
         try {
 

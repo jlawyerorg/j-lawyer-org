@@ -561,6 +561,43 @@
                             </execution>
                         </executions>
                     </plugin>
+                    <!-- finalize the generated spec (security + error-response envelope)
+                         into the served swagger.json, then assert semantic equivalence
+                         with the committed golden contract baseline. -->
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>finalize-swagger</id>
+                                <phase>process-classes</phase>
+                                <goals><goal>exec</goal></goals>
+                                <configuration>
+                                    <executable>python3</executable>
+                                    <arguments>
+                                        <argument>${maven.multiModuleProjectDirectory}/scripts/finalize-swagger.py</argument>
+                                        <argument>${project.build.directory}/swagger-gen/swagger.json</argument>
+                                        <argument>${project.basedir}/src/test/resources/swagger.golden.json</argument>
+                                        <argument>${project.basedir}/src/main/webapp/swagger-ui/swagger.json</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>verify-swagger-equivalence</id>
+                                <phase>process-classes</phase>
+                                <goals><goal>exec</goal></goals>
+                                <configuration>
+                                    <executable>python3</executable>
+                                    <arguments>
+                                        <argument>${maven.multiModuleProjectDirectory}/scripts/swagger-equivalence-check.py</argument>
+                                        <argument>${project.basedir}/src/main/webapp/swagger-ui/swagger.json</argument>
+                                        <argument>${project.basedir}/src/test/resources/swagger.golden.json</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                 </plugins>
             </build>
         </profile>

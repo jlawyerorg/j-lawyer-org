@@ -716,6 +716,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Path("/users")
     @GET
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulUserV6.class, responseContainer="List")
     public Response getEnabledUsers() {
 
         try {
@@ -748,6 +749,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/users/list")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulUserV6.class, responseContainer="List")
     public Response listUsers() {
         try {
             InitialContext ic = new InitialContext();
@@ -776,6 +778,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Path("/groups")
     @GET
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulGroupV6.class, responseContainer="List")
     public Response listGroups() {
 
         try {
@@ -810,6 +813,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/users/byexternalid/{extId}")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulUserV6.class)
     public Response getUserByExternalId(@PathParam("extId") String extId) {
         try {
             InitialContext ic = new InitialContext();
@@ -842,7 +846,8 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/users/create")
     @RolesAllowed({"adminRole"})
-    public Response createUser(RestfulUserV6 userData) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulUserV6.class)
+    public Response createUser(@io.swagger.annotations.ApiParam RestfulUserV6 userData) {
 
         // curl -u admin:a -X PUT -H "Content-Type: application/json" -d '{"name":"via REST", "reason":"wegen REST", "subjectField":"Familienrecht", "notice":"notiz REST","assistant":"user", "lawyer":"admin", "claimNumber":"RESTcn","claimValue":"3.44","custom1":"RESTc1","custom2":"RESTc2","custom3":"RESTc3"}' http://localhost:8080/j-lawyer-io/rest/cases/create
         try {
@@ -886,7 +891,8 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/users/update")
     @RolesAllowed({"adminRole"})
-    public Response updateUser(RestfulUserV6 userData) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulUserV6.class)
+    public Response updateUser(@io.swagger.annotations.ApiParam RestfulUserV6 userData) {
 
         try {
 
@@ -929,6 +935,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/roles")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulRoleV6.class, responseContainer="List")
     public Response listAllRoles() {
         try {
             ArrayList<RestfulRoleV6> resultList = new ArrayList<>();
@@ -955,6 +962,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/roles/{principalId}")
     @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulRoleV6.class, responseContainer="List")
     public Response getUserRoles(@PathParam("principalId") String principalId) {
         try {
             InitialContext ic = new InitialContext();
@@ -992,7 +1000,8 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/roles/{principalId}")
     @RolesAllowed({"adminRole"})
-    public Response updateUserRoles(@PathParam("principalId") String principalId, List<RestfulRoleV6> roles) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulRoleV6.class, responseContainer="List")
+    public Response updateUserRoles(@PathParam("principalId") String principalId, @io.swagger.annotations.ApiParam List<RestfulRoleV6> roles) {
         try {
             InitialContext ic = new InitialContext();
             SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);

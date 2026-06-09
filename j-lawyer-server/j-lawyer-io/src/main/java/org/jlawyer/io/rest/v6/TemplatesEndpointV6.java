@@ -733,6 +733,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/documents/folders")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=String.class, responseContainer="List")
     public Response getTemplateFolders() {
         try {
             InitialContext ic = new InitialContext();
@@ -773,6 +774,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/documents/{folder}")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=String.class, responseContainer="List")
     public Response getTemplatesInFolder(@PathParam("folder") String folder) {
         try {
             InitialContext ic = new InitialContext();
@@ -803,6 +805,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/documents/{folder}/{template}/{caseId}")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="")
     public Response getPlaceHoldersForTemplate(@PathParam("folder") String folder, @PathParam("template") String template, @PathParam("caseId") String caseId) {
         try {
             InitialContext ic = new InitialContext();
@@ -842,7 +845,8 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/documents/{folder}/{template}/{caseId}/{fileName}")
     @RolesAllowed({"loginRole"})
-    public Response addDocumentFromTemplate(@PathParam("caseId") String caseId, @PathParam("fileName") String fileName, @PathParam("folder") String folder, @PathParam("template") String template, List<RestfulPlaceholderV6> placeHolderValues) throws Exception {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1.class)
+    public Response addDocumentFromTemplate(@PathParam("caseId") String caseId, @PathParam("fileName") String fileName, @PathParam("folder") String folder, @PathParam("template") String template, @io.swagger.annotations.ApiParam List<RestfulPlaceholderV6> placeHolderValues) throws Exception {
 
         if (folder == null || "".equals(folder)) {
             folder = "/";
@@ -943,6 +947,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
     @Path("email")
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="")
     public Response listEmailTemplates() {
         try {
             InitialContext ic = new InitialContext();
@@ -993,6 +998,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
     @Path("email/{templateName}/{caseId}")
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=Object.class)
     public Response getEmailFromTemplate(@PathParam("templateName") String templateName, @PathParam("caseId") String caseId) {
         try {
             InitialContext ic = new InitialContext();

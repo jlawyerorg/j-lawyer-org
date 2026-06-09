@@ -710,6 +710,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}")
     @RolesAllowed({"readAddressRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulContactV1.class)
     public Response getContact(@PathParam("id") String id) {
         // http://localhost:8080/j-lawyer-io/rest/contacts/0c617d4e7f0001012eebc10d402e8a74
         try {
@@ -736,7 +737,8 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/create")
     @RolesAllowed({"createAddressRole"})
-    public Response createContact(RestfulContactV1 contact) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulContactV1.class)
+    public Response createContact(@io.swagger.annotations.ApiParam RestfulContactV1 contact) {
         try {
 
             InitialContext ic = new InitialContext();
@@ -763,6 +765,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/list")
     @RolesAllowed({"readAddressRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulContactOverviewV1.class, responseContainer="List")
     public Response listContacts() {
         try {
 
@@ -807,7 +810,8 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/similar")
     @RolesAllowed({"readAddressRole"})
-    public Response searchSimilarContacts(RestfulContactV1 contact) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulContactOverviewV1.class, responseContainer="List")
+    public Response searchSimilarContacts(@io.swagger.annotations.ApiParam RestfulContactV1 contact) {
         try {
 
             InitialContext ic = new InitialContext();
@@ -854,7 +858,8 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/update")
     @RolesAllowed({"writeAddressRole"})
-    public Response updateContact(RestfulContactV1 contact) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulContactV1.class)
+    public Response updateContact(@io.swagger.annotations.ApiParam RestfulContactV1 contact) {
         try {
 
             if (contact.getId() == null || "".equals(contact.getId())) {

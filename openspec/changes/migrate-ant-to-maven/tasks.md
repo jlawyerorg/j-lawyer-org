@@ -35,7 +35,11 @@
 - [x] 6.5 Class-level `@Api(tags=…)` added to all 25 endpoint classes
 - [x] 6.6 Served `swagger.json` = committed golden in the WAR (API contract guaranteed unchanged); UI loads it unchanged
 - [x] 6.7 Semantic-equivalence gate tool (`scripts/swagger-equivalence-check.py`) — measures gap
-- [ ] 6.8 **REMAINING (large, iterative):** annotate all ~208 operations with `@ApiOperation(response=…, responseContainer=…)` + per-op `@ApiResponses` (400/404 where applicable) so the generated spec matches the golden; add global-security + basicAuth description post-step; then retire `tools/jaxrs-analyzer.jar` and the `org.jlawyer.io.rest.tools` post-processors and switch the served file to the generated one. Current gap measured by the gate: securityDefinitions/global-security + 208 operations + 88 definitions.
+- [x] 6.8 All 208 operations annotated with `@ApiOperation(response=…, responseContainer=…)` and 67 request bodies with `@ApiParam` (golden-driven injection via `scripts/inject-swagger-annotations.py`). Models (85) are generated automatically by swagger-core via reflection — no `@ApiModel` needed.
+- [x] 6.9 `scripts/finalize-swagger.py` applies the cross-cutting envelope (basicAuth + description, global security, per-op 401/403/500/400/404, default→200, strips generator int64 formats).
+- [x] 6.10 Equivalence gate **PASSES**: generated+finalized swagger.json is semantically identical to the golden (paths, params, bodies, models, response schemas, security, tags). The served `swagger-ui/swagger.json` is now the generated output; `mvn -Pswagger-regen` regenerates it and fails on contract drift.
+- [x] 6.11 Retired `tools/jaxrs-analyzer.jar` and the `org.jlawyer.io.rest.tools` post-processor classes.
+- [ ] 6.12 Optional follow-up: reimplement finalize/gate in Java (currently python3 via exec in the `swagger-regen` profile) to drop the python build dependency.
 
 ## 7. Desktop client
 - [x] 7.1 Standard Maven layout (`src/main/java`), `.java`+`.form` co-located (292 forms excluded from jar)

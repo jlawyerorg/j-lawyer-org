@@ -708,6 +708,7 @@ public class WebHooksEndpointV7 implements WebHooksEndpointLocalV7 {
     @GET
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulIntegrationHookLogOverview.class, responseContainer="List")
     public Response listHooks() {
 
         try {
@@ -748,6 +749,7 @@ public class WebHooksEndpointV7 implements WebHooksEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{hookId}")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulIntegrationHookLog.class)
     public Response getHookLog(@PathParam("hookId") String hookId) {
 
         try {

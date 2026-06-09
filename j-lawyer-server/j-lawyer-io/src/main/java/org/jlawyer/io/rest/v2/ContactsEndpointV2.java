@@ -712,6 +712,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{id}")
     @RolesAllowed({"readAddressRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v2.pojo.RestfulContactV2.class)
     public Response getContact(@PathParam("id") String id) {
         // http://localhost:8080/j-lawyer-io/rest/contacts/0c617d4e7f0001012eebc10d402e8a74
         try {
@@ -742,6 +743,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/byexternalid/{extIdIndex}/{extId}")
     @RolesAllowed({"readAddressRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v2.pojo.RestfulContactV2.class)
     public Response getContactByExternalId(@PathParam("extIdIndex") int extIdIndex, @PathParam("extId") String extId) {
         try {
 
@@ -794,6 +796,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/byexternalid/{extId}")
     @RolesAllowed({"readAddressRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v2.pojo.RestfulContactV2.class)
     public Response getContactByAnyExternalId(@PathParam("extId") String extId) {
         try {
 
@@ -824,6 +827,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/bytag/{tag}")
     @RolesAllowed({"readAddressRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulContactOverviewV1.class, responseContainer="List")
     public Response getContactsByTag(@PathParam("tag") String tag, @QueryParam("value") @DefaultValue("") String value) {
         try {
 
@@ -877,7 +881,8 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/create")
     @RolesAllowed({"createAddressRole"})
-    public Response createContact(RestfulContactV2 contact) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v2.pojo.RestfulContactV2.class)
+    public Response createContact(@io.swagger.annotations.ApiParam RestfulContactV2 contact) {
         try {
 
             InitialContext ic = new InitialContext();
@@ -907,6 +912,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{id}/delete")
     @RolesAllowed({"removeAddressRole"})
+    @io.swagger.annotations.ApiOperation(value="")
     public Response deleteContact(@PathParam("id") String id) {
         try {
 
@@ -944,7 +950,8 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/update")
     @RolesAllowed({"writeAddressRole"})
-    public Response updateContact(RestfulContactV2 contact) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v2.pojo.RestfulContactV2.class)
+    public Response updateContact(@io.swagger.annotations.ApiParam RestfulContactV2 contact) {
         try {
 
             if (contact.getId() == null || "".equals(contact.getId())) {

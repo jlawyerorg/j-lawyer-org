@@ -711,6 +711,7 @@ public class ReportsEndpointV7 implements ReportsEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/list")
     @RolesAllowed({"commonReportRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulReportMetadataV7.class, responseContainer="List")
     public Response getAvailableReports() {
         try {
 
@@ -741,7 +742,8 @@ public class ReportsEndpointV7 implements ReportsEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/invoke")
     @RolesAllowed({"commonReportRole"})
-    public Response invokeReport(RestfulReportRequestV7 request) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulReportResultV7.class)
+    public Response invokeReport(@io.swagger.annotations.ApiParam RestfulReportRequestV7 request) {
         try {
 
             if (request.getReportId() == null || request.getReportId().isEmpty()) {

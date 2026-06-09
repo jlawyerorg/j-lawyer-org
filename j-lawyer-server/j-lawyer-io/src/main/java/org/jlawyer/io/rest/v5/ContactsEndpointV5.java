@@ -713,6 +713,7 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/tags")
     @RolesAllowed({"readAddressRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulTagV1.class, responseContainer="List")
     public Response getContactTags(@PathParam("id") String id) {
         try {
 
@@ -756,6 +757,7 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/tags/{id}")
     @RolesAllowed({"writeAddressRole"})
+    @io.swagger.annotations.ApiOperation(value="")
     public Response deleteContactTag(@PathParam("id") String id) {
         try {
 
@@ -787,7 +789,8 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/tags")
     @RolesAllowed({"writeAddressRole"})
-    public Response createContactTag(@PathParam("id") String id, RestfulTagV1 tag) {
+    @io.swagger.annotations.ApiOperation(value="")
+    public Response createContactTag(@PathParam("id") String id, @io.swagger.annotations.ApiParam RestfulTagV1 tag) {
         try {
 
             InitialContext ic = new InitialContext();
@@ -824,6 +827,7 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/cases")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1.class, responseContainer="List")
     public Response getCasesForContact(@PathParam("id") String id) {
         try {
 

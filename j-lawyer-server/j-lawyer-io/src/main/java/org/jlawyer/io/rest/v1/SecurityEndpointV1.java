@@ -692,6 +692,7 @@ public class SecurityEndpointV1 implements SecurityEndpointLocalV1 {
     @Path("/metadata")
     @GET
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.ApiMetadataV1.class)
     public Response getApiMetadata() {
 
         ApiMetadataV1 meta = new ApiMetadataV1();

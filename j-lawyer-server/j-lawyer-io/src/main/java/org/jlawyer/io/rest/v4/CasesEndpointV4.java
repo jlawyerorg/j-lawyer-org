@@ -713,6 +713,7 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/duedates")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulDueDateV6.class, responseContainer="List")
     public Response getDueDates(@PathParam("id") String id) {
         //http://localhost:8080/j-lawyer-io/rest/cases/0c79112f7f000101327bf357f0b6010c/duedates
         try {
@@ -775,6 +776,7 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/duedates")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulDueDateV6.class, responseContainer="List")
     public Response getAllDueDates() {
         //http://localhost:8080/j-lawyer-io/rest/cases/0c79112f7f000101327bf357f0b6010c/duedates
         try {
@@ -836,6 +838,7 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/duedates/range")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulDueDateV6.class, responseContainer="List")
     public Response getDueDatesInRange(
             @QueryParam("from") String from,
             @QueryParam("to") String to,

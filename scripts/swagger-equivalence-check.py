@@ -15,11 +15,20 @@ def load(p):
     with open(p, encoding="utf-8") as f:
         return json.load(f)
 
+# jaxrs-analyzer produced a few non-class "junk" definitions from bytecode signature
+# fragments; $ref to any of these is not a real schema, so normalize it away.
+JUNK_DEFS = {"[", "String;>", "String", "Number"}
+
 def norm_schema(s):
     if not isinstance(s, dict):
         return s
     if "$ref" in s:
+        if s["$ref"].split("/")[-1] in JUNK_DEFS:
+            return None
         return {"$ref": s["$ref"]}
+    if s.get("type") == "array" and isinstance(s.get("items"), dict) and "$ref" in s["items"] \
+            and s["items"]["$ref"].split("/")[-1] in JUNK_DEFS:
+        return None
     out = {}
     if "type" in s: out["type"] = s["type"]
     if "items" in s: out["items"] = norm_schema(s["items"])
@@ -33,7 +42,7 @@ def op_signature(op):
         for p in op.get("parameters", [])
     )
     responses = {
-        code: json.dumps(norm_schema(r.get("schema")), sort_keys=True) if isinstance(r, dict) and r.get("schema") else None
+        code: json.dumps(norm_schema(r.get("schema") if isinstance(r, dict) else None), sort_keys=True)
         for code, r in op.get("responses", {}).items()
     }
     return {
@@ -86,7 +95,11 @@ def main():
     if op_diffs:
         diffs.append(f"{op_diffs} operations differ in tags/params/responses")
 
-    gdefs, ndefs = set(gold.get("definitions", {})), set(gen.get("definitions", {}))
+    # jaxrs-analyzer emitted a few non-class "junk" definition names from bytecode
+    # signature fragments; they are not real schemas and swagger-core won't reproduce them.
+    JUNK = {"[", "String;>", "String", "Number"}
+    gdefs = set(gold.get("definitions", {})) - JUNK
+    ndefs = set(gen.get("definitions", {}))
     if gdefs - ndefs:
         diffs.append(f"{len(gdefs - ndefs)} missing definitions, e.g.: {sorted(gdefs - ndefs)[:8]}")
 

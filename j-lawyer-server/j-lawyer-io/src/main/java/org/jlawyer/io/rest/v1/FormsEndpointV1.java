@@ -713,6 +713,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/types/list")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulFormTypeV1.class, responseContainer="List")
     public Response listFormTypes() {
         try {
 
@@ -745,6 +746,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{id}/entries")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulFormEntryV1.class, responseContainer="List")
     public Response getFormEntries(@PathParam("id") String id) {
         try {
 
@@ -781,6 +783,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/type/{id}/list")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulFormV1.class, responseContainer="List")
     public Response getFormsByType(@PathParam("id") String id) {
         try {
             InitialContext ic = new InitialContext();
@@ -839,7 +842,8 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{id}/entries/update")
     @RolesAllowed({"writeArchiveFileRole"})
-    public Response setFormEntries(List<RestfulFormEntryV1> formEntries) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulFormEntryV1.class, responseContainer="List")
+    public Response setFormEntries(@io.swagger.annotations.ApiParam List<RestfulFormEntryV1> formEntries) {
         try {
 
             if (formEntries == null) {
@@ -913,7 +917,8 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/delete")
     @RolesAllowed({"writeArchiveFileRole"})
-    public Response deleteForm(String id) {
+    @io.swagger.annotations.ApiOperation(value="")
+    public Response deleteForm(@io.swagger.annotations.ApiParam String id) {
 
         try {
             InitialContext ic = new InitialContext();
@@ -955,7 +960,8 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/create")
     @RolesAllowed({"writeArchiveFileRole"})
-    public Response createForm(RestfulFormV1 form) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulFormV1.class)
+    public Response createForm(@io.swagger.annotations.ApiParam RestfulFormV1 form) {
 
         try {
             InitialContext ic = new InitialContext();

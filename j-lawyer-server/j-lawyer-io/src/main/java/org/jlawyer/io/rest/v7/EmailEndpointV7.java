@@ -92,6 +92,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/mailboxes")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulMailboxV7.class, responseContainer="List")
     public Response listMailboxes() {
         try {
             InitialContext ic = new InitialContext();
@@ -124,6 +125,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/mailboxes/{mailboxId}/folders")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulMailFolderV7.class, responseContainer="List")
     public Response listFolders(@PathParam("mailboxId") String mailboxId) {
         try {
             InitialContext ic = new InitialContext();
@@ -159,7 +161,8 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/mailboxes/{mailboxId}/folders")
     @RolesAllowed({"loginRole"})
-    public Response createFolder(@PathParam("mailboxId") String mailboxId, RestfulCreateFolderRequestV7 request) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulMailFolderV7.class)
+    public Response createFolder(@PathParam("mailboxId") String mailboxId, @io.swagger.annotations.ApiParam RestfulCreateFolderRequestV7 request) {
         try {
             InitialContext ic = new InitialContext();
             if (!hasMailboxAccess(ic, mailboxId)) {
@@ -188,6 +191,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/mailboxes/{mailboxId}/folders/{folderId}")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="")
     public Response deleteFolder(@PathParam("mailboxId") String mailboxId, @PathParam("folderId") String folderId) {
         try {
             InitialContext ic = new InitialContext();
@@ -217,6 +221,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/mailboxes/{mailboxId}/folders/{folderId}/trash")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="")
     public Response emptyTrash(@PathParam("mailboxId") String mailboxId, @PathParam("folderId") String folderId) {
         try {
             InitialContext ic = new InitialContext();
@@ -251,6 +256,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/mailboxes/{mailboxId}/folders/{folderId}/messages")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulMailMessageV7.class, responseContainer="List")
     public Response listMessages(@PathParam("mailboxId") String mailboxId,
             @PathParam("folderId") String folderId,
             @QueryParam("top") @DefaultValue("50") int top,
@@ -308,6 +314,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/mailboxes/{mailboxId}/messages/{messageRef}")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulMailMessageV7.class)
     public Response getMessage(@PathParam("mailboxId") String mailboxId,
             @PathParam("messageRef") String messageRef,
             @QueryParam("includeAttachments") @DefaultValue("false") boolean includeAttachments) {
@@ -339,6 +346,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/mailboxes/{mailboxId}/messages/{messageRef}")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="")
     public Response deleteMessage(@PathParam("mailboxId") String mailboxId, @PathParam("messageRef") String messageRef) {
         try {
             InitialContext ic = new InitialContext();
@@ -369,6 +377,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/mailboxes/{mailboxId}/messages/{messageRef}/move")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="")
     public Response moveMessage(@PathParam("mailboxId") String mailboxId,
             @PathParam("messageRef") String messageRef,
             @QueryParam("targetFolderId") String targetFolderId) {
@@ -401,6 +410,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/mailboxes/{mailboxId}/messages/{messageRef}/read")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="")
     public Response markAsRead(@PathParam("mailboxId") String mailboxId,
             @PathParam("messageRef") String messageRef,
             @QueryParam("read") @DefaultValue("true") boolean read) {
@@ -432,6 +442,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
     @Produces("message/rfc822")
     @Path("/mailboxes/{mailboxId}/messages/{messageRef}/eml")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="")
     public Response getMessageAsEml(@PathParam("mailboxId") String mailboxId, @PathParam("messageRef") String messageRef) {
         try {
             InitialContext ic = new InitialContext();
@@ -465,6 +476,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
     @Produces({MediaType.APPLICATION_JSON + ";charset=utf-8", MediaType.APPLICATION_OCTET_STREAM})
     @Path("/mailboxes/{mailboxId}/messages/{messageRef}/attachments/{attachmentId}")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulMailAttachmentV7.class)
     public Response getAttachment(@PathParam("mailboxId") String mailboxId,
             @PathParam("messageRef") String messageRef,
             @PathParam("attachmentId") String attachmentId) {
@@ -498,7 +510,8 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/mailboxes/{mailboxId}/send")
     @RolesAllowed({"loginRole"})
-    public Response sendMail(@PathParam("mailboxId") String mailboxId, RestfulSendMailRequestV7 request) {
+    @io.swagger.annotations.ApiOperation(value="")
+    public Response sendMail(@PathParam("mailboxId") String mailboxId, @io.swagger.annotations.ApiParam RestfulSendMailRequestV7 request) {
         try {
             InitialContext ic = new InitialContext();
             if (!hasMailboxAccess(ic, mailboxId)) {
@@ -548,9 +561,10 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/mailboxes/{mailboxId}/folders/{folderId}/append")
     @RolesAllowed({"loginRole"})
-    public Response appendToFolder(@PathParam("mailboxId") String mailboxId,
-            @PathParam("folderId") String folderId,
-            RestfulAppendMailRequestV7 request) {
+    @io.swagger.annotations.ApiOperation(value="")
+    public Response appendToFolder(@PathParam("mailboxId") String mailboxId, @PathParam("folderId") String folderId, @io.swagger.annotations.ApiParam RestfulAppendMailRequestV7 request) {
+
+
         try {
             InitialContext ic = new InitialContext();
             if (!hasMailboxAccess(ic, mailboxId)) {
@@ -596,6 +610,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/mailboxes/{mailboxId}/test")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=String.class)
     public Response testConnection(@PathParam("mailboxId") String mailboxId) {
         try {
             InitialContext ic = new InitialContext();
@@ -628,6 +643,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/mailboxes/{mailboxId}/cache")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="")
     public Response invalidateCaches(@PathParam("mailboxId") String mailboxId) {
         try {
             InitialContext ic = new InitialContext();

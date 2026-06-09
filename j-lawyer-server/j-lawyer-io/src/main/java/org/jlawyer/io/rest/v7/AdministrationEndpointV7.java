@@ -715,7 +715,8 @@ public class AdministrationEndpointV7 implements AdministrationEndpointLocalV7 {
     @Path("/backup")
     @POST
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    public Response adHocBackup(RestfulCredentials credentials) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulJobStatusV7.class)
+    public Response adHocBackup(@io.swagger.annotations.ApiParam RestfulCredentials credentials) {
 
         try {
             
@@ -776,6 +777,7 @@ public class AdministrationEndpointV7 implements AdministrationEndpointLocalV7 {
     @Path("/jobs/{jobId}/status")
     @GET
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulJobStatusV7.class)
     public Response getJobStatus(@PathParam("jobId") String jobId) {
 
         try {
@@ -811,6 +813,7 @@ public class AdministrationEndpointV7 implements AdministrationEndpointLocalV7 {
     @Path("/jobs/list")
     @GET
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulJobStatusV7.class, responseContainer="List")
     public Response listJobs() {
 
         try {

@@ -50,6 +50,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/login")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaLoginResult.class)
     public Response login() {
         try {
             InitialContext ic = new InitialContext();
@@ -73,6 +74,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/logout")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="")
     public Response logout() {
         try {
             InitialContext ic = new InitialContext();
@@ -96,6 +98,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/version")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=String.class)
     public Response getBeaWrapperVersion() {
         try {
             InitialContext ic = new InitialContext();
@@ -121,7 +124,8 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/certificate-info")
     @RolesAllowed({"loginRole"})
-    public Response getCertificateInformation(BeaCertificateInfoRequest request) {
+    @io.swagger.annotations.ApiOperation(value="", response=Object.class)
+    public Response getCertificateInformation(@io.swagger.annotations.ApiParam BeaCertificateInfoRequest request) {
         try {
             InitialContext ic = new InitialContext();
             BeaServiceLocal bea = (BeaServiceLocal) ic.lookup(BEA_SERVICE_JNDI);
@@ -146,6 +150,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/postboxes")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaPostbox.class, responseContainer="List")
     public Response getPostboxes() {
         try {
             InitialContext ic = new InitialContext();
@@ -170,6 +175,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/postboxes/{safeId}")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaPostbox.class)
     public Response getPostbox(@PathParam("safeId") String safeId) {
         try {
             InitialContext ic = new InitialContext();
@@ -194,6 +200,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/postboxes/{safeId}/outbox/empty")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=Boolean.class)
     public Response isOutboxEmpty(@PathParam("safeId") String safeId) {
         try {
             InitialContext ic = new InitialContext();
@@ -219,6 +226,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/postboxes/{safeId}/egvp")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=Boolean.class)
     public Response isEgvpPostBox(@PathParam("safeId") String safeId, @QueryParam("userName") String userName) {
         try {
             InitialContext ic = new InitialContext();
@@ -245,6 +253,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/postboxes/{safeId}/folders")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaFolder.class, responseContainer="List")
     public Response getFolders(@PathParam("safeId") String safeId) {
         try {
             InitialContext ic = new InitialContext();
@@ -270,6 +279,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/postboxes/{safeId}/folders/{folderId}")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaFolder.class)
     public Response getFolder(@PathParam("safeId") String safeId, @PathParam("folderId") long folderId) {
         try {
             InitialContext ic = new InitialContext();
@@ -296,7 +306,8 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/postboxes/{safeId}/folders")
     @RolesAllowed({"loginRole"})
-    public Response createFolder(@PathParam("safeId") String safeId, BeaFolder folder) {
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaFolder.class)
+    public Response createFolder(@PathParam("safeId") String safeId, @io.swagger.annotations.ApiParam BeaFolder folder) {
         try {
             InitialContext ic = new InitialContext();
             BeaServiceLocal bea = (BeaServiceLocal) ic.lookup(BEA_SERVICE_JNDI);
@@ -322,6 +333,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/postboxes/{safeId}/folders/{folderId}")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="")
     public Response deleteFolder(@PathParam("safeId") String safeId, @PathParam("folderId") long folderId) {
         try {
             InitialContext ic = new InitialContext();
@@ -349,6 +361,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/postboxes/{safeId}/folders/{folderId}/messages")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaMessageHeader.class, responseContainer="List")
     public Response getMessages(@PathParam("safeId") String safeId, @PathParam("folderId") long folderId) {
         try {
             InitialContext ic = new InitialContext();
@@ -376,7 +389,8 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/postboxes/{safeId}/folders/{folderId}/messages/search")
     @RolesAllowed({"loginRole"})
-    public Response searchMessages(@PathParam("safeId") String safeId, @PathParam("folderId") long folderId, BeaMessageFilter filter) {
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaMessageHeader.class, responseContainer="List")
+    public Response searchMessages(@PathParam("safeId") String safeId, @PathParam("folderId") long folderId, @io.swagger.annotations.ApiParam BeaMessageFilter filter) {
         try {
             InitialContext ic = new InitialContext();
             BeaServiceLocal bea = (BeaServiceLocal) ic.lookup(BEA_SERVICE_JNDI);
@@ -401,6 +415,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/postboxes/{safeId}/folders/{folderId}/messageids")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=String.class, responseContainer="List")
     public Response getMessageIds(@PathParam("safeId") String safeId, @PathParam("folderId") long folderId) {
         try {
             InitialContext ic = new InitialContext();
@@ -428,7 +443,8 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/postboxes/{safeId}/folders/{folderId}/messageids/search")
     @RolesAllowed({"loginRole"})
-    public Response searchMessageIds(@PathParam("safeId") String safeId, @PathParam("folderId") long folderId, BeaMessageFilter filter) {
+    @io.swagger.annotations.ApiOperation(value="", response=String.class, responseContainer="List")
+    public Response searchMessageIds(@PathParam("safeId") String safeId, @PathParam("folderId") long folderId, @io.swagger.annotations.ApiParam BeaMessageFilter filter) {
         try {
             InitialContext ic = new InitialContext();
             BeaServiceLocal bea = (BeaServiceLocal) ic.lookup(BEA_SERVICE_JNDI);
@@ -454,6 +470,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/postboxes/{safeId}/messages/{messageId}")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaMessage.class)
     public Response getMessage(@PathParam("safeId") String safeId, @PathParam("messageId") String messageId, @QueryParam("includeAttachments") Boolean includeAttachments) {
         try {
             InitialContext ic = new InitialContext();
@@ -481,6 +498,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/postboxes/{safeId}/messages/{messageId}/attachments/{attachmentName}")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaAttachment.class)
     public Response getAttachmentContent(@PathParam("safeId") String safeId, @PathParam("messageId") String messageId, @PathParam("attachmentName") String attachmentName) {
         try {
             InitialContext ic = new InitialContext();
@@ -506,6 +524,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/postboxes/{safeId}/messages/{messageId}/header")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaMessageHeader.class)
     public Response getMessageHeader(@PathParam("safeId") String safeId, @PathParam("messageId") String messageId) {
         try {
             InitialContext ic = new InitialContext();
@@ -532,7 +551,8 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/postboxes/{safeId}/messages")
     @RolesAllowed({"loginRole"})
-    public Response sendMessage(@PathParam("safeId") String safeId, BeaSendMessageRequest request) {
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaMessage.class)
+    public Response sendMessage(@PathParam("safeId") String safeId, @io.swagger.annotations.ApiParam BeaSendMessageRequest request) {
         try {
             InitialContext ic = new InitialContext();
             BeaServiceLocal bea = (BeaServiceLocal) ic.lookup(BEA_SERVICE_JNDI);
@@ -558,7 +578,8 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/postboxes/{safeId}/messages/draft")
     @RolesAllowed({"loginRole"})
-    public Response saveDraft(@PathParam("safeId") String safeId, BeaSaveDraftRequest request) {
+    @io.swagger.annotations.ApiOperation(value="", response=String.class)
+    public Response saveDraft(@PathParam("safeId") String safeId, @io.swagger.annotations.ApiParam BeaSaveDraftRequest request) {
         try {
             InitialContext ic = new InitialContext();
             BeaServiceLocal bea = (BeaServiceLocal) ic.lookup(BEA_SERVICE_JNDI);
@@ -583,6 +604,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/postboxes/{safeId}/messages/{messageId}")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="")
     public Response deleteMessage(@PathParam("safeId") String safeId, @PathParam("messageId") String messageId) {
         try {
             InitialContext ic = new InitialContext();
@@ -608,6 +630,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/postboxes/{safeId}/messages/{messageId}/restore")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=Boolean.class)
     public Response restoreMessage(@PathParam("safeId") String safeId, @PathParam("messageId") String messageId) {
         try {
             InitialContext ic = new InitialContext();
@@ -635,7 +658,8 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/postboxes/{safeId}/messages/{messageId}/move")
     @RolesAllowed({"loginRole"})
-    public Response moveMessage(@PathParam("safeId") String safeId, @PathParam("messageId") String messageId, BeaMoveMessageRequest request) {
+    @io.swagger.annotations.ApiOperation(value="", response=Boolean.class)
+    public Response moveMessage(@PathParam("safeId") String safeId, @PathParam("messageId") String messageId, @io.swagger.annotations.ApiParam BeaMoveMessageRequest request) {
         try {
             InitialContext ic = new InitialContext();
             BeaServiceLocal bea = (BeaServiceLocal) ic.lookup(BEA_SERVICE_JNDI);
@@ -660,6 +684,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/postboxes/{safeId}/messages/{messageId}/read")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=Boolean.class)
     public Response markMessageRead(@PathParam("safeId") String safeId, @PathParam("messageId") String messageId) {
         try {
             InitialContext ic = new InitialContext();
@@ -686,6 +711,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/postboxes/{safeId}/messages/{messageId}/read/{targetSafeId}")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=Boolean.class)
     public Response isMessageReadByIdentity(@PathParam("safeId") String safeId, @PathParam("messageId") String messageId, @PathParam("targetSafeId") String targetSafeId) {
         try {
             InitialContext ic = new InitialContext();
@@ -711,6 +737,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/postboxes/{safeId}/messages/{messageId}/journal")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaMessageJournalEntry.class, responseContainer="List")
     public Response getMessageJournal(@PathParam("safeId") String safeId, @PathParam("messageId") String messageId) {
         try {
             InitialContext ic = new InitialContext();
@@ -736,6 +763,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/postboxes/{safeId}/messages/{messageId}/processcards")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaProcessCard.class, responseContainer="List")
     public Response getProcessCards(@PathParam("safeId") String safeId, @PathParam("messageId") String messageId) {
         try {
             InitialContext ic = new InitialContext();
@@ -761,6 +789,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/postboxes/{safeId}/messages/{messageId}/verify")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaVerificationResult.class)
     public Response verifyMessage(@PathParam("safeId") String safeId, @PathParam("messageId") String messageId) {
         try {
             InitialContext ic = new InitialContext();
@@ -788,6 +817,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/identities/{safeId}")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaIdentity.class)
     public Response getIdentity(@PathParam("safeId") String safeId, @QueryParam("zipCode") String zipCode) {
         try {
             InitialContext ic = new InitialContext();
@@ -818,7 +848,8 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/identities/search")
     @RolesAllowed({"loginRole"})
-    public Response searchIdentity(BeaIdentitySearchRequest request) {
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaIdentity.class, responseContainer="List")
+    public Response searchIdentity(@io.swagger.annotations.ApiParam BeaIdentitySearchRequest request) {
         try {
             InitialContext ic = new InitialContext();
             BeaServiceLocal bea = (BeaServiceLocal) ic.lookup(BEA_SERVICE_JNDI);
@@ -843,6 +874,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/legal-authorities")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaListItem.class, responseContainer="List")
     public Response getLegalAuthorities() {
         try {
             InitialContext ic = new InitialContext();
@@ -866,6 +898,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/legal-authorities/default")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaListItem.class)
     public Response getDefaultLegalAuthority() {
         try {
             InitialContext ic = new InitialContext();
@@ -889,6 +922,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/message-priorities")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaListItem.class, responseContainer="List")
     public Response getMessagePriorities() {
         try {
             InitialContext ic = new InitialContext();
@@ -916,7 +950,8 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/eeb/check-request")
     @RolesAllowed({"loginRole"})
-    public Response isEebRequest(String xml) {
+    @io.swagger.annotations.ApiOperation(value="", response=Boolean.class)
+    public Response isEebRequest(@io.swagger.annotations.ApiParam String xml) {
         try {
             InitialContext ic = new InitialContext();
             BeaServiceLocal bea = (BeaServiceLocal) ic.lookup(BEA_SERVICE_JNDI);
@@ -941,7 +976,8 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/eeb/check-response")
     @RolesAllowed({"loginRole"})
-    public Response isEebResponse(String xml) {
+    @io.swagger.annotations.ApiOperation(value="", response=Boolean.class)
+    public Response isEebResponse(@io.swagger.annotations.ApiParam String xml) {
         try {
             InitialContext ic = new InitialContext();
             BeaServiceLocal bea = (BeaServiceLocal) ic.lookup(BEA_SERVICE_JNDI);
@@ -966,7 +1002,8 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/eeb/request-attributes")
     @RolesAllowed({"loginRole"})
-    public Response getEebRequestAttributes(String xml) {
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaEebRequestAttributes.class)
+    public Response getEebRequestAttributes(@io.swagger.annotations.ApiParam String xml) {
         try {
             InitialContext ic = new InitialContext();
             BeaServiceLocal bea = (BeaServiceLocal) ic.lookup(BEA_SERVICE_JNDI);
@@ -991,7 +1028,8 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/eeb/response-attributes")
     @RolesAllowed({"loginRole"})
-    public Response getEebResponseAttributes(String xml) {
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaEebResponseAttributes.class)
+    public Response getEebResponseAttributes(@io.swagger.annotations.ApiParam String xml) {
         try {
             InitialContext ic = new InitialContext();
             BeaServiceLocal bea = (BeaServiceLocal) ic.lookup(BEA_SERVICE_JNDI);
@@ -1016,7 +1054,8 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/eeb/render-html")
     @RolesAllowed({"loginRole"})
-    public Response renderEebHtml(RestfulBeaEebRenderRequestV8 request) {
+    @io.swagger.annotations.ApiOperation(value="", response=String.class)
+    public Response renderEebHtml(@io.swagger.annotations.ApiParam RestfulBeaEebRenderRequestV8 request) {
         try {
             InitialContext ic = new InitialContext();
             BeaServiceLocal bea = (BeaServiceLocal) ic.lookup(BEA_SERVICE_JNDI);
@@ -1039,6 +1078,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/eeb/rejection-reasons")
     @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaListItem.class, responseContainer="List")
     public Response getEebRejectionReasons() {
         try {
             InitialContext ic = new InitialContext();
@@ -1066,7 +1106,8 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/postboxes/{safeId}/messages/{messageId}/eeb/confirm")
     @RolesAllowed({"loginRole"})
-    public Response sendEebConfirmation(@PathParam("safeId") String safeId, @PathParam("messageId") String messageId, RestfulBeaEebConfirmationV8 request) {
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaMessage.class)
+    public Response sendEebConfirmation(@PathParam("safeId") String safeId, @PathParam("messageId") String messageId, @io.swagger.annotations.ApiParam RestfulBeaEebConfirmationV8 request) {
         try {
             InitialContext ic = new InitialContext();
             BeaServiceLocal bea = (BeaServiceLocal) ic.lookup(BEA_SERVICE_JNDI);
@@ -1093,7 +1134,8 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/postboxes/{safeId}/messages/{messageId}/eeb/reject")
     @RolesAllowed({"loginRole"})
-    public Response sendEebRejection(@PathParam("safeId") String safeId, @PathParam("messageId") String messageId, RestfulBeaEebRejectionV8 request) {
+    @io.swagger.annotations.ApiOperation(value="", response=com.jdimension.jlawyer.services.bea.rest.BeaMessage.class)
+    public Response sendEebRejection(@PathParam("safeId") String safeId, @PathParam("messageId") String messageId, @io.swagger.annotations.ApiParam RestfulBeaEebRejectionV8 request) {
         try {
             InitialContext ic = new InitialContext();
             BeaServiceLocal bea = (BeaServiceLocal) ic.lookup(BEA_SERVICE_JNDI);

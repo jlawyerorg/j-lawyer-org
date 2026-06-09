@@ -721,6 +721,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/list/synced/{principalId}")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1.class, responseContainer="List")
     public Response getSynced(@PathParam("principalId") String principalId) {
         try {
 
@@ -761,7 +762,8 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/syncsettings")
     @RolesAllowed({"readArchiveFileRole"})
-    public Response enableCaseSync(RestfulCaseSyncSettingV5 syncSettings) {
+    @io.swagger.annotations.ApiOperation(value="")
+    public Response enableCaseSync(@io.swagger.annotations.ApiParam RestfulCaseSyncSettingV5 syncSettings) {
         try {
 
             InitialContext ic = new InitialContext();
@@ -790,6 +792,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/history")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v5.pojo.RestfulCaseHistoryV5.class, responseContainer="List")
     public Response getHistory(@PathParam("id") String id) {
         //http://localhost:8080/j-lawyer-io/rest/cases/0c79112f7f000101327bf357f0b6010c/history
         try {
@@ -837,6 +840,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/document/{id}/tags")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulTagV1.class, responseContainer="List")
     public Response getDocumentTags(@PathParam("id") String id) {
         try {
 
@@ -879,6 +883,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/tags/{id}")
     @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="")
     public Response deleteCaseTag(@PathParam("id") String id) {
         try {
 
@@ -913,7 +918,8 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/tags")
     @RolesAllowed({"writeArchiveFileRole"})
-    public Response createCaseTag(@PathParam("id") String id, RestfulTagV1 tag) {
+    @io.swagger.annotations.ApiOperation(value="")
+    public Response createCaseTag(@PathParam("id") String id, @io.swagger.annotations.ApiParam RestfulTagV1 tag) {
         try {
 
             InitialContext ic = new InitialContext();
@@ -954,7 +960,8 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/documents/{id}/tags")
     @RolesAllowed({"writeArchiveFileRole"})
-    public Response createDocumentTag(@PathParam("id") String id, RestfulTagV1 tag) {
+    @io.swagger.annotations.ApiOperation(value="")
+    public Response createDocumentTag(@PathParam("id") String id, @io.swagger.annotations.ApiParam RestfulTagV1 tag) {
         try {
 
             InitialContext ic = new InitialContext();
@@ -992,6 +999,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/documents/tags/{id}")
     @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="")
     public Response deleteDocumentTag(@PathParam("id") String id) {
         try {
 

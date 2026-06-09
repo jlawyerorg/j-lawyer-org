@@ -701,7 +701,8 @@ public class DataBucketEndpointV6 implements DataBucketEndpointLocalV6 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/next")
     @RolesAllowed({"readArchiveFileRole"})
-    public Response nextBucket(RestfulDataBucketV6 bucket) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulDataBucketV6.class)
+    public Response nextBucket(@io.swagger.annotations.ApiParam RestfulDataBucketV6 bucket) {
         try {
             InitialContext ic = new InitialContext();
             DataBucketLoaderLocal loader = (DataBucketLoaderLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/DataBucketLoader!com.jdimension.jlawyer.services.DataBucketLoaderLocal");

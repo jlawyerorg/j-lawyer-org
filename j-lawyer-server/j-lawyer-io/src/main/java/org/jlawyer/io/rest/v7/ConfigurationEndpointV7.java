@@ -725,6 +725,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @Path("/optiongroups/list")
     @GET
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @io.swagger.annotations.ApiOperation(value="", response=String.class, responseContainer="List")
     public Response getOptionGroups() {
 
         try {
@@ -754,6 +755,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @Path("/optiongroups/{optiongroup}")
     @GET
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulOptionV7.class, responseContainer="List")
     public Response getOptionGroup(@PathParam("optiongroup") String optiongroup) {
 
         try {
@@ -792,7 +794,8 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/options/create")
     @RolesAllowed({"createOptionGroupRole"})
-    public Response createOption(RestfulOptionV7 option) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulOptionV7.class)
+    public Response createOption(@io.swagger.annotations.ApiParam RestfulOptionV7 option) {
 
         try {
 
@@ -840,7 +843,8 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/options/delete")
     @RolesAllowed({"deleteOptionGroupRole"})
-    public Response deleteOption(RestfulOptionV7 option) {
+    @io.swagger.annotations.ApiOperation(value="")
+    public Response deleteOption(@io.swagger.annotations.ApiParam RestfulOptionV7 option) {
 
         try {
 
@@ -875,7 +879,8 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/options/update")
     @RolesAllowed({"createOptionGroupRole"})
-    public Response renameOption(RestfulOptionV7 option) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulOptionV7.class)
+    public Response renameOption(@io.swagger.annotations.ApiParam RestfulOptionV7 option) {
 
         try {
 
@@ -910,6 +915,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @Path("/tags/multivalue/{entityType}")
     @GET
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulMultiValueTagDefinitionV7.class, responseContainer="List")
     public Response getMultiValueTagDefinitions(@PathParam("entityType") String entityType) {
 
         try {

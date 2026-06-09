@@ -52,6 +52,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/open")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetV8.class, responseContainer="List")
     public Response getOpenTimesheets() {
         try {
             InitialContext ic = new InitialContext();
@@ -83,6 +84,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{timesheetId}")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetV8.class)
     public Response getTimesheet(@PathParam("timesheetId") String timesheetId) {
         try {
             InitialContext ic = new InitialContext();
@@ -111,6 +113,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{timesheetId}/positions")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class, responseContainer="List")
     public Response getTimesheetPositions(@PathParam("timesheetId") String timesheetId) {
         try {
             InitialContext ic = new InitialContext();
@@ -141,6 +144,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{timesheetId}/templates")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionTemplateV8.class, responseContainer="List")
     public Response getTimesheetTemplates(@PathParam("timesheetId") String timesheetId) {
         try {
             InitialContext ic = new InitialContext();
@@ -170,6 +174,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/positions/running")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class, responseContainer="List")
     public Response getRunningPositions() {
         try {
             String principal = securityContext.getUserPrincipal().getName();
@@ -200,6 +205,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/positions/running/count")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=Integer.class)
     public Response getRunningPositionsCount() {
         try {
             String principal = securityContext.getUserPrincipal().getName();
@@ -226,6 +232,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/cases/{caseId}/positions/last")
     @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class, responseContainer="List")
     public Response getLastPositionsForCase(@PathParam("caseId") String caseId) {
         try {
             String principal = securityContext.getUserPrincipal().getName();
@@ -262,7 +269,8 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{timesheetId}/positions/start")
     @RolesAllowed({"writeArchiveFileRole"})
-    public Response startPosition(@PathParam("timesheetId") String timesheetId, RestfulTimesheetPositionV8 position) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class)
+    public Response startPosition(@PathParam("timesheetId") String timesheetId, @io.swagger.annotations.ApiParam RestfulTimesheetPositionV8 position) {
         try {
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
@@ -299,7 +307,8 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{timesheetId}/positions/{positionId}/stop")
     @RolesAllowed({"writeArchiveFileRole"})
-    public Response stopPosition(@PathParam("timesheetId") String timesheetId, @PathParam("positionId") String positionId, RestfulTimesheetPositionV8 position) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class)
+    public Response stopPosition(@PathParam("timesheetId") String timesheetId, @PathParam("positionId") String positionId, @io.swagger.annotations.ApiParam RestfulTimesheetPositionV8 position) {
         try {
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
@@ -333,7 +342,8 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{timesheetId}/positions")
     @RolesAllowed({"writeArchiveFileRole"})
-    public Response addPosition(@PathParam("timesheetId") String timesheetId, RestfulTimesheetPositionV8 position) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class)
+    public Response addPosition(@PathParam("timesheetId") String timesheetId, @io.swagger.annotations.ApiParam RestfulTimesheetPositionV8 position) {
         try {
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
@@ -367,7 +377,8 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{timesheetId}/positions/{positionId}")
     @RolesAllowed({"writeArchiveFileRole"})
-    public Response updatePosition(@PathParam("timesheetId") String timesheetId, @PathParam("positionId") String positionId, RestfulTimesheetPositionV8 position) {
+    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class)
+    public Response updatePosition(@PathParam("timesheetId") String timesheetId, @PathParam("positionId") String positionId, @io.swagger.annotations.ApiParam RestfulTimesheetPositionV8 position) {
         try {
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
@@ -400,6 +411,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{timesheetId}/positions/{positionId}")
     @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="")
     public Response deletePosition(@PathParam("timesheetId") String timesheetId, @PathParam("positionId") String positionId) {
         try {
             InitialContext ic = new InitialContext();
