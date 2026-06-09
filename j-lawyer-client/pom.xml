@@ -627,9 +627,14 @@
         <dependency><groupId>org.jlawyer</groupId><artifactId>j-lawyer-server-entities</artifactId></dependency>
         <dependency><groupId>org.jlawyer</groupId><artifactId>j-lawyer-server-api</artifactId></dependency>
         <dependency><groupId>org.jlawyer</groupId><artifactId>j-lawyer-fax</artifactId></dependency>
+        <!-- cloud is a self-contained shaded fat jar. In a reactor Maven uses its full
+             (non-shade-reduced) pom, leaking transitives such as caldav4j -> ical4j 2.0.0 ->
+             groovy-all 2.3.2, which clashes with the client's own groovy-all 2.4.21 and
+             ical4j 1.0-beta3. Exclude all transitives (the Ant build referenced only the jar). -->
         <dependency>
             <groupId>org.jlawyer.cloud</groupId>
             <artifactId>j-lawyer-cloud</artifactId>
+            <exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions>
         </dependency>
         <!-- invoicing is a self-contained shaded fat jar with mustang + a relocated
              shaded.org.apache.pdfbox. Depend on the classified fat jar (so NetBeans uses the
