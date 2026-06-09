@@ -1,2 +1,0 @@
-Manifest-Version: 1.0
-Class-Path: j-lawyer-server-ejb.jar j-lawyer-server-entities.jar

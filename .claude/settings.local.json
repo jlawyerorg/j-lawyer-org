@@ -80,7 +80,13 @@
       "Read(//home/jens/.claude/**)",
       "Read(//usr/lib/jvm/**)",
       "Bash(find / -name javap -type f)",
-      "Bash(openspec spec *)"
+      "Bash(openspec spec *)",
+      "Bash(openspec --version)",
+      "Bash(awk -F/ '{print $1}')",
+      "Bash(mvn -v)",
+      "Read(//home/jens/bin/jdk-17.0.9-full/**)",
+      "Bash(/home/jens/bin/jdk-17.0.9-full/bin/java -version)",
+      "Read(//home/jens/bin/wildfly-26.1.3.Final/**)"
     ],
     "deny": [],
     "ask": []

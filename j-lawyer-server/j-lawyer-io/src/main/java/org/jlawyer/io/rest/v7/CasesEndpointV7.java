@@ -1,0 +1,2196 @@
+/*
+                    GNU AFFERO GENERAL PUBLIC LICENSE
+                       Version 3, 19 November 2007
+
+ Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
+
+                            Preamble
+
+  The GNU Affero General Public License is a free, copyleft license for
+software and other kinds of works, specifically designed to ensure
+cooperation with the community in the case of network server software.
+
+  The licenses for most software and other practical works are designed
+to take away your freedom to share and change the works.  By contrast,
+our General Public Licenses are intended to guarantee your freedom to
+share and change all versions of a program--to make sure it remains free
+software for all its users.
+
+  When we speak of free software, we are referring to freedom, not
+price.  Our General Public Licenses are designed to make sure that you
+have the freedom to distribute copies of free software (and charge for
+them if you wish), that you receive source code or can get it if you
+want it, that you can change the software or use pieces of it in new
+free programs, and that you know you can do these things.
+
+  Developers that use our General Public Licenses protect your rights
+with two steps: (1) assert copyright on the software, and (2) offer
+you this License which gives you legal permission to copy, distribute
+and/or modify the software.
+
+  A secondary benefit of defending all users' freedom is that
+improvements made in alternate versions of the program, if they
+receive widespread use, become available for other developers to
+incorporate.  Many developers of free software are heartened and
+encouraged by the resulting cooperation.  However, in the case of
+software used on network servers, this result may fail to come about.
+The GNU General Public License permits making a modified version and
+letting the public access it on a server without ever releasing its
+source code to the public.
+
+  The GNU Affero General Public License is designed specifically to
+ensure that, in such cases, the modified source code becomes available
+to the community.  It requires the operator of a network server to
+provide the source code of the modified version running there to the
+users of that server.  Therefore, public use of a modified version, on
+a publicly accessible server, gives the public access to the source
+code of the modified version.
+
+  An older license, called the Affero General Public License and
+published by Affero, was designed to accomplish similar goals.  This is
+a different license, not a version of the Affero GPL, but Affero has
+released a new version of the Affero GPL which permits relicensing under
+this license.
+
+  The precise terms and conditions for copying, distribution and
+modification follow.
+
+                       TERMS AND CONDITIONS
+
+  0. Definitions.
+
+  "This License" refers to version 3 of the GNU Affero General Public License.
+
+  "Copyright" also means copyright-like laws that apply to other kinds of
+works, such as semiconductor masks.
+
+  "The Program" refers to any copyrightable work licensed under this
+License.  Each licensee is addressed as "you".  "Licensees" and
+"recipients" may be individuals or organizations.
+
+  To "modify" a work means to copy from or adapt all or part of the work
+in a fashion requiring copyright permission, other than the making of an
+exact copy.  The resulting work is called a "modified version" of the
+earlier work or a work "based on" the earlier work.
+
+  A "covered work" means either the unmodified Program or a work based
+on the Program.
+
+  To "propagate" a work means to do anything with it that, without
+permission, would make you directly or secondarily liable for
+infringement under applicable copyright law, except executing it on a
+computer or modifying a private copy.  Propagation includes copying,
+distribution (with or without modification), making available to the
+public, and in some countries other activities as well.
+
+  To "convey" a work means any kind of propagation that enables other
+parties to make or receive copies.  Mere interaction with a user through
+a computer network, with no transfer of a copy, is not conveying.
+
+  An interactive user interface displays "Appropriate Legal Notices"
+to the extent that it includes a convenient and prominently visible
+feature that (1) displays an appropriate copyright notice, and (2)
+tells the user that there is no warranty for the work (except to the
+extent that warranties are provided), that licensees may convey the
+work under this License, and how to view a copy of this License.  If
+the interface presents a list of user commands or options, such as a
+menu, a prominent item in the list meets this criterion.
+
+  1. Source Code.
+
+  The "source code" for a work means the preferred form of the work
+for making modifications to it.  "Object code" means any non-source
+form of a work.
+
+  A "Standard Interface" means an interface that either is an official
+standard defined by a recognized standards body, or, in the case of
+interfaces specified for a particular programming language, one that
+is widely used among developers working in that language.
+
+  The "System Libraries" of an executable work include anything, other
+than the work as a whole, that (a) is included in the normal form of
+packaging a Major Component, but which is not part of that Major
+Component, and (b) serves only to enable use of the work with that
+Major Component, or to implement a Standard Interface for which an
+implementation is available to the public in source code form.  A
+"Major Component", in this context, means a major essential component
+(kernel, window system, and so on) of the specific operating system
+(if any) on which the executable work runs, or a compiler used to
+produce the work, or an object code interpreter used to run it.
+
+  The "Corresponding Source" for a work in object code form means all
+the source code needed to generate, install, and (for an executable
+work) run the object code and to modify the work, including scripts to
+control those activities.  However, it does not include the work's
+System Libraries, or general-purpose tools or generally available free
+programs which are used unmodified in performing those activities but
+which are not part of the work.  For example, Corresponding Source
+includes interface definition files associated with source files for
+the work, and the source code for shared libraries and dynamically
+linked subprograms that the work is specifically designed to require,
+such as by intimate data communication or control flow between those
+subprograms and other parts of the work.
+
+  The Corresponding Source need not include anything that users
+can regenerate automatically from other parts of the Corresponding
+Source.
+
+  The Corresponding Source for a work in source code form is that
+same work.
+
+  2. Basic Permissions.
+
+  All rights granted under this License are granted for the term of
+copyright on the Program, and are irrevocable provided the stated
+conditions are met.  This License explicitly affirms your unlimited
+permission to run the unmodified Program.  The output from running a
+covered work is covered by this License only if the output, given its
+content, constitutes a covered work.  This License acknowledges your
+rights of fair use or other equivalent, as provided by copyright law.
+
+  You may make, run and propagate covered works that you do not
+convey, without conditions so long as your license otherwise remains
+in force.  You may convey covered works to others for the sole purpose
+of having them make modifications exclusively for you, or provide you
+with facilities for running those works, provided that you comply with
+the terms of this License in conveying all material for which you do
+not control copyright.  Those thus making or running the covered works
+for you must do so exclusively on your behalf, under your direction
+and control, on terms that prohibit them from making any copies of
+your copyrighted material outside their relationship with you.
+
+  Conveying under any other circumstances is permitted solely under
+the conditions stated below.  Sublicensing is not allowed; section 10
+makes it unnecessary.
+
+  3. Protecting Users' Legal Rights From Anti-Circumvention Law.
+
+  No covered work shall be deemed part of an effective technological
+measure under any applicable law fulfilling obligations under article
+11 of the WIPO copyright treaty adopted on 20 December 1996, or
+similar laws prohibiting or restricting circumvention of such
+measures.
+
+  When you convey a covered work, you waive any legal power to forbid
+circumvention of technological measures to the extent such circumvention
+is effected by exercising rights under this License with respect to
+the covered work, and you disclaim any intention to limit operation or
+modification of the work as a means of enforcing, against the work's
+users, your or third parties' legal rights to forbid circumvention of
+technological measures.
+
+  4. Conveying Verbatim Copies.
+
+  You may convey verbatim copies of the Program's source code as you
+receive it, in any medium, provided that you conspicuously and
+appropriately publish on each copy an appropriate copyright notice;
+keep intact all notices stating that this License and any
+non-permissive terms added in accord with section 7 apply to the code;
+keep intact all notices of the absence of any warranty; and give all
+recipients a copy of this License along with the Program.
+
+  You may charge any price or no price for each copy that you convey,
+and you may offer support or warranty protection for a fee.
+
+  5. Conveying Modified Source Versions.
+
+  You may convey a work based on the Program, or the modifications to
+produce it from the Program, in the form of source code under the
+terms of section 4, provided that you also meet all of these conditions:
+
+    a) The work must carry prominent notices stating that you modified
+    it, and giving a relevant date.
+
+    b) The work must carry prominent notices stating that it is
+    released under this License and any conditions added under section
+    7.  This requirement modifies the requirement in section 4 to
+    "keep intact all notices".
+
+    c) You must license the entire work, as a whole, under this
+    License to anyone who comes into possession of a copy.  This
+    License will therefore apply, along with any applicable section 7
+    additional terms, to the whole of the work, and all its parts,
+    regardless of how they are packaged.  This License gives no
+    permission to license the work in any other way, but it does not
+    invalidate such permission if you have separately received it.
+
+    d) If the work has interactive user interfaces, each must display
+    Appropriate Legal Notices; however, if the Program has interactive
+    interfaces that do not display Appropriate Legal Notices, your
+    work need not make them do so.
+
+  A compilation of a covered work with other separate and independent
+works, which are not by their nature extensions of the covered work,
+and which are not combined with it such as to form a larger program,
+in or on a volume of a storage or distribution medium, is called an
+"aggregate" if the compilation and its resulting copyright are not
+used to limit the access or legal rights of the compilation's users
+beyond what the individual works permit.  Inclusion of a covered work
+in an aggregate does not cause this License to apply to the other
+parts of the aggregate.
+
+  6. Conveying Non-Source Forms.
+
+  You may convey a covered work in object code form under the terms
+of sections 4 and 5, provided that you also convey the
+machine-readable Corresponding Source under the terms of this License,
+in one of these ways:
+
+    a) Convey the object code in, or embodied in, a physical product
+    (including a physical distribution medium), accompanied by the
+    Corresponding Source fixed on a durable physical medium
+    customarily used for software interchange.
+
+    b) Convey the object code in, or embodied in, a physical product
+    (including a physical distribution medium), accompanied by a
+    written offer, valid for at least three years and valid for as
+    long as you offer spare parts or customer support for that product
+    model, to give anyone who possesses the object code either (1) a
+    copy of the Corresponding Source for all the software in the
+    product that is covered by this License, on a durable physical
+    medium customarily used for software interchange, for a price no
+    more than your reasonable cost of physically performing this
+    conveying of source, or (2) access to copy the
+    Corresponding Source from a network server at no charge.
+
+    c) Convey individual copies of the object code with a copy of the
+    written offer to provide the Corresponding Source.  This
+    alternative is allowed only occasionally and noncommercially, and
+    only if you received the object code with such an offer, in accord
+    with subsection 6b.
+
+    d) Convey the object code by offering access from a designated
+    place (gratis or for a charge), and offer equivalent access to the
+    Corresponding Source in the same way through the same place at no
+    further charge.  You need not require recipients to copy the
+    Corresponding Source along with the object code.  If the place to
+    copy the object code is a network server, the Corresponding Source
+    may be on a different server (operated by you or a third party)
+    that supports equivalent copying facilities, provided you maintain
+    clear directions next to the object code saying where to find the
+    Corresponding Source.  Regardless of what server hosts the
+    Corresponding Source, you remain obligated to ensure that it is
+    available for as long as needed to satisfy these requirements.
+
+    e) Convey the object code using peer-to-peer transmission, provided
+    you inform other peers where the object code and Corresponding
+    Source of the work are being offered to the general public at no
+    charge under subsection 6d.
+
+  A separable portion of the object code, whose source code is excluded
+from the Corresponding Source as a System Library, need not be
+included in conveying the object code work.
+
+  A "User Product" is either (1) a "consumer product", which means any
+tangible personal property which is normally used for personal, family,
+or household purposes, or (2) anything designed or sold for incorporation
+into a dwelling.  In determining whether a product is a consumer product,
+doubtful cases shall be resolved in favor of coverage.  For a particular
+product received by a particular user, "normally used" refers to a
+typical or common use of that class of product, regardless of the status
+of the particular user or of the way in which the particular user
+actually uses, or expects or is expected to use, the product.  A product
+is a consumer product regardless of whether the product has substantial
+commercial, industrial or non-consumer uses, unless such uses represent
+the only significant mode of use of the product.
+
+  "Installation Information" for a User Product means any methods,
+procedures, authorization keys, or other information required to install
+and execute modified versions of a covered work in that User Product from
+a modified version of its Corresponding Source.  The information must
+suffice to ensure that the continued functioning of the modified object
+code is in no case prevented or interfered with solely because
+modification has been made.
+
+  If you convey an object code work under this section in, or with, or
+specifically for use in, a User Product, and the conveying occurs as
+part of a transaction in which the right of possession and use of the
+User Product is transferred to the recipient in perpetuity or for a
+fixed term (regardless of how the transaction is characterized), the
+Corresponding Source conveyed under this section must be accompanied
+by the Installation Information.  But this requirement does not apply
+if neither you nor any third party retains the ability to install
+modified object code on the User Product (for example, the work has
+been installed in ROM).
+
+  The requirement to provide Installation Information does not include a
+requirement to continue to provide support service, warranty, or updates
+for a work that has been modified or installed by the recipient, or for
+the User Product in which it has been modified or installed.  Access to a
+network may be denied when the modification itself materially and
+adversely affects the operation of the network or violates the rules and
+protocols for communication across the network.
+
+  Corresponding Source conveyed, and Installation Information provided,
+in accord with this section must be in a format that is publicly
+documented (and with an implementation available to the public in
+source code form), and must require no special password or key for
+unpacking, reading or copying.
+
+  7. Additional Terms.
+
+  "Additional permissions" are terms that supplement the terms of this
+License by making exceptions from one or more of its conditions.
+Additional permissions that are applicable to the entire Program shall
+be treated as though they were included in this License, to the extent
+that they are valid under applicable law.  If additional permissions
+apply only to part of the Program, that part may be used separately
+under those permissions, but the entire Program remains governed by
+this License without regard to the additional permissions.
+
+  When you convey a copy of a covered work, you may at your option
+remove any additional permissions from that copy, or from any part of
+it.  (Additional permissions may be written to require their own
+removal in certain cases when you modify the work.)  You may place
+additional permissions on material, added by you to a covered work,
+for which you have or can give appropriate copyright permission.
+
+  Notwithstanding any other provision of this License, for material you
+add to a covered work, you may (if authorized by the copyright holders of
+that material) supplement the terms of this License with terms:
+
+    a) Disclaiming warranty or limiting liability differently from the
+    terms of sections 15 and 16 of this License; or
+
+    b) Requiring preservation of specified reasonable legal notices or
+    author attributions in that material or in the Appropriate Legal
+    Notices displayed by works containing it; or
+
+    c) Prohibiting misrepresentation of the origin of that material, or
+    requiring that modified versions of such material be marked in
+    reasonable ways as different from the original version; or
+
+    d) Limiting the use for publicity purposes of names of licensors or
+    authors of the material; or
+
+    e) Declining to grant rights under trademark law for use of some
+    trade names, trademarks, or service marks; or
+
+    f) Requiring indemnification of licensors and authors of that
+    material by anyone who conveys the material (or modified versions of
+    it) with contractual assumptions of liability to the recipient, for
+    any liability that these contractual assumptions directly impose on
+    those licensors and authors.
+
+  All other non-permissive additional terms are considered "further
+restrictions" within the meaning of section 10.  If the Program as you
+received it, or any part of it, contains a notice stating that it is
+governed by this License along with a term that is a further
+restriction, you may remove that term.  If a license document contains
+a further restriction but permits relicensing or conveying under this
+License, you may add to a covered work material governed by the terms
+of that license document, provided that the further restriction does
+not survive such relicensing or conveying.
+
+  If you add terms to a covered work in accord with this section, you
+must place, in the relevant source files, a statement of the
+additional terms that apply to those files, or a notice indicating
+where to find the applicable terms.
+
+  Additional terms, permissive or non-permissive, may be stated in the
+form of a separately written license, or stated as exceptions;
+the above requirements apply either way.
+
+  8. Termination.
+
+  You may not propagate or modify a covered work except as expressly
+provided under this License.  Any attempt otherwise to propagate or
+modify it is void, and will automatically terminate your rights under
+this License (including any patent licenses granted under the third
+paragraph of section 11).
+
+  However, if you cease all violation of this License, then your
+license from a particular copyright holder is reinstated (a)
+provisionally, unless and until the copyright holder explicitly and
+finally terminates your license, and (b) permanently, if the copyright
+holder fails to notify you of the violation by some reasonable means
+prior to 60 days after the cessation.
+
+  Moreover, your license from a particular copyright holder is
+reinstated permanently if the copyright holder notifies you of the
+violation by some reasonable means, this is the first time you have
+received notice of violation of this License (for any work) from that
+copyright holder, and you cure the violation prior to 30 days after
+your receipt of the notice.
+
+  Termination of your rights under this section does not terminate the
+licenses of parties who have received copies or rights from you under
+this License.  If your rights have been terminated and not permanently
+reinstated, you do not qualify to receive new licenses for the same
+material under section 10.
+
+  9. Acceptance Not Required for Having Copies.
+
+  You are not required to accept this License in order to receive or
+run a copy of the Program.  Ancillary propagation of a covered work
+occurring solely as a consequence of using peer-to-peer transmission
+to receive a copy likewise does not require acceptance.  However,
+nothing other than this License grants you permission to propagate or
+modify any covered work.  These actions infringe copyright if you do
+not accept this License.  Therefore, by modifying or propagating a
+covered work, you indicate your acceptance of this License to do so.
+
+  10. Automatic Licensing of Downstream Recipients.
+
+  Each time you convey a covered work, the recipient automatically
+receives a license from the original licensors, to run, modify and
+propagate that work, subject to this License.  You are not responsible
+for enforcing compliance by third parties with this License.
+
+  An "entity transaction" is a transaction transferring control of an
+organization, or substantially all assets of one, or subdividing an
+organization, or merging organizations.  If propagation of a covered
+work results from an entity transaction, each party to that
+transaction who receives a copy of the work also receives whatever
+licenses to the work the party's predecessor in interest had or could
+give under the previous paragraph, plus a right to possession of the
+Corresponding Source of the work from the predecessor in interest, if
+the predecessor has it or can get it with reasonable efforts.
+
+  You may not impose any further restrictions on the exercise of the
+rights granted or affirmed under this License.  For example, you may
+not impose a license fee, royalty, or other charge for exercise of
+rights granted under this License, and you may not initiate litigation
+(including a cross-claim or counterclaim in a lawsuit) alleging that
+any patent claim is infringed by making, using, selling, offering for
+sale, or importing the Program or any portion of it.
+
+  11. Patents.
+
+  A "contributor" is a copyright holder who authorizes use under this
+License of the Program or a work on which the Program is based.  The
+work thus licensed is called the contributor's "contributor version".
+
+  A contributor's "essential patent claims" are all patent claims
+owned or controlled by the contributor, whether already acquired or
+hereafter acquired, that would be infringed by some manner, permitted
+by this License, of making, using, or selling its contributor version,
+but do not include claims that would be infringed only as a
+consequence of further modification of the contributor version.  For
+purposes of this definition, "control" includes the right to grant
+patent sublicenses in a manner consistent with the requirements of
+this License.
+
+  Each contributor grants you a non-exclusive, worldwide, royalty-free
+patent license under the contributor's essential patent claims, to
+make, use, sell, offer for sale, import and otherwise run, modify and
+propagate the contents of its contributor version.
+
+  In the following three paragraphs, a "patent license" is any express
+agreement or commitment, however denominated, not to enforce a patent
+(such as an express permission to practice a patent or covenant not to
+sue for patent infringement).  To "grant" such a patent license to a
+party means to make such an agreement or commitment not to enforce a
+patent against the party.
+
+  If you convey a covered work, knowingly relying on a patent license,
+and the Corresponding Source of the work is not available for anyone
+to copy, free of charge and under the terms of this License, through a
+publicly available network server or other readily accessible means,
+then you must either (1) cause the Corresponding Source to be so
+available, or (2) arrange to deprive yourself of the benefit of the
+patent license for this particular work, or (3) arrange, in a manner
+consistent with the requirements of this License, to extend the patent
+license to downstream recipients.  "Knowingly relying" means you have
+actual knowledge that, but for the patent license, your conveying the
+covered work in a country, or your recipient's use of the covered work
+in a country, would infringe one or more identifiable patents in that
+country that you have reason to believe are valid.
+
+  If, pursuant to or in connection with a single transaction or
+arrangement, you convey, or propagate by procuring conveyance of, a
+covered work, and grant a patent license to some of the parties
+receiving the covered work authorizing them to use, propagate, modify
+or convey a specific copy of the covered work, then the patent license
+you grant is automatically extended to all recipients of the covered
+work and works based on it.
+
+  A patent license is "discriminatory" if it does not include within
+the scope of its coverage, prohibits the exercise of, or is
+conditioned on the non-exercise of one or more of the rights that are
+specifically granted under this License.  You may not convey a covered
+work if you are a party to an arrangement with a third party that is
+in the business of distributing software, under which you make payment
+to the third party based on the extent of your activity of conveying
+the work, and under which the third party grants, to any of the
+parties who would receive the covered work from you, a discriminatory
+patent license (a) in connection with copies of the covered work
+conveyed by you (or copies made from those copies), or (b) primarily
+for and in connection with specific products or compilations that
+contain the covered work, unless you entered into that arrangement,
+or that patent license was granted, prior to 28 March 2007.
+
+  Nothing in this License shall be construed as excluding or limiting
+any implied license or other defenses to infringement that may
+otherwise be available to you under applicable patent law.
+
+  12. No Surrender of Others' Freedom.
+
+  If conditions are imposed on you (whether by court order, agreement or
+otherwise) that contradict the conditions of this License, they do not
+excuse you from the conditions of this License.  If you cannot convey a
+covered work so as to satisfy simultaneously your obligations under this
+License and any other pertinent obligations, then as a consequence you may
+not convey it at all.  For example, if you agree to terms that obligate you
+to collect a royalty for further conveying from those to whom you convey
+the Program, the only way you could satisfy both those terms and this
+License would be to refrain entirely from conveying the Program.
+
+  13. Remote Network Interaction; Use with the GNU General Public License.
+
+  Notwithstanding any other provision of this License, if you modify the
+Program, your modified version must prominently offer all users
+interacting with it remotely through a computer network (if your version
+supports such interaction) an opportunity to receive the Corresponding
+Source of your version by providing access to the Corresponding Source
+from a network server at no charge, through some standard or customary
+means of facilitating copying of software.  This Corresponding Source
+shall include the Corresponding Source for any work covered by version 3
+of the GNU General Public License that is incorporated pursuant to the
+following paragraph.
+
+  Notwithstanding any other provision of this License, you have
+permission to link or combine any covered work with a work licensed
+under version 3 of the GNU General Public License into a single
+combined work, and to convey the resulting work.  The terms of this
+License will continue to apply to the part which is the covered work,
+but the work with which it is combined will remain governed by version
+3 of the GNU General Public License.
+
+  14. Revised Versions of this License.
+
+  The Free Software Foundation may publish revised and/or new versions of
+the GNU Affero General Public License from time to time.  Such new versions
+will be similar in spirit to the present version, but may differ in detail to
+address new problems or concerns.
+
+  Each version is given a distinguishing version number.  If the
+Program specifies that a certain numbered version of the GNU Affero General
+Public License "or any later version" applies to it, you have the
+option of following the terms and conditions either of that numbered
+version or of any later version published by the Free Software
+Foundation.  If the Program does not specify a version number of the
+GNU Affero General Public License, you may choose any version ever published
+by the Free Software Foundation.
+
+  If the Program specifies that a proxy can decide which future
+versions of the GNU Affero General Public License can be used, that proxy's
+public statement of acceptance of a version permanently authorizes you
+to choose that version for the Program.
+
+  Later license versions may give you additional or different
+permissions.  However, no additional obligations are imposed on any
+author or copyright holder as a result of your choosing to follow a
+later version.
+
+  15. Disclaimer of Warranty.
+
+  THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
+APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
+HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY
+OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM
+IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF
+ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
+
+  16. Limitation of Liability.
+
+  IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS
+THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY
+GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE
+USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF
+DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD
+PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),
+EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.
+
+  17. Interpretation of Sections 15 and 16.
+
+  If the disclaimer of warranty and limitation of liability provided
+above cannot be given local legal effect according to their terms,
+reviewing courts shall apply local law that most closely approximates
+an absolute waiver of all civil liability in connection with the
+Program, unless a warranty or assumption of liability accompanies a
+copy of the Program in return for a fee.
+
+                     END OF TERMS AND CONDITIONS
+
+            How to Apply These Terms to Your New Programs
+
+  If you develop a new program, and you want it to be of the greatest
+possible use to the public, the best way to achieve this is to make it
+free software which everyone can redistribute and change under these terms.
+
+  To do so, attach the following notices to the program.  It is safest
+to attach them to the start of each source file to most effectively
+state the exclusion of warranty; and each file should have at least
+the "copyright" line and a pointer to where the full notice is found.
+
+    <one line to give the program's name and a brief idea of what it does.>
+    Copyright (C) <year>  <name of author>
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+Also add information on how to contact you by electronic and paper mail.
+
+  If your software can interact with users remotely through a computer
+network, you should also make sure that it provides a way for users to
+get its source.  For example, if your program is a web application, its
+interface could display a "Source" link that leads users to an archive
+of the code.  There are many ways you could offer source, and different
+solutions will be better for different programs; see section 13 for the
+specific requirements.
+
+  You should also get your employer (if you work as a programmer) or school,
+if any, to sign a "copyright disclaimer" for the program, if necessary.
+For more information on this, and how to apply and follow the GNU AGPL, see
+<https://www.gnu.org/licenses/>.
+ */
+package org.jlawyer.io.rest.v7;
+
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
+import com.jdimension.jlawyer.persistence.CaseAccountEntry;
+import com.jdimension.jlawyer.persistence.CaseAccountEntryFacadeLocal;
+import com.jdimension.jlawyer.persistence.Group;
+import com.jdimension.jlawyer.persistence.InstantMessage;
+import com.jdimension.jlawyer.persistence.Invoice;
+import com.jdimension.jlawyer.persistence.InvoiceFacadeLocal;
+import com.jdimension.jlawyer.persistence.InvoicePoolFacadeLocal;
+import com.jdimension.jlawyer.persistence.InvoicePool;
+import com.jdimension.jlawyer.persistence.InvoicePosition;
+import com.jdimension.jlawyer.persistence.InvoicePositionFacadeLocal;
+import com.jdimension.jlawyer.persistence.InvoiceType;
+import com.jdimension.jlawyer.persistence.Timesheet;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
+import com.jdimension.jlawyer.services.AddressServiceLocal;
+import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import com.jdimension.jlawyer.services.InvoiceServiceLocal;
+import com.jdimension.jlawyer.services.MessagingServiceLocal;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import javax.annotation.security.RolesAllowed;
+import javax.ejb.Stateless;
+import javax.naming.InitialContext;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulCaseV2;
+import org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1;
+import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
+import org.jlawyer.io.rest.v7.pojo.RestfulCaseAccountEntryV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulDocumentValidationRequestV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulInstantMessageV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceDuplicateRequestV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulStatusResponseV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulRecycleBinDocumentV7;
+import org.jlawyer.io.rest.v8.pojo.RestfulTimesheetV8;
+
+/**
+ *
+ * http://localhost:8080/j-lawyer-io/rest/cases/list
+ */
+@Stateless
+@Path("/v7/cases")
+@Consumes({"application/json"})
+@Produces({"application/json"})
+@io.swagger.annotations.Api(tags={"Cases"})
+public class CasesEndpointV7 implements CasesEndpointLocalV7 {
+
+    private static final Logger log = Logger.getLogger(CasesEndpointV7.class.getName());
+    private static final String LOOKUP_CASES = "java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
+    private static final String LOOKUP_INVOICES = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoiceService!com.jdimension.jlawyer.services.InvoiceServiceLocal";
+    private static final String LOOKUP_DOCS = "java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileDocumentsBeanFacade!com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal";
+    private static final String LOOKUP_MESSAGING = "java:global/j-lawyer-server/j-lawyer-server-ejb/MessagingService!com.jdimension.jlawyer.services.MessagingServiceLocal";
+    private static final String LOOKUP_INVOICE_FACADE = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoiceFacade!com.jdimension.jlawyer.persistence.InvoiceFacadeLocal";
+    private static final String LOOKUP_INVOICE_POOL_FACADE = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoicePoolFacade!com.jdimension.jlawyer.persistence.InvoicePoolFacadeLocal";
+    private static final String LOOKUP_INVOICE_POSITION_FACADE = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoicePositionFacade!com.jdimension.jlawyer.persistence.InvoicePositionFacadeLocal";
+    private static final String LOOKUP_ADDRESSES = "java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal";
+    private static final String LOOKUP_ACCOUNT_ENTRIES = "java:global/j-lawyer-server/j-lawyer-server-ejb/CaseAccountEntryFacade!com.jdimension.jlawyer.persistence.CaseAccountEntryFacadeLocal";
+
+    /**
+     * Checks whether or not a document (as specified in the request) may
+     * currently be added to the given case. Note that a client should then add
+     * the document directly after performing the check, otherwise there may be
+     * other clients who add same-named documents in the meantime. Checks are
+     * performed in a case-insensitive manner, even if some operating systems
+     * allow that.
+     *
+     * @param id case ID
+     * @param request the request object describing a document to be added to
+     * the case
+     * @return validation response as an instance of RestfulStatusResponseV7 - a
+     * JSON structure with "status" and "message" attributes. Status may have
+     * one of the values STATUS_OK, STATUS_WARNING, STATUS_ERROR.
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/{id}/documents/validate")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response validateDocumentName(@PathParam("id") String id, RestfulDocumentValidationRequestV7 request) {
+        try {
+            InitialContext ic = new InitialContext();
+
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileDocumentsBeanFacadeLocal docs = (ArchiveFileDocumentsBeanFacadeLocal) ic.lookup(LOOKUP_DOCS);
+
+            RestfulStatusResponseV7 response = new RestfulStatusResponseV7();
+
+            if (ServerStringUtils.isEmpty(request.getDocumentName())) {
+                response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
+                response.setMessage("A document must have a non-empty file name!");
+                return Response.ok(response).build();
+            }
+
+            ArchiveFileBean afb = cases.getArchiveFile(id);
+            if (afb == null) {
+                response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
+                response.setMessage("There is no case with id " + id);
+                return Response.ok(response).build();
+            }
+
+            String newNameLowerCase = request.getDocumentName().toLowerCase();
+            List<ArchiveFileDocumentsBean> activeDocs = docs.findByArchiveFileKey(afb, false);
+            for (ArchiveFileDocumentsBean d : activeDocs) {
+                if (d.getName().toLowerCase().equals(newNameLowerCase)) {
+                    response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
+                    response.setMessage("There is already a document with name " + request.getDocumentName() + " in case with ID " + id);
+                    return Response.ok(response).build();
+                }
+            }
+
+            List<ArchiveFileDocumentsBean> binDocs = docs.findByArchiveFileKey(afb, true);
+            for (ArchiveFileDocumentsBean d : binDocs) {
+                if (d.getName().toLowerCase().equals(newNameLowerCase)) {
+                    response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
+                    response.setMessage("There is a deleted document with name " + request.getDocumentName() + " in the paper bin for case with ID " + id);
+                    return Response.ok(response).build();
+                }
+            }
+
+            response.setStatus(RestfulStatusResponseV7.STATUS_OK);
+            response.setMessage("A document with name " + request.getDocumentName() + " may currently be added to case with ID " + id);
+            return Response.ok(response).build();
+        } catch (Exception ex) {
+            log.error("can not get document " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns a list of instant messages for a given case
+     *
+     * @param id case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/messages")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCaseMessages(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileBean currentCase = cases.getArchiveFile(id);
+            if (currentCase == null) {
+                log.error("case with id " + id + " does not exist");
+                return Response.serverError().build();
+            }
+
+            MessagingServiceLocal msgService = (MessagingServiceLocal) ic.lookup(LOOKUP_MESSAGING);
+            List<InstantMessage> messages = msgService.getMessagesForCase(id);
+
+            ArrayList<RestfulInstantMessageV7> msgList = new ArrayList<>();
+            for (InstantMessage im : messages) {
+                RestfulInstantMessageV7 m = RestfulInstantMessageV7.fromInstantMessage(im);
+                msgList.add(m);
+            }
+
+            return Response.ok(msgList).build();
+        } catch (Exception ex) {
+            log.error("can not get message for case " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns a list of invoices for a given case
+     *
+     * @param id case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/invoices")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCaseInvoices(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileBean currentCase = cases.getArchiveFile(id);
+            if (currentCase == null) {
+                log.error("case with id " + id + " does not exist");
+                return Response.serverError().build();
+            }
+
+            List<Invoice> invoices=cases.getInvoices(id);
+            
+            ArrayList<RestfulInvoiceV7> invoiceList = new ArrayList<>();
+            for (Invoice i : invoices) {
+                RestfulInvoiceV7 ri = RestfulInvoiceV7.fromInvoice(i);
+                invoiceList.add(ri);
+            }
+
+            return Response.ok(invoiceList).build();
+        } catch (Exception ex) {
+            log.error("can not get invoices for case " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+    
+    /**
+     * Returns a list of invoice positions for a given invoice
+     *
+     * @param id invoice ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/invoices/{id}/positions")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getInvoicePositions(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            
+            InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
+            Invoice found=invoiceFacade.find(id);
+            if(found==null)
+                return Response.status(Response.Status.NOT_FOUND).build();
+            
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            
+            List<InvoicePosition> positions=cases.getInvoicePositions(id);
+            
+            ArrayList<RestfulInvoicePositionV7> positionList = new ArrayList<>();
+            for (InvoicePosition i : positions) {
+                RestfulInvoicePositionV7 ri = RestfulInvoicePositionV7.fromInvoicePosition(i);
+                positionList.add(ri);
+            }
+
+            return Response.ok(positionList).build();
+        } catch (Exception ex) {
+            log.error("can not get invoice positions for invoice " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+    
+    /**
+     * Creates a new invoice within an existing case. An ID for the invoice is
+     * not required in the request.
+     *
+     * @param invoice document data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/invoices/create")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response createInvoice(RestfulInvoiceV7 invoice) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileBean currentCase = cases.getArchiveFile(invoice.getCaseId());
+            if (currentCase == null) {
+                log.error("case with id " + invoice.getCaseId() + " does not exist");
+                return Response.serverError().build();
+            }
+            
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup(LOOKUP_ADDRESSES);
+            AddressBean address=null;
+            if(invoice.getContactId()!=null) {
+                address=addresses.getAddress(invoice.getContactId());
+            }
+            
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICES);
+            InvoiceType foundType=null;
+            for(InvoiceType it: invoices.getAllInvoiceTypes()) {
+                if(it.getId().equals(invoice.getInvoiceType())) {
+                    foundType=it;
+                    break;
+                }
+            }
+            if(foundType==null) {
+                log.error("Invoice type with name '" + invoice.getInvoiceType() + "' can not be found!");
+                return Response.serverError().build();
+            }
+            
+            InvoicePool foundPool=null;
+            for(InvoicePool ip: invoices.getAllInvoicePools()) {
+                if(ip.getId().equals(invoice.getLastPoolId())) {
+                    foundPool=ip;
+                    break;
+                }
+            }
+            if(foundPool==null) {
+                log.error("Invoice pool with id '" + invoice.getLastPoolId() + "' can not be found!");
+                return Response.serverError().build();
+            }
+            
+            boolean found=false;
+            if(Invoice.PAYMENTTYPE_BANKTRANSFER.equals(invoice.getPaymentType()) || Invoice.PAYMENTTYPE_DIRECTDEBIT.equals(invoice.getPaymentType()) || Invoice.PAYMENTTYPE_OTHER.equals(invoice.getPaymentType())) {
+                found=true;
+            }
+            if(!found) {
+                log.error("Invoice with invalid payment type '" + invoice.getPaymentType());
+                return Response.serverError().build();
+            }
+            
+            Invoice newInvoice=new Invoice();
+            newInvoice.setArchiveFileKey(currentCase);
+            newInvoice.setContact(address);
+            newInvoice.setCreationDate(invoice.getCreationDate());
+            newInvoice.setCurrency(invoice.getCurrency());
+            newInvoice.setDescription(invoice.getDescription());
+            newInvoice.setDueDate(invoice.getDueDate());
+            //newInvoice.setElectronicInvoiceDocument(electronicInvoiceDocument);
+            //newInvoice.setInvoiceDocument(invoiceDocument);
+            //newInvoice.setInvoiceNumber(LOOKUP_CASES);
+            newInvoice.setInvoiceType(foundType);
+            //newInvoice.setLastPoolId(LOOKUP_CASES);
+            newInvoice.setName(invoice.getName());
+            newInvoice.setPaymentType(Invoice.PAYMENTTYPE_BANKTRANSFER);
+            newInvoice.setPeriodFrom(invoice.getPeriodFrom());
+            newInvoice.setPeriodTo(invoice.getPeriodTo());
+            newInvoice.setSender(invoice.getSender());
+            newInvoice.setSmallBusiness(invoice.isSmallBusiness());
+            newInvoice.setStatus(newInvoice.getStatusInt(invoice.getStatus()));
+            newInvoice.setTotal(invoice.getTotal());
+            newInvoice.setTotalGross(invoice.getTotalGross());
+            newInvoice.setLastPoolId(invoice.getLastPoolId());
+            
+            Invoice createdInvoice=cases.addInvoice(invoice.getCaseId(), foundPool, foundType, invoice.getCurrency());
+
+            // Setze die im Request übergebenen Felder, die von addInvoice() ignoriert wurden
+            createdInvoice.setContact(address);
+            createdInvoice.setName(invoice.getName());
+            createdInvoice.setSender(invoice.getSender());
+
+            // Update durchführen um die Felder zu speichern
+            Invoice updatedInvoice = cases.updateInvoice(invoice.getCaseId(), createdInvoice);
+
+            return Response.ok(RestfulInvoiceV7.fromInvoice(updatedInvoice)).build();
+        } catch (Exception ex) {
+            log.error("can not create invoice for case " + invoice.getCaseId(), ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates an existing invoice. Automatically detects pool changes:
+     * - Pool unchanged: Preserves invoice number
+     * - Pool changed: Generates new invoice number from new pool
+     *
+     * @param id invoice ID
+     * @param invoice invoice data with lastPoolId
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Invoice not found
+     */
+    @Override
+    @POST
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/invoices/{id}/update")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response updateInvoice(@PathParam("id") String id, RestfulInvoiceV7 invoice) {
+        try {
+            InitialContext ic = new InitialContext();
+            InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
+
+            // Check if invoice exists
+            Invoice existingInvoice = invoiceFacade.find(id);
+            if (existingInvoice == null) {
+                log.error("Invoice with id " + id + " does not exist");
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup(LOOKUP_ADDRESSES);
+            InvoicePoolFacadeLocal invoicePoolFacade = (InvoicePoolFacadeLocal) ic.lookup(LOOKUP_INVOICE_POOL_FACADE);
+
+            // Check if pool has changed
+            boolean poolChanged = false;
+            String newPoolId = invoice.getLastPoolId();
+            String existingPoolId = existingInvoice.getLastPoolId();
+
+            if (newPoolId != null && existingPoolId != null) {
+                poolChanged = !newPoolId.equals(existingPoolId);
+            } else if (newPoolId != null || existingPoolId != null) {
+                poolChanged = true;
+            }
+
+            // Prepare contact
+            AddressBean address = null;
+            if (invoice.getContactId() != null) {
+                address = addresses.getAddress(invoice.getContactId());
+            }
+
+            // Validate payment type
+            boolean validPaymentType = false;
+            if (Invoice.PAYMENTTYPE_BANKTRANSFER.equals(invoice.getPaymentType()) ||
+                Invoice.PAYMENTTYPE_DIRECTDEBIT.equals(invoice.getPaymentType()) ||
+                Invoice.PAYMENTTYPE_OTHER.equals(invoice.getPaymentType())) {
+                validPaymentType = true;
+            }
+            if (!validPaymentType) {
+                log.error("Invoice with invalid payment type '" + invoice.getPaymentType() + "'");
+                return Response.serverError().build();
+            }
+
+            Invoice updatedInvoice;
+
+            if (poolChanged) {
+                // Pool has changed -> use updateInvoiceType (generates new invoice number)
+                log.info("Invoice pool changed from " + existingPoolId + " to " + newPoolId + " - generating new invoice number");
+
+                InvoicePool newPool = invoicePoolFacade.find(newPoolId);
+                if (newPool == null) {
+                    log.error("Invoice pool with id '" + newPoolId + "' not found");
+                    return Response.serverError().build();
+                }
+
+                // Build invoice with all updated fields
+                Invoice invoiceToUpdate = new Invoice();
+                invoiceToUpdate.setId(id);
+                invoiceToUpdate.setContact(address);
+                invoiceToUpdate.setDescription(invoice.getDescription());
+                invoiceToUpdate.setCreationDate(invoice.getCreationDate());
+                invoiceToUpdate.setDueDate(invoice.getDueDate());
+                invoiceToUpdate.setName(invoice.getName());
+                invoiceToUpdate.setPeriodFrom(invoice.getPeriodFrom());
+                invoiceToUpdate.setPeriodTo(invoice.getPeriodTo());
+                invoiceToUpdate.setStatus(existingInvoice.getStatusInt(invoice.getStatus()));
+                invoiceToUpdate.setSmallBusiness(invoice.isSmallBusiness());
+                invoiceToUpdate.setCurrency(invoice.getCurrency());
+                invoiceToUpdate.setSender(invoice.getSender());
+                invoiceToUpdate.setPaymentType(invoice.getPaymentType());
+                invoiceToUpdate.setBuyerOrderReference(invoice.getBuyerOrderReference());
+
+                // Use updateInvoiceType which handles pool changes and generates new invoice number
+                updatedInvoice = cases.updateInvoiceType(invoice.getCaseId(), invoiceToUpdate, newPool, existingInvoice.getInvoiceType());
+
+            } else {
+                // Pool unchanged -> use updateInvoice (preserves invoice number)
+                log.info("Invoice pool unchanged - preserving invoice number");
+
+                Invoice invoiceToUpdate = new Invoice();
+                invoiceToUpdate.setId(id);
+                invoiceToUpdate.setContact(address);
+                invoiceToUpdate.setDescription(invoice.getDescription());
+                invoiceToUpdate.setCreationDate(invoice.getCreationDate());
+                invoiceToUpdate.setDueDate(invoice.getDueDate());
+                invoiceToUpdate.setInvoiceNumber(invoice.getInvoiceNumber());
+                invoiceToUpdate.setName(invoice.getName());
+                invoiceToUpdate.setPeriodFrom(invoice.getPeriodFrom());
+                invoiceToUpdate.setPeriodTo(invoice.getPeriodTo());
+                invoiceToUpdate.setStatus(existingInvoice.getStatusInt(invoice.getStatus()));
+                invoiceToUpdate.setSmallBusiness(invoice.isSmallBusiness());
+                invoiceToUpdate.setCurrency(invoice.getCurrency());
+                invoiceToUpdate.setSender(invoice.getSender());
+                invoiceToUpdate.setPaymentType(invoice.getPaymentType());
+                invoiceToUpdate.setBuyerOrderReference(invoice.getBuyerOrderReference());
+
+                // Use updateInvoice which preserves pool and invoice number
+                updatedInvoice = cases.updateInvoice(invoice.getCaseId(), invoiceToUpdate);
+            }
+
+            return Response.ok(RestfulInvoiceV7.fromInvoice(updatedInvoice)).build();
+
+        } catch (Exception ex) {
+            log.error("Cannot update invoice " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Creates a new invoice position within an existing invoice. An ID for the position is
+     * not required in the request.
+     *
+     * @param id id of the invoice
+     * @param invoicePos invoice position data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/invoices/{id}/positions/create")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response createInvoicePosition(@PathParam("id") String id, RestfulInvoicePositionV7 invoicePos) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
+            Invoice found=invoiceFacade.find(id);
+            if(found==null)
+                return Response.status(Response.Status.NOT_FOUND).build();
+                        
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            
+            InvoicePosition newPosition=new InvoicePosition();
+            newPosition.setDescription(invoicePos.getDescription());
+            newPosition.setInvoice(found);
+            newPosition.setName(invoicePos.getName());
+            newPosition.setPosition(invoicePos.getPosition());
+            newPosition.setTaxRate(invoicePos.getTaxRate());
+            newPosition.setTotal(invoicePos.getTotal());
+            newPosition.setUnitPrice(invoicePos.getUnitPrice());
+            newPosition.setUnits(invoicePos.getUnits());
+            
+            InvoicePosition createdPosition=cases.addInvoicePosition(id, newPosition);
+
+            return Response.ok(RestfulInvoicePositionV7.fromInvoicePosition(createdPosition)).build();
+        } catch (Exception ex) {
+            log.error("can not create invoice position for invoice " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates an invoice position and recalculates the invoice totals
+     *
+     * @response 200 Invoice position updated successfully
+     * @response 400 Bad request (invalid data)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Invoice position not found
+     * @response 500 Server error
+     */
+    @Override
+    @POST
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/invoices/positions/{positionId}/update")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response updateInvoicePosition(@PathParam("positionId") String positionId, RestfulInvoicePositionV7 restfulPosition) {
+        try {
+            if (positionId == null || positionId.isEmpty()) {
+                log.error("Position ID is required");
+                return Response.status(Response.Status.BAD_REQUEST).entity("Position ID is required").build();
+            }
+
+            if (restfulPosition == null) {
+                log.error("Invoice position data is required");
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invoice position data is required").build();
+            }
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            InvoicePositionFacadeLocal positionFacade = (InvoicePositionFacadeLocal) ic.lookup(LOOKUP_INVOICE_POSITION_FACADE);
+
+            // Load existing position to get invoice
+            InvoicePosition existingPosition = positionFacade.find(positionId);
+            if (existingPosition == null) {
+                log.error("Invoice position with ID " + positionId + " not found");
+                return Response.status(Response.Status.NOT_FOUND).entity("Invoice position with ID " + positionId + " not found").build();
+            }
+
+            Invoice invoice = existingPosition.getInvoice();
+            if (invoice == null) {
+                log.error("Invoice position is not associated with an invoice");
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invoice position is not associated with an invoice").build();
+            }
+
+            // Create InvoicePosition entity from DTO with ID set
+            InvoicePosition position = new InvoicePosition();
+            position.setId(positionId);
+            position.setName(restfulPosition.getName());
+            position.setDescription(restfulPosition.getDescription());
+            position.setPosition(restfulPosition.getPosition());
+            position.setTaxRate(restfulPosition.getTaxRate());
+            position.setUnits(restfulPosition.getUnits());
+            position.setUnitPrice(restfulPosition.getUnitPrice());
+            position.setTotal(restfulPosition.getTotal());
+
+            // Update via service (includes recalculation and permission check)
+            InvoicePosition updated = cases.updateInvoicePosition(invoice.getId(), position);
+
+            // Convert back to DTO
+            RestfulInvoicePositionV7 result = RestfulInvoicePositionV7.fromInvoicePosition(updated);
+
+            return Response.ok(result).build();
+
+        } catch (Exception ex) {
+            log.error("Cannot update invoice position " + positionId, ex);
+            if (ex.getMessage() != null && ex.getMessage().contains("not found")) {
+                return Response.status(Response.Status.NOT_FOUND).entity(ex.getMessage()).build();
+            }
+            return Response.serverError().entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Deletes an invoice position and recalculates the invoice totals
+     *
+     * @response 200 Invoice position deleted successfully
+     * @response 400 Bad request (invalid position ID)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Invoice position not found
+     * @response 500 Server error
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/invoices/positions/{positionId}")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response deleteInvoicePosition(@PathParam("positionId") String positionId) {
+        try {
+            if (positionId == null || positionId.isEmpty()) {
+                log.error("Position ID is required");
+                return Response.status(Response.Status.BAD_REQUEST).entity("Position ID is required").build();
+            }
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            InvoicePositionFacadeLocal positionFacade = (InvoicePositionFacadeLocal) ic.lookup(LOOKUP_INVOICE_POSITION_FACADE);
+
+            // Load existing position to get invoice
+            InvoicePosition position = positionFacade.find(positionId);
+            if (position == null) {
+                log.error("Invoice position with ID " + positionId + " not found");
+                return Response.status(Response.Status.NOT_FOUND).entity("Invoice position with ID " + positionId + " not found").build();
+            }
+
+            Invoice invoice = position.getInvoice();
+            if (invoice == null) {
+                log.error("Invoice position is not associated with an invoice");
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invoice position is not associated with an invoice").build();
+            }
+
+            // Delete position (includes recalculation and permission check)
+            cases.removeInvoicePosition(invoice.getId(), position);
+
+            return Response.ok().build();
+
+        } catch (Exception ex) {
+            log.error("Cannot delete invoice position " + positionId, ex);
+            if (ex.getMessage() != null && ex.getMessage().contains("not found")) {
+                return Response.status(Response.Status.NOT_FOUND).entity(ex.getMessage()).build();
+            }
+            return Response.serverError().entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Deletes an invoice from a case
+     *
+     * @param id Invoice ID
+     * @response 200 Invoice deleted successfully
+     * @response 400 Bad request (invalid invoice ID)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Invoice not found
+     * @response 500 Server error
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/invoices/{id}")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response deleteInvoice(@PathParam("id") String id) {
+        try {
+            if (id == null || id.isEmpty()) {
+                log.error("Invoice ID is required");
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invoice ID is required").build();
+            }
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
+
+            // Check if invoice exists
+            Invoice invoice = invoiceFacade.find(id);
+            if (invoice == null) {
+                log.error("Invoice with ID " + id + " not found");
+                return Response.status(Response.Status.NOT_FOUND).entity("Invoice with ID " + id + " not found").build();
+            }
+
+            // Delete invoice (includes permission check and case history entry)
+            cases.removeInvoice(id);
+
+            return Response.ok().build();
+
+        } catch (Exception ex) {
+            log.error("Cannot delete invoice " + id, ex);
+            if (ex.getMessage() != null && ex.getMessage().contains("not found")) {
+                return Response.status(Response.Status.NOT_FOUND).entity(ex.getMessage()).build();
+            }
+            return Response.serverError().entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Duplicates an existing invoice
+     *
+     * @param id the invoice ID to duplicate
+     * @param request the duplicate request containing target case, pool and options
+     * @return the duplicated invoice
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Invoice not found
+     * @response 500 Server error
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/invoices/{id}/duplicate")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response duplicateInvoice(@PathParam("id") String id, RestfulInvoiceDuplicateRequestV7 request) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
+            InvoicePoolFacadeLocal invoicePoolFacade = (InvoicePoolFacadeLocal) ic.lookup(LOOKUP_INVOICE_POOL_FACADE);
+
+            // Check if source invoice exists
+            Invoice sourceInvoice = invoiceFacade.find(id);
+            if (sourceInvoice == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            // Resolve InvoicePool if specified
+            InvoicePool pool = null;
+            if (request != null && request.getInvoicePoolId() != null) {
+                pool = invoicePoolFacade.find(request.getInvoicePoolId());
+            }
+
+            // Extract request parameters with defaults
+            String toCaseId = (request != null) ? request.getToCaseId() : null;
+            boolean asCredit = (request != null) && request.isAsCredit();
+            boolean markAsCopy = (request == null) || request.isMarkAsCopy();
+            Date periodFrom = (request != null) ? request.getPeriodFrom() : null;
+            Date periodTo = (request != null) ? request.getPeriodTo() : null;
+            Date due = (request != null) ? request.getDue() : null;
+
+            // Call copyInvoice
+            Invoice copiedInvoice = cases.copyInvoice(id, toCaseId, pool, asCredit, markAsCopy, periodFrom, periodTo, due);
+
+            // Return result as RestfulInvoiceV7
+            return Response.ok(RestfulInvoiceV7.fromInvoice(copiedInvoice)).build();
+
+        } catch (Exception ex) {
+            log.error("Error duplicating invoice", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns all invoices currently open or in draft for all non-archived cases
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/invoices")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getAllInvoices() {
+        //http://localhost:8080/j-lawyer-io/rest/cases/0c79112f7f000101327bf357f0b6010c/duedates
+        try {
+
+            InitialContext ic = new InitialContext();
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICES);
+            
+            List<Invoice> openInvoices = invoices.getInvoicesByStatus(Invoice.STATUS_NEW, Invoice.STATUS_OPEN, Invoice.STATUS_OPEN_NONENFORCEABLE, Invoice.STATUS_OPEN_REMINDER1, Invoice.STATUS_OPEN_REMINDER2, Invoice.STATUS_OPEN_REMINDER3);
+            ArrayList<RestfulInvoiceV7> invList = new ArrayList<>();
+            for (Invoice inv : openInvoices) {
+                RestfulInvoiceV7 i = RestfulInvoiceV7.fromInvoice(inv);
+                invList.add(i);
+            }
+
+            return Response.ok(invList).build();
+        } catch (Exception ex) {
+            log.error("can not get open invoices", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns a cases metadata given its external ID
+     *
+     * @param extId the cases external ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 No case found with this external ID
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/byexternalid/{extId}")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCaseByExternalId(@PathParam("extId") String extId) {
+
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileBean afb = cases.getCaseByExternalId(extId);
+            if (afb != null) {
+                return Response.ok(RestfulCaseV2.fromArchiveFileBean(afb)).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+        } catch (Exception ex) {
+            log.error("can not get case by external id " + extId, ex);
+            return Response.serverError().build();
+        }
+
+    }
+
+    /**
+     * Returns cases that have a given tag applied to them
+     *
+     * @param tag the tag
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/bytag/{tag}")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCasesByTag(@PathParam("tag") String tag, @QueryParam("value") @DefaultValue("") String value) {
+
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            List<ArchiveFileBean> matches;
+            if (value != null && !value.isEmpty()) {
+                HashMap<String, String[]> tagValues = new HashMap<>();
+                tagValues.put(tag, new String[]{value});
+                matches = cases.getTagged(new String[]{tag}, null, Integer.MAX_VALUE, tagValues, null);
+            } else {
+                matches = cases.getTagged(new String[]{tag}, null, Integer.MAX_VALUE);
+            }
+            ArrayList<RestfulCaseOverviewV1> rcoList = new ArrayList<>();
+            if (matches != null) {
+                for (ArchiveFileBean afb : matches) {
+                    RestfulCaseOverviewV1 rco = new RestfulCaseOverviewV1();
+                    rco.setId(afb.getId());
+                    rco.setExternalId(afb.getExternalId());
+                    rco.setName(afb.getName());
+                    rco.setReason(afb.getReason());
+                    rco.setFileNumber(afb.getFileNumber());
+                    rco.setDateChanged(afb.getDateChanged());
+                    rcoList.add(rco);
+                }
+            }
+            return Response.ok(rcoList).build();
+        } catch (Exception ex) {
+            log.error("Can not list cases with tag " + tag, ex);
+            return Response.serverError().build();
+        }
+
+    }
+
+    /**
+     * Returns cases that have a given reference in their case-contact relationships
+     *
+     * @param reference the reference text to search for
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/byreference/{reference}")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCasesByReference(@PathParam("reference") String reference) {
+
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            List<ArchiveFileAddressesBean> caseContacts = cases.getArchiveFileAddressesByReference(reference);
+
+            // Extract unique cases from the case-contact relationships
+            Set<String> seenCaseIds = new HashSet<>();
+            ArrayList<RestfulCaseOverviewV1> rcoList = new ArrayList<>();
+
+            if (caseContacts != null) {
+                for (ArchiveFileAddressesBean caseContact : caseContacts) {
+                    ArchiveFileBean afb = caseContact.getArchiveFileKey();
+                    if (afb != null && !seenCaseIds.contains(afb.getId())) {
+                        seenCaseIds.add(afb.getId());
+                        RestfulCaseOverviewV1 rco = new RestfulCaseOverviewV1();
+                        rco.setId(afb.getId());
+                        rco.setExternalId(afb.getExternalId());
+                        rco.setName(afb.getName());
+                        rco.setReason(afb.getReason());
+                        rco.setFileNumber(afb.getFileNumber());
+                        rco.setDateChanged(afb.getDateChanged());
+                        rcoList.add(rco);
+                    }
+                }
+            }
+            return Response.ok(rcoList).build();
+        } catch (Exception ex) {
+            log.error("Can not list cases with reference " + reference, ex);
+            return Response.serverError().build();
+        }
+
+    }
+
+    /**
+     * Searches for cases using enhanced search functionality
+     *
+     * @param searchString the search query (required, minimum 3 characters)
+     * @param includeArchived whether to include archived cases (optional, defaults to false)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/search")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response searchCases(@QueryParam("searchString") String searchString,
+                                 @QueryParam("includeArchived") Boolean includeArchived) {
+
+        try {
+            // Validate searchString parameter
+            if (ServerStringUtils.isEmpty(searchString)) {
+                log.error("searchString parameter is required");
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"error\": \"searchString parameter is required\"}")
+                        .build();
+            }
+
+            // Check minimum length requirement
+            if (searchString.trim().length() < 3) {
+                log.error("searchString must be at least 3 characters long");
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"error\": \"searchString must be at least 3 characters long\"}")
+                        .build();
+            }
+
+            // Set default value for includeArchived
+            boolean withArchive = (includeArchived != null) ? includeArchived : false;
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+
+            // Call searchEnhanced with null for tagName and documentTagNames parameters
+            ArchiveFileBean[] matches = cases.searchEnhanced(searchString, withArchive, null, null);
+
+            // Convert results to RestfulCaseOverviewV1 DTOs
+            ArrayList<RestfulCaseOverviewV1> rcoList = new ArrayList<>();
+            if (matches != null) {
+                for (ArchiveFileBean afb : matches) {
+                    RestfulCaseOverviewV1 rco = new RestfulCaseOverviewV1();
+                    rco.setId(afb.getId());
+                    rco.setExternalId(afb.getExternalId());
+                    rco.setName(afb.getName());
+                    rco.setReason(afb.getReason());
+                    rco.setFileNumber(afb.getFileNumber());
+                    rco.setDateChanged(afb.getDateChanged());
+                    rcoList.add(rco);
+                }
+            }
+            return Response.ok(rcoList).build();
+        } catch (Exception ex) {
+            log.error("Can not search cases with searchString: " + searchString, ex);
+            return Response.serverError().build();
+        }
+
+    }
+
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/document/byexternalid/{extId}")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getDocumentByExternalId(@PathParam("extId") String extId) {
+
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileDocumentsBean doc = cases.getDocumentByExternalId(extId);
+            if (doc == null) {
+                log.error("can not get document for external id " + extId);
+                return Response.serverError().build();
+            }
+
+            RestfulDocumentV1 d = new RestfulDocumentV1();
+            d.setId(doc.getId());
+            d.setCaseId(doc.getArchiveFileKey().getId());
+            d.setExternalId(doc.getExternalId());
+            d.setVersion(doc.getVersion());
+            d.setName(doc.getName());
+            d.setCreationDate(doc.getCreationDate());
+            d.setChangeDate(doc.getChangeDate());
+            d.setFavorite(doc.isFavorite());
+            d.setSize(doc.getSize());
+            d.setHighlight1(doc.getHighlight1());
+            d.setHighlight2(doc.getHighlight2());
+            if (doc.getFolder() != null) {
+                d.setFolderId(doc.getFolder().getId());
+            }
+            return Response.ok(d).build();
+        } catch (Exception ex) {
+            log.error("can not get document for external id " + extId, ex);
+            return Response.serverError().build();
+        }
+
+    }
+
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/documents/bytag/{tag}")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getDocumentsByTag(@PathParam("tag") String tag, @QueryParam("value") @DefaultValue("") String value) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            List<ArchiveFileDocumentsBean> matches = cases.getTaggedDocuments(new String[]{tag}, Integer.MAX_VALUE);
+
+            ArrayList<RestfulDocumentV1> docList = new ArrayList<>();
+            if (matches != null) {
+                for (ArchiveFileDocumentsBean doc : matches) {
+                    RestfulDocumentV1 d = new RestfulDocumentV1();
+                    d.setCaseId(doc.getArchiveFileKey().getId());
+                    d.setId(doc.getId());
+                    d.setExternalId(doc.getExternalId());
+                    d.setVersion(doc.getVersion());
+                    d.setName(doc.getName());
+                    d.setCreationDate(doc.getCreationDate());
+                    d.setChangeDate(doc.getChangeDate());
+                    d.setFavorite(doc.isFavorite());
+                    d.setSize(doc.getSize());
+                    d.setHighlight1(doc.getHighlight1());
+                    d.setHighlight2(doc.getHighlight2());
+                    if (doc.getFolder() != null) {
+                        d.setFolderId(doc.getFolder().getId());
+                    }
+                    docList.add(d);
+                }
+            }
+            return Response.ok(docList).build();
+        } catch (Exception ex) {
+            log.error("can not get documents by tag " + tag, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Lists all deleted documents in the recycle bin.
+     *
+     * @param caseId optional filter to only include documents of a single case
+     * @response 200 Returns a list of {@link RestfulRecycleBinDocumentV7}
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/recyclebin")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response getRecycleBin(@QueryParam("caseId") @DefaultValue("") String caseId) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            Collection<ArchiveFileDocumentsBean> deletedDocs = cases.getDocumentsBin();
+
+            ArrayList<RestfulRecycleBinDocumentV7> response = new ArrayList<>();
+            boolean includeAllCases = ServerStringUtils.isEmpty(caseId);
+            if (deletedDocs != null) {
+                for (ArchiveFileDocumentsBean doc : deletedDocs) {
+                    ArchiveFileBean archiveFile = doc.getArchiveFileKey();
+                    String docCaseId = archiveFile != null ? archiveFile.getId() : null;
+                    if (includeAllCases || (docCaseId != null && docCaseId.equals(caseId))) {
+                        response.add(RestfulRecycleBinDocumentV7.fromDocumentsBean(doc));
+                    }
+                }
+            }
+
+            return Response.ok(response).build();
+        } catch (Exception ex) {
+            log.error("can not load recycle bin contents", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Restores a document from the recycle bin.
+     *
+     * @param documentId document ID to restore
+     * @response 200 Document restored successfully
+     * @response 400 Document ID missing
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/document/{id}/restore")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response restoreDocumentFromRecycleBin(@PathParam("id") String documentId) {
+        RestfulStatusResponseV7 response = new RestfulStatusResponseV7();
+        try {
+            if (ServerStringUtils.isEmpty(documentId)) {
+                response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
+                response.setMessage("Document ID is required");
+                return Response.status(Response.Status.BAD_REQUEST).entity(response).build();
+            }
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            cases.restoreDocumentFromBin(documentId);
+
+            response.setStatus(RestfulStatusResponseV7.STATUS_OK);
+            response.setMessage("Document restored from recycle bin");
+            return Response.ok(response).build();
+        } catch (Exception ex) {
+            log.error("can not restore document " + documentId + " from recycle bin", ex);
+            response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
+            response.setMessage(ex.getMessage());
+            return Response.serverError().entity(response).build();
+        }
+    }
+
+    /**
+     * Permanently removes a document that is currently located in the recycle bin.
+     *
+     * @param documentId document ID to delete
+     * @response 200 Document deleted successfully
+     * @response 400 Document ID missing
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/document/{id}/permanent")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response removeDocumentFromRecycleBin(@PathParam("id") String documentId) {
+        RestfulStatusResponseV7 response = new RestfulStatusResponseV7();
+        try {
+            if (ServerStringUtils.isEmpty(documentId)) {
+                response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
+                response.setMessage("Document ID is required");
+                return Response.status(Response.Status.BAD_REQUEST).entity(response).build();
+            }
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            cases.removeDocumentFromBin(documentId);
+
+            response.setStatus(RestfulStatusResponseV7.STATUS_OK);
+            response.setMessage("Document permanently removed from recycle bin");
+            return Response.ok(response).build();
+        } catch (Exception ex) {
+            log.error("can not permanently remove document " + documentId + " from recycle bin", ex);
+            response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
+            response.setMessage(ex.getMessage());
+            return Response.serverError().entity(response).build();
+        }
+    }
+    
+    /**
+     * Updates a cases allowed groups. All allowed groups must be submitted in one request - existing permissions will be overwritten, not added to. This endpoint can also be used to reset security for a case by sending an empty list of groups. Providing the ID of a group is sufficient.
+     *
+     * @param id case ID
+     * @param allowedGroups the groups allowed to access the case
+     * @return
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/groups")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response updateAllowedGroups(@PathParam("id") String id, Collection<RestfulGroupV6> allowedGroups) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            Collection<Group> groups=new ArrayList<>();
+            for(RestfulGroupV6 g: allowedGroups) {
+                groups.add(g.toGroup());
+            }
+            cases.updateAllowedGroups(id, groups);
+
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not create history entry " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+    
+    /**
+     * Lists a cases allowed groups.
+     *
+     * @param id case ID
+     * @return
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/groups")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getAllowedGroups(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            List<ArchiveFileGroupsBean> groups=cases.getAllowedGroups(id);
+            List<RestfulGroupV6> resultList=new ArrayList<>();
+            for(ArchiveFileGroupsBean g: groups) {
+                resultList.add(RestfulGroupV6.fromGroup(g.getAllowedGroup()));
+            }
+
+            return Response.ok(resultList).build();
+        } catch (Exception ex) {
+            log.error("can not create history entry " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns a list of account entries for a given case
+     *
+     * @param id case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/{id}/accountentries")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCaseAccountEntries(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileBean currentCase = cases.getArchiveFile(id);
+            if (currentCase == null) {
+                log.error("case with id " + id + " does not exist");
+                return Response.serverError().build();
+            }
+
+            List<CaseAccountEntry> entries = cases.getAccountEntries(id);
+
+            ArrayList<RestfulCaseAccountEntryV7> entryList = new ArrayList<>();
+            for (CaseAccountEntry entry : entries) {
+                RestfulCaseAccountEntryV7 re = RestfulCaseAccountEntryV7.fromCaseAccountEntry(entry);
+                entryList.add(re);
+            }
+
+            return Response.ok(entryList).build();
+        } catch (Exception ex) {
+            log.error("can not get account entries for case " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Creates a new account entry within an existing case. An ID for the entry is
+     * not required in the request.
+     *
+     * @param id case ID
+     * @param accountEntry account entry data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/accountentries/create")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response createAccountEntry(@PathParam("id") String id, RestfulCaseAccountEntryV7 accountEntry) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileBean currentCase = cases.getArchiveFile(id);
+            if (currentCase == null) {
+                log.error("case with id " + id + " does not exist");
+                return Response.serverError().build();
+            }
+
+            // Validate contact if provided
+            AddressBean contact = null;
+            if (accountEntry.getContactId() != null && !accountEntry.getContactId().isEmpty()) {
+                AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup(LOOKUP_ADDRESSES);
+                contact = addresses.getAddress(accountEntry.getContactId());
+                if (contact == null) {
+                    log.error("contact with id " + accountEntry.getContactId() + " does not exist");
+                    return Response.serverError().build();
+                }
+            }
+
+            // Validate invoice if provided
+            Invoice invoice = null;
+            if (accountEntry.getInvoiceId() != null && !accountEntry.getInvoiceId().isEmpty()) {
+                InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
+                invoice = invoiceFacade.find(accountEntry.getInvoiceId());
+                if (invoice == null) {
+                    log.error("invoice with id " + accountEntry.getInvoiceId() + " does not exist");
+                    return Response.serverError().build();
+                }
+            }
+
+            CaseAccountEntry newEntry = new CaseAccountEntry();
+            newEntry.setArchiveFileKey(currentCase);
+            newEntry.setContact(contact);
+            newEntry.setInvoice(invoice);
+            newEntry.setEntryDate(accountEntry.getEntryDate());
+            newEntry.setDescription(accountEntry.getDescription());
+            newEntry.setEarnings(accountEntry.getEarnings());
+            newEntry.setSpendings(accountEntry.getSpendings());
+            newEntry.setEscrowIn(accountEntry.getEscrowIn());
+            newEntry.setEscrowOut(accountEntry.getEscrowOut());
+            newEntry.setExpendituresIn(accountEntry.getExpendituresIn());
+            newEntry.setExpendituresOut(accountEntry.getExpendituresOut());
+
+            CaseAccountEntry createdEntry = cases.addAccountEntry(id, newEntry);
+
+            return Response.ok(RestfulCaseAccountEntryV7.fromCaseAccountEntry(createdEntry)).build();
+        } catch (Exception ex) {
+            log.error("can not create account entry for case " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns a single account entry by ID
+     *
+     * @param id account entry ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Account entry not found
+     */
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/accountentries/{id}")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getAccountEntry(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            CaseAccountEntryFacadeLocal entryFacade = (CaseAccountEntryFacadeLocal) ic.lookup(LOOKUP_ACCOUNT_ENTRIES);
+            CaseAccountEntry found = entryFacade.find(id);
+            if (found == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            return Response.ok(RestfulCaseAccountEntryV7.fromCaseAccountEntry(found)).build();
+        } catch (Exception ex) {
+            log.error("can not get account entry " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates an existing account entry
+     *
+     * @param id account entry ID
+     * @param accountEntry updated account entry data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Account entry not found
+     */
+    @POST
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/accountentries/{id}/update")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response updateAccountEntry(@PathParam("id") String id, RestfulCaseAccountEntryV7 accountEntry) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            CaseAccountEntryFacadeLocal entryFacade = (CaseAccountEntryFacadeLocal) ic.lookup(LOOKUP_ACCOUNT_ENTRIES);
+            CaseAccountEntry found = entryFacade.find(id);
+            if (found == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            // Validate contact if provided
+            AddressBean contact = null;
+            if (accountEntry.getContactId() != null && !accountEntry.getContactId().isEmpty()) {
+                AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup(LOOKUP_ADDRESSES);
+                contact = addresses.getAddress(accountEntry.getContactId());
+                if (contact == null) {
+                    log.error("contact with id " + accountEntry.getContactId() + " does not exist");
+                    return Response.serverError().build();
+                }
+            }
+
+            // Validate invoice if provided
+            Invoice invoice = null;
+            if (accountEntry.getInvoiceId() != null && !accountEntry.getInvoiceId().isEmpty()) {
+                InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
+                invoice = invoiceFacade.find(accountEntry.getInvoiceId());
+                if (invoice == null) {
+                    log.error("invoice with id " + accountEntry.getInvoiceId() + " does not exist");
+                    return Response.serverError().build();
+                }
+            }
+
+            // Update fields
+            found.setContact(contact);
+            found.setInvoice(invoice);
+            found.setEntryDate(accountEntry.getEntryDate());
+            found.setDescription(accountEntry.getDescription());
+            found.setEarnings(accountEntry.getEarnings());
+            found.setSpendings(accountEntry.getSpendings());
+            found.setEscrowIn(accountEntry.getEscrowIn());
+            found.setEscrowOut(accountEntry.getEscrowOut());
+            found.setExpendituresIn(accountEntry.getExpendituresIn());
+            found.setExpendituresOut(accountEntry.getExpendituresOut());
+
+            entryFacade.edit(found);
+
+            return Response.ok(RestfulCaseAccountEntryV7.fromCaseAccountEntry(found)).build();
+        } catch (Exception ex) {
+            log.error("can not update account entry " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Deletes an account entry
+     *
+     * @param id account entry ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Account entry not found
+     */
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/accountentries/{id}")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response deleteAccountEntry(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            CaseAccountEntryFacadeLocal entryFacade = (CaseAccountEntryFacadeLocal) ic.lookup(LOOKUP_ACCOUNT_ENTRIES);
+            CaseAccountEntry found = entryFacade.find(id);
+            if (found == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            entryFacade.remove(found);
+
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not delete account entry " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns a list of open timesheets for a given case
+     *
+     * @param id case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/{id}/timesheets")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCaseTimesheets(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileBean currentCase = cases.getArchiveFile(id);
+            if (currentCase == null) {
+                log.error("case with id " + id + " does not exist");
+                return Response.serverError().build();
+            }
+
+            List<Timesheet> timesheets = cases.getOpenTimesheets(id);
+
+            ArrayList<RestfulTimesheetV8> resultList = new ArrayList<>();
+            for (Timesheet ts : timesheets) {
+                resultList.add(RestfulTimesheetV8.fromTimesheet(ts));
+            }
+
+            return Response.ok(resultList).build();
+        } catch (Exception ex) {
+            log.error("can not get timesheets for case " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+}
