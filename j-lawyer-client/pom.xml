@@ -634,6 +634,8 @@
         <dependency>
             <groupId>org.jlawyer.cloud</groupId>
             <artifactId>j-lawyer-cloud</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <classifier>shaded</classifier>
             <exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions>
         </dependency>
         <!-- invoicing is a self-contained shaded fat jar with mustang + a relocated

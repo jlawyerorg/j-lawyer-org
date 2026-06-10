@@ -126,6 +126,12 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <!-- attach the self-contained fat jar as a classified artifact so
+                                 consumers (incl. NetBeans, which otherwise resolves this reactor
+                                 module to its thin target/classes) get the bundled nextcloud-api /
+                                 ical4j etc. and do not leak conflicting transitives (groovy, ical4j) -->
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>shaded</shadedClassifierName>
                             <artifactSet>
                                 <excludes>
                                     <exclude>org.codehaus.groovy:groovy-all</exclude>
