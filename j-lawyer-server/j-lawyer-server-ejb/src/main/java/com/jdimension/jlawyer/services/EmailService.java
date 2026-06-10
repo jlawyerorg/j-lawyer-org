@@ -2783,7 +2783,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             try {
                 String personal = ia.getPersonal();
                 if (personal != null && !personal.isEmpty()) {
-                    personal = MimeUtility.decodeText(personal);
+                    personal = CommonMailUtils.decodeText(personal);
                     return "\"" + personal + "\" <" + ia.getAddress() + ">";
                 }
                 return ia.getAddress();
@@ -2791,11 +2791,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 // fall through to toString
             }
         }
-        try {
-            return MimeUtility.decodeText(address.toString());
-        } catch (Exception e) {
-            return address.toString();
-        }
+        return CommonMailUtils.decodeText(address.toString());
     }
 
     private String[] addressesToStrings(Address[] addresses) {

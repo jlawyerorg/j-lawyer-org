@@ -1734,13 +1734,13 @@ public class EmailUtils extends CommonMailUtils {
                     String email = ia.getAddress();
 
                     if (personal != null && !personal.isEmpty()) {
-                        personal = MimeUtility.decodeText(personal);
+                        personal = decodeText(personal);
                         listString.append("\"").append(personal).append("\" <").append(email).append(">, ");
                     } else {
                         listString.append(email).append(", ");
                     }
                 } else {
-                    listString.append(MimeUtility.decodeText(adr.toString())).append(", ");
+                    listString.append(decodeText(adr.toString())).append(", ");
                 }
             }
         }
@@ -1765,7 +1765,7 @@ public class EmailUtils extends CommonMailUtils {
                 String email = adr.getAddress();
 
                 if (personal != null && !personal.isEmpty()) {
-                    personal = MimeUtility.decodeText(personal);
+                    personal = decodeText(personal);
                     listString.append("\"").append(personal).append("\" <").append(email).append(">, ");
                 } else {
                     listString.append(email).append(", ");

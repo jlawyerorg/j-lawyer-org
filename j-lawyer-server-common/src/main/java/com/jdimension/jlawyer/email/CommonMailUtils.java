@@ -669,6 +669,8 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.Multipart;
@@ -930,17 +932,54 @@ public class CommonMailUtils {
         return (f instanceof IMAPFolder);
     }
     
+    /**
+     * Matches a single RFC 2047 encoded-word "=?charset?encoding?text?=".
+     * The encoded-text group is intentionally lenient (it tolerates the literal
+     * whitespace that some non-conformant mail clients emit inside the word).
+     */
+    private static final Pattern ENCODED_WORD_PATTERN = Pattern.compile("=\\?[^?]+\\?[bBqQ]\\?[^?]*\\?=");
+
     public static String decodeText(String t) {
         //iso-8859-1
         if (t != null) {
             t = t.replaceAll("x-unknown", "iso-8859-1");
+            String decoded;
             try {
-                return MimeUtility.decodeText(t);
+                decoded = MimeUtility.decodeText(t);
             } catch (UnsupportedEncodingException usee) {
-                return t;
+                decoded = t;
             }
+            // Some mail clients emit malformed encoded-words that contain literal
+            // whitespace inside the encoded-text, e.g.
+            // "=?utf-8?Q? Rechtsanwalt_Dr._L=C3=A4=C3=9Fle ?=". MimeUtility refuses
+            // to decode those and returns them verbatim, so fall back to a tolerant
+            // pass that strips the embedded whitespace before decoding each word.
+            if (decoded.contains("=?")) {
+                decoded = decodeMalformedEncodedWords(decoded);
+            }
+            return decoded;
         }
         return t;
+    }
+
+    private static String decodeMalformedEncodedWords(String text) {
+        Matcher m = ENCODED_WORD_PATTERN.matcher(text);
+        StringBuffer sb = new StringBuffer();
+        while (m.find()) {
+            String word = m.group();
+            // whitespace is never valid inside an encoded-word; removing it
+            // turns the malformed word back into a decodable one
+            String compact = word.replaceAll("\\s+", "");
+            String replacement;
+            try {
+                replacement = MimeUtility.decodeWord(compact);
+            } catch (Exception e) {
+                replacement = word;
+            }
+            m.appendReplacement(sb, Matcher.quoteReplacement(replacement));
+        }
+        m.appendTail(sb);
+        return sb.toString();
     }
 
     public static String encodeText(String t) {
