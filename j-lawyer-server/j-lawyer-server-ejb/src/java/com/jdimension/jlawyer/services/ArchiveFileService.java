@@ -6980,7 +6980,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     + "            WHERE p2.timesheet_id = p.timesheet_id\n"
                     + "              AND p2.principal = p.principal\n"
                     + "       )\n"
-                    + "  )");
+                    + "  )\n"
+                    + "ORDER BY p.time_stopped IS NOT NULL, p.time_stopped DESC, p.time_started DESC");
             st.setString(1, principal);
             rs = st.executeQuery();
 

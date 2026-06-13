@@ -16,11 +16,15 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" alignment="0" attributes="0">
+          <Group type="102" alignment="1" attributes="0">
+              <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Component id="togReview1Day" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
               <Component id="togReview2Days" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Component id="togReview1Week" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
               <Component id="togReview2Weeks" min="-2" max="-2" attributes="0"/>
@@ -28,15 +32,18 @@
               <Component id="togReview3Weeks" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
               <Component id="togReview4Weeks" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Component id="togReview1Month" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
               <Component id="togReview3Months" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
               <Component id="togReview6Months" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Component id="togReview1Year" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -53,6 +60,10 @@
               <Component id="togReview1Year" alignment="3" min="-2" max="-2" attributes="0"/>
               <Component id="togReview1Month" alignment="3" min="-2" max="-2" attributes="0"/>
               <Component id="togReview3Weeks" alignment="3" min="-2" max="-2" attributes="0"/>
+              <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
+              <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
+              <Component id="jLabel3" alignment="3" min="-2" max="-2" attributes="0"/>
+              <Component id="jLabel4" alignment="3" min="-2" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -60,7 +71,8 @@
   <SubComponents>
     <Component class="javax.swing.JToggleButton" name="togReview1Week">
       <Properties>
-        <Property name="text" type="java.lang.String" value="1W"/>
+        <Property name="text" type="java.lang.String" value="+1"/>
+        <Property name="toolTipText" type="java.lang.String" value="1 Woche addieren"/>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
           <Insets value="[2, 4, 2, 4]"/>
         </Property>
@@ -71,7 +83,8 @@
     </Component>
     <Component class="javax.swing.JToggleButton" name="togReview2Weeks">
       <Properties>
-        <Property name="text" type="java.lang.String" value="2W"/>
+        <Property name="text" type="java.lang.String" value="+2"/>
+        <Property name="toolTipText" type="java.lang.String" value="2 Wochen addieren"/>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
           <Insets value="[2, 4, 2, 4]"/>
         </Property>
@@ -82,7 +95,8 @@
     </Component>
     <Component class="javax.swing.JToggleButton" name="togReview3Weeks">
       <Properties>
-        <Property name="text" type="java.lang.String" value="3W"/>
+        <Property name="text" type="java.lang.String" value="+3"/>
+        <Property name="toolTipText" type="java.lang.String" value="3 Wochen addieren"/>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
           <Insets value="[2, 4, 2, 4]"/>
         </Property>
@@ -93,7 +107,8 @@
     </Component>
     <Component class="javax.swing.JToggleButton" name="togReview4Weeks">
       <Properties>
-        <Property name="text" type="java.lang.String" value="4W"/>
+        <Property name="text" type="java.lang.String" value="+4"/>
+        <Property name="toolTipText" type="java.lang.String" value="4 Wochen addieren"/>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
           <Insets value="[2, 4, 2, 4]"/>
         </Property>
@@ -104,7 +119,8 @@
     </Component>
     <Component class="javax.swing.JToggleButton" name="togReview1Day">
       <Properties>
-        <Property name="text" type="java.lang.String" value="1T"/>
+        <Property name="text" type="java.lang.String" value="+1"/>
+        <Property name="toolTipText" type="java.lang.String" value="1 Tag addieren"/>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
           <Insets value="[2, 4, 2, 4]"/>
         </Property>
@@ -115,7 +131,8 @@
     </Component>
     <Component class="javax.swing.JToggleButton" name="togReview2Days">
       <Properties>
-        <Property name="text" type="java.lang.String" value="2T"/>
+        <Property name="text" type="java.lang.String" value="+2"/>
+        <Property name="toolTipText" type="java.lang.String" value="2 Tage addieren"/>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
           <Insets value="[2, 4, 2, 4]"/>
         </Property>
@@ -126,7 +143,8 @@
     </Component>
     <Component class="javax.swing.JToggleButton" name="togReview1Month">
       <Properties>
-        <Property name="text" type="java.lang.String" value="1M"/>
+        <Property name="text" type="java.lang.String" value="+1"/>
+        <Property name="toolTipText" type="java.lang.String" value="1 Monat addieren"/>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
           <Insets value="[2, 4, 2, 4]"/>
         </Property>
@@ -137,7 +155,8 @@
     </Component>
     <Component class="javax.swing.JToggleButton" name="togReview3Months">
       <Properties>
-        <Property name="text" type="java.lang.String" value="3M"/>
+        <Property name="text" type="java.lang.String" value="+3"/>
+        <Property name="toolTipText" type="java.lang.String" value="3 Monate addieren"/>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
           <Insets value="[2, 4, 2, 4]"/>
         </Property>
@@ -148,7 +167,8 @@
     </Component>
     <Component class="javax.swing.JToggleButton" name="togReview6Months">
       <Properties>
-        <Property name="text" type="java.lang.String" value="6M"/>
+        <Property name="text" type="java.lang.String" value="+6"/>
+        <Property name="toolTipText" type="java.lang.String" value="6 Monate addieren"/>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
           <Insets value="[2, 4, 2, 4]"/>
         </Property>
@@ -159,7 +179,8 @@
     </Component>
     <Component class="javax.swing.JToggleButton" name="togReview1Year">
       <Properties>
-        <Property name="text" type="java.lang.String" value="1J"/>
+        <Property name="text" type="java.lang.String" value="+1"/>
+        <Property name="toolTipText" type="java.lang.String" value="1 Jahr addieren"/>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
           <Insets value="[2, 6, 2, 6]"/>
         </Property>
@@ -167,6 +188,30 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="togReview1YearActionPerformed"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="jLabel1">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="T:"/>
+        <Property name="toolTipText" type="java.lang.String" value="Tage addieren"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="jLabel2">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="W:"/>
+        <Property name="toolTipText" type="java.lang.String" value="Wochen addieren"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="jLabel3">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="M:"/>
+        <Property name="toolTipText" type="java.lang.String" value="Monate addieren"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="jLabel4">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="J:"/>
+        <Property name="toolTipText" type="java.lang.String" value="Jahre addieren"/>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>

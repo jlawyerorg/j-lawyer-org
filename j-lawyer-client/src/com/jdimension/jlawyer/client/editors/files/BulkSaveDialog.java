@@ -737,6 +737,10 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
     protected ArchiveFileBean selectedCase = null;
     protected CaseFolder caseFolder = null;
     protected CaseFolder rootFolder = null;
+
+    private HashMap<String, AppOptionGroupBean[]> docMvTagDefs = null;
+    private final java.util.Set<String> caseMvTagNames = new java.util.HashSet<>();
+    private final java.util.Set<String> docMvTagNames = new java.util.HashSet<>();
     protected DocumentNameTemplate nameTemplate=null;
     protected List<DocumentNameTemplate> allNameTemplates=new ArrayList<>();
 
@@ -802,7 +806,9 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
                 allCaseTagsAsString.add(aog.getValue());
             }
 
-            this.buildCheckboxPopup(this.cmdCaseTags, this.popCaseTags, allCaseTagsAsString, lastBulkSaveCaseTags, UserSettings.CONF_BULKSAVE_LASTCASETAGS_PREFIX + this.sourceType, this.lblCaseTags);
+            HashMap<String, AppOptionGroupBean[]> caseMvTagDefs = settings.getArchiveFileMvTagDefs();
+            collectMvTagNames(caseMvTagDefs, com.jdimension.jlawyer.server.constants.OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS_MV_PREFIX, this.caseMvTagNames);
+            this.buildCheckboxPopup(this.cmdCaseTags, this.popCaseTags, allCaseTagsAsString, lastBulkSaveCaseTags, UserSettings.CONF_BULKSAVE_LASTCASETAGS_PREFIX + this.sourceType, this.lblCaseTags, caseMvTagDefs, com.jdimension.jlawyer.server.constants.OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS_MV_PREFIX);
             lblCaseTags.setText(ComponentUtils.getSelectedPopupMenuItemsAsString(this.popCaseTags));
 
             String[] lastBulkSaveDocumentTags = UserSettings.getInstance().getSettingArray(UserSettings.CONF_BULKSAVE_LASTDOCTAGS_PREFIX + this.sourceType, new String[]{""});
@@ -812,7 +818,9 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
                 allDocTagsAsString.add(aog.getValue());
             }
 
-            this.buildCheckboxPopup(this.cmdCommonTags, this.popCommonDocumentTags, allDocTagsAsString, lastBulkSaveDocumentTags, UserSettings.CONF_BULKSAVE_LASTDOCTAGS_PREFIX + this.sourceType, this.lblCommonTags);
+            this.docMvTagDefs = settings.getDocumentMvTagDefs();
+            collectMvTagNames(this.docMvTagDefs, com.jdimension.jlawyer.server.constants.OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX, this.docMvTagNames);
+            this.buildCheckboxPopup(this.cmdCommonTags, this.popCommonDocumentTags, allDocTagsAsString, lastBulkSaveDocumentTags, UserSettings.CONF_BULKSAVE_LASTDOCTAGS_PREFIX + this.sourceType, this.lblCommonTags, this.docMvTagDefs, com.jdimension.jlawyer.server.constants.OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX);
             lblCommonTags.setText(ComponentUtils.getSelectedPopupMenuItemsAsString(this.popCommonDocumentTags));
 
         } catch (Exception ex) {
@@ -852,16 +860,34 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
         }
     }
 
-    private void buildCheckboxPopup(JButton button, JPopupMenu popup, List<String> tagsInUse, String[] lastFilterTags, String userSettingsKey, JLabel allValues) {
+    private void buildCheckboxPopup(JButton button, JPopupMenu popup, List<String> tagsInUse, String[] lastFilterTags, String userSettingsKey, JLabel allValues, HashMap<String, AppOptionGroupBean[]> mvTagDefs, String mvTagPrefix) {
 
-        if (tagsInUse == null) {
-            tagsInUse = new ArrayList<>();
+        // expand multi-value (list) tags into per-value entries "tagName: value", mixed with the regular tags
+        List<String> expandedTags = new ArrayList<>();
+        final java.util.Set<String> mvTagNames = new java.util.HashSet<>();
+        if (mvTagDefs != null && mvTagPrefix != null) {
+            for (java.util.Map.Entry<String, AppOptionGroupBean[]> entry : mvTagDefs.entrySet()) {
+                String tagName = entry.getKey().substring(mvTagPrefix.length());
+                mvTagNames.add(tagName);
+                if (entry.getValue() != null) {
+                    for (AppOptionGroupBean ogb : entry.getValue()) {
+                        expandedTags.add(tagName + ": " + ogb.getValue());
+                    }
+                }
+            }
         }
-        StringUtils.sortIgnoreCase(tagsInUse);
+        if (tagsInUse != null) {
+            for (String t : tagsInUse) {
+                if (!mvTagNames.contains(t) && !expandedTags.contains(t)) {
+                    expandedTags.add(t);
+                }
+            }
+        }
+        StringUtils.sortIgnoreCase(expandedTags);
 
         popup.removeAll();
         boolean hasSelection = false;
-        for (String t : tagsInUse) {
+        for (String t : expandedTags) {
             JCheckBoxMenuItem mi = new StayOpenCheckBoxMenuItem(t);
             if (Arrays.asList(lastFilterTags).contains(t)) {
                 mi.setSelected(true);
@@ -882,6 +908,7 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
                 allValues.setText(ComponentUtils.getSelectedPopupMenuItemsAsString(popup));
             });
             ((JCheckBoxMenuItem) me.getComponent()).addActionListener((ActionEvent e) -> {
+                deselectListTagSiblings(popup, e.getSource(), mvTagNames);
                 boolean selected = false;
                 ArrayList<String> al = new ArrayList<>();
                 for (MenuElement me1 : popup.getSubElements()) {
@@ -906,6 +933,64 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
             });
         }
 
+    }
+
+    /**
+     * Splits a checkbox entry into list tag name and value if it represents a
+     * known multi-value (list) tag. Entries are rendered as "tagName: value".
+     *
+     * @param entry   the checkbox entry text
+     * @param mvNames the set of known list tag names
+     * @return a two-element array {name, value} or null if the entry is not a list tag
+     */
+    static String[] splitListTag(String entry, java.util.Set<String> mvNames) {
+        if (entry == null || mvNames == null) {
+            return null;
+        }
+        for (String name : mvNames) {
+            String prefix = name + ": ";
+            if (entry.startsWith(prefix)) {
+                return new String[]{name, entry.substring(prefix.length())};
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Enforces single-value semantics for list tags: when a value of a list tag
+     * was just selected, all other values of the same list tag name in the popup
+     * are deselected.
+     */
+    static void deselectListTagSiblings(JPopupMenu popup, Object source, java.util.Set<String> mvNames) {
+        if (!(source instanceof JCheckBoxMenuItem)) {
+            return;
+        }
+        JCheckBoxMenuItem clicked = (JCheckBoxMenuItem) source;
+        String[] parts = splitListTag(clicked.getText(), mvNames);
+        if (parts == null || !clicked.isSelected()) {
+            return;
+        }
+        for (MenuElement me : popup.getSubElements()) {
+            JCheckBoxMenuItem other = (JCheckBoxMenuItem) me.getComponent();
+            if (other != clicked) {
+                String[] otherParts = splitListTag(other.getText(), mvNames);
+                if (otherParts != null && otherParts[0].equals(parts[0])) {
+                    other.setSelected(false);
+                }
+            }
+        }
+    }
+
+    /**
+     * Collects the list tag names (option group key without prefix) into the target set.
+     */
+    private static void collectMvTagNames(HashMap<String, AppOptionGroupBean[]> defs, String prefix, java.util.Set<String> target) {
+        target.clear();
+        if (defs != null) {
+            for (String groupName : defs.keySet()) {
+                target.add(groupName.substring(prefix.length()));
+            }
+        }
     }
 
     /**
@@ -1219,7 +1304,14 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
                 for (String selCaseTag : caseTags) {
                     ArchiveFileTagsBean tb = new ArchiveFileTagsBean();
                     tb.setArchiveFileKey(selectedCase);
-                    tb.setTagName(selCaseTag);
+                    String[] listTag = splitListTag(selCaseTag, this.caseMvTagNames);
+                    if (listTag != null) {
+                        // list tag: set name and value - the server updates the value if the tag already exists
+                        tb.setTagName(listTag[0]);
+                        tb.setTagValue(listTag[1]);
+                    } else {
+                        tb.setTagName(selCaseTag);
+                    }
                     afs.setTag(this.selectedCase.getId(), tb, true);
                 }
 
@@ -1262,8 +1354,15 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
                             if (!tags.isEmpty()) {
                                 List<CompletableFuture<Void>> tagFutures = new ArrayList<>();
                                 for (String docTag : tags) {
+                                    final DocumentTagsBean dtb = new DocumentTagsBean(docId, docTag);
+                                    String[] listTag = splitListTag(docTag, this.docMvTagNames);
+                                    if (listTag != null) {
+                                        // list tag: documents are always new, just set name and value
+                                        dtb.setTagName(listTag[0]);
+                                        dtb.setTagValue(listTag[1]);
+                                    }
                                     tagFutures.add(CompletableFuture.runAsync(() -> {
-                                        try { afs.setDocumentTag(docId, new DocumentTagsBean(docId, docTag), true); }
+                                        try { afs.setDocumentTag(docId, dtb, true); }
                                         catch (Exception ex2) { throw new RuntimeException(ex2); }
                                     }));
                                 }
@@ -1417,7 +1516,7 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
         e.setPlaceHoldersCache(this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant, this.parties);
         this.entryList.add(e);
         this.pnlEntries.add(e);
-        e.setDocumentTags(ComponentUtils.getPopupMenuItems(this.popCommonDocumentTags));
+        e.setDocumentTags(ComponentUtils.getPopupMenuItems(this.popCommonDocumentTags), this.docMvTagDefs, com.jdimension.jlawyer.server.constants.OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX);
         e.selectDocumentTags(ComponentUtils.getSelectedPopupMenuItems(this.popCommonDocumentTags));
         e.setCaseFolder(this.rootFolder, caseFolder);
         e.setAllNameTemplates(allNameTemplates);
@@ -1559,7 +1658,15 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
             for (ArchiveFileDocumentsBean d : docs) {
                 existingFileNames.add(d.getName().toLowerCase());
             }
-            
+
+            // preselect existing list tag values of the case so the current value is visible and only updated on save
+            try {
+                Collection<ArchiveFileTagsBean> caseTags = locator.lookupArchiveFileServiceRemote().getTags(selectedCase.getId());
+                preselectCaseListTags(caseTags);
+            } catch (Exception ex) {
+                log.error("Could not load case tags for list tag preselection", ex);
+            }
+
             // cached and passed to BulkSaveEntry to avoid loading for each entry
             this.allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
             if(this.selectedCase != null) {
@@ -1586,6 +1693,33 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
             log.error("Error getting docments for case " + selectedCase.getId(), ex);
             ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Dokumente der Akte", "Dokumente speichern");
         }
+    }
+
+    /**
+     * Preselects, in the case tag popup, the list tag value entries that are already
+     * set on the case so the current value is visible. On save these are only updated.
+     */
+    private void preselectCaseListTags(Collection<ArchiveFileTagsBean> caseTags) {
+        if (caseTags == null) {
+            return;
+        }
+        java.util.Map<String, String> currentValues = new java.util.HashMap<>();
+        for (ArchiveFileTagsBean t : caseTags) {
+            if (t.getTagName() != null && t.getTagValue() != null && this.caseMvTagNames.contains(t.getTagName())) {
+                currentValues.put(t.getTagName(), t.getTagValue());
+            }
+        }
+        if (currentValues.isEmpty()) {
+            return;
+        }
+        for (MenuElement me : this.popCaseTags.getSubElements()) {
+            JCheckBoxMenuItem mi = (JCheckBoxMenuItem) me.getComponent();
+            String[] parts = splitListTag(mi.getText(), this.caseMvTagNames);
+            if (parts != null && currentValues.containsKey(parts[0])) {
+                mi.setSelected(parts[1].equals(currentValues.get(parts[0])));
+            }
+        }
+        this.lblCaseTags.setText(ComponentUtils.getSelectedPopupMenuItemsAsString(this.popCaseTags));
     }
 
     public void checkForDuplicateFileNames() {

@@ -671,6 +671,8 @@ import com.jdimension.jlawyer.client.mail.EmailUtils;
 import com.jdimension.jlawyer.client.utils.convert.ParserUtil;
 import com.jdimension.jlawyer.email.CommonMailUtils;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import javax.mail.*;
@@ -725,7 +727,7 @@ public class EmailToPDFConverter {
         String fileOutUrl= conv.convertToPDF(htmlTemp.getAbsolutePath());
         File fileOut=new File(fileOutUrl);
         File renamedFile = new File(fileOut.getParent(), new File(emlFile).getName() + ".pdf");
-        fileOut.renameTo(renamedFile);
+        Files.move(fileOut.toPath(), renamedFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         return renamedFile.getAbsolutePath();
         
     }

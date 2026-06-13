@@ -674,6 +674,7 @@ import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.TemplatesUtil;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
@@ -748,7 +749,8 @@ public class BulkSaveEntry extends javax.swing.JPanel {
             @Override
             public void focusLost(java.awt.event.FocusEvent evt) {
                 if (documentFilename != null) {
-                    documentFilenameNew = FileUtils.preserveExtension(documentFilename, txtFileNameNew.getText());
+                    String committed = FileUtils.sanitizeFileName(txtFileNameNew.getText());
+                    documentFilenameNew = FileUtils.preserveExtension(documentFilename, committed);
                     txtFileNameNew.setText(documentFilenameNew);
                     updateFilenameOutline();
                 }
@@ -960,8 +962,9 @@ public class BulkSaveEntry extends javax.swing.JPanel {
     private void fileNameChanged() {
         this.documentFilenameNew=this.txtFileNameNew.getText();
 
-        // use may have typed invalid characters
-        String checkedName=FileUtils.sanitizeFileName(this.documentFilenameNew);
+        // use may have typed invalid characters - lenient variant keeps spaces
+        // intact while typing; final trim/collapse runs on focus loss / save
+        String checkedName=FileUtils.sanitizeFileNameForInput(this.documentFilenameNew);
         if(!checkedName.equals(this.txtFileNameNew.getText())) {
             int caretPosition=this.txtFileNameNew.getCaretPosition();
             this.txtFileNameNew.setText(checkedName);
@@ -1054,8 +1057,31 @@ public class BulkSaveEntry extends javax.swing.JPanel {
             this.lblDownloaded.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/lassists.png")));
     }
     
-    public void setDocumentTags(List<String> tagsInUse) {
-        this.buildPopup(this.cmdDocTags, this.popDocTags, tagsInUse, this.lblSelectedTags);
+    private final java.util.Set<String> docMvTagNames = new java.util.HashSet<>();
+
+    public void setDocumentTags(List<String> tagsInUse, HashMap<String, AppOptionGroupBean[]> mvTagDefs, String mvTagPrefix) {
+        // expand multi-value (list) tags into per-value entries "tagName: value", mixed with the regular tags
+        List<String> expandedTags = new ArrayList<>();
+        this.docMvTagNames.clear();
+        if (mvTagDefs != null && mvTagPrefix != null) {
+            for (java.util.Map.Entry<String, AppOptionGroupBean[]> entry : mvTagDefs.entrySet()) {
+                String tagName = entry.getKey().substring(mvTagPrefix.length());
+                this.docMvTagNames.add(tagName);
+                if (entry.getValue() != null) {
+                    for (AppOptionGroupBean ogb : entry.getValue()) {
+                        expandedTags.add(tagName + ": " + ogb.getValue());
+                    }
+                }
+            }
+        }
+        if (tagsInUse != null) {
+            for (String t : tagsInUse) {
+                if (!this.docMvTagNames.contains(t) && !expandedTags.contains(t)) {
+                    expandedTags.add(t);
+                }
+            }
+        }
+        this.buildPopup(this.cmdDocTags, this.popDocTags, expandedTags, this.lblSelectedTags);
     }
     
     public List<String> getDocumentTags() {
@@ -1094,6 +1120,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
                 allValues.setText(ComponentUtils.getSelectedPopupMenuItemsAsString(popup));
             });
             ((JCheckBoxMenuItem) me.getComponent()).addActionListener((ActionEvent e) -> {
+                BulkSaveDialog.deselectListTagSiblings(popup, e.getSource(), this.docMvTagNames);
                 boolean selected = false;
                 for (MenuElement me1 : popup.getSubElements()) {
                     JCheckBoxMenuItem mi = (JCheckBoxMenuItem) me1.getComponent();
@@ -1191,7 +1218,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
      */
     public String getDocumentFilenameNew() {
         if(this.documentFilename!=null && this.documentFilenameNew!=null)
-            return FileUtils.preserveExtension(this.documentFilename, this.documentFilenameNew);
+            return FileUtils.preserveExtension(this.documentFilename, FileUtils.sanitizeFileName(this.documentFilenameNew));
         return documentFilenameNew;
     }
 

@@ -35,6 +35,15 @@ public class DesktopLayoutManager {
 
     private static final Logger log = Logger.getLogger(DesktopLayoutManager.class.getName());
 
+    private static final String[] ALL_PANEL_IDS = {
+        DesktopLayoutPreset.PANEL_LASTCHANGED,
+        DesktopLayoutPreset.PANEL_DUE,
+        DesktopLayoutPreset.PANEL_TAGGED,
+        DesktopLayoutPreset.PANEL_MESSAGES_TO_ME,
+        DesktopLayoutPreset.PANEL_MESSAGES_TO_OTHERS,
+        DesktopLayoutPreset.PANEL_INVOICES
+    };
+
     private final Class<?> containerClass;
     private DesktopGridConfiguration configuration;
     private final Map<String, JComponent> panelContents;
@@ -94,9 +103,13 @@ public class DesktopLayoutManager {
      */
     public void applyPreset(DesktopLayoutPreset preset) {
         this.configuration = preset.toConfiguration();
-        // Preserve current visibility settings
+        // Preserve user's visibility settings for panels that ARE in the preset
         applyVisibilityFromSettings();
+        // Panels not in the preset get an invisible placeholder so saveVisibilitySettings()
+        // can persist their false flag and stale "true" settings won't resurrect them on reload
+        ensureAllPanelsPresent(this.configuration);
         saveConfiguration();
+        saveVisibilitySettings();
     }
 
     /**
@@ -250,13 +263,13 @@ public class DesktopLayoutManager {
                 config = DesktopGridConfiguration.fromJsonString(layoutJson);
             }
 
-            // Ensure invoices panel has a position (migration for existing configs)
-            if (config.getPanelPosition(DesktopLayoutPreset.PANEL_INVOICES) == null) {
-                config.setPanelPosition(DesktopLayoutPreset.PANEL_INVOICES, new GridPosition(0, 0, 1, 1, false));
-            }
-
-            // Apply visibility from individual settings
+            // Apply visibility to panels that exist in the saved config
             applyVisibilityFromSettings(config);
+
+            // Add invisible placeholders for any missing panels. MUST happen AFTER
+            // applyVisibilityFromSettings so a stale "true" setting cannot flip a
+            // newly migrated panel on and overlap an existing panel at (0,0).
+            ensureAllPanelsPresent(config);
 
             return config;
         } catch (Exception e) {
@@ -289,6 +302,14 @@ public class DesktopLayoutManager {
             config.applyVisibility(lastChangedVisible, dueVisible, taggedVisible, messagesToMeVisible, messagesToOthersVisible, invoicesVisible);
         } catch (Exception e) {
             log.error("Error loading visibility settings", e);
+        }
+    }
+
+    private void ensureAllPanelsPresent(DesktopGridConfiguration config) {
+        for (String panelId : ALL_PANEL_IDS) {
+            if (config.getPanelPosition(panelId) == null) {
+                config.setPanelPosition(panelId, new GridPosition(0, 0, 1, 1, false));
+            }
         }
     }
 

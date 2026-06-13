@@ -700,6 +700,7 @@ public class LoadBeaFolderAction extends ProgressableAction {
     private int scrollToRow = -1;
     
     private JSplitPane mainSplitter=null;
+    private int mainSplitterPosition=-1;
 
     private final Set<String> addedMessageIds = new HashSet<>();
 
@@ -707,13 +708,14 @@ public class LoadBeaFolderAction extends ProgressableAction {
 
     private int max = 1;
 
-    public LoadBeaFolderAction(ProgressIndicator i, BeaFolder f, JTable table, int sortCol, int scrollToRow, JSplitPane mainSplitter) throws Exception {
+    public LoadBeaFolderAction(ProgressIndicator i, BeaFolder f, JTable table, int sortCol, int scrollToRow, JSplitPane mainSplitter, int mainSplitterPosition) throws Exception {
         super(i, false);
         this.f = f;
         this.table = table;
         this.sortCol = sortCol;
         this.scrollToRow = scrollToRow;
         this.mainSplitter=mainSplitter;
+        this.mainSplitterPosition=mainSplitterPosition;
     }
 
     @Override
@@ -748,8 +750,6 @@ public class LoadBeaFolderAction extends ProgressableAction {
             log.info("LoadBeaFolderAction loading folder: " + f.getName() + " (id=" + f.getId() + "), message count: " + messageIds.size());
 
             EditorsRegistry.getInstance().updateStatus("Öffne Ordner " + f.getName(), true);
-
-            int mainSplitterPosition=this.mainSplitter.getDividerLocation();
 
             // Update progress indicator with actual count
             this.progress("Lade Nachrichten...", messageIds.size());
@@ -842,7 +842,9 @@ public class LoadBeaFolderAction extends ProgressableAction {
                 ComponentUtils.autoSizeColumns(table);
             });
 
-            ThreadUtils.setSplitDividerLocation(mainSplitter, mainSplitterPosition);
+            if (mainSplitterPosition > 0) {
+                ThreadUtils.setSplitDividerLocation(mainSplitter, mainSplitterPosition);
+            }
 
             EditorsRegistry.getInstance().clearStatus(true);
 

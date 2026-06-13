@@ -714,6 +714,16 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
             // all buttons are toggle buttons. it may happen that none is selected.
             boolean noneSelected=true;
             Calendar c = Calendar.getInstance();
+            String currentText = this.target.getText();
+            if (currentText != null && !currentText.trim().isEmpty()) {
+                try {
+                    SimpleDateFormat parser = new SimpleDateFormat("dd.MM.yyyy");
+                    parser.setLenient(false);
+                    c.setTime(parser.parse(currentText.trim()));
+                } catch (java.text.ParseException ex) {
+                    c = Calendar.getInstance();
+                }
+            }
             if (this.togReview1Week.isSelected()) {
                 c.add(Calendar.DAY_OF_YEAR, 7);
                 noneSelected=false;
@@ -828,8 +838,13 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
         togReview3Months = new javax.swing.JToggleButton();
         togReview6Months = new javax.swing.JToggleButton();
         togReview1Year = new javax.swing.JToggleButton();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
 
-        togReview1Week.setText("1W");
+        togReview1Week.setText("+1");
+        togReview1Week.setToolTipText("1 Woche addieren");
         togReview1Week.setMargin(new java.awt.Insets(2, 4, 2, 4));
         togReview1Week.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -837,7 +852,8 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
             }
         });
 
-        togReview2Weeks.setText("2W");
+        togReview2Weeks.setText("+2");
+        togReview2Weeks.setToolTipText("2 Wochen addieren");
         togReview2Weeks.setMargin(new java.awt.Insets(2, 4, 2, 4));
         togReview2Weeks.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -845,7 +861,8 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
             }
         });
 
-        togReview3Weeks.setText("3W");
+        togReview3Weeks.setText("+3");
+        togReview3Weeks.setToolTipText("3 Wochen addieren");
         togReview3Weeks.setMargin(new java.awt.Insets(2, 4, 2, 4));
         togReview3Weeks.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -853,7 +870,8 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
             }
         });
 
-        togReview4Weeks.setText("4W");
+        togReview4Weeks.setText("+4");
+        togReview4Weeks.setToolTipText("4 Wochen addieren");
         togReview4Weeks.setMargin(new java.awt.Insets(2, 4, 2, 4));
         togReview4Weeks.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -861,7 +879,8 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
             }
         });
 
-        togReview1Day.setText("1T");
+        togReview1Day.setText("+1");
+        togReview1Day.setToolTipText("1 Tag addieren");
         togReview1Day.setMargin(new java.awt.Insets(2, 4, 2, 4));
         togReview1Day.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -869,7 +888,8 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
             }
         });
 
-        togReview2Days.setText("2T");
+        togReview2Days.setText("+2");
+        togReview2Days.setToolTipText("2 Tage addieren");
         togReview2Days.setMargin(new java.awt.Insets(2, 4, 2, 4));
         togReview2Days.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -877,7 +897,8 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
             }
         });
 
-        togReview1Month.setText("1M");
+        togReview1Month.setText("+1");
+        togReview1Month.setToolTipText("1 Monat addieren");
         togReview1Month.setMargin(new java.awt.Insets(2, 4, 2, 4));
         togReview1Month.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -885,7 +906,8 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
             }
         });
 
-        togReview3Months.setText("3M");
+        togReview3Months.setText("+3");
+        togReview3Months.setToolTipText("3 Monate addieren");
         togReview3Months.setMargin(new java.awt.Insets(2, 4, 2, 4));
         togReview3Months.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -893,7 +915,8 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
             }
         });
 
-        togReview6Months.setText("6M");
+        togReview6Months.setText("+6");
+        togReview6Months.setToolTipText("6 Monate addieren");
         togReview6Months.setMargin(new java.awt.Insets(2, 4, 2, 4));
         togReview6Months.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -901,7 +924,8 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
             }
         });
 
-        togReview1Year.setText("1J");
+        togReview1Year.setText("+1");
+        togReview1Year.setToolTipText("1 Jahr addieren");
         togReview1Year.setMargin(new java.awt.Insets(2, 6, 2, 6));
         togReview1Year.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -909,15 +933,31 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
             }
         });
 
+        jLabel1.setText("T:");
+        jLabel1.setToolTipText("Tage addieren");
+
+        jLabel2.setText("W:");
+        jLabel2.setToolTipText("Wochen addieren");
+
+        jLabel3.setText("M:");
+        jLabel3.setToolTipText("Monate addieren");
+
+        jLabel4.setText("J:");
+        jLabel4.setToolTipText("Jahre addieren");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(togReview1Day)
                 .addGap(3, 3, 3)
                 .addComponent(togReview2Days)
-                .addGap(3, 3, 3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(togReview1Week)
                 .addGap(3, 3, 3)
                 .addComponent(togReview2Weeks)
@@ -925,15 +965,18 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
                 .addComponent(togReview3Weeks)
                 .addGap(3, 3, 3)
                 .addComponent(togReview4Weeks)
-                .addGap(3, 3, 3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(togReview1Month)
                 .addGap(3, 3, 3)
                 .addComponent(togReview3Months)
                 .addGap(3, 3, 3)
                 .addComponent(togReview6Months)
-                .addGap(3, 3, 3)
-                .addComponent(togReview1Year)
-                .addGap(0, 0, 0))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel4)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(togReview1Year))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -947,7 +990,11 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
                 .addComponent(togReview6Months)
                 .addComponent(togReview1Year)
                 .addComponent(togReview1Month)
-                .addComponent(togReview3Weeks))
+                .addComponent(togReview3Weeks)
+                .addComponent(jLabel1)
+                .addComponent(jLabel2)
+                .addComponent(jLabel3)
+                .addComponent(jLabel4))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -1012,6 +1059,10 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JToggleButton togReview1Day;
     private javax.swing.JToggleButton togReview1Month;
     private javax.swing.JToggleButton togReview1Week;

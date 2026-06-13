@@ -753,6 +753,18 @@ public class ServerFileUtils {
     }
     
     public static String sanitizeFileName(String fileName) {
+        String name = sanitizeFileNameForInput(fileName);
+        while(name.contains("  "))
+            name = name.replace("  ", " ");
+        return name.trim();
+    }
+
+    // Lenient variant for use during interactive editing: replaces invalid
+    // characters but keeps leading/trailing whitespace and consecutive spaces
+    // so the user can type a space mid-edit without it being immediately
+    // consumed. Final cleanup (trim, collapse) must happen on commit via
+    // sanitizeFileName().
+    public static String sanitizeFileNameForInput(String fileName) {
         String name = fileName;
         name = name.replace(",", " ");
         name = name.replace("\"", "");
@@ -775,9 +787,7 @@ public class ServerFileUtils {
         name = name.replace(">", "");
         name = name.replace("<", "");
         name = name.replace("|", "_");
-        while(name.contains("  "))
-            name = name.replace("  ", " ");
-        return name.trim();
+        return name;
     }
     
     public static String sanitizeFolderName(String folderName) {
