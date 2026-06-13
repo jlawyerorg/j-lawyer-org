@@ -1133,11 +1133,28 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
 
         try {
 
-            if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+            Transferable tr = dtde.getTransferable();
+
+            // Internal document move onto a folder. This must be checked BEFORE the
+            // javaFileListFlavor branch, because DocumentsTransferable now also offers
+            // a file list flavor (for dragging documents out to external applications).
+            // Discriminate via DOCS_FLAVOR (a local JVM object flavor only present on
+            // internal document drags) and not via "instanceof", because the drop event
+            // wraps the source transferable in a proxy.
+            if (dtde.isDataFlavorSupported(DocumentsTransferable.DOCS_FLAVOR)) {
+
+                dtde.acceptDrop(dtde.getDropAction());
+                Object transferred = tr.getTransferData(DocumentsTransferable.DOCS_FLAVOR);
+                ArrayList<ArchiveFileDocumentsBean> droppedDocs = (ArrayList<ArchiveFileDocumentsBean>) transferred;
+
+                this.parent.caseFolderPanel.moveDocumentsToFolder(droppedDocs, folder);
+
+                dtde.dropComplete(true);
+
+            } else if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
                 dtde.acceptDrop(dtde.getDropAction());
 
-                Transferable transferable = dtde.getTransferable();
-                List transferData = (List) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+                List transferData = (List) tr.getTransferData(DataFlavor.javaFileListFlavor);
                 if (transferData != null && !(transferData.isEmpty())) {
 
                     ThreadUtils.setWaitCursor(EditorsRegistry.getInstance().getMainEditorsPane());
@@ -1164,19 +1181,7 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
                 }
 
             } else {
-
-                // Ok, get the dropped object and try to figure out what it is
-                Transferable tr = dtde.getTransferable();
-                if (!(tr instanceof DocumentsTransferable)) {
-                    dtde.rejectDrop();
-                }
-                Object transferred = tr.getTransferData(DataFlavor.stringFlavor);
-                dtde.acceptDrop(DnDConstants.ACTION_LINK);
-                ArrayList<ArchiveFileDocumentsBean> droppedDocs = (ArrayList<ArchiveFileDocumentsBean>) transferred;
-
-                this.parent.caseFolderPanel.moveDocumentsToFolder(droppedDocs, folder);
-
-                dtde.dropComplete(true);
+                dtde.rejectDrop();
             }
         } catch (Exception e) {
             log.error(e);

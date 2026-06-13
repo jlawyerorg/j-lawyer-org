@@ -734,13 +734,17 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         this.lblSearchMatch.setText("");
 
         this.dragSource = new DragSource();
-        // Register drag gesture for multiple components to make the entire panel draggable
-        dragSource.createDefaultDragGestureRecognizer(this.lblFileName, DnDConstants.ACTION_MOVE, this);
-        dragSource.createDefaultDragGestureRecognizer(this.lblFileIcon, DnDConstants.ACTION_MOVE, this);
-        dragSource.createDefaultDragGestureRecognizer(this.lblDisplayedDate, DnDConstants.ACTION_MOVE, this);
-        dragSource.createDefaultDragGestureRecognizer(this.lblFileSize, DnDConstants.ACTION_MOVE, this);
-        dragSource.createDefaultDragGestureRecognizer(this.lblDictateSign, DnDConstants.ACTION_MOVE, this);
-        dragSource.createDefaultDragGestureRecognizer(this.lblFolder, DnDConstants.ACTION_MOVE, this);
+        // Register drag gesture for multiple components to make the entire panel draggable.
+        // ACTION_COPY is used so the documents can be dragged out as files into external
+        // applications (file manager, web upload), which only accept a COPY from an external
+        // source. The internal move onto a folder still works because FolderListCell reads
+        // the transfer data regardless of the drag action.
+        dragSource.createDefaultDragGestureRecognizer(this.lblFileName, DnDConstants.ACTION_COPY, this);
+        dragSource.createDefaultDragGestureRecognizer(this.lblFileIcon, DnDConstants.ACTION_COPY, this);
+        dragSource.createDefaultDragGestureRecognizer(this.lblDisplayedDate, DnDConstants.ACTION_COPY, this);
+        dragSource.createDefaultDragGestureRecognizer(this.lblFileSize, DnDConstants.ACTION_COPY, this);
+        dragSource.createDefaultDragGestureRecognizer(this.lblDictateSign, DnDConstants.ACTION_COPY, this);
+        dragSource.createDefaultDragGestureRecognizer(this.lblFolder, DnDConstants.ACTION_COPY, this);
 
         this.lblDisplayedDate.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.lblDictateSign.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
@@ -763,13 +767,17 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         this.setDocument(doc, invoice);
 
         this.dragSource = new DragSource();
-        // Register drag gesture for multiple components to make the entire panel draggable
-        dragSource.createDefaultDragGestureRecognizer(this.lblFileName, DnDConstants.ACTION_MOVE, this);
-        dragSource.createDefaultDragGestureRecognizer(this.lblFileIcon, DnDConstants.ACTION_MOVE, this);
-        dragSource.createDefaultDragGestureRecognizer(this.lblDisplayedDate, DnDConstants.ACTION_MOVE, this);
-        dragSource.createDefaultDragGestureRecognizer(this.lblFileSize, DnDConstants.ACTION_MOVE, this);
-        dragSource.createDefaultDragGestureRecognizer(this.lblDictateSign, DnDConstants.ACTION_MOVE, this);
-        dragSource.createDefaultDragGestureRecognizer(this.lblFolder, DnDConstants.ACTION_MOVE, this);
+        // Register drag gesture for multiple components to make the entire panel draggable.
+        // ACTION_COPY is used so the documents can be dragged out as files into external
+        // applications (file manager, web upload), which only accept a COPY from an external
+        // source. The internal move onto a folder still works because FolderListCell reads
+        // the transfer data regardless of the drag action.
+        dragSource.createDefaultDragGestureRecognizer(this.lblFileName, DnDConstants.ACTION_COPY, this);
+        dragSource.createDefaultDragGestureRecognizer(this.lblFileIcon, DnDConstants.ACTION_COPY, this);
+        dragSource.createDefaultDragGestureRecognizer(this.lblDisplayedDate, DnDConstants.ACTION_COPY, this);
+        dragSource.createDefaultDragGestureRecognizer(this.lblFileSize, DnDConstants.ACTION_COPY, this);
+        dragSource.createDefaultDragGestureRecognizer(this.lblDictateSign, DnDConstants.ACTION_COPY, this);
+        dragSource.createDefaultDragGestureRecognizer(this.lblFolder, DnDConstants.ACTION_COPY, this);
 
         this.lblDisplayedDate.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.lblDictateSign.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
@@ -1436,8 +1444,9 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             selDocs = new ArrayList<>();
             selDocs.add(this.document);
         }
-        // Use hand cursor during drag operation
-        this.dragSource.startDrag(dge, DragSource.DefaultMoveDrop, new DocumentsTransferable(selDocs), null);
+        // Use copy cursor during drag operation; internal folder moves still work because
+        // FolderListCell reads the transfer data regardless of the drop action.
+        this.dragSource.startDrag(dge, DragSource.DefaultCopyDrop, new DocumentsTransferable(selDocs), null);
     }
 
 }

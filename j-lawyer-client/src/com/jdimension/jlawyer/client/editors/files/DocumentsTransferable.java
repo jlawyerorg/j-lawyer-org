@@ -663,28 +663,70 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.documents.CachingDocumentLoader;
 import com.jdimension.jlawyer.client.mail.*;
+import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
+import org.apache.log4j.Logger;
 
 /**
+ * Transferable for documents being dragged out of the case view's document
+ * list.
+ *
+ * It exposes the following data flavors:
+ * <ul>
+ * <li>{@link #DOCS_FLAVOR} - a local JVM object flavor carrying the dragged
+ * {@code ArrayList<ArchiveFileDocumentsBean>}. This is used for moving documents
+ * onto a folder within the application (handled by FolderListCell).</li>
+ * <li>{@link DataFlavor#javaFileListFlavor} - a list of temporary files (used by
+ * the OS file manager on Windows/macOS and by Java-aware targets).</li>
+ * <li>{@link #URI_LIST_FLAVOR} - a {@code text/uri-list} string of {@code file://}
+ * URIs. This is the mechanism GTK based Linux file managers and browser based web
+ * upload areas negotiate with.</li>
+ * </ul>
+ * The document content is loaded from the server and materialized as temporary
+ * files lazily, i.e. only when an external drop target actually requests one of
+ * the file flavors. This avoids any download overhead for purely internal folder
+ * moves.
  *
  * @author jens
  */
 public class DocumentsTransferable implements Transferable {
-    DataFlavor localFlavor = DataFlavor.stringFlavor;
-      DataFlavor [] flavors = {localFlavor};
-    
-    private ArrayList<ArchiveFileDocumentsBean> object=null;
-    
+
+    private static final Logger log = Logger.getLogger(DocumentsTransferable.class.getName());
+
+    /**
+     * Local JVM object flavor used for internal document moves. Carries the
+     * dragged {@code ArrayList<ArchiveFileDocumentsBean>}.
+     */
+    public static final DataFlavor DOCS_FLAVOR = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=java.util.ArrayList", "j-lawyer documents");
+
+    /**
+     * {@code text/uri-list} flavor as a String, required by GTK based Linux file
+     * managers and by browser based web upload areas.
+     */
+    public static final DataFlavor URI_LIST_FLAVOR = new DataFlavor("text/uri-list;class=java.lang.String", "URI list");
+
+    private final DataFlavor[] flavors = {DataFlavor.javaFileListFlavor, URI_LIST_FLAVOR, DOCS_FLAVOR};
+
+    private ArrayList<ArchiveFileDocumentsBean> object = null;
+
+    // lazily materialized temporary files for external (file list) drops
+    private List<File> materializedFiles = null;
+
     public DocumentsTransferable(ArrayList<ArchiveFileDocumentsBean> documents) {
-        this.object=documents;
+        this.object = documents;
     }
-    
+
     @Override
     public DataFlavor[] getTransferDataFlavors() {
         return flavors;
@@ -692,11 +734,76 @@ public class DocumentsTransferable implements Transferable {
 
     @Override
     public boolean isDataFlavorSupported(DataFlavor flavor) {
-        return true;
+        return DOCS_FLAVOR.equals(flavor) || DataFlavor.javaFileListFlavor.equals(flavor) || URI_LIST_FLAVOR.equals(flavor);
     }
 
     @Override
     public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
-        return this.object;
+        if (DOCS_FLAVOR.equals(flavor)) {
+            return this.object;
+        } else if (DataFlavor.javaFileListFlavor.equals(flavor)) {
+            return getMaterializedFiles();
+        } else if (URI_LIST_FLAVOR.equals(flavor)) {
+            StringBuilder sb = new StringBuilder();
+            for (File f : getMaterializedFiles()) {
+                sb.append(toUriListEntry(f)).append("\r\n");
+            }
+            return sb.toString();
+        }
+        throw new UnsupportedFlavorException(flavor);
+    }
+
+    /**
+     * Builds a {@code file://} URI for the given file in the triple-slash form
+     * expected by most uri-list consumers. {@link File#toURI()} yields the
+     * single-slash {@code file:/path} form which some targets reject.
+     */
+    private static String toUriListEntry(File f) {
+        String uri = f.toURI().toString();
+        if (uri.startsWith("file:/") && !uri.startsWith("file://")) {
+            uri = "file://" + uri.substring("file:".length());
+        }
+        return uri;
+    }
+
+    /**
+     * Loads the dragged documents from the server and writes them to temporary
+     * files. The result is cached so that repeated requests by the drag-and-drop
+     * machinery do not trigger repeated downloads.
+     */
+    private synchronized List<File> getMaterializedFiles() throws IOException {
+        if (this.materializedFiles != null) {
+            return this.materializedFiles;
+        }
+
+        java.awt.Component cursorComponent = null;
+        try {
+            cursorComponent = EditorsRegistry.getInstance().getMainEditorsPane();
+        } catch (Exception ex) {
+            // ignore - cursor handling is optional
+        }
+
+        try {
+            if (cursorComponent != null) {
+                ThreadUtils.setWaitCursor(cursorComponent);
+            }
+            List<File> files = new ArrayList<>();
+            if (this.object != null) {
+                for (ArchiveFileDocumentsBean doc : this.object) {
+                    byte[] content = CachingDocumentLoader.getInstance().getDocument(doc.getId());
+                    String fullTmpFileLocation = FileUtils.createTempFile(doc.getName(), content);
+                    files.add(new File(fullTmpFileLocation));
+                }
+            }
+            this.materializedFiles = files;
+            return files;
+        } catch (Exception ex) {
+            log.error("Error materializing documents for drag and drop", ex);
+            throw new IOException("Error materializing documents for drag and drop", ex);
+        } finally {
+            if (cursorComponent != null) {
+                ThreadUtils.setDefaultCursor(cursorComponent);
+            }
+        }
     }
 }
