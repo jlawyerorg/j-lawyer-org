@@ -11,6 +11,7 @@ import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
+import com.jdimension.jlawyer.client.utils.FileChooserUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.pojo.DataBucket;
@@ -223,12 +224,13 @@ public class CaseExportDialog extends javax.swing.JDialog {
             return;
         }
 
-        JFileChooser chooser = new JFileChooser();
+        JFileChooser chooser = FileChooserUtils.createFileChooser(ClientSettings.CONF_CASES_EXPORT_LASTDIR);
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         chooser.setDialogTitle("Zielordner für den Export auswählen");
         int result = chooser.showSaveDialog(this);
 
         if (result == JFileChooser.APPROVE_OPTION) {
+            FileChooserUtils.rememberDirectory(ClientSettings.CONF_CASES_EXPORT_LASTDIR, chooser);
             File destinationDir = chooser.getSelectedFile();
             dispose();
 

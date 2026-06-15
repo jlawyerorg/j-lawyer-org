@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.editors.documents.CachingDocumentLoader;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.FileChooserUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -783,12 +784,13 @@ public class DownloadDocumentsAction extends ProgressableAction {
                         SwingUtilities.invokeLater(new Runnable() {
                             @Override
                             public void run() {
-                                JFileChooser chooser = new JFileChooser();
+                                JFileChooser chooser = FileChooserUtils.createFileChooser();
                                 chooser.setDialogTitle("XJustiz-Viewer suchen...");
                                 ExeFilter filter = new ExeFilter();
                                 chooser.setFileFilter(filter);
                                 int returnVal = chooser.showOpenDialog(EditorsRegistry.getInstance().getMainWindow());
                                 if (returnVal == JFileChooser.APPROVE_OPTION) {
+                                    FileChooserUtils.rememberDirectory(chooser);
 
                                     File exe = chooser.getSelectedFile();
                                     File path = exe.getParentFile();

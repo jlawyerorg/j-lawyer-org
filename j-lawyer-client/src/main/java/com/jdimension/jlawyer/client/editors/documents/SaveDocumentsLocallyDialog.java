@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileConverter;
+import com.jdimension.jlawyer.client.utils.FileChooserUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
@@ -701,20 +702,7 @@ public class SaveDocumentsLocallyDialog extends javax.swing.JDialog {
         this.convertToPdf = convertToPdf;
         initComponents();
 
-        ClientSettings settings = ClientSettings.getInstance();
-        String lastDir = settings.getConfiguration("client.archivefiles.encryptedpdf.lastdir", System.getProperty("user.home"));
-        if (!lastDir.endsWith(File.separator)) {
-            lastDir = lastDir + File.separator;
-        }
-
-        if (!(new File(lastDir).exists())) {
-            lastDir = System.getProperty("user.home");
-            if (!lastDir.endsWith(File.separator)) {
-                lastDir = lastDir + File.separator;
-            }
-        }
-
-        this.txtLastDir.setText(lastDir);
+        this.txtLastDir.setText(FileChooserUtils.getStartDirectoryPath("client.archivefiles.encryptedpdf.lastdir"));
 
     }
 
@@ -815,6 +803,7 @@ public class SaveDocumentsLocallyDialog extends javax.swing.JDialog {
         chooser.setDialogTitle("Verzeichnis wählen");
         chooser.setApproveButtonText("Auswählen");
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            FileChooserUtils.rememberDirectory("client.archivefiles.encryptedpdf.lastdir", chooser);
             this.txtLastDir.setText(chooser.getSelectedFile().getAbsolutePath());
         }
     }//GEN-LAST:event_cmdBrowseActionPerformed

@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.FileChooserUtils;
 import com.jdimension.jlawyer.client.voip.VoipUtils;
 import java.io.IOException;
 import javax.swing.JFileChooser;
@@ -905,10 +906,11 @@ public class VoipSoftphoneConfigurationDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdCancelActionPerformed
 
     private void cmdFindExecutableActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdFindExecutableActionPerformed
-        JFileChooser chooser = new JFileChooser();
+        JFileChooser chooser = FileChooserUtils.createFileChooser();
         chooser.setFileHidingEnabled(false);
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
+            FileChooserUtils.rememberDirectory(chooser);
 
             try {
                 this.txtExecutable.setText(chooser.getSelectedFile().getCanonicalPath());

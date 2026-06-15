@@ -1192,12 +1192,13 @@ public class BugReportDialog extends javax.swing.JDialog {
             
             byte[] zipReport=this.getReportAsZip();
             
-            JFileChooser chooser = new JFileChooser(System.getProperty("user.home"));
+            JFileChooser chooser = FileChooserUtils.createFileChooser();
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             chooser.setAcceptAllFileFilterUsed(false);
             chooser.setDialogTitle("Speicherort wählen");
             chooser.setApproveButtonText("Hier speichern");
             if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                FileChooserUtils.rememberDirectory(chooser);
                 SimpleDateFormat df=new SimpleDateFormat("yyyy-MM-dd_HH-mm");
                 FileOutputStream fout=new FileOutputStream(new File(chooser.getSelectedFile().getAbsolutePath() + File.separator + df.format(new Date()) + "_j-lawyer-Systeminfos.zip"));
                 fout.write(zipReport);

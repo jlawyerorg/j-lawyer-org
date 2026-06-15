@@ -679,6 +679,7 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.FileChooserUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
@@ -2749,9 +2750,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmbCountryItemStateChanged
 
     private void cmdSelectCertificateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectCertificateActionPerformed
-        JFileChooser chooser = new JFileChooser();
+        JFileChooser chooser = FileChooserUtils.createFileChooser();
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
+            FileChooserUtils.rememberDirectory(chooser);
 
             try {
                 String url = chooser.getSelectedFile().getCanonicalPath();

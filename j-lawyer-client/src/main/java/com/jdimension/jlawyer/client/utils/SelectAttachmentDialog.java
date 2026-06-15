@@ -733,6 +733,7 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
     }
     
     private void initialize(String caseId) {
+        FileChooserUtils.configureStartDirectory(fileChooser);
         this.txtSearch.putClientProperty("JTextField.showClearButton", true);
         this.txtSearch.putClientProperty("JTextField.placeholderText", "Suche nach Dateinamen");
         this.txtSearch.getDocument().addDocumentListener(new DocumentListener() {
@@ -904,6 +905,9 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
 
     private void fileChooserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileChooserActionPerformed
         this.selectedFiles = fileChooser.getSelectedFiles();
+        if (this.selectedFiles != null && this.selectedFiles.length > 0) {
+            FileChooserUtils.rememberDirectory(fileChooser);
+        }
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_fileChooserActionPerformed

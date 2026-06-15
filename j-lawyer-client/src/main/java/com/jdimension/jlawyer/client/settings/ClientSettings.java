@@ -775,6 +775,7 @@ public class ClientSettings {
     public static final String CONF_BEA_SAVETOARCHIVEFILE="client.bea.savetoarchivefile";
     
     public static final String CONF_CASE_LASTUPLOADDIR="client.case.lastuploaddir";
+    public static final String CONF_FILECHOOSER_LASTDIR="client.filechooser.lastdir";
     
     public static final String CONF_MAIL_HTMLWHITELIST="client.mail.htmlwhitelist";
     public static final String CONF_MAIL_SAVETOARCHIVEFILE="client.mail.savetoarchivefile";
