@@ -1503,13 +1503,32 @@ public class LibreOfficeAccess {
                     String[] trailingCharsRegex = new String[]{"\\.", ",", ";", ":", "!", "\\?", "'", "\"", " "};
                     String[] trailingChars = new String[]{".", ",", ";", ":", "!", "?", "'", "\"", " "};
 
+                    String value = (String) values.get(key);
+                    if (PlaceHolders.INGO_TEXT.equals(key) && isMultiParagraphText(value)) {
+                        String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
+                        TextNavigation search = new TextNavigation(regExKey, outputOdt);
+                        ArrayList<TextSelection> selections = new ArrayList<>();
+                        while (search.hasNext()) {
+                            selections.add((TextSelection) search.nextSelection());
+                        }
+                        for (TextSelection item : selections) {
+                            try {
+                                if (!replaceIngoTextWithParagraphs(item, value)) {
+                                    item.replaceWith(value);
+                                }
+                            } catch (Throwable t) {
+                                log.error("Error replacing " + regExKey + " with " + value + " in " + fileInFileSystem, t);
+                            }
+                        }
+                        continue;
+                    }
+
                     for (int i = 0; i < trailingCharsRegex.length; i++) {
                         String trailCharRegex = trailingCharsRegex[i];
                         String trailChar = trailingChars[i];
                         String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}" + trailCharRegex;
 
-                        String value = (String) values.get(key);
-                        value = value + trailChar;
+                        String trailValue = value + trailChar;
 
                         TextNavigation search = new TextNavigation(regExKey, outputOdt);
 
@@ -1517,18 +1536,19 @@ public class LibreOfficeAccess {
 
                             try {
                                 TextSelection item = (TextSelection) search.nextSelection();
-                                item.replaceWith(value);
+                                item.replaceWith(trailValue);
 
                             } catch (Throwable t) {
-                                log.error("Error replacing " + regExKey + " with " + value + " in " + fileInFileSystem, t);
+                                log.error("Error replacing " + regExKey + " with " + trailValue + " in " + fileInFileSystem, t);
                             }
                         }
                     }
 
                     String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
-                    String value = (String) values.get(key);
                     if (value == null) {
                         value = "";
+                    } else if (PlaceHolders.INGO_TEXT.equals(key)) {
+                        // keep body text untouched; it may contain paragraph boundaries
                     } else if ("".equals(value)) {
                         // do not append space
                     } else {
@@ -1539,7 +1559,6 @@ public class LibreOfficeAccess {
                     TextNavigation search = new TextNavigation(regExKey, outputOdt);
 
                     while (search.hasNext()) {
-
                         try {
                             TextSelection item = (TextSelection) search.nextSelection();
                             item.replaceWith(value);
@@ -2111,6 +2130,43 @@ public class LibreOfficeAccess {
             PdfFormsAccess.setPlaceHolders(caseId, fileInFileSystem, fileName, values, formsPrefixes);
         }
 
+    }
+
+    private static boolean replaceIngoTextWithParagraphs(TextSelection item, String value) {
+        Node paragraphNode = item.getContainerElement();
+        if (!(paragraphNode instanceof TextPElement)) {
+            return false;
+        }
+
+        Node parentNode = paragraphNode.getParentNode();
+        if (parentNode == null) {
+            return false;
+        }
+
+        String paragraphText = paragraphNode.getTextContent();
+        int placeholderIndex = paragraphText.indexOf(PlaceHolders.INGO_TEXT);
+        if (placeholderIndex < 0) {
+            return false;
+        }
+        String before = paragraphText.substring(0, placeholderIndex);
+        String after = paragraphText.substring(placeholderIndex + PlaceHolders.INGO_TEXT.length());
+        if (before.trim().length() > 0 || !after.matches("[\\.,;:!\\?'\" ]*")) {
+            return false;
+        }
+
+        String normalized = value.replace("\r\n", "\n").replace('\r', '\n').trim();
+        String[] paragraphs = normalized.split("\\n\\s*\\n");
+        for (int p = 0; p < paragraphs.length; p++) {
+            Node newParagraph = paragraphNode.cloneNode(false);
+            newParagraph.setTextContent(paragraphs[p] + (p == paragraphs.length - 1 ? after : ""));
+            parentNode.insertBefore(newParagraph, paragraphNode);
+        }
+        parentNode.removeChild(paragraphNode);
+        return true;
+    }
+
+    private static boolean isMultiParagraphText(String value) {
+        return value != null && value.replace("\r\n", "\n").replace('\r', '\n').matches("(?s).*\\n\\s*\\n.*");
     }
 
     private static boolean isContainedAsSeparateParagraph(Node rNode, String searchText) {
