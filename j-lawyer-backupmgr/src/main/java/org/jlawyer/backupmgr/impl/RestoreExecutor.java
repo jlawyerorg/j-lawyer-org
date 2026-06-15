@@ -757,7 +757,7 @@ public class RestoreExecutor {
         if (progress != null) {
             progress.onProgress("Prüfe Datenbankverbindung...");
         }
-        Class.forName("com.mysql.jdbc.Driver");
+        Class.forName("com.mysql.cj.jdbc.Driver");
         boolean jlawyerdbFound = false;
         try (Connection mysql = DriverManager.getConnection("jdbc:mysql://" + this.dbHost + ":" + this.dbPort + "/" + this.dbName + "?user=" + this.dbUser + "&serverTimezone=Europe/Berlin&useSSL=false&password=" + dbPassword)) {
             ResultSet rs = mysql.getMetaData().getCatalogs();
