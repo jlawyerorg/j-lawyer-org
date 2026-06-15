@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.jlawyer</groupId>
+        <artifactId>j-lawyer-parent</artifactId>
+        <version>2.8.0</version>
+    </parent>
     <groupId>org.jlawyer.invoicing</groupId>
     <artifactId>j-lawyer-invoicing</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
         <exec.mainClass>org.jlawyer.invoicing.JLawyerInvoicing</exec.mainClass>
     </properties>
     
@@ -43,27 +45,9 @@
                     </execution>
                 </executions>
             </plugin -->
-            <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>1.7</version>
-                <executions>
-                    <execution>
-                        <phase>install</phase>
-                        <configuration>
-                            <target>
- 
-                                <copy file="${project.build.directory}/j-lawyer-invoicing-${project.version}.jar" tofile="${project.basedir}/../j-lawyer-client/lib/j-lawyer-invoicing/j-lawyer-invoicing.jar"/>
-                                <!-- copy file="${project.build.directory}/j-lawyer-invoicing-${project.version}.jar" tofile="${project.basedir}/../j-lawyer-server/j-lawyer-server-ejb/lib/j-lawyer-invoicing.jar"/ -->
-                                
-                            </target>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            
+            <!-- Reactor migration: the install-phase antrun copy of the shaded jar into
+                 j-lawyer-client/lib has been removed. The client now depends on this
+                 artifact via the reactor. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -75,6 +59,12 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <!-- attach the self-contained fat jar as a classified artifact so
+                                 consumers (incl. NetBeans, which otherwise resolves this reactor
+                                 module to its thin target/classes) get the bundled mustang +
+                                 relocated shaded.org.apache.pdfbox instead of leaking pdfbox 3.x -->
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>shaded</shadedClassifierName>
                             <artifactSet>
                                 <excludes>
                                     <exclude>org.codehaus.groovy:groovy-all</exclude>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<actions>
+    <action>
+        <actionName>run</actionName>
+        <packagings>
+            <packaging>jar</packaging>
+        </packagings>
+        <goals>
+            <goal>process-classes</goal>
+            <goal>org.codehaus.mojo:exec-maven-plugin:3.1.0:exec</goal>
+        </goals>
+        <properties>
+            <exec.executable>java</exec.executable>
+            <exec.args>-Xmx2048m -Djava.net.preferIPv4Stack=true -Dswing.aatext=true -Dmail.imap.connectionpoolsize=2 -Dmail.imaps.connectionpoolsize=2 -Duser.language=de -Dmail.smtp.port=25 -Dmail.smtps.port=25 -classpath %classpath com.jdimension.jlawyer.client.Main</exec.args>
+        </properties>
+    </action>
+    <action>
+        <actionName>debug</actionName>
+        <packagings>
+            <packaging>jar</packaging>
+        </packagings>
+        <goals>
+            <goal>process-classes</goal>
+            <goal>org.codehaus.mojo:exec-maven-plugin:3.1.0:exec</goal>
+        </goals>
+        <properties>
+            <exec.executable>java</exec.executable>
+            <exec.args>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address} -Xmx2048m -Djava.net.preferIPv4Stack=true -Dswing.aatext=true -Duser.language=de -classpath %classpath com.jdimension.jlawyer.client.Main</exec.args>
+            <jpda.listen>true</jpda.listen>
+        </properties>
+    </action>
+</actions>

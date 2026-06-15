@@ -1,5 +1,9 @@
 **/.DS_Store
 **/.directory
+
+# Maven build outputs (replaces the former Ant build/ and dist/ ignores below).
+# The in-project dependency repository (maven-repo/) is intentionally committed.
+**/target/
 /j-lawyer-client/nbproject/private/
 /j-lawyer-fax/nbproject/private/
 /j-lawyer-io-common/nbproject/private/
@@ -71,3 +75,12 @@
 /j-lawyer-mcpserver/target/
 /j-lawyer-server/j-lawyer-io/addswaggertags-error.log
 /j-lawyer-server/j-lawyer-io/addswaggertags.log
+
+# Generated in-project Maven repository (seeded from lib/ jars by build-fast.sh)
+/maven-repo/
+
+# maven-shade generated artifact
+**/dependency-reduced-pom.xml
+
+# built EAR artifacts must never be committed
+*.ear
