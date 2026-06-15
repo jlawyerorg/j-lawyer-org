@@ -9926,7 +9926,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         protected void processDrag(DropTargetDragEvent dtde) {
-            if (OutlookDropHelper.isOutlookDrop(dtde.getCurrentDataFlavors())) {
+
+            if (dtde.isDataFlavorSupported(DocumentsTransferable.DOCS_FLAVOR)) {
+                // internal document drag - only folder cells (FolderListCell) handle these
+                dtde.rejectDrag();
+            } else if (OutlookDropHelper.isOutlookDrop(dtde.getCurrentDataFlavors())) {
                 dtde.acceptDrag(DnDConstants.ACTION_COPY);
             } else if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
                 dtde.acceptDrag(DnDConstants.ACTION_COPY);
@@ -9962,6 +9966,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         public void drop(DropTargetDropEvent dtde) {
 
             Transferable transferable = dtde.getTransferable();
+            if (transferable.isDataFlavorSupported(DocumentsTransferable.DOCS_FLAVOR)) {
+                // internal document drag dropped outside of a folder cell - must not be
+                // re-imported as a new document; only FolderListCell handles document moves
+                dtde.rejectDrop();
+                return;
+            }
+
             if (OutlookDropHelper.isOutlookDrop(transferable.getTransferDataFlavors())) {
                 dtde.acceptDrop(dtde.getDropAction());
                 try {
