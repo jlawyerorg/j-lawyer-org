@@ -13,29 +13,23 @@
     <name>j-lawyer-io</name>
 
     <dependencies>
-        <!-- Swagger 2.0 annotations used to drive build-time swagger.json generation
-             (replacing jaxrs-analyzer). RUNTIME retention; small, kept on the WAR. -->
         <dependency>
             <groupId>io.swagger</groupId>
             <artifactId>swagger-annotations</artifactId>
             <version>1.6.14</version>
         </dependency>
-        <!-- used by the build-time swagger tooling (SwaggerFinalizer) and the equivalence
-             test; provided by WildFly at runtime, so not bundled in the WAR -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>2.16.1</version>
             <scope>provided</scope>
         </dependency>
-        <!-- canonical coordinates so Surefire auto-detects the JUnit 4 provider -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
-        <!-- reactor libraries (bundled by the EAR, provided at compile time) -->
         <dependency>
             <groupId>org.jlawyer</groupId>
             <artifactId>j-lawyer-server-common</artifactId>
@@ -61,7 +55,6 @@
             <artifactId>j-lawyer-cloud</artifactId>
             <scope>provided</scope>
         </dependency>
-        <!-- entities is a separate EAR module -->
         <dependency>
             <groupId>org.jlawyer</groupId>
             <artifactId>j-lawyer-server-entities</artifactId>
@@ -74,81 +67,72 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>javax.activation</groupId>
             <artifactId>activation</artifactId>
             <version>1.1.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.glassfish.hk2.external</groupId>
             <artifactId>cglib</artifactId>
-            <version>2.2.0-b21</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
-            <version>1.13</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.commons</groupId>
             <artifactId>commons-collections4</artifactId>
-            <version>4.4</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <version>1.19</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>3.5</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
             <version>1.2</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.commons</groupId>
             <artifactId>commons-math3</artifactId>
-            <version>3.6.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
             <version>3.5</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>commons-validator</groupId>
             <artifactId>commons-validator</artifactId>
-            <version>1.4.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.commons</groupId>
             <artifactId>commons-vfs2</artifactId>
-            <version>2.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>com.google.zxing</groupId>
             <artifactId>core</artifactId>
-            <version>3.3.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>com.github.virtuald</groupId>
             <artifactId>curvesapi</artifactId>
-            <version>1.06</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -164,94 +148,109 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.groovy</groupId>
             <artifactId>groovy</artifactId>
-            <version>4.0.16</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.glassfish.hk2</groupId>
             <artifactId>hk2-api</artifactId>
-            <version>2.2.0-b21</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.glassfish.hk2</groupId>
             <artifactId>hk2-locator</artifactId>
-            <version>2.2.0-b21</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.glassfish.hk2</groupId>
             <artifactId>hk2-utils</artifactId>
-            <version>2.2.0-b21</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>com.github.jai-imageio</groupId>
             <artifactId>jai-imageio-core</artifactId>
-            <version>1.3.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>jakarta.enterprise</groupId>
             <artifactId>jakarta.enterprise.cdi-api</artifactId>
-            <version>2.0.2</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>jakarta.inject</groupId>
             <artifactId>jakarta.inject-api</artifactId>
-            <version>1.0.5</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>com.sun.mail</groupId>
             <artifactId>jakarta.mail</artifactId>
-            <version>1.6.7</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>jakarta.persistence</groupId>
             <artifactId>jakarta.persistence-api</artifactId>
-            <version>2.2.3</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>net.rootdev</groupId>
             <artifactId>java-rdfa</artifactId>
-            <version>0.4.2</version>
             <scope>provided</scope>
+            <!-- java-rdfa 0.4.2 pulls jena-core (-> log4j 1.x + xerces), slf4j-log4j12 and junit
+                 at compile scope; exclude them so they do not bundle / clash with log4j2. -->
+            <exclusions>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>log4j</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>xerces</groupId>
+                    <artifactId>xercesImpl</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>com.google.zxing</groupId>
             <artifactId>javase</artifactId>
-            <version>3.3.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
             <version>2.3.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>com.sun.xml.bind</groupId>
             <artifactId>jaxb-core</artifactId>
-            <version>2.3.0.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>com.sun.xml.bind</groupId>
             <artifactId>jaxb-impl</artifactId>
             <version>2.3.2</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
-            <artifactId>jboss-cli-client</artifactId>
-            <version>0.0.0</version>
+            <groupId>org.wildfly.core</groupId>
+            <artifactId>wildfly-cli</artifactId>
+            <classifier>client</classifier>
             <scope>provided</scope>
+            <!-- The 'client' classifier is a self-contained uber jar (old jboss-cli-client.jar); exclude its transitives to avoid duplicating the WildFly graph. -->
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>jlawyer.thirdparty</groupId>
@@ -260,15 +259,13 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.jboss.ejb3</groupId>
             <artifactId>jboss-ejb3-ext-api</artifactId>
-            <version>2.3.0.Final</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.jboss.spec.javax.servlet</groupId>
             <artifactId>jboss-servlet-api_4.0_spec</artifactId>
-            <version>2.0.0.Final</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -278,45 +275,63 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>com.beust</groupId>
             <artifactId>jcommander</artifactId>
-            <version>1.48</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.jena</groupId>
             <artifactId>jena-core</artifactId>
-            <version>2.7.4</version>
             <scope>provided</scope>
+            <!-- jena-core 2.7.4 drags in log4j 1.x + a second SLF4J binding (slf4j-log4j12) and xercesImpl, none present in the flat-jar model. -->
+            <exclusions>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>log4j</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>xerces</groupId>
+                    <artifactId>xercesImpl</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.jena</groupId>
             <artifactId>jena-iri</artifactId>
-            <version>0.9.4</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>log4j</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.glassfish.jersey.core</groupId>
             <artifactId>jersey-client</artifactId>
-            <version>0.0.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.glassfish.jersey.core</groupId>
             <artifactId>jersey-common</artifactId>
-            <version>0.0.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
-            <version>2.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>de.jollyday</groupId>
             <artifactId>jollyday</artifactId>
-            <version>0.5.10</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -338,9 +353,8 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>com.googlecode.libphonenumber</groupId>
             <artifactId>libphonenumber</artifactId>
-            <version>8.12.18</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -356,9 +370,8 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.slf4j</groupId>
             <artifactId>log4j-over-slf4j</artifactId>
-            <version>1.7.30</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -368,91 +381,91 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-analyzers-common</artifactId>
-            <version>4.7.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
-            <version>4.7.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-highlighter</artifactId>
-            <version>4.7.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-memory</artifactId>
-            <version>4.7.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-queries</artifactId>
-            <version>4.7.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-queryparser</artifactId>
-            <version>4.7.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>8.0.33</version>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.odftoolkit</groupId>
             <artifactId>odfdom-java</artifactId>
-            <version>0.8.11-incubating</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>xerces</groupId>
+                    <artifactId>xercesImpl</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.poi</groupId>
             <artifactId>poi</artifactId>
             <version>4.1.2</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.poi</groupId>
             <artifactId>poi-excelant</artifactId>
-            <version>4.1.2</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
-            <version>4.1.2</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml-schemas</artifactId>
-            <version>4.1.2</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.poi</groupId>
             <artifactId>poi-scratchpad</artifactId>
             <version>4.1.2</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.odftoolkit</groupId>
             <artifactId>simple-odf</artifactId>
-            <version>0.8.2-incubating</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>xerces</groupId>
+                    <artifactId>xercesImpl</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.7.30</version>
             <scope>provided</scope>
@@ -464,45 +477,44 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.ws.commons.util</groupId>
             <artifactId>ws-commons-util</artifactId>
-            <version>1.0.2</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.xmlbeans</groupId>
             <artifactId>xmlbeans</artifactId>
-            <version>3.1.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.xmlrpc</groupId>
             <artifactId>xmlrpc-client</artifactId>
-            <version>3.1.3</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.xmlrpc</groupId>
             <artifactId>xmlrpc-common</artifactId>
-            <version>3.1.3</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.xmlrpc</groupId>
             <artifactId>xmlrpc-server</artifactId>
-            <version>3.1.3</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.odftoolkit</groupId>
             <artifactId>xslt-runner</artifactId>
-            <version>1.2.4-incubating</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.odftoolkit</groupId>
             <artifactId>xslt-runner-task</artifactId>
-            <version>1.2.4-incubating</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
