@@ -37,9 +37,9 @@
 - [x] 4.5 Deleted `j-lawyer-client/lib/bea.bak/` (unused, build-excluded backup of old beA jars; not referenced anywhere).
 
 ## 5. Cleanup
-- [ ] 5.1 Remove obsolete committed `lib/*.jar`; update `.gitignore`
-- [ ] 5.2 Retire `scripts/seed-maven-repo.sh` + `scripts/lib-gav-map.txt` (or scope them to the residual set)
-- [ ] 5.3 CI: drop the maven-repo seed step (keep only if a residual local repo remains)
+- [x] 5.1 Removed 236 obsolete committed jars (213 now sourced from Maven Central + 7 javafx [JDK-provided] + 16 sources/javadoc). 87 jars remain in the seed scope: 61 backing residual `jlawyer.thirdparty:*` coords + 26 beA-wrapper/`lib/bea` jars. Verified: every residual coord still has a backing jar, zero migrated leftovers. `.gitignore` stale comment fixed (maven-repo is generated, not committed).
+- [x] 5.2 Scoped (not retired — file repo stays per 4.1): `scripts/lib-gav-map.txt` regenerated to the residual-only set (87 entries, was 323); `scripts/seed-maven-repo.sh` kept, header updated to document it now seeds only the residual set.
+- [x] 5.3 CI seed step kept (a residual local repo remains): `main.yml`/`pullrequests.yml` + `build.sh`/`build-fast.sh` keep `./scripts/seed-maven-repo.sh`, now seeding the 87 residual jars. **Note (documented BREAKING change): the build now requires network access to Maven Central** for the migrated coordinates; offline builds need a Central mirror.
 
 ## 6. Dependency security
 - [x] 6.1 Add `.github/dependabot.yml` (maven ecosystem, all module poms) — covers all 17 committed maven poms (root BOM + every reactor module + standalone `j-lawyer-ide`) via the `directories` key, weekly, minor/patch grouped to cut PR noise, majors separate, limit 10; plus a `github-actions` ecosystem entry for the CI workflows. YAML validated; every listed directory confirmed to have a tracked `pom.xml`. (No prior config existed — the earlier `/j-lawyer-ide` PRs were Dependabot *security* updates, which run without a config file.)

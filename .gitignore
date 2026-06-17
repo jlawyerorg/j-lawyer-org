@@ -2,7 +2,8 @@
 **/.directory
 
 # Maven build outputs (replaces the former Ant build/ and dist/ ignores below).
-# The in-project dependency repository (maven-repo/) is intentionally committed.
+# The in-project dependency repository (maven-repo/) is generated, not committed:
+# it is seeded on build from the residual lib/ jars (see /maven-repo/ rule below).
 **/target/
 /j-lawyer-client/nbproject/private/
 /j-lawyer-fax/nbproject/private/
