@@ -1,0 +1,56 @@
+# Dependabot configuration — enabled by the migrate-dependencies-to-central change.
+# Now that the bulk of dependencies carry real Maven Central coordinates (instead of the
+# synthetic jlawyer.thirdparty:* coordinates), Dependabot can match them against the GitHub
+# advisory database and the registry, surfacing CVEs and version updates.
+#
+# Coverage gap (documented in openspec/changes/migrate-dependencies-to-central):
+#   The residual artifacts still carried under jlawyer.thirdparty:* (proprietary / repackaged
+#   / not-on-Central — e.g. the beA wrapper, javafx.*, log4j repackages, tika-app, jboss-client)
+#   have no registry/advisory coordinates, so Dependabot cannot see them. They are covered, if
+#   at all, by a binary CVE scanner (OWASP Dependency-Check / Trivy) as a compensating control.
+version: 2
+updates:
+  # ---- Maven: every committed module pom in the reactor + the standalone j-lawyer-ide ----
+  - package-ecosystem: "maven"
+    directories:
+      - "/"                                    # root: dependencyManagement / BOM (pinned versions)
+      - "/j-lawyer-fax"
+      - "/j-lawyer-server-common"
+      - "/j-lawyer-io-common"
+      - "/j-lawyer-server-entities"
+      - "/j-lawyer-server-api"
+      - "/j-lawyer-server"                      # EAR aggregator pom
+      - "/j-lawyer-server/j-lawyer-server-ejb"
+      - "/j-lawyer-server/j-lawyer-server-war"
+      - "/j-lawyer-server/j-lawyer-server-io"
+      - "/j-lawyer-server/j-lawyer-io"
+      - "/j-lawyer-server/j-lawyer-server-ear"
+      - "/j-lawyer-client"
+      - "/j-lawyer-backupmgr"
+      - "/j-lawyer-cloud"
+      - "/j-lawyer-invoicing"
+      - "/j-lawyer-ide"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "deps"
+    # Reduce PR noise: bundle all minor/patch bumps per module into one PR; majors stay separate.
+    groups:
+      maven-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # ---- GitHub Actions used by the CI workflows ----
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"

@@ -4,6 +4,12 @@
 # currently committed under the various module lib/ folders plus the proprietary
 # beA wrapper. Existing versions are preserved verbatim (no upgrades).
 #
+# After the migrate-dependencies-to-central change, only the RESIDUAL artifacts are
+# still committed and seeded here: the proprietary beA wrapper + its lib/bea jars,
+# WildFly's jboss-client, and the repackaged / not-on-Central / no-version jars that
+# the SHA-1 verification confirmed differ from any Maven Central release. Everything
+# else now resolves from Maven Central via real groupId:artifactId:version coordinates.
+#
 # GAV derivation from a jar file name:
 #   groupId    = jlawyer.thirdparty           (single flat namespace)
 #   artifactId = everything before the first "-<digit>" token

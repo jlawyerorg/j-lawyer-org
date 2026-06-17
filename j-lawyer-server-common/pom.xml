@@ -13,11 +13,9 @@
     <name>j-lawyer-server-common</name>
 
     <dependencies>
-        <!-- Java EE 6 API: provided by the container at runtime -->
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>javax</groupId>
             <artifactId>javaee-api</artifactId>
-            <version>6.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -26,7 +24,7 @@
             <version>2.17.1</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
             <version>3.5</version>
         </dependency>
@@ -36,9 +34,8 @@
             <version>2.3.0</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>com.sun.mail</groupId>
             <artifactId>jakarta.mail</artifactId>
-            <version>1.6.7</version>
         </dependency>
         <dependency>
             <groupId>jlawyer.thirdparty</groupId>
@@ -46,17 +43,15 @@
             <version>2.17.1</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.5.8</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpcore</artifactId>
-            <version>4.4.11</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
             <version>1.2</version>
         </dependency>
@@ -71,9 +66,8 @@
             <version>0.1.54</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.slf4j</groupId>
             <artifactId>log4j-over-slf4j</artifactId>
-            <version>1.7.30</version>
         </dependency>
         <dependency>
             <groupId>jlawyer.thirdparty</groupId>
@@ -81,30 +75,28 @@
             <version>2.17.1</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.commons</groupId>
             <artifactId>commons-vfs2</artifactId>
-            <version>2.1</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.7.30</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>3.5</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-core</artifactId>
-            <version>1.3</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

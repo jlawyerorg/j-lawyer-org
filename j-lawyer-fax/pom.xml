@@ -14,9 +14,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.glassfish.jersey.core</groupId>
             <artifactId>jersey-client</artifactId>
-            <version>0.0.0</version>
         </dependency>
         <dependency>
             <groupId>jlawyer.thirdparty</groupId>
@@ -28,35 +27,52 @@
             <artifactId>json-simple</artifactId>
             <version>2.3.0</version>
         </dependency>
-        <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
-            <artifactId>jboss-jaxrs-api_2.1_spec</artifactId>
-            <version>2.0.2.Final</version>
-        </dependency>
+        <!-- JAX-RS API: provided transitively by the jersey stack (javax.ws.rs-api 2.0).
+             The previously direct jboss-jaxrs-api_2.1_spec was a flat-model stand-in and is
+             dropped to keep a single JAX-RS API jar (jersey 2.5.1 targets the 2.0 API). -->
         <dependency>
             <groupId>jlawyer.thirdparty</groupId>
             <artifactId>log4j-core</artifactId>
             <version>2.17.1</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
             <version>1.1</version>
+            <!-- commons-logging 1.1 declares these legacy optionals at compile scope; the
+                 flat-jar model never had them. Exclude to keep logging on log4j2/slf4j and
+                 avoid log4j 1.x + servlet-api 2.3 leaking onto the classpath. -->
+            <exclusions>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>log4j</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>logkit</groupId>
+                    <artifactId>logkit</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>avalon-framework</groupId>
+                    <artifactId>avalon-framework</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>javax.servlet</groupId>
+                    <artifactId>servlet-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.apache.ws.commons.util</groupId>
             <artifactId>ws-commons-util</artifactId>
-            <version>1.0.2</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>javax.activation</groupId>
             <artifactId>activation</artifactId>
             <version>1.1</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.slf4j</groupId>
             <artifactId>log4j-over-slf4j</artifactId>
-            <version>1.7.30</version>
         </dependency>
         <dependency>
             <groupId>jlawyer.thirdparty</groupId>
@@ -64,145 +80,117 @@
             <version>2.17.1</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
-            <artifactId>jersey-client</artifactId>
-            <version>0.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.glassfish.hk2.external</groupId>
             <artifactId>javax.inject</artifactId>
-            <version>2.2.0-b21</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.glassfish.jersey.media</groupId>
             <artifactId>jersey-media-moxy</artifactId>
-            <version>2.5.1</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.osgi</groupId>
             <artifactId>org.osgi.core</artifactId>
-            <version>4.2.0</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.glassfish.jersey.ext</groupId>
             <artifactId>jersey-entity-filtering</artifactId>
-            <version>2.5.1</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.glassfish.jersey.core</groupId>
             <artifactId>jersey-server</artifactId>
-            <version>0.0.0</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
             <version>2.2.7</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.glassfish.hk2.external</groupId>
             <artifactId>asm-all-repackaged</artifactId>
-            <version>2.2.0-b21</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>14.0.1</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.eclipse.persistence</groupId>
             <artifactId>org.eclipse.persistence.moxy</artifactId>
-            <version>2.7.7</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.eclipse.persistence</groupId>
             <artifactId>org.eclipse.persistence.jpa</artifactId>
-            <version>2.7.7</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>javax.annotation</groupId>
             <artifactId>javax.annotation-api</artifactId>
-            <version>1.2</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.glassfish.hk2</groupId>
             <artifactId>osgi-resource-locator</artifactId>
-            <version>1.0.1</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
-            <version>3.0.1</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.eclipse.persistence</groupId>
             <artifactId>org.eclipse.persistence.core</artifactId>
-            <version>2.7.7</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.eclipse.persistence</groupId>
             <artifactId>org.eclipse.persistence.antlr</artifactId>
-            <version>2.7.7</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.glassfish.hk2</groupId>
             <artifactId>hk2-api</artifactId>
-            <version>2.2.0-b21</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.glassfish.jersey.containers</groupId>
             <artifactId>jersey-container-servlet-core</artifactId>
-            <version>0.0.0</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.glassfish.hk2.external</groupId>
             <artifactId>cglib</artifactId>
-            <version>2.2.0-b21</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.glassfish.jersey.containers</groupId>
             <artifactId>jersey-container-servlet</artifactId>
-            <version>0.0.0</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.glassfish.hk2</groupId>
             <artifactId>hk2-utils</artifactId>
-            <version>2.2.0-b21</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.eclipse.persistence</groupId>
             <artifactId>org.eclipse.persistence.asm</artifactId>
-            <version>2.7.7</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.glassfish.jersey.core</groupId>
             <artifactId>jersey-common</artifactId>
-            <version>0.0.0</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.eclipse.persistence</groupId>
             <artifactId>org.eclipse.persistence.jpa.jpql</artifactId>
-            <version>2.7.7</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.glassfish.hk2</groupId>
             <artifactId>hk2-locator</artifactId>
-            <version>2.2.0-b21</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.7.30</version>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
+            <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-core</artifactId>
-            <version>1.3</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

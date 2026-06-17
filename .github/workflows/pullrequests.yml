@@ -8,7 +8,8 @@ on:
   # push:
   #   branches: [ master ]
   pull_request:
-    types: [opened, reopened, edited]
+    # include 'synchronize' so new commits pushed to a PR re-run validation
+    types: [opened, reopened, edited, synchronize]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -29,6 +30,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: 'liberica'
+          java-package: 'jdk+fx' # Liberica Full: bundles JavaFX (the client compiles/runs against the JDK's JavaFX)
           java-version: '17'
           architecture: x64
           cache: maven

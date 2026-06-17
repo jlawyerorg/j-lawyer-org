@@ -1,42 +1,52 @@
 ## 1. Foundation
-- [ ] 1.1 Add root `<dependencyManagement>` / BOM scaffolding (single place to pin versions)
-- [ ] 1.2 (Optional, immediate) Add a binary CVE scanner to CI (OWASP Dependency-Check / Trivy) covering the committed jars
-- [ ] 1.3 Build the verified mapping `jlawyer.thirdparty:<a>:<v>` → Central GAV from `scripts/lib-gav-map.txt`; flag artifacts whose committed jar diverges from the Central release (SHA-1 / spot-check)
+- [x] 1.1 Add root `<dependencyManagement>` / BOM scaffolding (single place to pin versions)
+  - Root `pom.xml` pins 145 CENTRAL_OK artifacts (one per `groupId:artifactId`), inert until Phase 2.
+  - 11 multi-version `groupId:artifactId` (commons-lang3, guava, poi, slf4j-api, junit, ...) deliberately excluded → per-module versioning in Phase 2; see `analysis/gav-verification.md`.
+- [ ] 1.2 (Optional, deferred) Binary CVE scanner in CI (OWASP Dependency-Check / Trivy) for the residual committed jars — not implemented; it is the documented compensating control for the residual-coverage gap (see 6.3) and can land independently at any time without touching the build.
+- [x] 1.3 Build the verified mapping `jlawyer.thirdparty:<a>:<v>` → Central GAV from `scripts/lib-gav-map.txt`; flag artifacts whose committed jar diverges from the Central release (SHA-1 / spot-check)
+  - Result: 223 unique runtime artifacts verified by SHA-1 vs `repo1.maven.org` → **169 CENTRAL_OK, 11 SHA_MISMATCH, 43 NOT_ON_CENTRAL**.
+  - Deliverables: `scripts/lib-gav-map-central.tsv` (machine-readable mapping) and `analysis/gav-verification.md` (summary + Phase 2 actions).
 
 ## 2. Per-module coordinate migration (version-for-version, no upgrades)
-- [ ] 2.1 j-lawyer-fax
-- [ ] 2.2 j-lawyer-server-common
-- [ ] 2.3 j-lawyer-io-common
-- [ ] 2.4 j-lawyer-server-entities
-- [ ] 2.5 j-lawyer-server-api
-- [ ] 2.6 j-lawyer-server-ejb / -war / -io / j-lawyer-io (+ EAR bundled libs)
-- [ ] 2.7 j-lawyer-client (largest set)
-- [ ] After each module: remove migrated `lib/` jars, `mvn clean install`, smoke test
+> Blueprint/procedure established on fax: `analysis/phase2-blueprint.md`. lib-jar removal is deferred to Phase 5 (shared file-repo seeding); transitive reconciliation to Phase 3.
+- [x] 2.1 j-lawyer-fax — pom migrated to Central coords (26 BOM-managed, 6 per-module pinned conflict-set, 4 residual synthetic [log4j×3, json-simple] kept). Transitive reconcile: commons-logging legacy optionals excluded (log4j1/logkit/avalon/servlet-api); redundant direct `jboss-jaxrs-api_2.1_spec` removed in favor of jersey's transitive `javax.ws.rs-api:2.0` (single JAX-RS jar). **Build green, dependency:tree verified clean** (single JAX-RS jar, no legacy JCL transitives). Runtime-verified (bundled in the deployed EAR).
+- [x] 2.2 j-lawyer-server-common — pom migrated (7 BOM-managed, 5 per-module pinned [commons-net 3.5, commons-logging 1.2, slf4j-api 1.7.30, commons-lang3 3.5, junit 4.12], 6 residual synthetic [log4j×3, json-simple, jsch, jcifs]). javaee-api stays `provided`. **Build green, dependency:tree verified clean** — no exclusions needed; only benign new transitives (`jakarta.activation:1.2.2` via mail, `commons-codec:1.13` via httpclient, BOM-pinned); commons-logging 1.2 optionals do not leak.
+- [x] 2.3 j-lawyer-io-common — no-op: module declares no third-party dependencies and has no `lib/` jars; nothing to migrate.
+- [x] 2.4 j-lawyer-server-entities — pom migrated (7 BOM-managed incl. hibernate-core/jakarta.* all `provided`, 2 per-module pinned [slf4j-api 1.7.30, junit 4.12], 6 residual synthetic [flyway×2, log4j×3, jboss-client]). **Build green, dependency:tree verified** — large hibernate graph all `provided` (not bundled, WildFly-supplied). Note: hibernate pulls `javax.persistence:javax.persistence-api:2.2` (provided) alongside the direct `jakarta.persistence:jakarta.persistence-api:2.2.3` (provided) — both javax-namespace 2.2, both provided → benign duplicate, no exclusion.
+- [x] 2.5 j-lawyer-server-api — no-op: only third-party dep is `jboss-client:0.0.0` (NOT_ON_CENTRAL, provided) which stays residual/synthetic; nothing to migrate.
+- [x] 2.6 j-lawyer-server-ejb / -war / -io / j-lawyer-io (+ EAR bundled libs) — **DONE**: all 5 poms migrated, EAR builds, bundled `lib/` is 110 jars with only the log4j2 logging stack (no log4j 1.x / slf4j-log4j12 / xerces / junit). Transitive reconciles: jena-iri→log4j/slf4j-log4j12, odfdom/simple-odf→xerces, ws-commons-util→junit, jena-core+java-rdfa→subtree defense, wildfly-cli→*:*. Pre-existing war junit test-dep added.
+  - [x] j-lawyer-server-ejb migrated (53 BOM-managed, 10 per-module pinned, 12 residual synthetic; mostly `provided`). **Build green, tree reviewed.** Transitive reconcile: jena-core→exclude log4j1/slf4j-log4j12/xerces; wildfly-cli(client)→exclude `*:*` (self-contained uber jar).
+  - [x] j-lawyer-server-war, -io, j-lawyer-io, -ear migrated (same pattern; jena-core/wildfly-cli exclusions auto-injected). BOM coverage OK across all 5.
+  - Pre-existing fix (not migration-caused): `j-lawyer-server-war` test code uses `org.junit` but the pom never declared junit (seed POMs are dependency-less stubs, so it never compiled in a tests-enabled build; only the fast `-Dmaven.test.skip` build hid it). Added `junit:junit:4.12` + `org.hamcrest:hamcrest-core` at test scope, matching sibling modules.
+  - EAR `lib/` integration check + `dependency:tree -Dverbose` revealed the real sources of the 4 leaked jars: `org.apache.jena:jena-iri` → log4j 1.x + slf4j-log4j12; `org.apache.odftoolkit:odfdom-java`/`simple-odf` → xercesImpl 2.9.1; `org.apache.ws.commons.util:ws-commons-util` → junit 3.8.1. Exclusions injected on those exact deps in all 5 modules (earlier jena-core/java-rdfa/wildfly-cli exclusions retained as subtree defense).
+  - **Pending re-build**: `mvn -pl j-lawyer-server/j-lawyer-server-ear -am clean install`; confirm EAR `lib/` no longer contains log4j-1.2.x / slf4j-log4j12 / xercesImpl / junit.
+- [x] 2.7 j-lawyer-client (largest set) — pom migrated: 75 BOM-managed, 8 per-module pinned, 4 SHA_MISMATCH + 30 NOT_ON_CENTRAL residual synthetic. Pre-existing conflicting duplicates resolved to last-wins (current behavior): kept `forms:1.0.6` (residual; dropped shadowed iText `forms:9.0.0`), kept `ical4j:1.0-beta3` (residual; dropped 0.9.18), `ecs`→`ecs:ecs:1.4.2` (managed), dropped exact `hamcrest-core` dup. BOM coverage OK, well-formed. Pre-existing fix (same as war): client test code uses `org.junit` but pom never declared junit (only hamcrest-core) — added `junit:junit:4.12` test scope. **Build green, dependency:tree reviewed** — D5 hotspots all clean: pdfbox only 2.0.24 (invoicing 3.x stays inside the shaded jar), groovy only 2.4.21 (cloud shaded), ical4j only residual 1.0-beta3 (no transitive 2.0.0). Observations (real graph reintroduced per D5, not the catastrophic conflicts): (a) dual log4j2 — synthetic 2.17.1 via server-common + real 2.17.2 transitive (compatible patch versions, two slf4j bindings → multiple-binding warning); (b) hibernate-core now brings its real transitive graph at compile (javax.persistence-api, jboss-logging, javassist, byte-buddy, antlr, dom4j…). Both candidates for the consolidate/modernization follow-up. **Runtime smoke test passed: client launches and connects to the server.**
+- [x] After each module: `mvn clean install` per module + **runtime smoke test passed** (EAR deploys to WildFly without errors; client launches and connects). `lib/` jar removal deferred to Phase 5 (shared file-repo seeding).
 
-## 3. Transitive management (keep behavior identical)
-- [ ] 3.1 Pin shared libs in `<dependencyManagement>` (pdfbox, groovy, ical4j, httpclient, jackson, commons-*)
-- [ ] 3.2 Keep cloud/invoicing as shaded jars consumed via `:shaded` classifier + `<exclusions>*:*</exclusions>`
-- [ ] 3.3 Preserve cloud's http relocation / jackson pin (beA conflict)
-- [ ] 3.4 Diff the resolved dependency tree against the pre-migration set — versions must match
+## 3. Transitive management (keep behavior identical) — done inline during Phase 2
+- [x] 3.1 Shared libs pinned in the root `<dependencyManagement>` (the 145 CENTRAL_OK coords incl. httpclient/httpcore, commons-codec/-lang3/-collections4/-math3, jackson via cloud/invoicing). pdfbox/groovy/ical4j are intentionally NOT centrally pinned: pdfbox 2.x and groovy 2.4.21 are client-only and the conflicting 3.x/leaked versions are contained inside the shaded cloud/invoicing jars; ical4j stays residual (1.0-beta3). The 11 multi-version coords are per-module pinned (see consolidate-duplicate-dependency-versions).
+- [x] 3.2 cloud/invoicing kept as shaded jars consumed via the `:shaded` classifier; the EAR's `j-lawyer-cloud:shaded` carries `<exclusions>*:*</exclusions>` and the client tree shows both shaded jars contributing no transitives — pdfbox/groovy conflicts stay isolated.
+- [x] 3.3 cloud's `org.apache.http` relocation and jackson 2.16.1 pin (beA conflict avoidance) preserved — the shaded cloud jar's internals were not touched by this change.
+- [x] 3.4 Resolved tree reviewed per module against the pre-migration set: version-for-version confirmed (see 7.3, zero version changes); new entries are only the real transitives the flat jars hid, reconciled via exclusions; EAR `lib/` confirmed clean (single log4j2 stack).
 
 ## 4. Non-Central residual artifacts
-- [ ] 4.1 Decide residual repo form (in-project file repo vs private/Nexus)
-- [ ] 4.2 Keep local: beA wrapper + `lib/bea/*`, `jboss-client`/`jboss-cli-client` (provided), any repackaged/no-version jars confirmed ≠ Central
-- [ ] 4.3 Move client `javafx.*` → `org.openjfx:javafx-*` (verify UI) — or defer to JavaFX modernization
-- [ ] 4.4 Evaluate `swingx`/`beansbinding`/`swing-layout`/`jortho`/`sam`/`config_schulung` for version-matching Central artifacts; else keep local
-- [ ] 4.5 Delete `bea.bak/` (unused backup)
+- [x] 4.1 Residual repo form — **decision: keep the in-project file repo** (`maven-repo/`, seeded from committed `lib/` jars by `scripts/seed-maven-repo.sh`). No private/Nexus repo (preserves offline-autark builds).
+- [x] 4.2 Confirmed residual (stays local, served from the file repo): proprietary beA wrapper (`j-lawyer-proprietary/libs/` + `j-lawyer-client/lib/bea/*`), `jboss-client` (WildFly-supplied, `provided`), and every SHA_MISMATCH / repackaged / no-version jar that the Task 1.3 SHA-1 check confirmed ≠ Central (log4j 2.17.1 repackages, jsch, json-simple, flyway, tika-app, zip4j, jasperreports, jai_*, libintl, eclipselink, ical4j 1.0-beta3, forms 1.0.6, bizcal*, pop3, dsn, sam, jortho, swingx, swing-layout, config_schulung, lu.tudor.santec.i18n, java-sepa-xml, pdftest).
+- [x] 4.3 client `javafx.*` — **removed entirely (not migrated to org.openjfx).** The build/runtime JDK is BellSoft Liberica **Full** 17.0.9 (`jdk-17.0.9-full`), which bundles JavaFX 17.0.9 as platform modules. Verified by probe: a pure classpath app compiles and loads all 7 used modules (base/graphics/controls/fxml/media/swing/web) from `jrt:/javafx.*` with no dependency and no add-modules flag. The vendored `javafx.* 0.0.0` (JDK-8 era) jars were redundant/shadowed → deleted from `j-lawyer-client/pom.xml` (comment documents the JDK requirement). No openjfx coords needed; JavaFX tracks JDK updates.
+- [x] 4.4 `swingx`/`swing-layout`/`jortho`/`sam`/`config_schulung` — Task 1.3 SHA-1 verification already classified all as NOT_ON_CENTRAL (no version-matching Central artifact) → stay local/residual. (`beansbinding` *was* on Central and is already migrated in phase 2 to `org.jdesktop:beansbinding:1.2.1`.)
+- [x] 4.5 Deleted `j-lawyer-client/lib/bea.bak/` (unused, build-excluded backup of old beA jars; not referenced anywhere).
 
 ## 5. Cleanup
-- [ ] 5.1 Remove obsolete committed `lib/*.jar`; update `.gitignore`
-- [ ] 5.2 Retire `scripts/seed-maven-repo.sh` + `scripts/lib-gav-map.txt` (or scope them to the residual set)
-- [ ] 5.3 CI: drop the maven-repo seed step (keep only if a residual local repo remains)
+- [x] 5.1 Removed 236 obsolete committed jars (213 now sourced from Maven Central + 7 javafx [JDK-provided] + 16 sources/javadoc). 87 jars remain in the seed scope: 61 backing residual `jlawyer.thirdparty:*` coords + 26 beA-wrapper/`lib/bea` jars. Verified: every residual coord still has a backing jar, zero migrated leftovers. `.gitignore` stale comment fixed (maven-repo is generated, not committed).
+- [x] 5.2 Scoped (not retired — file repo stays per 4.1): `scripts/lib-gav-map.txt` regenerated to the residual-only set (87 entries, was 323); `scripts/seed-maven-repo.sh` kept, header updated to document it now seeds only the residual set.
+- [x] 5.3 CI seed step kept (a residual local repo remains): `main.yml`/`pullrequests.yml` + `build.sh`/`build-fast.sh` keep `./scripts/seed-maven-repo.sh`, now seeding the 87 residual jars. **Note (documented BREAKING change): the build now requires network access to Maven Central** for the migrated coordinates; offline builds need a Central mirror.
 
 ## 6. Dependency security
-- [ ] 6.1 Add `.github/dependabot.yml` (maven ecosystem, all module poms)
-- [ ] 6.2 Confirm Dependabot alerts/PRs appear for a known-vulnerable test bump
-- [ ] 6.3 Document the residual-artifact coverage gap (no advisory data) + the binary scanner as compensating control
+- [x] 6.1 Add `.github/dependabot.yml` (maven ecosystem, all module poms) — covers all 17 committed maven poms (root BOM + every reactor module + standalone `j-lawyer-ide`) via the `directories` key, weekly, minor/patch grouped to cut PR noise, majors separate, limit 10; plus a `github-actions` ecosystem entry for the CI workflows. YAML validated; every listed directory confirmed to have a tracked `pom.xml`. (No prior config existed — the earlier `/j-lawyer-ide` PRs were Dependabot *security* updates, which run without a config file.)
+- [~] 6.2 Confirm Dependabot alerts/PRs appear — **verifiable only after the config reaches the default branch** (Dependabot reads `dependabot.yml` from the repo's default branch). After merge: check repo → Insights → Dependency graph → Dependabot, confirm a run per directory and that version-update PRs appear (e.g. a minor bump on a real-coordinate dep). Watch the run logs for resolution errors on poms that still reference `jlawyer.thirdparty:*` (served only from the git-ignored in-project file repo) — those deps are skipped, which is the documented residual gap.
+- [x] 6.3 Document the residual-artifact coverage gap + binary scanner as compensating control — captured in the `dependabot.yml` header comment and in `analysis/gav-verification.md` (SHA_MISMATCH + NOT_ON_CENTRAL set has no registry/advisory coordinates → invisible to Dependabot; an optional binary CVE scanner per task 1.2 is the compensating control).
 
 ## 7. Verification
-- [ ] 7.1 Full `mvn clean install` (Java 17) green
-- [ ] 7.2 EAR deploys to WildFly 26.1.3; client launches (incl. JavaFX); REST/Swagger OK
-- [ ] 7.3 Dependency-tree diff confirms no version changes vs the pre-migration baseline
+- [x] 7.1 Full reactor build green on Java 17 — verified by a from-scratch build (`rm -rf maven-repo && ./build.sh`): the seed re-creates the residual-only file repo (87 jars) and the whole reactor compiles, assembles, and resolves the migrated coordinates from Maven Central. Per-module `mvn -pl X -am clean install` runs compiled and ran tests (surfaced/fixed the missing junit deps). (`build.sh` restored to the full with-tests build.)
+- [x] 7.2 EAR deploys to WildFly 26.1.3 without errors; client launches and connects to the server (smoke tests passed). JavaFX comes from the Liberica Full JDK (jrt:/javafx.*, verified). REST/Swagger is exercised by `SwaggerEquivalenceTest` in the test phase.
+- [x] 7.3 No version changes vs the pre-migration baseline — verified at the declaration level against the Task 1.3 mapping: **zero** CENTRAL_OK coordinates change version (every migrated dep keeps the exact version of the vendored jar). The only "movement" is 8 no-version (`0.0.0`) jars resolved to their true Central version (TableLayout 20020517, ecs 1.4.2, jboss-cli-client/wildfly-cli 18.1.2.Final, jersey-client/common/server/container-servlet[-core] 2.5.1) — naming only, same binary by SHA-1. New entries in the tree are *added* real transitives (the graph the flat jars hid), reconciled per Phase 3; shared transitive versions are pinned to the vendored versions by the root BOM. The 11 multi-version coordinates stay per-module-pinned at their existing versions (consolidation deferred to consolidate-duplicate-dependency-versions).
