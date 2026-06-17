@@ -156,11 +156,6 @@
                 <version>1.06</version>
             </dependency>
             <dependency>
-                <groupId>com.glazedlists</groupId>
-                <artifactId>glazedlists</artifactId>
-                <version>1.11.0</version>
-            </dependency>
-            <dependency>
                 <groupId>com.google.code.findbugs</groupId>
                 <artifactId>jsr305</artifactId>
                 <version>3.0.2</version>
