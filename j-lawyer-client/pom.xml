@@ -49,41 +49,12 @@
             <artifactId>jasperreports</artifactId>
             <version>4.5.1</version>
         </dependency>
-        <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
-            <artifactId>javafx.web</artifactId>
-            <version>0.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
-            <artifactId>javafx.controls</artifactId>
-            <version>0.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
-            <artifactId>javafx.media</artifactId>
-            <version>0.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
-            <artifactId>javafx.swing</artifactId>
-            <version>0.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
-            <artifactId>javafx.fxml</artifactId>
-            <version>0.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
-            <artifactId>javafx.base</artifactId>
-            <version>0.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
-            <artifactId>javafx.graphics</artifactId>
-            <version>0.0.0</version>
-        </dependency>
+        <!-- JavaFX (base/graphics/controls/fxml/media/swing/web) is provided by the build
+             and runtime JDK: BellSoft Liberica "Full" 17.0.9 (jdk-17.0.9-full) bundles JavaFX
+             17.0.9 as platform modules (jrt:/javafx.*). A classpath app resolves them at both
+             compile and runtime with no dependency and no add-modules flag (verified), so the
+             former vendored javafx.* 0.0.0 jars (JDK-8 era) were redundant and have been removed.
+             NOTE: building requires a JavaFX-bundling JDK (the project already mandates -full). -->
         <dependency>
             <groupId>com.sun.mail</groupId>
             <artifactId>javax.mail</artifactId>

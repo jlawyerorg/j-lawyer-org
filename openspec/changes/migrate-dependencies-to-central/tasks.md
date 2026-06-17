@@ -30,11 +30,11 @@
 - [ ] 3.4 Diff the resolved dependency tree against the pre-migration set — versions must match
 
 ## 4. Non-Central residual artifacts
-- [ ] 4.1 Decide residual repo form (in-project file repo vs private/Nexus)
-- [ ] 4.2 Keep local: beA wrapper + `lib/bea/*`, `jboss-client`/`jboss-cli-client` (provided), any repackaged/no-version jars confirmed ≠ Central
-- [ ] 4.3 Move client `javafx.*` → `org.openjfx:javafx-*` (verify UI) — or defer to JavaFX modernization
-- [ ] 4.4 Evaluate `swingx`/`beansbinding`/`swing-layout`/`jortho`/`sam`/`config_schulung` for version-matching Central artifacts; else keep local
-- [ ] 4.5 Delete `bea.bak/` (unused backup)
+- [x] 4.1 Residual repo form — **decision: keep the in-project file repo** (`maven-repo/`, seeded from committed `lib/` jars by `scripts/seed-maven-repo.sh`). No private/Nexus repo (preserves offline-autark builds).
+- [x] 4.2 Confirmed residual (stays local, served from the file repo): proprietary beA wrapper (`j-lawyer-proprietary/libs/` + `j-lawyer-client/lib/bea/*`), `jboss-client` (WildFly-supplied, `provided`), and every SHA_MISMATCH / repackaged / no-version jar that the Task 1.3 SHA-1 check confirmed ≠ Central (log4j 2.17.1 repackages, jsch, json-simple, flyway, tika-app, zip4j, jasperreports, jai_*, libintl, eclipselink, ical4j 1.0-beta3, forms 1.0.6, bizcal*, pop3, dsn, sam, jortho, swingx, swing-layout, config_schulung, lu.tudor.santec.i18n, java-sepa-xml, pdftest).
+- [x] 4.3 client `javafx.*` — **removed entirely (not migrated to org.openjfx).** The build/runtime JDK is BellSoft Liberica **Full** 17.0.9 (`jdk-17.0.9-full`), which bundles JavaFX 17.0.9 as platform modules. Verified by probe: a pure classpath app compiles and loads all 7 used modules (base/graphics/controls/fxml/media/swing/web) from `jrt:/javafx.*` with no dependency and no add-modules flag. The vendored `javafx.* 0.0.0` (JDK-8 era) jars were redundant/shadowed → deleted from `j-lawyer-client/pom.xml` (comment documents the JDK requirement). No openjfx coords needed; JavaFX tracks JDK updates.
+- [x] 4.4 `swingx`/`swing-layout`/`jortho`/`sam`/`config_schulung` — Task 1.3 SHA-1 verification already classified all as NOT_ON_CENTRAL (no version-matching Central artifact) → stay local/residual. (`beansbinding` *was* on Central and is already migrated in phase 2 to `org.jdesktop:beansbinding:1.2.1`.)
+- [x] 4.5 Deleted `j-lawyer-client/lib/bea.bak/` (unused, build-excluded backup of old beA jars; not referenced anywhere).
 
 ## 5. Cleanup
 - [ ] 5.1 Remove obsolete committed `lib/*.jar`; update `.gitignore`
