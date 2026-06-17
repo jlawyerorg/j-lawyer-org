@@ -29,6 +29,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: 'liberica'
+          java-package: 'jdk+fx' # Liberica Full: bundles JavaFX (the client compiles/runs against the JDK's JavaFX)
           java-version: '17'
           architecture: x64
           cache: maven
