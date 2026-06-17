@@ -759,7 +759,7 @@ public class RestoreExecutor {
         }
         Class.forName("com.mysql.cj.jdbc.Driver");
         boolean jlawyerdbFound = false;
-        try (Connection mysql = DriverManager.getConnection("jdbc:mysql://" + this.dbHost + ":" + this.dbPort + "/" + this.dbName + "?user=" + this.dbUser + "&serverTimezone=Europe/Berlin&useSSL=false&password=" + dbPassword)) {
+        try (Connection mysql = DriverManager.getConnection("jdbc:mysql://" + this.dbHost + ":" + this.dbPort + "/" + this.dbName + "?user=" + this.dbUser + "&serverTimezone=Europe/Berlin&sslMode=DISABLED&password=" + dbPassword)) {
             ResultSet rs = mysql.getMetaData().getCatalogs();
 
             while (rs.next()) {
