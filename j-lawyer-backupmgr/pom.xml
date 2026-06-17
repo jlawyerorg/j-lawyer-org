@@ -38,9 +38,11 @@
             <version>${javafx.version}</version>
         </dependency>
         <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>8.0.28</version>
+            <!-- Renamed coordinate com.mysql:mysql-connector-j; version inherited from the
+                 root dependencyManagement (8.2.0), which fixes CVE-2023-22102. The old
+                 mysql:mysql-connector-java line ended at 8.0.33 (still vulnerable). -->
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
         </dependency>
         <dependency>
             <groupId>net.lingala.zip4j</groupId>
