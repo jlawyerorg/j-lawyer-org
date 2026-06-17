@@ -373,10 +373,6 @@
             <artifactId>bouncy-castle-connector</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.glazedlists</groupId>
-            <artifactId>glazedlists</artifactId>
-        </dependency>
-        <dependency>
             <groupId>jlawyer.thirdparty</groupId>
             <artifactId>jai_codec</artifactId>
             <version>0.0.0</version>
