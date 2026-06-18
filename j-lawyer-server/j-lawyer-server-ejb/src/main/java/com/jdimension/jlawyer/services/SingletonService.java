@@ -823,9 +823,11 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
             for (File f : files) {
                 if (!f.isDirectory() && !f.getName().endsWith(".metadata")) {
                     try {
-                        // file might still be copying - skip if last modified is less than 2.5s in the past
+                        // file might still be copying - skip if last modified is less than 2.5s ago
+                        // use abs() so files with a future timestamp (clock skew on the scanning
+                        // device) are not silently skipped forever
 
-                        if ((System.currentTimeMillis() - f.lastModified()) > 2500l) {
+                        if (Math.abs(System.currentTimeMillis() - f.lastModified()) > 2500l) {
 
                             if (!OcrUtils.hasMetadata(f)) {
                                 FileMetadata newMetadata = OcrUtils.generateMetadata(f, "", "zentraler Scanordner");
