@@ -431,6 +431,14 @@
                 <version>1.26.0</version>
             </dependency>
             <dependency>
+                <!-- Consolidated (was per-module: server 3.5, client 3.12.0). Lifted to 3.18.0
+                     so commons-vfs2 2.10.0 resolves SystemProperties.getUserHome (needs >=3.13)
+                     and to fix CVE-2025-48924. -->
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.18.0</version>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-imaging</artifactId>
                 <version>1.0-alpha2</version>
