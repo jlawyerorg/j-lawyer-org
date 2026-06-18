@@ -674,6 +674,7 @@ import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.VFS;
+import java.time.Duration;
 import org.apache.commons.vfs2.provider.ftp.FtpFileSystemConfigBuilder;
 import org.apache.commons.vfs2.provider.sftp.SftpFileSystemConfigBuilder;
 
@@ -694,14 +695,14 @@ public class LocalSshFtpFile extends VirtualFile {
         if (location.toLowerCase().startsWith("ftp://")) {
             FtpFileSystemConfigBuilder.getInstance().setPassiveMode(opts, true);
             FtpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(opts, false);
-            FtpFileSystemConfigBuilder.getInstance().setDataTimeout(opts, 5000);
-            FtpFileSystemConfigBuilder.getInstance().setSoTimeout(opts, 5000);
+            FtpFileSystemConfigBuilder.getInstance().setDataTimeout(opts, Duration.ofMillis(5000));
+            FtpFileSystemConfigBuilder.getInstance().setSoTimeout(opts, Duration.ofMillis(5000));
         }
 
         if (location.toLowerCase().startsWith("sftp://")) {
             SftpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(opts, false);
             SftpFileSystemConfigBuilder.getInstance().setStrictHostKeyChecking(opts, "no");
-            SftpFileSystemConfigBuilder.getInstance().setTimeout(opts, 60000);
+            SftpFileSystemConfigBuilder.getInstance().setSessionTimeout(opts, Duration.ofMillis(60000));
         }
 
         this.fo = fsManager.resolveFile(location, opts);
@@ -765,8 +766,8 @@ public class LocalSshFtpFile extends VirtualFile {
         if (newFileLocation.toLowerCase().startsWith("ftp://")) {
             FtpFileSystemConfigBuilder.getInstance().setPassiveMode(opts, true);
             FtpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(opts, false);
-            FtpFileSystemConfigBuilder.getInstance().setDataTimeout(opts, 5000);
-            FtpFileSystemConfigBuilder.getInstance().setSoTimeout(opts, 5000);
+            FtpFileSystemConfigBuilder.getInstance().setDataTimeout(opts, Duration.ofMillis(5000));
+            FtpFileSystemConfigBuilder.getInstance().setSoTimeout(opts, Duration.ofMillis(5000));
         }
 
         if (newFileLocation.toLowerCase().startsWith("sftp://")) {
