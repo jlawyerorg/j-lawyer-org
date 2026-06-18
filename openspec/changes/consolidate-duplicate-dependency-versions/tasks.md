@@ -8,7 +8,7 @@
 
 ## 2. Lifts that may need code changes (review APIs before/after)
 - [ ] 2.1 `javax.xml.bind:jaxb-api` → **2.3.1** (server-ejb 2.3.1; fax 2.2.7) — check JAXB binding/runtime usage in fax
-- [ ] 2.2 `org.apache.commons:commons-lang3` → **3.12.0** (client 3.12.0; server/server-common/server-ejb 3.5) — review removed/deprecated `org.apache.commons.lang3.*` usages in server modules
+- [x] 2.2 `org.apache.commons:commons-lang3` → consolidated to **3.18.0** in the root `dependencyManagement` (7 per-module pins dropped: client 3.12.0 + server/server-common/server-ejb/war/io/server-io 3.5). Lifted past the originally-planned 3.12.0 because commons-vfs2 2.10.0 requires ≥3.13 (`SystemProperties.getUserHome`); 3.18.0 also fixes CVE-2025-48924. Done in PR #3449 (commons-vfs2 upgrade); build green, server smoke-tested. commons-lang3 3.x is binary-backward-compatible so no server-code changes were needed.
 - [ ] 2.3 `com.google.guava:guava` → **32.1.1-jre** (client 32.1.1-jre; fax 14.0.1) — **major bump**; review fax's `com.google.common.*` usage for removed APIs (e.g. `Objects`, `Throwables`, beta APIs)
 
 ## 3. POI 4 → 5 (major; highest code-change risk)
