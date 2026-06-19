@@ -673,10 +673,15 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import javax.ws.rs.core.Response;
+import org.json.simple.JsonArray;
 import org.json.simple.JsonKey;
 import org.json.simple.JsonObject;
 import org.json.simple.Jsoner;
 import com.jdimension.jlawyer.sip.SipUtils;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URLConnection;
@@ -704,10 +709,13 @@ public class SipgateAPI {
     private static final String JSON_ALIAS = "alias";
 
     private static final String API_BASE = "https://api.sipgate.com/v2/";
+    private static final String API_BASE_V3 = "https://api.sipgate.com/v3/";
 
     private static final Logger log = Logger.getLogger(SipgateAPI.class.getName());
     private String user;
     private String password;
+    // null until first determined; true = classic PBX, false = neo PBX
+    private Boolean classicAccount = null;
 
     public SipgateAPI(String user, String password) throws SipgateException {
         this.user = user;
@@ -772,7 +780,7 @@ public class SipgateAPI {
 
     public ArrayList<SipUri> getOwnUris(String internalUserId) throws SipgateException {
 
-        log.info("Requesting own Sipgate URIs");
+        log.info("Requesting own Sipgate URIs for web user " + internalUserId);
 
         if (internalUserId == null || "".equals(internalUserId)) {
             throw new SipgateException("Sipgate internal user id must not be null");
@@ -783,12 +791,12 @@ public class SipgateAPI {
         HashMap<String, SipUri> allUris = new HashMap<>();
 
         String baseUri = API_BASE + internalUserId + "/faxlines";
-        
+
         JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
         JerseyWebTarget webTarget = restClient.target(baseUri);
-        
+
         try {
-            
+
             Response response = webTarget.request(MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
             String returnValue = response.readEntity(String.class);
             // {"items":[{"id":"f0","alias":"Fax","tagline":"","canSend":true,"canReceive":false}]}
@@ -889,110 +897,20 @@ public class SipgateAPI {
             throw new SipgateException(ex.getMessage(), ex);
         }
 
-        baseUri = API_BASE + internalUserId + "/phonelines";
-        webTarget = restClient.target(baseUri);
         try {
-            Response response = webTarget.request(MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
-            String returnValue = response.readEntity(String.class);
-            // {"items":[{"id":"p0","alias":"VoIP-Telefon von Jens Kutschke","blockAnonymousUrl":"https://api.sipgate.com/v2/w0/phonelines/p0/blockanonymous","devicesUrl":"https://api.sipgate.com/v2/w0/phonelines/p0/devices","forwardingsUrl":"https://api.sipgate.com/v2/w0/phonelines/p0/forwardings","numbersUrl":"https://api.sipgate.com/v2/w0/phonelines/p0/numbers","parallelForwardingsUrl":"https://api.sipgate.com/v2/w0/phonelines/p0/parallelforwardings","voicemailsUrl":"https://api.sipgate.com/v2/w0/phonelines/p0/voicemails"}]}
-            if (response.getStatus() != 200) {
-                log.error("Could not get Sipgate balance information: " + returnValue + " [" + response.getStatus() + "]");
-                throw new SipgateException("Could not get Sipgate phonelines device information: " + returnValue + " [" + response.getStatus() + "]");
+            // Classic PBX accounts expose voice endpoints as phonelines; neo PBX
+            // accounts have no phonelines (the endpoint returns 403) and route via
+            // channels and devices instead. The /v2/groups probe distinguishes them.
+            if (isClassicAccount()) {
+                addClassicVoiceUris(restClient, authStringEnc, internalUserId, allUris);
+            } else {
+                addNeoVoiceUris(restClient, authStringEnc, internalUserId, allUris);
             }
-
-            Object jsonOutput = Jsoner.deserialize(returnValue);
-            if (jsonOutput instanceof JsonObject) {
-                JsonObject result = (JsonObject) jsonOutput;
-                JsonKey itemsKey = Jsoner.mintJsonKey(JSON_ITEMS, null);
-                Collection items = result.getCollection(itemsKey);
-                Iterator itemIt = items.iterator();
-                while (itemIt.hasNext()) {
-                    JsonObject item0 = (JsonObject) itemIt.next();
-                    JsonKey idKey = Jsoner.mintJsonKey("id", null);
-                    String id = item0.getString(idKey);
-                    if (!allUris.containsKey(id)) {
-                        SipUri uri = new SipUri();
-                        uri.setUri(id);
-
-                        allUris.put(id, uri);
-                    }
-                    SipUri uri = allUris.get(id);
-
-                    JsonKey aliasKey = Jsoner.mintJsonKey(JSON_ALIAS, null);
-                    String alias = item0.getString(aliasKey);
-                    StringBuilder description = new StringBuilder();
-                    description.append(alias);
-                    uri.setDescription(description.toString());
-                    if (!(uri.getTypeOfService().contains(SipUtils.TOS_VOICE))) {
-                        uri.getTypeOfService().add(SipUtils.TOS_VOICE);
-                    }
-                    //uri.setDefaultUri(true);
-                    //uri.setOutgoingNumber(clientName);
-                }
-
-            }
-            response.close();
-        } catch (Exception ex) {
-            log.error("Could not get Sipgate phonelines device information", ex);
-            throw new SipgateException(ex.getMessage(), ex);
         }
-
-        baseUri = API_BASE + internalUserId + "/numbers";
-        webTarget = restClient.target(baseUri);
-        try {
-            Response response = webTarget.request(MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
-            String returnValue = response.readEntity(String.class);
-            // {"items":[{"id":"9104380","number":"+4935243188822","localized":"035243-188822","type":"LANDLINE","endpointId":"p0","endpointAlias":"VoIP-Telefon von Jens Kutschke","endpointUrl":"https://api.sipgate.com/v2/w0/phonelines/p0"},{"id":"9104381","number":"+493524344116","localized":"035243-44116","type":"LANDLINE","endpointId":"p0","endpointAlias":"VoIP-Telefon von Jens Kutschke","endpointUrl":"https://api.sipgate.com/v2/w0/phonelines/p0"}]}
-            if (response.getStatus() != 200) {
-                log.error("Could not get Sipgate numbers information: " + returnValue + " [" + response.getStatus() + "]");
-                throw new SipgateException("Could not get Sipgate numbers information: " + returnValue + " [" + response.getStatus() + "]");
-            }
-
-            Object jsonOutput = Jsoner.deserialize(returnValue);
-            if (jsonOutput instanceof JsonObject) {
-                JsonObject result = (JsonObject) jsonOutput;
-                JsonKey itemsKey = Jsoner.mintJsonKey(JSON_ITEMS, null);
-                Collection items = result.getCollection(itemsKey);
-                Iterator itemIt = items.iterator();
-                while (itemIt.hasNext()) {
-                    JsonObject item0 = (JsonObject) itemIt.next();
-                    JsonKey idKey = Jsoner.mintJsonKey("endpointId", null);
-                    String id = item0.getString(idKey);
-
-                    JsonKey numberKey = Jsoner.mintJsonKey("number", null);
-                    String number = item0.getString(numberKey);
-
-                    //  there may be multiple number per id, need tu use id+callerid as key for the hashmap
-                    if (!allUris.containsKey(id)) {
-                        SipUri uri = new SipUri();
-                        uri.setUri(id);
-
-                        allUris.put(id + number, uri);
-                    } else {
-                        SipUri uri = allUris.get(id);
-                        allUris.remove(id);
-                        allUris.put(id + number, uri);
-                    }
-                    SipUri uri = allUris.get(id + number);
-
-                    JsonKey aliasKey = Jsoner.mintJsonKey("endpointAlias", null);
-                    String alias = item0.getString(aliasKey);
-                    StringBuilder description = new StringBuilder();
-                    description.append(alias);
-                    uri.setDescription(description.toString());
-                    uri.getTypeOfService().add(com.jdimension.jlawyer.sip.SipUtils.TOS_VOICE);
-                    //uri.setDefaultUri(true);
-                    //uri.setOutgoingNumber(clientName);
-                    uri.setOutgoingNumber(number);
-
-                }
-
-            }
-            response.close();
-        } catch (Exception ex) {
-            log.error("Could not get Sipgate numbers information", ex);
-            throw new SipgateException(ex.getMessage(), ex);
-        } finally {
+        catch (Exception ex) {
+            log.error("Could not resolve Sipgate voice device information", ex);
+        }
+        finally {
             restClient.close();
         }
 
@@ -1033,9 +951,182 @@ public class SipgateAPI {
         return unsorted;
     }
 
+    /**
+     * Determines whether the authenticated account is a classic PBX (true) or a
+     * neo PBX (false). The result is cached for the lifetime of this instance.
+     * Classic-only endpoints such as {@code GET /v2/groups} return HTTP 200 on
+     * classic accounts and HTTP 403 ("This endpoint requires a sipgate Classic
+     * PBX Account") on neo accounts.
+     */
+    private synchronized boolean isClassicAccount() throws SipgateException {
+        if (classicAccount == null) {
+            classicAccount = probeClassicAccount();
+        }
+        return classicAccount;
+    }
+
+    private boolean probeClassicAccount() throws SipgateException {
+        String authStringEnc = this.getAuthString();
+        JerseyClient restClient = (JerseyClient) JerseyClientBuilder.createClient();
+        try {
+            Response response = restClient.target(API_BASE + "groups").request(MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
+            int status = response.getStatus();
+            response.close();
+            return status == 200;
+        } catch (Exception ex) {
+            log.error("Could not determine Sipgate account type", ex);
+            throw new SipgateException(ex.getMessage(), ex);
+        } finally {
+            restClient.close();
+        }
+    }
+
+    /**
+     * Adds the classic PBX voice endpoints (phonelines and their numbers) to the
+     * given map. Voice URIs carry the phoneline id as {@code uri} and the matched
+     * landline/mobile number as {@code outgoingNumber}.
+     */
+    private void addClassicVoiceUris(JerseyClient restClient, String authStringEnc, String internalUserId, HashMap<String, SipUri> allUris) throws SipgateException {
+        String baseUri = API_BASE + internalUserId + "/phonelines";
+        JerseyWebTarget webTarget = restClient.target(baseUri);
+        try {
+            Response response = webTarget.request(MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
+            String returnValue = response.readEntity(String.class);
+            // {"items":[{"id":"p0","alias":"VoIP-Telefon von Jens Kutschke",...}]}
+            if (response.getStatus() != 200) {
+                log.error("Could not get Sipgate phonelines information: " + returnValue + " [" + response.getStatus() + "]");
+                throw new SipgateException("Could not get Sipgate phonelines device information: " + returnValue + " [" + response.getStatus() + "]");
+            }
+
+            Object jsonOutput = Jsoner.deserialize(returnValue);
+            if (jsonOutput instanceof JsonObject) {
+                JsonObject result = (JsonObject) jsonOutput;
+                JsonKey itemsKey = Jsoner.mintJsonKey(JSON_ITEMS, null);
+                Collection items = result.getCollection(itemsKey);
+                Iterator itemIt = items.iterator();
+                while (itemIt.hasNext()) {
+                    JsonObject item0 = (JsonObject) itemIt.next();
+                    JsonKey idKey = Jsoner.mintJsonKey("id", null);
+                    String id = item0.getString(idKey);
+                    if (!allUris.containsKey(id)) {
+                        SipUri uri = new SipUri();
+                        uri.setUri(id);
+
+                        allUris.put(id, uri);
+                    }
+                    SipUri uri = allUris.get(id);
+
+                    JsonKey aliasKey = Jsoner.mintJsonKey(JSON_ALIAS, null);
+                    String alias = item0.getString(aliasKey);
+                    StringBuilder description = new StringBuilder();
+                    description.append(alias);
+                    uri.setDescription(description.toString());
+                    if (!(uri.getTypeOfService().contains(SipUtils.TOS_VOICE))) {
+                        uri.getTypeOfService().add(SipUtils.TOS_VOICE);
+                    }
+                }
+
+            }
+            response.close();
+        } catch (Exception ex) {
+            log.error("Could not get Sipgate phonelines device information", ex);
+            throw new SipgateException(ex.getMessage(), ex);
+        }
+
+        baseUri = API_BASE + internalUserId + "/numbers";
+        webTarget = restClient.target(baseUri);
+        try {
+            Response response = webTarget.request(MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
+            String returnValue = response.readEntity(String.class);
+            // {"items":[{"id":"9104380","number":"+4935243188822",...,"endpointId":"p0",...}]}
+            if (response.getStatus() != 200) {
+                log.error("Could not get Sipgate numbers information: " + returnValue + " [" + response.getStatus() + "]");
+                throw new SipgateException("Could not get Sipgate numbers information: " + returnValue + " [" + response.getStatus() + "]");
+            }
+
+            Object jsonOutput = Jsoner.deserialize(returnValue);
+            if (jsonOutput instanceof JsonObject) {
+                JsonObject result = (JsonObject) jsonOutput;
+                JsonKey itemsKey = Jsoner.mintJsonKey(JSON_ITEMS, null);
+                Collection items = result.getCollection(itemsKey);
+                Iterator itemIt = items.iterator();
+                while (itemIt.hasNext()) {
+                    JsonObject item0 = (JsonObject) itemIt.next();
+                    JsonKey idKey = Jsoner.mintJsonKey("endpointId", null);
+                    String id = item0.getString(idKey);
+
+                    JsonKey numberKey = Jsoner.mintJsonKey("number", null);
+                    String number = item0.getString(numberKey);
+
+                    //  there may be multiple number per id, need tu use id+callerid as key for the hashmap
+                    if (!allUris.containsKey(id)) {
+                        SipUri uri = new SipUri();
+                        uri.setUri(id);
+
+                        allUris.put(id + number, uri);
+                    } else {
+                        SipUri uri = allUris.get(id);
+                        allUris.remove(id);
+                        allUris.put(id + number, uri);
+                    }
+                    SipUri uri = allUris.get(id + number);
+
+                    JsonKey aliasKey = Jsoner.mintJsonKey("endpointAlias", null);
+                    String alias = item0.getString(aliasKey);
+                    StringBuilder description = new StringBuilder();
+                    description.append(alias);
+                    uri.setDescription(description.toString());
+                    uri.getTypeOfService().add(com.jdimension.jlawyer.sip.SipUtils.TOS_VOICE);
+                    uri.setOutgoingNumber(number);
+
+                }
+
+            }
+            response.close();
+        } catch (Exception ex) {
+            log.error("Could not get Sipgate numbers information", ex);
+            throw new SipgateException(ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * Adds the neo PBX voice endpoints to the given map by joining channels,
+     * phone numbers and the user's devices (see {@link #buildNeoVoiceUris}).
+     */
+    private void addNeoVoiceUris(JerseyClient restClient, String authStringEnc, String internalUserId, HashMap<String, SipUri> allUris) throws SipgateException {
+        String channelsJson = getJson(restClient, authStringEnc, API_BASE + "channels", "channels");
+        String phoneNumbersJson = getJson(restClient, authStringEnc, API_BASE_V3 + "phone-numbers", "phone-numbers");
+        String devicesJson = getJson(restClient, authStringEnc, API_BASE_V3 + "devices?userId=" + internalUserId, "devices");
+
+        List<SipUri> neoUris = buildNeoVoiceUris(channelsJson, phoneNumbersJson, devicesJson);
+        for (SipUri uri : neoUris) {
+            allUris.put(uri.getUri() + "#" + uri.getOutgoingNumber(), uri);
+        }
+    }
+
+    private String getJson(JerseyClient restClient, String authStringEnc, String url, String label) throws SipgateException {
+        JerseyWebTarget webTarget = restClient.target(url);
+        try {
+            Response response = webTarget.request(MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
+            String returnValue = response.readEntity(String.class);
+            int status = response.getStatus();
+            response.close();
+            if (status != 200) {
+                log.error("Could not get Sipgate " + label + " information: " + returnValue + " [" + status + "]");
+                throw new SipgateException("Could not get Sipgate " + label + " information: " + returnValue + " [" + status + "]");
+            }
+            return returnValue;
+        } catch (SipgateException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            log.error("Could not get Sipgate " + label + " information", ex);
+            throw new SipgateException(ex.getMessage(), ex);
+        }
+    }
+
     public BalanceInformation getBalance() throws SipgateException {
 
-        log.info("Requesting Sipgate balance information");
+        log.info("Requesting old Sipgate balance information");
 
         String baseUri = "https://api.sipgate.com/v2/balance";
         String authStringEnc = this.getAuthString();
@@ -1126,33 +1217,32 @@ public class SipgateAPI {
     public String initiateCall(String localUri, String remoteUri, String callerId) throws SipgateException {
         log.info("Initiating call via Sipgate: " + remoteUri);
 
-        //   "{\n" +
-        //"  \"deviceId\": \"e0\",\n" +
-        //"  \"caller\": \"e0\",\n" +
-        //"  \"callee\": \"+4915799912345\",\n" +
-        //"  \"callerId\": \"+4915799912345\"\n" +
-        //"}"
-        String baseUri = "https://api.sipgate.com/v2/sessions/calls";
+        if (isClassicAccount()) {
+            return initiateClassicCall(localUri, remoteUri, callerId);
+        }
+        return initiateNeoCall(localUri, remoteUri, callerId);
+    }
+
+    /**
+     * Classic PBX call initiation via {@code POST /v2/sessions/calls}. The
+     * {@code caller} is a phoneline id; the response carries a {@code sessionId}.
+     */
+    private String initiateClassicCall(String localUri, String remoteUri, String callerId) throws SipgateException {
+        String baseUri = API_BASE + "sessions/calls";
         String authStringEnc = this.getAuthString();
-        
-        JerseyClient restClient=(JerseyClient)JerseyClientBuilder.createClient();
+
+        JerseyClient restClient = (JerseyClient) JerseyClientBuilder.createClient();
         JerseyWebTarget webTarget = restClient.target(baseUri);
-        
-        String jsonQuery = null;
+
+        String jsonQuery;
         if (callerId == null || callerId.isEmpty()) {
             jsonQuery = "{\n"
-                    //+ "  \"deviceId\": \"" + localUri + "\",\n"
                     + "  \"caller\": \"" + localUri + "\",\n"
-                    //+ "  \"callee\": \"+4915799912345\",\n"
                     + "  \"callee\": \"" + remoteUri + "\"\n"
-                    //+ "  \"callerId\": \"+4915799912345\"\n"
                     + "}";
         } else {
-
             jsonQuery = "{\n"
-                    //+ "  \"deviceId\": \"" + localUri + "\",\n"
                     + "  \"caller\": \"" + localUri + "\",\n"
-                    //+ "  \"callee\": \"+4915799912345\",\n"
                     + "  \"callee\": \"" + remoteUri + "\",\n"
                     + "  \"callerId\": \"" + callerId + "\"\n"
                     + "}";
@@ -1169,13 +1259,9 @@ public class SipgateAPI {
 
             Object jsonOutput = Jsoner.deserialize(returnValue);
             if (jsonOutput instanceof JsonObject) {
-                JsonObject result = (JsonObject) jsonOutput;
-                JsonKey sessionKey = Jsoner.mintJsonKey("sessionId", null);
-                sessionId = result.getString(sessionKey);
-
+                sessionId = ((JsonObject) jsonOutput).getString(Jsoner.mintJsonKey("sessionId", null));
             }
             response.close();
-
         } catch (Exception ex) {
             log.error("Could not initiate call", ex);
             throw new SipgateException(ex.getMessage(), ex);
@@ -1183,6 +1269,42 @@ public class SipgateAPI {
             restClient.close();
         }
         return sessionId;
+    }
+
+    /**
+     * Neo PBX call initiation via {@code POST /v2/calls}. The {@code deviceId} is
+     * an eN device; the response carries a {@code callSid}.
+     */
+    private String initiateNeoCall(String deviceId, String remoteUri, String callerId) throws SipgateException {
+        String baseUri = API_BASE + "calls";
+        String authStringEnc = this.getAuthString();
+
+        JerseyClient restClient = (JerseyClient) JerseyClientBuilder.createClient();
+        JerseyWebTarget webTarget = restClient.target(baseUri);
+
+        String jsonQuery = buildNeoCallBody(deviceId, remoteUri, callerId);
+
+        String callSid = null;
+        try {
+            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).post(javax.ws.rs.client.Entity.entity(jsonQuery, javax.ws.rs.core.MediaType.APPLICATION_JSON));
+            String returnValue = response.readEntity(String.class);
+            if (response.getStatus() != 200 && response.getStatus() != 201) {
+                log.error("Could not initiate call: " + returnValue + " [" + response.getStatus() + "]");
+                throw new SipgateException("Could not initiate call: " + returnValue + " [" + response.getStatus() + "]");
+            }
+
+            Object jsonOutput = Jsoner.deserialize(returnValue);
+            if (jsonOutput instanceof JsonObject) {
+                callSid = ((JsonObject) jsonOutput).getString(Jsoner.mintJsonKey("callSid", null));
+            }
+            response.close();
+        } catch (Exception ex) {
+            log.error("Could not initiate call", ex);
+            throw new SipgateException(ex.getMessage(), ex);
+        } finally {
+            restClient.close();
+        }
+        return callSid;
     }
 
     public String initiateFax(String localUri, String remoteUri, byte[] pdfData, String fileName) throws SipgateException {
@@ -1370,5 +1492,210 @@ public class SipgateAPI {
         }
 
         return status;
+    }
+
+    // ----- sipgate neo (PBX) voice mapping ------------------------------------
+    // On neo accounts there are no phonelines. A device (eN) inherits every sender
+    // number whose routing targets a channel the device is a member of. The three
+    // sources GET /v2/channels, GET /v3/phone-numbers and GET /v3/devices are
+    // joined here. These methods are pure (no network) so they can be unit tested.
+
+    /**
+     * Maps each channel id to the sender numbers routed to it. The
+     * {@code /v3/phone-numbers} response is a top-level array in which a number
+     * block carries {@code routing: null} and a nested {@code numbers[]} array
+     * with the actual routing, so it is flattened recursively.
+     *
+     * @param phoneNumbersJson raw JSON body of {@code GET /v3/phone-numbers}
+     * @return channel id to list of E.164 numbers
+     */
+    static Map<String, List<String>> parseChannelNumbers(String phoneNumbersJson) throws SipgateException {
+        Map<String, List<String>> result = new LinkedHashMap<>();
+        try {
+            Object jsonOutput = Jsoner.deserialize(phoneNumbersJson);
+            if (jsonOutput instanceof JsonArray) {
+                collectNumberRoutings((JsonArray) jsonOutput, result);
+            }
+        } catch (Exception ex) {
+            throw new SipgateException("Could not parse Sipgate phone-numbers: " + ex.getMessage(), ex);
+        }
+        return result;
+    }
+
+    private static void collectNumberRoutings(Collection<?> items, Map<String, List<String>> result) {
+        JsonKey numberKey = Jsoner.mintJsonKey("e164Number", null);
+        JsonKey routingKey = Jsoner.mintJsonKey("routing", null);
+        JsonKey targetKey = Jsoner.mintJsonKey("targetId", null);
+        JsonKey nestedKey = Jsoner.mintJsonKey("numbers", null);
+        for (Object o : items) {
+            JsonObject item = (JsonObject) o;
+            JsonObject routing = item.getMap(routingKey);
+            if (routing != null) {
+                String channelId = routing.getString(targetKey);
+                String number = item.getString(numberKey);
+                if (channelId != null && number != null) {
+                    result.computeIfAbsent(channelId, k -> new ArrayList<>()).add(number);
+                }
+            }
+            Collection<?> nested = item.getCollection(nestedKey);
+            if (nested != null) {
+                collectNumberRoutings(nested, result);
+            }
+        }
+    }
+
+    /**
+     * Maps each device id to the channels it is a member of, derived from
+     * {@code users[].deviceIds[]} in the {@code GET /v2/channels} response.
+     *
+     * @param channelsJson raw JSON body of {@code GET /v2/channels}
+     * @return device id to list of channel ids
+     */
+    static Map<String, List<String>> parseDeviceChannels(String channelsJson) throws SipgateException {
+        Map<String, List<String>> result = new LinkedHashMap<>();
+        try {
+            Object jsonOutput = Jsoner.deserialize(channelsJson);
+            if (jsonOutput instanceof JsonObject) {
+                Collection items = ((JsonObject) jsonOutput).getCollection(Jsoner.mintJsonKey(JSON_ITEMS, null));
+                if (items != null) {
+                    JsonKey idKey = Jsoner.mintJsonKey("id", null);
+                    JsonKey usersKey = Jsoner.mintJsonKey("users", null);
+                    JsonKey devIdsKey = Jsoner.mintJsonKey("deviceIds", null);
+                    for (Object o : items) {
+                        JsonObject channel = (JsonObject) o;
+                        String channelId = channel.getString(idKey);
+                        Collection users = channel.getCollection(usersKey);
+                        if (channelId == null || users == null) {
+                            continue;
+                        }
+                        for (Object uo : users) {
+                            Collection deviceIds = ((JsonObject) uo).getCollection(devIdsKey);
+                            if (deviceIds == null) {
+                                continue;
+                            }
+                            for (Object d : deviceIds) {
+                                List<String> channels = result.computeIfAbsent((String) d, k -> new ArrayList<>());
+                                if (!channels.contains(channelId)) {
+                                    channels.add(channelId);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            throw new SipgateException("Could not parse Sipgate channels: " + ex.getMessage(), ex);
+        }
+        return result;
+    }
+
+    /**
+     * Builds the voice {@link SipUri} list for a neo account by joining devices,
+     * channels and phone numbers. One entry is created per (device, sender number)
+     * combination, mirroring the classic (phoneline, number) behaviour. A device
+     * that belongs to no channel (or whose channels carry no number) yields a
+     * single entry without an outgoing number.
+     *
+     * @param channelsJson     raw JSON body of {@code GET /v2/channels}
+     * @param phoneNumbersJson raw JSON body of {@code GET /v3/phone-numbers}
+     * @param devicesJson      raw JSON body of {@code GET /v3/devices?userId=...}
+     * @return voice SipUris with {@code uri} = device id and {@code outgoingNumber} = sender number
+     */
+    static List<SipUri> buildNeoVoiceUris(String channelsJson, String phoneNumbersJson, String devicesJson) throws SipgateException {
+        Map<String, List<String>> channelNumbers = parseChannelNumbers(phoneNumbersJson);
+        Map<String, List<String>> deviceChannels = parseDeviceChannels(channelsJson);
+
+        List<SipUri> result = new ArrayList<>();
+        try {
+            Object jsonOutput = Jsoner.deserialize(devicesJson);
+            if (jsonOutput instanceof JsonObject) {
+                Collection items = ((JsonObject) jsonOutput).getCollection(Jsoner.mintJsonKey(JSON_ITEMS, null));
+                if (items != null) {
+                    JsonKey idKey = Jsoner.mintJsonKey("id", null);
+                    JsonKey aliasKey = Jsoner.mintJsonKey(JSON_ALIAS, null);
+
+                    List<JsonObject> devices = new ArrayList<>();
+                    for (Object o : items) {
+                        devices.add((JsonObject) o);
+                    }
+                    devices.sort((a, b) -> nullSafe(a.getString(idKey)).compareTo(nullSafe(b.getString(idKey))));
+
+                    for (JsonObject device : devices) {
+                        String deviceId = device.getString(idKey);
+                        // eN devices are the callable voice endpoints (REGISTER, DESKTOP_APP);
+                        // mobile devices (yN) and SIMs (iN) are not used for outbound calls.
+                        if (deviceId == null || !deviceId.startsWith("e")) {
+                            continue;
+                        }
+                        String alias = device.getString(aliasKey);
+
+                        Set<String> numbers = new TreeSet<>();
+                        List<String> channels = deviceChannels.get(deviceId);
+                        if (channels != null) {
+                            for (String channelId : channels) {
+                                List<String> ns = channelNumbers.get(channelId);
+                                if (ns != null) {
+                                    numbers.addAll(ns);
+                                }
+                            }
+                        }
+                        if (numbers.isEmpty()) {
+                            result.add(neoVoiceUri(deviceId, null, alias));
+                        } else {
+                            for (String number : numbers) {
+                                result.add(neoVoiceUri(deviceId, number, alias));
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            throw new SipgateException("Could not parse Sipgate devices: " + ex.getMessage(), ex);
+        }
+        return result;
+    }
+
+    private static SipUri neoVoiceUri(String deviceId, String number, String alias) {
+        SipUri uri = new SipUri();
+        uri.setUri(deviceId);
+        uri.setDescription(alias);
+        if (number != null) {
+            uri.setOutgoingNumber(number);
+        }
+        if (!uri.getTypeOfService().contains(SipUtils.TOS_VOICE)) {
+            uri.getTypeOfService().add(SipUtils.TOS_VOICE);
+        }
+        return uri;
+    }
+
+    private static String nullSafe(String s) {
+        return s == null ? "" : s;
+    }
+
+    /**
+     * Builds the request body for the neo {@code POST /calls} endpoint. The
+     * {@code callerId} field is omitted when no caller id is given.
+     *
+     * @param deviceId     the calling device (eN)
+     * @param targetNumber the remote number in E.164 format
+     * @param callerId     the caller id to display, or null/empty to omit
+     * @return JSON request body
+     */
+    static String buildNeoCallBody(String deviceId, String targetNumber, String callerId) {
+        JsonObject body = new JsonObject();
+        body.put("deviceId", deviceId);
+        // POST /v2/calls expects E.164 without a leading "+" (e.g. 491776249000).
+        body.put("targetNumber", stripLeadingPlus(targetNumber));
+        if (callerId != null && !callerId.isEmpty()) {
+            body.put("callerId", stripLeadingPlus(callerId));
+        }
+        return body.toJson();
+    }
+
+    private static String stripLeadingPlus(String number) {
+        if (number != null && number.startsWith("+")) {
+            return number.substring(1);
+        }
+        return number;
     }
 }
