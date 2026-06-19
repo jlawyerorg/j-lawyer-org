@@ -1012,6 +1012,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
             currentContact.setEncryptionPwd(contact.getEncryptionPwd());
             currentContact.setFax(contact.getFax());
             currentContact.setFirstName(contact.getFirstName());
+            currentContact.setFirstName2(contact.getFirstName2());
             currentContact.setInsuranceName(contact.getInsuranceName());
             currentContact.setInsuranceNumber(contact.getInsuranceNumber());
             currentContact.setLegalProtection(contact.getLegalProtection() == 1);
