@@ -743,8 +743,8 @@ public class SipgateInstance {
         this.api.initiateSms(localUri, remoteUri, content);
     }
 
-    public String initiateCall(String localUri, String remoteUri, String callerId) throws SipgateException {
-        return this.api.initiateCall(localUri, remoteUri, callerId);
+    public String initiateCall(String localUri, String remoteUri, String callerId, String channelId) throws SipgateException {
+        return this.api.initiateCall(localUri, remoteUri, callerId, channelId);
     }
 
     public String initiateFax(String localUri, String remoteUri, File pdf) throws SipgateException {

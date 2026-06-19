@@ -676,9 +676,10 @@ public class SipUri implements Serializable {
     
     private String uri=null;
     private ArrayList<String> typeOfService=new ArrayList<>();
-    private boolean defaultUri=false; 
+    private boolean defaultUri=false;
     private String outgoingNumber=null;
     protected String description=null;
+    private String channelId=null;
     
     public SipUri() {
         
@@ -766,7 +767,21 @@ public class SipUri implements Serializable {
     public void setDescription(String description) {
         this.description = description;
     }
-    
-    
-    
+
+    /**
+     * @return the channelId (neo PBX channel this sender number routes to), or null
+     */
+    public String getChannelId() {
+        return channelId;
+    }
+
+    /**
+     * @param channelId the channelId to set
+     */
+    public void setChannelId(String channelId) {
+        this.channelId = channelId;
+    }
+
+
+
 }
