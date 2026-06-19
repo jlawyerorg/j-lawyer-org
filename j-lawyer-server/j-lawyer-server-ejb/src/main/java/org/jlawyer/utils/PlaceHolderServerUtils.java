@@ -1215,6 +1215,13 @@ public class PlaceHolderServerUtils extends PlaceHolders {
                 placeHolders.put(USER_USTIDNR, "");
             }
         }
+        if (placeHolders.containsKey(USER_LOGIN)) {
+            if (author != null) {
+                placeHolders.put(USER_LOGIN, val(author.getPrincipalId()));
+            } else {
+                placeHolders.put(USER_LOGIN, "");
+            }
+        }
 
         if (invoice != null) {
             SimpleDateFormat df = new SimpleDateFormat(DATE_FORMAT, Locale.GERMAN);

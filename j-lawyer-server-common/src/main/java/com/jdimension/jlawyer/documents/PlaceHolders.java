@@ -807,6 +807,7 @@ public class PlaceHolders {
     public static final String USER_IBAN = "{{USER_IBAN}}";
     public static final String USER_STEUERNR = "{{USER_STEUERNR}}";
     public static final String USER_USTIDNR = "{{USER_USTIDNR}}";
+    public static final String USER_LOGIN = "{{USER_LOGIN}}";
     
 
     public static final String TABELLE_1 = "{{TABELLE_1}}";
@@ -1028,6 +1029,7 @@ public class PlaceHolders {
         ALLPLACEHOLDERS.add(USER_IBAN);
         ALLPLACEHOLDERS.add(USER_STEUERNR);
         ALLPLACEHOLDERS.add(USER_USTIDNR);
+        ALLPLACEHOLDERS.add(USER_LOGIN);
 
         ALLPLACEHOLDERS.add(DOK_DZ);
         
