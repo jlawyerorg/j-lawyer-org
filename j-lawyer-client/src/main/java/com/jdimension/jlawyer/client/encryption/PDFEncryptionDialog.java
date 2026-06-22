@@ -679,6 +679,7 @@ import org.apache.log4j.Logger;
 public class PDFEncryptionDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(PDFEncryptionDialog.class.getName());
+    private static final String CONFIG_LAST_DIR = "client.archivefiles.encryptedpdf.lastdir";
     private String pdfSourceFile = null;
 
     private ArrayList<AddressBean> recipientList = new ArrayList<AddressBean>();
@@ -695,7 +696,7 @@ public class PDFEncryptionDialog extends javax.swing.JDialog {
         initComponents();
         this.cmbRecipient.removeAllItems();
 
-        this.txtLastDir.setText(FileChooserUtils.getStartDirectoryPath("client.archivefiles.encryptedpdf.lastdir"));
+        this.txtLastDir.setText(FileChooserUtils.getStartDirectoryPath(CONFIG_LAST_DIR));
 
     }
 
@@ -840,7 +841,7 @@ public class PDFEncryptionDialog extends javax.swing.JDialog {
         chooser.setDialogTitle("Verzeichnis wählen");
         chooser.setApproveButtonText("Auswählen");
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            FileChooserUtils.rememberDirectory("client.archivefiles.encryptedpdf.lastdir", chooser);
+            FileChooserUtils.rememberDirectory(CONFIG_LAST_DIR, chooser);
             this.txtLastDir.setText(chooser.getSelectedFile().getAbsolutePath());
         }
     }//GEN-LAST:event_cmdBrowseActionPerformed
@@ -862,7 +863,7 @@ public class PDFEncryptionDialog extends javax.swing.JDialog {
         }
 
         try {
-            ClientSettings.getInstance().setConfiguration("client.archivefiles.encryptedpdf.lastdir", this.txtLastDir.getText());
+            ClientSettings.getInstance().setConfiguration(CONFIG_LAST_DIR, this.txtLastDir.getText());
             //ClientSettings.getInstance().setConfiguration("client.archivefiles.encryptedpdf.lastpwd", this.txtPassword.getText());
             PDFEncryptor.encryptPdf(this.pdfSourceFile, this.txtLastDir.getText(), this.txtPassword.getText());
             cmdEncrypt.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));

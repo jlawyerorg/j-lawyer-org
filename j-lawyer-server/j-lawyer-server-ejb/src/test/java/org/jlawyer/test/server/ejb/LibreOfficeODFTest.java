@@ -680,6 +680,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.zip.ZipFile;
@@ -1430,7 +1431,7 @@ public class LibreOfficeODFTest {
                 throw new IOException("ZIP entry not found: " + entryName);
             }
             try ( InputStream is = zip.getInputStream(zip.getEntry(entryName))) {
-                return new String(is.readAllBytes(), "UTF-8");
+                return new String(is.readAllBytes(), StandardCharsets.UTF_8);
             }
         }
     }

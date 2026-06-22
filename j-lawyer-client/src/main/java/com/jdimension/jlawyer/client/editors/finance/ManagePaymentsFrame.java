@@ -846,7 +846,6 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
 
     private void cmdGenerateSepaXmlActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdGenerateSepaXmlActionPerformed
 
-        ClientSettings settings = ClientSettings.getInstance();
         try {
             // group payments by sender IBAN - need to generate one file for each bank account
             HashMap<String, List<Payment>> paymentsBySender = new HashMap<>();

@@ -686,6 +686,7 @@ import org.apache.log4j.Logger;
 public class SaveDocumentsLocallyDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(SaveDocumentsLocallyDialog.class.getName());
+    private static final String CONFIG_LAST_DIR = "client.archivefiles.encryptedpdf.lastdir";
     private ArrayList<ArchiveFileDocumentsBean> docs2local = null;
     private boolean convertToPdf = false;
 
@@ -702,7 +703,7 @@ public class SaveDocumentsLocallyDialog extends javax.swing.JDialog {
         this.convertToPdf = convertToPdf;
         initComponents();
 
-        this.txtLastDir.setText(FileChooserUtils.getStartDirectoryPath("client.archivefiles.encryptedpdf.lastdir"));
+        this.txtLastDir.setText(FileChooserUtils.getStartDirectoryPath(CONFIG_LAST_DIR));
 
     }
 
@@ -803,7 +804,7 @@ public class SaveDocumentsLocallyDialog extends javax.swing.JDialog {
         chooser.setDialogTitle("Verzeichnis wählen");
         chooser.setApproveButtonText("Auswählen");
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            FileChooserUtils.rememberDirectory("client.archivefiles.encryptedpdf.lastdir", chooser);
+            FileChooserUtils.rememberDirectory(CONFIG_LAST_DIR, chooser);
             this.txtLastDir.setText(chooser.getSelectedFile().getAbsolutePath());
         }
     }//GEN-LAST:event_cmdBrowseActionPerformed
@@ -820,7 +821,7 @@ public class SaveDocumentsLocallyDialog extends javax.swing.JDialog {
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
 
         try {
-            ClientSettings.getInstance().setConfiguration("client.archivefiles.encryptedpdf.lastdir", this.txtLastDir.getText());
+            ClientSettings.getInstance().setConfiguration(CONFIG_LAST_DIR, this.txtLastDir.getText());
             String path = this.txtLastDir.getText();
             if (!path.endsWith(File.separator)) {
                 path = path + File.separator;

@@ -735,6 +735,10 @@ public class LibreOfficeAccess {
     private static final String ERROR_MAYBE_HEADLESS = "Failure setting content of table cell - when running on a headless Linux system, please install xvfb libxext6 libxi6 libxtst6 libxrender1 libongoft2-1.0.0";
     private static final String EXT_DOCX = ".docx";
     private static final String EXT_PDF = ".pdf";
+    private static final String PLACEHOLDER_OPEN = "{{";
+    private static final String PLACEHOLDER_CLOSE = "}}";
+    private static final String PLACEHOLDER_REGEX_OPEN = "\\{\\{";
+    private static final String PLACEHOLDER_REGEX_CLOSE = "\\}\\}";
 
     public static void applyHeaderGraphic(String intoDocument, String mergeDocument, String templateName) throws Exception {
         // note: intoDocument is just an ID as filename, does not have an .odt / .docx extension
@@ -1505,7 +1509,7 @@ public class LibreOfficeAccess {
 
                     String value = (String) values.get(key);
                     if (PlaceHolders.INGO_TEXT.equals(key) && isMultiParagraphText(value)) {
-                        String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
+                        String regExKey = PLACEHOLDER_REGEX_OPEN + key.substring(2, key.length() - 2) + PLACEHOLDER_REGEX_CLOSE;
                         TextNavigation search = new TextNavigation(regExKey, outputOdt);
                         ArrayList<TextSelection> selections = new ArrayList<>();
                         while (search.hasNext()) {
@@ -1526,7 +1530,7 @@ public class LibreOfficeAccess {
                     for (int i = 0; i < trailingCharsRegex.length; i++) {
                         String trailCharRegex = trailingCharsRegex[i];
                         String trailChar = trailingChars[i];
-                        String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}" + trailCharRegex;
+                        String regExKey = PLACEHOLDER_REGEX_OPEN + key.substring(2, key.length() - 2) + PLACEHOLDER_REGEX_CLOSE + trailCharRegex;
 
                         String trailValue = value + trailChar;
 
@@ -1544,7 +1548,7 @@ public class LibreOfficeAccess {
                         }
                     }
 
-                    String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
+                    String regExKey = PLACEHOLDER_REGEX_OPEN + key.substring(2, key.length() - 2) + PLACEHOLDER_REGEX_CLOSE;
                     if (value == null) {
                         value = "";
                     } else if (PlaceHolders.INGO_TEXT.equals(key)) {
@@ -1929,9 +1933,9 @@ public class LibreOfficeAccess {
                             Node rowNode = rowNodes.item(ri);
                             String rowText = rowNode.getTextContent();
                             if (rowText != null) {
-                                if (rowText.contains("{{BELP_")) {
+                                if (rowText.contains(PLACEHOLDER_OPEN + "BELP_")) {
                                     positionTemplateRows.add(rowNode);
-                                } else if (rowText.contains("{{BEL_UST_")) {
+                                } else if (rowText.contains(PLACEHOLDER_OPEN + "BEL_UST_")) {
                                     taxTemplateRows.add(rowNode);
                                 }
                             }
@@ -2078,7 +2082,7 @@ public class LibreOfficeAccess {
                 for (int i = 0; i < trailingCharsRegex.length; i++) {
                     String trailCharRegex = trailingCharsRegex[i];
                     String trailChar = trailingChars[i];
-                    String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}" + trailCharRegex;
+                    String regExKey = PLACEHOLDER_REGEX_OPEN + key.substring(2, key.length() - 2) + PLACEHOLDER_REGEX_CLOSE + trailCharRegex;
                     String value = (String) values.get(key);
                     if (value == null) {
                         value = "";
@@ -2099,7 +2103,7 @@ public class LibreOfficeAccess {
                     }
                 }
 
-                String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
+                String regExKey = PLACEHOLDER_REGEX_OPEN + key.substring(2, key.length() - 2) + PLACEHOLDER_REGEX_CLOSE;
                 String value = (String) values.get(key);
                 if (value == null) {
                     value = "";
@@ -2218,7 +2222,7 @@ public class LibreOfficeAccess {
 
             for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders, formsPlaceHolders)) {
                 String key = r;
-                String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
+                String regExKey = PLACEHOLDER_REGEX_OPEN + key.substring(2, key.length() - 2) + PLACEHOLDER_REGEX_CLOSE;
 
                 TextNavigation search = new TextNavigation(regExKey, outputOdt);
                 if (search.hasNext()) {
@@ -2227,7 +2231,7 @@ public class LibreOfficeAccess {
 
                 // search for the alias also 
 //                key = PlaceHolders.aliasForPlaceHolder(r);
-//                regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
+//                regExKey = PLACEHOLDER_REGEX_OPEN + key.substring(2, key.length() - 2) + PLACEHOLDER_REGEX_CLOSE;
 //
 //                search = new TextNavigation(regExKey, outputOdt);
 //                if (search.hasNext()) {
@@ -2286,7 +2290,7 @@ public class LibreOfficeAccess {
             outputOds = SpreadsheetDocument.loadDocument(file);
             for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders, formsPlaceHolders)) {
                 String key = r;
-                String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
+                String regExKey = PLACEHOLDER_REGEX_OPEN + key.substring(2, key.length() - 2) + PLACEHOLDER_REGEX_CLOSE;
 
                 TextNavigation search = new TextNavigation(regExKey, outputOds);
                 if (search.hasNext()) {
@@ -2337,7 +2341,7 @@ public class LibreOfficeAccess {
         });
 
         for (String scriptPlaceHolderKey : lengthSortedValueKeys) {
-            if (scriptPlaceHolderKey.startsWith("{{") && scriptPlaceHolderKey.endsWith("}}")) {
+            if (scriptPlaceHolderKey.startsWith(PLACEHOLDER_OPEN) && scriptPlaceHolderKey.endsWith(PLACEHOLDER_CLOSE)) {
                 String scriptPlaceHolderValue = values.get(scriptPlaceHolderKey).toString();
                 scriptPlaceHolderKey = scriptPlaceHolderKey.substring(2);
                 scriptPlaceHolderKey = scriptPlaceHolderKey.substring(0, scriptPlaceHolderKey.length() - 2);
@@ -2396,7 +2400,7 @@ public class LibreOfficeAccess {
 //        Enumeration en = values.keys();
 //        while (en.hasMoreElements()) {
 //            String key = (String) en.nextElement();
-//            key = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
+//            key = PLACEHOLDER_REGEX_OPEN + key.substring(2, key.length() - 2) + PLACEHOLDER_REGEX_CLOSE;
 //            String value = (String) values.get(key);
 //            if (value == null) {
 //                value = "";
@@ -2417,7 +2421,7 @@ public class LibreOfficeAccess {
             outputOds = SpreadsheetDocument.loadDocument("/home/jens/temp/j-lawyer.org/j-lawyer.ods");
             for (String r : PlaceHolders.getAllPlaceHolders(null, null)) {
                 String key = r;
-                String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
+                String regExKey = PLACEHOLDER_REGEX_OPEN + key.substring(2, key.length() - 2) + PLACEHOLDER_REGEX_CLOSE;
 
                 TextNavigation search = new TextNavigation(regExKey, outputOds);
                 if (search.hasNext()) {
@@ -2436,7 +2440,7 @@ public class LibreOfficeAccess {
             values.put("{{MANDANT_STRASSE}}", "jens.kutschke strasse");
 
             for (String key : values.keySet()) {
-                String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}\\.";
+                String regExKey = PLACEHOLDER_REGEX_OPEN + key.substring(2, key.length() - 2) + PLACEHOLDER_REGEX_CLOSE + "\\.";
                 String value = (String) values.get(key);
                 if (value == null) {
                     value = "";
@@ -2453,7 +2457,7 @@ public class LibreOfficeAccess {
                 }
 
                 //key = (String) en.nextElement();
-                regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
+                regExKey = PLACEHOLDER_REGEX_OPEN + key.substring(2, key.length() - 2) + PLACEHOLDER_REGEX_CLOSE;
                 value = (String) values.get(key);
                 if (value == null) {
                     value = "";
