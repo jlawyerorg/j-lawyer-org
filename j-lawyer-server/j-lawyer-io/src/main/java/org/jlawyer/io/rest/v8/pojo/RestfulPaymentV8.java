@@ -660,69 +660,224 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
-package org.jlawyer.io.rest.v1;
+ */
+package org.jlawyer.io.rest.v8.pojo;
 
-import org.jlawyer.io.rest.v2.CasesEndpointV2;
-import java.util.HashSet;
-import java.util.Set;
-import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.core.Application;
-import org.jlawyer.io.rest.v2.ContactsEndpointV2;
-import org.jlawyer.io.rest.v3.CasesEndpointV3;
-import org.jlawyer.io.rest.v4.CalendarEndpointV4;
-import org.jlawyer.io.rest.v4.CasesEndpointV4;
-import org.jlawyer.io.rest.v5.CasesEndpointV5;
-import org.jlawyer.io.rest.v5.ContactsEndpointV5;
-import org.jlawyer.io.rest.v6.CasesEndpointV6;
-import org.jlawyer.io.rest.v6.DataBucketEndpointV6;
-import org.jlawyer.io.rest.v6.SecurityEndpointV6;
-import org.jlawyer.io.rest.v6.TemplatesEndpointV6;
-import org.jlawyer.io.rest.v7.AdministrationEndpointV7;
-import org.jlawyer.io.rest.v7.CasesEndpointV7;
-import org.jlawyer.io.rest.v7.ConfigurationEndpointV7;
-import org.jlawyer.io.rest.v7.InvoicesEndpointV7;
-import org.jlawyer.io.rest.v7.MessagingEndpointV7;
-import org.jlawyer.io.rest.v7.ReportsEndpointV7;
-import org.jlawyer.io.rest.v7.EmailEndpointV7;
-import org.jlawyer.io.rest.v7.WebHooksEndpointV7;
-import org.jlawyer.io.rest.v8.BeaEndpointV8;
-import org.jlawyer.io.rest.v8.PaymentsEndpointV8;
-import org.jlawyer.io.rest.v8.TimesheetsEndpointV8;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.Payment;
+import java.math.BigDecimal;
+import java.util.Date;
 
-@ApplicationPath("/rest")
-public class EndpointServiceLocator extends Application
-{
-    @Override
-    public Set<Class<?>> getClasses()
-    {
-        Set<Class<?>> s = new HashSet<>();
-        s.add(SecurityEndpointV1.class);
-        s.add(CasesEndpointV1.class);
-        s.add(CasesEndpointV2.class);
-        s.add(CasesEndpointV3.class);
-        s.add(CasesEndpointV4.class);
-        s.add(ContactsEndpointV1.class);
-        s.add(ContactsEndpointV2.class);
-        s.add(FormsEndpointV1.class);
-        s.add(CalendarEndpointV4.class);
-        s.add(CasesEndpointV5.class);
-        s.add(ContactsEndpointV5.class);
-        s.add(CasesEndpointV6.class);
-        s.add(SecurityEndpointV6.class);
-        s.add(DataBucketEndpointV6.class);
-        s.add(TemplatesEndpointV6.class);
-        s.add(ConfigurationEndpointV7.class);
-        s.add(CasesEndpointV7.class);
-        s.add(MessagingEndpointV7.class);
-        s.add(AdministrationEndpointV7.class);
-        s.add(WebHooksEndpointV7.class);
-        s.add(InvoicesEndpointV7.class);
-        s.add(ReportsEndpointV7.class);
-        s.add(EmailEndpointV7.class);
-        s.add(BeaEndpointV8.class);
-        s.add(PaymentsEndpointV8.class);
-        s.add(TimesheetsEndpointV8.class);
-        return s;
+public class RestfulPaymentV8 {
+
+    private String id;
+    private String name;
+    private String description;
+    private String reason;
+    private String paymentNumber;
+    private String status;
+    private Date creationDate;
+    private Date targetDate;
+    private String caseId;
+    private String contactId;
+    private String sender;
+    private BigDecimal total;
+    private String currency;
+    private String paymentType;
+
+    public RestfulPaymentV8() {
     }
+
+    public static RestfulPaymentV8 fromPayment(Payment p) {
+        if (p == null) {
+            throw new IllegalArgumentException("Payment is required");
+        }
+        RestfulPaymentV8 payment = new RestfulPaymentV8();
+        payment.setId(p.getId());
+        payment.setName(p.getName());
+        payment.setDescription(p.getDescription());
+        payment.setReason(p.getReason());
+        payment.setPaymentNumber(p.getPaymentNumber());
+        payment.setStatus(p.getStatusString());
+        payment.setCreationDate(p.getCreationDate());
+        payment.setTargetDate(p.getTargetDate());
+        if (p.getArchiveFileKey() != null) {
+            payment.setCaseId(p.getArchiveFileKey().getId());
+        }
+        if (p.getContact() != null) {
+            payment.setContactId(p.getContact().getId());
+        }
+        payment.setSender(p.getSender());
+        payment.setTotal(p.getTotal());
+        payment.setCurrency(p.getCurrency());
+        payment.setPaymentType(p.getPaymentType());
+        return payment;
+    }
+
+    public Payment toPayment(ArchiveFileBean archiveFile, AddressBean contact) {
+        if (archiveFile == null) {
+            throw new IllegalArgumentException("Archive file is required");
+        }
+        Payment payment = new Payment();
+        payment.setId(this.id);
+        payment.setArchiveFileKey(archiveFile);
+        payment.setContact(contact);
+        payment.setName(this.name);
+        payment.setDescription(this.description);
+        payment.setReason(this.reason);
+        payment.setPaymentNumber(this.paymentNumber);
+        if (this.status != null) {
+            payment.setStatus(Payment.getStatusInt(this.status));
+        }
+        payment.setCreationDate(this.creationDate);
+        payment.setTargetDate(this.targetDate != null ? this.targetDate : new Date());
+        payment.setSender(this.sender);
+        if (this.total != null) {
+            payment.setTotal(this.total);
+        }
+        if (this.currency != null) {
+            payment.setCurrency(this.currency);
+        }
+        payment.setPaymentType(this.paymentType);
+        return payment;
+    }
+
+    public Payment toPayment(ArchiveFileBean archiveFile, AddressBean contact, Payment existingPayment) {
+        if (archiveFile == null) {
+            throw new IllegalArgumentException("Archive file is required");
+        }
+        if (existingPayment == null) {
+            throw new IllegalArgumentException("Existing payment is required");
+        }
+        Payment payment = new Payment();
+        payment.setId(existingPayment.getId());
+        payment.setArchiveFileKey(archiveFile);
+        payment.setContact(contact);
+        payment.setName(this.name != null ? this.name : existingPayment.getName());
+        payment.setDescription(this.description != null ? this.description : existingPayment.getDescription());
+        payment.setReason(this.reason != null ? this.reason : existingPayment.getReason());
+        payment.setPaymentNumber(existingPayment.getPaymentNumber());
+        payment.setStatus(this.status != null ? Payment.getStatusInt(this.status) : existingPayment.getStatus());
+        payment.setCreationDate(existingPayment.getCreationDate());
+        payment.setTargetDate(this.targetDate != null ? this.targetDate : existingPayment.getTargetDate());
+        payment.setSender(this.sender != null ? this.sender : existingPayment.getSender());
+        payment.setTotal(this.total != null ? this.total : existingPayment.getTotal());
+        payment.setCurrency(this.currency != null ? this.currency : existingPayment.getCurrency());
+        payment.setPaymentType(this.paymentType != null ? this.paymentType : existingPayment.getPaymentType());
+        return payment;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
+    public String getPaymentNumber() {
+        return paymentNumber;
+    }
+
+    public void setPaymentNumber(String paymentNumber) {
+        this.paymentNumber = paymentNumber;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Date getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
+    }
+
+    public Date getTargetDate() {
+        return targetDate;
+    }
+
+    public void setTargetDate(Date targetDate) {
+        this.targetDate = targetDate;
+    }
+
+    public String getCaseId() {
+        return caseId;
+    }
+
+    public void setCaseId(String caseId) {
+        this.caseId = caseId;
+    }
+
+    public String getContactId() {
+        return contactId;
+    }
+
+    public void setContactId(String contactId) {
+        this.contactId = contactId;
+    }
+
+    public String getSender() {
+        return sender;
+    }
+
+    public void setSender(String sender) {
+        this.sender = sender;
+    }
+
+    public BigDecimal getTotal() {
+        return total;
+    }
+
+    public void setTotal(BigDecimal total) {
+        this.total = total;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
+    public String getPaymentType() {
+        return paymentType;
+    }
+
+    public void setPaymentType(String paymentType) {
+        this.paymentType = paymentType;
+    }
+
 }
