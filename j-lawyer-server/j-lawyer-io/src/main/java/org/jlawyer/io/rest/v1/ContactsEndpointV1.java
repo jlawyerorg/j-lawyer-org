@@ -897,10 +897,13 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             currentContact.setFirstName(contact.getFirstName());
             currentContact.setInsuranceName(contact.getInsuranceName());
             currentContact.setInsuranceNumber(contact.getInsuranceNumber());
+            currentContact.setInsurant(contact.getInsurant());
             currentContact.setLegalProtection(contact.getLegalProtection()==1);
             currentContact.setMobile(contact.getMobile());
             currentContact.setMotorInsuranceName(contact.getMotorInsuranceName());
             currentContact.setMotorInsuranceNumber(contact.getMotorInsuranceNumber());
+            currentContact.setMotorInsurant(contact.getMotorInsurant());
+            currentContact.setMotorLegalProtection(contact.getMotorLegalProtection()==1);
             currentContact.setName(contact.getName());
             currentContact.setPhone(contact.getPhone());
             currentContact.setSalutation(contact.getSalutation());
@@ -909,6 +912,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             currentContact.setTitle(contact.getTitle());
             currentContact.setTrafficInsuranceName(contact.getTrafficInsuranceName());
             currentContact.setTrafficInsuranceNumber(contact.getTrafficInsuranceNumber());
+            currentContact.setTrafficInsurant(contact.getTrafficInsurant());
             currentContact.setTrafficLegalProtection(contact.getTrafficLegalProtection()==1);
             currentContact.setTaxDeduction(contact.getTaxDeduction()==1);
             currentContact.setWebsite(contact.getWebsite());

@@ -472,86 +472,86 @@
                 <artifactId>maven-war-plugin</artifactId>
                 <configuration>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
+                    <!-- swagger.json is a build artifact (generated below), overlaid into
+                         swagger-ui/ so the served spec always reflects the annotations. -->
+                    <webResources>
+                        <resource>
+                            <directory>${project.build.directory}/swagger-final</directory>
+                            <targetPath>swagger-ui</targetPath>
+                            <includes>
+                                <include>swagger.json</include>
+                            </includes>
+                        </resource>
+                    </webResources>
                 </configuration>
+            </plugin>
+
+            <!-- swagger.json is generated from swagger-core annotations on every build
+                 (replacing the jaxrs-analyzer, which cannot read Java 17 bytecode) and packaged
+                 into the war as a build artifact; it is no longer committed or hand-maintained. -->
+            <plugin>
+                <groupId>com.github.kongchen</groupId>
+                <artifactId>swagger-maven-plugin</artifactId>
+                <version>3.1.8</version>
+                <configuration>
+                    <apiSources>
+                        <apiSource>
+                            <springmvc>false</springmvc>
+                            <locations>
+                                <location>org.jlawyer.io.rest</location>
+                            </locations>
+                            <schemes>
+                                <scheme>http</scheme>
+                                <scheme>https</scheme>
+                            </schemes>
+                            <basePath>/j-lawyer-io/rest</basePath>
+                            <info>
+                                <title>j-lawyer-io</title>
+                                <version>8</version>
+                            </info>
+                            <securityDefinitions>
+                                <securityDefinition>
+                                    <name>basicAuth</name>
+                                    <type>basic</type>
+                                </securityDefinition>
+                            </securityDefinitions>
+                            <swaggerDirectory>${project.build.directory}/swagger-gen</swaggerDirectory>
+                            <outputFormats>json</outputFormats>
+                        </apiSource>
+                    </apiSources>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- finalize the generated spec (security + uniform error envelope) into the
+                 packaged swagger.json. Pure Java (no python). -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>finalize-swagger</id>
+                        <phase>process-classes</phase>
+                        <goals><goal>java</goal></goals>
+                        <configuration>
+                            <mainClass>org.jlawyer.io.rest.tools.SwaggerFinalizer</mainClass>
+                            <classpathScope>compile</classpathScope>
+                            <arguments>
+                                <argument>${project.build.directory}/swagger-gen/swagger.json</argument>
+                                <argument>${project.build.directory}/swagger-final/swagger.json</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
 
-    <profiles>
-        <!-- swagger.json is generated from swagger-core annotations (replacing the
-             jaxrs-analyzer, which cannot read Java 17 bytecode). The generated spec
-             must stay semantically identical to the committed golden baseline
-             (src/test/resources/swagger.golden.json); SwaggerEquivalenceTest enforces it.
-             Opt-in so the default build serves the reviewed committed swagger.json. -->
-        <profile>
-            <id>swagger-regen</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.github.kongchen</groupId>
-                        <artifactId>swagger-maven-plugin</artifactId>
-                        <version>3.1.8</version>
-                        <configuration>
-                            <apiSources>
-                                <apiSource>
-                                    <springmvc>false</springmvc>
-                                    <locations>
-                                        <location>org.jlawyer.io.rest</location>
-                                    </locations>
-                                    <schemes>
-                                        <scheme>http</scheme>
-                                        <scheme>https</scheme>
-                                    </schemes>
-                                    <basePath>/j-lawyer-io/rest</basePath>
-                                    <info>
-                                        <title>j-lawyer-io</title>
-                                        <version>8</version>
-                                    </info>
-                                    <securityDefinitions>
-                                        <securityDefinition>
-                                            <name>basicAuth</name>
-                                            <type>basic</type>
-                                        </securityDefinition>
-                                    </securityDefinitions>
-                                    <swaggerDirectory>${project.build.directory}/swagger-gen</swaggerDirectory>
-                                    <outputFormats>json</outputFormats>
-                                </apiSource>
-                            </apiSources>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <phase>compile</phase>
-                                <goals>
-                                    <goal>generate</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <!-- finalize the generated spec (security + uniform error envelope) into the
-                         served swagger.json. Pure Java (no python). The semantic-equivalence gate
-                         runs as SwaggerEquivalenceTest in the normal test phase on every build. -->
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <version>3.1.0</version>
-                        <executions>
-                            <execution>
-                                <id>finalize-swagger</id>
-                                <phase>process-classes</phase>
-                                <goals><goal>java</goal></goals>
-                                <configuration>
-                                    <mainClass>org.jlawyer.io.rest.tools.SwaggerFinalizer</mainClass>
-                                    <classpathScope>compile</classpathScope>
-                                    <arguments>
-                                        <argument>${project.build.directory}/swagger-gen/swagger.json</argument>
-                                        <argument>${project.basedir}/src/main/webapp/swagger-ui/swagger.json</argument>
-                                    </arguments>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>

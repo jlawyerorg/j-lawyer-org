@@ -681,14 +681,18 @@ public class RestfulContactV1 {
     private short legalProtection=0;
     private String insuranceNumber=null;
     private String insuranceName=null;
-    
+    private String insurant=null;
+
     private short trafficLegalProtection=0;
     private String trafficInsuranceNumber=null;
     private String trafficInsuranceName=null;
+    private String trafficInsurant=null;
     private short taxDeduction=0;
-    
+
+    private short motorLegalProtection=0;
     private String motorInsuranceNumber=null;
     private String motorInsuranceName=null;
+    private String motorInsurant=null;
     
     private String title=null;
     private String salutation=null;
@@ -747,12 +751,15 @@ public class RestfulContactV1 {
         ad.setId(this.getId());
         ad.setInsuranceName(this.getInsuranceName());
         ad.setInsuranceNumber(this.getInsuranceNumber());
+        ad.setInsurant(this.getInsurant());
         ad.setLastModifier(this.getLastModifier());
         ad.setLegalProtection(this.getLegalProtection()==1);
         ad.setMobile(this.getMobile());
         ad.setModificationDate(this.getModificationDate());
         ad.setMotorInsuranceName(this.getMotorInsuranceName());
         ad.setMotorInsuranceNumber(this.getMotorInsuranceNumber());
+        ad.setMotorInsurant(this.getMotorInsurant());
+        ad.setMotorLegalProtection(this.getMotorLegalProtection()==1);
         ad.setName(this.getName());
         ad.setPhone(this.getPhone());
         ad.setSalutation(this.getSalutation());
@@ -761,6 +768,7 @@ public class RestfulContactV1 {
         ad.setTitle(this.getTitle());
         ad.setTrafficInsuranceName(this.getTrafficInsuranceName());
         ad.setTrafficInsuranceNumber(this.getTrafficInsuranceNumber());
+        ad.setTrafficInsurant(this.getTrafficInsurant());
         ad.setTrafficLegalProtection(this.getTrafficLegalProtection()==1);
         ad.setTaxDeduction(this.getTaxDeduction()==1);
         ad.setWebsite(this.getWebsite());
@@ -793,6 +801,7 @@ public class RestfulContactV1 {
         ad.setId(a.getId());
         ad.setInsuranceName(a.getInsuranceName());
         ad.setInsuranceNumber(a.getInsuranceNumber());
+        ad.setInsurant(a.getInsurant());
         ad.setLastModifier(a.getLastModifier());
         if(a.isLegalProtection())
             ad.setLegalProtection((short)1);
@@ -802,6 +811,11 @@ public class RestfulContactV1 {
         ad.setModificationDate(a.getModificationDate());
         ad.setMotorInsuranceName(a.getMotorInsuranceName());
         ad.setMotorInsuranceNumber(a.getMotorInsuranceNumber());
+        ad.setMotorInsurant(a.getMotorInsurant());
+        if(a.isMotorLegalProtection())
+            ad.setMotorLegalProtection((short)1);
+        else
+            ad.setMotorLegalProtection((short)0);
         ad.setName(a.getName());
         ad.setPhone(a.getPhone());
         ad.setSalutation(a.getSalutation());
@@ -810,6 +824,7 @@ public class RestfulContactV1 {
         ad.setTitle(a.getTitle());
         ad.setTrafficInsuranceName(a.getTrafficInsuranceName());
         ad.setTrafficInsuranceNumber(a.getTrafficInsuranceNumber());
+        ad.setTrafficInsurant(a.getTrafficInsurant());
         if(a.isTrafficLegalProtection())
             ad.setTrafficLegalProtection((short)1);
         else
@@ -1017,6 +1032,62 @@ public class RestfulContactV1 {
      */
     public void setMotorInsuranceName(String motorInsuranceName) {
         this.motorInsuranceName = motorInsuranceName;
+    }
+
+    /**
+     * @return the policy holder (Versicherungsnehmer) for general legal protection
+     */
+    public String getInsurant() {
+        return insurant;
+    }
+
+    /**
+     * @param insurant the policy holder for general legal protection to set
+     */
+    public void setInsurant(String insurant) {
+        this.insurant = insurant;
+    }
+
+    /**
+     * @return the policy holder (Versicherungsnehmer) for traffic legal protection
+     */
+    public String getTrafficInsurant() {
+        return trafficInsurant;
+    }
+
+    /**
+     * @param trafficInsurant the policy holder for traffic legal protection to set
+     */
+    public void setTrafficInsurant(String trafficInsurant) {
+        this.trafficInsurant = trafficInsurant;
+    }
+
+    /**
+     * @return the policy holder (Versicherungsnehmer) for motor insurance
+     */
+    public String getMotorInsurant() {
+        return motorInsurant;
+    }
+
+    /**
+     * @param motorInsurant the policy holder for motor insurance to set
+     */
+    public void setMotorInsurant(String motorInsurant) {
+        this.motorInsurant = motorInsurant;
+    }
+
+    /**
+     * @return whether a motor insurance (Kraftfahrtversicherung) is available (1) or not (0)
+     */
+    public short getMotorLegalProtection() {
+        return motorLegalProtection;
+    }
+
+    /**
+     * @param motorLegalProtection whether a motor insurance is available (1) or not (0)
+     */
+    public void setMotorLegalProtection(short motorLegalProtection) {
+        this.motorLegalProtection = motorLegalProtection;
     }
 
     /**

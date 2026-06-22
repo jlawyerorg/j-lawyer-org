@@ -64,7 +64,12 @@ public final class SwaggerFinalizer {
             }
         }
 
-        mapper.writerWithDefaultPrettyPrinter().writeValue(new File(args[1]), root);
+        File output = new File(args[1]);
+        File outputDir = output.getParentFile();
+        if (outputDir != null) {
+            outputDir.mkdirs();
+        }
+        mapper.writerWithDefaultPrettyPrinter().writeValue(output, root);
         System.out.println("finalized -> " + args[1]);
     }
 

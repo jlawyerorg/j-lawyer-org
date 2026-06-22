@@ -66,16 +66,13 @@ mvn -pl j-lawyer-fax test      # a single module
 Test classes follow the pattern `*Test.java` (under `src/test/java`).
 
 ### REST API spec (swagger.json)
-The served `j-lawyer-io` swagger.json is generated from swagger-core annotations and
-committed. After changing REST endpoints, regenerate and re-baseline it:
-```bash
-mvn -Pswagger-regen -pl j-lawyer-server/j-lawyer-io process-classes   # regenerate served spec
-# review the diff, then if intended, copy it over the golden baseline:
-cp j-lawyer-server/j-lawyer-io/src/main/webapp/swagger-ui/swagger.json \
-   j-lawyer-server/j-lawyer-io/src/test/resources/swagger.golden.json
-```
-`SwaggerEquivalenceTest` (runs in the normal test phase) fails the build if the served
-spec drifts from the golden baseline.
+The `j-lawyer-io` swagger.json is generated from swagger-core annotations on **every
+build** and packaged into the war as a build artifact — it is no longer committed or
+hand-maintained. The `swagger-maven-plugin` (`compile` phase) writes
+`target/swagger-gen/swagger.json`; `SwaggerFinalizer` (`process-classes` phase) adds the
+security definition + uniform error envelope and writes `target/swagger-final/swagger.json`,
+which the `maven-war-plugin` overlays into `swagger-ui/`. No manual regeneration step and
+no golden baseline; just change the REST annotations and rebuild.
 
 ### Deployment
 ```bash

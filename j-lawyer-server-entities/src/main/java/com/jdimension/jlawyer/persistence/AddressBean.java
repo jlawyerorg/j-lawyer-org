@@ -746,7 +746,9 @@ public class AddressBean implements Serializable {
     private String insuranceNumber;
     @Column(name = "insuranceName")
     private String insuranceName;
-    
+    @Column(name = "insurant")
+    private String insurant;
+
     @Basic(optional = false)
     @Column(name = "trafficLegalProtection")
     private boolean trafficLegalProtection;
@@ -757,11 +759,18 @@ public class AddressBean implements Serializable {
     private String trafficInsuranceNumber;
     @Column(name = "trafficInsuranceName")
     private String trafficInsuranceName;
-    
+    @Column(name = "trafficInsurant")
+    private String trafficInsurant;
+
+    @Basic(optional = false)
+    @Column(name = "motorLegalProtection")
+    private boolean motorLegalProtection;
     @Column(name = "motorInsuranceNumber")
     private String motorInsuranceNumber;
     @Column(name = "motorInsuranceName")
     private String motorInsuranceName;
+    @Column(name = "motorInsurant")
+    private String motorInsurant;
     
     @Column(name = "title")
     private String title;
@@ -1341,6 +1350,62 @@ public class AddressBean implements Serializable {
      */
     public void setMotorInsuranceName(String motorInsuranceName) {
         this.motorInsuranceName = motorInsuranceName;
+    }
+
+    /**
+     * @return the policy holder (Versicherungsnehmer) for general legal protection
+     */
+    public String getInsurant() {
+        return insurant;
+    }
+
+    /**
+     * @param insurant the policy holder for general legal protection to set
+     */
+    public void setInsurant(String insurant) {
+        this.insurant = insurant;
+    }
+
+    /**
+     * @return the policy holder (Versicherungsnehmer) for traffic legal protection
+     */
+    public String getTrafficInsurant() {
+        return trafficInsurant;
+    }
+
+    /**
+     * @param trafficInsurant the policy holder for traffic legal protection to set
+     */
+    public void setTrafficInsurant(String trafficInsurant) {
+        this.trafficInsurant = trafficInsurant;
+    }
+
+    /**
+     * @return the policy holder (Versicherungsnehmer) for motor insurance
+     */
+    public String getMotorInsurant() {
+        return motorInsurant;
+    }
+
+    /**
+     * @param motorInsurant the policy holder for motor insurance to set
+     */
+    public void setMotorInsurant(String motorInsurant) {
+        this.motorInsurant = motorInsurant;
+    }
+
+    /**
+     * @return whether a motor insurance (Kraftfahrtversicherung) is available
+     */
+    public boolean isMotorLegalProtection() {
+        return motorLegalProtection;
+    }
+
+    /**
+     * @param motorLegalProtection whether a motor insurance is available
+     */
+    public void setMotorLegalProtection(boolean motorLegalProtection) {
+        this.motorLegalProtection = motorLegalProtection;
     }
 
     /**
