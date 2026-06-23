@@ -2957,7 +2957,14 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     safeId = bea.getLoggedInSafeId();
                 }
 
-                BeaMessage m = bea.getMessage(mh.getId(), safeId);
+                // when saving without attachments, load the message without attachment content
+                // so the exported .bea file does not embed the attachments
+                BeaMessage m;
+                if (withAttachments || attachmentsOnly || separateAttachments) {
+                    m = bea.getMessage(mh.getId(), safeId);
+                } else {
+                    m = bea.getMessageWithoutAttachments(mh.getId(), safeId);
+                }
                 BeaMessageExport export = null;
                 byte[] data = null;
 
