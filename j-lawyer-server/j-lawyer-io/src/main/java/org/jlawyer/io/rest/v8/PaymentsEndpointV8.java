@@ -660,69 +660,345 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
-package org.jlawyer.io.rest.v1;
+ */
+package org.jlawyer.io.rest.v8;
 
-import org.jlawyer.io.rest.v2.CasesEndpointV2;
-import java.util.HashSet;
-import java.util.Set;
-import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.core.Application;
-import org.jlawyer.io.rest.v2.ContactsEndpointV2;
-import org.jlawyer.io.rest.v3.CasesEndpointV3;
-import org.jlawyer.io.rest.v4.CalendarEndpointV4;
-import org.jlawyer.io.rest.v4.CasesEndpointV4;
-import org.jlawyer.io.rest.v5.CasesEndpointV5;
-import org.jlawyer.io.rest.v5.ContactsEndpointV5;
-import org.jlawyer.io.rest.v6.CasesEndpointV6;
-import org.jlawyer.io.rest.v6.DataBucketEndpointV6;
-import org.jlawyer.io.rest.v6.SecurityEndpointV6;
-import org.jlawyer.io.rest.v6.TemplatesEndpointV6;
-import org.jlawyer.io.rest.v7.AdministrationEndpointV7;
-import org.jlawyer.io.rest.v7.CasesEndpointV7;
-import org.jlawyer.io.rest.v7.ConfigurationEndpointV7;
-import org.jlawyer.io.rest.v7.InvoicesEndpointV7;
-import org.jlawyer.io.rest.v7.MessagingEndpointV7;
-import org.jlawyer.io.rest.v7.ReportsEndpointV7;
-import org.jlawyer.io.rest.v7.EmailEndpointV7;
-import org.jlawyer.io.rest.v7.WebHooksEndpointV7;
-import org.jlawyer.io.rest.v8.BeaEndpointV8;
-import org.jlawyer.io.rest.v8.PaymentsEndpointV8;
-import org.jlawyer.io.rest.v8.TimesheetsEndpointV8;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.Payment;
+import com.jdimension.jlawyer.persistence.PaymentFacadeLocal;
+import com.jdimension.jlawyer.services.AddressServiceLocal;
+import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import java.util.ArrayList;
+import java.util.List;
+import javax.annotation.security.RolesAllowed;
+import javax.ejb.Stateless;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v8.pojo.RestfulPaymentV8;
 
-@ApplicationPath("/rest")
-public class EndpointServiceLocator extends Application
-{
+@Stateless
+@Path("/v8/cases")
+@Consumes({"application/json"})
+@Produces({"application/json"})
+@Api(tags={"Payments"})
+public class PaymentsEndpointV8 implements PaymentsEndpointLocalV8 {
+
+    private static final Logger log = Logger.getLogger(PaymentsEndpointV8.class.getName());
+    private static final String LOOKUP_CASES = "java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
+    private static final String LOOKUP_ADDRESSES = "java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal";
+    private static final String LOOKUP_PAYMENT_FACADE = "java:global/j-lawyer-server/j-lawyer-server-ejb/PaymentFacade!com.jdimension.jlawyer.persistence.PaymentFacadeLocal";
+
+    /**
+     * Returns all payments for a given case.
+     *
+     * @param caseId case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Case not found
+     */
     @Override
-    public Set<Class<?>> getClasses()
-    {
-        Set<Class<?>> s = new HashSet<>();
-        s.add(SecurityEndpointV1.class);
-        s.add(CasesEndpointV1.class);
-        s.add(CasesEndpointV2.class);
-        s.add(CasesEndpointV3.class);
-        s.add(CasesEndpointV4.class);
-        s.add(ContactsEndpointV1.class);
-        s.add(ContactsEndpointV2.class);
-        s.add(FormsEndpointV1.class);
-        s.add(CalendarEndpointV4.class);
-        s.add(CasesEndpointV5.class);
-        s.add(ContactsEndpointV5.class);
-        s.add(CasesEndpointV6.class);
-        s.add(SecurityEndpointV6.class);
-        s.add(DataBucketEndpointV6.class);
-        s.add(TemplatesEndpointV6.class);
-        s.add(ConfigurationEndpointV7.class);
-        s.add(CasesEndpointV7.class);
-        s.add(MessagingEndpointV7.class);
-        s.add(AdministrationEndpointV7.class);
-        s.add(WebHooksEndpointV7.class);
-        s.add(InvoicesEndpointV7.class);
-        s.add(ReportsEndpointV7.class);
-        s.add(EmailEndpointV7.class);
-        s.add(BeaEndpointV8.class);
-        s.add(PaymentsEndpointV8.class);
-        s.add(TimesheetsEndpointV8.class);
-        return s;
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/{caseId}/payments")
+    @RolesAllowed({"readArchiveFileRole"})
+    @ApiOperation(value="", response=RestfulPaymentV8.class, responseContainer="List")
+    @ApiResponses({@ApiResponse(code=404, message="Not Found")})
+    public Response getCasePayments(@PathParam("caseId") String caseId) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileBean currentCase = cases.getArchiveFile(caseId);
+            if (currentCase == null) {
+                log.warn("case with id " + caseId + " does not exist");
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            List<Payment> payments = cases.getPayments(caseId);
+            ArrayList<RestfulPaymentV8> resultList = new ArrayList<>();
+            for (Payment payment : payments) {
+                resultList.add(RestfulPaymentV8.fromPayment(payment));
+            }
+
+            return Response.ok(resultList).build();
+        } catch (NamingException ex) {
+            log.error("can not resolve payment endpoint dependencies", ex);
+            return Response.serverError().entity("Service lookup failed").build();
+        } catch (Exception ex) {
+            log.error("can not get payments for case " + caseId, ex);
+            return Response.serverError().build();
+        }
     }
+
+    /**
+     * Returns a single payment by ID.
+     *
+     * @param caseId case ID
+     * @param paymentId payment ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Case or payment not found
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/{caseId}/payments/{paymentId}")
+    @RolesAllowed({"readArchiveFileRole"})
+    @ApiOperation(value="", response=RestfulPaymentV8.class)
+    @ApiResponses({@ApiResponse(code=404, message="Not Found")})
+    public Response getPayment(@PathParam("caseId") String caseId, @PathParam("paymentId") String paymentId) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileBean currentCase = cases.getArchiveFile(caseId);
+            if (currentCase == null) {
+                log.warn("case with id " + caseId + " does not exist");
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            Payment payment = findPaymentInCase(cases, caseId, paymentId);
+            if (payment == null) {
+                log.warn("payment with id " + paymentId + " does not exist in case " + caseId);
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            return Response.ok(RestfulPaymentV8.fromPayment(payment)).build();
+        } catch (NamingException ex) {
+            log.error("can not resolve payment endpoint dependencies", ex);
+            return Response.serverError().entity("Service lookup failed").build();
+        } catch (Exception ex) {
+            log.error("can not get payment " + paymentId, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Creates a new payment within an existing case. The server generates the
+     * payment number and creation date.
+     *
+     * @param caseId case ID
+     * @param payment payment data
+     * @response 400 Bad request
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Case or contact not found
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{caseId}/payments")
+    @RolesAllowed({"writeArchiveFileRole"})
+    @ApiOperation(value="", response=RestfulPaymentV8.class)
+    @ApiResponses({@ApiResponse(code=400, message="Bad Request"), @ApiResponse(code=404, message="Not Found")})
+    public Response createPayment(@PathParam("caseId") String caseId, @ApiParam RestfulPaymentV8 payment) {
+        try {
+            if (payment == null) {
+                log.warn("payment data is required for case " + caseId);
+                return Response.status(Response.Status.BAD_REQUEST).entity("Payment data is required").build();
+            }
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileBean currentCase = cases.getArchiveFile(caseId);
+            if (currentCase == null) {
+                log.warn("case with id " + caseId + " does not exist");
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            Response invalidPayment = validatePayment(payment, true);
+            if (invalidPayment != null) {
+                return invalidPayment;
+            }
+
+            AddressBean contact = resolveContact(ic, payment.getContactId());
+            if (payment.getContactId() != null && !payment.getContactId().isEmpty() && contact == null) {
+                log.warn("contact with id " + payment.getContactId() + " does not exist");
+                return Response.status(Response.Status.NOT_FOUND).entity("Contact not found").build();
+            }
+
+            Payment newPayment = payment.toPayment(currentCase, contact);
+            Payment createdPayment = cases.addPayment(caseId, newPayment);
+
+            return Response.ok(RestfulPaymentV8.fromPayment(createdPayment)).build();
+        } catch (NamingException ex) {
+            log.error("can not resolve payment endpoint dependencies", ex);
+            return Response.serverError().entity("Service lookup failed").build();
+        } catch (Exception ex) {
+            log.error("can not create payment for case " + caseId, ex);
+            return Response.serverError().entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Updates an existing payment.
+     *
+     * @param caseId case ID
+     * @param paymentId payment ID
+     * @param payment updated payment data
+     * @response 400 Bad request
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Case, payment or contact not found
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{caseId}/payments/{paymentId}")
+    @RolesAllowed({"writeArchiveFileRole"})
+    @ApiOperation(value="", response=RestfulPaymentV8.class)
+    @ApiResponses({@ApiResponse(code=400, message="Bad Request"), @ApiResponse(code=404, message="Not Found")})
+    public Response updatePayment(@PathParam("caseId") String caseId, @PathParam("paymentId") String paymentId, @ApiParam RestfulPaymentV8 payment) {
+        try {
+            if (payment == null) {
+                log.warn("payment data is required for payment " + paymentId);
+                return Response.status(Response.Status.BAD_REQUEST).entity("Payment data is required").build();
+            }
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileBean currentCase = cases.getArchiveFile(caseId);
+            if (currentCase == null) {
+                log.warn("case with id " + caseId + " does not exist");
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            PaymentFacadeLocal paymentFacade = (PaymentFacadeLocal) ic.lookup(LOOKUP_PAYMENT_FACADE);
+            Payment existingPayment = paymentFacade.find(paymentId);
+            if (!belongsToCase(existingPayment, caseId)) {
+                log.warn("payment with id " + paymentId + " does not exist in case " + caseId);
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            Response invalidPayment = validatePayment(payment, false);
+            if (invalidPayment != null) {
+                return invalidPayment;
+            }
+
+            AddressBean contact = existingPayment.getContact();
+            if (payment.getContactId() != null) {
+                contact = resolveContact(ic, payment.getContactId());
+                if (!payment.getContactId().isEmpty() && contact == null) {
+                    log.warn("contact with id " + payment.getContactId() + " does not exist");
+                    return Response.status(Response.Status.NOT_FOUND).entity("Contact not found").build();
+                }
+            }
+
+            Payment updatedPayment = payment.toPayment(currentCase, contact, existingPayment);
+            Payment result = cases.updatePayment(caseId, updatedPayment);
+
+            return Response.ok(RestfulPaymentV8.fromPayment(result)).build();
+        } catch (NamingException ex) {
+            log.error("can not resolve payment endpoint dependencies", ex);
+            return Response.serverError().entity("Service lookup failed").build();
+        } catch (Exception ex) {
+            log.error("can not update payment " + paymentId, ex);
+            return Response.serverError().entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Deletes an existing payment.
+     *
+     * @param caseId case ID
+     * @param paymentId payment ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Case or payment not found
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/{caseId}/payments/{paymentId}")
+    @RolesAllowed({"writeArchiveFileRole"})
+    @ApiOperation(value="")
+    @ApiResponses({@ApiResponse(code=404, message="Not Found")})
+    public Response deletePayment(@PathParam("caseId") String caseId, @PathParam("paymentId") String paymentId) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileBean currentCase = cases.getArchiveFile(caseId);
+            if (currentCase == null) {
+                log.warn("case with id " + caseId + " does not exist");
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            PaymentFacadeLocal paymentFacade = (PaymentFacadeLocal) ic.lookup(LOOKUP_PAYMENT_FACADE);
+            Payment existingPayment = paymentFacade.find(paymentId);
+            if (!belongsToCase(existingPayment, caseId)) {
+                log.warn("payment with id " + paymentId + " does not exist in case " + caseId);
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            cases.removePayment(paymentId);
+
+            return Response.ok().build();
+        } catch (NamingException ex) {
+            log.error("can not resolve payment endpoint dependencies", ex);
+            return Response.serverError().entity("Service lookup failed").build();
+        } catch (Exception ex) {
+            log.error("can not delete payment " + paymentId, ex);
+            return Response.serverError().entity(ex.getMessage()).build();
+        }
+    }
+
+    private Payment findPaymentInCase(ArchiveFileServiceLocal cases, String caseId, String paymentId) {
+        List<Payment> payments = cases.getPayments(caseId);
+        for (Payment payment : payments) {
+            if (payment.getId() != null && payment.getId().equals(paymentId)) {
+                return payment;
+            }
+        }
+        return null;
+    }
+
+    private AddressBean resolveContact(InitialContext ic, String contactId) throws NamingException {
+        if (contactId == null || contactId.isEmpty()) {
+            return null;
+        }
+        AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup(LOOKUP_ADDRESSES);
+        return addresses.getAddress(contactId);
+    }
+
+    private Response validatePayment(RestfulPaymentV8 payment, boolean paymentTypeRequired) {
+        String paymentType = payment.getPaymentType();
+        if (paymentTypeRequired && (paymentType == null || paymentType.isEmpty())) {
+            log.warn("payment type is required");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Payment type is required").build();
+        }
+        if (paymentType != null && (paymentType.isEmpty() || !Payment.PAYMENTTYPES.contains(paymentType))) {
+            log.warn("invalid payment type " + paymentType);
+            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid payment type").build();
+        }
+        String status = payment.getStatus();
+        if (status != null && (status.isEmpty() || !new Payment().getStatusValues().contains(status))) {
+            log.warn("invalid payment status " + status);
+            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid payment status").build();
+        }
+        return null;
+    }
+
+    private boolean belongsToCase(Payment payment, String caseId) {
+        return payment != null
+                && payment.getArchiveFileKey() != null
+                && payment.getArchiveFileKey().getId() != null
+                && payment.getArchiveFileKey().getId().equals(caseId);
+    }
+
 }
