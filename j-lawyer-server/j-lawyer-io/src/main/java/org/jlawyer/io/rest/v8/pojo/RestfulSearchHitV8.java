@@ -660,71 +660,126 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
-package org.jlawyer.io.rest.v1;
+ */
+package org.jlawyer.io.rest.v8.pojo;
 
-import org.jlawyer.io.rest.v2.CasesEndpointV2;
-import java.util.HashSet;
-import java.util.Set;
-import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.core.Application;
-import org.jlawyer.io.rest.v2.ContactsEndpointV2;
-import org.jlawyer.io.rest.v3.CasesEndpointV3;
-import org.jlawyer.io.rest.v4.CalendarEndpointV4;
-import org.jlawyer.io.rest.v4.CasesEndpointV4;
-import org.jlawyer.io.rest.v5.CasesEndpointV5;
-import org.jlawyer.io.rest.v5.ContactsEndpointV5;
-import org.jlawyer.io.rest.v6.CasesEndpointV6;
-import org.jlawyer.io.rest.v6.DataBucketEndpointV6;
-import org.jlawyer.io.rest.v6.SecurityEndpointV6;
-import org.jlawyer.io.rest.v6.TemplatesEndpointV6;
-import org.jlawyer.io.rest.v7.AdministrationEndpointV7;
-import org.jlawyer.io.rest.v7.CasesEndpointV7;
-import org.jlawyer.io.rest.v7.ConfigurationEndpointV7;
-import org.jlawyer.io.rest.v7.InvoicesEndpointV7;
-import org.jlawyer.io.rest.v7.MessagingEndpointV7;
-import org.jlawyer.io.rest.v7.ReportsEndpointV7;
-import org.jlawyer.io.rest.v7.EmailEndpointV7;
-import org.jlawyer.io.rest.v7.WebHooksEndpointV7;
-import org.jlawyer.io.rest.v8.BeaEndpointV8;
-import org.jlawyer.io.rest.v8.PaymentsEndpointV8;
-import org.jlawyer.io.rest.v8.SearchEndpointV8;
-import org.jlawyer.io.rest.v8.TimesheetsEndpointV8;
+import org.jlawyer.search.SearchHit;
 
-@ApplicationPath("/rest")
-public class EndpointServiceLocator extends Application
-{
-    @Override
-    public Set<Class<?>> getClasses()
-    {
-        Set<Class<?>> s = new HashSet<>();
-        s.add(SecurityEndpointV1.class);
-        s.add(CasesEndpointV1.class);
-        s.add(CasesEndpointV2.class);
-        s.add(CasesEndpointV3.class);
-        s.add(CasesEndpointV4.class);
-        s.add(ContactsEndpointV1.class);
-        s.add(ContactsEndpointV2.class);
-        s.add(FormsEndpointV1.class);
-        s.add(CalendarEndpointV4.class);
-        s.add(CasesEndpointV5.class);
-        s.add(ContactsEndpointV5.class);
-        s.add(CasesEndpointV6.class);
-        s.add(SecurityEndpointV6.class);
-        s.add(DataBucketEndpointV6.class);
-        s.add(TemplatesEndpointV6.class);
-        s.add(ConfigurationEndpointV7.class);
-        s.add(CasesEndpointV7.class);
-        s.add(MessagingEndpointV7.class);
-        s.add(AdministrationEndpointV7.class);
-        s.add(WebHooksEndpointV7.class);
-        s.add(InvoicesEndpointV7.class);
-        s.add(ReportsEndpointV7.class);
-        s.add(EmailEndpointV7.class);
-        s.add(BeaEndpointV8.class);
-        s.add(PaymentsEndpointV8.class);
-        s.add(SearchEndpointV8.class);
-        s.add(TimesheetsEndpointV8.class);
-        return s;
+public class RestfulSearchHitV8 {
+
+    private String id;
+    private String fileName;
+    private String archiveFileId;
+    private String archiveFileName;
+    private String archiveFileNumber;
+    private String snippet;
+    private float score;
+
+    public RestfulSearchHitV8() {
     }
+
+    public static RestfulSearchHitV8 fromSearchHit(SearchHit hit) {
+        if (hit == null) {
+            throw new IllegalArgumentException("Search hit is required");
+        }
+        RestfulSearchHitV8 result = new RestfulSearchHitV8();
+        result.setId(hit.getId());
+        result.setFileName(hit.getFileName());
+        result.setArchiveFileId(hit.getArchiveFileId());
+        result.setArchiveFileName(hit.getArchiveFileName());
+        result.setArchiveFileNumber(hit.getArchiveFileNumber());
+        result.setSnippet(toPlainText(hit.getText()));
+        result.setScore(hit.getScore());
+        return result;
+    }
+
+    private static String toPlainText(String htmlSnippet) {
+        if (htmlSnippet == null) {
+            return null;
+        }
+        StringBuilder plainText = new StringBuilder(htmlSnippet.length());
+        boolean insideTag = false;
+        for (int i = 0; i < htmlSnippet.length(); i++) {
+            char current = htmlSnippet.charAt(i);
+            if (current == '<') {
+                insideTag = true;
+                appendSpace(plainText);
+                continue;
+            }
+            if (insideTag) {
+                if (current == '>') {
+                    insideTag = false;
+                    appendSpace(plainText);
+                }
+                continue;
+            }
+            if (current != '>') {
+                plainText.append(current);
+            }
+        }
+        return plainText.toString().replaceAll("\\s+", " ").trim();
+    }
+
+    private static void appendSpace(StringBuilder plainText) {
+        if (plainText.length() > 0 && plainText.charAt(plainText.length() - 1) != ' ') {
+            plainText.append(' ');
+        }
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    public String getArchiveFileId() {
+        return archiveFileId;
+    }
+
+    public void setArchiveFileId(String archiveFileId) {
+        this.archiveFileId = archiveFileId;
+    }
+
+    public String getArchiveFileName() {
+        return archiveFileName;
+    }
+
+    public void setArchiveFileName(String archiveFileName) {
+        this.archiveFileName = archiveFileName;
+    }
+
+    public String getArchiveFileNumber() {
+        return archiveFileNumber;
+    }
+
+    public void setArchiveFileNumber(String archiveFileNumber) {
+        this.archiveFileNumber = archiveFileNumber;
+    }
+
+    public String getSnippet() {
+        return snippet;
+    }
+
+    public void setSnippet(String snippet) {
+        this.snippet = snippet;
+    }
+
+    public float getScore() {
+        return score;
+    }
+
+    public void setScore(float score) {
+        this.score = score;
+    }
+
 }

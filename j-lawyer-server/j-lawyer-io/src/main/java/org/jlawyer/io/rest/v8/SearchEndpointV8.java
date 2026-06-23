@@ -660,71 +660,94 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
-package org.jlawyer.io.rest.v1;
+ */
+package org.jlawyer.io.rest.v8;
 
-import org.jlawyer.io.rest.v2.CasesEndpointV2;
-import java.util.HashSet;
-import java.util.Set;
-import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.core.Application;
-import org.jlawyer.io.rest.v2.ContactsEndpointV2;
-import org.jlawyer.io.rest.v3.CasesEndpointV3;
-import org.jlawyer.io.rest.v4.CalendarEndpointV4;
-import org.jlawyer.io.rest.v4.CasesEndpointV4;
-import org.jlawyer.io.rest.v5.CasesEndpointV5;
-import org.jlawyer.io.rest.v5.ContactsEndpointV5;
-import org.jlawyer.io.rest.v6.CasesEndpointV6;
-import org.jlawyer.io.rest.v6.DataBucketEndpointV6;
-import org.jlawyer.io.rest.v6.SecurityEndpointV6;
-import org.jlawyer.io.rest.v6.TemplatesEndpointV6;
-import org.jlawyer.io.rest.v7.AdministrationEndpointV7;
-import org.jlawyer.io.rest.v7.CasesEndpointV7;
-import org.jlawyer.io.rest.v7.ConfigurationEndpointV7;
-import org.jlawyer.io.rest.v7.InvoicesEndpointV7;
-import org.jlawyer.io.rest.v7.MessagingEndpointV7;
-import org.jlawyer.io.rest.v7.ReportsEndpointV7;
-import org.jlawyer.io.rest.v7.EmailEndpointV7;
-import org.jlawyer.io.rest.v7.WebHooksEndpointV7;
-import org.jlawyer.io.rest.v8.BeaEndpointV8;
-import org.jlawyer.io.rest.v8.PaymentsEndpointV8;
-import org.jlawyer.io.rest.v8.SearchEndpointV8;
-import org.jlawyer.io.rest.v8.TimesheetsEndpointV8;
+import com.jdimension.jlawyer.services.SearchServiceLocal;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import java.util.ArrayList;
+import javax.annotation.security.RolesAllowed;
+import javax.ejb.Stateless;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v8.pojo.RestfulSearchHitV8;
+import org.jlawyer.search.SearchException;
+import org.jlawyer.search.SearchHit;
 
-@ApplicationPath("/rest")
-public class EndpointServiceLocator extends Application
-{
+@Stateless
+@Path("/v8/search")
+@Consumes({"application/json"})
+@Produces({"application/json"})
+@Api(tags={"Search"})
+public class SearchEndpointV8 implements SearchEndpointLocalV8 {
+
+    private static final Logger log = Logger.getLogger(SearchEndpointV8.class.getName());
+    private static final String LOOKUP_SEARCH = "java:global/j-lawyer-server/j-lawyer-server-ejb/SearchService!com.jdimension.jlawyer.services.SearchServiceLocal";
+    private static final int MAX_DOCS_LIMIT = 500;
+
+    /**
+     * Searches the global fulltext document index.
+     *
+     * @param query search query
+     * @param maxDocs maximum number of results
+     * @response 400 Missing or invalid search parameters
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
     @Override
-    public Set<Class<?>> getClasses()
-    {
-        Set<Class<?>> s = new HashSet<>();
-        s.add(SecurityEndpointV1.class);
-        s.add(CasesEndpointV1.class);
-        s.add(CasesEndpointV2.class);
-        s.add(CasesEndpointV3.class);
-        s.add(CasesEndpointV4.class);
-        s.add(ContactsEndpointV1.class);
-        s.add(ContactsEndpointV2.class);
-        s.add(FormsEndpointV1.class);
-        s.add(CalendarEndpointV4.class);
-        s.add(CasesEndpointV5.class);
-        s.add(ContactsEndpointV5.class);
-        s.add(CasesEndpointV6.class);
-        s.add(SecurityEndpointV6.class);
-        s.add(DataBucketEndpointV6.class);
-        s.add(TemplatesEndpointV6.class);
-        s.add(ConfigurationEndpointV7.class);
-        s.add(CasesEndpointV7.class);
-        s.add(MessagingEndpointV7.class);
-        s.add(AdministrationEndpointV7.class);
-        s.add(WebHooksEndpointV7.class);
-        s.add(InvoicesEndpointV7.class);
-        s.add(ReportsEndpointV7.class);
-        s.add(EmailEndpointV7.class);
-        s.add(BeaEndpointV8.class);
-        s.add(PaymentsEndpointV8.class);
-        s.add(SearchEndpointV8.class);
-        s.add(TimesheetsEndpointV8.class);
-        return s;
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/fulltext")
+    @RolesAllowed({"readArchiveFileRole"})
+    @ApiOperation(value="Searches the global fulltext document index", response=RestfulSearchHitV8.class, responseContainer="List")
+    @ApiResponses({@ApiResponse(code=400, message="Bad Request")})
+    public Response searchFulltext(@QueryParam("query") String query, @QueryParam("maxDocs") @DefaultValue("50") int maxDocs) {
+        if (query == null || query.trim().isEmpty()) {
+            return badRequest("query parameter is required");
+        }
+        if (maxDocs < 1 || maxDocs > MAX_DOCS_LIMIT) {
+            return badRequest("maxDocs must be between 1 and " + MAX_DOCS_LIMIT);
+        }
+
+        try {
+            InitialContext ic = new InitialContext();
+            SearchServiceLocal searchService = (SearchServiceLocal) ic.lookup(LOOKUP_SEARCH);
+            ArrayList<SearchHit> hits = searchService.search(query.trim(), maxDocs);
+            ArrayList<RestfulSearchHitV8> result = new ArrayList<>();
+            if (hits != null) {
+                for (SearchHit hit : hits) {
+                    result.add(RestfulSearchHitV8.fromSearchHit(hit));
+                }
+            }
+            return Response.ok(result).build();
+        } catch (NamingException ex) {
+            log.error("can not lookup search service", ex);
+            return Response.serverError().build();
+        } catch (SearchException ex) {
+            log.error("can not search fulltext index", ex);
+            return Response.serverError().build();
+        } catch (Exception ex) {
+            log.error("unexpected error while searching fulltext index", ex);
+            return Response.serverError().build();
+        }
     }
+
+    private Response badRequest(String message) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                .entity("{\"error\":\"" + message + "\"}")
+                .build();
+    }
+
 }
