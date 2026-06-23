@@ -718,7 +718,7 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}")
     @RolesAllowed({"readArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulCaseV2.class)
+    @io.swagger.annotations.ApiOperation(value="Returns all case metadata based on its ID. This service supports extended file numbers (including prefix, suffix, group and user).", response=org.jlawyer.io.rest.v1.pojo.RestfulCaseV2.class)
     public Response getCase(@PathParam("id") String id) {
         // http://localhost:8080/j-lawyer-io/rest/cases/2c851dc47f0001011cdef6be8abaddee
         try {
@@ -779,7 +779,7 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/create")
     @RolesAllowed({"createArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiOperation(value="Creates a new case. This service supports extended file numbers (including prefix, suffix, group and user).")
     public Response createCase(@io.swagger.annotations.ApiParam RestfulCaseV2 caseData) {
 
         // curl -u admin:a -X PUT -H "Content-Type: application/json" -d '{"name":"via REST", "reason":"wegen REST", "subjectField":"Familienrecht", "notice":"notiz REST","assistant":"user", "lawyer":"admin", "claimNumber":"RESTcn","claimValue":"3.44","custom1":"RESTc1","custom2":"RESTc2","custom3":"RESTc3"}' http://localhost:8080/j-lawyer-io/rest/cases/create
@@ -832,7 +832,7 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/update")
     @RolesAllowed({"writeArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulCaseV2.class)
+    @io.swagger.annotations.ApiOperation(value="Updates an existing case based on its ID. The file number is immutable. This service supports extended file numbers (including prefix, suffix, group and user).", response=org.jlawyer.io.rest.v1.pojo.RestfulCaseV2.class)
     public Response updateCase(@io.swagger.annotations.ApiParam RestfulCaseV2 caseData) {
 
         // curl -u admin:a -X PUT -H "Content-Type: application/json" -d '{"id":"2187c30c7f0001011c78dd99d50cbd20", "name":"via REST", "reason":"wegen REST", "subjectField":"Familienrecht", "notice":"notiz REST","assistant":"user", "lawyer":"admin", "claimNumber":"RESTcn","claimValue":"3.44","custom1":"RESTc1","custom2":"RESTc2","custom3":"RESTc3"}' http://localhost:8080/j-lawyer-io/rest/cases/update

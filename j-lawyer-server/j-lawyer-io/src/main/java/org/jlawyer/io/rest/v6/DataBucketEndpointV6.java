@@ -701,7 +701,7 @@ public class DataBucketEndpointV6 implements DataBucketEndpointLocalV6 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/next")
     @RolesAllowed({"readArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulDataBucketV6.class)
+    @io.swagger.annotations.ApiOperation(value="Returns a a documents content in the form of a data bucket, given its ID. The return value is Base64 encoded.", response=org.jlawyer.io.rest.v6.pojo.RestfulDataBucketV6.class)
     public Response nextBucket(@io.swagger.annotations.ApiParam RestfulDataBucketV6 bucket) {
         try {
             InitialContext ic = new InitialContext();

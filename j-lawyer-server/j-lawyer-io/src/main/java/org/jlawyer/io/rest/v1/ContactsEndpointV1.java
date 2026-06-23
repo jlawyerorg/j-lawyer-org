@@ -710,7 +710,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}")
     @RolesAllowed({"readAddressRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulContactV1.class)
+    @io.swagger.annotations.ApiOperation(value="Returns a contacts metadata given its ID", response=org.jlawyer.io.rest.v1.pojo.RestfulContactV1.class)
     public Response getContact(@PathParam("id") String id) {
         // http://localhost:8080/j-lawyer-io/rest/contacts/0c617d4e7f0001012eebc10d402e8a74
         try {
@@ -737,7 +737,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/create")
     @RolesAllowed({"createAddressRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulContactV1.class)
+    @io.swagger.annotations.ApiOperation(value="Creates a new contact", response=org.jlawyer.io.rest.v1.pojo.RestfulContactV1.class)
     public Response createContact(@io.swagger.annotations.ApiParam RestfulContactV1 contact) {
         try {
 
@@ -765,7 +765,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/list")
     @RolesAllowed({"readAddressRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulContactOverviewV1.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Lists all contacts", response=org.jlawyer.io.rest.v1.pojo.RestfulContactOverviewV1.class, responseContainer="List")
     public Response listContacts() {
         try {
 
@@ -810,7 +810,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/similar")
     @RolesAllowed({"readAddressRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulContactOverviewV1.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Performs a similarity search using Jaro Winkler distance over name, first name, street and number, zip code and city. Anything with a similarity of 85% or higher will be returned.", response=org.jlawyer.io.rest.v1.pojo.RestfulContactOverviewV1.class, responseContainer="List")
     public Response searchSimilarContacts(@io.swagger.annotations.ApiParam RestfulContactV1 contact) {
         try {
 
@@ -858,7 +858,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/update")
     @RolesAllowed({"writeAddressRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulContactV1.class)
+    @io.swagger.annotations.ApiOperation(value="Updates an existing contact based on its ID", response=org.jlawyer.io.rest.v1.pojo.RestfulContactV1.class)
     public Response updateContact(@io.swagger.annotations.ApiParam RestfulContactV1 contact) {
         try {
 

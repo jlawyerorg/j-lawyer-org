@@ -708,7 +708,7 @@ public class WebHooksEndpointV7 implements WebHooksEndpointLocalV7 {
     @GET
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @RolesAllowed({"loginRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulIntegrationHookLogOverview.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Lists all logs for executed web hooks and their basic information.", response=org.jlawyer.io.rest.v7.pojo.RestfulIntegrationHookLogOverview.class, responseContainer="List")
     public Response listHooks() {
 
         try {
@@ -749,7 +749,7 @@ public class WebHooksEndpointV7 implements WebHooksEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{hookId}")
     @RolesAllowed({"loginRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulIntegrationHookLog.class)
+    @io.swagger.annotations.ApiOperation(value="Returns a specific web hooks execution log by its ID", response=org.jlawyer.io.rest.v7.pojo.RestfulIntegrationHookLog.class)
     @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response getHookLog(@PathParam("hookId") String hookId) {
 

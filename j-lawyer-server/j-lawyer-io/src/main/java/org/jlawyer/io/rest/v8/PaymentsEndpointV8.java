@@ -717,7 +717,7 @@ public class PaymentsEndpointV8 implements PaymentsEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{caseId}/payments")
     @RolesAllowed({"readArchiveFileRole"})
-    @ApiOperation(value="", response=RestfulPaymentV8.class, responseContainer="List")
+    @ApiOperation(value="Lists all payments of a case", response=RestfulPaymentV8.class, responseContainer="List")
     @ApiResponses({@ApiResponse(code=404, message="Not Found")})
     public Response getCasePayments(@PathParam("caseId") String caseId) {
         try {
@@ -759,7 +759,7 @@ public class PaymentsEndpointV8 implements PaymentsEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{caseId}/payments/{paymentId}")
     @RolesAllowed({"readArchiveFileRole"})
-    @ApiOperation(value="", response=RestfulPaymentV8.class)
+    @ApiOperation(value="Returns a single payment of a case given its ID", response=RestfulPaymentV8.class)
     @ApiResponses({@ApiResponse(code=404, message="Not Found")})
     public Response getPayment(@PathParam("caseId") String caseId, @PathParam("paymentId") String paymentId) {
         try {
@@ -804,7 +804,7 @@ public class PaymentsEndpointV8 implements PaymentsEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{caseId}/payments")
     @RolesAllowed({"writeArchiveFileRole"})
-    @ApiOperation(value="", response=RestfulPaymentV8.class)
+    @ApiOperation(value="Creates a new payment for a case", response=RestfulPaymentV8.class)
     @ApiResponses({@ApiResponse(code=400, message="Bad Request"), @ApiResponse(code=404, message="Not Found")})
     public Response createPayment(@PathParam("caseId") String caseId, @ApiParam RestfulPaymentV8 payment) {
         try {
@@ -862,7 +862,7 @@ public class PaymentsEndpointV8 implements PaymentsEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{caseId}/payments/{paymentId}")
     @RolesAllowed({"writeArchiveFileRole"})
-    @ApiOperation(value="", response=RestfulPaymentV8.class)
+    @ApiOperation(value="Updates an existing payment of a case", response=RestfulPaymentV8.class)
     @ApiResponses({@ApiResponse(code=400, message="Bad Request"), @ApiResponse(code=404, message="Not Found")})
     public Response updatePayment(@PathParam("caseId") String caseId, @PathParam("paymentId") String paymentId, @ApiParam RestfulPaymentV8 payment) {
         try {
@@ -927,7 +927,7 @@ public class PaymentsEndpointV8 implements PaymentsEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{caseId}/payments/{paymentId}")
     @RolesAllowed({"writeArchiveFileRole"})
-    @ApiOperation(value="")
+    @ApiOperation(value="Deletes a payment of a case given its ID")
     @ApiResponses({@ApiResponse(code=404, message="Not Found")})
     public Response deletePayment(@PathParam("caseId") String caseId, @PathParam("paymentId") String paymentId) {
         try {

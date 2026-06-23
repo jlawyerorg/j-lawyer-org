@@ -723,7 +723,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/history")
     @RolesAllowed({"writeArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiOperation(value="Creates a history entry for a case.")
     public Response createHistory(@PathParam("id") String id, @io.swagger.annotations.ApiParam RestfulCaseHistoryV5 history) {
         try {
 
@@ -761,7 +761,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/document/{id}/contentbucket")
     @RolesAllowed({"readArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulDataBucketV6.class)
+    @io.swagger.annotations.ApiOperation(value="Returns a documents content in the form of a data bucket, given its ID.The return value is Base64 encoded.", response=org.jlawyer.io.rest.v6.pojo.RestfulDataBucketV6.class)
     public Response getDocumentContentBucket(@PathParam("id") String id) {
         try {
             InitialContext ic = new InitialContext();
@@ -809,7 +809,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/duedate/create")
     @RolesAllowed({"writeArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulDueDateV6.class)
+    @io.swagger.annotations.ApiOperation(value="Creates a new due date within an existing case. An ID for the due date is not required in the request.", response=org.jlawyer.io.rest.v6.pojo.RestfulDueDateV6.class)
     public Response createDueDate(@io.swagger.annotations.ApiParam RestfulDueDateV6 dueDate) {
         try {
 
@@ -895,7 +895,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/duedate/update")
     @RolesAllowed({"writeArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulDueDateV6.class)
+    @io.swagger.annotations.ApiOperation(value="Updates a due date.", response=org.jlawyer.io.rest.v6.pojo.RestfulDueDateV6.class)
     public Response updateDueDate(@io.swagger.annotations.ApiParam RestfulDueDateV6 dueDate) {
         try {
 
@@ -989,7 +989,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/document/{id}/to-pdf")
     @RolesAllowed({"writeArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulDocumentContentV1.class)
+    @io.swagger.annotations.ApiOperation(value="Converts a document to PDF.", response=org.jlawyer.io.rest.v1.pojo.RestfulDocumentContentV1.class)
     public Response convertToPdf(@PathParam("id") String id) {
         try {
 
@@ -1025,7 +1025,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/document/{id}/perform-ocr")
     @RolesAllowed({"writeArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=Boolean.class)
+    @io.swagger.annotations.ApiOperation(value="Performs OCR on a PDF document. Existing PDF is replaced with its OCRed equivalent.", response=Boolean.class)
     public Response performOcr(@PathParam("id") String id) {
         try {
 

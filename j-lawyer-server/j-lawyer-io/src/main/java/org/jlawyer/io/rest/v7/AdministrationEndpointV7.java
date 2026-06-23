@@ -715,7 +715,7 @@ public class AdministrationEndpointV7 implements AdministrationEndpointLocalV7 {
     @Path("/backup")
     @POST
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulJobStatusV7.class)
+    @io.swagger.annotations.ApiOperation(value="Triggers a backup run and returns its status. The job ID may be used to check on the execution status of the job.", response=org.jlawyer.io.rest.v7.pojo.RestfulJobStatusV7.class)
     public Response adHocBackup(@io.swagger.annotations.ApiParam RestfulCredentials credentials) {
 
         try {
@@ -777,7 +777,7 @@ public class AdministrationEndpointV7 implements AdministrationEndpointLocalV7 {
     @Path("/jobs/{jobId}/status")
     @GET
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulJobStatusV7.class)
+    @io.swagger.annotations.ApiOperation(value="Returns the status of a specific job.", response=org.jlawyer.io.rest.v7.pojo.RestfulJobStatusV7.class)
     @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response getJobStatus(@PathParam("jobId") String jobId) {
 
@@ -814,7 +814,7 @@ public class AdministrationEndpointV7 implements AdministrationEndpointLocalV7 {
     @Path("/jobs/list")
     @GET
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulJobStatusV7.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Lists all jobs currently known to the server. Note that jobs are not persistent, restarting the server will result in an empty status list.", response=org.jlawyer.io.rest.v7.pojo.RestfulJobStatusV7.class, responseContainer="List")
     public Response listJobs() {
 
         try {

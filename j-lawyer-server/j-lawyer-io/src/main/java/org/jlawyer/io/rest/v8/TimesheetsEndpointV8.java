@@ -52,7 +52,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/open")
     @RolesAllowed({"readArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetV8.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns all open timesheets across all cases", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetV8.class, responseContainer="List")
     public Response getOpenTimesheets() {
         try {
             InitialContext ic = new InitialContext();
@@ -84,7 +84,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{timesheetId}")
     @RolesAllowed({"readArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetV8.class)
+    @io.swagger.annotations.ApiOperation(value="Returns a single timesheet by ID", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetV8.class)
     @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response getTimesheet(@PathParam("timesheetId") String timesheetId) {
         try {
@@ -114,7 +114,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{timesheetId}/positions")
     @RolesAllowed({"readArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns all positions for a given timesheet", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class, responseContainer="List")
     public Response getTimesheetPositions(@PathParam("timesheetId") String timesheetId) {
         try {
             InitialContext ic = new InitialContext();
@@ -145,7 +145,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{timesheetId}/templates")
     @RolesAllowed({"readArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionTemplateV8.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns the allowed position templates for a given timesheet", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionTemplateV8.class, responseContainer="List")
     public Response getTimesheetTemplates(@PathParam("timesheetId") String timesheetId) {
         try {
             InitialContext ic = new InitialContext();
@@ -175,7 +175,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/positions/running")
     @RolesAllowed({"readArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns the currently running timesheet positions for the authenticated user", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class, responseContainer="List")
     public Response getRunningPositions() {
         try {
             String principal = securityContext.getUserPrincipal().getName();
@@ -206,7 +206,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/positions/running/count")
     @RolesAllowed({"readArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=Integer.class)
+    @io.swagger.annotations.ApiOperation(value="Returns the number of currently running timesheet positions for the authenticated user", response=Integer.class)
     public Response getRunningPositionsCount() {
         try {
             String principal = securityContext.getUserPrincipal().getName();
@@ -233,7 +233,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/cases/{caseId}/positions/last")
     @RolesAllowed({"readArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns the last timesheet positions of the authenticated user for a given case", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class, responseContainer="List")
     public Response getLastPositionsForCase(@PathParam("caseId") String caseId) {
         try {
             String principal = securityContext.getUserPrincipal().getName();
@@ -270,7 +270,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{timesheetId}/positions/start")
     @RolesAllowed({"writeArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class)
+    @io.swagger.annotations.ApiOperation(value="Starts a new timesheet position (stopwatch). The position will be created with the current time as start time. The server automatically sets id, started, stopped, principal and invoice. Only the following JSON attributes are required in the request body: name, description, unitPrice, taxRate.", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class)
     @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response startPosition(@PathParam("timesheetId") String timesheetId, @io.swagger.annotations.ApiParam RestfulTimesheetPositionV8 position) {
         try {
@@ -309,7 +309,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{timesheetId}/positions/{positionId}/stop")
     @RolesAllowed({"writeArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class)
+    @io.swagger.annotations.ApiOperation(value="Stops a currently running timesheet position. The stop time is set automatically by the server. Only the following JSON attributes are required in the request body: name, description, unitPrice, taxRate. The position ID is taken from the URL path parameter.", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class)
     @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response stopPosition(@PathParam("timesheetId") String timesheetId, @PathParam("positionId") String positionId, @io.swagger.annotations.ApiParam RestfulTimesheetPositionV8 position) {
         try {
@@ -345,7 +345,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{timesheetId}/positions")
     @RolesAllowed({"writeArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class)
+    @io.swagger.annotations.ApiOperation(value="Adds a manual timesheet position with explicit start and stop times", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class)
     @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response addPosition(@PathParam("timesheetId") String timesheetId, @io.swagger.annotations.ApiParam RestfulTimesheetPositionV8 position) {
         try {
@@ -381,7 +381,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{timesheetId}/positions/{positionId}")
     @RolesAllowed({"writeArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class)
+    @io.swagger.annotations.ApiOperation(value="Updates an existing timesheet position", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class)
     @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response updatePosition(@PathParam("timesheetId") String timesheetId, @PathParam("positionId") String positionId, @io.swagger.annotations.ApiParam RestfulTimesheetPositionV8 position) {
         try {
@@ -416,7 +416,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{timesheetId}/positions/{positionId}")
     @RolesAllowed({"writeArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiOperation(value="Deletes an existing timesheet position")
     @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response deletePosition(@PathParam("timesheetId") String timesheetId, @PathParam("positionId") String positionId) {
         try {

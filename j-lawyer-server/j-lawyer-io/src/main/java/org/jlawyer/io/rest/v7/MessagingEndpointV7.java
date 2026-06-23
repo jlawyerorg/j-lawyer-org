@@ -714,7 +714,7 @@ public class MessagingEndpointV7 implements MessagingEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/mentions/{id}/done")
     @RolesAllowed({"loginRole"})
-    @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiOperation(value="Marks a specific mentioning of a user in a message as done.")
     public Response markMentionDone(@PathParam("id") String id) {
         try {
             InitialContext ic = new InitialContext();
@@ -741,7 +741,7 @@ public class MessagingEndpointV7 implements MessagingEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/submit")
     @RolesAllowed({"loginRole"})
-    @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiOperation(value="Submits a new message. An API client should not provide mentions along with the message, they will be automatically extracted based on the content of the message.")
     public Response submitMessage(@io.swagger.annotations.ApiParam RestfulInstantMessageV7 msg) {
 
         try {
@@ -804,7 +804,7 @@ public class MessagingEndpointV7 implements MessagingEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/delete")
     @RolesAllowed({"loginRole"})
-    @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiOperation(value="Deletes a message based on its ID")
     public Response deleteMessage(@PathParam("id") String id) {
         try {
 
@@ -837,7 +837,7 @@ public class MessagingEndpointV7 implements MessagingEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/since/{seconds}")
     @RolesAllowed({"readArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulInstantMessageV7.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns a list of instant messages the requesting user has access to, created up to x seconds in the past", response=org.jlawyer.io.rest.v7.pojo.RestfulInstantMessageV7.class, responseContainer="List")
     public Response getMessagesSince(@PathParam("seconds") int seconds,
                                      @QueryParam("includeArchived") @DefaultValue("true") boolean includeArchived) {
         try {

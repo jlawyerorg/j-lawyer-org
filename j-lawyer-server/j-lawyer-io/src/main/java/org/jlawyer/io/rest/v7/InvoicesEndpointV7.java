@@ -708,7 +708,7 @@ public class InvoicesEndpointV7 implements InvoicesEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/types")
     @RolesAllowed({"loginRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulInvoiceTypeV7.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns the list of invoice types available", response=org.jlawyer.io.rest.v7.pojo.RestfulInvoiceTypeV7.class, responseContainer="List")
     public Response getInvoiceTypes() {
         try {
             
@@ -741,7 +741,7 @@ public class InvoicesEndpointV7 implements InvoicesEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/pools")
     @RolesAllowed({"loginRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulInvoicePoolV7.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns the list of invoice pools available", response=org.jlawyer.io.rest.v7.pojo.RestfulInvoicePoolV7.class, responseContainer="List")
     public Response getInvoicePools() {
         try {
             

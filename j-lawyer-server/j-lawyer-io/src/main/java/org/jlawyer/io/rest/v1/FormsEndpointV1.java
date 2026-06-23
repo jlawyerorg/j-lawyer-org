@@ -713,7 +713,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/types/list")
     @RolesAllowed({"loginRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulFormTypeV1.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Lists all form types", response=org.jlawyer.io.rest.v1.pojo.RestfulFormTypeV1.class, responseContainer="List")
     public Response listFormTypes() {
         try {
 
@@ -746,7 +746,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{id}/entries")
     @RolesAllowed({"readArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulFormEntryV1.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns all form entries based on a forms ID", response=org.jlawyer.io.rest.v1.pojo.RestfulFormEntryV1.class, responseContainer="List")
     public Response getFormEntries(@PathParam("id") String id) {
         try {
 
@@ -783,7 +783,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/type/{id}/list")
     @RolesAllowed({"readArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulFormV1.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns all forms (as distributed across many cases) for a given form type", response=org.jlawyer.io.rest.v1.pojo.RestfulFormV1.class, responseContainer="List")
     public Response getFormsByType(@PathParam("id") String id) {
         try {
             InitialContext ic = new InitialContext();
@@ -842,7 +842,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{id}/entries/update")
     @RolesAllowed({"writeArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulFormEntryV1.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Updates ALL entries for an existing form. A client must provide ALL entries for the form. Updating a subset of entries is not supported. The services can be used to either create an initial set of entries for a form or to update exinsting entries.", response=org.jlawyer.io.rest.v1.pojo.RestfulFormEntryV1.class, responseContainer="List")
     public Response setFormEntries(@io.swagger.annotations.ApiParam List<RestfulFormEntryV1> formEntries) {
         try {
 
@@ -917,7 +917,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/delete")
     @RolesAllowed({"writeArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiOperation(value="Deletes a document based on its ID")
     public Response deleteForm(@io.swagger.annotations.ApiParam String id) {
 
         try {
@@ -960,7 +960,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/create")
     @RolesAllowed({"writeArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulFormV1.class)
+    @io.swagger.annotations.ApiOperation(value="Creates a new form within an existing case. An ID for the form is not required in the request. The value for placeholder must be unique within the cases forms, you cannot have two different forms with the same placeholder. Creating a form does not create empty dummy values for it. A client needs to explicityly set the entries or rely on a user editing it through the UI.", response=org.jlawyer.io.rest.v1.pojo.RestfulFormV1.class)
     public Response createForm(@io.swagger.annotations.ApiParam RestfulFormV1 form) {
 
         try {

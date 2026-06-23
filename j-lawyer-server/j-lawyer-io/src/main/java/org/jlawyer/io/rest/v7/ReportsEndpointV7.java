@@ -711,7 +711,7 @@ public class ReportsEndpointV7 implements ReportsEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/list")
     @RolesAllowed({"commonReportRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulReportMetadataV7.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns the list of available reports with their metadata.", response=org.jlawyer.io.rest.v7.pojo.RestfulReportMetadataV7.class, responseContainer="List")
     public Response getAvailableReports() {
         try {
 
@@ -742,7 +742,7 @@ public class ReportsEndpointV7 implements ReportsEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/invoke")
     @RolesAllowed({"commonReportRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulReportResultV7.class)
+    @io.swagger.annotations.ApiOperation(value="Invokes a report by its identifier and returns the result containing tables and/or bar charts.", response=org.jlawyer.io.rest.v7.pojo.RestfulReportResultV7.class)
     @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=400, message="Bad Request")})
     public Response invokeReport(@io.swagger.annotations.ApiParam RestfulReportRequestV7 request) {
         try {

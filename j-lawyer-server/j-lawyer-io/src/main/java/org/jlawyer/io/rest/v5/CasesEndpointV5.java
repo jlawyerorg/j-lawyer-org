@@ -721,7 +721,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/list/synced/{principalId}")
     @RolesAllowed({"readArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns IDs of all cases to be synced to the requesting users devices", response=org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1.class, responseContainer="List")
     public Response getSynced(@PathParam("principalId") String principalId) {
         try {
 
@@ -762,7 +762,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/syncsettings")
     @RolesAllowed({"readArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiOperation(value="Enables or disables the synchronization of a given case for the requesting user.")
     public Response enableCaseSync(@io.swagger.annotations.ApiParam RestfulCaseSyncSettingV5 syncSettings) {
         try {
 
@@ -792,7 +792,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/history")
     @RolesAllowed({"readArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v5.pojo.RestfulCaseHistoryV5.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns all history entries for a given case", response=org.jlawyer.io.rest.v5.pojo.RestfulCaseHistoryV5.class, responseContainer="List")
     public Response getHistory(@PathParam("id") String id) {
         //http://localhost:8080/j-lawyer-io/rest/cases/0c79112f7f000101327bf357f0b6010c/history
         try {
@@ -840,7 +840,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/document/{id}/tags")
     @RolesAllowed({"readArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulTagV1.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns all tags attached to the document given by its ID", response=org.jlawyer.io.rest.v1.pojo.RestfulTagV1.class, responseContainer="List")
     public Response getDocumentTags(@PathParam("id") String id) {
         try {
 
@@ -883,7 +883,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/tags/{id}")
     @RolesAllowed({"writeArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiOperation(value="Deletes a cases tag given the tags ID.")
     public Response deleteCaseTag(@PathParam("id") String id) {
         try {
 
@@ -918,7 +918,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/tags")
     @RolesAllowed({"writeArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiOperation(value="Creates a case tag. dateSet is optional.")
     public Response createCaseTag(@PathParam("id") String id, @io.swagger.annotations.ApiParam RestfulTagV1 tag) {
         try {
 
@@ -960,7 +960,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/documents/{id}/tags")
     @RolesAllowed({"writeArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiOperation(value="Creates a document tag. dateSet is optional.")
     public Response createDocumentTag(@PathParam("id") String id, @io.swagger.annotations.ApiParam RestfulTagV1 tag) {
         try {
 
@@ -999,7 +999,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/documents/tags/{id}")
     @RolesAllowed({"writeArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiOperation(value="Deletes a documents tag given the tags ID.")
     public Response deleteDocumentTag(@PathParam("id") String id) {
         try {
 

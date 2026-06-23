@@ -713,7 +713,7 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/tags")
     @RolesAllowed({"readAddressRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulTagV1.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns all tags attached to the contact given by its ID", response=org.jlawyer.io.rest.v1.pojo.RestfulTagV1.class, responseContainer="List")
     public Response getContactTags(@PathParam("id") String id) {
         try {
 
@@ -757,7 +757,7 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/tags/{id}")
     @RolesAllowed({"writeAddressRole"})
-    @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiOperation(value="Deletes a contacts tag given the tags ID.")
     public Response deleteContactTag(@PathParam("id") String id) {
         try {
 
@@ -789,7 +789,7 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/tags")
     @RolesAllowed({"writeAddressRole"})
-    @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiOperation(value="Creates a contact tag. dateSet is optional.")
     public Response createContactTag(@PathParam("id") String id, @io.swagger.annotations.ApiParam RestfulTagV1 tag) {
         try {
 
@@ -827,7 +827,7 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/cases")
     @RolesAllowed({"readArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns all cases for the contact given by its ID", response=org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1.class, responseContainer="List")
     public Response getCasesForContact(@PathParam("id") String id) {
         try {
 

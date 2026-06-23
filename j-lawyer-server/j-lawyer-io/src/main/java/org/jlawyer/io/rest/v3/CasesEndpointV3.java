@@ -712,7 +712,7 @@ public class CasesEndpointV3 implements CasesEndpointLocalV3 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/foldertemplates")
     @RolesAllowed({"loginRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v3.pojo.RestfulFolderTemplateV3.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns all folder templates configured in the system.", response=org.jlawyer.io.rest.v3.pojo.RestfulFolderTemplateV3.class, responseContainer="List")
     public Response listFolderTemplates() {
         try {
 
@@ -748,7 +748,7 @@ public class CasesEndpointV3 implements CasesEndpointLocalV3 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/folders")
     @RolesAllowed({"readArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v3.pojo.RestfulCaseFolderV3.class)
+    @io.swagger.annotations.ApiOperation(value="Returns the folder structure of a given case.", response=org.jlawyer.io.rest.v3.pojo.RestfulCaseFolderV3.class)
     public Response getCaseFolders(@PathParam("id") String id) {
         try {
 
@@ -806,7 +806,7 @@ public class CasesEndpointV3 implements CasesEndpointLocalV3 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/foldertemplates/{templateId}/apply")
     @RolesAllowed({"writeArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v3.pojo.RestfulCaseFolderV3.class)
+    @io.swagger.annotations.ApiOperation(value="Applies a folder template to a case.", response=org.jlawyer.io.rest.v3.pojo.RestfulCaseFolderV3.class)
     public Response applyFolderTemplate(@PathParam("id") String id, @PathParam("templateId") String templateId) {
         try {
 
@@ -853,7 +853,7 @@ public class CasesEndpointV3 implements CasesEndpointLocalV3 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/folders/create")
     @RolesAllowed({"writeArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v3.pojo.RestfulCaseFolderV3.class)
+    @io.swagger.annotations.ApiOperation(value="Creates a new folder in a case under the given parent folder.", response=org.jlawyer.io.rest.v3.pojo.RestfulCaseFolderV3.class)
     public Response createCaseFolder(@PathParam("id") String id, @io.swagger.annotations.ApiParam RestfulCaseFolderV3 folder) {
         try {
 
@@ -914,7 +914,7 @@ public class CasesEndpointV3 implements CasesEndpointLocalV3 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/{id}/folders/{folderId}")
     @RolesAllowed({"writeArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiOperation(value="Deletes a folder from a case. Prevents deleting the root folder.")
     public Response deleteCaseFolder(@PathParam("id") String id, @PathParam("folderId") String folderId) {
         try {
 

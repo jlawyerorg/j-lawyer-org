@@ -725,7 +725,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @Path("/optiongroups/list")
     @GET
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @io.swagger.annotations.ApiOperation(value="", response=String.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns all option groups available in the system who have at least one value configured.Some important option groups are: address.country: all countries address.degreeprefix: all degrees appearing before the name address.degreesuffix: all degrees appearing after the name address.profession: all professions address.role: all roles, such as \"CEO\" etc. archiveFile.subjectField: all subject fields for cases address.salutation: archiveFile.tags: all tags that can be attached to a case address.tags: all tags that can be attached to an address document.tags: all tags that can be attached to a document address.title: timesheet.intervalminutes: all intervals usable for timesheets, in minutes address.titleinaddress: address.complimentaryclose: address.legalform: all types of legal entities address.nationality: all nationalities invoice.currency: all currencies invoice.taxrates: all tax rates as decimal numbers", response=String.class, responseContainer="List")
     public Response getOptionGroups() {
 
         try {
@@ -755,7 +755,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @Path("/optiongroups/{optiongroup}")
     @GET
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulOptionV7.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns all options for an option group.", response=org.jlawyer.io.rest.v7.pojo.RestfulOptionV7.class, responseContainer="List")
     public Response getOptionGroup(@PathParam("optiongroup") String optiongroup) {
 
         try {
@@ -794,7 +794,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/options/create")
     @RolesAllowed({"createOptionGroupRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulOptionV7.class)
+    @io.swagger.annotations.ApiOperation(value="Creates a new option within an existing option group. An ID supplied by the caller will be ignored.", response=org.jlawyer.io.rest.v7.pojo.RestfulOptionV7.class)
     public Response createOption(@io.swagger.annotations.ApiParam RestfulOptionV7 option) {
 
         try {
@@ -843,7 +843,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/options/delete")
     @RolesAllowed({"deleteOptionGroupRole"})
-    @io.swagger.annotations.ApiOperation(value="")
+    @io.swagger.annotations.ApiOperation(value="Creates a new option within an existing option group. An ID supplied by the caller will be ignored.")
     @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response deleteOption(@io.swagger.annotations.ApiParam RestfulOptionV7 option) {
 
@@ -880,7 +880,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/options/update")
     @RolesAllowed({"createOptionGroupRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulOptionV7.class)
+    @io.swagger.annotations.ApiOperation(value="Renames an existing option. This will only impact master data, e.g. it will not rename tags attached to a case / address / document. A client is supposed to submit an option that can be found by its ID. Other attributes (such as the name) will be updated.", response=org.jlawyer.io.rest.v7.pojo.RestfulOptionV7.class)
     @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response renameOption(@io.swagger.annotations.ApiParam RestfulOptionV7 option) {
 
@@ -917,7 +917,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @Path("/tags/multivalue/{entityType}")
     @GET
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v7.pojo.RestfulMultiValueTagDefinitionV7.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns multi-value tag definitions for a given entity type. Each definition includes the tag name and the list of available values.", response=org.jlawyer.io.rest.v7.pojo.RestfulMultiValueTagDefinitionV7.class, responseContainer="List")
     @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=400, message="Bad Request")})
     public Response getMultiValueTagDefinitions(@PathParam("entityType") String entityType) {
 

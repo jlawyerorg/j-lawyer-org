@@ -716,7 +716,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Path("/users")
     @GET
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulUserV6.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns all user available in the security who have at least the permission to log in", response=org.jlawyer.io.rest.v6.pojo.RestfulUserV6.class, responseContainer="List")
     public Response getEnabledUsers() {
 
         try {
@@ -749,7 +749,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/users/list")
     @RolesAllowed({"loginRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulUserV6.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Lists all users, including ones without login permission", response=org.jlawyer.io.rest.v6.pojo.RestfulUserV6.class, responseContainer="List")
     public Response listUsers() {
         try {
             InitialContext ic = new InitialContext();
@@ -778,7 +778,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Path("/groups")
     @GET
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulGroupV6.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns all security groups set up in the security", response=org.jlawyer.io.rest.v6.pojo.RestfulGroupV6.class, responseContainer="List")
     public Response listGroups() {
 
         try {
@@ -813,7 +813,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/users/byexternalid/{extId}")
     @RolesAllowed({"loginRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulUserV6.class)
+    @io.swagger.annotations.ApiOperation(value="Returns a users metadata given its external ID", response=org.jlawyer.io.rest.v6.pojo.RestfulUserV6.class)
     @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response getUserByExternalId(@PathParam("extId") String extId) {
         try {
@@ -847,7 +847,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/users/create")
     @RolesAllowed({"adminRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulUserV6.class)
+    @io.swagger.annotations.ApiOperation(value="Creates a new user. No permissions will be granted.", response=org.jlawyer.io.rest.v6.pojo.RestfulUserV6.class)
     public Response createUser(@io.swagger.annotations.ApiParam RestfulUserV6 userData) {
 
         // curl -u admin:a -X PUT -H "Content-Type: application/json" -d '{"name":"via REST", "reason":"wegen REST", "subjectField":"Familienrecht", "notice":"notiz REST","assistant":"user", "lawyer":"admin", "claimNumber":"RESTcn","claimValue":"3.44","custom1":"RESTc1","custom2":"RESTc2","custom3":"RESTc3"}' http://localhost:8080/j-lawyer-io/rest/cases/create
@@ -892,7 +892,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/users/update")
     @RolesAllowed({"adminRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulUserV6.class)
+    @io.swagger.annotations.ApiOperation(value="Updates an existing user. Roles/permissions are preserved and cannot be changed via this endpoint. The principalId in the request body identifies the user to update.", response=org.jlawyer.io.rest.v6.pojo.RestfulUserV6.class)
     @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response updateUser(@io.swagger.annotations.ApiParam RestfulUserV6 userData) {
 
@@ -937,7 +937,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/roles")
     @RolesAllowed({"loginRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulRoleV6.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns all available roles with their descriptions", response=org.jlawyer.io.rest.v6.pojo.RestfulRoleV6.class, responseContainer="List")
     public Response listAllRoles() {
         try {
             ArrayList<RestfulRoleV6> resultList = new ArrayList<>();
@@ -964,7 +964,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/roles/{principalId}")
     @RolesAllowed({"adminRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulRoleV6.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Returns all roles assigned to a specific user", response=org.jlawyer.io.rest.v6.pojo.RestfulRoleV6.class, responseContainer="List")
     @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response getUserRoles(@PathParam("principalId") String principalId) {
         try {
@@ -1003,7 +1003,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/roles/{principalId}")
     @RolesAllowed({"adminRole"})
-    @io.swagger.annotations.ApiOperation(value="", response=org.jlawyer.io.rest.v6.pojo.RestfulRoleV6.class, responseContainer="List")
+    @io.swagger.annotations.ApiOperation(value="Updates the roles of a specific user. The provided list of roles replaces all existing roles. User attributes are preserved.", response=org.jlawyer.io.rest.v6.pojo.RestfulRoleV6.class, responseContainer="List")
     @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response updateUserRoles(@PathParam("principalId") String principalId, @io.swagger.annotations.ApiParam List<RestfulRoleV6> roles) {
         try {
