@@ -3851,6 +3851,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
                         // Get EML via server (single source of truth for EML generation)
                         byte[] data = locator.lookupEmailServiceRemote().getMessageAsEml(msgC.getMailboxId(), msgC.getMessageRef());
+                        if (!withAttachments) {
+                            data = stripAttachmentsFromEml(data);
+                        }
                         Date sentDate = fullMsg.getDate();
 
                         if (attachmentsOnly && atts != null) {
@@ -3927,37 +3930,12 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
                 byte[] data = null;
 
-                if (withAttachments) {
-                    ByteArrayOutputStream bOut = new ByteArrayOutputStream();
-                    m.writeTo(bOut);
-                    bOut.close();
-                    data = bOut.toByteArray();
-                } else {
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    m.writeTo(bos);
-                    bos.close();
-                    SharedByteArrayInputStream bis
-                            = new SharedByteArrayInputStream(bos.toByteArray());
-                    Session session = Session.getDefaultInstance(props, null);
-                    MimeMessage copiedMsg = new MimeMessage(session, bis);
-                    bis.close();
-                    if (copiedMsg.isMimeType("multipart/*")) {
-                        MimeMultipart mmp = (MimeMultipart) copiedMsg.getContent();
-                        for (int i = 0; i < mmp.getCount(); i++) {
-                            BodyPart part = mmp.getBodyPart(i);
-                            if (!StringUtils.isEmpty(part.getFileName())) {
-                                mmp.removeBodyPart(i);
-
-                                i--;
-                            } // +++++ end of if (hasToBeRemoved(part))
-                        } // +++++ end of for (int i = 0; i < mmp.getCount(); i++)
-                        copiedMsg.setContent(mmp);
-                        copiedMsg.saveChanges();
-                    }
-                    ByteArrayOutputStream bOut = new ByteArrayOutputStream();
-                    copiedMsg.writeTo(bOut);
-                    bOut.close();
-                    data = bOut.toByteArray();
+                ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+                m.writeTo(bOut);
+                bOut.close();
+                data = bOut.toByteArray();
+                if (!withAttachments) {
+                    data = stripAttachmentsFromEml(data);
                 }
 
                 if (attachmentsOnly) {
@@ -4070,6 +4048,40 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         } else {
             return false;
         }
+    }
+
+    /**
+     * Returns a copy of the given EML where all file attachments (body parts
+     * with a non-empty filename) have been removed, keeping the message body
+     * and any inline parts. Used when saving a message "without attachments" to
+     * a case. Mirrors the behaviour of the legacy IMAP save path so that both
+     * server-based and IMAP mailboxes strip attachments consistently.
+     *
+     * @param eml the full message as EML bytes
+     * @return the EML bytes without file attachments
+     * @throws Exception if the message cannot be parsed or rewritten
+     */
+    private byte[] stripAttachmentsFromEml(byte[] eml) throws Exception {
+        SharedByteArrayInputStream bis = new SharedByteArrayInputStream(eml);
+        Session session = Session.getDefaultInstance(System.getProperties(), null);
+        MimeMessage copiedMsg = new MimeMessage(session, bis);
+        bis.close();
+        if (copiedMsg.isMimeType("multipart/*")) {
+            MimeMultipart mmp = (MimeMultipart) copiedMsg.getContent();
+            for (int i = 0; i < mmp.getCount(); i++) {
+                BodyPart part = mmp.getBodyPart(i);
+                if (!StringUtils.isEmpty(part.getFileName())) {
+                    mmp.removeBodyPart(i);
+                    i--;
+                }
+            }
+            copiedMsg.setContent(mmp);
+            copiedMsg.saveChanges();
+        }
+        ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+        copiedMsg.writeTo(bOut);
+        bOut.close();
+        return bOut.toByteArray();
     }
 
     @Override
