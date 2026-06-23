@@ -1685,40 +1685,48 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     }
 
     private void addRecipientCandidate(AddressBean ab, PartyTypeBean ptb) {
-        if (ab.getEmail() != null && !("".equals(ab.getEmail()))) {
+        java.util.List<String> emails = ab.getAllEmails();
+        boolean multiple = emails.size() > 1;
+        boolean encrypted = !StringUtils.isEmpty(ab.getEncryptionPwd());
+        for (String email : emails) {
+            // when a contact has more than one address, make the entries distinguishable
+            String label = ab.toDisplayName() + " (" + ptb.getName() + ")";
+            if (multiple) {
+                label = label + " <" + email + ">";
+            }
+
             JCheckBoxMenuItem mi = new JCheckBoxMenuItem();
             mi.setState(false);
-            mi.setText(ab.toDisplayName() + " (" + ptb.getName() + ")");
-            mi.addActionListener(new RecipientsActionListener(ab.getEmail(), this.txtTo, RecipientsActionListener.TYPE_TO));
+            mi.setText(label);
+            mi.addActionListener(new RecipientsActionListener(email, this.txtTo, RecipientsActionListener.TYPE_TO));
             mi.setBackground(new Color(ptb.getColor()));
             mi.setOpaque(true);
-            if (!StringUtils.isEmpty(ab.getEncryptionPwd())) {
+            if (encrypted) {
                 mi.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_lock_black_48dp.png")));
             }
             this.popRecipients.add(mi);
 
             JCheckBoxMenuItem mi2 = new JCheckBoxMenuItem();
             mi2.setState(false);
-            mi2.setText(ab.toDisplayName() + " (" + ptb.getName() + ")");
-            mi2.addActionListener(new RecipientsActionListener(ab.getEmail(), this.txtCc, RecipientsActionListener.TYPE_CC));
+            mi2.setText(label);
+            mi2.addActionListener(new RecipientsActionListener(email, this.txtCc, RecipientsActionListener.TYPE_CC));
             mi2.setOpaque(true);
             mi2.setBackground(new Color(ptb.getColor()));
-            if (!StringUtils.isEmpty(ab.getEncryptionPwd())) {
+            if (encrypted) {
                 mi2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_lock_black_48dp.png")));
             }
             this.popRecipientsCc.add(mi2);
 
             JCheckBoxMenuItem mi3 = new JCheckBoxMenuItem();
             mi3.setState(false);
-            mi3.setText(ab.toDisplayName() + " (" + ptb.getName() + ")");
-            mi3.addActionListener(new RecipientsActionListener(ab.getEmail(), this.txtBcc, RecipientsActionListener.TYPE_BCC));
+            mi3.setText(label);
+            mi3.addActionListener(new RecipientsActionListener(email, this.txtBcc, RecipientsActionListener.TYPE_BCC));
             mi3.setBackground(new Color(ptb.getColor()));
             mi3.setOpaque(true);
-            if (!StringUtils.isEmpty(ab.getEncryptionPwd())) {
+            if (encrypted) {
                 mi3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_lock_black_48dp.png")));
             }
             this.popRecipientsBcc.add(mi3);
-
         }
     }
 

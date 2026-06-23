@@ -890,6 +890,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.cmbCountry.setEnabled(!readOnly);
         this.cmbState.setEnabled(!readOnly);
         this.txtEmail.setEnabled(!readOnly);
+        this.txtEmailHome.setEnabled(!readOnly);
+        this.txtEmailMisc.setEnabled(!readOnly);
         this.txtFax.setEnabled(!readOnly);
         this.txtFirstName.setEnabled(!readOnly);
         this.txtFirstName2.setEnabled(!readOnly);
@@ -983,6 +985,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.cmbCountry.setSelectedItem(dto.getCountry());
         this.cmbState.setSelectedItem(dto.getState());
         this.txtEmail.setText(dto.getEmail());
+        this.txtEmailHome.setText(dto.getEmailHome());
+        this.txtEmailMisc.setText(dto.getEmailMisc());
         this.enableEmailButton();
         this.txtFax.setText(dto.getFax());
         this.txtFirstName.setText(dto.getFirstName());
@@ -1350,6 +1354,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.cmbCountry.setSelectedItem("");
         this.cmbState.setSelectedItem("");
         this.txtEmail.setText("");
+        this.txtEmailHome.setText("");
+        this.txtEmailMisc.setText("");
         this.enableEmailButton();
         this.txtFax.setText("");
         this.txtFirstName.setText("");
@@ -1625,6 +1631,12 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         cmdNewCall2 = new javax.swing.JButton();
         cmdShowWebsite = new javax.swing.JButton();
         cmdNewFax = new javax.swing.JButton();
+        txtEmailHome = new javax.swing.JTextField();
+        jLabel60 = new javax.swing.JLabel();
+        txtEmailMisc = new javax.swing.JTextField();
+        jLabel61 = new javax.swing.JLabel();
+        cmdSendEmailHome = new javax.swing.JButton();
+        cmdSendEmailMisc = new javax.swing.JButton();
         jPanel17 = new javax.swing.JPanel();
         txtBeaSafeId = new javax.swing.JTextField();
         jLabel26 = new javax.swing.JLabel();
@@ -1775,7 +1787,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         jPanel19Layout.setVerticalGroup(
             jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel19Layout.createSequentialGroup()
-                .add(txtNoticePane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 393, Short.MAX_VALUE)
+                .add(txtNoticePane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 398, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -2192,7 +2204,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(rdGenderUndefined))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jPanel24, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(217, Short.MAX_VALUE))
+                .addContainerGap(222, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Person", new javax.swing.ImageIcon(getClass().getResource("/icons16/identity.png")), jPanel7); // NOI18N
@@ -2307,7 +2319,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .add(jPanel20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel25, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(477, Short.MAX_VALUE))
+                .addContainerGap(482, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Organisation", new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_business_black_48dp.png")), jPanel26); // NOI18N
@@ -2429,7 +2441,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jLabel9.setText("Fax:");
 
-        jLabel10.setText("E-Mail:");
+        jLabel10.setText("E-Mail (primär):");
 
         txtEmail.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
@@ -2488,35 +2500,80 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         });
 
+        txtEmailHome.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtEmailHomeKeyPressed(evt);
+            }
+        });
+
+        jLabel60.setText("E-Mail (privat):");
+
+        txtEmailMisc.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtEmailMiscKeyPressed(evt);
+            }
+        });
+
+        jLabel61.setText("E-Mail (sonstige):");
+
+        cmdSendEmailHome.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send.png"))); // NOI18N
+        cmdSendEmailHome.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSendEmailHomeActionPerformed(evt);
+            }
+        });
+
+        cmdSendEmailMisc.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send.png"))); // NOI18N
+        cmdSendEmailMisc.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSendEmailMiscActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel3Layout.createSequentialGroup()
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel9)
-                    .add(jLabel8)
-                    .add(jLabel10)
-                    .add(jLabel11)
-                    .add(jLabel19))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, txtEmail, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 869, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, txtPhone)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, txtFax)
-                    .add(txtMobile)
-                    .add(txtWebsite))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel3Layout.createSequentialGroup()
                         .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(cmdNewCall2)
-                            .add(cmdNewCall1)
-                            .add(cmdSendEmail))
+                            .add(jLabel9)
+                            .add(jLabel8)
+                            .add(jLabel10)
+                            .add(jLabel19))
+                        .add(18, 18, 18)
+                        .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(txtEmail, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1011, Short.MAX_VALUE)
+                            .add(txtPhone)
+                            .add(txtFax)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtMobile))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdNewSms))
-                    .add(cmdShowWebsite)
-                    .add(cmdNewFax))
+                        .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel3Layout.createSequentialGroup()
+                                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                    .add(cmdNewCall2)
+                                    .add(cmdNewCall1)
+                                    .add(cmdSendEmail))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdNewSms))
+                            .add(cmdNewFax)))
+                    .add(jPanel3Layout.createSequentialGroup()
+                        .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jLabel11)
+                            .add(jLabel60)
+                            .add(jLabel61))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                            .add(org.jdesktop.layout.GroupLayout.LEADING, txtEmailHome)
+                            .add(org.jdesktop.layout.GroupLayout.LEADING, txtEmailMisc)
+                            .add(org.jdesktop.layout.GroupLayout.LEADING, txtWebsite))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(cmdSendEmailMisc)
+                            .add(cmdSendEmailHome)
+                            .add(cmdShowWebsite))
+                        .add(34, 34, 34)))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
@@ -2541,16 +2598,29 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(cmdNewSms)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdSendEmail)
+                    .add(cmdSendEmail)
                     .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(jLabel10)
                         .add(txtEmail, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(jLabel11)
-                    .add(txtWebsite, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(cmdShowWebsite))
-                .addContainerGap(13, Short.MAX_VALUE))
+                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(cmdSendEmailHome)
+                    .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(txtEmailHome, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(jLabel60)))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(txtEmailMisc, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(jLabel61))
+                    .add(cmdSendEmailMisc))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(cmdShowWebsite)
+                    .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(jLabel11)
+                        .add(txtWebsite, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jPanel17.setBorder(javax.swing.BorderFactory.createTitledBorder("beA / EGVP / beBPo / eBO / beN / beSt / MJP"));
@@ -2628,7 +2698,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(183, Short.MAX_VALUE))
+                .addContainerGap(121, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Kontakt", new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_home_black_48dp.png")), jPanel18); // NOI18N
@@ -2955,7 +3025,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .add(jPanel11, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel12, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(46, Short.MAX_VALUE))
+                .addContainerGap(51, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Bank / Versicherung", new javax.swing.ImageIcon(getClass().getResource("/icons/money.png")), jPanel8); // NOI18N
@@ -3015,7 +3085,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(jPanel9Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(648, Short.MAX_VALUE))
+                .addContainerGap(653, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Textbausteine", new javax.swing.ImageIcon(getClass().getResource("/icons/folder_documents.png")), jPanel9); // NOI18N
@@ -3067,7 +3137,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .add(lblCustom3)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(475, Short.MAX_VALUE))
+                .addContainerGap(480, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Eigene", new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png")), jPanel15); // NOI18N
@@ -3098,7 +3168,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
             jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel10Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 765, Short.MAX_VALUE)
+                .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 770, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -3375,24 +3445,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     }//GEN-LAST:event_jTabbedPane1StateChanged
 
     private void cmdSendEmailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendEmailActionPerformed
-        SendEmailFrame dlg = new SendEmailFrame(false);
-        dlg.setTo(this.txtEmail.getText());
-
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-
-            // we do not know what role this person has - so put it as all three types
-            List<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
-            for (PartyTypeBean ptb : allPartyTypes) {
-                dlg.addParty(dto, ptb, true);
-            }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Beteiligtentypen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
-
-        FrameUtils.centerFrame(dlg, null);
-        EditorsRegistry.getInstance().registerFrame(dlg);
-        dlg.setVisible(true);
+        this.sendEmailTo(this.txtEmail.getText());
     }//GEN-LAST:event_cmdSendEmailActionPerformed
 
     private void txtEmailKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtEmailKeyPressed
@@ -3861,6 +3914,43 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         }
     }//GEN-LAST:event_cmdPopuplateAccountOwnerActionPerformed
 
+    private void cmdSendEmailHomeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendEmailHomeActionPerformed
+        this.sendEmailTo(this.txtEmailHome.getText());
+    }//GEN-LAST:event_cmdSendEmailHomeActionPerformed
+
+    private void cmdSendEmailMiscActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendEmailMiscActionPerformed
+        this.sendEmailTo(this.txtEmailMisc.getText());
+    }//GEN-LAST:event_cmdSendEmailMiscActionPerformed
+
+    private void txtEmailHomeKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtEmailHomeKeyPressed
+        this.enableEmailButton();
+    }//GEN-LAST:event_txtEmailHomeKeyPressed
+
+    private void txtEmailMiscKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtEmailMiscKeyPressed
+        this.enableEmailButton();
+    }//GEN-LAST:event_txtEmailMiscKeyPressed
+
+    private void sendEmailTo(String recipient) {
+        SendEmailFrame dlg = new SendEmailFrame(false);
+        dlg.setTo(recipient);
+
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+
+            // we do not know what role this person has - so put it as all three types
+            List<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+            for (PartyTypeBean ptb : allPartyTypes) {
+                dlg.addParty(dto, ptb, true);
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Beteiligtentypen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+
+        FrameUtils.centerFrame(dlg, null);
+        EditorsRegistry.getInstance().registerFrame(dlg);
+        dlg.setVisible(true);
+    }
+
     private void updateAge() {
         Date birth = null;
         Date death = null;
@@ -3943,11 +4033,9 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     }
 
     private void enableEmailButton() {
-        if (this.txtEmail.getText().length() > 0) {
-            this.cmdSendEmail.setEnabled(true);
-        } else {
-            this.cmdSendEmail.setEnabled(false);
-        }
+        this.cmdSendEmail.setEnabled(this.txtEmail.getText().length() > 0);
+        this.cmdSendEmailHome.setEnabled(this.txtEmailHome.getText().length() > 0);
+        this.cmdSendEmailMisc.setEnabled(this.txtEmailMisc.getText().length() > 0);
     }
 
     private void fillCasesForContactPanel(Collection<ArchiveFileAddressesBean> allCases, Hashtable<String, PartyTypeBean> partyTypes) {
@@ -4063,6 +4151,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JButton cmdSelectSepaSince;
     private javax.swing.JButton cmdSendBea;
     private javax.swing.JButton cmdSendEmail;
+    private javax.swing.JButton cmdSendEmailHome;
+    private javax.swing.JButton cmdSendEmailMisc;
     private javax.swing.JButton cmdShowBeaIdentity;
     private javax.swing.JButton cmdShowWebsite;
     protected javax.swing.JButton cmdToEditMode;
@@ -4122,6 +4212,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JLabel jLabel58;
     private javax.swing.JLabel jLabel59;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel60;
+    private javax.swing.JLabel jLabel61;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
@@ -4199,6 +4291,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JTextField txtDepartment;
     private javax.swing.JTextField txtDistrict;
     protected javax.swing.JTextField txtEmail;
+    private javax.swing.JTextField txtEmailHome;
+    private javax.swing.JTextField txtEmailMisc;
     protected javax.swing.JTextField txtFax;
     protected javax.swing.JTextField txtFirstName;
     private javax.swing.JTextField txtFirstName2;
@@ -4285,6 +4379,12 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
             return true;
         }
         if (!StringUtils.equals(dto.getEmail(), this.txtEmail.getText())) {
+            return true;
+        }
+        if (!StringUtils.equals(dto.getEmailHome(), this.txtEmailHome.getText())) {
+            return true;
+        }
+        if (!StringUtils.equals(dto.getEmailMisc(), this.txtEmailMisc.getText())) {
             return true;
         }
         if (!StringUtils.equals(dto.getFax(), this.txtFax.getText())) {
@@ -4486,6 +4586,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
             adr.setState("");
         }
         adr.setEmail(this.txtEmail.getText());
+        adr.setEmailHome(this.txtEmailHome.getText());
+        adr.setEmailMisc(this.txtEmailMisc.getText());
         adr.setFax(this.txtFax.getText());
         adr.setFirstName(this.txtFirstName.getText());
         adr.setFirstName2(this.txtFirstName2.getText());

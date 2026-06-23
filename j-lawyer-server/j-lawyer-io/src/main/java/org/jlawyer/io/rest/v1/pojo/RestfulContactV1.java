@@ -711,6 +711,8 @@ public class RestfulContactV1 {
     private String bankAccount=null;
     private String bankAccountOwner=null;
     private String email=null;
+    private String emailHome=null;
+    private String emailMisc=null;
     private String website=null;
     private String creator=null;
     private String lastModifier=null;
@@ -744,6 +746,8 @@ public class RestfulContactV1 {
         ad.setCustom3(this.getCustom3());
         ad.setDepartment(this.getDepartment());
         ad.setEmail(this.getEmail());
+        ad.setEmailHome(this.getEmailHome());
+        ad.setEmailMisc(this.getEmailMisc());
         ad.setEncryptionPwd(this.getEncryptionPwd());
         ad.setFax(this.getFax());
         ad.setFirstName(this.getFirstName());
@@ -794,6 +798,8 @@ public class RestfulContactV1 {
         ad.setCustom3(a.getCustom3());
         ad.setDepartment(a.getDepartment());
         ad.setEmail(a.getEmail());
+        ad.setEmailHome(a.getEmailHome());
+        ad.setEmailMisc(a.getEmailMisc());
         ad.setEncryptionPwd(a.getEncryptionPwd());
         ad.setFax(a.getFax());
         ad.setFirstName(a.getFirstName());
@@ -1298,6 +1304,34 @@ public class RestfulContactV1 {
      */
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    /**
+     * @return the home e-mail address
+     */
+    public String getEmailHome() {
+        return emailHome;
+    }
+
+    /**
+     * @param emailHome the home e-mail address to set
+     */
+    public void setEmailHome(String emailHome) {
+        this.emailHome = emailHome;
+    }
+
+    /**
+     * @return the misc e-mail address
+     */
+    public String getEmailMisc() {
+        return emailMisc;
+    }
+
+    /**
+     * @param emailMisc the misc e-mail address to set
+     */
+    public void setEmailMisc(String emailMisc) {
+        this.emailMisc = emailMisc;
     }
 
     /**

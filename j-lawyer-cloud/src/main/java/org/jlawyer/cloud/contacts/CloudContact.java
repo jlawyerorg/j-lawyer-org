@@ -694,6 +694,8 @@ public class CloudContact implements Serializable {
     private String mobile;
     private String fax;
     private String email;
+    private String emailHome;
+    private String emailMisc;
     private String website;
     private String birthDate;
     
@@ -818,6 +820,22 @@ public class CloudContact implements Serializable {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getEmailHome() {
+        return emailHome;
+    }
+
+    public void setEmailHome(String emailHome) {
+        this.emailHome = emailHome;
+    }
+
+    public String getEmailMisc() {
+        return emailMisc;
+    }
+
+    public void setEmailMisc(String emailMisc) {
+        this.emailMisc = emailMisc;
     }
 
     public String getWebsite() {

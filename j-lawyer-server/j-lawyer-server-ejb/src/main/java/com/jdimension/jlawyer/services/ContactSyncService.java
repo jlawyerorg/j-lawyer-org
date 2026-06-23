@@ -868,6 +868,8 @@ public class ContactSyncService implements ContactSyncServiceLocal {
         c.setDepartment(contact.getDepartment());
         c.setDistrict(contact.getDistrict());
         c.setEmail(contact.getEmail());
+        c.setEmailHome(contact.getEmailHome());
+        c.setEmailMisc(contact.getEmailMisc());
         c.setFax(contact.getFax());
         c.setFirstName(contact.getFirstName());
         c.setGender(contact.getGender());

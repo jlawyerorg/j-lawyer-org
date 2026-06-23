@@ -866,7 +866,7 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
         QuickAddressSearchRowIdentifier id = (QuickAddressSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
 
         AddressBean ab = id.getAddressDTO();
-        String email = ab.getEmail();
+        String email = ab.getAnyEmail();
         if (email == null) {
             email = "";
         }

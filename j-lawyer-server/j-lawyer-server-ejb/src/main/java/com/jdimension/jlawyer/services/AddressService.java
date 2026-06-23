@@ -725,7 +725,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     @Inject
     Event<AddressTagChangedEvent> tagChangedEvent;
 
-    private static final String PS_SEARCHENHANCED_2 = "select id from contacts where ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(department) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(city) like ? or ucase(birthName) like ? or zipCode like ?";
+    private static final String PS_SEARCHENHANCED_2 = "select id from contacts where ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(department) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(email_home) like ? or ucase(email_misc) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(city) like ? or ucase(birthName) like ? or zipCode like ?";
 
     @Override
     @RolesAllowed({"readAddressRole"})
@@ -855,7 +855,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
         JDBCUtils utils = new JDBCUtils();
         ResultSet rs = null;
         ArrayList<AddressBean> list = new ArrayList<>();
-        try ( Connection con = utils.getConnection();  PreparedStatement st = con.prepareStatement("select id from contacts where ucase(name) like ? or ucase(firstname) like ? or ucase(department) like ? or ucase(company) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(district) like ? or ucase(birthName) like ? or zipCode like ?")) {
+        try ( Connection con = utils.getConnection();  PreparedStatement st = con.prepareStatement("select id from contacts where ucase(name) like ? or ucase(firstname) like ? or ucase(department) like ? or ucase(company) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(email_home) like ? or ucase(email_misc) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(district) like ? or ucase(birthName) like ? or zipCode like ?")) {
 
             String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
             st.setString(1, wildCard);
@@ -872,6 +872,8 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             st.setString(12, wildCard);
             st.setString(13, wildCard);
             st.setString(14, wildCard);
+            st.setString(15, wildCard);
+            st.setString(16, wildCard);
             rs = st.executeQuery();
 
             while (rs.next()) {
@@ -1162,7 +1164,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                 }
                 inClause = inClause.replaceFirst(",", "");
 
-                st = con.prepareStatement("select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(department) like ? or ucase(company) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(city) like ? or ucase(birthName) like ? or zipCode like ?) and (contact_tags.tagName in (" + inClause + ") and contact_tags.addressKey=contacts.id)");
+                st = con.prepareStatement("select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(department) like ? or ucase(company) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(email_home) like ? or ucase(email_misc) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(city) like ? or ucase(birthName) like ? or zipCode like ?) and (contact_tags.tagName in (" + inClause + ") and contact_tags.addressKey=contacts.id)");
                 String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
                 st.setString(1, wildCard);
                 st.setString(2, wildCard);
@@ -1178,7 +1180,9 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                 st.setString(12, wildCard);
                 st.setString(13, wildCard);
                 st.setString(14, wildCard);
-                int index = 15;
+                st.setString(15, wildCard);
+                st.setString(16, wildCard);
+                int index = 17;
                 for (String t : tagName) {
                     st.setString(index, t);
                     index = index + 1;
@@ -1200,6 +1204,8 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                 st.setString(12, wildCard);
                 st.setString(13, wildCard);
                 st.setString(14, wildCard);
+                st.setString(15, wildCard);
+                st.setString(16, wildCard);
 
             }
             rs = st.executeQuery();
@@ -1293,7 +1299,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                 }
                 inClause = inClause.replaceFirst(",", "");
 
-                st = con.prepareStatement("select addressKey, IF(tag_value IS NOT NULL, CONCAT(tagName, ': ', tag_value), tagName) from contact_tags where addressKey in (" + "select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(department) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(city) like ? or ucase(birthName) like ?) and (contact_tags.tagName in (" + inClause + ") and contact_tags.addressKey=contacts.id)" + ")");
+                st = con.prepareStatement("select addressKey, IF(tag_value IS NOT NULL, CONCAT(tagName, ': ', tag_value), tagName) from contact_tags where addressKey in (" + "select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(department) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(email_home) like ? or ucase(email_misc) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(city) like ? or ucase(birthName) like ?) and (contact_tags.tagName in (" + inClause + ") and contact_tags.addressKey=contacts.id)" + ")");
                 String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
                 st.setString(1, wildCard);
                 st.setString(2, wildCard);
@@ -1308,8 +1314,10 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                 st.setString(11, wildCard);
                 st.setString(12, wildCard);
                 st.setString(13, wildCard);
+                st.setString(14, wildCard);
+                st.setString(15, wildCard);
 
-                int index = 14;
+                int index = 16;
                 for (String t : tagName) {
                     st.setString(index, t);
                     index = index + 1;
@@ -1331,6 +1339,8 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                 st.setString(12, wildCard);
                 st.setString(13, wildCard);
                 st.setString(14, wildCard);
+                st.setString(15, wildCard);
+                st.setString(16, wildCard);
             }
             rs = st.executeQuery();
 
@@ -1477,10 +1487,10 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                 List<String> params = new ArrayList<>();
                 String tagCond = buildTagCondition("contact_tags", tagName, tagValues, params);
 
-                st = con.prepareStatement("select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(department) like ? or ucase(company) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(city) like ? or ucase(birthName) like ? or zipCode like ?) and (" + tagCond + " and contact_tags.addressKey=contacts.id)");
+                st = con.prepareStatement("select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(department) like ? or ucase(company) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(email_home) like ? or ucase(email_misc) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(city) like ? or ucase(birthName) like ? or zipCode like ?) and (" + tagCond + " and contact_tags.addressKey=contacts.id)");
                 String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
                 int index = 1;
-                for (int i = 0; i < 14; i++) {
+                for (int i = 0; i < 16; i++) {
                     st.setString(index++, wildCard);
                 }
                 for (String p : params) {
@@ -1489,7 +1499,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             } else {
                 st = con.prepareStatement(PS_SEARCHENHANCED_2);
                 String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
-                for (int i = 1; i <= 14; i++) {
+                for (int i = 1; i <= 16; i++) {
                     st.setString(i, wildCard);
                 }
             }
@@ -1562,10 +1572,10 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                 List<String> params = new ArrayList<>();
                 String tagCond = buildTagCondition("contact_tags", tagName, tagValues, params);
 
-                st = con.prepareStatement("select addressKey, IF(tag_value IS NOT NULL, CONCAT(tagName, ': ', tag_value), tagName) from contact_tags where addressKey in (" + "select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(department) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(city) like ? or ucase(birthName) like ?) and (" + tagCond + " and contact_tags.addressKey=contacts.id)" + ")");
+                st = con.prepareStatement("select addressKey, IF(tag_value IS NOT NULL, CONCAT(tagName, ': ', tag_value), tagName) from contact_tags where addressKey in (" + "select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(department) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(email_home) like ? or ucase(email_misc) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(city) like ? or ucase(birthName) like ?) and (" + tagCond + " and contact_tags.addressKey=contacts.id)" + ")");
                 String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
                 int index = 1;
-                for (int i = 0; i < 13; i++) {
+                for (int i = 0; i < 15; i++) {
                     st.setString(index++, wildCard);
                 }
                 for (String p : params) {
@@ -1574,7 +1584,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             } else {
                 st = con.prepareStatement("select addressKey, IF(tag_value IS NOT NULL, CONCAT(tagName, ': ', tag_value), tagName) from contact_tags where addressKey in (" + PS_SEARCHENHANCED_2 + ")");
                 String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
-                for (int i = 1; i <= 14; i++) {
+                for (int i = 1; i <= 16; i++) {
                     st.setString(i, wildCard);
                 }
             }

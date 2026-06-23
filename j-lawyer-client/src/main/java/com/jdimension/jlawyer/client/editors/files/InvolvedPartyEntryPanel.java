@@ -1307,7 +1307,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
     private void mnuSendEmailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendEmailActionPerformed
 
-        if (this.a.getEmail() == null || "".equals(this.a.getEmail())) {
+        if (this.a.getAllEmails().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine E-Mail-Adresse erfasst.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
         } else {
@@ -1319,7 +1319,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
             SendEmailFrame dlg = new SendEmailFrame(false);
             dlg.setArchiveFile(this.caseDto, null);
-            dlg.setTo(this.a.getEmail());
+            dlg.setTo(this.a.getAnyEmail());
             ArrayList<ArchiveFileAddressesBean> involved = this.container.getInvolvedParties();
             for (ArchiveFileAddressesBean aab : involved) {
                 dlg.addParty(aab, true);

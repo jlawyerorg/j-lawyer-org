@@ -671,6 +671,7 @@ import ezvcard.VCardVersion;
 import ezvcard.parameter.EmailType;
 import ezvcard.parameter.TelephoneType;
 import ezvcard.property.Address;
+import ezvcard.property.Email;
 import ezvcard.property.Birthday;
 import ezvcard.property.Deathdate;
 import ezvcard.property.Organization;
@@ -983,8 +984,14 @@ public class NextcloudContactsConnector {
         if(c.getFax()!=null)
             v.addTelephoneNumber(c.getFax(), TelephoneType.FAX);
 
-        if(c.getEmail()!=null) 
-            v.addEmail(c.getEmail(), EmailType.HOME);
+        if(c.getEmail()!=null) {
+            Email pref = v.addEmail(c.getEmail(), EmailType.WORK);
+            pref.setPref(1);
+        }
+        if(c.getEmailHome()!=null)
+            v.addEmail(c.getEmailHome(), EmailType.HOME);
+        if(c.getEmailMisc()!=null)
+            v.addEmail(c.getEmailMisc());
 
         v.setStructuredName(n);
 

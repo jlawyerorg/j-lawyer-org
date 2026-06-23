@@ -813,6 +813,10 @@ public class AddressBean implements Serializable {
     
     @Column(name = "email")
     private String email;
+    @Column(name = "email_home")
+    private String emailHome;
+    @Column(name = "email_misc")
+    private String emailMisc;
     @Column(name = "website")
     private String website;
     @Column(name = "creator")
@@ -1103,6 +1107,61 @@ public class AddressBean implements Serializable {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getEmailHome() {
+        return emailHome;
+    }
+
+    public void setEmailHome(String emailHome) {
+        this.emailHome = emailHome;
+    }
+
+    public String getEmailMisc() {
+        return emailMisc;
+    }
+
+    public void setEmailMisc(String emailMisc) {
+        this.emailMisc = emailMisc;
+    }
+
+    /**
+     * Returns the first populated e-mail address of this contact in the order
+     * primary, home, misc. Returns an empty string if none is set.
+     *
+     * @return the first non-empty e-mail address, or an empty string
+     */
+    public String getAnyEmail() {
+        if (this.email != null && !this.email.trim().isEmpty()) {
+            return this.email;
+        }
+        if (this.emailHome != null && !this.emailHome.trim().isEmpty()) {
+            return this.emailHome;
+        }
+        if (this.emailMisc != null && !this.emailMisc.trim().isEmpty()) {
+            return this.emailMisc;
+        }
+        return "";
+    }
+
+    /**
+     * Returns all populated e-mail addresses of this contact in the order
+     * primary, home, misc.
+     *
+     * @return a list of the non-empty e-mail addresses (possibly empty)
+     */
+    public List<String> getAllEmails() {
+        List<String> result = new java.util.ArrayList<>();
+        if (this.email != null && !this.email.trim().isEmpty()) {
+            result.add(this.email);
+        }
+        if (this.emailHome != null && !this.emailHome.trim().isEmpty()) {
+            result.add(this.emailHome);
+        }
+        if (this.emailMisc != null && !this.emailMisc.trim().isEmpty()) {
+            result.add(this.emailMisc);
+        }
+        return result;
     }
 
     public String getWebsite() {

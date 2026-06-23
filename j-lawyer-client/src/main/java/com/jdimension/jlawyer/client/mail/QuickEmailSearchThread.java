@@ -728,7 +728,7 @@ public class QuickEmailSearchThread implements Runnable {
         String[] colNames=new String[] {"Name", "Vorname", "Unternehmen", "PLZ", "Ort", "E-Mail", "", "SafeID"};
         QuickAddressSearchTableModel model=new QuickAddressSearchTableModel(colNames, 0);
         for(int i=0;i<dtos.length;i++) {
-            Object[] row=new Object[]{new QuickAddressSearchRowIdentifier(dtos[i]), dtos[i].getFirstName(), dtos[i].getCompany(), dtos[i].getZipCode(), dtos[i].getCity(), dtos[i].getEmail(), !StringUtils.isEmpty(dtos[i].getEncryptionPwd()) && !StringUtils.isEmpty(dtos[i].getEmail()), dtos[i].getBeaSafeId()};
+            Object[] row=new Object[]{new QuickAddressSearchRowIdentifier(dtos[i]), dtos[i].getFirstName(), dtos[i].getCompany(), dtos[i].getZipCode(), dtos[i].getCity(), dtos[i].getAnyEmail(), !StringUtils.isEmpty(dtos[i].getEncryptionPwd()) && !StringUtils.isEmpty(dtos[i].getAnyEmail()), dtos[i].getBeaSafeId()};
             model.addRow(row);
         }
         if(dtos.length>0) {

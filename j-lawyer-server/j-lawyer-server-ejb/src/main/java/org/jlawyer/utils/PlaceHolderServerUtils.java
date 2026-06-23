@@ -857,7 +857,7 @@ public class PlaceHolderServerUtils extends PlaceHolders {
                 placeHolders.put(getPlaceHolderForType(_FAX, ptb.getPlaceHolder()), val(selected.getFax()));
             }
             if (placeHolders.containsKey(getPlaceHolderForType(_EMAIL, ptb.getPlaceHolder()))) {
-                placeHolders.put(getPlaceHolderForType(_EMAIL, ptb.getPlaceHolder()), val(selected.getEmail()));
+                placeHolders.put(getPlaceHolderForType(_EMAIL, ptb.getPlaceHolder()), val(selected.getAnyEmail()));
             }
             if (placeHolders.containsKey(getPlaceHolderForType(_WWW, ptb.getPlaceHolder()))) {
                 placeHolders.put(getPlaceHolderForType(_WWW, ptb.getPlaceHolder()), val(selected.getWebsite()));

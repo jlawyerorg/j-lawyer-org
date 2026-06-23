@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import ezvcard.Ezvcard;
 import ezvcard.VCard;
+import ezvcard.parameter.EmailType;
 import ezvcard.parameter.TelephoneType;
 import ezvcard.property.Address;
 import ezvcard.property.Email;
@@ -999,12 +1000,43 @@ public class ImportContactsDialog extends javax.swing.JDialog {
                     row.add(ab.getMobile());
                     row.add(ab.getFax());
 
-                    List<Email> emL = v.getEmails();
-                    for (Email e : emL) {
-                        //e.getTypes(); // home, internet, work
-                        //e.getValue(); // emailadresse
-                        ab.setEmail(e.getValue());
+                    // distribute the vCard EMAIL properties across the three address slots
+                    // (0=primary, 1=home, 2=misc): WORK/PREF -> primary, HOME -> home,
+                    // anything else -> next free slot; typed addresses keep their slot if
+                    // free, leftovers fill the first free slot starting at primary so no
+                    // address is lost; a 4th+ address is dropped.
+                    String[] emailSlots = new String[3];
+                    List<String> emailLeftovers = new ArrayList<>();
+                    for (Email e : v.getEmails()) {
+                        String value = e.getValue();
+                        if (value == null || value.trim().isEmpty()) {
+                            continue;
+                        }
+                        int preferredSlot = -1;
+                        if (e.getPref() != null || e.getTypes().contains(EmailType.WORK) || e.getTypes().contains(EmailType.PREF)) {
+                            preferredSlot = 0;
+                        } else if (e.getTypes().contains(EmailType.HOME)) {
+                            preferredSlot = 1;
+                        }
+                        if (preferredSlot >= 0 && emailSlots[preferredSlot] == null) {
+                            emailSlots[preferredSlot] = value;
+                        } else {
+                            emailLeftovers.add(value);
+                        }
                     }
+                    for (String value : emailLeftovers) {
+                        if (emailSlots[0] == null) {
+                            emailSlots[0] = value;
+                        } else if (emailSlots[1] == null) {
+                            emailSlots[1] = value;
+                        } else if (emailSlots[2] == null) {
+                            emailSlots[2] = value;
+                        }
+                        // else: no free slot left, address is dropped
+                    }
+                    ab.setEmail(emailSlots[0]);
+                    ab.setEmailHome(emailSlots[1]);
+                    ab.setEmailMisc(emailSlots[2]);
                     row.add(ab.getEmail());
 
                     if (v.getUrls() != null && v.getUrls().size() > 0) {

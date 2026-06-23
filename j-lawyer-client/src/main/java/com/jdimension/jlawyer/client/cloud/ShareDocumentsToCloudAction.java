@@ -814,7 +814,7 @@ public class ShareDocumentsToCloudAction extends ProgressableAction {
                         dlg.setArchiveFile(caseDto, null);
                     }
                     if (recipient != null) {
-                        dlg.setTo(recipient.getEmail());
+                        dlg.setTo(recipient.getAnyEmail());
                     }
                     if (parties != null) {
                         ArrayList<ArchiveFileAddressesBean> involved = parties;

@@ -2218,6 +2218,12 @@ public class ToolRegistry {
                 if (addr.getEmail() != null && !addr.getEmail().isEmpty()) {
                     sb.append(", \"email\": \"").append(ToolJsonUtils.escapeJson(addr.getEmail())).append("\"");
                 }
+                if (addr.getEmailHome() != null && !addr.getEmailHome().isEmpty()) {
+                    sb.append(", \"emailHome\": \"").append(ToolJsonUtils.escapeJson(addr.getEmailHome())).append("\"");
+                }
+                if (addr.getEmailMisc() != null && !addr.getEmailMisc().isEmpty()) {
+                    sb.append(", \"emailMisc\": \"").append(ToolJsonUtils.escapeJson(addr.getEmailMisc())).append("\"");
+                }
                 if (addr.getPhone() != null && !addr.getPhone().isEmpty()) {
                     sb.append(", \"phone\": \"").append(ToolJsonUtils.escapeJson(addr.getPhone())).append("\"");
                 }
@@ -4465,6 +4471,12 @@ public class ToolRegistry {
         }
         if (a.getEmail() != null && !a.getEmail().isEmpty()) {
             sb.append(", \"email\": \"").append(ToolJsonUtils.escapeJson(a.getEmail())).append("\"");
+        }
+        if (a.getEmailHome() != null && !a.getEmailHome().isEmpty()) {
+            sb.append(", \"emailHome\": \"").append(ToolJsonUtils.escapeJson(a.getEmailHome())).append("\"");
+        }
+        if (a.getEmailMisc() != null && !a.getEmailMisc().isEmpty()) {
+            sb.append(", \"emailMisc\": \"").append(ToolJsonUtils.escapeJson(a.getEmailMisc())).append("\"");
         }
         if (a.getPhone() != null && !a.getPhone().isEmpty()) {
             sb.append(", \"phone\": \"").append(ToolJsonUtils.escapeJson(a.getPhone())).append("\"");

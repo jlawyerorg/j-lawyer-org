@@ -892,6 +892,8 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             currentContact.setCustom3(contact.getCustom3());
             currentContact.setDepartment(contact.getDepartment());
             currentContact.setEmail(contact.getEmail());
+            currentContact.setEmailHome(contact.getEmailHome());
+            currentContact.setEmailMisc(contact.getEmailMisc());
             currentContact.setEncryptionPwd(contact.getEncryptionPwd());
             currentContact.setFax(contact.getFax());
             currentContact.setFirstName(contact.getFirstName());
