@@ -660,71 +660,15 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
-package org.jlawyer.io.rest.v1;
+ */
+package org.jlawyer.io.rest.v8;
 
-import org.jlawyer.io.rest.v2.CasesEndpointV2;
-import java.util.HashSet;
-import java.util.Set;
-import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.core.Application;
-import org.jlawyer.io.rest.v2.ContactsEndpointV2;
-import org.jlawyer.io.rest.v3.CasesEndpointV3;
-import org.jlawyer.io.rest.v4.CalendarEndpointV4;
-import org.jlawyer.io.rest.v4.CasesEndpointV4;
-import org.jlawyer.io.rest.v5.CasesEndpointV5;
-import org.jlawyer.io.rest.v5.ContactsEndpointV5;
-import org.jlawyer.io.rest.v6.CasesEndpointV6;
-import org.jlawyer.io.rest.v6.DataBucketEndpointV6;
-import org.jlawyer.io.rest.v6.SecurityEndpointV6;
-import org.jlawyer.io.rest.v6.TemplatesEndpointV6;
-import org.jlawyer.io.rest.v7.AdministrationEndpointV7;
-import org.jlawyer.io.rest.v7.CasesEndpointV7;
-import org.jlawyer.io.rest.v7.ConfigurationEndpointV7;
-import org.jlawyer.io.rest.v7.InvoicesEndpointV7;
-import org.jlawyer.io.rest.v7.MessagingEndpointV7;
-import org.jlawyer.io.rest.v7.ReportsEndpointV7;
-import org.jlawyer.io.rest.v7.EmailEndpointV7;
-import org.jlawyer.io.rest.v7.WebHooksEndpointV7;
-import org.jlawyer.io.rest.v8.BeaEndpointV8;
-import org.jlawyer.io.rest.v8.PaymentsEndpointV8;
-import org.jlawyer.io.rest.v8.SearchEndpointV8;
-import org.jlawyer.io.rest.v8.TimesheetsEndpointV8;
+import javax.ejb.Local;
+import javax.ws.rs.core.Response;
 
-@ApplicationPath("/rest")
-public class EndpointServiceLocator extends Application
-{
-    @Override
-    public Set<Class<?>> getClasses()
-    {
-        Set<Class<?>> s = new HashSet<>();
-        s.add(SecurityEndpointV1.class);
-        s.add(CasesEndpointV1.class);
-        s.add(CasesEndpointV2.class);
-        s.add(CasesEndpointV3.class);
-        s.add(CasesEndpointV4.class);
-        s.add(ContactsEndpointV1.class);
-        s.add(ContactsEndpointV2.class);
-        s.add(FormsEndpointV1.class);
-        s.add(CalendarEndpointV4.class);
-        s.add(CasesEndpointV5.class);
-        s.add(ContactsEndpointV5.class);
-        s.add(CasesEndpointV6.class);
-        s.add(SecurityEndpointV6.class);
-        s.add(DataBucketEndpointV6.class);
-        s.add(TemplatesEndpointV6.class);
-        s.add(ConfigurationEndpointV7.class);
-        s.add(CasesEndpointV7.class);
-        s.add(MessagingEndpointV7.class);
-        s.add(AdministrationEndpointV7.class);
-        s.add(WebHooksEndpointV7.class);
-        s.add(InvoicesEndpointV7.class);
-        s.add(ReportsEndpointV7.class);
-        s.add(EmailEndpointV7.class);
-        s.add(BeaEndpointV8.class);
-        s.add(PaymentsEndpointV8.class);
-        s.add(SearchEndpointV8.class);
-        s.add(TimesheetsEndpointV8.class);
-        return s;
-    }
+@Local
+public interface SearchEndpointLocalV8 {
+
+    Response searchFulltext(String query, int maxDocs);
+
 }

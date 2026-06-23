@@ -663,7 +663,10 @@
  */
 package com.jdimension.jlawyer.services;
 
+import java.util.ArrayList;
 import javax.ejb.Local;
+import org.jlawyer.search.SearchException;
+import org.jlawyer.search.SearchHit;
 
 /**
  *
@@ -671,5 +674,7 @@ import javax.ejb.Local;
  */
 @Local
 public interface SearchServiceLocal {
-    
+
+    ArrayList<SearchHit> search(String queryString, int maxDocs) throws SearchException;
+
 }
