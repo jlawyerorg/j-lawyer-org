@@ -704,6 +704,7 @@ public class WaitForDocumentAction extends ProgressableAction {
 
     private boolean isOpenForWrite(String docId) {
         DocumentObserver observer = DocumentObserver.getInstance();
+        observer.observe();
         if (observer.isDocumentOpen(docId)) {
             return !(observer.isDocumentReadOnly(docId));
         }
@@ -726,6 +727,10 @@ public class WaitForDocumentAction extends ProgressableAction {
             open = this.isOpenForWrite(doc.getId());
             if (open) {
                 ObservedDocument odoc = DocumentObserver.getInstance().getDocumentById(doc.getId());
+                if (odoc == null) {
+                    this.proceed = true;
+                    return true;
+                }
                 if (odoc.getStatus() != ObservedDocument.STATUS_CLOSING) {
                     Thread.sleep(500);
 

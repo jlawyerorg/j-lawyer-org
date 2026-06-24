@@ -698,6 +698,12 @@ public class WindowsOfficeLauncher extends OfficeLauncher {
                 odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
                 observer.addDocument(odoc);
                 
+                if (JavaUnoOfficeMonitor.launch(oooBinary, url, odoc)) {
+                    log.debug("observer status open " + odoc.getName() + " via UNO");
+                    odoc.setStatus(ObservedDocument.STATUS_OPEN);
+                    return;
+                }
+
                 Process p = null;
                 boolean success = false;
                 try {
