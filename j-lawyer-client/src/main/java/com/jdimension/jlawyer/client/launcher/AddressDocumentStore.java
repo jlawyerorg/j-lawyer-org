@@ -661,185 +661,84 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.utils;
+package com.jdimension.jlawyer.client.launcher;
 
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.AddressDocumentsBean;
+import com.jdimension.jlawyer.services.AddressDocumentServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.net.URL;
-import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.File;
 import org.apache.log4j.Logger;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 
 /**
+ * Document store for documents that belong directly to an address (contact).
+ * Changes made to an opened document are written back to the server via
+ * {@link AddressDocumentServiceRemote#setDocumentContent(java.lang.String, byte[])},
+ * mirroring {@link CaseDocumentStore} but without folders, tags or locking.
  *
  * @author jens
  */
-public class VersionUtils {
+public class AddressDocumentStore extends ObservedDocumentStore {
 
-    private static final Logger log = Logger.getLogger(VersionUtils.class.getName());
+    private static final Logger log = Logger.getLogger(AddressDocumentStore.class.getName());
 
-    public static String getLatestClientDownloadForServer(String serverVersion) {
-        return getLatestClientForServer(serverVersion, "url");
+    private final AddressDocumentsBean doc;
+    // length of the content as last seen/saved; used to avoid unnecessary writes on close
+    private long lastKnownLength;
+
+    public AddressDocumentStore(String documentIdentifier, String fileName, boolean readOnly, AddressDocumentsBean doc, long originalLength) {
+        super(documentIdentifier, fileName, readOnly);
+        this.doc = doc;
+        this.lastKnownLength = originalLength;
     }
-    
-    public static String getLatestClientVersionForServer(String serverVersion) {
-        return getLatestClientForServer(serverVersion, "client");
-    }
-    
-    private static String getLatestClientForServer(String serverVersion, String queryAttribute) {
-        try {
-            URL updateURL = new URL("https://www.j-lawyer.org/downloads/j-lawyer-autoupdate.xml");
-            URLConnection urlCon = updateURL.openConnection();
-            urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
-            urlCon.setConnectTimeout(2000);
-            urlCon.setReadTimeout(3000);
 
-            InputStream is = urlCon.getInputStream();
-            InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-
-            char[] buffer = new char[1024];
-            int len = 0;
-            StringBuilder sb = new StringBuilder();
-            while ((len = reader.read(buffer)) > -1) {
-                sb.append(buffer, 0, len);
-            }
-            reader.close();
-            is.close();
-            String calculationsContent = sb.toString();
-
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+    @Override
+    public void documentChanged(String path) {
+        log.info("address document change detected: " + doc.getId() + " " + doc.getName() + " (readOnly=" + this.isReadOnly() + ")");
+        if (!this.isReadOnly()) {
             try {
-                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-            } catch (IllegalArgumentException iae) {
-                log.warn("Unable to set external entity restrictions in XML parser", iae);
-            }
-            DocumentBuilder remoteDb = dbf.newDocumentBuilder();
-            InputSource inSrc1 = new InputSource(new StringReader(calculationsContent));
-            inSrc1.setEncoding("UTF-8");
-            Document remoteDoc = remoteDb.parse(inSrc1);
+                byte[] newContent = FileUtils.readFile(new File(path));
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                AddressDocumentServiceRemote ads = locator.lookupAddressDocumentServiceRemote();
 
-            NodeList remoteList = remoteDoc.getElementsByTagName("server");
-
-            for (int i = 0; i < remoteList.getLength(); i++) {
-                Node n = remoteList.item(i);
-                String server = n.getAttributes().getNamedItem("version").getNodeValue();
-                String os = n.getAttributes().getNamedItem("os").getNodeValue();
-                String arch = n.getAttributes().getNamedItem("arch").getNodeValue();
-                if (serverVersion.equals(server) && System.getProperty("os.name").toLowerCase().contains(os) && System.getProperty("os.arch").toLowerCase().contains(arch)) {
-                    return n.getAttributes().getNamedItem(queryAttribute).getNodeValue();
+                if (ads.getDocument(doc.getId()) != null) {
+                    ads.setDocumentContent(doc.getId(), newContent);
+                    this.lastKnownLength = newContent.length;
+                    log.info("address document saved back to server: " + doc.getId() + " " + doc.getName() + " (" + newContent.length + " bytes)");
+                } else {
+                    log.warn("Address document " + doc.getId() + " " + doc.getName() + " does no longer exist!");
                 }
+            } catch (Exception ex) {
+                log.error("Could not save address document " + doc.getId() + " " + doc.getName(), ex);
+                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             }
-
-        } catch (Throwable t) {
-            log.error("Error downloading client version information", t);
-        }
-        return null;
-    }
-    
-    public static String getClientVersion() {
-        return "3.6";
-    }
-
-    public static String getPatchLevel() {
-        return "0";
-    }
-
-    public static String getBuild() {
-        return "0";
-    }
-    
-    public static boolean isVersionGreater(String referenceVersion, String compareToVersion) {
-        long ref=getVersionAsLong(referenceVersion);
-        long comp=getVersionAsLong(compareToVersion);
-        
-        return (ref>comp);
-    }
-    
-    private static long getVersionAsLong(String v) {
-        String major="0";
-        String minor="0";
-        String patch="0";
-        String build="0";
-        
-        if(v.contains(".")) {
-            major=v.substring(0, v.indexOf("."));
-            v=v.substring(v.indexOf(".")+1, v.length());
-        } else if (v.length()>0) {
-            major=v;
-        }
-        
-        if(v.contains(".")) {
-            minor=v.substring(0, v.indexOf("."));
-            v=v.substring(v.indexOf(".")+1, v.length());
-        } else if (v.length()>0) {
-            minor=v;
-        }
-        
-        if(v.contains(".")) {
-            patch=v.substring(0, v.indexOf("."));
-            v=v.substring(v.indexOf(".")+1, v.length());
-        } else if (v.length()>0) {
-            patch=v;
-        }
-        
-        if(v.contains(".")) {
-            build=v.substring(0, v.indexOf("."));
-            v=v.substring(v.indexOf("."), v.length()-1);
-        } else if (v.length()>0) {
-            build=v;
-        }
-        
-        try {
-            return Long.parseLong(major)*1000000 + Long.parseLong(minor)*10000 + Long.parseLong(patch)*100 + Long.parseLong(build);
-        } catch (Exception ex) {
-            return 1;
         }
     }
 
-    public static String getFullClientVersion() {
-        return getClientVersion() + "." + getPatchLevel() + "." + getBuild();
+    @Override
+    public void documentClosed(String path) {
+        if (!this.isReadOnly()) {
+            try {
+                // cheap local size check - no server round trip just to compare
+                long newFileLength = new File(path).length();
+                if (newFileLength != this.lastKnownLength) {
+                    log.info("address document closed with unsaved changes for " + doc.getName() + " - saving now");
+                    this.documentChanged(path);
+                }
+            } catch (Exception ex) {
+                log.error("Could not save address document on close " + doc.getId() + " " + doc.getName(), ex);
+                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+            }
+        }
     }
 
-    public static boolean isCompatible(String serverVersion, String clientVersion) {
-        int serverRevs = serverVersion.length() - serverVersion.replace(".", "").length();
-        if (serverRevs == 3) {
-            serverVersion = serverVersion.substring(0, serverVersion.lastIndexOf('.'));
-        }
-        int clientRevs = clientVersion.length() - clientVersion.replace(".", "").length();
-        if (clientRevs == 3) {
-            clientVersion = clientVersion.substring(0, clientVersion.lastIndexOf('.'));
-        }
-
-        if (serverVersion == null) {
-            return false;
-        }
-        if (clientVersion == null) {
-            return false;
-        }
-        return clientVersion.startsWith(serverVersion);
+    @Override
+    public String getType() {
+        return "Address Document Store";
     }
 
-    public static String getServerVersion() {
-
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            return locator.lookupSystemManagementRemote().getServerVersion();
-        } catch (Exception ex) {
-            log.error(ex);
-        }
-
-        return "unbekannt";
-    }
 }

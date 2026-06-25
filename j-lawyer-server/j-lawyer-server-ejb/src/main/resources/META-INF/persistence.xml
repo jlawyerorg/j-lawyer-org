@@ -7,6 +7,7 @@
     <jar-file>../jlawyer-server-ejb.jar</jar-file>
     <!-- exclude-unlisted-classes>false</exclude-unlisted-classes -->
     <class>com.jdimension.jlawyer.persistence.AddressBean</class>
+    <class>com.jdimension.jlawyer.persistence.AddressDocumentsBean</class>
     <class>com.jdimension.jlawyer.persistence.AddressTagsBean</class>
     <class>com.jdimension.jlawyer.persistence.AppOptionGroupBean</class>
     <class>com.jdimension.jlawyer.persistence.AppRoleBean</class>

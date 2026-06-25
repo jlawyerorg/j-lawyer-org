@@ -670,7 +670,9 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.UserUtils;
+import com.jdimension.jlawyer.persistence.AddressDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.services.AddressDocumentServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
@@ -724,9 +726,6 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            Collection<ArchiveFileDocumentsBean> deletedDocs = remote.getDocumentsBin();
-            log.info("found " + deletedDocs.size() + " documents in bin");
 
             DefaultTableCellRenderer r = new DefaultTableCellRenderer() {
                 @Override
@@ -734,13 +733,16 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
 
                     JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-                    if (column == 2 && value != null) {
-                        String sValue = ((ArchiveFileDocumentsBean) value).getName();
-                        FileUtils fu = FileUtils.getInstance();
-                        Icon icon = fu.getFileTypeIcon(sValue);
-                        label.setText(sValue);
-                        label.setIcon(icon);
+                    String fileName = null;
+                    if (column == 2 && value instanceof ArchiveFileDocumentsBean) {
+                        fileName = ((ArchiveFileDocumentsBean) value).getName();
+                    } else if (column == 2 && value instanceof AddressDocumentsBean) {
+                        fileName = ((AddressDocumentsBean) value).getName();
+                    }
 
+                    if (fileName != null) {
+                        label.setText(fileName);
+                        label.setIcon(FileUtils.getInstance().getFileTypeIcon(fileName));
                     } else {
                         label.setIcon(null);
                     }
@@ -749,7 +751,7 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
             };
             this.tblBinDocuments.setDefaultRenderer(Object.class, r);
 
-            DefaultTableModel tm = new DefaultTableModel(new String[]{"gelöscht", "von", "Dateiname", "Akte"}, 0);
+            DefaultTableModel tm = new DefaultTableModel(new String[]{"gelöscht", "von", "Dateiname", "Akte", "Adresse"}, 0);
             this.tblBinDocuments.setModel(tm);
 
             TableRowSorter<TableModel> sorter = new TableRowSorter<>(tm);
@@ -757,10 +759,35 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
             this.tblBinDocuments.setRowSorter(sorter);
 
             long size = 0;
-            for (ArchiveFileDocumentsBean delDoc : deletedDocs) {
-                ((DefaultTableModel) this.tblBinDocuments.getModel()).addRow(new Object[]{df.format(delDoc.getDeletionDate()), delDoc.getDeletedBy(), delDoc, delDoc.getArchiveFileKey().getFileNumber() + " " + delDoc.getArchiveFileKey().getName()});
-                size += delDoc.getSize();
+
+            // soft-deleted case documents
+            try {
+                ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+                Collection<ArchiveFileDocumentsBean> deletedDocs = remote.getDocumentsBin();
+                log.info("found " + deletedDocs.size() + " case documents in bin");
+                for (ArchiveFileDocumentsBean delDoc : deletedDocs) {
+                    String caseName = delDoc.getArchiveFileKey() != null ? (delDoc.getArchiveFileKey().getFileNumber() + " " + delDoc.getArchiveFileKey().getName()) : "";
+                    tm.addRow(new Object[]{df.format(delDoc.getDeletionDate()), delDoc.getDeletedBy(), delDoc, caseName, ""});
+                    size += delDoc.getSize();
+                }
+            } catch (Throwable t) {
+                log.error("Could not load case documents bin", t);
             }
+
+            // soft-deleted address documents
+            try {
+                AddressDocumentServiceRemote ads = locator.lookupAddressDocumentServiceRemote();
+                Collection<AddressDocumentsBean> deletedAddrDocs = ads.getDocumentsBin();
+                log.info("found " + deletedAddrDocs.size() + " address documents in bin");
+                for (AddressDocumentsBean delDoc : deletedAddrDocs) {
+                    String addressName = delDoc.getAddressKey() != null ? delDoc.getAddressKey().toDisplayName() : "";
+                    tm.addRow(new Object[]{df.format(delDoc.getDeletionDate()), delDoc.getDeletedBy(), delDoc, "", addressName});
+                    size += delDoc.getSize();
+                }
+            } catch (Throwable t) {
+                log.error("Could not load address documents bin", t);
+            }
+
             this.tblBinDocuments.getRowSorter().toggleSortOrder(0);
 
             size = size / 1024l / 1024l;
@@ -769,6 +796,34 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
         } catch (Throwable t) {
             log.error("Could not load documents bin", t);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden des Papierkorbs: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Restores or permanently removes a recycle-bin row, dispatching to the
+     * correct service depending on whether it is a case or an address document.
+     *
+     * @param bean the document bean stored in column 2
+     * @param restore true to restore, false to permanently delete
+     * @param caseRemote case document service
+     * @param addrRemote address document service
+     */
+    private void processBinRow(Object bean, boolean restore, ArchiveFileServiceRemote caseRemote, AddressDocumentServiceRemote addrRemote) throws Exception {
+        if (bean instanceof ArchiveFileDocumentsBean) {
+            ArchiveFileDocumentsBean db = (ArchiveFileDocumentsBean) bean;
+            if (restore) {
+                caseRemote.restoreDocumentFromBin(db.getId());
+                EventBroker.getInstance().publishEvent(new DocumentAddedEvent(db));
+            } else {
+                caseRemote.removeDocumentFromBin(db.getId());
+            }
+        } else if (bean instanceof AddressDocumentsBean) {
+            AddressDocumentsBean db = (AddressDocumentsBean) bean;
+            if (restore) {
+                addrRemote.restoreDocumentFromBin(db.getId());
+            } else {
+                addrRemote.removeDocumentFromBin(db.getId());
+            }
         }
     }
 
@@ -800,7 +855,7 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
 
             },
             new String [] {
-                "gelöscht", "von", "Dateiname", "Akte"
+                "gelöscht", "von", "Dateiname", "Akte", "Adresse"
             }
         ));
         jScrollPane1.setViewportView(tblBinDocuments);
@@ -912,11 +967,11 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            
+            AddressDocumentServiceRemote ads = locator.lookupAddressDocumentServiceRemote();
+
             int[] selected = this.tblBinDocuments.getSelectedRows();
             for (int sel : selected) {
-                ArchiveFileDocumentsBean db = (ArchiveFileDocumentsBean) this.tblBinDocuments.getValueAt(sel, 2);
-                remote.removeDocumentFromBin(db.getId());
+                this.processBinRow(this.tblBinDocuments.getValueAt(sel, 2), false, remote, ads);
             }
             this.loadBin();
 
@@ -931,13 +986,11 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            
+            AddressDocumentServiceRemote ads = locator.lookupAddressDocumentServiceRemote();
+
             int[] selected = this.tblBinDocuments.getSelectedRows();
             for (int sel : selected) {
-                ArchiveFileDocumentsBean db = (ArchiveFileDocumentsBean) this.tblBinDocuments.getValueAt(sel, 2);
-                remote.restoreDocumentFromBin(db.getId());
-                EventBroker eb = EventBroker.getInstance();
-                eb.publishEvent(new DocumentAddedEvent(db));
+                this.processBinRow(this.tblBinDocuments.getValueAt(sel, 2), true, remote, ads);
             }
             this.loadBin();
 
@@ -952,15 +1005,15 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
         if (response == JOptionPane.NO_OPTION) {
             return;
         }
-        
+
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            
-            for (int sel=0;sel<this.tblBinDocuments.getRowCount();sel++) {
-                ArchiveFileDocumentsBean db = (ArchiveFileDocumentsBean) this.tblBinDocuments.getValueAt(sel, 2);
-                remote.removeDocumentFromBin(db.getId());
+            AddressDocumentServiceRemote ads = locator.lookupAddressDocumentServiceRemote();
+
+            for (int sel = 0; sel < this.tblBinDocuments.getRowCount(); sel++) {
+                this.processBinRow(this.tblBinDocuments.getValueAt(sel, 2), false, remote, ads);
             }
             this.loadBin();
 

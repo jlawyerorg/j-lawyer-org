@@ -1063,6 +1063,16 @@ public class RestoreExecutor {
             }
         }
 
+        // address documents - may be absent in backups created before this feature existed
+        dir = new File(backup + "addressfiles");
+        if (dir.exists() && dir.listFiles() != null) {
+            for (File child : dir.listFiles()) {
+                if (child.isDirectory()) {
+                    this.restoreFromTo(child.getAbsolutePath(), data + "addressfiles" + File.separator + child.getName(), progress);
+                }
+            }
+        }
+
     }
 
     private void restoreFromTo(String fromDir, String toDir, BackupProgressCallback progress) throws Exception {
@@ -1104,6 +1114,14 @@ public class RestoreExecutor {
         delDir.mkdirs();
 
         delDir = new File(data + "archivefiles-preview");
+        this.deleteRecursively(delDir, progress);
+        delDir.mkdirs();
+
+        delDir = new File(data + "addressfiles");
+        this.deleteRecursively(delDir, progress);
+        delDir.mkdirs();
+
+        delDir = new File(data + "addressfiles-preview");
         this.deleteRecursively(delDir, progress);
         delDir.mkdirs();
 

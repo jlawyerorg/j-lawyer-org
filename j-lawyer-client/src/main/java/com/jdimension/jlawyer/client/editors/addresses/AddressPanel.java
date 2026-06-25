@@ -691,6 +691,23 @@ import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.JTextFieldLimit;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.FileConverter;
+import com.jdimension.jlawyer.client.launcher.AddressDocumentStore;
+import com.jdimension.jlawyer.client.editors.files.AddAddressDocumentFromTemplateDialog;
+import com.jdimension.jlawyer.client.launcher.Launcher;
+import com.jdimension.jlawyer.client.launcher.LauncherFactory;
+import com.jdimension.jlawyer.persistence.AddressDocumentsBean;
+import com.jdimension.jlawyer.services.AddressDocumentServiceRemote;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.File;
+import javax.swing.JFileChooser;
+import javax.swing.JTable;
+import javax.swing.TransferHandler;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import com.jdimension.jlawyer.client.voip.SendFaxDialog;
 import com.jdimension.jlawyer.client.voip.SendSmsDialog;
 import com.jdimension.jlawyer.client.voip.VoipUtils;
@@ -759,6 +776,11 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     private HashMap<String, ArrayList<Invoice>> invoicesPerCase = null;
 
+    // documents that belong directly to this address (contact); kept parallel to the rows of tblContents
+    private final ArrayList<AddressDocumentsBean> currentDocuments = new ArrayList<>();
+    // renders the document name column with a format-dependent file type icon
+    private final DocumentNameCellRenderer documentNameRenderer = new DocumentNameCellRenderer();
+
     /**
      * Creates new form AddressPanel
      */
@@ -775,6 +797,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         }
 
         this.tagPanel.setLayout(new WrapLayout());
+        this.initDocumentsUI();
         this.cmbSalutation.setRenderer(new OptionGroupListCellRenderer());
         this.cmbComplimentaryClose.setRenderer(new OptionGroupListCellRenderer());
         this.cmbTitle.setRenderer(new OptionGroupListCellRenderer());
@@ -1238,6 +1261,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         xchartPanel.setBackground(this.pnlInvoicesChart.getBackground());
         this.pnlInvoicesChart.removeAll();
         this.pnlInvoicesChart.add(xchartPanel, BorderLayout.CENTER);
+
+        this.loadAddressDocuments();
     }
 
     private HashMap<Integer, BigDecimal> getCumulatedInvoicesValue(List<Invoice> invoices) {
@@ -1513,6 +1538,10 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         popHeader = new javax.swing.JPopupMenu();
         mnuCopyIdToClipboard = new javax.swing.JMenuItem();
         mnuCopyExtIdToClipboard = new javax.swing.JMenuItem();
+        popDocuments = new javax.swing.JPopupMenu();
+        mnuDuplicateDocumentAsPdf = new javax.swing.JMenuItem();
+        mnuRenameDocument = new javax.swing.JMenuItem();
+        mnuDeleteDocument = new javax.swing.JMenuItem();
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanel13 = new javax.swing.JPanel();
         jPanel22 = new javax.swing.JPanel();
@@ -1690,6 +1719,11 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         jLabel35 = new javax.swing.JLabel();
         txtTin = new javax.swing.JTextField();
         chkTaxDeduction = new javax.swing.JCheckBox();
+        pnlDocuments = new javax.swing.JPanel();
+        cmdAdd = new javax.swing.JButton();
+        cmdAddFromTemplate = new javax.swing.JButton();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        tblContents = new javax.swing.JTable();
         jPanel9 = new javax.swing.JPanel();
         jPanel6 = new javax.swing.JPanel();
         jLabel16 = new javax.swing.JLabel();
@@ -1736,6 +1770,33 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         });
         popHeader.add(mnuCopyExtIdToClipboard);
+
+        mnuDuplicateDocumentAsPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/pdf.png"))); // NOI18N
+        mnuDuplicateDocumentAsPdf.setText("als PDF zum Kontakt speichern");
+        mnuDuplicateDocumentAsPdf.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDuplicateDocumentAsPdfActionPerformed(evt);
+            }
+        });
+        popDocuments.add(mnuDuplicateDocumentAsPdf);
+
+        mnuRenameDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
+        mnuRenameDocument.setText("umbenennen");
+        mnuRenameDocument.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuRenameDocumentActionPerformed(evt);
+            }
+        });
+        popDocuments.add(mnuRenameDocument);
+
+        mnuDeleteDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        mnuDeleteDocument.setText("jMenuItem1");
+        mnuDeleteDocument.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDeleteDocumentActionPerformed(evt);
+            }
+        });
+        popDocuments.add(mnuDeleteDocument);
 
         jTabbedPane1.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
@@ -3030,6 +3091,64 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jTabbedPane1.addTab("Bank / Versicherung", new javax.swing.ImageIcon(getClass().getResource("/icons/money.png")), jPanel8); // NOI18N
 
+        cmdAdd.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_new.png"))); // NOI18N
+        cmdAdd.setText("Hinzufügen");
+        cmdAdd.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddActionPerformed(evt);
+            }
+        });
+
+        cmdAddFromTemplate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_documents.png"))); // NOI18N
+        cmdAddFromTemplate.setText("Erstellen");
+        cmdAddFromTemplate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddFromTemplateActionPerformed(evt);
+            }
+        });
+
+        tblContents.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        jScrollPane4.setViewportView(tblContents);
+
+        org.jdesktop.layout.GroupLayout pnlDocumentsLayout = new org.jdesktop.layout.GroupLayout(pnlDocuments);
+        pnlDocuments.setLayout(pnlDocumentsLayout);
+        pnlDocumentsLayout.setHorizontalGroup(
+            pnlDocumentsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, pnlDocumentsLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlDocumentsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1230, Short.MAX_VALUE)
+                    .add(pnlDocumentsLayout.createSequentialGroup()
+                        .add(0, 0, Short.MAX_VALUE)
+                        .add(cmdAddFromTemplate)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdAdd)))
+                .addContainerGap())
+        );
+        pnlDocumentsLayout.setVerticalGroup(
+            pnlDocumentsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlDocumentsLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlDocumentsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(cmdAdd)
+                    .add(cmdAddFromTemplate))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 733, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        jTabbedPane1.addTab("Dokumente", new javax.swing.ImageIcon(getClass().getResource("/icons/folder_documents.png")), pnlDocuments); // NOI18N
+
         jPanel6.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createTitledBorder("Dokumente")));
 
         jLabel16.setText("Begrüßung:");
@@ -3088,7 +3207,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .addContainerGap(653, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab("Textbausteine", new javax.swing.ImageIcon(getClass().getResource("/icons/folder_documents.png")), jPanel9); // NOI18N
+        jTabbedPane1.addTab("Textbausteine", new javax.swing.ImageIcon(getClass().getResource("/icons16/material/summarize.png")), jPanel9); // NOI18N
 
         jPanel15.setName(""); // NOI18N
 
@@ -3423,7 +3542,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     private void jTabbedPane1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jTabbedPane1StateChanged
         if (this.jTabbedPane1.getSelectedIndex() == 0) {
             this.updateOverview();
-        } else if (this.jTabbedPane1.getSelectedIndex() == 7) {
+        } else if (this.jTabbedPane1.getSelectedIndex() == 8) {
             if (this.dto == null) {
                 this.pnlCasesForContact.removeAll();
                 this.invoicesPerCase.clear();
@@ -3930,6 +4049,445 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.enableEmailButton();
     }//GEN-LAST:event_txtEmailMiscKeyPressed
 
+    private void cmdAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddActionPerformed
+        if (!this.ensureAddressSaved()) {
+            return;
+        }
+        JFileChooser chooser = new JFileChooser();
+        chooser.setMultiSelectionEnabled(true);
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            this.addFilesAsDocuments(chooser.getSelectedFiles());
+        }
+    }//GEN-LAST:event_cmdAddActionPerformed
+
+    private void cmdAddFromTemplateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddFromTemplateActionPerformed
+        this.addDocumentFromTemplate();
+    }//GEN-LAST:event_cmdAddFromTemplateActionPerformed
+
+    private void mnuDeleteDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDeleteDocumentActionPerformed
+        this.deleteSelectedDocuments();
+    }//GEN-LAST:event_mnuDeleteDocumentActionPerformed
+
+    private void mnuDuplicateDocumentAsPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDuplicateDocumentAsPdfActionPerformed
+        int[] rows = this.tblContents.getSelectedRows();
+        if (rows.length == 0) {
+            return;
+        }
+        ArrayList<AddressDocumentsBean> selected = new ArrayList<>();
+        for (int row : rows) {
+            int modelRow = this.tblContents.convertRowIndexToModel(row);
+            if (modelRow >= 0 && modelRow < this.currentDocuments.size()) {
+                selected.add(this.currentDocuments.get(modelRow));
+            }
+        }
+        if (selected.isEmpty()) {
+            return;
+        }
+        try {
+            for (AddressDocumentsBean doc : selected) {
+                this.convertDocumentToPdf(doc);
+            }
+        } finally {
+            this.loadAddressDocuments();
+        }
+    }//GEN-LAST:event_mnuDuplicateDocumentAsPdfActionPerformed
+
+    private void mnuRenameDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRenameDocumentActionPerformed
+        AddressDocumentsBean doc = this.getSelectedDocument();
+        if (doc == null) {
+            return;
+        }
+        String newName = JOptionPane.showInputDialog(this, "Neuer Name des Dokuments:", doc.getName());
+        if (newName == null) {
+            return;
+        }
+        newName = newName.trim();
+        if (newName.isEmpty() || newName.equals(doc.getName())) {
+            return;
+        }
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupAddressDocumentServiceRemote().renameDocument(doc.getId(), newName);
+        } catch (Exception ex) {
+            log.error("Could not rename address document " + doc.getId(), ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Umbenennen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        } finally {
+            this.loadAddressDocuments();
+        }
+    }//GEN-LAST:event_mnuRenameDocumentActionPerformed
+
+    /**
+     * Converts an address document to PDF (client side, via {@link FileConverter})
+     * and stores the result as a new document on the same contact. If the source
+     * is already a PDF, it is duplicated after confirmation.
+     *
+     * @param doc the source document
+     */
+    private void convertDocumentToPdf(AddressDocumentsBean doc) {
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            AddressDocumentServiceRemote ads = locator.lookupAddressDocumentServiceRemote();
+
+            byte[] content = ads.getDocumentContent(doc.getId());
+            String name = doc.getName() != null ? doc.getName() : "";
+
+            byte[] pdfContent;
+            String newName;
+            if (name.toLowerCase().endsWith(".pdf")) {
+                int response = JOptionPane.showConfirmDialog(this, "Dokument '" + name + "' ist bereits im PDF-Format. Soll es dupliziert werden?", "PDF bereits vorhanden", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                if (response != JOptionPane.YES_OPTION) {
+                    return;
+                }
+                pdfContent = content;
+                newName = name;
+            } else {
+                String curExt = "";
+                for (String ext : LauncherFactory.LO_OFFICEFILETYPES) {
+                    ext = ext.toLowerCase();
+                    if (name.toLowerCase().endsWith(ext)) {
+                        curExt = ext;
+                    }
+                }
+                newName = (curExt.length() > 0 ? name.substring(0, name.length() - curExt.length()) : name) + ".pdf";
+
+                FileConverter conv = FileConverter.getInstance();
+                String tempPath = FileUtils.createTempFile(name, content);
+                String tempPdfPath = conv.convertToPDF(tempPath);
+                pdfContent = FileUtils.readFile(new File(tempPdfPath));
+                FileUtils.cleanupTempFile(tempPath);
+                FileUtils.cleanupTempFile(tempPdfPath);
+            }
+
+            // address documents have no folders / replace flow - just ensure a unique name
+            newName = this.makeUniqueDocumentName(ads, this.dto.getId(), newName);
+            ads.addDocument(this.dto.getId(), newName, pdfContent);
+        } catch (Throwable t) {
+            log.error("Could not convert address document to PDF: " + doc.getId(), t);
+            JOptionPane.showMessageDialog(this, "Konvertierungsfehler: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Returns a document name that does not yet exist for the given address,
+     * appending a numeric suffix before the extension if necessary.
+     */
+    private String makeUniqueDocumentName(AddressDocumentServiceRemote ads, String addressId, String name) throws Exception {
+        if (!ads.doesDocumentExist(addressId, name)) {
+            return name;
+        }
+        String base = name;
+        String ext = "";
+        int dot = name.lastIndexOf('.');
+        if (dot > 0) {
+            base = name.substring(0, dot);
+            ext = name.substring(dot);
+        }
+        int counter = 1;
+        String candidate;
+        do {
+            candidate = base + " (" + counter + ")" + ext;
+            counter++;
+        } while (ads.doesDocumentExist(addressId, candidate));
+        return candidate;
+    }
+
+    /**
+     * Sets up the documents table (model, columns), the context menu, the
+     * double-click-to-open behaviour and drag and drop of files into the table.
+     */
+    private void initDocumentsUI() {
+        this.mnuDeleteDocument.setText("Löschen");
+
+        this.tblContents.setModel(new DefaultTableModel(
+                new Object[][]{}, new String[]{"Dokument", "Datum", "Größe"}) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        });
+
+        this.applyDocumentNameRenderer();
+
+        this.tblContents.setComponentPopupMenu(this.popDocuments);
+
+        this.tblContents.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && javax.swing.SwingUtilities.isLeftMouseButton(e)) {
+                    openSelectedDocument();
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                selectRowUnderCursor(e);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                selectRowUnderCursor(e);
+            }
+
+            private void selectRowUnderCursor(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    int row = tblContents.rowAtPoint(e.getPoint());
+                    if (row >= 0 && !tblContents.isRowSelected(row)) {
+                        tblContents.setRowSelectionInterval(row, row);
+                    }
+                }
+            }
+        });
+
+        // allow dropping files from the OS file manager directly into the table
+        this.tblContents.setDragEnabled(false);
+        this.tblContents.setFillsViewportHeight(true);
+        this.tblContents.setTransferHandler(new TransferHandler() {
+            @Override
+            public boolean canImport(TransferSupport support) {
+                return support.isDataFlavorSupported(DataFlavor.javaFileListFlavor);
+            }
+
+            @Override
+            @SuppressWarnings("unchecked")
+            public boolean importData(TransferSupport support) {
+                if (!canImport(support)) {
+                    return false;
+                }
+                try {
+                    java.util.List<File> files = (java.util.List<File>) support.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+                    if (files != null && !files.isEmpty()) {
+                        addFilesAsDocuments(files.toArray(new File[0]));
+                    }
+                    return true;
+                } catch (Exception ex) {
+                    log.error("Could not import dropped files", ex);
+                    return false;
+                }
+            }
+        });
+    }
+
+    /**
+     * Loads the documents of the current address into the table.
+     */
+    private void loadAddressDocuments() {
+        DefaultTableModel model = new DefaultTableModel(
+                new Object[][]{}, new String[]{"Dokument", "Datum", "Größe"}) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        this.currentDocuments.clear();
+
+        if (this.dto != null && this.dto.getId() != null) {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                Collection<AddressDocumentsBean> docs = locator.lookupAddressDocumentServiceRemote().getAddressDocuments(this.dto.getId());
+                SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+                for (AddressDocumentsBean doc : docs) {
+                    this.currentDocuments.add(doc);
+                    String dateString = doc.getCreationDate() != null ? df.format(doc.getCreationDate()) : "";
+                    model.addRow(new Object[]{doc.getName(), dateString, formatDocumentSize(doc.getSize())});
+                }
+            } catch (Exception ex) {
+                log.error("Could not load documents for address " + this.dto.getId(), ex);
+            }
+        }
+        this.tblContents.setModel(model);
+        this.applyDocumentNameRenderer();
+    }
+
+    /**
+     * Re-applies the file-type-icon renderer to the document name column. Must be
+     * called after every {@code setModel} since replacing the model resets the
+     * per-column renderers.
+     */
+    private void applyDocumentNameRenderer() {
+        if (this.tblContents.getColumnModel().getColumnCount() > 0) {
+            this.tblContents.getColumnModel().getColumn(0).setCellRenderer(this.documentNameRenderer);
+        }
+    }
+
+    /**
+     * Table cell renderer that prefixes the document name with a file-type icon
+     * derived from the file extension.
+     */
+    private static class DocumentNameCellRenderer extends DefaultTableCellRenderer {
+
+        private final transient FileUtils fu = FileUtils.getInstance();
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if (value != null) {
+                label.setIcon(fu.getFileTypeIcon(value.toString()));
+            } else {
+                label.setIcon(null);
+            }
+            return label;
+        }
+    }
+
+    private String formatDocumentSize(long size) {
+        if (size < 0) {
+            return "";
+        }
+        if (size < 1024) {
+            return size + " B";
+        }
+        return (size / 1024) + " KB";
+    }
+
+    /**
+     * @return the document selected in the table, or null if none is selected
+     */
+    private AddressDocumentsBean getSelectedDocument() {
+        int row = this.tblContents.getSelectedRow();
+        if (row < 0) {
+            return null;
+        }
+        int modelRow = this.tblContents.convertRowIndexToModel(row);
+        if (modelRow < 0 || modelRow >= this.currentDocuments.size()) {
+            return null;
+        }
+        return this.currentDocuments.get(modelRow);
+    }
+
+    private void openSelectedDocument() {
+        AddressDocumentsBean doc = this.getSelectedDocument();
+        if (doc != null) {
+            this.openDocument(doc);
+        }
+    }
+
+    /**
+     * Opens an address document in its launcher and registers it for change
+     * monitoring so edits are written back to the server.
+     *
+     * @param doc the address document to open
+     */
+    public void openDocument(AddressDocumentsBean doc) {
+        if (doc == null) {
+            return;
+        }
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            AddressDocumentServiceRemote ads = locator.lookupAddressDocumentServiceRemote();
+            byte[] content = ads.getDocumentContent(doc.getId());
+
+            AddressDocumentStore store = new AddressDocumentStore(doc.getId(), doc.getName(), false, doc, content != null ? content.length : 0);
+            Launcher launcher = LauncherFactory.getLauncher(doc.getName(), content, store, EditorsRegistry.getInstance().getMainWindow());
+            log.info("opening address document for monitoring: " + doc.getId() + " " + doc.getName());
+            launcher.launch(true);
+        } catch (Exception ex) {
+            log.error("Could not open address document " + doc.getId(), ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Reloads the address' document table from the server. Public so dialogs
+     * (e.g. the create-from-template dialog) can refresh the list after adding.
+     */
+    public void reloadDocuments() {
+        this.loadAddressDocuments();
+    }
+
+    private void addFilesAsDocuments(File[] files) {
+        if (files == null || files.length == 0 || !this.ensureAddressSaved()) {
+            return;
+        }
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            AddressDocumentServiceRemote ads = locator.lookupAddressDocumentServiceRemote();
+            for (File f : files) {
+                if (f == null || !f.isFile()) {
+                    continue;
+                }
+                try {
+                    byte[] data = FileUtils.readFile(f);
+                    ads.addDocument(this.dto.getId(), f.getName(), data);
+                } catch (Exception ex) {
+                    log.error("Could not add document " + f.getName() + " to address " + this.dto.getId(), ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Hinzufügen von '" + f.getName() + "': " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        } catch (Exception ex) {
+            log.error("Could not add documents to address " + this.dto.getId(), ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Hinzufügen der Dokumente: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        } finally {
+            this.loadAddressDocuments();
+        }
+    }
+
+    private void addDocumentFromTemplate() {
+        if (!this.ensureAddressSaved()) {
+            return;
+        }
+        AddAddressDocumentFromTemplateDialog dlg = new AddAddressDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this, this.dto);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+        // the dialog refreshes the document table itself via reloadDocuments()
+    }
+
+    private void deleteSelectedDocuments() {
+        int[] rows = this.tblContents.getSelectedRows();
+        if (rows.length == 0) {
+            return;
+        }
+        ArrayList<AddressDocumentsBean> toDelete = new ArrayList<>();
+        for (int row : rows) {
+            int modelRow = this.tblContents.convertRowIndexToModel(row);
+            if (modelRow >= 0 && modelRow < this.currentDocuments.size()) {
+                toDelete.add(this.currentDocuments.get(modelRow));
+            }
+        }
+        if (toDelete.isEmpty()) {
+            return;
+        }
+        if (JOptionPane.showConfirmDialog(this, "Sollen die markierten Dokumente (" + toDelete.size() + ") gelöscht werden?", "Dokumente löschen", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) {
+            return;
+        }
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            AddressDocumentServiceRemote ads = locator.lookupAddressDocumentServiceRemote();
+            for (AddressDocumentsBean doc : toDelete) {
+                try {
+                    ads.removeDocument(doc.getId());
+                } catch (Exception ex) {
+                    log.error("Could not delete address document " + doc.getId(), ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Löschen von '" + doc.getName() + "': " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        } catch (Exception ex) {
+            log.error("Could not delete address documents", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Löschen der Dokumente: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        } finally {
+            this.loadAddressDocuments();
+        }
+    }
+
+    /**
+     * Documents need a persisted contact (a contact_id) to attach to. For a new,
+     * not-yet-saved address the documents area cannot be used.
+     *
+     * @return true if the address is saved and documents can be managed
+     */
+    private boolean ensureAddressSaved() {
+        if (this.dto == null || this.dto.getId() == null || this.dto.getId().trim().length() == 0) {
+            JOptionPane.showMessageDialog(this, "Bitte speichern Sie den Kontakt zuerst, bevor Sie Dokumente hinzufügen.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+            return false;
+        }
+        return true;
+    }
+
     private void sendEmailTo(String recipient) {
         SendEmailFrame dlg = new SendEmailFrame(false);
         dlg.setTo(recipient);
@@ -4132,6 +4690,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JComboBox<String> cmbState;
     protected javax.swing.JComboBox cmbTitle;
     protected javax.swing.JComboBox<String> cmbTitleInAddress;
+    private javax.swing.JButton cmdAdd;
+    private javax.swing.JButton cmdAddFromTemplate;
     private javax.swing.JButton cmdAttributesFromClipboard;
     protected javax.swing.JButton cmdBackToSearch;
     private javax.swing.JButton cmdChooseBank;
@@ -4248,6 +4808,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLabel lblAge;
     private javax.swing.JLabel lblCustom1;
@@ -4265,8 +4826,13 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JMenuItem mnuCopyExtIdToClipboard;
     private javax.swing.JMenuItem mnuCopyIdToClipboard;
+    private javax.swing.JMenuItem mnuDeleteDocument;
+    private javax.swing.JMenuItem mnuDuplicateDocumentAsPdf;
+    private javax.swing.JMenuItem mnuRenameDocument;
     private javax.swing.JPanel pnlCasesForContact;
+    private javax.swing.JPanel pnlDocuments;
     private javax.swing.JPanel pnlInvoicesChart;
+    private javax.swing.JPopupMenu popDocuments;
     private javax.swing.JPopupMenu popHeader;
     private javax.swing.JRadioButton rdGenderDivers;
     private javax.swing.JRadioButton rdGenderFemale;
@@ -4275,6 +4841,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JRadioButton rdGenderUndefined;
     protected javax.swing.JTextArea taCustom3;
     private javax.swing.JPanel tagPanel;
+    private javax.swing.JTable tblContents;
     private javax.swing.JTextField txtAdjunct;
     protected javax.swing.JTextField txtBankAccount;
     private javax.swing.JTextField txtBankAccountOwner;

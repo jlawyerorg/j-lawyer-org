@@ -88,11 +88,12 @@
         <Component class="javax.swing.JTable" name="tblBinDocuments">
           <Properties>
             <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.editors2.TableModelEditor">
-              <Table columnCount="4" rowCount="0">
+              <Table columnCount="5" rowCount="0">
                 <Column editable="true" title="gel&#xf6;scht" type="java.lang.Object"/>
                 <Column editable="true" title="von" type="java.lang.Object"/>
                 <Column editable="true" title="Dateiname" type="java.lang.Object"/>
                 <Column editable="true" title="Akte" type="java.lang.Object"/>
+                <Column editable="true" title="Adresse" type="java.lang.Object"/>
               </Table>
             </Property>
           </Properties>

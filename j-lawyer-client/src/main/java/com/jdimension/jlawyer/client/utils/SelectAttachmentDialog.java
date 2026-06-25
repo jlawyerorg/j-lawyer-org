@@ -665,17 +665,30 @@ package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.client.editors.documents.CachingDocumentLoader;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.AddressDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.services.AddressDocumentServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import javax.swing.DefaultListModel;
+import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.apache.log4j.Logger;
@@ -775,6 +788,129 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
             this.jTabbedPane1.setEnabledAt(1, false);
             this.pnlFromCase.setEnabled(false);
         }
+
+        this.addInvolvedAddressTabs(caseId);
+    }
+
+    /**
+     * Loads the addresses involved in the given case and, for each address that
+     * actually has documents, adds a tab (named after the address' display name)
+     * listing those documents - structured like the "from case" tab.
+     *
+     * @param caseId the case id (may be null)
+     */
+    private void addInvolvedAddressTabs(String caseId) {
+        if (caseId == null) {
+            return;
+        }
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<AddressBean> addresses = locator.lookupArchiveFileServiceRemote().getAddressesForCase(caseId);
+            if (addresses == null) {
+                return;
+            }
+            AddressDocumentServiceRemote ads = locator.lookupAddressDocumentServiceRemote();
+            HashSet<String> seen = new HashSet<>();
+            for (AddressBean addr : addresses) {
+                if (addr == null || addr.getId() == null || !seen.add(addr.getId())) {
+                    continue;
+                }
+                try {
+                    Collection<AddressDocumentsBean> docs = ads.getAddressDocuments(addr.getId());
+                    if (docs == null || docs.isEmpty()) {
+                        continue;
+                    }
+                    this.addAddressDocumentsTab(addr, new ArrayList<>(docs));
+                } catch (Exception ex) {
+                    log.error("Could not load documents for involved address " + addr.getId(), ex);
+                }
+            }
+        } catch (Exception ex) {
+            log.error("Could not load involved address documents for case " + caseId, ex);
+        }
+    }
+
+    private void addAddressDocumentsTab(AddressBean addr, List<AddressDocumentsBean> docs) {
+        Collections.sort(docs, (a, b) -> {
+            String na = a.getName() != null ? a.getName() : "";
+            String nb = b.getName() != null ? b.getName() : "";
+            return na.compareToIgnoreCase(nb);
+        });
+
+        final JList<AddressDocumentsBean> list = new JList<>();
+        DefaultListModel<AddressDocumentsBean> model = new DefaultListModel<>();
+        for (AddressDocumentsBean d : docs) {
+            model.addElement(d);
+        }
+        list.setModel(model);
+        list.setCellRenderer(new AttachmentListCellRenderer());
+        list.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent evt) {
+                if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1) {
+                    selectAddressDocuments(list);
+                }
+            }
+        });
+
+        JButton open = new JButton("Öffnen");
+        open.addActionListener((java.awt.event.ActionEvent e) -> selectAddressDocuments(list));
+        JButton cancel = new JButton("Abbrechen");
+        cancel.addActionListener((java.awt.event.ActionEvent e) -> {
+            this.selectedFiles = new File[0];
+            this.selectedDocuments = new ArchiveFileDocumentsBean[0];
+            this.setVisible(false);
+            this.dispose();
+        });
+
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttons.add(open);
+        buttons.add(cancel);
+
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        panel.add(new JScrollPane(list), BorderLayout.CENTER);
+        panel.add(buttons, BorderLayout.SOUTH);
+
+        this.jTabbedPane1.addTab(addr.toDisplayName(), new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png")), panel);
+    }
+
+    private void selectAddressDocuments(JList<AddressDocumentsBean> list) {
+        List<AddressDocumentsBean> selected = list.getSelectedValuesList();
+        if (selected.isEmpty()) {
+            return;
+        }
+        ClientSettings settings = ClientSettings.getInstance();
+        AddressDocumentServiceRemote ads;
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ads = locator.lookupAddressDocumentServiceRemote();
+        } catch (Exception ex) {
+            log.error("Could not look up address document service", ex);
+            JOptionPane.showMessageDialog(this, "Dokumente können nicht geladen werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        File[] files = new File[selected.size()];
+        int index = 0;
+        for (AddressDocumentsBean doc : selected) {
+            try {
+                byte[] content = ads.getDocumentContent(doc.getId());
+                String tempUrl = FileUtils.createTempFile(doc.getName(), content);
+                File f = new File(tempUrl);
+                FileUtils.cleanupTempFile(tempUrl);
+                files[index] = f;
+                index = index + 1;
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Dokument " + doc.getName() + " kann nicht vom Server geladen werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+        this.selectedFiles = files;
+        // address documents are not case documents; callers relying on getSelectedFiles() get them
+        this.selectedDocuments = new ArchiveFileDocumentsBean[0];
+        this.setVisible(false);
+        this.dispose();
     }
 
     public File[] getSelectedFiles() {
@@ -818,18 +954,18 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
         pnlFromDesktop.setLayout(pnlFromDesktopLayout);
         pnlFromDesktopLayout.setHorizontalGroup(
             pnlFromDesktopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 571, Short.MAX_VALUE)
+            .addGap(0, 700, Short.MAX_VALUE)
             .addGroup(pnlFromDesktopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(fileChooser, javax.swing.GroupLayout.PREFERRED_SIZE, 571, Short.MAX_VALUE))
+                .addComponent(fileChooser, javax.swing.GroupLayout.DEFAULT_SIZE, 700, Short.MAX_VALUE))
         );
         pnlFromDesktopLayout.setVerticalGroup(
             pnlFromDesktopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 364, Short.MAX_VALUE)
+            .addGap(0, 509, Short.MAX_VALUE)
             .addGroup(pnlFromDesktopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(fileChooser, javax.swing.GroupLayout.PREFERRED_SIZE, 364, Short.MAX_VALUE))
+                .addComponent(fileChooser, javax.swing.GroupLayout.DEFAULT_SIZE, 509, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab("vom Arbeitsplatz", pnlFromDesktop);
+        jTabbedPane1.addTab("vom Arbeitsplatz", new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png")), pnlFromDesktop); // NOI18N
 
         lstCaseDocuments.setModel(new javax.swing.AbstractListModel<String>() {
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
@@ -865,7 +1001,7 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(pnlFromCaseLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlFromCaseLayout.createSequentialGroup()
-                        .addGap(0, 349, Short.MAX_VALUE)
+                        .addGap(0, 468, Short.MAX_VALUE)
                         .addComponent(cmdSelect)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdCancel))
@@ -879,7 +1015,7 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addComponent(txtSearch, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 278, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 423, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnlFromCaseLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
@@ -887,7 +1023,7 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
                 .addContainerGap())
         );
 
-        jTabbedPane1.addTab("aus der Akte", pnlFromCase);
+        jTabbedPane1.addTab("aus der Akte", new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png")), pnlFromCase); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -897,7 +1033,7 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane1)
+            .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 550, Short.MAX_VALUE)
         );
 
         pack();

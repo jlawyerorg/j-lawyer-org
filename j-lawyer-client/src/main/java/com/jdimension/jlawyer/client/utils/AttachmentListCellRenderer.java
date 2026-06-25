@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.AddressDocumentsBean;
 import java.awt.Component;
 import java.io.File;
 import javax.swing.DefaultListCellRenderer;
@@ -689,6 +690,10 @@ public class AttachmentListCellRenderer extends DefaultListCellRenderer {
             ((JLabel) ret).setIcon(FileUtils.getInstance().getFileTypeIcon(o.toString()));
         } else if (o instanceof ArchiveFileDocumentsBean) {
             ArchiveFileDocumentsBean d = (ArchiveFileDocumentsBean) o;
+            ((JLabel) ret).setText(d.getName());
+            ((JLabel) ret).setIcon(FileUtils.getInstance().getFileTypeIcon(d.getName()));
+        } else if (o instanceof AddressDocumentsBean) {
+            AddressDocumentsBean d = (AddressDocumentsBean) o;
             ((JLabel) ret).setText(d.getName());
             ((JLabel) ret).setIcon(FileUtils.getInstance().getFileTypeIcon(d.getName()));
         } else if (o instanceof BeaAttachment) {

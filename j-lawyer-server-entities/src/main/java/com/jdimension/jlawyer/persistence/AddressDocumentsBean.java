@@ -661,185 +661,197 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.utils;
+package com.jdimension.jlawyer.persistence;
 
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.net.URL;
-import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import org.apache.log4j.Logger;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
+import java.io.Serializable;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import javax.persistence.*;
+import javax.xml.bind.annotation.XmlRootElement;
 
 /**
+ * A document that belongs directly to an address (contact) rather than to a
+ * case. The binary content is not stored in this entity - it lives on disk
+ * (analogous to case documents). This entity deliberately has no folder, tag,
+ * version, lock, favorite, highlight, external-id or document-type attributes.
  *
  * @author jens
  */
-public class VersionUtils {
+@Entity
+@Table(name = "address_documents")
+@XmlRootElement
+@NamedQueries({
+    @NamedQuery(name = "AddressDocumentsBean.findAll", query = "SELECT a FROM AddressDocumentsBean a"),
+    @NamedQuery(name = "AddressDocumentsBean.findById", query = "SELECT a FROM AddressDocumentsBean a WHERE a.id = :id"),
+    @NamedQuery(name = "AddressDocumentsBean.findByName", query = "SELECT a FROM AddressDocumentsBean a WHERE a.name = :name"),
+    @NamedQuery(name = "AddressDocumentsBean.findByCreationDate", query = "SELECT a FROM AddressDocumentsBean a WHERE a.creationDate = :creationDate")})
+public class AddressDocumentsBean implements Serializable {
 
-    private static final Logger log = Logger.getLogger(VersionUtils.class.getName());
+    private static final long serialVersionUID = 1L;
 
-    public static String getLatestClientDownloadForServer(String serverVersion) {
-        return getLatestClientForServer(serverVersion, "url");
-    }
-    
-    public static String getLatestClientVersionForServer(String serverVersion) {
-        return getLatestClientForServer(serverVersion, "client");
-    }
-    
-    private static String getLatestClientForServer(String serverVersion, String queryAttribute) {
-        try {
-            URL updateURL = new URL("https://www.j-lawyer.org/downloads/j-lawyer-autoupdate.xml");
-            URLConnection urlCon = updateURL.openConnection();
-            urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
-            urlCon.setConnectTimeout(2000);
-            urlCon.setReadTimeout(3000);
+    @Id
+    @Basic(optional = false)
+    @Column(name = "id")
+    private String id;
+    @Column(name = "name")
+    private String name;
+    @Column(name = "size")
+    private long size;
+    @Column(name = "creationDate")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date creationDate;
+    @JoinColumn(name = "contact_id", referencedColumnName = "id")
+    @ManyToOne
+    private AddressBean addressKey;
 
-            InputStream is = urlCon.getInputStream();
-            InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
+    @Column(name = "deleted_by")
+    protected String deletedBy;
+    @Column(name = "deletion_date")
+    @Temporal(TemporalType.TIMESTAMP)
+    protected Date deletionDate;
+    @Column(name = "deleted")
+    protected boolean deleted;
+    @Column(name = "date_changed")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date changeDate;
 
-            char[] buffer = new char[1024];
-            int len = 0;
-            StringBuilder sb = new StringBuilder();
-            while ((len = reader.read(buffer)) > -1) {
-                sb.append(buffer, 0, len);
-            }
-            reader.close();
-            is.close();
-            String calculationsContent = sb.toString();
-
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            try {
-                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-            } catch (IllegalArgumentException iae) {
-                log.warn("Unable to set external entity restrictions in XML parser", iae);
-            }
-            DocumentBuilder remoteDb = dbf.newDocumentBuilder();
-            InputSource inSrc1 = new InputSource(new StringReader(calculationsContent));
-            inSrc1.setEncoding("UTF-8");
-            Document remoteDoc = remoteDb.parse(inSrc1);
-
-            NodeList remoteList = remoteDoc.getElementsByTagName("server");
-
-            for (int i = 0; i < remoteList.getLength(); i++) {
-                Node n = remoteList.item(i);
-                String server = n.getAttributes().getNamedItem("version").getNodeValue();
-                String os = n.getAttributes().getNamedItem("os").getNodeValue();
-                String arch = n.getAttributes().getNamedItem("arch").getNodeValue();
-                if (serverVersion.equals(server) && System.getProperty("os.name").toLowerCase().contains(os) && System.getProperty("os.arch").toLowerCase().contains(arch)) {
-                    return n.getAttributes().getNamedItem(queryAttribute).getNodeValue();
-                }
-            }
-
-        } catch (Throwable t) {
-            log.error("Error downloading client version information", t);
-        }
-        return null;
-    }
-    
-    public static String getClientVersion() {
-        return "3.6";
+    public AddressDocumentsBean() {
     }
 
-    public static String getPatchLevel() {
-        return "0";
+    public AddressDocumentsBean(String id) {
+        this.id = id;
     }
 
-    public static String getBuild() {
-        return "0";
-    }
-    
-    public static boolean isVersionGreater(String referenceVersion, String compareToVersion) {
-        long ref=getVersionAsLong(referenceVersion);
-        long comp=getVersionAsLong(compareToVersion);
-        
-        return (ref>comp);
-    }
-    
-    private static long getVersionAsLong(String v) {
-        String major="0";
-        String minor="0";
-        String patch="0";
-        String build="0";
-        
-        if(v.contains(".")) {
-            major=v.substring(0, v.indexOf("."));
-            v=v.substring(v.indexOf(".")+1, v.length());
-        } else if (v.length()>0) {
-            major=v;
-        }
-        
-        if(v.contains(".")) {
-            minor=v.substring(0, v.indexOf("."));
-            v=v.substring(v.indexOf(".")+1, v.length());
-        } else if (v.length()>0) {
-            minor=v;
-        }
-        
-        if(v.contains(".")) {
-            patch=v.substring(0, v.indexOf("."));
-            v=v.substring(v.indexOf(".")+1, v.length());
-        } else if (v.length()>0) {
-            patch=v;
-        }
-        
-        if(v.contains(".")) {
-            build=v.substring(0, v.indexOf("."));
-            v=v.substring(v.indexOf("."), v.length()-1);
-        } else if (v.length()>0) {
-            build=v;
-        }
-        
-        try {
-            return Long.parseLong(major)*1000000 + Long.parseLong(minor)*10000 + Long.parseLong(patch)*100 + Long.parseLong(build);
-        } catch (Exception ex) {
-            return 1;
-        }
+    public String getId() {
+        return id;
     }
 
-    public static String getFullClientVersion() {
-        return getClientVersion() + "." + getPatchLevel() + "." + getBuild();
+    public void setId(String id) {
+        this.id = id;
     }
 
-    public static boolean isCompatible(String serverVersion, String clientVersion) {
-        int serverRevs = serverVersion.length() - serverVersion.replace(".", "").length();
-        if (serverRevs == 3) {
-            serverVersion = serverVersion.substring(0, serverVersion.lastIndexOf('.'));
-        }
-        int clientRevs = clientVersion.length() - clientVersion.replace(".", "").length();
-        if (clientRevs == 3) {
-            clientVersion = clientVersion.substring(0, clientVersion.lastIndexOf('.'));
-        }
+    public String getName() {
+        return name;
+    }
 
-        if (serverVersion == null) {
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Date getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
+    }
+
+    public AddressBean getAddressKey() {
+        return addressKey;
+    }
+
+    public void setAddressKey(AddressBean addressKey) {
+        this.addressKey = addressKey;
+    }
+
+    /**
+     * @return the size
+     */
+    public long getSize() {
+        return size;
+    }
+
+    /**
+     * @param size the size to set
+     */
+    public void setSize(long size) {
+        this.size = size;
+    }
+
+    /**
+     * @return the deletedBy
+     */
+    public String getDeletedBy() {
+        return deletedBy;
+    }
+
+    /**
+     * @param deletedBy the deletedBy to set
+     */
+    public void setDeletedBy(String deletedBy) {
+        this.deletedBy = deletedBy;
+    }
+
+    /**
+     * @return the deletionDate
+     */
+    public Date getDeletionDate() {
+        return deletionDate;
+    }
+
+    /**
+     * @param deletionDate the deletionDate to set
+     */
+    public void setDeletionDate(Date deletionDate) {
+        this.deletionDate = deletionDate;
+    }
+
+    /**
+     * @return the deleted
+     */
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    /**
+     * @param deleted the deleted to set
+     */
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    /**
+     * @return the changeDate
+     */
+    public Date getChangeDate() {
+        return changeDate;
+    }
+
+    /**
+     * @param changeDate the changeDate to set
+     */
+    public void setChangeDate(Date changeDate) {
+        this.changeDate = changeDate;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 0;
+        hash += (id != null ? id.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (!(object instanceof AddressDocumentsBean)) {
             return false;
         }
-        if (clientVersion == null) {
+        AddressDocumentsBean other = (AddressDocumentsBean) object;
+        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
             return false;
         }
-        return clientVersion.startsWith(serverVersion);
+        return true;
     }
 
-    public static String getServerVersion() {
-
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            return locator.lookupSystemManagementRemote().getServerVersion();
-        } catch (Exception ex) {
-            log.error(ex);
+    @Override
+    public String toString() {
+        if (this.creationDate != null) {
+            SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMAN);
+            return df.format(this.creationDate);
+        } else {
+            return "undefiniert";
         }
-
-        return "unbekannt";
     }
+
 }

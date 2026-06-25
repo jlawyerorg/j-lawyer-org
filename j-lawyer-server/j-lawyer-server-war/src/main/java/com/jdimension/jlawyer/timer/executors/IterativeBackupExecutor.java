@@ -687,7 +687,7 @@ public class IterativeBackupExecutor {
     // these directories will be zipped entirely with each backup run
     private final String[] fullBackupDirs = new String[]{"emailtemplates", "mastertemplates", "faxqueue", "templates", "letterheads"};
     // these directories will be zipped on a per subdirectory basis and only if there are changes
-    private final String[] iterativeBackupDirs = new String[]{"archivefiles"};
+    private final String[] iterativeBackupDirs = new String[]{"archivefiles", "addressfiles"};
 
     private String dbUser = null;
     private String dbPassword = null;
@@ -834,6 +834,10 @@ public class IterativeBackupExecutor {
 
                 File dir = new File(this.dataDirectory + File.separator + itBackupDir);
                 File[] children = dir.listFiles();
+                if (children == null) {
+                    // directory does not exist yet (e.g. addressfiles before the first address document) - nothing to back up
+                    continue;
+                }
                 for (File child : children) {
                     if (child.isDirectory()) {
                         List<File> fileList = new ArrayList<>();
@@ -995,7 +999,7 @@ public class IterativeBackupExecutor {
         for (File file : files) {
             fileList.add(file);
             if (file.isDirectory()) {
-                if (!("searchindex".equals(file.getName())) && !("archivefiles-preview".equals(file.getName()))) {
+                if (!("searchindex".equals(file.getName())) && !("archivefiles-preview".equals(file.getName())) && !("addressfiles-preview".equals(file.getName()))) {
                     getAllFiles(file, fileList);
                 }
             }

@@ -756,6 +756,7 @@ import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.AddressDocumentServiceRemote;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import com.jdimension.jlawyer.ui.folders.DocumentEntryPanel;
 import com.jdimension.jlawyer.ui.tagging.ArchiveFileTagActionListener;
@@ -2179,8 +2180,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuOpenDocumentLibreOffice = new javax.swing.JMenuItem();
         mnuSaveDocumentsLocally = new javax.swing.JMenuItem();
         mnuDuplicateDocument = new javax.swing.JMenuItem();
+        mnuCopyMove = new javax.swing.JMenu();
         mnuCopyDocumentToOtherCase = new javax.swing.JMenuItem();
         mnuMoveDocumentToOtherCase = new javax.swing.JMenuItem();
+        jSeparator6 = new javax.swing.JPopupMenu.Separator();
         mnuRenameDocument = new javax.swing.JMenuItem();
         mnuSetDocumentDate = new javax.swing.JMenuItem();
         mnuDocumentHighlights = new javax.swing.JMenu();
@@ -2540,6 +2543,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         });
         documentsPopup.add(mnuDuplicateDocument);
 
+        mnuCopyMove.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/tooloptions.png"))); // NOI18N
+        mnuCopyMove.setText("kopieren oder verschieben");
+
         mnuCopyDocumentToOtherCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
         mnuCopyDocumentToOtherCase.setText("in andere Akte kopieren");
         mnuCopyDocumentToOtherCase.addActionListener(new java.awt.event.ActionListener() {
@@ -2547,7 +2553,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 mnuCopyDocumentToOtherCaseActionPerformed(evt);
             }
         });
-        documentsPopup.add(mnuCopyDocumentToOtherCase);
+        mnuCopyMove.add(mnuCopyDocumentToOtherCase);
 
         mnuMoveDocumentToOtherCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editmove.png"))); // NOI18N
         mnuMoveDocumentToOtherCase.setText("in andere Akte verschieben");
@@ -2556,7 +2562,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 mnuMoveDocumentToOtherCaseActionPerformed(evt);
             }
         });
-        documentsPopup.add(mnuMoveDocumentToOtherCase);
+        mnuCopyMove.add(mnuMoveDocumentToOtherCase);
+        mnuCopyMove.add(jSeparator6);
+
+        documentsPopup.add(mnuCopyMove);
 
         mnuRenameDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
         mnuRenameDocument.setText("umbenennen");
@@ -5371,8 +5380,134 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             log.error(ex);
         }
 
+        this.rebuildAddressCopyMoveItems();
+
         this.documentsPopup.show(evt.getComponent(), evt.getX(), evt.getY());
 
+    }
+
+    /**
+     * Rebuilds the dynamic "copy/move to involved address" entries below the
+     * separator in {@link #mnuCopyMove}. The involved parties are taken from the
+     * in-memory {@code pnlInvolvedParties} (no remote call). Because the panel is
+     * reused across cases, previously added dynamic entries (marked with the
+     * "addresscopymoveitem" client property) are removed first.
+     */
+    private void rebuildAddressCopyMoveItems() {
+        // remove previously added dynamic address entries
+        for (Component c : this.mnuCopyMove.getMenuComponents()) {
+            if (c instanceof JMenuItem && ((JMenuItem) c).getClientProperty("addresscopymoveitem") != null) {
+                this.mnuCopyMove.remove((JMenuItem) c);
+            }
+        }
+
+        List<AddressBean> parties = this.pnlInvolvedParties.getInvolvedPartiesAddress();
+        if (parties == null) {
+            return;
+        }
+
+        HashSet<String> seen = new HashSet<>();
+        for (AddressBean addr : parties) {
+            if (addr == null || addr.getId() == null || !seen.add(addr.getId())) {
+                continue;
+            }
+            final AddressBean address = addr;
+            String displayName = addr.toDisplayName();
+
+            JMenuItem miCopy = new JMenuItem("zu " + displayName + " kopieren");
+            miCopy.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png")));
+            miCopy.putClientProperty("addresscopymoveitem", "true");
+            miCopy.addActionListener((ActionEvent e) -> copyOrMoveSelectedDocumentsToAddress(address, false));
+            this.mnuCopyMove.add(miCopy);
+
+            JMenuItem miMove = new JMenuItem("zu " + displayName + " verschieben");
+            miMove.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editmove.png")));
+            miMove.putClientProperty("addresscopymoveitem", "true");
+            miMove.addActionListener((ActionEvent e) -> copyOrMoveSelectedDocumentsToAddress(address, true));
+            this.mnuCopyMove.add(miMove);
+        }
+    }
+
+    /**
+     * Copies (or moves) the currently selected case documents to the documents of
+     * an involved address (contact). On move, the documents are removed from the
+     * case after a confirmation. Name conflicts at the target are resolved by
+     * appending a numeric suffix.
+     *
+     * @param addr the target address
+     * @param move true to move (remove from case), false to copy
+     */
+    private void copyOrMoveSelectedDocumentsToAddress(AddressBean addr, boolean move) {
+        ArrayList<ArchiveFileDocumentsBean> selected = this.caseFolderPanel1.getSelectedDocuments();
+        if (selected.isEmpty()) {
+            return;
+        }
+
+        if (move) {
+            int response = JOptionPane.showConfirmDialog(this, selected.size() + " Dokument(e) zu " + addr.toDisplayName() + " verschieben? Sie werden aus der Akte in den Papierkorb verschoben.", "Dokumente verschieben", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if (response != JOptionPane.YES_OPTION) {
+                return;
+            }
+        }
+
+        final ArchiveFileServiceRemote remote;
+        final AddressDocumentServiceRemote ads;
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            remote = locator.lookupArchiveFileServiceRemote();
+            ads = locator.lookupAddressDocumentServiceRemote();
+        } catch (Exception ex) {
+            log.error("Could not look up services for copy/move to address", ex);
+            JOptionPane.showMessageDialog(this, "Dienste konnten nicht angesprochen werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        for (ArchiveFileDocumentsBean doc : selected) {
+            ProgressableActionCallback callback = () -> {
+                try {
+                    byte[] content = remote.getDocumentContent(doc.getId());
+                    String newName = uniqueAddressDocumentName(ads, addr.getId(), doc.getName());
+                    ads.addDocument(addr.getId(), newName, content);
+                    if (move) {
+                        remote.removeDocument(doc.getId());
+                        this.caseFolderPanel1.removeDocument(doc);
+                    }
+                } catch (Exception ex) {
+                    log.error("Error " + (move ? "moving" : "copying") + " document to address " + addr.getId(), ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim " + (move ? "Verschieben" : "Kopieren") + " des Dokuments '" + doc.getName() + "': " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
+            };
+            this.waitForOpenDocument(doc, callback);
+        }
+        if (move) {
+            this.updateFavoriteDocuments();
+        }
+        this.lastPopupClosed = System.currentTimeMillis();
+    }
+
+    /**
+     * Returns a document name that does not yet exist for the given address,
+     * appending a numeric suffix before the extension if necessary.
+     */
+    private String uniqueAddressDocumentName(AddressDocumentServiceRemote ads, String addressId, String name) throws Exception {
+        if (!ads.doesDocumentExist(addressId, name)) {
+            return name;
+        }
+        String base = name;
+        String ext = "";
+        int dot = name.lastIndexOf('.');
+        if (dot > 0) {
+            base = name.substring(0, dot);
+            ext = name.substring(dot);
+        }
+        int counter = 1;
+        String candidate;
+        do {
+            candidate = base + " (" + counter + ")" + ext;
+            counter++;
+        } while (ads.doesDocumentExist(addressId, candidate));
+        return candidate;
     }
 
     public void addMessageToView(InstantMessage msg) {
@@ -10186,6 +10321,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPopupMenu.Separator jSeparator3;
     private javax.swing.JPopupMenu.Separator jSeparator4;
     private javax.swing.JPopupMenu.Separator jSeparator5;
+    private javax.swing.JPopupMenu.Separator jSeparator6;
     private javax.swing.JSeparator jSeparator7;
     private javax.swing.JPopupMenu.Separator jSeparator8;
     protected javax.swing.JLabel lblArchivedSince;
@@ -10213,6 +10349,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JMenuItem mnuCopyExtIdToClipboard;
     private javax.swing.JMenuItem mnuCopyFilesToClipboard;
     private javax.swing.JMenuItem mnuCopyIdToClipboard;
+    private javax.swing.JMenu mnuCopyMove;
     private javax.swing.JMenuItem mnuDirectPrint;
     private javax.swing.JMenuItem mnuDocumentHighlight1;
     private javax.swing.JMenuItem mnuDocumentHighlight2;

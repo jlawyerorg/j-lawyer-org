@@ -682,9 +682,76 @@ public class PreviewGenerator {
     private ArchiveFileDocumentsBeanFacadeLocal archiveFileDocumentsFacade;
     private StirlingPdfAPI pdfApi=null;
 
+    // storage areas (sub-directories of jlawyer.server.basedirectory). Defaults
+    // target case documents; address documents reuse this generator with
+    // "addressfiles"/"addressfiles-preview" via the dedicated constructor.
+    private String contentArea = "archivefiles";
+    private String previewArea = "archivefiles-preview";
+
     public PreviewGenerator(ArchiveFileDocumentsBeanFacadeLocal archiveFileDocumentsFacade, StirlingPdfAPI pdfApi) {
         this.archiveFileDocumentsFacade = archiveFileDocumentsFacade;
         this.pdfApi=pdfApi;
+    }
+
+    /**
+     * Creates a preview generator operating on an arbitrary storage area. Use
+     * this constructor when the documents do not belong to a case (e.g. address
+     * documents); the facade-based {@link #getDocumentPreview(java.lang.String, java.lang.String)}
+     * is not available in that case.
+     *
+     * @param pdfApi optional Stirling PDF API for PDF previews, may be null
+     * @param contentArea content sub-directory (e.g. "addressfiles")
+     * @param previewArea preview sub-directory (e.g. "addressfiles-preview")
+     */
+    public PreviewGenerator(StirlingPdfAPI pdfApi, String contentArea, String previewArea) {
+        this.pdfApi = pdfApi;
+        this.contentArea = contentArea;
+        this.previewArea = previewArea;
+    }
+
+    /**
+     * Builds (if necessary) and returns a preview for a document identified by
+     * its storage directory id, document id and file name, without requiring a
+     * case-document facade lookup.
+     *
+     * @param dirId storage directory id (case id or address id)
+     * @param docId document id
+     * @param fileName document file name
+     * @param previewType {@link DocumentPreview#TYPE_TEXT} or {@link DocumentPreview#TYPE_PDF}
+     * @return the preview
+     * @throws Exception on failure
+     */
+    public DocumentPreview getDocumentPreview(String dirId, String docId, String fileName, String previewType) throws Exception {
+
+        if (!DocumentPreview.supportsPdfPreview(fileName)) {
+            previewType = DocumentPreview.TYPE_TEXT;
+        }
+
+        if (!this.previewExists(dirId, docId, fileName, previewType)) {
+            this.createPreview(dirId, docId, fileName, previewType);
+        }
+
+        String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
+        localBaseDir = localBaseDir.trim();
+        if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
+            localBaseDir = localBaseDir + System.getProperty("file.separator");
+        }
+
+        String dst = localBaseDir + previewArea + System.getProperty("file.separator") + dirId + System.getProperty("file.separator");
+
+        this.migrateDocument(dst, docId, fileName, previewType);
+
+        File dstFile = new File(dst + docId + "." + previewType);
+
+        if (!(dstFile.exists())) {
+            throw new Exception("Dokumentvorschau (" + previewType + ") für " + fileName + " existiert nicht!");
+        } else {
+            if (DocumentPreview.TYPE_TEXT.equals(previewType)) {
+                return new DocumentPreview(ServerFileUtils.readTextFile(dstFile));
+            } else {
+                return new DocumentPreview(ServerFileUtils.readFile(dstFile));
+            }
+        }
     }
 
     public DocumentPreview getDocumentPreview(String id, String previewType) throws Exception {
@@ -705,7 +772,7 @@ public class PreviewGenerator {
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
 
-        String dst = localBaseDir + "archivefiles-preview" + System.getProperty("file.separator") + aId + System.getProperty("file.separator");
+        String dst = localBaseDir + previewArea + System.getProperty("file.separator") + aId + System.getProperty("file.separator");
 
         this.migrateDocument(dst, db.getId(), db.getName(), previewType);
 
@@ -730,7 +797,7 @@ public class PreviewGenerator {
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
 
-        String dst = localBaseDir + "archivefiles-preview" + System.getProperty("file.separator") + archiveFileId + System.getProperty("file.separator");
+        String dst = localBaseDir + previewArea + System.getProperty("file.separator") + archiveFileId + System.getProperty("file.separator");
         String dstName = dst + fileName;
         String dstId = dst + docId;
 
@@ -759,7 +826,7 @@ public class PreviewGenerator {
                 localBaseDir = localBaseDir + System.getProperty("file.separator");
             }
 
-            String dst = localBaseDir + "archivefiles-preview" + System.getProperty("file.separator") + archiveFileId + System.getProperty("file.separator");
+            String dst = localBaseDir + previewArea + System.getProperty("file.separator") + archiveFileId + System.getProperty("file.separator");
 
             this.migrateDocument(dst, docId, fileName, previewType);
 
@@ -792,7 +859,7 @@ public class PreviewGenerator {
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
 
-        String src = localBaseDir + "archivefiles" + System.getProperty("file.separator") + archiveFileId + System.getProperty("file.separator");
+        String src = localBaseDir + contentArea + System.getProperty("file.separator") + archiveFileId + System.getProperty("file.separator");
         File srcDir = new File(src);
         srcDir.mkdirs();
         String srcId = src + docId;
@@ -803,7 +870,7 @@ public class PreviewGenerator {
             fSrcFile = new File(srcFile);
         }
 
-        String dst = localBaseDir + "archivefiles-preview" + System.getProperty("file.separator") + archiveFileId + System.getProperty("file.separator");
+        String dst = localBaseDir + previewArea + System.getProperty("file.separator") + archiveFileId + System.getProperty("file.separator");
         File dstDir = new File(dst);
         dstDir.mkdirs();
         dst = dst + docId + "." + previewType;

@@ -661,185 +661,518 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.utils;
+package com.jdimension.jlawyer.services;
 
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.net.URL;
-import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
+import com.jdimension.jlawyer.documents.DocumentPreview;
+import com.jdimension.jlawyer.documents.LibreOfficeAccess;
+import com.jdimension.jlawyer.documents.PreviewGenerator;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.AddressBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.AddressDocumentsBean;
+import com.jdimension.jlawyer.persistence.AddressDocumentsBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ServerSettingsBean;
+import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
+import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
+import com.jdimension.jlawyer.server.utils.ServerFileUtils;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
+import com.jdimension.jlawyer.stirlingpdf.StirlingPdfAPI;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Resource;
+import javax.annotation.security.RolesAllowed;
+import javax.ejb.EJB;
+import javax.ejb.EJBException;
+import javax.ejb.SessionContext;
+import javax.ejb.Stateless;
+import org.jboss.ejb3.annotation.TransactionTimeout;
 import org.apache.log4j.Logger;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
+import org.jlawyer.utils.ocr.OcrUtils;
 
 /**
+ * Manages documents that belong directly to an address (contact). The document
+ * metadata is persisted via {@link AddressDocumentsBeanFacadeLocal}; the binary
+ * content lives on disk under
+ * {@code ${jlawyer.server.basedirectory}/addressfiles/{addressId}/} with
+ * previews under {@code addressfiles-preview/{addressId}/}, mirroring the
+ * case-document storage discipline. Address documents are a flat list - no
+ * folders, tags, versioning, locking, favorites, highlights or external ids.
  *
  * @author jens
  */
-public class VersionUtils {
+@Stateless
+public class AddressDocumentService implements AddressDocumentServiceRemote, AddressDocumentServiceLocal {
 
-    private static final Logger log = Logger.getLogger(VersionUtils.class.getName());
+    private static final Logger log = Logger.getLogger(AddressDocumentService.class.getName());
 
-    public static String getLatestClientDownloadForServer(String serverVersion) {
-        return getLatestClientForServer(serverVersion, "url");
+    private static final String STORAGE_CONTENT = "addressfiles";
+    private static final String STORAGE_PREVIEW = "addressfiles-preview";
+
+    @Resource
+    private SessionContext context;
+
+    @EJB
+    private AddressBeanFacadeLocal addressFacade;
+
+    @EJB
+    private AddressDocumentsBeanFacadeLocal addressDocumentsFacade;
+
+    @EJB
+    private ServerSettingsBeanFacadeLocal settingsFacade;
+
+    private String getBaseDir() {
+        String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
+        localBaseDir = localBaseDir.trim();
+        if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
+            localBaseDir = localBaseDir + System.getProperty("file.separator");
+        }
+        return localBaseDir;
     }
-    
-    public static String getLatestClientVersionForServer(String serverVersion) {
-        return getLatestClientForServer(serverVersion, "client");
+
+    private String getDocumentDir(String addressId) {
+        return getBaseDir() + STORAGE_CONTENT + System.getProperty("file.separator") + addressId + System.getProperty("file.separator");
     }
-    
-    private static String getLatestClientForServer(String serverVersion, String queryAttribute) {
-        try {
-            URL updateURL = new URL("https://www.j-lawyer.org/downloads/j-lawyer-autoupdate.xml");
-            URLConnection urlCon = updateURL.openConnection();
-            urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
-            urlCon.setConnectTimeout(2000);
-            urlCon.setReadTimeout(3000);
 
-            InputStream is = urlCon.getInputStream();
-            InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-
-            char[] buffer = new char[1024];
-            int len = 0;
-            StringBuilder sb = new StringBuilder();
-            while ((len = reader.read(buffer)) > -1) {
-                sb.append(buffer, 0, len);
-            }
-            reader.close();
-            is.close();
-            String calculationsContent = sb.toString();
-
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            try {
-                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-            } catch (IllegalArgumentException iae) {
-                log.warn("Unable to set external entity restrictions in XML parser", iae);
-            }
-            DocumentBuilder remoteDb = dbf.newDocumentBuilder();
-            InputSource inSrc1 = new InputSource(new StringReader(calculationsContent));
-            inSrc1.setEncoding("UTF-8");
-            Document remoteDoc = remoteDb.parse(inSrc1);
-
-            NodeList remoteList = remoteDoc.getElementsByTagName("server");
-
-            for (int i = 0; i < remoteList.getLength(); i++) {
-                Node n = remoteList.item(i);
-                String server = n.getAttributes().getNamedItem("version").getNodeValue();
-                String os = n.getAttributes().getNamedItem("os").getNodeValue();
-                String arch = n.getAttributes().getNamedItem("arch").getNodeValue();
-                if (serverVersion.equals(server) && System.getProperty("os.name").toLowerCase().contains(os) && System.getProperty("os.arch").toLowerCase().contains(arch)) {
-                    return n.getAttributes().getNamedItem(queryAttribute).getNodeValue();
-                }
-            }
-
-        } catch (Throwable t) {
-            log.error("Error downloading client version information", t);
+    private StirlingPdfAPI getStirlingApi() {
+        ServerSettingsBean sb = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
+        if (sb != null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
+            return new StirlingPdfAPI(sb.getSettingValue(), 5000, 120000);
         }
         return null;
     }
-    
-    public static String getClientVersion() {
-        return "3.6";
+
+    private PreviewGenerator previewGenerator() {
+        return new PreviewGenerator(getStirlingApi(), STORAGE_CONTENT, STORAGE_PREVIEW);
     }
 
-    public static String getPatchLevel() {
-        return "0";
-    }
-
-    public static String getBuild() {
-        return "0";
-    }
-    
-    public static boolean isVersionGreater(String referenceVersion, String compareToVersion) {
-        long ref=getVersionAsLong(referenceVersion);
-        long comp=getVersionAsLong(compareToVersion);
-        
-        return (ref>comp);
-    }
-    
-    private static long getVersionAsLong(String v) {
-        String major="0";
-        String minor="0";
-        String patch="0";
-        String build="0";
-        
-        if(v.contains(".")) {
-            major=v.substring(0, v.indexOf("."));
-            v=v.substring(v.indexOf(".")+1, v.length());
-        } else if (v.length()>0) {
-            major=v;
-        }
-        
-        if(v.contains(".")) {
-            minor=v.substring(0, v.indexOf("."));
-            v=v.substring(v.indexOf(".")+1, v.length());
-        } else if (v.length()>0) {
-            minor=v;
-        }
-        
-        if(v.contains(".")) {
-            patch=v.substring(0, v.indexOf("."));
-            v=v.substring(v.indexOf(".")+1, v.length());
-        } else if (v.length()>0) {
-            patch=v;
-        }
-        
-        if(v.contains(".")) {
-            build=v.substring(0, v.indexOf("."));
-            v=v.substring(v.indexOf("."), v.length()-1);
-        } else if (v.length()>0) {
-            build=v;
-        }
-        
+    private void createPreviews(AddressDocumentsBean db) {
+        String addressId = db.getAddressKey().getId();
         try {
-            return Long.parseLong(major)*1000000 + Long.parseLong(minor)*10000 + Long.parseLong(patch)*100 + Long.parseLong(build);
+            PreviewGenerator pg = previewGenerator();
+            pg.updatePreview(addressId, db.getId(), db.getName(), DocumentPreview.TYPE_TEXT);
+            if (DocumentPreview.supportsPdfPreview(db.getName()) && getStirlingApi() != null) {
+                pg.updatePreview(addressId, db.getId(), db.getName(), DocumentPreview.TYPE_PDF);
+            }
+        } catch (Throwable t) {
+            log.error("Error creating address document preview", t);
+        }
+    }
+
+    private void deletePreviews(AddressDocumentsBean db) {
+        String addressId = db.getAddressKey().getId();
+        try {
+            PreviewGenerator pg = previewGenerator();
+            pg.deletePreview(addressId, db.getId(), db.getName(), DocumentPreview.TYPE_TEXT);
+            pg.deletePreview(addressId, db.getId(), db.getName(), DocumentPreview.TYPE_PDF);
+        } catch (Throwable t) {
+            log.warn("Error deleting address document preview", t);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public Collection<AddressDocumentsBean> getAddressDocuments(String addressId) throws Exception {
+        AddressBean ab = this.addressFacade.find(addressId);
+        if (ab == null) {
+            throw new Exception("Adresse mit ID " + addressId + " existiert nicht!");
+        }
+        return this.addressDocumentsFacade.findByAddressKey(ab, false);
+    }
+
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public Collection<AddressDocumentsBean> getAddressDocumentsBin(String addressId) throws Exception {
+        AddressBean ab = this.addressFacade.find(addressId);
+        if (ab == null) {
+            throw new Exception("Adresse mit ID " + addressId + " existiert nicht!");
+        }
+        return this.addressDocumentsFacade.findByAddressKey(ab, true);
+    }
+
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public Collection<AddressDocumentsBean> getDocumentsBin() throws Exception {
+        return this.addressDocumentsFacade.findDeleted();
+    }
+
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public AddressDocumentsBean getDocument(String id) throws Exception {
+        return this.addressDocumentsFacade.find(id);
+    }
+
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public byte[] getDocumentContent(String id) throws Exception {
+        AddressDocumentsBean db = this.addressDocumentsFacade.find(id);
+        if (db == null) {
+            log.error("Address document with id " + id + " does not exist");
+            throw new Exception("Dokument mit ID " + id + " existiert nicht!");
+        }
+        String dst = getDocumentDir(db.getAddressKey().getId()) + db.getId();
+        File dstFile = new File(dst);
+        if (!dstFile.exists()) {
+            throw new Exception("Dokument " + db.getName() + " existiert nicht!");
+        }
+        return ServerFileUtils.readFile(dstFile);
+    }
+
+    @Override
+    @RolesAllowed({"writeAddressRole"})
+    public AddressDocumentsBean addDocument(String addressId, String fileName, byte[] data) throws Exception {
+        if (fileName == null || "".equals(fileName)) {
+            throw new Exception("Dokumentname darf nicht leer sein!");
+        }
+
+        AddressBean ab = this.addressFacade.find(addressId);
+        if (ab == null) {
+            throw new Exception("Adresse mit ID " + addressId + " existiert nicht!");
+        }
+
+        AddressDocumentsBean existingDoc = this.addressDocumentsFacade.findByAddressKey(ab, fileName);
+        if (existingDoc != null) {
+            throw new Exception("Dokument " + fileName + " existiert bereits bei der Adresse oder deren Papierkorb - bitte einen anderen Namen wählen!");
+        }
+
+        String docId = new StringGenerator().getID().toString();
+        String dir = getDocumentDir(addressId);
+        new File(dir).mkdirs();
+        String dst = dir + docId;
+
+        if (new File(dst).exists()) {
+            throw new Exception("Datei " + docId + " existiert bereits im Datenverzeichnis der Adresse!");
+        }
+
+        ServerFileUtils.createFile(dst, data);
+
+        AddressDocumentsBean db = new AddressDocumentsBean();
+        db.setId(docId);
+        db.setAddressKey(ab);
+        Date created = new Date();
+        db.setCreationDate(created);
+        db.setChangeDate(created);
+        db.setName(fileName);
+        db.setSize(data != null ? data.length : -1);
+        db.setDeleted(false);
+        db.setDeletedBy(null);
+        db.setDeletionDate(null);
+        this.addressDocumentsFacade.create(db);
+
+        this.createPreviews(db);
+
+        return this.addressDocumentsFacade.find(docId);
+    }
+
+    @Override
+    @RolesAllowed({"writeAddressRole"})
+    public AddressDocumentsBean addDocumentFromTemplate(String addressId, String fileName, String letterHead, String templateFolder, String templateName, HashMap<String, Object> placeHolderValues) throws Exception {
+        if (fileName == null || "".equals(fileName)) {
+            throw new Exception("Dokumentname darf nicht leer sein!");
+        }
+
+        AddressBean ab = this.addressFacade.find(addressId);
+        if (ab == null) {
+            throw new Exception("Adresse mit ID " + addressId + " existiert nicht!");
+        }
+
+        String localBaseDir = getBaseDir();
+        String src = localBaseDir + "templates" + templateFolder + System.getProperty("file.separator") + templateName;
+
+        String ext = "";
+        try {
+            ext = templateName.substring(templateName.lastIndexOf('.'));
+        } catch (Throwable t) {
+            log.warn("Template without file extension: " + templateName);
+        }
+        fileName = fileName + ext;
+
+        AddressDocumentsBean existingDoc = this.addressDocumentsFacade.findByAddressKey(ab, fileName);
+        if (existingDoc != null) {
+            throw new Exception("Dokument " + fileName + " existiert bereits bei der Adresse oder deren Papierkorb - bitte einen anderen Namen wählen!");
+        }
+
+        String docId = new StringGenerator().getID().toString();
+        String dir = getDocumentDir(addressId);
+        new File(dir).mkdirs();
+        String dstId = dir + docId;
+
+        if (new File(dstId).exists()) {
+            throw new Exception("Dokument " + fileName + " existiert bereits bei der Adresse oder deren Papierkorb - bitte einen anderen Namen wählen!");
+        }
+
+        if (ServerStringUtils.isEmpty(letterHead)) {
+            ServerFileUtils.copyFile(src, dstId);
+        } else if (letterHead.toLowerCase().endsWith(".png") || letterHead.toLowerCase().endsWith(".jpg") || letterHead.toLowerCase().endsWith(".jpeg")) {
+            ServerFileUtils.copyFile(src, dstId);
+            String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + letterHead;
+            if (!(new File(srcHead).exists())) {
+                throw new Exception("Briefkopf " + letterHead + " existiert nicht!");
+            }
+            LibreOfficeAccess.applyHeaderGraphic(srcHead, dstId, templateName);
+        } else {
+            String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + letterHead;
+            ServerFileUtils.copyFile(srcHead, dstId);
+            if (!(new File(srcHead).exists())) {
+                throw new Exception("Briefkopf " + letterHead + " existiert nicht!");
+            }
+            LibreOfficeAccess.applyHeaderDocument(dstId, src);
+        }
+
+        try {
+            if (placeHolderValues == null) {
+                placeHolderValues = new HashMap<>();
+            }
+            LibreOfficeAccess.setPlaceHolders(addressId, dstId, fileName, placeHolderValues, new ArrayList<String>());
         } catch (Exception ex) {
-            return 1;
+            log.error("could not set placeholders in file " + dstId, ex);
         }
+
+        AddressDocumentsBean db = new AddressDocumentsBean();
+        db.setId(docId);
+        db.setAddressKey(ab);
+        Date created = new Date();
+        db.setCreationDate(created);
+        db.setChangeDate(created);
+        db.setName(fileName);
+        db.setSize(new File(dstId).exists() ? new File(dstId).length() : -1);
+        db.setDeleted(false);
+        db.setDeletedBy(null);
+        db.setDeletionDate(null);
+        this.addressDocumentsFacade.create(db);
+
+        this.createPreviews(db);
+
+        return this.addressDocumentsFacade.find(docId);
     }
 
-    public static String getFullClientVersion() {
-        return getClientVersion() + "." + getPatchLevel() + "." + getBuild();
+    @Override
+    @RolesAllowed({"writeAddressRole"})
+    public boolean setDocumentContent(String id, byte[] content) throws Exception {
+        AddressDocumentsBean db = this.addressDocumentsFacade.find(id);
+        if (db == null) {
+            throw new Exception("Dokument mit ID " + id + " existiert nicht!");
+        }
+
+        if (content != null) {
+            db.setSize(content.length);
+            db.setChangeDate(new Date());
+            this.addressDocumentsFacade.edit(db);
+        }
+
+        String dst = getDocumentDir(db.getAddressKey().getId()) + id;
+        File dstFile = new File(dst);
+        if (!dstFile.exists()) {
+            throw new Exception("Dokument " + db.getName() + " existiert nicht!");
+        }
+
+        ServerFileUtils.writeFile(dstFile, content);
+
+        this.createPreviews(db);
+
+        return true;
     }
 
-    public static boolean isCompatible(String serverVersion, String clientVersion) {
-        int serverRevs = serverVersion.length() - serverVersion.replace(".", "").length();
-        if (serverRevs == 3) {
-            serverVersion = serverVersion.substring(0, serverVersion.lastIndexOf('.'));
-        }
-        int clientRevs = clientVersion.length() - clientVersion.replace(".", "").length();
-        if (clientRevs == 3) {
-            clientVersion = clientVersion.substring(0, clientVersion.lastIndexOf('.'));
+    @Override
+    @RolesAllowed({"writeAddressRole"})
+    public boolean renameDocument(String id, String newName) throws Exception {
+        if (newName == null || "".equals(newName)) {
+            throw new Exception("Dokumentname darf nicht leer sein!");
         }
 
-        if (serverVersion == null) {
+        AddressDocumentsBean db = this.addressDocumentsFacade.find(id);
+        if (db == null) {
+            throw new Exception("Dokument mit ID " + id + " existiert nicht!");
+        }
+
+        AddressBean ab = db.getAddressKey();
+        AddressDocumentsBean existingDoc = this.addressDocumentsFacade.findByAddressKey(ab, newName);
+        if (existingDoc != null && !id.equals(existingDoc.getId())) {
+            throw new Exception("Dokument " + newName + " existiert bereits bei der Adresse oder deren Papierkorb - bitte einen anderen Namen wählen!");
+        }
+
+        db.setName(newName);
+        db.setChangeDate(new Date());
+        this.addressDocumentsFacade.edit(db);
+
+        return true;
+    }
+
+    @Override
+    @RolesAllowed({"writeAddressRole"})
+    public boolean setDocumentDate(String id, Date date) throws Exception {
+        AddressDocumentsBean db = this.addressDocumentsFacade.find(id);
+        if (db == null) {
+            throw new Exception("Dokument mit ID " + id + " existiert nicht!");
+        }
+        db.setCreationDate(date);
+        db.setChangeDate(new Date());
+        this.addressDocumentsFacade.edit(db);
+        return true;
+    }
+
+    @Override
+    @RolesAllowed({"writeAddressRole"})
+    public void removeDocument(String id) throws Exception {
+        AddressDocumentsBean db = this.addressDocumentsFacade.find(id);
+        if (db == null) {
+            throw new Exception("Dokument mit ID " + id + " existiert nicht!");
+        }
+
+        this.deletePreviews(db);
+
+        db.setDeleted(true);
+        db.setDeletionDate(new Date());
+        db.setDeletedBy(context.getCallerPrincipal().getName());
+        db.setChangeDate(new Date());
+        this.addressDocumentsFacade.edit(db);
+    }
+
+    @Override
+    @RolesAllowed({"writeAddressRole"})
+    public boolean restoreDocumentFromBin(String docId) throws Exception {
+        AddressDocumentsBean db = this.addressDocumentsFacade.find(docId);
+        if (db == null) {
+            throw new Exception("Dokument mit ID " + docId + " existiert nicht!");
+        }
+
+        db.setDeleted(false);
+        db.setDeletedBy(null);
+        db.setDeletionDate(null);
+        db.setChangeDate(new Date());
+        this.addressDocumentsFacade.edit(db);
+
+        this.createPreviews(db);
+
+        return true;
+    }
+
+    @Override
+    @RolesAllowed({"writeAddressRole"})
+    public void removeDocumentFromBin(String docId) throws Exception {
+        AddressDocumentsBean db = this.addressDocumentsFacade.find(docId);
+        if (db == null) {
+            throw new Exception("Dokument mit ID " + docId + " existiert nicht!");
+        }
+
+        this.deletePreviews(db);
+
+        String dst = getDocumentDir(db.getAddressKey().getId());
+        File dbFile = new File(dst + db.getId());
+        if (dbFile.exists()) {
+            if (!dbFile.delete()) {
+                log.error("Dokument " + dbFile.getAbsolutePath() + " konnte nicht gelöscht werden!");
+            }
+        } else {
+            File byName = new File(dst + db.getName());
+            if (byName.exists() && !byName.delete()) {
+                log.error("Dokument " + byName.getAbsolutePath() + " konnte nicht gelöscht werden!");
+            }
+        }
+
+        this.addressDocumentsFacade.remove(db);
+    }
+
+    @Override
+    @RolesAllowed({"writeAddressRole"})
+    @TransactionTimeout(value = 15, unit = TimeUnit.MINUTES)
+    public boolean performOcr(String docId) throws Exception {
+        AddressDocumentsBean doc = this.addressDocumentsFacade.find(docId);
+        if (doc == null) {
             return false;
         }
-        if (clientVersion == null) {
+        if (ServerStringUtils.isEmpty(doc.getName())) {
             return false;
         }
-        return clientVersion.startsWith(serverVersion);
-    }
-
-    public static String getServerVersion() {
-
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            return locator.lookupSystemManagementRemote().getServerVersion();
-        } catch (Exception ex) {
-            log.error(ex);
+        if (!doc.getName().toLowerCase().endsWith(".pdf")) {
+            return false;
         }
 
-        return "unbekannt";
+        ServerSettingsBean s = this.settingsFacade.find("jlawyer.server.observe.ocrcmd");
+        String[] cmd = null;
+        if (s != null && s.getSettingValue().length() > 0) {
+            cmd = s.getSettingValue().split(" ");
+        }
+
+        if (cmd != null) {
+            log.info("performing OCR on address document " + docId + " " + doc.getName() + " using ocrmypdf");
+
+            String tmpDir = System.getProperty("java.io.tmpdir");
+            if (!tmpDir.endsWith(System.getProperty("file.separator"))) {
+                tmpDir = tmpDir + System.getProperty("file.separator");
+            }
+            File outputFile = new File(tmpDir + System.currentTimeMillis());
+
+            String srcId = getDocumentDir(doc.getAddressKey().getId()) + doc.getId();
+            File srcFile = new File(srcId);
+
+            int exitCode = OcrUtils.performOcr(cmd, srcFile, outputFile);
+            if (!outputFile.exists()) {
+                log.error("OCR failed for file " + srcFile.getAbsolutePath());
+                return false;
+            } else {
+                byte[] ocrFile = ServerFileUtils.readFile(outputFile);
+                outputFile.delete();
+                if (exitCode < 0) {
+                    log.error("OCR failed for file " + srcFile.getAbsolutePath() + ", exit code is " + exitCode);
+                    return false;
+                } else {
+                    return this.setDocumentContent(docId, ocrFile);
+                }
+            }
+        } else {
+            StirlingPdfAPI pdfApi = getStirlingApi();
+            if (pdfApi != null) {
+                log.info("performing OCR on address document " + docId + " " + doc.getName() + " using Stirling PDF");
+                byte[] docContent = this.getDocumentContent(docId);
+                if (docContent == null) {
+                    return false;
+                }
+                byte[] ocred = pdfApi.ocrPdf(doc.getName(), docContent);
+                if (ocred != null) {
+                    return this.setDocumentContent(docId, ocred);
+                }
+            } else {
+                log.info("performing OCR on address document " + docId + " " + doc.getName() + " failed because OCR tooling is not configured");
+                return false;
+            }
+        }
+        log.info("performing OCR on address document " + docId + " " + doc.getName() + " failed");
+        return false;
+    }
+
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public DocumentPreview getDocumentPreview(String id, String previewType) throws Exception {
+        AddressDocumentsBean db = this.addressDocumentsFacade.find(id);
+        if (db == null) {
+            throw new Exception("Dokument mit ID " + id + " existiert nicht!");
+        }
+        return previewGenerator().getDocumentPreview(db.getAddressKey().getId(), db.getId(), db.getName(), previewType);
+    }
+
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public boolean doesDocumentExist(String addressId, String documentName) throws Exception {
+        AddressBean ab = this.addressFacade.find(addressId);
+        if (ab == null) {
+            return false;
+        }
+        return this.addressDocumentsFacade.findByAddressKey(ab, documentName) != null;
+    }
+
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public int getDocumentCount() {
+        JDBCUtils utils = new JDBCUtils();
+        try {
+            return utils.getRowCount("address_documents");
+        } catch (Exception ex) {
+            throw new EJBException("Error getting number of address documents", ex);
+        }
     }
 }

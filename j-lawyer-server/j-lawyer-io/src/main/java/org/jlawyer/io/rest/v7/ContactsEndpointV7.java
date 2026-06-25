@@ -661,185 +661,474 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.utils;
+package org.jlawyer.io.rest.v7;
 
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.net.URL;
-import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import org.apache.log4j.Logger;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
+import com.jdimension.jlawyer.documents.DocumentPreview;
+import com.jdimension.jlawyer.persistence.AddressDocumentsBean;
+import com.jdimension.jlawyer.security.Base64;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
+import com.jdimension.jlawyer.services.AddressDocumentServiceLocal;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import javax.annotation.security.RolesAllowed;
+import javax.ejb.Stateless;
+import javax.naming.InitialContext;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v7.pojo.RestfulAddressDocumentContentV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulAddressDocumentTemplateRequestV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulAddressDocumentV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulStatusResponseV7;
 
 /**
  *
- * @author jens
+ * http://localhost:8080/j-lawyer-io/rest/v7/contacts
  */
-public class VersionUtils {
+@Stateless
+@Path("/v7/contacts")
+@Consumes({"application/json"})
+@Produces({"application/json"})
+@io.swagger.annotations.Api(tags = {"Contacts"})
+public class ContactsEndpointV7 implements ContactsEndpointLocalV7 {
 
-    private static final Logger log = Logger.getLogger(VersionUtils.class.getName());
+    private static final Logger log = Logger.getLogger(ContactsEndpointV7.class.getName());
 
-    public static String getLatestClientDownloadForServer(String serverVersion) {
-        return getLatestClientForServer(serverVersion, "url");
+    private static final String LOOKUP_ADDRESSDOCS = "java:global/j-lawyer-server/j-lawyer-server-ejb/AddressDocumentService!com.jdimension.jlawyer.services.AddressDocumentServiceLocal";
+
+    private AddressDocumentServiceLocal lookupDocs() throws Exception {
+        InitialContext ic = new InitialContext();
+        return (AddressDocumentServiceLocal) ic.lookup(LOOKUP_ADDRESSDOCS);
     }
-    
-    public static String getLatestClientVersionForServer(String serverVersion) {
-        return getLatestClientForServer(serverVersion, "client");
-    }
-    
-    private static String getLatestClientForServer(String serverVersion, String queryAttribute) {
+
+    /**
+     * Returns a list of documents for a given address (contact).
+     *
+     * @param id contact ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/{id}/documents")
+    @RolesAllowed({"readAddressRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns a list of documents for a given contact", response = RestfulAddressDocumentV7.class, responseContainer = "List")
+    public Response getAddressDocuments(@PathParam("id") String id) {
         try {
-            URL updateURL = new URL("https://www.j-lawyer.org/downloads/j-lawyer-autoupdate.xml");
-            URLConnection urlCon = updateURL.openConnection();
-            urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
-            urlCon.setConnectTimeout(2000);
-            urlCon.setReadTimeout(3000);
-
-            InputStream is = urlCon.getInputStream();
-            InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-
-            char[] buffer = new char[1024];
-            int len = 0;
-            StringBuilder sb = new StringBuilder();
-            while ((len = reader.read(buffer)) > -1) {
-                sb.append(buffer, 0, len);
+            AddressDocumentServiceLocal docs = lookupDocs();
+            Collection<AddressDocumentsBean> documents = docs.getAddressDocuments(id);
+            ArrayList<RestfulAddressDocumentV7> docList = new ArrayList<>();
+            for (AddressDocumentsBean doc : documents) {
+                docList.add(RestfulAddressDocumentV7.fromDocumentsBean(doc, id));
             }
-            reader.close();
-            is.close();
-            String calculationsContent = sb.toString();
-
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            try {
-                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-            } catch (IllegalArgumentException iae) {
-                log.warn("Unable to set external entity restrictions in XML parser", iae);
-            }
-            DocumentBuilder remoteDb = dbf.newDocumentBuilder();
-            InputSource inSrc1 = new InputSource(new StringReader(calculationsContent));
-            inSrc1.setEncoding("UTF-8");
-            Document remoteDoc = remoteDb.parse(inSrc1);
-
-            NodeList remoteList = remoteDoc.getElementsByTagName("server");
-
-            for (int i = 0; i < remoteList.getLength(); i++) {
-                Node n = remoteList.item(i);
-                String server = n.getAttributes().getNamedItem("version").getNodeValue();
-                String os = n.getAttributes().getNamedItem("os").getNodeValue();
-                String arch = n.getAttributes().getNamedItem("arch").getNodeValue();
-                if (serverVersion.equals(server) && System.getProperty("os.name").toLowerCase().contains(os) && System.getProperty("os.arch").toLowerCase().contains(arch)) {
-                    return n.getAttributes().getNamedItem(queryAttribute).getNodeValue();
-                }
-            }
-
-        } catch (Throwable t) {
-            log.error("Error downloading client version information", t);
-        }
-        return null;
-    }
-    
-    public static String getClientVersion() {
-        return "3.6";
-    }
-
-    public static String getPatchLevel() {
-        return "0";
-    }
-
-    public static String getBuild() {
-        return "0";
-    }
-    
-    public static boolean isVersionGreater(String referenceVersion, String compareToVersion) {
-        long ref=getVersionAsLong(referenceVersion);
-        long comp=getVersionAsLong(compareToVersion);
-        
-        return (ref>comp);
-    }
-    
-    private static long getVersionAsLong(String v) {
-        String major="0";
-        String minor="0";
-        String patch="0";
-        String build="0";
-        
-        if(v.contains(".")) {
-            major=v.substring(0, v.indexOf("."));
-            v=v.substring(v.indexOf(".")+1, v.length());
-        } else if (v.length()>0) {
-            major=v;
-        }
-        
-        if(v.contains(".")) {
-            minor=v.substring(0, v.indexOf("."));
-            v=v.substring(v.indexOf(".")+1, v.length());
-        } else if (v.length()>0) {
-            minor=v;
-        }
-        
-        if(v.contains(".")) {
-            patch=v.substring(0, v.indexOf("."));
-            v=v.substring(v.indexOf(".")+1, v.length());
-        } else if (v.length()>0) {
-            patch=v;
-        }
-        
-        if(v.contains(".")) {
-            build=v.substring(0, v.indexOf("."));
-            v=v.substring(v.indexOf("."), v.length()-1);
-        } else if (v.length()>0) {
-            build=v;
-        }
-        
-        try {
-            return Long.parseLong(major)*1000000 + Long.parseLong(minor)*10000 + Long.parseLong(patch)*100 + Long.parseLong(build);
+            return Response.ok(docList).build();
         } catch (Exception ex) {
-            return 1;
+            log.error("can not get documents for contact " + id, ex);
+            return Response.serverError().build();
         }
     }
 
-    public static String getFullClientVersion() {
-        return getClientVersion() + "." + getPatchLevel() + "." + getBuild();
-    }
-
-    public static boolean isCompatible(String serverVersion, String clientVersion) {
-        int serverRevs = serverVersion.length() - serverVersion.replace(".", "").length();
-        if (serverRevs == 3) {
-            serverVersion = serverVersion.substring(0, serverVersion.lastIndexOf('.'));
-        }
-        int clientRevs = clientVersion.length() - clientVersion.replace(".", "").length();
-        if (clientRevs == 3) {
-            clientVersion = clientVersion.substring(0, clientVersion.lastIndexOf('.'));
-        }
-
-        if (serverVersion == null) {
-            return false;
-        }
-        if (clientVersion == null) {
-            return false;
-        }
-        return clientVersion.startsWith(serverVersion);
-    }
-
-    public static String getServerVersion() {
-
+    /**
+     * Returns a list of documents for a given address (contact) that have been
+     * moved to the recycle bin but are not finally deleted yet.
+     *
+     * @param id contact ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/{id}/documents/trash")
+    @RolesAllowed({"readAddressRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the recycle-bin documents for a given contact", response = RestfulAddressDocumentV7.class, responseContainer = "List")
+    public Response getAddressDocumentsInTrash(@PathParam("id") String id) {
         try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            return locator.lookupSystemManagementRemote().getServerVersion();
+            AddressDocumentServiceLocal docs = lookupDocs();
+            Collection<AddressDocumentsBean> documents = docs.getAddressDocumentsBin(id);
+            ArrayList<RestfulAddressDocumentV7> docList = new ArrayList<>();
+            for (AddressDocumentsBean doc : documents) {
+                docList.add(RestfulAddressDocumentV7.fromDocumentsBean(doc, id));
+            }
+            return Response.ok(docList).build();
         } catch (Exception ex) {
-            log.error(ex);
+            log.error("can not get recycle-bin documents for contact " + id, ex);
+            return Response.serverError().build();
         }
-
-        return "unbekannt";
     }
+
+    /**
+     * Returns a document given its ID.
+     *
+     * @param id document ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/document/{id}")
+    @RolesAllowed({"readAddressRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns an address document given its ID.", response = RestfulAddressDocumentV7.class)
+    public Response getDocument(@PathParam("id") String id) {
+        try {
+            AddressDocumentServiceLocal docs = lookupDocs();
+            AddressDocumentsBean doc = docs.getDocument(id);
+            if (doc == null) {
+                log.error("can not get document " + id);
+                return Response.serverError().build();
+            }
+            return Response.ok(RestfulAddressDocumentV7.fromDocumentsBean(doc)).build();
+        } catch (Exception ex) {
+            log.error("can not get document " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns an address documents content given its ID. The return value is
+     * Base64 encoded.
+     *
+     * @param id document ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/document/{id}/content")
+    @RolesAllowed({"readAddressRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns an address documents content given its ID. The return value is Base64 encoded.", response = RestfulAddressDocumentContentV7.class)
+    public Response getDocumentContent(@PathParam("id") String id) {
+        try {
+            AddressDocumentServiceLocal docs = lookupDocs();
+            AddressDocumentsBean doc = docs.getDocument(id);
+            if (doc == null) {
+                log.error("can not get document " + id);
+                return Response.serverError().build();
+            }
+            byte[] content = docs.getDocumentContent(id);
+            if (content == null) {
+                log.error("can not get content of document " + id);
+                return Response.serverError().build();
+            }
+            RestfulAddressDocumentContentV7 rdc = new RestfulAddressDocumentContentV7();
+            rdc.setId(id);
+            rdc.setFileName(doc.getName());
+            if (doc.getAddressKey() != null) {
+                rdc.setContactId(doc.getAddressKey().getId());
+            }
+            rdc.setBase64content(new Base64().encode(content));
+            return Response.ok(rdc).build();
+        } catch (Exception ex) {
+            log.error("can not get content of document " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns an address documents content as plain text, given its ID.
+     *
+     * @param id document ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.TEXT_PLAIN + ";charset=utf-8")
+    @Path("/document/{id}/content/as-text")
+    @RolesAllowed({"readAddressRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns an address documents content as plain text, given its ID.", response = String.class)
+    public Response getDocumentContentAsText(@PathParam("id") String id) {
+        try {
+            AddressDocumentServiceLocal docs = lookupDocs();
+            AddressDocumentsBean doc = docs.getDocument(id);
+            if (doc == null) {
+                log.error("can not get document " + id);
+                return Response.serverError().build();
+            }
+            DocumentPreview preview = docs.getDocumentPreview(id, DocumentPreview.TYPE_TEXT);
+            if (preview == null) {
+                log.error("can not get preview of document " + id);
+                return Response.serverError().build();
+            }
+            return Response.ok(preview.getText()).build();
+        } catch (Exception ex) {
+            log.error("can not get document " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Creates a new document for an address (contact). An ID for the document is
+     * not required in the request.
+     *
+     * @param document the document to create
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @POST
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/document/create")
+    @RolesAllowed({"writeAddressRole"})
+    @io.swagger.annotations.ApiOperation(value = "Creates a new document for an address. An ID for the document is not required in the request.", response = RestfulAddressDocumentV7.class)
+    public Response createDocument(@io.swagger.annotations.ApiParam RestfulAddressDocumentContentV7 document) {
+        try {
+            AddressDocumentServiceLocal docs = lookupDocs();
+            byte[] data = new Base64().decode(document.getBase64content());
+            AddressDocumentsBean newDoc = docs.addDocument(document.getContactId(), document.getFileName(), data);
+            return Response.ok(RestfulAddressDocumentV7.fromDocumentsBean(newDoc, document.getContactId())).build();
+        } catch (Exception ex) {
+            log.error("can not create new document " + document.getFileName(), ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Creates a new document for an address (contact) from a template,
+     * substituting the given placeholder values.
+     *
+     * @param request the template request
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @POST
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/document/create-from-template")
+    @RolesAllowed({"writeAddressRole"})
+    @io.swagger.annotations.ApiOperation(value = "Creates a new address document from a template, substituting the given placeholder values.", response = RestfulAddressDocumentV7.class)
+    public Response createDocumentFromTemplate(@io.swagger.annotations.ApiParam RestfulAddressDocumentTemplateRequestV7 request) {
+        try {
+            AddressDocumentServiceLocal docs = lookupDocs();
+            HashMap<String, Object> values = new HashMap<>();
+            if (request.getPlaceHolderValues() != null) {
+                values.putAll(request.getPlaceHolderValues());
+            }
+            AddressDocumentsBean newDoc = docs.addDocumentFromTemplate(request.getContactId(), request.getFileName(), request.getLetterHead(), request.getTemplateFolder(), request.getTemplateName(), values);
+            return Response.ok(RestfulAddressDocumentV7.fromDocumentsBean(newDoc, request.getContactId())).build();
+        } catch (Exception ex) {
+            log.error("can not create new document from template " + request.getTemplateName(), ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates an address document. If the file name differs from the stored one
+     * the document is renamed; if content is provided it is replaced.
+     *
+     * @param document the document to update (ID required)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/document/update")
+    @RolesAllowed({"writeAddressRole"})
+    @io.swagger.annotations.ApiOperation(value = "Updates an address documents name and/or content.", response = RestfulAddressDocumentV7.class)
+    public Response updateDocument(@io.swagger.annotations.ApiParam RestfulAddressDocumentContentV7 document) {
+        try {
+            AddressDocumentServiceLocal docs = lookupDocs();
+            AddressDocumentsBean currentDoc = docs.getDocument(document.getId());
+            if (currentDoc == null) {
+                log.error("can not get document " + document.getId());
+                return Response.serverError().build();
+            }
+
+            if (document.getFileName() != null && !currentDoc.getName().equals(document.getFileName())) {
+                docs.renameDocument(document.getId(), document.getFileName());
+            }
+
+            if (document.getBase64content() != null && !"".equals(document.getBase64content())) {
+                byte[] newContent = new Base64().decode(document.getBase64content());
+                docs.setDocumentContent(document.getId(), newContent);
+            }
+
+            AddressDocumentsBean updated = docs.getDocument(document.getId());
+            return Response.ok(RestfulAddressDocumentV7.fromDocumentsBean(updated)).build();
+        } catch (Exception ex) {
+            log.error("can not update document " + document.getId(), ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Soft-deletes an address document, moving it to the recycle bin.
+     *
+     * @param id document ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/document/{id}/delete")
+    @RolesAllowed({"writeAddressRole"})
+    @io.swagger.annotations.ApiOperation(value = "Soft-deletes an address document, moving it to the recycle bin.", response = RestfulStatusResponseV7.class)
+    public Response deleteDocument(@PathParam("id") String id) {
+        RestfulStatusResponseV7 response = new RestfulStatusResponseV7();
+        try {
+            AddressDocumentServiceLocal docs = lookupDocs();
+            docs.removeDocument(id);
+            response.setStatus(RestfulStatusResponseV7.STATUS_OK);
+            response.setMessage("Document moved to recycle bin");
+            return Response.ok(response).build();
+        } catch (Exception ex) {
+            log.error("can not delete document " + id, ex);
+            response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
+            response.setMessage(ex.getMessage());
+            return Response.serverError().entity(response).build();
+        }
+    }
+
+    /**
+     * Restores an address document from the recycle bin.
+     *
+     * @param id document ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/document/{id}/restore")
+    @RolesAllowed({"writeAddressRole"})
+    @io.swagger.annotations.ApiOperation(value = "Restores an address document from the recycle bin.", response = RestfulStatusResponseV7.class)
+    public Response restoreDocumentFromRecycleBin(@PathParam("id") String id) {
+        RestfulStatusResponseV7 response = new RestfulStatusResponseV7();
+        try {
+            if (ServerStringUtils.isEmpty(id)) {
+                response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
+                response.setMessage("Document ID is required");
+                return Response.status(Response.Status.BAD_REQUEST).entity(response).build();
+            }
+            AddressDocumentServiceLocal docs = lookupDocs();
+            docs.restoreDocumentFromBin(id);
+            response.setStatus(RestfulStatusResponseV7.STATUS_OK);
+            response.setMessage("Document restored from recycle bin");
+            return Response.ok(response).build();
+        } catch (Exception ex) {
+            log.error("can not restore document " + id + " from recycle bin", ex);
+            response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
+            response.setMessage(ex.getMessage());
+            return Response.serverError().entity(response).build();
+        }
+    }
+
+    /**
+     * Permanently removes an address document that is currently located in the
+     * recycle bin.
+     *
+     * @param id document ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/document/{id}/permanent")
+    @RolesAllowed({"writeAddressRole"})
+    @io.swagger.annotations.ApiOperation(value = "Permanently removes an address document that is currently located in the recycle bin.", response = RestfulStatusResponseV7.class)
+    public Response removeDocumentFromRecycleBin(@PathParam("id") String id) {
+        RestfulStatusResponseV7 response = new RestfulStatusResponseV7();
+        try {
+            if (ServerStringUtils.isEmpty(id)) {
+                response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
+                response.setMessage("Document ID is required");
+                return Response.status(Response.Status.BAD_REQUEST).entity(response).build();
+            }
+            AddressDocumentServiceLocal docs = lookupDocs();
+            docs.removeDocumentFromBin(id);
+            response.setStatus(RestfulStatusResponseV7.STATUS_OK);
+            response.setMessage("Document permanently removed from recycle bin");
+            return Response.ok(response).build();
+        } catch (Exception ex) {
+            log.error("can not permanently remove document " + id + " from recycle bin", ex);
+            response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
+            response.setMessage(ex.getMessage());
+            return Response.serverError().entity(response).build();
+        }
+    }
+
+    /**
+     * Returns a PDF rendering of a supported office-format address document. The
+     * returned content is Base64 encoded.
+     *
+     * @param id document ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @POST
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/document/{id}/to-pdf")
+    @RolesAllowed({"writeAddressRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns a PDF rendering of a supported office-format address document. The returned content is Base64 encoded.", response = RestfulAddressDocumentContentV7.class)
+    public Response convertToPdf(@PathParam("id") String id) {
+        try {
+            AddressDocumentServiceLocal docs = lookupDocs();
+            AddressDocumentsBean doc = docs.getDocument(id);
+            if (doc == null) {
+                log.error("can not get document " + id);
+                return Response.serverError().build();
+            }
+            DocumentPreview pdf = docs.getDocumentPreview(id, DocumentPreview.TYPE_PDF);
+            if (pdf == null || pdf.getBytes() == null) {
+                log.error("can not create PDF rendering of document " + id);
+                return Response.serverError().build();
+            }
+            RestfulAddressDocumentContentV7 rdc = new RestfulAddressDocumentContentV7();
+            rdc.setId(id);
+            rdc.setFileName(doc.getName());
+            if (doc.getAddressKey() != null) {
+                rdc.setContactId(doc.getAddressKey().getId());
+            }
+            rdc.setBase64content(new Base64().encode(pdf.getBytes()));
+            return Response.ok(rdc).build();
+        } catch (Exception ex) {
+            log.error("can not convert document " + id + " to PDF", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Performs OCR on a PDF address document. The existing PDF is replaced with
+     * its OCRed equivalent.
+     *
+     * @param id document ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @POST
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/document/{id}/perform-ocr")
+    @RolesAllowed({"writeAddressRole"})
+    @io.swagger.annotations.ApiOperation(value = "Performs OCR on a PDF address document. Existing PDF is replaced with its OCRed equivalent.", response = Boolean.class)
+    public Response performOcr(@PathParam("id") String id) {
+        try {
+            AddressDocumentServiceLocal docs = lookupDocs();
+            boolean ocred = docs.performOcr(id);
+            return Response.ok(ocred).build();
+        } catch (Exception ex) {
+            log.error("can not perform OCR for document " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
 }
