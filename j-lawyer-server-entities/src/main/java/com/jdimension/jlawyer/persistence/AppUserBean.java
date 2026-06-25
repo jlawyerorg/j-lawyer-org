@@ -822,6 +822,9 @@ public class AppUserBean implements Serializable {
     @Column(name = "dropscan_api_token")
     private String dropscanApiToken;
 
+    @Column(name = "dropscan_scanboxes")
+    private String dropscanScanboxes;
+
     public AppUserBean() {
     }
 
@@ -839,6 +842,43 @@ public class AppUserBean implements Serializable {
 
     public boolean isDropscanEnabled() {
         return this.dropscanApiToken != null && !("".equalsIgnoreCase(this.dropscanApiToken));
+    }
+
+    /**
+     * Returns the set of Dropscan scanbox IDs this user is restricted to. The
+     * IDs are parsed from the comma-separated {@code dropscanScanboxes} value.
+     * An empty set means there is no restriction (all scanboxes are allowed).
+     *
+     * @return the allowed scanbox IDs (never null)
+     */
+    public java.util.Set<String> getAllowedScanboxIds() {
+        java.util.Set<String> result = new java.util.HashSet<>();
+        if (this.dropscanScanboxes == null) {
+            return result;
+        }
+        for (String id : this.dropscanScanboxes.split(",")) {
+            String trimmed = id.trim();
+            if (!trimmed.isEmpty()) {
+                result.add(trimmed);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Checks whether the given Dropscan scanbox ID is visible to this user. If
+     * the user has no scanbox restriction configured (empty list), every
+     * scanbox is allowed.
+     *
+     * @param scanboxId the scanbox ID to check
+     * @return true if the scanbox is allowed for this user
+     */
+    public boolean isScanboxAllowed(String scanboxId) {
+        java.util.Set<String> allowed = getAllowedScanboxIds();
+        if (allowed.isEmpty()) {
+            return true;
+        }
+        return allowed.contains(scanboxId == null ? null : scanboxId.trim());
     }
 
     public String getPrincipalId() {
@@ -1507,6 +1547,22 @@ public class AppUserBean implements Serializable {
      */
     public void setDropscanApiToken(String dropscanApiToken) {
         this.dropscanApiToken = dropscanApiToken;
+    }
+
+    /**
+     * @return the comma-separated list of Dropscan scanbox IDs the user is
+     * restricted to (empty/null means no restriction)
+     */
+    public String getDropscanScanboxes() {
+        return dropscanScanboxes;
+    }
+
+    /**
+     * @param dropscanScanboxes the comma-separated list of Dropscan scanbox IDs
+     * to restrict the user to (empty/null means no restriction)
+     */
+    public void setDropscanScanboxes(String dropscanScanboxes) {
+        this.dropscanScanboxes = dropscanScanboxes;
     }
 
 }

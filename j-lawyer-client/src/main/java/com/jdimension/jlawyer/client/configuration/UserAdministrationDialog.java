@@ -981,6 +981,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         pwdDropscanToken = new javax.swing.JPasswordField();
         jLabel43 = new javax.swing.JLabel();
         cmdDropscanTest = new javax.swing.JButton();
+        txtDropscanScanboxes = new javax.swing.JTextField();
+        jLabel44 = new javax.swing.JLabel();
         jPanel9 = new javax.swing.JPanel();
         jLabel18 = new javax.swing.JLabel();
         cmbPrimaryGroup = new javax.swing.JComboBox<>();
@@ -1183,7 +1185,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                         .add(18, 18, 18)
                         .add(cmdPopulateFromCompanyProfile))
                     .add(chkLawyer))
-                .addContainerGap(172, Short.MAX_VALUE))
+                .addContainerGap(174, Short.MAX_VALUE))
         );
         jPanel14Layout.setVerticalGroup(
             jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1498,7 +1500,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(chkAutoLockDocuments)
-                .addContainerGap(160, Short.MAX_VALUE))
+                .addContainerGap(162, Short.MAX_VALUE))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1517,7 +1519,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                         .add(jPanel13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel15, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(66, Short.MAX_VALUE))
+                .addContainerGap(106, Short.MAX_VALUE))
         );
 
         jPanel1.getAccessibleContext().setAccessibleName("");
@@ -1577,7 +1579,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jLabel21))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmbCountry, 0, 831, Short.MAX_VALUE)
+                    .add(cmbCountry, 0, 833, Short.MAX_VALUE)
                     .add(cmbArea, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jScrollPane5))
                 .addContainerGap())
@@ -1640,7 +1642,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(jLabel22)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 994, Short.MAX_VALUE)
+                .add(jScrollPane6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 996, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel7Layout.setVerticalGroup(
@@ -1693,7 +1695,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jLabel16))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 968, Short.MAX_VALUE)
+                    .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 970, Short.MAX_VALUE)
                     .add(pwdBeaCertificatePassword))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1716,7 +1718,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(pwdBeaCertificatePassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel16))
-                .addContainerGap(265, Short.MAX_VALUE))
+                .addContainerGap(305, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("beA", jPanel8);
@@ -1736,7 +1738,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jPanel10Layout.createSequentialGroup()
                         .add(pnlCloudConnection, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(18, 18, 18)
-                        .add(nextcloudTeaserPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 679, Short.MAX_VALUE)))
+                        .add(nextcloudTeaserPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 681, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel10Layout.setVerticalGroup(
@@ -1759,7 +1761,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
         jLabel26.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel26.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info.png"))); // NOI18N
-        jLabel26.setText("Änderung erfordert Neustart des j-lawyer.org Clients");
+        jLabel26.setText("Änderungen in diesem Tab erfordern einen Neustart des Clients");
 
         cmdGetVoipIds.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/reload.png"))); // NOI18N
         cmdGetVoipIds.setToolTipText("Addressbücher dieser Nextcloud ermitteln");
@@ -1813,12 +1815,14 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         jLabel43.setText("API-Token:");
 
         cmdDropscanTest.setFont(cmdDropscanTest.getFont());
-        cmdDropscanTest.setText("Verbindung testen");
+        cmdDropscanTest.setText("Test / Scanboxen ermitteln");
         cmdDropscanTest.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdDropscanTestActionPerformed(evt);
             }
         });
+
+        jLabel44.setText("Scanboxen (komma-separiert):");
 
         org.jdesktop.layout.GroupLayout jPanel11Layout = new org.jdesktop.layout.GroupLayout(jPanel11);
         jPanel11.setLayout(jPanel11Layout);
@@ -1842,7 +1846,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                                 .add(cmdGetVoipIds))
                             .add(txtVoipUser)
                             .add(txtVoipPassword)))
-                    .add(jLabel26, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1086, Short.MAX_VALUE)
                     .add(jPanel11Layout.createSequentialGroup()
                         .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel8)
@@ -1862,23 +1865,32 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                             .add(jPanel11Layout.createSequentialGroup()
                                 .add(pwdEpostPassword)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cmdSetEpostPassword))))
+                                .add(cmdSetEpostPassword))
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel11Layout.createSequentialGroup()
+                                .add(0, 0, Short.MAX_VALUE)
+                                .add(jLabel26))))
                     .add(jPanel11Layout.createSequentialGroup()
                         .add(jLabel42)
                         .add(18, 18, 18)
-                        .add(jLabel43)
+                        .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jLabel43)
+                            .add(jLabel44))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(pwdDropscanToken, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                            .add(txtDropscanScanboxes)
+                            .add(pwdDropscanToken))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdDropscanTest)
-                        .add(0, 0, Short.MAX_VALUE)))
+                        .add(0, 160, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel11Layout.setVerticalGroup(
             jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel11Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jLabel9)
+                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel9)
+                    .add(jLabel26))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel2)
@@ -1921,9 +1933,11 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(pwdDropscanToken, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel43)
                     .add(cmdDropscanTest))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 32, Short.MAX_VALUE)
-                .add(jLabel26)
-                .addContainerGap())
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(txtDropscanScanboxes, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel44))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Sipgate / E-POST / Dropscan", jPanel11);
@@ -2044,7 +2058,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(jLabel7)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 909, Short.MAX_VALUE)
+                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 911, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel12Layout.setVerticalGroup(
@@ -2108,8 +2122,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                         .add(chkShowExternalUsers))
                     .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 137, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 552, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdClose)
                     .add(cmdSave))
@@ -2368,6 +2382,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     log.warn("Unable to decrypt Dropscan API token, might be empty", t);
                     this.pwdDropscanToken.setText("");
                 }
+                this.txtDropscanScanboxes.setText(u.getDropscanScanboxes() == null ? "" : u.getDropscanScanboxes());
 
                 this.txtDisplayName.setText(u.getDisplayName());
                 this.txtEmail.setText(u.getEmail());
@@ -2496,6 +2511,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
             this.pwdEpostPassword.setText("");
             this.pwdDropscanToken.setText("");
+            this.txtDropscanScanboxes.setText("");
 
             this.txtDisplayName.setText("");
             this.txtEmail.setText("");
@@ -2632,6 +2648,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 } else {
                     u.setDropscanApiToken(null);
                 }
+                u.setDropscanScanboxes(this.txtDropscanScanboxes.getText().trim());
 
                 u.setDisplayName(this.txtDisplayName.getText());
                 u.setEmail(this.txtEmail.getText().trim());
@@ -2692,6 +2709,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.pwdEpostPassword.setText("");
         this.txtEpostSecret.setText("");
         this.pwdDropscanToken.setText("");
+        this.txtDropscanScanboxes.setText("");
 
         this.txtDisplayName.setText("");
         this.txtEmail.setText("");
@@ -3128,9 +3146,15 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             com.jdimension.jlawyer.dropscan.DropscanApiClient client = new com.jdimension.jlawyer.dropscan.DropscanApiClient(token);
             java.util.List<com.jdimension.jlawyer.dropscan.DropscanScanbox> scanboxes = client.getScanboxes();
             StringBuilder sb = new StringBuilder("Verbindung erfolgreich!\n\nScanboxen:\n");
+            StringBuilder ids = new StringBuilder();
             for (com.jdimension.jlawyer.dropscan.DropscanScanbox box : scanboxes) {
                 sb.append("  - ").append(box.getNumber()).append(" (ID: ").append(box.getId()).append(")\n");
+                if (ids.length() > 0) {
+                    ids.append(",");
+                }
+                ids.append(box.getId());
             }
+            this.txtDropscanScanboxes.setText(ids.toString());
             javax.swing.JOptionPane.showMessageDialog(this, sb.toString(), "Dropscan", javax.swing.JOptionPane.INFORMATION_MESSAGE);
         } catch (Exception ex) {
             javax.swing.JOptionPane.showMessageDialog(this, "Verbindung fehlgeschlagen: " + ex.getMessage(), "Dropscan", javax.swing.JOptionPane.ERROR_MESSAGE);
@@ -3483,6 +3507,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel41;
     private javax.swing.JLabel jLabel42;
     private javax.swing.JLabel jLabel43;
+    private javax.swing.JLabel jLabel44;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
@@ -3537,6 +3562,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JTextField txtCity;
     private javax.swing.JTextField txtCompany;
     private javax.swing.JTextField txtDisplayName;
+    private javax.swing.JTextField txtDropscanScanboxes;
     private javax.swing.JTextField txtEmail;
     private javax.swing.JTextField txtEpostCustomer;
     private javax.swing.JTextField txtEpostSecret;

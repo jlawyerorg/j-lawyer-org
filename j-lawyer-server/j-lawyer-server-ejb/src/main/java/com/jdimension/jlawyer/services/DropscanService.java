@@ -29,43 +29,63 @@ public class DropscanService implements DropscanServiceRemote, DropscanServiceLo
     @EJB
     private SystemManagementLocal sysMan;
 
-    private DropscanApiClient getClientForCurrentUser() throws Exception {
-        AppUserBean currentUser = this.sysMan.getUser(context.getCallerPrincipal().getName());
-        if (!currentUser.isDropscanEnabled()) {
-            throw new Exception(EXCEPTION_DROPSCAN_INACTIVE);
-        }
-        String decryptedToken = CryptoProvider.newCrypto().decrypt(currentUser.getDropscanApiToken());
-        return new DropscanApiClient(decryptedToken);
+    private static final String EXCEPTION_SCANBOX_NOT_ALLOWED = "Scanbox für diesen Benutzer nicht freigegeben!";
+
+    private AppUserBean getCurrentUser() throws Exception {
+        return this.sysMan.getUser(context.getCallerPrincipal().getName());
     }
 
-    private DropscanApiClient getClientForUser(String principalId) throws Exception {
-        AppUserBean user = this.sysMan.getUser(principalId);
-        if (!user.isDropscanEnabled()) {
+    private DropscanApiClient getClientForUser(AppUserBean user) throws Exception {
+        if (user == null || !user.isDropscanEnabled()) {
             throw new Exception(EXCEPTION_DROPSCAN_INACTIVE);
         }
         String decryptedToken = CryptoProvider.newCrypto().decrypt(user.getDropscanApiToken());
         return new DropscanApiClient(decryptedToken);
     }
 
+    /**
+     * Filters the given scanboxes to those the user is allowed to see. An empty
+     * allow-list on the user means no restriction (all scanboxes returned).
+     */
+    private List<DropscanScanbox> filterAllowed(List<DropscanScanbox> scanboxes, AppUserBean user) {
+        List<DropscanScanbox> result = new ArrayList<>();
+        for (DropscanScanbox box : scanboxes) {
+            if (user.isScanboxAllowed(String.valueOf(box.getId()))) {
+                result.add(box);
+            }
+        }
+        return result;
+    }
+
+    private void assertScanboxAllowed(AppUserBean user, String scanboxId) throws Exception {
+        if (!user.isScanboxAllowed(scanboxId)) {
+            throw new Exception(EXCEPTION_SCANBOX_NOT_ALLOWED);
+        }
+    }
+
     @Override
     @RolesAllowed({"loginRole"})
     public List<DropscanScanbox> getScanboxes() throws Exception {
-        DropscanApiClient client = getClientForCurrentUser();
-        return client.getScanboxes();
+        AppUserBean user = getCurrentUser();
+        DropscanApiClient client = getClientForUser(user);
+        return filterAllowed(client.getScanboxes(), user);
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public List<DropscanMailing> getMailings(String scanboxId, String status) throws Exception {
-        DropscanApiClient client = getClientForCurrentUser();
+        AppUserBean user = getCurrentUser();
+        assertScanboxAllowed(user, scanboxId);
+        DropscanApiClient client = getClientForUser(user);
         return client.getMailings(scanboxId, status, null);
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public List<DropscanMailing> getAllMailings(String status) throws Exception {
-        DropscanApiClient client = getClientForCurrentUser();
-        List<DropscanScanbox> scanboxes = client.getScanboxes();
+        AppUserBean user = getCurrentUser();
+        DropscanApiClient client = getClientForUser(user);
+        List<DropscanScanbox> scanboxes = filterAllowed(client.getScanboxes(), user);
         List<DropscanMailing> allMailings = new ArrayList<>();
         for (DropscanScanbox box : scanboxes) {
             List<DropscanMailing> mailings = client.getMailings(String.valueOf(box.getId()), status, null);
@@ -80,56 +100,72 @@ public class DropscanService implements DropscanServiceRemote, DropscanServiceLo
     @Override
     @RolesAllowed({"loginRole"})
     public DropscanMailing getMailingDetails(String scanboxId, String mailingUuid) throws Exception {
-        DropscanApiClient client = getClientForCurrentUser();
+        AppUserBean user = getCurrentUser();
+        assertScanboxAllowed(user, scanboxId);
+        DropscanApiClient client = getClientForUser(user);
         return client.getMailingDetails(scanboxId, mailingUuid);
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public byte[] getEnvelopeImage(String scanboxId, String mailingUuid) throws Exception {
-        DropscanApiClient client = getClientForCurrentUser();
+        AppUserBean user = getCurrentUser();
+        assertScanboxAllowed(user, scanboxId);
+        DropscanApiClient client = getClientForUser(user);
         return client.getEnvelopeImage(scanboxId, mailingUuid);
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public byte[] getMailingPdf(String scanboxId, String mailingUuid) throws Exception {
-        DropscanApiClient client = getClientForCurrentUser();
+        AppUserBean user = getCurrentUser();
+        assertScanboxAllowed(user, scanboxId);
+        DropscanApiClient client = getClientForUser(user);
         return client.getMailingPdf(scanboxId, mailingUuid);
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public String getMailingPlaintext(String scanboxId, String mailingUuid) throws Exception {
-        DropscanApiClient client = getClientForCurrentUser();
+        AppUserBean user = getCurrentUser();
+        assertScanboxAllowed(user, scanboxId);
+        DropscanApiClient client = getClientForUser(user);
         return client.getMailingPlaintext(scanboxId, mailingUuid);
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public byte[] getMailingZip(String scanboxId, String mailingUuid) throws Exception {
-        DropscanApiClient client = getClientForCurrentUser();
+        AppUserBean user = getCurrentUser();
+        assertScanboxAllowed(user, scanboxId);
+        DropscanApiClient client = getClientForUser(user);
         return client.getMailingZip(scanboxId, mailingUuid);
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public DropscanActionRequest requestScan(String scanboxId, String mailingUuid) throws Exception {
-        DropscanApiClient client = getClientForCurrentUser();
+        AppUserBean user = getCurrentUser();
+        assertScanboxAllowed(user, scanboxId);
+        DropscanApiClient client = getClientForUser(user);
         return client.requestScan(scanboxId, mailingUuid);
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public DropscanActionRequest requestDestroy(String scanboxId, String mailingUuid) throws Exception {
-        DropscanApiClient client = getClientForCurrentUser();
+        AppUserBean user = getCurrentUser();
+        assertScanboxAllowed(user, scanboxId);
+        DropscanApiClient client = getClientForUser(user);
         return client.requestDestroy(scanboxId, mailingUuid);
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public DropscanActionRequest requestForward(String scanboxId, String mailingUuid, String addressId, String date) throws Exception {
-        DropscanApiClient client = getClientForCurrentUser();
+        AppUserBean user = getCurrentUser();
+        assertScanboxAllowed(user, scanboxId);
+        DropscanApiClient client = getClientForUser(user);
         return client.requestForward(scanboxId, mailingUuid, addressId, date);
     }
 
@@ -137,13 +173,16 @@ public class DropscanService implements DropscanServiceRemote, DropscanServiceLo
 
     @Override
     public List<DropscanScanbox> getScanboxesForUser(String principalId) throws Exception {
-        DropscanApiClient client = getClientForUser(principalId);
-        return client.getScanboxes();
+        AppUserBean user = this.sysMan.getUser(principalId);
+        DropscanApiClient client = getClientForUser(user);
+        return filterAllowed(client.getScanboxes(), user);
     }
 
     @Override
     public List<DropscanMailing> getMailingsForUser(String principalId, String scanboxId, String status) throws Exception {
-        DropscanApiClient client = getClientForUser(principalId);
+        AppUserBean user = this.sysMan.getUser(principalId);
+        assertScanboxAllowed(user, scanboxId);
+        DropscanApiClient client = getClientForUser(user);
         List<DropscanMailing> mailings = client.getMailings(scanboxId, status, null);
         return mailings;
     }
