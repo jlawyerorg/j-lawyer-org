@@ -45,7 +45,7 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="1" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jTabbedPane1" pref="541" max="32767" attributes="0"/>
+              <Component id="jTabbedPane1" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="cmdClose" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -232,8 +232,9 @@
                           <Component id="chkScheduledDailyAgenda" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="chkScheduledWeeklyDigest" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="chkEventInstantMessageDone" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="chkEventCalendarEdited" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="227" max="32767" attributes="0"/>
+                      <EmptySpace pref="144" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -251,6 +252,8 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="chkEventCalendarEntry" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
+                      <Component id="chkEventCalendarEdited" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="chkEventCalendarEntryReminder" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="chkEventInvoiceDue" min="-2" max="-2" attributes="0"/>
@@ -260,7 +263,7 @@
                       <Component id="chkScheduledDailyAgenda" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="chkScheduledWeeklyDigest" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="104" max="32767" attributes="0"/>
+                      <EmptySpace pref="69" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -317,6 +320,11 @@
             <Component class="javax.swing.JCheckBox" name="chkEventInstantMessageDone">
               <Properties>
                 <Property name="text" type="java.lang.String" value="eine von mir gesendete Sofortnachricht als erledigt markiert wurde"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="chkEventCalendarEdited">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="ein von mir erstellter Kalendereintrag durch andere ver&#xe4;ndert / erledigt wurde"/>
               </Properties>
             </Component>
           </SubComponents>

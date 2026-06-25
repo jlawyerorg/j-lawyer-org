@@ -1283,6 +1283,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             for (ArchiveFileReviewsBean ar : reviews) {
                 ar.setId(idGen.getID().toString());
                 ar.setArchiveFileKey(dto);
+                ar.setCreatedBy(context.getCallerPrincipal().getName());
                 this.archiveFileReviewsFacade.create(ar);
             }
         }
@@ -1727,6 +1728,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             for (ArchiveFileReviewsBean ar : reviews) {
                 ar.setId(idGen.getID().toString());
                 ar.setArchiveFileKey(dto);
+                ar.setCreatedBy(context.getCallerPrincipal().getName());
                 this.archiveFileReviewsFacade.create(ar);
             }
         }

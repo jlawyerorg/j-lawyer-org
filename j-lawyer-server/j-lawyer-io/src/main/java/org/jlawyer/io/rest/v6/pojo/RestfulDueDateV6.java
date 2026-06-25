@@ -676,6 +676,7 @@ public class RestfulDueDateV6 extends RestfulDueDateV4 {
     protected String caseReason=null;
     protected String caseNumber=null;
     protected int reminderMinutes=-1;
+    protected String createdBy=null;
 
     /**
      * @return the caseId
@@ -747,6 +748,22 @@ public class RestfulDueDateV6 extends RestfulDueDateV4 {
      */
     public void setReminderMinutes(int reminderMinutes) {
         this.reminderMinutes = reminderMinutes;
+    }
+
+    /**
+     * @return the principal id of the user who created the calendar entry.
+     * This field is read-only: it is populated by the server from the persisted
+     * creator and is ignored when supplied by a client on create/update.
+     */
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    /**
+     * @param createdBy the creator's principal id
+     */
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
     }
 
 }

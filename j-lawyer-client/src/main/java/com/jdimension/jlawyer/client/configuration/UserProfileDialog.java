@@ -896,6 +896,7 @@ public class UserProfileDialog extends javax.swing.JDialog {
         
         UserSettings uset=UserSettings.getInstance();
         this.chkEventCalendarEntry.setSelected(uset.getSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_CALENDARENTRY, true));
+        this.chkEventCalendarEdited.setSelected(uset.getSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_CALENDARENTRY_AUTHORED, false));
         this.chkEventCalendarEntryReminder.setSelected(uset.getSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_CALENDARENTRY_REMINDER, true));
         this.chkEventInstantMessage.setSelected(uset.getSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_INSTANTMESSAGEMENTION, true));
         this.chkEventInstantMessageDone.setSelected(uset.getSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_INSTANTMESSAGEMENTION_DONE, true));
@@ -1078,6 +1079,7 @@ public class UserProfileDialog extends javax.swing.JDialog {
         chkScheduledDailyAgenda = new javax.swing.JCheckBox();
         chkScheduledWeeklyDigest = new javax.swing.JCheckBox();
         chkEventInstantMessageDone = new javax.swing.JCheckBox();
+        chkEventCalendarEdited = new javax.swing.JCheckBox();
         jPanel3 = new javax.swing.JPanel();
         chkWarnOnUnknownSenders = new javax.swing.JCheckBox();
         jPanel4 = new javax.swing.JPanel();
@@ -1206,6 +1208,8 @@ public class UserProfileDialog extends javax.swing.JDialog {
 
         chkEventInstantMessageDone.setText("eine von mir gesendete Sofortnachricht als erledigt markiert wurde");
 
+        chkEventCalendarEdited.setText("ein von mir erstellter Kalendereintrag durch andere verändert / erledigt wurde");
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1222,8 +1226,9 @@ public class UserProfileDialog extends javax.swing.JDialog {
                     .addComponent(jLabel5)
                     .addComponent(chkScheduledDailyAgenda)
                     .addComponent(chkScheduledWeeklyDigest)
-                    .addComponent(chkEventInstantMessageDone))
-                .addContainerGap(227, Short.MAX_VALUE))
+                    .addComponent(chkEventInstantMessageDone)
+                    .addComponent(chkEventCalendarEdited))
+                .addContainerGap(144, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1239,6 +1244,8 @@ public class UserProfileDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(chkEventCalendarEntry)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkEventCalendarEdited)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(chkEventCalendarEntryReminder)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(chkEventInvoiceDue)
@@ -1248,7 +1255,7 @@ public class UserProfileDialog extends javax.swing.JDialog {
                 .addComponent(chkScheduledDailyAgenda)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(chkScheduledWeeklyDigest)
-                .addContainerGap(104, Short.MAX_VALUE))
+                .addContainerGap(69, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Benachrichtigungen", jPanel2);
@@ -1446,7 +1453,7 @@ public class UserProfileDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 541, Short.MAX_VALUE)
+                .addComponent(jTabbedPane1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdClose)
@@ -1464,6 +1471,7 @@ public class UserProfileDialog extends javax.swing.JDialog {
         settings.setSetting(UserSettings.USER_AVATAR, avatar);
         
         settings.setSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_CALENDARENTRY, this.chkEventCalendarEntry.isSelected());
+        settings.setSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_CALENDARENTRY_AUTHORED, this.chkEventCalendarEdited.isSelected());
         settings.setSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_CALENDARENTRY_REMINDER, this.chkEventCalendarEntryReminder.isSelected());
         settings.setSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_INSTANTMESSAGEMENTION, this.chkEventInstantMessage.isSelected());
         settings.setSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_INSTANTMESSAGEMENTION_DONE, this.chkEventInstantMessageDone.isSelected());
@@ -1616,6 +1624,7 @@ public class UserProfileDialog extends javax.swing.JDialog {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox chkEventCalendarEdited;
     private javax.swing.JCheckBox chkEventCalendarEntry;
     private javax.swing.JCheckBox chkEventCalendarEntryReminder;
     private javax.swing.JCheckBox chkEventInstantMessage;

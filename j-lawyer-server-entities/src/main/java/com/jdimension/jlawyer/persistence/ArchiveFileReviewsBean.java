@@ -723,6 +723,9 @@ public class ArchiveFileReviewsBean implements Serializable, EventTypes {
     @Column(name = "reminder_minutes")
     private int reminderMinutes = -1;
 
+    @Column(name = "created_by")
+    private String createdBy;
+
     public Object getClone() {
         ArchiveFileReviewsBean a=new ArchiveFileReviewsBean();
         a.archiveFileKey=this.archiveFileKey;
@@ -737,6 +740,7 @@ public class ArchiveFileReviewsBean implements Serializable, EventTypes {
         a.location=this.location;
         a.summary=this.summary;
         a.reminderMinutes=this.reminderMinutes;
+        a.createdBy=this.createdBy;
         return a;
     }
 
@@ -867,6 +871,21 @@ public class ArchiveFileReviewsBean implements Serializable, EventTypes {
      */
     public void setAssignee(String assignee) {
         this.assignee = assignee;
+    }
+
+    /**
+     * @return the principal id of the user who created this calendar entry,
+     * or null for entries created before creator tracking existed
+     */
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    /**
+     * @param createdBy the principal id of the user who created this calendar entry
+     */
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
     }
 
     /**

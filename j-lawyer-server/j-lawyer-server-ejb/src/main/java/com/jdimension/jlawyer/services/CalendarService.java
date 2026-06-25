@@ -865,6 +865,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         String revId = idGen.getID().toString();
         review.setId(revId);
         review.setArchiveFileKey(aFile);
+        review.setCreatedBy(context.getCallerPrincipal().getName());
 
         if (!review.hasEndDateAndTime() && review.getBeginDate() != null) {
             Date endDate = new Date(review.getBeginDate().getTime());
@@ -1224,6 +1225,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         this.archiveFileService.addCaseHistory(idGen.getID().toString(), aFile, currentReview.getEventTypeName() + " geändert: " + currentReview.getSummary() + " (" + currentReview.toString() + ", " + status + ")", context.getCallerPrincipal().getName(), new Date());
 
         this.publishUpdatedEventMail(currentReview, aFile);
+        this.publishAuthorNotification(currentReview, aFile, done);
 
         try {
             this.calendarSync.eventUpdated(aFile, currentReview);
@@ -1240,6 +1242,14 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         this.validateCalendarSetup(review);
 
         ArchiveFileReviewsBean oldReview = this.archiveFileReviewsFacade.find(review.getId());
+        // capture the previous completion state now: oldReview is a managed entity and the
+        // edit() merge below mutates it in place, so reading it afterwards would already
+        // reflect the new value
+        boolean wasDone = oldReview.isDone();
+        // the creator is immutable after creation and server-authoritative; preserve the
+        // persisted value so clients that do not round-trip createdBy (e.g. edit dialogs that
+        // rebuild the bean) cannot reset it to null on merge
+        review.setCreatedBy(oldReview.getCreatedBy());
         String oldCalendar = oldReview.getCalendarSetup().getId();
         String newCalendar = review.getCalendarSetup().getId();
         boolean calendarChanged = !(oldCalendar.equals(newCalendar));
@@ -1292,6 +1302,8 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         this.archiveFileService.addCaseHistory(idGen.getID().toString(), aFile, review.getEventTypeName() + " geändert: " + review.getSummary() + " (" + review.toString() + ", " + status + ")", context.getCallerPrincipal().getName(), new Date());
 
         this.publishUpdatedEventMail(review, aFile);
+        boolean completed = !wasDone && review.isDone();
+        this.publishAuthorNotification(review, aFile, completed);
 
         try {
             this.calendarSync.eventUpdated(aFile, review);
@@ -1323,6 +1335,41 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
                     }
                 }
             }
+        }
+    }
+
+    private void publishAuthorNotification(ArchiveFileReviewsBean review, ArchiveFileBean aFile, boolean completed) {
+        String creator = review.getCreatedBy();
+        // unknown creator (legacy entry without created_by) - cannot notify
+        if (ServerStringUtils.isEmpty(creator)) {
+            return;
+        }
+        String editor = context.getCallerPrincipal().getName();
+        // do not notify when the creator changed their own entry
+        if (creator.equals(editor)) {
+            return;
+        }
+        // when the creator is also the assignee, the assignee notification already covers them
+        if (creator.equals(review.getAssignee())) {
+            return;
+        }
+        AppUserBean creatorUser = this.userBeanFacade.find(creator);
+        if (creatorUser == null) {
+            return;
+        }
+        boolean notificationEnabled = creatorUser.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY_AUTHORED, false);
+        if (notificationEnabled && creatorUser.getEmail() != null) {
+            String action = completed ? "erledigt" : "geändert";
+            OutgoingMailRequest omr = new OutgoingMailRequest();
+            omr.setTo(creatorUser.getEmail());
+            omr.setSubject("Ein von Dir erstellter Kalendereintrag wurde " + action);
+            omr.setMainCaption("Ein(e) von Dir erstellte(r) " + review.getEventTypeName() + " wurde " + action);
+            omr.setSubCaption(review.toString() + " " + review.getSummary());
+            StringBuilder body = new StringBuilder();
+            body.append(ServerStringUtils.nonEmpty(review.getSummary())).append("\n").append(ServerStringUtils.nonEmpty(review.getDescription())).append("\nOrt: ").append(ServerStringUtils.nonEmpty(review.getLocation())).append("\nverantwortlich: ").append(ServerStringUtils.nonEmpty(review.getAssignee())).append("\nVorgang: ").append(action).append("\ngeändert von: ").append(editor);
+            body.append("\nAkte: ").append(aFile.getFileNumber()).append(" ").append(aFile.getName());
+            omr.setBodyContent(body.toString());
+            this.publishOutgoingMailRequest(omr);
         }
     }
 

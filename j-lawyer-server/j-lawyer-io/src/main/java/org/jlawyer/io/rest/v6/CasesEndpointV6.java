@@ -856,6 +856,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             RestfulDueDateV6 dd = new RestfulDueDateV6();
             dd.setId(rev.getId());
             dd.setAssignee(rev.getAssignee());
+            dd.setCreatedBy(rev.getCreatedBy());
             dd.setDone(rev.isDone());
             dd.setBeginDate(rev.getBeginDate());
             dd.setEndDate(rev.getBeginDate());
@@ -951,6 +952,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             RestfulDueDateV6 dd = new RestfulDueDateV6();
             dd.setId(rev.getId());
             dd.setAssignee(rev.getAssignee());
+            dd.setCreatedBy(rev.getCreatedBy());
             dd.setDone(rev.isDone());
             dd.setBeginDate(rev.getBeginDate());
             dd.setEndDate(rev.getBeginDate());
