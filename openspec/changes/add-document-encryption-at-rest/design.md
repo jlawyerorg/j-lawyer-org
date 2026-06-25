@@ -1,40 +1,48 @@
-# Design: Encryption at Rest for Case Documents and Previews
+# Design: Encryption at Rest for Case and Contact Documents and Previews
 
 ## Context
 
-Document bytes for cases are stored under the data directory
+Document bytes are stored under the data directory
 (`jlawyer.server.basedirectory`, default `/opt/jboss/j-lawyer-data/`):
 
 ```
 <basedirectory>/
-├── archivefiles/<archiveFileId>/<documentId>          # originals + versions (raw bytes)
-├── archivefiles-preview/<archiveFileId>/<documentId>.text   # extracted text for search
-│                                       /<documentId>.pdf    # rendered PDF preview
+├── archivefiles/<archiveFileId>/<documentId>          # case originals + versions (raw bytes)
+├── archivefiles-preview/<archiveFileId>/<documentId>.text   # case extracted text for search
+│                                       /<documentId>.pdf    # case rendered PDF preview
+├── addressfiles/<addressId>/<documentId>              # contact document originals (raw bytes)
+├── addressfiles-preview/<addressId>/<documentId>.text # contact extracted text / .pdf preview
 ├── searchindex/                                       # Lucene index (extracted plaintext)
 ├── templates/ emailtemplates/ mastertemplates/        # templates
 ```
 
-All document content I/O funnels through three static methods in
+All document content I/O funnels through the same three static methods in
 `com.jdimension.jlawyer.server.utils.ServerFileUtils`
 (`readFile(File)`:814, `writeFile(File,byte[])`:850, `createFile(String,byte[])`:857),
 invoked from `ArchiveFileService` (`addDocumentImpl`:~1805, `setDocumentContent`:~2127,
-`getDocumentContentImpl`:~2321) and `PreviewGenerator`. The storage location may be a
-local disk or a `VirtualFile` backend (Samba/SFTP/FTP) — encryption is applied to the
-byte payload **above** the storage layer, so it protects remote backends too.
+`getDocumentContentImpl`:~2321), from `AddressDocumentService` (`addDocument`,
+`setDocumentContent`, `getDocumentContent`, `addDocumentFromTemplate`), and from the
+shared `PreviewGenerator` (used by both case and address documents). The storage
+location may be a local disk or a `VirtualFile` backend (Samba/SFTP/FTP) — encryption is
+applied to the byte payload **above** the storage layer, so it protects remote backends
+too.
 
 ### Scope Boundary (by storage path, not content type) — Q5
 
 Encryption scope is defined by **where bytes are written**, not by content type. Every
-document under `archivefiles/` is in scope regardless of kind, because they all flow
-through the same `addDocumentImpl`/`getDocumentContent` byte[] path:
-- **Dictation/audio** are ordinary documents — `dictateSign` is only a metadata field on
-  `ArchiveFileDocumentsBean` (`ArchiveFileService.java:1811`); the audio bytes are stored
-  at `archivefiles/<id>/<docId>` like any other document. **No special handling.**
+document under `archivefiles/` (case) and `addressfiles/` (contact) is in scope
+regardless of kind, because they all flow through the same `byte[]` storage path:
+- **Dictation/audio** are ordinary documents — the audio bytes are stored at
+  `archivefiles/<id>/<docId>` like any other document. **No special handling.**
 - **Saved e-mails** (`.eml`) are likewise saved as documents under `archivefiles/`; there
   is no separate on-disk e-mail store (live mail stays on the IMAP server).
+- **Contact documents** are stored at `addressfiles/<addressId>/<docId>` with previews at
+  `addressfiles-preview/<addressId>/` — the same shape as case documents, via the same
+  `ServerFileUtils`/`PreviewGenerator` code, so they are covered by the same injection.
 
 Sibling folders under `basedirectory` and their disposition:
-- `archivefiles/`, `archivefiles-preview/` → **in scope** (C2).
+- `archivefiles/`, `archivefiles-preview/`, `addressfiles/`, `addressfiles-preview/`
+  → **in scope** (C2).
 - `searchindex/` (Lucene) → out of scope, accepted residual risk (C2).
 - `emailtemplates/`, `mastertemplates/`, `letterheads/` → templates, out of scope.
 - `faxqueue/` → transient outbound-fax spool; may briefly hold document content as
@@ -50,9 +58,9 @@ A fixed GCM nonce reused across many files breaks confidentiality and integrity,
 ## Goals / Non-Goals
 
 **Goals**
-- Confidentiality + integrity of `archivefiles/` and `archivefiles-preview/` content
-  on the storage medium (defends against stolen disk/backup/snapshot and read access
-  to the storage backend).
+- Confidentiality + integrity of `archivefiles/`, `archivefiles-preview/`,
+  `addressfiles/` and `addressfiles-preview/` content on the storage medium (defends
+  against stolen disk/backup/snapshot and read access to the storage backend).
 - Transparent to all readers/writers: REST (v1–v7), EJB clients, search indexing,
   preview/OCR/PDF generation behave identically for authenticated users.
 - Switchable on without a flag day (mixed encrypted/plaintext coexistence).
@@ -74,7 +82,8 @@ Confirmed with the product owner (2026-06-22):
   (unattended restarts supported). Threat model: protects against stolen
   disk/backup/snapshot and read access to the storage backend — **not** against an
   attacker who already has live access to the running server's memory.
-- **C2 Scope:** encrypt **only** `archivefiles/` and `archivefiles-preview/`. The
+- **C2 Scope:** encrypt **only** the document folders `archivefiles/`,
+  `archivefiles-preview/`, `addressfiles/` and `addressfiles-preview/`. The
   Lucene `searchindex/` stays plaintext — an **accepted residual risk** (extracted
   text recoverable with disk access). DB and templates are out of scope.
 - **C3 Key domain:** a **single firm-wide key domain** (one master key + per-file
@@ -124,8 +133,11 @@ Confirmed with the product owner (2026-06-22):
   mixed-state coexistence and idempotent migration.
 - **D4 Injection point:** a dedicated document-storage helper (or a scoped wrapper),
   **not** blanket encryption inside `ServerFileUtils` — only paths under
-  `archivefiles/` and `archivefiles-preview/` are encrypted, leaving templates and
-  other `ServerFileUtils` callers untouched.
+  `archivefiles/`, `archivefiles-preview/`, `addressfiles/` and `addressfiles-preview/`
+  are encrypted, leaving templates and other `ServerFileUtils` callers untouched. The
+  scope predicate keys on the storage-area path segment, so both the case
+  (`ArchiveFileService`) and contact (`AddressDocumentService`) callers are covered by
+  one rule.
 - **D5 Fail-closed:** if the feature is enabled but the key is missing/invalid at
   startup, document read/write fails loudly rather than silently serving/over-writing.
 - **D6 Key derivation:** KEK derived with PBKDF2WithHmacSHA512 (or Argon2 if a lib is
@@ -190,9 +202,10 @@ multiple GB/s, negligible next to disk throughput. Rough total I/O ≈ 2× data 
    entering the key fingerprint/recovery code (Variant B). This gate fires before the
    first key-dependent operation — enabling encrypted writes or starting migration,
    whichever comes first — not only before migration.
-3. Admin triggers forward migration: walk `archivefiles/` + `archivefiles-preview/`,
-   encrypt-in-place any plaintext file (skip already-encrypted via header), resumable
-   with progress + audit log. New writes are encrypted immediately once enabled.
+3. Admin triggers forward migration: walk `archivefiles/`, `archivefiles-preview/`,
+   `addressfiles/` and `addressfiles-preview/`, encrypt-in-place any plaintext file (skip
+   already-encrypted via header), resumable with progress + audit log. New writes are
+   encrypted immediately once enabled.
 4. Rollback: reverse migration decrypts in place and the feature can be disabled.
 5. Key rotation: re-wrap DEKs from old KEK to new KEK (fast, content untouched).
 
@@ -243,9 +256,9 @@ restrictive permissions, and **excluded from backups**:
 The **per-file header is authoritative** (D3): encryption state is determined by reading
 the file's magic bytes, which is what makes mixed-state coexistence and idempotent,
 resumable migration work — and it is robust if the DB and files ever diverge (e.g.
-restore from mismatched backups). Crucially, `archivefiles-preview/` files have **no DB
-row**, so they can only rely on the header. Therefore **all crypto material lives in the
-file header**, never in the DB:
+restore from mismatched backups). Crucially, `archivefiles-preview/` and
+`addressfiles-preview/` files have **no DB row**, so they can only rely on the header.
+Therefore **all crypto material lives in the file header**, never in the DB:
 `magic | formatVersion | algoId(AES-256-GCM) | keyVersion | wrappedDEK | iv | ciphertext+tag`.
 
 ### Per-document DB attributes (case_documents)

@@ -1,13 +1,15 @@
-# Change: Encryption at Rest for Case Documents and Previews
+# Change: Encryption at Rest for Case and Contact Documents and Previews
 
 ## Why
 
-Case documents are the most sensitive data the system holds (attorney-client
-privileged material, German DSGVO Art. 9 special-category data, etc.). Today the
-contents of the `archivefiles/` (originals/versions) and `archivefiles-preview/`
-(extracted text + rendered PDF previews) folders under the data directory
-(`jlawyer.server.basedirectory`, default `/opt/jboss/j-lawyer-data/`) are stored
-as **plaintext** on disk. Anyone with access to the filesystem, a stolen disk, a
+Documents are the most sensitive data the system holds (attorney-client
+privileged material, German DSGVO Art. 9 special-category data, etc.) — both case
+documents and the documents stored directly on a contact (powers of attorney, ID
+copies, mandate/fee agreements). Today the contents of the `archivefiles/` /
+`archivefiles-preview/` (case documents + previews) and `addressfiles/` /
+`addressfiles-preview/` (contact documents + previews) folders under the data
+directory (`jlawyer.server.basedirectory`, default `/opt/jboss/j-lawyer-data/`) are
+stored as **plaintext** on disk. Anyone with access to the filesystem, a stolen disk, a
 backup archive, a snapshot, or the underlying Samba/SFTP/FTP storage backend can
 read every document without authenticating to the application.
 
@@ -20,10 +22,13 @@ unchanged for authenticated users.
 ## What Changes
 
 - **NEW capability `document-encryption`**: transparent, authenticated encryption
-  of all bytes written to and read from the `archivefiles/` and
-  `archivefiles-preview/` folders, applied at the document-storage layer so that
-  business logic, REST endpoints, search indexing and preview generation are
-  unaffected.
+  of all bytes written to and read from the document-storage folders —
+  `archivefiles/` and `archivefiles-preview/` (case documents) **and** `addressfiles/`
+  and `addressfiles-preview/` (contact documents) — applied at the document-storage
+  layer so that business logic, REST endpoints, search indexing and preview generation
+  are unaffected. Case and address documents already share the same storage and
+  preview code paths (`ServerFileUtils`, `PreviewGenerator`), so the same scoped
+  injection covers both.
 - A new **per-file AES-256-GCM** crypto primitive with a **random IV/nonce per
   file** and a self-describing, versioned **on-disk file header** (magic bytes,
   format version, algorithm id, IV, wrapped key, auth tag). The existing
@@ -57,9 +62,9 @@ unchanged for authenticated users.
   operations.
 
 Scope is defined by storage path, not content type: **all** documents under
-`archivefiles/` are covered regardless of kind — including dictation/audio and saved
-e-mails, which are ordinary documents on that path (no separate dictation or e-mail
-store exists). Out of scope (documented as residual risk in `design.md`): the Lucene
+`archivefiles/` and `addressfiles/` are covered regardless of kind — including
+dictation/audio and saved e-mails, which are ordinary documents on those paths (no
+separate dictation or e-mail store exists). Out of scope (documented as residual risk in `design.md`): the Lucene
 `searchindex/` (extracted plaintext text), the MySQL database contents, the template
 folders (`emailtemplates/`/`mastertemplates/`/`letterheads/`), the transient
 `faxqueue/`, and transport encryption (already handled by TLS).
@@ -70,11 +75,14 @@ folders (`emailtemplates/`/`mastertemplates/`/`letterheads/`), the transient
 - Affected code:
   - `j-lawyer-server-common`: new `com.jdimension.jlawyer.security.*` file-crypto
     utility + key provider; `ServerFileUtils` (`readFile`/`writeFile`/`createFile`,
-    `ServerFileUtils.java:814,850,857`) — encryption must be scoped to the two
-    document folders, **not** applied to all `ServerFileUtils` callers.
+    `ServerFileUtils.java:814,850,857`) — encryption must be scoped to the four
+    document folders (`archivefiles/`, `archivefiles-preview/`, `addressfiles/`,
+    `addressfiles-preview/`), **not** applied to all `ServerFileUtils` callers.
   - `j-lawyer-server-ejb`: `ArchiveFileService` document I/O
     (`addDocumentImpl`, `setDocumentContent`, `getDocumentContentImpl`,
-    `getDocumentContentBucket`, preview read/write) and `PreviewGenerator`.
+    `getDocumentContentBucket`, preview read/write), `AddressDocumentService` document
+    I/O (`addDocument`, `setDocumentContent`, `getDocumentContent`,
+    `addDocumentFromTemplate`), and `PreviewGenerator` (shared by both).
   - Admin/config surface for enablement, key source, and the migration/rotation
     operations (EJB service + likely a client admin panel).
   - `j-lawyer-backupmgr`: backups will contain ciphertext; restore requires the

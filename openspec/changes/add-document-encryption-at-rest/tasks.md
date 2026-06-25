@@ -1,13 +1,13 @@
 ## 0. Decisions
 - [x] 0.1 Master-key source: key file on server, auto-unlock at startup (C1)
 - [x] 0.2 Single firm-wide key domain + per-file envelope keys (C3)
-- [x] 0.3 Scope: only archivefiles/ + archivefiles-preview/; Lucene index plaintext = accepted residual risk (C2)
+- [x] 0.3 Scope: only the document folders archivefiles/ + archivefiles-preview/ + addressfiles/ + addressfiles-preview/; Lucene index plaintext = accepted residual risk (C2)
 - [x] 0.4 Migration: admin-triggered resumable online batch + reverse + rotation (C4)
 - [x] 0.5a DataBucket path supported via server-side streaming decrypt to temp (C5/Q8)
 - [x] 0.5b Data directory 20–150 GB → I/O-bound, online/resumable/throttled migration (Q9)
 - [x] 0.5c ~5% steady-state overhead acceptable; AES-NI may be assumed (Q9, Q10)
 - [x] 0.6a Default OFF on new installs and upgrades (Q11); compliance: DSGVO + BRAO/StGB (Q13)
-- [x] 0.6b Scope is by storage path: dictation/audio + saved e-mails are documents under archivefiles/, auto-covered; no separate store (Q5)
+- [x] 0.6b Scope is by storage path: dictation/audio + saved e-mails are documents under archivefiles/, auto-covered; contact documents live under addressfiles/ and share the same storage/preview code, auto-covered; no separate store (Q5)
 - [x] 0.6c Key-backup gate at activation; Variant B (typed fingerprint/recovery code) (Q3)
 - [x] 0.6 Option A scoped fail-closed + startup health check on invalid key (Q12)
 - [ ] 0.6 Confirm default-on-vs-off, key-backup UX, compliance drivers (Q3, Q11, Q13)
@@ -40,14 +40,21 @@
       `encryption_state` + `key_version` to `case_documents` (schema only, inert when off)
 - [ ] 3.0b Add the two bookkeeping fields to `ArchiveFileDocumentsBean` (hints, header is
       authoritative); keep `size` = logical plaintext length
-- [ ] 3.1 Introduce a document-storage layer scoped to `archivefiles/` and
-      `archivefiles-preview/` (do NOT encrypt all `ServerFileUtils` callers)
+- [ ] 3.0c Same bookkeeping columns/fields on `address_documents` / `AddressDocumentsBean`
+      (Flyway + entity); header remains authoritative, `size` = logical plaintext length
+- [ ] 3.1 Introduce a document-storage layer scoped to `archivefiles/`,
+      `archivefiles-preview/`, `addressfiles/` and `addressfiles-preview/` (scope predicate
+      keys on the storage-area path segment; do NOT encrypt all `ServerFileUtils` callers)
 - [ ] 3.2 Wire encryption into `ArchiveFileService` write paths
       (`addDocumentImpl`, `setDocumentContent`)
 - [ ] 3.3 Wire decryption into read paths (`getDocumentContentImpl`, unrestricted reads)
 - [ ] 3.3a `getDocumentContentBucket`: replace `Files.copy(src→temp)` with streaming
       decrypt into the temp bucket file; ensure temp file cleanup (C5)
-- [ ] 3.4 Wire `PreviewGenerator` text/PDF preview read+write
+- [ ] 3.4 Wire `PreviewGenerator` text/PDF preview read+write (shared by case + address;
+      covers `archivefiles-preview/` and `addressfiles-preview/`)
+- [ ] 3.4b Wire `AddressDocumentService` write/read paths (`addDocument`,
+      `setDocumentContent`, `getDocumentContent`, `addDocumentFromTemplate`), or confirm they
+      are already covered because they go through the scoped storage layer from 3.1
 - [ ] 3.5 Verify search indexing receives decrypted text; confirm whether the
       Lucene index is in/out of scope per 0.3
 
@@ -80,7 +87,8 @@
       `SwaggerEquivalenceTest` green
 
 ## 5. Migration tooling (sized for 20–150 GB, I/O-bound)
-- [ ] 5.1 Idempotent, resumable forward migration over both folders with progress + ETA
+- [ ] 5.1 Idempotent, resumable forward migration over all four document folders
+      (archivefiles/, archivefiles-preview/, addressfiles/, addressfiles-preview/) with progress + ETA
 - [ ] 5.2 Reverse migration (decrypt-all) with progress
 - [ ] 5.3 Online-safe behaviour (handle concurrent reads/writes during migration)
 - [ ] 5.4 Crash-safe in-place rewrite: temp file in same dir → fsync → atomic rename

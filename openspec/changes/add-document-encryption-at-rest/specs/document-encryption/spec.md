@@ -3,14 +3,21 @@
 ### Requirement: Transparent Encryption of Document Content at Rest
 
 When encryption at rest is enabled, the system SHALL encrypt all byte content
-written to the `archivefiles/` folder (document originals and versions) before it is
+written to the document-content folders — `archivefiles/` (case document originals and
+versions) and `addressfiles/` (contact/address document originals) — before it is
 persisted to the storage backend, and SHALL decrypt it transparently on read, so that
-EJB clients, REST API consumers (v1–v7), search indexing, and preview generation
+EJB clients, REST API consumers (v1–v8), search indexing, and preview generation
 observe the same plaintext content as before.
 
-#### Scenario: New document is stored encrypted
-- **WHEN** encryption is enabled and a document is added or its content is updated
+#### Scenario: New case document is stored encrypted
+- **WHEN** encryption is enabled and a case document is added or its content is updated
 - **THEN** the bytes persisted under `archivefiles/<archiveFileId>/<documentId>` are
+  ciphertext and cannot be interpreted without the firm's key
+- **AND** a subsequent authenticated read returns the original plaintext bytes
+
+#### Scenario: New address document is stored encrypted
+- **WHEN** encryption is enabled and a document is added to a contact or its content is updated
+- **THEN** the bytes persisted under `addressfiles/<addressId>/<documentId>` are
   ciphertext and cannot be interpreted without the firm's key
 - **AND** a subsequent authenticated read returns the original plaintext bytes
 
@@ -31,12 +38,14 @@ observe the same plaintext content as before.
 
 When encryption at rest is enabled, the system SHALL encrypt the extracted-text
 (`<documentId>.text`) and rendered-PDF (`<documentId>.pdf`) preview files written to
-the `archivefiles-preview/` folder, and SHALL decrypt them transparently wherever
-previews are consumed.
+the preview folders — `archivefiles-preview/` (case documents) and
+`addressfiles-preview/` (contact/address documents) — and SHALL decrypt them
+transparently wherever previews are consumed.
 
 #### Scenario: Preview generation writes ciphertext
-- **WHEN** a text or PDF preview is generated for a document
-- **THEN** the preview file persisted under `archivefiles-preview/` is ciphertext
+- **WHEN** a text or PDF preview is generated for a case or address document
+- **THEN** the preview file persisted under `archivefiles-preview/` (case) or
+  `addressfiles-preview/` (address) is ciphertext
 - **AND** displaying the preview to an authenticated user yields the original content
 
 ### Requirement: Authenticated Per-File Encryption
@@ -76,8 +85,8 @@ the format in future versions without ambiguity.
 - **THEN** the wrapped data key, IV, algorithm, and key version are stored in the file
   header itself, so the file can be decrypted with only the master key and without any
   database record
-- **AND** preview files under `archivefiles-preview/` (which have no database row) are
-  decryptable from their header alone
+- **AND** preview files under `archivefiles-preview/` and `addressfiles-preview/` (which
+  have no database row) are decryptable from their header alone
 
 ### Requirement: Logical Size Reported Independently of Ciphertext
 
@@ -124,10 +133,10 @@ conversion of all existing files.
 ### Requirement: Migration from Unencrypted to Encrypted
 
 The system SHALL provide an administrator-triggered migration that encrypts existing
-plaintext files under `archivefiles/` and `archivefiles-preview/` in place. The
-migration SHALL be idempotent (skipping already-encrypted files via header detection),
-resumable after interruption, performable while the system is online, and SHALL report
-progress and completion.
+plaintext files under `archivefiles/`, `archivefiles-preview/`, `addressfiles/` and
+`addressfiles-preview/` in place. The migration SHALL be idempotent (skipping
+already-encrypted files via header detection), resumable after interruption, performable
+while the system is online, and SHALL report progress and completion.
 
 #### Scenario: Forward migration encrypts legacy files
 - **WHEN** an administrator starts the forward migration
