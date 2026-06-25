@@ -673,10 +673,14 @@ import org.apache.log4j.Logger;
 public class ObservedOfficeDocument extends ObservedDocument {
 
     private static final Logger log = Logger.getLogger(ObservedOfficeDocument.class.getName());
+    private static final long UNLOCK_GRACE_PERIOD_MILLIS = 2l * DocumentObserverTask.getDefaultInterval();
 
     private long lastLocked = -1;
     private long unlockTime = -1;
     private String lockFile = null;
+    private volatile boolean unoMonitoringActive = false;
+    private volatile boolean unoCloseConfirmed = false;
+    private volatile JavaUnoOfficeMonitor.MonitorSession unoMonitorSession = null;
 
     public ObservedOfficeDocument(String path, ObservedDocumentStore store, Launcher l) {
         super(path, store, l);
@@ -717,8 +721,14 @@ public class ObservedOfficeDocument extends ObservedDocument {
                 }
                 long unlockedForDuration = System.currentTimeMillis() - this.unlockTime;
 
-                // temporary loss of lock?
-                if (unlockedForDuration > (2l * DocumentObserverTask.getDefaultInterval())) {
+                if (this.unoMonitoringActive && this.unoCloseConfirmed) {
+                    log.debug("UNO close confirmed and lock released - considering closed: " + this.path);
+                    return true;
+                }
+
+                // LibreOffice can briefly recreate the lock file while saving (#232).
+                // Keep a grace period, but do not tie the wait to the observer timer.
+                if (unlockedForDuration >= UNLOCK_GRACE_PERIOD_MILLIS) {
                     log.debug("file without lock for " + unlockedForDuration + " - considering closed: " + this.path);
                     return true;
                 } else {
@@ -726,12 +736,45 @@ public class ObservedOfficeDocument extends ObservedDocument {
                     return false;
                 }
             } else {
+                if (this.unoMonitoringActive && this.unoCloseConfirmed) {
+                    log.debug("UNO close confirmed before lock was observed - considering closed: " + this.path);
+                    return true;
+                }
                 log.debug("file not locked yet: " + this.path + " considering document as NOT closed");
                 return false;
             }
         }
         //return super.isClosed();
 
+    }
+
+    public void setUnoMonitoringActive(boolean unoMonitoringActive) {
+        this.unoMonitoringActive = unoMonitoringActive;
+    }
+
+    public boolean isUnoMonitoringActive() {
+        return unoMonitoringActive;
+    }
+
+    public void markUnoCloseConfirmed() {
+        this.unoCloseConfirmed = true;
+    }
+
+    public boolean isUnoCloseConfirmed() {
+        return unoCloseConfirmed;
+    }
+
+    public void setUnoMonitorSession(JavaUnoOfficeMonitor.MonitorSession unoMonitorSession) {
+        this.unoMonitorSession = unoMonitorSession;
+    }
+
+    public void closeUnoMonitorSession() {
+        JavaUnoOfficeMonitor.MonitorSession session = this.unoMonitorSession;
+        this.unoMonitorSession = null;
+        this.unoMonitoringActive = false;
+        if (session != null) {
+            session.release();
+        }
     }
 
 }
