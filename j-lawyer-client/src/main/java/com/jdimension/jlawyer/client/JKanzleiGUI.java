@@ -717,6 +717,7 @@ import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -864,7 +865,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             mi.setToolTipText(cp.getDescription());
             mi.addActionListener((ActionEvent e) -> {
                 try {
-                    JPanel ui = cp.getUi(null, 0f);
+                    JPanel ui = cp.getUi(null, BigDecimal.ZERO.setScale(2));
                     CalculationPluginDialog dlg = new CalculationPluginDialog(EditorsRegistry.getInstance().getMainWindow(), false, ui);
                     dlg.setTitle("Plugin: " + cp.getName() + " " + cp.getVersion());
                     dlg.setHeader(cp.getDescription());

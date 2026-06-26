@@ -767,7 +767,7 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
         clone.setDescription(this.taDescription.getText());
         clone.setPosition(this.position.getPosition());
         try {
-            clone.setTaxRate(BigDecimal.valueOf(this.taxRateFormat.parse(this.cmbTaxRate.getSelectedItem().toString()).doubleValue()));
+            clone.setTaxRate(BigDecimal.valueOf(this.taxRateFormat.parse(this.cmbTaxRate.getSelectedItem().toString()).doubleValue()).setScale(2, RoundingMode.HALF_UP));
         } catch (Exception ex) {
             clone.setTaxRate(BigDecimal.ZERO);
             JOptionPane.showMessageDialog(this, "fehlerhafter Steuersatz: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);

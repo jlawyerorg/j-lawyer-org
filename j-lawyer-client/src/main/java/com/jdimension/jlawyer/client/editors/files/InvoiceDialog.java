@@ -876,7 +876,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             mi.setToolTipText(cp.getDescription());
             mi.addActionListener((ActionEvent e) -> {
                 try {
-                    JPanel ui1 = cp.getUi(this.currentEntry, caseDto, caseDto.getClaimValue());
+                    JPanel ui1 = cp.getUi(this.currentEntry, caseDto, new BigDecimal(Float.toString(caseDto.getClaimValue())).setScale(2, RoundingMode.HALF_UP));
                     CalculationPluginDialog dlg = new CalculationPluginDialog(this, true, ui1);
                     dlg.setTitle("Plugin: " + cp.getName() + " " + cp.getVersion());
                     dlg.setHeader(cp.getDescription());

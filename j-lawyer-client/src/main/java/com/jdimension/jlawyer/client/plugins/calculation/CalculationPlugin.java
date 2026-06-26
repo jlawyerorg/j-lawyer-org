@@ -672,6 +672,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -709,7 +710,18 @@ public class CalculationPlugin implements Comparable {
         return (JPanel)bind.getVariable(VARNAME_SCRIPTPANEL);
     }
     
-    public JPanel getUi(ArchiveFileBean targetCase, float claimValue) throws Exception {
+    /**
+     * Instantiates the plugin UI and binds the case claim value for the plugin to use.
+     * The claim value is passed as a {@link java.math.BigDecimal} (scale 2) via the Groovy
+     * binding variable {@code claimvalue} so that plugins can perform monetary calculations
+     * without binary floating-point rounding errors.
+     *
+     * @param targetCase the case the calculation result will be assigned to (may be null)
+     * @param claimValue the case claim value as a BigDecimal (scale 2)
+     * @return the plugin's Swing panel
+     * @throws Exception if the plugin script fails to run
+     */
+    public JPanel getUi(ArchiveFileBean targetCase, BigDecimal claimValue) throws Exception {
         GroovyScriptEngine e = new GroovyScriptEngine(CalculationPluginUtil.getLocalDirectory() + File.separator);
         Binding bind = new Binding();
         bind.setVariable(VARNAME_CALLBACK, new GenericCalculationCallback(targetCase));
@@ -717,8 +729,20 @@ public class CalculationPlugin implements Comparable {
         e.run(getId() + UICLASS_SUFFIX, bind);
         return (JPanel)bind.getVariable(VARNAME_SCRIPTPANEL);
     }
-    
-    public JPanel getUi(Invoice invoice, ArchiveFileBean targetCase, float claimValue) throws Exception {
+
+    /**
+     * Instantiates the plugin UI for adding positions to an invoice and binds the case claim
+     * value for the plugin to use. The claim value is passed as a {@link java.math.BigDecimal}
+     * (scale 2) via the Groovy binding variable {@code claimvalue} so that plugins can perform
+     * monetary calculations without binary floating-point rounding errors.
+     *
+     * @param invoice the invoice the plugin may add positions to
+     * @param targetCase the case the invoice belongs to (may be null)
+     * @param claimValue the case claim value as a BigDecimal (scale 2)
+     * @return the plugin's Swing panel
+     * @throws Exception if the plugin script fails to run
+     */
+    public JPanel getUi(Invoice invoice, ArchiveFileBean targetCase, BigDecimal claimValue) throws Exception {
         GroovyScriptEngine e = new GroovyScriptEngine(CalculationPluginUtil.getLocalDirectory() + File.separator);
         Binding bind = new Binding();
         bind.setVariable(VARNAME_CALLBACK, new GenericCalculationCallback(invoice, targetCase));

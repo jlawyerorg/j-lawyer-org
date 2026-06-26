@@ -802,6 +802,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -1133,7 +1134,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         log.error("invalid claim value: " + txtClaimValue.getText(), ex);
                         claimValueF = 0f;
                     }
-                    JPanel ui1 = cp.getUi(dto, claimValueF);
+                    JPanel ui1 = cp.getUi(dto, new BigDecimal(Float.toString(claimValueF)).setScale(2, RoundingMode.HALF_UP));
                     CalculationPluginDialog dlg = new CalculationPluginDialog(EditorsRegistry.getInstance().getMainWindow(), false, ui1);
                     dlg.setTitle("Plugin: " + cp.getName() + " " + cp.getVersion());
                     dlg.setHeader(cp.getDescription());
