@@ -131,6 +131,36 @@ declared only on `SearchServiceRemote` (used by the desktop client), not on
   `202 Accepted` (the rebuild runs asynchronously via JMS), or `500` on lookup failure.
 - The swagger.json is regenerated from these annotations on build (no manual step).
 
+### Fielded search for metadata
+
+Previously `SearchAPI.search()` ran `QueryParser.escape()` over the **entire** user query
+before parsing, which escaped the `:` and so silently disabled `field:value` syntax — all
+input was a literal phrase against the default `text` field. The metadata fields are also
+indexed as analyzed `TextField`s (German stemming, punctuation splitting), so even with the
+colon preserved, exact filename matching would be unreliable.
+
+Design:
+
+- Add **non-analyzed, lowercased keyword companion fields** for the searchable metadata —
+  `dateiname-kw`, `akte-kw`, `az-kw` (`StringField`, `Store.NO`) — populated in
+  `addToIndex`/`updateInIndex` alongside the existing stored display fields (the plain
+  `dateiname`/`akte`/`az` stay stored in original case for display). Lowercasing both at
+  index and query time gives case-insensitive matching.
+- Replace the blanket escape with `buildQuery(String)`:
+  - A recognised `field:value` prefix (`dateiname`/`akte`/`az`) builds a `TermQuery` on the
+    keyword field, or a `WildcardQuery` when the value contains `*`/`?`. These never go
+    through the parser, so they cannot raise a `ParseException`.
+  - `text:value` is parsed as analyzed full-text on the default field.
+  - Anything else (including an unknown field name) falls back to the previous robust
+    behavior: `QueryParser.escape()` the whole string and parse it on the default `text`
+    field. Non-fielded queries are therefore unchanged.
+- Scope/limitation: this handles a single leading `field:value`, not arbitrary boolean
+  combinations of fielded clauses (e.g. `dateiname:x AND text:y`). That matches the
+  requested use case and keeps the behavior predictable and parse-safe; richer boolean
+  fielded syntax can be a later change.
+- Requires a full re-index for the keyword fields to populate — covered by the same
+  admin-initiated re-index as the format rebuild.
+
 ### POM changes
 
 - Root `pom.xml` `dependencyManagement`: set every `org.apache.lucene:*` entry to the

@@ -28,22 +28,33 @@
 - [x] 4.3 Implement `reIndexAll()` in `SearchEndpointV8`: `@POST @Path("/reindex")`, `@RolesAllowed({"adminRole"})`, `@ApiOperation` (tag "Search"), look up `SearchServiceLocal` via the existing JNDI name, call `reIndexAll()`, return `202 Accepted` (async rebuild) and `500` on failure
 - [ ] 4.4 Confirm the generated `swagger.json` lists `POST /v8/search/reindex` under the "Search" tag after build
 
-## 5. Verification
-- [ ] 5.1 Full reactor build on Java 17 (`./build.sh`) compiles with no Lucene API errors
-- [ ] 5.2 Deploy the EAR to WildFly 26.1.3; server starts and the old 4.x index is cleared, not fatal
-- [ ] 5.3 Trigger re-index via the new `POST /v8/search/reindex` endpoint (admin credentials); confirm `getNumberOfDocs()` grows to match document count
-- [ ] 5.4 Smoke-test representative German full-text queries: hits returned, scoring sane, highlighting renders
-- [ ] 5.5 Verify the reindex endpoint rejects non-admin users (401/403)
-- [ ] 5.6 Confirm Dependabot/CVE tooling sees `org.apache.lucene:*:9.x` (real coordinates, current version)
-- [ ] 5.7 Measure performance & index size before/after: record `searchindex/` directory size and `getNumberOfDocs()`, plus latency of a few representative queries, on the old (4.7) index and the rebuilt (9.x) index; confirm size is roughly equal-or-smaller and top-N query latency is not worse
+## 5. Fielded search for metadata
+- [x] 5.1 Add non-analyzed lowercased keyword fields `dateiname-kw`, `akte-kw`, `az-kw` (`StringField`, `Store.NO`) in `addToIndex`/`updateInIndex`, alongside the existing stored display fields
+- [x] 5.2 Replace the blanket `QueryParser.escape()` in `search()` with `buildQuery()`: recognized `dateiname:`/`akte:`/`az:` → `TermQuery`/`WildcardQuery` on the keyword field (lowercased); `text:` → analyzed full-text; anything else → escaped literal full-text on the default field (unchanged behavior)
+- [x] 5.3 Keep non-fielded queries robust (special characters escaped, no `ParseException`)
+- [ ] 5.4 After re-index, verify: `dateiname:test.pdf` (exact, case-insensitive), `dateiname:*.pdf` (wildcard), `akte:`/`az:` queries, and that plain queries with special characters still work
+- [x] 5.5 Client: wire the search help icon (`jLabel3`) in `DocumentSearchPanel` to an accurate syntax dialog (`showSearchSyntaxHelp()` + `SEARCH_SYNTAX_HELP` constant reflecting the real single-field behavior)
+- [x] 5.6 Client: wire a field-selection dropdown — `applySelectedSearchField()` builds the `feld:wert` query from the selected `cmbSearchField` entry (index → `SEARCH_FIELD_PREFIXES`), used in the search action; "Inhalt"/empty selection sends the raw text so typed prefixes still work
+- [x] 5.7 Client (.form/UI, done by maintainer): add a `javax.swing.JComboBox` named `cmbSearchField` before `cmbMaxDocs` with items in this exact order — `Inhalt`, `Dateiname`, `Aktenname`, `Aktenzeichen` (done)
+- [ ] 5.8 Client (.form/UI, done by maintainer): replace the misleading `jLabel3` tooltip (advertises `autor:`, AND/OR, phrases, exclusion — none supported) with an accurate short hint; optionally update the placeholder
 
-## 6. Docs
-- [x] 6.1 Update CLAUDE.md and `openspec/project.md` references from "Apache Lucene 4.7.0" to the new 9.x version (now `9.12.0`)
-- [ ] 6.2 Add a release note documenting the mandatory one-time re-index after upgrade and the new `POST /v8/search/reindex` endpoint (no release-notes file in repo yet; to be added with the release)
+## 6. Verification
+- [x] 6.1 Full reactor build on Java 17 (`./build.sh`) compiles with no Lucene API errors
+- [x] 6.2 Deploy the EAR to WildFly 26.1.3; server starts and the old 4.x index is cleared, not fatal
+- [x] 6.3 Trigger re-index via the new `POST /v8/search/reindex` endpoint (admin credentials); confirm `getNumberOfDocs()` grows to match document count
+- [x] 6.4 Smoke-test representative German full-text queries: hits returned, scoring sane, highlighting renders
+- [x] 6.5 Verify the reindex endpoint rejects non-admin users (401/403)
+- [ ] 6.6 Confirm Dependabot/CVE tooling sees `org.apache.lucene:*:9.x` (real coordinates, current version)
+- [x] 6.7 Measure performance & index size before/after: record `searchindex/` directory size and `getNumberOfDocs()`, plus latency of a few representative queries, on the old (4.7) index and the rebuilt (9.x) index; confirm size is roughly equal-or-smaller and top-N query latency is not worse
+- [x] 6.8 Verify clean WildFly shutdown no longer logs the `NoClassDefFoundError` (`IndexFileDeleter$CommitPoint`) from the search index close
 
-## 7. Optional: migrate to UnifiedHighlighter (separate, behavior-changing — do not bundle with the core upgrade)
-- [ ] 7.1 Replace the classic `Highlighter` + `QueryScorer` + `TokenSources` path in `SearchAPI.search()` with `org.apache.lucene.search.uhighlight.UnifiedHighlighter`
-- [ ] 7.2 Stop indexing the `FIELD_TEXT_TERMVECTOR` field (drop term vectors + offsets); have the UnifiedHighlighter highlight from postings offsets (index `FIELD_TEXT` with `IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS`) or via re-analysis
-- [ ] 7.3 Verify highlighting output is equivalent (HTML fragments) for representative German queries
-- [ ] 7.4 Re-measure index size (per task 5.7) to quantify the reduction from removing term vectors
-- [ ] 7.5 Note: requires a full re-index because the field/term-vector layout changes
+## 7. Docs
+- [x] 7.1 Update CLAUDE.md and `openspec/project.md` references from "Apache Lucene 4.7.0" to the new 9.x version (now `9.12.0`)
+- [ ] 7.2 Add a release note documenting the mandatory one-time re-index after upgrade, the new `POST /v8/search/reindex` endpoint, and the new `field:value` search syntax (no release-notes file in repo yet; to be added with the release)
+
+## 8. Optional: migrate to UnifiedHighlighter (separate, behavior-changing — do not bundle with the core upgrade)
+- [ ] 8.1 Replace the classic `Highlighter` + `QueryScorer` + `TokenSources` path in `SearchAPI.search()` with `org.apache.lucene.search.uhighlight.UnifiedHighlighter`
+- [ ] 8.2 Stop indexing the `FIELD_TEXT_TERMVECTOR` field (drop term vectors + offsets); have the UnifiedHighlighter highlight from postings offsets (index `FIELD_TEXT` with `IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS`) or via re-analysis
+- [ ] 8.3 Verify highlighting output is equivalent (HTML fragments) for representative German queries
+- [ ] 8.4 Re-measure index size (per task 6.7) to quantify the reduction from removing term vectors
+- [ ] 8.5 Note: requires a full re-index because the field/term-vector layout changes

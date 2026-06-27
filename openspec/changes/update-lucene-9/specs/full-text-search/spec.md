@@ -35,6 +35,28 @@ stored in the case archive.
 - **WHEN** an administrator triggers a full re-index after the index was cleared
 - **THEN** documents are re-indexed via the existing re-index mechanism and the indexed document count grows to match the stored documents
 
+### Requirement: Fielded Search for Document Metadata
+Full-text search SHALL support a `field:value` query prefix for the document metadata
+fields filename (`dateiname`), case name (`akte`), and case number (`az`), in addition to
+the default full-text search over document content. Metadata fielded matches SHALL be
+case-insensitive and support `*`/`?` wildcards. Any query without a recognized field
+prefix SHALL continue to be treated as literal full-text against the document content,
+with query-syntax special characters escaped so arbitrary input cannot cause a parse
+error. Metadata fielded search relies on non-analyzed keyword index fields, so it takes
+effect only for documents indexed after the change (a full re-index is required).
+
+#### Scenario: Search by filename
+- **WHEN** a user searches for `dateiname:test.pdf`
+- **THEN** documents whose filename equals `test.pdf` (case-insensitive) are returned
+
+#### Scenario: Wildcard filename search
+- **WHEN** a user searches for `dateiname:*.pdf`
+- **THEN** documents whose filename ends with `.pdf` (case-insensitive) are returned
+
+#### Scenario: Plain text search is unchanged and robust
+- **WHEN** a user searches without a recognized field prefix (e.g. `Vertrag 2024` or text containing special characters like `:` or `(`)
+- **THEN** the input is searched as literal full-text against the document content and does not raise a query parse error
+
 ### Requirement: Administrative Re-Index via REST API
 The REST API SHALL provide an administrator-only endpoint, under the "Search" category, to
 start a full re-index of the document search index, so the rebuild can be initiated

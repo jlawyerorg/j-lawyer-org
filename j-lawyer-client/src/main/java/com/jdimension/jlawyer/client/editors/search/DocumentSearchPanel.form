@@ -21,22 +21,24 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="scrollResults" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
-                      <Component id="txtSearchString" max="32767" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="cmbMaxDocs" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="cmdQuickSearch" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <Group type="102" attributes="0">
                       <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblPanelTitle" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="32767" attributes="0"/>
                       <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Component id="cmbMaxDocs" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="lblResultCount" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                  </Group>
+                  <Group type="102" alignment="1" attributes="0">
+                      <Component id="txtSearchString" max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmbSearchField" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdQuickSearch" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -50,13 +52,16 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
                   <Component id="lblPanelTitle" min="-2" pref="34" max="-2" attributes="0"/>
-                  <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
+                  <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
+                      <Component id="jLabel3" alignment="0" max="32767" attributes="0"/>
+                      <Component id="cmbMaxDocs" alignment="0" max="32767" attributes="0"/>
+                  </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="103" alignment="1" groupAlignment="3" attributes="0">
                       <Component id="txtSearchString" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="cmbMaxDocs" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cmbSearchField" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Component id="cmdQuickSearch" min="-2" max="-2" attributes="0"/>
               </Group>
@@ -157,8 +162,23 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons16/baseline_help_white_36dp.png"/>
         </Property>
-        <Property name="toolTipText" type="java.lang.String" value="&lt;html&gt;&lt;b&gt;Felder: text: dateiname: autor: akte: az:&lt;/b&gt;&lt;br/&gt;Bsp: text:Kauf&#xa;&lt;p&gt;&amp;nbsp;&lt;/p&gt;&#xa;&lt;b&gt;Suchoptionen: AND OR&lt;/b&gt;&#xa;&lt;p&gt;&amp;nbsp;&lt;/p&gt;&#xa;&lt;b&gt;&amp;quot;Wortgruppe mittels Anf&amp;uuml;hrungszeichen&amp;quot;&lt;/b&gt;&#xa;&lt;p&gt;&amp;nbsp;&lt;/p&gt;&#xa;&lt;p&gt;&lt;b&gt;Ausschluss per vorangestelltem Minuszeichen&lt;/b&gt;&lt;br/&gt;Bsp: -Klage&lt;/p&gt;&#xa;&lt;p&gt;&amp;nbsp;&lt;/p&gt;&#xa;&lt;b&gt;Wildcards: ? f&amp;uuml;r ein Zeichen, * f&amp;uuml;r mehrere Zeichen.&lt;/b&gt;&lt;br/&gt;&#xa;Bsp: M?ier (f&amp;uuml;r eine Suche nach Meier und Maier)&lt;br/&gt;&#xa;&lt;/html&gt;"/>
+        <Property name="toolTipText" type="java.lang.String" value="&lt;html&gt;&lt;b&gt;Volltextsuche&lt;/b&gt; im Dokumentinhalt.&lt;br/&gt;Feld optional &#xfc;ber das Dropdown w&#xe4;hlen&lt;br/&gt;(Dateiname / Aktenname / Aktenzeichen).&lt;br/&gt;Platzhalter &lt;code&gt;*&lt;/code&gt;/&lt;code&gt;?&lt;/code&gt; nur in Feldsuchen.&lt;br/&gt;&lt;i&gt;Klicken f&#xfc;r Details.&lt;/i&gt;&lt;/html&gt;"/>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="cmbSearchField">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+          <StringArray count="4">
+            <StringItem index="0" value="Inhalt"/>
+            <StringItem index="1" value="Dateiname"/>
+            <StringItem index="2" value="Aktenname"/>
+            <StringItem index="3" value="Aktenzeichen"/>
+          </StringArray>
+        </Property>
+      </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+      </AuxValues>
     </Component>
   </SubComponents>
 </Form>

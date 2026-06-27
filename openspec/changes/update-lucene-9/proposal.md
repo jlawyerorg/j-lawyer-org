@@ -32,6 +32,12 @@ Java 21, so 9.x is the highest line we can adopt without a JDK migration).
   administrator can start the rebuild without the desktop client. This requires adding
   `reIndexAll()` to `SearchServiceLocal` (it currently exists only on
   `SearchServiceRemote`). Purely additive to the v8 API.
+- Add **fielded search** for document metadata: a `field:value` prefix
+  (`dateiname`, `akte`, `az`) now performs a case-insensitive, wildcard-capable match
+  against non-analyzed keyword index fields, while any non-fielded query keeps the
+  previous robust literal full-text behavior (special characters escaped). Previously the
+  blanket `QueryParser.escape()` neutralized the `:` so `field:value` never worked. Needs a
+  full re-index for the new keyword fields to populate (admin-initiated, as above).
 
 ## Impact
 
@@ -45,6 +51,8 @@ Java 21, so 9.x is the highest line we can adopt without a JDK migration).
   - REST re-index endpoint: `SearchEndpointV8` + `SearchEndpointLocalV8`
     (`j-lawyer-io/.../rest/v8/`) and `SearchServiceLocal`
     (`j-lawyer-server-ejb/.../services/SearchServiceLocal.java`).
+  - Fielded search + keyword index fields: `SearchAPI.java` (`buildQuery`, keyword fields
+    `dateiname-kw`/`akte-kw`/`az-kw`).
 - Operational impact: one-time full re-index after deployment; search is degraded/empty
   until the rebuild completes.
 - Relation to `consolidate-duplicate-dependency-versions`: Lucene is single-version today,

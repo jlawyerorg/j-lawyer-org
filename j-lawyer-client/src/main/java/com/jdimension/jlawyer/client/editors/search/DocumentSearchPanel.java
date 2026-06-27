@@ -691,6 +691,43 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
     private Image backgroundImage = null;
     DecimalFormat df = new DecimalFormat("0.000");
 
+    /**
+     * Accurate description of the search syntax actually supported by the server-side
+     * {@code SearchAPI}: a plain full-text query over the document content, OR a single
+     * field prefix (dateiname/akte/az/text). Fields cannot be combined and boolean
+     * operators / phrases / exclusion are not supported. Shown by
+     * {@link #showSearchSyntaxHelp()}. Keep in sync with {@code SearchAPI.buildQuery()}.
+     */
+    /**
+     * Query prefix per entry of the field-selection combo ({@code cmbSearchField}). The
+     * order MUST match the combo's items in the .form:
+     * 0 = Inhalt (full text, no prefix), 1 = Dateiname, 2 = Aktenname, 3 = Aktenzeichen.
+     * An empty prefix means "search the document content" (value sent unchanged).
+     */
+    private static final String[] SEARCH_FIELD_PREFIXES = {"", "dateiname:", "akte:", "az:"};
+
+    private static final String SEARCH_SYNTAX_HELP
+            = "<html><body style='width:380px'>"
+            + "<b>Volltextsuche</b><br/>"
+            + "Suchbegriff(e) eingeben &ndash; durchsucht den Dokumentinhalt. "
+            + "Mehrere W&ouml;rter werden ODER-verkn&uuml;pft.<br/><br/>"
+            + "<b>Feldsuche &ndash; jeweils nur EIN Feld, nicht kombinierbar</b><br/>"
+            + "Feld bequem &uuml;ber das Dropdown w&auml;hlen &ndash; oder den Pr&auml;fix selbst eintippen:<br/>"
+            + "<table cellpadding='2'>"
+            + "<tr><td valign='top'><code>dateiname:</code></td><td>Dateiname, z.B. <code>dateiname:vertrag.pdf</code></td></tr>"
+            + "<tr><td valign='top'><code>akte:</code></td><td>Aktenname</td></tr>"
+            + "<tr><td valign='top'><code>az:</code></td><td>Aktenzeichen</td></tr>"
+            + "<tr><td valign='top'><code>text:</code></td><td>Dokumentinhalt (wie Standardsuche)</td></tr>"
+            + "</table>"
+            + "Feldsuchen ignorieren Gro&szlig;-/Kleinschreibung; der gesamte Text nach dem "
+            + "Doppelpunkt ist der Feldwert.<br/><br/>"
+            + "<b>Platzhalter</b> (nur in dateiname/akte/az):<br/>"
+            + "<code>*</code> = beliebig viele Zeichen, <code>?</code> = ein Zeichen, "
+            + "z.B. <code>dateiname:*.pdf</code><br/><br/>"
+            + "<b>Nicht unterst&uuml;tzt:</b> Kombination mehrerer Felder, AND/OR/NOT, "
+            + "Phrasen in Anf&uuml;hrungszeichen, Ausschluss mit vorangestelltem Minus."
+            + "</body></html>";
+
     // Debounced search control
     private javax.swing.Timer searchTimer;
     private javax.swing.SwingWorker<Void, Void> searchWorker;
@@ -704,7 +741,16 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
         this.txtSearchString.putClientProperty("JTextField.placeholderText", "Suche: Dokumente");
         this.scrollResults.getVerticalScrollBar().setUnitIncrement(16);
         ((JLabel)this.cmbMaxDocs.getRenderer()).setHorizontalAlignment(SwingConstants.RIGHT);
-        
+
+        // Make the help icon open the (accurate) search-syntax dialog on click.
+        this.jLabel3.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+        this.jLabel3.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                showSearchSyntaxHelp();
+            }
+        });
+
     }
 
     @Override
@@ -744,6 +790,7 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
         cmbMaxDocs = new javax.swing.JComboBox();
         lblResultCount = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
+        cmbSearchField = new javax.swing.JComboBox<>();
 
         txtSearchString.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
@@ -786,7 +833,9 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
         lblResultCount.setText("0 Ergebnisse");
 
         jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_help_white_36dp.png"))); // NOI18N
-        jLabel3.setToolTipText("<html><b>Felder: text: dateiname: autor: akte: az:</b><br/>Bsp: text:Kauf\n<p>&nbsp;</p>\n<b>Suchoptionen: AND OR</b>\n<p>&nbsp;</p>\n<b>&quot;Wortgruppe mittels Anf&uuml;hrungszeichen&quot;</b>\n<p>&nbsp;</p>\n<p><b>Ausschluss per vorangestelltem Minuszeichen</b><br/>Bsp: -Klage</p>\n<p>&nbsp;</p>\n<b>Wildcards: ? f&uuml;r ein Zeichen, * f&uuml;r mehrere Zeichen.</b><br/>\nBsp: M?ier (f&uuml;r eine Suche nach Meier und Maier)<br/>\n</html>");
+        jLabel3.setToolTipText("<html><b>Volltextsuche</b> im Dokumentinhalt.<br/>Feld optional über das Dropdown wählen<br/>(Dateiname / Aktenname / Aktenzeichen).<br/>Platzhalter <code>*</code>/<code>?</code> nur in Feldsuchen.<br/><i>Klicken für Details.</i></html>");
+
+        cmbSearchField.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Inhalt", "Dateiname", "Aktenname", "Aktenzeichen" }));
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
@@ -797,20 +846,22 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(scrollResults)
                     .add(layout.createSequentialGroup()
-                        .add(txtSearchString)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmbMaxDocs, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdQuickSearch))
-                    .add(layout.createSequentialGroup()
                         .add(jLabel2)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblPanelTitle)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(jLabel3))
+                        .add(jLabel3)
+                        .add(18, 18, 18)
+                        .add(cmbMaxDocs, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(layout.createSequentialGroup()
                         .add(lblResultCount)
-                        .add(0, 0, Short.MAX_VALUE)))
+                        .add(0, 0, Short.MAX_VALUE))
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                        .add(txtSearchString)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmbSearchField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdQuickSearch)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -820,12 +871,14 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jLabel2)
                     .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 34, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel3))
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, cmbMaxDocs)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(cmbMaxDocs, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(cmbSearchField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(cmdQuickSearch))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(lblResultCount)
@@ -860,6 +913,35 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
         searchTimer.start();
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 
+    /**
+     * Shows the supported search syntax in an information dialog. Wired to the help icon
+     * ({@code jLabel3}) and intended to also be callable from an optional help button added
+     * in the .form (call this from its action handler).
+     */
+    public void showSearchSyntaxHelp() {
+        JOptionPane.showMessageDialog(this, SEARCH_SYNTAX_HELP,
+                "Suchsyntax", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    /**
+     * Combines the field selected in {@code cmbSearchField} with the entered text into the
+     * effective query string. For a metadata field the value is prefixed with
+     * {@code dateiname:}/{@code akte:}/{@code az:} (understood by {@code SearchAPI}); for
+     * "Inhalt" (or an empty selection / empty value) the raw text is returned unchanged, so
+     * power users can still type their own field prefix.
+     */
+    private String applySelectedSearchField(String rawValue) {
+        String value = (rawValue == null) ? "" : rawValue.trim();
+        int idx = this.cmbSearchField.getSelectedIndex();
+        if (idx >= 0 && idx < SEARCH_FIELD_PREFIXES.length) {
+            String prefix = SEARCH_FIELD_PREFIXES[idx];
+            if (!prefix.isEmpty() && !value.isEmpty()) {
+                return prefix + value;
+            }
+        }
+        return rawValue;
+    }
+
     private void cmdQuickSearchActionPerformedImpl() {
         // Clear results immediately for responsive feedback
         this.pnlResults.removeAll();
@@ -870,7 +952,7 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
             return;
         }
 
-        final String searchText = this.txtSearchString.getText();
+        final String searchText = applySelectedSearchField(this.txtSearchString.getText());
         final int maxDocs;
         try {
             maxDocs = Integer.parseInt(this.cmbMaxDocs.getSelectedItem().toString());
@@ -951,6 +1033,7 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox cmbMaxDocs;
+    private javax.swing.JComboBox<String> cmbSearchField;
     private javax.swing.JButton cmdQuickSearch;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
