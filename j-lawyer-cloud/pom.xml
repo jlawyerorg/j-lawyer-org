@@ -186,8 +186,16 @@
                                         <exclude>org.apache.logging.*</exclude>
                                     </excludes>
                                 </relocation>
-                                <!-- jackson core conflicts with the version that is part of bea-wrapper, therefore shade it -->
-                                <!-- relocation>
+                                <!-- Relocate the jackson that nextcloud-api uses into shaded.* so this
+                                     fat jar is self-contained. The client classpath carries several
+                                     competing jackson versions (WildFly's jboss-client.jar bundles
+                                     databind ~2.12 for EJB remoting; ez-vcard pulls jackson-core; this
+                                     jar bundles databind/core 2.16.1). Without relocation nextcloud-api
+                                     loads an inconsistent (databind, core) pair depending on classpath
+                                     order and fails with NoSuchMethodError (e.g. JsonParser.getRead
+                                     Capabilities / JsonFactory.requiresPropertyOrdering). Relocating
+                                     isolates nextcloud-api onto this jar's own 2.16.1 jackson. -->
+                                <relocation>
                                     <pattern>com.fasterxml.jackson.core</pattern>
                                     <shadedPattern>shaded.com.fasterxml.jackson.core</shadedPattern>
                                 </relocation>
@@ -198,7 +206,7 @@
                                 <relocation>
                                     <pattern>com.fasterxml.jackson.databind</pattern>
                                     <shadedPattern>shaded.com.fasterxml.jackson.databind</shadedPattern>
-                                </relocation -->
+                                </relocation>
                             </relocations>
                         </configuration>
                     </execution>
