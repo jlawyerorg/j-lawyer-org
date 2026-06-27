@@ -106,13 +106,10 @@ Lucene). None of those call sites are touched by this change. A standalone Tika 
   ineffective and unsafe (it would risk two concurrent writers). A genuine
   `LockObtainFailedException` propagates into the existing `initError` + cooldown-retry path
   (`ensureInitialized()`), which is the correct behavior.
-- Highlighter: the `Highlighter`/`QueryScorer`/`SimpleHTMLFormatter` API is retained in
-  9.x. The deprecated `TokenSources.getAnyTokenStream(...)` convenience is replaced with the
-  stable, definitely-present `TokenSources.getTermVectorTokenStreamOrNull(field, tvFields,
-  -1)` (the field stores term vectors with offsets), falling back to
-  `analyzer.tokenStream(field, text)` when no term vectors are available.
-  `IndexSearcher.doc(int)` still works (deprecated in 9 in favor of `storedFields()`); left
-  as-is.
+- Highlighter: migrated to the `UnifiedHighlighter` (see the dedicated section below) — the
+  classic `Highlighter`/`QueryScorer`/`SimpleHTMLFormatter`/`TokenSources` path and the
+  separate `text-tv` term-vector field are removed. `IndexSearcher.doc(int)` still works
+  (deprecated in 9 in favor of `storedFields()`); left as-is.
 
 ### REST re-index endpoint
 
@@ -210,13 +207,29 @@ the Lucene 4.7 → 9.x evolution and from how `SearchAPI` indexes.
 - **Net expectation:** roughly the same, more likely slightly smaller. A large increase is
   not expected.
 
-### Optional future optimization (out of scope here)
+### UnifiedHighlighter migration (now included)
 
-Migrating from the classic `Highlighter` to the `UnifiedHighlighter` would allow dropping
-the `FIELD_TEXT_TERMVECTOR` field (and its offsets), since the UnifiedHighlighter can
-highlight from postings offsets or by re-analysis. That could reduce index size
-substantially. It is intentionally kept out of this upgrade (separate change) to keep the
-Lucene migration behavior-preserving; it is captured as an optional task.
+Originally scoped as an optional follow-up, this was pulled into the change by request.
+`SearchAPI` now highlights with the `UnifiedHighlighter` and no longer indexes the separate
+`text-tv` term-vector field; instead `FIELD_TEXT` is stored and indexed with postings
+offsets (`DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS`), from which the highlighter builds
+snippets. This removes the largest size contributor (term vectors with offsets), so the
+rebuilt index is meaningfully smaller, and it drops the deprecated
+`TokenSources`/`getTermVectors` APIs (removed in Lucene 10), easing a future Lucene 10
+move. Snippet rendering is tuned to match the old output:
+- `DefaultPassageFormatter` with `<b>…</b>` match tags and a `<br/>` passage separator, so
+  each passage renders on its own line (the formatter default would join passages with
+  `"... "` on one line).
+- a `LengthGoalBreakIterator` over a word-boundary (`getLineInstance`) base, targeting
+  ~`SNIPPET_LENGTH` (150) chars, so passages stay short even for OCR text without sentence
+  punctuation (a sentence-based iterator could otherwise emit the whole document as one
+  giant line).
+- `withMaxNoHighlightPassages(0)`, so a hit that does not match the content field (e.g. a
+  pure metadata field search) yields no snippet instead of the document's leading text.
+- the snippet HTML is wrapped in `<body style="width:500px">` so long lines wrap in the
+  tooltip.
+
+Requires a full re-index because the field layout changed (same admin-initiated re-index).
 
 ## Risks / Trade-offs
 

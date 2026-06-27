@@ -32,6 +32,12 @@ Java 21, so 9.x is the highest line we can adopt without a JDK migration).
   administrator can start the rebuild without the desktop client. This requires adding
   `reIndexAll()` to `SearchServiceLocal` (it currently exists only on
   `SearchServiceRemote`). Purely additive to the v8 API.
+- Migrate highlighting to the **`UnifiedHighlighter`** and drop the separate `text-tv`
+  term-vector field: `FIELD_TEXT` is indexed with postings offsets and the highlighter
+  builds snippets from those. This removes the largest index-size contributor (term vectors
+  with offsets) and the deprecated `TokenSources`/`getTermVectors` APIs (eases a later
+  Lucene 10 move). Snippet markup may differ slightly (`<b>…</b>`, sentence-based passages).
+  Needs the same admin-initiated re-index.
 - Add **fielded search** for document metadata: a `field:value` prefix
   (`dateiname`, `akte`, `az`) now performs a case-insensitive, wildcard-capable match
   against non-analyzed keyword index fields, while any non-fielded query keeps the

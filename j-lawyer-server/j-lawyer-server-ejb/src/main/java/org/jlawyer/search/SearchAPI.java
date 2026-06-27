@@ -665,8 +665,10 @@ package org.jlawyer.search;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.BreakIterator;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -675,7 +677,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.de.GermanAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -691,11 +692,9 @@ import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.WildcardQuery;
-import org.apache.lucene.search.highlight.Highlighter;
-import org.apache.lucene.search.highlight.QueryScorer;
-import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
-import org.apache.lucene.search.highlight.TextFragment;
-import org.apache.lucene.search.highlight.TokenSources;
+import org.apache.lucene.search.uhighlight.DefaultPassageFormatter;
+import org.apache.lucene.search.uhighlight.LengthGoalBreakIterator;
+import org.apache.lucene.search.uhighlight.UnifiedHighlighter;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
@@ -708,11 +707,22 @@ public class SearchAPI {
     private static final String FIELD_ID = "id";
     private static final String FIELD_FILENAME = "dateiname";
     private static final String FIELD_TEXT = "text";
-    private static final String FIELD_TEXT_TERMVECTOR = "text-tv";
     private static final String FIELD_ARCHIVEFILEID = "archivefileid";
     private static final String FIELD_ARCHIVEFILENAME = "akte";
     private static final String FIELD_ARCHIVEFILENUMBER = "az";
     private static final String FIELD_DEFAULT = FIELD_TEXT;
+
+    // Field type for the stored, tokenized document content. Postings carry offsets so the
+    // UnifiedHighlighter can highlight directly from them — no separate term-vector field
+    // is needed. The field is stored so the highlighter can extract the snippet text.
+    private static final FieldType TEXT_FIELD_TYPE = new FieldType();
+
+    static {
+        TEXT_FIELD_TYPE.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
+        TEXT_FIELD_TYPE.setStored(true);
+        TEXT_FIELD_TYPE.setTokenized(true);
+        TEXT_FIELD_TYPE.freeze();
+    }
 
     // Non-analyzed, lowercased keyword companions of the stored metadata fields, used for
     // exact / wildcard fielded search (e.g. "dateiname:test.pdf"). The plain fields above
@@ -735,6 +745,8 @@ public class SearchAPI {
 
     private static final Logger log = Logger.getLogger(SearchAPI.class.getName());
     private static final int SEARCHER_REFRESH_INTERVAL_SECONDS = 10;
+    // Target length (characters) of a single highlighted snippet/passage.
+    private static final int SNIPPET_LENGTH = 150;
     private static final long INIT_RETRY_COOLDOWN_MS = 30_000L;
 
     private IndexWriter writer = null;
@@ -927,16 +939,7 @@ public class SearchAPI {
         doc.add(new StringField(SearchAPI.FIELD_ARCHIVEFILENAME_KEYWORD, toKeyword(archiveFileName), Field.Store.NO));
         doc.add(new StringField(SearchAPI.FIELD_ARCHIVEFILENUMBER_KEYWORD, toKeyword(archiveFileNumber), Field.Store.NO));
 
-        FieldType type = new FieldType();
-        type.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
-        type.setStored(true);
-        type.setStoreTermVectors(true);
-        type.setTokenized(true);
-        type.setStoreTermVectorOffsets(true);
-        Field textTv = new Field(SearchAPI.FIELD_TEXT_TERMVECTOR, text, type);//with term vector enabled
-        TextField textNorm = new TextField(SearchAPI.FIELD_TEXT, text, Field.Store.YES); //without term vector
-        doc.add(textTv);
-        doc.add(textNorm);
+        doc.add(new Field(SearchAPI.FIELD_TEXT, text, TEXT_FIELD_TYPE));
 
         try {
             this.writer.addDocument(doc);
@@ -993,16 +996,7 @@ public class SearchAPI {
         doc.add(new StringField(SearchAPI.FIELD_ARCHIVEFILENAME_KEYWORD, toKeyword(archiveFileName), Field.Store.NO));
         doc.add(new StringField(SearchAPI.FIELD_ARCHIVEFILENUMBER_KEYWORD, toKeyword(archiveFileNumber), Field.Store.NO));
 
-        FieldType type = new FieldType();
-        type.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
-        type.setStored(true);
-        type.setStoreTermVectors(true);
-        type.setTokenized(true);
-        type.setStoreTermVectorOffsets(true);
-        Field textTv = new Field(SearchAPI.FIELD_TEXT_TERMVECTOR, text, type);//with term vector enabled
-        TextField textNorm = new TextField(SearchAPI.FIELD_TEXT, text, Field.Store.YES); //without term vector
-        doc.add(textTv);
-        doc.add(textNorm);
+        doc.add(new Field(SearchAPI.FIELD_TEXT, text, TEXT_FIELD_TYPE));
 
         try {
             this.writer.updateDocument(new Term(SearchAPI.FIELD_ID, docId), doc);
@@ -1164,9 +1158,25 @@ public class SearchAPI {
             // literal full-text against the default text field (special characters escaped).
             Query query = buildQuery(queryString);
             TopDocs hits = searcher.search(query, maxDocs);
-            SimpleHTMLFormatter htmlFormatter = new SimpleHTMLFormatter();
-            Highlighter highlighter = new Highlighter(htmlFormatter, new QueryScorer(query));
 
+            // Highlight the document content via the UnifiedHighlighter, which works from
+            // the postings offsets of FIELD_TEXT (no term vectors needed). It returns one
+            // snippet per hit, aligned with hits.scoreDocs.
+            // - formatter: separate passages with <br/> so each renders on its own line
+            //   (the default joins them with "... " on a single line)
+            // - break iterator: word-boundary passages of ~SNIPPET_LENGTH chars, so snippets
+            //   stay short even for OCR text without sentence punctuation (sentence-based
+            //   passages could otherwise be the whole document on one line)
+            // - maxNoHighlightPassages(0): return null (no snippet) when the query does not
+            //   match the content field — e.g. a pure metadata field search — instead of the
+            //   document's leading text
+            UnifiedHighlighter highlighter = UnifiedHighlighter.builder(searcher, this.analyzer)
+                    .withFormatter(new DefaultPassageFormatter("<b>", "</b>", "<br/>", false))
+                    .withBreakIterator(() -> LengthGoalBreakIterator.createClosestToLength(
+                            BreakIterator.getLineInstance(Locale.GERMAN), SNIPPET_LENGTH, 0.5f))
+                    .withMaxNoHighlightPassages(0)
+                    .build();
+            String[] snippets = highlighter.highlight(SearchAPI.FIELD_TEXT, query, hits, 6);
 
             // Iterate through the results:
             for (int i = 0; i < hits.scoreDocs.length; i++) {
@@ -1182,24 +1192,13 @@ public class SearchAPI {
                 sh.setFileName(doc.get(FIELD_FILENAME));
                 sh.setId(doc.get(FIELD_ID));
 
-                String text = doc.get(SearchAPI.FIELD_TEXT_TERMVECTOR);
-                TokenStream tokenStream = TokenSources.getTermVectorTokenStreamOrNull(
-                        SearchAPI.FIELD_TEXT_TERMVECTOR,
-                        searcher.getIndexReader().getTermVectors(hits.scoreDocs[i].doc),
-                        -1);
-                if (tokenStream == null) {
-                    tokenStream = this.analyzer.tokenStream(SearchAPI.FIELD_TEXT_TERMVECTOR, text);
+                String snippet = (snippets != null && i < snippets.length) ? snippets[i] : null;
+                StringBuilder html = new StringBuilder();
+                html.append("<html><body style=\"width:500px\">");
+                if (snippet != null) {
+                    html.append(snippet);
                 }
-                TextFragment[] frag = highlighter.getBestTextFragments(tokenStream, text, false, 6);
-                StringBuilder html=new StringBuilder();
-                html.append("<html>");
-                for (int j = 0; j < frag.length; j++) {
-                    if ((frag[j] != null) && (frag[j].getScore() > 0)) {
-                        html.append((frag[j].toString()));
-                        html.append("<br/>");
-                    }
-                }
-                html.append("</html>");
+                html.append("</body></html>");
                 sh.setText(html.toString());
 
                 returnList.add(sh);

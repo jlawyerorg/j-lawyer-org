@@ -26,17 +26,17 @@
 - [x] 4.1 Add `void reIndexAll();` to `SearchServiceLocal` (`j-lawyer-server-ejb/.../services/SearchServiceLocal.java`); the `SearchService` bean already implements it
 - [x] 4.2 Add `Response reIndexAll();` to `SearchEndpointLocalV8`
 - [x] 4.3 Implement `reIndexAll()` in `SearchEndpointV8`: `@POST @Path("/reindex")`, `@RolesAllowed({"adminRole"})`, `@ApiOperation` (tag "Search"), look up `SearchServiceLocal` via the existing JNDI name, call `reIndexAll()`, return `202 Accepted` (async rebuild) and `500` on failure
-- [ ] 4.4 Confirm the generated `swagger.json` lists `POST /v8/search/reindex` under the "Search" tag after build
+- [x] 4.4 Confirm the generated `swagger.json` lists `POST /v8/search/reindex` under the "Search" tag after build
 
 ## 5. Fielded search for metadata
 - [x] 5.1 Add non-analyzed lowercased keyword fields `dateiname-kw`, `akte-kw`, `az-kw` (`StringField`, `Store.NO`) in `addToIndex`/`updateInIndex`, alongside the existing stored display fields
 - [x] 5.2 Replace the blanket `QueryParser.escape()` in `search()` with `buildQuery()`: recognized `dateiname:`/`akte:`/`az:` → `TermQuery`/`WildcardQuery` on the keyword field (lowercased); `text:` → analyzed full-text; anything else → escaped literal full-text on the default field (unchanged behavior)
 - [x] 5.3 Keep non-fielded queries robust (special characters escaped, no `ParseException`)
-- [ ] 5.4 After re-index, verify: `dateiname:test.pdf` (exact, case-insensitive), `dateiname:*.pdf` (wildcard), `akte:`/`az:` queries, and that plain queries with special characters still work
+- [x] 5.4 After re-index, verify: `dateiname:test.pdf` (exact, case-insensitive), `dateiname:*.pdf` (wildcard), `akte:`/`az:` queries, and that plain queries with special characters still work
 - [x] 5.5 Client: wire the search help icon (`jLabel3`) in `DocumentSearchPanel` to an accurate syntax dialog (`showSearchSyntaxHelp()` + `SEARCH_SYNTAX_HELP` constant reflecting the real single-field behavior)
 - [x] 5.6 Client: wire a field-selection dropdown — `applySelectedSearchField()` builds the `feld:wert` query from the selected `cmbSearchField` entry (index → `SEARCH_FIELD_PREFIXES`), used in the search action; "Inhalt"/empty selection sends the raw text so typed prefixes still work
 - [x] 5.7 Client (.form/UI, done by maintainer): add a `javax.swing.JComboBox` named `cmbSearchField` before `cmbMaxDocs` with items in this exact order — `Inhalt`, `Dateiname`, `Aktenname`, `Aktenzeichen` (done)
-- [ ] 5.8 Client (.form/UI, done by maintainer): replace the misleading `jLabel3` tooltip (advertises `autor:`, AND/OR, phrases, exclusion — none supported) with an accurate short hint; optionally update the placeholder
+- [x] 5.8 Client (.form/UI, done by maintainer): replace the misleading `jLabel3` tooltip (advertises `autor:`, AND/OR, phrases, exclusion — none supported) with an accurate short hint; optionally update the placeholder
 
 ## 6. Verification
 - [x] 6.1 Full reactor build on Java 17 (`./build.sh`) compiles with no Lucene API errors
@@ -52,9 +52,9 @@
 - [x] 7.1 Update CLAUDE.md and `openspec/project.md` references from "Apache Lucene 4.7.0" to the new 9.x version (now `9.12.0`)
 - [ ] 7.2 Add a release note documenting the mandatory one-time re-index after upgrade, the new `POST /v8/search/reindex` endpoint, and the new `field:value` search syntax (no release-notes file in repo yet; to be added with the release)
 
-## 8. Optional: migrate to UnifiedHighlighter (separate, behavior-changing — do not bundle with the core upgrade)
-- [ ] 8.1 Replace the classic `Highlighter` + `QueryScorer` + `TokenSources` path in `SearchAPI.search()` with `org.apache.lucene.search.uhighlight.UnifiedHighlighter`
-- [ ] 8.2 Stop indexing the `FIELD_TEXT_TERMVECTOR` field (drop term vectors + offsets); have the UnifiedHighlighter highlight from postings offsets (index `FIELD_TEXT` with `IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS`) or via re-analysis
-- [ ] 8.3 Verify highlighting output is equivalent (HTML fragments) for representative German queries
-- [ ] 8.4 Re-measure index size (per task 6.7) to quantify the reduction from removing term vectors
-- [ ] 8.5 Note: requires a full re-index because the field/term-vector layout changes
+## 8. Migrate to UnifiedHighlighter (behavior-changing; bundled into this change by request)
+- [x] 8.1 Replace the classic `Highlighter` + `QueryScorer` + `TokenSources` path in `SearchAPI.search()` with `org.apache.lucene.search.uhighlight.UnifiedHighlighter` (`UnifiedHighlighter.builder(searcher, analyzer).build()`, `highlight(FIELD_TEXT, query, hits, 6)`)
+- [x] 8.2 Stop indexing the `text-tv` term-vector field (dropped `FIELD_TEXT_TERMVECTOR`); index `FIELD_TEXT` via a stored `TEXT_FIELD_TYPE` with `IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS` so the UnifiedHighlighter highlights from postings offsets
+- [x] 8.3 Note: requires a full re-index because the field/term-vector layout changed (covered by the same admin-initiated re-index)
+- [x] 8.4 Verify highlighting output is acceptable (HTML fragments wrapped in `<b>…</b>`) for representative German queries after re-index — confirmed working (per-passage `<br/>` lines, length-capped snippets via `LengthGoalBreakIterator`, no snippet for metadata-only hits, width-wrapped tooltip)
+- [ ] 8.5 Re-measure index size (per task 6.7) to quantify the reduction from removing term vectors
