@@ -903,7 +903,11 @@ public class ImportContactsDialog extends javax.swing.JDialog {
                     if (v.getStructuredName() != null) {
                         ab.setName(v.getStructuredName().getFamily());
                     }
-                    if (v.getBirthday() != null) {
+                    // getDate() is null for reduced-accuracy / year-less BDAY values (e.g. "--12-31"),
+                    // which ez-vcard exposes via getPartialDate() instead. The birthDate column is a
+                    // full-date String, so such partial dates cannot be represented and are skipped
+                    // rather than triggering a (caught) NullPointerException in df.format(null).
+                    if (v.getBirthday() != null && v.getBirthday().getDate() != null) {
                         try {
                             ab.setBirthDate(df.format(v.getBirthday().getDate()));
                         } catch (Throwable t) {
@@ -915,7 +919,7 @@ public class ImportContactsDialog extends javax.swing.JDialog {
                             log.error("Could not import birth date for " + logName, t);
                         }
                     }
-                    if (v.getDeathdate() != null) {
+                    if (v.getDeathdate() != null && v.getDeathdate().getDate() != null) {
                         try {
                             ab.setDateOfDeath(df.format(v.getDeathdate().getDate()));
                         } catch (Throwable t) {
