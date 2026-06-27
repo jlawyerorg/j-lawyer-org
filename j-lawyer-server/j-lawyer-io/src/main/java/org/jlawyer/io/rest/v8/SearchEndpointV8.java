@@ -676,6 +676,7 @@ import javax.naming.NamingException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
@@ -740,6 +741,36 @@ public class SearchEndpointV8 implements SearchEndpointLocalV8 {
             return Response.serverError().build();
         } catch (Exception ex) {
             log.error("unexpected error while searching fulltext index", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Triggers a full re-index of the global fulltext document index. The rebuild runs
+     * asynchronously; this operation returns immediately once the request has been
+     * queued. Administrator role required.
+     *
+     * @response 202 Re-index has been started
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @POST
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/reindex")
+    @RolesAllowed({"adminRole"})
+    @ApiOperation(value="Triggers a full, asynchronous re-index of the global fulltext document index")
+    public Response reIndexAll() {
+        try {
+            InitialContext ic = new InitialContext();
+            SearchServiceLocal searchService = (SearchServiceLocal) ic.lookup(LOOKUP_SEARCH);
+            searchService.reIndexAll();
+            return Response.status(Response.Status.ACCEPTED).build();
+        } catch (NamingException ex) {
+            log.error("can not lookup search service", ex);
+            return Response.serverError().build();
+        } catch (Exception ex) {
+            log.error("unexpected error while triggering fulltext re-index", ex);
             return Response.serverError().build();
         }
     }

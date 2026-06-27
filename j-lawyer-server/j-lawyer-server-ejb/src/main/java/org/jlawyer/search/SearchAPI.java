@@ -690,8 +690,6 @@ import org.apache.lucene.search.highlight.TextFragment;
 import org.apache.lucene.search.highlight.TokenSources;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.store.LockObtainFailedException;
-import org.apache.lucene.util.Version;
 
 /**
  *
@@ -710,7 +708,6 @@ public class SearchAPI {
     private static final Logger log = Logger.getLogger(SearchAPI.class.getName());
     private static final int SEARCHER_REFRESH_INTERVAL_SECONDS = 10;
     private static final long INIT_RETRY_COOLDOWN_MS = 30_000L;
-    private static final long WRITE_LOCK_TIMEOUT_MS = 60_000L;
 
     private IndexWriter writer = null;
     private Directory directory = null;
@@ -722,14 +719,20 @@ public class SearchAPI {
     private long lastInitAttemptMs = 0L;
     private final Object initLock = new Object();
 
+    private static volatile SearchAPI activeInstance = null;
+
     private SearchAPI() {
 
         this.openWriterAndDirectory();
 
-        Runnable r = () -> {
-            close();
-        };
-        Runtime.getRuntime().addShutdownHook(new Thread(r));
+        // NOTE: closing is driven by the container lifecycle (see
+        // ContainerLifecycleBean#terminate -> SearchAPI.shutdownInstance), NOT by a JVM
+        // shutdown hook. A shutdown hook runs only at JVM exit, after WildFly has already
+        // undeployed the EAR and started tearing down the deployment module classloader;
+        // IndexWriter.close() performs a final commit that lazily loads
+        // IndexFileDeleter$CommitPoint, which then fails with NoClassDefFoundError. Closing
+        // via @PreDestroy happens while the classloader is still available.
+        activeInstance = this;
 
     }
 
@@ -745,29 +748,26 @@ public class SearchAPI {
         File dstDir = new File(dst);
         dstDir.mkdirs();
 
-        this.analyzer = new GermanAnalyzer(Version.LUCENE_47);
+        this.analyzer = new GermanAnalyzer();
 
         try {
-            this.directory = FSDirectory.open(dstDir);
+            this.directory = FSDirectory.open(dstDir.toPath());
 
             try {
                 this.writer = openIndexWriter(this.directory);
-            } catch (LockObtainFailedException lofe) {
-                log.warn("Could not obtain Lucene write lock after " + WRITE_LOCK_TIMEOUT_MS
-                        + " ms — assuming stale lock and clearing it. "
-                        + "WARNING: this is unsafe if a second JVM writes to the same index directory.", lofe);
-                try {
-                    IndexWriter.unlock(this.directory);
-                } catch (Throwable unlockErr) {
-                    log.error("Failed to clear stale Lucene write.lock", unlockErr);
-                    throw lofe;
-                }
+            } catch (IndexFormatTooOldException | IndexFormatTooNewException fmt) {
+                log.error("Existing search index at '" + dst + "' is in an incompatible Lucene format ("
+                        + fmt.getMessage() + "). Clearing the index directory and starting with an empty index. "
+                        + "IMPORTANT: an administrator MUST start a full re-index (desktop client search index "
+                        + "options, or POST /v8/search/reindex) to rebuild the search index. No case data is lost — "
+                        + "the index is derived from the documents stored in the case archive.", fmt);
+                clearIndexDirectory(dstDir);
                 this.writer = openIndexWriter(this.directory);
-                log.warn("Recovered Lucene index after clearing stale write.lock");
+                log.warn("Search index cleared due to incompatible format; awaiting an admin-initiated re-index.");
             }
 
             // Initialize SearcherManager for non-blocking searches
-            this.searcherManager = new SearcherManager(this.writer, true, null);
+            this.searcherManager = new SearcherManager(this.writer, null);
 
             // Start background refresh scheduler
             this.refreshScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
@@ -795,9 +795,35 @@ public class SearchAPI {
     }
 
     private IndexWriter openIndexWriter(Directory dir) throws IOException {
-        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_CURRENT, analyzer);
-        config.setWriteLockTimeout(WRITE_LOCK_TIMEOUT_MS);
+        IndexWriterConfig config = new IndexWriterConfig(analyzer);
         return new IndexWriter(dir, config);
+    }
+
+    /**
+     * Deletes all files in the search index directory and reopens a fresh, empty
+     * {@link Directory} on it. Used to recover from an index written in an incompatible
+     * (older or newer) Lucene format, since Lucene can only read its own and the previous
+     * major format. No case data is lost — the index is derived from the stored documents
+     * and must be rebuilt via an admin-initiated re-index.
+     */
+    private void clearIndexDirectory(File dstDir) throws IOException {
+        if (this.directory != null) {
+            try {
+                this.directory.close();
+            } catch (Throwable ignore) {
+                // best effort
+            }
+            this.directory = null;
+        }
+        File[] files = dstDir.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                if (!f.delete()) {
+                    log.warn("Could not delete search index file during reset: " + f.getAbsolutePath());
+                }
+            }
+        }
+        this.directory = FSDirectory.open(dstDir.toPath());
     }
 
     private void closeQuietly() {
@@ -869,8 +895,7 @@ public class SearchAPI {
         doc.add(new Field(SearchAPI.FIELD_ARCHIVEFILENUMBER, archiveFileNumber, TextField.TYPE_STORED));
 
         FieldType type = new FieldType();
-        type.setIndexed(true);
-        type.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
+        type.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
         type.setStored(true);
         type.setStoreTermVectors(true);
         type.setTokenized(true);
@@ -881,7 +906,7 @@ public class SearchAPI {
         doc.add(textNorm);
 
         try {
-            this.writer.addDocument(doc, this.analyzer);
+            this.writer.addDocument(doc);
         } catch (IOException ex) {
             log.error("Error adding document to index", ex);
             throw new SearchException(ex.getMessage());
@@ -931,8 +956,7 @@ public class SearchAPI {
         doc.add(new Field(SearchAPI.FIELD_ARCHIVEFILENUMBER, archiveFileNumber, TextField.TYPE_STORED));
 
         FieldType type = new FieldType();
-        type.setIndexed(true);
-        type.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
+        type.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
         type.setStored(true);
         type.setStoreTermVectors(true);
         type.setTokenized(true);
@@ -943,7 +967,7 @@ public class SearchAPI {
         doc.add(textNorm);
 
         try {
-            this.writer.updateDocument(new Term(SearchAPI.FIELD_ID, docId), doc, analyzer);
+            this.writer.updateDocument(new Term(SearchAPI.FIELD_ID, docId), doc);
         } catch (IOException ex) {
             log.error("Error updating document in index", ex);
             throw new SearchException(ex.getMessage());
@@ -1020,7 +1044,7 @@ public class SearchAPI {
     public int getNumberOfDocs() throws SearchException {
         ensureInitialized();
         try {
-            DirectoryReader reader = DirectoryReader.open(writer, true);
+            DirectoryReader reader = DirectoryReader.open(writer);
             int returnValue = reader.numDocs();
             reader.close();
             return returnValue;
@@ -1044,7 +1068,7 @@ public class SearchAPI {
             searcher = this.searcherManager.acquire();
 
             // Parse a simple query that searches for "text":
-            QueryParser parser = new QueryParser(Version.LUCENE_CURRENT, SearchAPI.FIELD_DEFAULT, this.analyzer);
+            QueryParser parser = new QueryParser(SearchAPI.FIELD_DEFAULT, this.analyzer);
             parser.setAllowLeadingWildcard(true);
             Query query = parser.parse(queryString);
             TopDocs hits = searcher.search(query, maxDocs);
@@ -1067,7 +1091,13 @@ public class SearchAPI {
                 sh.setId(doc.get(FIELD_ID));
 
                 String text = doc.get(SearchAPI.FIELD_TEXT_TERMVECTOR);
-                TokenStream tokenStream = TokenSources.getAnyTokenStream(searcher.getIndexReader(), hits.scoreDocs[i].doc, SearchAPI.FIELD_TEXT_TERMVECTOR, analyzer);
+                TokenStream tokenStream = TokenSources.getTermVectorTokenStreamOrNull(
+                        SearchAPI.FIELD_TEXT_TERMVECTOR,
+                        searcher.getIndexReader().getTermVectors(hits.scoreDocs[i].doc),
+                        -1);
+                if (tokenStream == null) {
+                    tokenStream = this.analyzer.tokenStream(SearchAPI.FIELD_TEXT_TERMVECTOR, text);
+                }
                 TextFragment[] frag = highlighter.getBestTextFragments(tokenStream, text, false, 6);
                 StringBuilder html=new StringBuilder();
                 html.append("<html>");
@@ -1102,6 +1132,20 @@ public class SearchAPI {
 
     public static SearchAPI getInstance() {
         return SearchAPIHolder.INSTANCE;
+    }
+
+    /**
+     * Closes the active search index, if one was ever created. Intended to be called from
+     * the container lifecycle ({@code @PreDestroy}) so the Lucene {@link IndexWriter} is
+     * committed and closed while the deployment classloader is still available. Does
+     * nothing if the singleton was never instantiated, to avoid creating (and immediately
+     * tearing down) an index just for shutdown.
+     */
+    public static void shutdownInstance() {
+        SearchAPI instance = activeInstance;
+        if (instance != null) {
+            instance.close();
+        }
     }
 
     private static class SearchAPIHolder {

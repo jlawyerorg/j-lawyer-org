@@ -148,7 +148,7 @@ files have been removed; if NetBeans recreates them it still has the project ope
 - **WildFly (JBoss)**: Application server
 - **MySQL**: Database (accessed via JNDI: `java:/jlawyerdb`)
 - **Hibernate/JPA 2.1**: ORM (persistence unit: `j-lawyer-server-ejbPU`)
-- **Apache Lucene 4.7.0**: Full-text search
+- **Apache Lucene 9.12.0**: Full-text search
 - **JAX-RS (RESTEasy)**: REST API implementation
 - **Java Swing**: Desktop UI framework
 - **FlatLaf**: Modern look and feel

@@ -22,7 +22,7 @@ j-lawyer.org is a comprehensive legal practice management system designed for la
 ### Backend
 - **EJB 3.x**: Business logic layer (Stateless and Singleton session beans)
 - **JAX-RS (RESTEasy)**: REST API implementation
-- **Apache Lucene 4.7.0**: Full-text search engine
+- **Apache Lucene 9.12.0**: Full-text search engine
 - **JBoss Remoting**: Client-server communication protocol
 
 ### Frontend

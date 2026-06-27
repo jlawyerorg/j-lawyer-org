@@ -671,4 +671,6 @@ public interface SearchEndpointLocalV8 {
 
     Response searchFulltext(String query, int maxDocs);
 
+    Response reIndexAll();
+
 }
