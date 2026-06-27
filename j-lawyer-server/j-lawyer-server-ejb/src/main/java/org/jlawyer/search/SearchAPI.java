@@ -665,33 +665,38 @@ package org.jlawyer.search;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.BreakIterator;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.de.GermanAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.*;
+import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SearcherManager;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.highlight.Highlighter;
-import org.apache.lucene.search.highlight.QueryScorer;
-import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
-import org.apache.lucene.search.highlight.TextFragment;
-import org.apache.lucene.search.highlight.TokenSources;
+import org.apache.lucene.search.WildcardQuery;
+import org.apache.lucene.search.uhighlight.DefaultPassageFormatter;
+import org.apache.lucene.search.uhighlight.LengthGoalBreakIterator;
+import org.apache.lucene.search.uhighlight.UnifiedHighlighter;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.store.LockObtainFailedException;
-import org.apache.lucene.util.Version;
 
 /**
  *
@@ -702,15 +707,47 @@ public class SearchAPI {
     private static final String FIELD_ID = "id";
     private static final String FIELD_FILENAME = "dateiname";
     private static final String FIELD_TEXT = "text";
-    private static final String FIELD_TEXT_TERMVECTOR = "text-tv";
     private static final String FIELD_ARCHIVEFILEID = "archivefileid";
     private static final String FIELD_ARCHIVEFILENAME = "akte";
     private static final String FIELD_ARCHIVEFILENUMBER = "az";
     private static final String FIELD_DEFAULT = FIELD_TEXT;
+
+    // Field type for the stored, tokenized document content. Postings carry offsets so the
+    // UnifiedHighlighter can highlight directly from them — no separate term-vector field
+    // is needed. The field is stored so the highlighter can extract the snippet text.
+    private static final FieldType TEXT_FIELD_TYPE = new FieldType();
+
+    static {
+        TEXT_FIELD_TYPE.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
+        TEXT_FIELD_TYPE.setStored(true);
+        TEXT_FIELD_TYPE.setTokenized(true);
+        TEXT_FIELD_TYPE.freeze();
+    }
+
+    // Non-analyzed, lowercased keyword companions of the stored metadata fields, used for
+    // exact / wildcard fielded search (e.g. "dateiname:test.pdf"). The plain fields above
+    // stay stored (original case) for display; these keyword fields are indexed only.
+    private static final String FIELD_FILENAME_KEYWORD = "dateiname-kw";
+    private static final String FIELD_ARCHIVEFILENAME_KEYWORD = "akte-kw";
+    private static final String FIELD_ARCHIVEFILENUMBER_KEYWORD = "az-kw";
+
+    // Maps a user-facing field name in a "field:value" query to its keyword search field.
+    private static final Map<String, String> FIELD_SEARCH_MAP = new HashMap<>();
+
+    static {
+        FIELD_SEARCH_MAP.put(FIELD_FILENAME, FIELD_FILENAME_KEYWORD);
+        FIELD_SEARCH_MAP.put(FIELD_ARCHIVEFILENAME, FIELD_ARCHIVEFILENAME_KEYWORD);
+        FIELD_SEARCH_MAP.put(FIELD_ARCHIVEFILENUMBER, FIELD_ARCHIVEFILENUMBER_KEYWORD);
+    }
+
+    // Matches a leading "field:value" prefix; DOTALL so multi-word/odd values are captured.
+    private static final Pattern FIELD_QUERY_PATTERN = Pattern.compile("^([A-Za-z]+)\\s*:\\s*(.+)$", Pattern.DOTALL);
+
     private static final Logger log = Logger.getLogger(SearchAPI.class.getName());
     private static final int SEARCHER_REFRESH_INTERVAL_SECONDS = 10;
+    // Target length (characters) of a single highlighted snippet/passage.
+    private static final int SNIPPET_LENGTH = 150;
     private static final long INIT_RETRY_COOLDOWN_MS = 30_000L;
-    private static final long WRITE_LOCK_TIMEOUT_MS = 60_000L;
 
     private IndexWriter writer = null;
     private Directory directory = null;
@@ -722,14 +759,20 @@ public class SearchAPI {
     private long lastInitAttemptMs = 0L;
     private final Object initLock = new Object();
 
+    private static volatile SearchAPI activeInstance = null;
+
     private SearchAPI() {
 
         this.openWriterAndDirectory();
 
-        Runnable r = () -> {
-            close();
-        };
-        Runtime.getRuntime().addShutdownHook(new Thread(r));
+        // NOTE: closing is driven by the container lifecycle (see
+        // ContainerLifecycleBean#terminate -> SearchAPI.shutdownInstance), NOT by a JVM
+        // shutdown hook. A shutdown hook runs only at JVM exit, after WildFly has already
+        // undeployed the EAR and started tearing down the deployment module classloader;
+        // IndexWriter.close() performs a final commit that lazily loads
+        // IndexFileDeleter$CommitPoint, which then fails with NoClassDefFoundError. Closing
+        // via @PreDestroy happens while the classloader is still available.
+        activeInstance = this;
 
     }
 
@@ -745,29 +788,26 @@ public class SearchAPI {
         File dstDir = new File(dst);
         dstDir.mkdirs();
 
-        this.analyzer = new GermanAnalyzer(Version.LUCENE_47);
+        this.analyzer = new GermanAnalyzer();
 
         try {
-            this.directory = FSDirectory.open(dstDir);
+            this.directory = FSDirectory.open(dstDir.toPath());
 
             try {
                 this.writer = openIndexWriter(this.directory);
-            } catch (LockObtainFailedException lofe) {
-                log.warn("Could not obtain Lucene write lock after " + WRITE_LOCK_TIMEOUT_MS
-                        + " ms — assuming stale lock and clearing it. "
-                        + "WARNING: this is unsafe if a second JVM writes to the same index directory.", lofe);
-                try {
-                    IndexWriter.unlock(this.directory);
-                } catch (Throwable unlockErr) {
-                    log.error("Failed to clear stale Lucene write.lock", unlockErr);
-                    throw lofe;
-                }
+            } catch (IndexFormatTooOldException | IndexFormatTooNewException fmt) {
+                log.error("Existing search index at '" + dst + "' is in an incompatible Lucene format ("
+                        + fmt.getMessage() + "). Clearing the index directory and starting with an empty index. "
+                        + "IMPORTANT: an administrator MUST start a full re-index (desktop client search index "
+                        + "options, or POST /v8/search/reindex) to rebuild the search index. No case data is lost — "
+                        + "the index is derived from the documents stored in the case archive.", fmt);
+                clearIndexDirectory(dstDir);
                 this.writer = openIndexWriter(this.directory);
-                log.warn("Recovered Lucene index after clearing stale write.lock");
+                log.warn("Search index cleared due to incompatible format; awaiting an admin-initiated re-index.");
             }
 
             // Initialize SearcherManager for non-blocking searches
-            this.searcherManager = new SearcherManager(this.writer, true, null);
+            this.searcherManager = new SearcherManager(this.writer, null);
 
             // Start background refresh scheduler
             this.refreshScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
@@ -795,9 +835,35 @@ public class SearchAPI {
     }
 
     private IndexWriter openIndexWriter(Directory dir) throws IOException {
-        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_CURRENT, analyzer);
-        config.setWriteLockTimeout(WRITE_LOCK_TIMEOUT_MS);
+        IndexWriterConfig config = new IndexWriterConfig(analyzer);
         return new IndexWriter(dir, config);
+    }
+
+    /**
+     * Deletes all files in the search index directory and reopens a fresh, empty
+     * {@link Directory} on it. Used to recover from an index written in an incompatible
+     * (older or newer) Lucene format, since Lucene can only read its own and the previous
+     * major format. No case data is lost — the index is derived from the stored documents
+     * and must be rebuilt via an admin-initiated re-index.
+     */
+    private void clearIndexDirectory(File dstDir) throws IOException {
+        if (this.directory != null) {
+            try {
+                this.directory.close();
+            } catch (Throwable ignore) {
+                // best effort
+            }
+            this.directory = null;
+        }
+        File[] files = dstDir.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                if (!f.delete()) {
+                    log.warn("Could not delete search index file during reset: " + f.getAbsolutePath());
+                }
+            }
+        }
+        this.directory = FSDirectory.open(dstDir.toPath());
     }
 
     private void closeQuietly() {
@@ -868,20 +934,15 @@ public class SearchAPI {
         doc.add(new Field(SearchAPI.FIELD_ARCHIVEFILENAME, archiveFileName, TextField.TYPE_STORED));
         doc.add(new Field(SearchAPI.FIELD_ARCHIVEFILENUMBER, archiveFileNumber, TextField.TYPE_STORED));
 
-        FieldType type = new FieldType();
-        type.setIndexed(true);
-        type.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
-        type.setStored(true);
-        type.setStoreTermVectors(true);
-        type.setTokenized(true);
-        type.setStoreTermVectorOffsets(true);
-        Field textTv = new Field(SearchAPI.FIELD_TEXT_TERMVECTOR, text, type);//with term vector enabled
-        TextField textNorm = new TextField(SearchAPI.FIELD_TEXT, text, Field.Store.YES); //without term vector
-        doc.add(textTv);
-        doc.add(textNorm);
+        // Non-analyzed, lowercased keyword companions for exact / wildcard fielded search.
+        doc.add(new StringField(SearchAPI.FIELD_FILENAME_KEYWORD, toKeyword(fileName), Field.Store.NO));
+        doc.add(new StringField(SearchAPI.FIELD_ARCHIVEFILENAME_KEYWORD, toKeyword(archiveFileName), Field.Store.NO));
+        doc.add(new StringField(SearchAPI.FIELD_ARCHIVEFILENUMBER_KEYWORD, toKeyword(archiveFileNumber), Field.Store.NO));
+
+        doc.add(new Field(SearchAPI.FIELD_TEXT, text, TEXT_FIELD_TYPE));
 
         try {
-            this.writer.addDocument(doc, this.analyzer);
+            this.writer.addDocument(doc);
         } catch (IOException ex) {
             log.error("Error adding document to index", ex);
             throw new SearchException(ex.getMessage());
@@ -930,20 +991,15 @@ public class SearchAPI {
         doc.add(new Field(SearchAPI.FIELD_ARCHIVEFILENAME, archiveFileName, TextField.TYPE_STORED));
         doc.add(new Field(SearchAPI.FIELD_ARCHIVEFILENUMBER, archiveFileNumber, TextField.TYPE_STORED));
 
-        FieldType type = new FieldType();
-        type.setIndexed(true);
-        type.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
-        type.setStored(true);
-        type.setStoreTermVectors(true);
-        type.setTokenized(true);
-        type.setStoreTermVectorOffsets(true);
-        Field textTv = new Field(SearchAPI.FIELD_TEXT_TERMVECTOR, text, type);//with term vector enabled
-        TextField textNorm = new TextField(SearchAPI.FIELD_TEXT, text, Field.Store.YES); //without term vector
-        doc.add(textTv);
-        doc.add(textNorm);
+        // Non-analyzed, lowercased keyword companions for exact / wildcard fielded search.
+        doc.add(new StringField(SearchAPI.FIELD_FILENAME_KEYWORD, toKeyword(fileName), Field.Store.NO));
+        doc.add(new StringField(SearchAPI.FIELD_ARCHIVEFILENAME_KEYWORD, toKeyword(archiveFileName), Field.Store.NO));
+        doc.add(new StringField(SearchAPI.FIELD_ARCHIVEFILENUMBER_KEYWORD, toKeyword(archiveFileNumber), Field.Store.NO));
+
+        doc.add(new Field(SearchAPI.FIELD_TEXT, text, TEXT_FIELD_TYPE));
 
         try {
-            this.writer.updateDocument(new Term(SearchAPI.FIELD_ID, docId), doc, analyzer);
+            this.writer.updateDocument(new Term(SearchAPI.FIELD_ID, docId), doc);
         } catch (IOException ex) {
             log.error("Error updating document in index", ex);
             throw new SearchException(ex.getMessage());
@@ -1020,7 +1076,7 @@ public class SearchAPI {
     public int getNumberOfDocs() throws SearchException {
         ensureInitialized();
         try {
-            DirectoryReader reader = DirectoryReader.open(writer, true);
+            DirectoryReader reader = DirectoryReader.open(writer);
             int returnValue = reader.numDocs();
             reader.close();
             return returnValue;
@@ -1031,10 +1087,64 @@ public class SearchAPI {
 
     }
 
+    /**
+     * Normalizes a metadata value for the non-analyzed keyword fields: never null and
+     * lowercased, so fielded search (e.g. {@code dateiname:test.pdf}) is case-insensitive.
+     */
+    private static String toKeyword(String value) {
+        return (value == null) ? "" : value.toLowerCase();
+    }
+
+    /**
+     * Builds the Lucene query for a user-entered search string.
+     * <p>
+     * If the string starts with a recognised {@code field:value} prefix
+     * ({@code dateiname}, {@code akte}, {@code az}, or {@code text}), a fielded query is
+     * built: the metadata fields map to their non-analyzed keyword companions and match
+     * exactly (or by wildcard when the value contains {@code *}/{@code ?}); {@code text}
+     * is treated as analyzed full-text. Any other input (including an unknown field name)
+     * is treated as literal full-text against the default text field, with all special
+     * characters escaped — preserving the previous robust behavior.
+     *
+     * @param queryString the raw user query
+     * @return the parsed Lucene {@link Query}
+     * @throws ParseException if the default full-text branch fails to parse
+     */
+    private Query buildQuery(String queryString) throws ParseException {
+        String trimmed = (queryString == null) ? "" : queryString.trim();
+        Matcher m = FIELD_QUERY_PATTERN.matcher(trimmed);
+        if (m.matches()) {
+            String fieldName = m.group(1).toLowerCase();
+            String value = m.group(2).trim();
+            if (!value.isEmpty()) {
+                String keywordField = FIELD_SEARCH_MAP.get(fieldName);
+                if (keywordField != null) {
+                    String v = value.toLowerCase();
+                    if (v.indexOf('*') >= 0 || v.indexOf('?') >= 0) {
+                        return new WildcardQuery(new Term(keywordField, v));
+                    }
+                    return new TermQuery(new Term(keywordField, v));
+                }
+                if (FIELD_TEXT.equals(fieldName)) {
+                    return parseDefaultTextQuery(value);
+                }
+            }
+        }
+        return parseDefaultTextQuery(trimmed);
+    }
+
+    /**
+     * Parses literal text against the default text field, escaping all query-syntax
+     * special characters so arbitrary user input cannot trigger a parse error.
+     */
+    private Query parseDefaultTextQuery(String text) throws ParseException {
+        QueryParser parser = new QueryParser(SearchAPI.FIELD_DEFAULT, this.analyzer);
+        parser.setAllowLeadingWildcard(true);
+        return parser.parse(QueryParser.escape(text));
+    }
+
     public ArrayList<SearchHit> search(String queryString, int maxDocs) throws SearchException {
         ensureInitialized();
-
-        queryString=QueryParser.escape(queryString);
 
         ArrayList<SearchHit> returnList = new ArrayList<>();
 
@@ -1043,14 +1153,30 @@ public class SearchAPI {
             // Acquire searcher from SearcherManager (non-blocking)
             searcher = this.searcherManager.acquire();
 
-            // Parse a simple query that searches for "text":
-            QueryParser parser = new QueryParser(Version.LUCENE_CURRENT, SearchAPI.FIELD_DEFAULT, this.analyzer);
-            parser.setAllowLeadingWildcard(true);
-            Query query = parser.parse(queryString);
+            // Build the query: a recognised "field:value" prefix (dateiname/akte/az/text)
+            // is turned into an exact/wildcard fielded query; anything else is treated as
+            // literal full-text against the default text field (special characters escaped).
+            Query query = buildQuery(queryString);
             TopDocs hits = searcher.search(query, maxDocs);
-            SimpleHTMLFormatter htmlFormatter = new SimpleHTMLFormatter();
-            Highlighter highlighter = new Highlighter(htmlFormatter, new QueryScorer(query));
 
+            // Highlight the document content via the UnifiedHighlighter, which works from
+            // the postings offsets of FIELD_TEXT (no term vectors needed). It returns one
+            // snippet per hit, aligned with hits.scoreDocs.
+            // - formatter: separate passages with <br/> so each renders on its own line
+            //   (the default joins them with "... " on a single line)
+            // - break iterator: word-boundary passages of ~SNIPPET_LENGTH chars, so snippets
+            //   stay short even for OCR text without sentence punctuation (sentence-based
+            //   passages could otherwise be the whole document on one line)
+            // - maxNoHighlightPassages(0): return null (no snippet) when the query does not
+            //   match the content field — e.g. a pure metadata field search — instead of the
+            //   document's leading text
+            UnifiedHighlighter highlighter = UnifiedHighlighter.builder(searcher, this.analyzer)
+                    .withFormatter(new DefaultPassageFormatter("<b>", "</b>", "<br/>", false))
+                    .withBreakIterator(() -> LengthGoalBreakIterator.createClosestToLength(
+                            BreakIterator.getLineInstance(Locale.GERMAN), SNIPPET_LENGTH, 0.5f))
+                    .withMaxNoHighlightPassages(0)
+                    .build();
+            String[] snippets = highlighter.highlight(SearchAPI.FIELD_TEXT, query, hits, 6);
 
             // Iterate through the results:
             for (int i = 0; i < hits.scoreDocs.length; i++) {
@@ -1066,18 +1192,13 @@ public class SearchAPI {
                 sh.setFileName(doc.get(FIELD_FILENAME));
                 sh.setId(doc.get(FIELD_ID));
 
-                String text = doc.get(SearchAPI.FIELD_TEXT_TERMVECTOR);
-                TokenStream tokenStream = TokenSources.getAnyTokenStream(searcher.getIndexReader(), hits.scoreDocs[i].doc, SearchAPI.FIELD_TEXT_TERMVECTOR, analyzer);
-                TextFragment[] frag = highlighter.getBestTextFragments(tokenStream, text, false, 6);
-                StringBuilder html=new StringBuilder();
-                html.append("<html>");
-                for (int j = 0; j < frag.length; j++) {
-                    if ((frag[j] != null) && (frag[j].getScore() > 0)) {
-                        html.append((frag[j].toString()));
-                        html.append("<br/>");
-                    }
+                String snippet = (snippets != null && i < snippets.length) ? snippets[i] : null;
+                StringBuilder html = new StringBuilder();
+                html.append("<html><body style=\"width:500px\">");
+                if (snippet != null) {
+                    html.append(snippet);
                 }
-                html.append("</html>");
+                html.append("</body></html>");
                 sh.setText(html.toString());
 
                 returnList.add(sh);
@@ -1102,6 +1223,20 @@ public class SearchAPI {
 
     public static SearchAPI getInstance() {
         return SearchAPIHolder.INSTANCE;
+    }
+
+    /**
+     * Closes the active search index, if one was ever created. Intended to be called from
+     * the container lifecycle ({@code @PreDestroy}) so the Lucene {@link IndexWriter} is
+     * committed and closed while the deployment classloader is still available. Does
+     * nothing if the singleton was never instantiated, to avoid creating (and immediately
+     * tearing down) an index just for shutdown.
+     */
+    public static void shutdownInstance() {
+        SearchAPI instance = activeInstance;
+        if (instance != null) {
+            instance.close();
+        }
     }
 
     private static class SearchAPIHolder {

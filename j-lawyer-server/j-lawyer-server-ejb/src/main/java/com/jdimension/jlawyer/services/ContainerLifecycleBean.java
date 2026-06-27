@@ -705,6 +705,14 @@ public class ContainerLifecycleBean implements ContainerLifecycleBeanRemote, Con
 
     @PreDestroy
     public void terminate() {
+        // Close the Lucene search index here (while the deployment classloader is still
+        // available) rather than via a JVM shutdown hook, which would run after undeploy
+        // and fail to lazily load Lucene classes during the final commit.
+        try {
+            org.jlawyer.search.SearchAPI.shutdownInstance();
+        } catch (Throwable t) {
+            log.error("Error closing search index during shutdown", t);
+        }
         log.info("j-lawyer.org Server terminated");
     }
 }

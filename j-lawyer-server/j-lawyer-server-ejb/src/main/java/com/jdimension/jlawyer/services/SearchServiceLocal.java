@@ -677,4 +677,6 @@ public interface SearchServiceLocal {
 
     ArrayList<SearchHit> search(String queryString, int maxDocs) throws SearchException;
 
+    void reIndexAll();
+
 }
