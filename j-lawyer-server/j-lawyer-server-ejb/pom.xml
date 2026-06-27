@@ -41,6 +41,17 @@
             <scope>provided</scope>
             <exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions>
         </dependency>
+        <!-- EmailService uses jackson directly (ObjectMapper). It must not rely on the jackson
+             that the j-lawyer-cloud shaded jar used to bundle under the original package names:
+             that jackson is now relocated to shaded.* to avoid client-classpath conflicts.
+             Declare jackson explicitly, scope provided (WildFly supplies it at runtime), mirroring
+             j-lawyer-io. -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.22.0</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.jlawyer</groupId>
             <artifactId>j-lawyer-server-entities</artifactId>
