@@ -734,6 +734,7 @@ public class ServerSettingsKeys {
     public static final String SERVERCONF_MONITOR_SMTPUSER="jlawyer.server.monitor.smtpuser";
     public static final String SERVERCONF_MONITOR_SMTPPASSWORD="jlawyer.server.monitor.smtppwd";
     public static final String SERVERCONF_MONITOR_SMTPSENDERNAME="jlawyer.server.monitor.smtpsendername";
+    public static final String SERVERCONF_MONITOR_SMTPFROM="jlawyer.server.monitor.smtpfrom";
     public static final String SERVERCONF_MONITOR_SMTPTO="jlawyer.server.monitor.smtpto";
     public static final String SERVERCONF_MONITOR_SMTPSSL="jlawyer.server.monitor.smtpssl";
     public static final String SERVERCONF_MONITOR_SMTPSTARTTLS="jlawyer.server.monitor.smtpstarttls";

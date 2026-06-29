@@ -697,6 +697,7 @@ public class SystemMailboxDialog extends javax.swing.JDialog {
                 this.txtSmtp.setEnabled(false);
                 this.txtSmtpPort.setEnabled(false);
                 this.txtUser.setEnabled(false);
+                this.txtSenderEmail.setEnabled(false);
                 this.txtSenderName.setEnabled(false);
                 this.txtRecipient.setEnabled(false);
                 this.chkSsl.setEnabled(false);
@@ -712,6 +713,7 @@ public class SystemMailboxDialog extends javax.swing.JDialog {
             this.txtSmtp.setText(set.getSetting(ServerSettings.SERVERCONF_MONITOR_SMTPSERVER, ""));
             this.txtSmtpPort.setText(set.getSetting(ServerSettings.SERVERCONF_MONITOR_SMTPPORT, ""));
             this.txtUser.setText(set.getSetting(ServerSettings.SERVERCONF_MONITOR_SMTPUSER, ""));
+            this.txtSenderEmail.setText(set.getSetting(ServerSettings.SERVERCONF_MONITOR_SMTPFROM, ""));
             this.txtSenderName.setText(set.getSetting(ServerSettings.SERVERCONF_MONITOR_SMTPSENDERNAME, ""));
             this.txtRecipient.setText(set.getSetting(ServerSettings.SERVERCONF_MONITOR_SMTPTO, ""));
 
@@ -753,6 +755,8 @@ public class SystemMailboxDialog extends javax.swing.JDialog {
         txtSmtpPort = new javax.swing.JTextField();
         chkEmailStartTls = new javax.swing.JCheckBox();
         txtSenderName = new javax.swing.JTextField();
+        txtSenderEmail = new javax.swing.JTextField();
+        jLabel23 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
         jLabel21 = new javax.swing.JLabel();
         txtSmtp = new javax.swing.JTextField();
@@ -788,7 +792,9 @@ public class SystemMailboxDialog extends javax.swing.JDialog {
 
         jLabel8.setText("Passwort:");
 
-        jLabel7.setText("Absenderadresse:");
+        jLabel7.setText("SMTP-Benutzer / Login:");
+
+        jLabel23.setText("Absender-Adresse (From):");
 
         chkEmailStartTls.setText("StartTLS");
 
@@ -826,6 +832,7 @@ public class SystemMailboxDialog extends javax.swing.JDialog {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel6)
                             .addComponent(jLabel7)
+                            .addComponent(jLabel23)
                             .addComponent(jLabel8)
                             .addComponent(jLabel19)
                             .addComponent(jLabel20)
@@ -834,6 +841,7 @@ public class SystemMailboxDialog extends javax.swing.JDialog {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(txtRecipient)
                             .addComponent(txtUser)
+                            .addComponent(txtSenderEmail)
                             .addComponent(txtPassword)
                             .addComponent(txtSenderName)
                             .addComponent(txtSmtpPort)
@@ -870,6 +878,10 @@ public class SystemMailboxDialog extends javax.swing.JDialog {
                     .addComponent(txtUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel23)
+                    .addComponent(txtSenderEmail, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtSenderName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel20))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -899,6 +911,7 @@ public class SystemMailboxDialog extends javax.swing.JDialog {
 
         set.setSetting(ServerSettings.SERVERCONF_MONITOR_SMTPPASSWORD, new String(this.txtPassword.getPassword()));
         set.setSetting(ServerSettings.SERVERCONF_MONITOR_SMTPUSER, this.txtUser.getText());
+        set.setSetting(ServerSettings.SERVERCONF_MONITOR_SMTPFROM, this.txtSenderEmail.getText());
         set.setSetting(ServerSettings.SERVERCONF_MONITOR_SMTPSENDERNAME, this.txtSenderName.getText());
         set.setSetting(ServerSettings.SERVERCONF_MONITOR_SMTPSERVER, this.txtSmtp.getText());
         set.setSetting(ServerSettings.SERVERCONF_MONITOR_SMTPPORT, this.txtSmtpPort.getText());
@@ -1002,12 +1015,14 @@ public class SystemMailboxDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel21;
     private javax.swing.JLabel jLabel22;
+    private javax.swing.JLabel jLabel23;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JPasswordField txtPassword;
     private javax.swing.JTextField txtRecipient;
+    private javax.swing.JTextField txtSenderEmail;
     private javax.swing.JTextField txtSenderName;
     private javax.swing.JTextField txtSmtp;
     private javax.swing.JTextField txtSmtpPort;

@@ -1380,6 +1380,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         ServerSettingsBean smtpHostP = this.settingsFacade.find("jlawyer.server.monitor.smtpport");
         ServerSettingsBean smtpUserS = this.settingsFacade.find("jlawyer.server.monitor.smtpuser");
         ServerSettingsBean smtpSenderName = this.settingsFacade.find("jlawyer.server.monitor.smtpsendername");
+        ServerSettingsBean smtpFromS = this.settingsFacade.find("jlawyer.server.monitor.smtpfrom");
         ServerSettingsBean smtpPwdS = this.settingsFacade.find("jlawyer.server.monitor.smtppwd");
         ServerSettingsBean smtpToS = this.settingsFacade.find("jlawyer.server.monitor.smtpto");
         ServerSettingsBean smtpSslS = this.settingsFacade.find("jlawyer.server.monitor.smtpssl");
@@ -1399,6 +1400,17 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         final String smtpUser = smtpUserS.getSettingValue();
         final String smtpPwd = smtpPwdS.getSettingValue();
         String smtpTo = smtpToS.getSettingValue();
+
+        // dedicated sender/From address, separate from the SMTP login; falls back to
+        // the SMTP user for backward compatibility. Header-From and envelope-From use
+        // the same value so SPF/DMARC alignment holds.
+        String fromAddress = smtpUser;
+        if (smtpFromS != null) {
+            String f = smtpFromS.getSettingValue();
+            if (f != null && !"".equals(f.trim())) {
+                fromAddress = f.trim();
+            }
+        }
 
         String smtpSsl = "false";
         if (smtpSslS != null) {
@@ -1445,9 +1457,10 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         props.put("mail.smtps.host", smtpHost);
         props.put("mail.smtps.user", smtpUser);
         props.put("mail.smtps.auth", true);
-        props.put("mail.from", smtpUser);
+        props.put("mail.from", fromAddress);
         props.put("mail.password", smtpPwd);
 
+        final String fromAddressFinal = fromAddress;
         javax.mail.Authenticator auth = new javax.mail.Authenticator() {
 
             @Override
@@ -1474,14 +1487,21 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
                 }
             }
 
-            msg.setFrom(new InternetAddress(smtpUser, senderName));
+            msg.setFrom(new InternetAddress(fromAddressFinal, senderName));
 
             msg.setRecipients(Message.RecipientType.TO, smtpTo);
-            msg.setSubject(subject);
+            msg.setSubject(subject, "UTF-8");
             msg.setSentDate(new java.util.Date());
-            msg.setText(body);
-            //Transport.send(msg);
+            msg.setText(body, "UTF-8");
+
+            // mark as automatically generated (RFC 3834) to avoid auto-responder loops
+            msg.setHeader("Auto-Submitted", "auto-generated");
+
+            // saveChanges() generates a Message-ID based on the local host name;
+            // override it with one whose domain matches the sender (spam signal).
             msg.saveChanges();
+            msg.setHeader("Message-ID", buildMessageId(fromAddressFinal));
+
             bus.send(msg);
             bus.close();
 
@@ -1489,6 +1509,17 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             log.error(mex);
 
         }
+    }
+
+    private static String buildMessageId(String fromAddress) {
+        String domain = "j-lawyer.org";
+        if (fromAddress != null) {
+            int at = fromAddress.lastIndexOf('@');
+            if (at > -1 && at < fromAddress.length() - 1) {
+                domain = fromAddress.substring(at + 1).trim();
+            }
+        }
+        return "<" + java.util.UUID.randomUUID().toString() + "@" + domain + ">";
     }
 
     @Override

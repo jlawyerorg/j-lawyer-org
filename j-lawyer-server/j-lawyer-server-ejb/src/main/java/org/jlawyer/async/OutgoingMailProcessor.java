@@ -746,6 +746,7 @@ public class OutgoingMailProcessor implements MessageListener {
         ServerSettingsBean smtpHostP = this.settingsFacade.find("jlawyer.server.monitor.smtpport");
         ServerSettingsBean smtpUserS = this.settingsFacade.find("jlawyer.server.monitor.smtpuser");
         ServerSettingsBean smtpSenderName = this.settingsFacade.find("jlawyer.server.monitor.smtpsendername");
+        ServerSettingsBean smtpFromS = this.settingsFacade.find("jlawyer.server.monitor.smtpfrom");
         ServerSettingsBean smtpPwdS = this.settingsFacade.find("jlawyer.server.monitor.smtppwd");
         ServerSettingsBean smtpSslS = this.settingsFacade.find("jlawyer.server.monitor.smtpssl");
         ServerSettingsBean smtpStartTlsS = this.settingsFacade.find("jlawyer.server.monitor.smtpstarttls");
@@ -763,6 +764,17 @@ public class OutgoingMailProcessor implements MessageListener {
         String smtpHost = smtpHostS.getSettingValue();
         final String smtpUser = smtpUserS.getSettingValue();
         final String smtpPwd = smtpPwdS.getSettingValue();
+
+        // dedicated sender/From address, separate from the SMTP login; falls back to
+        // the SMTP user for backward compatibility. Header-From and envelope-From use
+        // the same value so SPF/DMARC alignment holds.
+        String fromAddress = smtpUser;
+        if (smtpFromS != null) {
+            String f = smtpFromS.getSettingValue();
+            if (f != null && !"".equals(f.trim())) {
+                fromAddress = f.trim();
+            }
+        }
 
         String smtpSsl = "false";
         if (smtpSslS != null) {
@@ -809,7 +821,7 @@ public class OutgoingMailProcessor implements MessageListener {
         props.put("mail.smtps.host", smtpHost);
         props.put("mail.smtps.user", smtpUser);
         props.put("mail.smtps.auth", true);
-        props.put("mail.from", smtpUser);
+        props.put("mail.from", fromAddress);
         props.put("mail.password", smtpPwd);
 
         javax.mail.Authenticator auth = new javax.mail.Authenticator() {
@@ -838,28 +850,39 @@ public class OutgoingMailProcessor implements MessageListener {
                 }
             }
 
-            msg.setFrom(new InternetAddress(smtpUser, senderName));
+            msg.setFrom(new InternetAddress(fromAddress, senderName));
 
             msg.setRecipients(javax.mail.Message.RecipientType.TO, to);
-            msg.setSubject(subject);
+            msg.setSubject(subject, "UTF-8");
             msg.setSentDate(new java.util.Date());
-            
-            String body=this.getBodyContent(mainCaption, subCaption, bodyContent);
-            
-            
-            // Create the message body
-            MimeBodyPart messageBodyPart = new MimeBodyPart();
-            messageBodyPart.setContent(body, "text/html");
 
-            // Create a multipart message
-            Multipart multipart = new MimeMultipart();
-            multipart.addBodyPart(messageBodyPart);
+            String htmlBody = this.getBodyContent(mainCaption, subCaption, bodyContent);
+            String textBody = this.getPlainTextContent(mainCaption, subCaption, bodyContent);
+
+            // multipart/alternative: plain text part first, HTML part last (preferred).
+            // HTML-only mails trigger common spam rules (e.g. MIME_HTML_ONLY).
+            MimeBodyPart textPart = new MimeBodyPart();
+            textPart.setText(textBody, "UTF-8");
+
+            MimeBodyPart htmlPart = new MimeBodyPart();
+            htmlPart.setContent(htmlBody, "text/html; charset=UTF-8");
+
+            Multipart multipart = new MimeMultipart("alternative");
+            multipart.addBodyPart(textPart);
+            multipart.addBodyPart(htmlPart);
 
             // Set the content of the message
             msg.setContent(multipart);
 
-            
+            // mark as automatically generated (RFC 3834) to avoid auto-responder loops
+            msg.setHeader("Auto-Submitted", "auto-generated");
+
+            // saveChanges() generates the headers including a Message-ID based on the
+            // local host name. Override it afterwards with one whose domain matches the
+            // sender, since a mismatched Message-ID domain is a frequent spam signal.
             msg.saveChanges();
+            msg.setHeader("Message-ID", buildMessageId(fromAddress));
+
             bus.send(msg);
             bus.close();
 
@@ -869,6 +892,38 @@ public class OutgoingMailProcessor implements MessageListener {
         }
     }
     
+    private String getPlainTextContent(String mainCaption, String subCaption, String bodyContent) {
+        StringBuilder sb = new StringBuilder();
+        if (mainCaption != null && !mainCaption.trim().isEmpty()) {
+            sb.append(mainCaption).append(System.lineSeparator()).append(System.lineSeparator());
+        }
+        if (subCaption != null && !subCaption.trim().isEmpty()) {
+            sb.append(subCaption).append(System.lineSeparator()).append(System.lineSeparator());
+        }
+        if (bodyContent != null) {
+            sb.append(bodyContent).append(System.lineSeparator());
+        }
+        sb.append(System.lineSeparator());
+        sb.append("Bitte antworte nicht auf diese Nachricht.").append(System.lineSeparator());
+        sb.append(System.lineSeparator());
+        sb.append("Du erhältst diese Mitteilung, weil für Deinen Account eine "
+                + "E-Mail-Benachrichtigung aktiviert ist. Du kannst sie direkt in der "
+                + "Desktopansicht durch Klick auf Dein Nutzericon anpassen.")
+                .append(System.lineSeparator());
+        return sb.toString();
+    }
+
+    private static String buildMessageId(String fromAddress) {
+        String domain = "j-lawyer.org";
+        if (fromAddress != null) {
+            int at = fromAddress.lastIndexOf('@');
+            if (at > -1 && at < fromAddress.length() - 1) {
+                domain = fromAddress.substring(at + 1).trim();
+            }
+        }
+        return "<" + java.util.UUID.randomUUID().toString() + "@" + domain + ">";
+    }
+
     private String getBodyContent(String mainCaption, String subCaption, String bodyContent) {
         
         mainCaption=ServerStringUtils.toHtml4(mainCaption);

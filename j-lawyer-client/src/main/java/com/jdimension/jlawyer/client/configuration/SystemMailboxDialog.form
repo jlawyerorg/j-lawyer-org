@@ -40,6 +40,7 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="jLabel6" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel7" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabel23" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel8" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel19" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel20" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -49,6 +50,7 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="txtRecipient" max="32767" attributes="0"/>
                           <Component id="txtUser" max="32767" attributes="0"/>
+                          <Component id="txtSenderEmail" alignment="0" max="32767" attributes="0"/>
                           <Component id="txtPassword" alignment="0" max="32767" attributes="0"/>
                           <Component id="txtSenderName" alignment="0" max="32767" attributes="0"/>
                           <Component id="txtSmtpPort" alignment="0" max="32767" attributes="0"/>
@@ -93,6 +95,11 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="jLabel7" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="txtUser" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="jLabel23" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="txtSenderEmail" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
@@ -174,7 +181,7 @@
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel7">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Absenderadresse:"/>
+        <Property name="text" type="java.lang.String" value="SMTP-Benutzer / Login:"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="txtSmtpPort">
@@ -185,6 +192,13 @@
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="txtSenderName">
+    </Component>
+    <Component class="javax.swing.JTextField" name="txtSenderEmail">
+    </Component>
+    <Component class="javax.swing.JLabel" name="jLabel23">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Absender-Adresse (From):"/>
+      </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel6">
       <Properties>
