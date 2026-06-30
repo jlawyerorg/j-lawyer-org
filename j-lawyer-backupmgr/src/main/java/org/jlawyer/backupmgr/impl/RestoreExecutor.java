@@ -703,6 +703,8 @@ public class RestoreExecutor {
 
     private int fileFailures = 0;
 
+    private long validationTempCounter = 0;
+
     public RestoreExecutor(String dataDir, String backupDir, String encryptionPassword, String dbHost, String dbPort, String dbName, String dbUser, String dbPassword) {
 
         this.dbHost=dbHost;
@@ -848,7 +850,15 @@ public class RestoreExecutor {
                     if (progress != null) {
                         progress.onProgress("Nicht verschlüsselt: " + zip.getName());
                     }
-                    this.unzip(zip, System.getProperty("java.io.tmpdir") + File.separator + System.currentTimeMillis());
+                    // extract to a throwaway temp dir only to verify the archive is readable,
+                    // then delete it immediately so the temp partition never has to hold more
+                    // than a single archive at a time
+                    String tempDir = this.nextValidationTempDir();
+                    try {
+                        this.unzip(zip, tempDir);
+                    } finally {
+                        this.deleteQuietly(new File(tempDir));
+                    }
                 }
             }
         } else {
@@ -858,10 +868,34 @@ public class RestoreExecutor {
                     progress.onProgress("Prüfe Verschlüsselung: " + zip.getName());
                 }
                 if (zip.isFile() && zip.getName().toLowerCase().endsWith(".zip")) {
-                    this.unzipWithPassword(zip, System.getProperty("java.io.tmpdir") + File.separator + System.currentTimeMillis(), this.encryptionPassword);
+                    // see comment above: validate, then free the temp space right away
+                    String tempDir = this.nextValidationTempDir();
+                    try {
+                        this.unzipWithPassword(zip, tempDir, this.encryptionPassword);
+                    } finally {
+                        this.deleteQuietly(new File(tempDir));
+                    }
                 }
             }
         }
+    }
+
+    private String nextValidationTempDir() {
+        return System.getProperty("java.io.tmpdir") + File.separator
+                + "jlawyer-restore-validation-" + System.currentTimeMillis() + "-" + (this.validationTempCounter++);
+    }
+
+    private void deleteQuietly(File f) {
+        if (f == null || !f.exists()) {
+            return;
+        }
+        File[] children = f.listFiles();
+        if (children != null) {
+            for (File c : children) {
+                this.deleteQuietly(c);
+            }
+        }
+        f.delete();
     }
 
     private void unzipWithPassword(File source, String targetDir, String password) throws Exception {
