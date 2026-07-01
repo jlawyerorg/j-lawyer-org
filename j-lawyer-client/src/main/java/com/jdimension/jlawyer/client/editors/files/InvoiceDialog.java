@@ -1033,7 +1033,15 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         this.cmdGiroCode.setEnabled(invoice != null && invoice.getId() != null);
         this.txtBuyerOrderReference.setEnabled(invoice != null && invoice.getId() != null);
 
-        this.cmbInvoiceSender.setSelectedItem(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+        String defaultSender = UserSettings.getInstance().getCurrentUser().getPrincipalId();
+        if (this.caseDto != null && this.caseDto.getLawyer() != null && !this.caseDto.getLawyer().trim().isEmpty()) {
+            defaultSender = this.caseDto.getLawyer();
+        }
+        // falls der lawyer nicht (mehr) in der Liste login-fähiger Nutzer ist, ergänzen
+        if (!ComponentUtils.containsItem(cmbInvoiceSender, defaultSender)) {
+            defaultSender = UserSettings.getInstance().getCurrentUser().getPrincipalId();
+        }
+        this.cmbInvoiceSender.setSelectedItem(defaultSender);
 
         this.currentEntry = invoice;
 
