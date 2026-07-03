@@ -678,6 +678,7 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import de.costache.calendar.events.IntervalChangedEvent;
@@ -715,6 +716,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.MenuElement;
+import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
@@ -737,9 +739,14 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
 
     private JToolBar toolBar;
     HashMap<String, EventType> allCalTypes = new HashMap<>();
+    HashMap<String, EventType> allDoneCalTypes = new HashMap<>();
     HashSet<String> selectedCalTypes = new HashSet<>();
     List<String> selectedUsers = new ArrayList<>();
     private boolean userPopup = true;
+
+    private JToggleButton cmdToggleDone;
+    private boolean showDone = false;
+    private Collection<ArchiveFileReviewsBean> doneEvents = new ArrayList<>();
 
     private JPopupMenu popup;
 
@@ -775,6 +782,9 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
         
         this.cmdUserFilter.setEnabled(userPopup);
         this.lblUserFilterCount.setEnabled(userPopup);
+        // the "show done" toggle is only relevant in the reviews overview, not in the
+        // stripped-down calendar used e.g. for conflict detection
+        this.cmdToggleDone.setVisible(userPopup);
     }
 
     public void setParentEditor(String parentClass, String detailsEditorClass, Image backgroundImage) {
@@ -873,6 +883,25 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
         JLabel spacer = new JLabel();
         spacer.setText("   ");
         toolBar.add(spacer);
+
+        this.cmdToggleDone = new JToggleButton();
+        cmdToggleDone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdToggleDone.setToolTipText("erledigte Einträge anzeigen (nur für den sichtbaren Zeitraum)");
+        cmdToggleDone.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        cmdToggleDone.addActionListener((java.awt.event.ActionEvent evt) -> {
+            this.showDone = cmdToggleDone.isSelected();
+            if (this.showDone) {
+                this.reloadDoneEvents();
+            } else {
+                this.doneEvents.clear();
+                this.renderEvents();
+            }
+        });
+        toolBar.add(cmdToggleDone);
+
+        JLabel spacer2 = new JLabel();
+        spacer2.setText("   ");
+        toolBar.add(spacer2);
 
         try {
             this.buildUsersPopup();
@@ -1015,6 +1044,14 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
                         ArchiveFileReviewsBean updatedEvent = calService.getReview(ce.getEventId());
                         EventBroker eb = EventBroker.getInstance();
                         eb.publishEvent(new ReviewUpdatedEvent(null, null, updatedEvent));
+
+                        // keep caches consistent: this entry is no longer open
+                        removeById(this.cachedEvents, ce.getEventId());
+                        if (this.showDone && updatedEvent != null) {
+                            // immediately show it in the done ("erledigt") styling
+                            this.doneEvents.add(updatedEvent);
+                            this.renderEvents();
+                        }
                     } catch (Exception ex) {
                         log.error("Error updating review", ex);
                         JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1061,6 +1098,10 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
                         ArchiveFileReviewsBean updatedEvent = calService.getReview(ce.getEventId());
                         EventBroker eb = EventBroker.getInstance();
                         eb.publishEvent(new ReviewUpdatedEvent(null, null, updatedEvent));
+
+                        // keep caches consistent: the entry no longer exists
+                        removeById(this.cachedEvents, ce.getEventId());
+                        removeById(this.doneEvents, ce.getEventId());
                     } catch (Exception ex) {
                         log.error("Error updating review", ex);
                         JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1137,14 +1178,92 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
 
         this.cachedEvents = dtos;
 
+        this.renderEvents();
+
+    }
+
+    /**
+     * Clears the calendar and renders the currently cached open events plus, if
+     * enabled, the done events that were loaded for the visible interval.
+     */
+    private void renderEvents() {
+
         for (CalendarEvent ce : this.jCalendar.getCalendarEvents()) {
             this.jCalendar.removeCalendarEvent(ce);
         }
 
-        for (ArchiveFileReviewsBean rev : dtos) {
-            this.addCalendarEvent(rev);
+        if (this.cachedEvents != null) {
+            for (ArchiveFileReviewsBean rev : this.cachedEvents) {
+                this.addCalendarEvent(rev);
+            }
         }
 
+        if (this.showDone) {
+            for (ArchiveFileReviewsBean rev : this.doneEvents) {
+                this.addCalendarEvent(rev);
+            }
+        }
+
+    }
+
+    /**
+     * Reloads the done events for the currently visible interval (no-op if the
+     * "show done" toggle is off). Called on toggle activation and on manual
+     * refresh.
+     */
+    public void reloadDoneEvents() {
+        if (!this.showDone) {
+            return;
+        }
+        Calendar from = this.jCalendar.getConfig().getIntervalStart();
+        Calendar to = this.jCalendar.getConfig().getIntervalEnd();
+        if (from == null || to == null) {
+            return;
+        }
+        this.reloadDoneEvents(from.getTime(), to.getTime());
+    }
+
+    /**
+     * Fetches the done events for the given interval from the server in a
+     * background thread and re-renders once they are available.
+     */
+    private void reloadDoneEvents(final Date from, final Date to) {
+        new Thread(() -> {
+            Collection<ArchiveFileReviewsBean> done;
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+                done = calService.searchReviews(ArchiveFileConstants.REVIEWSTATUS_DONE, ArchiveFileConstants.REVIEWTYPE_ANY, from, to);
+            } catch (Exception ex) {
+                log.error("Error loading done calendar entries", ex);
+                return;
+            }
+            SwingUtilities.invokeLater(() -> {
+                this.doneEvents = done;
+                this.renderEvents();
+            });
+        }).start();
+    }
+
+    /**
+     * Removes the review with the given id from the given cache collection (if
+     * present), matching by review id.
+     */
+    private static void removeById(Collection<ArchiveFileReviewsBean> coll, String eventId) {
+        if (eventId == null || coll == null) {
+            return;
+        }
+        ArchiveFileReviewsBean toRemove = null;
+        for (ArchiveFileReviewsBean r : coll) {
+            if (eventId.equals(r.getId())) {
+                toRemove = r;
+                break;
+            }
+        }
+        if (toRemove != null) {
+            coll.remove(toRemove);
+        }
     }
 
     public void setSelectedDay(Date selDate) {
@@ -1161,7 +1280,7 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
             return;
         }
 
-        if (!this.cachedEvents.contains(rev)) {
+        if (!rev.isDone() && !this.cachedEvents.contains(rev)) {
             this.cachedEvents.add(rev);
         }
 
@@ -1176,6 +1295,15 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
                 t.setUniqueKey(rev.getEventTypeName());
                 this.allCalTypes.put(rev.getCalendarSetup().getId(), t);
                 this.selectedCalTypes.add(rev.getCalendarSetup().getId());
+
+                // dimmed variant used to render done ("erledigt") entries
+                EventType tDone = new EventType();
+                Color dimColor = new Color(opaque.getRed(), opaque.getGreen(), opaque.getBlue(), 120);
+                tDone.setBackgroundColor(dimColor);
+                tDone.setForegroundColor(Color.WHITE);
+                tDone.setName(rev.getCalendarSetup().getDisplayName() + " (" + rev.getEventTypeName() + ")");
+                tDone.setUniqueKey(rev.getEventTypeName());
+                this.allDoneCalTypes.put(rev.getCalendarSetup().getId(), tDone);
 
                 JToggleButton tog = new JToggleButton();
                 tog.setText(" " + rev.getCalendarSetup().getDisplayName() + " ");
@@ -1305,17 +1433,26 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
 
     private void addToRenderedCalendar(ArchiveFileReviewsBean rev, Date start, Date end, boolean allDay) {
 
+        // NOTE: the check-mark is wrapped in brackets on purpose. The calendar's shared
+        // text renderer (GraphicsUtil.drawString) drops standalone tokens of <= 2 chars,
+        // so a lone "✓" would vanish on timed events; "[✓]" is a 3-char token and survives.
+        // (The month view additionally needs a glyph-capable font - see DayContentPanel.)
+        String donePrefix = rev.isDone() ? "[✓] " : "";
         CalendarEvent calendarEvent = null;
         if (rev.getArchiveFileKey() != null) {
-            calendarEvent = new CalendarEvent(rev.getSummary() + " (" + rev.getArchiveFileKey().getFileNumber() + " " + rev.getArchiveFileKey().getName() + ")", start, end);
+            calendarEvent = new CalendarEvent(donePrefix + rev.getSummary() + " (" + rev.getArchiveFileKey().getFileNumber() + " " + rev.getArchiveFileKey().getName() + ")", start, end);
         } else {
-            calendarEvent = new CalendarEvent(rev.getSummary(), start, end);
+            calendarEvent = new CalendarEvent(donePrefix + rev.getSummary(), start, end);
         }
         calendarEvent.setDescription(rev.getDescription());
         calendarEvent.setLocation(rev.getLocation());
 
         if (rev.getCalendarSetup() != null) {
-            calendarEvent.setType(this.allCalTypes.get(rev.getCalendarSetup().getId()));
+            if (rev.isDone()) {
+                calendarEvent.setType(this.allDoneCalTypes.get(rev.getCalendarSetup().getId()));
+            } else {
+                calendarEvent.setType(this.allCalTypes.get(rev.getCalendarSetup().getId()));
+            }
         }
 
         calendarEvent.setEventId(rev.getId());
@@ -1394,8 +1531,10 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
 
         //jCalendar.a
         jCalendar.addIntervalChangedListener((final IntervalChangedEvent event) -> {
-//            System.out.println("Interval changed " + event.getIntervalStart() + " "
-//                    + event.getIntervalEnd() + "\n");
+            // when done entries are shown, reload them for the newly visible interval
+            if (this.showDone) {
+                this.reloadDoneEvents(event.getIntervalStart(), event.getIntervalEnd());
+            }
         });
 
         jCalendar.addIntervalSelectionListener((IntervalSelectionEvent event) -> {

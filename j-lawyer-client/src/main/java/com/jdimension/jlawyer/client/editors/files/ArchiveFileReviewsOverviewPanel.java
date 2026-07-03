@@ -931,7 +931,9 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
         // perform search here
         ThreadUtils.setWaitCursor(this);
         new Thread(new ArchiveFileReviewsSearchThread(this, this.tblResults, this.calendarPanel1)).start();
-        
+        // also reload done entries for the currently visible interval (no-op if the toggle is off)
+        this.calendarPanel1.reloadDoneEvents();
+
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
     public void refresh() {

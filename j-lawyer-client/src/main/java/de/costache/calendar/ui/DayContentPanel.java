@@ -716,9 +716,15 @@ public class DayContentPanel extends JPanel {
                     String eventString = event.isAllDay() ? event.getSummary()
                             : sdf.format(event.getStart()) + " " + sdf.format(event.getEnd()) + " " + event.getSummary();
                     int fontSize = Math.round(getHeight() * 0.5f);
-                    fontSize = fontSize > 9 ? 9 : fontSize;
+                    // cap raised from 9 to 13: the default (logical) font renders visibly smaller
+                    // than the previously used Verdana at the same point size, so it needs a
+                    // slightly larger size to stay legible in the month view.
+                    fontSize = fontSize > 13 ? 13 : fontSize;
 
-                    final Font font = new Font("Verdana", Font.BOLD, fontSize);
+                    // use the default (logical) font instead of Verdana: Verdana lacks some
+                    // glyphs (e.g. the U+2713 check mark used to mark done entries), which would
+                    // render as boxes in the month view.
+                    final Font font = new JLabel().getFont().deriveFont(Font.PLAIN, (float) fontSize);
                     final FontMetrics metrics = graphics2d.getFontMetrics(font);
                     graphics2d.setFont(font);
 
