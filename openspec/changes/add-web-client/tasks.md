@@ -21,6 +21,8 @@
 
 - [ ] 2.1 Design-System-Paket: Tokens, responsive App-Shell (adaptive Modulleiste/Bottom-Nav, Auth, Fehler-/Ladezustände), Komponentenkatalog
 - [ ] 2.2 Neues Maven-Modul `j-lawyer-web` (eigenständiger WAR): `frontend-maven-plugin` baut das Angular-Bundle, `maven-war-plugin` verpackt die statischen Assets + SPA-Fallback (unbekannte Pfade → `index.html`); `deploy.sh` um das zweite Artefakt erweitern
+- [ ] 2.2a Laufzeit-Härtung: alle Assets self-hosten (keine CDNs), strikte CSP als WildFly-/`web.xml`-Header (`default-src 'self'` …), Nonce für Component-Styles (`ngCspNonce`), Trusted Types aktivieren
+- [ ] 2.2b Build-Härtung gegen Supply-Chain: `npm ci --ignore-scripts`, gepinntes Lockfile mit Integrity-Hashes, gespiegelte/vendorte npm-Registry (analog `maven-repo/`), `npm audit`/Dependabot im CI
 - [ ] 2.3 Login-/Auth-Flow implementieren (Same-Origin, sichere Session/Token)
 - [ ] 2.4 Fehlende Basis-REST-Endpunkte additiv in neuer API-Version ergänzen (ohne bestehende Versionen zu brechen)
 

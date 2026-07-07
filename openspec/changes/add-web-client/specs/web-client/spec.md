@@ -98,6 +98,23 @@ erfordert.
 - **WHEN** das Projekt gebaut wird
 - **THEN** wird das Frontend-Bundle innerhalb des bestehenden Maven-Builds erzeugt und verpackt, und der Node-Toolchain-Bedarf ist auf die Buildmaschine beschränkt
 
+### Requirement: Keine Remote-Ressourcen zur Laufzeit und Supply-Chain-Härtung
+Die deployte Web-Anwendung MUST NOT zur Laufzeit Code oder andere Ressourcen von externen
+Hosts laden; alle Assets (JS, CSS, Schriften, Icons) SHALL aus dem eigenen Ursprung
+(same-origin) ausgeliefert werden, und einzige Netzwerk-Gegenstelle SHALL die eigene
+REST-API sein. Eine strikte Content Security Policy SHALL dies browserseitig erzwingen.
+Zusätzlich SHALL die Build-Kette gegen Supply-Chain-Angriffe gehärtet sein (gepinnte,
+integritätsgeprüfte Abhängigkeiten; deaktivierte Install-Skripte; gespiegelte/vendorte
+Registry; Abhängigkeits-Scanning).
+
+#### Scenario: Kein Laden von Remote-Code im Browser
+- **WHEN** die Web-Anwendung im Browser geladen und benutzt wird
+- **THEN** werden keinerlei Skripte, Styles, Schriften oder sonstige Ressourcen von externen Hosts angefordert, und eine strikte CSP blockiert entsprechende Versuche
+
+#### Scenario: Gehärtete Build-Kette
+- **WHEN** das Frontend-Bundle gebaut wird
+- **THEN** werden Abhängigkeiten gepinnt und integritätsgeprüft aus einer kontrollierten (gespiegelten/vendorten) Registry ohne Ausführung von Install-Skripten aufgelöst
+
 ### Requirement: Kostenfreie und anpassbare Komponentenbasis
 Das gewählte Framework und die genutzten UI-Komponenten MUST NOT wiederkehrende
 Lizenzkosten verursachen (permissive Lizenzen wie MIT/Apache). Das Framework SHALL das

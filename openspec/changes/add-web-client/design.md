@@ -170,6 +170,9 @@ funktional erreichbar.
    bauen, wenn die Bibliothek nichts Passendes bietet (headless Primitive erwünscht).
 6. **Keine laufenden Lizenzkosten** — weder Framework noch benötigte
    UI-Komponenten dürfen wiederkehrende Lizenzkosten verursachen.
+6a. **Supply-Chain-Angriffsfläche** — kleiner Dritt-Abhängigkeitsbaum; keine
+   Remote-Ressourcen zur Laufzeit (self-host + strikte CSP durchsetzbar); Build-Zeit-
+   Abhängigkeiten kontrollierbar (siehe Decision 2c).
 7. **Responsive-/Mobile-Fähigkeit** — touch-taugliche, adaptive Komponenten und ein
    ausgereiftes Breakpoint-/Layout-Modell (siehe Decision 3a); optional PWA-fähig
    (Installierbarkeit/Offline-Shell) als spätere Ausbaustufe.
@@ -234,17 +237,18 @@ Gewichtete Bewertung (Score 1–5 × Gewicht, Maximum 500):
 
 | Kriterium | Gewicht | Angular | React | Vue | Svelte |
 |---|---:|---:|---:|---:|---:|
-| Lesbarkeit/Verständlichkeit für Leser (Struktur, Explizitheit, wenig „Magie") | 20 | 4 | 3 | 4 | 5 |
-| Enterprise-Ökosystem „aus einer Hand" | 20 | 5 | 4 | 3 | 2 |
-| AI-Generierbarkeit & Konsistenz (großer Korpus, einheitliche Patterns) | 15 | 5 | 5 | 4 | 3 |
+| Lesbarkeit/Verständlichkeit für Leser (Struktur, Explizitheit, wenig „Magie") | 18 | 4 | 3 | 4 | 5 |
+| Enterprise-Ökosystem „aus einer Hand" | 18 | 5 | 4 | 3 | 2 |
+| AI-Generierbarkeit & Konsistenz (großer Korpus, einheitliche Patterns) | 14 | 5 | 5 | 4 | 3 |
 | Struktur/Konventionen & Konsistenz über Module | 12 | 5 | 3 | 4 | 3 |
 | API-Stabilität (keine häufigen Breaking Changes) | 10 | 4 | 5 | 3 | 2 |
 | Customizing / eigene Komponenten möglich | 8 | 5 | 5 | 4 | 4 |
+| Supply-Chain-Angriffsfläche (kleiner Dritt-Abhängigkeitsbaum) | 6 | 5 | 3 | 4 | 4 |
 | Keine laufenden Lizenzkosten (Framework + Komponenten) | 5 | 5 | 5 | 5 | 5 |
 | Langzeit-Reife / Community | 5 | 5 | 5 | 4 | 3 |
-| Responsive-/Mobile-Komponenten | 3 | 4 | 5 | 4 | 4 |
+| Responsive-/Mobile-Komponenten | 2 | 4 | 5 | 4 | 4 |
 | Build-/WAR-Integration (statisches Bundle) | 2 | 5 | 5 | 5 | 5 |
-| **Gewichtete Summe** | **100** | **467** | **416** | **377** | **335** |
+| **Gewichtete Summe** | **100** | **470** | **410** | **379** | **338** |
 
 **Ergebnis: Angular.** Begründung im Autoren-/Leser-Modell:
 - **Konsistenz fürs Reviewen (Hauptvorteil bei AI-Autorenschaft)**: Wenn Claude Code den
@@ -302,6 +306,37 @@ Verständlichkeit bewerten**, vor der finalen Festschreibung.
 Phase; `maven-war-plugin` verpackt die statischen Assets. Damit bleibt „ein
 `mvn install`, ein EAR/WAR-Set" erhalten und der Node-Toolchain-Bedarf ist auf die
 Buildmaschine beschränkt.
+
+### Decision 2c — Supply-Chain-Härtung (keine Remote-Ressourcen zur Laufzeit)
+
+Ziel (Auftraggeber): Supply-Chain-Angriffe minimieren; die deployte Anwendung soll
+**keinerlei Code von remote laden**. Zwei getrennte Vektoren:
+
+**A) Laufzeit (Browser) — garantierbar auf Null.** Die App wird als statisches Bundle
+ausschließlich aus dem eigenen WAR (same-origin) geliefert:
+- **Alles self-hosten**: JS/CSS (vom CLI gebündelt), Schriften (kein Font-CDN, siehe
+  Decision 1), Icons als Inline-SVG/Font. Kein externer Aufruf außer der eigenen REST-API.
+- **Strikte Content Security Policy** (per WildFly-/`web.xml`-Header) erzwingt das
+  browserseitig, z. B. `default-src 'self'; script-src 'self'; connect-src 'self';
+  font-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'`. Component-
+  Styles über Nonce (`ngCspNonce`) statt `unsafe-inline`; zusätzlich Angulars eingebaute
+  **Trusted-Types**-Unterstützung gegen DOM-XSS.
+- **Kein Node in Produktion** (Decision 2a) → keine serverseitige npm-Laufzeit-Angriffsfläche.
+
+**B) Build-Zeit (npm) — der eigentliche Supply-Chain-Vektor.** „Kein Remote zur Laufzeit"
+verhindert nicht, dass Schadcode beim Bauen ins Bundle gelangt. Kontrollen:
+- **Lockfile + `npm ci`** mit gepinnten, integritätsgehashten Versionen.
+- **Install-Skripte deaktivieren** (`npm ci --ignore-scripts`) gegen `postinstall`-Angriffe.
+- **Gespiegelte/vendorte Registry** analog zum bestehenden `maven-repo/`-Muster des
+  Projekts (private Registry wie Verdaccio/Nexus oder committeter Offline-Cache) → Builds
+  ziehen nichts Unkontrolliertes aus dem Netz.
+- **SCA/Scanning**: `npm audit` + Dependabot (bereits aktiv) + reproduzierbare Builds in CI
+  statt auf Dev-Maschinen.
+
+Dieses Ziel begünstigt **Angular** zusätzlich: der kuratierte First-Party-Monorepo
+(Router, Forms, HTTP, CLI, Material aus einer Hand) hat einen **deutlich kleineren
+Dritt-Abhängigkeitsbaum** als ein handzusammengestellter React-Stack → kleinere
+Build-Zeit-Angriffsfläche (siehe zusätzliches Kriterium in Decision 2b).
 
 **Authentifizierung**: Die REST-API nutzt heute HTTP Basic Auth — für eine Browser-SPA
 ungeeignet (kein Logout, kein 2FA, Credential-Handling). Es wird ein

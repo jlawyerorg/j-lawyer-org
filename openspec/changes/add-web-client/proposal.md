@@ -38,6 +38,9 @@ Entscheidungen und ihre Begründung stehen in `design.md`.
   einer neuen API-Version additiv ergänzt, ohne bestehende Versionen zu brechen.
 - **Design-System**: verbindliches, dokumentiertes UI-Design-System (Tokens,
   Komponentenbibliothek, Interaktionsmuster) als Voraussetzung für einheitliches Design.
+- **Supply-Chain-Härtung**: keine Remote-Ressourcen zur Laufzeit (self-host + strikte
+  CSP), gehärtete Build-Kette (gepinnte/integritätsgeprüfte Abhängigkeiten, deaktivierte
+  Install-Skripte, gespiegelte/vendorte Registry, Scanning).
 - **Technologie- und Deployment-Auswahl**: dokumentierte Auswahlkriterien und
   Entscheidung. Bevorzugtes Deployment als WAR auf demselben WildFly (charmant, nicht
   zwingend); Alternativen werden mit Begründung bewertet.
