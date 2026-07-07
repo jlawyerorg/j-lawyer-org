@@ -14,6 +14,12 @@
     headers at the WildFly/Undertow layer — see ../SUPPLY-CHAIN.md and web.xml notes.
     style-src allows 'unsafe-inline' for Angular component styles in this baseline;
     harden to nonce-based (ngCspNonce) in the server header.
+
+    NOTE: production build sets optimization.styles.inlineCritical=false (angular.json).
+    Beasties' critical-CSS deferral uses an inline onload handler on the stylesheet
+    <link>, which "script-src 'self'" blocks — that left the full stylesheet inactive
+    (media="print") and broke the light/dark theme switch. Disabling it keeps the CSP
+    strict (no inline handlers) and loads the full stylesheet via a normal <link>.
   -->
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
