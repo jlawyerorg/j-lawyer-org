@@ -339,10 +339,10 @@ Dritt-Abhängigkeitsbaum** als ein handzusammengestellter React-Stack → kleine
 Build-Zeit-Angriffsfläche (siehe zusätzliches Kriterium in Decision 2b).
 
 **Authentifizierung**: Die REST-API nutzt heute HTTP Basic Auth — für eine Browser-SPA
-ungeeignet (kein Logout, kein 2FA, Credential-Handling). Es wird ein
-session-/tokenbasierter Login-Flow benötigt (z. B. serverseitige Session-Cookie- oder
-Bearer-Token-Ausgabe nach Login), abgestimmt mit `add-two-factor-auth`. Same-Origin-
-Deployment (WAR auf demselben WildFly) vermeidet CORS und erleichtert sichere Cookies.
+ungeeignet (kein Logout, kein 2FA, Credential-Handling). Es wird ein additiver,
+tokenbasierter Login-Flow ergänzt — **Details und Kompatibilitätsentscheidung siehe
+Decision 5**. Same-Origin-Deployment (WAR auf demselben WildFly) vermeidet CORS und
+erleichtert sichere Cookies.
 
 ## Decision 3 — Besonders herausfordernde Funktionen
 
@@ -419,6 +419,61 @@ austauschbar, falls gewünscht.
 gegen den Gewinn an Laufzeit-Umschaltung und triviale Sprach-Erweiterung. Bewusst
 akzeptiert; passt zur Supply-Chain-Leitplanke (kleiner, reputabler, self-hosted).
 
+## Decision 5 — Authentifizierung der Web-UI (additiv, kompatibel)
+
+**Anforderung/Constraint:** Der bestehende **Swing-Client** (EJB-Remoting gegen die
+Security-Domain `jlawyer-application-security-domain`) und bestehende **REST-Clients**
+(**HTTP Basic Auth**, Realm `jlawyerRealm`, `@RolesAllowed({"loginRole"})`) müssen
+unverändert weiterlaufen. Die Browser-SPA braucht dennoch einen browsergeeigneten Login
+(kein natives Basic-Popup, Logout, 2FA-fähig).
+
+**Prinzip: rein additiv.** Kein bestehender Mechanismus wird entfernt; ein
+browsergeeigneter kommt daneben.
+
+| Client | Auth-Weg | Änderung |
+|---|---|---|
+| Swing-Client | EJB-Remoting + Security-Domain | keine (anderer Transport) |
+| Bestehende REST-Clients | HTTP Basic | keine (Basic bleibt gültig) |
+| Web-SPA (neu) | Token/Session via neuem Login-Endpunkt | additiv, neue API-Version `v{n}/auth/*` |
+
+**Flow (SPA):**
+1. `POST /j-lawyer-io/rest/v{n}/auth/login` `{username, password, otp?}` — validiert gegen
+   **denselben** Nutzer-Store via `SecurityService.login` + die 2FA-Verifikation aus
+   `add-two-factor-auth`.
+2. Erfolg → **kurzlebiges Access-Token (JWT)** + optional **httpOnly-Refresh-Cookie**;
+   Token trägt dieselbe Rolle (`loginRole`), damit `@RolesAllowed` unverändert greift.
+3. SPA sendet `Authorization: Bearer <jwt>` (same-origin, kein CORS).
+4. `POST …/auth/refresh` (Refresh-Cookie) und `POST …/auth/logout` (invalidieren).
+
+**Server-seitige Umsetzung — Entscheidung: App-Level-JAX-RS-Auth-Filter (Option A).**
+Ein `ContainerRequestFilter` mit `@Priority(AUTHENTICATION)` akzeptiert **Basic *oder*
+Bearer**, validiert beides in portablem App-Code und setzt den `SecurityContext`
+(Principal + Rollen) → `@RolesAllowed` funktioniert weiter. Bei 401 an SPA/JSON-Requests
+**kein** `WWW-Authenticate: Basic` → kein natives Browser-Popup. Basic-Clients verhalten
+sich exakt wie heute (derselbe Store). Passt zur „portable application code"-Linie des
+2FA-Changes; keine Elytron-Umkonfiguration nötig.
+- *Verworfen (Option B):* WildFly-Elytron mit mehreren Mechanismen (BASIC + Bearer) —
+  sauber, aber Server-Konfiguration statt App-Code, und die deklarative Basic-Challenge
+  bliebe für die SPA störend.
+
+**2FA-Einbindung:** Zweiter Faktor wird **nur am interaktiven Login-Endpunkt** erzwungen
+(dort wird das Token ausgestellt); maschinelle Basic-Clients bleiben außen vor — gewollt
+und deckungsgleich mit `add-two-factor-auth`.
+
+**Client-seitig (Angular):** Login-Route, `AuthService` (Token-State als Signal,
+Login/Logout/Refresh), `HttpInterceptor` (hängt Bearer an, behandelt 401 → Refresh sonst
+Redirect), Route-Guard für Modulrouten. **Token-Speicherung:** Access-Token **nur im
+Speicher** (nicht `localStorage` → XSS-resistenter), Refresh im **httpOnly-Cookie** —
+passt zur strikten CSP (Decision 2c).
+
+**Sicherheit:** Cookie `HttpOnly; Secure; SameSite=Lax` (+ CSRF-Token bei
+zustandsändernden Calls, falls cookie-basiert); Token kurzlebig + Refresh; Logout
+serverseitig invalidieren.
+
+**Abhängigkeit:** Der Server-Teil (Filter + Login-/Refresh-/Logout-Endpunkte) ist Arbeit
+in `j-lawyer-io`/`j-lawyer-server` und **muss mit `add-two-factor-auth` koordiniert**
+werden.
+
 ## Risks / Trade-offs
 
 - **Scope-Risiko**: Vollparität ist sehr groß (16+ Module). → Phasenplan mit MVP und
@@ -461,7 +516,9 @@ Rollback pro Phase: Web-UI ist additiv; bei Problemen weiter Swing-Client nutzen
   offen nur noch der Bestätigungs-Spike vor finaler Festschreibung.
 - WOPI-Editing: Collabora Online vs. OnlyOffice; als optionaler Dienst neben WildFly
   akzeptabel? Lizenz-/Betriebskosten?
-- Auth-Modell: serverseitige Session-Cookies vs. Bearer-Token; Zusammenspiel mit 2FA.
+- ~~Auth-Modell: Session-Cookies vs. Bearer-Token; Zusammenspiel mit 2FA.~~ —
+  **entschieden** (siehe Decision 5): additiver App-Level-Filter (Basic + Bearer),
+  SPA nutzt kurzlebiges JWT + httpOnly-Refresh-Cookie; 2FA nur am Login-Endpunkt.
 - Push-Mechanismus: WebSocket vs. SSE vs. Polling für Messenger/Erinnerungen.
 - Companion-App für Scanner/Edit-in-place: gewünscht oder bewusst verzichten?
 - ~~Wird die Web-UI als eigenes WAR oder als Overlay ausgeliefert?~~ — **entschieden:

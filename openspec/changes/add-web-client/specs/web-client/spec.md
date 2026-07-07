@@ -173,7 +173,11 @@ durchsetzen, sodass generierter Code gleichförmig und ohne den Autor verständl
 Das System SHALL für die Web-UI einen session- oder tokenbasierten Anmelde-Flow
 bereitstellen (inklusive Abmeldung) und MUST NOT sich auf HTTP-Basic-Auth als
 alleinigen Mechanismus für die interaktive Web-Anmeldung stützen. Der Flow SHALL mit
-der Zwei-Faktor-Authentifizierung kompatibel sein.
+der Zwei-Faktor-Authentifizierung kompatibel sein. Der neue Mechanismus SHALL **additiv**
+eingeführt werden: bestehende REST-Clients mit HTTP Basic Auth und der EJB-basierte
+Desktop-Client MUST weiterhin unverändert funktionieren; die Auth-Endpunkte werden in
+einer neuen API-Version ergänzt, ohne bestehende Versionen zu brechen. Der Anmelde-Flow
+SHALL denselben Nutzer-/Rollen-Store wie die bestehende Authentifizierung verwenden.
 
 #### Scenario: Anmeldung und Abmeldung
 - **WHEN** ein Anwender sich in der Web-UI anmeldet
@@ -182,6 +186,14 @@ der Zwei-Faktor-Authentifizierung kompatibel sein.
 #### Scenario: Kompatibilität mit Zwei-Faktor-Authentifizierung
 - **WHEN** für ein Konto Zwei-Faktor-Authentifizierung aktiviert ist
 - **THEN** verlangt der Web-Anmelde-Flow den zweiten Faktor
+
+#### Scenario: Bestehende Clients bleiben kompatibel
+- **WHEN** ein bestehender REST-Client mit HTTP Basic Auth oder der Desktop-Client (EJB) auf den Server zugreift
+- **THEN** funktioniert die Authentifizierung unverändert, weil der browsergeeignete Mechanismus additiv neben Basic/EJB besteht
+
+#### Scenario: Kein natives Browser-Basic-Popup
+- **WHEN** eine nicht authentifizierte Anfrage der Web-UI abgewiesen wird
+- **THEN** antwortet der Server mit einem für die SPA geeigneten 401 (ohne `WWW-Authenticate: Basic`), sodass kein natives Browser-Anmeldefenster erscheint
 
 ### Requirement: Funktionsparität mit dem Desktop-Client als Zielbild
 Das System SHALL schrittweise Funktionsparität mit dem Swing-Client anstreben und die

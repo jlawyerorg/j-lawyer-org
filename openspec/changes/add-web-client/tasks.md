@@ -24,7 +24,11 @@
 - [~] 2.2a Laufzeit-Härtung — **CSP-Baseline gesetzt**: alle Assets self-hosten (keine CDNs), CSP-`<meta>` in `index.html` (`default-src 'self'`; `script-src 'self'`). Offen: autoritative CSP-/Security-Header auf WildFly/Undertow (inkl. `frame-ancestors`), Nonce für Component-Styles (`ngCspNonce`), Trusted Types
 - [x] 2.2b Build-Härtung — Guardrails-Config & Policy etabliert (vor dem Scaffold): `j-lawyer-web/.npmrc` (`ignore-scripts`, `save-exact`, `package-lock`, `engine-strict`, `audit=false`), `.gitignore`, `SUPPLY-CHAIN.md`, `scripts/seed-npm-cache.sh` (Analog zu `maven-repo/`). `esbuild`-`postinstall` verifiziert: Build gelingt mit `--ignore-scripts` (esbuild-Binary via optionalDependencies, kein Skript nötig). Offen: Offline-Vendoring (`vendor-npm/`), `npm audit`-CI-Gate + Dependabot scharf schalten
 - [x] 2.2d i18n-Fundament (Transloco) — **implementiert & verifiziert**: DE/EN, Laufzeit-Umschaltung im Header, self-hosted JSON (`public/i18n/*.json`), `core/i18n.ts` als zentrale Sprachliste (neue Sprache = 1 JSON + 1 Eintrag), Persistenz via `localStorage`, Init aus gespeichert>Browser>Default. Alle Shell-Strings über Transloco-Keys. Verifiziert per Headless-Chromium (DE↔EN wechselt Labels/Suche/Überschrift). Offen: `TranslocoTitleStrategy` für übersetzte Seitentitel
-- [ ] 2.3 Login-/Auth-Flow implementieren (Same-Origin, sichere Session/Token)
+- [ ] 2.3 Login-/Auth-Flow implementieren (siehe `design.md` Decision 5 — additiv, kompatibel):
+  - [ ] 2.3a Server: App-Level-JAX-RS-Auth-Filter (`@Priority(AUTHENTICATION)`), akzeptiert Basic **oder** Bearer, setzt `SecurityContext`; 401 ohne `WWW-Authenticate: Basic`
+  - [ ] 2.3b Server: `POST v{n}/auth/login|refresh|logout` (JWT + httpOnly-Refresh-Cookie), gegen `SecurityService.login`; 2FA nur am Login (mit `add-two-factor-auth` koordinieren)
+  - [ ] 2.3c Client: Login-Route, `AuthService` (Signal-State), `HttpInterceptor` (Bearer + 401-Handling), Route-Guard; Access-Token nur im Speicher
+  - [ ] 2.3d Verifizieren: Basic-REST-Client und Swing-Client weiterhin unverändert funktionsfähig (Kompatibilität)
 - [ ] 2.4 Fehlende Basis-REST-Endpunkte additiv in neuer API-Version ergänzen (ohne bestehende Versionen zu brechen)
 
 ## 3. Phase 1 — MVP (Read-first)
