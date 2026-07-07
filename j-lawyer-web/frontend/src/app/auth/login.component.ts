@@ -6,7 +6,7 @@ import { AuthService } from '../core/auth/auth.service';
 
 /**
  * Full-screen login page (outside the shell). Exchanges credentials for a session via
- * AuthService, then routes to the returnUrl (or /akten). Reactive form, translated,
+ * AuthService, then routes to the returnUrl (or /cases). Reactive form, translated,
  * theme-aware. Demo credentials while on the mock backend: admin / a.
  */
 @Component({
@@ -90,7 +90,7 @@ export class LoginComponent {
     this.error.set(false);
     this.auth.login(this.form.getRawValue()).subscribe({
       next: () => {
-        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/akten';
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/cases';
         void this.router.navigateByUrl(returnUrl);
       },
       error: () => {

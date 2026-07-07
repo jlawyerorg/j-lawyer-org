@@ -13,9 +13,9 @@ type LoadComponent = NonNullable<Route['loadComponent']>;
 const placeholderLoader: LoadComponent = () =>
   import('./placeholder/module-placeholder.component').then((c) => c.ModulePlaceholderComponent);
 
-/** Modules with a real implemented component (others fall back to the placeholder). */
+/** Modules with a real implemented component (keyed by route path; others fall back to the placeholder). */
 const IMPLEMENTED: Record<string, LoadComponent> = {
-  akten: () => import('./akten/akten.component').then((c) => c.AktenComponent),
+  cases: () => import('./akten/akten.component').then((c) => c.AktenComponent),
 };
 
 const moduleRoutes: Routes = MODULES.map((m) => ({
@@ -38,9 +38,9 @@ export const routes: Routes = [
     loadComponent: () => import('./shell/shell.component').then((c) => c.ShellComponent),
     canActivateChild: [authGuard],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'akten' },
+      { path: '', pathMatch: 'full', redirectTo: 'cases' },
       ...moduleRoutes,
-      { path: '**', redirectTo: 'akten' },
+      { path: '**', redirectTo: 'cases' },
     ],
   },
 ];

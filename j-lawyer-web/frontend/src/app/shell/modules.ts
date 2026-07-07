@@ -5,7 +5,7 @@
  * Labels are i18n keys resolved via Transloco (see public/i18n/*.json).
  */
 export interface ModuleLink {
-  /** Route path segment. */
+  /** Route path segment (always English, e.g. 'cases'). */
   path: string;
   /** Transloco key for the display label (e.g. 'module.akten'). */
   labelKey: string;
@@ -21,12 +21,12 @@ export interface ModuleLink {
 
 export const MODULES: ModuleLink[] = [
   { path: 'desktop', labelKey: 'module.desktop', icon: 'desktop', mobile: true },
-  { path: 'akten', labelKey: 'module.akten', icon: 'cases', mobile: true },
-  { path: 'adressen', labelKey: 'module.adressen', icon: 'contacts' },
-  { path: 'kalender', labelKey: 'module.kalender', icon: 'calendar', mobile: true },
-  { path: 'kommunikation', labelKey: 'module.kommunikation', icon: 'mail', badge: 3, mobile: true },
-  { path: 'dokumente', labelKey: 'module.dokumente', icon: 'doc' },
-  { path: 'finanzen', labelKey: 'module.finanzen', icon: 'euro' },
+  { path: 'cases', labelKey: 'module.akten', icon: 'cases', mobile: true },
+  { path: 'contacts', labelKey: 'module.adressen', icon: 'contacts' },
+  { path: 'calendar', labelKey: 'module.kalender', icon: 'calendar', mobile: true },
+  { path: 'communication', labelKey: 'module.kommunikation', icon: 'mail', badge: 3, mobile: true },
+  { path: 'documents', labelKey: 'module.dokumente', icon: 'doc' },
+  { path: 'finance', labelKey: 'module.finanzen', icon: 'euro' },
   { path: 'reporting', labelKey: 'module.reporting', icon: 'chart' },
-  { path: 'einstellungen', labelKey: 'module.einstellungen', icon: 'gear', footer: true },
+  { path: 'settings', labelKey: 'module.einstellungen', icon: 'gear', footer: true },
 ];

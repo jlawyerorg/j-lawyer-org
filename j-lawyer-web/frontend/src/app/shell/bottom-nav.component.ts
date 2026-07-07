@@ -21,7 +21,7 @@ import { MODULES, ModuleLink } from './modules';
           <span>{{ m.labelKey | transloco }}</span>
         </a>
       }
-      <a [routerLink]="'einstellungen'" routerLinkActive="active">
+      <a [routerLink]="'settings'" routerLinkActive="active">
         <jl-icon name="more" [size]="20" /><span>{{ 'module.mehr' | transloco }}</span>
       </a>
     </nav>
