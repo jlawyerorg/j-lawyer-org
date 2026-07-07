@@ -1,12 +1,15 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { ShellComponent } from './shell/shell.component';
+import { RouterOutlet } from '@angular/router';
 
-/** Application root — hosts the responsive shell. */
+/**
+ * Application root — a bare router outlet. The router decides between the login page
+ * (public) and the shell layout route (guarded), so login renders outside the shell.
+ */
 @Component({
   selector: 'jl-root',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ShellComponent],
-  template: `<jl-shell />`,
+  imports: [RouterOutlet],
+  template: `<router-outlet />`,
 })
 export class AppComponent {}

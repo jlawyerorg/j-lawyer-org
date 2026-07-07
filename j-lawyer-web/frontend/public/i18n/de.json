@@ -8,6 +8,17 @@
     "toLight": "Zu hellem Design wechseln",
     "language": "Sprache"
   },
+  "auth": {
+    "title": "Anmelden",
+    "subtitle": "Melden Sie sich mit Ihren j-lawyer-Zugangsdaten an.",
+    "username": "Benutzername",
+    "password": "Passwort",
+    "signIn": "Anmelden",
+    "signingIn": "Anmeldung läuft …",
+    "signOut": "Abmelden",
+    "error": "Anmeldung fehlgeschlagen. Bitte prüfen Sie Benutzername und Passwort.",
+    "demoHint": "Demo-Zugang: admin / a"
+  },
   "module": {
     "desktop": "Mein Desktop",
     "akten": "Akten",

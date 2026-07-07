@@ -3,6 +3,7 @@ import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { ThemeService } from '../core/theme.service';
 import { LanguageService } from '../core/language.service';
+import { AuthService } from '../core/auth/auth.service';
 
 /**
  * Navy top bar: wordmark (logo colors), global search, notifications, language switcher,
@@ -53,7 +54,16 @@ import { LanguageService } from '../core/language.service';
     >
       <jl-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
     </button>
-    <span class="avatar" title="Dr. Kunze">DK</span>
+    <span class="avatar" [title]="auth.user()?.displayName ?? ''">{{ auth.user()?.initials ?? '' }}</span>
+    <button
+      type="button"
+      class="icon-btn"
+      [attr.aria-label]="'auth.signOut' | transloco"
+      [title]="'auth.signOut' | transloco"
+      (click)="auth.logout()"
+    >
+      <jl-icon name="logout" />
+    </button>
   `,
   styles: [`
     :host {
@@ -102,4 +112,5 @@ import { LanguageService } from '../core/language.service';
 export class AppHeaderComponent {
   protected readonly theme = inject(ThemeService);
   protected readonly lang = inject(LanguageService);
+  protected readonly auth = inject(AuthService);
 }

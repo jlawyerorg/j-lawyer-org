@@ -8,6 +8,17 @@
     "toLight": "Switch to light theme",
     "language": "Language"
   },
+  "auth": {
+    "title": "Sign in",
+    "subtitle": "Sign in with your j-lawyer credentials.",
+    "username": "Username",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in …",
+    "signOut": "Sign out",
+    "error": "Sign-in failed. Please check your username and password.",
+    "demoHint": "Demo login: admin / a"
+  },
   "module": {
     "desktop": "My Desktop",
     "akten": "Cases",

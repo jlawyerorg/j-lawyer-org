@@ -1,5 +1,6 @@
 import { Route, Routes } from '@angular/router';
 import { MODULES } from './shell/modules';
+import { authGuard } from './core/auth/auth.guard';
 
 type LoadComponent = NonNullable<Route['loadComponent']>;
 
@@ -25,7 +26,21 @@ const moduleRoutes: Routes = MODULES.map((m) => ({
 }));
 
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'akten' },
-  ...moduleRoutes,
-  { path: '**', redirectTo: 'akten' },
+  {
+    path: 'login',
+    loadComponent: () => import('./auth/login.component').then((c) => c.LoginComponent),
+    title: 'j-lawyer',
+  },
+  {
+    // Shell layout route: all module routes are children, guarded so unauthenticated
+    // users are redirected to /login (auth.guard). Login lives outside this subtree.
+    path: '',
+    loadComponent: () => import('./shell/shell.component').then((c) => c.ShellComponent),
+    canActivateChild: [authGuard],
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'akten' },
+      ...moduleRoutes,
+      { path: '**', redirectTo: 'akten' },
+    ],
+  },
 ];

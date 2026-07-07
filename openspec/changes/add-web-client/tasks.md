@@ -27,7 +27,7 @@
 - [ ] 2.3 Login-/Auth-Flow implementieren (siehe `design.md` Decision 5 — additiv, kompatibel):
   - [ ] 2.3a Server: App-Level-JAX-RS-Auth-Filter (`@Priority(AUTHENTICATION)`), akzeptiert Basic **oder** Bearer, setzt `SecurityContext`; 401 ohne `WWW-Authenticate: Basic`
   - [ ] 2.3b Server: `POST v{n}/auth/login|refresh|logout` (JWT + httpOnly-Refresh-Cookie), gegen `SecurityService.login`; 2FA nur am Login (mit `add-two-factor-auth` koordinieren)
-  - [ ] 2.3c Client: Login-Route, `AuthService` (Signal-State), `HttpInterceptor` (Bearer + 401-Handling), Route-Guard; Access-Token nur im Speicher
+  - [~] 2.3c Client: Login-Route, `AuthService` (Signal-State), `HttpInterceptor` (Bearer + 401-Handling), Route-Guard; Access-Token nur im Speicher — **implementiert gegen Mock-Backend & verifiziert**: `LoginComponent` (Reactive-Form, i18n, hell/dunkel, Demo-Hinweis admin/a), `AuthBackend` (Mock, `sessionStorage`-Refresh-Marker als Platzhalter fürs httpOnly-Cookie), `AuthService` (Signal-Session, Token nur in-memory, `restore()`), funktionaler `authInterceptor` (Bearer nur an API-URLs, 401→Logout), `authGuard` (`canActivateChild`, Redirect `/login?returnUrl`), Shell als bewachte Layout-Route + `/login` außerhalb, `provideAppInitializer` für Silent-Restore, Logout + Nutzer-Initialen im Header. Verifiziert per Headless-Chromium: Unauth→Redirect, Falsch-Login→Fehler, admin/a→`/akten`, Reload→Session bleibt, Logout→`/login`. **Offen: Umstellung des `AuthBackend`-Mocks auf echte REST-Endpunkte (2.3b)**
   - [ ] 2.3d Verifizieren: Basic-REST-Client und Swing-Client weiterhin unverändert funktionsfähig (Kompatibilität)
 - [ ] 2.4 Fehlende Basis-REST-Endpunkte additiv in neuer API-Version ergänzen (ohne bestehende Versionen zu brechen)
 
