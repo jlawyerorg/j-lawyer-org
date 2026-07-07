@@ -1,5 +1,14 @@
 # Change: Web UI mit Funktionsumfang des j-lawyer-client
 
+## Status
+
+**Freigegeben am 2026-07-07** (jens@office-42.de) — Umsetzung freigegeben. Fixierte
+Entscheidungen: Angular · statisches Bundle als eigenständiger WAR (`j-lawyer-web`) auf
+WildFly · kostenfreie Komponentenbasis · Logo-Farben führend + responsives Master-Detail.
+Die Detail-/Folge-Entscheidungen (Bestätigungs-Spike, REST-Gap-Analyse, Auth-/Push-Modell,
+WOPI-Office-Strategie, exakte Produktionsschrift) bleiben wie in `tasks.md`/`design.md`
+markiert offen und werden im Zuge der Umsetzung getroffen.
+
 ## Why
 
 Der bestehende `j-lawyer-client` ist eine reichhaltige Swing-Desktop-Anwendung, die
