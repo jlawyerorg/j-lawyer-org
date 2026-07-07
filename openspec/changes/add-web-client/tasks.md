@@ -14,7 +14,7 @@
 - [ ] 1.4 Auth-Modell festlegen (session-/tokenbasiert) und mit `add-two-factor-auth` abstimmen
 - [ ] 1.5 Push-Mechanismus wählen (WebSocket/SSE/Polling) für Messenger, Erinnerungen, Status-Badges
 - [ ] 1.6 Office-Editing-Strategie entscheiden (WOPI via Collabora/OnlyOffice als Ziel; Download/Upload als MVP-Fallback)
-- [ ] 1.7 REST-Gap-Analyse: 24 EJB-Remote-Interfaces vs. vorhandene REST v1–v8; fehlende Endpunkte je Modul dokumentieren
+- [x] 1.7 REST-Gap-Analyse: 24 EJB-Remote-Interfaces vs. REST v1–v8; fehlende Endpunkte je Modul dokumentiert → siehe `gap-analysis.md`
 - [ ] 1.8 Offene Fragen aus `design.md` beantworten und Entscheidungen dort festhalten
 
 ## 2. Phase 0 — Fundament
