@@ -445,16 +445,30 @@ browsergeeigneter kommt daneben.
 3. SPA sendet `Authorization: Bearer <jwt>` (same-origin, kein CORS).
 4. `POST …/auth/refresh` (Refresh-Cookie) und `POST …/auth/logout` (invalidieren).
 
-**Server-seitige Umsetzung — Entscheidung: App-Level-JAX-RS-Auth-Filter (Option A).**
-Ein `ContainerRequestFilter` mit `@Priority(AUTHENTICATION)` akzeptiert **Basic *oder*
-Bearer**, validiert beides in portablem App-Code und setzt den `SecurityContext`
-(Principal + Rollen) → `@RolesAllowed` funktioniert weiter. Bei 401 an SPA/JSON-Requests
-**kein** `WWW-Authenticate: Basic` → kein natives Browser-Popup. Basic-Clients verhalten
-sich exakt wie heute (derselbe Store). Passt zur „portable application code"-Linie des
-2FA-Changes; keine Elytron-Umkonfiguration nötig.
-- *Verworfen (Option B):* WildFly-Elytron mit mehreren Mechanismen (BASIC + Bearer) —
-  sauber, aber Server-Konfiguration statt App-Code, und die deklarative Basic-Challenge
-  bliebe für die SPA störend.
+**Server-seitige Umsetzung — Entscheidung: Elytron-Bearer-Mechanismus (Option B).**
+> **Revidiert 2026-07-08.** Ursprünglich war Option A (portabler App-Level-JAX-RS-Filter,
+> der Basic *oder* Bearer selbst validiert und den JAX-RS-`SecurityContext` setzt) gewählt.
+> Eine Code-Analyse widerlegt deren Tragfähigkeit: Die EJB-Schicht stützt sich **durchgängig**
+> auf die vom Container etablierte Aufrufer-Identität — allein `ArchiveFileService` hat **180×
+> `@RolesAllowed`** und nutzt überall `context.getCallerPrincipal().getName()` für
+> Akten-Sichtbarkeit (`getAllowedCasesForUser`), Gruppen-Checks (`checkGroupsForCase`),
+> Sperren und Audit-Felder (`setCreatedBy`). Ein rein portabler JAX-RS-`SecurityContext`
+> propagiert **nicht** zur EJB-Ebene; `getCallerPrincipal()` bliebe „anonymous", und
+> Autorisierung/Gruppenfilter/Audit brächen. Damit ein JWT-Login korrekt bis in die EJBs
+> trägt, **muss** die Identität auf Elytron-Ebene entstehen.
+
+Elytron erhält **neben BASIC** einen Bearer-/JWT-Mechanismus (WildFly `BEARER_TOKEN` +
+`token-realm`). Der Login-Endpunkt stellt ein **RS256-JWT** aus (privater Schlüssel im
+Server); Elytron verifiziert es gegen den öffentlichen Schlüssel/das Zertifikat aus einem
+gemeinsamen Keystore und etabliert die `SecurityIdentity` → sie propagiert zur EJB-Ebene,
+`getCallerPrincipal()` und `@RolesAllowed` funktionieren unverändert. Rollen kommen aus einem
+JWT-Claim (bzw. werden aus `security_roles` gemappt). Bestehende Basic-Clients laufen über
+denselben `security-domain` unverändert weiter (derselbe Store). Die `/rest/v{n}/auth/*`-Pfade
+sind vom `security-constraint` ausgenommen (öffentlich), damit der Login ohne Auth erreichbar
+ist. Konfiguration liegt in `docker/wildfly/standalone.xml` (versioniert); der lokale WildFly
+braucht die gleiche Ergänzung + Keystore-Erzeugung.
+- *Verworfen (Option A):* Portabler App-Level-Filter — scheitert an der EJB-seitigen
+  `getCallerPrincipal()`-Abhängigkeit (s. o.); JAX-RS-`SecurityContext` propagiert nicht.
 
 **2FA-Einbindung:** Zweiter Faktor wird **nur am interaktiven Login-Endpunkt** erzwungen
 (dort wird das Token ausgestellt); maschinelle Basic-Clients bleiben außen vor — gewollt
@@ -517,8 +531,11 @@ Rollback pro Phase: Web-UI ist additiv; bei Problemen weiter Swing-Client nutzen
 - WOPI-Editing: Collabora Online vs. OnlyOffice; als optionaler Dienst neben WildFly
   akzeptabel? Lizenz-/Betriebskosten?
 - ~~Auth-Modell: Session-Cookies vs. Bearer-Token; Zusammenspiel mit 2FA.~~ —
-  **entschieden** (siehe Decision 5): additiver App-Level-Filter (Basic + Bearer),
-  SPA nutzt kurzlebiges JWT + httpOnly-Refresh-Cookie; 2FA nur am Login-Endpunkt.
+  **entschieden** (siehe Decision 5, revidiert 2026-07-08): Elytron-Bearer-Mechanismus
+  (`BEARER_TOKEN` + `token-realm`, RS256) **neben** BASIC, damit die JWT-Identität zur
+  EJB-Ebene propagiert; SPA nutzt kurzlebiges JWT + httpOnly-Refresh-Cookie; 2FA nur am
+  Login-Endpunkt. (Der zuvor gewählte portable App-Level-Filter scheitert an der
+  EJB-seitigen `getCallerPrincipal()`-Abhängigkeit.)
 - Push-Mechanismus: WebSocket vs. SSE vs. Polling für Messenger/Erinnerungen.
 - Companion-App für Scanner/Edit-in-place: gewünscht oder bewusst verzichten?
 - ~~Wird die Web-UI als eigenes WAR oder als Overlay ausgeliefert?~~ — **entschieden:

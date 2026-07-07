@@ -281,6 +281,10 @@
                 </security-domain>
                 <security-domain name="jlawyer-security-domain" default-realm="jlawyer-jdbc-realm" permission-mapper="default-permission-mapper">
                     <realm name="jlawyer-jdbc-realm" role-decoder="from-roles-attribute"/>
+                    <!-- Bearer/JWT identity for the web UI resolves against the token-realm; roles come
+                         from the token's "roles" claim via the same from-roles-attribute decoder as Basic,
+                         so the identity propagates to the EJB tier identically (add-web-client, Decision 5). -->
+                    <realm name="jlawyer-jwt-realm" role-decoder="from-roles-attribute"/>
                 </security-domain>
             </security-domains>
             <security-realms>
@@ -295,6 +299,12 @@
                         </attribute-mapping>
                     </principal-query>
                 </jdbc-realm>
+                <!-- Verifies RS256 web-UI access tokens against the public key in jlawyer-jwt-keystore.
+                     principal-claim "sub" becomes the caller principal; the "roles" claim becomes the
+                     multi-valued "roles" attribute consumed by the from-roles-attribute role-decoder. -->
+                <token-realm name="jlawyer-jwt-realm" principal-claim="sub">
+                    <jwt issuer="j-lawyer" audience="j-lawyer-web" key-store="jlawyer-jwt-keystore" certificate="jwt"/>
+                </token-realm>
                 <properties-realm name="ApplicationRealm">
                     <users-properties path="application-users.properties" relative-to="jboss.server.config.dir" digest-realm-name="ApplicationRealm"/>
                     <groups-properties path="application-roles.properties" relative-to="jboss.server.config.dir"/>
@@ -347,6 +357,16 @@
                         </mechanism>
                     </mechanism-configuration>
                 </http-authentication-factory>
+                <!-- j-lawyer-io offers BOTH Basic (unchanged, existing REST clients) and Bearer/JWT
+                     (web UI) against the same jlawyer-security-domain (add-web-client, Decision 5). -->
+                <http-authentication-factory name="jlawyer-http-authentication" security-domain="jlawyer-security-domain" http-server-mechanism-factory="global">
+                    <mechanism-configuration>
+                        <mechanism mechanism-name="BASIC">
+                            <mechanism-realm realm-name="jlawyerRealm"/>
+                        </mechanism>
+                        <mechanism mechanism-name="BEARER_TOKEN"/>
+                    </mechanism-configuration>
+                </http-authentication-factory>
                 <provider-http-server-mechanism-factory name="global"/>
             </http>
             <sasl>
@@ -392,6 +412,16 @@
                         <credential-reference clear-text="password"/>
                         <implementation type="JKS"/>
                         <file path="application.keystore" relative-to="jboss.server.config.dir"/>
+                    </key-store>
+                    <!-- RSA key pair for verifying j-lawyer web-UI JWT access tokens (add-web-client, Decision 5).
+                         The j-lawyer-io deployment signs with the private key of the SAME keystore. Generate with:
+                         keytool -genkeypair -alias jwt -keyalg RSA -keysize 2048 -sigalg SHA256withRSA \
+                           -dname "CN=j-lawyer" -validity 3650 -storetype PKCS12 \
+                           -keystore j-lawyer-jwt.p12 -storepass changeit -->
+                    <key-store name="jlawyer-jwt-keystore">
+                        <credential-reference clear-text="changeit"/>
+                        <implementation type="PKCS12"/>
+                        <file path="j-lawyer-jwt.p12" relative-to="jboss.server.config.dir"/>
                     </key-store>
                 </key-stores>
                 <key-managers>
@@ -569,7 +599,11 @@
             </handlers>
             <application-security-domains>
                 <application-security-domain name="other" security-domain="ApplicationDomain"/>
-                <application-security-domain name="jlawyer-application-security-domain" security-domain="jlawyer-security-domain"/>
+                <!-- Bearer + Basic for the HTTP tier via the explicit factory; override-deployment-config
+                     makes Undertow offer BEARER_TOKEN in addition to the war's declared BASIC login-config
+                     (add-web-client, Decision 5). The EJB tier keeps mapping this name to the security-domain
+                     (see ejb3 subsystem), so the authenticated identity still propagates to EJBs. -->
+                <application-security-domain name="jlawyer-application-security-domain" http-authentication-factory="jlawyer-http-authentication" override-deployment-config="true"/>
             </application-security-domains>
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:webservices:2.0" statistics-enabled="${wildfly.webservices.statistics-enabled:${wildfly.statistics-enabled:false}}">

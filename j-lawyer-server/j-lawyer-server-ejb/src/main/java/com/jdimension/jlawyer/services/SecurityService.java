@@ -696,6 +696,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 import javax.annotation.Resource;
+import com.jdimension.jlawyer.security.PasswordsUtil;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
 import javax.ejb.SessionContext;
@@ -753,6 +758,44 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
     @RolesAllowed({"loginRole"})
     public boolean login(String principalId, String password) {
         return false;
+    }
+
+    @Override
+    @PermitAll
+    public List<String> authenticateAndGetRoles(String principalId, String password) {
+        if (principalId == null || password == null) {
+            return null;
+        }
+
+        AppUserBean user = this.userBeanFacade.findByPrincipalIdUnrestricted(principalId);
+        if (user == null || user.getPassword() == null) {
+            return null;
+        }
+
+        String candidateHash;
+        try {
+            candidateHash = PasswordsUtil.createPasswordHash(password);
+        } catch (NoSuchAlgorithmException ex) {
+            log.error("SHA-256 unavailable while authenticating " + principalId, ex);
+            return null;
+        }
+
+        // constant-time comparison to avoid leaking hash length/prefix via timing
+        boolean matches = MessageDigest.isEqual(
+                user.getPassword().getBytes(StandardCharsets.UTF_8),
+                candidateHash.getBytes(StandardCharsets.UTF_8));
+        if (!matches) {
+            log.info("failed web login attempt for principal id: " + principalId);
+            return null;
+        }
+
+        List<String> roles = new ArrayList<>();
+        for (AppRoleBean role : this.roleBeanFacade.findByPrincipalId(principalId)) {
+            if (role.getRole() != null) {
+                roles.add(role.getRole());
+            }
+        }
+        return roles;
     }
 
     @Override

@@ -695,5 +695,19 @@ public interface SecurityServiceLocal {
     boolean addUserToInvoicePool(String principalId, String poolId) throws Exception;
     
     public AppUserBean getUserByExternalId(String extId);
-    
+
+    /**
+     * Authenticates a principal against the same user/role store as the container's HTTP
+     * Basic auth and returns the granted role names. Intended to back a browser login
+     * endpoint (see OpenSpec change {@code add-web-client}, Decision 5): unlike
+     * {@code login(...)}, this method is callable without an already-authenticated caller
+     * ({@code @PermitAll}), because the SPA is not yet authenticated when it logs in.
+     *
+     * @param principalId the user name
+     * @param password    the clear-text password (compared against the stored SHA-256 hash)
+     * @return the user's role names on success, or {@code null} if the user is unknown or
+     *         the password does not match
+     */
+    List<String> authenticateAndGetRoles(String principalId, String password);
+
 }

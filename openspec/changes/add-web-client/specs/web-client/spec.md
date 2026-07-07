@@ -195,6 +195,10 @@ SHALL denselben Nutzer-/Rollen-Store wie die bestehende Authentifizierung verwen
 - **WHEN** eine nicht authentifizierte Anfrage der Web-UI abgewiesen wird
 - **THEN** antwortet der Server mit einem für die SPA geeigneten 401 (ohne `WWW-Authenticate: Basic`), sodass kein natives Browser-Anmeldefenster erscheint
 
+#### Scenario: Token-Identität propagiert zur EJB-Ebene
+- **WHEN** eine Web-UI-Anfrage mit gültigem Token einen Endpunkt aufruft, der Business-EJBs verwendet
+- **THEN** entspricht die vom Server etablierte Aufrufer-Identität (`getCallerPrincipal()`) dem angemeldeten Nutzer und seinen Rollen, sodass EJB-seitige Autorisierung (Akten-/Gruppen-Sichtbarkeit) und Audit-Felder korrekt greifen — identisch zum Basic-authentifizierten Zugriff
+
 ### Requirement: Funktionsparität mit dem Desktop-Client als Zielbild
 Das System SHALL schrittweise Funktionsparität mit dem Swing-Client anstreben und die
 Kernmodule abdecken: Fälle, Dokumente, Kontakte, Kalender/Fristen, Finanzen/Rechnungen,

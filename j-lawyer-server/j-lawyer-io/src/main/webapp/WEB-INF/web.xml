@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+    <!--
+        Public browser-login endpoints (OpenSpec add-web-client, Decision 5): the SPA is not
+        yet authenticated when it calls /rest/v8/auth/login|refresh|logout, so this more
+        specific pattern (no auth-constraint) makes those paths public. The container's Basic
+        challenge therefore never fires for the login, and the endpoint returns a plain 401
+        without WWW-Authenticate. All other paths remain behind the loginRole constraint below.
+    -->
+    <security-constraint>
+        <display-name>PublicAuthEndpoints</display-name>
+        <web-resource-collection>
+            <web-resource-name>auth</web-resource-name>
+            <url-pattern>/rest/v8/auth/*</url-pattern>
+        </web-resource-collection>
+    </security-constraint>
     <security-constraint>
         <display-name>Constraint1</display-name>
         <web-resource-collection>
