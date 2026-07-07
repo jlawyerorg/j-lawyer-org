@@ -1,0 +1,13 @@
+# Generated / not committed (roles mirror maven-repo/: generated, seeded on build)
+node_modules/
+dist/
+.angular/
+target/
+
+# Generated npm cache populated by scripts/seed-npm-cache.sh from vendor-npm/*.tgz
+.npm-cache/
+
+# Committed on purpose (do NOT ignore):
+#   package.json, package-lock.json  -> pinned + integrity-hashed dependency graph
+#   vendor-npm/*.tgz                  -> vetted, committed tarballs (role like lib/ jars)
+#   .npmrc, SUPPLY-CHAIN.md, scripts/ -> guardrail config & policy
