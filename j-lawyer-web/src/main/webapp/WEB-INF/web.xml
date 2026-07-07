@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+         version="3.1">
+
+    <display-name>j-lawyer-web</display-name>
+
+    <welcome-file-list>
+        <welcome-file>index.html</welcome-file>
+    </welcome-file-list>
+
+    <!--
+        SPA client-side routing: serve index.html for unknown paths so Angular's router
+        can handle deep links / reloads. Angular processes the route client-side.
+    -->
+    <error-page>
+        <error-code>404</error-code>
+        <location>/index.html</location>
+    </error-page>
+
+    <!--
+        NOTE: The authoritative Content-Security-Policy and security headers
+        (incl. frame-ancestors, X-Content-Type-Options, Referrer-Policy) are set as
+        response headers at the WildFly/Undertow layer, not here. A CSP baseline is
+        also present as a <meta> tag in index.html. See SUPPLY-CHAIN.md.
+    -->
+</web-app>

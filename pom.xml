@@ -44,6 +44,21 @@
         <module>j-lawyer-backupmgr</module>
     </modules>
 
+    <!--
+        The web UI (j-lawyer-web, standalone Angular WAR) is opt-in via `-Pweb` so the
+        default reactor build stays unaffected until its npm supply-chain seeding and
+        toolchain are ready (see j-lawyer-web/SUPPLY-CHAIN.md; OpenSpec change
+        add-web-client). Build it with:  mvn -Pweb -pl j-lawyer-web -am install
+    -->
+    <profiles>
+        <profile>
+            <id>web</id>
+            <modules>
+                <module>j-lawyer-web</module>
+            </modules>
+        </profile>
+    </profiles>
+
     <dependencyManagement>
         <dependencies>
             <!-- inter-module artifacts -->

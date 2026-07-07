@@ -66,12 +66,16 @@ Hand) minimiert Dritt-transitive Pakete — kleinere Angriffsfläche als ein
 handzusammengestellter Stack (siehe Decision 2b).
 
 ## Dateien in diesem Modul
-- `.npmrc` — erzwingt `ignore-scripts`, `save-exact`, `package-lock`, `engine-strict`,
-  `fund=false`, `audit=false` (Audit dediziert in CI).
-- `.gitignore` — `node_modules/`, `dist/`, `.angular/` und der generierte npm-Cache sind
-  nicht committet (Rolle wie `maven-repo/`); `package-lock.json` **wird** committet.
-- `scripts/seed-npm-cache.sh` — befüllt den npm-Cache aus `vendor-npm/*.tgz` (Skelett;
-  wird nach dem ersten Lockfile/Seeding in Phase 1 scharf geschaltet).
+Das npm/Angular-Projekt liegt unter `frontend/`; die Maven-WAR-Assembly im Modul-Root
+(`pom.xml`, `src/main/webapp/`). npm läuft ausschließlich in `frontend/`.
+- `frontend/.npmrc` — erzwingt `ignore-scripts`, `save-exact`, `package-lock`,
+  `engine-strict`, `fund=false`, `audit=false` (Audit dediziert in CI).
+- `frontend/.gitignore` — `node_modules/`, `dist/`, `.angular/` und der generierte
+  npm-Cache sind nicht committet (Rolle wie `maven-repo/`); `package-lock.json`
+  **wird** committet.
+- `frontend/scripts/seed-npm-cache.sh` — befüllt den npm-Cache aus
+  `frontend/vendor-npm/*.tgz` (Skelett; wird nach dem ersten Lockfile/Seeding in
+  Phase 1 scharf geschaltet).
 
 ## Status
 Guardrail-Konfiguration und -Policy sind **vor** dem Scaffolding etabliert. Das

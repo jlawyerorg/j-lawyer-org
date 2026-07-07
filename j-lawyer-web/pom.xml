@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.jlawyer</groupId>
+        <artifactId>j-lawyer-parent</artifactId>
+        <version>2.8.0</version>
+    </parent>
+
+    <artifactId>j-lawyer-web</artifactId>
+    <packaging>war</packaging>
+    <name>j-lawyer-web</name>
+    <description>
+        Standalone WAR serving the static Angular web UI (design.md Decision 2a).
+        Contains no servlets/JAX-RS — only the built Angular bundle + web.xml SPA
+        fallback. The Angular project lives under frontend/; supply-chain guardrails
+        are documented in SUPPLY-CHAIN.md.
+    </description>
+
+    <properties>
+        <!-- Pin the toolchain used to build the frontend (reproducible builds). -->
+        <frontend.plugin.version>1.15.1</frontend.plugin.version>
+        <node.version>v20.11.1</node.version>
+        <npm.version>10.2.4</npm.version>
+        <!-- npm install command: reproducible + hardened (see SUPPLY-CHAIN.md).
+             For the one-time Phase-1 seeding, override this property (online, scripts
+             ignored) via the command line. -->
+        <npm.install.args>ci --offline --ignore-scripts</npm.install.args>
+    </properties>
+
+    <build>
+        <finalName>j-lawyer-web</finalName>
+        <plugins>
+            <!-- Build the Angular bundle from ./frontend during the Maven build.
+                 Node/npm are provisioned locally by the plugin; nothing is needed on
+                 the machine except network access for the one-time node download
+                 (or a pre-provisioned node). No Node runtime in production. -->
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>${frontend.plugin.version}</version>
+                <configuration>
+                    <workingDirectory>frontend</workingDirectory>
+                    <installDirectory>${project.build.directory}</installDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>install-node-and-npm</id>
+                        <goals><goal>install-node-and-npm</goal></goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <nodeVersion>${node.version}</nodeVersion>
+                            <npmVersion>${npm.version}</npmVersion>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm-install</id>
+                        <goals><goal>npm</goal></goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <arguments>${npm.install.args}</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm-build</id>
+                        <goals><goal>npm</goal></goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <arguments>run build:prod</arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Package the built static bundle (frontend/dist/j-lawyer-web/browser)
+                 plus web.xml into the WAR. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <configuration>
+                    <webResources>
+                        <resource>
+                            <directory>frontend/dist/j-lawyer-web/browser</directory>
+                        </resource>
+                    </webResources>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

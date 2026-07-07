@@ -2,7 +2,7 @@
 
 - [ ] 1.0 Design vorab exakt ausarbeiten (interaktiver Prototyp/Mockup via Claude-Artifacts) auf Basis Referenz-Screenshot + Logo-Farben; abnehmen lassen
 - [ ] 1.1 Design-System-Ansatz festlegen (Tokens-Quelle, Komponentenbibliothek, Governance) — siehe `design.md` Decision 1
-- [ ] 1.1a Farb-Tokens festlegen: **Logo-Farben führend** (`#0e72b5`/`#de313b`/`#97bf0d`/`#666666` aus `ServerColorTheme`) als Primärtoken + Neutralfarben aus dem Screenshot (Navy `#0b1b2c`, Off-White, Creme) → Tints/Shades, WCAG-Kontraste; Layout NICHT aus dem Mockup ableiten
+- [~] 1.1a Farb-Tokens festlegen: **Logo-Farben führend** (`#0e72b5`/`#de313b`/`#97bf0d`/`#666666` aus `ServerColorTheme`) als Primärtoken + Neutralfarben aus dem Screenshot (Navy `#0b1b2c`, Off-White, Creme) → in `frontend/src/styles/tokens.css` implementiert (hell/dunkel). Offen: finale Tints/Shades + WCAG-Kontrastprüfung; Layout NICHT aus dem Mockup ableiten
 - [ ] 1.1a-2 Typografie festlegen: self-hostbare Open-Source-Grotesk-Sans (im WAR gebündelt); exakte `font-family` aus dem CSS der Live-Website bestätigen
 - [ ] 1.1b Responsive Breakpoints + adaptive Layout-Muster definieren (Desktop/Tablet/Smartphone, Tabelle→Karte) — siehe `design.md` Decision 3a
 - [x] 1.2 SPA-Framework per gewichteter Bewertung entscheiden → **Angular** (siehe `design.md` Decision 2b)
@@ -20,8 +20,8 @@
 ## 2. Phase 0 — Fundament
 
 - [ ] 2.1 Design-System-Paket: Tokens, responsive App-Shell (adaptive Modulleiste/Bottom-Nav, Auth, Fehler-/Ladezustände), Komponentenkatalog
-- [ ] 2.2 Neues Maven-Modul `j-lawyer-web` (eigenständiger WAR): `frontend-maven-plugin` baut das Angular-Bundle, `maven-war-plugin` verpackt die statischen Assets + SPA-Fallback (unbekannte Pfade → `index.html`); `deploy.sh` um das zweite Artefakt erweitern
-- [ ] 2.2a Laufzeit-Härtung: alle Assets self-hosten (keine CDNs), strikte CSP als WildFly-/`web.xml`-Header (`default-src 'self'` …), Nonce für Component-Styles (`ngCspNonce`), Trusted Types aktivieren
+- [~] 2.2 Neues Maven-Modul `j-lawyer-web` (eigenständiger WAR) — **Gerüst erstellt (ohne Build)**: Angular-19-Projekt in `frontend/` (standalone, Signals-first), `pom.xml` mit `frontend-maven-plugin` + `maven-war-plugin`, `web.xml` SPA-Fallback (404 → `index.html`), opt-in Reactor-Profil `-Pweb` (bricht den Default-Build nicht). Offen: Phase-1-npm-Seeding, erster Build/`ng`-Build, `deploy.sh` um das WAR erweitern
+- [~] 2.2a Laufzeit-Härtung — **CSP-Baseline gesetzt**: alle Assets self-hosten (keine CDNs), CSP-`<meta>` in `index.html` (`default-src 'self'`; `script-src 'self'`). Offen: autoritative CSP-/Security-Header auf WildFly/Undertow (inkl. `frame-ancestors`), Nonce für Component-Styles (`ngCspNonce`), Trusted Types
 - [x] 2.2b Build-Härtung — Guardrails-Config & Policy etabliert (vor dem Scaffold): `j-lawyer-web/.npmrc` (`ignore-scripts`, `save-exact`, `package-lock`, `engine-strict`, `audit=false`), `.gitignore`, `SUPPLY-CHAIN.md`, `scripts/seed-npm-cache.sh` (Analog zu `maven-repo/`). Offen bis Scaffold: tatsächliches Seeding (`vendor-npm/`), `esbuild`-`postinstall` verifizieren/allowlisten, `npm audit`-CI-Gate + Dependabot scharf schalten
 - [ ] 2.3 Login-/Auth-Flow implementieren (Same-Origin, sichere Session/Token)
 - [ ] 2.4 Fehlende Basis-REST-Endpunkte additiv in neuer API-Version ergänzen (ohne bestehende Versionen zu brechen)

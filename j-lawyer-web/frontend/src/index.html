@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>j-lawyer</title>
+  <!-- Deployed as standalone WAR under this context path (design.md Decision 2a). -->
+  <base href="/j-lawyer-web/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!--
+    CSP baseline (design.md Decision 2c): no remote code at runtime, same-origin only.
+    This <meta> is a fallback; the AUTHORITATIVE CSP + security headers (incl.
+    frame-ancestors, X-Content-Type-Options, Referrer-Policy) are set as response
+    headers at the WildFly/Undertow layer — see ../SUPPLY-CHAIN.md and web.xml notes.
+    style-src allows 'unsafe-inline' for Angular component styles in this baseline;
+    harden to nonce-based (ngCspNonce) in the server header.
+  -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+
+  <meta name="color-scheme" content="light dark">
+</head>
+<body>
+  <jl-root></jl-root>
+</body>
+</html>
