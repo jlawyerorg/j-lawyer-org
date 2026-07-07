@@ -1,19 +1,22 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 /**
- * Placeholder landing route for the scaffold. Confirms the design tokens are wired
- * (logo colors + neutrals). Replaced by the real Akten module in a later phase.
+ * Generic per-module landing until the real module is built (OpenSpec add-web-client,
+ * phased rollout). Reads its label from the route data so one component serves all
+ * not-yet-implemented modules.
  */
 @Component({
-  selector: 'jl-home',
+  selector: 'jl-module-placeholder',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="card">
-      <p class="label">Scaffold</p>
-      <h1>j-lawyer Web-UI</h1>
-      <p>
-        Gerüst steht. Design-Tokens (Logo-Farben + Neutrale) sind eingebunden;
-        Module folgen phasenweise (siehe OpenSpec-Change <code>add-web-client</code>).
+      <p class="label">Modul</p>
+      <h1>{{ label() }}</h1>
+      <p class="muted">
+        Dieses Modul wird phasenweise umgesetzt. Shell, Design-System und Routing stehen;
+        die Fachinhalte folgen (OpenSpec-Change <code>add-web-client</code>).
       </p>
       <div class="swatches" aria-hidden="true">
         <span style="background:var(--jl-blue)"></span>
@@ -34,9 +37,13 @@ import { Component } from '@angular/core';
       margin: 0; font-size: .7rem; text-transform: uppercase; letter-spacing: .09em;
       font-weight: 600; color: var(--jl-ink-faint);
     }
+    .muted { color: var(--jl-ink-soft); }
     code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
     .swatches { display: flex; gap: 8px; margin-top: 18px; }
     .swatches span { width: 40px; height: 40px; border-radius: 8px; }
   `],
 })
-export class HomeComponent {}
+export class ModulePlaceholderComponent {
+  private readonly route = inject(ActivatedRoute);
+  protected readonly label = signal<string>(this.route.snapshot.data['label'] ?? 'Modul');
+}
