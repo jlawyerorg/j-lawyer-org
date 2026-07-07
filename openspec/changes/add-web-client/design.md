@@ -391,6 +391,34 @@ festgelegt:
 7. **Diktat/Audio.** Aufnahme im Browser via MediaRecorder-API möglich, aber
    Diktiergeräte-Hardware (Fußschalter etc.) nicht — reiner Web-Workaround.
 
+## Decision 4 — Mehrsprachigkeit (i18n)
+
+**Anforderung (Auftraggeber):** Die UI muss mehrsprachig sein (Deutsch + Englisch), und
+weitere Sprachen müssen später einfach hinzufügbar sein (inkl. Umschaltung zur Laufzeit).
+
+**Verworfen — Angulars eingebautes i18n (`@angular/localize`):** kompiliert **einen
+Build pro Sprache** und unterstützt **kein Umschalten zur Laufzeit** (Sprachwechsel =
+andere ausgelieferte App unter anderem Pfad). Passt nicht zu „umschaltbar + einfach
+erweiterbar".
+
+**Entscheidung — Runtime-i18n mit Transloco (`@jsverse/transloco`, MIT):**
+- **Laufzeit-Umschaltung** über einen Sprachwähler im Header; kein Rebuild/Redeploy.
+- **Neue Sprache = eine JSON-Datei** (`public/i18n/<code>.json`) **+ ein Listeneintrag**
+  in `core/i18n.ts` (`APP_LANGUAGES`). Verfügbare Sprachen und der Header-Wähler werden
+  daraus abgeleitet — keine weiteren Codeänderungen.
+- **Self-hosted JSON** im WAR (`/j-lawyer-web/i18n/*.json`), geladen via `HttpClient`
+  relativ zum `<base href>` → **kein CDN, CSP-konform** (`connect-src 'self'`).
+- **Persistenz**: gewählte Sprache in `localStorage`; Initialsprache = gespeichert >
+  Browser (`navigator.language`) > Default (`de`).
+- Alle sichtbaren Strings (inkl. `aria-label`/Placeholder) laufen über Transloco-Keys.
+
+**Alternative:** `@ngx-translate/core` (funktional gleichwertig, etwas simpler) — leicht
+austauschbar, falls gewünscht.
+
+**Trade-off:** eine zusätzliche Laufzeit-Abhängigkeit (Transloco, 5 Pakete, MIT) —
+gegen den Gewinn an Laufzeit-Umschaltung und triviale Sprach-Erweiterung. Bewusst
+akzeptiert; passt zur Supply-Chain-Leitplanke (kleiner, reputabler, self-hosted).
+
 ## Risks / Trade-offs
 
 - **Scope-Risiko**: Vollparität ist sehr groß (16+ Module). → Phasenplan mit MVP und

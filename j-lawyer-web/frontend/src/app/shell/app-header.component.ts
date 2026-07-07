@@ -1,33 +1,56 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { ThemeService } from '../core/theme.service';
+import { LanguageService } from '../core/language.service';
 
 /**
- * Navy top bar: wordmark (logo colors), global search, notifications, theme toggle,
- * user avatar. Chrome stays navy in both themes (design-mockup.html).
+ * Navy top bar: wordmark (logo colors), global search, notifications, language switcher,
+ * theme toggle, user avatar. Chrome stays navy in both themes (design-mockup.html).
+ * All user-facing strings are translated (Transloco); labels come from public/i18n.
  */
 @Component({
   selector: 'jl-app-header',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent],
+  imports: [IconComponent, TranslocoModule],
   template: `
-    <span class="wordmark"><span class="dots" aria-hidden="true"></span><b>j-lawyer</b><span class="sub">Kanzlei München</span></span>
+    <span class="wordmark">
+      <span class="dots" aria-hidden="true"></span><b>j-lawyer</b>
+      <span class="sub">{{ 'header.firm' | transloco }}</span>
+    </span>
 
     <label class="search">
       <jl-icon name="search" [size]="15" />
-      <input type="search" placeholder="Akten, Kontakte, Dokumente durchsuchen …" aria-label="Suche" />
+      <input type="search" [placeholder]="'header.search' | transloco" [attr.aria-label]="'header.search' | transloco" />
     </label>
 
     <span class="spacer"></span>
 
-    <button type="button" class="icon-btn" aria-label="Nachrichten">
+    <select
+      class="lang"
+      #langSel
+      [value]="lang.current()"
+      (change)="lang.use(langSel.value)"
+      [attr.aria-label]="'header.language' | transloco"
+    >
+      @for (l of lang.languages; track l.code) {
+        <option [value]="l.code">{{ l.code.toUpperCase() }}</option>
+      }
+    </select>
+
+    <button type="button" class="icon-btn" [attr.aria-label]="'header.messages' | transloco">
       <jl-icon name="mail" /><span class="badge">3</span>
     </button>
-    <button type="button" class="icon-btn" aria-label="Benachrichtigungen">
+    <button type="button" class="icon-btn" [attr.aria-label]="'header.notifications' | transloco">
       <jl-icon name="bell" /><span class="badge">5</span>
     </button>
-    <button type="button" class="icon-btn" [attr.aria-label]="themeLabel()" (click)="theme.toggle()">
+    <button
+      type="button"
+      class="icon-btn"
+      [attr.aria-label]="(theme.theme() === 'dark' ? 'header.toLight' : 'header.toDark') | transloco"
+      (click)="theme.toggle()"
+    >
       <jl-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
     </button>
     <span class="avatar" title="Dr. Kunze">DK</span>
@@ -52,6 +75,11 @@ import { ThemeService } from '../core/theme.service';
     .search input { all: unset; flex: 1; color: #eaf1f7; min-width: 0; font: inherit; }
     .search input::placeholder { color: #8ba0b2; }
     .spacer { flex: 1; }
+    .lang {
+      background: #ffffff14; color: #eaf1f7; border: 1px solid #ffffff1f;
+      border-radius: 8px; padding: 6px 8px; font: inherit; font-size: .82rem; cursor: pointer;
+    }
+    .lang option { color: #14222e; }
     .icon-btn {
       position: relative; width: 34px; height: 34px; display: grid; place-items: center;
       border-radius: 8px; background: transparent; border: 1px solid transparent;
@@ -73,7 +101,5 @@ import { ThemeService } from '../core/theme.service';
 })
 export class AppHeaderComponent {
   protected readonly theme = inject(ThemeService);
-  protected readonly themeLabel = computed(() =>
-    this.theme.theme() === 'dark' ? 'Zu hellem Design wechseln' : 'Zu dunklem Design wechseln',
-  );
+  protected readonly lang = inject(LanguageService);
 }

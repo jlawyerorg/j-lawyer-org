@@ -1,0 +1,31 @@
+{
+  "header": {
+    "firm": "Kanzlei München",
+    "search": "Akten, Kontakte, Dokumente durchsuchen …",
+    "messages": "Nachrichten",
+    "notifications": "Benachrichtigungen",
+    "toDark": "Zu dunklem Design wechseln",
+    "toLight": "Zu hellem Design wechseln",
+    "language": "Sprache"
+  },
+  "module": {
+    "desktop": "Mein Desktop",
+    "akten": "Akten",
+    "adressen": "Adressen",
+    "kalender": "Kalender & Fristen",
+    "kommunikation": "Kommunikation",
+    "dokumente": "Dokumente",
+    "finanzen": "Finanzen",
+    "reporting": "Reporting",
+    "einstellungen": "Einstellungen",
+    "mehr": "Mehr"
+  },
+  "placeholder": {
+    "eyebrow": "Modul",
+    "body": "Dieses Modul wird phasenweise umgesetzt. Shell, Design-System und Routing stehen; die Fachinhalte folgen."
+  },
+  "nav": {
+    "modules": "Module",
+    "modulesMobile": "Module (mobil)"
+  }
+}

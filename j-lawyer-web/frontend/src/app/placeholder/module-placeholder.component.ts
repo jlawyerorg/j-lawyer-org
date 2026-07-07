@@ -1,23 +1,22 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { TranslocoModule } from '@jsverse/transloco';
 
 /**
  * Generic per-module landing until the real module is built (OpenSpec add-web-client,
- * phased rollout). Reads its label from the route data so one component serves all
- * not-yet-implemented modules.
+ * phased rollout). Reads its i18n label key from the route data so one component serves
+ * all not-yet-implemented modules.
  */
 @Component({
   selector: 'jl-module-placeholder',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TranslocoModule],
   template: `
     <section class="card">
-      <p class="label">Modul</p>
-      <h1>{{ label() }}</h1>
-      <p class="muted">
-        Dieses Modul wird phasenweise umgesetzt. Shell, Design-System und Routing stehen;
-        die Fachinhalte folgen (OpenSpec-Change <code>add-web-client</code>).
-      </p>
+      <p class="label">{{ 'placeholder.eyebrow' | transloco }}</p>
+      <h1>{{ labelKey() | transloco }}</h1>
+      <p class="muted">{{ 'placeholder.body' | transloco }}</p>
       <div class="swatches" aria-hidden="true">
         <span style="background:var(--jl-blue)"></span>
         <span style="background:var(--jl-red)"></span>
@@ -45,5 +44,7 @@ import { ActivatedRoute } from '@angular/router';
 })
 export class ModulePlaceholderComponent {
   private readonly route = inject(ActivatedRoute);
-  protected readonly label = signal<string>(this.route.snapshot.data['label'] ?? 'Modul');
+  protected readonly labelKey = signal<string>(
+    this.route.snapshot.data['labelKey'] ?? 'placeholder.eyebrow',
+  );
 }

@@ -5,6 +5,7 @@ import { MODULES } from './shell/modules';
  * Routes are derived from the module list so navigation and routing stay in sync.
  * Every module currently resolves to a placeholder; real module components replace
  * these entries per migration phase (OpenSpec change add-web-client, tasks.md).
+ * The module's i18n key is passed via route data for the placeholder heading.
  */
 const moduleRoutes: Routes = MODULES.map((m) => ({
   path: m.path,
@@ -12,8 +13,8 @@ const moduleRoutes: Routes = MODULES.map((m) => ({
     import('./placeholder/module-placeholder.component').then(
       (c) => c.ModulePlaceholderComponent,
     ),
-  data: { label: m.label },
-  title: `${m.label} – j-lawyer`,
+  data: { labelKey: m.labelKey },
+  title: 'j-lawyer',
 }));
 
 export const routes: Routes = [

@@ -1,0 +1,31 @@
+{
+  "header": {
+    "firm": "Munich Law Office",
+    "search": "Search cases, contacts, documents …",
+    "messages": "Messages",
+    "notifications": "Notifications",
+    "toDark": "Switch to dark theme",
+    "toLight": "Switch to light theme",
+    "language": "Language"
+  },
+  "module": {
+    "desktop": "My Desktop",
+    "akten": "Cases",
+    "adressen": "Contacts",
+    "kalender": "Calendar & Deadlines",
+    "kommunikation": "Communication",
+    "dokumente": "Documents",
+    "finanzen": "Finance",
+    "reporting": "Reporting",
+    "einstellungen": "Settings",
+    "mehr": "More"
+  },
+  "placeholder": {
+    "eyebrow": "Module",
+    "body": "This module is being delivered in phases. The shell, design system and routing are in place; the functional content follows."
+  },
+  "nav": {
+    "modules": "Modules",
+    "modulesMobile": "Modules (mobile)"
+  }
+}

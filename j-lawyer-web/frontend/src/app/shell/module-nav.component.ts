@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { MODULES, ModuleLink } from './modules';
 
@@ -12,21 +13,21 @@ import { MODULES, ModuleLink } from './modules';
   selector: 'jl-module-nav',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive, IconComponent],
+  imports: [RouterLink, RouterLinkActive, IconComponent, TranslocoModule],
   template: `
-    <nav aria-label="Module">
+    <nav [attr.aria-label]="'nav.modules' | transloco">
       @for (m of primary; track m.path) {
-        <a [routerLink]="m.path" routerLinkActive="active" [title]="m.label">
+        <a [routerLink]="m.path" routerLinkActive="active" [title]="m.labelKey | transloco">
           <jl-icon [name]="m.icon" />
-          <span class="txt">{{ m.label }}</span>
+          <span class="txt">{{ m.labelKey | transloco }}</span>
           @if (m.badge) { <span class="nav-badge">{{ m.badge }}</span> }
         </a>
       }
       <span class="grow"></span>
       @for (m of footer; track m.path) {
-        <a [routerLink]="m.path" routerLinkActive="active" [title]="m.label">
+        <a [routerLink]="m.path" routerLinkActive="active" [title]="m.labelKey | transloco">
           <jl-icon [name]="m.icon" />
-          <span class="txt">{{ m.label }}</span>
+          <span class="txt">{{ m.labelKey | transloco }}</span>
         </a>
       }
     </nav>

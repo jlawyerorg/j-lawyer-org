@@ -115,6 +115,26 @@ Registry; Abhängigkeits-Scanning).
 - **WHEN** das Frontend-Bundle gebaut wird
 - **THEN** werden Abhängigkeiten gepinnt und integritätsgeprüft aus einer kontrollierten (gespiegelten/vendorten) Registry ohne Ausführung von Install-Skripten aufgelöst
 
+### Requirement: Mehrsprachige Oberfläche mit Laufzeit-Umschaltung
+Die Web-UI SHALL mehrsprachig sein (mindestens Deutsch und Englisch) und die Sprache
+**zur Laufzeit** umschaltbar anbieten (ohne Rebuild/Redeploy). Das Hinzufügen einer
+weiteren Sprache SHALL ohne Codeänderung an den Modulen möglich sein (eine
+Übersetzungsdatei plus ein zentraler Listeneintrag). Alle sichtbaren Texte SHALL über
+Übersetzungsschlüssel aufgelöst werden; Übersetzungsressourcen MUST NOT von externen
+Hosts geladen werden (self-hosted, same-origin — vgl. Supply-Chain/CSP).
+
+#### Scenario: Sprache zur Laufzeit wechseln
+- **WHEN** ein Anwender im Sprachwähler von Deutsch auf Englisch wechselt
+- **THEN** werden die sichtbaren Texte sofort auf Englisch dargestellt, ohne Neuladen/Redeploy, und die Wahl bleibt für die nächste Sitzung erhalten
+
+#### Scenario: Weitere Sprache hinzufügen
+- **WHEN** eine neue Übersetzungsdatei plus zentraler Listeneintrag ergänzt wird
+- **THEN** erscheint die Sprache im Wähler und ist nutzbar, ohne die Module zu ändern
+
+#### Scenario: Initiale Sprachwahl
+- **WHEN** ein Anwender die Anwendung erstmals öffnet
+- **THEN** wird die Sprache aus vorheriger Wahl, sonst aus der Browsersprache, sonst aus dem Default (Deutsch) bestimmt
+
 ### Requirement: Kostenfreie und anpassbare Komponentenbasis
 Das gewählte Framework und die genutzten UI-Komponenten MUST NOT wiederkehrende
 Lizenzkosten verursachen (permissive Lizenzen wie MIT/Apache). Das Framework SHALL das
