@@ -29,7 +29,7 @@
 
 ## 3. Phase 1 — MVP (Read-first)
 
-- [ ] 3.1 Fallliste + Suche + Falldetail
+- [~] 3.1 Fallliste + Suche + Falldetail — **UI implementiert & verifiziert**: `AktenComponent` (responsives Master-Detail), filterbare/durchsuchbare Liste mit Status-Pills, Detail mit Reiter „Übersicht" (Beteiligte, Fristen, letzte Dokumente, Notiz), i18n (DE/EN), Logo-Tokens, hell/dunkel. `CasesService` mit REST-kompatiblen Modellen (`RestfulCaseV1`/`Party`/`DueDate`). Verifiziert per Headless-Chromium (Liste/Auswahl/Filter/Sprachwechsel). **Offen: Anbindung an echte REST-API — braucht Auth-Flow (2.3); aktuell Sample-Daten im `CasesService`**
 - [ ] 3.2 Dokumentenliste + Download + Vorschau (PDF nativ; Office via Konvertierung/Viewer)
 - [ ] 3.3 Kontakte (Liste/Detail/Suche)
 - [ ] 3.4 Kalender-/Wiedervorlagen-Ansicht

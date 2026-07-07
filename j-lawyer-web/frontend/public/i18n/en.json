@@ -27,5 +27,25 @@
   "nav": {
     "modules": "Modules",
     "modulesMobile": "Modules (mobile)"
+  },
+  "akten": {
+    "title": "Cases",
+    "new": "New case",
+    "searchCases": "Search cases …",
+    "empty": "No cases found.",
+    "selectHint": "Select a case on the left.",
+    "back": "Back",
+    "parties": "Parties",
+    "deadlines": "Deadlines & follow-ups",
+    "noDeadlines": "No deadlines.",
+    "recentDocs": "Recent documents",
+    "note": "Case note",
+    "tabTodo": "This tab will be implemented in a later phase.",
+    "filter": { "all": "All", "mine": "Mine", "open": "Open", "deadlines": "Deadlines", "closed": "Closed" },
+    "status": { "open": "open", "dueToday": "due today", "waiting": "waiting", "closed": "closed" },
+    "tabs": { "overview": "Overview", "documents": "Documents", "parties": "Parties", "deadlines": "Deadlines", "finance": "Finance", "history": "History" },
+    "roles": { "client": "Client", "opponent": "Opponent", "court": "Court", "insurer": "Insurer" },
+    "dueType": { "deadline": "Deadline", "followup": "Follow-up" },
+    "meta": { "fileNumber": "File number", "subjectField": "Practice area", "lawyer": "Lawyer", "claimValue": "Amount in dispute", "created": "Created" }
   }
 }

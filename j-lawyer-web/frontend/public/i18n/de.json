@@ -27,5 +27,25 @@
   "nav": {
     "modules": "Module",
     "modulesMobile": "Module (mobil)"
+  },
+  "akten": {
+    "title": "Akten",
+    "new": "Neue Akte",
+    "searchCases": "Akten durchsuchen …",
+    "empty": "Keine Akten gefunden.",
+    "selectHint": "Wählen Sie links eine Akte.",
+    "back": "Zurück",
+    "parties": "Beteiligte",
+    "deadlines": "Fristen & Wiedervorlagen",
+    "noDeadlines": "Keine Fristen.",
+    "recentDocs": "Letzte Dokumente",
+    "note": "Aktennotiz",
+    "tabTodo": "Dieser Reiter wird in einer späteren Phase umgesetzt.",
+    "filter": { "all": "Alle", "mine": "Meine", "open": "Offen", "deadlines": "Fristen", "closed": "Abgeschlossen" },
+    "status": { "open": "offen", "dueToday": "Frist heute", "waiting": "wartet", "closed": "abgeschlossen" },
+    "tabs": { "overview": "Übersicht", "documents": "Dokumente", "parties": "Beteiligte", "deadlines": "Fristen", "finance": "Finanzen", "history": "Historie" },
+    "roles": { "client": "Mandant", "opponent": "Gegner", "court": "Gericht", "insurer": "Versicherung" },
+    "dueType": { "deadline": "Frist", "followup": "Wiedervorlage" },
+    "meta": { "fileNumber": "Aktenzeichen", "subjectField": "Rechtsgebiet", "lawyer": "Anwalt", "claimValue": "Streitwert", "created": "Angelegt" }
   }
 }
