@@ -1,17 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
-import { CasesService } from './cases.service';
+import { CaseFilter, CasesService } from './cases.service';
 import { CaseDetail } from './case.models';
 
 type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 'history';
-type CaseFilter = 'all' | 'open' | 'closed';
 
 /**
  * Akten (cases) module — responsive master-detail (design-mockup.html): searchable case
  * list + case detail (overview with parties, deadlines, recent documents, note). Data comes
- * from the real REST API via CasesService (list eagerly, detail lazily per selection).
+ * from the real REST API via CasesService. The list is filtered/searched and paginated
+ * server-side (infinite scroll via {@link CasesService.loadMore}); the detail is fetched
+ * lazily per selection.
  */
 @Component({
   selector: 'jl-akten',
@@ -24,7 +25,7 @@ type CaseFilter = 'all' | 'open' | 'closed';
       <section class="list">
         <header class="list-head">
           <h1>{{ 'akten.title' | transloco }}</h1>
-          <span class="count">{{ filtered().length }}</span>
+          <span class="count">{{ cases.total() }}</span>
           <button type="button" class="btn-primary">
             <jl-icon name="plus" [size]="14" />{{ 'akten.new' | transloco }}
           </button>
@@ -32,7 +33,7 @@ type CaseFilter = 'all' | 'open' | 'closed';
 
         <div class="filters" role="tablist">
           @for (f of filters; track f) {
-            <button type="button" class="chip" [class.on]="filter() === f" (click)="filter.set(f)">
+            <button type="button" class="chip" [class.on]="filter() === f" (click)="setFilter(f)">
               {{ 'akten.filter.' + f | transloco }}
             </button>
           }
@@ -41,19 +42,19 @@ type CaseFilter = 'all' | 'open' | 'closed';
         <label class="search">
           <jl-icon name="search" [size]="14" />
           <input type="search" [placeholder]="'akten.searchCases' | transloco"
-                 [value]="search()" (input)="search.set($any($event.target).value)" />
+                 [value]="search()" (input)="onSearch($any($event.target).value)" />
         </label>
 
-        <div class="rows">
-          @if (cases.listLoading()) {
+        <div class="rows" (scroll)="onScroll($event)">
+          @if (cases.listLoading() && cases.overviews().length === 0) {
             <p class="muted loading">{{ 'akten.loading' | transloco }}</p>
-          } @else if (cases.listError()) {
+          } @else if (cases.listError() && cases.overviews().length === 0) {
             <p class="empty">
               {{ 'akten.error' | transloco }}
-              <button type="button" class="btn-retry" (click)="cases.loadList()">{{ 'akten.retry' | transloco }}</button>
+              <button type="button" class="btn-retry" (click)="cases.reload()">{{ 'akten.retry' | transloco }}</button>
             </p>
           } @else {
-            @for (c of filtered(); track c.id) {
+            @for (c of cases.overviews(); track c.id) {
               <button type="button" class="row" [class.sel]="c.id === selectedId()" (click)="select(c.id)">
                 <span class="az">{{ c.fileNumber }}</span>
                 <span class="name">{{ c.name }}</span>
@@ -65,6 +66,9 @@ type CaseFilter = 'all' | 'open' | 'closed';
               </button>
             } @empty {
               <p class="empty">{{ 'akten.empty' | transloco }}</p>
+            }
+            @if (cases.listLoading() && cases.overviews().length > 0) {
+              <p class="muted loading more">{{ 'akten.loadingMore' | transloco }}</p>
             }
           }
         </div>
@@ -192,22 +196,10 @@ export class AktenComponent {
   protected readonly detailLoading = signal(false);
 
   private autoSelected = false;
-
-  protected readonly filtered = computed(() => {
-    const term = this.search().trim().toLowerCase();
-    const f = this.filter();
-    return this.cases.overviews().filter((c) => {
-      if (f === 'open' && c.archived) return false;
-      if (f === 'closed' && !c.archived) return false;
-      if (!term) return true;
-      return (c.name + ' ' + c.fileNumber + ' ' + c.reason + ' ' + c.subjectField + ' ' + c.lawyer)
-        .toLowerCase()
-        .includes(term);
-    });
-  });
+  private searchDebounce: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
-    this.cases.loadList();
+    this.cases.reload();
     // On wide screens, open the first case once the list arrives (once only).
     effect(() => {
       const rows = this.cases.overviews();
@@ -216,6 +208,32 @@ export class AktenComponent {
         this.select(rows[0].id);
       }
     });
+  }
+
+  /** Switches the server-side filter and reloads the first page. */
+  protected setFilter(f: CaseFilter): void {
+    if (this.filter() === f) {
+      return;
+    }
+    this.filter.set(f);
+    this.cases.setFilter(f);
+  }
+
+  /** Debounces keystrokes into a server-side search (250ms). */
+  protected onSearch(value: string): void {
+    this.search.set(value);
+    if (this.searchDebounce) {
+      clearTimeout(this.searchDebounce);
+    }
+    this.searchDebounce = setTimeout(() => this.cases.setSearch(value), 250);
+  }
+
+  /** Loads the next page when the list is scrolled near the bottom. */
+  protected onScroll(event: Event): void {
+    const el = event.target as HTMLElement;
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 240) {
+      this.cases.loadMore();
+    }
   }
 
   protected select(id: string): void {

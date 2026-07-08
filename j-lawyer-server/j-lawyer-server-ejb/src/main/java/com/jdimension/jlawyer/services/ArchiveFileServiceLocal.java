@@ -711,6 +711,20 @@ public interface ArchiveFileServiceLocal {
     public int getArchiveFileCount();
     public ArchiveFileBean getArchiveFile(String id) throws Exception;
     public ArrayList<String> getAllArchiveFileIds();
+
+    /**
+     * Returns one ACL-restricted, filtered, paginated page of cases for the current caller
+     * (server-side pagination for the web-UI case list — OpenSpec change {@code add-web-client}).
+     *
+     * @param search   case-insensitive term over name/file number/reason/subject/lawyer, or null
+     * @param archived {@code true}/{@code false} to filter by archived state, or {@code null} for both
+     * @param offset   0-based row offset
+     * @param limit    page size (clamped server-side)
+     */
+    public List<ArchiveFileBean> getManagedCasesPage(String search, Boolean archived, int offset, int limit);
+
+    /** Total cases matching {@link #getManagedCasesPage} for the current caller (ignores offset/limit). */
+    public long countManagedCases(String search, Boolean archived);
     public Date getLastChangedForArchiveFile(String archiveFileKey);
     public ArrayList<String> getAllArchiveFileNumbers(boolean activeCasesOnly) throws Exception;
     public ArrayList<String> getAllArchiveFileNumbersUnrestricted(boolean activeCasesOnly) throws Exception;

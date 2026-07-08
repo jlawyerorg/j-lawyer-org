@@ -51,6 +51,7 @@
 .row .date { color: var(--jl-ink-faint); font-size: .76rem; font-variant-numeric: tabular-nums; }
 .empty { padding: 24px 16px; color: var(--jl-ink-faint); }
 .loading { padding: 24px 16px; }
+.loading.more { padding: 14px 16px; text-align: center; font-size: .82rem; }
 .btn-retry {
   margin-left: 8px; font: inherit; font-size: .8rem; font-weight: 600; cursor: pointer;
   color: var(--jl-blue); background: transparent; border: 1px solid var(--jl-line-strong);

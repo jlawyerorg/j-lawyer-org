@@ -21,17 +21,21 @@ package org.jlawyer.io.rest.v8;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 import org.jlawyer.io.rest.v8.pojo.RestfulCaseOverviewV8;
+import org.jlawyer.io.rest.v8.pojo.RestfulCasePageV8;
 
 /**
  * v8 cases list endpoints returning a richer overview than v1 (adds subject field, lawyer,
@@ -81,6 +85,52 @@ public class CasesEndpointV8 implements CasesEndpointLocalV8 {
     @io.swagger.annotations.ApiOperation(value = "Lists all active (non-archived) cases with a richer overview", response = RestfulCaseOverviewV8.class, responseContainer = "List")
     public Response listActiveCases() {
         return list(true);
+    }
+
+    /**
+     * Returns one server-paginated, filtered page of cases for the caller.
+     *
+     * @param offset 0-based row offset (default 0)
+     * @param limit  page size (default 50, clamped server-side)
+     * @param filter one of {@code all} | {@code open} (non-archived) | {@code closed} (archived)
+     * @param q      optional case-insensitive search over name/file number/reason/subject/lawyer
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/page")
+    @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns a server-paginated, filtered page of cases", response = RestfulCasePageV8.class)
+    public Response listPage(
+            @QueryParam("offset") @DefaultValue("0") int offset,
+            @QueryParam("limit") @DefaultValue("50") int limit,
+            @QueryParam("filter") @DefaultValue("all") String filter,
+            @QueryParam("q") String q) {
+        try {
+            Boolean archived = null;
+            if ("open".equalsIgnoreCase(filter)) {
+                archived = Boolean.FALSE;
+            } else if ("closed".equalsIgnoreCase(filter)) {
+                archived = Boolean.TRUE;
+            }
+            String search = (q == null || q.trim().isEmpty()) ? null : q.trim();
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            long total = cases.countManagedCases(search, archived);
+            List<ArchiveFileBean> page = cases.getManagedCasesPage(search, archived, offset, limit);
+
+            ArrayList<RestfulCaseOverviewV8> items = new ArrayList<>();
+            for (ArchiveFileBean afb : page) {
+                items.add(RestfulCaseOverviewV8.fromArchiveFile(afb));
+            }
+            return Response.ok(new RestfulCasePageV8(total, offset, limit, items)).build();
+        } catch (Exception ex) {
+            log.error("Can not list cases page", ex);
+            return Response.serverError().build();
+        }
     }
 
     private Response list(boolean activeOnly) {

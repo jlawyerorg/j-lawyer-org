@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { catchError, forkJoin, map, Observable, of } from 'rxjs';
 import { API_ROOT } from '../core/api';
@@ -6,12 +6,16 @@ import { CaseDetail, CaseDocument, CaseOverview, CaseStatus, DueDate, Party } fr
 
 const CASES_BASE = `${API_ROOT}/v1/cases`;
 const CASES_V8 = `${API_ROOT}/v8/cases`;
+const PAGE_SIZE = 50;
+
+export type CaseFilter = 'all' | 'open' | 'closed';
 
 /** Wire shapes returned by j-lawyer-io (only the fields we consume). */
 interface CaseListDto {
   id: string; fileNumber: string; name: string; reason: string; dateChanged: string;
   subjectField: string; lawyer: string; archived: boolean;
 }
+interface CasePageDto { total: number; offset: number; limit: number; items: CaseListDto[]; }
 interface CaseDto {
   id: string; fileNumber: string; name: string; reason: string; subjectField: string;
   lawyer: string; assistant: string; claimNumber: string; claimValue: number; notice: string; archived: number;
@@ -29,20 +33,77 @@ interface DocDto { id: string; name: string; size: number; creationDate: string;
 export class CasesService {
   private readonly http = inject(HttpClient);
 
+  /** Accumulated rows across the pages loaded so far (server-side paginated). */
   readonly overviews = signal<CaseOverview[]>([]);
+  readonly total = signal(0);
   readonly listLoading = signal(false);
   readonly listError = signal(false);
 
-  /** Loads the case list (all cases, incl. archived) into {@link overviews}. Re-callable on retry. */
-  loadList(): void {
+  private currentFilter: CaseFilter = 'all';
+  private currentSearch = '';
+  private requestSeq = 0;
+
+  get filter(): CaseFilter {
+    return this.currentFilter;
+  }
+
+  /** True while more pages are available for the current filter/search. */
+  get hasMore(): boolean {
+    return this.overviews().length < this.total();
+  }
+
+  /** (Re)loads the first page with the given filter (server-side). */
+  setFilter(filter: CaseFilter): void {
+    this.currentFilter = filter;
+    this.reload();
+  }
+
+  /** (Re)loads the first page with the given search term (server-side). */
+  setSearch(search: string): void {
+    this.currentSearch = search;
+    this.reload();
+  }
+
+  /** Loads the first page for the current filter/search (also used for retry). */
+  reload(): void {
+    this.fetchPage(0, true);
+  }
+
+  /** Appends the next page (infinite scroll). No-op while loading or when exhausted. */
+  loadMore(): void {
+    if (this.listLoading() || !this.hasMore) {
+      return;
+    }
+    this.fetchPage(this.overviews().length, false);
+  }
+
+  private fetchPage(offset: number, reset: boolean): void {
     this.listLoading.set(true);
     this.listError.set(false);
-    this.http.get<CaseListDto[]>(`${CASES_V8}/list`).subscribe({
-      next: (rows) => {
-        this.overviews.set((rows ?? []).map(toOverview));
+    const seq = ++this.requestSeq;
+
+    let params = new HttpParams()
+      .set('offset', String(offset))
+      .set('limit', String(PAGE_SIZE))
+      .set('filter', this.currentFilter);
+    if (this.currentSearch.trim()) {
+      params = params.set('q', this.currentSearch.trim());
+    }
+
+    this.http.get<CasePageDto>(`${CASES_V8}/page`, { params }).subscribe({
+      next: (page) => {
+        if (seq !== this.requestSeq) {
+          return; // a newer request superseded this one
+        }
+        const rows = (page.items ?? []).map(toOverview);
+        this.overviews.update((cur) => (reset ? rows : [...cur, ...rows]));
+        this.total.set(page.total ?? rows.length);
         this.listLoading.set(false);
       },
       error: () => {
+        if (seq !== this.requestSeq) {
+          return;
+        }
         this.listError.set(true);
         this.listLoading.set(false);
       },

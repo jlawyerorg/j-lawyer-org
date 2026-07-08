@@ -33,4 +33,6 @@ public interface CasesEndpointLocalV8 {
 
     Response listActiveCases();
 
+    Response listPage(int offset, int limit, String filter, String q);
+
 }

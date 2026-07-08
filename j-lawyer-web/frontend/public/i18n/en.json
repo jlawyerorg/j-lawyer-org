@@ -57,11 +57,44 @@
     "recentDocs": "Recent documents",
     "note": "Case note",
     "tabTodo": "This tab will be implemented in a later phase.",
-    "filter": { "all": "All", "mine": "Mine", "open": "Open", "deadlines": "Deadlines", "closed": "Closed" },
-    "status": { "open": "open", "dueToday": "due today", "waiting": "waiting", "closed": "closed" },
-    "tabs": { "overview": "Overview", "documents": "Documents", "parties": "Parties", "deadlines": "Deadlines", "finance": "Finance", "history": "History" },
-    "roles": { "client": "Client", "opponent": "Opponent", "court": "Court", "insurer": "Insurer" },
-    "dueType": { "deadline": "Deadline", "followup": "Follow-up" },
-    "meta": { "fileNumber": "File number", "subjectField": "Practice area", "lawyer": "Lawyer", "claimValue": "Amount in dispute", "created": "Created" }
+    "filter": {
+      "all": "All",
+      "mine": "Mine",
+      "open": "Open",
+      "deadlines": "Deadlines",
+      "closed": "Closed"
+    },
+    "status": {
+      "open": "open",
+      "dueToday": "due today",
+      "waiting": "waiting",
+      "closed": "closed"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "documents": "Documents",
+      "parties": "Parties",
+      "deadlines": "Deadlines",
+      "finance": "Finance",
+      "history": "History"
+    },
+    "roles": {
+      "client": "Client",
+      "opponent": "Opponent",
+      "court": "Court",
+      "insurer": "Insurer"
+    },
+    "dueType": {
+      "deadline": "Deadline",
+      "followup": "Follow-up"
+    },
+    "meta": {
+      "fileNumber": "File number",
+      "subjectField": "Practice area",
+      "lawyer": "Lawyer",
+      "claimValue": "Amount in dispute",
+      "created": "Created"
+    },
+    "loadingMore": "Loading more …"
   }
 }

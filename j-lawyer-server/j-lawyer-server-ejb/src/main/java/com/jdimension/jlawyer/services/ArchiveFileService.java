@@ -3668,6 +3668,28 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<ArchiveFileBean> getManagedCasesPage(String search, Boolean archived, int offset, int limit) {
+        return this.archiveFileFacade.findOverviewPage(allowedCaseIdsForCaller(), search, archived, offset, limit);
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public long countManagedCases(String search, Boolean archived) {
+        return this.archiveFileFacade.countOverview(allowedCaseIdsForCaller(), search, archived);
+    }
+
+    /** Case ids the current caller may access (owner group / allowed group / unprotected). */
+    private ArrayList<String> allowedCaseIdsForCaller() {
+        try {
+            return SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
+        } catch (Exception ex) {
+            log.error("Unable to determine allowed cases for user " + context.getCallerPrincipal().getName(), ex);
+            throw new EJBException("Akten für Nutzer '" + context.getCallerPrincipal().getName() + "' konnten nicht ermittelt werden.", ex);
+        }
+    }
+
+    @Override
     public Date getLastChangedForArchiveFile(String archiveFileKey) {
         JDBCUtils utils = new JDBCUtils();
         ResultSet rs = null;

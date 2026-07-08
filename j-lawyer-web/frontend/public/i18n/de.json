@@ -57,11 +57,44 @@
     "recentDocs": "Letzte Dokumente",
     "note": "Aktennotiz",
     "tabTodo": "Dieser Reiter wird in einer späteren Phase umgesetzt.",
-    "filter": { "all": "Alle", "mine": "Meine", "open": "Offen", "deadlines": "Fristen", "closed": "Abgeschlossen" },
-    "status": { "open": "offen", "dueToday": "Frist heute", "waiting": "wartet", "closed": "abgeschlossen" },
-    "tabs": { "overview": "Übersicht", "documents": "Dokumente", "parties": "Beteiligte", "deadlines": "Fristen", "finance": "Finanzen", "history": "Historie" },
-    "roles": { "client": "Mandant", "opponent": "Gegner", "court": "Gericht", "insurer": "Versicherung" },
-    "dueType": { "deadline": "Frist", "followup": "Wiedervorlage" },
-    "meta": { "fileNumber": "Aktenzeichen", "subjectField": "Rechtsgebiet", "lawyer": "Anwalt", "claimValue": "Streitwert", "created": "Angelegt" }
+    "filter": {
+      "all": "Alle",
+      "mine": "Meine",
+      "open": "Offen",
+      "deadlines": "Fristen",
+      "closed": "Abgeschlossen"
+    },
+    "status": {
+      "open": "offen",
+      "dueToday": "Frist heute",
+      "waiting": "wartet",
+      "closed": "abgeschlossen"
+    },
+    "tabs": {
+      "overview": "Übersicht",
+      "documents": "Dokumente",
+      "parties": "Beteiligte",
+      "deadlines": "Fristen",
+      "finance": "Finanzen",
+      "history": "Historie"
+    },
+    "roles": {
+      "client": "Mandant",
+      "opponent": "Gegner",
+      "court": "Gericht",
+      "insurer": "Versicherung"
+    },
+    "dueType": {
+      "deadline": "Frist",
+      "followup": "Wiedervorlage"
+    },
+    "meta": {
+      "fileNumber": "Aktenzeichen",
+      "subjectField": "Rechtsgebiet",
+      "lawyer": "Anwalt",
+      "claimValue": "Streitwert",
+      "created": "Angelegt"
+    },
+    "loadingMore": "Weitere werden geladen …"
   }
 }
