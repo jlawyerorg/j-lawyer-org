@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl, SafeUrl } from '@angular/platform-browser';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { CaseFilter, CasesService } from './cases.service';
@@ -56,7 +58,7 @@ type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 
             </p>
           } @else {
             @for (c of cases.overviews(); track c.id) {
-              <button type="button" class="row" [class.sel]="c.id === selectedId()" (click)="select(c.id)">
+              <button type="button" class="row" [class.sel]="c.id === selectedId()" (click)="open(c.id)">
                 <span class="az">{{ c.fileNumber }}</span>
                 <span class="name">{{ c.name }}</span>
                 <span class="sub">{{ c.subjectField || c.reason || '—' }}{{ c.lawyer ? ' · ' + c.lawyer : '' }}</span>
@@ -248,6 +250,8 @@ type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 
 export class AktenComponent {
   protected readonly cases = inject(CasesService);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly tabs: CaseTab[] = ['overview', 'documents', 'parties', 'deadlines', 'finance', 'history'];
   protected readonly filters: CaseFilter[] = ['all', 'open', 'closed'];
@@ -275,12 +279,26 @@ export class AktenComponent {
 
   constructor() {
     this.cases.reload();
-    // On wide screens, open the first case once the list arrives (once only).
+    // The route param (/cases/:id) is the source of truth for the selected case, so
+    // deep links, browser back/forward and in-app navigation all stay in sync.
+    this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const id = params.get('id');
+      if (id) {
+        this.autoSelected = true;
+        if (id !== this.selectedId()) {
+          this.select(id);
+        }
+      } else if (this.selectedId() !== null) {
+        this.selectedId.set(null);
+        this.selected.set(null);
+      }
+    });
+    // On wide screens with no deep link, open the first case once the list arrives (once).
     effect(() => {
       const rows = this.cases.overviews();
       if (!this.autoSelected && rows.length && this.selectedId() === null && window.innerWidth > 680) {
         this.autoSelected = true;
-        this.select(rows[0].id);
+        this.router.navigate(['/cases', rows[0].id], { replaceUrl: true });
       }
     });
     inject(DestroyRef).onDestroy(() => this.revokePdfUrl());
@@ -405,7 +423,12 @@ export class AktenComponent {
     }
   }
 
-  protected select(id: string): void {
+  /** Navigates to a case's deep link; the route subscription performs the actual select. */
+  protected open(id: string): void {
+    this.router.navigate(['/cases', id]);
+  }
+
+  private select(id: string): void {
     this.selectedId.set(id);
     this.activeTab.set('overview');
     this.detailLoading.set(true);
@@ -419,9 +442,9 @@ export class AktenComponent {
     });
   }
 
+  /** Mobile "back" from the detail: return to the plain list URL. */
   protected clearSelection(): void {
-    this.selectedId.set(null);
-    this.selected.set(null);
+    this.router.navigate(['/cases']);
   }
 
   protected initials(name: string): string {

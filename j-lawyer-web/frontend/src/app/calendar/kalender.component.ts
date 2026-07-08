@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { LanguageService } from '../core/language.service';
@@ -23,7 +24,7 @@ interface AgendaDay {
   selector: 'jl-kalender',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoModule, IconComponent],
+  imports: [TranslocoModule, IconComponent, RouterLink],
   template: `
     <section class="cal">
       <header class="cal-head">
@@ -78,7 +79,13 @@ interface AgendaDay {
                       @if (r.ev.done) { <jl-icon name="check" [size]="14" /> }
                     </span>
                     <span class="emeta">
-                      @if (r.ev.caseFileNumber) { <span class="ecase">{{ r.ev.caseFileNumber }} · {{ r.ev.caseName }}</span> }
+                      @if (r.ev.caseFileNumber) {
+                        @if (r.ev.caseId) {
+                          <a class="ecase link" [routerLink]="['/cases', r.ev.caseId]">{{ r.ev.caseFileNumber }} · {{ r.ev.caseName }}</a>
+                        } @else {
+                          <span class="ecase">{{ r.ev.caseFileNumber }} · {{ r.ev.caseName }}</span>
+                        }
+                      }
                       @if (r.ev.location) { <span class="eloc"><jl-icon name="pin" [size]="12" /> {{ r.ev.location }}</span> }
                       @if (r.ev.assignee) { <span class="eass">{{ r.ev.assignee }}</span> }
                     </span>

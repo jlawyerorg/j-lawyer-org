@@ -41,6 +41,14 @@ export const routes: Routes = [
     canActivateChild: [authGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'cases' },
+      // Deep link to a single case (shareable/bookmarkable); reuses the Akten component,
+      // which reads the :id param to select the case. Must precede the module routes.
+      {
+        path: 'cases/:id',
+        loadComponent: () => import('./akten/akten.component').then((c) => c.AktenComponent),
+        data: { labelKey: 'module.akten' },
+        title: 'j-lawyer',
+      },
       ...moduleRoutes,
       { path: '**', redirectTo: 'cases' },
     ],

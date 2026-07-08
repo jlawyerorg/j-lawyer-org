@@ -69,6 +69,8 @@
 .esum { font-weight: 600; font-size: .92rem; color: var(--jl-ink); }
 .emeta { display: flex; align-items: center; gap: 6px 14px; flex-wrap: wrap; color: var(--jl-ink-soft); font-size: .8rem; }
 .emeta .ecase { font-weight: 550; }
+.emeta a.ecase.link { color: var(--jl-blue); text-decoration: none; }
+.emeta a.ecase.link:hover { text-decoration: underline; }
 .emeta .eloc { display: inline-flex; align-items: center; gap: 3px; }
 .emeta .eass { color: var(--jl-ink-faint); }
 
