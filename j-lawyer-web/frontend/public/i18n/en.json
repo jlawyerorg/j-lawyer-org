@@ -102,7 +102,6 @@
     "docLoading": "Loading document …",
     "docError": "Could not load document.",
     "close": "Close",
-    "pdfNewTabHint": "For security reasons the PDF preview opens in a new tab.",
     "pdfOpenTab": "Open in new tab"
   },
   "kontakte": {

@@ -20,9 +20,17 @@
     <link>, which "script-src 'self'" blocks — that left the full stylesheet inactive
     (media="print") and broke the light/dark theme switch. Disabling it keeps the CSP
     strict (no inline handlers) and loads the full stylesheet via a normal <link>.
+
+    frame-src 'self' blob': allows the in-case document viewer to embed a PDF that was
+    fetched with the Bearer token and turned into a client-side blob: URL. 'self' alone
+    does NOT match blob:, and there is no frame-src fallback other than default-src.
+    blob: URLs are same-origin and only creatable by our own code, so this is a narrow,
+    deliberate allowance; object-src stays 'none'. IMPORTANT: if/when the AUTHORITATIVE
+    CSP is added as an Undertow response header, it MUST also carry frame-src 'self'
+    blob:, otherwise it overrides this <meta> and re-breaks embedded PDF preview.
   -->
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
 
   <meta name="color-scheme" content="light dark">
 </head>

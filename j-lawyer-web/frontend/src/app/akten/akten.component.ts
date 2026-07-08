@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { DomSanitizer, SafeResourceUrl, SafeUrl } from '@angular/platform-browser';
 import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { CaseFilter, CasesService } from './cases.service';
@@ -218,6 +218,9 @@ type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 
           <header class="viewer-head">
             <span class="ext">{{ pd.ext || '—' }}</span>
             <span class="viewer-name">{{ pd.name }}</span>
+            @if (previewKind() === 'pdf' && pdfSafeUrl()) {
+              <button type="button" class="doc-btn" (click)="openPdfTab()">{{ 'akten.pdfOpenTab' | transloco }}</button>
+            }
             <button type="button" class="doc-btn" (click)="download(pd)">
               <jl-icon name="download" [size]="14" />{{ 'akten.docDownload' | transloco }}
             </button>
@@ -232,11 +235,8 @@ type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 
               <img class="viewer-img" [src]="previewImage()" [alt]="pd.name" />
             } @else if (previewKind() === 'text') {
               <pre class="viewer-text">{{ previewText() }}</pre>
-            } @else if (previewKind() === 'pdf') {
-              <div class="viewer-pdf">
-                <p>{{ 'akten.pdfNewTabHint' | transloco }}</p>
-                <button type="button" class="doc-btn primary" (click)="openPdfTab()">{{ 'akten.pdfOpenTab' | transloco }}</button>
-              </div>
+            } @else if (previewKind() === 'pdf' && pdfSafeUrl()) {
+              <iframe class="viewer-frame" [src]="pdfSafeUrl()" [title]="pd.name"></iframe>
             }
           </div>
         </div>
@@ -266,6 +266,7 @@ export class AktenComponent {
   protected readonly previewError = signal(false);
   protected readonly previewImage = signal<SafeUrl | null>(null);
   protected readonly previewText = signal('');
+  protected readonly pdfSafeUrl = signal<SafeResourceUrl | null>(null);
   private pdfBlobUrl: string | null = null;
   private previewSeq = 0;
 
@@ -299,6 +300,7 @@ export class AktenComponent {
     }
     const seq = ++this.previewSeq;
     this.revokePdfUrl();
+    this.pdfSafeUrl.set(null);
     this.previewImage.set(null);
     this.previewText.set('');
     this.previewError.set(false);
@@ -319,6 +321,9 @@ export class AktenComponent {
           this.previewText.set(bytesToText(base64ToBytes(b64)));
         } else if (kind === 'pdf') {
           this.pdfBlobUrl = URL.createObjectURL(new Blob([base64ToBytes(b64)], { type: mime }));
+          // iframe [src] is a RESOURCE_URL context; the blob is our own same-origin data.
+          // CSP frame-src 'self' blob: permits embedding it (see index.html).
+          this.pdfSafeUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(this.pdfBlobUrl));
         }
         this.previewLoading.set(false);
       },
@@ -344,6 +349,7 @@ export class AktenComponent {
     this.previewDoc.set(null);
     this.previewImage.set(null);
     this.previewText.set('');
+    this.pdfSafeUrl.set(null);
     this.previewLoading.set(false);
     this.previewError.set(false);
     this.revokePdfUrl();
