@@ -95,7 +95,15 @@
       "claimValue": "Streitwert",
       "created": "Angelegt"
     },
-    "loadingMore": "Weitere werden geladen …"
+    "loadingMore": "Weitere werden geladen …",
+    "documents": "Dokumente",
+    "docPreview": "Vorschau",
+    "docDownload": "Herunterladen",
+    "docLoading": "Dokument wird geladen …",
+    "docError": "Dokument konnte nicht geladen werden.",
+    "close": "Schließen",
+    "pdfNewTabHint": "PDF-Vorschau öffnet aus Sicherheitsgründen in einem neuen Tab.",
+    "pdfOpenTab": "Im neuen Tab öffnen"
   },
   "kontakte": {
     "title": "Kontakte",

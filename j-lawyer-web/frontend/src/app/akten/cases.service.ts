@@ -23,6 +23,7 @@ interface CaseDto {
 interface PartyDto { id: string; involvementType: string; contact?: string; }
 interface DueDateDto { id: string; reason: string; dueDate: string; done: boolean; assignee: string; type: string; }
 interface DocDto { id: string; name: string; size: number; creationDate: string; }
+interface DocumentContentDto { id: string; fileName: string; caseId: string; base64content: string; }
 
 /**
  * Case data access against the real REST API (GET /rest/v1/cases/…). The Bearer token is
@@ -108,6 +109,11 @@ export class CasesService {
         this.listLoading.set(false);
       },
     });
+  }
+
+  /** Loads a single document's Base64-encoded content (GET /v1/cases/document/{id}/content). */
+  documentContent(id: string): Observable<DocumentContentDto> {
+    return this.http.get<DocumentContentDto>(`${CASES_BASE}/document/${id}/content`);
   }
 
   /** Loads a full case with its parties, due dates and documents; null on error. */

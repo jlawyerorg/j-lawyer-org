@@ -95,7 +95,15 @@
       "claimValue": "Amount in dispute",
       "created": "Created"
     },
-    "loadingMore": "Loading more …"
+    "loadingMore": "Loading more …",
+    "documents": "Documents",
+    "docPreview": "Preview",
+    "docDownload": "Download",
+    "docLoading": "Loading document …",
+    "docError": "Could not load document.",
+    "close": "Close",
+    "pdfNewTabHint": "For security reasons the PDF preview opens in a new tab.",
+    "pdfOpenTab": "Open in new tab"
   },
   "kontakte": {
     "title": "Contacts",

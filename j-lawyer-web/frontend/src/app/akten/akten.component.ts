@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { CaseFilter, CasesService } from './cases.service';
-import { CaseDetail } from './case.models';
+import { CaseDetail, CaseDocument, DocPreviewKind, mimeOf, previewKindOf } from './case.models';
 
 type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 'history';
 
@@ -169,6 +170,37 @@ type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 
                   </div>
                 }
               </div>
+            } @else if (activeTab() === 'documents') {
+              <div class="card full">
+                <div class="card-h">
+                  <h3>{{ 'akten.documents' | transloco }}</h3>
+                  <span class="card-count">{{ c.documents.length }}</span>
+                </div>
+                <div class="card-b">
+                  @for (doc of c.documents; track doc.id) {
+                    <div class="doc doc-row" [class.previewable]="canPreview(doc)"
+                         (click)="canPreview(doc) ? preview(doc) : download(doc)">
+                      <span class="ext">{{ doc.ext || '—' }}</span>
+                      <span class="doc-main">
+                        <span class="dn">{{ doc.name }}</span>
+                        <span class="dmeta">{{ doc.date | date: 'dd.MM.yyyy' }} · {{ doc.size }}</span>
+                      </span>
+                      <span class="doc-actions">
+                        @if (canPreview(doc)) {
+                          <button type="button" class="doc-btn" (click)="$event.stopPropagation(); preview(doc)">
+                            {{ 'akten.docPreview' | transloco }}
+                          </button>
+                        }
+                        <button type="button" class="doc-btn primary" (click)="$event.stopPropagation(); download(doc)">
+                          <jl-icon name="download" [size]="14" />{{ 'akten.docDownload' | transloco }}
+                        </button>
+                      </span>
+                    </div>
+                  } @empty {
+                    <p class="muted">{{ 'akten.noDocs' | transloco }}</p>
+                  }
+                </div>
+              </div>
             } @else {
               <p class="muted tab-todo">{{ 'akten.tabTodo' | transloco }}</p>
             }
@@ -179,11 +211,43 @@ type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 
         }
       </section>
     </div>
+
+    @if (previewDoc(); as pd) {
+      <div class="viewer" (click)="closePreview()">
+        <div class="viewer-box" (click)="$event.stopPropagation()">
+          <header class="viewer-head">
+            <span class="ext">{{ pd.ext || '—' }}</span>
+            <span class="viewer-name">{{ pd.name }}</span>
+            <button type="button" class="doc-btn" (click)="download(pd)">
+              <jl-icon name="download" [size]="14" />{{ 'akten.docDownload' | transloco }}
+            </button>
+            <button type="button" class="viewer-close" (click)="closePreview()" [attr.aria-label]="'akten.close' | transloco">✕</button>
+          </header>
+          <div class="viewer-body">
+            @if (previewLoading()) {
+              <p class="muted pad">{{ 'akten.docLoading' | transloco }}</p>
+            } @else if (previewError()) {
+              <p class="pad">{{ 'akten.docError' | transloco }}</p>
+            } @else if (previewKind() === 'image' && previewImage()) {
+              <img class="viewer-img" [src]="previewImage()" [alt]="pd.name" />
+            } @else if (previewKind() === 'text') {
+              <pre class="viewer-text">{{ previewText() }}</pre>
+            } @else if (previewKind() === 'pdf') {
+              <div class="viewer-pdf">
+                <p>{{ 'akten.pdfNewTabHint' | transloco }}</p>
+                <button type="button" class="doc-btn primary" (click)="openPdfTab()">{{ 'akten.pdfOpenTab' | transloco }}</button>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
   `,
   styleUrl: './akten.component.css',
 })
 export class AktenComponent {
   protected readonly cases = inject(CasesService);
+  private readonly sanitizer = inject(DomSanitizer);
 
   protected readonly tabs: CaseTab[] = ['overview', 'documents', 'parties', 'deadlines', 'finance', 'history'];
   protected readonly filters: CaseFilter[] = ['all', 'open', 'closed'];
@@ -194,6 +258,16 @@ export class AktenComponent {
   protected readonly selectedId = signal<string | null>(null);
   protected readonly selected = signal<CaseDetail | null>(null);
   protected readonly detailLoading = signal(false);
+
+  // Document preview state
+  protected readonly previewDoc = signal<CaseDocument | null>(null);
+  protected readonly previewKind = signal<DocPreviewKind>('none');
+  protected readonly previewLoading = signal(false);
+  protected readonly previewError = signal(false);
+  protected readonly previewImage = signal<SafeUrl | null>(null);
+  protected readonly previewText = signal('');
+  private pdfBlobUrl: string | null = null;
+  private previewSeq = 0;
 
   private autoSelected = false;
   private searchDebounce: ReturnType<typeof setTimeout> | null = null;
@@ -208,6 +282,95 @@ export class AktenComponent {
         this.select(rows[0].id);
       }
     });
+    inject(DestroyRef).onDestroy(() => this.revokePdfUrl());
+  }
+
+  /** True when the document can be previewed inline / in a new tab (vs. download-only). */
+  protected canPreview(doc: CaseDocument): boolean {
+    return previewKindOf(doc.ext) !== 'none';
+  }
+
+  /** Opens the preview overlay for a document (image/text inline, PDF via a new tab). */
+  protected preview(doc: CaseDocument): void {
+    const kind = previewKindOf(doc.ext);
+    if (kind === 'none') {
+      this.download(doc);
+      return;
+    }
+    const seq = ++this.previewSeq;
+    this.revokePdfUrl();
+    this.previewImage.set(null);
+    this.previewText.set('');
+    this.previewError.set(false);
+    this.previewKind.set(kind);
+    this.previewDoc.set(doc);
+    this.previewLoading.set(true);
+
+    this.cases.documentContent(doc.id).subscribe({
+      next: (dto) => {
+        if (seq !== this.previewSeq) {
+          return;
+        }
+        const b64 = (dto.base64content ?? '').replace(/\s/g, '');
+        const mime = mimeOf(doc.ext);
+        if (kind === 'image') {
+          this.previewImage.set(this.sanitizer.bypassSecurityTrustUrl(`data:${mime};base64,${b64}`));
+        } else if (kind === 'text') {
+          this.previewText.set(bytesToText(base64ToBytes(b64)));
+        } else if (kind === 'pdf') {
+          this.pdfBlobUrl = URL.createObjectURL(new Blob([base64ToBytes(b64)], { type: mime }));
+        }
+        this.previewLoading.set(false);
+      },
+      error: () => {
+        if (seq !== this.previewSeq) {
+          return;
+        }
+        this.previewError.set(true);
+        this.previewLoading.set(false);
+      },
+    });
+  }
+
+  /** Opens the already-fetched PDF blob in a new tab (native viewer; CSP blocks embedding). */
+  protected openPdfTab(): void {
+    if (this.pdfBlobUrl) {
+      window.open(this.pdfBlobUrl, '_blank', 'noopener');
+    }
+  }
+
+  protected closePreview(): void {
+    this.previewSeq++;
+    this.previewDoc.set(null);
+    this.previewImage.set(null);
+    this.previewText.set('');
+    this.previewLoading.set(false);
+    this.previewError.set(false);
+    this.revokePdfUrl();
+  }
+
+  /** Fetches a document's bytes and triggers a browser download with its file name. */
+  protected download(doc: CaseDocument): void {
+    this.cases.documentContent(doc.id).subscribe({
+      next: (dto) => {
+        const bytes = base64ToBytes((dto.base64content ?? '').replace(/\s/g, ''));
+        const url = URL.createObjectURL(new Blob([bytes], { type: mimeOf(doc.ext) }));
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = dto.fileName || doc.name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      },
+    });
+  }
+
+  private revokePdfUrl(): void {
+    if (this.pdfBlobUrl) {
+      URL.revokeObjectURL(this.pdfBlobUrl);
+      this.pdfBlobUrl = null;
+    }
   }
 
   /** Switches the server-side filter and reloads the first page. */
@@ -264,4 +427,19 @@ export class AktenComponent {
       .join('')
       .toUpperCase();
   }
+}
+
+/** Decodes a (whitespace-stripped) Base64 string into raw bytes. */
+function base64ToBytes(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) {
+    bytes[i] = bin.charCodeAt(i);
+  }
+  return bytes;
+}
+
+/** Decodes UTF-8 bytes to a string for text preview. */
+function bytesToText(bytes: Uint8Array): string {
+  return new TextDecoder('utf-8').decode(bytes);
 }
