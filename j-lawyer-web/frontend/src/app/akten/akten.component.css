@@ -49,6 +49,13 @@
 .row .r-right { grid-column: 2; grid-row: 1 / span 3; display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; gap: 6px; }
 .row .date { color: var(--jl-ink-faint); font-size: .76rem; font-variant-numeric: tabular-nums; }
 .empty { padding: 24px 16px; color: var(--jl-ink-faint); }
+.loading { padding: 24px 16px; }
+.btn-retry {
+  margin-left: 8px; font: inherit; font-size: .8rem; font-weight: 600; cursor: pointer;
+  color: var(--jl-blue); background: transparent; border: 1px solid var(--jl-line-strong);
+  border-radius: 7px; padding: 4px 10px;
+}
+.btn-retry:hover { border-color: var(--jl-blue); }
 
 /* Status-Pills */
 .pill { font-size: .72rem; font-weight: 650; padding: 3px 9px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }

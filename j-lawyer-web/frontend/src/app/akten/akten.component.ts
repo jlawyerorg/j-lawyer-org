@@ -1,17 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { CasesService } from './cases.service';
-import { CaseStatus } from './case.models';
+import { CaseDetail } from './case.models';
 
-type CaseFilter = 'all' | 'mine' | 'open' | 'deadlines' | 'closed';
 type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 'history';
 
 /**
- * Akten (cases) module — responsive master-detail (design-mockup.html): filterable case
- * list + case detail (overview with parties, deadlines, recent documents, note).
- * Data comes from CasesService (sample data until auth/REST lands — see that service).
+ * Akten (cases) module — responsive master-detail (design-mockup.html): searchable case
+ * list + case detail (overview with parties, deadlines, recent documents, note). Data comes
+ * from the real REST API via CasesService (list eagerly, detail lazily per selection).
  */
 @Component({
   selector: 'jl-akten',
@@ -30,14 +29,6 @@ type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 
           </button>
         </header>
 
-        <div class="filters" role="tablist">
-          @for (f of filters; track f) {
-            <button type="button" class="chip" [class.on]="filter() === f" (click)="filter.set(f)">
-              {{ 'akten.filter.' + f | transloco }}
-            </button>
-          }
-        </div>
-
         <label class="search">
           <jl-icon name="search" [size]="14" />
           <input type="search" [placeholder]="'akten.searchCases' | transloco"
@@ -45,27 +36,38 @@ type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 
         </label>
 
         <div class="rows">
-          @for (c of filtered(); track c.id) {
-            <button type="button" class="row" [class.sel]="c.id === selectedId()" (click)="select(c.id)">
-              <span class="az">{{ c.fileNumber }}</span>
-              <span class="name">{{ c.name }}</span>
-              <span class="sub">{{ c.subjectField }} · {{ c.lawyer }}</span>
-              <span class="r-right">
-                <span class="pill" [class]="c.status">{{ 'akten.status.' + c.status | transloco }}</span>
-                <span class="date">{{ c.lastChanged | date: 'dd.MM.' }}</span>
-              </span>
-            </button>
-          } @empty {
-            <p class="empty">{{ 'akten.empty' | transloco }}</p>
+          @if (cases.listLoading()) {
+            <p class="muted loading">{{ 'akten.loading' | transloco }}</p>
+          } @else if (cases.listError()) {
+            <p class="empty">
+              {{ 'akten.error' | transloco }}
+              <button type="button" class="btn-retry" (click)="cases.loadList()">{{ 'akten.retry' | transloco }}</button>
+            </p>
+          } @else {
+            @for (c of filtered(); track c.id) {
+              <button type="button" class="row" [class.sel]="c.id === selectedId()" (click)="select(c.id)">
+                <span class="az">{{ c.fileNumber }}</span>
+                <span class="name">{{ c.name }}</span>
+                <span class="sub">{{ c.reason || '—' }}</span>
+                <span class="r-right">
+                  <span class="date">{{ c.lastChanged | date: 'dd.MM.yy' }}</span>
+                </span>
+              </button>
+            } @empty {
+              <p class="empty">{{ 'akten.empty' | transloco }}</p>
+            }
           }
         </div>
       </section>
 
       <!-- Aktendetail -->
       <section class="detail">
-        @if (selected(); as c) {
+        @if (detailLoading()) {
+          <p class="muted detail-empty">{{ 'akten.loading' | transloco }}</p>
+        } @else {
+          @if (selected(); as c) {
           <div class="detail-head">
-            <button type="button" class="back" (click)="selectedId.set(null)">‹ {{ 'akten.back' | transloco }}</button>
+            <button type="button" class="back" (click)="clearSelection()">‹ {{ 'akten.back' | transloco }}</button>
             <div class="crumbs">{{ 'akten.title' | transloco }} › <b>{{ c.fileNumber }}</b></div>
             <div class="title-row">
               <h2>{{ c.name }}</h2>
@@ -73,10 +75,9 @@ type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 
             </div>
             <div class="meta">
               <span><span class="k">{{ 'akten.meta.fileNumber' | transloco }}</span> <b>{{ c.fileNumber }}</b></span>
-              <span><span class="k">{{ 'akten.meta.subjectField' | transloco }}</span> <b>{{ c.subjectField }}</b></span>
-              <span><span class="k">{{ 'akten.meta.lawyer' | transloco }}</span> <b>{{ c.lawyer }}</b></span>
+              <span><span class="k">{{ 'akten.meta.subjectField' | transloco }}</span> <b>{{ c.subjectField || '—' }}</b></span>
+              <span><span class="k">{{ 'akten.meta.lawyer' | transloco }}</span> <b>{{ c.lawyer || '—' }}</b></span>
               <span><span class="k">{{ 'akten.meta.claimValue' | transloco }}</span> <b>{{ c.claimValue | number: '1.2-2' }} €</b></span>
-              <span><span class="k">{{ 'akten.meta.created' | transloco }}</span> <b>{{ c.created | date: 'dd.MM.yyyy' }}</b></span>
             </div>
             <div class="tabs" role="tablist">
               @for (t of tabs; track t) {
@@ -96,12 +97,14 @@ type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 
                   <div class="card-b">
                     @for (p of c.parties; track p.id) {
                       <div class="party">
-                        <span class="pa" [class]="p.involvementType">{{ initials(p.contact) }}</span>
+                        <span class="pa">{{ initials(p.contact || p.involvementType) }}</span>
                         <span>
-                          <span class="role">{{ 'akten.roles.' + p.involvementType | transloco }}</span>
-                          <span class="nm">{{ p.contact }}</span>
+                          <span class="role">{{ p.involvementType || '—' }}</span>
+                          <span class="nm">{{ p.contact || '—' }}</span>
                         </span>
                       </div>
+                    } @empty {
+                      <p class="muted">{{ 'akten.noParties' | transloco }}</p>
                     }
                   </div>
                 </div>
@@ -134,10 +137,12 @@ type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 
                         <span class="ext">{{ doc.ext }}</span>
                         <span>
                           <span class="dn">{{ doc.name }}</span>
-                          <span class="dmeta">{{ doc.date | date: 'dd.MM.yyyy' }} · {{ doc.author }}</span>
+                          <span class="dmeta">{{ doc.date | date: 'dd.MM.yyyy' }}</span>
                         </span>
                         <span class="dsz">{{ doc.size }}</span>
                       </div>
+                    } @empty {
+                      <p class="muted">{{ 'akten.noDocs' | transloco }}</p>
                     }
                   </div>
                 </div>
@@ -154,8 +159,9 @@ type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 
               <p class="muted tab-todo">{{ 'akten.tabTodo' | transloco }}</p>
             }
           </div>
-        } @else {
-          <p class="empty detail-empty">{{ 'akten.selectHint' | transloco }}</p>
+          } @else {
+            <p class="empty detail-empty">{{ 'akten.selectHint' | transloco }}</p>
+          }
         }
       </section>
     </div>
@@ -163,47 +169,65 @@ type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 
   styleUrl: './akten.component.css',
 })
 export class AktenComponent {
-  private readonly cases = inject(CasesService);
+  protected readonly cases = inject(CasesService);
 
-  protected readonly filters: CaseFilter[] = ['all', 'mine', 'open', 'deadlines', 'closed'];
   protected readonly tabs: CaseTab[] = ['overview', 'documents', 'parties', 'deadlines', 'finance', 'history'];
 
-  protected readonly filter = signal<CaseFilter>('all');
   protected readonly search = signal('');
   protected readonly activeTab = signal<CaseTab>('overview');
-  protected readonly selectedId = signal<string | null>(this.cases.overviews()[0]?.id ?? null);
+  protected readonly selectedId = signal<string | null>(null);
+  protected readonly selected = signal<CaseDetail | null>(null);
+  protected readonly detailLoading = signal(false);
+
+  private autoSelected = false;
 
   protected readonly filtered = computed(() => {
     const term = this.search().trim().toLowerCase();
-    const f = this.filter();
-    return this.cases.overviews().filter((c) => {
-      if (!this.matchesFilter(c.status, c.lawyer, f)) return false;
-      if (!term) return true;
-      return (c.name + ' ' + c.fileNumber + ' ' + c.subjectField).toLowerCase().includes(term);
-    });
+    const rows = this.cases.overviews();
+    if (!term) {
+      return rows;
+    }
+    return rows.filter((c) => (c.name + ' ' + c.fileNumber + ' ' + c.reason).toLowerCase().includes(term));
   });
 
-  protected readonly selected = computed(() => {
-    const id = this.selectedId();
-    return id ? this.cases.find(id) : undefined;
-  });
+  constructor() {
+    this.cases.loadList();
+    // On wide screens, open the first case once the list arrives (once only).
+    effect(() => {
+      const rows = this.cases.overviews();
+      if (!this.autoSelected && rows.length && this.selectedId() === null && window.innerWidth > 680) {
+        this.autoSelected = true;
+        this.select(rows[0].id);
+      }
+    });
+  }
 
   protected select(id: string): void {
     this.selectedId.set(id);
     this.activeTab.set('overview');
+    this.detailLoading.set(true);
+    this.selected.set(null);
+    this.cases.loadDetail(id).subscribe((detail) => {
+      // ignore a stale response if the user already picked another case
+      if (this.selectedId() === id) {
+        this.selected.set(detail);
+        this.detailLoading.set(false);
+      }
+    });
+  }
+
+  protected clearSelection(): void {
+    this.selectedId.set(null);
+    this.selected.set(null);
   }
 
   protected initials(name: string): string {
-    return name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
-  }
-
-  private matchesFilter(status: CaseStatus, lawyer: string, f: CaseFilter): boolean {
-    switch (f) {
-      case 'all': return true;
-      case 'mine': return lawyer.includes('Kunze');
-      case 'open': return status === 'open';
-      case 'deadlines': return status === 'dueToday';
-      case 'closed': return status === 'closed';
-    }
+    return name
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((w) => w[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
   }
 }

@@ -34,7 +34,7 @@
 
 ## 3. Phase 1 — MVP (Read-first)
 
-- [~] 3.1 Fallliste + Suche + Falldetail — **UI implementiert & verifiziert**: `AktenComponent` (responsives Master-Detail), filterbare/durchsuchbare Liste mit Status-Pills, Detail mit Reiter „Übersicht" (Beteiligte, Fristen, letzte Dokumente, Notiz), i18n (DE/EN), Logo-Tokens, hell/dunkel. `CasesService` mit REST-kompatiblen Modellen (`RestfulCaseV1`/`Party`/`DueDate`). Verifiziert per Headless-Chromium (Liste/Auswahl/Filter/Sprachwechsel). **Offen: Anbindung an echte REST-API — braucht Auth-Flow (2.3); aktuell Sample-Daten im `CasesService`**
+- [x] 3.1 Fallliste + Suche + Falldetail — **an echte REST-API angebunden & E2E verifiziert (2026-07-08)**: `AktenComponent` (responsives Master-Detail), durchsuchbare Liste, Detail mit Reiter „Übersicht" (Beteiligte, Fristen, Dokumente, Notiz), i18n (DE/EN), Logo-Tokens, hell/dunkel, Lade-/Fehler-/Retry-Zustände. `CasesService` nutzt `HttpClient`: Liste via `GET /v1/cases/list/active`, Detail lazy via `forkJoin(GET /{id} + /parties + /duedates + /documents)`; Modelle an reale DTOs angeglichen (Beteiligten-Rolle als freier Server-String, Java-`ZonedDateTime`-`[UTC]`-Suffix beim Parsen entfernt, Status client-seitig aus `archived`+Fristen abgeleitet, Bytes/Extension formatiert). Browser-Trace gegen laufenden Server: 765 echte Akten geladen, Detail-Calls alle 200, Suche „Petzke"→3 Treffer, Beteiligte/Fristen real (Rolle „Sachverständiger", Datum 25.05.). **Follow-up: bei sehr großen Listen Virtual-Scrolling; `mine`/Status-Filter serverseitig (Listen-DTO trägt keinen Status).**
 - [ ] 3.2 Dokumentenliste + Download + Vorschau (PDF nativ; Office via Konvertierung/Viewer)
 - [ ] 3.3 Kontakte (Liste/Detail/Suche)
 - [ ] 3.4 Kalender-/Wiedervorlagen-Ansicht

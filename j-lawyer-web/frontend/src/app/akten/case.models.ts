@@ -1,64 +1,73 @@
 /**
- * Case domain models. Field names mirror the REST DTOs (RestfulCaseV1 / RestfulPartyV1 /
- * RestfulDueDateV1 in j-lawyer-io) so swapping the mock CasesService for real REST calls
- * (GET /j-lawyer-io/rest/v7/cases/…) is a localized change. See gap-analysis.md.
+ * Case domain models, aligned with the j-lawyer REST DTOs actually returned by
+ * j-lawyer-io (verified against a live server):
+ *  - list:      GET /rest/v1/cases/list/active  -> { id, fileNumber, name, reason, dateChanged }
+ *  - detail:    GET /rest/v1/cases/{id}          -> RestfulCaseV1
+ *  - parties:   GET /rest/v1/cases/{id}/parties  -> RestfulPartyV1[]
+ *  - duedates:  GET /rest/v1/cases/{id}/duedates -> RestfulDueDateV1[]
+ *  - documents: GET /rest/v1/cases/{id}/documents
  */
 
-/** Display status derived for the list (mock); real data derives it from `archived` + due dates. */
-export type CaseStatus = 'open' | 'dueToday' | 'waiting' | 'closed';
+/** Display status derived on the client (the list DTO carries no status). */
+export type CaseStatus = 'open' | 'dueToday' | 'closed';
 
-/** List row (aligns with RestfulCaseOverviewV1 + a few display fields). */
+/** List row — the fields the list endpoint actually provides. */
 export interface CaseOverview {
   id: string;
   /** Aktenzeichen */
   fileNumber: string;
   name: string;
-  /** Rechtsgebiet */
-  subjectField: string;
-  lawyer: string;
-  status: CaseStatus;
-  /** ISO date of last change (display). */
+  /** Betreff/Grund */
+  reason: string;
+  /** ISO date of last change (sanitized, no [UTC] suffix). */
   lastChanged: string;
 }
 
-/** Involved party (RestfulPartyV1). `involvementType` is an i18n key suffix (akten.roles.*). */
+/** Involved party. `involvementType` is a free German label from the server (e.g. "Mandant"). */
 export interface Party {
   id: string;
-  involvementType: 'client' | 'opponent' | 'court' | 'insurer';
+  involvementType: string;
+  /** Resolved contact name; may be empty if the server did not include it. */
   contact: string;
 }
 
-/** Deadline / follow-up (RestfulDueDateV1). */
+/** Deadline / follow-up. `type` is derived from the server type (RESPITE -> deadline). */
 export interface DueDate {
   id: string;
   reason: string;
-  /** ISO date. */
+  /** ISO date (sanitized). */
   dueDate: string;
   done: boolean;
   assignee: string;
   type: 'deadline' | 'followup';
 }
 
-/** Document shown in the case (subset; real data comes from GET …/{id}/documents). */
+/** Document shown in the case. */
 export interface CaseDocument {
   id: string;
   name: string;
-  /** ISO date. */
+  /** ISO date (sanitized). */
   date: string;
-  author: string;
+  /** Human-readable size (e.g. "34 KB"). */
   size: string;
+  /** Upper-case file extension derived from the name (e.g. "PDF"). */
   ext: string;
 }
 
-/** Full case (RestfulCaseV1 + related collections). */
-export interface CaseDetail extends CaseOverview {
+/** Full case (RestfulCaseV1 + related collections + derived status). */
+export interface CaseDetail {
+  id: string;
+  fileNumber: string;
+  name: string;
+  reason: string;
+  subjectField: string;
+  lawyer: string;
+  assistant: string;
   claimNumber: string;
   claimValue: number;
-  assistant: string;
-  reason: string;
   notice: string;
-  /** ISO date the case was created. */
-  created: string;
+  archived: boolean;
+  status: CaseStatus;
   parties: Party[];
   dueDates: DueDate[];
   documents: CaseDocument[];
