@@ -1,7 +1,7 @@
 /**
- * Auth domain models. Shapes mirror the planned REST auth contract (design.md
- * Decision 5): login exchanges credentials for a short-lived access token; the user's
- * identity/roles come with it. `otp` carries the optional second factor (2FA).
+ * Auth domain models. Shapes mirror the REST auth contract (design.md Decision 5,
+ * `TokenResponseV8`): login exchanges credentials for a short-lived access token; the
+ * user's identity/roles come with it. `otp` carries the optional second factor (2FA).
  */
 export interface Credentials {
   username: string;

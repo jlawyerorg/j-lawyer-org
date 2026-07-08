@@ -7,7 +7,7 @@ import { AuthSession, Credentials } from './auth.models';
 /**
  * Authentication state. Holds the session (access token in memory only — design.md
  * Decision 5) as a signal; components read `user()`/`isAuthenticated()`. Delegates the
- * actual credential exchange to AuthBackend (mock for now, REST later).
+ * actual credential exchange to AuthBackend (the real `/v8/auth/*` REST endpoints).
  */
 @Injectable({ providedIn: 'root' })
 export class AuthService {

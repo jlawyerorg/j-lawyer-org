@@ -1,51 +1,66 @@
-import { Injectable } from '@angular/core';
-import { delay, Observable, of, throwError } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
+import { map, Observable } from 'rxjs';
+import { AUTH_BASE } from '../api';
 import { AuthSession, AuthUser, Credentials } from './auth.models';
 
+/** Wire shape of the server's TokenResponseV8 (POST /v8/auth/login|refresh). */
+interface TokenResponse {
+  accessToken: string;
+  tokenType: string;
+  expiresIn: number;
+  username: string;
+  roles: string[];
+}
+
 /**
- * Authentication backend.
+ * Authentication backend talking to the real j-lawyer REST endpoints
+ * (`/j-lawyer-io/rest/v8/auth/*`, see design.md Decision 5 and j-lawyer-io/AUTH-SETUP.md).
  *
- * TEMPORARY MOCK (design.md Decision 5). Swap for real REST here without touching the
- * AuthService/components: replace each method with an HttpClient call to
- * POST /j-lawyer-io/rest/v{n}/auth/{login,refresh,logout}. The server issues the access
- * token and an httpOnly refresh cookie; here `sessionStorage` stands in for that cookie
- * so a page reload can "refresh" the session (the real refresh cookie is not JS-readable).
- *
- * Demo credentials: admin / a  (the docker default).
+ * The server returns the short-lived access token in the body (kept in memory by
+ * {@link AuthService}) and the refresh token as an httpOnly cookie the browser stores and
+ * replays automatically. Requests use `withCredentials` so that cookie is sent/stored even
+ * if the API is ever served from a different origin.
  */
 @Injectable({ providedIn: 'root' })
 export class AuthBackend {
-  private static readonly REFRESH_MARKER = 'jl.mock.refresh';
+  private readonly http = inject(HttpClient);
 
-  login(c: Credentials): Observable<AuthSession> {
-    const ok = c.username.trim().toLowerCase() === 'admin' && c.password === 'a';
-    if (!ok) {
-      return throwError(() => new Error('invalid-credentials')).pipe(delay(300));
-    }
-    sessionStorage.setItem(AuthBackend.REFRESH_MARKER, c.username.trim());
-    return of(this.session(c.username.trim())).pipe(delay(300));
+  login(credentials: Credentials): Observable<AuthSession> {
+    return this.http
+      .post<TokenResponse>(`${AUTH_BASE}/login`, credentials, { withCredentials: true })
+      .pipe(map((response) => toSession(response)));
   }
 
-  /** Silent re-auth via the (mock) refresh cookie; errors if none. */
+  /** Silent re-auth via the httpOnly refresh cookie; errors (401) when there is none. */
   refresh(): Observable<AuthSession> {
-    const username = sessionStorage.getItem(AuthBackend.REFRESH_MARKER);
-    return username
-      ? of(this.session(username)).pipe(delay(150))
-      : throwError(() => new Error('no-session'));
+    return this.http
+      .post<TokenResponse>(`${AUTH_BASE}/refresh`, null, { withCredentials: true })
+      .pipe(map((response) => toSession(response)));
   }
 
   logout(): Observable<void> {
-    sessionStorage.removeItem(AuthBackend.REFRESH_MARKER);
-    return of(void 0);
+    return this.http.post<void>(`${AUTH_BASE}/logout`, null, { withCredentials: true });
   }
+}
 
-  private session(username: string): AuthSession {
-    const user: AuthUser = {
-      username,
-      displayName: username === 'admin' ? 'Dr. Kunze' : username,
-      initials: (username === 'admin' ? 'DK' : username.slice(0, 2)).toUpperCase(),
-      roles: ['loginRole'],
-    };
-    return { token: `mock.${username}.${crypto.randomUUID()}`, user };
-  }
+function toSession(response: TokenResponse): AuthSession {
+  return { token: response.accessToken, user: toUser(response.username, response.roles) };
+}
+
+function toUser(username: string, roles: string[]): AuthUser {
+  return {
+    username,
+    displayName: username,
+    initials: initialsOf(username),
+    roles: roles ?? [],
+  };
+}
+
+/** Up to two letters: first of each name part (jens.kutschke → JK), else first two chars. */
+function initialsOf(username: string): string {
+  const parts = username.split(/[.\-_@\s]+/).filter(Boolean);
+  const letters =
+    parts.length >= 2 ? parts[0][0] + parts[1][0] : username.slice(0, 2);
+  return letters.toUpperCase();
 }
