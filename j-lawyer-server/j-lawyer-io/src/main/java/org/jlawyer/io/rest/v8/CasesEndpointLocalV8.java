@@ -35,4 +35,6 @@ public interface CasesEndpointLocalV8 {
 
     Response listPage(int offset, int limit, String filter, String q);
 
+    Response getHistory(String id);
+
 }

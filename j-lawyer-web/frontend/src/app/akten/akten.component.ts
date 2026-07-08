@@ -5,8 +5,11 @@ import { DomSanitizer, SafeResourceUrl, SafeUrl } from '@angular/platform-browse
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
+import { forkJoin } from 'rxjs';
 import { CaseFilter, CasesService } from './cases.service';
-import { CaseDetail, CaseDocument, DocPreviewKind, mimeOf, previewKindOf } from './case.models';
+import {
+  CaseDetail, CaseDocument, CaseHistoryEntry, CaseInvoice, CasePayment, DocPreviewKind, mimeOf, previewKindOf,
+} from './case.models';
 
 type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 'history';
 
@@ -98,7 +101,7 @@ type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 
             </div>
             <div class="tabs" role="tablist">
               @for (t of tabs; track t) {
-                <button type="button" class="tab" [class.on]="activeTab() === t" (click)="activeTab.set(t)">
+                <button type="button" class="tab" [class.on]="activeTab() === t" (click)="selectTab(t)">
                   {{ 'akten.tabs.' + t | transloco }}
                 </button>
               }
@@ -203,8 +206,149 @@ type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 
                   }
                 </div>
               </div>
-            } @else {
-              <p class="muted tab-todo">{{ 'akten.tabTodo' | transloco }}</p>
+            } @else if (activeTab() === 'parties') {
+              <div class="card full">
+                <div class="card-h">
+                  <h3>{{ 'akten.parties' | transloco }}</h3>
+                  <span class="card-count">{{ c.parties.length }}</span>
+                </div>
+                <div class="card-b">
+                  @for (p of c.parties; track p.id) {
+                    <div class="party">
+                      <span class="pa">{{ initials(p.contact || p.involvementType) }}</span>
+                      <span>
+                        <span class="role">{{ p.involvementType || '—' }}</span>
+                        <span class="nm">{{ p.contact || '—' }}</span>
+                      </span>
+                    </div>
+                  } @empty {
+                    <p class="muted">{{ 'akten.noParties' | transloco }}</p>
+                  }
+                </div>
+              </div>
+            } @else if (activeTab() === 'deadlines') {
+              <div class="card full">
+                <div class="card-h">
+                  <h3>{{ 'akten.deadlines' | transloco }}</h3>
+                  <span class="card-count">{{ c.dueDates.length }}</span>
+                </div>
+                <div class="card-b">
+                  @for (d of c.dueDates; track d.id) {
+                    <div class="frist" [class.done]="d.done">
+                      <span class="bar" [class.deadline]="d.type === 'deadline'"></span>
+                      <span class="fdate">{{ d.dueDate | date: 'dd.MM.yyyy' }}</span>
+                      <span class="fx">
+                        <span class="ft">{{ d.reason }}</span>
+                        <span class="fs">{{ d.assignee }} · {{ 'akten.dueType.' + d.type | transloco }}</span>
+                      </span>
+                      @if (d.done) { <jl-icon name="check" [size]="14" /> }
+                    </div>
+                  } @empty {
+                    <p class="muted">{{ 'akten.noDeadlines' | transloco }}</p>
+                  }
+                </div>
+              </div>
+            } @else if (activeTab() === 'finance') {
+              @if (financeLoading()) {
+                <p class="muted tab-todo">{{ 'akten.loading' | transloco }}</p>
+              } @else if (financeError()) {
+                <p class="tab-todo">
+                  {{ 'akten.error' | transloco }}
+                  <button type="button" class="btn-retry" (click)="retryTab()">{{ 'akten.retry' | transloco }}</button>
+                </p>
+              } @else {
+                <div class="grid">
+                  <div class="card full finance-summary">
+                    <div class="fin-kpi">
+                      <span class="fk-label">{{ 'akten.finance.claimValue' | transloco }}</span>
+                      <span class="fk-value">{{ c.claimValue | number: '1.2-2' }} €</span>
+                    </div>
+                    <div class="fin-kpi">
+                      <span class="fk-label">{{ 'akten.finance.invoiced' | transloco }}</span>
+                      <span class="fk-value">{{ sumGross(invoices()) | number: '1.2-2' }} €</span>
+                    </div>
+                    <div class="fin-kpi">
+                      <span class="fk-label">{{ 'akten.finance.paid' | transloco }}</span>
+                      <span class="fk-value">{{ sumPayments(payments()) | number: '1.2-2' }} €</span>
+                    </div>
+                  </div>
+
+                  <div class="card full">
+                    <div class="card-h">
+                      <h3>{{ 'akten.finance.invoices' | transloco }}</h3>
+                      <span class="card-count">{{ invoices()?.length ?? 0 }}</span>
+                    </div>
+                    <div class="card-b">
+                      @for (inv of invoices(); track inv.id) {
+                        <div class="fin-row">
+                          <span class="fin-main">
+                            <span class="dn">{{ inv.invoiceNumber || inv.name || '—' }}</span>
+                            <span class="dmeta">
+                              {{ inv.status }}
+                              @if (inv.dueDate) { · {{ 'akten.finance.due' | transloco }} {{ inv.dueDate | date: 'dd.MM.yyyy' }} }
+                            </span>
+                          </span>
+                          <span class="fin-amount">{{ inv.totalGross | number: '1.2-2' }} {{ inv.currency }}</span>
+                        </div>
+                      } @empty {
+                        <p class="muted">{{ 'akten.finance.noInvoices' | transloco }}</p>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="card full">
+                    <div class="card-h">
+                      <h3>{{ 'akten.finance.payments' | transloco }}</h3>
+                      <span class="card-count">{{ payments()?.length ?? 0 }}</span>
+                    </div>
+                    <div class="card-b">
+                      @for (pay of payments(); track pay.id) {
+                        <div class="fin-row">
+                          <span class="fin-main">
+                            <span class="dn">{{ pay.name || pay.paymentNumber || pay.reason || '—' }}</span>
+                            <span class="dmeta">
+                              {{ pay.status }}
+                              @if (pay.targetDate) { · {{ pay.targetDate | date: 'dd.MM.yyyy' }} }
+                            </span>
+                          </span>
+                          <span class="fin-amount">{{ pay.total | number: '1.2-2' }} {{ pay.currency }}</span>
+                        </div>
+                      } @empty {
+                        <p class="muted">{{ 'akten.finance.noPayments' | transloco }}</p>
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
+            } @else if (activeTab() === 'history') {
+              <div class="card full">
+                <div class="card-h">
+                  <h3>{{ 'akten.tabs.history' | transloco }}</h3>
+                  @if (history()) { <span class="card-count">{{ history()?.length ?? 0 }}</span> }
+                </div>
+                <div class="card-b">
+                  @if (historyLoading()) {
+                    <p class="muted">{{ 'akten.loading' | transloco }}</p>
+                  } @else if (historyError()) {
+                    <p>
+                      {{ 'akten.error' | transloco }}
+                      <button type="button" class="btn-retry" (click)="retryTab()">{{ 'akten.retry' | transloco }}</button>
+                    </p>
+                  } @else {
+                    @for (h of history(); track h.id) {
+                      <div class="hist">
+                        <span class="hist-dot"></span>
+                        <span class="hist-body">
+                          <span class="hist-desc">{{ h.changeDescription }}</span>
+                          <span class="hist-meta">{{ h.changeDate | date: 'dd.MM.yyyy HH:mm' }} · {{ h.principal }}</span>
+                        </span>
+                      </div>
+                    } @empty {
+                      <p class="muted">{{ 'akten.noHistory' | transloco }}</p>
+                    }
+                  }
+                </div>
+              </div>
             }
           </div>
           } @else {
@@ -273,6 +417,17 @@ export class AktenComponent {
   protected readonly pdfSafeUrl = signal<SafeResourceUrl | null>(null);
   private pdfBlobUrl: string | null = null;
   private previewSeq = 0;
+
+  // History tab state (lazy-loaded per case)
+  protected readonly history = signal<CaseHistoryEntry[] | null>(null);
+  protected readonly historyLoading = signal(false);
+  protected readonly historyError = signal(false);
+
+  // Finance tab state (invoices + payments, lazy-loaded per case)
+  protected readonly invoices = signal<CaseInvoice[] | null>(null);
+  protected readonly payments = signal<CasePayment[] | null>(null);
+  protected readonly financeLoading = signal(false);
+  protected readonly financeError = signal(false);
 
   private autoSelected = false;
   private searchDebounce: ReturnType<typeof setTimeout> | null = null;
@@ -433,6 +588,12 @@ export class AktenComponent {
     this.activeTab.set('overview');
     this.detailLoading.set(true);
     this.selected.set(null);
+    // Reset the lazily-loaded tab data for the new case.
+    this.history.set(null);
+    this.historyError.set(false);
+    this.invoices.set(null);
+    this.payments.set(null);
+    this.financeError.set(false);
     this.cases.loadDetail(id).subscribe((detail) => {
       // ignore a stale response if the user already picked another case
       if (this.selectedId() === id) {
@@ -440,6 +601,86 @@ export class AktenComponent {
         this.detailLoading.set(false);
       }
     });
+  }
+
+  /** Switches the active detail tab and lazily loads its data on first open. */
+  protected selectTab(tab: CaseTab): void {
+    this.activeTab.set(tab);
+    if (tab === 'history' && this.history() === null && !this.historyLoading()) {
+      this.loadHistory();
+    } else if (tab === 'finance' && this.invoices() === null && !this.financeLoading()) {
+      this.loadFinance();
+    }
+  }
+
+  private loadHistory(): void {
+    const id = this.selectedId();
+    if (!id) {
+      return;
+    }
+    this.historyLoading.set(true);
+    this.historyError.set(false);
+    this.cases.history(id).subscribe({
+      next: (rows) => {
+        if (this.selectedId() !== id) {
+          return;
+        }
+        this.history.set(rows);
+        this.historyLoading.set(false);
+      },
+      error: () => {
+        if (this.selectedId() !== id) {
+          return;
+        }
+        this.historyError.set(true);
+        this.historyLoading.set(false);
+      },
+    });
+  }
+
+  private loadFinance(): void {
+    const id = this.selectedId();
+    if (!id) {
+      return;
+    }
+    this.financeLoading.set(true);
+    this.financeError.set(false);
+    forkJoin({ invoices: this.cases.invoices(id), payments: this.cases.payments(id) }).subscribe({
+      next: ({ invoices, payments }) => {
+        if (this.selectedId() !== id) {
+          return;
+        }
+        this.invoices.set(invoices);
+        this.payments.set(payments);
+        this.financeLoading.set(false);
+      },
+      error: () => {
+        if (this.selectedId() !== id) {
+          return;
+        }
+        this.financeError.set(true);
+        this.financeLoading.set(false);
+      },
+    });
+  }
+
+  /** Retries the currently-active tab's lazy load (history/finance). */
+  protected retryTab(): void {
+    if (this.activeTab() === 'history') {
+      this.loadHistory();
+    } else if (this.activeTab() === 'finance') {
+      this.loadFinance();
+    }
+  }
+
+  /** Sum of an invoice list's gross totals (for the finance summary). */
+  protected sumGross(list: CaseInvoice[] | null): number {
+    return (list ?? []).reduce((acc, i) => acc + (i.totalGross || 0), 0);
+  }
+
+  /** Sum of a payment list's totals (for the finance summary). */
+  protected sumPayments(list: CasePayment[] | null): number {
+    return (list ?? []).reduce((acc, p) => acc + (p.total || 0), 0);
   }
 
   /** Mobile "back" from the detail: return to the plain list URL. */

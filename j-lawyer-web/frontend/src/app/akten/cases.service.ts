@@ -2,9 +2,12 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { catchError, forkJoin, map, Observable, of } from 'rxjs';
 import { API_ROOT } from '../core/api';
-import { CaseDetail, CaseDocument, CaseOverview, CaseStatus, DueDate, Party } from './case.models';
+import {
+  CaseDetail, CaseDocument, CaseHistoryEntry, CaseInvoice, CaseOverview, CasePayment, CaseStatus, DueDate, Party,
+} from './case.models';
 
 const CASES_BASE = `${API_ROOT}/v1/cases`;
+const CASES_V7 = `${API_ROOT}/v7/cases`;
 const CASES_V8 = `${API_ROOT}/v8/cases`;
 const PAGE_SIZE = 50;
 
@@ -24,6 +27,15 @@ interface PartyDto { id: string; involvementType: string; contact?: string; }
 interface DueDateDto { id: string; reason: string; dueDate: string; done: boolean; assignee: string; type: string; }
 interface DocDto { id: string; name: string; size: number; creationDate: string; }
 interface DocumentContentDto { id: string; fileName: string; caseId: string; base64content: string; }
+interface HistoryDto { id: string; principal: string; changeDate: number; changeDescription: string; }
+interface InvoiceDto {
+  id: string; invoiceNumber: string; name: string; status: string;
+  total: number; totalGross: number; currency: string; dueDate: string; creationDate: string;
+}
+interface PaymentDto {
+  id: string; paymentNumber: string; name: string; reason: string; status: string;
+  total: number; currency: string; targetDate: string; creationDate: string;
+}
 
 /**
  * Case data access against the real REST API (GET /rest/v1/cases/…). The Bearer token is
@@ -116,6 +128,29 @@ export class CasesService {
     return this.http.get<DocumentContentDto>(`${CASES_BASE}/document/${id}/content`);
   }
 
+  /** Loads a case's change history, most recent first (GET /v8/cases/{id}/history); [] on error. */
+  history(id: string): Observable<CaseHistoryEntry[]> {
+    return this.http.get<HistoryDto[]>(`${CASES_V8}/${id}/history`).pipe(
+      map((rows) => (rows ?? []).map(toHistory)),
+    );
+  }
+
+  /** Loads the case's invoices (GET /v7/cases/{id}/invoices); [] on error. */
+  invoices(id: string): Observable<CaseInvoice[]> {
+    return this.http.get<InvoiceDto[]>(`${CASES_V7}/${id}/invoices`).pipe(
+      map((rows) => (rows ?? []).map(toInvoice)),
+      catchError(() => of([])),
+    );
+  }
+
+  /** Loads the case's payments (GET /v8/cases/{id}/payments); [] on error. */
+  payments(id: string): Observable<CasePayment[]> {
+    return this.http.get<PaymentDto[]>(`${CASES_V8}/${id}/payments`).pipe(
+      map((rows) => (rows ?? []).map(toPayment)),
+      catchError(() => of([])),
+    );
+  }
+
   /** Loads a full case with its parties, due dates and documents; null on error. */
   loadDetail(id: string): Observable<CaseDetail | null> {
     return forkJoin({
@@ -188,6 +223,43 @@ function toDocument(dto: DocDto): CaseDocument {
     date: isoDate(dto.creationDate),
     size: formatBytes(dto.size),
     ext: extensionOf(dto.name),
+  };
+}
+
+function toHistory(dto: HistoryDto): CaseHistoryEntry {
+  return {
+    id: dto.id,
+    principal: dto.principal ?? '',
+    changeDate: dto.changeDate ?? 0,
+    changeDescription: dto.changeDescription ?? '',
+  };
+}
+
+function toInvoice(dto: InvoiceDto): CaseInvoice {
+  return {
+    id: dto.id,
+    invoiceNumber: dto.invoiceNumber ?? '',
+    name: dto.name ?? '',
+    status: dto.status ?? '',
+    total: dto.total ?? 0,
+    totalGross: dto.totalGross ?? 0,
+    currency: dto.currency ?? '€',
+    dueDate: isoDate(dto.dueDate),
+    creationDate: isoDate(dto.creationDate),
+  };
+}
+
+function toPayment(dto: PaymentDto): CasePayment {
+  return {
+    id: dto.id,
+    paymentNumber: dto.paymentNumber ?? '',
+    name: dto.name ?? '',
+    reason: dto.reason ?? '',
+    status: dto.status ?? '',
+    total: dto.total ?? 0,
+    currency: dto.currency ?? '€',
+    targetDate: isoDate(dto.targetDate),
+    creationDate: isoDate(dto.creationDate),
   };
 }
 

@@ -102,7 +102,18 @@
     "docLoading": "Dokument wird geladen …",
     "docError": "Dokument konnte nicht geladen werden.",
     "close": "Schließen",
-    "pdfOpenTab": "Im neuen Tab öffnen"
+    "pdfOpenTab": "Im neuen Tab öffnen",
+    "noHistory": "Keine Historieneinträge.",
+    "finance": {
+      "claimValue": "Streitwert",
+      "invoiced": "Rechnungen (brutto)",
+      "paid": "Zahlungen",
+      "invoices": "Rechnungen",
+      "payments": "Zahlungen",
+      "due": "fällig",
+      "noInvoices": "Keine Rechnungen.",
+      "noPayments": "Keine Zahlungen."
+    }
   },
   "kontakte": {
     "title": "Kontakte",

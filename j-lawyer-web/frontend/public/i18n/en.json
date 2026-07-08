@@ -102,7 +102,18 @@
     "docLoading": "Loading document …",
     "docError": "Could not load document.",
     "close": "Close",
-    "pdfOpenTab": "Open in new tab"
+    "pdfOpenTab": "Open in new tab",
+    "noHistory": "No history entries.",
+    "finance": {
+      "claimValue": "Amount in dispute",
+      "invoiced": "Invoiced (gross)",
+      "paid": "Payments",
+      "invoices": "Invoices",
+      "payments": "Payments",
+      "due": "due",
+      "noInvoices": "No invoices.",
+      "noPayments": "No payments."
+    }
   },
   "kontakte": {
     "title": "Contacts",

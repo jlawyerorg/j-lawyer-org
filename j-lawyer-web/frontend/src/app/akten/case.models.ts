@@ -103,6 +103,46 @@ export function mimeOf(ext: string): string {
   }
 }
 
+/** A case change-history (audit trail) entry (GET /v8/cases/{id}/history). */
+export interface CaseHistoryEntry {
+  id: string;
+  /** Login name of the user who caused the change. */
+  principal: string;
+  /** Epoch milliseconds (UTC). */
+  changeDate: number;
+  changeDescription: string;
+}
+
+/** An invoice attached to the case (GET /v7/cases/{id}/invoices). */
+export interface CaseInvoice {
+  id: string;
+  invoiceNumber: string;
+  name: string;
+  status: string;
+  /** Net total. */
+  total: number;
+  /** Gross total (incl. VAT). */
+  totalGross: number;
+  currency: string;
+  /** ISO date (sanitized, no [UTC] suffix); empty if unset. */
+  dueDate: string;
+  creationDate: string;
+}
+
+/** A payment attached to the case (GET /v8/cases/{id}/payments). */
+export interface CasePayment {
+  id: string;
+  paymentNumber: string;
+  name: string;
+  reason: string;
+  status: string;
+  total: number;
+  currency: string;
+  /** ISO date (sanitized, no [UTC] suffix); empty if unset. */
+  targetDate: string;
+  creationDate: string;
+}
+
 /** Full case (RestfulCaseV1 + related collections + derived status). */
 export interface CaseDetail {
   id: string;

@@ -19,6 +19,7 @@
 package org.jlawyer.io.rest.v8;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,11 +30,13 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v8.pojo.RestfulCaseHistoryV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulCaseOverviewV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulCasePageV8;
 
@@ -129,6 +132,42 @@ public class CasesEndpointV8 implements CasesEndpointLocalV8 {
             return Response.ok(new RestfulCasePageV8(total, offset, limit, items)).build();
         } catch (Exception ex) {
             log.error("Can not list cases page", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns the change history (audit trail) of a case, most recent first. The underlying
+     * service performs the ACL check for the calling user.
+     *
+     * @param id case id
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/{id}/history")
+    @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the change history of a case (most recent first)", response = RestfulCaseHistoryV8.class, responseContainer = "List")
+    public Response getHistory(@PathParam("id") String id) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            // null "since" returns the full history; the service enforces the ACL for the caller.
+            ArchiveFileHistoryBean[] history = cases.getHistoryForArchiveFile(id, null);
+
+            ArrayList<RestfulCaseHistoryV8> result = new ArrayList<>();
+            if (history != null) {
+                for (ArchiveFileHistoryBean h : history) {
+                    result.add(RestfulCaseHistoryV8.fromBean(h));
+                }
+            }
+            // most recent first
+            result.sort((a, b) -> Long.compare(b.getChangeDate(), a.getChangeDate()));
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("Can not get history for case " + id, ex);
             return Response.serverError().build();
         }
     }
