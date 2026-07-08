@@ -690,6 +690,7 @@ import org.jlawyer.io.rest.v7.WebHooksEndpointV7;
 import org.jlawyer.io.rest.v8.AuthenticationEndpointV8;
 import org.jlawyer.io.rest.v8.BeaEndpointV8;
 import org.jlawyer.io.rest.v8.CasesEndpointV8;
+import org.jlawyer.io.rest.v8.ContactsEndpointV8;
 import org.jlawyer.io.rest.v8.PaymentsEndpointV8;
 import org.jlawyer.io.rest.v8.SearchEndpointV8;
 import org.jlawyer.io.rest.v8.TimesheetsEndpointV8;
@@ -728,6 +729,7 @@ public class EndpointServiceLocator extends Application
         s.add(AuthenticationEndpointV8.class);
         s.add(BeaEndpointV8.class);
         s.add(CasesEndpointV8.class);
+        s.add(ContactsEndpointV8.class);
         s.add(PaymentsEndpointV8.class);
         s.add(SearchEndpointV8.class);
         s.add(TimesheetsEndpointV8.class);

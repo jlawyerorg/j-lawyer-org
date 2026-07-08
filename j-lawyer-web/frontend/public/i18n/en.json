@@ -96,5 +96,54 @@
       "created": "Created"
     },
     "loadingMore": "Loading more …"
+  },
+  "kontakte": {
+    "title": "Contacts",
+    "new": "New contact",
+    "searchContacts": "Search contacts …",
+    "empty": "No contacts found.",
+    "loading": "Loading …",
+    "loadingMore": "Loading more …",
+    "error": "Could not load contacts.",
+    "retry": "Try again",
+    "back": "Back",
+    "selectHint": "Select a contact on the left.",
+    "channels": "Contact channels",
+    "noChannels": "No contact details.",
+    "address": "Address",
+    "noAddress": "No address.",
+    "more": "Further details",
+    "tabTodo": "This tab will be implemented in a later phase.",
+    "filter": {
+      "all": "All",
+      "people": "People",
+      "companies": "Companies"
+    },
+    "type": {
+      "person": "Person",
+      "company": "Company"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "cases": "Cases",
+      "documents": "Documents",
+      "history": "History"
+    },
+    "field": {
+      "honorific": "Salutation",
+      "company": "Company",
+      "department": "Department",
+      "phone": "Phone",
+      "mobile": "Mobile",
+      "fax": "Fax",
+      "email": "E-mail",
+      "emailHome": "E-mail (private)",
+      "emailMisc": "E-mail (other)",
+      "website": "Website",
+      "birthDate": "Date of birth",
+      "custom1": "Field 1",
+      "custom2": "Field 2",
+      "custom3": "Field 3"
+    }
   }
 }

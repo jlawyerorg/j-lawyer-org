@@ -1650,6 +1650,18 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     }
 
     @Override
+    @RolesAllowed({"readAddressRole"})
+    public List<AddressBean> getContactsPage(String search, String kind, int offset, int limit) {
+        return this.addressFacade.findOverviewPage(search, kind, offset, limit);
+    }
+
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public long countContacts(String search, String kind) {
+        return this.addressFacade.countOverview(search, kind);
+    }
+
+    @Override
     @RolesAllowed({"adminRole"})
     public void runFullAddressBookSync() {
         this.contactSync.runFullAddressBookSync();

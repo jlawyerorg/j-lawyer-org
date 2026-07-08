@@ -715,4 +715,26 @@ public interface AddressServiceLocal {
     int deleteContactTagsByNameAndValue(String tagName, String tagValue);
     int deleteContactTagsByName(String tagName);
 
+    /**
+     * Returns one filtered, ordered page of contacts for a server-paginated overview (used by
+     * the v8 REST contacts list). The address book is not per-user restricted.
+     *
+     * @param search optional case-insensitive term matched against name, first name, company,
+     *               city, zip code and e-mail (null/blank matches all)
+     * @param kind   {@code people} (no company), {@code companies} (has a company) or null for all
+     * @param offset 0-based row offset
+     * @param limit  page size (clamped to 1..200; defaults to 50 when &lt;= 0)
+     * @return the matching contacts ordered by name, company, first name
+     */
+    List<AddressBean> getContactsPage(String search, String kind, int offset, int limit);
+
+    /**
+     * Counts the contacts matching the same filter as {@link #getContactsPage}.
+     *
+     * @param search optional case-insensitive term (see {@link #getContactsPage})
+     * @param kind   {@code people}, {@code companies} or null
+     * @return the total number of matching contacts
+     */
+    long countContacts(String search, String kind);
+
 }

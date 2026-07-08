@@ -96,5 +96,54 @@
       "created": "Angelegt"
     },
     "loadingMore": "Weitere werden geladen …"
+  },
+  "kontakte": {
+    "title": "Kontakte",
+    "new": "Neuer Kontakt",
+    "searchContacts": "Kontakte durchsuchen …",
+    "empty": "Keine Kontakte gefunden.",
+    "loading": "Wird geladen …",
+    "loadingMore": "Weitere werden geladen …",
+    "error": "Kontakte konnten nicht geladen werden.",
+    "retry": "Erneut versuchen",
+    "back": "Zurück",
+    "selectHint": "Wählen Sie links einen Kontakt.",
+    "channels": "Kontaktkanäle",
+    "noChannels": "Keine Kontaktdaten.",
+    "address": "Anschrift",
+    "noAddress": "Keine Anschrift.",
+    "more": "Weiteres",
+    "tabTodo": "Dieser Reiter wird in einer späteren Phase umgesetzt.",
+    "filter": {
+      "all": "Alle",
+      "people": "Personen",
+      "companies": "Firmen"
+    },
+    "type": {
+      "person": "Person",
+      "company": "Firma"
+    },
+    "tabs": {
+      "overview": "Übersicht",
+      "cases": "Akten",
+      "documents": "Dokumente",
+      "history": "Historie"
+    },
+    "field": {
+      "honorific": "Anrede",
+      "company": "Firma",
+      "department": "Abteilung",
+      "phone": "Telefon",
+      "mobile": "Mobil",
+      "fax": "Fax",
+      "email": "E-Mail",
+      "emailHome": "E-Mail (privat)",
+      "emailMisc": "E-Mail (weitere)",
+      "website": "Webseite",
+      "birthDate": "Geburtsdatum",
+      "custom1": "Feld 1",
+      "custom2": "Feld 2",
+      "custom3": "Feld 3"
+    }
   }
 }
