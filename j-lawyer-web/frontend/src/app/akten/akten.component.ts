@@ -6,6 +6,7 @@ import { CasesService } from './cases.service';
 import { CaseDetail } from './case.models';
 
 type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 'history';
+type CaseFilter = 'all' | 'open' | 'closed';
 
 /**
  * Akten (cases) module — responsive master-detail (design-mockup.html): searchable case
@@ -29,6 +30,14 @@ type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 
           </button>
         </header>
 
+        <div class="filters" role="tablist">
+          @for (f of filters; track f) {
+            <button type="button" class="chip" [class.on]="filter() === f" (click)="filter.set(f)">
+              {{ 'akten.filter.' + f | transloco }}
+            </button>
+          }
+        </div>
+
         <label class="search">
           <jl-icon name="search" [size]="14" />
           <input type="search" [placeholder]="'akten.searchCases' | transloco"
@@ -48,8 +57,9 @@ type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 
               <button type="button" class="row" [class.sel]="c.id === selectedId()" (click)="select(c.id)">
                 <span class="az">{{ c.fileNumber }}</span>
                 <span class="name">{{ c.name }}</span>
-                <span class="sub">{{ c.reason || '—' }}</span>
+                <span class="sub">{{ c.subjectField || c.reason || '—' }}{{ c.lawyer ? ' · ' + c.lawyer : '' }}</span>
                 <span class="r-right">
+                  <span class="pill" [class]="c.status">{{ 'akten.status.' + c.status | transloco }}</span>
                   <span class="date">{{ c.lastChanged | date: 'dd.MM.yy' }}</span>
                 </span>
               </button>
@@ -172,7 +182,9 @@ export class AktenComponent {
   protected readonly cases = inject(CasesService);
 
   protected readonly tabs: CaseTab[] = ['overview', 'documents', 'parties', 'deadlines', 'finance', 'history'];
+  protected readonly filters: CaseFilter[] = ['all', 'open', 'closed'];
 
+  protected readonly filter = signal<CaseFilter>('all');
   protected readonly search = signal('');
   protected readonly activeTab = signal<CaseTab>('overview');
   protected readonly selectedId = signal<string | null>(null);
@@ -183,11 +195,15 @@ export class AktenComponent {
 
   protected readonly filtered = computed(() => {
     const term = this.search().trim().toLowerCase();
-    const rows = this.cases.overviews();
-    if (!term) {
-      return rows;
-    }
-    return rows.filter((c) => (c.name + ' ' + c.fileNumber + ' ' + c.reason).toLowerCase().includes(term));
+    const f = this.filter();
+    return this.cases.overviews().filter((c) => {
+      if (f === 'open' && c.archived) return false;
+      if (f === 'closed' && !c.archived) return false;
+      if (!term) return true;
+      return (c.name + ' ' + c.fileNumber + ' ' + c.reason + ' ' + c.subjectField + ' ' + c.lawyer)
+        .toLowerCase()
+        .includes(term);
+    });
   });
 
   constructor() {

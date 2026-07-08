@@ -11,7 +11,7 @@
 /** Display status derived on the client (the list DTO carries no status). */
 export type CaseStatus = 'open' | 'dueToday' | 'closed';
 
-/** List row — the fields the list endpoint actually provides. */
+/** List row — the fields the v8 list endpoint provides (richer than v1). */
 export interface CaseOverview {
   id: string;
   /** Aktenzeichen */
@@ -19,6 +19,12 @@ export interface CaseOverview {
   name: string;
   /** Betreff/Grund */
   reason: string;
+  /** Rechtsgebiet */
+  subjectField: string;
+  lawyer: string;
+  archived: boolean;
+  /** Derived from `archived` (the list has no due-date data, so no dueToday here). */
+  status: CaseStatus;
   /** ISO date of last change (sanitized, no [UTC] suffix). */
   lastChanged: string;
 }

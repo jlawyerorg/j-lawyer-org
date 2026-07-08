@@ -5,9 +5,13 @@ import { API_ROOT } from '../core/api';
 import { CaseDetail, CaseDocument, CaseOverview, CaseStatus, DueDate, Party } from './case.models';
 
 const CASES_BASE = `${API_ROOT}/v1/cases`;
+const CASES_V8 = `${API_ROOT}/v8/cases`;
 
 /** Wire shapes returned by j-lawyer-io (only the fields we consume). */
-interface CaseListDto { id: string; fileNumber: string; name: string; reason: string; dateChanged: string; }
+interface CaseListDto {
+  id: string; fileNumber: string; name: string; reason: string; dateChanged: string;
+  subjectField: string; lawyer: string; archived: boolean;
+}
 interface CaseDto {
   id: string; fileNumber: string; name: string; reason: string; subjectField: string;
   lawyer: string; assistant: string; claimNumber: string; claimValue: number; notice: string; archived: number;
@@ -29,11 +33,11 @@ export class CasesService {
   readonly listLoading = signal(false);
   readonly listError = signal(false);
 
-  /** Loads the active-cases list into {@link overviews}. Idempotent enough to re-call on retry. */
+  /** Loads the case list (all cases, incl. archived) into {@link overviews}. Re-callable on retry. */
   loadList(): void {
     this.listLoading.set(true);
     this.listError.set(false);
-    this.http.get<CaseListDto[]>(`${CASES_BASE}/list/active`).subscribe({
+    this.http.get<CaseListDto[]>(`${CASES_V8}/list`).subscribe({
       next: (rows) => {
         this.overviews.set((rows ?? []).map(toOverview));
         this.listLoading.set(false);
@@ -65,6 +69,10 @@ function toOverview(dto: CaseListDto): CaseOverview {
     fileNumber: dto.fileNumber,
     name: dto.name,
     reason: dto.reason ?? '',
+    subjectField: dto.subjectField ?? '',
+    lawyer: dto.lawyer ?? '',
+    archived: !!dto.archived,
+    status: dto.archived ? 'closed' : 'open',
     lastChanged: isoDate(dto.dateChanged),
   };
 }
