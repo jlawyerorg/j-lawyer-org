@@ -187,5 +187,17 @@
       "respite": "Deadline",
       "followup": "Follow-up"
     }
+  },
+  "dokumente": {
+    "title": "Documents",
+    "searchPlaceholder": "Search document contents …",
+    "searching": "Searching …",
+    "error": "Search failed.",
+    "retry": "Try again",
+    "hint": "Enter a search term to full-text search across all case documents.",
+    "empty": "No results.",
+    "capped": "Showing the first {{max}} results — refine your search for more precise results.",
+    "score": "Relevance",
+    "download": "Download"
   }
 }

@@ -18,6 +18,7 @@ const IMPLEMENTED: Record<string, LoadComponent> = {
   cases: () => import('./akten/akten.component').then((c) => c.AktenComponent),
   contacts: () => import('./contacts/kontakte.component').then((c) => c.KontakteComponent),
   calendar: () => import('./calendar/kalender.component').then((c) => c.KalenderComponent),
+  documents: () => import('./documents/dokumente.component').then((c) => c.DokumenteComponent),
 };
 
 const moduleRoutes: Routes = MODULES.map((m) => ({

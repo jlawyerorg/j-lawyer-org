@@ -187,5 +187,17 @@
       "respite": "Frist",
       "followup": "Wiedervorlage"
     }
+  },
+  "dokumente": {
+    "title": "Dokumente",
+    "searchPlaceholder": "Dokumentinhalte durchsuchen …",
+    "searching": "Wird gesucht …",
+    "error": "Suche fehlgeschlagen.",
+    "retry": "Erneut versuchen",
+    "hint": "Geben Sie einen Suchbegriff ein, um alle Aktendokumente im Volltext zu durchsuchen.",
+    "empty": "Keine Treffer.",
+    "capped": "Die ersten {{max}} Treffer werden angezeigt — Suche verfeinern für genauere Ergebnisse.",
+    "score": "Relevanz",
+    "download": "Herunterladen"
   }
 }
