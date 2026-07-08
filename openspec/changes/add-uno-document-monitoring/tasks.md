@@ -5,7 +5,6 @@
 - [x] 1.4 Implement hybrid close logic: UNO close/unload plus lock-file removal closes immediately; lock-only uses grace period.
 - [x] 1.5 Wire LibreOffice/OpenOffice launchers to attempt UNO monitoring and fall back to existing launch behavior.
 - [x] 1.6 Keep `WaitForDocumentAction` actively refreshing observer state while it waits.
-- [x] 1.7 Normalize unusable LibreOffice document window bounds after UNO launch.
 
 ## 2. Verification
 - [x] 2.1 Add or keep a Java harness/test proving UNO modify/save/close events are observed on a real ODT.

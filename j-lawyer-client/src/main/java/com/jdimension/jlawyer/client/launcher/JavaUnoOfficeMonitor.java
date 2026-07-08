@@ -9,9 +9,6 @@
  */
 package com.jdimension.jlawyer.client.launcher;
 
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.Rectangle;
 import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Array;
@@ -42,10 +39,6 @@ public class JavaUnoOfficeMonitor {
     private static final String PROP_UNO_EXTRA_ARGS = "jlawyer.uno.extraArgs";
     private static final String PROP_UNO_PORT = "jlawyer.uno.port";
     private static final String ENV_UNO_CLASSPATH = "JLAWYER_UNO_CLASSPATH";
-    private static final int MIN_WINDOW_WIDTH = 800;
-    private static final int MIN_WINDOW_HEIGHT = 600;
-    private static final int DEFAULT_WINDOW_WIDTH = 1200;
-    private static final int DEFAULT_WINDOW_HEIGHT = 900;
 
     private JavaUnoOfficeMonitor() {
     }
@@ -88,7 +81,6 @@ public class JavaUnoOfficeMonitor {
             }
             componentLoaded = true;
 
-            normalizeDocumentWindow(uno, component);
             List<Object> listeners = registerListeners(uno, component, document);
             document.setUnoMonitorSession(new MonitorSession(unoClassLoader, process, resolver, remoteContext, component, listeners));
             document.setUnoMonitoringActive(true);
@@ -133,120 +125,6 @@ public class JavaUnoOfficeMonitor {
             listeners.add(modifyListener);
         }
         return listeners;
-    }
-
-    private static void normalizeDocumentWindow(UnoClasses uno, Object component) {
-        for (int attempt = 0; attempt < 5; attempt++) {
-            normalizeDocumentWindowOnce(uno, component);
-            if (attempt < 4) {
-                try {
-                    Thread.sleep(150);
-                } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
-                    return;
-                }
-            }
-        }
-    }
-
-    private static void normalizeDocumentWindowOnce(UnoClasses uno, Object component) {
-        try {
-            Object model = queryInterface(uno, uno.xModel, component);
-            if (model == null) {
-                return;
-            }
-            Object controller = invoke(model, "getCurrentController");
-            if (controller == null) {
-                return;
-            }
-            Object frame = invoke(controller, "getFrame");
-            if (frame == null) {
-                return;
-            }
-            Object xFrame = queryInterface(uno, uno.xFrame, frame);
-            if (xFrame == null) {
-                return;
-            }
-            Object containerWindow = queryInterface(uno, uno.xWindow, invoke(xFrame, "getContainerWindow"));
-            if (containerWindow == null) {
-                return;
-            }
-
-            invoke(containerWindow, "setVisible", Boolean.TRUE);
-            Rectangle currentBounds = getUnoWindowBounds(containerWindow);
-            if (!isWindowUsable(currentBounds)) {
-                Rectangle safeBounds = getSafeWindowBounds();
-                invoke(containerWindow, "setPosSize",
-                        Integer.valueOf(safeBounds.x),
-                        Integer.valueOf(safeBounds.y),
-                        Integer.valueOf(safeBounds.width),
-                        Integer.valueOf(safeBounds.height),
-                        getPosSizeAllFlag(uno));
-                log.debug("Normalized LibreOffice document window from " + currentBounds + " to " + safeBounds);
-            }
-            invoke(containerWindow, "setFocus");
-        } catch (Throwable t) {
-            log.debug("Could not normalize LibreOffice document window: " + t.getMessage(), t);
-        }
-    }
-
-    private static Rectangle getUnoWindowBounds(Object window) throws Exception {
-        Object bounds = invoke(window, "getPosSize");
-        return new Rectangle(
-                getIntField(bounds, "X"),
-                getIntField(bounds, "Y"),
-                getIntField(bounds, "Width"),
-                getIntField(bounds, "Height"));
-    }
-
-    private static int getIntField(Object object, String name) throws Exception {
-        Field field = object.getClass().getField(name);
-        return ((Number) field.get(object)).intValue();
-    }
-
-    private static Object getPosSizeAllFlag(UnoClasses uno) throws Exception {
-        Field field = uno.posSize.getField("POSSIZE");
-        return Short.valueOf(((Number) field.get(null)).shortValue());
-    }
-
-    private static boolean isWindowUsable(Rectangle bounds) {
-        if (bounds == null || bounds.width < MIN_WINDOW_WIDTH || bounds.height < MIN_WINDOW_HEIGHT) {
-            return false;
-        }
-
-        Rectangle screenBounds = getVirtualScreenBounds();
-        if (screenBounds == null) {
-            return true;
-        }
-        Rectangle visibleBounds = screenBounds.intersection(bounds);
-        return visibleBounds.width >= MIN_WINDOW_WIDTH / 2 && visibleBounds.height >= MIN_WINDOW_HEIGHT / 2;
-    }
-
-    private static Rectangle getSafeWindowBounds() {
-        Rectangle screenBounds = getVirtualScreenBounds();
-        if (screenBounds == null) {
-            return new Rectangle(100, 100, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT);
-        }
-
-        int width = Math.min(DEFAULT_WINDOW_WIDTH, Math.max(MIN_WINDOW_WIDTH, screenBounds.width - 100));
-        int height = Math.min(DEFAULT_WINDOW_HEIGHT, Math.max(MIN_WINDOW_HEIGHT, screenBounds.height - 100));
-        int x = screenBounds.x + Math.max(50, (screenBounds.width - width) / 2);
-        int y = screenBounds.y + Math.max(50, (screenBounds.height - height) / 2);
-        return new Rectangle(x, y, width, height);
-    }
-
-    private static Rectangle getVirtualScreenBounds() {
-        try {
-            GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
-            Rectangle bounds = null;
-            for (GraphicsDevice device : environment.getScreenDevices()) {
-                Rectangle deviceBounds = device.getDefaultConfiguration().getBounds();
-                bounds = bounds == null ? new Rectangle(deviceBounds) : bounds.union(deviceBounds);
-            }
-            return bounds;
-        } catch (Throwable t) {
-            return null;
-        }
     }
 
     private static Object connect(UnoClasses uno, Object resolver, int port, Process process) throws Exception {
@@ -500,10 +378,6 @@ public class JavaUnoOfficeMonitor {
         private final Class<?> xCloseListener;
         private final Class<?> xModifyBroadcaster;
         private final Class<?> xModifyListener;
-        private final Class<?> xModel;
-        private final Class<?> xFrame;
-        private final Class<?> xWindow;
-        private final Class<?> posSize;
 
         UnoClasses(ClassLoader loader) throws Exception {
             this.loader = loader;
@@ -519,10 +393,6 @@ public class JavaUnoOfficeMonitor {
             this.xCloseListener = Class.forName("com.sun.star.util.XCloseListener", true, loader);
             this.xModifyBroadcaster = Class.forName("com.sun.star.util.XModifyBroadcaster", true, loader);
             this.xModifyListener = Class.forName("com.sun.star.util.XModifyListener", true, loader);
-            this.xModel = Class.forName("com.sun.star.frame.XModel", true, loader);
-            this.xFrame = Class.forName("com.sun.star.frame.XFrame", true, loader);
-            this.xWindow = Class.forName("com.sun.star.awt.XWindow", true, loader);
-            this.posSize = Class.forName("com.sun.star.awt.PosSize", true, loader);
         }
     }
 

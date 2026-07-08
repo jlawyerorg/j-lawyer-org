@@ -26,9 +26,3 @@ The desktop client SHALL support optional UNO-backed close detection for LibreOf
 - **WHEN** the client monitors the document lifecycle
 - **THEN** the client SHALL use lock-file monitoring with the grace period
 - **AND** document save/close handling SHALL continue without requiring UNO
-
-#### Scenario: UNO launch avoids unusable restored window geometry
-- **GIVEN** LibreOffice has saved a tiny or off-screen document window state
-- **WHEN** j-lawyer opens a LibreOffice document with active UNO launching
-- **THEN** the client SHALL make the document window visible
-- **AND** if the restored document window is too small or outside the available desktop, the client SHALL move and resize it to usable bounds
