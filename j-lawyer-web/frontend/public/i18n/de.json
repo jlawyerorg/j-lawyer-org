@@ -188,6 +188,34 @@
       "followup": "Wiedervorlage"
     }
   },
+  "desktop": {
+    "title": "Mein Desktop",
+    "greeting": "Willkommen zurück, {{name}}.",
+    "all": "Alle",
+    "loading": "Wird geladen …",
+    "error": "Konnte nicht geladen werden.",
+    "retry": "Erneut versuchen",
+    "recent": {
+      "title": "Zuletzt geändert",
+      "empty": "Keine Akten."
+    },
+    "due": {
+      "title": "Fällig & Wiedervorlagen",
+      "empty": "Nichts fällig.",
+      "noSummary": "(ohne Betreff)",
+      "type": {
+        "event": "Termin",
+        "respite": "Frist",
+        "followup": "Wiedervorlage"
+      }
+    },
+    "invoices": {
+      "title": "Offene Rechnungen",
+      "open": "offen",
+      "sum": "Summe (brutto)",
+      "empty": "Keine offenen Rechnungen."
+    }
+  },
   "dokumente": {
     "title": "Dokumente",
     "searchPlaceholder": "Dokumentinhalte durchsuchen …",

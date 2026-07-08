@@ -188,6 +188,34 @@
       "followup": "Follow-up"
     }
   },
+  "desktop": {
+    "title": "My Desktop",
+    "greeting": "Welcome back, {{name}}.",
+    "all": "All",
+    "loading": "Loading …",
+    "error": "Could not be loaded.",
+    "retry": "Try again",
+    "recent": {
+      "title": "Recently changed",
+      "empty": "No cases."
+    },
+    "due": {
+      "title": "Due & follow-ups",
+      "empty": "Nothing due.",
+      "noSummary": "(no subject)",
+      "type": {
+        "event": "Appointment",
+        "respite": "Deadline",
+        "followup": "Follow-up"
+      }
+    },
+    "invoices": {
+      "title": "Open invoices",
+      "open": "open",
+      "sum": "Total (gross)",
+      "empty": "No open invoices."
+    }
+  },
   "dokumente": {
     "title": "Documents",
     "searchPlaceholder": "Search document contents …",

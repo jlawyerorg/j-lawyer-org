@@ -15,6 +15,7 @@ const placeholderLoader: LoadComponent = () =>
 
 /** Modules with a real implemented component (keyed by route path; others fall back to the placeholder). */
 const IMPLEMENTED: Record<string, LoadComponent> = {
+  desktop: () => import('./desktop/desktop.component').then((c) => c.DesktopComponent),
   cases: () => import('./akten/akten.component').then((c) => c.AktenComponent),
   contacts: () => import('./contacts/kontakte.component').then((c) => c.KontakteComponent),
   calendar: () => import('./calendar/kalender.component').then((c) => c.KalenderComponent),
