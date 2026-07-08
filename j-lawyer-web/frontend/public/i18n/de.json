@@ -145,5 +145,29 @@
       "custom2": "Feld 2",
       "custom3": "Feld 3"
     }
+  },
+  "kalender": {
+    "loading": "Wird geladen …",
+    "error": "Kalender konnte nicht geladen werden.",
+    "retry": "Erneut versuchen",
+    "empty": "Keine Einträge in diesem Monat.",
+    "prev": "Vorheriger Monat",
+    "next": "Nächster Monat",
+    "today": "Heute",
+    "todayTag": "Heute",
+    "openOnly": "Nur offene",
+    "allDay": "ganztägig",
+    "noSummary": "(ohne Betreff)",
+    "filter": {
+      "all": "Alle",
+      "event": "Termine",
+      "respite": "Fristen",
+      "followup": "Wiedervorlagen"
+    },
+    "type": {
+      "event": "Termin",
+      "respite": "Frist",
+      "followup": "Wiedervorlage"
+    }
   }
 }

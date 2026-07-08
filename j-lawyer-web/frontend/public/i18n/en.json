@@ -145,5 +145,29 @@
       "custom2": "Field 2",
       "custom3": "Field 3"
     }
+  },
+  "kalender": {
+    "loading": "Loading …",
+    "error": "Could not load calendar.",
+    "retry": "Try again",
+    "empty": "No entries this month.",
+    "prev": "Previous month",
+    "next": "Next month",
+    "today": "Today",
+    "todayTag": "Today",
+    "openOnly": "Open only",
+    "allDay": "all-day",
+    "noSummary": "(no subject)",
+    "filter": {
+      "all": "All",
+      "event": "Appointments",
+      "respite": "Deadlines",
+      "followup": "Follow-ups"
+    },
+    "type": {
+      "event": "Appointment",
+      "respite": "Deadline",
+      "followup": "Follow-up"
+    }
   }
 }
