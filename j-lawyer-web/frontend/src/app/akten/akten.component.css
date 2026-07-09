@@ -77,7 +77,7 @@
 .title-row { display: flex; align-items: center; gap: 12px; margin: 6px 0 2px; flex-wrap: wrap; }
 .title-row h2 { font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; margin: 0; }
 .meta { display: flex; gap: 18px; flex-wrap: wrap; color: var(--jl-ink-soft); font-size: .82rem; margin: 10px 0 14px; }
-.meta .k { color: var(--jl-ink-faint); }
+.meta .k { color: var(--jl-ink-faint); margin-right: 6px; }
 .meta b { font-variant-numeric: tabular-nums; }
 .tabs { display: flex; gap: 2px; overflow-x: auto; }
 .tab { padding: 10px 14px; font: inherit; font-size: .82rem; font-weight: 600; color: var(--jl-ink-soft); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; }
