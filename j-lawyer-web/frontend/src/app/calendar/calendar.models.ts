@@ -12,6 +12,9 @@ export type CalendarEventType = 'event' | 'respite' | 'followup';
 /** Type filter for the agenda (adds `all`). */
 export type CalendarFilter = 'all' | 'event' | 'respite' | 'followup';
 
+/** How the calendar is laid out: the agenda list or a day/week/month sheet. */
+export type CalendarView = 'agenda' | 'day' | 'week' | 'month';
+
 /** A single calendar entry shaped for display. */
 export interface CalendarEvent {
   id: string;

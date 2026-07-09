@@ -1,7 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { API_ROOT } from '../core/api';
-import { CalendarEvent, CalendarEventType, CalendarFilter } from './calendar.models';
+import { CalendarEvent, CalendarEventType, CalendarFilter, CalendarView } from './calendar.models';
+import { addDays, endOfMonth, isoDay, startOfDay, startOfMonth, startOfWeekMon } from './calendar.dates';
 
 const CALENDAR_V8 = `${API_ROOT}/v8/calendar`;
 
@@ -14,8 +15,9 @@ interface CalendarEventDto {
 
 /**
  * Calendar data access against the real REST API (GET /v8/calendar/events). Holds the current
- * view state (anchor month, type filter, open/all status) and refetches whenever it changes.
- * The Bearer token is attached by authInterceptor.
+ * view state (layout, anchor date, type filter, open/all status) and refetches whenever it
+ * changes. The fetched date range follows the layout: the whole month grid for agenda/month,
+ * the Mon–Sun week for week, a single day for day. The Bearer token is attached by authInterceptor.
  */
 @Injectable({ providedIn: 'root' })
 export class CalendarService {
@@ -24,26 +26,48 @@ export class CalendarService {
   readonly events = signal<CalendarEvent[]>([]);
   readonly loading = signal(false);
   readonly error = signal(false);
-  /** First day of the currently displayed month (local). */
-  readonly month = signal<Date>(startOfMonth(new Date()));
+  /** The layout the calendar is currently shown in. */
+  readonly view = signal<CalendarView>('agenda');
+  /** Reference day the current view is centred on (local, midnight). */
+  readonly anchor = signal<Date>(startOfDay(new Date()));
   readonly filter = signal<CalendarFilter>('all');
   /** When true, only open (not-done) entries are requested. */
   readonly openOnly = signal(false);
 
   private requestSeq = 0;
 
-  /** Loads the events for the current month/filter/status (also used for retry). */
+  /** The [from, to] date range fetched for the current view + anchor. */
+  range(): { from: Date; to: Date } {
+    const a = this.anchor();
+    switch (this.view()) {
+      case 'day':
+        return { from: startOfDay(a), to: startOfDay(a) };
+      case 'week': {
+        const from = startOfWeekMon(a);
+        return { from, to: addDays(from, 6) };
+      }
+      case 'month': {
+        // The month sheet shows a 6-week grid, so fetch the whole visible grid (incl. the
+        // adjacent-month days) rather than just the 1st–last of the month.
+        const from = startOfWeekMon(startOfMonth(a));
+        return { from, to: addDays(from, 41) };
+      }
+      case 'agenda':
+      default:
+        return { from: startOfMonth(a), to: endOfMonth(a) };
+    }
+  }
+
+  /** Loads the events for the current view/filter/status (also used for retry). */
   reload(): void {
-    const anchor = this.month();
-    const from = isoDay(anchor);
-    const to = isoDay(endOfMonth(anchor));
+    const { from, to } = this.range();
     this.loading.set(true);
     this.error.set(false);
     const seq = ++this.requestSeq;
 
-    let params = new HttpParams()
-      .set('from', from)
-      .set('to', to)
+    const params = new HttpParams()
+      .set('from', isoDay(from))
+      .set('to', isoDay(to))
       .set('type', this.filter())
       .set('status', this.openOnly() ? 'open' : 'all');
 
@@ -65,16 +89,35 @@ export class CalendarService {
     });
   }
 
-  /** Moves the displayed month by the given offset (e.g. -1 / +1) and reloads. */
-  shiftMonth(offset: number): void {
-    const cur = this.month();
-    this.month.set(new Date(cur.getFullYear(), cur.getMonth() + offset, 1));
+  /** Switches the layout (agenda/day/week/month) and refetches the matching range. */
+  setView(view: CalendarView): void {
+    if (this.view() === view) {
+      return;
+    }
+    this.view.set(view);
     this.reload();
   }
 
-  /** Jumps to the current month and reloads. */
+  /** Moves the anchor by one unit of the current view (day/week/month) and reloads. */
+  shift(direction: number): void {
+    const a = this.anchor();
+    switch (this.view()) {
+      case 'day':
+        this.anchor.set(addDays(a, direction));
+        break;
+      case 'week':
+        this.anchor.set(addDays(a, direction * 7));
+        break;
+      default: // month + agenda step by whole months
+        this.anchor.set(new Date(a.getFullYear(), a.getMonth() + direction, 1));
+        break;
+    }
+    this.reload();
+  }
+
+  /** Jumps to today and reloads. */
   goToday(): void {
-    this.month.set(startOfMonth(new Date()));
+    this.anchor.set(startOfDay(new Date()));
     this.reload();
   }
 
@@ -87,22 +130,6 @@ export class CalendarService {
     this.openOnly.set(openOnly);
     this.reload();
   }
-}
-
-function startOfMonth(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth(), 1);
-}
-
-function endOfMonth(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth() + 1, 0);
-}
-
-/** Formats a Date as a local yyyy-MM-dd string (no timezone shift). */
-function isoDay(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
 }
 
 function toEvent(dto: CalendarEventDto): CalendarEvent {

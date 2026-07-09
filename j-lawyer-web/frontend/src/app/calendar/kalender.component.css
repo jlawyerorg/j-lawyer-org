@@ -21,7 +21,17 @@
   border-radius: 8px; padding: 6px 12px;
 }
 .today:hover { border-color: var(--jl-blue); }
-.head-right { display: flex; align-items: center; gap: 16px; margin-left: auto; }
+.head-right { display: flex; align-items: center; gap: 16px; margin-left: auto; flex-wrap: wrap; }
+
+/* View-Umschalter (Agenda / Tag / Woche / Monat) */
+.views { display: inline-flex; border: 1px solid var(--jl-line-strong); border-radius: 8px; overflow: hidden; }
+.vbtn {
+  font: inherit; font-size: .82rem; font-weight: 600; cursor: pointer; padding: 5px 12px;
+  color: var(--jl-ink-soft); background: var(--jl-surface); border: 0; border-left: 1px solid var(--jl-line);
+}
+.vbtn:first-child { border-left: 0; }
+.vbtn:hover { color: var(--jl-blue); }
+.vbtn.on { color: #fff; background: var(--jl-blue); }
 .toggle { display: inline-flex; align-items: center; gap: 7px; font-size: .84rem; color: var(--jl-ink-soft); cursor: pointer; user-select: none; }
 .toggle input { accent-color: var(--jl-blue); width: 15px; height: 15px; }
 .count { color: var(--jl-ink-faint); font-size: .82rem; font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -80,6 +90,63 @@
 .pill.event { color: var(--jl-blue); background: color-mix(in srgb, var(--jl-blue) 14%, transparent); }
 .pill.respite { color: var(--jl-red); background: color-mix(in srgb, var(--jl-red) 14%, transparent); }
 .pill.followup { color: var(--jl-warning); background: color-mix(in srgb, var(--jl-warning) 18%, transparent); }
+
+/* ---------- Chips (Monatszelle + Ganztags-Leiste) ---------- */
+.mchip {
+  display: flex; align-items: center; gap: 5px; min-width: 0; padding: 1px 6px; border-radius: 5px;
+  font-size: .74rem; font-weight: 550; color: var(--jl-ink); text-decoration: none; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; background: color-mix(in srgb, var(--jl-blue) 12%, transparent);
+}
+a.mchip:hover { background: color-mix(in srgb, var(--jl-blue) 22%, transparent); }
+.mchip.done { opacity: .55; text-decoration: line-through; }
+.mchip .mdot { width: 6px; height: 6px; border-radius: 50%; flex: none; background: var(--jl-blue); }
+.mchip.respite { background: color-mix(in srgb, var(--jl-red) 12%, transparent); }
+.mchip.respite .mdot { background: var(--jl-red); }
+.mchip.followup { background: color-mix(in srgb, var(--jl-warning) 18%, transparent); }
+.mchip.followup .mdot { background: var(--jl-warning); }
+
+/* ---------- Monatsansicht ---------- */
+.month { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+.wk-head { display: grid; grid-template-columns: repeat(7, 1fr); flex: none; border-bottom: 1px solid var(--jl-line); }
+.wk-head span { padding: 8px 10px; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--jl-ink-faint); }
+.month-grid { flex: 1 1 auto; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-auto-rows: minmax(84px, 1fr); min-height: 0; overflow-y: auto; }
+.mcell { display: flex; flex-direction: column; gap: 3px; padding: 5px 6px; min-width: 0; overflow: hidden; border-right: 1px solid var(--jl-line); border-bottom: 1px solid var(--jl-line); }
+.mcell:nth-child(7n) { border-right: 0; }
+.mcell.out { background: var(--jl-surface-alt); }
+.mcell.out .mday { color: var(--jl-ink-faint); }
+.mday { align-self: flex-start; font-size: .78rem; font-weight: 700; color: var(--jl-ink-soft); }
+.mcell.today .mday { display: inline-grid; place-items: center; min-width: 22px; height: 22px; border-radius: 50%; background: var(--jl-blue); color: #fff; }
+.mmore { font-size: .7rem; font-weight: 600; color: var(--jl-ink-faint); padding: 0 5px; }
+
+/* ---------- Tages-/Wochenansicht (Zeitraster) ---------- */
+.timegrid { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+.tg-headrow, .tg-alldayrow { display: flex; flex: none; border-bottom: 1px solid var(--jl-line); }
+.tg-gutter { width: 60px; flex: none; display: flex; align-items: center; justify-content: flex-end; padding: 6px 8px; font-size: .68rem; font-weight: 600; color: var(--jl-ink-faint); }
+.tg-cols { flex: 1 1 auto; display: flex; min-width: 0; }
+.tg-colhead { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; padding: 7px 4px; border-left: 1px solid var(--jl-line); }
+.tg-colhead .ch-wd { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--jl-ink-faint); }
+.tg-colhead .ch-d { font-size: .92rem; font-weight: 700; }
+.tg-colhead.today .ch-wd, .tg-colhead.today .ch-d { color: var(--jl-blue); }
+.tg-allday { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 4px; border-left: 1px solid var(--jl-line); }
+.tg-scroll { flex: 1 1 auto; overflow-y: auto; min-height: 0; }
+.tg-body { display: flex; }
+.tg-hours { width: 60px; flex: none; }
+.tg-hour { position: relative; }
+.tg-hour span { position: absolute; top: 1px; right: 8px; font-size: .68rem; color: var(--jl-ink-faint); font-variant-numeric: tabular-nums; }
+.tg-col { flex: 1 1 0; min-width: 0; position: relative; border-left: 1px solid var(--jl-line); }
+.tg-hline { border-top: 1px solid var(--jl-line); box-sizing: border-box; }
+.tev {
+  position: absolute; left: 0; box-sizing: border-box; overflow: hidden; z-index: 1;
+  padding: 2px 6px; border-radius: 6px; font-size: .74rem; color: #fff; text-decoration: none;
+  display: flex; flex-direction: column; gap: 1px; background: var(--jl-blue);
+  border: 1px solid color-mix(in srgb, var(--jl-blue) 65%, #000);
+}
+a.tev:hover { filter: brightness(1.07); }
+.tev .tev-t { font-weight: 700; font-variant-numeric: tabular-nums; }
+.tev .tev-s { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tev.respite { background: var(--jl-red); border-color: color-mix(in srgb, var(--jl-red) 65%, #000); }
+.tev.followup { background: var(--jl-warning); border-color: color-mix(in srgb, var(--jl-warning) 65%, #000); color: #3a2c00; }
+.tev.done { opacity: .6; }
 
 @media (max-width: 560px) {
   .ev { grid-template-columns: 46px 3px 1fr; column-gap: 9px; padding: 10px 14px; }

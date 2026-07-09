@@ -195,13 +195,20 @@
     "error": "Kalender konnte nicht geladen werden.",
     "retry": "Erneut versuchen",
     "empty": "Keine Einträge in diesem Monat.",
-    "prev": "Vorheriger Monat",
-    "next": "Nächster Monat",
+    "prev": "Zurück",
+    "next": "Weiter",
     "today": "Heute",
     "todayTag": "Heute",
     "openOnly": "Nur offene",
     "allDay": "ganztägig",
     "noSummary": "(ohne Betreff)",
+    "more": "+{{n}} weitere",
+    "view": {
+      "agenda": "Agenda",
+      "day": "Tag",
+      "week": "Woche",
+      "month": "Monat"
+    },
     "filter": {
       "all": "Alle",
       "event": "Termine",

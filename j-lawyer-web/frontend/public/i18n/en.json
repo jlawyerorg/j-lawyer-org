@@ -195,13 +195,20 @@
     "error": "Could not load calendar.",
     "retry": "Try again",
     "empty": "No entries this month.",
-    "prev": "Previous month",
-    "next": "Next month",
+    "prev": "Back",
+    "next": "Forward",
     "today": "Today",
     "todayTag": "Today",
     "openOnly": "Open only",
     "allDay": "all-day",
     "noSummary": "(no subject)",
+    "more": "+{{n}} more",
+    "view": {
+      "agenda": "Agenda",
+      "day": "Day",
+      "week": "Week",
+      "month": "Month"
+    },
     "filter": {
       "all": "All",
       "event": "Appointments",
