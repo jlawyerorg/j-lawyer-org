@@ -7,15 +7,22 @@ import { IconComponent } from '../shared/icon.component';
 import { DocumentPreviewComponent } from '../shared/document-preview.component';
 import { DocumentContentService } from '../shared/document-content.service';
 import { PreviewDoc, previewKindOf } from '../shared/document-preview.models';
-import { forkJoin } from 'rxjs';
+import { forkJoin, map } from 'rxjs';
 import { CaseFilter, CasesService } from './cases.service';
 import {
   AccountEntry, CaseDetail, CaseDocument, CaseHistoryEntry, CaseInvoice, CasePayment,
+  CaseTimesheet, TimesheetPosition,
 } from './case.models';
 
-type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 'history';
+type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 'zeiten' | 'history';
 /** Sub-view within the finance tab (invoices, payments and the case account are too much for one screen). */
 type FinanceView = 'invoices' | 'payments' | 'account';
+/** Status filter for the Zeiten tab (show all timesheets, only open, or only closed ones). */
+type ZeitenFilter = 'all' | 'open' | 'closed';
+/** A timesheet with its loaded positions (the "Zeiten" tab lists positions per timesheet). */
+interface TimesheetView extends CaseTimesheet {
+  positions: TimesheetPosition[];
+}
 
 /**
  * Akten (cases) module — responsive master-detail (design-mockup.html): searchable case
@@ -409,6 +416,109 @@ type FinanceView = 'invoices' | 'payments' | 'account';
                   }
                 </div>
               }
+            } @else if (activeTab() === 'zeiten') {
+              @if (timesheetsLoading()) {
+                <p class="muted tab-todo">{{ 'akten.loading' | transloco }}</p>
+              } @else if (timesheetsError()) {
+                <p class="tab-todo">
+                  {{ 'akten.error' | transloco }}
+                  <button type="button" class="btn-retry" (click)="retryTab()">{{ 'akten.retry' | transloco }}</button>
+                </p>
+              } @else {
+                <div class="grid">
+                  @if (timesheets()?.length) {
+                    <div class="fin-nav" role="tablist">
+                      @for (f of zeitenFilters; track f) {
+                        <button type="button" class="fin-nav-btn" [class.on]="zeitenFilter() === f" (click)="zeitenFilter.set(f)">
+                          {{ 'akten.zeiten.filter.' + f | transloco }}
+                          <span class="fin-nav-count">{{ zeitenCount(f) }}</span>
+                        </button>
+                      }
+                    </div>
+                  }
+                  @for (ts of visibleTimesheets(); track ts.id) {
+                    <div class="card full">
+                      <div class="card-h">
+                        <h3>{{ ts.name || '—' }}</h3>
+                        <span class="ts-status" [class.closed]="ts.status === 20">
+                          {{ (ts.status === 20 ? 'akten.zeiten.closed' : 'akten.zeiten.open') | transloco }}
+                        </span>
+                        <span class="card-count">{{ ts.positions.length }}</span>
+                      </div>
+                      <div class="card-b">
+                        @if (ts.description) { <p class="ts-desc">{{ ts.description }}</p> }
+                        <div class="ts-kpis">
+                          <div class="fin-kpi">
+                            <span class="fk-label">{{ 'akten.zeiten.duration' | transloco }}</span>
+                            <span class="fk-value">{{ tsDuration(ts.positions) }} h</span>
+                          </div>
+                          <div class="fin-kpi">
+                            <span class="fk-label">{{ 'akten.zeiten.net' | transloco }}</span>
+                            <span class="fk-value">{{ tsNet(ts.positions) | number: '1.2-2' }} €</span>
+                          </div>
+                          <div class="fin-kpi">
+                            <span class="fk-label">{{ 'akten.zeiten.invoiceable' | transloco }}</span>
+                            <span class="fk-value">{{ tsInvoiceable(ts.positions) | number: '1.2-2' }} €</span>
+                          </div>
+                          @if (ts.limited) {
+                            <div class="fin-kpi">
+                              <span class="fk-label">{{ 'akten.zeiten.limit' | transloco }}</span>
+                              <span class="fk-value">{{ ts.limit | number: '1.2-2' }} € · {{ ts.percentageDone | number: '1.0-0' }} %</span>
+                            </div>
+                          }
+                        </div>
+
+                        @if (ts.positions.length) {
+                          <div class="ts-scroll">
+                            <table class="ts-table">
+                              <thead>
+                                <tr>
+                                  <th>{{ 'akten.zeiten.col.description' | transloco }}</th>
+                                  <th>{{ 'akten.zeiten.col.user' | transloco }}</th>
+                                  <th>{{ 'akten.zeiten.col.started' | transloco }}</th>
+                                  <th class="num">{{ 'akten.zeiten.col.duration' | transloco }}</th>
+                                  <th class="num">{{ 'akten.zeiten.col.rate' | transloco }}</th>
+                                  <th class="num">{{ 'akten.zeiten.col.total' | transloco }}</th>
+                                  <th>{{ 'akten.zeiten.col.billing' | transloco }}</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                @for (p of ts.positions; track p.id) {
+                                  <tr>
+                                    <td>{{ p.name || p.description || '—' }}</td>
+                                    <td>{{ p.principal || '—' }}</td>
+                                    <td>{{ p.started ? (p.started | date: 'dd.MM.yyyy HH:mm') : '—' }}</td>
+                                    <td class="num">
+                                      @if (p.running) {
+                                        <span class="ts-run">{{ 'akten.zeiten.running' | transloco }}</span>
+                                      } @else { {{ durationOf(p) }} }
+                                    </td>
+                                    <td class="num">{{ p.unitPrice | number: '1.2-2' }} €</td>
+                                    <td class="num">{{ p.total | number: '1.2-2' }} €</td>
+                                    <td>
+                                      @if (p.invoiceId) {
+                                        <span class="ts-badge billed">{{ 'akten.zeiten.billed' | transloco }}</span>
+                                      } @else {
+                                        <span class="ts-badge open">{{ 'akten.zeiten.unbilled' | transloco }}</span>
+                                      }
+                                    </td>
+                                  </tr>
+                                }
+                              </tbody>
+                            </table>
+                          </div>
+                        } @else {
+                          <p class="muted">{{ 'akten.zeiten.noPositions' | transloco }}</p>
+                        }
+                      </div>
+                    </div>
+                  } @empty {
+                    <div class="card full"><div class="card-b">
+                      <p class="muted">{{ 'akten.zeiten.noTimesheets' | transloco }}</p>
+                    </div></div>
+                  }
+                </div>
+              }
             } @else if (activeTab() === 'history') {
               <div class="card full">
                 <div class="card-h">
@@ -457,7 +567,7 @@ export class AktenComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
-  protected readonly tabs: CaseTab[] = ['overview', 'documents', 'parties', 'deadlines', 'finance', 'history'];
+  protected readonly tabs: CaseTab[] = ['overview', 'documents', 'parties', 'deadlines', 'finance', 'zeiten', 'history'];
   protected readonly filters: CaseFilter[] = ['all', 'open', 'closed'];
 
   protected readonly filter = signal<CaseFilter>('all');
@@ -484,6 +594,14 @@ export class AktenComponent {
   /** Active sub-view of the finance tab. */
   protected readonly financeView = signal<FinanceView>('invoices');
   protected readonly financeViews: FinanceView[] = ['invoices', 'payments', 'account'];
+
+  // Zeiten (time tracking) tab state — the case's timesheets (open + closed) with their positions.
+  protected readonly timesheets = signal<TimesheetView[] | null>(null);
+  protected readonly timesheetsLoading = signal(false);
+  protected readonly timesheetsError = signal(false);
+  /** Show all timesheets, only open or only closed. */
+  protected readonly zeitenFilter = signal<ZeitenFilter>('all');
+  protected readonly zeitenFilters: ZeitenFilter[] = ['all', 'open', 'closed'];
 
   private autoSelected = false;
   private searchDebounce: ReturnType<typeof setTimeout> | null = null;
@@ -577,6 +695,9 @@ export class AktenComponent {
     this.accountEntries.set(null);
     this.financeError.set(false);
     this.financeView.set('invoices');
+    this.timesheets.set(null);
+    this.timesheetsError.set(false);
+    this.zeitenFilter.set('all');
     this.cases.loadDetail(id).subscribe((detail) => {
       // ignore a stale response if the user already picked another case
       if (this.selectedId() === id) {
@@ -593,6 +714,8 @@ export class AktenComponent {
       this.loadHistory();
     } else if (tab === 'finance' && this.invoices() === null && !this.financeLoading()) {
       this.loadFinance();
+    } else if (tab === 'zeiten' && this.timesheets() === null && !this.timesheetsLoading()) {
+      this.loadTimesheets();
     }
   }
 
@@ -652,13 +775,114 @@ export class AktenComponent {
     });
   }
 
-  /** Retries the currently-active tab's lazy load (history/finance). */
+  /**
+   * Loads the case's (open) timesheets, then their positions in parallel. Mirrors the desktop
+   * "Zeiten" tab: a list of timesheet projects, each with its time entries. Read-only.
+   */
+  private loadTimesheets(): void {
+    const id = this.selectedId();
+    if (!id) {
+      return;
+    }
+    this.timesheetsLoading.set(true);
+    this.timesheetsError.set(false);
+    this.cases.timesheets(id).subscribe({
+      next: (sheets) => {
+        if (this.selectedId() !== id) {
+          return;
+        }
+        if (!sheets.length) {
+          this.timesheets.set([]);
+          this.timesheetsLoading.set(false);
+          return;
+        }
+        forkJoin(
+          sheets.map((s) => this.cases.timesheetPositions(s.id).pipe(
+            map((positions) => ({ ...s, positions })),
+          )),
+        ).subscribe({
+          next: (views) => {
+            if (this.selectedId() !== id) {
+              return;
+            }
+            this.timesheets.set(views);
+            this.timesheetsLoading.set(false);
+          },
+          error: () => {
+            if (this.selectedId() !== id) {
+              return;
+            }
+            this.timesheetsError.set(true);
+            this.timesheetsLoading.set(false);
+          },
+        });
+      },
+      error: () => {
+        if (this.selectedId() !== id) {
+          return;
+        }
+        this.timesheetsError.set(true);
+        this.timesheetsLoading.set(false);
+      },
+    });
+  }
+
+  /** Retries the currently-active tab's lazy load (history/finance/zeiten). */
   protected retryTab(): void {
     if (this.activeTab() === 'history') {
       this.loadHistory();
     } else if (this.activeTab() === 'finance') {
       this.loadFinance();
+    } else if (this.activeTab() === 'zeiten') {
+      this.loadTimesheets();
     }
+  }
+
+  /** Timesheets matching the active status filter (status 20 = closed). */
+  protected visibleTimesheets(): TimesheetView[] {
+    const all = this.timesheets() ?? [];
+    const f = this.zeitenFilter();
+    if (f === 'open') {
+      return all.filter((t) => t.status !== 20);
+    }
+    if (f === 'closed') {
+      return all.filter((t) => t.status === 20);
+    }
+    return all;
+  }
+
+  /** Count of timesheets for a given filter (shown as a badge on the filter buttons). */
+  protected zeitenCount(f: ZeitenFilter): number {
+    const all = this.timesheets() ?? [];
+    if (f === 'open') {
+      return all.filter((t) => t.status !== 20).length;
+    }
+    if (f === 'closed') {
+      return all.filter((t) => t.status === 20).length;
+    }
+    return all.length;
+  }
+
+  /** Net sum of a timesheet's positions. */
+  protected tsNet(positions: TimesheetPosition[]): number {
+    return positions.reduce((acc, p) => acc + (p.total || 0), 0);
+  }
+
+  /** Sum of the still-unbilled (no invoice) positions — the invoiceable amount. */
+  protected tsInvoiceable(positions: TimesheetPosition[]): number {
+    return positions.reduce((acc, p) => acc + (p.invoiceId ? 0 : (p.total || 0)), 0);
+  }
+
+  /** Total tracked duration of a timesheet's completed positions, formatted "h:mm". */
+  protected tsDuration(positions: TimesheetPosition[]): string {
+    const ms = positions.reduce((acc, p) => acc + positionMillis(p), 0);
+    return formatDurationMs(ms);
+  }
+
+  /** A single position's duration, formatted "h:mm" (empty while running or unstarted). */
+  protected durationOf(p: TimesheetPosition): string {
+    const ms = positionMillis(p);
+    return ms > 0 ? formatDurationMs(ms) : '—';
   }
 
   /** Sum of an invoice list's gross totals (for the finance summary). */
@@ -714,4 +938,22 @@ export class AktenComponent {
       .join('')
       .toUpperCase();
   }
+}
+
+/** Elapsed milliseconds of a completed position (0 while running or unstarted). */
+function positionMillis(p: TimesheetPosition): number {
+  if (!p.started || !p.stopped) {
+    return 0;
+  }
+  const start = new Date(p.started).getTime();
+  const stop = new Date(p.stopped).getTime();
+  return stop > start ? stop - start : 0;
+}
+
+/** Formats a duration in milliseconds as "h:mm" (e.g. 125 min -> "2:05"). */
+function formatDurationMs(ms: number): string {
+  const totalMinutes = Math.round(ms / 60000);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  return `${h}:${String(m).padStart(2, '0')}`;
 }

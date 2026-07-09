@@ -77,6 +77,7 @@
       "parties": "Parties",
       "deadlines": "Calendar",
       "finance": "Finance",
+      "zeiten": "Time tracking",
       "history": "History"
     },
     "roles": {
@@ -139,6 +140,33 @@
           "escrow": "Escrow",
           "expenditures": "Disbursements"
         }
+      }
+    },
+    "zeiten": {
+      "open": "open",
+      "closed": "closed",
+      "duration": "Duration",
+      "net": "Net",
+      "invoiceable": "invoiceable",
+      "limit": "Budget",
+      "running": "running",
+      "billed": "billed",
+      "unbilled": "open",
+      "noPositions": "No entries.",
+      "noTimesheets": "No time tracking.",
+      "filter": {
+        "all": "All",
+        "open": "Open",
+        "closed": "Closed"
+      },
+      "col": {
+        "description": "Description",
+        "user": "User",
+        "started": "Start",
+        "duration": "Duration",
+        "rate": "Rate/h",
+        "total": "Total",
+        "billing": "Billing"
       }
     }
   },

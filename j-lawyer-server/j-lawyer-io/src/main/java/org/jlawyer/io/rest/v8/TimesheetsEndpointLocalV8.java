@@ -9,6 +9,8 @@ public interface TimesheetsEndpointLocalV8 {
 
     Response getOpenTimesheets();
 
+    Response getCaseTimesheets(String caseId);
+
     Response getTimesheet(String timesheetId);
 
     Response getTimesheetPositions(String timesheetId);

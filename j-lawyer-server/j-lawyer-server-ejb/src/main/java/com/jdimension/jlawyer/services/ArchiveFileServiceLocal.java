@@ -895,6 +895,7 @@ public interface ArchiveFileServiceLocal {
     List<CaseAccountEntry> getAccountEntriesUnrestricted(String caseId) throws Exception;
 
     // Timesheets
+    List<Timesheet> getTimesheets(String caseId) throws Exception;
     List<Timesheet> getOpenTimesheets(String caseId) throws Exception;
     List<Timesheet> getOpenTimesheets() throws Exception;
     Timesheet getTimesheet(String timesheetId) throws Exception;

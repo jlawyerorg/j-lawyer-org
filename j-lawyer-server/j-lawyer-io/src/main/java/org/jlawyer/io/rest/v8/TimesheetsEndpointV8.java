@@ -72,6 +72,38 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     }
 
     /**
+     * Returns all timesheets of a case, both open and closed (unlike the
+     * v7 /cases/{id}/timesheets endpoint which returns only open ones).
+     *
+     * @param caseId case (archive file) ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/cases/{caseId}")
+    @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="Returns all timesheets of a case, both open and closed", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetV8.class, responseContainer="List")
+    public Response getCaseTimesheets(@PathParam("caseId") String caseId) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            List<Timesheet> timesheets = cases.getTimesheets(caseId);
+
+            ArrayList<RestfulTimesheetV8> resultList = new ArrayList<>();
+            for (Timesheet ts : timesheets) {
+                resultList.add(RestfulTimesheetV8.fromTimesheet(ts));
+            }
+
+            return Response.ok(resultList).build();
+        } catch (Exception ex) {
+            log.error("can not get timesheets for case " + caseId, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
      * Returns a single timesheet by ID
      *
      * @param timesheetId timesheet ID

@@ -77,6 +77,7 @@
       "parties": "Beteiligte",
       "deadlines": "Kalender",
       "finance": "Finanzen",
+      "zeiten": "Zeiten",
       "history": "Historie"
     },
     "roles": {
@@ -139,6 +140,33 @@
           "escrow": "Fremdgeld",
           "expenditures": "Auslagen"
         }
+      }
+    },
+    "zeiten": {
+      "open": "offen",
+      "closed": "geschlossen",
+      "duration": "Dauer",
+      "net": "Netto",
+      "invoiceable": "abrechenbar",
+      "limit": "Budget",
+      "running": "läuft",
+      "billed": "abgerechnet",
+      "unbilled": "offen",
+      "noPositions": "Keine Positionen.",
+      "noTimesheets": "Keine Zeiterfassung.",
+      "filter": {
+        "all": "Alle",
+        "open": "Offen",
+        "closed": "Geschlossen"
+      },
+      "col": {
+        "description": "Bezeichnung",
+        "user": "Benutzer",
+        "started": "Beginn",
+        "duration": "Dauer",
+        "rate": "Satz/h",
+        "total": "Summe",
+        "billing": "Abrechnung"
       }
     }
   },

@@ -134,6 +134,49 @@ export interface AccountEntry {
   total: number;
 }
 
+/**
+ * A timesheet ("Zeitwerk"/project) of the case (GET /v7/cases/{id}/timesheets — open ones only).
+ * The web view fills `positions` with a follow-up call per timesheet.
+ */
+export interface CaseTimesheet {
+  id: string;
+  name: string;
+  description: string;
+  /** Rounding granularity in minutes for its positions. */
+  interval: number;
+  /** True when a net budget cap applies. */
+  limited: boolean;
+  /** Net budget cap (only meaningful when limited). */
+  limit: number;
+  /** Percentage of the budget consumed (server-computed). */
+  percentageDone: number;
+  /** 10 = open ("offen"), 20 = closed ("geschlossen"). */
+  status: number;
+}
+
+/** A single time entry within a timesheet (GET /v8/timesheets/{id}/positions). */
+export interface TimesheetPosition {
+  id: string;
+  name: string;
+  description: string;
+  /** User/principal who logged the entry. */
+  principal: string;
+  /** ISO timestamp (sanitized); empty if unset. */
+  started: string;
+  /** ISO timestamp (sanitized); empty while running. */
+  stopped: string;
+  /** Hourly rate (net). */
+  unitPrice: number;
+  taxRate: number;
+  /** Net line total (server-computed with the timesheet's rounding interval). */
+  total: number;
+  timesheetId: string;
+  /** Set once billed; empty/absent while unbilled. */
+  invoiceId: string;
+  /** True when started but not stopped (a live timer). */
+  running: boolean;
+}
+
 /** Full case (RestfulCaseV1 + related collections + derived status). */
 export interface CaseDetail {
   id: string;

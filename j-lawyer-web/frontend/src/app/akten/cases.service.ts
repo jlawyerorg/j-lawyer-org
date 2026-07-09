@@ -3,12 +3,14 @@ import { inject, Injectable, signal } from '@angular/core';
 import { catchError, forkJoin, map, Observable, of } from 'rxjs';
 import { API_ROOT } from '../core/api';
 import {
-  AccountEntry, CaseDetail, CaseDocument, CaseHistoryEntry, CaseInvoice, CaseOverview, CasePayment, CaseStatus, DueDate, Party,
+  AccountEntry, CaseDetail, CaseDocument, CaseHistoryEntry, CaseInvoice, CaseOverview, CasePayment, CaseStatus,
+  CaseTimesheet, DueDate, Party, TimesheetPosition,
 } from './case.models';
 
 const CASES_BASE = `${API_ROOT}/v1/cases`;
 const CASES_V7 = `${API_ROOT}/v7/cases`;
 const CASES_V8 = `${API_ROOT}/v8/cases`;
+const TIMESHEETS_V8 = `${API_ROOT}/v8/timesheets`;
 const PAGE_SIZE = 50;
 
 export type CaseFilter = 'all' | 'open' | 'closed';
@@ -39,6 +41,14 @@ interface AccountEntryDto {
   id: string; entryDate: string; description: string; contactName?: string;
   earnings: number; spendings: number; escrowIn: number; escrowOut: number;
   expendituresIn: number; expendituresOut: number;
+}
+interface TimesheetDto {
+  id: string; name: string; description: string; interval: number;
+  limited: boolean; limit: number; percentageDone: number; status: number;
+}
+interface TimesheetPositionDto {
+  id: string; name: string; description: string; principal: string; started: string; stopped: string;
+  unitPrice: number; taxRate: number; total: number; timesheetId: string; invoiceId?: string; running: boolean;
 }
 
 /**
@@ -154,6 +164,27 @@ export class CasesService {
   accountEntries(id: string): Observable<AccountEntry[]> {
     return this.http.get<AccountEntryDto[]>(`${CASES_V7}/${id}/accountentries`).pipe(
       map((rows) => (rows ?? []).map(toAccountEntry)),
+      catchError(() => of([])),
+    );
+  }
+
+  /**
+   * Loads the case's timesheets ("Zeiten") including closed ones (GET /v8/timesheets/cases/{id}).
+   * Falls back to the open-only v7 endpoint (GET /v7/cases/{id}/timesheets) when the v8 endpoint
+   * is unavailable (e.g. an older server that predates it); [] if both fail.
+   */
+  timesheets(id: string): Observable<CaseTimesheet[]> {
+    return this.http.get<TimesheetDto[]>(`${TIMESHEETS_V8}/cases/${id}`).pipe(
+      catchError(() => this.http.get<TimesheetDto[]>(`${CASES_V7}/${id}/timesheets`)),
+      map((rows) => (rows ?? []).map(toTimesheet)),
+      catchError(() => of([])),
+    );
+  }
+
+  /** Loads a timesheet's positions/time entries (GET /v8/timesheets/{id}/positions); [] on error. */
+  timesheetPositions(timesheetId: string): Observable<TimesheetPosition[]> {
+    return this.http.get<TimesheetPositionDto[]>(`${TIMESHEETS_V8}/${timesheetId}/positions`).pipe(
+      map((rows) => (rows ?? []).map(toTimesheetPosition)),
       catchError(() => of([])),
     );
   }
@@ -291,6 +322,36 @@ function toAccountEntry(dto: AccountEntryDto): AccountEntry {
     expendituresIn,
     expendituresOut,
     total: earnings + escrowIn + expendituresIn - spendings - escrowOut - expendituresOut,
+  };
+}
+
+function toTimesheet(dto: TimesheetDto): CaseTimesheet {
+  return {
+    id: dto.id,
+    name: dto.name ?? '',
+    description: dto.description ?? '',
+    interval: dto.interval ?? 0,
+    limited: !!dto.limited,
+    limit: dto.limit ?? 0,
+    percentageDone: dto.percentageDone ?? 0,
+    status: dto.status ?? 10,
+  };
+}
+
+function toTimesheetPosition(dto: TimesheetPositionDto): TimesheetPosition {
+  return {
+    id: dto.id,
+    name: dto.name ?? '',
+    description: dto.description ?? '',
+    principal: dto.principal ?? '',
+    started: isoDate(dto.started),
+    stopped: isoDate(dto.stopped),
+    unitPrice: dto.unitPrice ?? 0,
+    taxRate: dto.taxRate ?? 0,
+    total: dto.total ?? 0,
+    timesheetId: dto.timesheetId ?? '',
+    invoiceId: dto.invoiceId ?? '',
+    running: !!dto.running,
   };
 }
 
