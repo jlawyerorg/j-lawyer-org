@@ -108,7 +108,6 @@
       "claimValue": "Amount in dispute",
       "invoiced": "Invoiced (gross)",
       "paid": "Payments",
-      "balance": "Account balance",
       "invoices": "Invoices",
       "payments": "Payments",
       "due": "due",
@@ -122,13 +121,23 @@
       },
       "acct": {
         "date": "Date",
+        "contact": "From/To",
         "description": "Description",
-        "contact": "Contact",
         "earnings": "Income",
         "spendings": "Expenses",
-        "escrow": "Escrow",
-        "expenditures": "Disbursements",
-        "balance": "Balance"
+        "escrowIn": "Escrow in",
+        "escrowOut": "Escrow out",
+        "expendituresIn": "Disbursements in",
+        "expendituresOut": "Disbursements out",
+        "balance": "Balance",
+        "in": "Incoming",
+        "out": "Outgoing",
+        "totals": "Totals",
+        "cat": {
+          "earnings": "Income / Expenses",
+          "escrow": "Escrow",
+          "expenditures": "Disbursements"
+        }
       }
     }
   },

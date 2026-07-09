@@ -161,7 +161,7 @@
 .fin-kpi .fk-value.neg { color: var(--jl-red); }
 
 /* Finanzen: Unternavigation (Rechnungen / Zahlungen / Aktenkonto) */
-.fin-nav { display: flex; flex-wrap: wrap; gap: 6px; }
+.fin-nav { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
 .fin-nav-btn {
   display: inline-flex; align-items: center; gap: 7px; font: inherit; font-size: .84rem; font-weight: 650;
   cursor: pointer; color: var(--jl-ink-soft); background: var(--jl-surface);
@@ -173,6 +173,18 @@
   font-size: .72rem; font-weight: 700; font-variant-numeric: tabular-nums;
   background: color-mix(in srgb, currentColor 16%, transparent); border-radius: 20px; padding: 1px 7px;
 }
+
+/* Aktenkonto: Kategorie-Salden (Einnahmen/Ausgaben, Fremdgeld, Auslagen) */
+.acct-sums { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 12px; }
+.acct-sum {
+  flex: 1 1 200px; min-width: 0; padding: 12px 14px;
+  border: 1px solid var(--jl-line); border-radius: 10px; background: var(--jl-surface);
+}
+.acct-sum-title { display: block; font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--jl-ink-faint); font-weight: 700; margin-bottom: 8px; }
+.acct-sum-row { display: flex; justify-content: space-between; gap: 16px; font-size: .86rem; padding: 3px 0; color: var(--jl-ink-soft); }
+.acct-sum-row .num { font-variant-numeric: tabular-nums; color: var(--jl-ink); }
+.acct-sum-row.net { margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--jl-line); font-weight: 800; color: var(--jl-ink); }
+.acct-sum-row .num.neg { color: var(--jl-red); }
 
 /* Aktenkonto-Tabelle (horizontal scrollbar, damit sie nie den Body überläuft) */
 .acct-scroll { overflow-x: auto; max-width: 100%; }
@@ -186,9 +198,9 @@
 .acct-table .c-desc { white-space: normal; min-width: 180px; }
 .acct-table .c-contact { white-space: normal; min-width: 130px; color: var(--jl-ink-soft); }
 .acct-table .c-date { color: var(--jl-ink-soft); }
-.acct-table .bal { font-weight: 700; }
-.acct-table .num.neg, .acct-table .bal.neg { color: var(--jl-red); }
+.acct-table .num.neg { color: var(--jl-red); }
 .acct-table tbody tr:hover { background: var(--jl-surface-alt); }
+.acct-table tfoot td { border-top: 2px solid var(--jl-line-strong); border-bottom: 0; font-weight: 800; background: var(--jl-surface); }
 
 /* ---------- Historie-Reiter ---------- */
 .hist { display: flex; gap: 12px; padding: 9px 0; }

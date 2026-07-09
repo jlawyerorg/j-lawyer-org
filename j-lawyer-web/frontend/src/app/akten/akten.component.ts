@@ -275,12 +275,6 @@ type FinanceView = 'invoices' | 'payments' | 'account';
                       <span class="fk-label">{{ 'akten.finance.paid' | transloco }}</span>
                       <span class="fk-value">{{ sumPayments(payments()) | number: '1.2-2' }} €</span>
                     </div>
-                    <div class="fin-kpi">
-                      <span class="fk-label">{{ 'akten.finance.balance' | transloco }}</span>
-                      <span class="fk-value" [class.neg]="accountBalance(accountEntries()) < 0">
-                        {{ accountBalance(accountEntries()) | number: '1.2-2' }} €
-                      </span>
-                    </div>
                   </div>
 
                   <div class="fin-nav" role="tablist">
@@ -334,44 +328,83 @@ type FinanceView = 'invoices' | 'payments' | 'account';
                       </div>
                     }
                     @case ('account') {
-                      <div class="card full">
-                        <div class="card-b">
-                          @if (accountRows().length) {
+                      @if (accountEntries()?.length) {
+                        @let sum = accountSummary();
+                        <!-- Kategorie-Salden (Einnahmen/Ausgaben, Fremdgeld, Auslagen), analog ArchiveFilePanel -->
+                        <div class="acct-sums">
+                          @for (g of sum; track g.key) {
+                            <div class="acct-sum">
+                              <span class="acct-sum-title">{{ 'akten.finance.acct.cat.' + g.key | transloco }}</span>
+                              <div class="acct-sum-row">
+                                <span>{{ 'akten.finance.acct.in' | transloco }}</span>
+                                <span class="num">{{ g.in | number: '1.2-2' }} €</span>
+                              </div>
+                              <div class="acct-sum-row">
+                                <span>{{ 'akten.finance.acct.out' | transloco }}</span>
+                                <span class="num">{{ g.out | number: '1.2-2' }} €</span>
+                              </div>
+                              <div class="acct-sum-row net">
+                                <span>{{ 'akten.finance.acct.balance' | transloco }}</span>
+                                <span class="num" [class.neg]="g.net < 0">{{ g.net | number: '1.2-2' }} €</span>
+                              </div>
+                            </div>
+                          }
+                        </div>
+
+                        <div class="card full">
+                          <div class="card-b">
                             <div class="acct-scroll">
                               <table class="acct-table">
                                 <thead>
                                   <tr>
                                     <th class="c-date">{{ 'akten.finance.acct.date' | transloco }}</th>
-                                    <th class="c-desc">{{ 'akten.finance.acct.description' | transloco }}</th>
                                     <th class="c-contact">{{ 'akten.finance.acct.contact' | transloco }}</th>
+                                    <th class="c-desc">{{ 'akten.finance.acct.description' | transloco }}</th>
                                     <th class="num">{{ 'akten.finance.acct.earnings' | transloco }}</th>
                                     <th class="num">{{ 'akten.finance.acct.spendings' | transloco }}</th>
-                                    <th class="num">{{ 'akten.finance.acct.escrow' | transloco }}</th>
-                                    <th class="num">{{ 'akten.finance.acct.expenditures' | transloco }}</th>
-                                    <th class="num">{{ 'akten.finance.acct.balance' | transloco }}</th>
+                                    <th class="num">{{ 'akten.finance.acct.escrowIn' | transloco }}</th>
+                                    <th class="num">{{ 'akten.finance.acct.escrowOut' | transloco }}</th>
+                                    <th class="num">{{ 'akten.finance.acct.expendituresIn' | transloco }}</th>
+                                    <th class="num">{{ 'akten.finance.acct.expendituresOut' | transloco }}</th>
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  @for (row of accountRows(); track row.entry.id) {
+                                  @for (e of accountEntries(); track e.id) {
                                     <tr>
-                                      <td class="c-date">{{ row.entry.date | date: 'dd.MM.yyyy' }}</td>
-                                      <td class="c-desc">{{ row.entry.description || '—' }}</td>
-                                      <td class="c-contact">{{ row.entry.contact || '—' }}</td>
-                                      <td class="num">{{ row.entry.earnings ? (row.entry.earnings | number: '1.2-2') : '—' }}</td>
-                                      <td class="num">{{ row.entry.spendings ? (row.entry.spendings | number: '1.2-2') : '—' }}</td>
-                                      <td class="num">{{ (row.entry.escrowIn - row.entry.escrowOut) ? ((row.entry.escrowIn - row.entry.escrowOut) | number: '1.2-2') : '—' }}</td>
-                                      <td class="num">{{ (row.entry.expendituresIn - row.entry.expendituresOut) ? ((row.entry.expendituresIn - row.entry.expendituresOut) | number: '1.2-2') : '—' }}</td>
-                                      <td class="num bal" [class.neg]="row.balance < 0">{{ row.balance | number: '1.2-2' }}</td>
+                                      <td class="c-date">{{ e.date | date: 'dd.MM.yyyy' }}</td>
+                                      <td class="c-contact">{{ e.contact || '—' }}</td>
+                                      <td class="c-desc">{{ e.description || '—' }}</td>
+                                      <td class="num">{{ e.earnings ? (e.earnings | number: '1.2-2') : '—' }}</td>
+                                      <td class="num">{{ e.spendings ? (e.spendings | number: '1.2-2') : '—' }}</td>
+                                      <td class="num">{{ e.escrowIn ? (e.escrowIn | number: '1.2-2') : '—' }}</td>
+                                      <td class="num">{{ e.escrowOut ? (e.escrowOut | number: '1.2-2') : '—' }}</td>
+                                      <td class="num">{{ e.expendituresIn ? (e.expendituresIn | number: '1.2-2') : '—' }}</td>
+                                      <td class="num">{{ e.expendituresOut ? (e.expendituresOut | number: '1.2-2') : '—' }}</td>
                                     </tr>
                                   }
                                 </tbody>
+                                <tfoot>
+                                  <tr>
+                                    <td class="c-date"></td>
+                                    <td class="c-contact"></td>
+                                    <td class="c-desc">{{ 'akten.finance.acct.totals' | transloco }}</td>
+                                    <td class="num">{{ sum[0].in | number: '1.2-2' }}</td>
+                                    <td class="num">{{ sum[0].out | number: '1.2-2' }}</td>
+                                    <td class="num">{{ sum[1].in | number: '1.2-2' }}</td>
+                                    <td class="num">{{ sum[1].out | number: '1.2-2' }}</td>
+                                    <td class="num">{{ sum[2].in | number: '1.2-2' }}</td>
+                                    <td class="num">{{ sum[2].out | number: '1.2-2' }}</td>
+                                  </tr>
+                                </tfoot>
                               </table>
                             </div>
-                          } @else {
-                            <p class="muted">{{ 'akten.finance.noAccountEntries' | transloco }}</p>
-                          }
+                          </div>
                         </div>
-                      </div>
+                      } @else {
+                        <div class="card full"><div class="card-b">
+                          <p class="muted">{{ 'akten.finance.noAccountEntries' | transloco }}</p>
+                        </div></div>
+                      }
                     }
                   }
                 </div>
@@ -646,21 +679,25 @@ export class AktenComponent {
     return list?.length ?? 0;
   }
 
-  /** Overall case-account balance: the sum of all entries' net effects. */
-  protected accountBalance(list: AccountEntry[] | null): number {
-    return (list ?? []).reduce((acc, e) => acc + (e.total || 0), 0);
-  }
-
   /**
-   * The account entries decorated with a running balance, in entry order (the endpoint
-   * already returns them by ascending date).
+   * Per-category account totals (mirrors ArchiveFilePanel.updateAccountTotals): for each of
+   * the three categories — earnings/spendings, escrow, expenditures — the sum of credits
+   * (`in`), the sum of debits (`out`) and the net (`in - out`). Returned in display order.
    */
-  protected accountRows(): { entry: AccountEntry; balance: number }[] {
-    let running = 0;
-    return (this.accountEntries() ?? []).map((entry) => {
-      running += entry.total || 0;
-      return { entry, balance: running };
-    });
+  protected accountSummary(): { key: 'earnings' | 'escrow' | 'expenditures'; in: number; out: number; net: number }[] {
+    const list = this.accountEntries() ?? [];
+    const s = (pick: (e: AccountEntry) => number) => list.reduce((acc, e) => acc + (pick(e) || 0), 0);
+    const earningsIn = s((e) => e.earnings);
+    const earningsOut = s((e) => e.spendings);
+    const escrowIn = s((e) => e.escrowIn);
+    const escrowOut = s((e) => e.escrowOut);
+    const expIn = s((e) => e.expendituresIn);
+    const expOut = s((e) => e.expendituresOut);
+    return [
+      { key: 'earnings', in: earningsIn, out: earningsOut, net: earningsIn - earningsOut },
+      { key: 'escrow', in: escrowIn, out: escrowOut, net: escrowIn - escrowOut },
+      { key: 'expenditures', in: expIn, out: expOut, net: expIn - expOut },
+    ];
   }
 
   /** Mobile "back" from the detail: return to the plain list URL. */

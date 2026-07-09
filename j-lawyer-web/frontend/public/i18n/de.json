@@ -108,7 +108,6 @@
       "claimValue": "Streitwert",
       "invoiced": "Rechnungen (brutto)",
       "paid": "Zahlungen",
-      "balance": "Aktenkonto-Saldo",
       "invoices": "Rechnungen",
       "payments": "Zahlungen",
       "due": "fällig",
@@ -122,13 +121,23 @@
       },
       "acct": {
         "date": "Datum",
+        "contact": "von/an",
         "description": "Beschreibung",
-        "contact": "Kontakt",
         "earnings": "Einnahmen",
         "spendings": "Ausgaben",
-        "escrow": "Fremdgeld",
-        "expenditures": "Auslagen",
-        "balance": "Saldo"
+        "escrowIn": "Fremdgeld ein",
+        "escrowOut": "Fremdgeld aus",
+        "expendituresIn": "Auslagen ein",
+        "expendituresOut": "Auslagen aus",
+        "balance": "Saldo",
+        "in": "Eingang",
+        "out": "Ausgang",
+        "totals": "Summen",
+        "cat": {
+          "earnings": "Einnahmen / Ausgaben",
+          "escrow": "Fremdgeld",
+          "expenditures": "Auslagen"
+        }
       }
     }
   },
