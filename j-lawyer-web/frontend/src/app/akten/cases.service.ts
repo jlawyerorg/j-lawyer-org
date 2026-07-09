@@ -36,7 +36,7 @@ interface PaymentDto {
   total: number; currency: string; targetDate: string; creationDate: string;
 }
 interface AccountEntryDto {
-  id: string; entryDate: string; description: string;
+  id: string; entryDate: string; description: string; contactName?: string;
   earnings: number; spendings: number; escrowIn: number; escrowOut: number;
   expendituresIn: number; expendituresOut: number;
 }
@@ -283,6 +283,7 @@ function toAccountEntry(dto: AccountEntryDto): AccountEntry {
     id: dto.id,
     date: isoDate(dto.entryDate),
     description: dto.description ?? '',
+    contact: dto.contactName ?? '',
     earnings,
     spendings,
     escrowIn,

@@ -123,6 +123,7 @@
       "acct": {
         "date": "Datum",
         "description": "Beschreibung",
+        "contact": "Kontakt",
         "earnings": "Einnahmen",
         "spendings": "Ausgaben",
         "escrow": "Fremdgeld",

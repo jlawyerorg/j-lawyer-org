@@ -343,6 +343,7 @@ type FinanceView = 'invoices' | 'payments' | 'account';
                                   <tr>
                                     <th class="c-date">{{ 'akten.finance.acct.date' | transloco }}</th>
                                     <th class="c-desc">{{ 'akten.finance.acct.description' | transloco }}</th>
+                                    <th class="c-contact">{{ 'akten.finance.acct.contact' | transloco }}</th>
                                     <th class="num">{{ 'akten.finance.acct.earnings' | transloco }}</th>
                                     <th class="num">{{ 'akten.finance.acct.spendings' | transloco }}</th>
                                     <th class="num">{{ 'akten.finance.acct.escrow' | transloco }}</th>
@@ -355,6 +356,7 @@ type FinanceView = 'invoices' | 'payments' | 'account';
                                     <tr>
                                       <td class="c-date">{{ row.entry.date | date: 'dd.MM.yyyy' }}</td>
                                       <td class="c-desc">{{ row.entry.description || '—' }}</td>
+                                      <td class="c-contact">{{ row.entry.contact || '—' }}</td>
                                       <td class="num">{{ row.entry.earnings ? (row.entry.earnings | number: '1.2-2') : '—' }}</td>
                                       <td class="num">{{ row.entry.spendings ? (row.entry.spendings | number: '1.2-2') : '—' }}</td>
                                       <td class="num">{{ (row.entry.escrowIn - row.entry.escrowOut) ? ((row.entry.escrowIn - row.entry.escrowOut) | number: '1.2-2') : '—' }}</td>

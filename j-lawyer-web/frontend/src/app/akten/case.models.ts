@@ -116,6 +116,8 @@ export interface AccountEntry {
   /** ISO date (sanitized, no [UTC] suffix); empty if unset. */
   date: string;
   description: string;
+  /** Resolved display name of the linked contact; empty if none. */
+  contact: string;
   /** Einnahmen (credit). */
   earnings: number;
   /** Ausgaben (debit). */

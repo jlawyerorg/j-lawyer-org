@@ -184,6 +184,7 @@
 }
 .acct-table .num { text-align: right; font-variant-numeric: tabular-nums; }
 .acct-table .c-desc { white-space: normal; min-width: 180px; }
+.acct-table .c-contact { white-space: normal; min-width: 130px; color: var(--jl-ink-soft); }
 .acct-table .c-date { color: var(--jl-ink-soft); }
 .acct-table .bal { font-weight: 700; }
 .acct-table .num.neg, .acct-table .bal.neg { color: var(--jl-red); }

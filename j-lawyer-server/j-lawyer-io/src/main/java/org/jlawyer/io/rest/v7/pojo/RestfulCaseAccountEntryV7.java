@@ -677,6 +677,7 @@ public class RestfulCaseAccountEntryV7 {
     private String id;
     private Date entryDate;
     private String contactId;
+    private String contactName;
     private String caseId;
     private String invoiceId;
     private String description;
@@ -698,8 +699,10 @@ public class RestfulCaseAccountEntryV7 {
         entry.setEntryDate(e.getEntryDate());
         entry.setDescription(e.getDescription());
         entry.setCaseId(e.getArchiveFileKey().getId());
-        if(e.getContact()!=null)
+        if(e.getContact()!=null) {
             entry.setContactId(e.getContact().getId());
+            entry.setContactName(e.getContact().toDisplayName());
+        }
         if(e.getInvoice()!=null)
             entry.setInvoiceId(e.getInvoice().getId());
         entry.setEarnings(e.getEarnings());
@@ -752,6 +755,21 @@ public class RestfulCaseAccountEntryV7 {
      */
     public void setContactId(String contactId) {
         this.contactId = contactId;
+    }
+
+    /**
+     * @return the resolved display name of the linked contact (address), e.g. company or
+     * "last name, first name". May be null if no contact is linked to the entry.
+     */
+    public String getContactName() {
+        return contactName;
+    }
+
+    /**
+     * @param contactName the resolved contact display name to set
+     */
+    public void setContactName(String contactName) {
+        this.contactName = contactName;
     }
 
     /**
