@@ -108,8 +108,8 @@
 .frist + .frist { border-top: 1px solid var(--jl-line); }
 .frist .bar { width: 3px; align-self: stretch; border-radius: 3px; background: var(--jl-warning); flex: none; }
 .frist .bar.deadline { background: var(--jl-red); }
-.frist .fdate { width: 46px; text-align: center; font-weight: 800; font-variant-numeric: tabular-nums; }
-.frist .fx { flex: 1; }
+.frist .fdate { flex: none; min-width: 46px; white-space: nowrap; text-align: center; font-weight: 800; font-variant-numeric: tabular-nums; }
+.frist .fx { flex: 1; min-width: 0; }
 .frist .ft { display: block; font-weight: 600; font-size: .9rem; }
 .frist .fs { display: block; font-size: .82rem; color: var(--jl-ink-soft); }
 
