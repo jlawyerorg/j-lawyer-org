@@ -224,8 +224,19 @@
     "retry": "Try again",
     "hint": "Enter a search term to full-text search across all case documents.",
     "empty": "No results.",
+    "emptyFileName": "No file name contains the search term.",
+    "fileNameOnly": "Search file names only",
     "capped": "Showing the first {{max}} results — refine your search for more precise results.",
     "score": "Relevance",
+    "preview": "Preview",
     "download": "Download"
+  },
+  "preview": {
+    "openTab": "Open in new tab",
+    "download": "Download",
+    "close": "Close",
+    "loading": "Loading document …",
+    "error": "The document could not be loaded.",
+    "noPreview": "No preview available for this format."
   }
 }

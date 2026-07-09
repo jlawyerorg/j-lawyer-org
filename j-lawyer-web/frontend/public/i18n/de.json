@@ -224,8 +224,19 @@
     "retry": "Erneut versuchen",
     "hint": "Geben Sie einen Suchbegriff ein, um alle Aktendokumente im Volltext zu durchsuchen.",
     "empty": "Keine Treffer.",
+    "emptyFileName": "Kein Dateiname enthält den Suchbegriff.",
+    "fileNameOnly": "Nur Dateinamen durchsuchen",
     "capped": "Die ersten {{max}} Treffer werden angezeigt — Suche verfeinern für genauere Ergebnisse.",
     "score": "Relevanz",
+    "preview": "Vorschau",
     "download": "Herunterladen"
+  },
+  "preview": {
+    "openTab": "Im neuen Tab öffnen",
+    "download": "Herunterladen",
+    "close": "Schließen",
+    "loading": "Dokument wird geladen …",
+    "error": "Dokument konnte nicht geladen werden.",
+    "noPreview": "Für dieses Format ist keine Vorschau verfügbar."
   }
 }

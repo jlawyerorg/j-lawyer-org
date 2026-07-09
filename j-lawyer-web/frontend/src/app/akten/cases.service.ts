@@ -26,7 +26,6 @@ interface CaseDto {
 interface PartyDto { id: string; involvementType: string; contact?: string; }
 interface DueDateDto { id: string; reason: string; dueDate: string; done: boolean; assignee: string; type: string; }
 interface DocDto { id: string; name: string; size: number; creationDate: string; }
-interface DocumentContentDto { id: string; fileName: string; caseId: string; base64content: string; }
 interface HistoryDto { id: string; principal: string; changeDate: number; changeDescription: string; }
 interface InvoiceDto {
   id: string; invoiceNumber: string; name: string; status: string;
@@ -121,11 +120,6 @@ export class CasesService {
         this.listLoading.set(false);
       },
     });
-  }
-
-  /** Loads a single document's Base64-encoded content (GET /v1/cases/document/{id}/content). */
-  documentContent(id: string): Observable<DocumentContentDto> {
-    return this.http.get<DocumentContentDto>(`${CASES_BASE}/document/${id}/content`);
   }
 
   /** Loads a case's change history, most recent first (GET /v8/cases/{id}/history); [] on error. */

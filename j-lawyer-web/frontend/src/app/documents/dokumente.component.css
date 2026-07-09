@@ -19,6 +19,13 @@
 .search:focus-within { border-color: var(--jl-blue); }
 .search input { flex: 1; font: inherit; font-size: .95rem; border: 0; outline: 0; background: transparent; color: var(--jl-ink); }
 
+/* ---------- Filename-only toggle ---------- */
+.fn-toggle {
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: 7px; margin: 0 18px 12px;
+  font-size: .84rem; font-weight: 600; color: var(--jl-ink-soft); cursor: pointer; user-select: none;
+}
+.fn-toggle input { accent-color: var(--jl-blue); cursor: pointer; }
+
 /* ---------- Results ---------- */
 .results { flex: 1 1 auto; overflow-y: auto; min-height: 0; padding: 0 0 20px; }
 .pad { padding: 20px 18px; }
@@ -34,6 +41,8 @@
 
 .hit { display: flex; gap: 12px; padding: 13px 18px; border-top: 1px solid var(--jl-line); }
 .hit:first-of-type { border-top: 0; }
+.hit.previewable { cursor: pointer; }
+.hit.previewable:hover { background: var(--jl-surface-alt); }
 .hit .ext {
   width: 34px; height: 40px; border-radius: 5px; display: grid; place-items: center; color: #fff;
   font-size: .58rem; font-weight: 800; flex: none; background: var(--jl-blue);

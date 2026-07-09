@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { ThemeService } from '../core/theme.service';
@@ -23,7 +24,8 @@ import { AuthService } from '../core/auth/auth.service';
 
     <label class="search">
       <jl-icon name="search" [size]="15" />
-      <input type="search" [placeholder]="'header.search' | transloco" [attr.aria-label]="'header.search' | transloco" />
+      <input type="search" [placeholder]="'header.search' | transloco" [attr.aria-label]="'header.search' | transloco"
+             (keydown.enter)="search($any($event.target).value)" />
     </label>
 
     <span class="spacer"></span>
@@ -113,4 +115,13 @@ export class AppHeaderComponent {
   protected readonly theme = inject(ThemeService);
   protected readonly lang = inject(LanguageService);
   protected readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+
+  /** Global search: routes the term to the fulltext documents module (?q=). */
+  protected search(term: string): void {
+    const q = (term ?? '').trim();
+    if (q) {
+      this.router.navigate(['/documents'], { queryParams: { q } });
+    }
+  }
 }

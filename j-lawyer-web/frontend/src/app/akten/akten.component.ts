@@ -1,14 +1,16 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { DomSanitizer, SafeResourceUrl, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
+import { DocumentPreviewComponent } from '../shared/document-preview.component';
+import { DocumentContentService } from '../shared/document-content.service';
+import { PreviewDoc, previewKindOf } from '../shared/document-preview.models';
 import { forkJoin } from 'rxjs';
 import { CaseFilter, CasesService } from './cases.service';
 import {
-  CaseDetail, CaseDocument, CaseHistoryEntry, CaseInvoice, CasePayment, DocPreviewKind, mimeOf, previewKindOf,
+  CaseDetail, CaseDocument, CaseHistoryEntry, CaseInvoice, CasePayment,
 } from './case.models';
 
 type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 'history';
@@ -24,7 +26,7 @@ type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 
   selector: 'jl-akten',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoModule, IconComponent, DatePipe, DecimalPipe],
+  imports: [TranslocoModule, IconComponent, DatePipe, DecimalPipe, DocumentPreviewComponent],
   template: `
     <div class="master-detail" [class.show-detail]="selectedId()">
       <!-- Aktenliste -->
@@ -358,42 +360,13 @@ type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 
       </section>
     </div>
 
-    @if (previewDoc(); as pd) {
-      <div class="viewer" (click)="closePreview()">
-        <div class="viewer-box" (click)="$event.stopPropagation()">
-          <header class="viewer-head">
-            <span class="ext">{{ pd.ext || '—' }}</span>
-            <span class="viewer-name">{{ pd.name }}</span>
-            @if (previewKind() === 'pdf' && pdfSafeUrl()) {
-              <button type="button" class="doc-btn" (click)="openPdfTab()">{{ 'akten.pdfOpenTab' | transloco }}</button>
-            }
-            <button type="button" class="doc-btn" (click)="download(pd)">
-              <jl-icon name="download" [size]="14" />{{ 'akten.docDownload' | transloco }}
-            </button>
-            <button type="button" class="viewer-close" (click)="closePreview()" [attr.aria-label]="'akten.close' | transloco">✕</button>
-          </header>
-          <div class="viewer-body">
-            @if (previewLoading()) {
-              <p class="muted pad">{{ 'akten.docLoading' | transloco }}</p>
-            } @else if (previewError()) {
-              <p class="pad">{{ 'akten.docError' | transloco }}</p>
-            } @else if (previewKind() === 'image' && previewImage()) {
-              <img class="viewer-img" [src]="previewImage()" [alt]="pd.name" />
-            } @else if (previewKind() === 'text') {
-              <pre class="viewer-text">{{ previewText() }}</pre>
-            } @else if (previewKind() === 'pdf' && pdfSafeUrl()) {
-              <iframe class="viewer-frame" [src]="pdfSafeUrl()" [title]="pd.name"></iframe>
-            }
-          </div>
-        </div>
-      </div>
-    }
+    <jl-document-preview [doc]="previewDoc()" (closed)="previewDoc.set(null)" />
   `,
   styleUrl: './akten.component.css',
 })
 export class AktenComponent {
   protected readonly cases = inject(CasesService);
-  private readonly sanitizer = inject(DomSanitizer);
+  private readonly documents = inject(DocumentContentService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
@@ -407,16 +380,8 @@ export class AktenComponent {
   protected readonly selected = signal<CaseDetail | null>(null);
   protected readonly detailLoading = signal(false);
 
-  // Document preview state
-  protected readonly previewDoc = signal<CaseDocument | null>(null);
-  protected readonly previewKind = signal<DocPreviewKind>('none');
-  protected readonly previewLoading = signal(false);
-  protected readonly previewError = signal(false);
-  protected readonly previewImage = signal<SafeUrl | null>(null);
-  protected readonly previewText = signal('');
-  protected readonly pdfSafeUrl = signal<SafeResourceUrl | null>(null);
-  private pdfBlobUrl: string | null = null;
-  private previewSeq = 0;
+  // Document preview — handed to the shared <jl-document-preview> overlay.
+  protected readonly previewDoc = signal<PreviewDoc | null>(null);
 
   // History tab state (lazy-loaded per case)
   protected readonly history = signal<CaseHistoryEntry[] | null>(null);
@@ -456,7 +421,6 @@ export class AktenComponent {
         this.router.navigate(['/cases', rows[0].id], { replaceUrl: true });
       }
     });
-    inject(DestroyRef).onDestroy(() => this.revokePdfUrl());
   }
 
   /** True when the document can be previewed inline / in a new tab (vs. download-only). */
@@ -464,92 +428,18 @@ export class AktenComponent {
     return previewKindOf(doc.ext) !== 'none';
   }
 
-  /** Opens the preview overlay for a document (image/text inline, PDF via a new tab). */
+  /** Opens the shared preview overlay for a document (download-only kinds just download). */
   protected preview(doc: CaseDocument): void {
-    const kind = previewKindOf(doc.ext);
-    if (kind === 'none') {
+    if (previewKindOf(doc.ext) === 'none') {
       this.download(doc);
       return;
     }
-    const seq = ++this.previewSeq;
-    this.revokePdfUrl();
-    this.pdfSafeUrl.set(null);
-    this.previewImage.set(null);
-    this.previewText.set('');
-    this.previewError.set(false);
-    this.previewKind.set(kind);
-    this.previewDoc.set(doc);
-    this.previewLoading.set(true);
-
-    this.cases.documentContent(doc.id).subscribe({
-      next: (dto) => {
-        if (seq !== this.previewSeq) {
-          return;
-        }
-        const b64 = (dto.base64content ?? '').replace(/\s/g, '');
-        const mime = mimeOf(doc.ext);
-        if (kind === 'image') {
-          this.previewImage.set(this.sanitizer.bypassSecurityTrustUrl(`data:${mime};base64,${b64}`));
-        } else if (kind === 'text') {
-          this.previewText.set(bytesToText(base64ToBytes(b64)));
-        } else if (kind === 'pdf') {
-          this.pdfBlobUrl = URL.createObjectURL(new Blob([base64ToBytes(b64)], { type: mime }));
-          // iframe [src] is a RESOURCE_URL context; the blob is our own same-origin data.
-          // CSP frame-src 'self' blob: permits embedding it (see index.html).
-          this.pdfSafeUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(this.pdfBlobUrl));
-        }
-        this.previewLoading.set(false);
-      },
-      error: () => {
-        if (seq !== this.previewSeq) {
-          return;
-        }
-        this.previewError.set(true);
-        this.previewLoading.set(false);
-      },
-    });
-  }
-
-  /** Opens the already-fetched PDF blob in a new tab (native viewer; CSP blocks embedding). */
-  protected openPdfTab(): void {
-    if (this.pdfBlobUrl) {
-      window.open(this.pdfBlobUrl, '_blank', 'noopener');
-    }
-  }
-
-  protected closePreview(): void {
-    this.previewSeq++;
-    this.previewDoc.set(null);
-    this.previewImage.set(null);
-    this.previewText.set('');
-    this.pdfSafeUrl.set(null);
-    this.previewLoading.set(false);
-    this.previewError.set(false);
-    this.revokePdfUrl();
+    this.previewDoc.set({ id: doc.id, name: doc.name, ext: doc.ext });
   }
 
   /** Fetches a document's bytes and triggers a browser download with its file name. */
   protected download(doc: CaseDocument): void {
-    this.cases.documentContent(doc.id).subscribe({
-      next: (dto) => {
-        const bytes = base64ToBytes((dto.base64content ?? '').replace(/\s/g, ''));
-        const url = URL.createObjectURL(new Blob([bytes], { type: mimeOf(doc.ext) }));
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = dto.fileName || doc.name;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 10_000);
-      },
-    });
-  }
-
-  private revokePdfUrl(): void {
-    if (this.pdfBlobUrl) {
-      URL.revokeObjectURL(this.pdfBlobUrl);
-      this.pdfBlobUrl = null;
-    }
+    this.documents.download({ id: doc.id, name: doc.name, ext: doc.ext });
   }
 
   /** Switches the server-side filter and reloads the first page. */
@@ -697,19 +587,4 @@ export class AktenComponent {
       .join('')
       .toUpperCase();
   }
-}
-
-/** Decodes a (whitespace-stripped) Base64 string into raw bytes. */
-function base64ToBytes(b64: string): Uint8Array {
-  const bin = atob(b64);
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) {
-    bytes[i] = bin.charCodeAt(i);
-  }
-  return bytes;
-}
-
-/** Decodes UTF-8 bytes to a string for text preview. */
-function bytesToText(bytes: Uint8Array): string {
-  return new TextDecoder('utf-8').decode(bytes);
 }

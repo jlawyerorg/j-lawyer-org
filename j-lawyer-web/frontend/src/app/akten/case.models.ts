@@ -60,48 +60,11 @@ export interface CaseDocument {
   ext: string;
 }
 
-/** How a document can be previewed in the browser (constrained by the app CSP). */
-export type DocPreviewKind = 'pdf' | 'image' | 'text' | 'none';
-
-const IMAGE_EXTS = new Set(['PNG', 'JPG', 'JPEG', 'GIF', 'WEBP', 'BMP']);
-const TEXT_EXTS = new Set(['TXT', 'MD', 'CSV', 'LOG', 'XML', 'JSON', 'HTML', 'HTM', 'EML', 'YML', 'YAML']);
-
-/** Decides how (or whether) a document can be previewed, based on its extension. */
-export function previewKindOf(ext: string): DocPreviewKind {
-  const e = (ext || '').toUpperCase();
-  if (e === 'PDF') {
-    return 'pdf';
-  }
-  if (IMAGE_EXTS.has(e)) {
-    return 'image';
-  }
-  if (TEXT_EXTS.has(e)) {
-    return 'text';
-  }
-  return 'none';
-}
-
-/** Best-effort MIME type for building a Blob / data URL from a document's bytes. */
-export function mimeOf(ext: string): string {
-  switch ((ext || '').toUpperCase()) {
-    case 'PDF': return 'application/pdf';
-    case 'PNG': return 'image/png';
-    case 'JPG':
-    case 'JPEG': return 'image/jpeg';
-    case 'GIF': return 'image/gif';
-    case 'WEBP': return 'image/webp';
-    case 'BMP': return 'image/bmp';
-    case 'TXT':
-    case 'LOG': return 'text/plain';
-    case 'MD': return 'text/markdown';
-    case 'CSV': return 'text/csv';
-    case 'XML': return 'application/xml';
-    case 'JSON': return 'application/json';
-    case 'HTML':
-    case 'HTM': return 'text/html';
-    default: return 'application/octet-stream';
-  }
-}
+// Preview primitives (DocPreviewKind, previewKindOf, mimeOf) now live in
+// shared/document-preview.models.ts so the case detail and the fulltext search share one
+// preview implementation. Re-exported here for existing importers.
+export type { DocPreviewKind } from '../shared/document-preview.models';
+export { previewKindOf, mimeOf } from '../shared/document-preview.models';
 
 /** A case change-history (audit trail) entry (GET /v8/cases/{id}/history). */
 export interface CaseHistoryEntry {
