@@ -10,10 +10,12 @@ import { PreviewDoc, previewKindOf } from '../shared/document-preview.models';
 import { forkJoin } from 'rxjs';
 import { CaseFilter, CasesService } from './cases.service';
 import {
-  CaseDetail, CaseDocument, CaseHistoryEntry, CaseInvoice, CasePayment,
+  AccountEntry, CaseDetail, CaseDocument, CaseHistoryEntry, CaseInvoice, CasePayment,
 } from './case.models';
 
 type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 'history';
+/** Sub-view within the finance tab (invoices, payments and the case account are too much for one screen). */
+type FinanceView = 'invoices' | 'payments' | 'account';
 
 /**
  * Akten (cases) module — responsive master-detail (design-mockup.html): searchable case
@@ -273,53 +275,103 @@ type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 
                       <span class="fk-label">{{ 'akten.finance.paid' | transloco }}</span>
                       <span class="fk-value">{{ sumPayments(payments()) | number: '1.2-2' }} €</span>
                     </div>
-                  </div>
-
-                  <div class="card full">
-                    <div class="card-h">
-                      <h3>{{ 'akten.finance.invoices' | transloco }}</h3>
-                      <span class="card-count">{{ invoices()?.length ?? 0 }}</span>
-                    </div>
-                    <div class="card-b">
-                      @for (inv of invoices(); track inv.id) {
-                        <div class="fin-row">
-                          <span class="fin-main">
-                            <span class="dn">{{ inv.invoiceNumber || inv.name || '—' }}</span>
-                            <span class="dmeta">
-                              {{ inv.status }}
-                              @if (inv.dueDate) { · {{ 'akten.finance.due' | transloco }} {{ inv.dueDate | date: 'dd.MM.yyyy' }} }
-                            </span>
-                          </span>
-                          <span class="fin-amount">{{ inv.totalGross | number: '1.2-2' }} {{ inv.currency }}</span>
-                        </div>
-                      } @empty {
-                        <p class="muted">{{ 'akten.finance.noInvoices' | transloco }}</p>
-                      }
+                    <div class="fin-kpi">
+                      <span class="fk-label">{{ 'akten.finance.balance' | transloco }}</span>
+                      <span class="fk-value" [class.neg]="accountBalance(accountEntries()) < 0">
+                        {{ accountBalance(accountEntries()) | number: '1.2-2' }} €
+                      </span>
                     </div>
                   </div>
 
-                  <div class="card full">
-                    <div class="card-h">
-                      <h3>{{ 'akten.finance.payments' | transloco }}</h3>
-                      <span class="card-count">{{ payments()?.length ?? 0 }}</span>
-                    </div>
-                    <div class="card-b">
-                      @for (pay of payments(); track pay.id) {
-                        <div class="fin-row">
-                          <span class="fin-main">
-                            <span class="dn">{{ pay.name || pay.paymentNumber || pay.reason || '—' }}</span>
-                            <span class="dmeta">
-                              {{ pay.status }}
-                              @if (pay.targetDate) { · {{ pay.targetDate | date: 'dd.MM.yyyy' }} }
-                            </span>
-                          </span>
-                          <span class="fin-amount">{{ pay.total | number: '1.2-2' }} {{ pay.currency }}</span>
-                        </div>
-                      } @empty {
-                        <p class="muted">{{ 'akten.finance.noPayments' | transloco }}</p>
-                      }
-                    </div>
+                  <div class="fin-nav" role="tablist">
+                    @for (v of financeViews; track v) {
+                      <button type="button" class="fin-nav-btn" [class.on]="financeView() === v" (click)="financeView.set(v)">
+                        {{ 'akten.finance.view.' + v | transloco }}
+                        <span class="fin-nav-count">{{ financeCount(v) }}</span>
+                      </button>
+                    }
                   </div>
+
+                  @switch (financeView()) {
+                    @case ('invoices') {
+                      <div class="card full">
+                        <div class="card-b">
+                          @for (inv of invoices(); track inv.id) {
+                            <div class="fin-row">
+                              <span class="fin-main">
+                                <span class="dn">{{ inv.invoiceNumber || inv.name || '—' }}</span>
+                                <span class="dmeta">
+                                  {{ inv.status }}
+                                  @if (inv.dueDate) { · {{ 'akten.finance.due' | transloco }} {{ inv.dueDate | date: 'dd.MM.yyyy' }} }
+                                </span>
+                              </span>
+                              <span class="fin-amount">{{ inv.totalGross | number: '1.2-2' }} {{ inv.currency }}</span>
+                            </div>
+                          } @empty {
+                            <p class="muted">{{ 'akten.finance.noInvoices' | transloco }}</p>
+                          }
+                        </div>
+                      </div>
+                    }
+                    @case ('payments') {
+                      <div class="card full">
+                        <div class="card-b">
+                          @for (pay of payments(); track pay.id) {
+                            <div class="fin-row">
+                              <span class="fin-main">
+                                <span class="dn">{{ pay.name || pay.paymentNumber || pay.reason || '—' }}</span>
+                                <span class="dmeta">
+                                  {{ pay.status }}
+                                  @if (pay.targetDate) { · {{ pay.targetDate | date: 'dd.MM.yyyy' }} }
+                                </span>
+                              </span>
+                              <span class="fin-amount">{{ pay.total | number: '1.2-2' }} {{ pay.currency }}</span>
+                            </div>
+                          } @empty {
+                            <p class="muted">{{ 'akten.finance.noPayments' | transloco }}</p>
+                          }
+                        </div>
+                      </div>
+                    }
+                    @case ('account') {
+                      <div class="card full">
+                        <div class="card-b">
+                          @if (accountRows().length) {
+                            <div class="acct-scroll">
+                              <table class="acct-table">
+                                <thead>
+                                  <tr>
+                                    <th class="c-date">{{ 'akten.finance.acct.date' | transloco }}</th>
+                                    <th class="c-desc">{{ 'akten.finance.acct.description' | transloco }}</th>
+                                    <th class="num">{{ 'akten.finance.acct.earnings' | transloco }}</th>
+                                    <th class="num">{{ 'akten.finance.acct.spendings' | transloco }}</th>
+                                    <th class="num">{{ 'akten.finance.acct.escrow' | transloco }}</th>
+                                    <th class="num">{{ 'akten.finance.acct.expenditures' | transloco }}</th>
+                                    <th class="num">{{ 'akten.finance.acct.balance' | transloco }}</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  @for (row of accountRows(); track row.entry.id) {
+                                    <tr>
+                                      <td class="c-date">{{ row.entry.date | date: 'dd.MM.yyyy' }}</td>
+                                      <td class="c-desc">{{ row.entry.description || '—' }}</td>
+                                      <td class="num">{{ row.entry.earnings ? (row.entry.earnings | number: '1.2-2') : '—' }}</td>
+                                      <td class="num">{{ row.entry.spendings ? (row.entry.spendings | number: '1.2-2') : '—' }}</td>
+                                      <td class="num">{{ (row.entry.escrowIn - row.entry.escrowOut) ? ((row.entry.escrowIn - row.entry.escrowOut) | number: '1.2-2') : '—' }}</td>
+                                      <td class="num">{{ (row.entry.expendituresIn - row.entry.expendituresOut) ? ((row.entry.expendituresIn - row.entry.expendituresOut) | number: '1.2-2') : '—' }}</td>
+                                      <td class="num bal" [class.neg]="row.balance < 0">{{ row.balance | number: '1.2-2' }}</td>
+                                    </tr>
+                                  }
+                                </tbody>
+                              </table>
+                            </div>
+                          } @else {
+                            <p class="muted">{{ 'akten.finance.noAccountEntries' | transloco }}</p>
+                          }
+                        </div>
+                      </div>
+                    }
+                  }
                 </div>
               }
             } @else if (activeTab() === 'history') {
@@ -388,11 +440,15 @@ export class AktenComponent {
   protected readonly historyLoading = signal(false);
   protected readonly historyError = signal(false);
 
-  // Finance tab state (invoices + payments, lazy-loaded per case)
+  // Finance tab state (invoices + payments + case account, lazy-loaded per case)
   protected readonly invoices = signal<CaseInvoice[] | null>(null);
   protected readonly payments = signal<CasePayment[] | null>(null);
+  protected readonly accountEntries = signal<AccountEntry[] | null>(null);
   protected readonly financeLoading = signal(false);
   protected readonly financeError = signal(false);
+  /** Active sub-view of the finance tab. */
+  protected readonly financeView = signal<FinanceView>('invoices');
+  protected readonly financeViews: FinanceView[] = ['invoices', 'payments', 'account'];
 
   private autoSelected = false;
   private searchDebounce: ReturnType<typeof setTimeout> | null = null;
@@ -483,7 +539,9 @@ export class AktenComponent {
     this.historyError.set(false);
     this.invoices.set(null);
     this.payments.set(null);
+    this.accountEntries.set(null);
     this.financeError.set(false);
+    this.financeView.set('invoices');
     this.cases.loadDetail(id).subscribe((detail) => {
       // ignore a stale response if the user already picked another case
       if (this.selectedId() === id) {
@@ -535,13 +593,18 @@ export class AktenComponent {
     }
     this.financeLoading.set(true);
     this.financeError.set(false);
-    forkJoin({ invoices: this.cases.invoices(id), payments: this.cases.payments(id) }).subscribe({
-      next: ({ invoices, payments }) => {
+    forkJoin({
+      invoices: this.cases.invoices(id),
+      payments: this.cases.payments(id),
+      accountEntries: this.cases.accountEntries(id),
+    }).subscribe({
+      next: ({ invoices, payments, accountEntries }) => {
         if (this.selectedId() !== id) {
           return;
         }
         this.invoices.set(invoices);
         this.payments.set(payments);
+        this.accountEntries.set(accountEntries);
         this.financeLoading.set(false);
       },
       error: () => {
@@ -571,6 +634,31 @@ export class AktenComponent {
   /** Sum of a payment list's totals (for the finance summary). */
   protected sumPayments(list: CasePayment[] | null): number {
     return (list ?? []).reduce((acc, p) => acc + (p.total || 0), 0);
+  }
+
+  /** Item count shown as a badge on a finance sub-nav button. */
+  protected financeCount(view: FinanceView): number {
+    const list = view === 'invoices' ? this.invoices()
+      : view === 'payments' ? this.payments()
+        : this.accountEntries();
+    return list?.length ?? 0;
+  }
+
+  /** Overall case-account balance: the sum of all entries' net effects. */
+  protected accountBalance(list: AccountEntry[] | null): number {
+    return (list ?? []).reduce((acc, e) => acc + (e.total || 0), 0);
+  }
+
+  /**
+   * The account entries decorated with a running balance, in entry order (the endpoint
+   * already returns them by ascending date).
+   */
+  protected accountRows(): { entry: AccountEntry; balance: number }[] {
+    let running = 0;
+    return (this.accountEntries() ?? []).map((entry) => {
+      running += entry.total || 0;
+      return { entry, balance: running };
+    });
   }
 
   /** Mobile "back" from the detail: return to the plain list URL. */

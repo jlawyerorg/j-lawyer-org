@@ -108,11 +108,27 @@
       "claimValue": "Streitwert",
       "invoiced": "Rechnungen (brutto)",
       "paid": "Zahlungen",
+      "balance": "Aktenkonto-Saldo",
       "invoices": "Rechnungen",
       "payments": "Zahlungen",
       "due": "fällig",
       "noInvoices": "Keine Rechnungen.",
-      "noPayments": "Keine Zahlungen."
+      "noPayments": "Keine Zahlungen.",
+      "noAccountEntries": "Keine Aktenkonto-Buchungen.",
+      "view": {
+        "invoices": "Rechnungen",
+        "payments": "Zahlungen",
+        "account": "Aktenkonto"
+      },
+      "acct": {
+        "date": "Datum",
+        "description": "Beschreibung",
+        "earnings": "Einnahmen",
+        "spendings": "Ausgaben",
+        "escrow": "Fremdgeld",
+        "expenditures": "Auslagen",
+        "balance": "Saldo"
+      }
     }
   },
   "kontakte": {

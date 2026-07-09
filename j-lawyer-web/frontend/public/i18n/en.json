@@ -108,11 +108,27 @@
       "claimValue": "Amount in dispute",
       "invoiced": "Invoiced (gross)",
       "paid": "Payments",
+      "balance": "Account balance",
       "invoices": "Invoices",
       "payments": "Payments",
       "due": "due",
       "noInvoices": "No invoices.",
-      "noPayments": "No payments."
+      "noPayments": "No payments.",
+      "noAccountEntries": "No account entries.",
+      "view": {
+        "invoices": "Invoices",
+        "payments": "Payments",
+        "account": "Case account"
+      },
+      "acct": {
+        "date": "Date",
+        "description": "Description",
+        "earnings": "Income",
+        "spendings": "Expenses",
+        "escrow": "Escrow",
+        "expenditures": "Disbursements",
+        "balance": "Balance"
+      }
     }
   },
   "kontakte": {

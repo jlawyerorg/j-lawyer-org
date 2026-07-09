@@ -85,8 +85,8 @@
 .tab.on { color: var(--jl-blue); border-bottom-color: var(--jl-blue); }
 
 .detail-body { padding: 18px 22px 24px; }
-.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.card { border: 1px solid var(--jl-line); border-radius: 10px; background: var(--jl-surface); }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+.card { min-width: 0; border: 1px solid var(--jl-line); border-radius: 10px; background: var(--jl-surface); }
 .card.full { grid-column: 1 / -1; }
 .card-h { padding: 12px 15px; border-bottom: 1px solid var(--jl-line); }
 .card-h h3 { margin: 0; font-size: .76rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--jl-ink-soft); }
@@ -158,6 +158,36 @@
 .fin-row .dn { font-weight: 550; font-size: .89rem; word-break: break-word; }
 .fin-row .dmeta { font-size: .76rem; color: var(--jl-ink-faint); }
 .fin-row .fin-amount { margin-left: auto; font-weight: 700; font-size: .9rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fin-kpi .fk-value.neg { color: var(--jl-red); }
+
+/* Finanzen: Unternavigation (Rechnungen / Zahlungen / Aktenkonto) */
+.fin-nav { display: flex; flex-wrap: wrap; gap: 6px; }
+.fin-nav-btn {
+  display: inline-flex; align-items: center; gap: 7px; font: inherit; font-size: .84rem; font-weight: 650;
+  cursor: pointer; color: var(--jl-ink-soft); background: var(--jl-surface);
+  border: 1px solid var(--jl-line-strong); border-radius: 8px; padding: 6px 12px;
+}
+.fin-nav-btn:hover { border-color: var(--jl-blue); color: var(--jl-blue); }
+.fin-nav-btn.on { color: #fff; background: var(--jl-blue); border-color: var(--jl-blue); }
+.fin-nav-count {
+  font-size: .72rem; font-weight: 700; font-variant-numeric: tabular-nums;
+  background: color-mix(in srgb, currentColor 16%, transparent); border-radius: 20px; padding: 1px 7px;
+}
+
+/* Aktenkonto-Tabelle (horizontal scrollbar, damit sie nie den Body überläuft) */
+.acct-scroll { overflow-x: auto; max-width: 100%; }
+.acct-table { width: 100%; border-collapse: collapse; font-size: .84rem; white-space: nowrap; }
+.acct-table th, .acct-table td { padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--jl-line); }
+.acct-table thead th {
+  position: sticky; top: 0; background: var(--jl-surface); z-index: 1;
+  font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--jl-ink-faint); font-weight: 700;
+}
+.acct-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.acct-table .c-desc { white-space: normal; min-width: 180px; }
+.acct-table .c-date { color: var(--jl-ink-soft); }
+.acct-table .bal { font-weight: 700; }
+.acct-table .num.neg, .acct-table .bal.neg { color: var(--jl-red); }
+.acct-table tbody tr:hover { background: var(--jl-surface-alt); }
 
 /* ---------- Historie-Reiter ---------- */
 .hist { display: flex; gap: 12px; padding: 9px 0; }
@@ -174,5 +204,5 @@
   .master-detail.show-detail .list { display: none; }
   .master-detail.show-detail .detail { display: block; }
   .back { display: inline-block; }
-  .grid { grid-template-columns: 1fr; }
+  .grid { grid-template-columns: minmax(0, 1fr); }
 }

@@ -106,6 +106,32 @@ export interface CasePayment {
   creationDate: string;
 }
 
+/**
+ * An entry of the case account ("Aktenkonto", GET /v7/cases/{id}/accountentries). Each entry
+ * has up to three debit/credit pairs: earnings/spendings (fees), escrow in/out (Fremdgeld)
+ * and expenditures in/out (Auslagen). `total` is the entry's net effect on the balance.
+ */
+export interface AccountEntry {
+  id: string;
+  /** ISO date (sanitized, no [UTC] suffix); empty if unset. */
+  date: string;
+  description: string;
+  /** Einnahmen (credit). */
+  earnings: number;
+  /** Ausgaben (debit). */
+  spendings: number;
+  /** Fremdgeld-Eingang (credit). */
+  escrowIn: number;
+  /** Fremdgeld-Ausgang (debit). */
+  escrowOut: number;
+  /** Auslagen-Eingang (credit). */
+  expendituresIn: number;
+  /** Auslagen-Ausgang (debit). */
+  expendituresOut: number;
+  /** Net effect on the balance: (earnings+escrowIn+expendituresIn) - (spendings+escrowOut+expendituresOut). */
+  total: number;
+}
+
 /** Full case (RestfulCaseV1 + related collections + derived status). */
 export interface CaseDetail {
   id: string;

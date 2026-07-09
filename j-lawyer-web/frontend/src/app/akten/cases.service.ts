@@ -3,7 +3,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { catchError, forkJoin, map, Observable, of } from 'rxjs';
 import { API_ROOT } from '../core/api';
 import {
-  CaseDetail, CaseDocument, CaseHistoryEntry, CaseInvoice, CaseOverview, CasePayment, CaseStatus, DueDate, Party,
+  AccountEntry, CaseDetail, CaseDocument, CaseHistoryEntry, CaseInvoice, CaseOverview, CasePayment, CaseStatus, DueDate, Party,
 } from './case.models';
 
 const CASES_BASE = `${API_ROOT}/v1/cases`;
@@ -34,6 +34,11 @@ interface InvoiceDto {
 interface PaymentDto {
   id: string; paymentNumber: string; name: string; reason: string; status: string;
   total: number; currency: string; targetDate: string; creationDate: string;
+}
+interface AccountEntryDto {
+  id: string; entryDate: string; description: string;
+  earnings: number; spendings: number; escrowIn: number; escrowOut: number;
+  expendituresIn: number; expendituresOut: number;
 }
 
 /**
@@ -141,6 +146,14 @@ export class CasesService {
   payments(id: string): Observable<CasePayment[]> {
     return this.http.get<PaymentDto[]>(`${CASES_V8}/${id}/payments`).pipe(
       map((rows) => (rows ?? []).map(toPayment)),
+      catchError(() => of([])),
+    );
+  }
+
+  /** Loads the case account entries ("Aktenkonto", GET /v7/cases/{id}/accountentries); [] on error. */
+  accountEntries(id: string): Observable<AccountEntry[]> {
+    return this.http.get<AccountEntryDto[]>(`${CASES_V7}/${id}/accountentries`).pipe(
+      map((rows) => (rows ?? []).map(toAccountEntry)),
       catchError(() => of([])),
     );
   }
@@ -256,6 +269,27 @@ function toPayment(dto: PaymentDto): CasePayment {
     currency: dto.currency ?? '€',
     targetDate: isoDate(dto.targetDate),
     creationDate: isoDate(dto.creationDate),
+  };
+}
+
+function toAccountEntry(dto: AccountEntryDto): AccountEntry {
+  const earnings = dto.earnings ?? 0;
+  const spendings = dto.spendings ?? 0;
+  const escrowIn = dto.escrowIn ?? 0;
+  const escrowOut = dto.escrowOut ?? 0;
+  const expendituresIn = dto.expendituresIn ?? 0;
+  const expendituresOut = dto.expendituresOut ?? 0;
+  return {
+    id: dto.id,
+    date: isoDate(dto.entryDate),
+    description: dto.description ?? '',
+    earnings,
+    spendings,
+    escrowIn,
+    escrowOut,
+    expendituresIn,
+    expendituresOut,
+    total: earnings + escrowIn + expendituresIn - spendings - escrowOut - expendituresOut,
   };
 }
 
