@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
@@ -39,18 +39,18 @@ interface MailboxFolders {
       <aside class="folders">
         <header class="col-head">
           <h1>{{ 'email.title' | transloco }}</h1>
-          <button type="button" class="icon-btn" [disabled]="foldersLoading()"
+          <button type="button" class="icon-btn" [disabled]="structureLoading()"
                   (click)="refresh()" [attr.aria-label]="'email.refresh' | transloco" [title]="'email.refresh' | transloco">
             <jl-icon name="refresh" [size]="15" />
           </button>
         </header>
         <div class="col-body">
-          @if (mailboxesLoading()) {
+          @if (structureLoading() && !mailboxes()) {
             <p class="muted pad">{{ 'email.loading' | transloco }}</p>
-          } @else if (mailboxesError()) {
+          } @else if (structureError()) {
             <p class="pad">
               {{ 'email.error' | transloco }}
-              <button type="button" class="btn-retry" (click)="loadMailboxes()">{{ 'email.retry' | transloco }}</button>
+              <button type="button" class="btn-retry" (click)="refresh()">{{ 'email.retry' | transloco }}</button>
             </p>
           } @else if (!mailboxes()?.length) {
             <p class="muted pad">{{ 'email.noMailboxes' | transloco }}</p>
@@ -229,11 +229,11 @@ export class EmailComponent {
 
   protected readonly restrictions = LOAD_RESTRICTIONS;
 
-  protected readonly mailboxes = signal<Mailbox[] | null>(null);
-  protected readonly mailboxesLoading = signal(false);
-  protected readonly mailboxesError = signal(false);
-  protected readonly foldersLoading = signal(false);
-  private readonly folders = signal<MailboxFolders[]>([]);
+  // Mailbox/folder structure is cached in the service (survives view open/close); the component
+  // just reads it and derives the folder tree. Only the message list is component-local state.
+  protected readonly mailboxes = this.api.mailboxes;
+  protected readonly structureLoading = this.api.structureLoading;
+  protected readonly structureError = this.api.structureError;
 
   protected readonly selectedMailboxId = signal<string | null>(null);
   protected readonly selectedFolderId = signal<string | null>(null);
@@ -258,10 +258,17 @@ export class EmailComponent {
   private msgSeq = 0;
   private bodyBlobUrl: string | null = null;
 
+  /** Folder trees derived from the cached (flat) folder lists — one per mailbox, in order. */
+  private readonly folderTrees = computed<MailboxFolders[]>(() => {
+    const boxes = this.mailboxes() ?? [];
+    const raw = this.api.folders();
+    return boxes.map((mb) => ({ mailbox: mb, nodes: buildTree(raw[mb.id] ?? []) }));
+  });
+
   /** Flattened left navigation: each mailbox header followed by its folder rows. */
   protected readonly navRows = computed<NavRow[]>(() => {
     const rows: NavRow[] = [];
-    for (const mf of this.folders()) {
+    for (const mf of this.folderTrees()) {
       rows.push({ kind: 'mailbox', mailbox: mf.mailbox });
       flatten(mf.nodes, (f) => rows.push({ kind: 'folder', mailboxId: mf.mailbox.id, folder: f }));
     }
@@ -271,14 +278,14 @@ export class EmailComponent {
   protected readonly selectedFolder = computed<FolderNode | null>(() => {
     const mid = this.selectedMailboxId(); const fid = this.selectedFolderId();
     if (!mid || !fid) { return null; }
-    const mf = this.folders().find((x) => x.mailbox.id === mid);
+    const mf = this.folderTrees().find((x) => x.mailbox.id === mid);
     return mf ? findFolder(mf.nodes, fid) : null;
   });
 
   /** Folders of the current mailbox other than the current one — valid move targets. */
   protected readonly moveTargets = computed<FolderNode[]>(() => {
     const mid = this.selectedMailboxId(); const fid = this.selectedFolderId();
-    const mf = this.folders().find((x) => x.mailbox.id === mid);
+    const mf = this.folderTrees().find((x) => x.mailbox.id === mid);
     if (!mf) { return []; }
     const flat: FolderNode[] = [];
     flatten(mf.nodes, (f) => flat.push(f));
@@ -290,56 +297,26 @@ export class EmailComponent {
     (this.message()?.attachments ?? []).filter((a) => !(a.inline && a.contentId)),
   );
 
+  private autoSelected = false;
+
   constructor() {
-    this.loadMailboxes();
+    // Load the structure only if not already cached; the effect opens the first inbox as soon as
+    // the (cached or freshly fetched) tree is available — once per component instance.
+    this.api.ensureStructure();
+    effect(() => {
+      const trees = this.folderTrees();
+      if (!this.autoSelected && trees.length && !this.selectedFolderId()) {
+        this.autoSelected = true;
+        this.autoSelectInbox();
+      }
+    });
     inject(DestroyRef).onDestroy(() => this.revokeBody());
   }
 
-  protected loadMailboxes(): void {
-    this.mailboxesLoading.set(true);
-    this.mailboxesError.set(false);
-    this.api.listMailboxes().subscribe({
-      next: (rows) => {
-        this.mailboxes.set(rows);
-        this.mailboxesLoading.set(false);
-        this.loadAllFolders(rows);
-      },
-      error: () => {
-        this.mailboxesError.set(true);
-        this.mailboxesLoading.set(false);
-      },
-    });
-  }
-
-  private loadAllFolders(mailboxes: Mailbox[]): void {
-    if (!mailboxes.length) {
-      this.folders.set([]);
-      return;
-    }
-    this.foldersLoading.set(true);
-    const acc: MailboxFolders[] = [];
-    let pending = mailboxes.length;
-    const done = () => {
-      if (--pending === 0) {
-        // Preserve mailbox order regardless of response order.
-        acc.sort((a, b) => mailboxes.indexOf(a.mailbox) - mailboxes.indexOf(b.mailbox));
-        this.folders.set(acc);
-        this.foldersLoading.set(false);
-        this.autoSelectInbox();
-      }
-    };
-    for (const mb of mailboxes) {
-      this.api.listFolders(mb.id).subscribe({
-        next: (flat) => { acc.push({ mailbox: mb, nodes: buildTree(flat) }); done(); },
-        error: () => { acc.push({ mailbox: mb, nodes: [] }); done(); },
-      });
-    }
-  }
-
-  /** On first load, open the first mailbox's inbox so the module isn't empty. */
+  /** Opens the first mailbox's inbox so the module isn't empty. */
   private autoSelectInbox(): void {
     if (this.selectedFolderId()) { return; }
-    for (const mf of this.folders()) {
+    for (const mf of this.folderTrees()) {
       const inbox = firstMatch(mf.nodes, (f) => f.wellKnownName === 'inbox') ?? mf.nodes[0];
       if (inbox) {
         this.selectFolder(mf.mailbox.id, inbox);
@@ -522,8 +499,7 @@ export class EmailComponent {
   }
 
   protected refresh(): void {
-    const mb = this.mailboxes();
-    if (mb) { this.loadAllFolders(mb); }
+    this.api.ensureStructure(true);
     if (this.selectedFolderId()) { this.loadMessages(); }
   }
 
@@ -560,15 +536,11 @@ export class EmailComponent {
     this.messages.update((list) => list?.filter((m) => m.messageRef !== ref) ?? list);
   }
 
-  /** Adjusts the selected folder's unread badge (kept in sync with optimistic read toggles). */
+  /** Adjusts the selected folder's unread badge via the service cache (survives view re-open). */
   private bumpUnread(delta: number): void {
     const mid = this.selectedMailboxId(); const fid = this.selectedFolderId();
     if (!mid || !fid) { return; }
-    this.folders.update((all) => all.map((mf) => {
-      if (mf.mailbox.id !== mid) { return mf; }
-      return { ...mf, nodes: mapTree(mf.nodes, (n) =>
-        n.folderId === fid ? { ...n, unreadCount: Math.max(0, n.unreadCount + delta) } : n) };
-    }));
+    this.api.adjustUnread(mid, fid, delta);
   }
 
   protected formatDate(iso: string | null): string {
@@ -648,10 +620,6 @@ function firstMatch(nodes: FolderNode[], pred: (n: FolderNode) => boolean): Fold
     if (found) { return found; }
   }
   return null;
-}
-
-function mapTree(nodes: FolderNode[], fn: (n: FolderNode) => FolderNode): FolderNode[] {
-  return nodes.map((n) => ({ ...fn(n), children: mapTree(n.children, fn) }));
 }
 
 /** i18n key for a well-known folder name, or '' to fall back to the server-provided display name. */

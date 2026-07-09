@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
@@ -42,7 +42,7 @@ interface PostboxFolders {
       <aside class="folders">
         <header class="col-head">
           <h1><jl-icon name="shield" [size]="16" /> {{ 'bea.title' | transloco }}</h1>
-          <button type="button" class="icon-btn" [disabled]="foldersLoading() || loginState() !== 'ok'"
+          <button type="button" class="icon-btn" [disabled]="loginState() !== 'ok'"
                   (click)="refresh()" [title]="'bea.refresh' | transloco" [attr.aria-label]="'bea.refresh' | transloco">
             <jl-icon name="refresh" [size]="15" />
           </button>
@@ -295,10 +295,10 @@ export class BeaComponent {
 
   protected readonly restrictions = BEA_RESTRICTIONS;
 
-  protected readonly loginState = signal<'loading' | 'ok' | 'error'>('loading');
-  protected readonly postboxes = signal<Postbox[]>([]);
-  protected readonly foldersLoading = signal(false);
-  private readonly folders = signal<PostboxFolders[]>([]);
+  // beA session (login state, postboxes, folders) is cached in the service and survives view
+  // open/close; the component derives the folder tree. Only the message list is component-local.
+  protected readonly loginState = this.api.sessionState;
+  protected readonly postboxes = this.api.postboxes;
 
   protected readonly selectedSafeId = signal<string | null>(null);
   protected readonly selectedFolderId = signal<number | null>(null);
@@ -326,9 +326,15 @@ export class BeaComponent {
   private bodyBlobUrl: string | null = null;
   private verifyBlobUrl: string | null = null;
 
+  /** Folder trees derived from the cached (flat) folder lists — one per postbox, in order. */
+  private readonly folderTrees = computed<PostboxFolders[]>(() => {
+    const raw = this.api.folders();
+    return this.postboxes().map((pb) => ({ postbox: pb, nodes: buildTree(raw[pb.safeId] ?? []) }));
+  });
+
   protected readonly navRows = computed<NavRow[]>(() => {
     const rows: NavRow[] = [];
-    for (const pf of this.folders()) {
+    for (const pf of this.folderTrees()) {
       rows.push({ kind: 'postbox', postbox: pf.postbox });
       flatten(pf.nodes, (f) => rows.push({ kind: 'folder', safeId: pf.postbox.safeId, folder: f }));
     }
@@ -338,13 +344,13 @@ export class BeaComponent {
   protected readonly selectedFolder = computed<BeaFolderNode | null>(() => {
     const sid = this.selectedSafeId(); const fid = this.selectedFolderId();
     if (!sid || fid == null) { return null; }
-    const pf = this.folders().find((x) => x.postbox.safeId === sid);
+    const pf = this.folderTrees().find((x) => x.postbox.safeId === sid);
     return pf ? findFolder(pf.nodes, fid) : null;
   });
 
   protected readonly moveTargets = computed<BeaFolderNode[]>(() => {
     const sid = this.selectedSafeId(); const fid = this.selectedFolderId();
-    const pf = this.folders().find((x) => x.postbox.safeId === sid);
+    const pf = this.folderTrees().find((x) => x.postbox.safeId === sid);
     if (!pf) { return []; }
     const flat: BeaFolderNode[] = [];
     flatten(pf.nodes, (f) => flat.push(f));
@@ -369,48 +375,30 @@ export class BeaComponent {
     return null;
   });
 
+  private autoSelected = false;
+
   constructor() {
-    this.connect();
+    // Establish the session only if not already cached; the effect opens the first inbox as soon
+    // as the (cached or freshly fetched) tree is available — once per component instance.
+    this.api.ensureSession();
+    effect(() => {
+      const trees = this.folderTrees();
+      if (!this.autoSelected && trees.length && this.selectedFolderId() == null) {
+        this.autoSelected = true;
+        this.autoSelectInbox();
+      }
+    });
     inject(DestroyRef).onDestroy(() => { this.revokeBody(); this.revokeVerify(); });
   }
 
-  /** Establishes the beA session and loads postboxes + folders. */
+  /** Re-establishes the beA session (used by the error-state retry). */
   protected connect(): void {
-    this.loginState.set('loading');
-    this.api.login().subscribe({
-      next: (boxes) => {
-        this.postboxes.set(boxes);
-        this.loginState.set('ok');
-        this.loadAllFolders(boxes);
-      },
-      error: () => this.loginState.set('error'),
-    });
-  }
-
-  private loadAllFolders(boxes: Postbox[]): void {
-    if (!boxes.length) { this.folders.set([]); return; }
-    this.foldersLoading.set(true);
-    const acc: PostboxFolders[] = [];
-    let pending = boxes.length;
-    const done = () => {
-      if (--pending === 0) {
-        acc.sort((a, b) => boxes.indexOf(a.postbox) - boxes.indexOf(b.postbox));
-        this.folders.set(acc);
-        this.foldersLoading.set(false);
-        this.autoSelectInbox();
-      }
-    };
-    for (const pb of boxes) {
-      this.api.listFolders(pb.safeId).subscribe({
-        next: (flat) => { acc.push({ postbox: pb, nodes: buildTree(flat) }); done(); },
-        error: () => { acc.push({ postbox: pb, nodes: [] }); done(); },
-      });
-    }
+    this.api.ensureSession(true);
   }
 
   private autoSelectInbox(): void {
     if (this.selectedFolderId() != null) { return; }
-    for (const pf of this.folders()) {
+    for (const pf of this.folderTrees()) {
       const inbox = firstMatch(pf.nodes, (f) => f.type === 'INBOX') ?? pf.nodes[0];
       if (inbox) { this.selectFolder(pf.postbox.safeId, inbox); return; }
     }
@@ -541,7 +529,7 @@ export class BeaComponent {
   }
 
   protected refresh(): void {
-    if (this.postboxes().length) { this.loadAllFolders(this.postboxes()); }
+    this.api.ensureSession(true);
     if (this.selectedFolderId() != null) { this.loadMessages(); }
   }
 
@@ -599,11 +587,7 @@ export class BeaComponent {
   private bumpUnread(delta: number): void {
     const sid = this.selectedSafeId(); const fid = this.selectedFolderId();
     if (!sid || fid == null) { return; }
-    this.folders.update((all) => all.map((pf) => {
-      if (pf.postbox.safeId !== sid) { return pf; }
-      return { ...pf, nodes: mapTree(pf.nodes, (n) =>
-        n.id === fid ? { ...n, unreadMessageCount: Math.max(0, n.unreadMessageCount + delta) } : n) };
-    }));
+    this.api.adjustUnread(sid, fid, delta);
   }
 
   protected formatDate(iso: string | null): string {
@@ -687,10 +671,6 @@ function firstMatch(nodes: BeaFolderNode[], pred: (n: BeaFolderNode) => boolean)
     if (found) { return found; }
   }
   return null;
-}
-
-function mapTree(nodes: BeaFolderNode[], fn: (n: BeaFolderNode) => BeaFolderNode): BeaFolderNode[] {
-  return nodes.map((n) => ({ ...fn(n), children: mapTree(n.children, fn) }));
 }
 
 /** i18n key for a well-known folder type, or '' to fall back to the server-provided name. */

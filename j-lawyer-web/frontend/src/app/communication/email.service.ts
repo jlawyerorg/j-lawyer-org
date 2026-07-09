@@ -1,7 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { effect, inject, Injectable, signal } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { API_ROOT } from '../core/api';
+import { AuthService } from '../core/auth/auth.service';
 import { MailAttachment, Mailbox, MailFolder, MailMessage } from './email.models';
 
 const EMAIL_V7 = `${API_ROOT}/v7/email`;
@@ -30,6 +31,88 @@ interface MessageDto {
 @Injectable({ providedIn: 'root' })
 export class EmailService {
   private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+
+  // Cached mailbox/folder structure, held for the whole app session so re-opening the module
+  // is instant. Loaded once (or on manual refresh); the message list is always fetched fresh.
+  private readonly _mailboxes = signal<Mailbox[] | null>(null);
+  private readonly _folders = signal<Record<string, MailFolder[]>>({});
+  private readonly _structureLoading = signal(false);
+  private readonly _structureError = signal(false);
+  private structureLoaded = false;
+
+  readonly mailboxes = this._mailboxes.asReadonly();
+  /** Flat folder lists keyed by mailbox id (the component builds the tree). */
+  readonly folders = this._folders.asReadonly();
+  readonly structureLoading = this._structureLoading.asReadonly();
+  readonly structureError = this._structureError.asReadonly();
+
+  constructor() {
+    // Drop the cache when the signed-in user changes (incl. logout), so a different user never
+    // sees the previous user's mailboxes.
+    let lastUser: string | null = null;
+    effect(() => {
+      const u = this.auth.user()?.username ?? null;
+      if (u !== lastUser) { lastUser = u; this.clearCache(); }
+    });
+  }
+
+  /**
+   * Loads mailboxes + all their folders once and caches them. No-op if already cached (or
+   * loading) unless `force` is set — the manual refresh passes force=true.
+   */
+  ensureStructure(force = false): void {
+    if ((this.structureLoaded || this._structureLoading()) && !force) { return; }
+    this._structureLoading.set(true);
+    this._structureError.set(false);
+    this.listMailboxes().subscribe({
+      next: (boxes) => {
+        this._mailboxes.set(boxes);
+        if (!boxes.length) {
+          this._folders.set({});
+          this._structureLoading.set(false);
+          this.structureLoaded = true;
+          return;
+        }
+        const acc: Record<string, MailFolder[]> = {};
+        let pending = boxes.length;
+        const done = () => {
+          if (--pending === 0) {
+            this._folders.set(acc);
+            this._structureLoading.set(false);
+            this.structureLoaded = true;
+          }
+        };
+        for (const mb of boxes) {
+          this.listFolders(mb.id).subscribe({
+            next: (flat) => { acc[mb.id] = flat; done(); },
+            error: () => { acc[mb.id] = []; done(); },
+          });
+        }
+      },
+      error: () => { this._structureError.set(true); this._structureLoading.set(false); },
+    });
+  }
+
+  /** Optimistic unread adjustment on a cached folder, so badges survive a view re-open. */
+  adjustUnread(mailboxId: string, folderId: string, delta: number): void {
+    this._folders.update((map) => {
+      const list = map[mailboxId];
+      if (!list) { return map; }
+      return {
+        ...map,
+        [mailboxId]: list.map((f) => (f.folderId === folderId
+          ? { ...f, unreadCount: Math.max(0, f.unreadCount + delta) } : f)),
+      };
+    });
+  }
+
+  private clearCache(): void {
+    this._mailboxes.set(null);
+    this._folders.set({});
+    this._structureError.set(false);
+    this.structureLoaded = false;
+  }
 
   /** Mailboxes the caller may access. */
   listMailboxes(): Observable<Mailbox[]> {

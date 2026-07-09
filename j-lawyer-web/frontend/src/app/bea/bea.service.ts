@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { effect, inject, Injectable, signal } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { API_ROOT } from '../core/api';
+import { AuthService } from '../core/auth/auth.service';
 import {
   BeaAttachment, BeaFolder, BeaJournalEntry, BeaMessage, BeaMessageHeader, BeaRestriction,
   BeaVerificationResult, Postbox,
@@ -50,6 +51,85 @@ interface VerificationDto { html?: string; xml?: string; status?: string; }
 @Injectable({ providedIn: 'root' })
 export class BeaService {
   private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+
+  // Cached session state, held for the whole app session so re-opening the module is instant
+  // (and the slow beAstie login runs once, not on every view open). The message list is fetched
+  // fresh each time. State: 'loading' before/while connecting, 'ok', or 'error'.
+  private readonly _sessionState = signal<'loading' | 'ok' | 'error'>('loading');
+  private readonly _postboxes = signal<Postbox[]>([]);
+  private readonly _folders = signal<Record<string, BeaFolder[]>>({});
+  private sessionLoaded = false;
+  private loadingInFlight = false;
+
+  readonly sessionState = this._sessionState.asReadonly();
+  readonly postboxes = this._postboxes.asReadonly();
+  /** Flat folder lists keyed by postbox safe-id (the component builds the tree). */
+  readonly folders = this._folders.asReadonly();
+
+  constructor() {
+    // Drop the cache when the signed-in user changes (incl. logout) — beA is per-user.
+    let lastUser: string | null = null;
+    effect(() => {
+      const u = this.auth.user()?.username ?? null;
+      if (u !== lastUser) { lastUser = u; this.clearCache(); }
+    });
+  }
+
+  /**
+   * Establishes the beA session once (login → postboxes → folders) and caches it. No-op if
+   * already established (or connecting) unless `force` is set — the manual refresh passes force.
+   */
+  ensureSession(force = false): void {
+    if (!force && (this.sessionLoaded || this.loadingInFlight)) { return; }
+    this.loadingInFlight = true;
+    this._sessionState.set('loading');
+    this.login().subscribe({
+      next: (boxes) => {
+        this._postboxes.set(boxes);
+        this._sessionState.set('ok');
+        if (!boxes.length) {
+          this._folders.set({});
+          this.sessionLoaded = true;
+          this.loadingInFlight = false;
+          return;
+        }
+        const acc: Record<string, BeaFolder[]> = {};
+        let pending = boxes.length;
+        const done = () => {
+          if (--pending === 0) { this._folders.set(acc); this.sessionLoaded = true; this.loadingInFlight = false; }
+        };
+        for (const pb of boxes) {
+          this.listFolders(pb.safeId).subscribe({
+            next: (flat) => { acc[pb.safeId] = flat; done(); },
+            error: () => { acc[pb.safeId] = []; done(); },
+          });
+        }
+      },
+      error: () => { this._sessionState.set('error'); this.loadingInFlight = false; },
+    });
+  }
+
+  /** Optimistic unread adjustment on a cached folder, so badges survive a view re-open. */
+  adjustUnread(safeId: string, folderId: number, delta: number): void {
+    this._folders.update((map) => {
+      const list = map[safeId];
+      if (!list) { return map; }
+      return {
+        ...map,
+        [safeId]: list.map((f) => (f.id === folderId
+          ? { ...f, unreadMessageCount: Math.max(0, f.unreadMessageCount + delta) } : f)),
+      };
+    });
+  }
+
+  private clearCache(): void {
+    this._postboxes.set([]);
+    this._folders.set({});
+    this._sessionState.set('loading');
+    this.sessionLoaded = false;
+    this.loadingInFlight = false;
+  }
 
   /**
    * Establishes the beA session (server reads the caller's stored certificate) and returns the
