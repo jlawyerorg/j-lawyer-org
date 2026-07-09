@@ -15,9 +15,10 @@
     <name>j-lawyer-web</name>
     <description>
         Standalone WAR serving the static Angular web UI (design.md Decision 2a).
-        Contains no servlets/JAX-RS — only the built Angular bundle + web.xml SPA
-        fallback. The Angular project lives under frontend/; supply-chain guardrails
-        are documented in SUPPLY-CHAIN.md.
+        Contains only the built Angular bundle plus a single SPA deep-link filter
+        (SpaRoutingFilter) that forwards client routes to index.html. The Angular
+        project lives under frontend/; supply-chain guardrails are documented in
+        SUPPLY-CHAIN.md.
     </description>
 
     <properties>
@@ -30,6 +31,15 @@
              ignored) via the command line. -->
         <npm.install.args>ci --offline --ignore-scripts</npm.install.args>
     </properties>
+
+    <dependencies>
+        <!-- Servlet API (provided by WildFly at runtime) for the SPA deep-link filter. -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 
     <build>
         <finalName>j-lawyer-web</finalName>

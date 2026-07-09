@@ -11,8 +11,11 @@
     </welcome-file-list>
 
     <!--
-        SPA client-side routing: serve index.html for unknown paths so Angular's router
-        can handle deep links / reloads. Angular processes the route client-side.
+        SPA client-side routing is handled by SpaRoutingFilter, which FORWARDS extension-less
+        routes (e.g. /cases/123, /calendar) to index.html with HTTP 200 so Angular's router can
+        resolve them. This 404 error-page is only a fallback for any request the filter passes
+        through that still 404s (e.g. a genuinely missing asset); it serves index.html but keeps
+        the 404 status, so it must not be relied on for normal deep links.
     -->
     <error-page>
         <error-code>404</error-code>
