@@ -675,6 +675,7 @@ public class RestfulPartyV1 {
     private String reference=null;
     private String involvementType=null;
     private String contact=null;
+    private String contactName=null;
     private String custom1=null;
     private String custom2=null;
     private String custom3=null;
@@ -739,6 +740,22 @@ public class RestfulPartyV1 {
      */
     public void setContact(String contact) {
         this.contact = contact;
+    }
+
+    /**
+     * @return the resolved display name of the linked contact (address), e.g. company or
+     * "last name, first name" — as opposed to {@link #getContact()} which is the free-text
+     * contact person ("Ansprechpartner"). May be null if no address is linked.
+     */
+    public String getContactName() {
+        return contactName;
+    }
+
+    /**
+     * @param contactName the resolved contact display name to set
+     */
+    public void setContactName(String contactName) {
+        this.contactName = contactName;
     }
 
     /**

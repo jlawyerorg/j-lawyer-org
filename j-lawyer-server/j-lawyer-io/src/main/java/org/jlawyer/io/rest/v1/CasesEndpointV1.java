@@ -1324,6 +1324,9 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 i.setId(inv.getId());
                 i.setCaseId(id);
                 i.setContact(inv.getContact());
+                if (inv.getAddressKey() != null) {
+                    i.setContactName(inv.getAddressKey().toDisplayName());
+                }
                 i.setCustom1(inv.getCustom1());
                 i.setCustom2(inv.getCustom2());
                 i.setCustom3(inv.getCustom3());
@@ -1643,6 +1646,9 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             newParty.setId(newAab.getId());
             newParty.setCaseId(newAab.getArchiveFileKey().getId());
             newParty.setContact(newAab.getContact());
+            if (newAab.getAddressKey() != null) {
+                newParty.setContactName(newAab.getAddressKey().toDisplayName());
+            }
             newParty.setCustom1(newAab.getCustom1());
             newParty.setCustom2(newAab.getCustom2());
             newParty.setCustom3(newAab.getCustom3());
@@ -1723,6 +1729,9 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             i.setId(inv.getId());
             i.setCaseId(party.getCaseId());
             i.setContact(inv.getContact());
+            if (inv.getAddressKey() != null) {
+                i.setContactName(inv.getAddressKey().toDisplayName());
+            }
             i.setCustom1(inv.getCustom1());
             i.setCustom2(inv.getCustom2());
             i.setCustom3(inv.getCustom3());

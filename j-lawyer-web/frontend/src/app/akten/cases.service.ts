@@ -23,7 +23,7 @@ interface CaseDto {
   id: string; fileNumber: string; name: string; reason: string; subjectField: string;
   lawyer: string; assistant: string; claimNumber: string; claimValue: number; notice: string; archived: number;
 }
-interface PartyDto { id: string; involvementType: string; contact?: string; }
+interface PartyDto { id: string; involvementType: string; contact?: string; contactName?: string; }
 interface DueDateDto { id: string; reason: string; dueDate: string; done: boolean; assignee: string; type: string; }
 interface DocDto { id: string; name: string; size: number; creationDate: string; }
 interface HistoryDto { id: string; principal: string; changeDate: number; changeDescription: string; }
@@ -192,7 +192,9 @@ function toDetail(dto: CaseDto, parties: PartyDto[], dueDates: DueDateDto[], doc
     parties: (parties ?? []).map((p) => ({
       id: p.id,
       involvementType: p.involvementType ?? '',
-      contact: p.contact ?? '',
+      // Prefer the resolved contact display name (linked address); fall back to the
+      // free-text contact person, then leave empty for the template's "—" placeholder.
+      contact: p.contactName || p.contact || '',
     } satisfies Party)),
     dueDates: mappedDue,
     documents: (documents ?? []).map(toDocument),
