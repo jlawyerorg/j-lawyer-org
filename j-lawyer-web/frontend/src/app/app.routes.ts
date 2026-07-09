@@ -42,7 +42,7 @@ export const routes: Routes = [
     loadComponent: () => import('./shell/shell.component').then((c) => c.ShellComponent),
     canActivateChild: [authGuard],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'cases' },
+      { path: '', pathMatch: 'full', redirectTo: 'desktop' },
       // Deep link to a single case (shareable/bookmarkable); reuses the Akten component,
       // which reads the :id param to select the case. Must precede the module routes.
       {
@@ -52,7 +52,7 @@ export const routes: Routes = [
         title: 'j-lawyer',
       },
       ...moduleRoutes,
-      { path: '**', redirectTo: 'cases' },
+      { path: '**', redirectTo: 'desktop' },
     ],
   },
 ];
