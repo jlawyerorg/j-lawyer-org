@@ -19,6 +19,8 @@ const IMPLEMENTED: Record<string, LoadComponent> = {
   cases: () => import('./akten/akten.component').then((c) => c.AktenComponent),
   contacts: () => import('./contacts/kontakte.component').then((c) => c.KontakteComponent),
   calendar: () => import('./calendar/kalender.component').then((c) => c.KalenderComponent),
+  communication: () => import('./communication/email.component').then((c) => c.EmailComponent),
+  bea: () => import('./bea/bea.component').then((c) => c.BeaComponent),
   documents: () => import('./documents/dokumente.component').then((c) => c.DokumenteComponent),
   reporting: () => import('./reporting/reporting.component').then((c) => c.ReportingComponent),
 };

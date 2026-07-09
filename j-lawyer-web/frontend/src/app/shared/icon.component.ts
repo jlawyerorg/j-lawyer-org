@@ -90,6 +90,12 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
         @case ('download') {
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
         }
+        @case ('refresh') {
+          <path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6" />
+        }
+        @case ('shield') {
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        }
       }
     </svg>
   `,
