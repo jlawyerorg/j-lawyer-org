@@ -20,6 +20,7 @@ const IMPLEMENTED: Record<string, LoadComponent> = {
   contacts: () => import('./contacts/kontakte.component').then((c) => c.KontakteComponent),
   calendar: () => import('./calendar/kalender.component').then((c) => c.KalenderComponent),
   documents: () => import('./documents/dokumente.component').then((c) => c.DokumenteComponent),
+  reporting: () => import('./reporting/reporting.component').then((c) => c.ReportingComponent),
 };
 
 const moduleRoutes: Routes = MODULES.map((m) => ({

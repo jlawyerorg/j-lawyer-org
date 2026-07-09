@@ -27,7 +27,7 @@
     "kommunikation": "Communication",
     "dokumente": "Documents",
     "finanzen": "Finance",
-    "reporting": "Reporting",
+    "reporting": "Reports",
     "einstellungen": "Settings",
     "mehr": "More"
   },
@@ -271,5 +271,22 @@
     "loading": "Loading document …",
     "error": "The document could not be loaded.",
     "noPreview": "No preview available for this format."
+  },
+  "reporting": {
+    "title": "Reports",
+    "loading": "Loading …",
+    "error": "Could not load reports.",
+    "retry": "Try again",
+    "empty": "No reports available.",
+    "selectHint": "Select a report on the left.",
+    "back": "Back",
+    "confidential": "confidential",
+    "from": "From",
+    "to": "To",
+    "run": "Run",
+    "running": "Running report …",
+    "runError": "Could not run the report.",
+    "noRows": "No rows.",
+    "noData": "No data for the selected period."
   }
 }

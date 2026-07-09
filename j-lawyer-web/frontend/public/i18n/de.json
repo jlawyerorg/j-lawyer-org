@@ -27,7 +27,7 @@
     "kommunikation": "Kommunikation",
     "dokumente": "Dokumente",
     "finanzen": "Finanzen",
-    "reporting": "Reporting",
+    "reporting": "Auswertungen",
     "einstellungen": "Einstellungen",
     "mehr": "Mehr"
   },
@@ -271,5 +271,22 @@
     "loading": "Dokument wird geladen …",
     "error": "Dokument konnte nicht geladen werden.",
     "noPreview": "Für dieses Format ist keine Vorschau verfügbar."
+  },
+  "reporting": {
+    "title": "Auswertungen",
+    "loading": "Wird geladen …",
+    "error": "Auswertungen konnten nicht geladen werden.",
+    "retry": "Erneut versuchen",
+    "empty": "Keine Auswertungen verfügbar.",
+    "selectHint": "Wählen Sie links eine Auswertung.",
+    "back": "Zurück",
+    "confidential": "vertraulich",
+    "from": "Von",
+    "to": "Bis",
+    "run": "Ausführen",
+    "running": "Auswertung wird erstellt …",
+    "runError": "Auswertung konnte nicht erstellt werden.",
+    "noRows": "Keine Datensätze.",
+    "noData": "Keine Daten für den gewählten Zeitraum."
   }
 }
