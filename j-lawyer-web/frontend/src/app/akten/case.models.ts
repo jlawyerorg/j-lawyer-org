@@ -48,6 +48,28 @@ export interface DueDate {
   type: 'deadline' | 'followup';
 }
 
+/** A case label ("Etikett", GET /v1/cases/{id}/tags). */
+export interface CaseTag {
+  id: string;
+  name: string;
+}
+
+/** A user group allowed to access the case ("Berechtigung", GET /v7/cases/{id}/groups). */
+export interface CaseGroup {
+  id: string;
+  name: string;
+}
+
+/** An instant message linked to the case (GET /v7/cases/{id}/messages). */
+export interface CaseMessage {
+  id: string;
+  /** ISO timestamp (sanitized). */
+  sent: string;
+  /** Author username. */
+  sender: string;
+  content: string;
+}
+
 /** Document shown in the case. */
 export interface CaseDocument {
   id: string;

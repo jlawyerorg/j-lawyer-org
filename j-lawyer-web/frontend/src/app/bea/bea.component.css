@@ -145,15 +145,25 @@
 .jtable th, .jtable td { padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--jl-line); white-space: nowrap; }
 .jtable thead th { font-size: .66rem; text-transform: uppercase; letter-spacing: .04em; color: var(--jl-ink-faint); font-weight: 700; }
 
-/* ---------- Responsive ---------- */
-@media (max-width: 1100px) {
+/* "Back to postboxes" button — only visible in the phone drill-down. */
+.to-folders { display: none; margin-right: 8px; font: inherit; font-size: .84rem; font-weight: 600; color: var(--jl-blue); background: transparent; border: 0; cursor: pointer; padding: 0; }
+
+/* ---------- Responsive: tablet keeps postboxes + list, reader overlays ---------- */
+@media (max-width: 1100px) and (min-width: 681px) {
   .bea { grid-template-columns: minmax(0, 220px) minmax(0, 1fr); }
   .bea .reader { display: none; }
   .bea.show-reader .folders, .bea.show-reader .list { display: none; }
   .bea.show-reader .reader { display: flex; grid-column: 1 / -1; }
   .bea.show-reader .back { display: inline-block; }
 }
+
+/* ---------- Phone: single-pane drill-down (postbox tree → list → reader) ---------- */
 @media (max-width: 680px) {
   .bea { grid-template-columns: 1fr; }
-  .bea .folders { display: none; }
+  .bea .folders, .bea .list, .bea .reader { display: none; }
+  .bea.m-folders .folders { display: flex; grid-column: 1 / -1; }
+  .bea.m-list .list { display: flex; grid-column: 1 / -1; }
+  .bea.m-reader .reader { display: flex; grid-column: 1 / -1; }
+  .back { display: inline-block; }
+  .list-title .to-folders { display: inline-block; }
 }

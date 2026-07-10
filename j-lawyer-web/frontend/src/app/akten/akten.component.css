@@ -210,6 +210,25 @@
 .hist .hist-desc { font-weight: 550; font-size: .89rem; word-break: break-word; }
 .hist .hist-meta { font-size: .76rem; color: var(--jl-ink-faint); font-variant-numeric: tabular-nums; }
 
+/* ---------- Übersicht: Grund & Verantwortliche, Etiketten, Berechtigungen, Nachrichten ---------- */
+.kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 5px 14px; margin: 0; }
+.kv dt { color: var(--jl-ink-faint); font-size: .8rem; font-weight: 600; }
+.kv dd { margin: 0; font-size: .88rem; color: var(--jl-ink); word-break: break-word; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  font-size: .78rem; font-weight: 600; color: var(--jl-ink-soft);
+  background: var(--jl-surface-alt); border: 1px solid var(--jl-line); border-radius: 12px; padding: 3px 10px;
+}
+
+.msg-item { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; }
+.msg-item + .msg-item { border-top: 1px solid var(--jl-line); }
+.msg-item .msg-meta { font-size: .74rem; color: var(--jl-ink-faint); font-variant-numeric: tabular-nums; }
+.msg-item .msg-text { font-size: .88rem; color: var(--jl-ink); word-break: break-word; white-space: pre-wrap; }
+
+/* Overdue deadlines stand out in the overview. */
+.frist.overdue .fdate { color: var(--jl-red); font-weight: 700; }
+
 /* ---------- Zeiten-Reiter ---------- */
 .ts-status {
   font-size: .66rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;

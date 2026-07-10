@@ -128,15 +128,25 @@
 .att-name { max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .att-size { color: var(--jl-ink-faint); font-variant-numeric: tabular-nums; font-size: .76rem; }
 
-/* ---------- Responsive: collapse to list, then reader ---------- */
-@media (max-width: 1100px) {
+/* "Back to folders" button — only visible in the phone drill-down. */
+.to-folders { display: none; margin-right: 8px; font: inherit; font-size: .84rem; font-weight: 600; color: var(--jl-blue); background: transparent; border: 0; cursor: pointer; padding: 0; }
+
+/* ---------- Responsive: tablet keeps folders + list, reader overlays ---------- */
+@media (max-width: 1100px) and (min-width: 681px) {
   .mail { grid-template-columns: minmax(0, 210px) minmax(0, 1fr); }
   .mail .reader { display: none; }
   .mail.show-reader .folders, .mail.show-reader .list { display: none; }
   .mail.show-reader .reader { display: flex; grid-column: 1 / -1; }
   .mail.show-reader .back { display: inline-block; }
 }
+
+/* ---------- Phone: single-pane drill-down (folder tree → list → reader) ---------- */
 @media (max-width: 680px) {
   .mail { grid-template-columns: 1fr; }
-  .mail .folders { display: none; }
+  .mail .folders, .mail .list, .mail .reader { display: none; }
+  .mail.m-folders .folders { display: flex; grid-column: 1 / -1; }
+  .mail.m-list .list { display: flex; grid-column: 1 / -1; }
+  .mail.m-reader .reader { display: flex; grid-column: 1 / -1; }
+  .back { display: inline-block; }
+  .list-title .to-folders { display: inline-block; }
 }

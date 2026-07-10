@@ -10,8 +10,8 @@ import { PreviewDoc, previewKindOf } from '../shared/document-preview.models';
 import { forkJoin, map } from 'rxjs';
 import { CaseFilter, CasesService } from './cases.service';
 import {
-  AccountEntry, CaseDetail, CaseDocument, CaseHistoryEntry, CaseInvoice, CasePayment,
-  CaseTimesheet, TimesheetPosition,
+  AccountEntry, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseMessage, CasePayment,
+  CaseTag, CaseTimesheet, DueDate, TimesheetPosition,
 } from './case.models';
 
 type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 'zeiten' | 'history';
@@ -122,6 +122,42 @@ interface TimesheetView extends CaseTimesheet {
           <div class="detail-body">
             @if (activeTab() === 'overview') {
               <div class="grid">
+                <!-- Notiz (weiter oben, meist wichtig) -->
+                @if (c.notice) {
+                  <div class="card full">
+                    <div class="card-h"><h3>{{ 'akten.note' | transloco }}</h3></div>
+                    <div class="card-b"><p class="note">{{ c.notice }}</p></div>
+                  </div>
+                }
+
+                <!-- Grund & Verantwortliche -->
+                <div class="card">
+                  <div class="card-h"><h3>{{ 'akten.about' | transloco }}</h3></div>
+                  <div class="card-b">
+                    <dl class="kv">
+                      <dt>{{ 'akten.meta.reason' | transloco }}</dt><dd>{{ c.reason || '—' }}</dd>
+                      <dt>{{ 'akten.meta.lawyer' | transloco }}</dt><dd>{{ c.lawyer || '—' }}</dd>
+                      <dt>{{ 'akten.meta.assistant' | transloco }}</dt><dd>{{ c.assistant || '—' }}</dd>
+                    </dl>
+                  </div>
+                </div>
+
+                <!-- Etiketten -->
+                <div class="card">
+                  <div class="card-h"><h3>{{ 'akten.tags' | transloco }}</h3></div>
+                  <div class="card-b">
+                    @if (caseTags() === null) {
+                      <p class="muted">{{ 'akten.loading' | transloco }}</p>
+                    } @else if (caseTags()?.length) {
+                      <div class="chips">
+                        @for (t of caseTags(); track t.id) { <span class="chip">{{ t.name }}</span> }
+                      </div>
+                    } @else {
+                      <p class="muted">{{ 'akten.noTags' | transloco }}</p>
+                    }
+                  </div>
+                </div>
+
                 <!-- Beteiligte -->
                 <div class="card">
                   <div class="card-h"><h3>{{ 'akten.parties' | transloco }}</h3></div>
@@ -140,12 +176,28 @@ interface TimesheetView extends CaseTimesheet {
                   </div>
                 </div>
 
-                <!-- Fristen -->
+                <!-- Berechtigungen -->
+                <div class="card">
+                  <div class="card-h"><h3>{{ 'akten.permissions' | transloco }}</h3></div>
+                  <div class="card-b">
+                    @if (caseGroups() === null) {
+                      <p class="muted">{{ 'akten.loading' | transloco }}</p>
+                    } @else if (caseGroups()?.length) {
+                      <div class="chips">
+                        @for (g of caseGroups(); track g.id) { <span class="chip">{{ g.name }}</span> }
+                      </div>
+                    } @else {
+                      <p class="muted">{{ 'akten.noPermissions' | transloco }}</p>
+                    }
+                  </div>
+                </div>
+
+                <!-- Fristen & Wiedervorlagen (überfällig + demnächst, max. 10) -->
                 <div class="card">
                   <div class="card-h"><h3>{{ 'akten.deadlines' | transloco }}</h3></div>
                   <div class="card-b">
-                    @for (d of c.dueDates; track d.id) {
-                      <div class="frist">
+                    @for (d of overviewDueDates(); track d.id) {
+                      <div class="frist" [class.overdue]="isOverdue(d)">
                         <span class="bar" [class.deadline]="d.type === 'deadline'"></span>
                         <span class="fdate">{{ d.dueDate | date: 'dd.MM.' }}</span>
                         <span class="fx">
@@ -159,11 +211,33 @@ interface TimesheetView extends CaseTimesheet {
                   </div>
                 </div>
 
-                <!-- Dokumente -->
+                <!-- Instant-Nachrichten -->
+                <div class="card">
+                  <div class="card-h">
+                    <h3>{{ 'akten.messages' | transloco }}</h3>
+                    @if (caseMessages()?.length) { <span class="card-count">{{ caseMessages()?.length }}</span> }
+                  </div>
+                  <div class="card-b">
+                    @if (caseMessages() === null) {
+                      <p class="muted">{{ 'akten.loading' | transloco }}</p>
+                    } @else {
+                      @for (m of caseMessages(); track m.id) {
+                        <div class="msg-item">
+                          <span class="msg-meta">{{ m.sender }} · {{ m.sent | date: 'dd.MM.yyyy HH:mm' }}</span>
+                          <span class="msg-text">{{ m.content }}</span>
+                        </div>
+                      } @empty {
+                        <p class="muted">{{ 'akten.noMessages' | transloco }}</p>
+                      }
+                    }
+                  </div>
+                </div>
+
+                <!-- Letzte Dokumente (max. 20) -->
                 <div class="card full">
                   <div class="card-h"><h3>{{ 'akten.recentDocs' | transloco }}</h3></div>
                   <div class="card-b">
-                    @for (doc of c.documents; track doc.id) {
+                    @for (doc of overviewDocuments(); track doc.id) {
                       <div class="doc">
                         <span class="ext">{{ doc.ext }}</span>
                         <span>
@@ -177,14 +251,6 @@ interface TimesheetView extends CaseTimesheet {
                     }
                   </div>
                 </div>
-
-                <!-- Notiz -->
-                @if (c.notice) {
-                  <div class="card full">
-                    <div class="card-h"><h3>{{ 'akten.note' | transloco }}</h3></div>
-                    <div class="card-b"><p class="note">{{ c.notice }}</p></div>
-                  </div>
-                }
               </div>
             } @else if (activeTab() === 'documents') {
               <div class="card full">
@@ -580,6 +646,12 @@ export class AktenComponent {
   // Document preview — handed to the shared <jl-document-preview> overlay.
   protected readonly previewDoc = signal<PreviewDoc | null>(null);
 
+  // Overview extras (labels, permissions, messages) — loaded eagerly with the case (overview is
+  // the default tab). null while loading, [] when loaded/empty.
+  protected readonly caseTags = signal<CaseTag[] | null>(null);
+  protected readonly caseGroups = signal<CaseGroup[] | null>(null);
+  protected readonly caseMessages = signal<CaseMessage[] | null>(null);
+
   // History tab state (lazy-loaded per case)
   protected readonly history = signal<CaseHistoryEntry[] | null>(null);
   protected readonly historyLoading = signal(false);
@@ -698,6 +770,9 @@ export class AktenComponent {
     this.timesheets.set(null);
     this.timesheetsError.set(false);
     this.zeitenFilter.set('all');
+    this.caseTags.set(null);
+    this.caseGroups.set(null);
+    this.caseMessages.set(null);
     this.cases.loadDetail(id).subscribe((detail) => {
       // ignore a stale response if the user already picked another case
       if (this.selectedId() === id) {
@@ -705,6 +780,10 @@ export class AktenComponent {
         this.detailLoading.set(false);
       }
     });
+    // Overview extras (labels, permissions, messages) load eagerly alongside the detail.
+    this.cases.tags(id).subscribe((t) => { if (this.selectedId() === id) { this.caseTags.set(t); } });
+    this.cases.allowedGroups(id).subscribe((g) => { if (this.selectedId() === id) { this.caseGroups.set(g); } });
+    this.cases.messages(id).subscribe((m) => { if (this.selectedId() === id) { this.caseMessages.set(m); } });
   }
 
   /** Switches the active detail tab and lazily loads its data on first open. */
@@ -937,6 +1016,34 @@ export class AktenComponent {
       .slice(0, 2)
       .join('')
       .toUpperCase();
+  }
+
+  /**
+   * Deadlines/follow-ups for the overview: only open (not done) ones with a date — overdue and
+   * upcoming — soonest first, capped at 10. Overdue entries naturally sort to the top.
+   */
+  protected overviewDueDates(): DueDate[] {
+    return (this.selected()?.dueDates ?? [])
+      .filter((d) => !d.done && d.dueDate)
+      .sort((a, b) => (a.dueDate < b.dueDate ? -1 : a.dueDate > b.dueDate ? 1 : 0))
+      .slice(0, 10);
+  }
+
+  /** Recent documents for the overview: most recent first, capped at 20. */
+  protected overviewDocuments(): CaseDocument[] {
+    return [...(this.selected()?.documents ?? [])]
+      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+      .slice(0, 20);
+  }
+
+  /** True when a deadline is open and its date is today or in the past. */
+  protected isOverdue(d: DueDate): boolean {
+    if (!d.dueDate) {
+      return false;
+    }
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+    return new Date(d.dueDate) <= end;
   }
 }
 

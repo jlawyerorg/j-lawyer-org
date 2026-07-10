@@ -37,7 +37,10 @@ interface PostboxFolders {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslocoModule, IconComponent],
   template: `
-    <div class="bea" [class.show-reader]="selectedId()">
+    <div class="bea" [class.show-reader]="selectedId()"
+         [class.m-folders]="mobilePane() === 'folders'"
+         [class.m-list]="mobilePane() === 'list'"
+         [class.m-reader]="mobilePane() === 'reader'">
       <!-- ---------- Left: postboxes + folders ---------- -->
       <aside class="folders">
         <header class="col-head">
@@ -88,6 +91,7 @@ interface PostboxFolders {
       <section class="list">
         <header class="col-head list-head">
           <div class="list-title">
+            <button type="button" class="to-folders" (click)="mobilePane.set('folders')">‹ {{ 'bea.navBack' | transloco }}</button>
             <h2>{{ selectedFolder() ? folderLabel(selectedFolder()!) : ('bea.selectFolder' | transloco) }}</h2>
             @if (messages()?.length) { <span class="count">{{ messages()!.length }}</span> }
           </div>
@@ -303,6 +307,10 @@ export class BeaComponent {
   protected readonly selectedSafeId = signal<string | null>(null);
   protected readonly selectedFolderId = signal<number | null>(null);
 
+  // Phone drill-down: which single pane is visible (folder tree → list → reader). Ignored on
+  // wider viewports where the panes sit side by side.
+  protected readonly mobilePane = signal<'folders' | 'list' | 'reader'>('folders');
+
   protected readonly messages = signal<BeaMessageHeader[] | null>(null);
   protected readonly messagesLoading = signal(false);
   protected readonly messagesError = signal(false);
@@ -410,6 +418,7 @@ export class BeaComponent {
     this.search.set('');
     this.searchInput.set('');
     this.closeReader();
+    this.mobilePane.set('list');
     this.loadMessages();
   }
 
@@ -430,6 +439,7 @@ export class BeaComponent {
 
   protected selectMessage(m: BeaMessageHeader): void {
     this.selectedId.set(m.id);
+    this.mobilePane.set('reader');
     this.reloadMessage();
     if (!m.read) {
       this.patchMessage(m.id, { read: true });
@@ -538,6 +548,7 @@ export class BeaComponent {
     this.selectedId.set(null);
     this.message.set(null);
     this.moveOpen.set(false);
+    this.mobilePane.set('list');
     this.resetBody();
   }
 

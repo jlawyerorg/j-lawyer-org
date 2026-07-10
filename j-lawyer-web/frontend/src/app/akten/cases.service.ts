@@ -3,8 +3,8 @@ import { inject, Injectable, signal } from '@angular/core';
 import { catchError, forkJoin, map, Observable, of } from 'rxjs';
 import { API_ROOT } from '../core/api';
 import {
-  AccountEntry, CaseDetail, CaseDocument, CaseHistoryEntry, CaseInvoice, CaseOverview, CasePayment, CaseStatus,
-  CaseTimesheet, DueDate, Party, TimesheetPosition,
+  AccountEntry, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseMessage, CaseOverview,
+  CasePayment, CaseStatus, CaseTag, CaseTimesheet, DueDate, Party, TimesheetPosition,
 } from './case.models';
 
 const CASES_BASE = `${API_ROOT}/v1/cases`;
@@ -50,6 +50,9 @@ interface TimesheetPositionDto {
   id: string; name: string; description: string; principal: string; started: string; stopped: string;
   unitPrice: number; taxRate: number; total: number; timesheetId: string; invoiceId?: string; running: boolean;
 }
+interface TagDto { id: string; name: string; }
+interface GroupDto { id: string; name: string; abbreviation?: string; }
+interface MessageDto { id: string; sent: number | string; sender: string; content: string; }
 
 /**
  * Case data access against the real REST API (GET /rest/v1/cases/…). The Bearer token is
@@ -185,6 +188,30 @@ export class CasesService {
   timesheetPositions(timesheetId: string): Observable<TimesheetPosition[]> {
     return this.http.get<TimesheetPositionDto[]>(`${TIMESHEETS_V8}/${timesheetId}/positions`).pipe(
       map((rows) => (rows ?? []).map(toTimesheetPosition)),
+      catchError(() => of([])),
+    );
+  }
+
+  /** Loads the case's labels ("Etiketten", GET /v1/cases/{id}/tags); [] on error. */
+  tags(id: string): Observable<CaseTag[]> {
+    return this.http.get<TagDto[]>(`${CASES_BASE}/${id}/tags`).pipe(
+      map((rows) => (rows ?? []).map((t) => ({ id: t.id, name: t.name ?? '' }))),
+      catchError(() => of([])),
+    );
+  }
+
+  /** Loads the user groups allowed to access the case ("Berechtigungen", GET /v7/cases/{id}/groups); [] on error. */
+  allowedGroups(id: string): Observable<CaseGroup[]> {
+    return this.http.get<GroupDto[]>(`${CASES_V7}/${id}/groups`).pipe(
+      map((rows) => (rows ?? []).map((g) => ({ id: g.id, name: g.name || g.abbreviation || '' }))),
+      catchError(() => of([])),
+    );
+  }
+
+  /** Loads the case's instant messages (GET /v7/cases/{id}/messages), most recent first; [] on error. */
+  messages(id: string): Observable<CaseMessage[]> {
+    return this.http.get<MessageDto[]>(`${CASES_V7}/${id}/messages`).pipe(
+      map((rows) => (rows ?? []).map(toMessage).sort((a, b) => (b.sent > a.sent ? 1 : b.sent < a.sent ? -1 : 0))),
       catchError(() => of([])),
     );
   }
@@ -352,6 +379,15 @@ function toTimesheetPosition(dto: TimesheetPositionDto): TimesheetPosition {
     timesheetId: dto.timesheetId ?? '',
     invoiceId: dto.invoiceId ?? '',
     running: !!dto.running,
+  };
+}
+
+function toMessage(dto: MessageDto): CaseMessage {
+  return {
+    id: dto.id,
+    sent: typeof dto.sent === 'number' ? new Date(dto.sent).toISOString() : isoDate(dto.sent),
+    sender: dto.sender ?? '',
+    content: dto.content ?? '',
   };
 }
 

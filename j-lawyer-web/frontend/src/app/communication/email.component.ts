@@ -34,7 +34,10 @@ interface MailboxFolders {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslocoModule, IconComponent],
   template: `
-    <div class="mail" [class.show-reader]="selectedRef()">
+    <div class="mail" [class.show-reader]="selectedRef()"
+         [class.m-folders]="mobilePane() === 'folders'"
+         [class.m-list]="mobilePane() === 'list'"
+         [class.m-reader]="mobilePane() === 'reader'">
       <!-- ---------- Left: mailboxes + folders ---------- -->
       <aside class="folders">
         <header class="col-head">
@@ -79,6 +82,7 @@ interface MailboxFolders {
       <section class="list">
         <header class="col-head list-head">
           <div class="list-title">
+            <button type="button" class="to-folders" (click)="mobilePane.set('folders')">‹ {{ 'email.navBack' | transloco }}</button>
             <h2>{{ selectedFolder() ? folderLabel(selectedFolder()!) : ('email.selectFolder' | transloco) }}</h2>
             @if (messages()?.length) { <span class="count">{{ messages()!.length }}</span> }
           </div>
@@ -254,6 +258,8 @@ export class EmailComponent {
   protected readonly acting = signal(false);
   protected readonly moveOpen = signal(false);
   protected readonly downloadingAtt = signal<string | null>(null);
+  /** Which pane is shown on phones (drill-down: folder tree → message list → reader). */
+  protected readonly mobilePane = signal<'folders' | 'list' | 'reader'>('folders');
 
   private msgSeq = 0;
   private bodyBlobUrl: string | null = null;
@@ -331,6 +337,7 @@ export class EmailComponent {
     this.search.set('');
     this.searchInput.set('');
     this.closeReader();
+    this.mobilePane.set('list');
     this.loadMessages();
   }
 
@@ -369,6 +376,7 @@ export class EmailComponent {
 
   protected selectMessage(m: MailMessage): void {
     this.selectedRef.set(m.messageRef);
+    this.mobilePane.set('reader');
     this.reloadMessage();
     if (!m.read) {
       // Optimistically reflect the read state in the list and folder badge.
@@ -511,6 +519,7 @@ export class EmailComponent {
     this.revokeBody();
     this.bodyUrl.set(null);
     this.bodyText.set('');
+    this.mobilePane.set('list');
   }
 
   // ----- helpers -----
