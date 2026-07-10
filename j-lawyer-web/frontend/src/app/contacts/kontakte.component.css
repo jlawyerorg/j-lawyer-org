@@ -81,6 +81,9 @@
 .crumbs b { color: var(--jl-ink-soft); }
 .title-row { display: flex; align-items: center; gap: 12px; margin: 8px 0 2px; flex-wrap: wrap; }
 .title-row h2 { font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; margin: 0; }
+.pin-toggle { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--jl-line-strong); background: var(--jl-surface); color: var(--jl-ink-faint); cursor: pointer; }
+.pin-toggle:hover { border-color: var(--jl-blue); color: var(--jl-blue); }
+.pin-toggle.on { border-color: var(--jl-amber, #e0a100); color: var(--jl-amber, #e0a100); background: color-mix(in srgb, var(--jl-amber, #e0a100) 14%, transparent); }
 .meta { display: flex; gap: 18px; flex-wrap: wrap; color: var(--jl-ink-soft); font-size: .82rem; margin: 10px 0 14px; }
 .meta .k { color: var(--jl-ink-faint); margin-right: 6px; }
 .tabs { display: flex; gap: 2px; overflow-x: auto; }

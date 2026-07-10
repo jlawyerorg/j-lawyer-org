@@ -9,6 +9,7 @@ import { DocumentContentService } from '../shared/document-content.service';
 import { fileKind, kindGlyph, PreviewDoc, previewKindOf } from '../shared/document-preview.models';
 import { forkJoin, map } from 'rxjs';
 import { CaseFilter, CasesService } from './cases.service';
+import { PinsService } from '../shell/pins.service';
 import {
   AccountEntry, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseMessage, CasePayment,
   CaseTag, CaseTimesheet, DocFolder, DocSortKey, DueDate, TimesheetPosition,
@@ -112,6 +113,11 @@ interface TimesheetView extends CaseTimesheet {
             <div class="title-row">
               <h2>{{ c.name }}</h2>
               <span class="pill" [class]="c.status">{{ 'akten.status.' + c.status | transloco }}</span>
+              <button type="button" class="pin-toggle" [class.on]="pins.isPinned('case', c.id)"
+                      (click)="togglePin(c)"
+                      [title]="(pins.isPinned('case', c.id) ? 'pins.unpinItem' : 'pins.pinItem') | transloco">
+                <jl-icon name="star" [size]="16" />
+              </button>
             </div>
             <div class="meta">
               <span><span class="k">{{ 'akten.meta.fileNumber' | transloco }}</span> <b>{{ c.fileNumber }}</b></span>
@@ -714,6 +720,7 @@ interface TimesheetView extends CaseTimesheet {
 })
 export class AktenComponent {
   protected readonly cases = inject(CasesService);
+  protected readonly pins = inject(PinsService);
   private readonly documents = inject(DocumentContentService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -1287,6 +1294,11 @@ export class AktenComponent {
   /** Mobile "back" from the detail: return to the plain list URL. */
   protected clearSelection(): void {
     this.router.navigate(['/cases']);
+  }
+
+  /** Toggles the current case as a pinned shortcut in the header pin bar. */
+  protected togglePin(c: CaseDetail): void {
+    this.pins.toggle({ kind: 'case', id: c.id, label: c.fileNumber, title: c.name });
   }
 
   protected initials(name: string): string {

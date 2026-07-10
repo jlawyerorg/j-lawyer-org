@@ -539,5 +539,11 @@
     "runError": "Could not run the report.",
     "noRows": "No rows.",
     "noData": "No data for the selected period."
+  },
+  "pins": {
+    "label": "Pinned",
+    "unpin": "Unpin",
+    "pinItem": "Pin",
+    "unpinItem": "Unpin"
   }
 }

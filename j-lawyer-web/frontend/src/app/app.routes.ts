@@ -54,6 +54,14 @@ export const routes: Routes = [
         data: { labelKey: 'module.akten' },
         title: 'j-lawyer',
       },
+      // Deep link to a single contact (used by pinned shortcuts); reuses the contacts component,
+      // which reads the :id param to select the contact. Must precede the module routes.
+      {
+        path: 'contacts/:id',
+        loadComponent: () => import('./contacts/kontakte.component').then((c) => c.KontakteComponent),
+        data: { labelKey: 'module.kontakte' },
+        title: 'j-lawyer',
+      },
       ...moduleRoutes,
       { path: '**', redirectTo: 'desktop' },
     ],

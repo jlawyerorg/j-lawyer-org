@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { DocumentPreviewComponent } from '../shared/document-preview.component';
 import { DocumentContentService } from '../shared/document-content.service';
 import { fileKind, fileKindIcon, PreviewDoc, previewKindOf } from '../shared/document-preview.models';
+import { PinsService } from '../shell/pins.service';
 import { ContactsService } from './contacts.service';
 import { ContactCase, ContactDetail, ContactDocSortKey, ContactDocument, ContactFilter } from './contact.models';
 
@@ -89,6 +91,11 @@ type ContactTab = 'overview' | 'cases' | 'documents';
               <span class="av lg" [class]="c.type">{{ initials(c.displayName) }}</span>
               <h2>{{ c.displayName }}</h2>
               <span class="pill" [class]="c.type">{{ 'kontakte.type.' + c.type | transloco }}</span>
+              <button type="button" class="pin-toggle" [class.on]="pins.isPinned('contact', c.id)"
+                      (click)="togglePin(c)"
+                      [title]="(pins.isPinned('contact', c.id) ? 'pins.unpinItem' : 'pins.pinItem') | transloco">
+                <jl-icon name="star" [size]="16" />
+              </button>
             </div>
             <div class="meta">
               @if (c.company) { <span><span class="k">{{ 'kontakte.field.company' | transloco }}</span> <b>{{ c.company }}</b></span> }
@@ -281,7 +288,9 @@ type ContactTab = 'overview' | 'cases' | 'documents';
 })
 export class KontakteComponent {
   protected readonly cases = inject(ContactsService);
+  protected readonly pins = inject(PinsService);
   private readonly content = inject(DocumentContentService);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly tabs: ContactTab[] = ['overview', 'cases', 'documents'];
   protected readonly filters: ContactFilter[] = ['all', 'people', 'companies'];
@@ -312,7 +321,17 @@ export class KontakteComponent {
 
   constructor() {
     this.cases.reload();
-    // On wide screens, open the first contact once the list arrives (once only).
+    // A :id route param (deep link / pinned shortcut) selects that contact.
+    this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const id = params.get('id');
+      if (id) {
+        this.autoSelected = true;
+        if (id !== this.selectedId()) {
+          this.select(id);
+        }
+      }
+    });
+    // On wide screens with no deep link, open the first contact once the list arrives (once only).
     effect(() => {
       const rows = this.cases.overviews();
       if (!this.autoSelected && rows.length && this.selectedId() === null && window.innerWidth > 680) {
@@ -320,6 +339,11 @@ export class KontakteComponent {
         this.select(rows[0].id);
       }
     });
+  }
+
+  /** Toggles the current contact as a pinned shortcut in the header pin bar. */
+  protected togglePin(c: ContactDetail): void {
+    this.pins.toggle({ kind: 'contact', id: c.id, label: c.displayName });
   }
 
   /** Switches the server-side filter and reloads the first page. */

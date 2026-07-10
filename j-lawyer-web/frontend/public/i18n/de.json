@@ -539,5 +539,11 @@
     "runError": "Auswertung konnte nicht erstellt werden.",
     "noRows": "Keine Datensätze.",
     "noData": "Keine Daten für den gewählten Zeitraum."
+  },
+  "pins": {
+    "label": "Angepinnt",
+    "unpin": "Lösen",
+    "pinItem": "Anpinnen",
+    "unpinItem": "Pin entfernen"
   }
 }
