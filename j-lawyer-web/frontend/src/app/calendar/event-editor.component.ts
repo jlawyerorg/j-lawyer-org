@@ -127,9 +127,11 @@ const REMINDER_OPTIONS: { value: number; key: string }[] = [
               }
             </select>
           </label>
-          <label class="fld">
+          <label class="fld" [class.disabled]="!timed()">
             <span class="lbl">{{ 'kalender.editor.reminder' | transloco }}</span>
-            <select [ngModel]="reminderMinutes()" (ngModelChange)="reminderMinutes.set(+$event)">
+            <select [ngModel]="timed() ? reminderMinutes() : -1" (ngModelChange)="reminderMinutes.set(+$event)"
+                    [disabled]="!timed()"
+                    [title]="timed() ? null : ('kalender.editor.reminderEventOnly' | transloco)">
               @for (o of reminderOptions; track o.value) {
                 <option [value]="o.value">{{ o.key | transloco }}</option>
               }
@@ -159,6 +161,11 @@ const REMINDER_OPTIONS: { value: number; key: string }[] = [
         @if (event()) {
           <button type="button" class="btn danger" [disabled]="cal.saving()" (click)="remove.emit(event()!.id)">
             <jl-icon name="trash" [size]="15" /> {{ 'kalender.editor.delete' | transloco }}
+          </button>
+        }
+        @if (caseIdResolved()) {
+          <button type="button" class="btn" (click)="openCase.emit(caseIdResolved())">
+            <jl-icon name="cases" [size]="15" /> {{ 'kalender.editor.toCase' | transloco }}
           </button>
         }
         <span class="spacer"></span>
@@ -191,6 +198,8 @@ const REMINDER_OPTIONS: { value: number; key: string }[] = [
       border-radius: 8px; background: var(--jl-surface); color: var(--jl-ink); width: 100%;
     }
     input:focus, select:focus, textarea:focus { outline: none; border-color: var(--jl-blue); }
+    select:disabled { opacity: .5; cursor: not-allowed; }
+    .fld.disabled .lbl { opacity: .5; }
     textarea { resize: vertical; }
     .fixed, .picked { font-size: .88rem; font-weight: 600; padding: 8px 10px; border: 1px dashed var(--jl-line-strong); border-radius: 8px; display: flex; align-items: center; gap: 8px; }
     .unpick { margin-left: auto; display: inline-grid; place-items: center; width: 20px; height: 20px; border: 0; border-radius: 5px; background: transparent; color: var(--jl-ink-faint); cursor: pointer; }
@@ -225,6 +234,8 @@ export class EventEditorComponent implements OnInit {
   readonly save = output<EventDraft>();
   readonly remove = output<string>();
   readonly close = output<void>();
+  /** Emits the owning case id when the user asks to jump to the case (parent navigates + closes). */
+  readonly openCase = output<string>();
 
   protected readonly reminderOptions = REMINDER_OPTIONS;
 
@@ -284,6 +295,9 @@ export class EventEditorComponent implements OnInit {
   });
 
   protected readonly canSave = computed(() => !!this.calendarId() && !!this.resolveCaseId());
+
+  /** The owning case id (fixed entry case, or the picked case when creating); '' when none. */
+  protected readonly caseIdResolved = computed(() => this.event()?.caseId ?? this.selectedCase()?.id ?? '');
 
   ngOnInit(): void {
     this.cal.loadCalendars();
@@ -377,7 +391,8 @@ export class EventEditorComponent implements OnInit {
       assignee: this.assignee().trim(),
       begin: begin.getTime(),
       end: Math.max(end.getTime(), begin.getTime()),
-      reminderMinutes: this.reminderMinutes(),
+      // Reminders apply to appointments only; deadlines/follow-ups store "no reminder".
+      reminderMinutes: timed ? this.reminderMinutes() : -1,
       done: this.done(),
     });
   }

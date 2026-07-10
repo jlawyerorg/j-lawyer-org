@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, HostListener, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { LanguageService } from '../core/language.service';
@@ -168,18 +168,11 @@ const HOUR_PX = 46;
                   <div class="mcell" [class.out]="!cell.inMonth" [class.today]="cell.isToday">
                     <span class="mday">{{ cell.dayNum }}</span>
                     @for (r of cell.events.slice(0, 3); track r.ev.id) {
-                      @if (r.ev.caseId) {
-                        <a class="mchip" [class]="r.ev.type" [class.done]="r.ev.done"
-                           [style.background]="r.ev.color ? tint(r.ev.color) : null"
-                           [routerLink]="['/cases', r.ev.caseId]" [title]="r.ev.calendarName || r.ev.summary">
-                          <span class="mdot" [style.background]="r.ev.color || null"></span>{{ r.time }}{{ r.ev.summary || ('kalender.noSummary' | transloco) }}
-                        </a>
-                      } @else {
-                        <span class="mchip" [class]="r.ev.type" [class.done]="r.ev.done"
-                              [style.background]="r.ev.color ? tint(r.ev.color) : null" [title]="r.ev.calendarName || r.ev.summary">
-                          <span class="mdot" [style.background]="r.ev.color || null"></span>{{ r.time }}{{ r.ev.summary || ('kalender.noSummary' | transloco) }}
-                        </span>
-                      }
+                      <button type="button" class="mchip" [class]="r.ev.type" [class.done]="r.ev.done"
+                              [style.background]="r.ev.color ? tint(r.ev.color) : null"
+                              (click)="openEdit(r.ev)" [title]="'kalender.edit' | transloco">
+                        <span class="mdot" [style.background]="r.ev.color || null"></span>{{ r.time }}{{ r.ev.summary || ('kalender.noSummary' | transloco) }}
+                      </button>
                     }
                     @if (cell.events.length > 3) {
                       <span class="mmore">{{ 'kalender.more' | transloco: { n: cell.events.length - 3 } }}</span>
@@ -209,18 +202,11 @@ const HOUR_PX = 46;
                   @for (col of gridDays(); track col.key) {
                     <div class="tg-allday">
                       @for (ev of col.allDay; track ev.id) {
-                        @if (ev.caseId) {
-                          <a class="mchip" [class]="ev.type" [class.done]="ev.done"
-                             [style.background]="ev.color ? tint(ev.color) : null"
-                             [routerLink]="['/cases', ev.caseId]" [title]="ev.calendarName || ev.summary">
-                            <span class="mdot" [style.background]="ev.color || null"></span>{{ ev.summary || ('kalender.noSummary' | transloco) }}
-                          </a>
-                        } @else {
-                          <span class="mchip" [class]="ev.type" [class.done]="ev.done"
-                                [style.background]="ev.color ? tint(ev.color) : null" [title]="ev.calendarName || ev.summary">
-                            <span class="mdot" [style.background]="ev.color || null"></span>{{ ev.summary || ('kalender.noSummary' | transloco) }}
-                          </span>
-                        }
+                        <button type="button" class="mchip" [class]="ev.type" [class.done]="ev.done"
+                                [style.background]="ev.color ? tint(ev.color) : null"
+                                (click)="openEdit(ev)" [title]="'kalender.edit' | transloco">
+                          <span class="mdot" [style.background]="ev.color || null"></span>{{ ev.summary || ('kalender.noSummary' | transloco) }}
+                        </button>
                       }
                     </div>
                   }
@@ -243,28 +229,19 @@ const HOUR_PX = 46;
                           }
                         }
                         @for (ge of col.timed; track ge.ev.id) {
-                          @if (ge.ev.caseId) {
-                            <a class="tev" [class]="ge.ev.type" [class.done]="ge.ev.done"
-                               [routerLink]="['/cases', ge.ev.caseId]" [title]="ge.ev.calendarName || ge.ev.summary"
+                          <div class="tev" [class]="ge.ev.type" [class.done]="ge.ev.done"
+                               [class.dragging]="moveState()?.id === ge.ev.id"
+                               [title]="'kalender.edit' | transloco"
+                               (mousedown)="eventDragStart($event, ge.ev)"
                                [style.background]="ge.ev.color || null"
                                [style.border-color]="ge.ev.color ? darken(ge.ev.color) : null"
                                [style.color]="ge.ev.color ? contrastOn(ge.ev.color) : null"
                                [style.top.px]="ge.top" [style.height.px]="ge.height"
-                               [style.left.%]="ge.lane * (100 / ge.lanes)" [style.width.%]="100 / ge.lanes">
-                              <span class="tev-t">{{ ge.time }}</span>
-                              <span class="tev-s">{{ ge.ev.summary || ('kalender.noSummary' | transloco) }}</span>
-                            </a>
-                          } @else {
-                            <span class="tev" [class]="ge.ev.type" [class.done]="ge.ev.done" [title]="ge.ev.calendarName || ge.ev.summary"
-                                  [style.background]="ge.ev.color || null"
-                                  [style.border-color]="ge.ev.color ? darken(ge.ev.color) : null"
-                                  [style.color]="ge.ev.color ? contrastOn(ge.ev.color) : null"
-                                  [style.top.px]="ge.top" [style.height.px]="ge.height"
-                                  [style.left.%]="ge.lane * (100 / ge.lanes)" [style.width.%]="100 / ge.lanes">
-                              <span class="tev-t">{{ ge.time }}</span>
-                              <span class="tev-s">{{ ge.ev.summary || ('kalender.noSummary' | transloco) }}</span>
-                            </span>
-                          }
+                               [style.left.%]="ge.lane * (100 / ge.lanes)" [style.width.%]="100 / ge.lanes"
+                               [style.transform]="moveState()?.id === ge.ev.id ? 'translate(' + moveState()!.dx + 'px,' + moveState()!.dy + 'px)' : null">
+                            <span class="tev-t">{{ moveState()?.id === ge.ev.id && moveState()!.timeLabel ? moveState()!.timeLabel : ge.time }}</span>
+                            <span class="tev-s">{{ ge.ev.summary || ('kalender.noSummary' | transloco) }}</span>
+                          </div>
                         }
                       </div>
                     }
@@ -279,7 +256,8 @@ const HOUR_PX = 46;
 
     @if (editing(); as ed) {
       <jl-event-editor [event]="ed.event" [presetBegin]="ed.begin" [presetEnd]="ed.end" [presetTimed]="ed.timed"
-                       (save)="onSave($event)" (remove)="onDelete($event)" (close)="closeEditor()" />
+                       (save)="onSave($event)" (remove)="onDelete($event)" (close)="closeEditor()"
+                       (openCase)="onOpenCase($event)" />
     }
   `,
   styleUrl: './kalender.component.css',
@@ -287,6 +265,7 @@ const HOUR_PX = 46;
 export class KalenderComponent {
   protected readonly cal = inject(CalendarService);
   private readonly lang = inject(LanguageService).current;
+  private readonly router = inject(Router);
 
   protected readonly filters: CalendarFilter[] = ['all', 'event', 'respite', 'followup'];
   protected readonly views: CalendarView[] = ['agenda', 'day', 'week', 'month'];
@@ -296,6 +275,9 @@ export class KalenderComponent {
   protected readonly hourPx = HOUR_PX;
 
   protected readonly countLabel = computed(() => String(this.cal.events().length));
+
+  /** Locale-aware HH:mm formatter for the live drag start-time label. */
+  private readonly moveTimeFmt = computed(() => new Intl.DateTimeFormat(this.lang(), { hour: '2-digit', minute: '2-digit' }));
 
   /** The header label, adapted to the active view (month, week range or full day). */
   protected readonly rangeLabel = computed(() => {
@@ -448,6 +430,12 @@ export class KalenderComponent {
     this.editing.set({ event: ev, begin: ev.begin, end: ev.end, timed: ev.timed });
   }
 
+  /** Jumps from the (open) editor to the owning case, closing the dialog first. */
+  protected onOpenCase(caseId: string): void {
+    this.closeEditor();
+    this.router.navigate(['/cases', caseId]);
+  }
+
   protected closeEditor(): void {
     this.editing.set(null);
   }
@@ -467,16 +455,30 @@ export class KalenderComponent {
     });
   }
 
-  // ---- Drag-to-create on the day/week time grid ------------------------------------------------
-  // A vertical drag in a day column selects a time range and opens the create dialog prefilled
-  // with a timed appointment on that column's date. Times snap to 15-minute steps.
+  // ---- Drag on the day/week time grid ----------------------------------------------------------
+  // Two gestures share the document mouse listeners:
+  //  * drag on empty grid  -> select a time range and open the create dialog (dragState/dragBox)
+  //  * drag on an event     -> reschedule it in time (and across days in week view); a drag below
+  //    the click threshold is treated as a click that opens the editor (moveState/moveCtx)
+  // Times snap to 15-minute steps.
 
-  /** Active drag: the column key/date plus the start/current y (px, relative to the column top). */
+  /** Active create-drag: the column key/date plus the start/current y (px, relative to the column top). */
   private readonly dragState = signal<{ key: string; date: Date; y0: number; y1: number } | null>(null);
   /** clientY of the dragged column's top edge, captured on mousedown. */
   private dragColTop = 0;
 
-  /** The selection rectangle (px) for the column currently being dragged, or null. */
+  /**
+   * Active event-move drag (reactive part): the snapped x/y offset in px so the block follows into
+   * the target day/time, the live target start-time label, and whether the threshold was passed.
+   */
+  protected readonly moveState = signal<{ id: string; dx: number; dy: number; timeLabel: string; moved: boolean } | null>(null);
+  /** Immutable context of the current event-move drag (geometry captured at mousedown). */
+  private moveCtx: {
+    ev: CalendarEvent; startClientY: number; startClientX: number; originLeft: number;
+    colRects: { date: Date; left: number; right: number }[];
+  } | null = null;
+
+  /** The selection rectangle (px) for the column currently being create-dragged, or null. */
   protected readonly dragBox = computed(() => {
     const s = this.dragState();
     if (!s) {
@@ -490,7 +492,7 @@ export class KalenderComponent {
   }
 
   protected dragStart(ev: MouseEvent, col: GridColumn): void {
-    // Left button only; ignore drags that begin on an existing event (let its link work).
+    // Left button only; ignore drags that begin on an existing event (that starts a move instead).
     if (ev.button !== 0 || (ev.target as HTMLElement).closest('.tev')) {
       return;
     }
@@ -501,8 +503,63 @@ export class KalenderComponent {
     ev.preventDefault();
   }
 
+  /** Begins a reschedule drag on a timed event (or, if it stays still, a click that opens it). */
+  protected eventDragStart(ev: MouseEvent, calEv: CalendarEvent): void {
+    if (ev.button !== 0) {
+      return;
+    }
+    const tev = ev.currentTarget as HTMLElement;
+    const colsEl = tev.closest('.tg-cols') as HTMLElement | null;
+    if (!colsEl) {
+      return;
+    }
+    const cols = Array.from(colsEl.querySelectorAll(':scope > .tg-col')) as HTMLElement[];
+    const days = this.gridDays();
+    const colRects = cols.map((c, i) => {
+      const r = c.getBoundingClientRect();
+      return { date: days[i]?.date ?? calEv.begin, left: r.left, right: r.right };
+    });
+    const origin = colRects.find((c) => ev.clientX >= c.left && ev.clientX <= c.right);
+    this.moveCtx = {
+      ev: calEv, startClientY: ev.clientY, startClientX: ev.clientX,
+      originLeft: origin?.left ?? colRects[0]?.left ?? ev.clientX, colRects,
+    };
+    this.moveState.set({ id: calEv.id, dx: 0, dy: 0, timeLabel: '', moved: false });
+    ev.preventDefault();
+    ev.stopPropagation(); // do not also start a create-drag on the underlying column
+  }
+
+  /**
+   * Derives the current move offsets and target from a pointer position: time snapped to 15 min
+   * (vertical), the day column under the pointer (horizontal), the resulting begin/end instants and
+   * a formatted target start-time label. Shared by the live preview and the final save so they agree.
+   */
+  private computeMove(clientX: number, clientY: number): {
+    dx: number; dy: number; deltaMin: number; deltaDays: number; begin: number; end: number; timeLabel: string;
+  } {
+    const ctx = this.moveCtx!;
+    const deltaMin = Math.round(((clientY - ctx.startClientY) / this.hourPx) * 60 / 15) * 15;
+    const targetCol = ctx.colRects.find((c) => clientX >= c.left && clientX <= c.right);
+    const deltaDays = targetCol ? daysBetween(ctx.ev.begin, targetCol.date) : 0;
+    const shiftMs = deltaDays * 86_400_000 + deltaMin * 60_000;
+    const begin = ctx.ev.begin.getTime() + shiftMs;
+    const end = (ctx.ev.end ? ctx.ev.end.getTime() : ctx.ev.begin.getTime() + 3_600_000) + shiftMs;
+    return {
+      dx: targetCol ? targetCol.left - ctx.originLeft : 0,
+      dy: (deltaMin / 60) * this.hourPx,
+      deltaMin, deltaDays, begin, end,
+      timeLabel: this.moveTimeFmt().format(new Date(begin)),
+    };
+  }
+
   @HostListener('document:mousemove', ['$event'])
   protected onDragMove(ev: MouseEvent): void {
+    if (this.moveCtx) {
+      const rawMoved = Math.abs(ev.clientY - this.moveCtx.startClientY) > 4 || Math.abs(ev.clientX - this.moveCtx.startClientX) > 4;
+      const m = this.computeMove(ev.clientX, ev.clientY);
+      this.moveState.set({ id: this.moveCtx.ev.id, dx: m.dx, dy: m.dy, timeLabel: rawMoved ? m.timeLabel : '', moved: rawMoved });
+      return;
+    }
     const s = this.dragState();
     if (!s) {
       return;
@@ -511,8 +568,12 @@ export class KalenderComponent {
     this.dragState.set({ ...s, y1: y });
   }
 
-  @HostListener('document:mouseup')
-  protected onDragEnd(): void {
+  @HostListener('document:mouseup', ['$event'])
+  protected onDragEnd(ev: MouseEvent): void {
+    if (this.moveCtx) {
+      this.finishMove(ev);
+      return;
+    }
     const s = this.dragState();
     this.dragState.set(null);
     if (!s || Math.abs(s.y1 - s.y0) < 6) {
@@ -526,6 +587,23 @@ export class KalenderComponent {
       end: atMinutes(s.date, endMin),
       timed: true,
     });
+  }
+
+  /** Completes an event-move drag: a still drag opens the editor, a real drag reschedules the entry. */
+  private finishMove(ev: MouseEvent): void {
+    const ctx = this.moveCtx!;
+    const st = this.moveState();
+    const m = this.computeMove(ev.clientX, ev.clientY);
+    this.moveCtx = null;
+    this.moveState.set(null);
+    if (!st || !st.moved) {
+      this.openEdit(ctx.ev); // below threshold — treat as a click
+      return;
+    }
+    if (m.deltaMin === 0 && m.deltaDays === 0) {
+      return; // no net change
+    }
+    this.cal.reschedule(ctx.ev, m.begin, m.end);
   }
 
   /** Converts a y offset (px from the grid top) to minutes-of-day, snapped to 15-minute steps. */
@@ -546,6 +624,13 @@ function atMinutes(day: Date, minutes: number): Date {
   const d = new Date(day.getFullYear(), day.getMonth(), day.getDate());
   d.setMinutes(minutes);
   return d;
+}
+
+/** Whole-day difference (target - from), ignoring the time of day. */
+function daysBetween(from: Date, target: Date): number {
+  const a = new Date(from.getFullYear(), from.getMonth(), from.getDate()).getTime();
+  const b = new Date(target.getFullYear(), target.getMonth(), target.getDate()).getTime();
+  return Math.round((b - a) / 86_400_000);
 }
 
 /** Local yyyy-MM-dd key used to group and match "today". */

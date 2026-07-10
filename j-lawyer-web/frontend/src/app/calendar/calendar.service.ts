@@ -241,6 +241,27 @@ export class CalendarService {
       done: !ev.done,
     }).subscribe({ error: () => undefined });
   }
+
+  /**
+   * Moves an entry to a new begin/end (drag-and-drop reschedule on the time grid), preserving all
+   * other fields. Subscribes internally so the grid handler can call it fire-and-forget.
+   */
+  reschedule(ev: CalendarEvent, begin: number, end: number): void {
+    this.save({
+      id: ev.id,
+      caseId: ev.caseId,
+      calendar: ev.calendarId,
+      type: ev.type,
+      summary: ev.summary,
+      description: ev.description,
+      location: ev.location,
+      assignee: ev.assignee,
+      begin,
+      end,
+      reminderMinutes: ev.reminderMinutes,
+      done: ev.done,
+    }).subscribe({ error: () => undefined });
+  }
 }
 
 function toCalendarSetup(dto: CalendarSetupDto): CalendarSetup {

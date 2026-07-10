@@ -388,7 +388,9 @@
         "h1": "1 hr",
         "h2": "2 hrs",
         "d1": "1 day"
-      }
+      },
+      "toCase": "Go to case",
+      "reminderEventOnly": "Reminders are available for appointments only."
     }
   },
   "desktop": {

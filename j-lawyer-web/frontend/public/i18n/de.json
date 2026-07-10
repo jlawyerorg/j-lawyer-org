@@ -388,7 +388,9 @@
         "h1": "1 Std.",
         "h2": "2 Std.",
         "d1": "1 Tag"
-      }
+      },
+      "toCase": "Zur Akte",
+      "reminderEventOnly": "Erinnerungen sind nur für Termine verfügbar."
     }
   },
   "desktop": {
