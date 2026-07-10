@@ -116,7 +116,7 @@ interface TimesheetView extends CaseTimesheet {
               <button type="button" class="pin-toggle" [class.on]="pins.isPinned('case', c.id)"
                       (click)="togglePin(c)"
                       [title]="(pins.isPinned('case', c.id) ? 'pins.unpinItem' : 'pins.pinItem') | transloco">
-                <jl-icon name="star" [size]="16" />
+                <jl-icon name="pushpin" [size]="16" />
               </button>
             </div>
             <div class="meta">
