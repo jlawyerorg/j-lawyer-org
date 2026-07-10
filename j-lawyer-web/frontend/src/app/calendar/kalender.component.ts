@@ -115,7 +115,8 @@ const HOUR_PX = 46;
                       <span class="etime">
                         @if (r.time) { {{ r.time }} } @else { <span class="allday">{{ 'kalender.allDay' | transloco }}</span> }
                       </span>
-                      <span class="bar" [class]="r.ev.type"></span>
+                      <span class="bar" [class]="r.ev.type" [style.background]="r.ev.color || null"
+                            [title]="r.ev.calendarName || null"></span>
                       <span class="ebody">
                         <span class="etop">
                           <span class="pill" [class]="r.ev.type">{{ 'kalender.type.' + r.ev.type | transloco }}</span>
@@ -155,12 +156,14 @@ const HOUR_PX = 46;
                     @for (r of cell.events.slice(0, 3); track r.ev.id) {
                       @if (r.ev.caseId) {
                         <a class="mchip" [class]="r.ev.type" [class.done]="r.ev.done"
-                           [routerLink]="['/cases', r.ev.caseId]" [title]="r.ev.summary">
-                          <span class="mdot"></span>{{ r.time }}{{ r.ev.summary || ('kalender.noSummary' | transloco) }}
+                           [style.background]="r.ev.color ? tint(r.ev.color) : null"
+                           [routerLink]="['/cases', r.ev.caseId]" [title]="r.ev.calendarName || r.ev.summary">
+                          <span class="mdot" [style.background]="r.ev.color || null"></span>{{ r.time }}{{ r.ev.summary || ('kalender.noSummary' | transloco) }}
                         </a>
                       } @else {
-                        <span class="mchip" [class]="r.ev.type" [class.done]="r.ev.done" [title]="r.ev.summary">
-                          <span class="mdot"></span>{{ r.time }}{{ r.ev.summary || ('kalender.noSummary' | transloco) }}
+                        <span class="mchip" [class]="r.ev.type" [class.done]="r.ev.done"
+                              [style.background]="r.ev.color ? tint(r.ev.color) : null" [title]="r.ev.calendarName || r.ev.summary">
+                          <span class="mdot" [style.background]="r.ev.color || null"></span>{{ r.time }}{{ r.ev.summary || ('kalender.noSummary' | transloco) }}
                         </span>
                       }
                     }
@@ -193,12 +196,15 @@ const HOUR_PX = 46;
                     <div class="tg-allday">
                       @for (ev of col.allDay; track ev.id) {
                         @if (ev.caseId) {
-                          <a class="mchip" [class]="ev.type" [class.done]="ev.done" [routerLink]="['/cases', ev.caseId]" [title]="ev.summary">
-                            <span class="mdot"></span>{{ ev.summary || ('kalender.noSummary' | transloco) }}
+                          <a class="mchip" [class]="ev.type" [class.done]="ev.done"
+                             [style.background]="ev.color ? tint(ev.color) : null"
+                             [routerLink]="['/cases', ev.caseId]" [title]="ev.calendarName || ev.summary">
+                            <span class="mdot" [style.background]="ev.color || null"></span>{{ ev.summary || ('kalender.noSummary' | transloco) }}
                           </a>
                         } @else {
-                          <span class="mchip" [class]="ev.type" [class.done]="ev.done" [title]="ev.summary">
-                            <span class="mdot"></span>{{ ev.summary || ('kalender.noSummary' | transloco) }}
+                          <span class="mchip" [class]="ev.type" [class.done]="ev.done"
+                                [style.background]="ev.color ? tint(ev.color) : null" [title]="ev.calendarName || ev.summary">
+                            <span class="mdot" [style.background]="ev.color || null"></span>{{ ev.summary || ('kalender.noSummary' | transloco) }}
                           </span>
                         }
                       }
@@ -220,14 +226,20 @@ const HOUR_PX = 46;
                         @for (ge of col.timed; track ge.ev.id) {
                           @if (ge.ev.caseId) {
                             <a class="tev" [class]="ge.ev.type" [class.done]="ge.ev.done"
-                               [routerLink]="['/cases', ge.ev.caseId]" [title]="ge.ev.summary"
+                               [routerLink]="['/cases', ge.ev.caseId]" [title]="ge.ev.calendarName || ge.ev.summary"
+                               [style.background]="ge.ev.color || null"
+                               [style.border-color]="ge.ev.color ? darken(ge.ev.color) : null"
+                               [style.color]="ge.ev.color ? contrastOn(ge.ev.color) : null"
                                [style.top.px]="ge.top" [style.height.px]="ge.height"
                                [style.left.%]="ge.lane * (100 / ge.lanes)" [style.width.%]="100 / ge.lanes">
                               <span class="tev-t">{{ ge.time }}</span>
                               <span class="tev-s">{{ ge.ev.summary || ('kalender.noSummary' | transloco) }}</span>
                             </a>
                           } @else {
-                            <span class="tev" [class]="ge.ev.type" [class.done]="ge.ev.done" [title]="ge.ev.summary"
+                            <span class="tev" [class]="ge.ev.type" [class.done]="ge.ev.done" [title]="ge.ev.calendarName || ge.ev.summary"
+                                  [style.background]="ge.ev.color || null"
+                                  [style.border-color]="ge.ev.color ? darken(ge.ev.color) : null"
+                                  [style.color]="ge.ev.color ? contrastOn(ge.ev.color) : null"
                                   [style.top.px]="ge.top" [style.height.px]="ge.height"
                                   [style.left.%]="ge.lane * (100 / ge.lanes)" [style.width.%]="100 / ge.lanes">
                               <span class="tev-t">{{ ge.time }}</span>
@@ -367,6 +379,28 @@ export class KalenderComponent {
 
   protected hourLabel(h: number): string {
     return `${String(h).padStart(2, '0')}:00`;
+  }
+
+  /** A faint tint of the calendar colour for chip backgrounds (month/all-day). */
+  protected tint(hex: string): string {
+    return `color-mix(in srgb, ${hex} 16%, transparent)`;
+  }
+
+  /** A darker shade of the calendar colour for the time-grid block border. */
+  protected darken(hex: string): string {
+    return `color-mix(in srgb, ${hex} 65%, #000)`;
+  }
+
+  /**
+   * Readable foreground (black or white) for a given "#rrggbb" background, by perceived
+   * luminance, so a light calendar colour never renders unreadable white text on the time grid.
+   */
+  protected contrastOn(hex: string): string {
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+    if (!m) { return '#fff'; }
+    const n = parseInt(m[1], 16);
+    const r = (n >> 16) & 0xff, g = (n >> 8) & 0xff, b = n & 0xff;
+    return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? '#16232e' : '#fff';
   }
 
   constructor() {

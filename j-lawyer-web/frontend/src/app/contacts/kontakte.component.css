@@ -82,7 +82,7 @@
 .title-row { display: flex; align-items: center; gap: 12px; margin: 8px 0 2px; flex-wrap: wrap; }
 .title-row h2 { font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; margin: 0; }
 .meta { display: flex; gap: 18px; flex-wrap: wrap; color: var(--jl-ink-soft); font-size: .82rem; margin: 10px 0 14px; }
-.meta .k { color: var(--jl-ink-faint); }
+.meta .k { color: var(--jl-ink-faint); margin-right: 6px; }
 .tabs { display: flex; gap: 2px; overflow-x: auto; }
 .tab { padding: 10px 14px; font: inherit; font-size: .82rem; font-weight: 600; color: var(--jl-ink-soft); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; }
 .tab:hover { color: var(--jl-ink); }
@@ -118,4 +118,80 @@
   .master-detail.show-detail .detail { display: block; }
   .back { display: inline-block; }
   .grid { grid-template-columns: 1fr; }
+}
+
+/* ---------- Documents tab ---------- */
+.docs-card .card-h { display: flex; align-items: center; gap: 8px; }
+.card-count { font-size: .72rem; font-weight: 700; color: var(--jl-ink-faint); font-variant-numeric: tabular-nums; }
+
+.doc-tools { display: flex; flex-direction: column; gap: 8px; padding: 10px 15px; border-bottom: 1px solid var(--jl-line); }
+.doc-search {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 9px; border: 1px solid var(--jl-line-strong); border-radius: 8px; color: var(--jl-ink-faint);
+}
+.doc-search input { flex: 1; min-width: 0; font: inherit; font-size: .84rem; border: 0; background: transparent; color: var(--jl-ink); outline: none; }
+.doc-search .clear { border: 0; background: transparent; cursor: pointer; color: var(--jl-ink-faint); font-size: .85rem; }
+.doc-sort { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.doc-sort .sort-label { font-size: .74rem; color: var(--jl-ink-faint); margin-right: 2px; }
+.sort-btn {
+  font: inherit; font-size: .78rem; font-weight: 600; cursor: pointer; padding: 4px 9px;
+  color: var(--jl-ink-soft); background: var(--jl-surface); border: 1px solid var(--jl-line-strong); border-radius: 7px; white-space: nowrap;
+}
+.sort-btn:hover { border-color: var(--jl-blue); color: var(--jl-blue); }
+.sort-btn.on { color: #fff; background: var(--jl-blue); border-color: var(--jl-blue); font-variant-numeric: tabular-nums; }
+
+.doc { display: flex; align-items: center; gap: 11px; padding: 9px 15px; }
+.doc + .doc { border-top: 1px solid var(--jl-line); }
+.doc-row.previewable { cursor: pointer; }
+.doc-row:hover { background: var(--jl-surface-alt); }
+.doc-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.doc-main .dn { font-weight: 550; font-size: .89rem; word-break: break-word; }
+.doc-main .dmeta { font-size: .76rem; color: var(--jl-ink-faint); font-variant-numeric: tabular-nums; }
+.doc-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+.doc-btn {
+  display: inline-flex; align-items: center; gap: 5px; font: inherit; font-size: .78rem; font-weight: 600; cursor: pointer;
+  color: var(--jl-ink-soft); background: var(--jl-surface); border: 1px solid var(--jl-line-strong); border-radius: 7px; padding: 5px 10px;
+}
+.doc-btn:hover { border-color: var(--jl-blue); color: var(--jl-blue); }
+.doc-btn.primary { color: #fff; background: var(--jl-blue); border-color: var(--jl-blue); }
+.doc-btn.primary:hover { background: var(--jl-blue-strong); color: #fff; }
+
+/* File-type badge (shared look with the case documents view). */
+.ftype {
+  width: 38px; height: 42px; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  border-radius: 6px; color: #fff; background: var(--jl-ink-faint);
+}
+.ftype jl-icon { line-height: 0; }
+.ftype .ext-lbl { font-size: .5rem; font-weight: 800; letter-spacing: .02em; text-transform: uppercase; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.ftype.kind-pdf { background: #d6423b; }
+.ftype.kind-word { background: #2b6cb0; }
+.ftype.kind-excel { background: #2f855a; }
+.ftype.kind-ppt { background: #dd6b20; }
+.ftype.kind-image { background: #805ad5; }
+.ftype.kind-archive { background: #b7791f; }
+.ftype.kind-email { background: #4a6b82; }
+.ftype.kind-text { background: #5a6b78; }
+.ftype.kind-generic { background: #7a8791; }
+
+/* Grouped detail sections (label/value) + note + cases list. */
+.kv { display: grid; grid-template-columns: minmax(90px, auto) 1fr; gap: 4px 14px; margin: 0; }
+.kv dt { color: var(--jl-ink-faint); font-size: .78rem; font-weight: 600; }
+.kv dd { margin: 0; font-size: .84rem; color: var(--jl-ink); word-break: break-word; }
+.note { margin: 0; font-size: .88rem; line-height: 1.5; color: var(--jl-ink); white-space: pre-wrap; word-break: break-word; }
+
+.case-row {
+  display: flex; align-items: center; gap: 11px; padding: 9px 0; text-decoration: none; color: inherit; cursor: pointer;
+}
+.case-row + .case-row { border-top: 1px solid var(--jl-line); }
+.case-row:hover { background: var(--jl-surface-alt); }
+.case-row jl-icon { color: var(--jl-ink-faint); flex: none; }
+.case-row .cx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.case-row .cn { font-weight: 600; font-size: .89rem; color: var(--jl-blue); word-break: break-word; }
+.case-row .cmeta { font-size: .78rem; color: var(--jl-ink-soft); word-break: break-word; }
+.case-row .cdate { flex: none; font-size: .76rem; color: var(--jl-ink-faint); font-variant-numeric: tabular-nums; }
+
+/* Role (party type) badge in the cases list — coloured with the party type's colour. */
+.case-row .role-badge {
+  flex: none; font-size: .68rem; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+  white-space: nowrap; color: #fff; background: #5a6b78;
 }

@@ -96,6 +96,28 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
         @case ('shield') {
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
         }
+        @case ('folder') {
+          <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+        }
+        @case ('star') {
+          <path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z" />
+        }
+        @case ('file-text') {
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" />
+          <path d="M9 13h6M9 17h6" />
+        }
+        @case ('image') {
+          <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-5-5L5 21" />
+        }
+        @case ('archive') {
+          <path d="M21 8v13H3V8" /><path d="M1 3h22v5H1z" /><path d="M10 12h4" />
+        }
+        @case ('sheet') {
+          <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" />
+        }
+        @case ('presentation') {
+          <path d="M2 3h20" /><path d="M3 3v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V3" /><path d="M12 15v6M9 21h6" />
+        }
       }
     </svg>
   `,

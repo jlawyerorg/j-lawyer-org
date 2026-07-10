@@ -1,16 +1,21 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
-import { catchError, forkJoin, map, Observable, of } from 'rxjs';
+import { catchError, forkJoin, map, Observable, of, shareReplay } from 'rxjs';
 import { API_ROOT } from '../core/api';
 import {
   AccountEntry, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseMessage, CaseOverview,
-  CasePayment, CaseStatus, CaseTag, CaseTimesheet, DueDate, Party, TimesheetPosition,
+  CasePayment, CaseStatus, CaseTag, CaseTimesheet, DocDateMode, DocFolder, DocSortKey, DueDate,
+  Party, SortDir, TimesheetPosition,
 } from './case.models';
 
 const CASES_BASE = `${API_ROOT}/v1/cases`;
+const CASES_V3 = `${API_ROOT}/v3/cases`;
+const CASES_V4 = `${API_ROOT}/v4/cases`;
 const CASES_V7 = `${API_ROOT}/v7/cases`;
 const CASES_V8 = `${API_ROOT}/v8/cases`;
 const TIMESHEETS_V8 = `${API_ROOT}/v8/timesheets`;
+const CALENDARS_V4 = `${API_ROOT}/v4/calendars/list`;
+const PARTY_TYPES = `${API_ROOT}/v1/cases/party/types`;
 const PAGE_SIZE = 50;
 
 export type CaseFilter = 'all' | 'open' | 'closed';
@@ -26,8 +31,23 @@ interface CaseDto {
   lawyer: string; assistant: string; claimNumber: string; claimValue: number; notice: string; archived: number;
 }
 interface PartyDto { id: string; involvementType: string; contact?: string; contactName?: string; }
-interface DueDateDto { id: string; reason: string; dueDate: string; done: boolean; assignee: string; type: string; }
-interface DocDto { id: string; name: string; size: number; creationDate: string; }
+// v1 and v4 differ: v1 has `reason`/`dueDate`; v4 renames them to `summary`/`beginDate` and adds
+// `calendar` (the calendar-setup id). We read whichever the server provides.
+interface DueDateDto {
+  id: string; done: boolean; assignee: string; type: string;
+  reason?: string; dueDate?: string; summary?: string; beginDate?: string; calendar?: string;
+}
+// GET /v4/calendars — configured calendars; `background` is a packed-RGB int colour.
+interface CalendarDto { id: string; displayName?: string; background?: number; }
+// GET /v1/cases/party/types — configured party types; `color` is a packed-RGB int colour.
+interface PartyTypeDto { id: string; name?: string; color?: number; }
+interface DocDto {
+  id: string; name: string; size: number; creationDate: string; changeDate?: string;
+  favorite?: boolean; folderId?: string; version?: number; highlight1?: number; highlight2?: number;
+  tags?: { name?: string }[];
+}
+// GET /v3/cases/{id}/folders — the nested root folder node (children hold sub-folders).
+interface FolderDto { id: string; name: string; parentId?: string; children?: FolderDto[]; }
 interface HistoryDto { id: string; principal: string; changeDate: number; changeDescription: string; }
 interface InvoiceDto {
   id: string; invoiceNumber: string; name: string; status: string;
@@ -68,6 +88,10 @@ export class CasesService {
   readonly total = signal(0);
   readonly listLoading = signal(false);
   readonly listError = signal(false);
+
+  // Documents-tab view state, kept here so it survives case navigation for the session.
+  readonly docSort = signal<{ key: DocSortKey; dir: SortDir }>({ key: 'name', dir: 'asc' });
+  readonly docDateMode = signal<DocDateMode>('change');
 
   private currentFilter: CaseFilter = 'all';
   private currentSearch = '';
@@ -221,12 +245,44 @@ export class CasesService {
     return forkJoin({
       caseDto: this.http.get<CaseDto>(`${CASES_BASE}/${id}`),
       parties: this.http.get<PartyDto[]>(`${CASES_BASE}/${id}/parties`).pipe(catchError(() => of([]))),
-      dueDates: this.http.get<DueDateDto[]>(`${CASES_BASE}/${id}/duedates`).pipe(catchError(() => of([]))),
+      // v4 duedates carry the calendar id (v1 does not); fall back to v1 if v4 is unavailable.
+      dueDates: this.http.get<DueDateDto[]>(`${CASES_V4}/${id}/duedates`).pipe(
+        catchError(() => this.http.get<DueDateDto[]>(`${CASES_BASE}/${id}/duedates`).pipe(catchError(() => of([])))),
+      ),
       documents: this.http.get<DocDto[]>(`${CASES_BASE}/${id}/documents`).pipe(catchError(() => of([]))),
+      // The document folder tree; 204 (no root folder) yields null.
+      rootFolder: this.http.get<FolderDto | null>(`${CASES_V3}/${id}/folders`).pipe(catchError(() => of(null))),
+      // Colour lookups (calendar-id -> colour, party-type-name -> colour); cached app-wide.
+      calendarColors: this.calendarColors(),
+      partyTypeColors: this.partyTypeColors(),
     }).pipe(
-      map(({ caseDto, parties, dueDates, documents }) => toDetail(caseDto, parties, dueDates, documents)),
+      map(({ caseDto, parties, dueDates, documents, rootFolder, calendarColors, partyTypeColors }) =>
+        toDetail(caseDto, parties, dueDates, documents, rootFolder, calendarColors, partyTypeColors)),
       catchError(() => of(null)),
     );
+  }
+
+  private calendarColors$?: Observable<Map<string, string>>;
+  private partyTypeColors$?: Observable<Map<string, string>>;
+
+  /** Calendar id -> CSS hex colour, from the configured calendars. Cached for the app lifetime. */
+  private calendarColors(): Observable<Map<string, string>> {
+    this.calendarColors$ ??= this.http.get<CalendarDto[]>(CALENDARS_V4).pipe(
+      map((list) => new Map((list ?? []).map((c) => [c.id, rgbHex(c.background)] as const))),
+      catchError(() => of(new Map<string, string>())),
+      shareReplay(1),
+    );
+    return this.calendarColors$;
+  }
+
+  /** Party-type name -> CSS hex colour, from the configured party types. Cached for the app lifetime. */
+  private partyTypeColors(): Observable<Map<string, string>> {
+    this.partyTypeColors$ ??= this.http.get<PartyTypeDto[]>(PARTY_TYPES).pipe(
+      map((list) => new Map((list ?? []).filter((t) => t.name).map((t) => [t.name!, rgbHex(t.color)] as const))),
+      catchError(() => of(new Map<string, string>())),
+      shareReplay(1),
+    );
+    return this.partyTypeColors$;
   }
 }
 
@@ -244,8 +300,11 @@ function toOverview(dto: CaseListDto): CaseOverview {
   };
 }
 
-function toDetail(dto: CaseDto, parties: PartyDto[], dueDates: DueDateDto[], documents: DocDto[]): CaseDetail {
-  const mappedDue = (dueDates ?? []).map(toDueDate);
+function toDetail(
+  dto: CaseDto, parties: PartyDto[], dueDates: DueDateDto[], documents: DocDto[], rootFolder: FolderDto | null,
+  calendarColors: Map<string, string>, partyTypeColors: Map<string, string>,
+): CaseDetail {
+  const mappedDue = (dueDates ?? []).map((d) => toDueDate(d, calendarColors));
   const archived = !!dto.archived;
   return {
     id: dto.id,
@@ -266,21 +325,44 @@ function toDetail(dto: CaseDto, parties: PartyDto[], dueDates: DueDateDto[], doc
       // Prefer the resolved contact display name (linked address); fall back to the
       // free-text contact person, then leave empty for the template's "—" placeholder.
       contact: p.contactName || p.contact || '',
+      // The party type's colour, matched by its name (= involvementType).
+      color: partyTypeColors.get(p.involvementType ?? '') ?? '',
     } satisfies Party)),
     dueDates: mappedDue,
     documents: (documents ?? []).map(toDocument),
+    rootFolder: rootFolder ? toFolder(rootFolder) : null,
   };
 }
 
-function toDueDate(dto: DueDateDto): DueDate {
+function toFolder(dto: FolderDto): DocFolder {
   return {
     id: dto.id,
-    reason: dto.reason ?? '',
-    dueDate: isoDate(dto.dueDate),
+    name: dto.name ?? '',
+    children: (dto.children ?? []).map(toFolder),
+  };
+}
+
+function toDueDate(dto: DueDateDto, calendarColors: Map<string, string>): DueDate {
+  return {
+    id: dto.id,
+    // v1 -> reason/dueDate, v4 -> summary/beginDate.
+    reason: dto.reason || dto.summary || '',
+    dueDate: isoDate(dto.dueDate || dto.beginDate || ''),
     done: !!dto.done,
     assignee: dto.assignee ?? '',
     type: dto.type === 'RESPITE' ? 'deadline' : 'followup',
+    calendarColor: (dto.calendar && calendarColors.get(dto.calendar)) || '',
   };
+}
+
+/**
+ * Converts a packed-RGB int colour (as stored server-side, the argument to java.awt.Color(int))
+ * to a CSS hex string. Only the low 24 bits are used (any alpha byte is ignored), matching the
+ * desktop client's `new Color(int)`. Returns '' for null/undefined.
+ */
+function rgbHex(value: number | undefined | null): string {
+  if (value == null) { return ''; }
+  return '#' + (value & 0xffffff).toString(16).padStart(6, '0');
 }
 
 function toDocument(dto: DocDto): CaseDocument {
@@ -288,9 +370,26 @@ function toDocument(dto: DocDto): CaseDocument {
     id: dto.id,
     name: dto.name,
     date: isoDate(dto.creationDate),
+    changeDate: isoDate(dto.changeDate),
     size: formatBytes(dto.size),
+    sizeBytes: dto.size ?? 0,
     ext: extensionOf(dto.name),
+    folderId: dto.folderId ?? '',
+    favorite: !!dto.favorite,
+    version: dto.version ?? 1,
+    highlight1: highlightHex(dto.highlight1),
+    highlight2: highlightHex(dto.highlight2),
+    tags: (dto.tags ?? []).map((t) => t.name ?? '').filter(Boolean),
   };
+}
+
+/**
+ * A document label colour to CSS hex, or '' when unset. The server uses Integer.MIN_VALUE (and
+ * -1 on some DTOs) as the "no colour" sentinel; every other value is a packed RGB int.
+ */
+function highlightHex(value: number | undefined | null): string {
+  if (value == null || value === -1 || value === -2147483648) { return ''; }
+  return rgbHex(value);
 }
 
 function toHistory(dto: HistoryDto): CaseHistoryEntry {

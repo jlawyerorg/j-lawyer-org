@@ -96,7 +96,8 @@
 
 .party { display: flex; align-items: center; gap: 11px; padding: 8px 0; }
 .party + .party { border-top: 1px solid var(--jl-line); }
-.party .pa { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; font-weight: 700; font-size: .8rem; color: #fff; flex: none; }
+/* Default avatar colour; overridden inline with the party type's colour when configured. */
+.party .pa { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; font-weight: 700; font-size: .8rem; color: #fff; background: #5a6b78; flex: none; }
 .party .pa.client { background: var(--jl-blue); }
 .party .pa.opponent { background: var(--jl-red); }
 .party .pa.court { background: #5a6b78; }
@@ -255,6 +256,110 @@
 .ts-badge.billed { color: var(--jl-blue); background: color-mix(in srgb, var(--jl-blue) 12%, transparent); }
 .ts-badge.open { color: var(--jl-ink-soft); background: var(--jl-surface-alt); }
 
+/* ---------- Documents tab: folder tree + document list ---------- */
+.docs {
+  display: grid; grid-template-columns: minmax(0, 250px) minmax(0, 1fr); gap: 14px;
+  height: 66vh; min-height: 340px;
+}
+.docs .doc-folders, .docs .doc-list {
+  display: flex; flex-direction: column; min-height: 0;
+  border: 1px solid var(--jl-line); border-radius: 10px; background: var(--jl-surface); overflow: hidden;
+}
+.docs .col-head { flex: none; display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-bottom: 1px solid var(--jl-line); }
+.docs .col-head h3 { margin: 0; flex: 1; min-width: 0; font-size: .8rem; font-weight: 750; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: none; letter-spacing: 0; color: var(--jl-ink); }
+.all-toggle { flex: none; font: inherit; font-size: .72rem; font-weight: 600; cursor: pointer; color: var(--jl-blue); background: transparent; border: 0; padding: 0; white-space: nowrap; }
+.all-toggle:hover { text-decoration: underline; }
+.to-list { display: none; flex: none; font: inherit; font-size: .78rem; font-weight: 600; cursor: pointer; color: var(--jl-blue); background: transparent; border: 0; padding: 0; white-space: nowrap; }
+.docs .col-body { flex: 1 1 auto; overflow-y: auto; min-height: 0; }
+.docs .col-body.pad, .docs .col-body .pad { padding: 16px 14px; }
+
+/* Folder rows */
+.docs .fld {
+  width: 100%; display: flex; align-items: center; gap: 8px; text-align: left;
+  padding: 8px 14px; border: 0; background: transparent; cursor: pointer; font: inherit; color: var(--jl-ink);
+}
+.docs .fld:hover { background: var(--jl-surface-alt); }
+.docs .fld.sel { background: color-mix(in srgb, var(--jl-blue) 10%, transparent); }
+.docs .fld jl-icon { color: var(--jl-ink-faint); flex: none; }
+.docs .fld.sel > jl-icon { color: var(--jl-blue); }
+/* Checkbox square reflecting the folder's selection state. */
+.docs .fld-box {
+  flex: none; width: 15px; height: 15px; border-radius: 4px; display: grid; place-items: center;
+  border: 1px solid var(--jl-line-strong); color: #fff; background: var(--jl-surface);
+}
+.docs .fld-box.on { background: var(--jl-blue); border-color: var(--jl-blue); }
+.docs .fld-box jl-icon { color: #fff; }
+.docs .fld-name { flex: 1; min-width: 0; font-size: .88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.docs .fld-badge {
+  flex: none; min-width: 18px; padding: 1px 6px; border-radius: 9px; text-align: center;
+  font-size: .68rem; font-weight: 700; color: var(--jl-ink-soft); background: var(--jl-surface-alt); font-variant-numeric: tabular-nums;
+}
+.docs .fld.sel .fld-badge { color: #fff; background: var(--jl-blue); }
+
+/* List header + sort tools */
+.doc-list-head { flex-wrap: wrap; align-items: stretch; gap: 9px; }
+.dl-title { display: flex; align-items: baseline; gap: 8px; width: 100%; }
+.dl-title .count { color: var(--jl-ink-faint); font-size: .82rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.dl-search {
+  display: flex; align-items: center; gap: 6px; width: 100%;
+  padding: 5px 9px; border: 1px solid var(--jl-line-strong); border-radius: 8px; color: var(--jl-ink-faint);
+}
+.dl-search input { flex: 1; min-width: 0; font: inherit; font-size: .84rem; border: 0; background: transparent; color: var(--jl-ink); outline: none; }
+.dl-search .clear { border: 0; background: transparent; cursor: pointer; color: var(--jl-ink-faint); font-size: .85rem; }
+.dl-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; width: 100%; }
+.dl-tools .sort-label { font-size: .74rem; color: var(--jl-ink-faint); margin-right: 2px; }
+.sort-btn {
+  font: inherit; font-size: .78rem; font-weight: 600; cursor: pointer; padding: 4px 9px;
+  color: var(--jl-ink-soft); background: var(--jl-surface); border: 1px solid var(--jl-line-strong); border-radius: 7px; white-space: nowrap;
+}
+.sort-btn:hover { border-color: var(--jl-blue); color: var(--jl-blue); }
+.sort-btn.on { color: #fff; background: var(--jl-blue); border-color: var(--jl-blue); font-variant-numeric: tabular-nums; }
+.date-toggle {
+  margin-left: auto; font: inherit; font-size: .76rem; font-weight: 600; cursor: pointer; padding: 4px 9px;
+  color: var(--jl-blue); background: transparent; border: 1px dashed var(--jl-line-strong); border-radius: 7px; white-space: nowrap;
+}
+.date-toggle:hover { border-color: var(--jl-blue); }
+
+/* Document rows inside the list column */
+.docs .doc-row { padding: 9px 14px; }
+.docs .doc-row + .doc-row { border-top: 1px solid var(--jl-line); }
+.docs .dn { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.docs .dn .dn-name { font-weight: 550; font-size: .89rem; word-break: break-word; }
+.docs .dn .fav { color: #f5b301; flex: none; }
+.docs .dn .fav svg { fill: #f5b301; }
+
+/* Two optional colour markings, shown as a split stripe at the very left of the row. */
+.docs .doc-row { position: relative; }
+.hl-stripe { flex: none; width: 4px; align-self: stretch; display: flex; flex-direction: column; border-radius: 3px; overflow: hidden; }
+.hl-stripe > span { flex: 1; min-height: 3px; }
+.hl-stripe.single > span { flex: 1 0 100%; }
+
+/* File-type badge: category-coloured tile with a type glyph + the extension. */
+.ftype {
+  width: 38px; height: 42px; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  border-radius: 6px; color: #fff; background: var(--jl-ink-faint);
+}
+.ftype jl-icon { line-height: 0; }
+.ftype .ext-lbl { font-size: .5rem; font-weight: 800; letter-spacing: .02em; text-transform: uppercase; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.ftype.kind-pdf { background: #d6423b; }
+.ftype.kind-word { background: #2b6cb0; }
+.ftype.kind-excel { background: #2f855a; }
+.ftype.kind-ppt { background: #dd6b20; }
+.ftype.kind-image { background: #805ad5; }
+.ftype.kind-archive { background: #b7791f; }
+.ftype.kind-email { background: #4a6b82; }
+.ftype.kind-text { background: #5a6b78; }
+.ftype.kind-generic { background: #7a8791; }
+.dfolder { display: inline-flex; align-items: center; gap: 3px; }
+.dfolder jl-icon { color: var(--jl-ink-faint); vertical-align: -1px; }
+.dtags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+.dtag {
+  font-size: .68rem; font-weight: 600; padding: 1px 7px; border-radius: 9px;
+  color: var(--jl-ink-soft); background: var(--jl-surface-alt);
+}
+
+.to-folders { display: none; margin-right: 6px; font: inherit; font-size: .82rem; font-weight: 600; color: var(--jl-blue); background: transparent; border: 0; cursor: pointer; padding: 0; }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 820px) {
   .master-detail { grid-template-columns: 1fr; }
@@ -263,4 +368,14 @@
   .master-detail.show-detail .detail { display: block; }
   .back { display: inline-block; }
   .grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Phone: single-pane drill-down for the documents tab (folder tree -> document list). */
+@media (max-width: 680px) {
+  .docs { grid-template-columns: 1fr; height: auto; min-height: 0; }
+  .docs .doc-folders, .docs .doc-list { display: none; height: 62vh; }
+  .docs.m-folders .doc-folders { display: flex; }
+  .docs.m-list .doc-list { display: flex; }
+  .dl-title .to-folders { display: inline-block; }
+  .doc-folders .to-list { display: inline-block; }
 }

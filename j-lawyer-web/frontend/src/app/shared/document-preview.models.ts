@@ -10,6 +10,8 @@ export interface PreviewDoc {
   name: string;
   /** Upper-case file extension (e.g. "PDF"). */
   ext: string;
+  /** Which content endpoint holds the bytes: case documents (default) or contact documents. */
+  source?: 'case' | 'contact';
 }
 
 /** Response of GET /v1/cases/document/{id}/content. */
@@ -76,4 +78,39 @@ export function base64ToBytes(b64: string): Uint8Array {
 /** Decodes UTF-8 bytes into a string (for text previews). */
 export function bytesToText(bytes: Uint8Array): string {
   return new TextDecoder('utf-8').decode(bytes);
+}
+
+/** Display category derived from a file extension (drives the file-type badge icon + colour). */
+export type FileKind = 'pdf' | 'word' | 'excel' | 'ppt' | 'image' | 'archive' | 'email' | 'text' | 'generic';
+
+/** Icon glyph (IconComponent) for each file-type category; generic 'doc' is the fallback. */
+const KIND_ICON: Record<FileKind, string> = {
+  pdf: 'file-text', word: 'file-text', text: 'file-text',
+  excel: 'sheet', ppt: 'presentation', image: 'image', archive: 'archive', email: 'mail', generic: 'doc',
+};
+
+/** Groups a file extension into a display category. */
+export function fileKind(ext: string): FileKind {
+  switch ((ext || '').toLowerCase()) {
+    case 'pdf': return 'pdf';
+    case 'doc': case 'docx': case 'odt': case 'rtf': return 'word';
+    case 'xls': case 'xlsx': case 'ods': case 'csv': return 'excel';
+    case 'ppt': case 'pptx': case 'odp': return 'ppt';
+    case 'png': case 'jpg': case 'jpeg': case 'gif': case 'bmp': case 'tif': case 'tiff': case 'webp': case 'svg':
+      return 'image';
+    case 'zip': case 'rar': case '7z': case 'tar': case 'gz': return 'archive';
+    case 'eml': case 'msg': return 'email';
+    case 'txt': case 'md': case 'log': return 'text';
+    default: return 'generic';
+  }
+}
+
+/** The icon glyph for a file-type category. */
+export function kindGlyph(kind: FileKind): string {
+  return KIND_ICON[kind] ?? 'doc';
+}
+
+/** Convenience: the icon glyph directly from a file extension. */
+export function fileKindIcon(ext: string): string {
+  return kindGlyph(fileKind(ext));
 }

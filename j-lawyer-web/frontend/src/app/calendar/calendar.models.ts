@@ -33,6 +33,14 @@ export interface CalendarEvent {
   caseId: string;
   caseFileNumber: string;
   caseName: string;
+  /**
+   * Colour of the calendar this entry belongs to, as a CSS hex string (e.g. "#de303b"),
+   * converted from the server's packed-RGB int. Empty when the entry has no calendar; the view
+   * then falls back to a type-based colour.
+   */
+  color: string;
+  /** Display name of that calendar; empty when none. Used as a tooltip. */
+  calendarName: string;
 }
 
 /** Events belonging to one calendar day, for the agenda grouping. */

@@ -143,7 +143,7 @@ export class DocumentPreviewComponent {
     }
     this.loading.set(true);
 
-    this.contentService.content(d.id).subscribe({
+    this.contentService.content(d.id, d.source).subscribe({
       next: (dto) => {
         if (seq !== this.seq) {
           return;

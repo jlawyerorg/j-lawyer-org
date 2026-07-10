@@ -11,6 +11,7 @@ interface CalendarEventDto {
   id: string; type: CalendarEventType; summary: string; description: string; location: string;
   begin: number; end: number | null; done: boolean; assignee: string;
   caseId: string; caseFileNumber: string; caseName: string;
+  calendar?: string; calendarColor?: number; calendarName?: string;
 }
 
 /**
@@ -149,5 +150,18 @@ function toEvent(dto: CalendarEventDto): CalendarEvent {
     caseId: dto.caseId ?? '',
     caseFileNumber: dto.caseFileNumber ?? '',
     caseName: dto.caseName ?? '',
+    // Only trust the colour when a calendar is actually assigned — the int defaults to 0
+    // (which would otherwise read as black) for entries without a calendar.
+    color: dto.calendar ? rgbHex(dto.calendarColor) : '',
+    calendarName: dto.calendarName ?? '',
   };
+}
+
+/**
+ * Converts a packed-RGB int colour (the server's java.awt.Color(int) argument) to a CSS hex
+ * string; only the low 24 bits are used (any alpha byte is ignored). '' for null/undefined.
+ */
+function rgbHex(value: number | undefined | null): string {
+  if (value == null) { return ''; }
+  return '#' + (value & 0xffffff).toString(16).padStart(6, '0');
 }

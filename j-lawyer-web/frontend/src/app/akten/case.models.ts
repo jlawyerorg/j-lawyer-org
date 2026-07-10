@@ -35,6 +35,12 @@ export interface Party {
   involvementType: string;
   /** Resolved contact name; may be empty if the server did not include it. */
   contact: string;
+  /**
+   * The party type's colour as a CSS hex string (e.g. "#c62828"), resolved from the
+   * configured party types by matching `involvementType` (= party-type name). Empty when the
+   * party type has no colour or could not be matched.
+   */
+  color: string;
 }
 
 /** Deadline / follow-up. `type` is derived from the server type (RESPITE -> deadline). */
@@ -46,6 +52,12 @@ export interface DueDate {
   done: boolean;
   assignee: string;
   type: 'deadline' | 'followup';
+  /**
+   * Colour of the calendar this entry belongs to, as a CSS hex string, resolved from the
+   * configured calendars via the entry's calendar id. Empty when unknown; the view then falls
+   * back to a type-based colour.
+   */
+  calendarColor: string;
 }
 
 /** A case label ("Etikett", GET /v1/cases/{id}/tags). */
@@ -74,13 +86,47 @@ export interface CaseMessage {
 export interface CaseDocument {
   id: string;
   name: string;
-  /** ISO date (sanitized). */
+  /** Creation date, ISO (sanitized). */
   date: string;
+  /** Last-change date, ISO (sanitized). */
+  changeDate: string;
   /** Human-readable size (e.g. "34 KB"). */
   size: string;
+  /** Raw size in bytes (for sorting). */
+  sizeBytes: number;
   /** Upper-case file extension derived from the name (e.g. "PDF"). */
   ext: string;
+  /**
+   * Id of the folder the document lives in; empty when it belongs to the root ("Dokumente").
+   * Note: root documents may carry either no folder id or the root folder's own id.
+   */
+  folderId: string;
+  favorite: boolean;
+  /** Document version (>= 1). */
+  version: number;
+  /** First label colour as CSS hex, or '' when unset. */
+  highlight1: string;
+  /** Second label colour as CSS hex, or '' when unset. */
+  highlight2: string;
+  /** Tag/label names attached to the document. */
+  tags: string[];
 }
+
+/**
+ * A case document folder (GET /v3/cases/{id}/folders). The endpoint returns the nested root
+ * node directly (its `children` hold the sub-folders); `id` of the root may equal the case id.
+ */
+export interface DocFolder {
+  id: string;
+  name: string;
+  children: DocFolder[];
+}
+
+/** Document sort criteria offered in the documents tab (mirrors the desktop sort toggles). */
+export type DocSortKey = 'name' | 'date' | 'size' | 'type' | 'favorite' | 'folder';
+export type SortDir = 'asc' | 'desc';
+/** Which date the documents view shows/sorts by (mirrors the desktop DATE_DISPLAY_MODE). */
+export type DocDateMode = 'change' | 'creation';
 
 // Preview primitives (DocPreviewKind, previewKindOf, mimeOf) now live in
 // shared/document-preview.models.ts so the case detail and the fulltext search share one
@@ -216,4 +262,6 @@ export interface CaseDetail {
   parties: Party[];
   dueDates: DueDate[];
   documents: CaseDocument[];
+  /** Root of the case document folder tree; null when the case has no folder structure. */
+  rootFolder: DocFolder | null;
 }

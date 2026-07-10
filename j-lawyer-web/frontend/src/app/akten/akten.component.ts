@@ -6,13 +6,22 @@ import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { DocumentPreviewComponent } from '../shared/document-preview.component';
 import { DocumentContentService } from '../shared/document-content.service';
-import { PreviewDoc, previewKindOf } from '../shared/document-preview.models';
+import { fileKind, kindGlyph, PreviewDoc, previewKindOf } from '../shared/document-preview.models';
 import { forkJoin, map } from 'rxjs';
 import { CaseFilter, CasesService } from './cases.service';
 import {
   AccountEntry, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseMessage, CasePayment,
-  CaseTag, CaseTimesheet, DueDate, TimesheetPosition,
+  CaseTag, CaseTimesheet, DocFolder, DocSortKey, DueDate, TimesheetPosition,
 } from './case.models';
+
+/** A row in the document folder tree, flattened for display with indentation + a doc count. */
+interface DocFolderRow {
+  id: string;
+  name: string;
+  depth: number;
+  count: number;
+  isRoot: boolean;
+}
 
 type CaseTab = 'overview' | 'documents' | 'parties' | 'deadlines' | 'finance' | 'zeiten' | 'history';
 /** Sub-view within the finance tab (invoices, payments and the case account are too much for one screen). */
@@ -164,7 +173,7 @@ interface TimesheetView extends CaseTimesheet {
                   <div class="card-b">
                     @for (p of c.parties; track p.id) {
                       <div class="party">
-                        <span class="pa">{{ initials(p.contact || p.involvementType) }}</span>
+                        <span class="pa" [style.background]="p.color || null" [style.color]="p.color ? contrastOn(p.color) : null">{{ initials(p.contact || p.involvementType) }}</span>
                         <span>
                           <span class="role">{{ p.involvementType || '—' }}</span>
                           <span class="nm">{{ p.contact || '—' }}</span>
@@ -239,7 +248,10 @@ interface TimesheetView extends CaseTimesheet {
                   <div class="card-b">
                     @for (doc of overviewDocuments(); track doc.id) {
                       <div class="doc">
-                        <span class="ext">{{ doc.ext }}</span>
+                        <span class="ftype" [class]="'kind-' + docKind(doc)" [title]="doc.ext || ''">
+                          <jl-icon [name]="kindIcon(docKind(doc))" [size]="16" />
+                          <span class="ext-lbl">{{ doc.ext || '—' }}</span>
+                        </span>
                         <span>
                           <span class="dn">{{ doc.name }}</span>
                           <span class="dmeta">{{ doc.date | date: 'dd.MM.yyyy' }}</span>
@@ -253,35 +265,107 @@ interface TimesheetView extends CaseTimesheet {
                 </div>
               </div>
             } @else if (activeTab() === 'documents') {
-              <div class="card full">
-                <div class="card-h">
-                  <h3>{{ 'akten.documents' | transloco }}</h3>
-                  <span class="card-count">{{ c.documents.length }}</span>
-                </div>
-                <div class="card-b">
-                  @for (doc of c.documents; track doc.id) {
-                    <div class="doc doc-row" [class.previewable]="canPreview(doc)"
-                         (click)="canPreview(doc) ? preview(doc) : download(doc)">
-                      <span class="ext">{{ doc.ext || '—' }}</span>
-                      <span class="doc-main">
-                        <span class="dn">{{ doc.name }}</span>
-                        <span class="dmeta">{{ doc.date | date: 'dd.MM.yyyy' }} · {{ doc.size }}</span>
-                      </span>
-                      <span class="doc-actions">
-                        @if (canPreview(doc)) {
-                          <button type="button" class="doc-btn" (click)="$event.stopPropagation(); preview(doc)">
-                            {{ 'akten.docPreview' | transloco }}
-                          </button>
-                        }
-                        <button type="button" class="doc-btn primary" (click)="$event.stopPropagation(); download(doc)">
-                          <jl-icon name="download" [size]="14" />{{ 'akten.docDownload' | transloco }}
-                        </button>
-                      </span>
+              <div class="docs" [class.m-folders]="docMobilePane() === 'folders'" [class.m-list]="docMobilePane() === 'list'">
+                <!-- Folder tree (multi-select; default all selected, like the Swing client) -->
+                <aside class="doc-folders">
+                  <header class="col-head">
+                    <h3>{{ 'akten.docs.folders' | transloco }}</h3>
+                    <button type="button" class="all-toggle" (click)="toggleAllFolders()">
+                      {{ (allFoldersSelected() ? 'akten.docs.selectNone' : 'akten.docs.selectAll') | transloco }}
+                    </button>
+                    <button type="button" class="to-list" (click)="docMobilePane.set('list')">
+                      {{ 'akten.docs.show' | transloco }} ({{ visibleDocs().length }}) ›
+                    </button>
+                  </header>
+                  <div class="col-body">
+                    @for (f of docFolderRows(); track f.id) {
+                      <button type="button" class="fld" [class.sel]="isFolderSelected(f.id)"
+                              [style.padding-left.px]="10 + f.depth * 14" (click)="toggleFolder(f.id)">
+                        <span class="fld-box" [class.on]="isFolderSelected(f.id)">
+                          @if (isFolderSelected(f.id)) { <jl-icon name="check" [size]="11" /> }
+                        </span>
+                        <jl-icon name="folder" [size]="14" />
+                        <span class="fld-name">{{ f.isRoot ? ('akten.docs.root' | transloco) : f.name }}</span>
+                        @if (f.count > 0) { <span class="fld-badge">{{ f.count }}</span> }
+                      </button>
+                    }
+                  </div>
+                </aside>
+
+                <!-- Document list -->
+                <section class="doc-list">
+                  <header class="col-head doc-list-head">
+                    <div class="dl-title">
+                      <button type="button" class="to-folders" (click)="docMobilePane.set('folders')">‹ {{ 'akten.docs.folders' | transloco }}</button>
+                      @if (singleSelectedFolder(); as sf) {
+                        <h3>{{ sf.isRoot ? ('akten.docs.root' | transloco) : sf.name }}</h3>
+                      } @else if (allFoldersSelected()) {
+                        <h3>{{ 'akten.docs.allFolders' | transloco }}</h3>
+                      } @else {
+                        <h3>{{ 'akten.docs.nFolders' | transloco: { n: docFolderSel().size } }}</h3>
+                      }
+                      <span class="count">{{ visibleDocs().length }}</span>
                     </div>
-                  } @empty {
-                    <p class="muted">{{ 'akten.noDocs' | transloco }}</p>
-                  }
-                </div>
+                    <div class="dl-search">
+                      <jl-icon name="search" [size]="14" />
+                      <input type="search" [value]="docSearch()" [placeholder]="'akten.docs.searchPlaceholder' | transloco"
+                             (input)="docSearch.set($any($event.target).value)" />
+                      @if (docSearch()) { <button type="button" class="clear" (click)="clearDocSearch()" aria-label="clear">✕</button> }
+                    </div>
+                    <div class="dl-tools">
+                      <span class="sort-label">{{ 'akten.docs.sortBy' | transloco }}</span>
+                      @for (s of sortKeys; track s) {
+                        <button type="button" class="sort-btn" [class.on]="cases.docSort().key === s" (click)="toggleSort(s)">
+                          {{ 'akten.docs.sort.' + s | transloco }}{{ sortArrow(s) }}
+                        </button>
+                      }
+                      <button type="button" class="date-toggle" (click)="toggleDateMode()" [title]="'akten.docs.dateModeHint' | transloco">
+                        {{ (cases.docDateMode() === 'change' ? 'akten.docs.dateChange' : 'akten.docs.dateCreation') | transloco }}
+                      </button>
+                    </div>
+                  </header>
+                  <div class="col-body">
+                    @for (doc of visibleDocs(); track doc.id) {
+                      <div class="doc doc-row" [class.previewable]="canPreview(doc)"
+                           (click)="canPreview(doc) ? preview(doc) : download(doc)">
+                        <span class="hl-stripe" [class.single]="!(doc.highlight1 && doc.highlight2)">
+                          @if (doc.highlight1) { <span [style.background]="doc.highlight1"></span> }
+                          @if (doc.highlight2) { <span [style.background]="doc.highlight2"></span> }
+                        </span>
+                        <span class="ftype" [class]="'kind-' + docKind(doc)" [title]="doc.ext || ''">
+                          <jl-icon [name]="kindIcon(docKind(doc))" [size]="16" />
+                          <span class="ext-lbl">{{ doc.ext || '—' }}</span>
+                        </span>
+                        <span class="doc-main">
+                          <span class="dn">
+                            @if (doc.favorite) { <jl-icon class="fav" name="star" [size]="13" /> }
+                            <span class="dn-name">{{ doc.name }}</span>
+                          </span>
+                          <span class="dmeta">
+                            {{ (cases.docDateMode() === 'change' ? doc.changeDate : doc.date) | date: 'dd.MM.yyyy' }} · {{ doc.size }}@if (doc.version > 1) { · v{{ doc.version }} }@if (showFolderColumn() && docFolderLabel(doc)) { · <span class="dfolder"><jl-icon name="folder" [size]="11" /> {{ docFolderLabel(doc) }}</span> }
+                          </span>
+                          @if (doc.tags.length) {
+                            <span class="dtags">
+                              @for (t of doc.tags; track t) { <span class="dtag">{{ t }}</span> }
+                            </span>
+                          }
+                        </span>
+                        <span class="doc-actions">
+                          @if (canPreview(doc)) {
+                            <button type="button" class="doc-btn" (click)="$event.stopPropagation(); preview(doc)">
+                              {{ 'akten.docPreview' | transloco }}
+                            </button>
+                          }
+                          <button type="button" class="doc-btn primary" (click)="$event.stopPropagation(); download(doc)">
+                            <jl-icon name="download" [size]="14" />{{ 'akten.docDownload' | transloco }}
+                          </button>
+                        </span>
+                      </div>
+                    } @empty {
+                      <p class="muted pad">{{ (docSearch() ? 'akten.docs.noResults' : 'akten.noDocs') | transloco }}</p>
+                    }
+                  </div>
+                </section>
               </div>
             } @else if (activeTab() === 'parties') {
               <div class="card full">
@@ -292,7 +376,7 @@ interface TimesheetView extends CaseTimesheet {
                 <div class="card-b">
                   @for (p of c.parties; track p.id) {
                     <div class="party">
-                      <span class="pa">{{ initials(p.contact || p.involvementType) }}</span>
+                      <span class="pa" [style.background]="p.color || null" [style.color]="p.color ? contrastOn(p.color) : null">{{ initials(p.contact || p.involvementType) }}</span>
                       <span>
                         <span class="role">{{ p.involvementType || '—' }}</span>
                         <span class="nm">{{ p.contact || '—' }}</span>
@@ -312,7 +396,8 @@ interface TimesheetView extends CaseTimesheet {
                 <div class="card-b">
                   @for (d of c.dueDates; track d.id) {
                     <div class="frist" [class.done]="d.done">
-                      <span class="bar" [class.deadline]="d.type === 'deadline'"></span>
+                      <span class="bar" [class.deadline]="d.type === 'deadline'"
+                            [style.background]="d.calendarColor || null"></span>
                       <span class="fdate">{{ d.dueDate | date: 'dd.MM.yyyy' }}</span>
                       <span class="fx">
                         <span class="ft">{{ d.reason }}</span>
@@ -646,6 +731,15 @@ export class AktenComponent {
   // Document preview — handed to the shared <jl-document-preview> overlay.
   protected readonly previewDoc = signal<PreviewDoc | null>(null);
 
+  // Documents tab: folder navigation. Multiple folders can be viewed at once (like the Swing
+  // client) — docFolderSel holds the selected folder ids (default: all). docMobilePane drives the
+  // phone drill-down. The 'folder' sort is only offered because several folders can be shown.
+  protected readonly docFolderSel = signal<Set<string>>(new Set());
+  protected readonly docMobilePane = signal<'folders' | 'list'>('folders');
+  protected readonly sortKeys: DocSortKey[] = ['name', 'date', 'size', 'type', 'favorite', 'folder'];
+  /** Free-text filter over the case's documents (by name/tag). When set it searches case-wide. */
+  protected readonly docSearch = signal('');
+
   // Overview extras (labels, permissions, messages) — loaded eagerly with the case (overview is
   // the default tab). null while loading, [] when loaded/empty.
   protected readonly caseTags = signal<CaseTag[] | null>(null);
@@ -702,6 +796,188 @@ export class AktenComponent {
         this.router.navigate(['/cases', rows[0].id], { replaceUrl: true });
       }
     });
+  }
+
+  // ----- Documents tab: folders + sorting -----
+
+  /** The case's root folder id ('' when the case has no folder tree). */
+  private docRootId(): string {
+    return this.selected()?.rootFolder?.id ?? '';
+  }
+
+  /** True when a folder id denotes the root ('' sentinel or the actual root id). */
+  private isRootFolder(folderId: string): boolean {
+    return folderId === '' || folderId === this.docRootId();
+  }
+
+  /**
+   * The folder a document effectively lives in: root documents may carry no folder id or the root
+   * folder's own id, so both collapse to the root id used in the folder rows / selection set.
+   */
+  private effectiveFolderId(doc: CaseDocument): string {
+    return this.isRootFolder(doc.folderId) ? this.docRootId() : doc.folderId;
+  }
+
+  /** The folder tree flattened to indented rows (children alphabetical), each with a doc count. */
+  protected docFolderRows(): DocFolderRow[] {
+    const detail = this.selected();
+    if (!detail) { return []; }
+    const rows: DocFolderRow[] = [];
+    const visit = (folder: DocFolder, depth: number, isRoot: boolean) => {
+      rows.push({
+        id: folder.id,
+        name: folder.name,
+        depth,
+        count: detail.documents.filter((d) => this.effectiveFolderId(d) === folder.id).length,
+        isRoot,
+      });
+      [...folder.children]
+        .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
+        .forEach((c) => visit(c, depth + 1, false));
+    };
+    if (detail.rootFolder) {
+      visit(detail.rootFolder, 0, true);
+    } else {
+      rows.push({ id: '', name: '', depth: 0, count: detail.documents.length, isRoot: true });
+    }
+    return rows;
+  }
+
+  protected isFolderSelected(id: string): boolean {
+    return this.docFolderSel().has(id);
+  }
+
+  /** Toggles one folder in/out of the current selection. */
+  protected toggleFolder(id: string): void {
+    const next = new Set(this.docFolderSel());
+    if (next.has(id)) { next.delete(id); } else { next.add(id); }
+    this.docFolderSel.set(next);
+  }
+
+  protected allFolderIds(): string[] {
+    return this.docFolderRows().map((f) => f.id);
+  }
+
+  protected allFoldersSelected(): boolean {
+    const ids = this.allFolderIds();
+    const sel = this.docFolderSel();
+    return ids.length > 0 && ids.every((id) => sel.has(id));
+  }
+
+  /** Selects every folder, or clears the selection when everything is already selected. */
+  protected toggleAllFolders(): void {
+    this.docFolderSel.set(this.allFoldersSelected() ? new Set() : new Set(this.allFolderIds()));
+  }
+
+  /** id -> folder name (leaf), for the per-document folder label when several folders are shown. */
+  private folderNameMap(): Map<string, string> {
+    const m = new Map<string, string>();
+    const walk = (f: DocFolder) => { m.set(f.id, f.name); f.children.forEach(walk); };
+    const root = this.selected()?.rootFolder;
+    if (root) { walk(root); } else { m.set('', ''); }
+    return m;
+  }
+
+  /** id -> full folder path ("Dokumente / Gericht"), used for the "Folder" sort. */
+  private folderPathMap(): Map<string, string> {
+    const m = new Map<string, string>();
+    const walk = (f: DocFolder, prefix: string) => {
+      const path = prefix ? `${prefix} / ${f.name}` : f.name;
+      m.set(f.id, path);
+      f.children.forEach((c) => walk(c, path));
+    };
+    const root = this.selected()?.rootFolder;
+    if (root) { walk(root, ''); } else { m.set('', ''); }
+    return m;
+  }
+
+  /** Leaf folder name of a document (shown on rows when the selection spans several folders). */
+  protected docFolderLabel(doc: CaseDocument): string {
+    return this.folderNameMap().get(this.effectiveFolderId(doc)) ?? '';
+  }
+
+  /** Matches a document against a lower-cased search term (file name or any tag). */
+  private matchesSearch(doc: CaseDocument, term: string): boolean {
+    return doc.name.toLowerCase().includes(term) || doc.tags.some((t) => t.toLowerCase().includes(term));
+  }
+
+  protected clearDocSearch(): void {
+    this.docSearch.set('');
+  }
+
+  /** File-type category derived from the extension (drives the row icon + its colour). */
+  protected docKind(doc: CaseDocument): string {
+    return fileKind(doc.ext);
+  }
+
+  /** The glyph name for a file-type category (generic 'doc' as the fallback). */
+  protected kindIcon(kind: string): string {
+    return kindGlyph(kind as ReturnType<typeof fileKind>);
+  }
+
+  /** When exactly one folder is selected, its display row (else null) — drives the list heading. */
+  protected singleSelectedFolder(): DocFolderRow | null {
+    const sel = this.docFolderSel();
+    if (sel.size !== 1) { return null; }
+    return this.docFolderRows().find((f) => sel.has(f.id)) ?? null;
+  }
+
+  /** True when documents should show their folder (search results or a multi-folder selection). */
+  protected showFolderColumn(): boolean {
+    return this.docSearch().trim().length > 0 || this.docFolderSel().size > 1;
+  }
+
+  /**
+   * The documents to list: while a search term is present it filters the whole case (by name and
+   * tags) ignoring the folder selection; otherwise the documents of the selected folders. Sorted
+   * by the active criterion/direction.
+   */
+  protected visibleDocs(): CaseDocument[] {
+    const detail = this.selected();
+    if (!detail) { return []; }
+    const term = this.docSearch().trim().toLowerCase();
+    const sel = this.docFolderSel();
+    const docs = term
+      ? detail.documents.filter((d) => this.matchesSearch(d, term))
+      : detail.documents.filter((d) => sel.has(this.effectiveFolderId(d)));
+    const { key, dir } = this.cases.docSort();
+    const mode = this.cases.docDateMode();
+    const mul = dir === 'asc' ? 1 : -1;
+    const paths = key === 'folder' ? this.folderPathMap() : null;
+    return docs.sort((a, b) => {
+      let p: number;
+      if (paths) {
+        const pa = paths.get(this.effectiveFolderId(a)) ?? '';
+        const pb = paths.get(this.effectiveFolderId(b)) ?? '';
+        p = pa.localeCompare(pb, undefined, { sensitivity: 'base' });
+      } else {
+        p = comparePrimary(a, b, key, mode);
+      }
+      p *= mul;
+      return p !== 0 ? p : a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+    });
+  }
+
+  /** Toggles the sort direction when re-clicking the active criterion, else switches criterion. */
+  protected toggleSort(key: DocSortKey): void {
+    const cur = this.cases.docSort();
+    if (cur.key === key) {
+      this.cases.docSort.set({ key, dir: cur.dir === 'asc' ? 'desc' : 'asc' });
+    } else {
+      // Sensible default direction: newest/biggest/favourites first, names/types A→Z.
+      const dir = key === 'date' || key === 'size' ? 'desc' : 'asc';
+      this.cases.docSort.set({ key, dir });
+    }
+  }
+
+  /** The ▲/▼ marker for the active sort criterion (empty for the others). */
+  protected sortArrow(key: DocSortKey): string {
+    const s = this.cases.docSort();
+    return s.key === key ? (s.dir === 'asc' ? ' ▲' : ' ▼') : '';
+  }
+
+  protected toggleDateMode(): void {
+    this.cases.docDateMode.set(this.cases.docDateMode() === 'change' ? 'creation' : 'change');
   }
 
   /** True when the document can be previewed inline / in a new tab (vs. download-only). */
@@ -773,10 +1049,15 @@ export class AktenComponent {
     this.caseTags.set(null);
     this.caseGroups.set(null);
     this.caseMessages.set(null);
+    this.docFolderSel.set(new Set());
+    this.docMobilePane.set('folders');
+    this.docSearch.set('');
     this.cases.loadDetail(id).subscribe((detail) => {
       // ignore a stale response if the user already picked another case
       if (this.selectedId() === id) {
         this.selected.set(detail);
+        // Default: every folder selected (mirrors the Swing client's initial state).
+        this.docFolderSel.set(new Set(collectFolderIds(detail)));
         this.detailLoading.set(false);
       }
     });
@@ -1019,6 +1300,19 @@ export class AktenComponent {
   }
 
   /**
+   * Readable foreground (black or white) for a given "#rrggbb" background, chosen by the
+   * background's perceived luminance so the party-type colour never renders unreadable initials.
+   */
+  protected contrastOn(hex: string): string {
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+    if (!m) { return '#fff'; }
+    const n = parseInt(m[1], 16);
+    const r = (n >> 16) & 0xff, g = (n >> 8) & 0xff, b = n & 0xff;
+    // Rec. 601 luma; > 150 counts as a light background → dark text.
+    return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? '#16232e' : '#fff';
+  }
+
+  /**
    * Deadlines/follow-ups for the overview: only open (not done) ones with a date — overdue and
    * upcoming — soonest first, capped at 10. Overdue entries naturally sort to the top.
    */
@@ -1063,4 +1357,38 @@ function formatDurationMs(ms: number): string {
   const h = Math.floor(totalMinutes / 60);
   const m = totalMinutes % 60;
   return `${h}:${String(m).padStart(2, '0')}`;
+}
+
+/** Every folder id of a case (root + descendants); ['' ] when the case has no folder tree. */
+function collectFolderIds(detail: CaseDetail | null): string[] {
+  if (!detail?.rootFolder) { return ['']; }
+  const ids: string[] = [];
+  const walk = (f: DocFolder) => { ids.push(f.id); f.children.forEach(walk); };
+  walk(detail.rootFolder);
+  return ids;
+}
+
+/**
+ * Compares two documents by the given sort criterion in ascending order (the caller applies the
+ * direction and a name tiebreaker). Favourites sort ascending = favourites first. The 'folder'
+ * criterion is handled by the caller (it needs the folder-path map), so it falls through to 0.
+ */
+function comparePrimary(a: CaseDocument, b: CaseDocument, key: DocSortKey, mode: 'change' | 'creation'): number {
+  switch (key) {
+    case 'name':
+      return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+    case 'date': {
+      const av = mode === 'change' ? a.changeDate : a.date;
+      const bv = mode === 'change' ? b.changeDate : b.date;
+      return av < bv ? -1 : av > bv ? 1 : 0;
+    }
+    case 'size':
+      return a.sizeBytes - b.sizeBytes;
+    case 'type':
+      return a.ext.localeCompare(b.ext, undefined, { sensitivity: 'base' });
+    case 'favorite':
+      return a.favorite === b.favorite ? 0 : a.favorite ? -1 : 1;
+    default:
+      return 0;
+  }
 }

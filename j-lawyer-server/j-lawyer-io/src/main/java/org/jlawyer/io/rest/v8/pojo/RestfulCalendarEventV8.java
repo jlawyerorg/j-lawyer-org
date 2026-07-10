@@ -20,6 +20,7 @@ package org.jlawyer.io.rest.v8.pojo;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.CalendarSetup;
 
 /**
  * A single calendar entry (follow-up / deadline / appointment) for the v8 calendar view, with
@@ -47,6 +48,12 @@ public class RestfulCalendarEventV8 {
     private String caseId;
     private String caseFileNumber;
     private String caseName;
+    /** Id of the calendar this entry belongs to; empty when none is assigned. */
+    private String calendar;
+    /** Colour of that calendar as a packed RGB int (the argument to java.awt.Color(int)). */
+    private int calendarColor;
+    /** Display name of that calendar; empty when none is assigned. */
+    private String calendarName;
 
     public RestfulCalendarEventV8() {
     }
@@ -85,6 +92,14 @@ public class RestfulCalendarEventV8 {
             e.setCaseId(afb.getId());
             e.setCaseFileNumber(afb.getFileNumber());
             e.setCaseName(afb.getName());
+        }
+        // The calendar the entry belongs to carries the colour shown in the client. The
+        // calendarSetup is an eager @ManyToOne, so it is available on the (possibly detached) bean.
+        CalendarSetup cs = rev.getCalendarSetup();
+        if (cs != null) {
+            e.setCalendar(cs.getId());
+            e.setCalendarColor(cs.getBackground());
+            e.setCalendarName(cs.getDisplayName());
         }
         return e;
     }
@@ -191,5 +206,29 @@ public class RestfulCalendarEventV8 {
 
     public void setCaseName(String caseName) {
         this.caseName = caseName;
+    }
+
+    public String getCalendar() {
+        return calendar;
+    }
+
+    public void setCalendar(String calendar) {
+        this.calendar = calendar;
+    }
+
+    public int getCalendarColor() {
+        return calendarColor;
+    }
+
+    public void setCalendarColor(int calendarColor) {
+        this.calendarColor = calendarColor;
+    }
+
+    public String getCalendarName() {
+        return calendarName;
+    }
+
+    public void setCalendarName(String calendarName) {
+        this.calendarName = calendarName;
     }
 }
