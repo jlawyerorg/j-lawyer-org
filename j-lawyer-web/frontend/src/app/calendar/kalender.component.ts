@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, HostListener, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { LanguageService } from '../core/language.service';
 import { CalendarService } from './calendar.service';
-import { CalendarEvent, CalendarFilter, CalendarView } from './calendar.models';
+import { EventEditorComponent } from './event-editor.component';
+import { CalendarEvent, CalendarFilter, CalendarView, EventDraft } from './calendar.models';
 import { addDays, sameDay, startOfDay, startOfMonth, startOfWeekMon } from './calendar.dates';
 
 /** One agenda day with preformatted labels (recomputed on language change). */
@@ -59,7 +60,7 @@ const HOUR_PX = 46;
   selector: 'jl-kalender',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoModule, IconComponent, RouterLink],
+  imports: [TranslocoModule, IconComponent, RouterLink, EventEditorComponent],
   template: `
     <section class="cal">
       <header class="cal-head">
@@ -82,6 +83,9 @@ const HOUR_PX = 46;
             {{ 'kalender.openOnly' | transloco }}
           </label>
           <span class="count">{{ countLabel() }}</span>
+          <button type="button" class="new-btn" (click)="openCreate()">
+            <jl-icon name="plus" [size]="15" /> {{ 'kalender.new' | transloco }}
+          </button>
         </div>
       </header>
 
@@ -134,6 +138,16 @@ const HOUR_PX = 46;
                           @if (r.ev.location) { <span class="eloc"><jl-icon name="pin" [size]="12" /> {{ r.ev.location }}</span> }
                           @if (r.ev.assignee) { <span class="eass">{{ r.ev.assignee }}</span> }
                         </span>
+                      </span>
+                      <span class="eactions">
+                        <button type="button" class="ea" [class.on]="r.ev.done" [disabled]="cal.saving()"
+                                (click)="cal.toggleDone(r.ev)"
+                                [title]="(r.ev.done ? 'kalender.markOpen' : 'kalender.markDone') | transloco">
+                          <jl-icon name="check" [size]="15" />
+                        </button>
+                        <button type="button" class="ea" (click)="openEdit(r.ev)" [title]="'kalender.edit' | transloco">
+                          <jl-icon name="edit" [size]="15" />
+                        </button>
                       </span>
                     </div>
                   }
@@ -221,8 +235,13 @@ const HOUR_PX = 46;
                   </div>
                   <div class="tg-cols">
                     @for (col of gridDays(); track col.key) {
-                      <div class="tg-col">
+                      <div class="tg-col" (mousedown)="dragStart($event, col)">
                         @for (h of hours; track h) { <div class="tg-hline" [style.height.px]="hourPx"></div> }
+                        @if (dragBox(); as db) {
+                          @if (db.key === col.key) {
+                            <div class="drag-sel" [style.top.px]="db.top" [style.height.px]="db.height"></div>
+                          }
+                        }
                         @for (ge of col.timed; track ge.ev.id) {
                           @if (ge.ev.caseId) {
                             <a class="tev" [class]="ge.ev.type" [class.done]="ge.ev.done"
@@ -257,6 +276,11 @@ const HOUR_PX = 46;
         }
       }
     </section>
+
+    @if (editing(); as ed) {
+      <jl-event-editor [event]="ed.event" [presetBegin]="ed.begin" [presetEnd]="ed.end" [presetTimed]="ed.timed"
+                       (save)="onSave($event)" (remove)="onDelete($event)" (close)="closeEditor()" />
+    }
   `,
   styleUrl: './kalender.component.css',
 })
@@ -403,9 +427,125 @@ export class KalenderComponent {
     return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? '#16232e' : '#fff';
   }
 
+  /**
+   * Editor state: null = closed. `event` is the entry to edit (null when creating); `begin`/`end`
+   * preselect the time range (from a grid drag), `timed` prefers an appointment calendar.
+   */
+  protected readonly editing = signal<{
+    event: CalendarEvent | null; begin: Date | null; end: Date | null; timed: boolean;
+  } | null>(null);
+
   constructor() {
     this.cal.reload();
+    this.cal.loadCalendars();
   }
+
+  protected openCreate(): void {
+    this.editing.set({ event: null, begin: startOfDay(this.cal.anchor()), end: null, timed: false });
+  }
+
+  protected openEdit(ev: CalendarEvent): void {
+    this.editing.set({ event: ev, begin: ev.begin, end: ev.end, timed: ev.timed });
+  }
+
+  protected closeEditor(): void {
+    this.editing.set(null);
+  }
+
+  protected onSave(draft: EventDraft): void {
+    this.cal.save(draft).subscribe({
+      next: () => this.closeEditor(),
+      // On failure keep the dialog open so the user can retry; cal.saving() is already reset.
+      error: () => undefined,
+    });
+  }
+
+  protected onDelete(id: string): void {
+    this.cal.remove(id).subscribe({
+      next: () => this.closeEditor(),
+      error: () => undefined,
+    });
+  }
+
+  // ---- Drag-to-create on the day/week time grid ------------------------------------------------
+  // A vertical drag in a day column selects a time range and opens the create dialog prefilled
+  // with a timed appointment on that column's date. Times snap to 15-minute steps.
+
+  /** Active drag: the column key/date plus the start/current y (px, relative to the column top). */
+  private readonly dragState = signal<{ key: string; date: Date; y0: number; y1: number } | null>(null);
+  /** clientY of the dragged column's top edge, captured on mousedown. */
+  private dragColTop = 0;
+
+  /** The selection rectangle (px) for the column currently being dragged, or null. */
+  protected readonly dragBox = computed(() => {
+    const s = this.dragState();
+    if (!s) {
+      return null;
+    }
+    return { key: s.key, top: Math.min(s.y0, s.y1), height: Math.abs(s.y1 - s.y0) };
+  });
+
+  private gridHeightPx(): number {
+    return this.hours.length * this.hourPx;
+  }
+
+  protected dragStart(ev: MouseEvent, col: GridColumn): void {
+    // Left button only; ignore drags that begin on an existing event (let its link work).
+    if (ev.button !== 0 || (ev.target as HTMLElement).closest('.tev')) {
+      return;
+    }
+    const rect = (ev.currentTarget as HTMLElement).getBoundingClientRect();
+    this.dragColTop = rect.top;
+    const y = clamp(ev.clientY - rect.top, 0, this.gridHeightPx());
+    this.dragState.set({ key: col.key, date: col.date, y0: y, y1: y });
+    ev.preventDefault();
+  }
+
+  @HostListener('document:mousemove', ['$event'])
+  protected onDragMove(ev: MouseEvent): void {
+    const s = this.dragState();
+    if (!s) {
+      return;
+    }
+    const y = clamp(ev.clientY - this.dragColTop, 0, this.gridHeightPx());
+    this.dragState.set({ ...s, y1: y });
+  }
+
+  @HostListener('document:mouseup')
+  protected onDragEnd(): void {
+    const s = this.dragState();
+    this.dragState.set(null);
+    if (!s || Math.abs(s.y1 - s.y0) < 6) {
+      return; // too small — treat as a click, not a range selection
+    }
+    const startMin = this.yToMinutes(Math.min(s.y0, s.y1));
+    const endMin = Math.max(this.yToMinutes(Math.max(s.y0, s.y1)), startMin + 15);
+    this.editing.set({
+      event: null,
+      begin: atMinutes(s.date, startMin),
+      end: atMinutes(s.date, endMin),
+      timed: true,
+    });
+  }
+
+  /** Converts a y offset (px from the grid top) to minutes-of-day, snapped to 15-minute steps. */
+  private yToMinutes(y: number): number {
+    const winStart = DAY_START * 60;
+    const raw = winStart + (y / this.hourPx) * 60;
+    return Math.round(raw / 15) * 15;
+  }
+}
+
+/** Clamps n to [lo, hi]. */
+function clamp(n: number, lo: number, hi: number): number {
+  return Math.max(lo, Math.min(hi, n));
+}
+
+/** A Date on the given day at the given minutes-of-day (local). */
+function atMinutes(day: Date, minutes: number): Date {
+  const d = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+  d.setMinutes(minutes);
+  return d;
 }
 
 /** Local yyyy-MM-dd key used to group and match "today". */

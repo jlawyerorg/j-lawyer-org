@@ -31,4 +31,6 @@ public interface CalendarEndpointLocalV8 {
 
     Response listEvents(String from, String to, String type, String status, int limit);
 
+    Response deleteEvent(String id);
+
 }

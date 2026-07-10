@@ -353,6 +353,42 @@
       "event": "Appointment",
       "respite": "Deadline",
       "followup": "Follow-up"
+    },
+    "new": "New",
+    "edit": "Edit",
+    "markDone": "Mark as done",
+    "markOpen": "Mark as open",
+    "editor": {
+      "newTitle": "New calendar entry",
+      "editTitle": "Edit entry",
+      "case": "Case",
+      "casePlaceholder": "Search file number or name …",
+      "calendar": "Calendar",
+      "summary": "Subject",
+      "date": "Date",
+      "start": "From",
+      "end": "To",
+      "assignee": "Assignee",
+      "reminder": "Reminder (min.)",
+      "location": "Location",
+      "description": "Description",
+      "done": "Done",
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "time": "Time",
+      "assigneeNone": "— nobody —",
+      "rem": {
+        "none": "No reminder",
+        "atStart": "At start",
+        "m5": "5 min",
+        "m10": "10 min",
+        "m15": "15 min",
+        "m30": "30 min",
+        "h1": "1 hr",
+        "h2": "2 hrs",
+        "d1": "1 day"
+      }
     }
   },
   "desktop": {

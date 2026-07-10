@@ -353,6 +353,42 @@
       "event": "Termin",
       "respite": "Frist",
       "followup": "Wiedervorlage"
+    },
+    "new": "Neu",
+    "edit": "Bearbeiten",
+    "markDone": "Als erledigt markieren",
+    "markOpen": "Als offen markieren",
+    "editor": {
+      "newTitle": "Neuer Kalendereintrag",
+      "editTitle": "Eintrag bearbeiten",
+      "case": "Akte",
+      "casePlaceholder": "Aktenzeichen oder Name suchen …",
+      "calendar": "Kalender",
+      "summary": "Betreff",
+      "date": "Datum",
+      "start": "Von",
+      "end": "Bis",
+      "assignee": "Zuständig",
+      "reminder": "Erinnerung (Min.)",
+      "location": "Ort",
+      "description": "Beschreibung",
+      "done": "Erledigt",
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "delete": "Löschen",
+      "time": "Uhrzeit",
+      "assigneeNone": "— niemand —",
+      "rem": {
+        "none": "Keine Erinnerung",
+        "atStart": "Bei Beginn",
+        "m5": "5 Min.",
+        "m10": "10 Min.",
+        "m15": "15 Min.",
+        "m30": "30 Min.",
+        "h1": "1 Std.",
+        "h2": "2 Std.",
+        "d1": "1 Tag"
+      }
     }
   },
   "desktop": {

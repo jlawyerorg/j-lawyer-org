@@ -18,8 +18,10 @@
  */
 package org.jlawyer.io.rest.v8;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
+import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import com.jdimension.jlawyer.services.CalendarServiceLocal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -29,9 +31,11 @@ import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
@@ -55,6 +59,7 @@ public class CalendarEndpointV8 implements CalendarEndpointLocalV8 {
 
     private static final Logger log = Logger.getLogger(CalendarEndpointV8.class.getName());
     private static final String LOOKUP_CALENDAR = "java:global/j-lawyer-server/j-lawyer-server-ejb/CalendarService!com.jdimension.jlawyer.services.CalendarServiceLocal";
+    private static final String LOOKUP_CASES = "java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
 
     /**
      * Lists calendar entries (follow-ups, deadlines, appointments) for the caller within a range.
@@ -111,6 +116,53 @@ public class CalendarEndpointV8 implements CalendarEndpointLocalV8 {
             return Response.ok(items).build();
         } catch (Exception ex) {
             log.error("Can not list calendar events", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Deletes a calendar entry (follow-up, deadline or appointment) by its id. Access is checked
+     * against the case the entry belongs to: the caller must be able to read that case, otherwise
+     * the entry is treated as non-existent (404). Completes the calendar CRUD surface for the web
+     * client — OpenSpec change {@code add-web-client}. Creation/update live at {@code /v6/cases/duedate/*}.
+     *
+     * @param id the calendar entry (review) id
+     * @response 204 Entry deleted
+     * @response 404 No such entry, or the caller cannot access the owning case
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/events/{id}")
+    @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Deletes a calendar entry (follow-up, deadline or appointment) by id")
+    public Response deleteEvent(@PathParam("id") String id) {
+        try {
+            if (id == null || id.trim().isEmpty()) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            InitialContext ic = new InitialContext();
+            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup(LOOKUP_CALENDAR);
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+
+            ArchiveFileReviewsBean review = cal.getReview(id);
+            if (review == null || review.getArchiveFileKey() == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            // ACL: getArchiveFile is restricted to cases the caller may access; null => no access.
+            ArchiveFileBean owningCase = cases.getArchiveFile(review.getArchiveFileKey().getId());
+            if (owningCase == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            cal.removeReview(id);
+            return Response.noContent().build();
+        } catch (Exception ex) {
+            log.error("Can not delete calendar entry " + id, ex);
             return Response.serverError().build();
         }
     }

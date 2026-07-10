@@ -1,17 +1,37 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
+import { defer, finalize, map, Observable, tap } from 'rxjs';
 import { API_ROOT } from '../core/api';
-import { CalendarEvent, CalendarEventType, CalendarFilter, CalendarView } from './calendar.models';
+import { CalendarEvent, CalendarEventType, CalendarFilter, CalendarSetup, CalendarView, CaseRef, EventDraft, UserRef } from './calendar.models';
 import { addDays, endOfMonth, isoDay, startOfDay, startOfMonth, startOfWeekMon } from './calendar.dates';
 
 const CALENDAR_V8 = `${API_ROOT}/v8/calendar`;
+const CALENDARS_V4 = `${API_ROOT}/v4/calendars`;
+const DUEDATE_V6 = `${API_ROOT}/v6/cases/duedate`;
+const CASES_V8 = `${API_ROOT}/v8/cases`;
+const USERS_V6 = `${API_ROOT}/v6/security/users`;
 
 /** Wire shape returned by j-lawyer-io (only the fields we consume). */
 interface CalendarEventDto {
   id: string; type: CalendarEventType; summary: string; description: string; location: string;
-  begin: number; end: number | null; done: boolean; assignee: string;
+  begin: number; end: number | null; done: boolean; assignee: string; reminderMinutes?: number;
   caseId: string; caseFileNumber: string; caseName: string;
   calendar?: string; calendarColor?: number; calendarName?: string;
+}
+
+/** Wire shape of GET /v4/calendars/list. */
+interface CalendarSetupDto {
+  id: string; displayName: string; eventType: string; background: number;
+}
+
+/** Wire shape of GET /v8/cases/page (only the fields the picker needs). */
+interface CasePageDto {
+  items: { id: string; fileNumber: string; name: string }[];
+}
+
+/** Wire shape of GET /v6/security/users (only the fields the assignee picker needs). */
+interface UserDto {
+  principalId: string; displayName: string;
 }
 
 /**
@@ -34,6 +54,13 @@ export class CalendarService {
   readonly filter = signal<CalendarFilter>('all');
   /** When true, only open (not-done) entries are requested. */
   readonly openOnly = signal(false);
+
+  /** Calendars the user can file entries into (loaded once, lazily). */
+  readonly calendars = signal<CalendarSetup[]>([]);
+  /** Login-enabled users offered as the entry's responsible person (loaded once, lazily). */
+  readonly users = signal<UserRef[]>([]);
+  /** True while a create/update/delete/toggle write is in flight. */
+  readonly saving = signal(false);
 
   private requestSeq = 0;
 
@@ -131,6 +158,116 @@ export class CalendarService {
     this.openOnly.set(openOnly);
     this.reload();
   }
+
+  /** Loads the list of calendars for the entry editor (once; no-op if already loaded). */
+  loadCalendars(): void {
+    if (this.calendars().length) {
+      return;
+    }
+    this.http.get<CalendarSetupDto[]>(`${CALENDARS_V4}/list`).subscribe({
+      next: (rows) => this.calendars.set((rows ?? []).map(toCalendarSetup)),
+      error: () => this.calendars.set([]),
+    });
+  }
+
+  /** Loads the login-enabled users for the assignee picker (once; no-op if already loaded). */
+  loadUsers(): void {
+    if (this.users().length) {
+      return;
+    }
+    this.http.get<UserDto[]>(USERS_V6).subscribe({
+      next: (rows) => this.users.set(
+        (rows ?? [])
+          .map((u) => ({ principalId: u.principalId, displayName: u.displayName || u.principalId }))
+          .sort((a, b) => a.displayName.localeCompare(b.displayName)),
+      ),
+      error: () => this.users.set([]),
+    });
+  }
+
+  /** Case search for the create dialog's picker (by file number / name / …). */
+  searchCases(query: string): Observable<CaseRef[]> {
+    const params = new HttpParams().set('q', query).set('offset', 0).set('limit', 8);
+    return this.http.get<CasePageDto>(`${CASES_V8}/page`, { params }).pipe(
+      map((page) => (page?.items ?? []).map((i) => ({ id: i.id, fileNumber: i.fileNumber, name: i.name }))),
+    );
+  }
+
+  /**
+   * Creates (no id) or updates (with id) a calendar entry via the v6 duedate endpoints, reloading
+   * the current view on success. Both endpoints require the owning case and target calendar.
+   * Returns a cold observable — the caller subscribes exactly once (see {@link toggleDone} for the
+   * fire-and-forget variant).
+   */
+  save(draft: EventDraft): Observable<unknown> {
+    const url = draft.id ? `${DUEDATE_V6}/update` : `${DUEDATE_V6}/create`;
+    return defer(() => {
+      this.saving.set(true);
+      return this.http.put(url, toDueDatePayload(draft));
+    }).pipe(
+      tap(() => this.reload()),
+      finalize(() => this.saving.set(false)),
+    );
+  }
+
+  /** Deletes a calendar entry (DELETE /v8/calendar/events/{id}), reloading on success. */
+  remove(id: string): Observable<unknown> {
+    return defer(() => {
+      this.saving.set(true);
+      return this.http.delete(`${CALENDAR_V8}/events/${encodeURIComponent(id)}`);
+    }).pipe(
+      tap(() => this.reload()),
+      finalize(() => this.saving.set(false)),
+    );
+  }
+
+  /**
+   * Flips an entry's done flag via update (there is no dedicated mark-done REST endpoint).
+   * Subscribes internally so it can be called fire-and-forget from a template click handler.
+   */
+  toggleDone(ev: CalendarEvent): void {
+    this.save({
+      id: ev.id,
+      caseId: ev.caseId,
+      calendar: ev.calendarId,
+      type: ev.type,
+      summary: ev.summary,
+      description: ev.description,
+      location: ev.location,
+      assignee: ev.assignee,
+      begin: ev.begin.getTime(),
+      end: (ev.end ?? ev.begin).getTime(),
+      reminderMinutes: ev.reminderMinutes,
+      done: !ev.done,
+    }).subscribe({ error: () => undefined });
+  }
+}
+
+function toCalendarSetup(dto: CalendarSetupDto): CalendarSetup {
+  const t = (dto.eventType ?? '').toUpperCase();
+  const type: CalendarEventType = t === 'EVENT' ? 'event' : t === 'RESPITE' ? 'respite' : 'followup';
+  return { id: dto.id, displayName: dto.displayName ?? '', eventType: type, color: rgbHex(dto.background) };
+}
+
+/** Maps our draft to the RestfulDueDateV6 JSON shape (ISO dates, uppercase type). */
+function toDueDatePayload(draft: EventDraft): Record<string, unknown> {
+  const payload: Record<string, unknown> = {
+    caseId: draft.caseId,
+    calendar: draft.calendar,
+    type: draft.type.toUpperCase(),
+    summary: draft.summary,
+    description: draft.description,
+    location: draft.location,
+    assignee: draft.assignee,
+    beginDate: new Date(draft.begin).toISOString(),
+    endDate: new Date(draft.end).toISOString(),
+    reminderMinutes: draft.reminderMinutes,
+    done: draft.done,
+  };
+  if (draft.id) {
+    payload['id'] = draft.id;
+  }
+  return payload;
 }
 
 function toEvent(dto: CalendarEventDto): CalendarEvent {
@@ -145,6 +282,7 @@ function toEvent(dto: CalendarEventDto): CalendarEvent {
     end: dto.end != null ? new Date(dto.end) : null,
     done: !!dto.done,
     assignee: dto.assignee ?? '',
+    reminderMinutes: dto.reminderMinutes ?? -1,
     // Only appointments (Termin) carry a meaningful clock time; the others are all-day.
     timed: dto.type === 'event',
     caseId: dto.caseId ?? '',
@@ -154,6 +292,7 @@ function toEvent(dto: CalendarEventDto): CalendarEvent {
     // (which would otherwise read as black) for entries without a calendar.
     color: dto.calendar ? rgbHex(dto.calendarColor) : '',
     calendarName: dto.calendarName ?? '',
+    calendarId: dto.calendar ?? '',
   };
 }
 

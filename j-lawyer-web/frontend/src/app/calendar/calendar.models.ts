@@ -28,6 +28,8 @@ export interface CalendarEvent {
   end: Date | null;
   done: boolean;
   assignee: string;
+  /** Reminder lead time in minutes; -1 = no reminder (matches the desktop default). */
+  reminderMinutes: number;
   /** True for appointments (Termin), which carry a clock time; deadlines/follow-ups are all-day. */
   timed: boolean;
   caseId: string;
@@ -41,6 +43,58 @@ export interface CalendarEvent {
   color: string;
   /** Display name of that calendar; empty when none. Used as a tooltip. */
   calendarName: string;
+  /** Id of the calendar this entry belongs to; empty when none. Needed to edit/update the entry. */
+  calendarId: string;
+}
+
+/**
+ * A calendar the user can file entries into (GET /v4/calendars/list). Each calendar is typed:
+ * its {@link eventType} determines the kind of entry it holds (and whether entries are timed).
+ */
+export interface CalendarSetup {
+  id: string;
+  displayName: string;
+  /** The single entry kind this calendar holds — drives the new entry's type. */
+  eventType: CalendarEventType;
+  /** CSS hex colour derived from the server's packed-RGB int; '' when unset. */
+  color: string;
+}
+
+/** A minimal case reference for the create dialog's case picker. */
+export interface CaseRef {
+  id: string;
+  fileNumber: string;
+  name: string;
+}
+
+/** A user that can be assigned responsibility for an entry (login-enabled users). */
+export interface UserRef {
+  /** Login/principal id — stored as the entry's assignee. */
+  principalId: string;
+  displayName: string;
+}
+
+/**
+ * The editable shape of a calendar entry, sent to the write endpoints
+ * (PUT /v6/cases/duedate/{create,update}). {@link id} is absent when creating.
+ */
+export interface EventDraft {
+  id?: string;
+  caseId: string;
+  /** Calendar setup id the entry is filed into. */
+  calendar: string;
+  /** REST type token — 'event' | 'respite' | 'followup' (uppercased on the wire). */
+  type: CalendarEventType;
+  summary: string;
+  description: string;
+  location: string;
+  assignee: string;
+  /** Start as epoch millis. */
+  begin: number;
+  /** End as epoch millis (equals begin for all-day entries). */
+  end: number;
+  reminderMinutes: number;
+  done: boolean;
 }
 
 /** Events belonging to one calendar day, for the agenda grouping. */

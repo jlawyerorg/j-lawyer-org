@@ -685,7 +685,11 @@ public interface CalendarServiceLocal {
     Collection<ArchiveFileReviewsBean> getReviewsUnrestricted(String archiveFileKey) throws Exception;
     
     public Collection<ArchiveFileReviewsBean> getReviews(String archiveFileKey) throws Exception;
-    
+
+    ArchiveFileReviewsBean getReview(String eventId) throws Exception;
+
+    void removeReview(String reviewId) throws Exception;
+
     public List<CalendarSetup> getAllCalendarSetups();
     
     public List<CalendarSetup> getCalendarSetupsForUser(String principalId);

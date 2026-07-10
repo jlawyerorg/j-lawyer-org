@@ -35,6 +35,8 @@
 .toggle { display: inline-flex; align-items: center; gap: 7px; font-size: .84rem; color: var(--jl-ink-soft); cursor: pointer; user-select: none; }
 .toggle input { accent-color: var(--jl-blue); width: 15px; height: 15px; }
 .count { color: var(--jl-ink-faint); font-size: .82rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.new-btn { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: .82rem; font-weight: 650; padding: 7px 13px; border-radius: 8px; border: 1px solid var(--jl-blue); background: var(--jl-blue); color: #fff; cursor: pointer; }
+.new-btn:hover { background: color-mix(in srgb, var(--jl-blue) 88%, #000); }
 
 /* ---------- Filter chips ---------- */
 .filters { display: flex; flex-shrink: 0; gap: 6px; padding: 10px 16px; border-bottom: 1px solid var(--jl-line); overflow-x: auto; }
@@ -64,8 +66,13 @@
 .day-h.today .dl { color: var(--jl-blue); }
 .badge-today { font-size: .66rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--jl-blue); background: color-mix(in srgb, var(--jl-blue) 14%, transparent); padding: 2px 7px; border-radius: 10px; }
 
-.ev { display: grid; grid-template-columns: 54px 3px 1fr; column-gap: 12px; align-items: stretch; padding: 10px 18px; border-bottom: 1px solid var(--jl-line); }
+.ev { display: grid; grid-template-columns: 54px 3px 1fr auto; column-gap: 12px; align-items: stretch; padding: 10px 18px; border-bottom: 1px solid var(--jl-line); }
 .ev.done { opacity: .6; }
+.eactions { grid-column: 4; display: flex; align-items: center; gap: 4px; }
+.ev .ea { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 7px; border: 1px solid transparent; background: transparent; color: var(--jl-ink-faint); cursor: pointer; }
+.ev .ea:hover:not(:disabled) { background: var(--jl-surface-alt); color: var(--jl-blue); border-color: var(--jl-line-strong); }
+.ev .ea:disabled { opacity: .5; cursor: default; }
+.ev .ea.on { color: var(--jl-green); }
 .ev.done .esum { text-decoration: line-through; }
 .etime { grid-column: 1; font-size: .82rem; font-weight: 700; color: var(--jl-ink); font-variant-numeric: tabular-nums; padding-top: 1px; }
 .etime .allday { font-size: .68rem; font-weight: 600; color: var(--jl-ink-faint); text-transform: uppercase; letter-spacing: .04em; }
@@ -133,8 +140,9 @@ a.mchip:hover { background: color-mix(in srgb, var(--jl-blue) 22%, transparent);
 .tg-hours { width: 60px; flex: none; }
 .tg-hour { position: relative; }
 .tg-hour span { position: absolute; top: 1px; right: 8px; font-size: .68rem; color: var(--jl-ink-faint); font-variant-numeric: tabular-nums; }
-.tg-col { flex: 1 1 0; min-width: 0; position: relative; border-left: 1px solid var(--jl-line); }
+.tg-col { flex: 1 1 0; min-width: 0; position: relative; border-left: 1px solid var(--jl-line); cursor: cell; }
 .tg-hline { border-top: 1px solid var(--jl-line); box-sizing: border-box; }
+.drag-sel { position: absolute; left: 2px; right: 2px; z-index: 2; border-radius: 5px; background: color-mix(in srgb, var(--jl-blue) 22%, transparent); border: 1px dashed var(--jl-blue); pointer-events: none; }
 .tev {
   position: absolute; left: 0; box-sizing: border-box; overflow: hidden; z-index: 1;
   padding: 2px 6px; border-radius: 6px; font-size: .74rem; color: #fff; text-decoration: none;
