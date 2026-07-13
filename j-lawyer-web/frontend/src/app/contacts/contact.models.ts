@@ -89,6 +89,36 @@ export interface ContactDocument {
 /** Sort criteria for the contact documents tab. */
 export type ContactDocSortKey = 'name' | 'date' | 'size';
 
+/**
+ * The writable contact shape (RestfulContactV2), all fields optional. Used verbatim as the request
+ * body for create/update and as the editor's working copy — on edit it is cloned from the loaded
+ * contact so unedited fields (insurance, external ids, …) round-trip unchanged. Short 0/1 flags are
+ * kept as numbers; everything else is a string.
+ */
+export interface ContactData {
+  id?: string;
+  title?: string; salutation?: string; gender?: string;
+  firstName?: string; firstName2?: string; name?: string; birthName?: string; initials?: string;
+  company?: string; department?: string; legalForm?: string;
+  companyRegistrationNumber?: string; companyRegistrationCourt?: string;
+  street?: string; streetNumber?: string; zipCode?: string; city?: string;
+  country?: string; state?: string; district?: string; adjunct?: string;
+  phone?: string; mobile?: string; fax?: string;
+  email?: string; emailHome?: string; emailMisc?: string; website?: string; beaSafeId?: string;
+  birthDate?: string; placeOfBirth?: string; dateOfDeath?: string; nationality?: string;
+  profession?: string; role?: string; degreePrefix?: string; degreeSuffix?: string; titleInAddress?: string;
+  vatId?: string; tin?: string;
+  bankName?: string; bankCode?: string; bankAccount?: string; bankAccountOwner?: string;
+  sepaReference?: string; sepaSince?: string; leitwegId?: string;
+  legalProtection?: number; insuranceName?: string; insuranceNumber?: string; insurant?: string;
+  trafficLegalProtection?: number; trafficInsuranceName?: string; trafficInsuranceNumber?: string; trafficInsurant?: string;
+  motorLegalProtection?: number; motorInsuranceName?: string; motorInsuranceNumber?: string; motorInsurant?: string;
+  taxDeduction?: number;
+  complimentaryClose?: string; notice?: string;
+  custom1?: string; custom2?: string; custom3?: string;
+  externalId?: string; externalId2?: string; externalId3?: string; externalId4?: string; externalId5?: string;
+}
+
 /** Full contact (RestfulContactV2) shaped for the detail view. */
 export interface ContactDetail {
   id: string;

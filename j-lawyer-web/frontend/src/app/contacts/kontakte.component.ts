@@ -2,14 +2,15 @@ import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@ang
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { TranslocoModule } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { DocumentPreviewComponent } from '../shared/document-preview.component';
 import { DocumentContentService } from '../shared/document-content.service';
 import { fileKind, fileKindIcon, PreviewDoc, previewKindOf } from '../shared/document-preview.models';
 import { PinsService } from '../shell/pins.service';
 import { ContactsService } from './contacts.service';
-import { ContactCase, ContactDetail, ContactDocSortKey, ContactDocument, ContactFilter } from './contact.models';
+import { ContactEditorComponent } from './contact-editor.component';
+import { ContactCase, ContactData, ContactDetail, ContactDocSortKey, ContactDocument, ContactFilter } from './contact.models';
 
 type ContactTab = 'overview' | 'cases' | 'documents';
 
@@ -23,7 +24,7 @@ type ContactTab = 'overview' | 'cases' | 'documents';
   selector: 'jl-kontakte',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoModule, IconComponent, DatePipe, RouterLink, DocumentPreviewComponent],
+  imports: [TranslocoModule, IconComponent, DatePipe, RouterLink, DocumentPreviewComponent, ContactEditorComponent],
   template: `
     <div class="master-detail" [class.show-detail]="selectedId()">
       <!-- Kontaktliste -->
@@ -31,7 +32,7 @@ type ContactTab = 'overview' | 'cases' | 'documents';
         <header class="list-head">
           <h1>{{ 'kontakte.title' | transloco }}</h1>
           <span class="count">{{ cases.total() }}</span>
-          <button type="button" class="btn-primary">
+          <button type="button" class="btn-primary" (click)="openCreate()">
             <jl-icon name="plus" [size]="14" />{{ 'kontakte.new' | transloco }}
           </button>
         </header>
@@ -96,6 +97,14 @@ type ContactTab = 'overview' | 'cases' | 'documents';
                       [title]="(pins.isPinned('contact', c.id) ? 'pins.unpinItem' : 'pins.pinItem') | transloco">
                 <jl-icon name="pushpin" [size]="16" />
               </button>
+              <span class="head-actions">
+                <button type="button" class="hbtn" (click)="openEdit()" [title]="'kontakte.editContact' | transloco">
+                  <jl-icon name="edit" [size]="15" /> {{ 'kontakte.edit' | transloco }}
+                </button>
+                <button type="button" class="hbtn danger" (click)="confirmDelete(c)" [title]="'kontakte.deleteContact' | transloco">
+                  <jl-icon name="trash" [size]="15" />
+                </button>
+              </span>
             </div>
             <div class="meta">
               @if (c.company) { <span><span class="k">{{ 'kontakte.field.company' | transloco }}</span> <b>{{ c.company }}</b></span> }
@@ -283,6 +292,11 @@ type ContactTab = 'overview' | 'cases' | 'documents';
     </div>
 
     <jl-document-preview [doc]="previewDoc()" (closed)="previewDoc.set(null)" />
+
+    @if (editing(); as ed) {
+      <jl-contact-editor [contact]="ed.contact"
+                         (save)="onSave($event)" (remove)="onDelete($event)" (close)="closeEditor()" />
+    }
   `,
   styleUrl: './kontakte.component.css',
 })
@@ -291,6 +305,7 @@ export class KontakteComponent {
   protected readonly pins = inject(PinsService);
   private readonly content = inject(DocumentContentService);
   private readonly route = inject(ActivatedRoute);
+  private readonly transloco = inject(TranslocoService);
 
   protected readonly tabs: ContactTab[] = ['overview', 'cases', 'documents'];
   protected readonly filters: ContactFilter[] = ['all', 'people', 'companies'];
@@ -344,6 +359,62 @@ export class KontakteComponent {
   /** Toggles the current contact as a pinned shortcut in the header pin bar. */
   protected togglePin(c: ContactDetail): void {
     this.pins.toggle({ kind: 'contact', id: c.id, label: c.displayName });
+  }
+
+  /** Editor state: null = closed; `contact` is the raw DTO to edit (null when creating). */
+  protected readonly editing = signal<{ contact: ContactData | null } | null>(null);
+
+  protected openCreate(): void {
+    this.editing.set({ contact: null });
+  }
+
+  /** Opens the editor for the current contact using its raw (writable) DTO. */
+  protected openEdit(): void {
+    const raw = this.cases.rawSelected();
+    if (raw) {
+      this.editing.set({ contact: raw });
+    }
+  }
+
+  protected closeEditor(): void {
+    this.editing.set(null);
+  }
+
+  /** Persists the working copy (create or update), then refreshes the list and reopens the detail. */
+  protected onSave(data: ContactData): void {
+    this.cases.save(data).subscribe({
+      next: (saved) => {
+        this.closeEditor();
+        this.cases.reload();
+        if (saved?.id) {
+          this.select(saved.id);
+        }
+      },
+      error: () => undefined, // keep the dialog open on failure
+    });
+  }
+
+  /** Confirms and deletes the current contact directly from the detail header. */
+  protected confirmDelete(c: ContactDetail): void {
+    if (confirm(this.deletePrompt(c.displayName))) {
+      this.onDelete(c.id);
+    }
+  }
+
+  private deletePrompt(name: string): string {
+    return this.transloco.translate('kontakte.deleteConfirm', { name });
+  }
+
+  protected onDelete(id: string): void {
+    this.cases.remove(id).subscribe({
+      next: () => {
+        this.closeEditor();
+        this.selectedId.set(null);
+        this.selected.set(null);
+        this.cases.reload();
+      },
+      error: () => undefined,
+    });
   }
 
   /** Switches the server-side filter and reloads the first page. */

@@ -1,9 +1,9 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
-import { catchError, forkJoin, map, Observable, of, shareReplay, switchMap } from 'rxjs';
+import { catchError, defer, finalize, forkJoin, map, Observable, of, shareReplay, switchMap } from 'rxjs';
 import { API_ROOT } from '../core/api';
 import {
-  ContactCase, ContactDetail, ContactDocument, ContactField, ContactKV, ContactSection,
+  ContactCase, ContactData, ContactDetail, ContactDocument, ContactField, ContactKV, ContactSection,
   ContactFilter, ContactOverview, ContactType,
 } from './contact.models';
 
@@ -67,6 +67,10 @@ export class ContactsService {
   readonly total = signal(0);
   readonly listLoading = signal(false);
   readonly listError = signal(false);
+  /** The raw (writable) DTO of the contact loaded last, so the editor can clone it for edits. */
+  readonly rawSelected = signal<ContactData | null>(null);
+  /** True while a create/update/delete write is in flight. */
+  readonly saving = signal(false);
 
   private currentFilter: ContactFilter = 'all';
   private currentSearch = '';
@@ -139,12 +143,32 @@ export class ContactsService {
     });
   }
 
-  /** Loads a full contact (the richer v2 detail); null on error. */
+  /** Loads a full contact (the richer v2 detail); null on error. Also stashes the raw DTO for editing. */
   loadDetail(id: string): Observable<ContactDetail | null> {
     return this.http.get<ContactDto>(`${CONTACTS_V2}/${id}`).pipe(
-      map((dto) => toDetail(dto)),
-      catchError(() => of(null)),
+      map((dto) => { this.rawSelected.set(dto); return toDetail(dto); }),
+      catchError(() => { this.rawSelected.set(null); return of(null); }),
     );
+  }
+
+  /**
+   * Creates (no id) or updates (with id) a contact via the v2 endpoints, returning the saved DTO
+   * (with its id). The caller sends the full working copy so unedited fields round-trip unchanged.
+   */
+  save(data: ContactData): Observable<ContactData> {
+    const url = data.id ? `${CONTACTS_V2}/update` : `${CONTACTS_V2}/create`;
+    return defer(() => {
+      this.saving.set(true);
+      return this.http.put<ContactData>(url, data);
+    }).pipe(finalize(() => this.saving.set(false)));
+  }
+
+  /** Deletes a contact (DELETE /v2/contacts/{id}/delete). */
+  remove(id: string): Observable<unknown> {
+    return defer(() => {
+      this.saving.set(true);
+      return this.http.delete(`${CONTACTS_V2}/${encodeURIComponent(id)}/delete`);
+    }).pipe(finalize(() => this.saving.set(false)));
   }
 
   /**

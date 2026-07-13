@@ -84,6 +84,10 @@
 .pin-toggle { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--jl-line-strong); background: var(--jl-surface); color: var(--jl-ink-faint); cursor: pointer; }
 .pin-toggle:hover { border-color: var(--jl-blue); color: var(--jl-blue); }
 .pin-toggle.on { border-color: var(--jl-blue); color: var(--jl-blue); background: color-mix(in srgb, var(--jl-blue) 14%, transparent); }
+.head-actions { display: inline-flex; gap: 6px; margin-left: auto; }
+.hbtn { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: .82rem; font-weight: 650; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--jl-line-strong); background: var(--jl-surface); color: var(--jl-ink); cursor: pointer; }
+.hbtn:hover { border-color: var(--jl-blue); color: var(--jl-blue); }
+.hbtn.danger:hover { border-color: var(--jl-red); color: var(--jl-red); }
 .meta { display: flex; gap: 18px; flex-wrap: wrap; color: var(--jl-ink-soft); font-size: .82rem; margin: 10px 0 14px; }
 .meta .k { color: var(--jl-ink-faint); margin-right: 6px; }
 .tabs { display: flex; gap: 2px; overflow-x: auto; }
