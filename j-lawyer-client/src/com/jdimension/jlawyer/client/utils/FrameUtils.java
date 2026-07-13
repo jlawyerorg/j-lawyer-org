@@ -681,33 +681,65 @@ import javax.swing.JFrame;
 public class FrameUtils {
 
     public static void centerFrame(JFrame frame, JFrame parent) {
-        Dimension d = null; // size of what we're positioning against
-        Point p = null;
+        centerWindowOnParent(frame, parent);
+    }
 
-        if (parent != null) // w is what we are positioning against, null means desktop
-        {
-            d = parent.getSize();
-            p = parent.getLocation();
-        } else {
-            d = Toolkit.getDefaultToolkit().getScreenSize();
-            p = new Point();
+    /**
+     * Centers a window on its parent (or on the primary screen when no parent is
+     * given) and clamps the result to the bounds of the screen that actually hosts
+     * the parent. This replaces the previous logic that clamped only against the
+     * primary-screen origin (0,0), which pushed windows into off-screen "dead zones"
+     * on multi-monitor setups where the parent lives on a monitor with negative
+     * virtual-desktop coordinates.
+     */
+    private static void centerWindowOnParent(Window w, Window parent) {
+        Dimension size = w.getSize();
+        Rectangle ref = (parent != null)
+                ? parent.getBounds()
+                : GraphicsEnvironment.getLocalGraphicsEnvironment()
+                        .getDefaultScreenDevice().getDefaultConfiguration().getBounds();
+
+        int x = ref.x + (ref.width - size.width) / 2;
+        int y = ref.y + (ref.height - size.height) / 2;
+
+        Rectangle screen = screenBoundsFor(ref);
+        // keep the window fully within its screen when it fits; otherwise align to screen origin
+        x = (size.width <= screen.width)
+                ? Math.max(screen.x, Math.min(x, screen.x + screen.width - size.width))
+                : screen.x;
+        y = (size.height <= screen.height)
+                ? Math.max(screen.y, Math.min(y, screen.y + screen.height - size.height))
+                : screen.y;
+
+        w.setLocation(x, y);
+    }
+
+    /**
+     * Returns the bounds of the screen that should host a window whose reference
+     * bounds are given. Picks the screen containing the center of refBounds; if none
+     * contains it, the screen with the largest overlap; otherwise the primary screen.
+     * Never returns null.
+     */
+    private static Rectangle screenBoundsFor(Rectangle refBounds) {
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        Rectangle primary = ge.getDefaultScreenDevice().getDefaultConfiguration().getBounds();
+        Point center = new Point(refBounds.x + refBounds.width / 2,
+                refBounds.y + refBounds.height / 2);
+        Rectangle best = null;
+        long bestArea = 0;
+        for (GraphicsDevice gd : ge.getScreenDevices()) {
+            Rectangle b = gd.getDefaultConfiguration().getBounds();
+            if (b.contains(center)) {
+                return b;
+            }
+            Rectangle inter = b.intersection(refBounds);
+            long area = (long) Math.max(0, inter.width) * Math.max(0, inter.height);
+            if (area > bestArea) {
+                bestArea = area;
+                best = b;
+            }
         }
-
-        double centreX = p.getX() + d.getWidth() / 2;
-        double centreY = p.getY() + d.getHeight() / 2;
-
-        frame.getSize(d);
-        p.setLocation(centreX - d.getWidth() / 2,
-                centreY - d.getHeight() / 2);
-        if (p.getX() < 0) {
-            p.setLocation(0, p.getY());
-        }
-
-        if (p.getY() < 0) {
-            p.setLocation(p.getX(), 0);
-        }
-
-        frame.setLocation(p);
+        return best != null ? best : primary;
     }
 
     public static void focusFrame(JFrame frame) {
@@ -755,33 +787,7 @@ public class FrameUtils {
     }
 
     public static void centerDialog(JDialog dlg, Window parent) {
-        Dimension d = null; // size of what we're positioning against
-        Point p = null;
-
-        if (parent != null) // w is what we are positioning against, null means desktop
-        {
-            d = parent.getSize();
-            p = parent.getLocation();
-        } else {
-            d = Toolkit.getDefaultToolkit().getScreenSize();
-            p = new Point();
-        }
-
-        double centreX = p.getX() + d.getWidth() / 2;
-        double centreY = p.getY() + d.getHeight() / 2;
-
-        dlg.getSize(d);
-        p.setLocation(centreX - d.getWidth() / 2,
-                centreY - d.getHeight() / 2);
-        if (p.getX() < 0) {
-            p.setLocation(0, p.getY());
-        }
-
-        if (p.getY() < 0) {
-            p.setLocation(p.getX(), 0);
-        }
-
-        dlg.setLocation(p);
+        centerWindowOnParent(dlg, parent);
     }
 
     public static Container getDialogOfComponent(Container c) {
