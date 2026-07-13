@@ -245,7 +245,13 @@
       "preview": "Vorschau",
       "download": "Herunterladen",
       "empty": "Keine Dokumente zu diesem Kontakt.",
-      "noResults": "Keine Treffer."
+      "noResults": "Keine Treffer.",
+      "upload": "Hochladen",
+      "uploading": "Wird hochgeladen …",
+      "uploadError": "Upload fehlgeschlagen",
+      "dropHint": "Dateien hier ablegen oder klicken zum Auswählen",
+      "delete": "Löschen",
+      "deleteConfirm": "Dokument „{{name}}“ wirklich in den Papierkorb verschieben?"
     },
     "tabTodo": "Dieser Reiter wird in einer späteren Phase umgesetzt.",
     "filter": {

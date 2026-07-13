@@ -245,7 +245,13 @@
       "preview": "Preview",
       "download": "Download",
       "empty": "No documents for this contact.",
-      "noResults": "No matches."
+      "noResults": "No matches.",
+      "upload": "Upload",
+      "uploading": "Uploading …",
+      "uploadError": "Upload failed",
+      "dropHint": "Drop files here or click to select",
+      "delete": "Delete",
+      "deleteConfirm": "Move document \"{{name}}\" to the recycle bin?"
     },
     "tabTodo": "This tab will be implemented in a later phase.",
     "filter": {

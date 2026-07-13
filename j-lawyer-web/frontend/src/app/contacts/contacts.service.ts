@@ -219,6 +219,20 @@ export class ContactsService {
     return this.partyTypeColors$;
   }
 
+  /**
+   * Uploads a new document to a contact (POST /v7/contacts/document/create). The file content is
+   * sent base64-encoded; the server derives the type from the file name. Returns the created
+   * document metadata.
+   */
+  uploadDocument(contactId: string, fileName: string, base64content: string): Observable<unknown> {
+    return this.http.post(`${CONTACTS_V7}/document/create`, { contactId, fileName, base64content });
+  }
+
+  /** Soft-deletes a contact document, moving it to the recycle bin (DELETE /v7/contacts/document/{id}/delete). */
+  deleteDocument(documentId: string): Observable<unknown> {
+    return this.http.delete(`${CONTACTS_V7}/document/${encodeURIComponent(documentId)}/delete`);
+  }
+
   /** Documents attached directly to the contact (GET /v7/contacts/{id}/documents); [] on error. */
   documents(id: string): Observable<ContactDocument[]> {
     return this.http.get<AddressDocDto[]>(`${CONTACTS_V7}/${id}/documents`).pipe(

@@ -7,6 +7,7 @@ import { IconComponent } from '../shared/icon.component';
 import { DocumentPreviewComponent } from '../shared/document-preview.component';
 import { DocumentContentService } from '../shared/document-content.service';
 import { fileKind, fileKindIcon, PreviewDoc, previewKindOf } from '../shared/document-preview.models';
+import { firstValueFrom } from 'rxjs';
 import { PinsService } from '../shell/pins.service';
 import { ContactsService } from './contacts.service';
 import { ContactEditorComponent } from './contact-editor.component';
@@ -244,6 +245,14 @@ type ContactTab = 'overview' | 'cases' | 'documents';
                   </div>
                 </div>
                 <div class="card-b">
+                  <div class="dropzone" [class.over]="dragOver()" [class.busy]="docUploading()"
+                       (dragover)="onDragOver($event)" (dragleave)="onDragLeave()" (drop)="onDrop($event)"
+                       (click)="fileInput.click()">
+                    <jl-icon name="download" [size]="18" />
+                    <span>{{ (docUploading() ? 'kontakte.docs.uploading' : 'kontakte.docs.dropHint') | transloco }}</span>
+                  </div>
+                  <input #fileInput type="file" multiple hidden (change)="onUpload($event)" />
+                  @if (docUploadError()) { <p class="up-error">{{ 'kontakte.docs.uploadError' | transloco }}</p> }
                   @if (docsLoading()) {
                     <p class="muted">{{ 'kontakte.loading' | transloco }}</p>
                   } @else if (docsError()) {
@@ -271,6 +280,11 @@ type ContactTab = 'overview' | 'cases' | 'documents';
                           }
                           <button type="button" class="doc-btn primary" (click)="$event.stopPropagation(); download(doc)">
                             <jl-icon name="download" [size]="14" />{{ 'kontakte.docs.download' | transloco }}
+                          </button>
+                          <button type="button" class="doc-btn danger" [disabled]="docDeleting() === doc.id"
+                                  (click)="$event.stopPropagation(); confirmDeleteDoc(doc)"
+                                  [title]="'kontakte.docs.delete' | transloco">
+                            <jl-icon name="trash" [size]="14" />
                           </button>
                         </span>
                       </div>
@@ -330,6 +344,11 @@ export class KontakteComponent {
   protected readonly docSortKeys: ContactDocSortKey[] = ['name', 'date', 'size'];
   protected readonly docSort = signal<{ key: ContactDocSortKey; dir: 'asc' | 'desc' }>({ key: 'name', dir: 'asc' });
   protected readonly previewDoc = signal<PreviewDoc | null>(null);
+  protected readonly docUploading = signal(false);
+  protected readonly docUploadError = signal(false);
+  protected readonly dragOver = signal(false);
+  /** Id of the document currently being deleted (disables its row button), or null. */
+  protected readonly docDeleting = signal<string | null>(null);
 
   private autoSelected = false;
   private searchDebounce: ReturnType<typeof setTimeout> | null = null;
@@ -497,6 +516,77 @@ export class KontakteComponent {
     });
   }
 
+  /** File-input change handler → upload the picked file(s). */
+  protected onUpload(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    input.value = ''; // allow re-selecting the same file later
+    void this.uploadFiles(files);
+  }
+
+  /** Drag&drop: highlight the drop zone while a drag with files is over it. */
+  protected onDragOver(event: DragEvent): void {
+    if (event.dataTransfer?.types.includes('Files')) {
+      event.preventDefault(); // required so the drop event fires
+      this.dragOver.set(true);
+    }
+  }
+
+  protected onDragLeave(): void {
+    this.dragOver.set(false);
+  }
+
+  protected onDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.dragOver.set(false);
+    void this.uploadFiles(Array.from(event.dataTransfer?.files ?? []));
+  }
+
+  /** Uploads the given file(s) to the current contact (base64), then refreshes the documents list. */
+  private async uploadFiles(files: File[]): Promise<void> {
+    const id = this.selectedId();
+    if (!files.length || !id) {
+      return;
+    }
+    this.docUploading.set(true);
+    this.docUploadError.set(false);
+    let failed = false;
+    for (const file of files) {
+      try {
+        const base64 = await readAsBase64(file);
+        await firstValueFrom(this.cases.uploadDocument(id, file.name, base64));
+      } catch {
+        failed = true;
+      }
+    }
+    this.docUploading.set(false);
+    this.docUploadError.set(failed);
+    if (this.selectedId() === id) {
+      this.loadDocuments();
+    }
+  }
+
+  /** Confirms, then soft-deletes a contact document and refreshes the list. */
+  protected confirmDeleteDoc(doc: ContactDocument): void {
+    if (this.docDeleting()) {
+      return;
+    }
+    if (!confirm(this.transloco.translate('kontakte.docs.deleteConfirm', { name: doc.name }))) {
+      return;
+    }
+    const id = this.selectedId();
+    this.docDeleting.set(doc.id);
+    this.cases.deleteDocument(doc.id).subscribe({
+      next: () => {
+        this.docDeleting.set(null);
+        if (this.selectedId() === id) {
+          this.loadDocuments();
+        }
+      },
+      error: () => { this.docDeleting.set(null); },
+    });
+  }
+
   /** The documents to show: filtered by the search term, sorted by the active criterion. */
   protected visibleDocs(): ContactDocument[] {
     const all = this.contactDocs() ?? [];
@@ -579,4 +669,18 @@ export class KontakteComponent {
       .join('')
       .toUpperCase();
   }
+}
+
+/** Reads a File as a base64 string (without the data-URL prefix), for the upload payload. */
+function readAsBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result);
+      const comma = result.indexOf(',');
+      resolve(comma >= 0 ? result.slice(comma + 1) : result);
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
 }

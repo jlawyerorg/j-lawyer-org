@@ -130,6 +130,11 @@
 /* ---------- Documents tab ---------- */
 .docs-card .card-h { display: flex; align-items: center; gap: 8px; }
 .card-count { font-size: .72rem; font-weight: 700; color: var(--jl-ink-faint); font-variant-numeric: tabular-nums; }
+.up-error { margin: 0 0 12px; font-size: .78rem; font-weight: 600; color: var(--jl-red); }
+.dropzone { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 12px; padding: 16px; border: 2px dashed var(--jl-line-strong); border-radius: 10px; background: var(--jl-surface-alt); color: var(--jl-ink-soft); font-size: .82rem; font-weight: 600; cursor: pointer; transition: border-color .12s, background .12s, color .12s; }
+.dropzone:hover { border-color: var(--jl-blue); background: color-mix(in srgb, var(--jl-blue) 8%, var(--jl-surface-alt)); color: var(--jl-blue); }
+.dropzone.over { border-color: var(--jl-blue); background: color-mix(in srgb, var(--jl-blue) 10%, transparent); color: var(--jl-blue); }
+.dropzone.busy { opacity: .7; pointer-events: none; }
 
 .doc-tools { display: flex; flex-direction: column; gap: 8px; padding: 10px 15px; border-bottom: 1px solid var(--jl-line); }
 .doc-search {
@@ -162,6 +167,9 @@
 .doc-btn:hover { border-color: var(--jl-blue); color: var(--jl-blue); }
 .doc-btn.primary { color: #fff; background: var(--jl-blue); border-color: var(--jl-blue); }
 .doc-btn.primary:hover { background: var(--jl-blue-strong); color: #fff; }
+.doc-btn.danger { padding: 5px 8px; }
+.doc-btn.danger:hover { border-color: var(--jl-red); color: var(--jl-red); }
+.doc-btn:disabled { opacity: .5; cursor: default; }
 
 /* File-type badge (shared look with the case documents view). */
 .ftype {
