@@ -3,7 +3,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { catchError, defer, finalize, forkJoin, map, Observable, of, shareReplay, switchMap } from 'rxjs';
 import { API_ROOT } from '../core/api';
 import {
-  AccountEntry, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseMessage, CaseOverview,
+  AccountEntry, AccountEntryWrite, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseMessage, CaseOverview,
   CasePayment, CaseStatus, CaseTag, CaseTimesheet, CaseUserRef, CaseWrite, ContactRef, DocDateMode, DocFolder,
   DocSortKey, DueDate, MultiValueTagDef, Party, PartyTypeOption, PartyUpdate, PartyWrite, PositionTemplate,
   PositionWrite, RunningPosition, SortDir, TimesheetPosition, TimesheetWrite,
@@ -79,7 +79,7 @@ interface PaymentDto {
   total: number; currency: string; targetDate: string; creationDate: string;
 }
 interface AccountEntryDto {
-  id: string; entryDate: string; description: string; contactName?: string;
+  id: string; entryDate: string; description: string; contactName?: string; contactId?: string; invoiceId?: string;
   earnings: number; spendings: number; escrowIn: number; escrowOut: number;
   expendituresIn: number; expendituresOut: number;
 }
@@ -221,6 +221,29 @@ export class CasesService {
       map((rows) => (rows ?? []).map(toAccountEntry)),
       catchError(() => of([])),
     );
+  }
+
+  /** Creates a case account entry / "Buchung" (PUT /v7/cases/{id}/accountentries/create). */
+  createAccountEntry(caseId: string, data: AccountEntryWrite): Observable<unknown> {
+    return this.write(this.http.put(`${CASES_V7}/${encodeURIComponent(caseId)}/accountentries/create`, data));
+  }
+
+  /** Updates a case account entry (POST /v7/cases/accountentries/{id}/update). */
+  updateAccountEntry(entryId: string, data: AccountEntryWrite): Observable<unknown> {
+    return this.write(this.http.post(`${CASES_V7}/accountentries/${encodeURIComponent(entryId)}/update`, data));
+  }
+
+  /** Deletes a case account entry (DELETE /v7/cases/accountentries/{id}). */
+  deleteAccountEntry(entryId: string): Observable<unknown> {
+    return this.write(this.http.delete(`${CASES_V7}/accountentries/${encodeURIComponent(entryId)}`));
+  }
+
+  /** Wraps a write call with the shared `saving` flag. */
+  private write(call: Observable<unknown>): Observable<unknown> {
+    return defer(() => {
+      this.saving.set(true);
+      return call;
+    }).pipe(finalize(() => this.saving.set(false)));
   }
 
   /**
@@ -824,6 +847,8 @@ function toAccountEntry(dto: AccountEntryDto): AccountEntry {
     date: isoDate(dto.entryDate),
     description: dto.description ?? '',
     contact: dto.contactName ?? '',
+    contactId: dto.contactId ?? '',
+    invoiceId: dto.invoiceId ?? '',
     earnings,
     spendings,
     escrowIn,

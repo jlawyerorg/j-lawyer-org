@@ -309,6 +309,20 @@
     "msg": {
       "placeholder": "Write a message …",
       "send": "Send"
+    },
+    "acct": {
+      "add": "New entry",
+      "edit": "Edit entry",
+      "duplicate": "Duplicate entry",
+      "delete": "Delete entry",
+      "deleteConfirm": "Delete this entry?",
+      "date": "Date",
+      "contact": "From / to",
+      "invoice": "Voucher (invoice)",
+      "comment": "Comment",
+      "in": "in",
+      "out": "out",
+      "net": "Net"
     }
   },
   "kontakte": {

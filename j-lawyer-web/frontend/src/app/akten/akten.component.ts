@@ -17,6 +17,7 @@ import { TimesheetEditorComponent, TimesheetSaveResult } from './timesheet-edito
 import { TimesheetDetailComponent } from './timesheet-detail.component';
 import { PositionEditorComponent, PositionEditResult, PositionMode } from './position-editor.component';
 import { TimesheetTrackingService } from './timesheet-tracking.service';
+import { AccountEntryEditorComponent, ContactOption, InvoiceOption } from './account-entry-editor.component';
 import {
   formatDurationMs, positionMillis, runningElapsed as elapsedOf, sumDuration, sumInvoiceable, sumNet, toServerDateTime,
 } from './timesheet.util';
@@ -25,7 +26,7 @@ import { CalendarService } from '../calendar/calendar.service';
 import { CalendarEvent, CalendarEventType, CaseRef, EventDraft } from '../calendar/calendar.models';
 import { AuthService } from '../core/auth/auth.service';
 import {
-  AccountEntry, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseMessage, CasePayment,
+  AccountEntry, AccountEntryWrite, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseMessage, CasePayment,
   CaseTag, CaseTimesheet, CaseWrite, DocFolder, DocSortKey, DueDate, MultiValueTagDef, Party, PartyUpdate,
   PositionWrite, TimesheetPosition, TimesheetWrite,
 } from './case.models';
@@ -62,7 +63,7 @@ interface TimesheetView extends CaseTimesheet {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslocoModule, IconComponent, DatePipe, DecimalPipe, DocumentPreviewComponent,
     CaseEditorComponent, PartyAddComponent, PartyEditorComponent, EventEditorComponent,
-    TimesheetEditorComponent, TimesheetDetailComponent, PositionEditorComponent],
+    TimesheetEditorComponent, TimesheetDetailComponent, PositionEditorComponent, AccountEntryEditorComponent],
   template: `
     <div class="master-detail" [class.show-detail]="selectedId()">
       <!-- Aktenliste -->
@@ -601,6 +602,12 @@ interface TimesheetView extends CaseTimesheet {
                       </div>
                     }
                     @case ('account') {
+                      <div class="acct-bar">
+                        <span class="spacer"></span>
+                        <button type="button" class="add-btn" (click)="openNewAccountEntry()">
+                          <jl-icon name="plus" [size]="14" /> {{ 'akten.acct.add' | transloco }}
+                        </button>
+                      </div>
                       @if (accountEntries()?.length) {
                         @let sum = accountSummary();
                         <!-- Kategorie-Salden (Einnahmen/Ausgaben, Fremdgeld, Auslagen), analog ArchiveFilePanel -->
@@ -639,11 +646,12 @@ interface TimesheetView extends CaseTimesheet {
                                     <th class="num">{{ 'akten.finance.acct.escrowOut' | transloco }}</th>
                                     <th class="num">{{ 'akten.finance.acct.expendituresIn' | transloco }}</th>
                                     <th class="num">{{ 'akten.finance.acct.expendituresOut' | transloco }}</th>
+                                    <th class="c-act"></th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   @for (e of accountEntries(); track e.id) {
-                                    <tr>
+                                    <tr class="acct-row" (dblclick)="openEditAccountEntry(e)">
                                       <td class="c-date">{{ e.date | date: 'dd.MM.yyyy' }}</td>
                                       <td class="c-contact">{{ e.contact || '—' }}</td>
                                       <td class="c-desc">{{ e.description || '—' }}</td>
@@ -653,6 +661,20 @@ interface TimesheetView extends CaseTimesheet {
                                       <td class="num">{{ e.escrowOut ? (e.escrowOut | number: '1.2-2') : '—' }}</td>
                                       <td class="num">{{ e.expendituresIn ? (e.expendituresIn | number: '1.2-2') : '—' }}</td>
                                       <td class="num">{{ e.expendituresOut ? (e.expendituresOut | number: '1.2-2') : '—' }}</td>
+                                      <td class="c-act">
+                                        <span class="row-actions">
+                                          <button type="button" class="row-edit" (click)="openEditAccountEntry(e)" [title]="'akten.acct.edit' | transloco">
+                                            <jl-icon name="edit" [size]="15" />
+                                          </button>
+                                          <button type="button" class="row-edit" (click)="duplicateAccountEntry(e)" [title]="'akten.acct.duplicate' | transloco">
+                                            <jl-icon name="plus" [size]="15" />
+                                          </button>
+                                          <button type="button" class="row-del" [disabled]="accountDeleting() === e.id"
+                                                  (click)="confirmDeleteAccountEntry(e)" [title]="'akten.acct.delete' | transloco">
+                                            <jl-icon name="trash" [size]="15" />
+                                          </button>
+                                        </span>
+                                      </td>
                                     </tr>
                                   }
                                 </tbody>
@@ -667,6 +689,7 @@ interface TimesheetView extends CaseTimesheet {
                                     <td class="num">{{ sum[1].out | number: '1.2-2' }}</td>
                                     <td class="num">{{ sum[2].in | number: '1.2-2' }}</td>
                                     <td class="num">{{ sum[2].out | number: '1.2-2' }}</td>
+                                    <td class="c-act"></td>
                                   </tr>
                                 </tfoot>
                               </table>
@@ -860,6 +883,10 @@ interface TimesheetView extends CaseTimesheet {
       <jl-position-editor [mode]="pe.mode" [timesheetId]="pe.timesheetId" [position]="pe.position"
                           (save)="onSavePosition($event)" (close)="positionEditor.set(null)" />
     }
+    @if (editingAccountEntry(); as ae) {
+      <jl-account-entry-editor [entry]="ae.entry" [contacts]="accountContacts()" [invoices]="accountInvoiceOptions()"
+                               (save)="onSaveAccountEntry($event)" (close)="editingAccountEntry.set(null)" />
+    }
   `,
   styleUrl: './akten.component.css',
 })
@@ -916,6 +943,10 @@ export class AktenComponent {
   /** Active sub-view of the finance tab. */
   protected readonly financeView = signal<FinanceView>('invoices');
   protected readonly financeViews: FinanceView[] = ['invoices', 'payments', 'account'];
+  /** Account-entry editor ("Buchung"): the entry to edit (null = create), or null when closed. */
+  protected readonly editingAccountEntry = signal<{ entry: AccountEntry | null } | null>(null);
+  /** Id of the account entry currently being deleted, or null. */
+  protected readonly accountDeleting = signal<string | null>(null);
 
   // Zeiten (time tracking) tab state — the case's timesheets (open + closed) with their positions.
   protected readonly timesheets = signal<TimesheetView[] | null>(null);
@@ -2036,6 +2067,84 @@ export class AktenComponent {
       { key: 'escrow', in: escrowIn, out: escrowOut, net: escrowIn - escrowOut },
       { key: 'expenditures', in: expIn, out: expOut, net: expIn - expOut },
     ];
+  }
+
+  // ----- Aktenkonto (account entries: create / edit / duplicate / delete) -----
+
+  /** Contact options for the entry editor ("von/an"): the case's parties that link an address. */
+  protected accountContacts(): ContactOption[] {
+    const seen = new Set<string>();
+    const out: ContactOption[] = [];
+    for (const p of this.selected()?.parties ?? []) {
+      if (p.addressId && !seen.has(p.addressId)) {
+        seen.add(p.addressId);
+        out.push({ id: p.addressId, name: p.contact || p.contactName || p.involvementType || p.addressId });
+      }
+    }
+    return out;
+  }
+
+  /** Invoice options for the entry editor ("Beleg"): the case's invoices. */
+  protected accountInvoiceOptions(): InvoiceOption[] {
+    return (this.invoices() ?? []).map((i) => ({ id: i.id, label: i.invoiceNumber || i.name || i.id }));
+  }
+
+  /** Opens the account-entry editor to create a new "Buchung". */
+  protected openNewAccountEntry(): void {
+    this.editingAccountEntry.set({ entry: null });
+  }
+
+  /** Opens the account-entry editor to edit an entry. */
+  protected openEditAccountEntry(e: AccountEntry): void {
+    this.editingAccountEntry.set({ entry: e });
+  }
+
+  /** Opens the editor pre-filled from an entry as a new one (id dropped, dated today). */
+  protected duplicateAccountEntry(e: AccountEntry): void {
+    this.editingAccountEntry.set({ entry: { ...e, id: '', date: new Date().toISOString() } });
+  }
+
+  /** Persists the entry (create when it has no id, else update), then closes and reloads. */
+  protected onSaveAccountEntry(data: AccountEntryWrite): void {
+    const id = this.selectedId();
+    if (!id) {
+      return;
+    }
+    const call = data.id
+      ? this.cases.updateAccountEntry(data.id, data)
+      : this.cases.createAccountEntry(id, data);
+    call.subscribe({
+      next: () => { this.editingAccountEntry.set(null); this.reloadAccountEntries(); },
+      error: () => undefined,
+    });
+  }
+
+  /** Confirms, then deletes an account entry and reloads. */
+  protected confirmDeleteAccountEntry(e: AccountEntry): void {
+    if (this.accountDeleting()) {
+      return;
+    }
+    if (!confirm(this.transloco.translate('akten.acct.deleteConfirm'))) {
+      return;
+    }
+    this.accountDeleting.set(e.id);
+    this.cases.deleteAccountEntry(e.id).subscribe({
+      next: () => { this.accountDeleting.set(null); this.reloadAccountEntries(); },
+      error: () => this.accountDeleting.set(null),
+    });
+  }
+
+  /** Re-fetches the case account entries after a write (keeps the finance tab open). */
+  private reloadAccountEntries(): void {
+    const id = this.selectedId();
+    if (!id) {
+      return;
+    }
+    this.cases.accountEntries(id).subscribe((rows) => {
+      if (this.selectedId() === id) {
+        this.accountEntries.set(rows);
+      }
+    });
   }
 
   /** Mobile "back" from the detail: return to the plain list URL. */

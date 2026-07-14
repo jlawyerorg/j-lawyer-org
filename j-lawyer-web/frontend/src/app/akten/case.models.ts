@@ -232,6 +232,28 @@ export interface AccountEntry {
   expendituresOut: number;
   /** Net effect on the balance: (earnings+escrowIn+expendituresIn) - (spendings+escrowOut+expendituresOut). */
   total: number;
+  /** Id of the linked contact ("von / an"); empty if none. */
+  contactId: string;
+  /** Id of the linked invoice ("Beleg"); empty if none. */
+  invoiceId: string;
+}
+
+/**
+ * Writable case account entry ("Buchung"). entryDate is an ISO datetime the server (JSON-B) parses
+ * (offset with a colon, or 'Z'). contactId/invoiceId link the "von/an" and "Beleg" fields (optional).
+ */
+export interface AccountEntryWrite {
+  id?: string;
+  entryDate: string;
+  contactId?: string;
+  invoiceId?: string;
+  description: string;
+  earnings: number;
+  spendings: number;
+  escrowIn: number;
+  escrowOut: number;
+  expendituresIn: number;
+  expendituresOut: number;
 }
 
 /**

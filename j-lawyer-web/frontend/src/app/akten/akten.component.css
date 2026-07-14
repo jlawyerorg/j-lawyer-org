@@ -206,6 +206,12 @@
 .acct-table .num.neg { color: var(--jl-red); }
 .acct-table tbody tr:hover { background: var(--jl-surface-alt); }
 .acct-table tfoot td { border-top: 2px solid var(--jl-line-strong); border-bottom: 0; font-weight: 800; background: var(--jl-surface); }
+.acct-table .c-act { text-align: right; width: 1%; white-space: nowrap; }
+.acct-table .acct-row { cursor: default; }
+.acct-table .row-actions { display: inline-flex; align-items: center; gap: 4px; justify-content: flex-end; }
+/* Aktenkonto toolbar (full width above the table; holds the "Buchung erstellen" button) */
+.acct-bar { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; }
+.acct-bar .spacer { flex: 1; }
 
 /* ---------- Historie-Reiter ---------- */
 .hist { display: flex; gap: 12px; padding: 9px 0; }

@@ -309,6 +309,20 @@
     "msg": {
       "placeholder": "Nachricht schreiben …",
       "send": "Senden"
+    },
+    "acct": {
+      "add": "Buchung erstellen",
+      "edit": "Buchung bearbeiten",
+      "duplicate": "Buchung duplizieren",
+      "delete": "Buchung löschen",
+      "deleteConfirm": "Diese Buchung wirklich löschen?",
+      "date": "Datum",
+      "contact": "von / an",
+      "invoice": "Beleg (Rechnung)",
+      "comment": "Kommentar",
+      "in": "ein",
+      "out": "aus",
+      "net": "Saldo"
     }
   },
   "kontakte": {
