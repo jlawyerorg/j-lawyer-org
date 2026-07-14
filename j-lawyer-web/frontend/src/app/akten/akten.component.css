@@ -260,6 +260,35 @@
 .ts-badge.billed { color: var(--jl-blue); background: color-mix(in srgb, var(--jl-blue) 12%, transparent); }
 .ts-badge.open { color: var(--jl-ink-soft); background: var(--jl-surface-alt); }
 
+/* Zeiten tab: toolbar + per-project entry tools + row actions */
+.zeiten-bar { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.zeiten-bar .fin-nav { grid-column: auto; flex: 0 1 auto; }
+.zeiten-bar .spacer { flex: 1; }
+.ts-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.add-btn.ghost { background: transparent; border: 1px solid var(--jl-line-strong); color: var(--jl-ink-soft); }
+.add-btn.ghost:hover { border-color: var(--jl-blue); color: var(--jl-blue); background: color-mix(in srgb, var(--jl-blue) 8%, transparent); }
+.ts-table .ts-act-col { text-align: right; width: 1%; white-space: nowrap; }
+.ts-table tbody tr.running { background: color-mix(in srgb, var(--jl-blue) 7%, transparent); }
+.ts-table .row-actions { margin-left: 0; justify-content: flex-end; }
+.row-edit.stop { border-color: var(--jl-red); color: var(--jl-red); }
+.row-edit.stop:hover { background: color-mix(in srgb, var(--jl-red) 10%, transparent); }
+.row-edit.stop:disabled { opacity: .4; cursor: default; }
+
+/* Zeiten tab: running-timer rows (shown directly) + 'show all entries' button */
+.ts-running { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.run-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--jl-line); border-radius: 9px;
+  background: color-mix(in srgb, var(--jl-blue) 6%, transparent); }
+.run-pulse { width: 9px; height: 9px; border-radius: 50%; background: #4ade80; flex: none; animation: jl-run-pulse 1.15s ease-in-out infinite; }
+@keyframes jl-run-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .run-pulse { animation: none; } }
+.run-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.run-title { font-weight: 650; font-size: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.run-sub { font-size: .76rem; color: var(--jl-ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.run-time { font-variant-numeric: tabular-nums; font-weight: 800; color: var(--jl-blue); font-size: .95rem; }
+.ts-detail-btn { display: inline-flex; align-items: center; gap: 7px; font: inherit; font-size: .84rem; font-weight: 650;
+  padding: 8px 14px; border-radius: 8px; border: 1px solid var(--jl-line-strong); background: var(--jl-surface); color: var(--jl-ink); cursor: pointer; }
+.ts-detail-btn:hover { border-color: var(--jl-blue); color: var(--jl-blue); background: color-mix(in srgb, var(--jl-blue) 8%, transparent); }
+
 /* ---------- Documents tab: folder tree + document list ---------- */
 .docs {
   display: grid; grid-template-columns: minmax(0, 250px) minmax(0, 1fr); gap: 14px;

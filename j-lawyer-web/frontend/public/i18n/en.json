@@ -206,6 +206,51 @@
         "rate": "Rate/h",
         "total": "Total",
         "billing": "Billing"
+      },
+      "newProject": "New project",
+      "editProject": "Edit project",
+      "deleteProject": "Delete project",
+      "deleteConfirm": "Delete project “{{name}}” with all entries?",
+      "startTimer": "Stopwatch",
+      "stopTimer": "Stop",
+      "addManual": "Add entry",
+      "field": {
+        "name": "Name",
+        "description": "Description",
+        "interval": "Rounding interval",
+        "status": "Status",
+        "limited": "Cap budget",
+        "limit": "Budget (net)",
+        "allowedPositions": "Allowed positions / hourly rates"
+      },
+      "pos": {
+        "startTitle": "Start stopwatch",
+        "manualTitle": "Add time entry",
+        "editTitle": "Edit entry",
+        "template": "Template",
+        "name": "Name",
+        "description": "Description",
+        "start": "Start",
+        "stop": "End",
+        "rate": "Rate/h (net)",
+        "tax": "VAT %",
+        "startBtn": "Start",
+        "edit": "Edit entry",
+        "delete": "Delete entry",
+        "deleteConfirm": "Delete entry “{{name}}”?",
+        "user": "User"
+      },
+      "showAll": "Show all entries ({{n}})",
+      "since": "since",
+      "searchEntries": "Search entries…",
+      "noEntryMatch": "No matching entries.",
+      "entryCount": "{{shown}} of {{total}} entries",
+      "tpl": {
+        "hint": "Pick the bookable position templates (empty = all allowed).",
+        "none": "No position templates configured.",
+        "selected": "{{n}} selected",
+        "selectAll": "All",
+        "selectNone": "None"
       }
     },
     "edit": "Edit",
@@ -744,5 +789,17 @@
     "unpin": "Unpin",
     "pinItem": "Pin",
     "unpinItem": "Unpin"
+  },
+  "timelog": {
+    "title": "Time tracking",
+    "runningTitle": "Time tracking — {{n}} running",
+    "running": "Running timers",
+    "noRunning": "No running timer.",
+    "newEntry": "New entry",
+    "case": "Case",
+    "casePlaceholder": "Search case…",
+    "changeCase": "Change case",
+    "project": "Project",
+    "noProjects": "No open projects in this case."
   }
 }

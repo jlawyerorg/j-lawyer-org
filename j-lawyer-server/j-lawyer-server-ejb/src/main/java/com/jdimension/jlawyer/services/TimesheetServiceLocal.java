@@ -10,5 +10,7 @@ public interface TimesheetServiceLocal {
 
     List<TimesheetPositionTemplate> getPositionTemplatesForTimesheet(String timesheetId) throws Exception;
     Map<String,List<TimesheetPositionTemplate>> getPositionTemplatesForTimesheets(List<String> timesheetIds) throws Exception;
+    List<TimesheetPositionTemplate> getAllTimesheetPositionTemplates() throws Exception;
+    void setPositionTemplatesForTimesheet(String timesheetId, List<TimesheetPositionTemplate> positionTemplates) throws Exception;
 
 }

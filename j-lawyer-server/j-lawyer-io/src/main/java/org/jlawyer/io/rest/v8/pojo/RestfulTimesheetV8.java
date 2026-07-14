@@ -38,6 +38,25 @@ public class RestfulTimesheetV8 {
         return r;
     }
 
+    /**
+     * Builds a Timesheet entity from this DTO for create/update. The case link is set by the
+     * service from the request path, so the archive file key is not populated here.
+     *
+     * @return a Timesheet carrying the editable fields (id, name, description, interval, limited,
+     *         limit, status)
+     */
+    public Timesheet toTimesheet() {
+        Timesheet ts = new Timesheet();
+        ts.setId(this.id);
+        ts.setName(this.name);
+        ts.setDescription(this.description);
+        ts.setInterval(this.interval);
+        ts.setLimited(this.limited);
+        ts.setLimit(this.limit);
+        ts.setStatus(this.status);
+        return ts;
+    }
+
     public String getId() {
         return id;
     }

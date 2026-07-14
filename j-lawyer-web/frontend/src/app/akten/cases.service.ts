@@ -1,11 +1,12 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
-import { catchError, defer, finalize, forkJoin, map, Observable, of, shareReplay } from 'rxjs';
+import { catchError, defer, finalize, forkJoin, map, Observable, of, shareReplay, switchMap } from 'rxjs';
 import { API_ROOT } from '../core/api';
 import {
   AccountEntry, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseMessage, CaseOverview,
   CasePayment, CaseStatus, CaseTag, CaseTimesheet, CaseUserRef, CaseWrite, ContactRef, DocDateMode, DocFolder,
-  DocSortKey, DueDate, MultiValueTagDef, Party, PartyTypeOption, PartyUpdate, PartyWrite, SortDir, TimesheetPosition,
+  DocSortKey, DueDate, MultiValueTagDef, Party, PartyTypeOption, PartyUpdate, PartyWrite, PositionTemplate,
+  PositionWrite, RunningPosition, SortDir, TimesheetPosition, TimesheetWrite,
 } from './case.models';
 
 const CASES_BASE = `${API_ROOT}/v1/cases`;
@@ -85,11 +86,13 @@ interface AccountEntryDto {
 interface TimesheetDto {
   id: string; name: string; description: string; interval: number;
   limited: boolean; limit: number; percentageDone: number; status: number;
+  caseId?: string; caseFileNumber?: string; caseName?: string;
 }
 interface TimesheetPositionDto {
   id: string; name: string; description: string; principal: string; started: string; stopped: string;
   unitPrice: number; taxRate: number; total: number; timesheetId: string; invoiceId?: string; running: boolean;
 }
+interface PositionTemplateDto { id: string; name?: string; description?: string; unitPrice?: number; taxRate?: number; }
 interface TagDto { id: string; name: string; tagValue?: string; }
 interface MultiValueTagDto { tagName?: string; values?: string[]; }
 interface GroupDto { id: string; name: string; abbreviation?: string; }
@@ -239,6 +242,161 @@ export class CasesService {
       map((rows) => (rows ?? []).map(toTimesheetPosition)),
       catchError(() => of([])),
     );
+  }
+
+  /** Loads a single timesheet by id, incl. its case (GET /v8/timesheets/{id}); null on error. */
+  getTimesheet(timesheetId: string): Observable<CaseTimesheet | null> {
+    return this.http.get<TimesheetDto>(`${TIMESHEETS_V8}/${encodeURIComponent(timesheetId)}`).pipe(
+      map((dto) => (dto ? toTimesheet(dto) : null)),
+      catchError(() => of(null)),
+    );
+  }
+
+  /** Number of the authenticated user's currently running timers (GET .../positions/running/count); 0 on error. */
+  runningCount(): Observable<number> {
+    return this.http.get<number>(`${TIMESHEETS_V8}/positions/running/count`).pipe(
+      map((n) => Number(n) || 0),
+      catchError(() => of(0)),
+    );
+  }
+
+  /**
+   * The authenticated user's running timers, each enriched with its timesheet + case
+   * (GET .../positions/running, then one getTimesheet per entry). [] on error.
+   */
+  runningPositions(): Observable<RunningPosition[]> {
+    return this.http.get<TimesheetPositionDto[]>(`${TIMESHEETS_V8}/positions/running`).pipe(
+      map((rows) => (rows ?? []).map(toTimesheetPosition)),
+      switchMap((positions) => positions.length
+        ? forkJoin(positions.map((p) => this.getTimesheet(p.timesheetId).pipe(
+            map((ts) => ({ position: p, timesheet: ts ?? emptyTimesheet(p.timesheetId) })),
+          )))
+        : of([] as RunningPosition[])),
+      catchError(() => of([] as RunningPosition[])),
+    );
+  }
+
+  /** One-shot case search for pickers (GET /v8/cases/page?q=); up to `limit` overviews, [] on error. */
+  searchCases(term: string, limit = 20): Observable<CaseOverview[]> {
+    let params = new HttpParams().set('offset', '0').set('limit', String(limit)).set('filter', 'all');
+    if (term.trim()) {
+      params = params.set('q', term.trim());
+    }
+    return this.http.get<CasePageDto>(`${CASES_V8}/page`, { params }).pipe(
+      map((page) => (page.items ?? []).map(toOverview)),
+      catchError(() => of([])),
+    );
+  }
+
+  /** Predefined position templates for a timesheet (GET /v8/timesheets/{id}/templates); [] on error. */
+  positionTemplates(timesheetId: string): Observable<PositionTemplate[]> {
+    return this.http.get<PositionTemplateDto[]>(`${TIMESHEETS_V8}/${timesheetId}/templates`).pipe(
+      map((rows) => (rows ?? []).map((t) => ({
+        id: t.id, name: t.name ?? '', description: t.description ?? '',
+        unitPrice: t.unitPrice ?? 0, taxRate: t.taxRate ?? 0,
+      }))),
+      catchError(() => of([])),
+    );
+  }
+
+  private allTemplates$?: Observable<PositionTemplate[]>;
+
+  /** The global pool of position templates (GET /v8/timesheets/templates), incl. hourly rate. Cached. */
+  allTimesheetTemplates(): Observable<PositionTemplate[]> {
+    this.allTemplates$ ??= this.http.get<PositionTemplateDto[]>(`${TIMESHEETS_V8}/templates`).pipe(
+      map((rows) => (rows ?? []).map((t) => ({
+        id: t.id, name: t.name ?? '', description: t.description ?? '',
+        unitPrice: t.unitPrice ?? 0, taxRate: t.taxRate ?? 0,
+      }))),
+      catchError(() => of([])),
+      shareReplay(1),
+    );
+    return this.allTemplates$;
+  }
+
+  private intervals$?: Observable<number[]>;
+
+  /** Configured timesheet rounding intervals in minutes (GET /v7 option group). Cached; falls back to a default set. */
+  timesheetIntervals(): Observable<number[]> {
+    this.intervals$ ??= this.http.get<{ value?: string }[]>(`${API_ROOT}/v7/configuration/optiongroups/timesheet.intervalminutes`).pipe(
+      map((rows) => {
+        const vals = (rows ?? []).map((o) => parseInt((o.value ?? '').trim(), 10)).filter((n) => Number.isFinite(n) && n > 0);
+        return vals.length ? Array.from(new Set(vals)).sort((a, b) => a - b) : [1, 5, 10, 15, 30, 60];
+      }),
+      catchError(() => of([1, 5, 10, 15, 30, 60])),
+      shareReplay(1),
+    );
+    return this.intervals$;
+  }
+
+  // ----- Timesheet (project) CRUD (v8) -----
+
+  /** Creates a timesheet/project for a case (POST /v8/timesheets/cases/{caseId}). */
+  createTimesheet(caseId: string, data: TimesheetWrite): Observable<unknown> {
+    return this.timesheetWrite(this.http.post(`${TIMESHEETS_V8}/cases/${encodeURIComponent(caseId)}`, data));
+  }
+
+  /** Updates a timesheet/project (PUT /v8/timesheets/{id}). */
+  updateTimesheet(timesheetId: string, data: TimesheetWrite): Observable<unknown> {
+    return this.timesheetWrite(this.http.put(`${TIMESHEETS_V8}/${encodeURIComponent(timesheetId)}`, data));
+  }
+
+  /** Deletes a timesheet/project including its positions (DELETE /v8/timesheets/{id}). */
+  deleteTimesheet(timesheetId: string): Observable<unknown> {
+    return this.timesheetWrite(this.http.delete(`${TIMESHEETS_V8}/${encodeURIComponent(timesheetId)}`));
+  }
+
+  /**
+   * Creates or updates a project, then sets its allowed position templates (project positions /
+   * hourly rates) in one flow — the allowed set needs the (possibly just created) timesheet id.
+   */
+  saveTimesheetWithTemplates(caseId: string, data: TimesheetWrite, templates: PositionTemplate[]): Observable<unknown> {
+    const id$ = data.id
+      ? this.http.put(`${TIMESHEETS_V8}/${encodeURIComponent(data.id)}`, data).pipe(map(() => data.id as string))
+      : this.http.post<{ id: string }>(`${TIMESHEETS_V8}/cases/${encodeURIComponent(caseId)}`, data).pipe(map((r) => r.id));
+    return this.timesheetWrite(id$.pipe(
+      switchMap((id) => this.http.put(`${TIMESHEETS_V8}/${encodeURIComponent(id)}/templates`, templates).pipe(map(() => id))),
+    ));
+  }
+
+  /** Sets a project's allowed position templates (PUT /v8/timesheets/{id}/templates). */
+  setTimesheetTemplates(timesheetId: string, templates: PositionTemplate[]): Observable<unknown> {
+    return this.timesheetWrite(this.http.put(`${TIMESHEETS_V8}/${encodeURIComponent(timesheetId)}/templates`, templates));
+  }
+
+  // ----- Position (time entry) CRUD + stopwatch (v8) -----
+
+  /** Adds a manual time entry with explicit start/stop (POST /v8/timesheets/{id}/positions). */
+  addPosition(timesheetId: string, pos: PositionWrite): Observable<unknown> {
+    return this.timesheetWrite(this.http.post(`${TIMESHEETS_V8}/${encodeURIComponent(timesheetId)}/positions`, pos));
+  }
+
+  /** Updates a time entry (PUT /v8/timesheets/{id}/positions/{positionId}). */
+  updatePosition(timesheetId: string, positionId: string, pos: PositionWrite): Observable<unknown> {
+    return this.timesheetWrite(this.http.put(`${TIMESHEETS_V8}/${encodeURIComponent(timesheetId)}/positions/${encodeURIComponent(positionId)}`, pos));
+  }
+
+  /** Deletes a time entry (DELETE /v8/timesheets/{id}/positions/{positionId}). */
+  deletePosition(timesheetId: string, positionId: string): Observable<unknown> {
+    return this.timesheetWrite(this.http.delete(`${TIMESHEETS_V8}/${encodeURIComponent(timesheetId)}/positions/${encodeURIComponent(positionId)}`));
+  }
+
+  /** Starts a running timer (POST /v8/timesheets/{id}/positions/start); the server timestamps the start. */
+  startPosition(timesheetId: string, pos: PositionWrite): Observable<unknown> {
+    return this.timesheetWrite(this.http.post(`${TIMESHEETS_V8}/${encodeURIComponent(timesheetId)}/positions/start`, pos));
+  }
+
+  /** Stops a running timer (PUT /v8/timesheets/{id}/positions/{positionId}/stop); the server timestamps the stop. */
+  stopPosition(timesheetId: string, positionId: string, pos: PositionWrite): Observable<unknown> {
+    return this.timesheetWrite(this.http.put(`${TIMESHEETS_V8}/${encodeURIComponent(timesheetId)}/positions/${encodeURIComponent(positionId)}/stop`, pos));
+  }
+
+  /** Wraps a timesheet write with the shared `saving` flag. */
+  private timesheetWrite(call: Observable<unknown>): Observable<unknown> {
+    return defer(() => {
+      this.saving.set(true);
+      return call;
+    }).pipe(finalize(() => this.saving.set(false)));
   }
 
   /** Loads the case's labels ("Etiketten", GET /v1/cases/{id}/tags); [] on error. */
@@ -676,6 +834,11 @@ function toAccountEntry(dto: AccountEntryDto): AccountEntry {
   };
 }
 
+/** Placeholder timesheet when a running position's project can't be resolved (keeps the row usable). */
+function emptyTimesheet(id: string): CaseTimesheet {
+  return { id, name: '', description: '', interval: 0, limited: false, limit: 0, percentageDone: 0, status: 10 };
+}
+
 function toTimesheet(dto: TimesheetDto): CaseTimesheet {
   return {
     id: dto.id,
@@ -686,6 +849,9 @@ function toTimesheet(dto: TimesheetDto): CaseTimesheet {
     limit: dto.limit ?? 0,
     percentageDone: dto.percentageDone ?? 0,
     status: dto.status ?? 10,
+    caseId: dto.caseId,
+    caseFileNumber: dto.caseFileNumber,
+    caseName: dto.caseName,
   };
 }
 

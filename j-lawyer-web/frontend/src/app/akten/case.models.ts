@@ -252,6 +252,10 @@ export interface CaseTimesheet {
   percentageDone: number;
   /** 10 = open ("offen"), 20 = closed ("geschlossen"). */
   status: number;
+  /** The owning case (present on GET; used by the cross-case running view). */
+  caseId?: string;
+  caseFileNumber?: string;
+  caseName?: string;
 }
 
 /** A single time entry within a timesheet (GET /v8/timesheets/{id}/positions). */
@@ -339,6 +343,50 @@ export interface PartyUpdate {
   custom1: string;
   custom2: string;
   custom3: string;
+}
+
+/** Writable timesheet (project) fields sent to the v8 create/update endpoints. */
+export interface TimesheetWrite {
+  id?: string;
+  name: string;
+  description: string;
+  /** Rounding interval in minutes. */
+  interval: number;
+  limited: boolean;
+  /** Net budget cap (only meaningful when limited). */
+  limit: number;
+  /** 10 = open, 20 = closed. */
+  status: number;
+}
+
+/**
+ * Writable time-entry (position) fields. `started`/`stopped` are server-format datetime strings
+ * (yyyy-MM-ddTHH:mm:ss±HHMM); omitted for the stopwatch start/stop calls where the server timestamps.
+ */
+export interface PositionWrite {
+  name: string;
+  description: string;
+  started?: string;
+  stopped?: string;
+  unitPrice: number;
+  taxRate: number;
+  /** Login name of the user the time is logged for (defaults server-side to the caller). */
+  principal?: string;
+}
+
+/** A running time entry enriched with its timesheet/case, for the cross-case running view. */
+export interface RunningPosition {
+  position: TimesheetPosition;
+  timesheet: CaseTimesheet;
+}
+
+/** A predefined position template (GET /v8/timesheets/{id}/templates) for pre-filling entries. */
+export interface PositionTemplate {
+  id: string;
+  name: string;
+  description: string;
+  unitPrice: number;
+  taxRate: number;
 }
 
 /** Full case (RestfulCaseV1 + related collections + derived status). */

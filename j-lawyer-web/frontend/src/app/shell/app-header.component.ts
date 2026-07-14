@@ -5,6 +5,8 @@ import { IconComponent } from '../shared/icon.component';
 import { ThemeService } from '../core/theme.service';
 import { LanguageService } from '../core/language.service';
 import { AuthService } from '../core/auth/auth.service';
+import { TimesheetTrackingService } from '../akten/timesheet-tracking.service';
+import { TimesheetLogComponent } from '../akten/timesheet-log.component';
 
 /**
  * Navy top bar: wordmark (logo colors), global search, notifications, language switcher,
@@ -15,7 +17,7 @@ import { AuthService } from '../core/auth/auth.service';
   selector: 'jl-app-header',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, TranslocoModule],
+  imports: [IconComponent, TranslocoModule, TimesheetLogComponent],
   template: `
     <span class="wordmark">
       <span class="dots" aria-hidden="true"></span><b>j-lawyer</b>
@@ -42,6 +44,18 @@ import { AuthService } from '../core/auth/auth.service';
       }
     </select>
 
+    <button
+      type="button"
+      class="icon-btn stopwatch"
+      [class.running]="tracking.runningCount() > 0"
+      [attr.aria-label]="'timelog.title' | transloco"
+      [title]="(tracking.runningCount() > 0 ? 'timelog.runningTitle' : 'timelog.title') | transloco: { n: tracking.runningCount() }"
+      (click)="tracking.open()"
+    >
+      <jl-icon name="clock" />
+      @if (tracking.runningCount() > 0) { <span class="badge live">{{ tracking.runningCount() }}</span> }
+    </button>
+
     <button type="button" class="icon-btn" [attr.aria-label]="'header.messages' | transloco">
       <jl-icon name="mail" /><span class="badge">3</span>
     </button>
@@ -66,6 +80,10 @@ import { AuthService } from '../core/auth/auth.service';
     >
       <jl-icon name="logout" />
     </button>
+
+    @if (tracking.dialogOpen()) {
+      <jl-timesheet-log (close)="tracking.close()" />
+    }
   `,
   styles: [`
     :host {
@@ -108,6 +126,12 @@ import { AuthService } from '../core/auth/auth.service';
       background: linear-gradient(135deg, var(--jl-blue), #0a5b90); color: #fff;
       font-size: .78rem; font-weight: 700;
     }
+    /* Stopwatch: steady when idle; pulses green + shows a live count while a timer runs. */
+    .stopwatch.running { color: #4ade80; background: #4ade8022; animation: jl-pulse 1.15s ease-in-out infinite; }
+    .stopwatch.running:hover { color: #86efac; background: #4ade8033; }
+    .badge.live { background: var(--jl-green, #22c55e); }
+    @keyframes jl-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+    @media (prefers-reduced-motion: reduce) { .stopwatch.running { animation: none; } }
     @media (max-width: 680px) { .search { display: none; } .wordmark .sub { display: none; } }
   `],
 })
@@ -115,6 +139,7 @@ export class AppHeaderComponent {
   protected readonly theme = inject(ThemeService);
   protected readonly lang = inject(LanguageService);
   protected readonly auth = inject(AuthService);
+  protected readonly tracking = inject(TimesheetTrackingService);
   private readonly router = inject(Router);
 
   /** Global search: routes the term to the fulltext documents module (?q=). */

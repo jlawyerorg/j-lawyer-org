@@ -206,6 +206,51 @@
         "rate": "Satz/h",
         "total": "Summe",
         "billing": "Abrechnung"
+      },
+      "newProject": "Neues Projekt",
+      "editProject": "Projekt bearbeiten",
+      "deleteProject": "Projekt löschen",
+      "deleteConfirm": "Projekt „{{name}}“ mit allen Positionen löschen?",
+      "startTimer": "Stoppuhr",
+      "stopTimer": "Stoppen",
+      "addManual": "Zeit erfassen",
+      "field": {
+        "name": "Bezeichnung",
+        "description": "Beschreibung",
+        "interval": "Rundungsintervall",
+        "status": "Status",
+        "limited": "Budget begrenzen",
+        "limit": "Budget (netto)",
+        "allowedPositions": "Zulässige Positionen / Stundensätze"
+      },
+      "pos": {
+        "startTitle": "Stoppuhr starten",
+        "manualTitle": "Zeit erfassen",
+        "editTitle": "Position bearbeiten",
+        "template": "Vorlage",
+        "name": "Bezeichnung",
+        "description": "Beschreibung",
+        "start": "Beginn",
+        "stop": "Ende",
+        "rate": "Satz/h (netto)",
+        "tax": "MwSt. %",
+        "startBtn": "Starten",
+        "edit": "Position bearbeiten",
+        "delete": "Position löschen",
+        "deleteConfirm": "Position „{{name}}“ löschen?",
+        "user": "Benutzer"
+      },
+      "showAll": "Alle Zeiten anzeigen ({{n}})",
+      "since": "seit",
+      "searchEntries": "Zeiten durchsuchen…",
+      "noEntryMatch": "Keine passenden Zeiten.",
+      "entryCount": "{{shown}} von {{total}} Zeiten",
+      "tpl": {
+        "hint": "Auswahl der buchbaren Positionsvorlagen (leer = alle erlaubt).",
+        "none": "Keine Positionsvorlagen konfiguriert.",
+        "selected": "{{n}} ausgewählt",
+        "selectAll": "Alle",
+        "selectNone": "Keine"
       }
     },
     "edit": "Bearbeiten",
@@ -744,5 +789,17 @@
     "unpin": "Lösen",
     "pinItem": "Anpinnen",
     "unpinItem": "Pin entfernen"
+  },
+  "timelog": {
+    "title": "Zeiterfassung",
+    "runningTitle": "Zeiterfassung — {{n}} laufend",
+    "running": "Laufende Zeiten",
+    "noRunning": "Keine laufende Zeiterfassung.",
+    "newEntry": "Neu erfassen",
+    "case": "Akte",
+    "casePlaceholder": "Akte suchen…",
+    "changeCase": "Akte ändern",
+    "project": "Projekt",
+    "noProjects": "Keine offenen Projekte in dieser Akte."
   }
 }

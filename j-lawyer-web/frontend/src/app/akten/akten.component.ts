@@ -7,19 +7,27 @@ import { IconComponent } from '../shared/icon.component';
 import { DocumentPreviewComponent } from '../shared/document-preview.component';
 import { DocumentContentService } from '../shared/document-content.service';
 import { fileKind, kindGlyph, PreviewDoc, previewKindOf } from '../shared/document-preview.models';
-import { firstValueFrom, forkJoin, map } from 'rxjs';
+import { firstValueFrom, forkJoin, interval, map } from 'rxjs';
 import { CaseFilter, CasesService } from './cases.service';
 import { PinsService } from '../shell/pins.service';
 import { CaseEditorComponent } from './case-editor.component';
 import { PartyAddComponent } from './party-add.component';
 import { PartyEditorComponent } from './party-editor.component';
+import { TimesheetEditorComponent, TimesheetSaveResult } from './timesheet-editor.component';
+import { TimesheetDetailComponent } from './timesheet-detail.component';
+import { PositionEditorComponent, PositionEditResult, PositionMode } from './position-editor.component';
+import { TimesheetTrackingService } from './timesheet-tracking.service';
+import {
+  formatDurationMs, positionMillis, runningElapsed as elapsedOf, sumDuration, sumInvoiceable, sumNet, toServerDateTime,
+} from './timesheet.util';
 import { EventEditorComponent } from '../calendar/event-editor.component';
 import { CalendarService } from '../calendar/calendar.service';
 import { CalendarEvent, CalendarEventType, CaseRef, EventDraft } from '../calendar/calendar.models';
 import { AuthService } from '../core/auth/auth.service';
 import {
   AccountEntry, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseMessage, CasePayment,
-  CaseTag, CaseTimesheet, CaseWrite, DocFolder, DocSortKey, DueDate, MultiValueTagDef, Party, PartyUpdate, TimesheetPosition,
+  CaseTag, CaseTimesheet, CaseWrite, DocFolder, DocSortKey, DueDate, MultiValueTagDef, Party, PartyUpdate,
+  PositionWrite, TimesheetPosition, TimesheetWrite,
 } from './case.models';
 
 /** A row in the document folder tree, flattened for display with indentation + a doc count. */
@@ -53,7 +61,8 @@ interface TimesheetView extends CaseTimesheet {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslocoModule, IconComponent, DatePipe, DecimalPipe, DocumentPreviewComponent,
-    CaseEditorComponent, PartyAddComponent, PartyEditorComponent, EventEditorComponent],
+    CaseEditorComponent, PartyAddComponent, PartyEditorComponent, EventEditorComponent,
+    TimesheetEditorComponent, TimesheetDetailComponent, PositionEditorComponent],
   template: `
     <div class="master-detail" [class.show-detail]="selectedId()">
       <!-- Aktenliste -->
@@ -683,16 +692,22 @@ interface TimesheetView extends CaseTimesheet {
                 </p>
               } @else {
                 <div class="grid">
-                  @if (timesheets()?.length) {
-                    <div class="fin-nav" role="tablist">
-                      @for (f of zeitenFilters; track f) {
-                        <button type="button" class="fin-nav-btn" [class.on]="zeitenFilter() === f" (click)="zeitenFilter.set(f)">
-                          {{ 'akten.zeiten.filter.' + f | transloco }}
-                          <span class="fin-nav-count">{{ zeitenCount(f) }}</span>
-                        </button>
-                      }
-                    </div>
-                  }
+                  <div class="zeiten-bar">
+                    @if (timesheets()?.length) {
+                      <div class="fin-nav" role="tablist">
+                        @for (f of zeitenFilters; track f) {
+                          <button type="button" class="fin-nav-btn" [class.on]="zeitenFilter() === f" (click)="zeitenFilter.set(f)">
+                            {{ 'akten.zeiten.filter.' + f | transloco }}
+                            <span class="fin-nav-count">{{ zeitenCount(f) }}</span>
+                          </button>
+                        }
+                      </div>
+                    }
+                    <span class="spacer"></span>
+                    <button type="button" class="add-btn" (click)="openNewTimesheet()">
+                      <jl-icon name="plus" [size]="14" /> {{ 'akten.zeiten.newProject' | transloco }}
+                    </button>
+                  </div>
                   @for (ts of visibleTimesheets(); track ts.id) {
                     <div class="card full">
                       <div class="card-h">
@@ -701,8 +716,27 @@ interface TimesheetView extends CaseTimesheet {
                           {{ (ts.status === 20 ? 'akten.zeiten.closed' : 'akten.zeiten.open') | transloco }}
                         </span>
                         <span class="card-count">{{ ts.positions.length }}</span>
+                        <span class="ch-actions">
+                          <button type="button" class="row-edit" (click)="openEditTimesheet(ts)" [title]="'akten.zeiten.editProject' | transloco">
+                            <jl-icon name="edit" [size]="15" />
+                          </button>
+                          <button type="button" class="row-del" [disabled]="timesheetDeleting() === ts.id"
+                                  (click)="confirmDeleteTimesheet(ts)" [title]="'akten.zeiten.deleteProject' | transloco">
+                            <jl-icon name="trash" [size]="15" />
+                          </button>
+                        </span>
                       </div>
                       <div class="card-b">
+                        @if (ts.status !== 20) {
+                          <div class="ts-tools">
+                            <button type="button" class="add-btn" (click)="openStartPosition(ts)">
+                              <jl-icon name="clock" [size]="14" /> {{ 'akten.zeiten.startTimer' | transloco }}
+                            </button>
+                            <button type="button" class="add-btn ghost" (click)="openManualPosition(ts)">
+                              <jl-icon name="plus" [size]="14" /> {{ 'akten.zeiten.addManual' | transloco }}
+                            </button>
+                          </div>
+                        }
                         @if (ts.description) { <p class="ts-desc">{{ ts.description }}</p> }
                         <div class="ts-kpis">
                           <div class="fin-kpi">
@@ -725,48 +759,29 @@ interface TimesheetView extends CaseTimesheet {
                           }
                         </div>
 
-                        @if (ts.positions.length) {
-                          <div class="ts-scroll">
-                            <table class="ts-table">
-                              <thead>
-                                <tr>
-                                  <th>{{ 'akten.zeiten.col.description' | transloco }}</th>
-                                  <th>{{ 'akten.zeiten.col.user' | transloco }}</th>
-                                  <th>{{ 'akten.zeiten.col.started' | transloco }}</th>
-                                  <th class="num">{{ 'akten.zeiten.col.duration' | transloco }}</th>
-                                  <th class="num">{{ 'akten.zeiten.col.rate' | transloco }}</th>
-                                  <th class="num">{{ 'akten.zeiten.col.total' | transloco }}</th>
-                                  <th>{{ 'akten.zeiten.col.billing' | transloco }}</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                @for (p of ts.positions; track p.id) {
-                                  <tr>
-                                    <td>{{ p.name || p.description || '—' }}</td>
-                                    <td>{{ p.principal || '—' }}</td>
-                                    <td>{{ p.started ? (p.started | date: 'dd.MM.yyyy HH:mm') : '—' }}</td>
-                                    <td class="num">
-                                      @if (p.running) {
-                                        <span class="ts-run">{{ 'akten.zeiten.running' | transloco }}</span>
-                                      } @else { {{ durationOf(p) }} }
-                                    </td>
-                                    <td class="num">{{ p.unitPrice | number: '1.2-2' }} €</td>
-                                    <td class="num">{{ p.total | number: '1.2-2' }} €</td>
-                                    <td>
-                                      @if (p.invoiceId) {
-                                        <span class="ts-badge billed">{{ 'akten.zeiten.billed' | transloco }}</span>
-                                      } @else {
-                                        <span class="ts-badge open">{{ 'akten.zeiten.unbilled' | transloco }}</span>
-                                      }
-                                    </td>
-                                  </tr>
-                                }
-                              </tbody>
-                            </table>
+                        <!-- Running timers are shown directly in the tab; the full list lives in the detail dialog. -->
+                        @if (runningPositions(ts.positions).length) {
+                          <div class="ts-running">
+                            @for (p of runningPositions(ts.positions); track p.id) {
+                              <div class="run-row">
+                                <span class="run-pulse"></span>
+                                <span class="run-main">
+                                  <span class="run-title">{{ p.name || p.description || '—' }}</span>
+                                  <span class="run-sub">{{ p.principal || '—' }} · {{ 'akten.zeiten.since' | transloco }} {{ p.started | date: 'dd.MM. HH:mm' }}</span>
+                                </span>
+                                <span class="run-time">{{ runningElapsed(p) }}</span>
+                                <button type="button" class="row-edit stop" [disabled]="positionBusy() === p.id"
+                                        (click)="stopRunning(ts, p)" [title]="'akten.zeiten.stopTimer' | transloco">
+                                  <jl-icon name="stop" [size]="15" />
+                                </button>
+                              </div>
+                            }
                           </div>
-                        } @else {
-                          <p class="muted">{{ 'akten.zeiten.noPositions' | transloco }}</p>
                         }
+                        <button type="button" class="ts-detail-btn" (click)="openDetail(ts)">
+                          <jl-icon name="sheet" [size]="14" />
+                          {{ 'akten.zeiten.showAll' | transloco: { n: ts.positions.length } }}
+                        </button>
                       </div>
                     </div>
                   } @empty {
@@ -831,6 +846,20 @@ interface TimesheetView extends CaseTimesheet {
                        (save)="onSaveEvent($event)" (remove)="onDeleteEvent($event)"
                        (close)="eventEditor.set(null)" (openCase)="eventEditor.set(null)" />
     }
+    @if (editingTimesheet(); as te) {
+      <jl-timesheet-editor [sheet]="te.sheet" (save)="onSaveTimesheet($event)" (close)="editingTimesheet.set(null)" />
+    }
+    @if (detailTimesheet(); as td) {
+      <jl-timesheet-detail [sheet]="td" [positions]="td.positions" [busyId]="positionBusy()"
+                           (startTimer)="openStartPosition(td)" (addManual)="openManualPosition(td)"
+                           (editPosition)="openEditPosition(td, $event)" (stopPosition)="stopRunning(td, $event)"
+                           (deletePosition)="confirmDeletePosition(td, $event)"
+                           (close)="detailTimesheetId.set(null)" />
+    }
+    @if (positionEditor(); as pe) {
+      <jl-position-editor [mode]="pe.mode" [timesheetId]="pe.timesheetId" [position]="pe.position"
+                          (save)="onSavePosition($event)" (close)="positionEditor.set(null)" />
+    }
   `,
   styleUrl: './akten.component.css',
 })
@@ -841,6 +870,7 @@ export class AktenComponent {
   private readonly calendar = inject(CalendarService);
   private readonly transloco = inject(TranslocoService);
   private readonly auth = inject(AuthService);
+  private readonly tracking = inject(TimesheetTrackingService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
@@ -894,6 +924,18 @@ export class AktenComponent {
   /** Show all timesheets, only open or only closed. */
   protected readonly zeitenFilter = signal<ZeitenFilter>('all');
   protected readonly zeitenFilters: ZeitenFilter[] = ['all', 'open', 'closed'];
+  /** Timesheet (project) editor: holds the sheet to edit (null = create), or null when closed. */
+  protected readonly editingTimesheet = signal<{ sheet: CaseTimesheet | null } | null>(null);
+  /** Position (time entry) editor: mode + target timesheet + entry, or null when closed. */
+  protected readonly positionEditor = signal<{ mode: PositionMode; timesheetId: string; position: TimesheetPosition | null } | null>(null);
+  /** Full-list detail dialog: the timesheet id whose entries are shown, or null when closed. */
+  protected readonly detailTimesheetId = signal<string | null>(null);
+  /** Ticks every second while a timer runs, driving the live-elapsed display. */
+  protected readonly nowTick = signal(Date.now());
+  /** Id of the timesheet currently being deleted, or null. */
+  protected readonly timesheetDeleting = signal<string | null>(null);
+  /** Id of the position currently being deleted/stopped, or null. */
+  protected readonly positionBusy = signal<string | null>(null);
 
   // ---- Editing state (Stammdaten / Beteiligte / Dokumente / Kalender) ----
   /** Stammdaten editor: holds the raw case DTO to edit, or null when closed. */
@@ -959,6 +1001,12 @@ export class AktenComponent {
       if (!this.autoSelected && rows.length && this.selectedId() === null && window.innerWidth > 680) {
         this.autoSelected = true;
         this.router.navigate(['/cases', rows[0].id], { replaceUrl: true });
+      }
+    });
+    // Drive the running-timer display: re-stamp "now" every second while a timer is live.
+    interval(1000).pipe(takeUntilDestroyed()).subscribe(() => {
+      if (this.activeTab() === 'zeiten' && this.hasRunningPosition()) {
+        this.nowTick.set(Date.now());
       }
     });
   }
@@ -1784,24 +1832,171 @@ export class AktenComponent {
 
   /** Net sum of a timesheet's positions. */
   protected tsNet(positions: TimesheetPosition[]): number {
-    return positions.reduce((acc, p) => acc + (p.total || 0), 0);
+    return sumNet(positions);
   }
 
   /** Sum of the still-unbilled (no invoice) positions — the invoiceable amount. */
   protected tsInvoiceable(positions: TimesheetPosition[]): number {
-    return positions.reduce((acc, p) => acc + (p.invoiceId ? 0 : (p.total || 0)), 0);
+    return sumInvoiceable(positions);
   }
 
   /** Total tracked duration of a timesheet's completed positions, formatted "h:mm". */
   protected tsDuration(positions: TimesheetPosition[]): string {
-    const ms = positions.reduce((acc, p) => acc + positionMillis(p), 0);
-    return formatDurationMs(ms);
+    return sumDuration(positions);
+  }
+
+  /** The running positions of a timesheet (shown directly in the tab). */
+  protected runningPositions(positions: TimesheetPosition[]): TimesheetPosition[] {
+    return positions.filter((p) => p.running);
   }
 
   /** A single position's duration, formatted "h:mm" (empty while running or unstarted). */
   protected durationOf(p: TimesheetPosition): string {
     const ms = positionMillis(p);
     return ms > 0 ? formatDurationMs(ms) : '—';
+  }
+
+  // ----- Zeiten: editing (projects, entries, stopwatch) -----
+
+  /** True when any loaded timesheet has a running (live) timer. */
+  protected hasRunningPosition(): boolean {
+    return (this.timesheets() ?? []).some((t) => t.positions.some((p) => p.running));
+  }
+
+  /** Live elapsed time of a running position ("h:mm:ss"), recomputed each nowTick. */
+  protected runningElapsed(p: TimesheetPosition): string {
+    return elapsedOf(p, this.nowTick());
+  }
+
+  /** Opens the project editor to create a new timesheet on this case. */
+  protected openNewTimesheet(): void {
+    this.editingTimesheet.set({ sheet: null });
+  }
+
+  /** Opens the project editor to edit an existing timesheet. */
+  protected openEditTimesheet(ts: TimesheetView): void {
+    this.editingTimesheet.set({ sheet: ts });
+  }
+
+  /** Persists the project (create/update) + its allowed positions, then closes and reloads. */
+  protected onSaveTimesheet(result: TimesheetSaveResult): void {
+    const id = this.selectedId();
+    if (!id) {
+      return;
+    }
+    this.cases.saveTimesheetWithTemplates(id, result.data, result.templates).subscribe({
+      next: () => { this.editingTimesheet.set(null); this.reloadTimesheets(); },
+      error: () => undefined,
+    });
+  }
+
+  /** Confirms, then deletes a timesheet (project) including its entries and reloads. */
+  protected confirmDeleteTimesheet(ts: TimesheetView): void {
+    if (this.timesheetDeleting()) {
+      return;
+    }
+    if (!confirm(this.transloco.translate('akten.zeiten.deleteConfirm', { name: ts.name || '' }))) {
+      return;
+    }
+    this.timesheetDeleting.set(ts.id);
+    this.cases.deleteTimesheet(ts.id).subscribe({
+      next: () => { this.timesheetDeleting.set(null); this.reloadTimesheets(); },
+      error: () => this.timesheetDeleting.set(null),
+    });
+  }
+
+  /** Opens the entry editor to start a stopwatch on a timesheet. */
+  protected openStartPosition(ts: TimesheetView): void {
+    this.positionEditor.set({ mode: 'start', timesheetId: ts.id, position: null });
+  }
+
+  /** Opens the entry editor to add a manual entry (explicit start/stop) to a timesheet. */
+  protected openManualPosition(ts: TimesheetView): void {
+    this.positionEditor.set({ mode: 'manual', timesheetId: ts.id, position: null });
+  }
+
+  /** Opens the entry editor to edit an existing entry. */
+  protected openEditPosition(ts: TimesheetView, p: TimesheetPosition): void {
+    this.positionEditor.set({ mode: 'edit', timesheetId: ts.id, position: p });
+  }
+
+  /** Persists an entry from the editor (start / add / update), then closes and reloads. */
+  protected onSavePosition(r: PositionEditResult): void {
+    const ctx = this.positionEditor();
+    if (!ctx) {
+      return;
+    }
+    const base: PositionWrite = {
+      name: r.name,
+      description: r.description,
+      unitPrice: r.unitPrice,
+      taxRate: r.taxRate,
+      principal: r.principal,
+    };
+    let call;
+    if (r.mode === 'start') {
+      call = this.cases.startPosition(ctx.timesheetId, base);
+    } else {
+      const withTimes: PositionWrite = {
+        ...base,
+        started: toServerDateTime(r.startLocal),
+        stopped: toServerDateTime(r.stopLocal),
+      };
+      call = r.mode === 'edit' && r.positionId
+        ? this.cases.updatePosition(ctx.timesheetId, r.positionId, withTimes)
+        : this.cases.addPosition(ctx.timesheetId, withTimes);
+    }
+    call.subscribe({
+      next: () => { this.positionEditor.set(null); this.reloadTimesheets(); },
+      error: () => undefined,
+    });
+  }
+
+  /** Stops a running timer (server timestamps the stop), then reloads. */
+  protected stopRunning(ts: TimesheetView, p: TimesheetPosition): void {
+    if (this.positionBusy()) {
+      return;
+    }
+    this.positionBusy.set(p.id);
+    this.cases.stopPosition(ts.id, p.id, {
+      name: p.name, description: p.description, unitPrice: p.unitPrice, taxRate: p.taxRate, principal: p.principal,
+    }).subscribe({
+      next: () => { this.positionBusy.set(null); this.reloadTimesheets(); },
+      error: () => this.positionBusy.set(null),
+    });
+  }
+
+  /** Confirms, then deletes a time entry and reloads. */
+  protected confirmDeletePosition(ts: TimesheetView, p: TimesheetPosition): void {
+    if (this.positionBusy()) {
+      return;
+    }
+    if (!confirm(this.transloco.translate('akten.zeiten.pos.deleteConfirm', { name: p.name || p.description || '' }))) {
+      return;
+    }
+    this.positionBusy.set(p.id);
+    this.cases.deletePosition(ts.id, p.id).subscribe({
+      next: () => { this.positionBusy.set(null); this.reloadTimesheets(); },
+      error: () => this.positionBusy.set(null),
+    });
+  }
+
+  /** Reloads the current case's timesheets + positions after a write (keeps the tab open + detail dialog). */
+  protected reloadTimesheets(): void {
+    this.loadTimesheets();
+    // The header stopwatch indicator may have changed (a timer started/stopped/was deleted).
+    this.tracking.refresh();
+  }
+
+  /** The timesheet whose full entry list is shown in the detail dialog (null when closed). */
+  protected detailTimesheet(): TimesheetView | null {
+    const id = this.detailTimesheetId();
+    return id ? (this.timesheets() ?? []).find((t) => t.id === id) ?? null : null;
+  }
+
+  /** Opens the full-entry detail dialog for a project. */
+  protected openDetail(ts: TimesheetView): void {
+    this.detailTimesheetId.set(ts.id);
   }
 
   /** Sum of an invoice list's gross totals (for the finance summary). */
@@ -1905,23 +2100,8 @@ export class AktenComponent {
   }
 }
 
-/** Elapsed milliseconds of a completed position (0 while running or unstarted). */
-function positionMillis(p: TimesheetPosition): number {
-  if (!p.started || !p.stopped) {
-    return 0;
-  }
-  const start = new Date(p.started).getTime();
-  const stop = new Date(p.stopped).getTime();
-  return stop > start ? stop - start : 0;
-}
+/** ---- (timesheet helpers moved to ./timesheet.util) ---- */
 
-/** Formats a duration in milliseconds as "h:mm" (e.g. 125 min -> "2:05"). */
-function formatDurationMs(ms: number): string {
-  const totalMinutes = Math.round(ms / 60000);
-  const h = Math.floor(totalMinutes / 60);
-  const m = totalMinutes % 60;
-  return `${h}:${String(m).padStart(2, '0')}`;
-}
 
 /** Every folder id of a case (root + descendants); ['' ] when the case has no folder tree. */
 function collectFolderIds(detail: CaseDetail | null): string[] {

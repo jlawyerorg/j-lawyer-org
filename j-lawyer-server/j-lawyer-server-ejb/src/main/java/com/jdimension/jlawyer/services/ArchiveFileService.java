@@ -7075,9 +7075,15 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             throw new Exception(MSG_MISSING_TIMESHEET);
         }
 
+        // Time can be logged for another user: honour an explicitly provided principal, otherwise
+        // fall back to the authenticated caller (the desktop client always sends its own principal).
+        String effectivePrincipal = (position.getPrincipal() != null && !position.getPrincipal().trim().isEmpty())
+                ? position.getPrincipal()
+                : context.getCallerPrincipal().getName();
+
         if (position.getId() == null) {
 
-            List openForUserInTimesheet = this.timesheetPositionsFacade.findOpenByPrincipalAndTimesheet(context.getCallerPrincipal().getName(), sheet);
+            List openForUserInTimesheet = this.timesheetPositionsFacade.findOpenByPrincipalAndTimesheet(effectivePrincipal, sheet);
             if (!openForUserInTimesheet.isEmpty()) {
                 throw new Exception("In einem Zeiterfassungsprojekt kann immer nur eine offene Position für einen Nutzer existieren!");
             }
@@ -7096,7 +7102,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             position.setStarted(start);
             position.setStopped(null);
-            position.setPrincipal(context.getCallerPrincipal().getName());
+            position.setPrincipal(effectivePrincipal);
             position.setTimesheet(sheet);
 
             // newly added position cannot be part of an invoice
@@ -7150,7 +7156,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             TimesheetPosition newPos = new TimesheetPosition();
             StringGenerator idGen = new StringGenerator();
             String id = idGen.getID().toString();
-            newPos.setPrincipal(context.getCallerPrincipal().getName());
+            newPos.setPrincipal(effectivePrincipal);
             newPos.setDescription(position.getDescription());
             newPos.setName(position.getName());
 
@@ -7250,6 +7256,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             existing.setUnitPrice(position.getUnitPrice());
             existing.setStarted(position.getStarted());
             existing.setStopped(position.getStopped());
+            // Time can be reassigned to another user: honour an explicitly provided principal.
+            if (position.getPrincipal() != null && !position.getPrincipal().trim().isEmpty()) {
+                existing.setPrincipal(position.getPrincipal());
+            }
             existing.setTotal(existing.calculateTotal(sheet.getInterval()));
             this.timesheetPositionsFacade.edit(existing);
 
