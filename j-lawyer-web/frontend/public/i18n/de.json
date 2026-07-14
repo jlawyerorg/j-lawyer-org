@@ -17,7 +17,8 @@
     "signingIn": "Anmeldung läuft …",
     "signOut": "Abmelden",
     "error": "Anmeldung fehlgeschlagen. Bitte prüfen Sie Benutzername und Passwort.",
-    "demoHint": "Demo-Zugang: admin / a"
+    "demoHint": "Demo-Zugang: admin / a",
+    "nextBackground": "Anderes Hintergrundbild anzeigen"
   },
   "module": {
     "desktop": "Mein Desktop",
