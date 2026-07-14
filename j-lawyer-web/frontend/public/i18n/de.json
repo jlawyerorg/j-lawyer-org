@@ -132,7 +132,13 @@
       },
       "dateChange": "Änderungsdatum",
       "dateCreation": "Erstelldatum",
-      "dateModeHint": "Zwischen Änderungs- und Erstelldatum umschalten"
+      "dateModeHint": "Zwischen Änderungs- und Erstelldatum umschalten",
+      "uploading": "Wird hochgeladen …",
+      "uploadError": "Upload fehlgeschlagen",
+      "dropHint": "Dateien hier ablegen oder klicken · Ablage: {{folder}}",
+      "dropHintFolder": "Dateien hier ablegen oder klicken · Ordner: {{folder}}",
+      "delete": "Löschen",
+      "deleteConfirm": "Dokument „{{name}}“ wirklich löschen?"
     },
     "docLoading": "Dokument wird geladen …",
     "docError": "Dokument konnte nicht geladen werden.",
@@ -201,6 +207,63 @@
         "total": "Summe",
         "billing": "Abrechnung"
       }
+    },
+    "edit": "Bearbeiten",
+    "editCase": "Akte bearbeiten",
+    "editor": {
+      "editTitle": "Akte bearbeiten",
+      "newTitle": "Neue Akte",
+      "cancel": "Abbrechen",
+      "save": "Speichern",
+      "group": {
+        "base": "Akte",
+        "responsible": "Verantwortliche",
+        "claim": "Forderung"
+      },
+      "field": {
+        "name": "Bezeichnung",
+        "claimNumber": "Schadennummer",
+        "archived": "Akte abgelegt (archiviert)",
+        "ownerGroup": "Eigentümer-Gruppe"
+      }
+    },
+    "party": {
+      "add": "Hinzufügen",
+      "addTitle": "Beteiligten hinzufügen",
+      "involvementType": "Beteiligungsart",
+      "contact": "Kontakt",
+      "searchPlaceholder": "Kontakt suchen …",
+      "typeToSearch": "Zum Suchen tippen (min. 2 Zeichen)",
+      "noResults": "Keine Treffer.",
+      "clear": "Auswahl entfernen",
+      "remove": "Beteiligten entfernen",
+      "removeConfirm": "Beteiligten „{{name}}“ wirklich entfernen?",
+      "reference": "Zeichen",
+      "editTitle": "Beteiligten bearbeiten",
+      "edit": "Beteiligten bearbeiten",
+      "contactPerson": "Ansprechpartner",
+      "custom1": "Eigenes Feld 1",
+      "custom2": "Eigenes Feld 2",
+      "custom3": "Eigenes Feld 3",
+      "toContact": "Zum Kontakt"
+    },
+    "due": {
+      "add": "Hinzufügen",
+      "delete": "Eintrag löschen",
+      "deleteConfirm": "Eintrag „{{name}}“ wirklich löschen?",
+      "edit": "Eintrag bearbeiten"
+    },
+    "tag": {
+      "add": "Etikett",
+      "remove": "Etikett entfernen"
+    },
+    "perm": {
+      "add": "Gruppe",
+      "remove": "Berechtigung entfernen"
+    },
+    "msg": {
+      "placeholder": "Nachricht schreiben …",
+      "send": "Senden"
     }
   },
   "kontakte": {

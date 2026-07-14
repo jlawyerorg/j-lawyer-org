@@ -107,6 +107,7 @@
 .party .pa.insurer { background: var(--jl-green); color: #233; }
 .party .role { display: block; font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; color: var(--jl-ink-faint); font-weight: 600; }
 .party .nm { display: block; font-weight: 600; font-size: .9rem; }
+.party .ref { display: block; font-size: .74rem; color: var(--jl-ink-faint); }
 
 .frist { display: flex; align-items: center; gap: 12px; padding: 9px 0; }
 .frist + .frist { border-top: 1px solid var(--jl-line); }
@@ -382,3 +383,85 @@
   .dl-title .to-folders { display: inline-block; }
   .doc-folders .to-list { display: inline-block; }
 }
+
+/* Editing affordances: edit case / add party+due / upload / delete rows. */
+.head-actions { display: inline-flex; align-items: center; gap: 6px; }
+.hbtn {
+  display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: .78rem; font-weight: 650;
+  color: var(--jl-ink-soft); background: var(--jl-surface); border: 1px solid var(--jl-line-strong);
+  border-radius: 8px; padding: 6px 11px; cursor: pointer;
+}
+.hbtn:hover { border-color: var(--jl-blue); color: var(--jl-blue); }
+.ch-actions { margin-left: auto; }
+.add-btn {
+  display: inline-flex; align-items: center; gap: 5px; font: inherit; font-size: .76rem; font-weight: 650;
+  color: var(--jl-blue); background: color-mix(in srgb, var(--jl-blue) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--jl-blue) 40%, transparent); border-radius: 7px; padding: 5px 10px; cursor: pointer;
+}
+.add-btn:hover { background: color-mix(in srgb, var(--jl-blue) 18%, transparent); }
+.party { position: relative; }
+.party .party-x { flex: 1; min-width: 0; }
+.row-del {
+  flex: none; display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 7px;
+  border: 1px solid transparent; background: transparent; color: var(--jl-ink-faint); cursor: pointer;
+}
+.row-del:hover { border-color: var(--jl-red); color: var(--jl-red); background: color-mix(in srgb, var(--jl-red) 10%, transparent); }
+.row-del:disabled { opacity: .4; cursor: default; }
+.frist .row-del { margin-left: auto; }
+.doc-btn.danger { padding: 5px 8px; }
+.doc-btn.danger:hover { border-color: var(--jl-red); color: var(--jl-red); }
+.doc-btn:disabled { opacity: .5; cursor: default; }
+.dropzone {
+  display: flex; align-items: center; justify-content: center; gap: 10px; margin: 0 0 10px; padding: 14px;
+  border: 2px dashed var(--jl-line-strong); border-radius: 10px; background: var(--jl-surface-alt);
+  color: var(--jl-ink-soft); font-size: .8rem; font-weight: 600; cursor: pointer; text-align: center;
+  transition: border-color .12s, background .12s, color .12s;
+}
+.dropzone:hover { border-color: var(--jl-blue); background: color-mix(in srgb, var(--jl-blue) 8%, var(--jl-surface-alt)); color: var(--jl-blue); }
+.dropzone.over { border-color: var(--jl-blue); background: color-mix(in srgb, var(--jl-blue) 12%, transparent); color: var(--jl-blue); }
+.dropzone.busy { opacity: .7; pointer-events: none; }
+.up-error { margin: 0 0 10px; font-size: .78rem; font-weight: 600; color: var(--jl-red); }
+
+/* Removable chips (tags / authorized groups) + add-dropdown. */
+.chip.removable { display: inline-flex; align-items: center; gap: 5px; padding-right: 5px; }
+.chip-x { display: inline-grid; place-items: center; width: 16px; height: 16px; border: 0; border-radius: 50%; background: transparent; color: var(--jl-ink-faint); font-size: .7rem; cursor: pointer; }
+.chip-x:hover { background: color-mix(in srgb, var(--jl-red) 16%, transparent); color: var(--jl-red); }
+.add-select {
+  margin-top: 8px; font: inherit; font-size: .78rem; font-weight: 600; color: var(--jl-blue);
+  background: var(--jl-surface); border: 1px dashed var(--jl-line-strong); border-radius: 8px; padding: 5px 8px; cursor: pointer;
+}
+.add-select:hover { border-color: var(--jl-blue); }
+/* Row action group (edit + delete on due dates). */
+.row-actions { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; }
+.row-actions .row-del { margin-left: 0; }
+.row-edit {
+  flex: none; display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 7px;
+  border: 1px solid transparent; background: transparent; color: var(--jl-ink-faint); cursor: pointer;
+}
+.row-edit:hover { border-color: var(--jl-blue); color: var(--jl-blue); background: color-mix(in srgb, var(--jl-blue) 10%, transparent); }
+/* Instant-message chat. */
+.chat { display: flex; flex-direction: column; gap: 8px; max-height: 340px; overflow-y: auto; padding: 2px 0 4px; }
+.bubble { max-width: 82%; align-self: flex-start; display: flex; flex-direction: column; gap: 3px;
+  background: var(--jl-surface-alt); border: 1px solid var(--jl-line); border-radius: 12px 12px 12px 4px; padding: 7px 11px; }
+.bubble.mine { align-self: flex-end; background: color-mix(in srgb, var(--jl-blue) 12%, var(--jl-surface)); border-color: color-mix(in srgb, var(--jl-blue) 30%, transparent); border-radius: 12px 12px 4px 12px; }
+.bubble-meta { font-size: .72rem; color: var(--jl-ink-faint); font-variant-numeric: tabular-nums; }
+.bubble-text { font-size: .88rem; color: var(--jl-ink); word-break: break-word; white-space: pre-wrap; }
+.composer { display: flex; gap: 8px; margin-bottom: 10px; }
+.composer input {
+  flex: 1; min-width: 0; font: inherit; font-size: .86rem; padding: 8px 11px;
+  border: 1px solid var(--jl-line-strong); border-radius: 8px; background: var(--jl-surface); color: var(--jl-ink);
+}
+.composer input:focus { outline: none; border-color: var(--jl-blue); }
+.send-btn { flex: none; font: inherit; font-size: .82rem; font-weight: 650; color: #fff; background: var(--jl-blue); border: 0; border-radius: 8px; padding: 8px 15px; cursor: pointer; }
+.send-btn:hover:not(:disabled) { background: var(--jl-blue-strong); }
+.send-btn:disabled { opacity: .5; cursor: default; }
+
+/* List (multi-value) tags: rendered as a chip (like single labels) with an inline name + dropdown. */
+.chip.list-chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 6px 2px 10px; }
+.list-chip .lc-name { color: var(--jl-ink-soft); }
+.list-chip .lc-name::after { content: ":"; }
+.lc-select {
+  font: inherit; font-size: .78rem; font-weight: 600; color: var(--jl-ink);
+  border: 0; background: transparent; padding: 1px 2px; margin: 0; cursor: pointer; max-width: 170px;
+}
+.lc-select:focus { outline: none; }

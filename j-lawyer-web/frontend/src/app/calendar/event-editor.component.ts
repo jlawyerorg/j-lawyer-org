@@ -46,6 +46,8 @@ const REMINDER_OPTIONS: { value: number; key: string }[] = [
           <span class="lbl">{{ 'kalender.editor.case' | transloco }}</span>
           @if (event()) {
             <span class="fixed">{{ caseLabel() }}</span>
+          } @else if (presetCase()) {
+            <span class="fixed">{{ presetCase()!.fileNumber }} · {{ presetCase()!.name }}</span>
           } @else {
             @if (selectedCase(); as c) {
               <span class="picked">
@@ -230,6 +232,8 @@ export class EventEditorComponent implements OnInit {
   readonly presetEnd = input<Date | null>(null);
   /** When true (grid drag) prefer an appointment calendar so the time fields show. */
   readonly presetTimed = input<boolean>(false);
+  /** A fixed case to file a new entry against (used when creating from a case detail); locks the picker. */
+  readonly presetCase = input<CaseRef | null>(null);
 
   readonly save = output<EventDraft>();
   readonly remove = output<string>();
@@ -297,7 +301,7 @@ export class EventEditorComponent implements OnInit {
   protected readonly canSave = computed(() => !!this.calendarId() && !!this.resolveCaseId());
 
   /** The owning case id (fixed entry case, or the picked case when creating); '' when none. */
-  protected readonly caseIdResolved = computed(() => this.event()?.caseId ?? this.selectedCase()?.id ?? '');
+  protected readonly caseIdResolved = computed(() => this.event()?.caseId ?? this.presetCase()?.id ?? this.selectedCase()?.id ?? '');
 
   ngOnInit(): void {
     this.cal.loadCalendars();
@@ -367,7 +371,7 @@ export class EventEditorComponent implements OnInit {
   }
 
   private resolveCaseId(): string {
-    return this.event()?.caseId ?? this.selectedCase()?.id ?? '';
+    return this.event()?.caseId ?? this.presetCase()?.id ?? this.selectedCase()?.id ?? '';
   }
 
   protected submit(): void {

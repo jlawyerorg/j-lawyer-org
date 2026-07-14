@@ -1,19 +1,26 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
-import { catchError, forkJoin, map, Observable, of, shareReplay } from 'rxjs';
+import { catchError, defer, finalize, forkJoin, map, Observable, of, shareReplay } from 'rxjs';
 import { API_ROOT } from '../core/api';
 import {
   AccountEntry, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseMessage, CaseOverview,
-  CasePayment, CaseStatus, CaseTag, CaseTimesheet, DocDateMode, DocFolder, DocSortKey, DueDate,
-  Party, SortDir, TimesheetPosition,
+  CasePayment, CaseStatus, CaseTag, CaseTimesheet, CaseUserRef, CaseWrite, ContactRef, DocDateMode, DocFolder,
+  DocSortKey, DueDate, MultiValueTagDef, Party, PartyTypeOption, PartyUpdate, PartyWrite, SortDir, TimesheetPosition,
 } from './case.models';
 
 const CASES_BASE = `${API_ROOT}/v1/cases`;
+const CASES_V2 = `${API_ROOT}/v2/cases`;
 const CASES_V3 = `${API_ROOT}/v3/cases`;
 const CASES_V4 = `${API_ROOT}/v4/cases`;
+const CASES_V5 = `${API_ROOT}/v5/cases`;
 const CASES_V7 = `${API_ROOT}/v7/cases`;
 const CASES_V8 = `${API_ROOT}/v8/cases`;
 const TIMESHEETS_V8 = `${API_ROOT}/v8/timesheets`;
+const CONTACTS_V8 = `${API_ROOT}/v8/contacts`;
+const USERS_V6 = `${API_ROOT}/v6/security/users`;
+const GROUPS_V6 = `${API_ROOT}/v6/security/groups`;
+const MESSAGES_V7 = `${API_ROOT}/v7/messages`;
+const TAG_TEMPLATES_V7 = `${API_ROOT}/v7/configuration/optiongroups/archiveFile.tags`;
 const CALENDARS_V4 = `${API_ROOT}/v4/calendars/list`;
 const PARTY_TYPES = `${API_ROOT}/v1/cases/party/types`;
 const PAGE_SIZE = 50;
@@ -29,13 +36,26 @@ interface CasePageDto { total: number; offset: number; limit: number; items: Cas
 interface CaseDto {
   id: string; fileNumber: string; name: string; reason: string; subjectField: string;
   lawyer: string; assistant: string; claimNumber: string; claimValue: number; notice: string; archived: number;
+  // Extra writable fields kept so the editor can round-trip them unchanged (not shown in the form).
+  custom1?: string; custom2?: string; custom3?: string; group?: string; externalId?: string;
 }
-interface PartyDto { id: string; involvementType: string; contact?: string; contactName?: string; }
+interface PartyDto {
+  id: string; involvementType: string; contact?: string; contactName?: string; reference?: string;
+  custom1?: string; custom2?: string; custom3?: string; addressId?: string;
+}
+// GET /v8/contacts/page item (only the fields the party picker needs).
+interface ContactHitDto {
+  id: string; firstName?: string; name?: string; company?: string; city?: string; zipCode?: string;
+}
+interface ContactPageHitDto { items?: ContactHitDto[]; }
+// GET /v6/security/users
+interface UserDto { principalId: string; displayName?: string; }
 // v1 and v4 differ: v1 has `reason`/`dueDate`; v4 renames them to `summary`/`beginDate` and adds
 // `calendar` (the calendar-setup id). We read whichever the server provides.
 interface DueDateDto {
   id: string; done: boolean; assignee: string; type: string;
   reason?: string; dueDate?: string; summary?: string; beginDate?: string; calendar?: string;
+  description?: string; location?: string; endDate?: string; reminderMinutes?: number;
 }
 // GET /v4/calendars — configured calendars; `background` is a packed-RGB int colour.
 interface CalendarDto { id: string; displayName?: string; background?: number; }
@@ -70,7 +90,8 @@ interface TimesheetPositionDto {
   id: string; name: string; description: string; principal: string; started: string; stopped: string;
   unitPrice: number; taxRate: number; total: number; timesheetId: string; invoiceId?: string; running: boolean;
 }
-interface TagDto { id: string; name: string; }
+interface TagDto { id: string; name: string; tagValue?: string; }
+interface MultiValueTagDto { tagName?: string; values?: string[]; }
 interface GroupDto { id: string; name: string; abbreviation?: string; }
 interface MessageDto { id: string; sent: number | string; sender: string; content: string; }
 
@@ -88,6 +109,10 @@ export class CasesService {
   readonly total = signal(0);
   readonly listLoading = signal(false);
   readonly listError = signal(false);
+  /** The raw (writable) DTO of the case loaded last, so the editor can clone it for edits. */
+  readonly rawSelected = signal<CaseWrite | null>(null);
+  /** True while a create/update/delete/upload write is in flight. */
+  readonly saving = signal(false);
 
   // Documents-tab view state, kept here so it survives case navigation for the session.
   readonly docSort = signal<{ key: DocSortKey; dir: SortDir }>({ key: 'name', dir: 'asc' });
@@ -219,17 +244,98 @@ export class CasesService {
   /** Loads the case's labels ("Etiketten", GET /v1/cases/{id}/tags); [] on error. */
   tags(id: string): Observable<CaseTag[]> {
     return this.http.get<TagDto[]>(`${CASES_BASE}/${id}/tags`).pipe(
-      map((rows) => (rows ?? []).map((t) => ({ id: t.id, name: t.name ?? '' }))),
+      map((rows) => (rows ?? []).map((t) => ({ id: t.id, name: t.name ?? '', value: t.tagValue ?? '' }))),
       catchError(() => of([])),
     );
+  }
+
+  private multiValueTags$?: Observable<MultiValueTagDef[]>;
+
+  /** The configured list-tag ("multi-value") definitions for cases (name + value set). Cached. */
+  multiValueTags(): Observable<MultiValueTagDef[]> {
+    this.multiValueTags$ ??= this.http.get<MultiValueTagDto[]>(`${API_ROOT}/v7/configuration/tags/multivalue/case`).pipe(
+      map((rows) => (rows ?? [])
+        .filter((t) => t.tagName)
+        .map((t) => ({ tagName: t.tagName!, values: (t.values ?? []).filter(Boolean) }))),
+      catchError(() => of([])),
+      shareReplay(1),
+    );
+    return this.multiValueTags$;
   }
 
   /** Loads the user groups allowed to access the case ("Berechtigungen", GET /v7/cases/{id}/groups); [] on error. */
   allowedGroups(id: string): Observable<CaseGroup[]> {
     return this.http.get<GroupDto[]>(`${CASES_V7}/${id}/groups`).pipe(
-      map((rows) => (rows ?? []).map((g) => ({ id: g.id, name: g.name || g.abbreviation || '' }))),
+      map((rows) => (rows ?? []).map(toGroup)),
       catchError(() => of([])),
     );
+  }
+
+  private allGroups$?: Observable<CaseGroup[]>;
+
+  /** All configured user groups (GET /v6/security/groups), for the owner/authorized-group pickers. Cached. */
+  allGroups(): Observable<CaseGroup[]> {
+    this.allGroups$ ??= this.http.get<GroupDto[]>(GROUPS_V6).pipe(
+      map((rows) => (rows ?? []).map(toGroup).sort((a, b) => a.name.localeCompare(b.name))),
+      catchError(() => of([])),
+      shareReplay(1),
+    );
+    return this.allGroups$;
+  }
+
+  /**
+   * Overwrites a case's authorized groups with the given full set (PUT /v7/cases/{id}/groups — a
+   * bulk overwrite; there is no discrete add/remove endpoint, so the caller sends the desired list).
+   */
+  setAllowedGroups(caseId: string, groups: CaseGroup[]): Observable<unknown> {
+    return defer(() => {
+      this.saving.set(true);
+      return this.http.put(`${CASES_V7}/${encodeURIComponent(caseId)}/groups`,
+        groups.map((g) => ({ id: g.id, name: g.name, abbreviation: g.abbreviation })));
+    }).pipe(finalize(() => this.saving.set(false)));
+  }
+
+  private tagTemplates$?: Observable<string[]>;
+
+  /** The configured case-tag templates (GET /v7/configuration/optiongroups/archiveFile.tags). Cached. */
+  tagTemplates(): Observable<string[]> {
+    this.tagTemplates$ ??= this.http.get<{ value?: string }[]>(TAG_TEMPLATES_V7).pipe(
+      map((rows) => (rows ?? []).map((o) => (o.value ?? '').trim()).filter(Boolean)),
+      catchError(() => of([])),
+      shareReplay(1),
+    );
+    return this.tagTemplates$;
+  }
+
+  /**
+   * Adds/sets a label/tag on a case (PUT /v5/cases/{id}/tags). For a list (multi-value) tag pass
+   * `tagValue`; the server updates the value in place if the tag is already set (setTag by name).
+   */
+  addTag(caseId: string, name: string, tagValue?: string): Observable<unknown> {
+    const body: Record<string, string> = { name };
+    if (tagValue != null) {
+      body['tagValue'] = tagValue;
+    }
+    return defer(() => {
+      this.saving.set(true);
+      return this.http.put(`${CASES_V5}/${encodeURIComponent(caseId)}/tags`, body);
+    }).pipe(finalize(() => this.saving.set(false)));
+  }
+
+  /** Removes a label/tag from a case (DELETE /v5/cases/tags/{tagId}). */
+  removeTag(tagId: string): Observable<unknown> {
+    return defer(() => {
+      this.saving.set(true);
+      return this.http.delete(`${CASES_V5}/tags/${encodeURIComponent(tagId)}`);
+    }).pipe(finalize(() => this.saving.set(false)));
+  }
+
+  /** Posts a new instant message to a case (PUT /v7/messages/submit); mentions are auto-extracted server-side. */
+  sendMessage(caseId: string, sender: string, content: string): Observable<unknown> {
+    return defer(() => {
+      this.saving.set(true);
+      return this.http.put(`${MESSAGES_V7}/submit`, { sender, content, caseContext: caseId });
+    }).pipe(finalize(() => this.saving.set(false)));
   }
 
   /** Loads the case's instant messages (GET /v7/cases/{id}/messages), most recent first; [] on error. */
@@ -240,10 +346,13 @@ export class CasesService {
     );
   }
 
-  /** Loads a full case with its parties, due dates and documents; null on error. */
+  /**
+   * Loads a full case with its parties, due dates and documents; null on error. The case itself is
+   * read from v2 (a superset of v1) so its raw writable DTO can be stashed for the editor.
+   */
   loadDetail(id: string): Observable<CaseDetail | null> {
     return forkJoin({
-      caseDto: this.http.get<CaseDto>(`${CASES_BASE}/${id}`),
+      caseDto: this.http.get<CaseDto>(`${CASES_V2}/${id}`).pipe(map((c) => { this.rawSelected.set(c); return c; })),
       parties: this.http.get<PartyDto[]>(`${CASES_BASE}/${id}/parties`).pipe(catchError(() => of([]))),
       // v4 duedates carry the calendar id (v1 does not); fall back to v1 if v4 is unavailable.
       dueDates: this.http.get<DueDateDto[]>(`${CASES_V4}/${id}/duedates`).pipe(
@@ -258,8 +367,99 @@ export class CasesService {
     }).pipe(
       map(({ caseDto, parties, dueDates, documents, rootFolder, calendarColors, partyTypeColors }) =>
         toDetail(caseDto, parties, dueDates, documents, rootFolder, calendarColors, partyTypeColors)),
-      catchError(() => of(null)),
+      catchError(() => { this.rawSelected.set(null); return of(null); }),
     );
+  }
+
+  /**
+   * Creates (no id) or updates (with id) a case's master data via the v2 endpoints, returning the
+   * saved DTO. The caller sends the full working copy (cloned from {@link rawSelected}) so unedited
+   * fields round-trip unchanged.
+   */
+  saveCase(data: CaseWrite): Observable<CaseWrite> {
+    const url = data.id ? `${CASES_V2}/update` : `${CASES_V2}/create`;
+    return defer(() => {
+      this.saving.set(true);
+      return this.http.put<CaseWrite>(url, data);
+    }).pipe(finalize(() => this.saving.set(false)));
+  }
+
+  private partyTypes$?: Observable<PartyTypeOption[]>;
+
+  /** The configured party/involvement types for the add-party dropdown. Cached app-wide. */
+  partyTypes(): Observable<PartyTypeOption[]> {
+    this.partyTypes$ ??= this.http.get<PartyTypeDto[]>(PARTY_TYPES).pipe(
+      map((list) => (list ?? [])
+        .filter((t) => t.name)
+        .map((t) => ({ name: t.name!, color: rgbHex(t.color), placeHolder: !!(t as { placeHolder?: boolean }).placeHolder }))),
+      catchError(() => of([])),
+      shareReplay(1),
+    );
+    return this.partyTypes$;
+  }
+
+  /** Links a contact to a case as a party (PUT /v1/cases/party/create). */
+  addParty(party: PartyWrite): Observable<unknown> {
+    return defer(() => {
+      this.saving.set(true);
+      return this.http.put(`${CASES_BASE}/party/create`, party);
+    }).pipe(finalize(() => this.saving.set(false)));
+  }
+
+  /** Updates an existing party's editable fields (PUT /v1/cases/party/update). */
+  updateParty(party: PartyUpdate): Observable<unknown> {
+    return defer(() => {
+      this.saving.set(true);
+      return this.http.put(`${CASES_BASE}/party/update`, party);
+    }).pipe(finalize(() => this.saving.set(false)));
+  }
+
+  /** Removes a party from a case (DELETE /v1/cases/party/{id}/delete). */
+  removeParty(partyId: string): Observable<unknown> {
+    return defer(() => {
+      this.saving.set(true);
+      return this.http.delete(`${CASES_BASE}/party/${encodeURIComponent(partyId)}/delete`);
+    }).pipe(finalize(() => this.saving.set(false)));
+  }
+
+  /**
+   * Uploads a new document to a case (PUT /v1/cases/document/create). The content is sent
+   * base64-encoded; `folderId` files it into a sub-folder (empty = the case root).
+   */
+  uploadDocument(caseId: string, fileName: string, base64content: string, folderId?: string): Observable<unknown> {
+    const body: Record<string, string> = { caseId, fileName, base64content };
+    if (folderId) {
+      body['folderId'] = folderId;
+    }
+    return this.http.put(`${CASES_BASE}/document/create`, body);
+  }
+
+  /** Deletes a case document (DELETE /v1/cases/document/{id}/delete). */
+  deleteDocument(documentId: string): Observable<unknown> {
+    return this.http.delete(`${CASES_BASE}/document/${encodeURIComponent(documentId)}/delete`);
+  }
+
+  /** Contact search for the add-party picker (by name / file number / …); [] on error. */
+  searchContacts(query: string): Observable<ContactRef[]> {
+    const params = new HttpParams().set('offset', '0').set('limit', '20').set('filter', 'all').set('q', query);
+    return this.http.get<ContactPageHitDto>(`${CONTACTS_V8}/page`, { params }).pipe(
+      map((page) => (page.items ?? []).map(toContactRef)),
+      catchError(() => of([])),
+    );
+  }
+
+  private users$?: Observable<CaseUserRef[]>;
+
+  /** Login-enabled users for the Anwalt/Sachbearbeiter dropdowns (GET /v6/security/users). Cached. */
+  users(): Observable<CaseUserRef[]> {
+    this.users$ ??= this.http.get<UserDto[]>(USERS_V6).pipe(
+      map((rows) => (rows ?? [])
+        .map((u) => ({ principalId: u.principalId, displayName: u.displayName || u.principalId }))
+        .sort((a, b) => a.displayName.localeCompare(b.displayName))),
+      catchError(() => of([])),
+      shareReplay(1),
+    );
+    return this.users$;
   }
 
   private calendarColors$?: Observable<Map<string, string>>;
@@ -300,6 +500,18 @@ function toOverview(dto: CaseListDto): CaseOverview {
   };
 }
 
+function toGroup(dto: GroupDto): CaseGroup {
+  return { id: dto.id, name: dto.name || dto.abbreviation || '', abbreviation: dto.abbreviation || '' };
+}
+
+/** A contact page hit to an add-party picker option ("Nachname, Vorname" or company, + place). */
+function toContactRef(dto: ContactHitDto): ContactRef {
+  const person = [dto.name, dto.firstName].map((s) => (s ?? '').trim()).filter(Boolean).join(', ');
+  const display = (dto.company ?? '').trim() || person || '—';
+  const place = [dto.zipCode, dto.city].map((s) => (s ?? '').trim()).filter(Boolean).join(' ');
+  return { id: dto.id, label: place ? `${display} · ${place}` : display };
+}
+
 function toDetail(
   dto: CaseDto, parties: PartyDto[], dueDates: DueDateDto[], documents: DocDto[], rootFolder: FolderDto | null,
   calendarColors: Map<string, string>, partyTypeColors: Map<string, string>,
@@ -325,6 +537,13 @@ function toDetail(
       // Prefer the resolved contact display name (linked address); fall back to the
       // free-text contact person, then leave empty for the template's "—" placeholder.
       contact: p.contactName || p.contact || '',
+      reference: p.reference ?? '',
+      contactName: p.contactName ?? '',
+      contactPerson: p.contact ?? '',
+      custom1: p.custom1 ?? '',
+      custom2: p.custom2 ?? '',
+      custom3: p.custom3 ?? '',
+      addressId: p.addressId ?? '',
       // The party type's colour, matched by its name (= involvementType).
       color: partyTypeColors.get(p.involvementType ?? '') ?? '',
     } satisfies Party)),
@@ -352,6 +571,12 @@ function toDueDate(dto: DueDateDto, calendarColors: Map<string, string>): DueDat
     assignee: dto.assignee ?? '',
     type: dto.type === 'RESPITE' ? 'deadline' : 'followup',
     calendarColor: (dto.calendar && calendarColors.get(dto.calendar)) || '',
+    description: dto.description ?? '',
+    location: dto.location ?? '',
+    endDate: isoDate(dto.endDate || ''),
+    reminderMinutes: dto.reminderMinutes ?? -1,
+    calendarId: dto.calendar ?? '',
+    restType: (dto.type ?? 'FOLLOWUP').toUpperCase(),
   };
 }
 

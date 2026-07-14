@@ -15,17 +15,34 @@
             "outputPath": "dist/j-lawyer-web",
             "index": "src/index.html",
             "browser": "src/main.ts",
-            "polyfills": ["zone.js"],
+            "polyfills": [
+              "zone.js"
+            ],
             "tsConfig": "tsconfig.app.json",
-            "assets": [{ "glob": "**/*", "input": "public" }],
-            "styles": ["src/styles.css"],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "public"
+              }
+            ],
+            "styles": [
+              "src/styles.css"
+            ],
             "scripts": []
           },
           "configurations": {
             "production": {
               "budgets": [
-                { "type": "initial", "maximumWarning": "700kB", "maximumError": "1.2MB" },
-                { "type": "anyComponentStyle", "maximumWarning": "22kB", "maximumError": "28kB" }
+                {
+                  "type": "initial",
+                  "maximumWarning": "700kB",
+                  "maximumError": "1.2MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "26kB",
+                  "maximumError": "28kB"
+                }
               ],
               "outputHashing": "all",
               "optimization": {
@@ -48,8 +65,12 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
-            "production": { "buildTarget": "j-lawyer-web:build:production" },
-            "development": { "buildTarget": "j-lawyer-web:build:development" }
+            "production": {
+              "buildTarget": "j-lawyer-web:build:production"
+            },
+            "development": {
+              "buildTarget": "j-lawyer-web:build:development"
+            }
           },
           "defaultConfiguration": "development"
         }

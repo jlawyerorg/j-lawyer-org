@@ -35,6 +35,18 @@ export interface Party {
   involvementType: string;
   /** Resolved contact name; may be empty if the server did not include it. */
   contact: string;
+  /** The party's own reference/file mark ("Zeichen"), e.g. their case number; empty when none. */
+  reference: string;
+  // Editable detail fields (mirroring the desktop InvolvedPartyEntryPanel).
+  /** Resolved name of the linked address (read-only display in the editor). */
+  contactName: string;
+  /** Free-text contact person ("Ansprechpartner"). */
+  contactPerson: string;
+  custom1: string;
+  custom2: string;
+  custom3: string;
+  /** Id of the linked address/contact (round-tripped on update). */
+  addressId: string;
   /**
    * The party type's colour as a CSS hex string (e.g. "#c62828"), resolved from the
    * configured party types by matching `involvementType` (= party-type name). Empty when the
@@ -58,18 +70,38 @@ export interface DueDate {
    * back to a type-based colour.
    */
   calendarColor: string;
+  // Extra fields captured so the entry can be opened in the calendar editor for editing.
+  description: string;
+  location: string;
+  /** ISO end date/time (sanitized); empty when none. */
+  endDate: string;
+  reminderMinutes: number;
+  /** Calendar setup id this entry belongs to; needed to edit. */
+  calendarId: string;
+  /** Raw server type token: 'EVENT' | 'RESPITE' | 'FOLLOWUP'. */
+  restType: string;
 }
 
 /** A case label ("Etikett", GET /v1/cases/{id}/tags). */
 export interface CaseTag {
   id: string;
   name: string;
+  /** Selected value for a list/multi-value tag; empty for a plain single-value label. */
+  value: string;
 }
 
-/** A user group allowed to access the case ("Berechtigung", GET /v7/cases/{id}/groups). */
+/** A configured list-tag definition (GET /v7/configuration/tags/multivalue/case): a name + its value set. */
+export interface MultiValueTagDef {
+  tagName: string;
+  values: string[];
+}
+
+/** A user group (all groups: GET /v6/security/groups; case's allowed groups: GET /v7/cases/{id}/groups). */
 export interface CaseGroup {
   id: string;
   name: string;
+  /** Short code; needed when PUTting the full authorized-group set back. */
+  abbreviation: string;
 }
 
 /** An instant message linked to the case (GET /v7/cases/{id}/messages). */
@@ -243,6 +275,70 @@ export interface TimesheetPosition {
   invoiceId: string;
   /** True when started but not stopped (a live timer). */
   running: boolean;
+}
+
+/**
+ * Writable case master data (RestfulCaseV2 shape, all optional). The editor clones the raw DTO
+ * loaded from GET /v2/cases/{id} so fields not shown in the form (custom1-3, group, externalId)
+ * round-trip unchanged on update. `archived` is the server's short flag (0/1).
+ */
+export interface CaseWrite {
+  id?: string;
+  fileNumber?: string;
+  name?: string;
+  reason?: string;
+  subjectField?: string;
+  lawyer?: string;
+  assistant?: string;
+  claimNumber?: string;
+  claimValue?: number;
+  notice?: string;
+  archived?: number;
+  custom1?: string;
+  custom2?: string;
+  custom3?: string;
+  group?: string;
+  externalId?: string;
+}
+
+/** A configured party/involvement type (GET /v1/cases/party/types) for the add-party dropdown. */
+export interface PartyTypeOption {
+  name: string;
+  /** CSS hex colour ('' when none). */
+  color: string;
+  placeHolder: boolean;
+}
+
+/** A contact search hit for the add-party picker (GET /v8/contacts/page). */
+export interface ContactRef {
+  id: string;
+  label: string;
+}
+
+/** A login-enabled user for the Anwalt/Sachbearbeiter dropdowns (GET /v6/security/users). */
+export interface CaseUserRef {
+  principalId: string;
+  displayName: string;
+}
+
+/** Payload to link a contact to a case as a party (PUT /v1/cases/party/create). */
+export interface PartyWrite {
+  caseId: string;
+  addressId: string;
+  involvementType: string;
+}
+
+/** Editable party fields sent to PUT /v1/cases/party/update (mirrors RestfulPartyV1). */
+export interface PartyUpdate {
+  id: string;
+  caseId: string;
+  addressId: string;
+  involvementType: string;
+  reference: string;
+  contact: string;
+  custom1: string;
+  custom2: string;
+  custom3: string;
 }
 
 /** Full case (RestfulCaseV1 + related collections + derived status). */

@@ -132,7 +132,13 @@
       },
       "dateChange": "Modified date",
       "dateCreation": "Created date",
-      "dateModeHint": "Toggle between modified and created date"
+      "dateModeHint": "Toggle between modified and created date",
+      "uploading": "Uploading …",
+      "uploadError": "Upload failed",
+      "dropHint": "Drop files here or click · into: {{folder}}",
+      "dropHintFolder": "Drop files here or click · folder: {{folder}}",
+      "delete": "Delete",
+      "deleteConfirm": "Delete document \"{{name}}\"?"
     },
     "docLoading": "Loading document …",
     "docError": "Could not load document.",
@@ -201,6 +207,63 @@
         "total": "Total",
         "billing": "Billing"
       }
+    },
+    "edit": "Edit",
+    "editCase": "Edit case",
+    "editor": {
+      "editTitle": "Edit case",
+      "newTitle": "New case",
+      "cancel": "Cancel",
+      "save": "Save",
+      "group": {
+        "base": "Case",
+        "responsible": "Responsible",
+        "claim": "Claim"
+      },
+      "field": {
+        "name": "Label",
+        "claimNumber": "Claim number",
+        "archived": "Case archived",
+        "ownerGroup": "Owner group"
+      }
+    },
+    "party": {
+      "add": "Add",
+      "addTitle": "Add party",
+      "involvementType": "Involvement type",
+      "contact": "Contact",
+      "searchPlaceholder": "Search contact …",
+      "typeToSearch": "Type to search (min. 2 characters)",
+      "noResults": "No matches.",
+      "clear": "Clear selection",
+      "remove": "Remove party",
+      "removeConfirm": "Remove party \"{{name}}\"?",
+      "reference": "Reference",
+      "editTitle": "Edit party",
+      "edit": "Edit party",
+      "contactPerson": "Contact person",
+      "custom1": "Custom field 1",
+      "custom2": "Custom field 2",
+      "custom3": "Custom field 3",
+      "toContact": "Go to contact"
+    },
+    "due": {
+      "add": "Add",
+      "delete": "Delete entry",
+      "deleteConfirm": "Delete entry \"{{name}}\"?",
+      "edit": "Edit entry"
+    },
+    "tag": {
+      "add": "Label",
+      "remove": "Remove label"
+    },
+    "perm": {
+      "add": "Group",
+      "remove": "Remove permission"
+    },
+    "msg": {
+      "placeholder": "Write a message …",
+      "send": "Send"
     }
   },
   "kontakte": {
