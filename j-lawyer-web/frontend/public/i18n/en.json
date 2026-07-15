@@ -793,6 +793,7 @@
     "selectFolder": "Folder",
     "selectFolderHint": "Select a folder on the left.",
     "searchPlaceholder": "Search the current folder …",
+    "search": "Search",
     "listError": "Could not load messages.",
     "empty": "No messages.",
     "noSender": "(no sender)",

@@ -100,7 +100,11 @@ interface MailboxFolders {
           </div>
           <div class="list-tools">
             <div class="search">
-              <jl-icon name="search" [size]="14" />
+              <button type="button" class="search-btn" [disabled]="!selectedFolderId()"
+                      (click)="applySearch()" [title]="'email.search' | transloco"
+                      [attr.aria-label]="'email.search' | transloco">
+                <jl-icon name="search" [size]="14" />
+              </button>
               <input type="search" [value]="searchInput()" [placeholder]="'email.searchPlaceholder' | transloco"
                      [disabled]="!selectedFolderId()"
                      (input)="searchInput.set($any($event.target).value)"

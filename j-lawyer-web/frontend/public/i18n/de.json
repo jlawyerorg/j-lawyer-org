@@ -793,6 +793,7 @@
     "selectFolder": "Ordner",
     "selectFolderHint": "Wählen Sie links einen Ordner.",
     "searchPlaceholder": "Im aktuellen Ordner suchen …",
+    "search": "Suchen",
     "listError": "Nachrichten konnten nicht geladen werden.",
     "empty": "Keine Nachrichten.",
     "noSender": "(kein Absender)",

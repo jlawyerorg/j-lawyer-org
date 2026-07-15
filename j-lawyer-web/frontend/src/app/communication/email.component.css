@@ -95,6 +95,12 @@
   flex: 1 1 auto; display: flex; align-items: center; gap: 6px; min-width: 0;
   padding: 5px 9px; border: 1px solid var(--jl-line-strong); border-radius: 8px; color: var(--jl-ink-faint);
 }
+.search-btn {
+  flex: none; display: inline-flex; align-items: center; padding: 0; border: 0; background: transparent;
+  color: var(--jl-ink-faint); cursor: pointer;
+}
+.search-btn:hover:not(:disabled) { color: var(--jl-blue); }
+.search-btn:disabled { cursor: default; }
 .search input { flex: 1; min-width: 0; font: inherit; font-size: .84rem; border: 0; background: transparent; color: var(--jl-ink); outline: none; }
 .search .clear { border: 0; background: transparent; cursor: pointer; color: var(--jl-ink-faint); font-size: .85rem; }
 /* Scope toggle (Alle / Ungelesen) + optional time-range select replace the old count presets. */
