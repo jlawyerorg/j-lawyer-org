@@ -323,6 +323,49 @@
       "in": "ein",
       "out": "aus",
       "net": "Saldo"
+    },
+    "inv": {
+      "add": "Neue Rechnung",
+      "edit": "Rechnung bearbeiten",
+      "delete": "Rechnung löschen",
+      "deleteConfirm": "Rechnung „{{name}}“ wirklich löschen?",
+      "duplicate": "In dieser Akte duplizieren",
+      "markPaid": "Als bezahlt markieren",
+      "positions": "Positionen",
+      "noPositions": "Keine Positionen.",
+      "name": "Bezeichnung",
+      "type": "Rechnungsart",
+      "pool": "Nummernkreis",
+      "recipient": "Empfänger",
+      "linkedContact": "(verknüpfter Kontakt)",
+      "status": "Status",
+      "created": "Rechnungsdatum",
+      "due": "Fällig am",
+      "payment": "Zahlungsart",
+      "currency": "Währung",
+      "smallBusiness": "Kleinunternehmer (§19 UStG)",
+      "description": "Beschreibung",
+      "netTotal": "Netto gesamt",
+      "pay": {
+        "BANKTRANSFER": "Überweisung",
+        "DIRECTDEBIT": "Lastschrift",
+        "OTHER": "Sonstige"
+      },
+      "col": {
+        "name": "Bezeichnung",
+        "units": "Menge",
+        "price": "Einzelpreis",
+        "tax": "MwSt",
+        "total": "Summe"
+      },
+      "pos": {
+        "add": "Position hinzufügen",
+        "edit": "Position bearbeiten",
+        "delete": "Position löschen",
+        "description": "Beschreibung",
+        "addBtn": "Hinzufügen",
+        "newBtn": "Neu"
+      }
     }
   },
   "kontakte": {

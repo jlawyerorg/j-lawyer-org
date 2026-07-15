@@ -1153,7 +1153,9 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
                 invoiceToUpdate.setDescription(invoice.getDescription());
                 invoiceToUpdate.setCreationDate(invoice.getCreationDate());
                 invoiceToUpdate.setDueDate(invoice.getDueDate());
-                invoiceToUpdate.setInvoiceNumber(invoice.getInvoiceNumber());
+                // Preserve the server-generated invoice number: on a pool-unchanged update the number
+                // is immutable, and the request DTO does not carry it (would otherwise be nulled out).
+                invoiceToUpdate.setInvoiceNumber(existingInvoice.getInvoiceNumber());
                 invoiceToUpdate.setName(invoice.getName());
                 invoiceToUpdate.setPeriodFrom(invoice.getPeriodFrom());
                 invoiceToUpdate.setPeriodTo(invoice.getPeriodTo());

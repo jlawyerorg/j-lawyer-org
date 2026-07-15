@@ -323,6 +323,49 @@
       "in": "in",
       "out": "out",
       "net": "Net"
+    },
+    "inv": {
+      "add": "New invoice",
+      "edit": "Edit invoice",
+      "delete": "Delete invoice",
+      "deleteConfirm": "Delete invoice “{{name}}”?",
+      "duplicate": "Duplicate in this case",
+      "markPaid": "Mark as paid",
+      "positions": "Positions",
+      "noPositions": "No positions.",
+      "name": "Name",
+      "type": "Invoice type",
+      "pool": "Number range",
+      "recipient": "Recipient",
+      "linkedContact": "(linked contact)",
+      "status": "Status",
+      "created": "Invoice date",
+      "due": "Due date",
+      "payment": "Payment method",
+      "currency": "Currency",
+      "smallBusiness": "Small business (§19 UStG)",
+      "description": "Description",
+      "netTotal": "Net total",
+      "pay": {
+        "BANKTRANSFER": "Bank transfer",
+        "DIRECTDEBIT": "Direct debit",
+        "OTHER": "Other"
+      },
+      "col": {
+        "name": "Name",
+        "units": "Qty",
+        "price": "Unit price",
+        "tax": "VAT",
+        "total": "Total"
+      },
+      "pos": {
+        "add": "Add position",
+        "edit": "Edit position",
+        "delete": "Delete position",
+        "description": "Description",
+        "addBtn": "Add",
+        "newBtn": "New"
+      }
     }
   },
   "kontakte": {

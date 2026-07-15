@@ -5,7 +5,8 @@ import { API_ROOT } from '../core/api';
 import {
   AccountEntry, AccountEntryWrite, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseMessage, CaseOverview,
   CasePayment, CaseStatus, CaseTag, CaseTimesheet, CaseUserRef, CaseWrite, ContactRef, DocDateMode, DocFolder,
-  DocSortKey, DueDate, MultiValueTagDef, Party, PartyTypeOption, PartyUpdate, PartyWrite, PositionTemplate,
+  DocSortKey, DueDate, InvoicePool, InvoicePositionItem, InvoicePositionWrite, InvoiceType, InvoiceWrite,
+  MultiValueTagDef, Party, PartyTypeOption, PartyUpdate, PartyWrite, PositionTemplate,
   PositionWrite, RunningPosition, SortDir, TimesheetPosition, TimesheetWrite,
 } from './case.models';
 
@@ -15,6 +16,7 @@ const CASES_V3 = `${API_ROOT}/v3/cases`;
 const CASES_V4 = `${API_ROOT}/v4/cases`;
 const CASES_V5 = `${API_ROOT}/v5/cases`;
 const CASES_V7 = `${API_ROOT}/v7/cases`;
+const INVOICES_V7 = `${API_ROOT}/v7/invoices`;
 const CASES_V8 = `${API_ROOT}/v8/cases`;
 const TIMESHEETS_V8 = `${API_ROOT}/v8/timesheets`;
 const CONTACTS_V8 = `${API_ROOT}/v8/contacts`;
@@ -73,7 +75,16 @@ interface HistoryDto { id: string; principal: string; changeDate: number; change
 interface InvoiceDto {
   id: string; invoiceNumber: string; name: string; status: string;
   total: number; totalGross: number; currency: string; dueDate: string; creationDate: string;
+  description?: string; invoiceType?: string; invoiceTypeId?: string; lastPoolId?: string;
+  contactId?: string; sender?: string; paymentType?: string; smallBusiness?: boolean;
+  periodFrom?: string; periodTo?: string;
 }
+interface InvoicePositionDto {
+  id: string; name?: string; description?: string; position?: number;
+  taxRate?: number; units?: number; unitPrice?: number; total?: number; invoiceId?: string;
+}
+interface InvoiceTypeDto { id: string; displayName?: string; description?: string; turnOver?: boolean; }
+interface InvoicePoolDto { id: string; displayName?: string; smallBusiness?: boolean; paymentTerm?: number; }
 interface PaymentDto {
   id: string; paymentNumber: string; name: string; reason: string; status: string;
   total: number; currency: string; targetDate: string; creationDate: string;
@@ -205,6 +216,77 @@ export class CasesService {
       map((rows) => (rows ?? []).map(toInvoice)),
       catchError(() => of([])),
     );
+  }
+
+  private invoiceTypes$?: Observable<InvoiceType[]>;
+  private invoicePools$?: Observable<InvoicePool[]>;
+
+  /** The configured invoice types ("Rechnungsarten", GET /v7/invoices/types). Cached. */
+  invoiceTypes(): Observable<InvoiceType[]> {
+    this.invoiceTypes$ ??= this.http.get<InvoiceTypeDto[]>(`${INVOICES_V7}/types`).pipe(
+      map((rows) => (rows ?? []).map((t) => ({
+        id: t.id, displayName: t.displayName ?? '', description: t.description ?? '', turnOver: !!t.turnOver,
+      }))),
+      catchError(() => of([])),
+      shareReplay(1),
+    );
+    return this.invoiceTypes$;
+  }
+
+  /** The configured invoice number-range pools ("Nummernkreise", GET /v7/invoices/pools). Cached. */
+  invoicePools(): Observable<InvoicePool[]> {
+    this.invoicePools$ ??= this.http.get<InvoicePoolDto[]>(`${INVOICES_V7}/pools`).pipe(
+      map((rows) => (rows ?? []).map((p) => ({
+        id: p.id, displayName: p.displayName ?? '', smallBusiness: !!p.smallBusiness, paymentTerm: p.paymentTerm ?? 14,
+      }))),
+      catchError(() => of([])),
+      shareReplay(1),
+    );
+    return this.invoicePools$;
+  }
+
+  /** Loads an invoice's line items (GET /v7/cases/invoices/{id}/positions), by sort order; [] on error. */
+  invoicePositions(invoiceId: string): Observable<InvoicePositionItem[]> {
+    return this.http.get<InvoicePositionDto[]>(`${CASES_V7}/invoices/${encodeURIComponent(invoiceId)}/positions`).pipe(
+      map((rows) => (rows ?? []).map(toInvoicePosition).sort((a, b) => a.position - b.position)),
+      catchError(() => of([])),
+    );
+  }
+
+  /** Creates an invoice (PUT /v7/cases/invoices/create); returns the created invoice (incl. its id). */
+  createInvoice(data: InvoiceWrite): Observable<CaseInvoice> {
+    return this.write(this.http.put<InvoiceDto>(`${CASES_V7}/invoices/create`, data)).pipe(map((dto) => toInvoice(dto as InvoiceDto)));
+  }
+
+  /** Updates an invoice's Stammdaten (POST /v7/cases/invoices/{id}/update). */
+  updateInvoice(invoiceId: string, data: InvoiceWrite): Observable<unknown> {
+    return this.write(this.http.post(`${CASES_V7}/invoices/${encodeURIComponent(invoiceId)}/update`, data));
+  }
+
+  /** Deletes an invoice (DELETE /v7/cases/invoices/{id}). */
+  deleteInvoice(invoiceId: string): Observable<unknown> {
+    return this.write(this.http.delete(`${CASES_V7}/invoices/${encodeURIComponent(invoiceId)}`));
+  }
+
+  /** Duplicates an invoice into the same case (PUT /v7/cases/invoices/{id}/duplicate). */
+  duplicateInvoice(invoiceId: string, caseId: string, poolId: string): Observable<unknown> {
+    return this.write(this.http.put(`${CASES_V7}/invoices/${encodeURIComponent(invoiceId)}/duplicate`,
+      { toCaseId: caseId, invoicePoolId: poolId, asCredit: false, markAsCopy: true }));
+  }
+
+  /** Adds a line item to an invoice (PUT /v7/cases/invoices/{id}/positions/create); recalculates totals. */
+  createInvoicePosition(invoiceId: string, pos: InvoicePositionWrite): Observable<unknown> {
+    return this.write(this.http.put(`${CASES_V7}/invoices/${encodeURIComponent(invoiceId)}/positions/create`, pos));
+  }
+
+  /** Updates a line item (POST /v7/cases/invoices/positions/{positionId}/update); recalculates totals. */
+  updateInvoicePosition(positionId: string, pos: InvoicePositionWrite): Observable<unknown> {
+    return this.write(this.http.post(`${CASES_V7}/invoices/positions/${encodeURIComponent(positionId)}/update`, pos));
+  }
+
+  /** Deletes a line item (DELETE /v7/cases/invoices/positions/{positionId}); recalculates totals. */
+  deleteInvoicePosition(positionId: string): Observable<unknown> {
+    return this.write(this.http.delete(`${CASES_V7}/invoices/positions/${encodeURIComponent(positionId)}`));
   }
 
   /** Loads the case's payments (GET /v8/cases/{id}/payments); [] on error. */
@@ -818,6 +900,30 @@ function toInvoice(dto: InvoiceDto): CaseInvoice {
     currency: dto.currency ?? '€',
     dueDate: isoDate(dto.dueDate),
     creationDate: isoDate(dto.creationDate),
+    description: dto.description ?? '',
+    invoiceType: dto.invoiceType ?? '',
+    invoiceTypeId: dto.invoiceTypeId ?? '',
+    lastPoolId: dto.lastPoolId ?? '',
+    contactId: dto.contactId ?? '',
+    sender: dto.sender ?? '',
+    paymentType: dto.paymentType ?? 'BANKTRANSFER',
+    smallBusiness: !!dto.smallBusiness,
+    periodFrom: isoDate(dto.periodFrom),
+    periodTo: isoDate(dto.periodTo),
+  };
+}
+
+function toInvoicePosition(dto: InvoicePositionDto): InvoicePositionItem {
+  return {
+    id: dto.id,
+    name: dto.name ?? '',
+    description: dto.description ?? '',
+    position: dto.position ?? 0,
+    taxRate: dto.taxRate ?? 0,
+    units: dto.units ?? 0,
+    unitPrice: dto.unitPrice ?? 0,
+    total: dto.total ?? 0,
+    invoiceId: dto.invoiceId ?? '',
   };
 }
 

@@ -190,6 +190,90 @@ export interface CaseInvoice {
   /** ISO date (sanitized, no [UTC] suffix); empty if unset. */
   dueDate: string;
   creationDate: string;
+  description: string;
+  /** Display name of the invoice type. */
+  invoiceType: string;
+  /** Id of the invoice type (for editing). */
+  invoiceTypeId: string;
+  /** Id of the number-range pool. */
+  lastPoolId: string;
+  /** Id of the linked recipient contact; empty if none. */
+  contactId: string;
+  /** Sender / law-firm profile id. */
+  sender: string;
+  /** BANKTRANSFER | DIRECTDEBIT | OTHER. */
+  paymentType: string;
+  smallBusiness: boolean;
+  periodFrom: string;
+  periodTo: string;
+}
+
+/** Writable invoice ("Beleg") — the Stammdaten of an invoice (positions are managed separately). */
+export interface InvoiceWrite {
+  id?: string;
+  caseId: string;
+  name: string;
+  description: string;
+  /** Id of the invoice type. */
+  invoiceType: string;
+  /** Id of the number-range pool. */
+  lastPoolId: string;
+  contactId?: string;
+  sender?: string;
+  status: string;
+  paymentType: string;
+  smallBusiness: boolean;
+  currency: string;
+  creationDate?: string;
+  dueDate?: string;
+  periodFrom?: string;
+  periodTo?: string;
+  total?: number;
+  totalGross?: number;
+}
+
+/** A line item ("Position") of an invoice. */
+export interface InvoicePositionItem {
+  id: string;
+  name: string;
+  description: string;
+  /** Sort order. */
+  position: number;
+  taxRate: number;
+  units: number;
+  unitPrice: number;
+  /** Net line total (units * unitPrice). */
+  total: number;
+  invoiceId: string;
+}
+
+/** Writable invoice line item. */
+export interface InvoicePositionWrite {
+  id?: string;
+  name: string;
+  description: string;
+  position: number;
+  taxRate: number;
+  units: number;
+  unitPrice: number;
+  total: number;
+}
+
+/** An invoice type ("Rechnungsart", GET /v7/invoices/types). */
+export interface InvoiceType {
+  id: string;
+  displayName: string;
+  description: string;
+  /** Whether the type counts toward turnover ("umsatzwirksam"). */
+  turnOver: boolean;
+}
+
+/** An invoice number-range pool ("Nummernkreis", GET /v7/invoices/pools). */
+export interface InvoicePool {
+  id: string;
+  displayName: string;
+  smallBusiness: boolean;
+  paymentTerm: number;
 }
 
 /** A payment attached to the case (GET /v8/cases/{id}/payments). */

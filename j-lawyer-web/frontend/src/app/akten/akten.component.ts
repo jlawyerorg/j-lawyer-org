@@ -18,6 +18,8 @@ import { TimesheetDetailComponent } from './timesheet-detail.component';
 import { PositionEditorComponent, PositionEditResult, PositionMode } from './position-editor.component';
 import { TimesheetTrackingService } from './timesheet-tracking.service';
 import { AccountEntryEditorComponent, ContactOption, InvoiceOption } from './account-entry-editor.component';
+import { InvoiceEditorComponent } from './invoice-editor.component';
+import { InvoicePositionsComponent } from './invoice-positions.component';
 import {
   formatDurationMs, positionMillis, runningElapsed as elapsedOf, sumDuration, sumInvoiceable, sumNet, toServerDateTime,
 } from './timesheet.util';
@@ -27,8 +29,8 @@ import { CalendarEvent, CalendarEventType, CaseRef, EventDraft } from '../calend
 import { AuthService } from '../core/auth/auth.service';
 import {
   AccountEntry, AccountEntryWrite, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseMessage, CasePayment,
-  CaseTag, CaseTimesheet, CaseWrite, DocFolder, DocSortKey, DueDate, MultiValueTagDef, Party, PartyUpdate,
-  PositionWrite, TimesheetPosition, TimesheetWrite,
+  CaseTag, CaseTimesheet, CaseWrite, DocFolder, DocSortKey, DueDate, InvoicePool, InvoiceType, InvoiceWrite,
+  MultiValueTagDef, Party, PartyUpdate, PositionWrite, TimesheetPosition, TimesheetWrite,
 } from './case.models';
 
 /** A row in the document folder tree, flattened for display with indentation + a doc count. */
@@ -63,7 +65,8 @@ interface TimesheetView extends CaseTimesheet {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslocoModule, IconComponent, DatePipe, DecimalPipe, DocumentPreviewComponent,
     CaseEditorComponent, PartyAddComponent, PartyEditorComponent, EventEditorComponent,
-    TimesheetEditorComponent, TimesheetDetailComponent, PositionEditorComponent, AccountEntryEditorComponent],
+    TimesheetEditorComponent, TimesheetDetailComponent, PositionEditorComponent, AccountEntryEditorComponent,
+    InvoiceEditorComponent, InvoicePositionsComponent],
   template: `
     <div class="master-detail" [class.show-detail]="selectedId()">
       <!-- Aktenliste -->
@@ -562,18 +565,48 @@ interface TimesheetView extends CaseTimesheet {
 
                   @switch (financeView()) {
                     @case ('invoices') {
+                      <div class="acct-bar">
+                        <span class="spacer"></span>
+                        <button type="button" class="add-btn" (click)="openNewInvoice()">
+                          <jl-icon name="plus" [size]="14" /> {{ 'akten.inv.add' | transloco }}
+                        </button>
+                      </div>
                       <div class="card full">
                         <div class="card-b">
                           @for (inv of invoices(); track inv.id) {
-                            <div class="fin-row">
+                            <div class="fin-row inv-row">
                               <span class="fin-main">
-                                <span class="dn">{{ inv.invoiceNumber || inv.name || '—' }}</span>
+                                <span class="dn">
+                                  {{ inv.invoiceNumber || inv.name || '—' }}
+                                  <span class="inv-status" [class.paid]="inv.status === 'bezahlt'" [class.draft]="inv.status === 'Entwurf'">{{ inv.status }}</span>
+                                </span>
                                 <span class="dmeta">
-                                  {{ inv.status }}
+                                  {{ inv.name }}{{ inv.invoiceType ? ' · ' + inv.invoiceType : '' }}
                                   @if (inv.dueDate) { · {{ 'akten.finance.due' | transloco }} {{ inv.dueDate | date: 'dd.MM.yyyy' }} }
                                 </span>
                               </span>
                               <span class="fin-amount">{{ inv.totalGross | number: '1.2-2' }} {{ inv.currency }}</span>
+                              <span class="row-actions">
+                                <button type="button" class="row-edit" (click)="openEditInvoice(inv)" [title]="'akten.inv.edit' | transloco">
+                                  <jl-icon name="edit" [size]="15" />
+                                </button>
+                                <button type="button" class="row-edit" (click)="openInvoicePositions(inv)" [title]="'akten.inv.positions' | transloco">
+                                  <jl-icon name="sheet" [size]="15" />
+                                </button>
+                                <button type="button" class="row-edit" (click)="duplicateInvoiceEntry(inv)" [title]="'akten.inv.duplicate' | transloco">
+                                  <jl-icon name="plus" [size]="15" />
+                                </button>
+                                @if (inv.status !== 'bezahlt') {
+                                  <button type="button" class="row-edit paid" [disabled]="invoiceBusy() === inv.id"
+                                          (click)="markInvoicePaid(inv)" [title]="'akten.inv.markPaid' | transloco">
+                                    <jl-icon name="check" [size]="15" />
+                                  </button>
+                                }
+                                <button type="button" class="row-del" [disabled]="invoiceBusy() === inv.id"
+                                        (click)="confirmDeleteInvoice(inv)" [title]="'akten.inv.delete' | transloco">
+                                  <jl-icon name="trash" [size]="15" />
+                                </button>
+                              </span>
                             </div>
                           } @empty {
                             <p class="muted">{{ 'akten.finance.noInvoices' | transloco }}</p>
@@ -887,6 +920,15 @@ interface TimesheetView extends CaseTimesheet {
       <jl-account-entry-editor [entry]="ae.entry" [contacts]="accountContacts()" [invoices]="accountInvoiceOptions()"
                                (save)="onSaveAccountEntry($event)" (close)="editingAccountEntry.set(null)" />
     }
+    @if (editingInvoice(); as ie) {
+      <jl-invoice-editor [entry]="ie.entry" [types]="invoiceTypes()" [pools]="invoicePools()"
+                         [contacts]="accountContacts()" [caseId]="selectedId() ?? ''"
+                         (save)="onSaveInvoice($event)" (close)="editingInvoice.set(null)" />
+    }
+    @if (invoicePositionsFor(); as ip) {
+      <jl-invoice-positions [invoiceId]="ip.id" [invoiceLabel]="ip.label"
+                            (changed)="reloadInvoices()" (close)="invoicePositionsFor.set(null)" />
+    }
   `,
   styleUrl: './akten.component.css',
 })
@@ -947,6 +989,15 @@ export class AktenComponent {
   protected readonly editingAccountEntry = signal<{ entry: AccountEntry | null } | null>(null);
   /** Id of the account entry currently being deleted, or null. */
   protected readonly accountDeleting = signal<string | null>(null);
+  /** Invoice editor: the invoice to edit (null = create), or null when closed. */
+  protected readonly editingInvoice = signal<{ entry: CaseInvoice | null } | null>(null);
+  /** Invoice positions dialog: the invoice whose line items are shown, or null when closed. */
+  protected readonly invoicePositionsFor = signal<{ id: string; label: string } | null>(null);
+  /** Id of the invoice currently being written (delete/mark-paid), or null. */
+  protected readonly invoiceBusy = signal<string | null>(null);
+  /** Configured invoice types + pools for the editor (cached in the service). */
+  protected readonly invoiceTypes = signal<InvoiceType[]>([]);
+  protected readonly invoicePools = signal<InvoicePool[]>([]);
 
   // Zeiten (time tracking) tab state — the case's timesheets (open + closed) with their positions.
   protected readonly timesheets = signal<TimesheetView[] | null>(null);
@@ -1012,6 +1063,9 @@ export class AktenComponent {
     this.cases.allGroups().subscribe((g) => this.allGroups.set(g));
     this.cases.tagTemplates().subscribe((t) => this.tagTemplates.set(t));
     this.cases.multiValueTags().subscribe((m) => this.multiTagDefs.set(m));
+    // Invoice types + number-range pools for the invoice editor (cached app-wide in the service).
+    this.cases.invoiceTypes().subscribe((t) => this.invoiceTypes.set(t));
+    this.cases.invoicePools().subscribe((p) => this.invoicePools.set(p));
     // The route param (/cases/:id) is the source of truth for the selected case, so
     // deep links, browser back/forward and in-app navigation all stay in sync.
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
@@ -2143,6 +2197,110 @@ export class AktenComponent {
     this.cases.accountEntries(id).subscribe((rows) => {
       if (this.selectedId() === id) {
         this.accountEntries.set(rows);
+      }
+    });
+  }
+
+  // ----- Rechnungen / Belege (invoices: create / edit / positions / duplicate / mark-paid / delete) -----
+
+  /** Opens the invoice editor to create a new invoice. */
+  protected openNewInvoice(): void {
+    this.editingInvoice.set({ entry: null });
+  }
+
+  /** Opens the invoice editor to edit an invoice's master data. */
+  protected openEditInvoice(inv: CaseInvoice): void {
+    this.editingInvoice.set({ entry: inv });
+  }
+
+  /** Opens the line-item (positions) dialog for an invoice. */
+  protected openInvoicePositions(inv: CaseInvoice): void {
+    this.invoicePositionsFor.set({ id: inv.id, label: inv.invoiceNumber || inv.name || '' });
+  }
+
+  /** Persists the invoice (create/update), then closes and reloads. */
+  protected onSaveInvoice(data: InvoiceWrite): void {
+    const call = data.id ? this.cases.updateInvoice(data.id, data) : this.cases.createInvoice(data);
+    call.subscribe({
+      next: () => { this.editingInvoice.set(null); this.reloadInvoices(); },
+      error: () => undefined,
+    });
+  }
+
+  /** Duplicates an invoice within this case, then reloads. */
+  protected duplicateInvoiceEntry(inv: CaseInvoice): void {
+    const id = this.selectedId();
+    if (!id || this.invoiceBusy()) {
+      return;
+    }
+    this.invoiceBusy.set(inv.id);
+    this.cases.duplicateInvoice(inv.id, id, inv.lastPoolId).subscribe({
+      next: () => { this.invoiceBusy.set(null); this.reloadInvoices(); },
+      error: () => this.invoiceBusy.set(null),
+    });
+  }
+
+  /** Marks an invoice as paid ("bezahlt") via an update, then reloads. */
+  protected markInvoicePaid(inv: CaseInvoice): void {
+    const id = this.selectedId();
+    if (!id || this.invoiceBusy()) {
+      return;
+    }
+    this.invoiceBusy.set(inv.id);
+    this.cases.updateInvoice(inv.id, this.toInvoiceWrite(inv, id, 'bezahlt')).subscribe({
+      next: () => { this.invoiceBusy.set(null); this.reloadInvoices(); },
+      error: () => this.invoiceBusy.set(null),
+    });
+  }
+
+  /** Confirms, then deletes an invoice and reloads. */
+  protected confirmDeleteInvoice(inv: CaseInvoice): void {
+    if (this.invoiceBusy()) {
+      return;
+    }
+    if (!confirm(this.transloco.translate('akten.inv.deleteConfirm', { name: inv.invoiceNumber || inv.name || '' }))) {
+      return;
+    }
+    this.invoiceBusy.set(inv.id);
+    this.cases.deleteInvoice(inv.id).subscribe({
+      next: () => { this.invoiceBusy.set(null); this.reloadInvoices(); },
+      error: () => this.invoiceBusy.set(null),
+    });
+  }
+
+  /** Builds an InvoiceWrite from a loaded invoice, optionally overriding the status (mark-paid). */
+  private toInvoiceWrite(inv: CaseInvoice, caseId: string, status?: string): InvoiceWrite {
+    return {
+      id: inv.id,
+      caseId,
+      name: inv.name,
+      description: inv.description,
+      invoiceType: inv.invoiceTypeId,
+      lastPoolId: inv.lastPoolId,
+      contactId: inv.contactId || undefined,
+      sender: inv.sender || undefined,
+      status: status ?? inv.status,
+      paymentType: inv.paymentType || 'BANKTRANSFER',
+      smallBusiness: inv.smallBusiness,
+      currency: inv.currency || 'EUR',
+      creationDate: inv.creationDate || undefined,
+      dueDate: inv.dueDate || undefined,
+      periodFrom: inv.periodFrom || undefined,
+      periodTo: inv.periodTo || undefined,
+      total: inv.total,
+      totalGross: inv.totalGross,
+    };
+  }
+
+  /** Re-fetches the case's invoices after a write (totals/status may have changed). */
+  protected reloadInvoices(): void {
+    const id = this.selectedId();
+    if (!id) {
+      return;
+    }
+    this.cases.invoices(id).subscribe((rows) => {
+      if (this.selectedId() === id) {
+        this.invoices.set(rows);
       }
     });
   }

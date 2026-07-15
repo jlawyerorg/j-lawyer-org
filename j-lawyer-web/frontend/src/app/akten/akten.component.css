@@ -163,6 +163,15 @@
 .fin-row .dn { font-weight: 550; font-size: .89rem; word-break: break-word; }
 .fin-row .dmeta { font-size: .76rem; color: var(--jl-ink-faint); }
 .fin-row .fin-amount { margin-left: auto; font-weight: 700; font-size: .9rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Invoice rows: status chip + inline row actions; amount no longer pushed by margin-auto */
+.inv-row .fin-amount { margin-left: 0; }
+.inv-row .row-actions { display: inline-flex; align-items: center; gap: 4px; flex: none; }
+.inv-status { display: inline-block; margin-left: 8px; font-size: .66rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .03em; padding: 1px 7px; border-radius: 8px; color: var(--jl-ink-soft); background: var(--jl-surface-alt); vertical-align: middle; }
+.inv-status.paid { color: var(--jl-green, #1f9d55); background: color-mix(in srgb, var(--jl-green, #1f9d55) 14%, transparent); }
+.inv-status.draft { color: var(--jl-ink-faint); }
+.row-edit.paid:hover { border-color: var(--jl-green, #1f9d55); color: var(--jl-green, #1f9d55); background: color-mix(in srgb, var(--jl-green, #1f9d55) 10%, transparent); }
+.row-edit.paid:disabled { opacity: .4; cursor: default; }
 .fin-kpi .fk-value.neg { color: var(--jl-red); }
 
 /* Finanzen: Unternavigation (Rechnungen / Zahlungen / Aktenkonto) */
