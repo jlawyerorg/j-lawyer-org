@@ -90,9 +90,9 @@
 .list-head { flex-wrap: wrap; align-items: stretch; gap: 10px; }
 .list-title { display: flex; align-items: baseline; gap: 8px; width: 100%; }
 .list-title .count { color: var(--jl-ink-faint); font-size: .82rem; font-weight: 600; font-variant-numeric: tabular-nums; }
-.list-tools { display: flex; gap: 8px; width: 100%; }
+.list-tools { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
 .search {
-  flex: 1 1 auto; display: flex; align-items: center; gap: 6px; min-width: 0;
+  flex: 1 1 200px; display: flex; align-items: center; gap: 6px; min-width: 160px;
   padding: 5px 9px; border: 1px solid var(--jl-line-strong); border-radius: 8px; color: var(--jl-ink-faint);
 }
 .search-btn {
