@@ -133,6 +133,21 @@
 .doc-row { cursor: default; padding: 9px 4px; gap: 12px; }
 .doc-row.previewable { cursor: pointer; }
 .doc-row:hover { background: var(--jl-surface-alt); }
+.doc-row.sel { background: color-mix(in srgb, var(--jl-blue) 9%, transparent); }
+/* Per-row multi-select checkbox (revealed on hover / when selected). */
+.doc-cbx {
+  flex: none; width: 18px; height: 18px; border-radius: 5px; display: grid; place-items: center;
+  border: 1px solid var(--jl-line-strong); background: var(--jl-surface); color: #fff; cursor: pointer; opacity: 0;
+}
+.doc-row:hover .doc-cbx, .doc-cbx.on { opacity: 1; }
+.doc-cbx.on { background: var(--jl-blue); border-color: var(--jl-blue); }
+/* Header "select all visible" box. */
+.sel-all { flex: none; display: inline-grid; place-items: center; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.sel-all .cbx {
+  width: 17px; height: 17px; border-radius: 5px; display: grid; place-items: center;
+  border: 1px solid var(--jl-line-strong); background: var(--jl-surface); color: #fff;
+}
+.sel-all .cbx.on { background: var(--jl-blue); border-color: var(--jl-blue); }
 .doc-row .doc-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .doc-row .dn { font-weight: 550; font-size: .89rem; word-break: break-word; }
 .doc-row .dmeta { font-size: .76rem; color: var(--jl-ink-faint); font-variant-numeric: tabular-nums; }
@@ -322,6 +337,22 @@
 .docs .col-body.pad, .docs .col-body .pad { padding: 16px 14px; }
 
 /* Folder rows */
+/* Folder-tree "new folder" button in the column header. */
+.folder-add {
+  flex: none; display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 7px;
+  border: 1px solid var(--jl-line-strong); background: var(--jl-surface); color: var(--jl-ink-soft); cursor: pointer;
+}
+.folder-add:hover { border-color: var(--jl-blue); color: var(--jl-blue); }
+/* Folder row = selectable button + (hover) delete affordance. */
+.docs .fld-row { position: relative; display: flex; align-items: center; }
+.docs .fld-row .fld { flex: 1; min-width: 0; }
+.docs .fld-del {
+  flex: none; display: inline-grid; place-items: center; width: 26px; height: 26px; margin-right: 4px; border-radius: 7px;
+  border: 0; background: transparent; color: var(--jl-ink-faint); cursor: pointer; opacity: 0;
+}
+.docs .fld-row:hover .fld-del { opacity: 1; }
+.docs .fld-del:hover { background: color-mix(in srgb, var(--jl-red, #d14343) 14%, transparent); color: var(--jl-red, #d14343); }
+.docs .fld-del:disabled { opacity: .4; cursor: default; }
 .docs .fld {
   width: 100%; display: flex; align-items: center; gap: 8px; text-align: left;
   padding: 8px 14px; border: 0; background: transparent; cursor: pointer; font: inherit; color: var(--jl-ink);
@@ -401,9 +432,11 @@
 .dfolder { display: inline-flex; align-items: center; gap: 3px; }
 .dfolder jl-icon { color: var(--jl-ink-faint); vertical-align: -1px; }
 .dtags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+/* Active document labels, shown as small pills right on the row. */
 .dtag {
-  font-size: .68rem; font-weight: 600; padding: 1px 7px; border-radius: 9px;
-  color: var(--jl-ink-soft); background: var(--jl-surface-alt);
+  font-size: .64rem; font-weight: 700; line-height: 1.4; padding: 1px 7px; border-radius: 999px; white-space: nowrap;
+  color: var(--jl-blue); background: color-mix(in srgb, var(--jl-blue) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--jl-blue) 26%, transparent);
 }
 
 .to-folders { display: none; margin-right: 6px; font: inherit; font-size: .82rem; font-weight: 600; color: var(--jl-blue); background: transparent; border: 0; cursor: pointer; padding: 0; }
@@ -509,3 +542,27 @@
   border: 0; background: transparent; padding: 1px 2px; margin: 0; cursor: pointer; max-width: 170px;
 }
 .lc-select:focus { outline: none; }
+
+/* ---- Generic overlay dialog (folder create) ---- */
+.ov-backdrop { position: fixed; inset: 0; z-index: 60; background: rgba(6, 14, 22, .5); }
+.ov-dialog {
+  position: fixed; z-index: 61; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: min(440px, 94vw); max-height: 90dvh; display: flex; flex-direction: column;
+  background: var(--jl-surface); border: 1px solid var(--jl-line); border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .32); overflow: hidden;
+}
+.ov-dh { display: flex; align-items: center; gap: 10px; padding: 13px 16px; border-bottom: 1px solid var(--jl-line); }
+.ov-dh h2 { margin: 0; font-size: 1rem; font-weight: 800; }
+.ov-x { margin-left: auto; display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; border: 0; background: transparent; color: var(--jl-ink-soft); cursor: pointer; }
+.ov-x:hover { background: var(--jl-surface-alt); }
+.ov-db { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+.ov-fld { display: flex; flex-direction: column; gap: 5px; }
+.ov-lbl { font-size: .72rem; font-weight: 700; color: var(--jl-ink-faint); text-transform: uppercase; letter-spacing: .03em; }
+.ov-db input, .ov-db select { font: inherit; font-size: .88rem; padding: 8px 10px; border: 1px solid var(--jl-line-strong); border-radius: 8px; background: var(--jl-surface); color: var(--jl-ink); width: 100%; }
+.ov-db input:focus, .ov-db select:focus { outline: none; border-color: var(--jl-blue); }
+.ov-df { display: flex; align-items: center; gap: 10px; padding: 11px 16px; border-top: 1px solid var(--jl-line); }
+.ov-spacer { flex: 1; }
+.ov-btn { font: inherit; font-size: .85rem; font-weight: 650; padding: 8px 15px; border-radius: 8px; border: 1px solid var(--jl-line-strong); background: var(--jl-surface); color: var(--jl-ink); cursor: pointer; }
+.ov-btn:hover:not(:disabled) { border-color: var(--jl-blue); }
+.ov-btn:disabled { opacity: .5; cursor: default; }
+.ov-btn.primary { background: var(--jl-blue); border-color: var(--jl-blue); color: #fff; }

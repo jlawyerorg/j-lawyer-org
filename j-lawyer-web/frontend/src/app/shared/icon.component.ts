@@ -106,6 +106,13 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
         @case ('star') {
           <path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z" />
         }
+        @case ('tag') {
+          <path d="M20.6 13.4 12 22l-9-9V4a1 1 0 0 1 1-1h8z" /><circle cx="7.5" cy="7.5" r="1.2" />
+        }
+        @case ('palette') {
+          <path d="M12 3a9 9 0 0 0 0 18 2 2 0 0 0 2-2c0-1.1.9-2 2-2h1.5a3.5 3.5 0 0 0 3.5-3.5C21 6.9 17 3 12 3z" />
+          <circle cx="7.5" cy="10.5" r="1" /><circle cx="12" cy="7.5" r="1" /><circle cx="16.5" cy="10.5" r="1" />
+        }
         @case ('file-text') {
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" />
           <path d="M9 13h6M9 17h6" />

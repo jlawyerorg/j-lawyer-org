@@ -140,8 +140,46 @@ export interface CaseDocument {
   highlight1: string;
   /** Second label colour as CSS hex, or '' when unset. */
   highlight2: string;
+  /** Raw first-highlight colour value (server int; {@link HIGHLIGHT_NONE} when unset) — kept for round-tripping. */
+  highlight1Value: number;
+  /** Raw second-highlight colour value (server int; {@link HIGHLIGHT_NONE} when unset) — kept for round-tripping. */
+  highlight2Value: number;
+  /** External id (set by integrations); '' when unset — kept so metadata writes don't wipe it. */
+  externalId: string;
   /** Tag/label names attached to the document. */
   tags: string[];
+}
+
+/** Sentinel highlight value meaning "no colour" (Java Integer.MIN_VALUE). */
+export const HIGHLIGHT_NONE = -2147483648;
+
+/**
+ * Payload for a document metadata write (PUT /v1/cases/document/update-metadata). The endpoint
+ * overwrites every field from the request, so callers must resend the full current metadata and
+ * change only what they intend. Pass `folderId` only to move the document (null/undefined = no move).
+ */
+export interface DocMetaWrite {
+  id: string;
+  caseId: string;
+  name: string;
+  /** ISO instant (UTC 'Z'); required non-null by the server. */
+  creationDate: string;
+  /** ISO instant (UTC 'Z'); required non-null by the server. */
+  changeDate: string;
+  favorite: boolean;
+  highlight1: number;
+  highlight2: number;
+  externalId: string | null;
+  /** Target folder id to move into; omit/undefined to leave the document where it is. */
+  folderId?: string;
+  version?: number;
+}
+
+/** A document label/tag ("Etikett"), as returned by GET /v5/cases/document/{id}/tags. */
+export interface DocTag {
+  id: string;
+  name: string;
+  value: string;
 }
 
 /**

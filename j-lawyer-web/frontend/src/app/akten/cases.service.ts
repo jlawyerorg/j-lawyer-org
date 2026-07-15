@@ -5,7 +5,7 @@ import { API_ROOT } from '../core/api';
 import {
   AccountEntry, AccountEntryWrite, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseMessage, CaseOverview,
   CasePayment, CaseStatus, CaseTag, CaseTimesheet, CaseUserRef, CaseWrite, ContactRef, DocDateMode, DocFolder,
-  DocSortKey, DueDate, InvoicePool, InvoicePositionItem, InvoicePositionWrite, InvoiceType, InvoiceWrite,
+  DocMetaWrite, DocSortKey, DocTag, DueDate, HIGHLIGHT_NONE, InvoicePool, InvoicePositionItem, InvoicePositionWrite, InvoiceType, InvoiceWrite,
   MultiValueTagDef, Party, PartyTypeOption, PartyUpdate, PartyWrite, PaymentWrite, PositionTemplate,
   PositionWrite, RunningPosition, SortDir, TimesheetPosition, TimesheetWrite,
 } from './case.models';
@@ -15,7 +15,9 @@ const CASES_V2 = `${API_ROOT}/v2/cases`;
 const CASES_V3 = `${API_ROOT}/v3/cases`;
 const CASES_V4 = `${API_ROOT}/v4/cases`;
 const CASES_V5 = `${API_ROOT}/v5/cases`;
+const CASES_V6 = `${API_ROOT}/v6/cases`;
 const CASES_V7 = `${API_ROOT}/v7/cases`;
+const DOCTAGS_TEMPLATES_V7 = `${API_ROOT}/v7/configuration/optiongroups/document.tags`;
 const INVOICES_V7 = `${API_ROOT}/v7/invoices`;
 const CASES_V8 = `${API_ROOT}/v8/cases`;
 const TIMESHEETS_V8 = `${API_ROOT}/v8/timesheets`;
@@ -67,8 +69,9 @@ interface PartyTypeDto { id: string; name?: string; color?: number; }
 interface DocDto {
   id: string; name: string; size: number; creationDate: string; changeDate?: string;
   favorite?: boolean; folderId?: string; version?: number; highlight1?: number; highlight2?: number;
-  tags?: { name?: string }[];
+  externalId?: string; tags?: { name?: string }[];
 }
+interface DocTagDto { id: string; name?: string; tagValue?: string; }
 // GET /v3/cases/{id}/folders — the nested root folder node (children hold sub-folders).
 interface FolderDto { id: string; name: string; parentId?: string; children?: FolderDto[]; }
 interface HistoryDto { id: string; principal: string; changeDate: number; changeDescription: string; }
@@ -638,7 +641,8 @@ export class CasesService {
       dueDates: this.http.get<DueDateDto[]>(`${CASES_V4}/${id}/duedates`).pipe(
         catchError(() => this.http.get<DueDateDto[]>(`${CASES_BASE}/${id}/duedates`).pipe(catchError(() => of([])))),
       ),
-      documents: this.http.get<DocDto[]>(`${CASES_BASE}/${id}/documents`).pipe(catchError(() => of([]))),
+      // /documents/with-tags (not /documents) so each document carries its labels for the row chips.
+      documents: this.http.get<DocDto[]>(`${CASES_BASE}/${id}/documents/with-tags`).pipe(catchError(() => of([]))),
       // The document folder tree; 204 (no root folder) yields null.
       rootFolder: this.http.get<FolderDto | null>(`${CASES_V3}/${id}/folders`).pipe(catchError(() => of(null))),
       // Colour lookups (calendar-id -> colour, party-type-name -> colour); cached app-wide.
@@ -717,6 +721,66 @@ export class CasesService {
   /** Deletes a case document (DELETE /v1/cases/document/{id}/delete). */
   deleteDocument(documentId: string): Observable<unknown> {
     return this.http.delete(`${CASES_BASE}/document/${encodeURIComponent(documentId)}/delete`);
+  }
+
+  /**
+   * Updates a document's metadata (PUT /v1/cases/document/update-metadata): rename, creation date,
+   * favorite, highlights, external id and — when `folderId` is set — moves it into that folder.
+   * The server overwrites every field, so callers must pass the full current metadata (see
+   * {@link DocMetaWrite}).
+   */
+  updateDocumentMetadata(data: DocMetaWrite): Observable<unknown> {
+    return this.write(this.http.put(`${CASES_BASE}/document/update-metadata`, data));
+  }
+
+  /** Converts a document to PDF and stores it in the case (PUT /v6/cases/document/{id}/to-pdf). */
+  convertDocumentToPdf(documentId: string): Observable<unknown> {
+    return this.write(this.http.put(`${CASES_V6}/document/${encodeURIComponent(documentId)}/to-pdf`, {}));
+  }
+
+  /** Runs OCR on a PDF document in place (PUT /v6/cases/document/{id}/perform-ocr). */
+  ocrDocument(documentId: string): Observable<unknown> {
+    return this.write(this.http.put(`${CASES_V6}/document/${encodeURIComponent(documentId)}/perform-ocr`, {}));
+  }
+
+  /** Loads a document's labels/tags with their ids (GET /v5/cases/document/{id}/tags); [] on error. */
+  documentTags(documentId: string): Observable<DocTag[]> {
+    return this.http.get<DocTagDto[]>(`${CASES_V5}/document/${encodeURIComponent(documentId)}/tags`).pipe(
+      map((rows) => (rows ?? []).map((t) => ({ id: t.id, name: t.name ?? '', value: t.tagValue ?? '' }))),
+      catchError(() => of([])),
+    );
+  }
+
+  /** Adds/sets a label on a document (PUT /v5/cases/documents/{id}/tags); idempotent by name. */
+  addDocumentTag(documentId: string, name: string): Observable<unknown> {
+    return this.write(this.http.put(`${CASES_V5}/documents/${encodeURIComponent(documentId)}/tags`, { name }));
+  }
+
+  /** Removes a label by its tag id (DELETE /v5/cases/documents/tags/{tagId}). */
+  deleteDocumentTag(tagId: string): Observable<unknown> {
+    return this.write(this.http.delete(`${CASES_V5}/documents/tags/${encodeURIComponent(tagId)}`));
+  }
+
+  private docTagDict$?: Observable<string[]>;
+
+  /** The configured document-label names ("Etiketten", GET /v7/configuration/optiongroups/document.tags). Cached. */
+  documentTagDictionary(): Observable<string[]> {
+    this.docTagDict$ ??= this.http.get<{ value?: string }[]>(DOCTAGS_TEMPLATES_V7).pipe(
+      map((rows) => (rows ?? []).map((r) => r.value ?? '').filter(Boolean).sort((a, b) => a.localeCompare(b))),
+      catchError(() => of([])),
+      shareReplay(1),
+    );
+    return this.docTagDict$;
+  }
+
+  /** Creates a document folder within a case (PUT /v3/cases/{caseId}/folders/create). */
+  createFolder(caseId: string, name: string, parentId: string): Observable<unknown> {
+    return this.write(this.http.put(`${CASES_V3}/${encodeURIComponent(caseId)}/folders/create`, { name, parentId }));
+  }
+
+  /** Deletes a document folder (DELETE /v3/cases/{caseId}/folders/{folderId}). */
+  deleteFolder(caseId: string, folderId: string): Observable<unknown> {
+    return this.write(this.http.delete(`${CASES_V3}/${encodeURIComponent(caseId)}/folders/${encodeURIComponent(folderId)}`));
   }
 
   /** Contact search for the add-party picker (by name / file number / …); [] on error. */
@@ -884,6 +948,9 @@ function toDocument(dto: DocDto): CaseDocument {
     version: dto.version ?? 1,
     highlight1: highlightHex(dto.highlight1),
     highlight2: highlightHex(dto.highlight2),
+    highlight1Value: dto.highlight1 ?? HIGHLIGHT_NONE,
+    highlight2Value: dto.highlight2 ?? HIGHLIGHT_NONE,
+    externalId: dto.externalId ?? '',
     tags: (dto.tags ?? []).map((t) => t.name ?? '').filter(Boolean),
   };
 }

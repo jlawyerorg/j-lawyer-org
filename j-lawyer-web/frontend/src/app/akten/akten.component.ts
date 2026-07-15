@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
@@ -21,6 +22,8 @@ import { AccountEntryEditorComponent, ContactOption, InvoiceOption } from './acc
 import { InvoiceEditorComponent } from './invoice-editor.component';
 import { InvoicePositionsComponent } from './invoice-positions.component';
 import { PaymentEditorComponent } from './payment-editor.component';
+import { DocumentActionsComponent, FolderOption } from './document-actions.component';
+import { DocumentBulkBarComponent } from './document-bulk-bar.component';
 import {
   formatDurationMs, positionMillis, runningElapsed as elapsedOf, sumDuration, sumInvoiceable, sumNet, toServerDateTime,
 } from './timesheet.util';
@@ -64,10 +67,11 @@ interface TimesheetView extends CaseTimesheet {
   selector: 'jl-akten',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoModule, IconComponent, DatePipe, DecimalPipe, DocumentPreviewComponent,
+  imports: [TranslocoModule, FormsModule, IconComponent, DatePipe, DecimalPipe, DocumentPreviewComponent,
     CaseEditorComponent, PartyAddComponent, PartyEditorComponent, EventEditorComponent,
     TimesheetEditorComponent, TimesheetDetailComponent, PositionEditorComponent, AccountEntryEditorComponent,
-    InvoiceEditorComponent, InvoicePositionsComponent, PaymentEditorComponent],
+    InvoiceEditorComponent, InvoicePositionsComponent, PaymentEditorComponent, DocumentActionsComponent,
+    DocumentBulkBarComponent],
   template: `
     <div class="master-detail" [class.show-detail]="selectedId()">
       <!-- Aktenliste -->
@@ -346,21 +350,32 @@ interface TimesheetView extends CaseTimesheet {
                     <button type="button" class="all-toggle" (click)="toggleAllFolders()">
                       {{ (allFoldersSelected() ? 'akten.docs.selectNone' : 'akten.docs.selectAll') | transloco }}
                     </button>
+                    <button type="button" class="folder-add" (click)="openNewFolder()" [title]="'akten.docs.newFolder' | transloco">
+                      <jl-icon name="plus" [size]="14" />
+                    </button>
                     <button type="button" class="to-list" (click)="docMobilePane.set('list')">
                       {{ 'akten.docs.show' | transloco }} ({{ visibleDocs().length }}) ›
                     </button>
                   </header>
                   <div class="col-body">
                     @for (f of docFolderRows(); track f.id) {
-                      <button type="button" class="fld" [class.sel]="isFolderSelected(f.id)"
-                              [style.padding-left.px]="10 + f.depth * 14" (click)="toggleFolder(f.id)">
-                        <span class="fld-box" [class.on]="isFolderSelected(f.id)">
-                          @if (isFolderSelected(f.id)) { <jl-icon name="check" [size]="11" /> }
-                        </span>
-                        <jl-icon name="folder" [size]="14" />
-                        <span class="fld-name">{{ f.isRoot ? ('akten.docs.root' | transloco) : f.name }}</span>
-                        @if (f.count > 0) { <span class="fld-badge">{{ f.count }}</span> }
-                      </button>
+                      <div class="fld-row">
+                        <button type="button" class="fld" [class.sel]="isFolderSelected(f.id)"
+                                [style.padding-left.px]="10 + f.depth * 14" (click)="toggleFolder(f.id)">
+                          <span class="fld-box" [class.on]="isFolderSelected(f.id)">
+                            @if (isFolderSelected(f.id)) { <jl-icon name="check" [size]="11" /> }
+                          </span>
+                          <jl-icon name="folder" [size]="14" />
+                          <span class="fld-name">{{ f.isRoot ? ('akten.docs.root' | transloco) : f.name }}</span>
+                          @if (f.count > 0) { <span class="fld-badge">{{ f.count }}</span> }
+                        </button>
+                        @if (!f.isRoot) {
+                          <button type="button" class="fld-del" [disabled]="folderBusy() === f.id"
+                                  (click)="confirmDeleteFolder(f)" [title]="'akten.docs.deleteFolder' | transloco">
+                            <jl-icon name="trash" [size]="13" />
+                          </button>
+                        }
+                      </div>
                     }
                   </div>
                 </aside>
@@ -370,6 +385,14 @@ interface TimesheetView extends CaseTimesheet {
                   <header class="col-head doc-list-head">
                     <div class="dl-title">
                       <button type="button" class="to-folders" (click)="docMobilePane.set('folders')">‹ {{ 'akten.docs.folders' | transloco }}</button>
+                      @if (visibleDocs().length) {
+                        <button type="button" class="sel-all" [class.on]="allVisibleSelected()"
+                                (click)="toggleSelectAllVisible()" [title]="'akten.docs.bulk.selectAll' | transloco">
+                          <span class="cbx" [class.on]="allVisibleSelected()">
+                            @if (allVisibleSelected()) { <jl-icon name="check" [size]="11" /> }
+                          </span>
+                        </button>
+                      }
                       @if (singleSelectedFolder(); as sf) {
                         <h3>{{ sf.isRoot ? ('akten.docs.root' | transloco) : sf.name }}</h3>
                       } @else if (allFoldersSelected()) {
@@ -406,9 +429,17 @@ interface TimesheetView extends CaseTimesheet {
                     </div>
                     <input #fileInput type="file" multiple hidden (change)="onUpload($event)" />
                     @if (docUploadError()) { <p class="up-error">{{ 'akten.docs.uploadError' | transloco }}</p> }
+                    @if (selectedDocs().length) {
+                      <jl-document-bulk-bar [docs]="selectedDocs()" [caseId]="selectedId() ?? ''" [folders]="docFolderOptions()"
+                                            (changed)="onBulkChanged()" (clear)="clearDocSel()" (download)="downloadSelected()" />
+                    }
                     @for (doc of visibleDocs(); track doc.id) {
-                      <div class="doc doc-row" [class.previewable]="canPreview(doc)"
+                      <div class="doc doc-row" [class.previewable]="canPreview(doc)" [class.sel]="isDocSelected(doc.id)"
                            (click)="canPreview(doc) ? preview(doc) : download(doc)">
+                        <button type="button" class="doc-cbx" [class.on]="isDocSelected(doc.id)"
+                                (click)="toggleDocSel(doc.id, $event)" [attr.aria-label]="'akten.docs.bulk.select' | transloco">
+                          @if (isDocSelected(doc.id)) { <jl-icon name="check" [size]="12" /> }
+                        </button>
                         <span class="hl-stripe" [class.single]="!(doc.highlight1 && doc.highlight2)">
                           @if (doc.highlight1) { <span [style.background]="doc.highlight1"></span> }
                           @if (doc.highlight2) { <span [style.background]="doc.highlight2"></span> }
@@ -440,10 +471,9 @@ interface TimesheetView extends CaseTimesheet {
                           <button type="button" class="doc-btn primary" (click)="$event.stopPropagation(); download(doc)">
                             <jl-icon name="download" [size]="14" />{{ 'akten.docDownload' | transloco }}
                           </button>
-                          <button type="button" class="doc-btn danger" [disabled]="docDeleting() === doc.id"
-                                  (click)="$event.stopPropagation(); confirmDeleteDoc(doc)" [title]="'akten.docs.delete' | transloco">
-                            <jl-icon name="trash" [size]="14" />
-                          </button>
+                          <jl-document-actions (click)="$event.stopPropagation()" [doc]="doc" [caseId]="selectedId() ?? ''"
+                                               [folders]="docFolderOptions()" (changed)="reloadDetail()"
+                                               (preview)="preview(doc)" (download)="download(doc)" (remove)="confirmDeleteDoc(doc)" />
                         </span>
                       </div>
                     } @empty {
@@ -953,6 +983,36 @@ interface TimesheetView extends CaseTimesheet {
                          [currentUser]="currentUser()"
                          (save)="onSavePayment($event)" (close)="editingPayment.set(null)" />
     }
+    @if (folderDialog()) {
+      <div class="ov-backdrop" (click)="folderDialog.set(false)"></div>
+      <div class="ov-dialog" role="dialog" aria-modal="true">
+        <header class="ov-dh">
+          <h2>{{ 'akten.docs.newFolder' | transloco }}</h2>
+          <button type="button" class="ov-x" (click)="folderDialog.set(false)" [attr.aria-label]="'akten.editor.cancel' | transloco">
+            <jl-icon name="close" [size]="18" />
+          </button>
+        </header>
+        <div class="ov-db">
+          <label class="ov-fld">
+            <span class="ov-lbl">{{ 'akten.docs.folderName' | transloco }}</span>
+            <input type="text" [ngModel]="newFolderName()" (ngModelChange)="newFolderName.set($event)" (keydown.enter)="createFolder()" />
+          </label>
+          <label class="ov-fld">
+            <span class="ov-lbl">{{ 'akten.docs.parentFolder' | transloco }}</span>
+            <select [ngModel]="newFolderParent()" (ngModelChange)="newFolderParent.set($event)">
+              @for (f of docFolderOptions(); track f.id) {
+                <option [value]="f.id">{{ f.isRoot ? ('akten.docs.root' | transloco) : f.name }}</option>
+              }
+            </select>
+          </label>
+        </div>
+        <footer class="ov-df">
+          <span class="ov-spacer"></span>
+          <button type="button" class="ov-btn" (click)="folderDialog.set(false)">{{ 'akten.editor.cancel' | transloco }}</button>
+          <button type="button" class="ov-btn primary" [disabled]="!newFolderName().trim() || folderBusy() === 'create'" (click)="createFolder()">{{ 'akten.docs.createBtn' | transloco }}</button>
+        </footer>
+      </div>
+    }
   `,
   styleUrl: './akten.component.css',
 })
@@ -984,6 +1044,8 @@ export class AktenComponent {
   // client) — docFolderSel holds the selected folder ids (default: all). docMobilePane drives the
   // phone drill-down. The 'folder' sort is only offered because several folders can be shown.
   protected readonly docFolderSel = signal<Set<string>>(new Set());
+  /** Ids of documents ticked for bulk actions (multi-select), independent of folder/search filtering. */
+  protected readonly docSel = signal<Set<string>>(new Set());
   protected readonly docMobilePane = signal<'folders' | 'list'>('folders');
   protected readonly sortKeys: DocSortKey[] = ['name', 'date', 'size', 'type', 'favorite', 'folder'];
   /** Free-text filter over the case's documents (by name/tag). When set it searches case-wide. */
@@ -1063,6 +1125,11 @@ export class AktenComponent {
   protected readonly dragOver = signal(false);
   /** Id of the document currently being deleted, or null. */
   protected readonly docDeleting = signal<string | null>(null);
+  /** Folder-create dialog open state + its inputs; folderBusy = 'create' | <folderId being deleted> | null. */
+  protected readonly folderDialog = signal(false);
+  protected readonly newFolderName = signal('');
+  protected readonly newFolderParent = signal('');
+  protected readonly folderBusy = signal<string | null>(null);
   /** Id of the due date currently being deleted, or null. */
   protected readonly dueDeleting = signal<string | null>(null);
 
@@ -1376,6 +1443,7 @@ export class AktenComponent {
     this.caseGroups.set(null);
     this.caseMessages.set(null);
     this.docFolderSel.set(new Set());
+    this.docSel.set(new Set());
     this.docMobilePane.set('folders');
     this.docSearch.set('');
     this.cases.loadDetail(id).subscribe((detail) => {
@@ -1398,7 +1466,7 @@ export class AktenComponent {
    * preserving the open tab and folder selection. When `refreshList` is set (master-data change)
    * the list is also reloaded so a changed name/status shows there too.
    */
-  private reloadDetail(refreshList = false): void {
+  protected reloadDetail(refreshList = false): void {
     const id = this.selectedId();
     if (!id) {
       return;
@@ -1411,6 +1479,104 @@ export class AktenComponent {
     if (refreshList) {
       this.cases.reload();
     }
+  }
+
+  /** Flattened folder list for the document "move" dropdown + folder-create parent picker. */
+  protected docFolderOptions(): FolderOption[] {
+    return this.docFolderRows().map((f) => ({ id: f.id, name: f.name, depth: f.depth, isRoot: f.isRoot }));
+  }
+
+  // ----- Dokument-Mehrfachauswahl (multi-select + bulk actions) -----
+
+  protected isDocSelected(id: string): boolean {
+    return this.docSel().has(id);
+  }
+
+  /** Toggles one document in/out of the bulk selection (without opening it). */
+  protected toggleDocSel(id: string, ev?: Event): void {
+    ev?.stopPropagation();
+    const next = new Set(this.docSel());
+    if (next.has(id)) { next.delete(id); } else { next.add(id); }
+    this.docSel.set(next);
+  }
+
+  /** The selected documents (resolved from the loaded case, so hidden-by-filter ones still count). */
+  protected selectedDocs(): CaseDocument[] {
+    const sel = this.docSel();
+    if (!sel.size) { return []; }
+    return (this.selected()?.documents ?? []).filter((d) => sel.has(d.id));
+  }
+
+  /** Whether every currently visible document is selected (drives the header select-all box). */
+  protected allVisibleSelected(): boolean {
+    const vis = this.visibleDocs();
+    return vis.length > 0 && vis.every((d) => this.docSel().has(d.id));
+  }
+
+  /** Select-all toggle over the visible documents (adds/removes them from the selection). */
+  protected toggleSelectAllVisible(): void {
+    const vis = this.visibleDocs();
+    const next = new Set(this.docSel());
+    if (this.allVisibleSelected()) {
+      vis.forEach((d) => next.delete(d.id));
+    } else {
+      vis.forEach((d) => next.add(d.id));
+    }
+    this.docSel.set(next);
+  }
+
+  protected clearDocSel(): void {
+    this.docSel.set(new Set());
+  }
+
+  /** After a bulk write: reload the case and clear the selection. */
+  protected onBulkChanged(): void {
+    this.clearDocSel();
+    this.reloadDetail();
+  }
+
+  /** Downloads every selected document (client-side, one after another). */
+  protected downloadSelected(): void {
+    this.selectedDocs().forEach((d) => this.download(d));
+  }
+
+  // ----- Ordner (document folders: create / delete) -----
+
+  /** Opens the folder-create dialog, defaulting the parent to the root folder. */
+  protected openNewFolder(): void {
+    this.newFolderName.set('');
+    this.newFolderParent.set(this.docFolderOptions().find((f) => f.isRoot)?.id ?? '');
+    this.folderDialog.set(true);
+  }
+
+  /** Creates a document folder, then reloads and closes the dialog. */
+  protected createFolder(): void {
+    const id = this.selectedId();
+    const name = this.newFolderName().trim();
+    if (!id || !name || this.folderBusy()) {
+      return;
+    }
+    this.folderBusy.set('create');
+    this.cases.createFolder(id, name, this.newFolderParent()).subscribe({
+      next: () => { this.folderBusy.set(null); this.folderDialog.set(false); this.reloadDetail(); },
+      error: () => this.folderBusy.set(null),
+    });
+  }
+
+  /** Confirms, then deletes a (non-root) document folder and reloads. */
+  protected confirmDeleteFolder(f: DocFolderRow): void {
+    const id = this.selectedId();
+    if (!id || f.isRoot || this.folderBusy()) {
+      return;
+    }
+    if (!confirm(this.transloco.translate('akten.docs.deleteFolderConfirm', { name: f.name }))) {
+      return;
+    }
+    this.folderBusy.set(f.id);
+    this.cases.deleteFolder(id, f.id).subscribe({
+      next: () => { this.folderBusy.set(null); this.reloadDetail(); },
+      error: () => this.folderBusy.set(null),
+    });
   }
 
   // ----- Stammdaten (master data) -----
