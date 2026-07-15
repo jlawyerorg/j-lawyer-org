@@ -6,7 +6,7 @@ import {
   AccountEntry, AccountEntryWrite, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseMessage, CaseOverview,
   CasePayment, CaseStatus, CaseTag, CaseTimesheet, CaseUserRef, CaseWrite, ContactRef, DocDateMode, DocFolder,
   DocSortKey, DueDate, InvoicePool, InvoicePositionItem, InvoicePositionWrite, InvoiceType, InvoiceWrite,
-  MultiValueTagDef, Party, PartyTypeOption, PartyUpdate, PartyWrite, PositionTemplate,
+  MultiValueTagDef, Party, PartyTypeOption, PartyUpdate, PartyWrite, PaymentWrite, PositionTemplate,
   PositionWrite, RunningPosition, SortDir, TimesheetPosition, TimesheetWrite,
 } from './case.models';
 
@@ -88,6 +88,7 @@ interface InvoicePoolDto { id: string; displayName?: string; smallBusiness?: boo
 interface PaymentDto {
   id: string; paymentNumber: string; name: string; reason: string; status: string;
   total: number; currency: string; targetDate: string; creationDate: string;
+  description?: string; contactId?: string; sender?: string; paymentType?: string;
 }
 interface AccountEntryDto {
   id: string; entryDate: string; description: string; contactName?: string; contactId?: string; invoiceId?: string;
@@ -295,6 +296,22 @@ export class CasesService {
       map((rows) => (rows ?? []).map(toPayment)),
       catchError(() => of([])),
     );
+  }
+
+  /** Creates a payment (PUT /v8/cases/{caseId}/payments); the number is generated server-side. */
+  createPayment(data: PaymentWrite): Observable<CasePayment> {
+    return this.write(this.http.put<PaymentDto>(`${CASES_V8}/${encodeURIComponent(data.caseId)}/payments`, data))
+      .pipe(map((dto) => toPayment(dto as PaymentDto)));
+  }
+
+  /** Updates a payment (PUT /v8/cases/{caseId}/payments/{id}); the number is preserved. */
+  updatePayment(paymentId: string, data: PaymentWrite): Observable<unknown> {
+    return this.write(this.http.put(`${CASES_V8}/${encodeURIComponent(data.caseId)}/payments/${encodeURIComponent(paymentId)}`, data));
+  }
+
+  /** Deletes a payment (DELETE /v8/cases/{caseId}/payments/{id}). */
+  deletePayment(caseId: string, paymentId: string): Observable<unknown> {
+    return this.write(this.http.delete(`${CASES_V8}/${encodeURIComponent(caseId)}/payments/${encodeURIComponent(paymentId)}`));
   }
 
   /** Loads the case account entries ("Aktenkonto", GET /v7/cases/{id}/accountentries); [] on error. */
@@ -938,6 +955,10 @@ function toPayment(dto: PaymentDto): CasePayment {
     currency: dto.currency ?? '€',
     targetDate: isoDate(dto.targetDate),
     creationDate: isoDate(dto.creationDate),
+    description: dto.description ?? '',
+    contactId: dto.contactId ?? '',
+    sender: dto.sender ?? '',
+    paymentType: dto.paymentType ?? 'SEPATRANSFER',
   };
 }
 

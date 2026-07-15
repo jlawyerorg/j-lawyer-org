@@ -288,6 +288,30 @@ export interface CasePayment {
   /** ISO date (sanitized, no [UTC] suffix); empty if unset. */
   targetDate: string;
   creationDate: string;
+  description: string;
+  /** Id of the linked recipient contact; empty if none. */
+  contactId: string;
+  /** Login id of the paying user ("Absender"); empty if none. */
+  sender: string;
+  /** SEPATRANSFER | OTHER. */
+  paymentType: string;
+}
+
+/** Payload for creating/updating a payment (PUT /v8/cases/{caseId}/payments[/{id}]). */
+export interface PaymentWrite {
+  id?: string;
+  caseId: string;
+  name: string;
+  description: string;
+  reason: string;
+  status: string;
+  paymentType: string;
+  contactId?: string;
+  sender?: string;
+  total: number;
+  currency: string;
+  /** ISO instant (UTC 'Z'); omit to let the server default. */
+  targetDate?: string;
 }
 
 /**

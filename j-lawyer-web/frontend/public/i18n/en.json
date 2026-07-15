@@ -366,6 +366,27 @@
         "addBtn": "Add",
         "newBtn": "New"
       }
+    },
+    "pay": {
+      "add": "New payment",
+      "edit": "Edit payment",
+      "delete": "Delete payment",
+      "deleteConfirm": "Really delete payment \"{{name}}\"?",
+      "name": "Name",
+      "reason": "Purpose",
+      "recipient": "Recipient",
+      "linkedContact": "Linked contact",
+      "sender": "Sender",
+      "status": "Status",
+      "target": "Due date",
+      "type": "Payment type",
+      "amount": "Amount",
+      "currency": "Currency",
+      "description": "Description",
+      "pay": {
+        "SEPATRANSFER": "Bank transfer",
+        "OTHER": "Other"
+      }
     }
   },
   "kontakte": {

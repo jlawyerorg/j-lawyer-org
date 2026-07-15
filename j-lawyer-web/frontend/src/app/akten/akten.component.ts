@@ -20,6 +20,7 @@ import { TimesheetTrackingService } from './timesheet-tracking.service';
 import { AccountEntryEditorComponent, ContactOption, InvoiceOption } from './account-entry-editor.component';
 import { InvoiceEditorComponent } from './invoice-editor.component';
 import { InvoicePositionsComponent } from './invoice-positions.component';
+import { PaymentEditorComponent } from './payment-editor.component';
 import {
   formatDurationMs, positionMillis, runningElapsed as elapsedOf, sumDuration, sumInvoiceable, sumNet, toServerDateTime,
 } from './timesheet.util';
@@ -30,7 +31,7 @@ import { AuthService } from '../core/auth/auth.service';
 import {
   AccountEntry, AccountEntryWrite, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseMessage, CasePayment,
   CaseTag, CaseTimesheet, CaseWrite, DocFolder, DocSortKey, DueDate, InvoicePool, InvoiceType, InvoiceWrite,
-  MultiValueTagDef, Party, PartyUpdate, PositionWrite, TimesheetPosition, TimesheetWrite,
+  MultiValueTagDef, Party, PartyUpdate, PaymentWrite, PositionWrite, TimesheetPosition, TimesheetWrite,
 } from './case.models';
 
 /** A row in the document folder tree, flattened for display with indentation + a doc count. */
@@ -66,7 +67,7 @@ interface TimesheetView extends CaseTimesheet {
   imports: [TranslocoModule, IconComponent, DatePipe, DecimalPipe, DocumentPreviewComponent,
     CaseEditorComponent, PartyAddComponent, PartyEditorComponent, EventEditorComponent,
     TimesheetEditorComponent, TimesheetDetailComponent, PositionEditorComponent, AccountEntryEditorComponent,
-    InvoiceEditorComponent, InvoicePositionsComponent],
+    InvoiceEditorComponent, InvoicePositionsComponent, PaymentEditorComponent],
   template: `
     <div class="master-detail" [class.show-detail]="selectedId()">
       <!-- Aktenliste -->
@@ -615,18 +616,36 @@ interface TimesheetView extends CaseTimesheet {
                       </div>
                     }
                     @case ('payments') {
+                      <div class="acct-bar">
+                        <span class="spacer"></span>
+                        <button type="button" class="add-btn" (click)="openNewPayment()">
+                          <jl-icon name="plus" [size]="14" /> {{ 'akten.pay.add' | transloco }}
+                        </button>
+                      </div>
                       <div class="card full">
                         <div class="card-b">
                           @for (pay of payments(); track pay.id) {
-                            <div class="fin-row">
+                            <div class="fin-row inv-row">
                               <span class="fin-main">
-                                <span class="dn">{{ pay.name || pay.paymentNumber || pay.reason || '—' }}</span>
+                                <span class="dn">
+                                  {{ pay.paymentNumber || pay.name || '—' }}
+                                  <span class="inv-status" [class.paid]="pay.status === 'ausgeführt'" [class.draft]="pay.status === 'Entwurf'">{{ pay.status }}</span>
+                                </span>
                                 <span class="dmeta">
-                                  {{ pay.status }}
-                                  @if (pay.targetDate) { · {{ pay.targetDate | date: 'dd.MM.yyyy' }} }
+                                  {{ pay.name || pay.reason }}
+                                  @if (pay.targetDate) { · {{ 'akten.finance.due' | transloco }} {{ pay.targetDate | date: 'dd.MM.yyyy' }} }
                                 </span>
                               </span>
                               <span class="fin-amount">{{ pay.total | number: '1.2-2' }} {{ pay.currency }}</span>
+                              <span class="row-actions">
+                                <button type="button" class="row-edit" (click)="openEditPayment(pay)" [title]="'akten.pay.edit' | transloco">
+                                  <jl-icon name="edit" [size]="15" />
+                                </button>
+                                <button type="button" class="row-del" [disabled]="paymentBusy() === pay.id"
+                                        (click)="confirmDeletePayment(pay)" [title]="'akten.pay.delete' | transloco">
+                                  <jl-icon name="trash" [size]="15" />
+                                </button>
+                              </span>
                             </div>
                           } @empty {
                             <p class="muted">{{ 'akten.finance.noPayments' | transloco }}</p>
@@ -929,6 +948,11 @@ interface TimesheetView extends CaseTimesheet {
       <jl-invoice-positions [invoiceId]="ip.id" [invoiceLabel]="ip.label"
                             (changed)="reloadInvoices()" (close)="invoicePositionsFor.set(null)" />
     }
+    @if (editingPayment(); as pe) {
+      <jl-payment-editor [entry]="pe.entry" [contacts]="accountContacts()" [caseId]="selectedId() ?? ''"
+                         [currentUser]="currentUser()"
+                         (save)="onSavePayment($event)" (close)="editingPayment.set(null)" />
+    }
   `,
   styleUrl: './akten.component.css',
 })
@@ -998,6 +1022,10 @@ export class AktenComponent {
   /** Configured invoice types + pools for the editor (cached in the service). */
   protected readonly invoiceTypes = signal<InvoiceType[]>([]);
   protected readonly invoicePools = signal<InvoicePool[]>([]);
+  /** Payment editor: the payment to edit (null = create), or null when closed. */
+  protected readonly editingPayment = signal<{ entry: CasePayment | null } | null>(null);
+  /** Id of the payment currently being written (delete), or null. */
+  protected readonly paymentBusy = signal<string | null>(null);
 
   // Zeiten (time tracking) tab state — the case's timesheets (open + closed) with their positions.
   protected readonly timesheets = signal<TimesheetView[] | null>(null);
@@ -2301,6 +2329,56 @@ export class AktenComponent {
     this.cases.invoices(id).subscribe((rows) => {
       if (this.selectedId() === id) {
         this.invoices.set(rows);
+      }
+    });
+  }
+
+  // ----- Zahlungen (payments) -----
+
+  /** Opens the payment editor to create a new payment. */
+  protected openNewPayment(): void {
+    this.editingPayment.set({ entry: null });
+  }
+
+  /** Opens the payment editor to edit a payment. */
+  protected openEditPayment(pay: CasePayment): void {
+    this.editingPayment.set({ entry: pay });
+  }
+
+  /** Persists the payment (create/update), then closes and reloads. */
+  protected onSavePayment(data: PaymentWrite): void {
+    const call = data.id ? this.cases.updatePayment(data.id, data) : this.cases.createPayment(data);
+    call.subscribe({
+      next: () => { this.editingPayment.set(null); this.reloadPayments(); },
+      error: () => undefined,
+    });
+  }
+
+  /** Confirms, then deletes a payment and reloads. */
+  protected confirmDeletePayment(pay: CasePayment): void {
+    const caseId = this.selectedId();
+    if (!caseId || this.paymentBusy()) {
+      return;
+    }
+    if (!confirm(this.transloco.translate('akten.pay.deleteConfirm', { name: pay.paymentNumber || pay.name || '' }))) {
+      return;
+    }
+    this.paymentBusy.set(pay.id);
+    this.cases.deletePayment(caseId, pay.id).subscribe({
+      next: () => { this.paymentBusy.set(null); this.reloadPayments(); },
+      error: () => this.paymentBusy.set(null),
+    });
+  }
+
+  /** Re-fetches the case's payments after a write. */
+  protected reloadPayments(): void {
+    const id = this.selectedId();
+    if (!id) {
+      return;
+    }
+    this.cases.payments(id).subscribe((rows) => {
+      if (this.selectedId() === id) {
+        this.payments.set(rows);
       }
     });
   }

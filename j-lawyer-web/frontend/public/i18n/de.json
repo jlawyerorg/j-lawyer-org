@@ -366,6 +366,27 @@
         "addBtn": "Hinzufügen",
         "newBtn": "Neu"
       }
+    },
+    "pay": {
+      "add": "Neue Zahlung",
+      "edit": "Zahlung bearbeiten",
+      "delete": "Zahlung löschen",
+      "deleteConfirm": "Zahlung \"{{name}}\" wirklich löschen?",
+      "name": "Bezeichnung",
+      "reason": "Verwendungszweck",
+      "recipient": "Empfänger",
+      "linkedContact": "Verknüpfter Kontakt",
+      "sender": "Absender",
+      "status": "Status",
+      "target": "Fälligkeit",
+      "type": "Zahlungsart",
+      "amount": "Betrag",
+      "currency": "Währung",
+      "description": "Beschreibung",
+      "pay": {
+        "SEPATRANSFER": "Überweisung",
+        "OTHER": "Sonstige"
+      }
     }
   },
   "kontakte": {
