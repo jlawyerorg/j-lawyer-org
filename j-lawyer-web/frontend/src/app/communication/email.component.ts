@@ -6,7 +6,7 @@ import { IconComponent } from '../shared/icon.component';
 import { base64ToBytes } from '../shared/document-preview.models';
 import { EmailService } from './email.service';
 import {
-  FolderNode, LoadRestriction, LOAD_RESTRICTIONS, Mailbox, MailFolder, MailMessage, wellKnownOrder,
+  FolderNode, MailScope, Mailbox, MailFolder, MailMessage, PAGE_SIZE, TIME_RANGES, TimeRange, wellKnownOrder,
 } from './email.models';
 
 /** A mailbox header or an (indented) folder row in the left navigation. */
@@ -63,15 +63,27 @@ interface MailboxFolders {
                 <div class="mbx" [title]="row.mailbox.emailAddress">
                   <jl-icon name="mail" [size]="13" />
                   <span class="mbx-name">{{ row.mailbox.displayName || row.mailbox.emailAddress }}</span>
+                  <button type="button" class="mbx-hidden" (click)="openHidden(row.mailbox.id)"
+                          [title]="'email.hidden.manage' | transloco" [attr.aria-label]="'email.hidden.manage' | transloco">
+                    <jl-icon name="eye" [size]="13" />
+                  </button>
                 </div>
               } @else {
-                <button type="button" class="fld"
-                        [class.sel]="row.mailboxId === selectedMailboxId() && row.folder.folderId === selectedFolderId()"
-                        [style.padding-left.px]="18 + row.folder.depth * 14"
-                        (click)="selectFolder(row.mailboxId, row.folder)">
-                  <span class="fld-name">{{ folderLabel(row.folder) }}</span>
-                  @if (row.folder.unreadCount > 0) { <span class="fld-badge">{{ row.folder.unreadCount }}</span> }
-                </button>
+                <div class="fld-row">
+                  <button type="button" class="fld"
+                          [class.sel]="row.mailboxId === selectedMailboxId() && row.folder.folderId === selectedFolderId()"
+                          [style.padding-left.px]="18 + row.folder.depth * 14"
+                          (click)="selectFolder(row.mailboxId, row.folder)">
+                    <span class="fld-name">{{ folderLabel(row.folder) }}</span>
+                    @if (row.folder.unreadCount > 0) { <span class="fld-badge">{{ row.folder.unreadCount }}</span> }
+                  </button>
+                  @if (!isWellKnown(row.folder)) {
+                    <button type="button" class="fld-hide" [disabled]="folderBusy() === row.folder.folderId"
+                            (click)="hideFolder(row.mailboxId, row.folder)" [title]="'email.hidden.hide' | transloco">
+                      <jl-icon name="eye-off" [size]="13" />
+                    </button>
+                  }
+                </div>
               }
             }
           }
@@ -97,15 +109,21 @@ interface MailboxFolders {
                 <button type="button" class="clear" (click)="clearSearch()" aria-label="clear">✕</button>
               }
             </div>
-            <select class="restrict" [disabled]="!selectedFolderId()"
-                    [value]="restrictionId()" (change)="changeRestriction($any($event.target).value)">
-              @for (r of restrictions; track r.id) {
+            <div class="seg" role="group" [attr.aria-label]="'email.scope.label' | transloco">
+              <button type="button" [class.on]="scope() === 'all'" [disabled]="!selectedFolderId()"
+                      (click)="setScope('all')">{{ 'email.scope.all' | transloco }}</button>
+              <button type="button" [class.on]="scope() === 'unread'" [disabled]="!selectedFolderId()"
+                      (click)="setScope('unread')">{{ 'email.scope.unread' | transloco }}</button>
+            </div>
+            <select class="range" [disabled]="!selectedFolderId()"
+                    [value]="rangeId()" (change)="changeRange($any($event.target).value)">
+              @for (r of ranges; track r.id) {
                 <option [value]="r.id">{{ r.labelKey | transloco }}</option>
               }
             </select>
           </div>
         </header>
-        <div class="col-body">
+        <div class="col-body" (scroll)="onListScroll($event)">
           @if (!selectedFolderId()) {
             <p class="muted pad">{{ 'email.selectFolderHint' | transloco }}</p>
           } @else if (messagesLoading()) {
@@ -133,6 +151,9 @@ interface MailboxFolders {
                   </div>
                 </div>
               </button>
+            }
+            @if (paging()) {
+              <p class="muted pad load-more">{{ 'email.loadingMore' | transloco }}</p>
             }
           }
         </div>
@@ -222,6 +243,34 @@ interface MailboxFolders {
         }
       </section>
     </div>
+
+    @if (hiddenDialog(); as hd) {
+      <div class="hf-backdrop" (click)="hiddenDialog.set(null)"></div>
+      <div class="hf-dialog" role="dialog" aria-modal="true">
+        <header class="hf-head">
+          <h2>{{ 'email.hidden.title' | transloco }}</h2>
+          <button type="button" class="icon-btn" (click)="hiddenDialog.set(null)" [attr.aria-label]="'email.hidden.close' | transloco">
+            <jl-icon name="close" [size]="18" />
+          </button>
+        </header>
+        <div class="hf-body">
+          @if (hiddenList() === null) {
+            <p class="muted">{{ 'email.loading' | transloco }}</p>
+          } @else if (!hiddenList()!.length) {
+            <p class="muted">{{ 'email.hidden.none' | transloco }}</p>
+          } @else {
+            @for (f of hiddenList()!; track f.folderId) {
+              <div class="hf-row">
+                <jl-icon name="eye-off" [size]="14" />
+                <span class="hf-name">{{ f.displayName }}</span>
+                <button type="button" class="hf-unhide" [disabled]="folderBusy() === f.folderId"
+                        (click)="unhide(hd.mailboxId, f)">{{ 'email.hidden.unhide' | transloco }}</button>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    }
   `,
   styleUrl: './email.component.css',
 })
@@ -231,7 +280,7 @@ export class EmailComponent {
   private readonly transloco = inject(TranslocoService);
   private readonly router = inject(Router);
 
-  protected readonly restrictions = LOAD_RESTRICTIONS;
+  protected readonly ranges = TIME_RANGES;
 
   // Mailbox/folder structure is cached in the service (survives view open/close); the component
   // just reads it and derives the folder tree. Only the message list is component-local state.
@@ -245,7 +294,12 @@ export class EmailComponent {
   protected readonly messages = signal<MailMessage[] | null>(null);
   protected readonly messagesLoading = signal(false);
   protected readonly messagesError = signal(false);
-  protected readonly restrictionId = signal<string>(LOAD_RESTRICTIONS[0].id);
+  /** Scope toggle (all / unread only) and optional time-range filter. */
+  protected readonly scope = signal<MailScope>('all');
+  protected readonly rangeId = signal<string>(TIME_RANGES[0].id);
+  /** Infinite-scroll paging state: loading a subsequent page, and "no more pages". */
+  protected readonly paging = signal(false);
+  protected readonly exhausted = signal(false);
   protected readonly searchInput = signal('');
   protected readonly search = signal('');
 
@@ -261,7 +315,14 @@ export class EmailComponent {
   /** Which pane is shown on phones (drill-down: folder tree → message list → reader). */
   protected readonly mobilePane = signal<'folders' | 'list' | 'reader'>('folders');
 
+  /** Folder-hide state: id of the folder being hidden/unhidden, and the "manage hidden" dialog. */
+  protected readonly folderBusy = signal<string | null>(null);
+  protected readonly hiddenDialog = signal<{ mailboxId: string } | null>(null);
+  protected readonly hiddenList = signal<MailFolder[] | null>(null);
+
   private msgSeq = 0;
+  /** Guards against a folder switch / filter change landing an in-flight page in the wrong list. */
+  private listSeq = 0;
   private bodyBlobUrl: string | null = null;
 
   /** Folder trees derived from the cached (flat) folder lists — one per mailbox, in order. */
@@ -341,25 +402,80 @@ export class EmailComponent {
     this.loadMessages();
   }
 
+  /** (Re)loads the first page of the current folder with the active scope/range/search filter. */
   protected loadMessages(): void {
     const mid = this.selectedMailboxId(); const fid = this.selectedFolderId();
     if (!mid || !fid) { return; }
-    const r = this.currentRestriction();
+    const seq = ++this.listSeq;
+    this.messages.set(null);
     this.messagesLoading.set(true);
     this.messagesError.set(false);
+    this.paging.set(false);
+    this.exhausted.set(false);
+    this.fetchPage(mid, fid, 0, seq, false);
+  }
+
+  /** Loads the next page (older messages) when the list is scrolled near its end. */
+  protected loadMore(): void {
+    const mid = this.selectedMailboxId(); const fid = this.selectedFolderId();
+    if (!mid || !fid) { return; }
+    if (this.messagesLoading() || this.paging() || this.exhausted() || this.messagesError()) { return; }
+    const loaded = this.messages()?.length ?? 0;
+    if (!loaded) { return; }
+    this.paging.set(true);
+    this.fetchPage(mid, fid, loaded, this.listSeq, true);
+  }
+
+  /** Fetches one page at `offset`; appends (infinite scroll) or replaces (fresh load). */
+  private fetchPage(mid: string, fid: string, offset: number, seq: number, append: boolean): void {
+    const sinceDays = this.currentRange().sinceDays;
     this.api.listMessages(mid, fid, {
-      top: r.top,
-      sinceDate: r.sinceDays != null ? isoDaysAgo(r.sinceDays) : undefined,
-      unreadOnly: r.unreadOnly,
+      top: PAGE_SIZE,
+      offset,
+      sinceDate: sinceDays != null ? isoDaysAgo(sinceDays) : undefined,
+      unreadOnly: this.scope() === 'unread',
       search: this.search() || undefined,
     }).subscribe({
-      next: (rows) => { this.messages.set(rows); this.messagesLoading.set(false); },
-      error: () => { this.messagesError.set(true); this.messagesLoading.set(false); },
+      next: (rows) => {
+        if (seq !== this.listSeq) { return; }
+        if (append) {
+          // Dedupe by ref in case the folder shifted between pages (avoids @for track collisions).
+          this.messages.update((list) => {
+            const seen = new Set((list ?? []).map((m) => m.messageRef));
+            return [...(list ?? []), ...rows.filter((m) => !seen.has(m.messageRef))];
+          });
+        } else {
+          this.messages.set(rows);
+        }
+        if (rows.length < PAGE_SIZE) { this.exhausted.set(true); }
+        this.messagesLoading.set(false);
+        this.paging.set(false);
+      },
+      error: () => {
+        if (seq !== this.listSeq) { return; }
+        if (!append) { this.messagesError.set(true); }
+        this.messagesLoading.set(false);
+        this.paging.set(false);
+      },
     });
   }
 
-  protected changeRestriction(id: string): void {
-    this.restrictionId.set(id);
+  /** Fires from the list body's scroll; triggers the next page shortly before the end. */
+  protected onListScroll(ev: Event): void {
+    const el = ev.target as HTMLElement;
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 240) {
+      this.loadMore();
+    }
+  }
+
+  protected setScope(s: MailScope): void {
+    if (this.scope() === s) { return; }
+    this.scope.set(s);
+    this.loadMessages();
+  }
+
+  protected changeRange(id: string): void {
+    this.rangeId.set(id);
     this.loadMessages();
   }
 
@@ -533,8 +649,52 @@ export class EmailComponent {
     return key ? this.transloco.translate(key) : f.displayName;
   }
 
-  private currentRestriction(): LoadRestriction {
-    return this.restrictions.find((r) => r.id === this.restrictionId()) ?? this.restrictions[0];
+  /** Well-known folders (Inbox/Sent/Trash/Drafts) can't be hidden — mirrors the desktop client. */
+  protected isWellKnown(f: MailFolder): boolean {
+    return !!f.wellKnownName;
+  }
+
+  /** Confirms, then hides a folder and refreshes the mailbox's tree. */
+  protected hideFolder(mailboxId: string, folder: MailFolder): void {
+    if (this.folderBusy()) { return; }
+    if (!confirm(this.transloco.translate('email.hidden.confirm', { name: this.folderLabel(folder) }))) { return; }
+    this.folderBusy.set(folder.folderId);
+    this.api.setFolderHidden(mailboxId, folder.folderId, true).subscribe({
+      next: () => {
+        this.folderBusy.set(null);
+        if (this.selectedFolderId() === folder.folderId) { this.selectedFolderId.set(null); this.messages.set(null); }
+        this.api.refreshFolders(mailboxId);
+      },
+      error: () => this.folderBusy.set(null),
+    });
+  }
+
+  /** Opens the "manage hidden folders" dialog for a mailbox. */
+  protected openHidden(mailboxId: string): void {
+    this.hiddenList.set(null);
+    this.hiddenDialog.set({ mailboxId });
+    this.api.hiddenFolders(mailboxId).subscribe({
+      next: (list) => this.hiddenList.set(list),
+      error: () => this.hiddenList.set([]),
+    });
+  }
+
+  /** Unhides a folder from the dialog, then refreshes the tree + the dialog list. */
+  protected unhide(mailboxId: string, folder: MailFolder): void {
+    if (this.folderBusy()) { return; }
+    this.folderBusy.set(folder.folderId);
+    this.api.setFolderHidden(mailboxId, folder.folderId, false).subscribe({
+      next: () => {
+        this.folderBusy.set(null);
+        this.api.refreshFolders(mailboxId);
+        this.hiddenList.update((list) => (list ?? []).filter((f) => f.folderId !== folder.folderId));
+      },
+      error: () => this.folderBusy.set(null),
+    });
+  }
+
+  private currentRange(): TimeRange {
+    return this.ranges.find((r) => r.id === this.rangeId()) ?? this.ranges[0];
   }
 
   private patchMessage(ref: string, patch: Partial<MailMessage>): void {

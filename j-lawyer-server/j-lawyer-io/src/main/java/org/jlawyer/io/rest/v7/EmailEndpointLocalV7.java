@@ -27,7 +27,13 @@ public interface EmailEndpointLocalV7 {
 
     Response listMailboxes();
 
-    Response listFolders(String mailboxId);
+    Response listFolders(String mailboxId, boolean includeHidden, boolean includeCounts);
+
+    Response getFolderCounts(String mailboxId, String folderId);
+
+    Response getHiddenFolders(String mailboxId);
+
+    Response setFolderHidden(String mailboxId, String folderId, org.jlawyer.io.rest.v7.pojo.RestfulSetHiddenRequestV7 request);
 
     Response createFolder(String mailboxId, RestfulCreateFolderRequestV7 request);
 

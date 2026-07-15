@@ -670,7 +670,9 @@ import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.persistence.MailboxSetupFacadeLocal;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
+import com.jdimension.jlawyer.server.services.settings.MailboxSettingsKeys;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -680,9 +682,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import javax.activation.DataHandler;
@@ -947,9 +952,20 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     }
 
     // ==================== Unified Service Methods ====================
+    /** Sentinel count returned when per-folder counts were not computed (see {@link #getFolderCounts}). */
+    public static final int COUNT_UNKNOWN = -1;
+    /** Delimiter used to store the hidden-folder path array (matches the desktop MailboxSettings format). */
+    private static final String HIDDEN_FOLDERS_DELIMITER = "#####";
+
     private List<MailFolderDTO> doListFolders(String mailboxId) throws Exception {
+        return doListFolders(mailboxId, true);
+    }
+
+    private List<MailFolderDTO> doListFolders(String mailboxId, boolean includeCounts) throws Exception {
         MailboxSetup ms = getMailboxOrThrow(mailboxId);
-        return ms.isMsExchange() ? graphListFolders(ms) : imapListFolders(ms);
+        // Graph returns counts as part of the folder metadata (no extra round-trip), so it always
+        // includes them; only the IMAP path benefits from skipping the per-folder SELECT.
+        return ms.isMsExchange() ? graphListFolders(ms) : imapListFolders(ms, includeCounts);
     }
 
     @Override
@@ -958,10 +974,222 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         return doListFolders(mailboxId);
     }
 
+    /**
+     * Lists a mailbox's folders with two independent, opt-in optimizations. Defaults
+     * ({@code includeHidden=true, includeCounts=true}) reproduce the legacy behaviour exactly, so
+     * existing callers are unaffected.
+     *
+     * @param includeHidden when false, folders the user marked hidden (and their descendants) are omitted
+     * @param includeCounts when false, per-folder unread/total counts are not computed (returned as
+     *                      {@link #COUNT_UNKNOWN}) — fetch them lazily via {@link #getFolderCounts}
+     */
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<MailFolderDTO> listFolders(String mailboxId, boolean includeHidden, boolean includeCounts) throws Exception {
+        List<MailFolderDTO> folders = doListFolders(mailboxId, includeCounts);
+        if (!includeHidden) {
+            folders = filterHiddenFolders(mailboxId, folders);
+        }
+        return folders;
+    }
+
     @Override
     @PermitAll
     public List<MailFolderDTO> listFoldersInternal(String mailboxId) throws Exception {
         return doListFolders(mailboxId);
+    }
+
+    /**
+     * Returns the folders the user explicitly hid (that still exist), without counts. Descendants
+     * of hidden folders are NOT included — only the explicitly hidden entries, for an "unhide" UI.
+     */
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<MailFolderDTO> getHiddenFolders(String mailboxId) throws Exception {
+        List<MailFolderDTO> folders = doListFolders(mailboxId, false);
+        Map<String, MailFolderDTO> byId = new HashMap<>();
+        for (MailFolderDTO f : folders) {
+            byId.put(f.getFolderId(), f);
+        }
+        Set<String> hiddenPaths = normalizedPaths(readHiddenFolderPaths(mailboxId));
+        List<MailFolderDTO> result = new ArrayList<>();
+        for (MailFolderDTO f : folders) {
+            if (hiddenPaths.contains(normalizeFolderPath(buildFolderPath(f, byId)))) {
+                result.add(f);
+            }
+        }
+        return result;
+    }
+
+    /** Hides or unhides a folder (persisted per mailbox under {@code folders.hidden}). */
+    @Override
+    @RolesAllowed({"loginRole"})
+    public void setFolderHidden(String mailboxId, String folderId, boolean hidden) throws Exception {
+        List<MailFolderDTO> folders = doListFolders(mailboxId, false);
+        Map<String, MailFolderDTO> byId = new HashMap<>();
+        MailFolderDTO target = null;
+        for (MailFolderDTO f : folders) {
+            byId.put(f.getFolderId(), f);
+            if (f.getFolderId().equals(folderId)) {
+                target = f;
+            }
+        }
+        if (target == null) {
+            throw new Exception("No folder with ID " + folderId + " in mailbox " + mailboxId);
+        }
+        String path = buildFolderPath(target, byId);
+        String norm = normalizeFolderPath(path);
+
+        List<String> stored = new ArrayList<>();
+        for (String p : readHiddenFolderPaths(mailboxId)) {
+            if (!normalizeFolderPath(p).equals(norm)) {
+                stored.add(p);
+            }
+        }
+        if (hidden) {
+            stored.add(path);
+        }
+        writeHiddenFolderPaths(mailboxId, stored);
+    }
+
+    /** Computes the unread/total counts for a single folder (used for lazy, on-demand loading). */
+    @Override
+    @RolesAllowed({"loginRole"})
+    public int[] getFolderCounts(String mailboxId, String folderId) throws Exception {
+        MailboxSetup ms = getMailboxOrThrow(mailboxId);
+        if (ms.isMsExchange()) {
+            for (MailFolderDTO f : graphListFolders(ms)) {
+                if (f.getFolderId().equals(folderId)) {
+                    return new int[]{f.getUnreadCount(), f.getTotalCount()};
+                }
+            }
+            return new int[]{0, 0};
+        }
+        Store store = imapConnect(ms);
+        Folder folder = store.getFolder(folderId);
+        folder.open(Folder.READ_ONLY);
+        try {
+            return new int[]{folder.getUnreadMessageCount(), folder.getMessageCount()};
+        } finally {
+            folder.close(false);
+        }
+    }
+
+    /** Removes the hidden folders (and their descendants) from a folder list, by matching stored paths. */
+    private List<MailFolderDTO> filterHiddenFolders(String mailboxId, List<MailFolderDTO> folders) throws Exception {
+        Set<String> hiddenPaths = normalizedPaths(readHiddenFolderPaths(mailboxId));
+        if (hiddenPaths.isEmpty()) {
+            return folders;
+        }
+        Map<String, MailFolderDTO> byId = new HashMap<>();
+        for (MailFolderDTO f : folders) {
+            byId.put(f.getFolderId(), f);
+        }
+        Set<String> hiddenIds = new HashSet<>();
+        for (MailFolderDTO f : folders) {
+            if (hiddenPaths.contains(normalizeFolderPath(buildFolderPath(f, byId)))) {
+                hiddenIds.add(f.getFolderId());
+            }
+        }
+        // Also hide descendants of hidden folders (mirrors the desktop client).
+        boolean changed = true;
+        while (changed) {
+            changed = false;
+            for (MailFolderDTO f : folders) {
+                if (!hiddenIds.contains(f.getFolderId()) && f.getParentFolderId() != null
+                        && hiddenIds.contains(f.getParentFolderId())) {
+                    hiddenIds.add(f.getFolderId());
+                    changed = true;
+                }
+            }
+        }
+        List<MailFolderDTO> result = new ArrayList<>();
+        for (MailFolderDTO f : folders) {
+            if (!hiddenIds.contains(f.getFolderId())) {
+                result.add(f);
+            }
+        }
+        return result;
+    }
+
+    /** Builds a folder's full path from display names up the parent chain ('/'-joined), like the desktop. */
+    private String buildFolderPath(MailFolderDTO folder, Map<String, MailFolderDTO> byId) {
+        LinkedList<String> parts = new LinkedList<>();
+        MailFolderDTO current = folder;
+        while (current != null) {
+            parts.addFirst(current.getDisplayName());
+            current = current.getParentFolderId() != null ? byId.get(current.getParentFolderId()) : null;
+        }
+        return String.join("/", parts);
+    }
+
+    /** Path comparison normalization: treat '\\' (Windows-stored paths) as '/'. */
+    private String normalizeFolderPath(String path) {
+        return path == null ? null : path.replace('\\', '/');
+    }
+
+    private Set<String> normalizedPaths(List<String> paths) {
+        Set<String> set = new HashSet<>();
+        for (String p : paths) {
+            if (p != null && !p.isEmpty()) {
+                set.add(normalizeFolderPath(p));
+            }
+        }
+        return set;
+    }
+
+    /** Reads the stored hidden-folder paths for a mailbox ({@code folders.hidden}, '#####'-delimited). */
+    private List<String> readHiddenFolderPaths(String mailboxId) throws Exception {
+        MailboxSetup ms = getMailboxOrThrow(mailboxId);
+        Properties props = readMailboxProperties(ms);
+        String value = props.getProperty(MailboxSettingsKeys.FOLDERS_HIDDEN);
+        List<String> result = new ArrayList<>();
+        if (value != null && !value.isEmpty()) {
+            for (String p : value.split(HIDDEN_FOLDERS_DELIMITER, -1)) {
+                if (!p.isEmpty()) {
+                    result.add(p);
+                }
+            }
+        }
+        return result;
+    }
+
+    private void writeHiddenFolderPaths(String mailboxId, List<String> paths) throws Exception {
+        MailboxSetup ms = getMailboxOrThrow(mailboxId);
+        Properties props = readMailboxProperties(ms);
+        StringBuilder sb = new StringBuilder();
+        for (String p : paths) {
+            sb.append(p).append(HIDDEN_FOLDERS_DELIMITER);
+        }
+        props.setProperty(MailboxSettingsKeys.FOLDERS_HIDDEN, sb.toString());
+        writeMailboxProperties(ms, props);
+    }
+
+    private Properties readMailboxProperties(MailboxSetup mailbox) {
+        MailboxSetup current = this.mailboxSetupFacade.find(mailbox.getId());
+        Properties settings = new Properties();
+        byte[] bytes = current.getSettings();
+        if (bytes != null) {
+            try {
+                settings.load(new ByteArrayInputStream(bytes));
+            } catch (Exception ex) {
+                log.error("Error reading mailbox settings for " + mailbox.getId(), ex);
+            }
+        }
+        return settings;
+    }
+
+    private void writeMailboxProperties(MailboxSetup mailbox, Properties settings) {
+        MailboxSetup current = this.mailboxSetupFacade.find(mailbox.getId());
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            settings.store(out, "updated " + new Date().toString());
+            out.flush();
+        } catch (Exception ex) {
+            log.error("Error writing mailbox settings for " + mailbox.getId(), ex);
+        }
+        current.setSettings(out.toByteArray());
+        this.mailboxSetupFacade.edit(current);
     }
 
     @Override
@@ -1685,6 +1913,15 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     }
 
     private List<MailFolderDTO> imapListFolders(MailboxSetup ms) throws Exception {
+        return imapListFolders(ms, true);
+    }
+
+    /**
+     * Lists the mailbox folders. When {@code includeCounts} is false the per-folder message/unread
+     * counts are NOT computed (avoids one IMAP SELECT round-trip per folder) and are returned as
+     * {@link #COUNT_UNKNOWN}; callers can fetch them lazily via {@link #getFolderCounts}.
+     */
+    private List<MailFolderDTO> imapListFolders(MailboxSetup ms, boolean includeCounts) throws Exception {
         Store store = imapConnect(ms);
         try {
             List<MailFolderDTO> result = new ArrayList<>();
@@ -1704,10 +1941,15 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                     String fullName = f.getFullName();
                     dto.setFolderId(fullName);
                     dto.setDisplayName(f.getName());
-                    f.open(Folder.READ_ONLY);
-                    dto.setTotalCount(f.getMessageCount());
-                    dto.setUnreadCount(f.getUnreadMessageCount());
-                    f.close(false);
+                    if (includeCounts) {
+                        f.open(Folder.READ_ONLY);
+                        dto.setTotalCount(f.getMessageCount());
+                        dto.setUnreadCount(f.getUnreadMessageCount());
+                        f.close(false);
+                    } else {
+                        dto.setTotalCount(COUNT_UNKNOWN);
+                        dto.setUnreadCount(COUNT_UNKNOWN);
+                    }
                     // Derive parent folder ID from full name
                     int lastSep = fullName.lastIndexOf(separator);
                     if (lastSep > 0) {
@@ -1762,11 +2004,22 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                         term = (term != null) ? new javax.mail.search.AndTerm(term, searchOrTerm) : searchOrTerm;
                     }
                     messages = folder.search(term);
-                    // Apply top limit
-                    if (messages.length > top) {
-                        Message[] limited = new Message[top];
-                        System.arraycopy(messages, messages.length - top, limited, 0, top);
-                        messages = limited;
+                    // Window the newest `top` results, paging `offset` messages further
+                    // into the past. The search result is ordered ascending by message
+                    // number (oldest -> newest), so the window is taken from the tail.
+                    // For offset == 0 this is byte-for-byte identical to the previous
+                    // "newest top" behaviour, so existing callers are unaffected.
+                    int len = messages.length;
+                    int end = len - offset; // exclusive upper bound into the ascending array
+                    if (end <= 0) {
+                        messages = new Message[0];
+                    } else {
+                        int start = Math.max(0, end - top);
+                        if (start > 0 || end < len) {
+                            Message[] windowed = new Message[end - start];
+                            System.arraycopy(messages, start, windowed, 0, end - start);
+                            messages = windowed;
+                        }
                     }
                 } else {
                     int total = folder.getMessageCount();

@@ -41,12 +41,44 @@
   display: flex; align-items: center; gap: 7px; padding: 11px 16px 5px; color: var(--jl-ink-faint);
   font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
 }
-.mbx-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mbx-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* "Manage hidden folders" button on the mailbox header. */
+.mbx-hidden { flex: none; display: inline-grid; place-items: center; width: 22px; height: 22px; border: 0; border-radius: 6px; background: transparent; color: var(--jl-ink-faint); cursor: pointer; }
+.mbx-hidden:hover { background: var(--jl-surface-alt); color: var(--jl-blue); }
+/* Folder row = selectable button + (hover) hide affordance. */
+.fld-row { position: relative; display: flex; align-items: center; }
+.fld-row .fld { flex: 1; min-width: 0; }
+.fld-hide {
+  flex: none; display: inline-grid; place-items: center; width: 26px; height: 26px; margin-right: 6px; border-radius: 6px;
+  border: 0; background: transparent; color: var(--jl-ink-faint); cursor: pointer; opacity: 0;
+}
+.fld-row:hover .fld-hide { opacity: 1; }
+.fld-hide:hover { background: var(--jl-surface-alt); color: var(--jl-blue); }
+.fld-hide:disabled { opacity: .4; cursor: default; }
 .fld {
   width: 100%; display: flex; align-items: center; gap: 8px; text-align: left;
   padding: 8px 16px; border: 0; background: transparent; cursor: pointer; font: inherit; color: var(--jl-ink);
 }
 .fld:hover { background: var(--jl-surface-alt); }
+
+/* ---- Manage-hidden-folders dialog ---- */
+.hf-backdrop { position: fixed; inset: 0; z-index: 60; background: rgba(6, 14, 22, .5); }
+.hf-dialog {
+  position: fixed; z-index: 61; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: min(460px, 94vw); max-height: 82dvh; display: flex; flex-direction: column;
+  background: var(--jl-surface); border: 1px solid var(--jl-line); border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .32); overflow: hidden;
+}
+.hf-head { display: flex; align-items: center; gap: 10px; padding: 13px 16px; border-bottom: 1px solid var(--jl-line); }
+.hf-head h2 { margin: 0; font-size: 1rem; font-weight: 800; flex: 1; }
+.hf-body { padding: 10px 16px 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.hf-body .muted { color: var(--jl-ink-faint); font-size: .86rem; padding: 8px 0; }
+.hf-row { display: flex; align-items: center; gap: 9px; padding: 7px 4px; color: var(--jl-ink-soft); }
+.hf-row + .hf-row { border-top: 1px solid var(--jl-line); }
+.hf-name { flex: 1; min-width: 0; font-size: .88rem; color: var(--jl-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hf-unhide { flex: none; font: inherit; font-size: .8rem; font-weight: 650; padding: 5px 12px; border-radius: 7px; border: 1px solid var(--jl-line-strong); background: var(--jl-surface); color: var(--jl-blue); cursor: pointer; }
+.hf-unhide:hover:not(:disabled) { border-color: var(--jl-blue); }
+.hf-unhide:disabled { opacity: .5; cursor: default; }
 .fld.sel { background: color-mix(in srgb, var(--jl-blue) 12%, transparent); font-weight: 650; }
 .fld-name { flex: 1; min-width: 0; font-size: .88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fld-badge {
@@ -65,10 +97,21 @@
 }
 .search input { flex: 1; min-width: 0; font: inherit; font-size: .84rem; border: 0; background: transparent; color: var(--jl-ink); outline: none; }
 .search .clear { border: 0; background: transparent; cursor: pointer; color: var(--jl-ink-faint); font-size: .85rem; }
-.restrict {
-  flex: none; font: inherit; font-size: .82rem; padding: 5px 8px; border: 1px solid var(--jl-line-strong);
-  border-radius: 8px; background: var(--jl-surface); color: var(--jl-ink); cursor: pointer; max-width: 42%;
+/* Scope toggle (Alle / Ungelesen) + optional time-range select replace the old count presets. */
+.seg { flex: none; display: inline-flex; border: 1px solid var(--jl-line-strong); border-radius: 8px; overflow: hidden; }
+.seg button {
+  font: inherit; font-size: .82rem; padding: 5px 11px; border: 0; background: var(--jl-surface);
+  color: var(--jl-ink-faint); cursor: pointer; white-space: nowrap;
 }
+.seg button + button { border-left: 1px solid var(--jl-line-strong); }
+.seg button:hover:not(:disabled) { background: var(--jl-surface-alt); }
+.seg button.on { background: color-mix(in srgb, var(--jl-blue) 14%, transparent); color: var(--jl-blue); font-weight: 650; }
+.seg button:disabled { cursor: default; opacity: .55; }
+.range {
+  flex: none; font: inherit; font-size: .82rem; padding: 5px 8px; border: 1px solid var(--jl-line-strong);
+  border-radius: 8px; background: var(--jl-surface); color: var(--jl-ink); cursor: pointer;
+}
+.load-more { text-align: center; }
 
 .msg {
   width: 100%; display: flex; gap: 9px; text-align: left; padding: 10px 16px;

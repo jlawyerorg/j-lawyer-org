@@ -805,6 +805,7 @@
     "downloadEml": "Download as EML",
     "delete": "Delete",
     "loadingMessage": "Loading message …",
+    "loadingMore": "Loading more messages …",
     "messageError": "Could not load the message.",
     "from": "From",
     "to": "To",
@@ -818,17 +819,27 @@
       "trash": "Trash",
       "drafts": "Drafts"
     },
-    "restriction": {
-      "last50": "Last 50",
-      "last20": "Last 20",
-      "last100": "Last 100",
-      "last500": "Last 500",
-      "unread": "Unread only",
+    "scope": {
+      "label": "Filter",
+      "all": "All",
+      "unread": "Unread"
+    },
+    "range": {
+      "any": "All time",
       "week": "Last week",
       "twoWeeks": "Last 2 weeks",
       "month": "Last month",
       "threeMonths": "Last 3 months",
       "year": "Last year"
+    },
+    "hidden": {
+      "manage": "Manage hidden folders",
+      "hide": "Hide folder",
+      "confirm": "Hide folder \"{{name}}\"?",
+      "title": "Hidden folders",
+      "none": "No folders hidden.",
+      "unhide": "Show",
+      "close": "Close"
     }
   },
   "bea": {

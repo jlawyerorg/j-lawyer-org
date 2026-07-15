@@ -114,9 +114,13 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
     }
 
     /**
-     * Returns all folders for the given mailbox.
+     * Returns all folders for the given mailbox. Two optional query parameters allow faster loading;
+     * their defaults reproduce the legacy behaviour, so existing clients are unaffected.
      *
      * @param mailboxId mailbox ID
+     * @param includeHidden when {@code false}, folders the user hid (and their descendants) are omitted (default {@code true})
+     * @param includeCounts when {@code false}, per-folder unread/total counts are not computed and are
+     *                      returned as {@code -1}; fetch them lazily via the counts endpoint (default {@code true})
      * @response 401 User not authorized
      * @response 403 User not authenticated / no mailbox access
      */
@@ -126,7 +130,9 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
     @Path("/mailboxes/{mailboxId}/folders")
     @RolesAllowed({"loginRole"})
     @io.swagger.annotations.ApiOperation(value="Returns all folders for the given mailbox.", response=org.jlawyer.io.rest.v7.pojo.RestfulMailFolderV7.class, responseContainer="List")
-    public Response listFolders(@PathParam("mailboxId") String mailboxId) {
+    public Response listFolders(@PathParam("mailboxId") String mailboxId,
+            @QueryParam("includeHidden") @DefaultValue("true") boolean includeHidden,
+            @QueryParam("includeCounts") @DefaultValue("true") boolean includeCounts) {
         try {
             InitialContext ic = new InitialContext();
             if (!hasMailboxAccess(ic, mailboxId)) {
@@ -134,7 +140,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             }
 
             EmailServiceLocal emailService = (EmailServiceLocal) ic.lookup(LOOKUP_EMAIL);
-            List<MailFolderDTO> folders = emailService.listFolders(mailboxId);
+            List<MailFolderDTO> folders = emailService.listFolders(mailboxId, includeHidden, includeCounts);
             ArrayList<RestfulMailFolderV7> result = new ArrayList<>();
             if (folders != null) {
                 for (MailFolderDTO f : folders) {
@@ -144,6 +150,106 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not list folders for mailbox " + mailboxId, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns the unread/total message counts for a single folder — for lazily filling in counts
+     * after a fast {@code ?includeCounts=false} folder listing.
+     *
+     * @param mailboxId mailbox ID
+     * @param folderId folder ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated / no mailbox access
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/mailboxes/{mailboxId}/folders/{folderId}/counts")
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="Returns unread/total counts for a single folder.", response=org.jlawyer.io.rest.v7.pojo.RestfulFolderCountsV7.class)
+    public Response getFolderCounts(@PathParam("mailboxId") String mailboxId, @PathParam("folderId") String folderId) {
+        try {
+            InitialContext ic = new InitialContext();
+            if (!hasMailboxAccess(ic, mailboxId)) {
+                return Response.status(Response.Status.FORBIDDEN).build();
+            }
+            EmailServiceLocal emailService = (EmailServiceLocal) ic.lookup(LOOKUP_EMAIL);
+            int[] counts = emailService.getFolderCounts(mailboxId, folderId);
+            org.jlawyer.io.rest.v7.pojo.RestfulFolderCountsV7 result = new org.jlawyer.io.rest.v7.pojo.RestfulFolderCountsV7();
+            result.setFolderId(folderId);
+            result.setUnreadCount(counts[0]);
+            result.setTotalCount(counts[1]);
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("can not get counts for folder " + folderId + " in mailbox " + mailboxId, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns the folders the user explicitly hid (that still exist) — for an "unhide" management UI.
+     *
+     * @param mailboxId mailbox ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated / no mailbox access
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/mailboxes/{mailboxId}/hidden-folders")
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="Returns the folders hidden for the given mailbox.", response=org.jlawyer.io.rest.v7.pojo.RestfulMailFolderV7.class, responseContainer="List")
+    public Response getHiddenFolders(@PathParam("mailboxId") String mailboxId) {
+        try {
+            InitialContext ic = new InitialContext();
+            if (!hasMailboxAccess(ic, mailboxId)) {
+                return Response.status(Response.Status.FORBIDDEN).build();
+            }
+            EmailServiceLocal emailService = (EmailServiceLocal) ic.lookup(LOOKUP_EMAIL);
+            List<MailFolderDTO> folders = emailService.getHiddenFolders(mailboxId);
+            ArrayList<RestfulMailFolderV7> result = new ArrayList<>();
+            if (folders != null) {
+                for (MailFolderDTO f : folders) {
+                    result.add(RestfulMailFolderV7.fromMailFolderDTO(f));
+                }
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("can not list hidden folders for mailbox " + mailboxId, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Hides or unhides a folder for the given mailbox.
+     *
+     * @param mailboxId mailbox ID
+     * @param folderId folder ID
+     * @param request whether the folder should be hidden
+     * @response 401 User not authorized
+     * @response 403 User not authenticated / no mailbox access
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/mailboxes/{mailboxId}/folders/{folderId}/hidden")
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="Hides or unhides a folder for the given mailbox.")
+    public Response setFolderHidden(@PathParam("mailboxId") String mailboxId, @PathParam("folderId") String folderId,
+            @io.swagger.annotations.ApiParam org.jlawyer.io.rest.v7.pojo.RestfulSetHiddenRequestV7 request) {
+        try {
+            InitialContext ic = new InitialContext();
+            if (!hasMailboxAccess(ic, mailboxId)) {
+                return Response.status(Response.Status.FORBIDDEN).build();
+            }
+            EmailServiceLocal emailService = (EmailServiceLocal) ic.lookup(LOOKUP_EMAIL);
+            emailService.setFolderHidden(mailboxId, folderId, request != null && request.isHidden());
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not set hidden state for folder " + folderId + " in mailbox " + mailboxId, ex);
             return Response.serverError().build();
         }
     }

@@ -62,30 +62,30 @@ export interface MailAttachment {
   contentBase64: string | null;
 }
 
+/** Message-list scope toggle: all messages, or unread only (mirrors the desktop "unread" filter). */
+export type MailScope = 'all' | 'unread';
+
 /**
- * How much of a folder to download — mirrors the Swing client's LoadFolderRestriction combo.
- * `top` caps the count; `sinceDays` limits how far back (null = no limit); `unreadOnly` filters.
+ * Optional "how far back" filter for the message list. `sinceDays` null = no limit. Replaces the
+ * old count-capped presets ("Letzte 20/50/…") now that the list pages in via infinite scroll.
  */
-export interface LoadRestriction {
+export interface TimeRange {
   id: string;
   labelKey: string;
-  top: number;
   sinceDays: number | null;
-  unreadOnly: boolean;
 }
 
-export const LOAD_RESTRICTIONS: LoadRestriction[] = [
-  { id: 'last50', labelKey: 'email.restriction.last50', top: 50, sinceDays: null, unreadOnly: false },
-  { id: 'last20', labelKey: 'email.restriction.last20', top: 20, sinceDays: null, unreadOnly: false },
-  { id: 'last100', labelKey: 'email.restriction.last100', top: 100, sinceDays: null, unreadOnly: false },
-  { id: 'last500', labelKey: 'email.restriction.last500', top: 500, sinceDays: null, unreadOnly: false },
-  { id: 'unread', labelKey: 'email.restriction.unread', top: 200, sinceDays: null, unreadOnly: true },
-  { id: 'week', labelKey: 'email.restriction.week', top: 500, sinceDays: 7, unreadOnly: false },
-  { id: 'twoWeeks', labelKey: 'email.restriction.twoWeeks', top: 500, sinceDays: 14, unreadOnly: false },
-  { id: 'month', labelKey: 'email.restriction.month', top: 500, sinceDays: 31, unreadOnly: false },
-  { id: 'threeMonths', labelKey: 'email.restriction.threeMonths', top: 500, sinceDays: 93, unreadOnly: false },
-  { id: 'year', labelKey: 'email.restriction.year', top: 500, sinceDays: 366, unreadOnly: false },
+export const TIME_RANGES: TimeRange[] = [
+  { id: 'any', labelKey: 'email.range.any', sinceDays: null },
+  { id: 'week', labelKey: 'email.range.week', sinceDays: 7 },
+  { id: 'twoWeeks', labelKey: 'email.range.twoWeeks', sinceDays: 14 },
+  { id: 'month', labelKey: 'email.range.month', sinceDays: 31 },
+  { id: 'threeMonths', labelKey: 'email.range.threeMonths', sinceDays: 93 },
+  { id: 'year', labelKey: 'email.range.year', sinceDays: 366 },
 ];
+
+/** Messages fetched per infinite-scroll page (server `top`; `offset` advances by this each page). */
+export const PAGE_SIZE = 50;
 
 /** Order well-known folders first (inbox, drafts, sent), trash last, others alphabetical. */
 export function wellKnownOrder(wellKnownName: string): number {

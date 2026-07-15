@@ -106,6 +106,13 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
         @case ('star') {
           <path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z" />
         }
+        @case ('eye') {
+          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" /><circle cx="12" cy="12" r="3" />
+        }
+        @case ('eye-off') {
+          <path d="M17.9 17.9A10.5 10.5 0 0 1 12 19C5.5 19 2 12 2 12a18 18 0 0 1 5.1-5.9M9.9 4.2A10.5 10.5 0 0 1 12 4c6.5 0 10 7 10 7a18 18 0 0 1-2.2 3.2M9.5 9.5a3 3 0 0 0 4.2 4.2" />
+          <path d="M2 2l20 20" />
+        }
         @case ('tag') {
           <path d="M20.6 13.4 12 22l-9-9V4a1 1 0 0 1 1-1h8z" /><circle cx="7.5" cy="7.5" r="1.2" />
         }

@@ -1,17 +1,22 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { effect, inject, Injectable, signal } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { catchError, from, map, mergeMap, Observable, of } from 'rxjs';
 import { API_ROOT } from '../core/api';
 import { AuthService } from '../core/auth/auth.service';
 import { MailAttachment, Mailbox, MailFolder, MailMessage } from './email.models';
 
 const EMAIL_V7 = `${API_ROOT}/v7/email`;
+/** Sentinel for a not-yet-loaded folder count (server returns -1 when includeCounts=false). */
+const COUNT_UNKNOWN = -1;
+/** Concurrency for the background per-folder count fetches (one IMAP SELECT each). */
+const COUNTS_CONCURRENCY = 4;
 
 interface MailboxDto { id: string; displayName?: string; emailAddress?: string; type?: string; }
 interface FolderDto {
   folderId: string; parentFolderId?: string; displayName?: string; wellKnownName?: string;
   unreadCount?: number; totalCount?: number;
 }
+interface FolderCountsDto { folderId: string; unreadCount?: number; totalCount?: number; }
 interface AttachmentDto {
   attachmentId: string; name?: string; contentType?: string; size?: number;
   inline?: boolean; contentId?: string; contentBase64?: string | null;
@@ -85,7 +90,7 @@ export class EmailService {
         };
         for (const mb of boxes) {
           this.listFolders(mb.id).subscribe({
-            next: (flat) => { acc[mb.id] = flat; done(); },
+            next: (flat) => { acc[mb.id] = flat; done(); this.loadCounts(mb.id, flat); },
             error: () => { acc[mb.id] = []; done(); },
           });
         }
@@ -121,11 +126,62 @@ export class EmailService {
     );
   }
 
-  /** Folders of a mailbox (flat; the component builds the tree). */
+  /**
+   * Folders of a mailbox (flat; the component builds the tree). Loads WITHOUT hidden folders and
+   * WITHOUT counts — the countless call avoids one IMAP SELECT per folder, so the tree renders fast;
+   * counts are then filled in lazily by {@link loadCounts}.
+   */
   listFolders(mailboxId: string): Observable<MailFolder[]> {
-    return this.http.get<FolderDto[]>(`${EMAIL_V7}/mailboxes/${enc(mailboxId)}/folders`).pipe(
+    const params = new HttpParams().set('includeHidden', 'false').set('includeCounts', 'false');
+    return this.http.get<FolderDto[]>(`${EMAIL_V7}/mailboxes/${enc(mailboxId)}/folders`, { params }).pipe(
       map((rows) => (rows ?? []).map(toFolder)),
     );
+  }
+
+  /** Background-fetches per-folder unread/total counts (bounded concurrency) and patches the cache. */
+  private loadCounts(mailboxId: string, folders: MailFolder[]): void {
+    const pending = folders.filter((f) => f.unreadCount === COUNT_UNKNOWN || f.totalCount === COUNT_UNKNOWN);
+    if (!pending.length) { return; }
+    from(pending).pipe(
+      mergeMap((f) => this.http
+        .get<FolderCountsDto>(`${EMAIL_V7}/mailboxes/${enc(mailboxId)}/folders/${enc(f.folderId)}/counts`)
+        .pipe(catchError(() => of(null))), COUNTS_CONCURRENCY),
+    ).subscribe((c) => {
+      if (c) { this.patchCounts(mailboxId, c.folderId, c.unreadCount ?? 0, c.totalCount ?? 0); }
+    });
+  }
+
+  private patchCounts(mailboxId: string, folderId: string, unread: number, total: number): void {
+    this._folders.update((map) => {
+      const list = map[mailboxId];
+      if (!list) { return map; }
+      return {
+        ...map,
+        [mailboxId]: list.map((f) => (f.folderId === folderId ? { ...f, unreadCount: unread, totalCount: total } : f)),
+      };
+    });
+  }
+
+  /** The folders the user hid for a mailbox (for an "unhide" management UI). */
+  hiddenFolders(mailboxId: string): Observable<MailFolder[]> {
+    return this.http.get<FolderDto[]>(`${EMAIL_V7}/mailboxes/${enc(mailboxId)}/hidden-folders`).pipe(
+      map((rows) => (rows ?? []).map(toFolder)),
+    );
+  }
+
+  /** Hides/unhides a folder, then reloads that mailbox's folder list (+counts) to reflect it. */
+  setFolderHidden(mailboxId: string, folderId: string, hidden: boolean): Observable<unknown> {
+    return this.http.put(`${EMAIL_V7}/mailboxes/${enc(mailboxId)}/folders/${enc(folderId)}/hidden`, { hidden });
+  }
+
+  /** Re-fetches one mailbox's folder list (used after hide/unhide). */
+  refreshFolders(mailboxId: string): void {
+    this.listFolders(mailboxId).subscribe({
+      next: (flat) => {
+        this._folders.update((map) => ({ ...map, [mailboxId]: flat }));
+        this.loadCounts(mailboxId, flat);
+      },
+    });
   }
 
   /**

@@ -805,6 +805,7 @@
     "downloadEml": "Als EML herunterladen",
     "delete": "Löschen",
     "loadingMessage": "Nachricht wird geladen …",
+    "loadingMore": "Weitere Nachrichten werden geladen …",
     "messageError": "Nachricht konnte nicht geladen werden.",
     "from": "Von",
     "to": "An",
@@ -818,17 +819,27 @@
       "trash": "Papierkorb",
       "drafts": "Entwürfe"
     },
-    "restriction": {
-      "last50": "Letzte 50",
-      "last20": "Letzte 20",
-      "last100": "Letzte 100",
-      "last500": "Letzte 500",
-      "unread": "Nur ungelesen",
+    "scope": {
+      "label": "Filter",
+      "all": "Alle",
+      "unread": "Ungelesen"
+    },
+    "range": {
+      "any": "Gesamter Zeitraum",
       "week": "Letzte Woche",
       "twoWeeks": "Letzte 2 Wochen",
       "month": "Letzter Monat",
       "threeMonths": "Letzte 3 Monate",
       "year": "Letztes Jahr"
+    },
+    "hidden": {
+      "manage": "Ausgeblendete Ordner verwalten",
+      "hide": "Ordner ausblenden",
+      "confirm": "Ordner \"{{name}}\" ausblenden?",
+      "title": "Ausgeblendete Ordner",
+      "none": "Keine Ordner ausgeblendet.",
+      "unhide": "Einblenden",
+      "close": "Schließen"
     }
   },
   "bea": {
