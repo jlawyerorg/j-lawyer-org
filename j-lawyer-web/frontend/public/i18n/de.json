@@ -830,20 +830,6 @@
       "phones": "Rufnummern",
       "archived": "Archiv"
     },
-    "saveToCase": {
-      "title": "In Akte speichern",
-      "suggestions": "Vorschläge",
-      "searchPlaceholder": "Akte suchen (Aktenzeichen, Name …)",
-      "change": "Ändern",
-      "modeFull": "Ganze Nachricht (.eml)",
-      "modeSeparate": "Nachricht + Anhänge einzeln",
-      "modeAttachmentsOnly": "Nur Anhänge",
-      "cancel": "Abbrechen",
-      "save": "Speichern",
-      "saving": "Wird gespeichert …",
-      "close": "Schließen",
-      "error": "Die Nachricht konnte nicht in der Akte gespeichert werden."
-    },
     "range": {
       "any": "Gesamter Zeitraum",
       "week": "Letzte Woche",
@@ -888,6 +874,20 @@
     "quoteHeader": "Am {{date}} schrieb {{from}}:",
     "forwardHeader": "Weitergeleitete Nachricht",
     "error": "Die Nachricht konnte nicht gesendet werden."
+  },
+  "saveToCase": {
+    "title": "In Akte speichern",
+    "suggestions": "Vorschläge",
+    "searchPlaceholder": "Akte suchen (Aktenzeichen, Name …)",
+    "change": "Ändern",
+    "modeFull": "Ganze Nachricht (.eml)",
+    "modeSeparate": "Nachricht + Anhänge einzeln",
+    "modeAttachmentsOnly": "Nur Anhänge",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "saving": "Wird gespeichert …",
+    "close": "Schließen",
+    "error": "Die Nachricht konnte nicht in der Akte gespeichert werden."
   },
   "bea": {
     "title": "beA",
