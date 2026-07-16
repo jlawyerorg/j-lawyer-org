@@ -686,4 +686,6 @@ public interface ConfigurationEndpointLocalV7 {
 
     Response getMultiValueTagDefinitions(String entityType);
 
+    Response getDocumentNameTemplates();
+
 }

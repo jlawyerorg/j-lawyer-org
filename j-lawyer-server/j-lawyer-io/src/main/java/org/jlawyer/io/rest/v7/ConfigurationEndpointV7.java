@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package org.jlawyer.io.rest.v7;
 
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
+import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.services.SystemManagementLocal;
 import java.util.ArrayList;
@@ -683,6 +684,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v7.pojo.RestfulDocumentNameTemplateV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulMultiValueTagDefinitionV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulOptionV7;
 
@@ -956,6 +958,52 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not determine multi-value tag definitions for entity type " + entityType, ex);
+            return Response.serverError().build();
+        }
+
+    }
+
+    /**
+     * Returns all document name templates (Benennungsschemata) configured in the
+     * system. Each template carries a flag indicating whether it is the default
+     * template.
+     *
+     * @return a list of document name templates
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/document-name-templates")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @io.swagger.annotations.ApiOperation(value = "Returns all document name templates (Benennungsschemata) configured in the system.", response = RestfulDocumentNameTemplateV7.class, responseContainer = "List")
+    public Response getDocumentNameTemplates() {
+
+        try {
+
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+
+            DocumentNameTemplate defaultTemplate = null;
+            try {
+                defaultTemplate = system.getDefaultDocumentNameTemplate();
+            } catch (Exception ex) {
+                log.warn("can not determine default document name template", ex);
+            }
+            String defaultId = defaultTemplate == null ? null : defaultTemplate.getId();
+
+            List<DocumentNameTemplate> templates = system.getDocumentNameTemplates();
+            ArrayList<RestfulDocumentNameTemplateV7> resultList = new ArrayList<>();
+            for (DocumentNameTemplate t : templates) {
+                RestfulDocumentNameTemplateV7 r = new RestfulDocumentNameTemplateV7();
+                r.setId(t.getId());
+                r.setDisplayName(t.getDisplayName());
+                r.setDefaultTemplate(t.isDefaultTemplate() || (defaultId != null && defaultId.equals(t.getId())));
+                resultList.add(r);
+            }
+            return Response.ok(resultList).build();
+        } catch (Exception ex) {
+            log.error("can not determine document name templates", ex);
             return Response.serverError().build();
         }
 

@@ -183,6 +183,17 @@ export interface DocTag {
 }
 
 /**
+ * A document name template ("Benennungsschema"), as returned by
+ * GET /v7/configuration/document-name-templates. Applied server-side to derive a document file
+ * name from a case and its placeholders.
+ */
+export interface DocumentNameTemplate {
+  id: string;
+  displayName: string;
+  defaultTemplate: boolean;
+}
+
+/**
  * A case document folder (GET /v3/cases/{id}/folders). The endpoint returns the nested root
  * node directly (its `children` hold the sub-folders); `id` of the root may equal the case id.
  */

@@ -876,19 +876,35 @@
     "forwardHeader": "Forwarded message",
     "error": "The message could not be sent."
   },
-  "saveToCase": {
+  "bulkSave": {
     "title": "Save to case",
+    "close": "Close",
+    "change": "Change",
     "suggestions": "Suggestions",
     "searchPlaceholder": "Search case (file number, name …)",
-    "change": "Change",
-    "modeFull": "Whole message (.eml)",
-    "modeSeparate": "Message + attachments separately",
-    "modeAttachmentsOnly": "Attachments only",
+    "nameTemplate": "Naming template",
+    "applyAll": "Apply to all",
+    "folder": "Target folder",
+    "tags": "Labels",
+    "addTag": "Add label …",
+    "rootFolder": "Documents",
+    "selectedCount": "{{included}} of {{total}} selected",
+    "favorite": "Mark as favorite",
+    "duplicateWarning": "There are documents with the same name (in the case or among each other). Please rename.",
+    "saved": "Saved to case.",
+    "createFollowup": "Create calendar entry",
+    "partialError": "{{failed}} document(s) could not be saved.",
     "cancel": "Cancel",
     "save": "Save",
     "saving": "Saving …",
-    "close": "Close",
-    "error": "The message could not be saved to the case."
+    "done": "Done",
+    "caseLabels": "Case labels",
+    "docLabels": "Document labels"
+  },
+  "labelEditor": {
+    "remove": "Remove",
+    "none": "None",
+    "add": "add"
   },
   "bea": {
     "title": "beA",

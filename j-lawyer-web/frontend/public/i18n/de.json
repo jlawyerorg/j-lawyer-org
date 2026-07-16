@@ -876,19 +876,35 @@
     "forwardHeader": "Weitergeleitete Nachricht",
     "error": "Die Nachricht konnte nicht gesendet werden."
   },
-  "saveToCase": {
+  "bulkSave": {
     "title": "In Akte speichern",
+    "close": "Schließen",
+    "change": "Ändern",
     "suggestions": "Vorschläge",
     "searchPlaceholder": "Akte suchen (Aktenzeichen, Name …)",
-    "change": "Ändern",
-    "modeFull": "Ganze Nachricht (.eml)",
-    "modeSeparate": "Nachricht + Anhänge einzeln",
-    "modeAttachmentsOnly": "Nur Anhänge",
+    "nameTemplate": "Benennungsschema",
+    "applyAll": "Auf alle anwenden",
+    "folder": "Zielordner",
+    "tags": "Etiketten",
+    "addTag": "Etikett hinzufügen …",
+    "rootFolder": "Dokumente",
+    "selectedCount": "{{included}} von {{total}} ausgewählt",
+    "favorite": "Als Favorit markieren",
+    "duplicateWarning": "Es gibt Dokumente mit gleichem Namen (in der Akte oder untereinander). Bitte umbenennen.",
+    "saved": "In Akte gespeichert.",
+    "createFollowup": "Kalendereintrag erstellen",
+    "partialError": "{{failed}} Dokument(e) konnten nicht gespeichert werden.",
     "cancel": "Abbrechen",
     "save": "Speichern",
     "saving": "Wird gespeichert …",
-    "close": "Schließen",
-    "error": "Die Nachricht konnte nicht in der Akte gespeichert werden."
+    "done": "Fertig",
+    "caseLabels": "Aktenetiketten",
+    "docLabels": "Dokument-Etiketten"
+  },
+  "labelEditor": {
+    "remove": "Entfernen",
+    "none": "Keine",
+    "add": "hinzufügen"
   },
   "bea": {
     "title": "beA",

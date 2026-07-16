@@ -6,7 +6,7 @@ import { IconComponent } from '../shared/icon.component';
 import { base64ToBytes } from '../shared/document-preview.models';
 import { EmailService } from './email.service';
 import { EmailComposeComponent } from './email-compose.component';
-import { EmailSaveToCaseComponent, TargetCase } from './email-save-to-case.component';
+import { EmailBulkSaveComponent, TargetCase } from './email-bulk-save.component';
 import {
   CaseSuggestions, ComposeMode, FolderNode, MailScope, Mailbox, MailFolder, MailMessage, PAGE_SIZE,
   TIME_RANGES, TimeRange, wellKnownOrder,
@@ -35,7 +35,7 @@ interface MailboxFolders {
   selector: 'jl-email',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoModule, IconComponent, EmailComposeComponent, EmailSaveToCaseComponent, RouterLink],
+  imports: [TranslocoModule, IconComponent, EmailComposeComponent, EmailBulkSaveComponent, RouterLink],
   template: `
     <div class="mail" [class.show-reader]="selectedRef()"
          [class.m-folders]="mobilePane() === 'folders'"
@@ -189,7 +189,7 @@ interface MailboxFolders {
                 <jl-icon name="forward" [size]="15" />
               </button>
               <button type="button" class="icon-btn" [disabled]="acting() || !message()" (click)="openSaveToCase(null)"
-                      [title]="'saveToCase.title' | transloco">
+                      [title]="'bulkSave.title' | transloco">
                 <jl-icon name="inbox" [size]="15" />
               </button>
               <button type="button" class="icon-btn" [disabled]="acting()" (click)="toggleRead()"
@@ -255,7 +255,7 @@ interface MailboxFolders {
                               </a>
                               <button type="button" class="sc-save"
                                       (click)="openSaveToCase({ id: c.id, fileNumber: c.fileNumber, name: c.name })"
-                                      [title]="'saveToCase.title' | transloco" [attr.aria-label]="'saveToCase.title' | transloco">
+                                      [title]="'bulkSave.title' | transloco" [attr.aria-label]="'bulkSave.title' | transloco">
                                 <jl-icon name="inbox" [size]="13" />
                               </button>
                             </span>
@@ -359,9 +359,9 @@ interface MailboxFolders {
     }
 
     @if (saveToCaseOpen() && message() && selectedMailboxId()) {
-      <jl-email-save-to-case [mailboxId]="selectedMailboxId()!" [message]="message()!" [suggestions]="suggestions()"
-                             [preselect]="saveToCasePreselect()"
-                             (saved)="onSavedToCase()" (closed)="saveToCaseOpen.set(false)" />
+      <jl-email-bulk-save [mailboxId]="selectedMailboxId()!" [message]="message()!" [suggestions]="suggestions()"
+                          [preselect]="saveToCasePreselect()"
+                          (saved)="onSavedToCase()" (closed)="saveToCaseOpen.set(false)" />
     }
   `,
   styleUrl: './email.component.css',
@@ -765,7 +765,8 @@ export class EmailComponent {
 
   /** Closes the save-to-case dialog after the email has been stored in the case. */
   protected onSavedToCase(): void {
-    this.saveToCaseOpen.set(false);
+    // The bulk-save dialog stays open after a successful save to offer a calendar follow-up
+    // ("Wiedervorlage"); it closes itself via (closed). Nothing to refresh on the mail side.
   }
 
   /** After a successful send, close the composer and refresh the list if we're viewing Sent. */

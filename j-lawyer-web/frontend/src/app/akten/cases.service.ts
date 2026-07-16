@@ -5,7 +5,7 @@ import { API_ROOT } from '../core/api';
 import {
   AccountEntry, AccountEntryWrite, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseMessage, CaseOverview,
   CasePayment, CaseStatus, CaseTag, CaseTimesheet, CaseUserRef, CaseWrite, ContactRef, DocDateMode, DocFolder,
-  DocMetaWrite, DocSortKey, DocTag, DueDate, HIGHLIGHT_NONE, InvoicePool, InvoicePositionItem, InvoicePositionWrite, InvoiceType, InvoiceWrite,
+  DocMetaWrite, DocSortKey, DocTag, DocumentNameTemplate, DueDate, HIGHLIGHT_NONE, InvoicePool, InvoicePositionItem, InvoicePositionWrite, InvoiceType, InvoiceWrite,
   MultiValueTagDef, Party, PartyTypeOption, PartyUpdate, PartyWrite, PaymentWrite, PositionTemplate,
   PositionWrite, RunningPosition, SortDir, TimesheetPosition, TimesheetWrite,
 } from './case.models';
@@ -546,6 +546,20 @@ export class CasesService {
     return this.multiValueTags$;
   }
 
+  private docMultiValueTags$?: Observable<MultiValueTagDef[]>;
+
+  /** The configured list-tag ("multi-value") definitions for documents (name + value set). Cached. */
+  documentMultiValueTags(): Observable<MultiValueTagDef[]> {
+    this.docMultiValueTags$ ??= this.http.get<MultiValueTagDto[]>(`${API_ROOT}/v7/configuration/tags/multivalue/document`).pipe(
+      map((rows) => (rows ?? [])
+        .filter((t) => t.tagName)
+        .map((t) => ({ tagName: t.tagName!, values: (t.values ?? []).filter(Boolean) }))),
+      catchError(() => of([])),
+      shareReplay(1),
+    );
+    return this.docMultiValueTags$;
+  }
+
   /** Loads the user groups allowed to access the case ("Berechtigungen", GET /v7/cases/{id}/groups); [] on error. */
   allowedGroups(id: string): Observable<CaseGroup[]> {
     return this.http.get<GroupDto[]>(`${CASES_V7}/${id}/groups`).pipe(
@@ -710,12 +724,12 @@ export class CasesService {
    * Uploads a new document to a case (PUT /v1/cases/document/create). The content is sent
    * base64-encoded; `folderId` files it into a sub-folder (empty = the case root).
    */
-  uploadDocument(caseId: string, fileName: string, base64content: string, folderId?: string): Observable<unknown> {
+  uploadDocument(caseId: string, fileName: string, base64content: string, folderId?: string): Observable<{ id: string }> {
     const body: Record<string, string> = { caseId, fileName, base64content };
     if (folderId) {
       body['folderId'] = folderId;
     }
-    return this.http.put(`${CASES_BASE}/document/create`, body);
+    return this.http.put<{ id: string }>(`${CASES_BASE}/document/create`, body);
   }
 
   /** Deletes a case document (DELETE /v1/cases/document/{id}/delete). */
@@ -751,9 +765,13 @@ export class CasesService {
     );
   }
 
-  /** Adds/sets a label on a document (PUT /v5/cases/documents/{id}/tags); idempotent by name. */
-  addDocumentTag(documentId: string, name: string): Observable<unknown> {
-    return this.write(this.http.put(`${CASES_V5}/documents/${encodeURIComponent(documentId)}/tags`, { name }));
+  /**
+   * Adds/sets a label on a document (PUT /v5/cases/documents/{id}/tags); idempotent by name. Pass
+   * `tagValue` for a list (multi-value) label; the server updates the value in place by name.
+   */
+  addDocumentTag(documentId: string, name: string, tagValue?: string): Observable<unknown> {
+    return this.write(this.http.put(`${CASES_V5}/documents/${encodeURIComponent(documentId)}/tags`,
+      tagValue ? { name, tagValue } : { name }));
   }
 
   /** Removes a label by its tag id (DELETE /v5/cases/documents/tags/{tagId}). */
@@ -781,6 +799,48 @@ export class CasesService {
   /** Deletes a document folder (DELETE /v3/cases/{caseId}/folders/{folderId}). */
   deleteFolder(caseId: string, folderId: string): Observable<unknown> {
     return this.write(this.http.delete(`${CASES_V3}/${encodeURIComponent(caseId)}/folders/${encodeURIComponent(folderId)}`));
+  }
+
+  /** The document folder tree of a case (GET /v3/cases/{id}/folders); the nested root node, or null. */
+  caseFolders(caseId: string): Observable<DocFolder | null> {
+    return this.http.get<FolderDto | null>(`${CASES_V3}/${encodeURIComponent(caseId)}/folders`).pipe(
+      map((root) => (root ? toFolder(root) : null)),
+      catchError(() => of(null)),
+    );
+  }
+
+  /** Existing (active) document names of a case (GET /v1/cases/{id}/documents/with-tags); [] on error. */
+  caseDocumentNames(caseId: string): Observable<string[]> {
+    return this.http.get<DocDto[]>(`${CASES_BASE}/${encodeURIComponent(caseId)}/documents/with-tags`).pipe(
+      map((rows) => (rows ?? []).map((d) => d.name ?? '').filter(Boolean)),
+      catchError(() => of([])),
+    );
+  }
+
+  private docNameTemplates$?: Observable<DocumentNameTemplate[]>;
+
+  /** All document name templates ("Benennungsschemata", GET /v7/configuration/document-name-templates). Cached. */
+  documentNameTemplates(): Observable<DocumentNameTemplate[]> {
+    this.docNameTemplates$ ??= this.http.get<DocumentNameTemplate[]>(`${API_ROOT}/v7/configuration/document-name-templates`).pipe(
+      map((rows) => rows ?? []),
+      catchError(() => of([])),
+      shareReplay(1),
+    );
+    return this.docNameTemplates$;
+  }
+
+  /**
+   * Computes a document file name for a case by applying a document name template server-side
+   * (POST /v7/cases/{id}/document-name). Placeholders are resolved against the case, the name is
+   * sanitized and the extension of `fileName` is preserved. `date` is a JS Date (0/absent = now);
+   * `templateId` empty = the default template. Falls back to `fileName` on error.
+   */
+  computeDocumentName(caseId: string, fileName: string, date: Date | null, templateId: string): Observable<string> {
+    const body = { fileName, date: date ? date.getTime() : 0, template: templateId ?? '' };
+    return this.http.post<{ name?: string }>(`${CASES_V7}/${encodeURIComponent(caseId)}/document-name`, body).pipe(
+      map((r) => r?.name || fileName),
+      catchError(() => of(fileName)),
+    );
   }
 
   /** Contact search for the add-party picker (by name / file number / …); [] on error. */

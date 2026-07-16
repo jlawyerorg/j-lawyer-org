@@ -751,6 +751,8 @@ public interface SystemManagementLocal {
     
     DocumentNameTemplate getDefaultDocumentNameTemplate() throws Exception;
 
+    List<DocumentNameTemplate> getDocumentNameTemplates() throws Exception;
+
     List<DocumentTagRule> getAllDocumentTagRules();
     
 }
