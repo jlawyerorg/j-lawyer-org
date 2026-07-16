@@ -128,6 +128,60 @@ export const BEA_RESTRICTIONS: BeaRestriction[] = [
   { id: 'year', labelKey: 'bea.restriction.year', limit: 500, sinceDays: 366, onlyNew: false },
 ];
 
+/** A beA identity (recipient) from the SAFE directory search or a Safe-ID lookup. */
+export interface BeaIdentity {
+  safeId: string;
+  firstName: string;
+  surName: string;
+  userName: string;
+  city: string;
+  zipCode: string;
+  officeName: string;
+  organization: string;
+  type: string;
+  /** A readable one-line label derived from the available fields. */
+  displayName: string;
+}
+
+/** Criteria for the SAFE directory search (all optional; at least one should be set). */
+export interface BeaIdentitySearchCriteria {
+  firstName?: string;
+  surName?: string;
+  userName?: string;
+  city?: string;
+  zipCode?: string;
+  officeName?: string;
+}
+
+/** A code/name pair (message priority, legal authority). */
+export interface BeaListItem {
+  code: string;
+  name: string;
+}
+
+/** A beA message exported as a `.bea` file (whole message serialized to XML). */
+export interface BeaExport {
+  fileName: string;
+  contentBase64: string;
+}
+
+/** Payload to send a beA message (one recipient per message). */
+export interface BeaSendRequest {
+  recipientSafeId: string;
+  subject: string;
+  body: string;
+  referenceNumber: string;
+  referenceJustice: string;
+  attachments: { name: string; content: string }[];
+  legalAuthorityCode: string;
+  priorityCode: string;
+  eebRequested: boolean;
+  confidential: boolean;
+}
+
+/** Composer mode: a new message, a reply to the sender, or a forward carrying the attachments. */
+export type BeaComposeMode = 'new' | 'reply' | 'forward';
+
 /** Order well-known folders first (inbox, drafts, outbox, sent), trash last, custom in between. */
 export function beaFolderOrder(type: string): number {
   switch (type) {

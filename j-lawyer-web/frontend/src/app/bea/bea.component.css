@@ -167,3 +167,45 @@
   .back { display: inline-block; }
   .list-title .to-folders { display: inline-block; }
 }
+
+/* Compose button (list header) + case/contact suggestion panel — mirrors the e-mail view. */
+.list-title .compose-btn {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 6px; flex: none;
+  font: inherit; font-size: .82rem; font-weight: 600; padding: 6px 12px; border: 0; border-radius: 8px;
+  background: var(--jl-blue); color: #fff; cursor: pointer;
+}
+.list-title .compose-btn:hover:not(:disabled) { filter: brightness(1.06); }
+.list-title .compose-btn:disabled { opacity: .5; cursor: default; }
+
+.suggest {
+  margin: 0 0 4px; padding: 10px 12px; border: 1px solid var(--jl-line); border-radius: 10px;
+  background: var(--jl-surface-alt); display: flex; flex-direction: column; gap: 8px;
+}
+.suggest-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.suggest-label { flex: none; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--jl-ink-faint); }
+.suggest-items { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.suggest-case {
+  display: inline-flex; align-items: stretch; max-width: 100%; border: 1px solid var(--jl-line-strong);
+  border-radius: 999px; background: var(--jl-surface); overflow: hidden;
+}
+.suggest-case:hover { border-color: var(--jl-blue); }
+.suggest-case .sc-open {
+  display: inline-flex; align-items: center; gap: 6px; min-width: 0; padding: 4px 4px 4px 10px;
+  color: var(--jl-ink); text-decoration: none; font-size: .8rem;
+}
+.suggest-case:hover .sc-open { color: var(--jl-blue); }
+.suggest-case .sc-fn { font-weight: 700; font-variant-numeric: tabular-nums; flex: none; }
+.suggest-case .sc-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+.suggest-case .sc-arch { flex: none; font-size: .68rem; color: var(--jl-ink-faint); border: 1px solid var(--jl-line); border-radius: 4px; padding: 0 4px; }
+.suggest-case .sc-save {
+  flex: none; display: inline-flex; align-items: center; padding: 0 9px; border: 0; border-left: 1px solid var(--jl-line);
+  background: transparent; color: var(--jl-ink-faint); cursor: pointer;
+}
+.suggest-case .sc-save:hover { background: var(--jl-blue); color: #fff; }
+.suggest-contact {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 4px 10px;
+  border: 1px solid var(--jl-line-strong); border-radius: 999px; background: var(--jl-surface);
+  color: var(--jl-ink); text-decoration: none; font-size: .8rem;
+}
+.suggest-contact:hover { border-color: var(--jl-blue); color: var(--jl-blue); }
+.suggest-contact .sc-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }

@@ -1,11 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { effect, inject, Injectable, signal } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { catchError, map, Observable, of, shareReplay } from 'rxjs';
 import { API_ROOT } from '../core/api';
 import { AuthService } from '../core/auth/auth.service';
+import { CaseSuggestions } from '../communication/email.models';
 import {
-  BeaAttachment, BeaFolder, BeaJournalEntry, BeaMessage, BeaMessageHeader, BeaRestriction,
-  BeaVerificationResult, Postbox,
+  BeaAttachment, BeaExport, BeaFolder, BeaIdentity, BeaIdentitySearchCriteria, BeaJournalEntry,
+  BeaListItem, BeaMessage, BeaMessageHeader, BeaRestriction, BeaSendRequest, BeaVerificationResult,
+  Postbox,
 } from './bea.models';
 
 const BEA_V8 = `${API_ROOT}/v8/bea`;
@@ -41,6 +43,12 @@ interface MessageDto {
 }
 interface LoginResultDto { postboxes?: PostboxDto[]; }
 interface VerificationDto { html?: string; xml?: string; status?: string; }
+interface IdentityDto {
+  safeId?: string; firstName?: string; surName?: string; userName?: string; city?: string;
+  zipCode?: string; officeName?: string; organization?: string; type?: string; displayName?: string;
+}
+interface ListItemDto { code?: string; name?: string; }
+interface ExportDto { fileName?: string; contentBase64?: string; }
 
 /**
  * beA data access against the v8 REST API (/v8/bea/**). All calls are Basic-auth-restricted
@@ -209,6 +217,97 @@ export class BeaService {
       .get<VerificationDto>(`${BEA_V8}/postboxes/${enc(safeId)}/messages/${enc(messageId)}/verify`)
       .pipe(map((v) => ({ html: v?.html ?? '', xml: v?.xml ?? '', status: v?.status ?? '' })));
   }
+
+  /** Exports the whole message as a `.bea` file (XML) for storing it in a case. */
+  exportMessage(safeId: string, messageId: string): Observable<BeaExport> {
+    return this.http
+      .get<ExportDto>(`${BEA_V8}/postboxes/${enc(safeId)}/messages/${enc(messageId)}/export`)
+      .pipe(map((e) => ({ fileName: e?.fileName ?? 'message.bea', contentBase64: e?.contentBase64 ?? '' })));
+  }
+
+  /** Server-computed case suggestions for an opened beA message; empty result on error. */
+  caseSuggestions(req: {
+    subject: string; body: string; referenceNumber: string; referenceJustice: string; senderName: string;
+  }): Observable<CaseSuggestions> {
+    return this.http.post<CaseSuggestions>(`${BEA_V8}/case-suggestions`, req).pipe(
+      catchError(() => of({ suggestedCases: [], contacts: [], phoneNumbers: [], senderName: '', senderEmail: '' })),
+    );
+  }
+
+  /** Searches the SAFE directory for recipient identities; [] on error. */
+  searchIdentity(criteria: BeaIdentitySearchCriteria): Observable<BeaIdentity[]> {
+    return this.http.post<IdentityDto[]>(`${BEA_V8}/identities/search`, criteria).pipe(
+      map((rows) => (rows ?? []).map(toIdentity)),
+      catchError(() => of([])),
+    );
+  }
+
+  /** Looks up a single identity by Safe-ID (optionally constrained by ZIP). */
+  getIdentity(safeId: string, zipCode?: string): Observable<BeaIdentity | null> {
+    const url = `${BEA_V8}/identities/${enc(safeId)}${zipCode ? `?zipCode=${enc(zipCode)}` : ''}`;
+    return this.http.get<IdentityDto>(url).pipe(map(toIdentity), catchError(() => of(null)));
+  }
+
+  private priorities$?: Observable<BeaListItem[]>;
+
+  /** Message priorities (Nachrichtenpriorität); cached. */
+  messagePriorities(): Observable<BeaListItem[]> {
+    this.priorities$ ??= this.http.get<ListItemDto[]>(`${BEA_V8}/message-priorities`).pipe(
+      map((rows) => (rows ?? []).map((r) => ({ code: r.code ?? '', name: r.name ?? '' }))),
+      catchError(() => of([])),
+      shareReplay(1),
+    );
+    return this.priorities$;
+  }
+
+  private legalAuthorities$?: Observable<BeaListItem[]>;
+
+  /** Legal authorities (Gerichte/Justizbehörden) for the send form; cached. */
+  legalAuthorities(): Observable<BeaListItem[]> {
+    this.legalAuthorities$ ??= this.http.get<ListItemDto[]>(`${BEA_V8}/legal-authorities`).pipe(
+      map((rows) => (rows ?? []).map((r) => ({ code: r.code ?? '', name: r.name ?? '' }))),
+      catchError(() => of([])),
+      shareReplay(1),
+    );
+    return this.legalAuthorities$;
+  }
+
+  /** Sends a beA message from the given postbox (one recipient per message). */
+  sendMessage(safeId: string, req: BeaSendRequest): Observable<BeaMessage> {
+    const body = {
+      recipientSafeId: req.recipientSafeId,
+      subject: req.subject,
+      body: req.body,
+      referenceNumber: req.referenceNumber,
+      referenceJustice: req.referenceJustice,
+      attachments: req.attachments.map((a) => ({ name: a.name, content: a.content })),
+      legalAuthorityCode: req.legalAuthorityCode,
+      priorityCode: req.priorityCode,
+      eebRequested: req.eebRequested,
+      confidential: req.confidential,
+    };
+    return this.http.post<MessageDto>(`${BEA_V8}/postboxes/${enc(safeId)}/messages`, body).pipe(map(toMessage));
+  }
+}
+
+function toIdentity(dto: IdentityDto): BeaIdentity {
+  const person = [dto.firstName, dto.surName].filter(Boolean).join(' ').trim();
+  const place = [dto.zipCode, dto.city].filter(Boolean).join(' ').trim();
+  const label = dto.displayName
+    || [dto.officeName || dto.organization || person, place].filter(Boolean).join(', ')
+    || dto.userName || dto.safeId || '';
+  return {
+    safeId: dto.safeId ?? '',
+    firstName: dto.firstName ?? '',
+    surName: dto.surName ?? '',
+    userName: dto.userName ?? '',
+    city: dto.city ?? '',
+    zipCode: dto.zipCode ?? '',
+    officeName: dto.officeName ?? '',
+    organization: dto.organization ?? '',
+    type: dto.type ?? '',
+    displayName: label,
+  };
 }
 
 function enc(seg: string): string {

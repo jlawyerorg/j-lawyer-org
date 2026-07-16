@@ -1,11 +1,15 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { RouterLink } from '@angular/router';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { base64ToBytes } from '../shared/document-preview.models';
+import { CaseSuggestions } from '../communication/email.models';
 import { BeaService } from './bea.service';
+import { BeaComposeComponent } from './bea-compose.component';
+import { BeaBulkSaveComponent, TargetCase } from './bea-bulk-save.component';
 import {
-  BeaAttachment, BeaFolder, BeaFolderNode, beaFolderOrder, BeaMessage, BeaMessageHeader,
+  BeaAttachment, BeaComposeMode, BeaFolder, BeaFolderNode, beaFolderOrder, BeaMessage, BeaMessageHeader,
   BeaRestriction, BEA_RESTRICTIONS, Postbox,
 } from './bea.models';
 
@@ -35,7 +39,7 @@ interface PostboxFolders {
   selector: 'jl-bea',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoModule, IconComponent],
+  imports: [TranslocoModule, IconComponent, RouterLink, BeaComposeComponent, BeaBulkSaveComponent],
   template: `
     <div class="bea" [class.show-reader]="selectedId()"
          [class.m-folders]="mobilePane() === 'folders'"
@@ -94,6 +98,10 @@ interface PostboxFolders {
             <button type="button" class="to-folders" (click)="mobilePane.set('folders')">‹ {{ 'bea.navBack' | transloco }}</button>
             <h2>{{ selectedFolder() ? folderLabel(selectedFolder()!) : ('bea.selectFolder' | transloco) }}</h2>
             @if (messages()?.length) { <span class="count">{{ messages()!.length }}</span> }
+            <button type="button" class="compose-btn" [disabled]="!sendableSafeId()" (click)="composeNew()"
+                    [title]="'beaCompose.new' | transloco">
+              <jl-icon name="edit" [size]="14" /><span>{{ 'beaCompose.new' | transloco }}</span>
+            </button>
           </div>
           <div class="list-tools">
             <div class="search">
@@ -158,6 +166,12 @@ interface PostboxFolders {
           <header class="col-head reader-head">
             <button type="button" class="back" (click)="closeReader()">‹ {{ 'bea.back' | transloco }}</button>
             <div class="reader-actions">
+              <button type="button" class="icon-btn" [disabled]="acting() || !message() || !sendableSafeId()" (click)="reply()"
+                      [title]="'beaCompose.reply' | transloco"><jl-icon name="reply" [size]="15" /></button>
+              <button type="button" class="icon-btn" [disabled]="acting() || !message() || !sendableSafeId()" (click)="forward()"
+                      [title]="'beaCompose.forward' | transloco"><jl-icon name="forward" [size]="15" /></button>
+              <button type="button" class="icon-btn" [disabled]="acting() || !message()" (click)="openSaveToCase(null)"
+                      [title]="'bulkSave.title' | transloco"><jl-icon name="inbox" [size]="15" /></button>
               <button type="button" class="icon-btn" [disabled]="acting() || verifying()" (click)="verify()"
                       [title]="'bea.verify' | transloco"><jl-icon name="shield" [size]="15" /></button>
               <div class="menu-wrap">
@@ -204,6 +218,48 @@ interface PostboxFolders {
                   @if (msg.referenceJustice) { <dt>{{ 'bea.refCourt' | transloco }}</dt><dd>{{ msg.referenceJustice }}</dd> }
                 </dl>
               </div>
+
+              @if (suggestions(); as sg) {
+                @if (sg.suggestedCases.length || sg.contacts.length) {
+                  <div class="suggest">
+                    @if (sg.suggestedCases.length) {
+                      <div class="suggest-group">
+                        <span class="suggest-label">{{ 'bea.suggest.cases' | transloco }}</span>
+                        <div class="suggest-items">
+                          @for (c of sg.suggestedCases; track c.id) {
+                            <span class="suggest-case">
+                              <a class="sc-open" [routerLink]="['/cases', c.id]" [title]="c.name" (click)="mobilePane.set('reader')">
+                                <jl-icon name="cases" [size]="13" />
+                                <span class="sc-fn">{{ c.fileNumber }}</span>
+                                <span class="sc-name">{{ c.name }}</span>
+                                @if (c.archived) { <span class="sc-arch">{{ 'bea.suggest.archived' | transloco }}</span> }
+                              </a>
+                              <button type="button" class="sc-save"
+                                      (click)="openSaveToCase({ id: c.id, fileNumber: c.fileNumber, name: c.name })"
+                                      [title]="'bulkSave.title' | transloco" [attr.aria-label]="'bulkSave.title' | transloco">
+                                <jl-icon name="inbox" [size]="13" />
+                              </button>
+                            </span>
+                          }
+                        </div>
+                      </div>
+                    }
+                    @if (sg.contacts.length) {
+                      <div class="suggest-group">
+                        <span class="suggest-label">{{ 'bea.suggest.contacts' | transloco }}</span>
+                        <div class="suggest-items">
+                          @for (ct of sg.contacts; track ct.id) {
+                            <a class="suggest-contact" [routerLink]="['/contacts', ct.id]" [title]="ct.displayName">
+                              <jl-icon name="contacts" [size]="12" />
+                              <span class="sc-name">{{ ct.displayName }}</span>
+                            </a>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              }
 
               <div class="body">
                 @if (bodyUrl()) {
@@ -289,6 +345,17 @@ interface PostboxFolders {
         }
       </section>
     </div>
+
+    @if (compose(); as c) {
+      <jl-bea-compose [senderSafeId]="sendableSafeId()!" [senderLabel]="senderLabel()" [mode]="c.mode" [seed]="c.seed"
+                      (sent)="onSent()" (closed)="compose.set(null)" />
+    }
+
+    @if (saveOpen() && message() && selectedSafeId()) {
+      <jl-bea-bulk-save [safeId]="selectedSafeId()!" [message]="message()!" [suggestions]="suggestions()"
+                        [preselect]="savePreselect()"
+                        (saved)="onSavedToCase()" (closed)="saveOpen.set(false)" />
+    }
   `,
   styleUrl: './bea.component.css',
 })
@@ -329,6 +396,23 @@ export class BeaComponent {
   protected readonly acting = signal(false);
   protected readonly moveOpen = signal(false);
   protected readonly downloadingAtt = signal<string | null>(null);
+
+  /** Composer state (new/reply/forward), or null when closed. `seed` is the original for reply/forward. */
+  protected readonly compose = signal<{ mode: BeaComposeMode; seed: BeaMessage | null } | null>(null);
+  /** Whether the save-to-case dialog is open, plus an optional case preselected from a suggestion chip. */
+  protected readonly saveOpen = signal(false);
+  protected readonly savePreselect = signal<TargetCase | null>(null);
+  /** Server-computed case/contact suggestions for the opened message. */
+  protected readonly suggestions = signal<CaseSuggestions | null>(null);
+
+  /** The Safe-ID to send from: the selected postbox, else the first available one. */
+  protected readonly sendableSafeId = computed<string | null>(() =>
+    this.selectedSafeId() ?? this.postboxes()[0]?.safeId ?? null);
+  /** Readable label of the postbox we send from. */
+  protected readonly senderLabel = computed<string>(() => {
+    const sid = this.sendableSafeId();
+    return this.postboxes().find((p) => p.safeId === sid)?.label ?? '';
+  });
 
   private msgSeq = 0;
   private bodyBlobUrl: string | null = null;
@@ -461,6 +545,7 @@ export class BeaComponent {
         if (seq !== this.msgSeq) { return; }
         this.message.set(msg);
         this.renderBody(msg);
+        this.loadSuggestions(msg, seq);
         this.messageLoading.set(false);
       },
       error: () => {
@@ -547,9 +632,61 @@ export class BeaComponent {
     this.msgSeq++;
     this.selectedId.set(null);
     this.message.set(null);
+    this.suggestions.set(null);
+    this.saveOpen.set(false);
+    this.savePreselect.set(null);
     this.moveOpen.set(false);
     this.mobilePane.set('list');
     this.resetBody();
+  }
+
+  // ----- compose / save-to-case / suggestions -----
+
+  /** Lazily fetches server-side case suggestions for the opened message (best-effort). */
+  private loadSuggestions(msg: BeaMessage, seq: number): void {
+    this.suggestions.set(null);
+    this.api.caseSuggestions({
+      subject: msg.subject,
+      body: msg.body,
+      referenceNumber: msg.referenceNumber,
+      referenceJustice: msg.referenceJustice,
+      senderName: msg.senderName,
+    }).subscribe({
+      next: (sg) => { if (seq === this.msgSeq) { this.suggestions.set(sg); } },
+      error: () => { /* suggestions are best-effort */ },
+    });
+  }
+
+  protected composeNew(): void {
+    if (!this.sendableSafeId()) { return; }
+    this.compose.set({ mode: 'new', seed: null });
+  }
+
+  protected reply(): void { this.openCompose('reply'); }
+  protected forward(): void { this.openCompose('forward'); }
+
+  private openCompose(mode: BeaComposeMode): void {
+    const msg = this.message();
+    if (!msg || !this.sendableSafeId()) { return; }
+    this.compose.set({ mode, seed: msg });
+  }
+
+  /** Called after a message is sent: close the composer and refresh the list. */
+  protected onSent(): void {
+    this.compose.set(null);
+    this.loadMessages();
+  }
+
+  /** Opens the save-to-case dialog, optionally with a case preselected (from a suggestion chip). */
+  protected openSaveToCase(preselect: TargetCase | null): void {
+    if (!this.message()) { return; }
+    this.savePreselect.set(preselect);
+    this.saveOpen.set(true);
+  }
+
+  /** The save dialog stays open to offer a calendar entry; it closes itself via (closed). */
+  protected onSavedToCase(): void {
+    // nothing to refresh on the beA side
   }
 
   // ----- helpers -----
