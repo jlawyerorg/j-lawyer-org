@@ -762,6 +762,7 @@ import com.jdimension.jlawyer.ui.folders.DocumentEntryPanel;
 import com.jdimension.jlawyer.ui.tagging.ArchiveFileTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.DocumentTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.TagSelectedAction;
+import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.ui.tagging.MultiValueTag;
 import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
@@ -6258,6 +6259,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 // click on checkbox in table
                 int row = this.tblReviewReasons.rowAtPoint(p);
                 ArchiveFileReviewsBean reviewDto = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(row, 0);
+                if (!reviewDto.isDone() && reviewDto.getEventType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
+                    int response = JOptionPane.showConfirmDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("dialog.confirm.setdone"), new Object[]{reviewDto.getSummary()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("dialog.confirm.setdone.title"), JOptionPane.YES_NO_OPTION);
+                    if (response != JOptionPane.YES_OPTION) {
+                        return;
+                    }
+                }
                 reviewDto.setDone(!reviewDto.isDone());
 
                 ClientSettings settings = ClientSettings.getInstance();
