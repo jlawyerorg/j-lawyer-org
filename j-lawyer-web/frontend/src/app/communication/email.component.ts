@@ -1,14 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { base64ToBytes } from '../shared/document-preview.models';
 import { EmailService } from './email.service';
 import { EmailComposeComponent } from './email-compose.component';
 import {
-  ComposeMode, FolderNode, MailScope, Mailbox, MailFolder, MailMessage, PAGE_SIZE, TIME_RANGES, TimeRange,
-  wellKnownOrder,
+  CaseSuggestions, ComposeMode, FolderNode, MailScope, Mailbox, MailFolder, MailMessage, PAGE_SIZE,
+  TIME_RANGES, TimeRange, wellKnownOrder,
 } from './email.models';
 
 /** A mailbox header or an (indented) folder row in the left navigation. */
@@ -34,7 +34,7 @@ interface MailboxFolders {
   selector: 'jl-email',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoModule, IconComponent, EmailComposeComponent],
+  imports: [TranslocoModule, IconComponent, EmailComposeComponent, RouterLink],
   template: `
     <div class="mail" [class.show-reader]="selectedRef()"
          [class.m-folders]="mobilePane() === 'folders'"
@@ -232,6 +232,39 @@ interface MailboxFolders {
                 </dl>
               </div>
 
+              @if (suggestions(); as sg) {
+                @if (sg.suggestedCases.length || sg.phoneNumbers.length) {
+                  <div class="suggest">
+                    @if (sg.suggestedCases.length) {
+                      <div class="suggest-group">
+                        <span class="suggest-label">{{ 'email.suggest.cases' | transloco }}</span>
+                        <div class="suggest-items">
+                          @for (c of sg.suggestedCases; track c.id) {
+                            <a class="suggest-case" [routerLink]="['/cases', c.id]"
+                               [title]="c.name" (click)="mobilePane.set('reader')">
+                              <jl-icon name="cases" [size]="13" />
+                              <span class="sc-fn">{{ c.fileNumber }}</span>
+                              <span class="sc-name">{{ c.name }}</span>
+                              @if (c.archived) { <span class="sc-arch">{{ 'email.suggest.archived' | transloco }}</span> }
+                            </a>
+                          }
+                        </div>
+                      </div>
+                    }
+                    @if (sg.phoneNumbers.length) {
+                      <div class="suggest-group">
+                        <span class="suggest-label">{{ 'email.suggest.phones' | transloco }}</span>
+                        <div class="suggest-items">
+                          @for (p of sg.phoneNumbers; track p) {
+                            <a class="suggest-phone" [href]="'tel:' + p"><jl-icon name="phone" [size]="12" />{{ p }}</a>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              }
+
               <div class="body">
                 @if (bodyUrl()) {
                   <iframe class="body-frame" sandbox="allow-popups allow-popups-to-escape-sandbox"
@@ -337,6 +370,8 @@ export class EmailComponent {
   protected readonly messageError = signal(false);
   protected readonly bodyUrl = signal<SafeResourceUrl | null>(null);
   protected readonly bodyText = signal('');
+  /** Server-computed case/contact/phone suggestions for the opened message. */
+  protected readonly suggestions = signal<CaseSuggestions | null>(null);
   protected readonly acting = signal(false);
   protected readonly moveOpen = signal(false);
   protected readonly downloadingAtt = signal<string | null>(null);
@@ -544,6 +579,7 @@ export class EmailComponent {
     this.messageLoading.set(true);
     this.messageError.set(false);
     this.message.set(null);
+    this.suggestions.set(null);
     this.revokeBody();
     this.bodyUrl.set(null);
     this.bodyText.set('');
@@ -553,6 +589,7 @@ export class EmailComponent {
         this.message.set(msg);
         this.renderBody(msg);
         this.messageLoading.set(false);
+        this.loadSuggestions(seq, mid, msg);
       },
       error: () => {
         if (seq !== this.msgSeq) { return; }
@@ -662,6 +699,14 @@ export class EmailComponent {
     if (this.selectedFolderId()) { this.loadMessages(); }
   }
 
+  /** Lazily fetches server-side case/contact/phone suggestions once a message has loaded. */
+  private loadSuggestions(seq: number, mailboxId: string, msg: MailMessage): void {
+    this.api.caseSuggestions(mailboxId, { subject: msg.subject, body: msg.body, from: msg.from }).subscribe({
+      next: (sg) => { if (seq === this.msgSeq) { this.suggestions.set(sg); } },
+      error: () => { /* suggestions are best-effort; ignore */ },
+    });
+  }
+
   protected composeNew(): void {
     if (!this.composeFromId()) { return; }
     this.compose.set({ mode: 'new', seed: null });
@@ -687,6 +732,7 @@ export class EmailComponent {
     this.msgSeq++;
     this.selectedRef.set(null);
     this.message.set(null);
+    this.suggestions.set(null);
     this.moveOpen.set(false);
     this.revokeBody();
     this.bodyUrl.set(null);

@@ -100,6 +100,33 @@ export interface ComposeAttachment {
   contentId: string;
 }
 
+/** A case suggested for an opened email; `source` says why it was suggested. */
+export interface CaseSuggestion {
+  id: string;
+  fileNumber: string;
+  name: string;
+  reason: string;
+  archived: boolean;
+  /** 'subjectBody' | 'reference' | 'sender'. */
+  source: string;
+}
+
+/** A contact matching the sender of an opened email. */
+export interface SuggestedContact {
+  id: string;
+  displayName: string;
+  email: string;
+}
+
+/** Consolidated case suggestions returned by POST /v7/email/mailboxes/{id}/case-suggestions. */
+export interface CaseSuggestions {
+  suggestedCases: CaseSuggestion[];
+  contacts: SuggestedContact[];
+  phoneNumbers: string[];
+  senderName: string;
+  senderEmail: string;
+}
+
 /** Payload for POST /v7/email/mailboxes/{id}/send. `to`/`cc`/`bcc` are comma-separated address lists. */
 export interface SendMailRequest {
   to: string;

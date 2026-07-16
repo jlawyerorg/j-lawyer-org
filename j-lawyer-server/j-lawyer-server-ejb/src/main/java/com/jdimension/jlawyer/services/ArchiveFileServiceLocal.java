@@ -730,6 +730,8 @@ public interface ArchiveFileServiceLocal {
     public ArrayList<String> getAllArchiveFileNumbersUnrestricted(boolean activeCasesOnly) throws Exception;
     public ArchiveFileBean getArchiveFileByFileNumber(String fileNumber) throws Exception;
     public ArchiveFileBean getArchiveFileByFileNumberUnrestricted(String fileNumber) throws Exception;
+    public java.util.Collection<Keyword> extractKeywordsFromText(String text) throws Exception;
+    public ArrayList<String> getAllReferencedFileNumbers(int minChars, boolean activeCasesOnly) throws Exception;
     
     
     public int getDocumentCount();

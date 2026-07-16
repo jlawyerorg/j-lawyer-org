@@ -126,6 +126,30 @@
 }
 .load-more { text-align: center; }
 
+/* ---------- Reader: case suggestions ---------- */
+.suggest {
+  margin: 0 0 4px; padding: 10px 12px; border: 1px solid var(--jl-line); border-radius: 10px;
+  background: var(--jl-surface-alt); display: flex; flex-direction: column; gap: 8px;
+}
+.suggest-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.suggest-label { flex: none; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--jl-ink-faint); }
+.suggest-items { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.suggest-case {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 4px 10px;
+  border: 1px solid var(--jl-line-strong); border-radius: 999px; background: var(--jl-surface);
+  color: var(--jl-ink); text-decoration: none; font-size: .8rem;
+}
+.suggest-case:hover { border-color: var(--jl-blue); color: var(--jl-blue); }
+.suggest-case .sc-fn { font-weight: 700; font-variant-numeric: tabular-nums; flex: none; }
+.suggest-case .sc-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+.suggest-case .sc-arch { flex: none; font-size: .68rem; color: var(--jl-ink-faint); border: 1px solid var(--jl-line); border-radius: 4px; padding: 0 4px; }
+.suggest-phone {
+  display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--jl-line-strong); background: var(--jl-surface); color: var(--jl-ink);
+  text-decoration: none; font-size: .8rem; font-variant-numeric: tabular-nums;
+}
+.suggest-phone:hover { border-color: var(--jl-blue); color: var(--jl-blue); }
+
 .msg {
   width: 100%; display: flex; gap: 9px; text-align: left; padding: 10px 16px;
   border: 0; border-bottom: 1px solid var(--jl-line); background: var(--jl-surface); cursor: pointer;

@@ -825,6 +825,11 @@
       "all": "Alle",
       "unread": "Ungelesen"
     },
+    "suggest": {
+      "cases": "Passende Akten",
+      "phones": "Rufnummern",
+      "archived": "Archiv"
+    },
     "range": {
       "any": "Gesamter Zeitraum",
       "week": "Letzte Woche",

@@ -825,6 +825,11 @@
       "all": "All",
       "unread": "Unread"
     },
+    "suggest": {
+      "cases": "Matching cases",
+      "phones": "Phone numbers",
+      "archived": "Archived"
+    },
     "range": {
       "any": "All time",
       "week": "Last week",

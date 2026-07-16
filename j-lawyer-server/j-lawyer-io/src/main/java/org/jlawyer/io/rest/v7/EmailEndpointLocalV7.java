@@ -19,6 +19,7 @@ package org.jlawyer.io.rest.v7;
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
 import org.jlawyer.io.rest.v7.pojo.RestfulAppendMailRequestV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulCaseSuggestionRequestV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulCreateFolderRequestV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulSendMailRequestV7;
 
@@ -56,6 +57,8 @@ public interface EmailEndpointLocalV7 {
     Response getAttachment(String mailboxId, String messageRef, String attachmentId);
 
     Response sendMail(String mailboxId, RestfulSendMailRequestV7 request);
+
+    Response caseSuggestions(String mailboxId, RestfulCaseSuggestionRequestV7 request);
 
     Response appendToFolder(String mailboxId, String folderId, RestfulAppendMailRequestV7 request);
 

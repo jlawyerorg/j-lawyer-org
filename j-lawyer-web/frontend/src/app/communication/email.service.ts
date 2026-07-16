@@ -3,7 +3,7 @@ import { effect, inject, Injectable, signal } from '@angular/core';
 import { catchError, from, map, mergeMap, Observable, of } from 'rxjs';
 import { API_ROOT } from '../core/api';
 import { AuthService } from '../core/auth/auth.service';
-import { MailAttachment, Mailbox, MailFolder, MailMessage, SendMailRequest } from './email.models';
+import { CaseSuggestions, MailAttachment, Mailbox, MailFolder, MailMessage, SendMailRequest } from './email.models';
 
 const EMAIL_V7 = `${API_ROOT}/v7/email`;
 /** Sentinel for a not-yet-loaded folder count (server returns -1 when includeCounts=false). */
@@ -255,6 +255,22 @@ export class EmailService {
    */
   sendMail(mailboxId: string, req: SendMailRequest): Observable<unknown> {
     return this.http.post(`${EMAIL_V7}/mailboxes/${enc(mailboxId)}/send`, req);
+  }
+
+  /**
+   * Server-side case suggestions for an opened message (matching cases, sender contacts, extracted
+   * phone numbers). The whole heuristic runs on the server; the client just sends subject/body/from.
+   */
+  caseSuggestions(mailboxId: string, req: { subject: string; body: string; from: string }): Observable<CaseSuggestions> {
+    return this.http.post<CaseSuggestions>(`${EMAIL_V7}/mailboxes/${enc(mailboxId)}/case-suggestions`, req).pipe(
+      map((r) => ({
+        suggestedCases: r?.suggestedCases ?? [],
+        contacts: r?.contacts ?? [],
+        phoneNumbers: r?.phoneNumbers ?? [],
+        senderName: r?.senderName ?? '',
+        senderEmail: r?.senderEmail ?? '',
+      })),
+    );
   }
 }
 
