@@ -82,6 +82,12 @@ import {
 })
 export class DocumentPreviewComponent {
   readonly doc = input<PreviewDoc | null>(null);
+  /**
+   * Optional pre-fetched Base64 content. When provided, the overlay renders (and downloads)
+   * these bytes directly instead of fetching via the content service — for callers whose bytes
+   * come from a non-document source (e.g. beA message attachments).
+   */
+  readonly inlineContent = input<string | null>(null);
   readonly closed = output<void>();
 
   private readonly contentService = inject(DocumentContentService);
@@ -116,9 +122,23 @@ export class DocumentPreviewComponent {
 
   protected triggerDownload(): void {
     const d = this.doc();
-    if (d) {
-      this.contentService.download(d);
+    if (!d) {
+      return;
     }
+    const inline = this.inlineContent();
+    if (inline != null) {
+      const bytes = base64ToBytes(inline.replace(/\s/g, ''));
+      const url = URL.createObjectURL(new Blob([bytes], { type: mimeOf(d.ext) }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = d.name || 'download';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      return;
+    }
+    this.contentService.download(d);
   }
 
   /** Opens the already-fetched PDF blob in a new tab (native viewer; CSP blocks embedding). */
@@ -131,6 +151,8 @@ export class DocumentPreviewComponent {
   private load(d: PreviewDoc): void {
     const kind = previewKindOf(d.ext);
     const seq = ++this.seq;
+    // Read the inline input up front so this effect always depends on it (doc + content are set together).
+    const inline = this.inlineContent();
     this.revokePdfUrl();
     this.pdfSafeUrl.set(null);
     this.image.set(null);
@@ -141,27 +163,14 @@ export class DocumentPreviewComponent {
       this.loading.set(false);
       return;
     }
+    if (inline != null) {
+      this.render(d, inline, kind, seq);
+      return;
+    }
     this.loading.set(true);
 
     this.contentService.content(d.id, d.source).subscribe({
-      next: (dto) => {
-        if (seq !== this.seq) {
-          return;
-        }
-        const b64 = (dto.base64content ?? '').replace(/\s/g, '');
-        const mime = mimeOf(d.ext);
-        if (kind === 'image') {
-          this.image.set(this.sanitizer.bypassSecurityTrustUrl(`data:${mime};base64,${b64}`));
-        } else if (kind === 'text') {
-          this.text.set(bytesToText(base64ToBytes(b64)));
-        } else if (kind === 'pdf') {
-          this.pdfBlobUrl = URL.createObjectURL(new Blob([base64ToBytes(b64)], { type: mime }));
-          // iframe [src] is a RESOURCE_URL context; the blob is our own same-origin data.
-          // CSP frame-src 'self' blob: permits embedding it (see index.html).
-          this.pdfSafeUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(this.pdfBlobUrl));
-        }
-        this.loading.set(false);
-      },
+      next: (dto) => this.render(d, dto.base64content ?? '', kind, seq),
       error: () => {
         if (seq !== this.seq) {
           return;
@@ -170,6 +179,26 @@ export class DocumentPreviewComponent {
         this.loading.set(false);
       },
     });
+  }
+
+  /** Renders already-decoded Base64 bytes into the appropriate viewer (image/text/pdf). */
+  private render(d: PreviewDoc, rawB64: string, kind: DocPreviewKind, seq: number): void {
+    if (seq !== this.seq) {
+      return;
+    }
+    const b64 = (rawB64 ?? '').replace(/\s/g, '');
+    const mime = mimeOf(d.ext);
+    if (kind === 'image') {
+      this.image.set(this.sanitizer.bypassSecurityTrustUrl(`data:${mime};base64,${b64}`));
+    } else if (kind === 'text') {
+      this.text.set(bytesToText(base64ToBytes(b64)));
+    } else if (kind === 'pdf') {
+      this.pdfBlobUrl = URL.createObjectURL(new Blob([base64ToBytes(b64)], { type: mime }));
+      // iframe [src] is a RESOURCE_URL context; the blob is our own same-origin data.
+      // CSP frame-src 'self' blob: permits embedding it (see index.html).
+      this.pdfSafeUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(this.pdfBlobUrl));
+    }
+    this.loading.set(false);
   }
 
   private reset(): void {

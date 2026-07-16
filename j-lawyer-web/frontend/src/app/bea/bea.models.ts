@@ -182,6 +182,17 @@ export interface BeaSendRequest {
 /** Composer mode: a new message, a reply to the sender, or a forward carrying the attachments. */
 export type BeaComposeMode = 'new' | 'reply' | 'forward';
 
+/** One line of a process card (Laufzettel): an OSCI status code + its human-readable text. */
+export interface BeaProcessCardEntry { code: string; text: string; }
+
+/** A process card (Laufzettel) — the OSCI delivery protocol for a message. */
+export interface BeaProcessCard {
+  entries: BeaProcessCardEntry[];
+  osciMessage: string;
+  exceptionMessage: string;
+  success: boolean;
+}
+
 /** Order well-known folders first (inbox, drafts, outbox, sent), trash last, custom in between. */
 export function beaFolderOrder(type: string): number {
   switch (type) {

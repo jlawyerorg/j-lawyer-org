@@ -6,8 +6,8 @@ import { AuthService } from '../core/auth/auth.service';
 import { CaseSuggestions } from '../communication/email.models';
 import {
   BeaAttachment, BeaExport, BeaFolder, BeaIdentity, BeaIdentitySearchCriteria, BeaJournalEntry,
-  BeaListItem, BeaMessage, BeaMessageHeader, BeaRestriction, BeaSendRequest, BeaVerificationResult,
-  Postbox,
+  BeaListItem, BeaMessage, BeaMessageHeader, BeaProcessCard, BeaRestriction, BeaSendRequest,
+  BeaVerificationResult, Postbox,
 } from './bea.models';
 
 const BEA_V8 = `${API_ROOT}/v8/bea`;
@@ -26,7 +26,10 @@ interface HeaderDto {
   recipientSafeId?: string; folderId?: number; postBoxSafeId?: string;
 }
 interface AttachmentDto {
-  name?: string; alias?: string; type?: number; size?: number; content?: string | null; technicalAttachment?: boolean;
+  name?: string; alias?: string; type?: number; size?: number;
+  // Bytes come only from the `/base64` endpoint, in `contentBase64`. Message-embedded attachments
+  // carry a raw byte[] `content` which is deliberately ignored (unusable in JS).
+  contentBase64?: string | null; technicalAttachment?: boolean;
 }
 interface JournalDto {
   journalType?: string; eventType?: string; timestamp?: number | string | null;
@@ -49,6 +52,9 @@ interface IdentityDto {
 }
 interface ListItemDto { code?: string; name?: string; }
 interface ExportDto { fileName?: string; contentBase64?: string; }
+interface ProcessCardDto {
+  entries?: { code?: string; text?: string }[]; osciMessage?: string; exceptionMessage?: string; success?: boolean;
+}
 
 /**
  * beA data access against the v8 REST API (/v8/bea/**). All calls are Basic-auth-restricted
@@ -187,13 +193,16 @@ export class BeaService {
       .pipe(map(toMessage));
   }
 
-  /** Fetches one attachment's bytes (Base64) on demand. */
+  /**
+   * Fetches one attachment's bytes on demand. Uses the browser-oriented `/base64` endpoint, which
+   * returns the content as a Base64 string (`contentBase64`) rather than a raw byte[].
+   */
   getAttachment(safeId: string, messageId: string, attachmentName: string): Observable<BeaAttachment> {
     return this.http
       .get<AttachmentDto>(
-        `${BEA_V8}/postboxes/${enc(safeId)}/messages/${enc(messageId)}/attachments/${enc(attachmentName)}`,
+        `${BEA_V8}/postboxes/${enc(safeId)}/messages/${enc(messageId)}/attachments/${enc(attachmentName)}/base64`,
       )
-      .pipe(map(toAttachment));
+      .pipe(map(toAttachmentContent));
   }
 
   markRead(safeId: string, messageId: string): Observable<unknown> {
@@ -274,19 +283,26 @@ export class BeaService {
 
   /** Sends a beA message from the given postbox (one recipient per message). */
   sendMessage(safeId: string, req: BeaSendRequest): Observable<BeaMessage> {
-    const body = {
-      recipientSafeId: req.recipientSafeId,
-      subject: req.subject,
-      body: req.body,
-      referenceNumber: req.referenceNumber,
-      referenceJustice: req.referenceJustice,
-      attachments: req.attachments.map((a) => ({ name: a.name, content: a.content })),
-      legalAuthorityCode: req.legalAuthorityCode,
-      priorityCode: req.priorityCode,
-      eebRequested: req.eebRequested,
-      confidential: req.confidential,
-    };
-    return this.http.post<MessageDto>(`${BEA_V8}/postboxes/${enc(safeId)}/messages`, body).pipe(map(toMessage));
+    return this.http.post<MessageDto>(`${BEA_V8}/postboxes/${enc(safeId)}/messages`, toSendBody(req)).pipe(map(toMessage));
+  }
+
+  /** Saves a beA message as a draft (recipient optional); returns the created draft id. */
+  saveDraft(safeId: string, req: BeaSendRequest): Observable<string> {
+    return this.http.post(`${BEA_V8}/postboxes/${enc(safeId)}/messages/draft`,
+      { ...toSendBody(req), messageType: '' }, { responseType: 'text' });
+  }
+
+  /** Process cards (Laufzettel — the OSCI delivery protocol) for a message; [] on error. */
+  getProcessCards(safeId: string, messageId: string): Observable<BeaProcessCard[]> {
+    return this.http
+      .get<ProcessCardDto[]>(`${BEA_V8}/postboxes/${enc(safeId)}/messages/${enc(messageId)}/processcards`)
+      .pipe(
+        map((rows) => (rows ?? []).map((c) => ({
+          entries: (c.entries ?? []).map((e) => ({ code: e.code ?? '', text: e.text ?? '' })),
+          osciMessage: c.osciMessage ?? '', exceptionMessage: c.exceptionMessage ?? '', success: !!c.success,
+        }))),
+        catchError(() => of([])),
+      );
   }
 
   private eebReasons$?: Observable<BeaListItem[]>;
@@ -323,6 +339,22 @@ export class BeaService {
       { senderSafeId: safeId, recipientSafeId, code, comment },
     ).pipe(map(toMessage));
   }
+}
+
+/** Maps a send/draft request to the server payload shared by both endpoints. */
+function toSendBody(req: BeaSendRequest): Record<string, unknown> {
+  return {
+    recipientSafeId: req.recipientSafeId,
+    subject: req.subject,
+    body: req.body,
+    referenceNumber: req.referenceNumber,
+    referenceJustice: req.referenceJustice,
+    attachments: req.attachments.map((a) => ({ name: a.name, content: a.content })),
+    legalAuthorityCode: req.legalAuthorityCode,
+    priorityCode: req.priorityCode,
+    eebRequested: req.eebRequested,
+    confidential: req.confidential,
+  };
 }
 
 function toIdentity(dto: IdentityDto): BeaIdentity {
@@ -416,14 +448,27 @@ function toMessage(dto: MessageDto): BeaMessage {
   };
 }
 
+/**
+ * Maps an attachment carried inside a message. Only metadata is kept — a message's inline
+ * `content` is a raw byte[] that JSON serializes inconsistently, so bytes are always fetched on
+ * demand via {@link BeaService.getAttachment} (which returns a Base64 `contentBase64`).
+ */
 function toAttachment(dto: AttachmentDto): BeaAttachment {
   return {
     name: dto.name ?? '',
     alias: dto.alias ?? '',
     type: dto.type ?? 10,
     size: dto.size ?? 0,
-    content: dto.content ?? null,
+    content: null,
     technicalAttachment: !!dto.technicalAttachment,
+  };
+}
+
+/** Maps the on-demand attachment endpoint's response, reading the Base64 `contentBase64` field. */
+function toAttachmentContent(dto: AttachmentDto): BeaAttachment {
+  return {
+    ...toAttachment(dto),
+    content: dto.contentBase64 ?? null,
   };
 }
 

@@ -4,7 +4,7 @@ import {
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { BeaService } from './bea.service';
-import { BeaListItem } from './bea.models';
+import { BeaListItem, BeaMessage } from './bea.models';
 
 /** Which eEB reply this dialog sends. */
 export type EebMode = 'confirm' | 'reject';
@@ -112,8 +112,8 @@ export class BeaEebDialogComponent implements OnInit {
   readonly eebId = input.required<string>();
   readonly mode = input.required<EebMode>();
 
-  /** Emitted after the eEB reply was sent successfully. */
-  readonly done = output<void>();
+  /** Emitted with the sent eEB reply message after it was sent successfully. */
+  readonly done = output<BeaMessage>();
   readonly closed = output<void>();
 
   protected readonly date = signal(today());
@@ -141,7 +141,7 @@ export class BeaEebDialogComponent implements OnInit {
     if (this.sending() || !this.canSubmit()) { return; }
     this.error.set(null);
     this.sending.set(true);
-    const done = () => { this.sending.set(false); this.done.emit(); };
+    const done = (sent: BeaMessage) => { this.sending.set(false); this.done.emit(sent); };
     const fail = () => { this.sending.set(false); this.error.set(this.transloco.translate('beaEeb.error')); };
 
     if (this.mode() === 'confirm') {

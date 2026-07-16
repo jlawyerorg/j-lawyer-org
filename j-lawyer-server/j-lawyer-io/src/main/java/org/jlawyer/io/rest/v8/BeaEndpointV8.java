@@ -38,6 +38,7 @@ import org.jlawyer.io.rest.v8.pojo.RestfulBeaEebRejectionV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulBeaCaseSuggestionRequestV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulBeaEebRenderRequestV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulBeaExportV8;
+import org.jlawyer.io.rest.v8.pojo.RestfulBeaAttachmentV8;
 import org.jlawyer.io.rest.v7.pojo.RestfulCaseSuggestionsV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulSuggestedCaseV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulSuggestedContactV7;
@@ -739,6 +740,37 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             BeaServiceLocal bea = (BeaServiceLocal) ic.lookup(BEA_SERVICE_JNDI);
             BeaAttachment attachment = bea.getAttachmentContent(safeId, messageId, attachmentName);
             return Response.ok(attachment).build();
+        } catch (Exception ex) {
+            log.error("can not get attachment " + attachmentName + " for message " + messageId + " in " + safeId, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Retrieves the content of a single attachment with the content Base64-encoded. This is a
+     * variant of {@link #getAttachmentContent(String, String, String)} intended for browser clients:
+     * it returns the content as a Base64 {@code String} ({@code contentBase64}) rather than a raw
+     * {@code byte[]}, which is serialized inconsistently across JSON providers and cannot be decoded
+     * reliably in JavaScript. The response therefore carries only one copy of the content.
+     *
+     * @param safeId the Safe-ID of the postbox
+     * @param messageId the message ID
+     * @param attachmentName the name of the attachment
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/postboxes/{safeId}/messages/{messageId}/attachments/{attachmentName}/base64")
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="Retrieves the content of a single attachment, Base64-encoded (for browser clients).", response=RestfulBeaAttachmentV8.class)
+    public Response getAttachmentContentBase64(@PathParam("safeId") String safeId, @PathParam("messageId") String messageId, @PathParam("attachmentName") String attachmentName) {
+        try {
+            InitialContext ic = new InitialContext();
+            BeaServiceLocal bea = (BeaServiceLocal) ic.lookup(BEA_SERVICE_JNDI);
+            BeaAttachment attachment = bea.getAttachmentContent(safeId, messageId, attachmentName);
+            return Response.ok(RestfulBeaAttachmentV8.fromBea(attachment)).build();
         } catch (Exception ex) {
             log.error("can not get attachment " + attachmentName + " for message " + messageId + " in " + safeId, ex);
             return Response.serverError().build();

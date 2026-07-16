@@ -3,7 +3,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
-import { base64ToBytes } from '../shared/document-preview.models';
+import { base64ToBytes, PreviewDoc } from '../shared/document-preview.models';
+import { DocumentPreviewComponent } from '../shared/document-preview.component';
 import { CaseSuggestions } from '../communication/email.models';
 import { BeaService } from './bea.service';
 import { BeaComposeComponent } from './bea-compose.component';
@@ -11,7 +12,7 @@ import { BeaBulkSaveComponent, TargetCase } from './bea-bulk-save.component';
 import { BeaEebDialogComponent, EebMode } from './bea-eeb-dialog.component';
 import {
   BeaAttachment, BeaComposeMode, BeaFolder, BeaFolderNode, beaFolderOrder, BeaMessage, BeaMessageHeader,
-  BeaRestriction, BEA_RESTRICTIONS, Postbox,
+  BeaProcessCard, BeaRestriction, BEA_RESTRICTIONS, Postbox,
 } from './bea.models';
 
 /** A postbox header or an (indented) folder row in the left navigation. */
@@ -40,7 +41,7 @@ interface PostboxFolders {
   selector: 'jl-bea',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoModule, IconComponent, RouterLink, BeaComposeComponent, BeaBulkSaveComponent, BeaEebDialogComponent],
+  imports: [TranslocoModule, IconComponent, RouterLink, BeaComposeComponent, BeaBulkSaveComponent, BeaEebDialogComponent, DocumentPreviewComponent],
   template: `
     <div class="bea" [class.show-reader]="selectedId()"
          [class.m-folders]="mobilePane() === 'folders'"
@@ -298,11 +299,16 @@ interface PostboxFolders {
                   <h4>{{ 'bea.documents' | transloco }} ({{ documents().length }})</h4>
                   <ul>
                     @for (a of documents(); track a.name) {
-                      <li>
-                        <button type="button" class="att" [disabled]="downloadingAtt() === a.name" (click)="download(a)">
-                          <jl-icon name="download" [size]="14" />
+                      <li class="att-row">
+                        <button type="button" class="att" [disabled]="viewingAtt() === a.name" (click)="view(a)"
+                                [title]="'bea.view' | transloco">
+                          <jl-icon name="eye" [size]="14" />
                           <span class="att-name">{{ a.alias || a.name }}</span>
                           <span class="att-size">{{ formatSize(a.size) }}</span>
+                        </button>
+                        <button type="button" class="att-dl" [disabled]="downloadingAtt() === a.name" (click)="download(a)"
+                                [title]="'bea.download' | transloco" [attr.aria-label]="'bea.download' | transloco">
+                          <jl-icon name="download" [size]="14" />
                         </button>
                       </li>
                     }
@@ -315,17 +321,24 @@ interface PostboxFolders {
                   <h4>{{ 'bea.technical' | transloco }} ({{ technical().length }})</h4>
                   <ul>
                     @for (a of technical(); track a.name) {
-                      <li>
-                        <button type="button" class="att tech" [disabled]="downloadingAtt() === a.name" (click)="download(a)">
-                          <jl-icon name="download" [size]="14" />
+                      <li class="att-row">
+                        <button type="button" class="att tech" [disabled]="viewingAtt() === a.name" (click)="view(a)"
+                                [title]="'bea.view' | transloco">
+                          <jl-icon name="eye" [size]="14" />
                           <span class="att-name">{{ a.alias || a.name }}</span>
                           <span class="att-size">{{ formatSize(a.size) }}</span>
+                        </button>
+                        <button type="button" class="att-dl tech" [disabled]="downloadingAtt() === a.name" (click)="download(a)"
+                                [title]="'bea.download' | transloco" [attr.aria-label]="'bea.download' | transloco">
+                          <jl-icon name="download" [size]="14" />
                         </button>
                       </li>
                     }
                   </ul>
                 </div>
               }
+
+              @if (attError()) { <p class="att-error">{{ attError() }}</p> }
 
               @if (msg.journal.length) {
                 <div class="atts">
@@ -352,6 +365,35 @@ interface PostboxFolders {
                   </div>
                 </div>
               }
+
+              @if (processCards().length) {
+                <div class="atts">
+                  <h4>{{ 'bea.processCards' | transloco }} ({{ processCards().length }})</h4>
+                  @for (pc of processCards(); track $index) {
+                    <div class="pcard">
+                      <div class="pcard-head">
+                        <span class="pcard-status" [class.ok]="pc.success" [class.bad]="!pc.success">
+                          <jl-icon [name]="pc.success ? 'check' : 'close'" [size]="12" />
+                          {{ (pc.success ? 'bea.pcSuccess' : 'bea.pcFailed') | transloco }}
+                        </span>
+                        @if (pc.osciMessage) {
+                          <button type="button" class="pcard-xml-btn" (click)="xmlView.set(pc.osciMessage)">
+                            <jl-icon name="file-text" [size]="12" /> {{ 'bea.pcShowXml' | transloco }}
+                          </button>
+                        }
+                      </div>
+                      @if (pc.entries.length) {
+                        <ul class="pcard-entries">
+                          @for (e of pc.entries; track $index) {
+                            <li><span class="pcard-code">{{ e.code }}</span>{{ e.text }}</li>
+                          }
+                        </ul>
+                      }
+                      @if (pc.exceptionMessage) { <p class="pcard-error">{{ pc.exceptionMessage }}</p> }
+                    </div>
+                  }
+                </div>
+              }
             }
           </div>
         } @else {
@@ -362,11 +404,11 @@ interface PostboxFolders {
 
     @if (compose(); as c) {
       <jl-bea-compose [senderSafeId]="sendableSafeId()!" [senderLabel]="senderLabel()" [mode]="c.mode" [seed]="c.seed"
-                      (sent)="onSent()" (closed)="compose.set(null)" />
+                      (sent)="onSent()" (draftSaved)="onDraftSaved()" (closed)="compose.set(null)" />
     }
 
-    @if (saveOpen() && message() && selectedSafeId()) {
-      <jl-bea-bulk-save [safeId]="selectedSafeId()!" [message]="message()!" [suggestions]="suggestions()"
+    @if (saveOpen() && saveMessage() && selectedSafeId()) {
+      <jl-bea-bulk-save [safeId]="selectedSafeId()!" [message]="saveMessage()!" [suggestions]="suggestions()"
                         [preselect]="savePreselect()"
                         (saved)="onSavedToCase()" (closed)="saveOpen.set(false)" />
     }
@@ -375,8 +417,29 @@ interface PostboxFolders {
       @if (message(); as msg) {
         <jl-bea-eeb-dialog [safeId]="selectedSafeId()!" [messageId]="msg.id" [recipientSafeId]="msg.senderSafeId"
                            [eebId]="msg.eebId" [mode]="m"
-                           (done)="onEebDone()" (closed)="eebMode.set(null)" />
+                           (done)="onEebDone($event)" (closed)="eebMode.set(null)" />
       }
+    }
+
+    @if (xmlView(); as xml) {
+      <div class="xmlv-backdrop" (click)="xmlView.set(null)"></div>
+      <div class="xmlv-dialog" role="dialog" aria-modal="true">
+        <header class="xmlv-head">
+          <h2>{{ 'bea.pcXmlTitle' | transloco }}</h2>
+          <button type="button" class="icon-btn" (click)="xmlView.set(null)" [attr.aria-label]="'bea.pcClose' | transloco">
+            <jl-icon name="close" [size]="18" />
+          </button>
+        </header>
+        <div class="xmlv-body"><pre>{{ xml }}</pre></div>
+        <footer class="xmlv-foot">
+          <button type="button" class="btn-ghost" (click)="copyXml(xml)">{{ (xmlCopied() ? 'bea.pcCopied' : 'bea.pcCopy') | transloco }}</button>
+          <button type="button" class="btn-ghost" (click)="xmlView.set(null)">{{ 'bea.pcClose' | transloco }}</button>
+        </footer>
+      </div>
+    }
+
+    @if (previewDoc(); as pd) {
+      <jl-document-preview [doc]="pd" [inlineContent]="previewContent()" (closed)="closePreview()" />
     }
   `,
   styleUrl: './bea.component.css',
@@ -418,12 +481,26 @@ export class BeaComponent {
   protected readonly acting = signal(false);
   protected readonly moveOpen = signal(false);
   protected readonly downloadingAtt = signal<string | null>(null);
+  /** The attachment currently being fetched for preview (by name), for the button spinner/disable state. */
+  protected readonly viewingAtt = signal<string | null>(null);
+  /** Attachment being previewed in the overlay, plus its already-fetched Base64 bytes; null when closed. */
+  protected readonly previewDoc = signal<PreviewDoc | null>(null);
+  protected readonly previewContent = signal<string | null>(null);
+  /** Transient error shown under the attachment lists when a view/download fails. */
+  protected readonly attError = signal<string | null>(null);
 
   /** Composer state (new/reply/forward), or null when closed. `seed` is the original for reply/forward. */
   protected readonly compose = signal<{ mode: BeaComposeMode; seed: BeaMessage | null } | null>(null);
   /** Whether the save-to-case dialog is open, plus an optional case preselected from a suggestion chip. */
   protected readonly saveOpen = signal(false);
   protected readonly savePreselect = signal<TargetCase | null>(null);
+  /** The message the save-to-case dialog operates on (the opened message, or a sent eEB response). */
+  protected readonly saveMessage = signal<BeaMessage | null>(null);
+  /** Process cards (Laufzettel) for the opened message; loaded lazily. */
+  protected readonly processCards = signal<BeaProcessCard[]>([]);
+  /** The OSCI XML currently shown in the modal viewer, or null when closed (it can be very long). */
+  protected readonly xmlView = signal<string | null>(null);
+  protected readonly xmlCopied = signal(false);
   /** Server-computed case/contact suggestions for the opened message. */
   protected readonly suggestions = signal<CaseSuggestions | null>(null);
   /** Open eEB reply dialog mode ('confirm' | 'reject'), or null when closed. */
@@ -563,6 +640,8 @@ export class BeaComponent {
     this.messageLoading.set(true);
     this.messageError.set(false);
     this.message.set(null);
+    this.attError.set(null);
+    this.closePreview();
     this.resetBody();
     this.api.getMessage(sid, id, true).subscribe({
       next: (msg) => {
@@ -570,6 +649,7 @@ export class BeaComponent {
         this.message.set(msg);
         this.renderBody(msg);
         this.loadSuggestions(msg, seq);
+        this.loadProcessCards(sid, id, seq);
         this.messageLoading.set(false);
       },
       error: () => {
@@ -630,9 +710,11 @@ export class BeaComponent {
     });
   }
 
+  /** Downloads an attachment, fetching its bytes on demand when the message carried only metadata. */
   protected download(a: BeaAttachment): void {
     const sid = this.selectedSafeId(); const id = this.selectedId();
     if (!sid || !id) { return; }
+    this.attError.set(null);
     if (a.content) {
       triggerDownload(bytesBlob(a.content), a.alias || a.name);
       return;
@@ -640,11 +722,52 @@ export class BeaComponent {
     this.downloadingAtt.set(a.name);
     this.api.getAttachment(sid, id, a.name).subscribe({
       next: (full) => {
-        if (full.content) { triggerDownload(bytesBlob(full.content), full.alias || full.name || a.name); }
         this.downloadingAtt.set(null);
+        if (full.content) {
+          triggerDownload(bytesBlob(full.content), full.alias || full.name || a.name);
+        } else {
+          this.attError.set(this.transloco.translate('bea.attError', { name: a.alias || a.name }));
+        }
       },
-      error: () => this.downloadingAtt.set(null),
+      error: () => {
+        this.downloadingAtt.set(null);
+        this.attError.set(this.transloco.translate('bea.attError', { name: a.alias || a.name }));
+      },
     });
+  }
+
+  /** Opens an attachment in the preview overlay, fetching its bytes on demand if not already inline. */
+  protected view(a: BeaAttachment): void {
+    const sid = this.selectedSafeId(); const id = this.selectedId();
+    if (!sid || !id) { return; }
+    this.attError.set(null);
+    const name = a.alias || a.name;
+    const open = (content: string) => {
+      this.previewContent.set(content);
+      this.previewDoc.set({ id: a.name, name, ext: extOf(name) });
+      this.viewingAtt.set(null);
+    };
+    if (a.content) { open(a.content); return; }
+    this.viewingAtt.set(a.name);
+    this.api.getAttachment(sid, id, a.name).subscribe({
+      next: (full) => {
+        if (full.content) {
+          open(full.content);
+        } else {
+          this.viewingAtt.set(null);
+          this.attError.set(this.transloco.translate('bea.attError', { name }));
+        }
+      },
+      error: () => {
+        this.viewingAtt.set(null);
+        this.attError.set(this.transloco.translate('bea.attError', { name }));
+      },
+    });
+  }
+
+  protected closePreview(): void {
+    this.previewDoc.set(null);
+    this.previewContent.set(null);
   }
 
   protected refresh(): void {
@@ -657,8 +780,13 @@ export class BeaComponent {
     this.selectedId.set(null);
     this.message.set(null);
     this.suggestions.set(null);
+    this.processCards.set([]);
+    this.xmlView.set(null);
+    this.closePreview();
+    this.attError.set(null);
     this.saveOpen.set(false);
     this.savePreselect.set(null);
+    this.saveMessage.set(null);
     this.eebMode.set(null);
     this.moveOpen.set(false);
     this.mobilePane.set('list');
@@ -682,6 +810,23 @@ export class BeaComponent {
     });
   }
 
+  /** Lazily fetches the message's process cards (Laufzettel), best-effort. */
+  private loadProcessCards(safeId: string, messageId: string, seq: number): void {
+    this.processCards.set([]);
+    this.api.getProcessCards(safeId, messageId).subscribe({
+      next: (cards) => { if (seq === this.msgSeq) { this.processCards.set(cards); } },
+      error: () => { /* best-effort */ },
+    });
+  }
+
+  /** Copies the OSCI XML shown in the modal to the clipboard (best-effort). */
+  protected copyXml(xml: string): void {
+    navigator.clipboard?.writeText(xml).then(
+      () => { this.xmlCopied.set(true); setTimeout(() => this.xmlCopied.set(false), 2000); },
+      () => { /* clipboard unavailable */ },
+    );
+  }
+
   protected composeNew(): void {
     if (!this.sendableSafeId()) { return; }
     this.compose.set({ mode: 'new', seed: null });
@@ -702,9 +847,17 @@ export class BeaComponent {
     this.loadMessages();
   }
 
-  /** Opens the save-to-case dialog, optionally with a case preselected (from a suggestion chip). */
+  /** Called after a draft is saved: close the composer and refresh (the draft appears in Drafts). */
+  protected onDraftSaved(): void {
+    this.compose.set(null);
+    this.loadMessages();
+  }
+
+  /** Opens the save-to-case dialog for the opened message, optionally with a case preselected. */
   protected openSaveToCase(preselect: TargetCase | null): void {
-    if (!this.message()) { return; }
+    const msg = this.message();
+    if (!msg) { return; }
+    this.saveMessage.set(msg);
     this.savePreselect.set(preselect);
     this.saveOpen.set(true);
   }
@@ -720,10 +873,16 @@ export class BeaComponent {
     this.eebMode.set(mode);
   }
 
-  /** After an eEB reply is sent: clear the request flag locally and close the dialog. */
-  protected onEebDone(): void {
+  /**
+   * After an eEB reply is sent: clear the request flag, close the eEB dialog, and offer to save the
+   * sent eEB response (.bea) to a case — mirroring the desktop's saveEebResponse.
+   */
+  protected onEebDone(sent: BeaMessage): void {
     this.eebMode.set(null);
     this.message.update((m) => (m ? { ...m, eebRequested: false } : m));
+    this.saveMessage.set(sent);
+    this.savePreselect.set(null);
+    this.saveOpen.set(true);
   }
 
   // ----- helpers -----
@@ -880,6 +1039,12 @@ function sandboxDoc(html: string): string {
     'color:#16232e;word-break:break-word;} img{max-width:100%;height:auto;} a{color:#0b5cad;} table{border-collapse:collapse;}' +
     'td,th{border:1px solid #ccc;padding:4px 8px;}</style>' +
     `</head><body>${html}</body></html>`;
+}
+
+/** Upper-case file extension of a name (empty when it has none), for preview-kind detection. */
+function extOf(name: string): string {
+  const dot = name.lastIndexOf('.');
+  return dot > 0 && dot < name.length - 1 ? name.slice(dot + 1).toUpperCase() : '';
 }
 
 function bytesBlob(base64: string): Blob {

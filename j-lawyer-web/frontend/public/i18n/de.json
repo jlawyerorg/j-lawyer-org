@@ -938,6 +938,9 @@
     "noBody": "Kein Nachrichtentext.",
     "verifyResult": "Signaturprüfung",
     "documents": "Dokumente",
+    "view": "Anzeigen",
+    "download": "Herunterladen",
+    "attError": "Anhang „{{name}}“ konnte nicht geladen werden.",
     "technical": "Technische Anhänge / VHN",
     "journal": "Nachrichtenjournal",
     "jEvent": "Ereignis",
@@ -978,7 +981,15 @@
       "cases": "Passende Akten",
       "contacts": "Kontakte",
       "archived": "archiviert"
-    }
+    },
+    "processCards": "Laufzettel",
+    "pcSuccess": "erfolgreich",
+    "pcFailed": "fehlgeschlagen",
+    "pcShowXml": "XML anzeigen",
+    "pcXmlTitle": "OSCI-Nachricht (XML)",
+    "pcCopy": "Kopieren",
+    "pcCopied": "Kopiert ✓",
+    "pcClose": "Schließen"
   },
   "beaCompose": {
     "new": "Verfassen",
@@ -1012,7 +1023,10 @@
     "sending": "Wird gesendet …",
     "error": "Die Nachricht konnte nicht gesendet werden.",
     "quoteHeader": "Am {{from}} schrieb:",
-    "forwardHeader": "Weitergeleitete Nachricht"
+    "forwardHeader": "Weitergeleitete Nachricht",
+    "saveDraft": "Als Entwurf speichern",
+    "savingDraft": "Entwurf wird gespeichert …",
+    "draftError": "Der Entwurf konnte nicht gespeichert werden."
   },
   "beaEeb": {
     "requested": "Für diese Nachricht wurde ein Empfangsbekenntnis (eEB) angefordert.",

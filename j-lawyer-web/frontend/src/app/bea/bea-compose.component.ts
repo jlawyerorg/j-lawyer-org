@@ -142,6 +142,9 @@ interface OutAttachment { name: string; content: string; size: number; }
         <button type="button" class="btn-ghost" [disabled]="sending()" (click)="tryClose()">
           {{ 'beaCompose.cancel' | transloco }}
         </button>
+        <button type="button" class="btn-ghost" [disabled]="sending() || !canSaveDraft()" (click)="saveDraft()">
+          {{ (savingDraft() ? 'beaCompose.savingDraft' : 'beaCompose.saveDraft') | transloco }}
+        </button>
         <button type="button" class="btn-primary" [disabled]="sending() || !canSend()" (click)="send()">
           <jl-icon name="send" [size]="15" />
           <span>{{ (sending() ? 'beaCompose.sending' : 'beaCompose.send') | transloco }}</span>
@@ -161,6 +164,7 @@ export class BeaComposeComponent implements OnInit {
   readonly seed = input<BeaMessage | null>(null);
 
   readonly sent = output<void>();
+  readonly draftSaved = output<void>();
   readonly closed = output<void>();
 
   protected readonly recipient = signal<Recipient | null>(null);
@@ -175,6 +179,7 @@ export class BeaComposeComponent implements OnInit {
   protected readonly priorities = signal<BeaListItem[]>([]);
 
   protected readonly sending = signal(false);
+  protected readonly savingDraft = signal(false);
   protected readonly loadingAtt = signal(false);
   protected readonly error = signal<string | null>(null);
 
@@ -197,6 +202,9 @@ export class BeaComposeComponent implements OnInit {
   protected readonly canSearch = computed(() =>
     !!(this.qName().trim() || this.qCity().trim() || this.qZip().trim()));
   protected readonly canSend = computed(() => !!this.recipient() && !!this.subject().trim());
+  /** A draft may be saved with just a subject or body — no recipient required. */
+  protected readonly canSaveDraft = computed(() =>
+    !this.sending() && !!(this.subject().trim() || this.body().trim() || this.recipient()));
 
   ngOnInit(): void {
     this.api.messagePriorities().subscribe((p) => this.priorities.set(p));
@@ -289,13 +297,10 @@ export class BeaComposeComponent implements OnInit {
 
   // ----- send -----
 
-  protected send(): void {
-    const r = this.recipient();
-    if (this.sending() || !r || !this.canSend()) { return; }
-    this.error.set(null);
-    this.sending.set(true);
-    const req: BeaSendRequest = {
-      recipientSafeId: r.safeId,
+  /** Assembles the send/draft request from the current form state. */
+  private buildRequest(): BeaSendRequest {
+    return {
+      recipientSafeId: this.recipient()?.safeId ?? '',
       subject: this.subject().trim(),
       body: this.body(),
       referenceNumber: this.referenceNumber().trim(),
@@ -306,9 +311,29 @@ export class BeaComposeComponent implements OnInit {
       eebRequested: this.eebRequested(),
       confidential: this.confidential(),
     };
-    this.api.sendMessage(this.senderSafeId(), req).subscribe({
+  }
+
+  protected send(): void {
+    if (this.sending() || !this.recipient() || !this.canSend()) { return; }
+    this.error.set(null);
+    this.sending.set(true);
+    this.api.sendMessage(this.senderSafeId(), this.buildRequest()).subscribe({
       next: () => { this.sending.set(false); this.sent.emit(); },
       error: () => { this.sending.set(false); this.error.set(this.transloco.translate('beaCompose.error')); },
+    });
+  }
+
+  protected saveDraft(): void {
+    if (this.sending() || !this.canSaveDraft()) { return; }
+    this.error.set(null);
+    this.sending.set(true);
+    this.savingDraft.set(true);
+    this.api.saveDraft(this.senderSafeId(), this.buildRequest()).subscribe({
+      next: () => { this.sending.set(false); this.savingDraft.set(false); this.draftSaved.emit(); },
+      error: () => {
+        this.sending.set(false); this.savingDraft.set(false);
+        this.error.set(this.transloco.translate('beaCompose.draftError'));
+      },
     });
   }
 

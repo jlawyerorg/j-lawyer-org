@@ -938,6 +938,9 @@
     "noBody": "No message body.",
     "verifyResult": "Signature verification",
     "documents": "Documents",
+    "view": "View",
+    "download": "Download",
+    "attError": "Attachment \"{{name}}\" could not be loaded.",
     "technical": "Technical attachments / VHN",
     "journal": "Message journal",
     "jEvent": "Event",
@@ -978,7 +981,15 @@
       "cases": "Matching cases",
       "contacts": "Contacts",
       "archived": "archived"
-    }
+    },
+    "processCards": "Process cards",
+    "pcSuccess": "success",
+    "pcFailed": "failed",
+    "pcShowXml": "Show XML",
+    "pcXmlTitle": "OSCI message (XML)",
+    "pcCopy": "Copy",
+    "pcCopied": "Copied ✓",
+    "pcClose": "Close"
   },
   "beaCompose": {
     "new": "Compose",
@@ -1012,7 +1023,10 @@
     "sending": "Sending …",
     "error": "The message could not be sent.",
     "quoteHeader": "On {{from}} wrote:",
-    "forwardHeader": "Forwarded message"
+    "forwardHeader": "Forwarded message",
+    "saveDraft": "Save as draft",
+    "savingDraft": "Saving draft …",
+    "draftError": "The draft could not be saved."
   },
   "beaEeb": {
     "requested": "An electronic return receipt (eEB) was requested for this message.",

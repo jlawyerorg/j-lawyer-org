@@ -40,6 +40,7 @@ public interface BeaEndpointLocalV8 {
     Response searchMessageIds(String safeId, long folderId, BeaMessageFilter filter);
     Response getMessage(String safeId, String messageId, Boolean includeAttachments);
     Response getAttachmentContent(String safeId, String messageId, String attachmentName);
+    Response getAttachmentContentBase64(String safeId, String messageId, String attachmentName);
     Response getMessageHeader(String safeId, String messageId);
     Response sendMessage(String safeId, BeaSendMessageRequest request);
     Response saveDraft(String safeId, BeaSaveDraftRequest request);
