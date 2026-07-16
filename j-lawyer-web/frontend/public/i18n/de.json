@@ -827,6 +827,7 @@
     },
     "suggest": {
       "cases": "Passende Akten",
+      "contacts": "Adressbuch",
       "phones": "Rufnummern",
       "archived": "Archiv"
     },

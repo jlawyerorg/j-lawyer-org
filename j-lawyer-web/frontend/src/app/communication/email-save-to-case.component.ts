@@ -15,7 +15,7 @@ import { CaseSuggestions, MailMessage } from './email.models';
 type SaveMode = 'full' | 'separate' | 'attachmentsOnly';
 
 /** A case chosen as the save target (from a suggestion or a search hit). */
-interface TargetCase { id: string; fileNumber: string; name: string; }
+export interface TargetCase { id: string; fileNumber: string; name: string; }
 
 /**
  * Modal for storing an opened email in a case as document(s). Mirrors the desktop client's
@@ -121,6 +121,8 @@ export class EmailSaveToCaseComponent implements OnInit {
   readonly mailboxId = input.required<string>();
   readonly message = input.required<MailMessage>();
   readonly suggestions = input<CaseSuggestions | null>(null);
+  /** Preselected target case (e.g. when opened from a specific suggestion chip). */
+  readonly preselect = input<TargetCase | null>(null);
 
   readonly saved = output<void>();
   readonly closed = output<void>();
@@ -149,7 +151,9 @@ export class EmailSaveToCaseComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Preselect when there is exactly one suggested case — the common "obvious match" case.
+    // An explicit preselection (from a chip) wins; otherwise preselect a lone obvious match.
+    const pre = this.preselect();
+    if (pre) { this.target.set(pre); return; }
     const cs = this.suggestedCases();
     if (cs.length === 1) {
       this.target.set({ id: cs[0].id, fileNumber: cs[0].fileNumber, name: cs[0].name });

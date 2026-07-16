@@ -6,7 +6,7 @@ import { IconComponent } from '../shared/icon.component';
 import { base64ToBytes } from '../shared/document-preview.models';
 import { EmailService } from './email.service';
 import { EmailComposeComponent } from './email-compose.component';
-import { EmailSaveToCaseComponent } from './email-save-to-case.component';
+import { EmailSaveToCaseComponent, TargetCase } from './email-save-to-case.component';
 import {
   CaseSuggestions, ComposeMode, FolderNode, MailScope, Mailbox, MailFolder, MailMessage, PAGE_SIZE,
   TIME_RANGES, TimeRange, wellKnownOrder,
@@ -188,7 +188,7 @@ interface MailboxFolders {
                       [title]="'compose.forward' | transloco">
                 <jl-icon name="forward" [size]="15" />
               </button>
-              <button type="button" class="icon-btn" [disabled]="acting() || !message()" (click)="saveToCaseOpen.set(true)"
+              <button type="button" class="icon-btn" [disabled]="acting() || !message()" (click)="openSaveToCase(null)"
                       [title]="'saveToCase.title' | transloco">
                 <jl-icon name="inbox" [size]="15" />
               </button>
@@ -238,19 +238,39 @@ interface MailboxFolders {
               </div>
 
               @if (suggestions(); as sg) {
-                @if (sg.suggestedCases.length || sg.phoneNumbers.length) {
+                @if (sg.suggestedCases.length || sg.contacts.length || sg.phoneNumbers.length) {
                   <div class="suggest">
                     @if (sg.suggestedCases.length) {
                       <div class="suggest-group">
                         <span class="suggest-label">{{ 'email.suggest.cases' | transloco }}</span>
                         <div class="suggest-items">
                           @for (c of sg.suggestedCases; track c.id) {
-                            <a class="suggest-case" [routerLink]="['/cases', c.id]"
-                               [title]="c.name" (click)="mobilePane.set('reader')">
-                              <jl-icon name="cases" [size]="13" />
-                              <span class="sc-fn">{{ c.fileNumber }}</span>
-                              <span class="sc-name">{{ c.name }}</span>
-                              @if (c.archived) { <span class="sc-arch">{{ 'email.suggest.archived' | transloco }}</span> }
+                            <span class="suggest-case">
+                              <a class="sc-open" [routerLink]="['/cases', c.id]"
+                                 [title]="c.name" (click)="mobilePane.set('reader')">
+                                <jl-icon name="cases" [size]="13" />
+                                <span class="sc-fn">{{ c.fileNumber }}</span>
+                                <span class="sc-name">{{ c.name }}</span>
+                                @if (c.archived) { <span class="sc-arch">{{ 'email.suggest.archived' | transloco }}</span> }
+                              </a>
+                              <button type="button" class="sc-save"
+                                      (click)="openSaveToCase({ id: c.id, fileNumber: c.fileNumber, name: c.name })"
+                                      [title]="'saveToCase.title' | transloco" [attr.aria-label]="'saveToCase.title' | transloco">
+                                <jl-icon name="inbox" [size]="13" />
+                              </button>
+                            </span>
+                          }
+                        </div>
+                      </div>
+                    }
+                    @if (sg.contacts.length) {
+                      <div class="suggest-group">
+                        <span class="suggest-label">{{ 'email.suggest.contacts' | transloco }}</span>
+                        <div class="suggest-items">
+                          @for (ct of sg.contacts; track ct.id) {
+                            <a class="suggest-contact" [routerLink]="['/contacts', ct.id]" [title]="ct.email">
+                              <jl-icon name="contacts" [size]="12" />
+                              <span class="sc-name">{{ ct.displayName }}</span>
                             </a>
                           }
                         </div>
@@ -340,6 +360,7 @@ interface MailboxFolders {
 
     @if (saveToCaseOpen() && message() && selectedMailboxId()) {
       <jl-email-save-to-case [mailboxId]="selectedMailboxId()!" [message]="message()!" [suggestions]="suggestions()"
+                             [preselect]="saveToCasePreselect()"
                              (saved)="onSavedToCase()" (closed)="saveToCaseOpen.set(false)" />
     }
   `,
@@ -390,8 +411,9 @@ export class EmailComponent {
 
   /** Open composer (new/reply/forward), or null when closed. `seed` is the original for reply/forward. */
   protected readonly compose = signal<{ mode: ComposeMode; seed: MailMessage | null } | null>(null);
-  /** Whether the "save to case" dialog is open for the current message. */
+  /** Whether the "save to case" dialog is open, and an optional case preselected from a chip. */
   protected readonly saveToCaseOpen = signal(false);
+  protected readonly saveToCasePreselect = signal<TargetCase | null>(null);
 
   /** Folder-hide state: id of the folder being hidden/unhidden, and the "manage hidden" dialog. */
   protected readonly folderBusy = signal<string | null>(null);
@@ -734,6 +756,13 @@ export class EmailComponent {
     this.compose.set({ mode, seed: msg });
   }
 
+  /** Opens the save-to-case dialog, optionally with a case preselected (from a suggestion chip). */
+  protected openSaveToCase(preselect: TargetCase | null): void {
+    if (!this.message()) { return; }
+    this.saveToCasePreselect.set(preselect);
+    this.saveToCaseOpen.set(true);
+  }
+
   /** Closes the save-to-case dialog after the email has been stored in the case. */
   protected onSavedToCase(): void {
     this.saveToCaseOpen.set(false);
@@ -751,6 +780,7 @@ export class EmailComponent {
     this.message.set(null);
     this.suggestions.set(null);
     this.saveToCaseOpen.set(false);
+    this.saveToCasePreselect.set(null);
     this.moveOpen.set(false);
     this.revokeBody();
     this.bodyUrl.set(null);

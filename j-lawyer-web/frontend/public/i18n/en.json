@@ -827,6 +827,7 @@
     },
     "suggest": {
       "cases": "Matching cases",
+      "contacts": "Address book",
       "phones": "Phone numbers",
       "archived": "Archived"
     },
