@@ -1,6 +1,7 @@
 import { Route, Routes } from '@angular/router';
 import { MODULES } from './shell/modules';
 import { authGuard } from './core/auth/auth.guard';
+import { roleGuard } from './core/auth/role.guard';
 
 type LoadComponent = NonNullable<Route['loadComponent']>;
 
@@ -25,12 +26,45 @@ const IMPLEMENTED: Record<string, LoadComponent> = {
   reporting: () => import('./reporting/reporting.component').then((c) => c.ReportingComponent),
 };
 
-const moduleRoutes: Routes = MODULES.map((m) => ({
+// 'settings' is not a flat placeholder route — it is a nested layout (tabs) with role-scoped
+// child screens (see settingsRoute below), so it is excluded from the generated module routes.
+const moduleRoutes: Routes = MODULES.filter((m) => m.path !== 'settings').map((m) => ({
   path: m.path,
   loadComponent: IMPLEMENTED[m.path] ?? placeholderLoader,
   data: { labelKey: m.labelKey },
   title: 'j-lawyer',
 }));
+
+/**
+ * The consolidated Settings area: a tab layout with three role-scoped screens. Auth is enforced by
+ * the shell's canActivateChild; the admin/system child routes additionally require a role via
+ * roleGuard (`data.requiredRoles`). The default child is the always-accessible general screen.
+ */
+const settingsRoute: Route = {
+  path: 'settings',
+  loadComponent: () => import('./settings/settings.component').then((c) => c.SettingsComponent),
+  data: { labelKey: 'module.einstellungen' },
+  title: 'j-lawyer',
+  children: [
+    { path: '', pathMatch: 'full', redirectTo: 'general' },
+    {
+      path: 'general',
+      loadComponent: () => import('./settings/general-settings.component').then((c) => c.GeneralSettingsComponent),
+    },
+    {
+      path: 'administration',
+      canActivate: [roleGuard],
+      data: { requiredRoles: ['adminRole'] },
+      loadComponent: () => import('./settings/administration-settings.component').then((c) => c.AdministrationSettingsComponent),
+    },
+    {
+      path: 'system',
+      canActivate: [roleGuard],
+      data: { requiredRoles: ['sysAdminRole'] },
+      loadComponent: () => import('./settings/system-settings.component').then((c) => c.SystemSettingsComponent),
+    },
+  ],
+};
 
 export const routes: Routes = [
   {
@@ -62,6 +96,7 @@ export const routes: Routes = [
         data: { labelKey: 'module.kontakte' },
         title: 'j-lawyer',
       },
+      settingsRoute,
       ...moduleRoutes,
       { path: '**', redirectTo: 'desktop' },
     ],

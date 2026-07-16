@@ -672,14 +672,19 @@ import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 import org.jlawyer.io.rest.v7.pojo.RestfulInvoicePoolV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionTemplateV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceTypeV7;
+import com.jdimension.jlawyer.persistence.InvoicePositionTemplate;
 
 /**
  *
@@ -761,5 +766,294 @@ public class InvoicesEndpointV7 implements InvoicesEndpointLocalV7 {
             return Response.serverError().build();
         }
     }
-    
+
+    /**
+     * Creates a new invoice type (Belegart). Requires administrator permission.
+     *
+     * @param invoiceType the invoice type to create (id is ignored)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/types")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value="Creates a new invoice type (Belegart).", response=RestfulInvoiceTypeV7.class)
+    public Response createInvoiceType(@io.swagger.annotations.ApiParam RestfulInvoiceTypeV7 invoiceType) {
+        try {
+            InitialContext ic = new InitialContext();
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICES);
+            InvoiceType created = invoices.addInvoiceType(invoiceType.toInvoiceType());
+            return Response.ok(RestfulInvoiceTypeV7.fromInvoiceType(created)).build();
+        } catch (Exception ex) {
+            log.error("can not create invoice type", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates an existing invoice type (Belegart). Requires administrator permission.
+     *
+     * @param invoiceType the invoice type to update (identified by id)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/types")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value="Updates an existing invoice type (Belegart).", response=RestfulInvoiceTypeV7.class)
+    public Response updateInvoiceType(@io.swagger.annotations.ApiParam RestfulInvoiceTypeV7 invoiceType) {
+        try {
+            InitialContext ic = new InitialContext();
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICES);
+            InvoiceType updated = invoices.updateInvoiceType(invoiceType.toInvoiceType());
+            return Response.ok(RestfulInvoiceTypeV7.fromInvoiceType(updated)).build();
+        } catch (Exception ex) {
+            log.error("can not update invoice type", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Deletes an invoice type (Belegart). Requires administrator permission.
+     *
+     * @param invoiceType the invoice type to delete (identified by id)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @DELETE
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/types")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value="Deletes an invoice type (Belegart).")
+    public Response deleteInvoiceType(@io.swagger.annotations.ApiParam RestfulInvoiceTypeV7 invoiceType) {
+        try {
+            InitialContext ic = new InitialContext();
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICES);
+            invoices.removeInvoiceType(invoiceType.toInvoiceType());
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not delete invoice type", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Creates a new invoice pool (Belegnummernkreis). Requires administrator permission.
+     *
+     * @param invoicePool the invoice pool to create (id is ignored)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/pools")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value="Creates a new invoice pool (Belegnummernkreis).", response=RestfulInvoicePoolV7.class)
+    public Response createInvoicePool(@io.swagger.annotations.ApiParam RestfulInvoicePoolV7 invoicePool) {
+        try {
+            InitialContext ic = new InitialContext();
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICES);
+            InvoicePool created = invoices.addInvoicePool(invoicePool.toInvoicePool());
+            return Response.ok(RestfulInvoicePoolV7.fromInvoicePool(created)).build();
+        } catch (Exception ex) {
+            log.error("can not create invoice pool", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates an existing invoice pool (Belegnummernkreis). Requires administrator permission.
+     *
+     * @param invoicePool the invoice pool to update (identified by id)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/pools")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value="Updates an existing invoice pool (Belegnummernkreis).", response=RestfulInvoicePoolV7.class)
+    public Response updateInvoicePool(@io.swagger.annotations.ApiParam RestfulInvoicePoolV7 invoicePool) {
+        try {
+            InitialContext ic = new InitialContext();
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICES);
+            InvoicePool updated = invoices.updateInvoicePool(invoicePool.toInvoicePool());
+            return Response.ok(RestfulInvoicePoolV7.fromInvoicePool(updated)).build();
+        } catch (Exception ex) {
+            log.error("can not update invoice pool", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Deletes an invoice pool (Belegnummernkreis). Requires administrator permission.
+     *
+     * @param invoicePool the invoice pool to delete (identified by id)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @DELETE
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/pools")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value="Deletes an invoice pool (Belegnummernkreis).")
+    public Response deleteInvoicePool(@io.swagger.annotations.ApiParam RestfulInvoicePoolV7 invoicePool) {
+        try {
+            InitialContext ic = new InitialContext();
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICES);
+            invoices.removeInvoicePool(invoicePool.toInvoicePool());
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not delete invoice pool", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Previews the next invoice numbers a pool would produce for the given (possibly unsaved)
+     * configuration — lets a client validate a numbering pattern before saving.
+     *
+     * @param invoicePool the pool configuration to preview
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/pools/preview")
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="Previews the next invoice numbers for a pool configuration.", response=String.class, responseContainer="List")
+    public Response previewInvoicePool(@io.swagger.annotations.ApiParam RestfulInvoicePoolV7 invoicePool) {
+        try {
+            InitialContext ic = new InitialContext();
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICES);
+            List<String> preview = invoices.previewInvoiceNumbering(invoicePool.toInvoicePool());
+            return Response.ok(preview).build();
+        } catch (Exception ex) {
+            log.error("can not preview invoice pool numbering", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns all invoice position templates (Belegposition-Vorlagen).
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/position-templates")
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="Returns all invoice position templates (Belegposition-Vorlagen).", response=RestfulInvoicePositionTemplateV7.class, responseContainer="List")
+    public Response getInvoicePositionTemplates() {
+        try {
+            InitialContext ic = new InitialContext();
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICES);
+            List<InvoicePositionTemplate> templates = invoices.getAllInvoicePositionTemplates();
+            List<RestfulInvoicePositionTemplateV7> resultList = new ArrayList<>();
+            for (InvoicePositionTemplate t : templates) {
+                resultList.add(RestfulInvoicePositionTemplateV7.fromEntity(t));
+            }
+            return Response.ok(resultList).build();
+        } catch (Exception ex) {
+            log.error("can not get invoice position templates", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Creates a new invoice position template. Requires administrator permission.
+     *
+     * @param template the template to create (id is ignored)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/position-templates")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value="Creates a new invoice position template.", response=RestfulInvoicePositionTemplateV7.class)
+    public Response createInvoicePositionTemplate(@io.swagger.annotations.ApiParam RestfulInvoicePositionTemplateV7 template) {
+        try {
+            InitialContext ic = new InitialContext();
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICES);
+            InvoicePositionTemplate created = invoices.addInvoicePositionTemplate(template.toEntity());
+            return Response.ok(RestfulInvoicePositionTemplateV7.fromEntity(created)).build();
+        } catch (Exception ex) {
+            log.error("can not create invoice position template", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates an existing invoice position template. Requires administrator permission.
+     *
+     * @param template the template to update (identified by id)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/position-templates")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value="Updates an existing invoice position template.", response=RestfulInvoicePositionTemplateV7.class)
+    public Response updateInvoicePositionTemplate(@io.swagger.annotations.ApiParam RestfulInvoicePositionTemplateV7 template) {
+        try {
+            InitialContext ic = new InitialContext();
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICES);
+            InvoicePositionTemplate updated = invoices.updateInvoicePositionTemplate(template.toEntity());
+            return Response.ok(RestfulInvoicePositionTemplateV7.fromEntity(updated)).build();
+        } catch (Exception ex) {
+            log.error("can not update invoice position template", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Deletes an invoice position template. Requires administrator permission.
+     *
+     * @param template the template to delete (identified by id)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @DELETE
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/position-templates")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value="Deletes an invoice position template.")
+    public Response deleteInvoicePositionTemplate(@io.swagger.annotations.ApiParam RestfulInvoicePositionTemplateV7 template) {
+        try {
+            InitialContext ic = new InitialContext();
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICES);
+            invoices.removeInvoicePositionTemplate(template.toEntity());
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not delete invoice position template", ex);
+            return Response.serverError().build();
+        }
+    }
+
 }

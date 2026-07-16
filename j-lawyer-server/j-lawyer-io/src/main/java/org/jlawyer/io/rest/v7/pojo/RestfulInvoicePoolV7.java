@@ -694,8 +694,26 @@ public class RestfulInvoicePoolV7 {
         invoicePool.setPaymentTerm(i.getPaymentTerm());
         invoicePool.setSmallBusiness(i.isSmallBusiness());
         invoicePool.setStartIndex(i.getStartIndex());
-        
+
         return invoicePool;
+    }
+
+    /**
+     * Maps this POJO to an {@link InvoicePool} entity (for create/update/preview).
+     *
+     * @return the entity
+     */
+    public InvoicePool toInvoicePool() {
+        InvoicePool i = new InvoicePool();
+        i.setId(this.id);
+        i.setDisplayName(this.displayName);
+        i.setPattern(this.pattern);
+        i.setManualAdjust(this.manualAdjust);
+        i.setSmallBusiness(this.smallBusiness);
+        i.setStartIndex(this.startIndex);
+        i.setLastIndex(this.lastIndex);
+        i.setPaymentTerm(this.paymentTerm);
+        return i;
     }
 
     /**

@@ -23,6 +23,24 @@ export class AuthService {
     return this._session()?.token ?? null;
   }
 
+  /**
+   * Whether the signed-in user holds a given server role (e.g. 'adminRole', 'sysAdminRole',
+   * 'createOptionGroupRole'). Roles come from the login/refresh response. This gates the UI only —
+   * the server independently enforces every write, so a missing role also yields a 403.
+   */
+  hasRole(role: string): boolean {
+    return this.user()?.roles?.includes(role) ?? false;
+  }
+
+  /** Whether the user holds at least one of the given roles (empty list → true, i.e. no gate). */
+  hasAnyRole(roles: string[]): boolean {
+    if (roles.length === 0) {
+      return true;
+    }
+    const owned = this.user()?.roles ?? [];
+    return roles.some((r) => owned.includes(r));
+  }
+
   login(credentials: Credentials): Observable<AuthSession> {
     return this.backend.login(credentials).pipe(tap((s) => this._session.set(s)));
   }

@@ -685,8 +685,12 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 import org.jlawyer.io.rest.v7.pojo.RestfulDocumentNameTemplateV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulFinanceSettingsV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulFirmProfileV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulMultiValueTagDefinitionV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulOptionV7;
+import com.jdimension.jlawyer.persistence.ServerSettingsBean;
+import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 
 /**
  *
@@ -1007,6 +1011,163 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.serverError().build();
         }
 
+    }
+
+    /**
+     * Returns the firm master data ("Kanzleidaten") — company address, contact details, tax
+     * identifiers and bank accounts, stored as server settings.
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/firm-profile")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @io.swagger.annotations.ApiOperation(value = "Returns the firm master data (company address, contact, tax and bank details).", response = RestfulFirmProfileV7.class)
+    public Response getFirmProfile() {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+
+            RestfulFirmProfileV7 p = new RestfulFirmProfileV7();
+            p.setCompanyName(readSetting(system, ServerSettingsKeys.PROFILE_COMPANYNAME));
+            p.setStreet(readSetting(system, ServerSettingsKeys.PROFILE_COMPANYSTREET));
+            p.setStreet2(readSetting(system, ServerSettingsKeys.PROFILE_COMPANYSTREET2));
+            p.setZipCode(readSetting(system, ServerSettingsKeys.PROFILE_COMPANYZIP));
+            p.setCity(readSetting(system, ServerSettingsKeys.PROFILE_COMPANYCITY));
+            p.setCountry(readSetting(system, ServerSettingsKeys.PROFILE_COMPANYCOUNTRY));
+            p.setPhone(readSetting(system, ServerSettingsKeys.PROFILE_COMPANYPHONE));
+            p.setFax(readSetting(system, ServerSettingsKeys.PROFILE_COMPANYFAX));
+            p.setMobile(readSetting(system, ServerSettingsKeys.PROFILE_COMPANYMOBILE));
+            p.setEmail(readSetting(system, ServerSettingsKeys.PROFILE_COMPANYEMAIL));
+            p.setWebsite(readSetting(system, ServerSettingsKeys.PROFILE_COMPANYWWW));
+            p.setTaxId(readSetting(system, ServerSettingsKeys.PROFILE_COMPANYTAXID));
+            p.setVatId(readSetting(system, ServerSettingsKeys.PROFILE_COMPANYUSTID));
+            p.setBank(readSetting(system, ServerSettingsKeys.PROFILE_COMPANYBANK));
+            p.setBic(readSetting(system, ServerSettingsKeys.PROFILE_COMPANYBANKCODE));
+            p.setIban(readSetting(system, ServerSettingsKeys.PROFILE_COMPANYACCOUNTNO));
+            p.setEscrowBank(readSetting(system, ServerSettingsKeys.PROFILE_COMPANYBANK_AK));
+            p.setEscrowBic(readSetting(system, ServerSettingsKeys.PROFILE_COMPANYBANKCODE_AK));
+            p.setEscrowIban(readSetting(system, ServerSettingsKeys.PROFILE_COMPANYACCOUNTNO_AK));
+            return Response.ok(p).build();
+        } catch (Exception ex) {
+            log.error("can not determine firm profile", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates the firm master data ("Kanzleidaten"). Requires administrator permission.
+     *
+     * @param profile the firm profile to store
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/firm-profile")
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Updates the firm master data. Requires administrator permission.", response = RestfulFirmProfileV7.class)
+    public Response setFirmProfile(@io.swagger.annotations.ApiParam RestfulFirmProfileV7 profile) {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+
+            system.setSetting(ServerSettingsKeys.PROFILE_COMPANYNAME, nz(profile.getCompanyName()));
+            system.setSetting(ServerSettingsKeys.PROFILE_COMPANYSTREET, nz(profile.getStreet()));
+            system.setSetting(ServerSettingsKeys.PROFILE_COMPANYSTREET2, nz(profile.getStreet2()));
+            system.setSetting(ServerSettingsKeys.PROFILE_COMPANYZIP, nz(profile.getZipCode()));
+            system.setSetting(ServerSettingsKeys.PROFILE_COMPANYCITY, nz(profile.getCity()));
+            system.setSetting(ServerSettingsKeys.PROFILE_COMPANYCOUNTRY, nz(profile.getCountry()));
+            system.setSetting(ServerSettingsKeys.PROFILE_COMPANYPHONE, nz(profile.getPhone()));
+            system.setSetting(ServerSettingsKeys.PROFILE_COMPANYFAX, nz(profile.getFax()));
+            system.setSetting(ServerSettingsKeys.PROFILE_COMPANYMOBILE, nz(profile.getMobile()));
+            system.setSetting(ServerSettingsKeys.PROFILE_COMPANYEMAIL, nz(profile.getEmail()));
+            system.setSetting(ServerSettingsKeys.PROFILE_COMPANYWWW, nz(profile.getWebsite()));
+            system.setSetting(ServerSettingsKeys.PROFILE_COMPANYTAXID, nz(profile.getTaxId()));
+            system.setSetting(ServerSettingsKeys.PROFILE_COMPANYUSTID, nz(profile.getVatId()));
+            system.setSetting(ServerSettingsKeys.PROFILE_COMPANYBANK, nz(profile.getBank()));
+            system.setSetting(ServerSettingsKeys.PROFILE_COMPANYBANKCODE, nz(profile.getBic()));
+            system.setSetting(ServerSettingsKeys.PROFILE_COMPANYACCOUNTNO, nz(profile.getIban()));
+            system.setSetting(ServerSettingsKeys.PROFILE_COMPANYBANK_AK, nz(profile.getEscrowBank()));
+            system.setSetting(ServerSettingsKeys.PROFILE_COMPANYBANKCODE_AK, nz(profile.getEscrowBic()));
+            system.setSetting(ServerSettingsKeys.PROFILE_COMPANYACCOUNTNO_AK, nz(profile.getEscrowIban()));
+            return Response.ok(profile).build();
+        } catch (Exception ex) {
+            log.error("can not update firm profile", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns the global finance settings (currently the GiroCode image size in pixels).
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/finance-settings")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @io.swagger.annotations.ApiOperation(value = "Returns global finance settings (GiroCode image size).", response = RestfulFinanceSettingsV7.class)
+    public Response getFinanceSettings() {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            RestfulFinanceSettingsV7 s = new RestfulFinanceSettingsV7();
+            String px = readSetting(system, ServerSettingsKeys.SERVERCONF_FINANCE_GIROCODEPX);
+            if (px != null && !px.isEmpty()) {
+                try {
+                    s.setGiroCodePx(Integer.parseInt(px.trim()));
+                } catch (NumberFormatException nfe) {
+                    log.warn("invalid girocode px setting: " + px);
+                }
+            }
+            return Response.ok(s).build();
+        } catch (Exception ex) {
+            log.error("can not determine finance settings", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates the global finance settings. Requires administrator permission.
+     *
+     * @param settings the finance settings to store
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/finance-settings")
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Updates global finance settings. Requires administrator permission.", response = RestfulFinanceSettingsV7.class)
+    public Response setFinanceSettings(@io.swagger.annotations.ApiParam RestfulFinanceSettingsV7 settings) {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            system.setSetting(ServerSettingsKeys.SERVERCONF_FINANCE_GIROCODEPX, String.valueOf(settings.getGiroCodePx()));
+            return Response.ok(settings).build();
+        } catch (Exception ex) {
+            log.error("can not update finance settings", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /** Reads a server setting's value, or "" when it is not set. */
+    private String readSetting(SystemManagementLocal system, String key) {
+        ServerSettingsBean b = system.getSetting(key);
+        return (b == null || b.getSettingValue() == null) ? "" : b.getSettingValue();
+    }
+
+    /** Null-safe: maps null to an empty string for storage. */
+    private String nz(String s) {
+        return s == null ? "" : s;
     }
 
 }

@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.InvoicePool;
+import com.jdimension.jlawyer.persistence.InvoicePositionTemplate;
 import com.jdimension.jlawyer.persistence.InvoiceStatusSummary;
 import com.jdimension.jlawyer.persistence.InvoiceType;
 import java.math.BigDecimal;
@@ -680,7 +681,23 @@ public interface InvoiceServiceLocal {
 
     List<InvoicePool> getAllInvoicePools() throws Exception;
     List<InvoiceType> getAllInvoiceTypes() throws Exception;
-    
+
+    // Invoice pool / type administration. Already implemented for the remote interface; exposed on
+    // the local interface so the configuration REST endpoints can manage this master data.
+    InvoicePool addInvoicePool(InvoicePool ip);
+    InvoicePool updateInvoicePool(InvoicePool ip);
+    void removeInvoicePool(InvoicePool ip);
+    List<String> previewInvoiceNumbering(InvoicePool testPool) throws Exception;
+
+    InvoiceType addInvoiceType(InvoiceType invoiceType) throws Exception;
+    InvoiceType updateInvoiceType(InvoiceType invoiceType) throws Exception;
+    void removeInvoiceType(InvoiceType invoiceType) throws Exception;
+
+    List<InvoicePositionTemplate> getAllInvoicePositionTemplates() throws Exception;
+    InvoicePositionTemplate addInvoicePositionTemplate(InvoicePositionTemplate tpl);
+    InvoicePositionTemplate updateInvoicePositionTemplate(InvoicePositionTemplate tpl);
+    void removeInvoicePositionTemplate(InvoicePositionTemplate tpl);
+
     List<Invoice> getInvoicesByStatus(int... status) throws Exception;
 
     List<InvoiceStatusSummary> getInvoicesSummaryByStatus(int... status) throws Exception;

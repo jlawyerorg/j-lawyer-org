@@ -665,6 +665,8 @@ package org.jlawyer.io.rest.v7;
 
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
+import org.jlawyer.io.rest.v7.pojo.RestfulFinanceSettingsV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulFirmProfileV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulOptionV7;
 
 /**
@@ -687,5 +689,13 @@ public interface ConfigurationEndpointLocalV7 {
     Response getMultiValueTagDefinitions(String entityType);
 
     Response getDocumentNameTemplates();
+
+    Response getFirmProfile();
+
+    Response setFirmProfile(RestfulFirmProfileV7 profile);
+
+    Response getFinanceSettings();
+
+    Response setFinanceSettings(RestfulFinanceSettingsV7 settings);
 
 }

@@ -668,6 +668,9 @@ import javax.ejb.Local;
 import javax.ws.rs.core.Response;
 import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
 import org.jlawyer.io.rest.v7.pojo.RestfulDocumentValidationRequestV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulInvoicePoolV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionTemplateV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceTypeV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7;
 
 /**
@@ -679,6 +682,19 @@ public interface InvoicesEndpointLocalV7 {
 
     Response getInvoiceTypes();
     Response getInvoicePools();
-    
-        
+
+    Response createInvoiceType(RestfulInvoiceTypeV7 invoiceType);
+    Response updateInvoiceType(RestfulInvoiceTypeV7 invoiceType);
+    Response deleteInvoiceType(RestfulInvoiceTypeV7 invoiceType);
+
+    Response createInvoicePool(RestfulInvoicePoolV7 invoicePool);
+    Response updateInvoicePool(RestfulInvoicePoolV7 invoicePool);
+    Response deleteInvoicePool(RestfulInvoicePoolV7 invoicePool);
+    Response previewInvoicePool(RestfulInvoicePoolV7 invoicePool);
+
+    Response getInvoicePositionTemplates();
+    Response createInvoicePositionTemplate(RestfulInvoicePositionTemplateV7 template);
+    Response updateInvoicePositionTemplate(RestfulInvoicePositionTemplateV7 template);
+    Response deleteInvoicePositionTemplate(RestfulInvoicePositionTemplateV7 template);
+
 }

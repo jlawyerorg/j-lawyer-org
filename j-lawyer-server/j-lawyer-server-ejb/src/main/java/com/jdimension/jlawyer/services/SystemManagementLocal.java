@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.persistence.DocumentTagRule;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.MappingTable;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import java.util.HashMap;
 import java.util.List;
@@ -754,5 +755,24 @@ public interface SystemManagementLocal {
     List<DocumentNameTemplate> getDocumentNameTemplates() throws Exception;
 
     List<DocumentTagRule> getAllDocumentTagRules();
-    
+
+    /**
+     * Returns a single server setting by its key, or {@code null} if it is not set. Already
+     * implemented for the remote interface; exposed on the local interface so REST endpoints can
+     * read server-wide settings (e.g. the firm profile).
+     *
+     * @param key the setting key
+     * @return the setting, or {@code null}
+     */
+    ServerSettingsBean getSetting(String key);
+
+    /**
+     * Creates or updates a single server setting.
+     *
+     * @param key the setting key
+     * @param value the value to store
+     * @return {@code true} on success
+     */
+    boolean setSetting(String key, String value);
+
 }
