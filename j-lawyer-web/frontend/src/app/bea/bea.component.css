@@ -209,3 +209,21 @@
 }
 .suggest-contact:hover { border-color: var(--jl-blue); color: var(--jl-blue); }
 .suggest-contact .sc-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+
+/* eEB (Empfangsbekenntnis) request bar shown in the reader when eebRequested. */
+.eeb-bar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0 0 4px;
+  padding: 9px 12px; border: 1px solid color-mix(in srgb, var(--jl-blue) 40%, var(--jl-line-strong));
+  border-radius: 10px; background: color-mix(in srgb, var(--jl-blue) 8%, var(--jl-surface));
+}
+.eeb-bar > jl-icon { color: var(--jl-blue); flex: none; }
+.eeb-bar-text { font-size: .84rem; font-weight: 600; color: var(--jl-ink); margin-right: auto; }
+.eeb-confirm, .eeb-reject {
+  display: inline-flex; align-items: center; gap: 5px; font: inherit; font-size: .8rem; font-weight: 600;
+  padding: 6px 12px; border-radius: 8px; border: 1px solid transparent; cursor: pointer;
+}
+.eeb-confirm { background: var(--jl-blue); color: #fff; }
+.eeb-confirm:hover:not(:disabled) { filter: brightness(1.06); }
+.eeb-reject { background: var(--jl-surface); color: var(--jl-ink); border-color: var(--jl-line-strong); }
+.eeb-reject:hover:not(:disabled) { border-color: var(--jl-red); color: var(--jl-red); }
+.eeb-confirm:disabled, .eeb-reject:disabled { opacity: .55; cursor: default; }

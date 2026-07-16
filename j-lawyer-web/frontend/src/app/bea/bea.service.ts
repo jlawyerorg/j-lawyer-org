@@ -288,6 +288,41 @@ export class BeaService {
     };
     return this.http.post<MessageDto>(`${BEA_V8}/postboxes/${enc(safeId)}/messages`, body).pipe(map(toMessage));
   }
+
+  private eebReasons$?: Observable<BeaListItem[]>;
+
+  /** The configured eEB rejection reasons (code + name); cached. */
+  eebRejectionReasons(): Observable<BeaListItem[]> {
+    this.eebReasons$ ??= this.http.get<ListItemDto[]>(`${BEA_V8}/eeb/rejection-reasons`).pipe(
+      map((rows) => (rows ?? []).map((r) => ({ code: r.code ?? '', name: r.name ?? '' }))),
+      catchError(() => of([])),
+      shareReplay(1),
+    );
+    return this.eebReasons$;
+  }
+
+  /**
+   * Sends an eEB confirmation ("Empfangsbekenntnis abgeben") for a received message. The confirming
+   * postbox is `safeId`; `recipientSafeId` is the original sender (who requested the eEB);
+   * `abgabeDate` is the acceptance date as an ISO instant (e.g. `2026-07-16T12:00:00Z`).
+   */
+  sendEebConfirmation(safeId: string, messageId: string, recipientSafeId: string, abgabeDate: string): Observable<BeaMessage> {
+    return this.http.post<MessageDto>(
+      `${BEA_V8}/postboxes/${enc(safeId)}/messages/${enc(messageId)}/eeb/confirm`,
+      { senderSafeId: safeId, recipientSafeId, abgabeDate },
+    ).pipe(map(toMessage));
+  }
+
+  /**
+   * Sends an eEB rejection ("Empfangsbekenntnis zurückweisen") for a received message, with a reason
+   * `code` and an optional `comment`. Sender/recipient mapping is as for the confirmation.
+   */
+  sendEebRejection(safeId: string, messageId: string, recipientSafeId: string, code: string, comment: string): Observable<BeaMessage> {
+    return this.http.post<MessageDto>(
+      `${BEA_V8}/postboxes/${enc(safeId)}/messages/${enc(messageId)}/eeb/reject`,
+      { senderSafeId: safeId, recipientSafeId, code, comment },
+    ).pipe(map(toMessage));
+  }
 }
 
 function toIdentity(dto: IdentityDto): BeaIdentity {

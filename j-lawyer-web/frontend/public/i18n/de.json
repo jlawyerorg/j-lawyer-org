@@ -1014,6 +1014,25 @@
     "quoteHeader": "Am {{from}} schrieb:",
     "forwardHeader": "Weitergeleitete Nachricht"
   },
+  "beaEeb": {
+    "requested": "Für diese Nachricht wurde ein Empfangsbekenntnis (eEB) angefordert.",
+    "confirm": "eEB abgeben",
+    "reject": "eEB ablehnen",
+    "titleConfirm": "Empfangsbekenntnis abgeben",
+    "titleReject": "Empfangsbekenntnis zurückweisen",
+    "confirmInfo": "Mit der Abgabe bestätigen Sie den Empfang zum angegebenen Datum.",
+    "rejectInfo": "Bitte wählen Sie einen Grund für die Zurückweisung.",
+    "abgabeDate": "Abgabedatum",
+    "reason": "Grund",
+    "reasonPlaceholder": "Grund wählen …",
+    "comment": "Kommentar (optional)",
+    "commentPlaceholder": "Anmerkung …",
+    "noEebId": "Für diese Nachricht liegt keine eEB-ID vor — bitte über beA im Browser abgeben.",
+    "close": "Schließen",
+    "cancel": "Abbrechen",
+    "sending": "Wird gesendet …",
+    "error": "Das Empfangsbekenntnis konnte nicht gesendet werden."
+  },
   "reporting": {
     "title": "Auswertungen",
     "loading": "Wird geladen …",

@@ -1014,6 +1014,25 @@
     "quoteHeader": "On {{from}} wrote:",
     "forwardHeader": "Forwarded message"
   },
+  "beaEeb": {
+    "requested": "An electronic return receipt (eEB) was requested for this message.",
+    "confirm": "Confirm eEB",
+    "reject": "Reject eEB",
+    "titleConfirm": "Confirm return receipt",
+    "titleReject": "Reject return receipt",
+    "confirmInfo": "Confirming acknowledges receipt on the given date.",
+    "rejectInfo": "Please choose a reason for the rejection.",
+    "abgabeDate": "Receipt date",
+    "reason": "Reason",
+    "reasonPlaceholder": "Choose a reason …",
+    "comment": "Comment (optional)",
+    "commentPlaceholder": "Note …",
+    "noEebId": "This message has no eEB id — please submit it via the beA web portal.",
+    "close": "Close",
+    "cancel": "Cancel",
+    "sending": "Sending …",
+    "error": "The return receipt could not be sent."
+  },
   "reporting": {
     "title": "Reports",
     "loading": "Loading …",

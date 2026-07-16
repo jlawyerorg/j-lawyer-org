@@ -8,6 +8,7 @@ import { CaseSuggestions } from '../communication/email.models';
 import { BeaService } from './bea.service';
 import { BeaComposeComponent } from './bea-compose.component';
 import { BeaBulkSaveComponent, TargetCase } from './bea-bulk-save.component';
+import { BeaEebDialogComponent, EebMode } from './bea-eeb-dialog.component';
 import {
   BeaAttachment, BeaComposeMode, BeaFolder, BeaFolderNode, beaFolderOrder, BeaMessage, BeaMessageHeader,
   BeaRestriction, BEA_RESTRICTIONS, Postbox,
@@ -39,7 +40,7 @@ interface PostboxFolders {
   selector: 'jl-bea',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoModule, IconComponent, RouterLink, BeaComposeComponent, BeaBulkSaveComponent],
+  imports: [TranslocoModule, IconComponent, RouterLink, BeaComposeComponent, BeaBulkSaveComponent, BeaEebDialogComponent],
   template: `
     <div class="bea" [class.show-reader]="selectedId()"
          [class.m-folders]="mobilePane() === 'folders'"
@@ -219,6 +220,19 @@ interface PostboxFolders {
                 </dl>
               </div>
 
+              @if (msg.eebRequested) {
+                <div class="eeb-bar">
+                  <jl-icon name="bell" [size]="15" />
+                  <span class="eeb-bar-text">{{ 'beaEeb.requested' | transloco }}</span>
+                  <button type="button" class="eeb-confirm" [disabled]="acting()" (click)="openEeb('confirm')">
+                    <jl-icon name="check" [size]="14" /> {{ 'beaEeb.confirm' | transloco }}
+                  </button>
+                  <button type="button" class="eeb-reject" [disabled]="acting()" (click)="openEeb('reject')">
+                    <jl-icon name="close" [size]="14" /> {{ 'beaEeb.reject' | transloco }}
+                  </button>
+                </div>
+              }
+
               @if (suggestions(); as sg) {
                 @if (sg.suggestedCases.length || sg.contacts.length) {
                   <div class="suggest">
@@ -356,6 +370,14 @@ interface PostboxFolders {
                         [preselect]="savePreselect()"
                         (saved)="onSavedToCase()" (closed)="saveOpen.set(false)" />
     }
+
+    @if (eebMode(); as m) {
+      @if (message(); as msg) {
+        <jl-bea-eeb-dialog [safeId]="selectedSafeId()!" [messageId]="msg.id" [recipientSafeId]="msg.senderSafeId"
+                           [eebId]="msg.eebId" [mode]="m"
+                           (done)="onEebDone()" (closed)="eebMode.set(null)" />
+      }
+    }
   `,
   styleUrl: './bea.component.css',
 })
@@ -404,6 +426,8 @@ export class BeaComponent {
   protected readonly savePreselect = signal<TargetCase | null>(null);
   /** Server-computed case/contact suggestions for the opened message. */
   protected readonly suggestions = signal<CaseSuggestions | null>(null);
+  /** Open eEB reply dialog mode ('confirm' | 'reject'), or null when closed. */
+  protected readonly eebMode = signal<EebMode | null>(null);
 
   /** The Safe-ID to send from: the selected postbox, else the first available one. */
   protected readonly sendableSafeId = computed<string | null>(() =>
@@ -635,6 +659,7 @@ export class BeaComponent {
     this.suggestions.set(null);
     this.saveOpen.set(false);
     this.savePreselect.set(null);
+    this.eebMode.set(null);
     this.moveOpen.set(false);
     this.mobilePane.set('list');
     this.resetBody();
@@ -687,6 +712,18 @@ export class BeaComponent {
   /** The save dialog stays open to offer a calendar entry; it closes itself via (closed). */
   protected onSavedToCase(): void {
     // nothing to refresh on the beA side
+  }
+
+  /** Opens the eEB reply dialog (confirm/reject) for the opened message. */
+  protected openEeb(mode: EebMode): void {
+    if (!this.message() || !this.selectedSafeId()) { return; }
+    this.eebMode.set(mode);
+  }
+
+  /** After an eEB reply is sent: clear the request flag locally and close the dialog. */
+  protected onEebDone(): void {
+    this.eebMode.set(null);
+    this.message.update((m) => (m ? { ...m, eebRequested: false } : m));
   }
 
   // ----- helpers -----
