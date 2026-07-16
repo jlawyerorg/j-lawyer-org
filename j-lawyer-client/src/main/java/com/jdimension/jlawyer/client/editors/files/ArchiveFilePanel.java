@@ -4730,6 +4730,32 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
 
         int[] selectedRows = this.tblReviewReasons.getSelectedRows();
+
+        java.util.List<ArchiveFileReviewsBean> openRespites = new ArrayList<>();
+        for (int i = 0; i < selectedRows.length; i++) {
+            ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
+            if (!review.isDone() && review.getEventType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
+                openRespites.add(review);
+            }
+        }
+        if (!openRespites.isEmpty()) {
+            java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel");
+            int response;
+            if (openRespites.size() == 1) {
+                response = JOptionPane.showConfirmDialog(this, java.text.MessageFormat.format(bundle.getString("dialog.confirm.setdone"), new Object[]{openRespites.get(0).getSummary()}), bundle.getString("dialog.confirm.setdone.title"), JOptionPane.YES_NO_OPTION);
+            } else {
+                StringBuilder reasons = new StringBuilder();
+                for (ArchiveFileReviewsBean r : openRespites) {
+                    reasons.append("- ").append(r.getSummary()).append(System.lineSeparator());
+                }
+                response = JOptionPane.showConfirmDialog(this, java.text.MessageFormat.format(bundle.getString("dialog.confirm.setdone.multiple"), new Object[]{openRespites.size(), reasons.toString()}), bundle.getString("dialog.confirm.setdone.multiple.title"), JOptionPane.YES_NO_OPTION);
+            }
+            if (response != JOptionPane.YES_OPTION) {
+                EditorsRegistry.getInstance().clearStatus();
+                return;
+            }
+        }
+
         ArchiveFileReviewsBean relevantEvent = null;
         for (int i = 0; i < selectedRows.length; i++) {
 
