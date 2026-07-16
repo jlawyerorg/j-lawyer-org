@@ -843,6 +843,33 @@
       "close": "Close"
     }
   },
+  "compose": {
+    "new": "Compose",
+    "reply": "Reply",
+    "replyAll": "Reply all",
+    "forward": "Forward",
+    "titleNew": "New message",
+    "titleReply": "Reply",
+    "titleReplyAll": "Reply all",
+    "titleForward": "Forward",
+    "from": "From",
+    "to": "To",
+    "toPlaceholder": "Recipients, comma-separated",
+    "cc": "Cc",
+    "bcc": "Bcc",
+    "addCc": "Cc/Bcc",
+    "subject": "Subject",
+    "bodyPlaceholder": "Write your message …",
+    "attach": "Attach",
+    "loadingAtt": "Loading attachments …",
+    "cancel": "Cancel",
+    "send": "Send",
+    "sending": "Sending …",
+    "close": "Close",
+    "quoteHeader": "On {{date}}, {{from}} wrote:",
+    "forwardHeader": "Forwarded message",
+    "error": "The message could not be sent."
+  },
   "bea": {
     "title": "beA",
     "connecting": "Connecting to beA …",

@@ -87,6 +87,36 @@ export const TIME_RANGES: TimeRange[] = [
 /** Messages fetched per infinite-scroll page (server `top`; `offset` advances by this each page). */
 export const PAGE_SIZE = 50;
 
+/** How the composer was opened, driving prefill (recipients, subject, quoted body, threading). */
+export type ComposeMode = 'new' | 'reply' | 'replyAll' | 'forward';
+
+/** An attachment to send: raw bytes as Base64 (no `data:` prefix), mirroring RestfulMailAttachmentV7. */
+export interface ComposeAttachment {
+  name: string;
+  contentType: string;
+  size: number;
+  contentBase64: string;
+  inline: boolean;
+  contentId: string;
+}
+
+/** Payload for POST /v7/email/mailboxes/{id}/send. `to`/`cc`/`bcc` are comma-separated address lists. */
+export interface SendMailRequest {
+  to: string;
+  cc: string;
+  bcc: string;
+  subject: string;
+  body: string;
+  /** 'text/plain' | 'text/html'. */
+  contentType: string;
+  attachments: ComposeAttachment[];
+  /** '' | 'high' | 'low'. */
+  priority: string;
+  readReceipt: boolean;
+  inReplyTo: string;
+  references: string;
+}
+
 /** Order well-known folders first (inbox, drafts, sent), trash last, others alphabetical. */
 export function wellKnownOrder(wellKnownName: string): number {
   switch (wellKnownName) {

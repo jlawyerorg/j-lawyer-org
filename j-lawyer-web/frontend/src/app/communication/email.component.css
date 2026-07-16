@@ -90,6 +90,13 @@
 .list-head { flex-wrap: wrap; align-items: stretch; gap: 10px; }
 .list-title { display: flex; align-items: baseline; gap: 8px; width: 100%; }
 .list-title .count { color: var(--jl-ink-faint); font-size: .82rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.list-title .compose-btn {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 6px; flex: none;
+  font: inherit; font-size: .82rem; font-weight: 600; padding: 6px 12px; border: 0; border-radius: 8px;
+  background: var(--jl-blue); color: #fff; cursor: pointer;
+}
+.list-title .compose-btn:hover:not(:disabled) { filter: brightness(1.06); }
+.list-title .compose-btn:disabled { opacity: .5; cursor: default; }
 .list-tools { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
 .search {
   flex: 1 1 200px; display: flex; align-items: center; gap: 6px; min-width: 160px;

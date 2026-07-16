@@ -3,7 +3,7 @@ import { effect, inject, Injectable, signal } from '@angular/core';
 import { catchError, from, map, mergeMap, Observable, of } from 'rxjs';
 import { API_ROOT } from '../core/api';
 import { AuthService } from '../core/auth/auth.service';
-import { MailAttachment, Mailbox, MailFolder, MailMessage } from './email.models';
+import { MailAttachment, Mailbox, MailFolder, MailMessage, SendMailRequest } from './email.models';
 
 const EMAIL_V7 = `${API_ROOT}/v7/email`;
 /** Sentinel for a not-yet-loaded folder count (server returns -1 when includeCounts=false). */
@@ -247,6 +247,14 @@ export class EmailService {
 
   deleteMessage(mailboxId: string, messageRef: string): Observable<unknown> {
     return this.http.delete(`${EMAIL_V7}/mailboxes/${enc(mailboxId)}/messages/${enc(messageRef)}`);
+  }
+
+  /**
+   * Sends a message through the mailbox's configured backend (SMTP or Graph). The server also
+   * copies the sent message into the mailbox's Sent folder, so no separate append is needed.
+   */
+  sendMail(mailboxId: string, req: SendMailRequest): Observable<unknown> {
+    return this.http.post(`${EMAIL_V7}/mailboxes/${enc(mailboxId)}/send`, req);
   }
 }
 

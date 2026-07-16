@@ -843,6 +843,33 @@
       "close": "Schließen"
     }
   },
+  "compose": {
+    "new": "Verfassen",
+    "reply": "Antworten",
+    "replyAll": "Allen antworten",
+    "forward": "Weiterleiten",
+    "titleNew": "Neue Nachricht",
+    "titleReply": "Antworten",
+    "titleReplyAll": "Allen antworten",
+    "titleForward": "Weiterleiten",
+    "from": "Von",
+    "to": "An",
+    "toPlaceholder": "Empfänger, durch Komma getrennt",
+    "cc": "Kopie",
+    "bcc": "Blindkopie",
+    "addCc": "Kopie/Blindkopie",
+    "subject": "Betreff",
+    "bodyPlaceholder": "Nachricht schreiben …",
+    "attach": "Anhang",
+    "loadingAtt": "Anhänge werden geladen …",
+    "cancel": "Abbrechen",
+    "send": "Senden",
+    "sending": "Wird gesendet …",
+    "close": "Schließen",
+    "quoteHeader": "Am {{date}} schrieb {{from}}:",
+    "forwardHeader": "Weitergeleitete Nachricht",
+    "error": "Die Nachricht konnte nicht gesendet werden."
+  },
   "bea": {
     "title": "beA",
     "connecting": "Verbindung zum beA wird hergestellt …",

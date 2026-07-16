@@ -5,8 +5,10 @@ import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { base64ToBytes } from '../shared/document-preview.models';
 import { EmailService } from './email.service';
+import { EmailComposeComponent } from './email-compose.component';
 import {
-  FolderNode, MailScope, Mailbox, MailFolder, MailMessage, PAGE_SIZE, TIME_RANGES, TimeRange, wellKnownOrder,
+  ComposeMode, FolderNode, MailScope, Mailbox, MailFolder, MailMessage, PAGE_SIZE, TIME_RANGES, TimeRange,
+  wellKnownOrder,
 } from './email.models';
 
 /** A mailbox header or an (indented) folder row in the left navigation. */
@@ -32,7 +34,7 @@ interface MailboxFolders {
   selector: 'jl-email',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoModule, IconComponent],
+  imports: [TranslocoModule, IconComponent, EmailComposeComponent],
   template: `
     <div class="mail" [class.show-reader]="selectedRef()"
          [class.m-folders]="mobilePane() === 'folders'"
@@ -97,6 +99,10 @@ interface MailboxFolders {
             <button type="button" class="to-folders" (click)="mobilePane.set('folders')">‹ {{ 'email.navBack' | transloco }}</button>
             <h2>{{ selectedFolder() ? folderLabel(selectedFolder()!) : ('email.selectFolder' | transloco) }}</h2>
             @if (messages()?.length) { <span class="count">{{ messages()!.length }}</span> }
+            <button type="button" class="compose-btn" [disabled]="!composeFromId()" (click)="composeNew()"
+                    [title]="'compose.new' | transloco">
+              <jl-icon name="edit" [size]="14" /><span>{{ 'compose.new' | transloco }}</span>
+            </button>
           </div>
           <div class="list-tools">
             <div class="search">
@@ -169,6 +175,18 @@ interface MailboxFolders {
           <header class="col-head reader-head">
             <button type="button" class="back" (click)="closeReader()">‹ {{ 'email.back' | transloco }}</button>
             <div class="reader-actions">
+              <button type="button" class="icon-btn" [disabled]="acting() || !message()" (click)="reply()"
+                      [title]="'compose.reply' | transloco">
+                <jl-icon name="reply" [size]="15" />
+              </button>
+              <button type="button" class="icon-btn" [disabled]="acting() || !message()" (click)="replyAll()"
+                      [title]="'compose.replyAll' | transloco">
+                <jl-icon name="reply-all" [size]="15" />
+              </button>
+              <button type="button" class="icon-btn" [disabled]="acting() || !message()" (click)="forward()"
+                      [title]="'compose.forward' | transloco">
+                <jl-icon name="forward" [size]="15" />
+              </button>
               <button type="button" class="icon-btn" [disabled]="acting()" (click)="toggleRead()"
                       [title]="(message()?.read ? 'email.markUnread' : 'email.markRead') | transloco">
                 <jl-icon name="check" [size]="15" />
@@ -275,6 +293,12 @@ interface MailboxFolders {
         </div>
       </div>
     }
+
+    @if (compose(); as c) {
+      <jl-email-compose [mailboxes]="mailboxes() ?? []" [mailboxId]="composeFromId()!"
+                        [mode]="c.mode" [seed]="c.seed"
+                        (sent)="onSent()" (closed)="compose.set(null)" />
+    }
   `,
   styleUrl: './email.component.css',
 })
@@ -318,6 +342,9 @@ export class EmailComponent {
   protected readonly downloadingAtt = signal<string | null>(null);
   /** Which pane is shown on phones (drill-down: folder tree → message list → reader). */
   protected readonly mobilePane = signal<'folders' | 'list' | 'reader'>('folders');
+
+  /** Open composer (new/reply/forward), or null when closed. `seed` is the original for reply/forward. */
+  protected readonly compose = signal<{ mode: ComposeMode; seed: MailMessage | null } | null>(null);
 
   /** Folder-hide state: id of the folder being hidden/unhidden, and the "manage hidden" dialog. */
   protected readonly folderBusy = signal<string | null>(null);
@@ -367,6 +394,10 @@ export class EmailComponent {
   protected readonly visibleAttachments = computed(() =>
     (this.message()?.attachments ?? []).filter((a) => !(a.inline && a.contentId)),
   );
+
+  /** Mailbox used as the sender: the selected one, else the first available. */
+  protected readonly composeFromId = computed(() =>
+    this.selectedMailboxId() ?? this.mailboxes()?.[0]?.id ?? null);
 
   private autoSelected = false;
 
@@ -629,6 +660,27 @@ export class EmailComponent {
   protected refresh(): void {
     this.api.ensureStructure(true);
     if (this.selectedFolderId()) { this.loadMessages(); }
+  }
+
+  protected composeNew(): void {
+    if (!this.composeFromId()) { return; }
+    this.compose.set({ mode: 'new', seed: null });
+  }
+
+  protected reply(): void { this.openReply('reply'); }
+  protected replyAll(): void { this.openReply('replyAll'); }
+  protected forward(): void { this.openReply('forward'); }
+
+  private openReply(mode: ComposeMode): void {
+    const msg = this.message();
+    if (!msg) { return; }
+    this.compose.set({ mode, seed: msg });
+  }
+
+  /** After a successful send, close the composer and refresh the list if we're viewing Sent. */
+  protected onSent(): void {
+    this.compose.set(null);
+    if (this.selectedFolder()?.wellKnownName === 'sentitems') { this.loadMessages(); }
   }
 
   protected closeReader(): void {
