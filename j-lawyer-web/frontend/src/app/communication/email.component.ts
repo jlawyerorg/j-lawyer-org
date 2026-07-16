@@ -6,6 +6,7 @@ import { IconComponent } from '../shared/icon.component';
 import { base64ToBytes } from '../shared/document-preview.models';
 import { EmailService } from './email.service';
 import { EmailComposeComponent } from './email-compose.component';
+import { EmailSaveToCaseComponent } from './email-save-to-case.component';
 import {
   CaseSuggestions, ComposeMode, FolderNode, MailScope, Mailbox, MailFolder, MailMessage, PAGE_SIZE,
   TIME_RANGES, TimeRange, wellKnownOrder,
@@ -34,7 +35,7 @@ interface MailboxFolders {
   selector: 'jl-email',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoModule, IconComponent, EmailComposeComponent, RouterLink],
+  imports: [TranslocoModule, IconComponent, EmailComposeComponent, EmailSaveToCaseComponent, RouterLink],
   template: `
     <div class="mail" [class.show-reader]="selectedRef()"
          [class.m-folders]="mobilePane() === 'folders'"
@@ -187,6 +188,10 @@ interface MailboxFolders {
                       [title]="'compose.forward' | transloco">
                 <jl-icon name="forward" [size]="15" />
               </button>
+              <button type="button" class="icon-btn" [disabled]="acting() || !message()" (click)="saveToCaseOpen.set(true)"
+                      [title]="'saveToCase.title' | transloco">
+                <jl-icon name="inbox" [size]="15" />
+              </button>
               <button type="button" class="icon-btn" [disabled]="acting()" (click)="toggleRead()"
                       [title]="(message()?.read ? 'email.markUnread' : 'email.markRead') | transloco">
                 <jl-icon name="check" [size]="15" />
@@ -332,6 +337,11 @@ interface MailboxFolders {
                         [mode]="c.mode" [seed]="c.seed"
                         (sent)="onSent()" (closed)="compose.set(null)" />
     }
+
+    @if (saveToCaseOpen() && message() && selectedMailboxId()) {
+      <jl-email-save-to-case [mailboxId]="selectedMailboxId()!" [message]="message()!" [suggestions]="suggestions()"
+                             (saved)="onSavedToCase()" (closed)="saveToCaseOpen.set(false)" />
+    }
   `,
   styleUrl: './email.component.css',
 })
@@ -380,6 +390,8 @@ export class EmailComponent {
 
   /** Open composer (new/reply/forward), or null when closed. `seed` is the original for reply/forward. */
   protected readonly compose = signal<{ mode: ComposeMode; seed: MailMessage | null } | null>(null);
+  /** Whether the "save to case" dialog is open for the current message. */
+  protected readonly saveToCaseOpen = signal(false);
 
   /** Folder-hide state: id of the folder being hidden/unhidden, and the "manage hidden" dialog. */
   protected readonly folderBusy = signal<string | null>(null);
@@ -722,6 +734,11 @@ export class EmailComponent {
     this.compose.set({ mode, seed: msg });
   }
 
+  /** Closes the save-to-case dialog after the email has been stored in the case. */
+  protected onSavedToCase(): void {
+    this.saveToCaseOpen.set(false);
+  }
+
   /** After a successful send, close the composer and refresh the list if we're viewing Sent. */
   protected onSent(): void {
     this.compose.set(null);
@@ -733,6 +750,7 @@ export class EmailComponent {
     this.selectedRef.set(null);
     this.message.set(null);
     this.suggestions.set(null);
+    this.saveToCaseOpen.set(false);
     this.moveOpen.set(false);
     this.revokeBody();
     this.bodyUrl.set(null);

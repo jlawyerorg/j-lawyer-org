@@ -830,6 +830,20 @@
       "phones": "Phone numbers",
       "archived": "Archived"
     },
+    "saveToCase": {
+      "title": "Save to case",
+      "suggestions": "Suggestions",
+      "searchPlaceholder": "Search case (file number, name …)",
+      "change": "Change",
+      "modeFull": "Whole message (.eml)",
+      "modeSeparate": "Message + attachments separately",
+      "modeAttachmentsOnly": "Attachments only",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving …",
+      "close": "Close",
+      "error": "The message could not be saved to the case."
+    },
     "range": {
       "any": "All time",
       "week": "Last week",
