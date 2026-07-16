@@ -29,6 +29,21 @@
 }
 .cmp-row input:focus, .cmp-row select:focus, .cmp-text:focus { border-color: var(--jl-blue); }
 .cmp-static { flex: 1 1 auto; font-size: .86rem; color: var(--jl-ink); }
+
+/* Address-book typeahead */
+.cmp-ac-wrap { position: relative; flex: 1 1 auto; min-width: 0; }
+.cmp-ac-wrap input { width: 100%; }
+.cmp-ac {
+  position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% + 2px); margin: 0; padding: 4px;
+  list-style: none; background: var(--jl-surface); border: 1px solid var(--jl-line-strong); border-radius: 8px;
+  box-shadow: 0 12px 28px rgba(4, 12, 20, .28); max-height: 240px; overflow-y: auto;
+}
+.cmp-ac li {
+  display: flex; align-items: baseline; gap: 8px; padding: 6px 8px; border-radius: 6px; cursor: pointer;
+}
+.cmp-ac li.sel, .cmp-ac li:hover { background: var(--jl-surface-alt); }
+.cmp-ac-name { font-size: .86rem; color: var(--jl-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cmp-ac-mail { font-size: .78rem; color: var(--jl-ink-faint); margin-left: auto; white-space: nowrap; flex: none; }
 .cmp-link {
   flex: none; border: 0; background: transparent; color: var(--jl-blue); cursor: pointer;
   font: inherit; font-size: .82rem; padding: 0 2px;

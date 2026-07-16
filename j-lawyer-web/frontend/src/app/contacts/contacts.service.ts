@@ -4,7 +4,7 @@ import { catchError, defer, finalize, forkJoin, map, Observable, of, shareReplay
 import { API_ROOT } from '../core/api';
 import {
   ContactCase, ContactData, ContactDetail, ContactDocument, ContactField, ContactKV, ContactSection,
-  ContactFilter, ContactOverview, ContactType,
+  ContactFilter, ContactOverview, ContactType, RecipientSuggestion,
 } from './contact.models';
 
 const CONTACTS_V1 = `${API_ROOT}/v1/contacts`;
@@ -141,6 +141,23 @@ export class ContactsService {
         this.listLoading.set(false);
       },
     });
+  }
+
+  /**
+   * Stateless recipient typeahead for the mail composer: searches the (global) address book and
+   * returns name + primary email for contacts that have one. Does not touch the list state.
+   */
+  searchRecipients(query: string, limit = 8): Observable<RecipientSuggestion[]> {
+    const term = query.trim();
+    if (term.length < 2) { return of([]); }
+    const params = new HttpParams()
+      .set('offset', '0').set('limit', String(limit)).set('filter', 'all').set('q', term);
+    return this.http.get<ContactPageDto>(`${CONTACTS_V8}/page`, { params }).pipe(
+      map((page) => (page.items ?? [])
+        .filter((c) => (c.email ?? '').trim())
+        .map((c) => ({ label: displayNameOf(c.company, c.firstName, c.name), email: c.email.trim() }))),
+      catchError(() => of([])),
+    );
   }
 
   /** Loads a full contact (the richer v2 detail); null on error. Also stashes the raw DTO for editing. */

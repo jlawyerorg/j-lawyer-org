@@ -1,12 +1,18 @@
 import {
   ChangeDetectionStrategy, Component, computed, inject, input, OnInit, output, signal,
 } from '@angular/core';
-import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { forkJoin, of, Subject } from 'rxjs';
+import { catchError, debounceTime, map, switchMap } from 'rxjs/operators';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
+import { ContactsService } from '../contacts/contacts.service';
+import { RecipientSuggestion } from '../contacts/contact.models';
 import { EmailService } from './email.service';
 import { ComposeAttachment, ComposeMode, Mailbox, MailMessage, SendMailRequest } from './email.models';
+
+/** Which recipient field an address-book suggestion applies to. */
+type RecipField = 'to' | 'cc' | 'bcc';
 
 /**
  * Modal composer for writing and sending mail (new / reply / reply-all / forward). Bodies are
@@ -46,8 +52,20 @@ import { ComposeAttachment, ComposeMode, Mailbox, MailMessage, SendMailRequest }
 
         <div class="cmp-row">
           <label>{{ 'compose.to' | transloco }}</label>
-          <input type="text" [value]="to()" (input)="to.set($any($event.target).value)"
-                 [placeholder]="'compose.toPlaceholder' | transloco" autocomplete="off" />
+          <div class="cmp-ac-wrap">
+            <input type="text" [value]="to()" (input)="onRecipientInput('to', $event)"
+                   (keydown)="onRecipientKeydown('to', $event)" (blur)="closeAc()"
+                   [placeholder]="'compose.toPlaceholder' | transloco" autocomplete="off" />
+            @if (acField() === 'to') {
+              <ul class="cmp-ac">
+                @for (r of acItems(); track r.email; let i = $index) {
+                  <li [class.sel]="i === acIndex()" (mousedown)="$event.preventDefault()" (click)="selectRecipient(r)">
+                    <span class="cmp-ac-name">{{ r.label }}</span><span class="cmp-ac-mail">{{ r.email }}</span>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
           @if (!showCc()) {
             <button type="button" class="cmp-link" (click)="showCc.set(true)">{{ 'compose.addCc' | transloco }}</button>
           }
@@ -56,11 +74,35 @@ import { ComposeAttachment, ComposeMode, Mailbox, MailMessage, SendMailRequest }
         @if (showCc()) {
           <div class="cmp-row">
             <label>{{ 'compose.cc' | transloco }}</label>
-            <input type="text" [value]="cc()" (input)="cc.set($any($event.target).value)" autocomplete="off" />
+            <div class="cmp-ac-wrap">
+              <input type="text" [value]="cc()" (input)="onRecipientInput('cc', $event)"
+                     (keydown)="onRecipientKeydown('cc', $event)" (blur)="closeAc()" autocomplete="off" />
+              @if (acField() === 'cc') {
+                <ul class="cmp-ac">
+                  @for (r of acItems(); track r.email; let i = $index) {
+                    <li [class.sel]="i === acIndex()" (mousedown)="$event.preventDefault()" (click)="selectRecipient(r)">
+                      <span class="cmp-ac-name">{{ r.label }}</span><span class="cmp-ac-mail">{{ r.email }}</span>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
           </div>
           <div class="cmp-row">
             <label>{{ 'compose.bcc' | transloco }}</label>
-            <input type="text" [value]="bcc()" (input)="bcc.set($any($event.target).value)" autocomplete="off" />
+            <div class="cmp-ac-wrap">
+              <input type="text" [value]="bcc()" (input)="onRecipientInput('bcc', $event)"
+                     (keydown)="onRecipientKeydown('bcc', $event)" (blur)="closeAc()" autocomplete="off" />
+              @if (acField() === 'bcc') {
+                <ul class="cmp-ac">
+                  @for (r of acItems(); track r.email; let i = $index) {
+                    <li [class.sel]="i === acIndex()" (mousedown)="$event.preventDefault()" (click)="selectRecipient(r)">
+                      <span class="cmp-ac-name">{{ r.label }}</span><span class="cmp-ac-mail">{{ r.email }}</span>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
           </div>
         }
 
@@ -112,6 +154,7 @@ import { ComposeAttachment, ComposeMode, Mailbox, MailMessage, SendMailRequest }
 })
 export class EmailComposeComponent implements OnInit {
   private readonly api = inject(EmailService);
+  private readonly contacts = inject(ContactsService);
   private readonly transloco = inject(TranslocoService);
 
   readonly mailboxes = input.required<Mailbox[]>();
@@ -136,6 +179,25 @@ export class EmailComposeComponent implements OnInit {
 
   private inReplyTo = '';
   private references = '';
+
+  /** Address-book typeahead: which field is active, its current suggestions, and the highlighted row. */
+  protected readonly acField = signal<RecipField | null>(null);
+  protected readonly acItems = signal<RecipientSuggestion[]>([]);
+  protected readonly acIndex = signal(0);
+  private readonly acInput$ = new Subject<{ field: RecipField; token: string }>();
+
+  constructor() {
+    // Debounced address-book search; switchMap drops superseded queries so only the latest lands.
+    this.acInput$.pipe(
+      debounceTime(180),
+      switchMap(({ field, token }) => this.contacts.searchRecipients(token).pipe(map((items) => ({ field, items })))),
+      takeUntilDestroyed(),
+    ).subscribe(({ field, items }) => {
+      this.acField.set(items.length ? field : null);
+      this.acItems.set(items);
+      this.acIndex.set(0);
+    });
+  }
 
   protected readonly titleKey = computed(() => {
     switch (this.mode()) {
@@ -223,6 +285,47 @@ export class EmailComposeComponent implements OnInit {
     this.attachments.update((list) => list.filter((_, idx) => idx !== i));
   }
 
+  // ----- address-book typeahead -----
+
+  private recipientSignal(field: RecipField) {
+    return field === 'to' ? this.to : field === 'cc' ? this.cc : this.bcc;
+  }
+
+  protected onRecipientInput(field: RecipField, ev: Event): void {
+    const value = (ev.target as HTMLInputElement).value;
+    this.recipientSignal(field).set(value);
+    const token = lastToken(value);
+    if (token.length >= 2) {
+      this.acInput$.next({ field, token });
+    } else {
+      this.closeAc();
+    }
+  }
+
+  protected onRecipientKeydown(field: RecipField, ev: KeyboardEvent): void {
+    if (this.acField() !== field || !this.acItems().length) { return; }
+    switch (ev.key) {
+      case 'ArrowDown': this.acIndex.update((i) => Math.min(this.acItems().length - 1, i + 1)); ev.preventDefault(); break;
+      case 'ArrowUp': this.acIndex.update((i) => Math.max(0, i - 1)); ev.preventDefault(); break;
+      case 'Enter': this.selectRecipient(this.acItems()[this.acIndex()]); ev.preventDefault(); break;
+      case 'Escape': this.closeAc(); break;
+    }
+  }
+
+  protected selectRecipient(item: RecipientSuggestion): void {
+    const field = this.acField();
+    if (!field || !item) { return; }
+    const sig = this.recipientSignal(field);
+    sig.set(replaceLastToken(sig(), item.email));
+    this.closeAc();
+  }
+
+  protected closeAc(): void {
+    this.acField.set(null);
+    this.acItems.set([]);
+    this.acIndex.set(0);
+  }
+
   protected send(): void {
     if (this.sending() || !this.canSend()) { return; }
     this.error.set(null);
@@ -260,6 +363,18 @@ export class EmailComposeComponent implements OnInit {
 }
 
 // ---------- module-scope helpers ----------
+
+/** The recipient token currently being typed: everything after the last comma, trimmed. */
+function lastToken(value: string): string {
+  return value.slice(value.lastIndexOf(',') + 1).trim();
+}
+
+/** Replaces the last (in-progress) token with the picked address and leaves a trailing ", ". */
+function replaceLastToken(value: string, email: string): string {
+  const parts = value.split(',');
+  parts[parts.length - 1] = email;
+  return parts.map((p) => p.trim()).filter(Boolean).join(', ') + ', ';
+}
 
 /** Extracts the bare email address (lowercased) from a "Name <a@b.de>" or "a@b.de" string. */
 function addressOf(s: string): string {

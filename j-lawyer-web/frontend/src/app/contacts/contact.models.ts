@@ -15,6 +15,14 @@ export type ContactType = 'person' | 'company';
 export type ContactFilter = 'all' | 'people' | 'companies';
 
 /** List row — the fields the v8 list endpoint provides. */
+/** A single recipient suggestion for the mail composer's address-book typeahead. */
+export interface RecipientSuggestion {
+  /** Contact display name shown in the dropdown. */
+  label: string;
+  /** The e-mail address inserted into the recipient field. */
+  email: string;
+}
+
 export interface ContactOverview {
   id: string;
   type: ContactType;
