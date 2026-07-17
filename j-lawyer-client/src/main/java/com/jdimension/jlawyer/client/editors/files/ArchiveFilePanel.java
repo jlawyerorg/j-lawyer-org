@@ -6264,6 +6264,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             }
             this.updateFavoriteDocuments();
+            this.updateDocumentTagsOverview();
 
         } catch (Exception ioe) {
             log.error("Error removing document", ioe);
