@@ -697,14 +697,6 @@ public interface SystemManagementLocal {
     public MonitoringSnapshot getMonitoringSnapshot();
 
     /**
-     * Returns basic server information (host/version). Already implemented on the remote interface;
-     * exposed on the local interface so the self-contained system-report REST endpoint can use it.
-     *
-     * @return the server information
-     */
-    com.jdimension.jlawyer.server.utils.ServerInformation getServerInformation();
-
-    /**
      * Returns the server JVM's system properties. Already implemented on the remote interface;
      * exposed on the local interface for the system-report REST endpoint. Requires {@code adminRole}.
      *
