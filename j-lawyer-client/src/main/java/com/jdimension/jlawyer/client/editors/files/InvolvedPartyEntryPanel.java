@@ -822,7 +822,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 if (age < 18 && age > -1) {
                     this.lblUnderage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_child_care_black_20.png")));
                     this.lblUnderage.setText("U18");
-                    this.lblUnderage.setToolTipText("Beteiligte(r) ist minderjährig");
+                    this.lblUnderage.setToolTipText("Beteiligte(r) ist minderjährig (geboren: " + a.getBirthDate() + ")");
                 }
             }
 
