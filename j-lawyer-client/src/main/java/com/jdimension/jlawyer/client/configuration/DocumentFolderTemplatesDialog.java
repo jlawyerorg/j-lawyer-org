@@ -1105,7 +1105,9 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
 
     private MutableTreeNode buildTree(DocumentFolder df) {
         DefaultMutableTreeNode node = new DefaultMutableTreeNode(df);
-        for (DocumentFolder child : df.getChildren()) {
+        java.util.List<DocumentFolder> sortedChildren = new java.util.ArrayList<>(df.getChildren());
+        sortedChildren.sort(java.util.Comparator.comparing(DocumentFolder::getName, String.CASE_INSENSITIVE_ORDER));
+        for (DocumentFolder child : sortedChildren) {
             node.add(buildTree(child));
         }
         return node;
