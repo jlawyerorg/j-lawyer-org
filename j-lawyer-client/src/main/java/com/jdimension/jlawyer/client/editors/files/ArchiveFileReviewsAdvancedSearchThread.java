@@ -790,7 +790,7 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
         }
         TableRowSorter<TableModel> sorter = new TableRowSorter<>(model);
         sorter.setComparator(2, new FileNumberComparatorString());
-        sorter.setComparator(0, new DateStringComparator());
+        sorter.setComparator(0, new DateStringComparator("EEEE, dd.MM.yyyy"));
         ThreadUtils.setTableModel(this.target, model, sorter);
         ThreadUtils.setDefaultCursor(this.owner);
         // give the EDT some time to process the new table model
