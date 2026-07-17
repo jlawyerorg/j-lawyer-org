@@ -669,7 +669,8 @@
     "finanzen": "Finance",
     "reporting": "Reports",
     "einstellungen": "Settings",
-    "mehr": "More"
+    "mehr": "More",
+    "papierkorb": "Recycle bin"
   },
   "placeholder": {
     "eyebrow": "Module",
@@ -1726,5 +1727,30 @@
     "changeCase": "Change case",
     "project": "Project",
     "noProjects": "No open projects in this case."
+  },
+  "trash": {
+    "title": "Recycle bin",
+    "summary": "{{count}} documents · {{size}}",
+    "refresh": "Refresh",
+    "empty": "Empty bin",
+    "retention": "auto-delete after",
+    "days": "days",
+    "emptyState": "The recycle bin is empty.",
+    "restore": "Restore",
+    "deleteForever": "Delete permanently",
+    "filter": {
+      "all": "All",
+      "case": "Cases",
+      "address": "Contacts"
+    },
+    "type": {
+      "case": "Case",
+      "address": "Contact"
+    },
+    "confirmDeleteTitle": "Delete permanently",
+    "confirmDelete": "Permanently delete {{name}}?",
+    "confirmEmptyTitle": "Empty bin",
+    "confirmEmpty": "Permanently delete all documents in the recycle bin?",
+    "emptyPartial": "{{n}} document(s) could not be deleted."
   }
 }

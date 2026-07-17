@@ -669,7 +669,8 @@
     "finanzen": "Finanzen",
     "reporting": "Auswertungen",
     "einstellungen": "Einstellungen",
-    "mehr": "Mehr"
+    "mehr": "Mehr",
+    "papierkorb": "Papierkorb"
   },
   "placeholder": {
     "eyebrow": "Modul",
@@ -1726,5 +1727,30 @@
     "changeCase": "Akte ändern",
     "project": "Projekt",
     "noProjects": "Keine offenen Projekte in dieser Akte."
+  },
+  "trash": {
+    "title": "Papierkorb",
+    "summary": "{{count}} Dokumente · {{size}}",
+    "refresh": "Aktualisieren",
+    "empty": "Papierkorb leeren",
+    "retention": "automatisch löschen nach",
+    "days": "Tagen",
+    "emptyState": "Der Papierkorb ist leer.",
+    "restore": "Wiederherstellen",
+    "deleteForever": "Endgültig löschen",
+    "filter": {
+      "all": "Alle",
+      "case": "Akten",
+      "address": "Kontakte"
+    },
+    "type": {
+      "case": "Akte",
+      "address": "Kontakt"
+    },
+    "confirmDeleteTitle": "Endgültig löschen",
+    "confirmDelete": "Dokument {{name}} unwiderruflich löschen?",
+    "confirmEmptyTitle": "Papierkorb leeren",
+    "confirmEmpty": "Alle Dokumente im Papierkorb unwiderruflich löschen?",
+    "emptyPartial": "{{n}} Dokument(e) konnten nicht gelöscht werden."
   }
 }

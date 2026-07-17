@@ -29,5 +29,6 @@ export const MODULES: ModuleLink[] = [
   { path: 'documents', labelKey: 'module.dokumente', icon: 'doc' },
   { path: 'finance', labelKey: 'module.finanzen', icon: 'euro' },
   { path: 'reporting', labelKey: 'module.reporting', icon: 'chart' },
+  { path: 'trash', labelKey: 'module.papierkorb', icon: 'trash', footer: true },
   { path: 'settings', labelKey: 'module.einstellungen', icon: 'gear', footer: true },
 ];

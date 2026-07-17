@@ -24,6 +24,7 @@ const IMPLEMENTED: Record<string, LoadComponent> = {
   bea: () => import('./bea/bea.component').then((c) => c.BeaComponent),
   documents: () => import('./documents/dokumente.component').then((c) => c.DokumenteComponent),
   reporting: () => import('./reporting/reporting.component').then((c) => c.ReportingComponent),
+  trash: () => import('./trash/papierkorb.component').then((c) => c.PapierkorbComponent),
 };
 
 // 'settings' is not a flat placeholder route — it is a nested layout (tabs) with role-scoped
