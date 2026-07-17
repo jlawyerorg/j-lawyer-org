@@ -721,6 +721,7 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
     private static final Logger log = Logger.getLogger(AddNoteFrame.class.getName());
     private ArchiveFileBean aFile = null;
     private boolean initializing = true;
+    private String initialNoteContent = "";
 
     private boolean isRecording = false;
     private long recordingStarted = -1;
@@ -788,6 +789,7 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
                 + "  \n"
                 + "</p><p>&nbsp;</p><p>&nbsp;</p>";
         this.htmlNoteEditor.setText(html);
+        this.initialNoteContent = this.htmlNoteEditor.getText();
 
         ClientSettings settings = ClientSettings.getInstance();
 
@@ -857,6 +859,13 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
         AudioUtils.populateMicrophoneDevices(this.cmbDevices);
 
         this.initializing = false;
+        this.setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
+        this.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                confirmClose();
+            }
+        });
     }
 
     public void setFocusToBody() {
@@ -1284,17 +1293,22 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
-        String currentContent = this.htmlNoteEditor.getText();
-        log.debug("AddNoteFrame: Cancel clicked, current editor content length: " + currentContent.length() + " chars");
-        if (currentContent.length() > 200) {
-            int response = JOptionPane.showConfirmDialog(this, "Notiz verwerfen und Dialog schliessen?", "Notiz verwerfen", JOptionPane.YES_NO_OPTION);
-            if (response == JOptionPane.NO_OPTION) {
+    private void confirmClose() {
+        if (!this.htmlNoteEditor.getText().equals(this.initialNoteContent)) {
+            int response = JOptionPane.showConfirmDialog(this, "Notiz speichern?", "Notiz schließen", JOptionPane.YES_NO_CANCEL_OPTION);
+            if (response == JOptionPane.YES_OPTION) {
+                this.cmdAddDocumentActionPerformed(null);
+                return;
+            } else if (response != JOptionPane.NO_OPTION) {
                 return;
             }
         }
         this.setVisible(false);
         this.dispose();
+    }
+
+    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
+        this.confirmClose();
     }//GEN-LAST:event_cmdCancelActionPerformed
 
     private void cmdAddDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddDocumentActionPerformed
