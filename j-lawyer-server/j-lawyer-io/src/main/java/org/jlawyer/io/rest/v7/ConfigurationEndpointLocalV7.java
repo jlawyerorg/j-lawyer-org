@@ -667,7 +667,11 @@ import javax.ejb.Local;
 import javax.ws.rs.core.Response;
 import org.jlawyer.io.rest.v7.pojo.RestfulFinanceSettingsV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulFirmProfileV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulCaseNumberingV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulFolderTemplateV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulFolderTemplateFolderV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulOptionV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulPartyTypeV7;
 
 /**
  *
@@ -697,5 +701,53 @@ public interface ConfigurationEndpointLocalV7 {
     Response getFinanceSettings();
 
     Response setFinanceSettings(RestfulFinanceSettingsV7 settings);
+
+    Response getPartyTypes();
+
+    Response createPartyType(RestfulPartyTypeV7 partyType);
+
+    Response updatePartyType(RestfulPartyTypeV7 partyType);
+
+    Response deletePartyType(RestfulPartyTypeV7 partyType);
+
+    Response getCaseNumbering();
+
+    Response setCaseNumbering(RestfulCaseNumberingV7 config);
+
+    Response previewCaseNumbering(RestfulCaseNumberingV7 config);
+
+    Response getFolderTemplates();
+
+    Response createFolderTemplate(RestfulFolderTemplateV7 template);
+
+    Response renameFolderTemplate(RestfulFolderTemplateV7 template);
+
+    Response deleteFolderTemplate(RestfulFolderTemplateV7 template);
+
+    Response cloneFolderTemplate(RestfulFolderTemplateFolderV7 request);
+
+    Response addTemplateFolder(RestfulFolderTemplateFolderV7 request);
+
+    Response renameTemplateFolder(RestfulFolderTemplateFolderV7 request);
+
+    Response removeTemplateFolder(RestfulFolderTemplateFolderV7 request);
+
+    Response getScanSettings();
+
+    Response setScanSettings(org.jlawyer.io.rest.v7.pojo.RestfulScanSettingsV7 settings);
+
+    Response getBackupSettings();
+
+    Response setBackupSettings(org.jlawyer.io.rest.v7.pojo.RestfulBackupSettingsV7 settings);
+
+    Response validateStorageLocation(org.jlawyer.io.rest.v7.pojo.RestfulStorageLocationV7 request);
+
+    Response getStirlingSettings();
+
+    Response setStirlingSettings(org.jlawyer.io.rest.v7.pojo.RestfulStirlingSettingsV7 settings);
+
+    Response getBeaSettings();
+
+    Response setBeaSettings(org.jlawyer.io.rest.v7.pojo.RestfulBeaSettingsV7 settings);
 
 }

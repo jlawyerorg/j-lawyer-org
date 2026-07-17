@@ -807,6 +807,8 @@ public interface ArchiveFileServiceLocal {
 
     void removeFolderFromTemplate(String folderId) throws Exception;
 
+    DocumentFolder renameFolderInTemplate(String folderId, String newName) throws Exception;
+
     void cloneFolderTemplate(String sourceTemplateName, String targetTemplateName) throws Exception;
     
     void moveDocumentsToFolder(Collection<String> documentIds, String folderId) throws Exception;
@@ -913,5 +915,7 @@ public interface ArchiveFileServiceLocal {
     Timesheet addTimesheet(String caseId, Timesheet timesheet) throws Exception;
     Timesheet updateTimesheet(String caseId, Timesheet timesheet) throws Exception;
     void removeTimesheet(String timesheetId) throws Exception;
+
+    String[] previewCaseNumbering(String pattern, int startFrom, int increment, boolean extension, String dividerMain, String dividerExt, boolean bPrefix, String prefix, boolean bSuffix, String suffix, boolean userAbbr, boolean groupAbbr) throws Exception;
 
 }

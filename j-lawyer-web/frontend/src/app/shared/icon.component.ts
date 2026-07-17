@@ -62,6 +62,11 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
         @case ('more') {
           <circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" />
         }
+        @case ('grip') {
+          <circle cx="9" cy="6" r="1" /><circle cx="15" cy="6" r="1" />
+          <circle cx="9" cy="12" r="1" /><circle cx="15" cy="12" r="1" />
+          <circle cx="9" cy="18" r="1" /><circle cx="15" cy="18" r="1" />
+        }
         @case ('sun') {
           <circle cx="12" cy="12" r="4" />
           <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />

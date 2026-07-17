@@ -665,17 +665,28 @@ package org.jlawyer.io.rest.v6;
 
 import com.jdimension.jlawyer.persistence.AppRoleBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.Group;
+import com.jdimension.jlawyer.persistence.InvoicePool;
+import com.jdimension.jlawyer.persistence.InvoicePoolAccess;
+import com.jdimension.jlawyer.persistence.MailboxSetup;
+import com.jdimension.jlawyer.security.CryptoProvider;
+import com.jdimension.jlawyer.services.CalendarServiceLocal;
+import com.jdimension.jlawyer.services.InvoiceServiceLocal;
 import com.jdimension.jlawyer.services.SecurityServiceLocal;
 import com.jdimension.jlawyer.services.SystemManagementLocal;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.jlawyer.io.rest.v6.pojo.RestfulBeaCertificateV6;
+import org.jlawyer.io.rest.v6.pojo.RestfulIdNameV6;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -704,6 +715,8 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     
     private static final String LOOKUP_SYSMAN="java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal";
     private static final String LOOKUP_SECSVC="java:global/j-lawyer-server/j-lawyer-server-ejb/SecurityService!com.jdimension.jlawyer.services.SecurityServiceLocal";
+    private static final String LOOKUP_CALENDAR="java:global/j-lawyer-server/j-lawyer-server-ejb/CalendarService!com.jdimension.jlawyer.services.CalendarServiceLocal";
+    private static final String LOOKUP_INVOICE="java:global/j-lawyer-server/j-lawyer-server-ejb/InvoiceService!com.jdimension.jlawyer.services.InvoiceServiceLocal";
 
     /**
      * Returns all user available in the security who have at least the permission
@@ -799,7 +812,553 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
         }
 
     }
-    
+
+    /**
+     * Creates a new security group. Requires administrator permission. Any id supplied by the caller
+     * is ignored; the created group is returned.
+     *
+     * @param group the group to create (name + abbreviation)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 409 the group could not be created
+     */
+    @Override
+    @PUT
+    @Path("/groups/create")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Creates a new security group. Requires administrator permission.", response = RestfulGroupV6.class)
+    public Response createGroup(@io.swagger.annotations.ApiParam RestfulGroupV6 group) {
+        try {
+            InitialContext ic = new InitialContext();
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
+            Group g = new Group();
+            g.setName(group.getName());
+            g.setAbbreviation(group.getAbbreviation());
+            Group created = security.createGroup(g);
+            return Response.ok(RestfulGroupV6.fromGroup(created)).build();
+        } catch (Exception ex) {
+            log.error("can not create group " + group.getName(), ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Updates an existing security group (name + abbreviation). Requires administrator permission.
+     *
+     * @param group the group to update (identified by its id)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 409 the group could not be updated
+     */
+    @Override
+    @POST
+    @Path("/groups/update")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Updates a security group. Requires administrator permission.", response = RestfulGroupV6.class)
+    public Response updateGroup(@io.swagger.annotations.ApiParam RestfulGroupV6 group) {
+        try {
+            InitialContext ic = new InitialContext();
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
+            Group updated = security.updateGroup(group.toGroup());
+            return Response.ok(RestfulGroupV6.fromGroup(updated)).build();
+        } catch (Exception ex) {
+            log.error("can not update group " + group.getName(), ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Deletes a security group. Requires administrator permission.
+     *
+     * @param groupId the id of the group to delete
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 409 the group could not be deleted (e.g. still in use)
+     */
+    @Override
+    @DELETE
+    @Path("/groups/{groupId}")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Deletes a security group. Requires administrator permission.")
+    public Response deleteGroup(@PathParam("groupId") String groupId) {
+        try {
+            InitialContext ic = new InitialContext();
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
+            security.deleteGroup(groupId);
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not delete group " + groupId, ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Returns the login names (principal ids) of the users that are members of a group. Requires
+     * administrator permission.
+     *
+     * @param groupId the id of the group
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Path("/groups/{groupId}/members")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the members (principal ids) of a group. Requires administrator permission.", response = String.class, responseContainer = "List")
+    public Response getGroupMembers(@PathParam("groupId") String groupId) {
+        try {
+            InitialContext ic = new InitialContext();
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            List<String> members = new ArrayList<>();
+            for (AppUserBean u : system.getUsers()) {
+                for (Group g : security.getGroupsForUser(u.getPrincipalId())) {
+                    if (g.getId().equals(groupId)) {
+                        members.add(u.getPrincipalId());
+                        break;
+                    }
+                }
+            }
+            return Response.ok(members).build();
+        } catch (Exception ex) {
+            log.error("can not determine members of group " + groupId, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns the groups a user is a member of. Requires administrator permission.
+     *
+     * @param principalId the login name of the user
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Path("/users/{principalId}/groups")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the groups a user is a member of. Requires administrator permission.", response = RestfulGroupV6.class, responseContainer = "List")
+    public Response getUserGroups(@PathParam("principalId") String principalId) {
+        try {
+            InitialContext ic = new InitialContext();
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
+            ArrayList<RestfulGroupV6> result = new ArrayList<>();
+            for (Group g : security.getGroupsForUser(principalId)) {
+                result.add(RestfulGroupV6.fromGroup(g));
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("can not determine groups for user " + principalId, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Adds a user to a group. Requires administrator permission.
+     *
+     * @param groupId the id of the group
+     * @param principalId the login name of the user to add
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 409 the user could not be added
+     */
+    @Override
+    @PUT
+    @Path("/groups/{groupId}/members/{principalId}")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Adds a user to a group. Requires administrator permission.")
+    public Response addGroupMember(@PathParam("groupId") String groupId, @PathParam("principalId") String principalId) {
+        try {
+            InitialContext ic = new InitialContext();
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
+            security.addUserToGroup(principalId, groupId);
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not add user " + principalId + " to group " + groupId, ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Removes a user from a group. Requires administrator permission.
+     *
+     * @param groupId the id of the group
+     * @param principalId the login name of the user to remove
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 409 the user could not be removed
+     */
+    @Override
+    @DELETE
+    @Path("/groups/{groupId}/members/{principalId}")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Removes a user from a group. Requires administrator permission.")
+    public Response removeGroupMember(@PathParam("groupId") String groupId, @PathParam("principalId") String principalId) {
+        try {
+            InitialContext ic = new InitialContext();
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
+            security.removeUserFromGroup(principalId, groupId);
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not remove user " + principalId + " from group " + groupId, ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    // ===== per-user resource access: calendars, mailboxes, invoice pools =====
+
+    /** All calendars configured in the system (id + display name). Requires administrator permission. */
+    @Override
+    @GET
+    @Path("/calendars")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "All calendars configured in the system. Requires administrator permission.", response = RestfulIdNameV6.class, responseContainer = "List")
+    public Response listCalendars() {
+        try {
+            InitialContext ic = new InitialContext();
+            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup(LOOKUP_CALENDAR);
+            List<RestfulIdNameV6> result = new ArrayList<>();
+            for (CalendarSetup c : cal.getAllCalendarSetups()) {
+                result.add(new RestfulIdNameV6(c.getId(), c.getDisplayName()));
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("can not list calendars", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /** Ids of the calendars a user has access to. Requires administrator permission. */
+    @Override
+    @GET
+    @Path("/users/{principalId}/calendars")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Ids of the calendars a user has access to. Requires administrator permission.", response = String.class, responseContainer = "List")
+    public Response getUserCalendars(@PathParam("principalId") String principalId) {
+        try {
+            InitialContext ic = new InitialContext();
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
+            List<String> ids = new ArrayList<>();
+            for (CalendarSetup c : security.getCalendarsForUser(principalId)) {
+                ids.add(c.getId());
+            }
+            return Response.ok(ids).build();
+        } catch (Exception ex) {
+            log.error("can not determine calendars for user " + principalId, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /** Grants a user access to a calendar. Requires administrator permission. */
+    @Override
+    @PUT
+    @Path("/users/{principalId}/calendars/{calendarId}")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Grants a user access to a calendar. Requires administrator permission.")
+    public Response addUserCalendar(@PathParam("principalId") String principalId, @PathParam("calendarId") String calendarId) {
+        try {
+            InitialContext ic = new InitialContext();
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
+            security.addUserToCalendar(principalId, calendarId);
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not add calendar " + calendarId + " to user " + principalId, ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /** Revokes a user's access to a calendar. Requires administrator permission. */
+    @Override
+    @DELETE
+    @Path("/users/{principalId}/calendars/{calendarId}")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Revokes a user's access to a calendar. Requires administrator permission.")
+    public Response removeUserCalendar(@PathParam("principalId") String principalId, @PathParam("calendarId") String calendarId) {
+        try {
+            InitialContext ic = new InitialContext();
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
+            security.removeUserFromCalendar(principalId, calendarId);
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not remove calendar " + calendarId + " from user " + principalId, ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /** All mailboxes configured in the system (id + display name). Requires administrator permission. */
+    @Override
+    @GET
+    @Path("/mailboxes")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "All mailboxes configured in the system. Requires administrator permission.", response = RestfulIdNameV6.class, responseContainer = "List")
+    public Response listMailboxes() {
+        try {
+            InitialContext ic = new InitialContext();
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
+            List<RestfulIdNameV6> result = new ArrayList<>();
+            for (MailboxSetup m : security.getAllMailboxSetups()) {
+                String label = (m.getDisplayName() != null && !m.getDisplayName().isEmpty()) ? m.getDisplayName() : m.getEmailAddress();
+                result.add(new RestfulIdNameV6(m.getId(), label));
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("can not list mailboxes", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /** Ids of the mailboxes a user has access to. Requires administrator permission. */
+    @Override
+    @GET
+    @Path("/users/{principalId}/mailboxes")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Ids of the mailboxes a user has access to. Requires administrator permission.", response = String.class, responseContainer = "List")
+    public Response getUserMailboxes(@PathParam("principalId") String principalId) {
+        try {
+            InitialContext ic = new InitialContext();
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
+            List<String> ids = new ArrayList<>();
+            for (MailboxSetup m : security.getMailboxesForUser(principalId)) {
+                ids.add(m.getId());
+            }
+            return Response.ok(ids).build();
+        } catch (Exception ex) {
+            log.error("can not determine mailboxes for user " + principalId, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /** Grants a user access to a mailbox. Requires administrator permission. */
+    @Override
+    @PUT
+    @Path("/users/{principalId}/mailboxes/{mailboxId}")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Grants a user access to a mailbox. Requires administrator permission.")
+    public Response addUserMailbox(@PathParam("principalId") String principalId, @PathParam("mailboxId") String mailboxId) {
+        try {
+            InitialContext ic = new InitialContext();
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
+            security.addUserToMailbox(principalId, mailboxId);
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not add mailbox " + mailboxId + " to user " + principalId, ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /** Revokes a user's access to a mailbox. Requires administrator permission. */
+    @Override
+    @DELETE
+    @Path("/users/{principalId}/mailboxes/{mailboxId}")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Revokes a user's access to a mailbox. Requires administrator permission.")
+    public Response removeUserMailbox(@PathParam("principalId") String principalId, @PathParam("mailboxId") String mailboxId) {
+        try {
+            InitialContext ic = new InitialContext();
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
+            security.removeUserFromMailbox(principalId, mailboxId);
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not remove mailbox " + mailboxId + " from user " + principalId, ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /** All invoice number pools configured in the system (id + display name). Requires administrator permission. */
+    @Override
+    @GET
+    @Path("/invoice-pools")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "All invoice number pools configured in the system. Requires administrator permission.", response = RestfulIdNameV6.class, responseContainer = "List")
+    public Response listInvoicePools() {
+        try {
+            InitialContext ic = new InitialContext();
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICE);
+            List<RestfulIdNameV6> result = new ArrayList<>();
+            for (InvoicePool p : invoices.getAllInvoicePools()) {
+                result.add(new RestfulIdNameV6(p.getId(), p.getDisplayName()));
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("can not list invoice pools", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /** Ids of the invoice number pools a user may use. Requires administrator permission. */
+    @Override
+    @GET
+    @Path("/users/{principalId}/invoice-pools")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Ids of the invoice number pools a user may use. Requires administrator permission.", response = String.class, responseContainer = "List")
+    public Response getUserInvoicePools(@PathParam("principalId") String principalId) {
+        try {
+            InitialContext ic = new InitialContext();
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
+            List<String> ids = new ArrayList<>();
+            for (InvoicePoolAccess a : security.getInvoicePoolAccessForUser(principalId)) {
+                ids.add(a.getPoolId());
+            }
+            return Response.ok(ids).build();
+        } catch (Exception ex) {
+            log.error("can not determine invoice pools for user " + principalId, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /** Grants a user access to an invoice number pool. Requires administrator permission. */
+    @Override
+    @PUT
+    @Path("/users/{principalId}/invoice-pools/{poolId}")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Grants a user access to an invoice number pool. Requires administrator permission.")
+    public Response addUserInvoicePool(@PathParam("principalId") String principalId, @PathParam("poolId") String poolId) {
+        try {
+            InitialContext ic = new InitialContext();
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
+            security.addUserToInvoicePool(principalId, poolId);
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not add invoice pool " + poolId + " to user " + principalId, ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /** Revokes a user's access to an invoice number pool. Requires administrator permission. */
+    @Override
+    @DELETE
+    @Path("/users/{principalId}/invoice-pools/{poolId}")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Revokes a user's access to an invoice number pool. Requires administrator permission.")
+    public Response removeUserInvoicePool(@PathParam("principalId") String principalId, @PathParam("poolId") String poolId) {
+        try {
+            InitialContext ic = new InitialContext();
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
+            security.removeUserFromInvoicePool(principalId, poolId);
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not remove invoice pool " + poolId + " from user " + principalId, ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Uploads (or replaces) a user's beA certificate. Requires administrator permission. The password
+     * is stored encrypted with the same scheme the desktop client uses.
+     *
+     * @param principalId the user to store the certificate for
+     * @param cert the base64-encoded certificate plus its password
+     * @response 404 No user found with the given principalId
+     */
+    @Override
+    @POST
+    @Path("/users/{principalId}/bea-certificate")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Uploads a user's beA certificate. Requires administrator permission.")
+    public Response uploadBeaCertificate(@PathParam("principalId") String principalId, @io.swagger.annotations.ApiParam RestfulBeaCertificateV6 cert) {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            AppUserBean user = system.getUser(principalId);
+            if (user == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            if (cert == null || cert.getContentBase64() == null || cert.getContentBase64().isEmpty()) {
+                return Response.status(Response.Status.CONFLICT).entity("Kein Zertifikat übergeben.").build();
+            }
+            byte[] bytes = Base64.getDecoder().decode(cert.getContentBase64());
+            user.setBeaCertificate(bytes);
+            String pwd = cert.getPassword() == null ? "" : cert.getPassword();
+            user.setBeaCertificatePassword(CryptoProvider.defaultCrypto().encrypt(pwd));
+            system.updateUser(user, system.getRoles(principalId));
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not store beA certificate for user " + principalId, ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Removes a user's beA certificate. Requires administrator permission.
+     *
+     * @param principalId the user whose certificate to remove
+     * @response 404 No user found with the given principalId
+     */
+    @Override
+    @DELETE
+    @Path("/users/{principalId}/bea-certificate")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Removes a user's beA certificate. Requires administrator permission.")
+    public Response removeBeaCertificate(@PathParam("principalId") String principalId) {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            AppUserBean user = system.getUser(principalId);
+            if (user == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            user.setBeaCertificate(null);
+            user.setBeaCertificatePassword(null);
+            system.updateUser(user, system.getRoles(principalId));
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not remove beA certificate for user " + principalId, ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Applies the user attributes that need extra handling beyond the plain POJO mapping: the primary
+     * group is resolved from its id, and a submitted Nextcloud password is encrypted (write-only — an
+     * empty value leaves the stored password untouched). Encryption uses the same {@link CryptoProvider}
+     * the desktop client uses, so both agree on the stored value.
+     */
+    private void applyUserExtras(AppUserBean u, RestfulUserV6 userData, SecurityServiceLocal security) throws Exception {
+        // primary group
+        String pgId = userData.getPrimaryGroupId();
+        if (pgId == null || pgId.trim().isEmpty()) {
+            u.setPrimaryGroup(null);
+        } else {
+            Group match = null;
+            for (Group g : security.getAllGroups()) {
+                if (g.getId().equals(pgId)) {
+                    match = g;
+                    break;
+                }
+            }
+            u.setPrimaryGroup(match);
+        }
+        // Nextcloud password: only (re)set when a non-empty value was submitted
+        String cloudPwd = userData.getCloudPassword();
+        if (cloudPwd != null && !cloudPwd.isEmpty()) {
+            u.setCloudPassword(CryptoProvider.defaultCrypto().encrypt(cloudPwd));
+        }
+    }
+
         /**
      * Returns a users metadata given its external ID
      *
@@ -861,9 +1420,12 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
             InitialContext ic = new InitialContext();
             SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
             
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
+
             AppUserBean u = new AppUserBean();
             u = userData.toAppUserBean(u);
-            
+            applyUserExtras(u, userData, security);
+
             // apply dummy password - not an issue, because the user will not have any login permission anyways
             u.setPassword(""+System.currentTimeMillis());
             u=system.createUser(u, new ArrayList<>());
@@ -913,7 +1475,9 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
 
             List<AppRoleBean> currentRoles = system.getRoles(userData.getPrincipalId());
 
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
             existing = userData.toAppUserBean(existing);
+            applyUserExtras(existing, userData, security);
 
             existing = system.updateUser(existing, currentRoles);
 

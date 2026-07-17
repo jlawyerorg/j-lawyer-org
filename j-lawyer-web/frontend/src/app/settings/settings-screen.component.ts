@@ -12,6 +12,13 @@ import { FinanceTypesComponent } from './finance-types.component';
 import { FinancePoolsComponent } from './finance-pools.component';
 import { FinancePositionsComponent } from './finance-positions.component';
 import { FinanceSettingsComponent } from './finance-settings.component';
+import { PartyTypesComponent } from './party-types.component';
+import { CaseNumberingComponent } from './case-numbering.component';
+import { FolderTemplatesComponent } from './folder-templates.component';
+import { ScanSettingsComponent } from './scan-settings.component';
+import { BackupSettingsComponent } from './backup-settings.component';
+import { StirlingSettingsComponent } from './stirling-settings.component';
+import { BeaSettingsComponent } from './bea-settings.component';
 
 interface SectionGroup {
   groupKey: string;
@@ -29,7 +36,7 @@ interface SectionGroup {
   selector: 'jl-settings-screen',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoModule, IconComponent, OptionListEditorComponent, SettingsUsersComponent, SettingsGroupsComponent, FirmProfileComponent, FinanceTypesComponent, FinancePoolsComponent, FinancePositionsComponent, FinanceSettingsComponent],
+  imports: [TranslocoModule, IconComponent, OptionListEditorComponent, SettingsUsersComponent, SettingsGroupsComponent, FirmProfileComponent, FinanceTypesComponent, FinancePoolsComponent, FinancePositionsComponent, FinanceSettingsComponent, PartyTypesComponent, CaseNumberingComponent, FolderTemplatesComponent, ScanSettingsComponent, BackupSettingsComponent, StirlingSettingsComponent, BeaSettingsComponent],
   template: `
     <div class="st" [class.show-detail]="selected()">
       <section class="st-list">
@@ -76,6 +83,13 @@ interface SectionGroup {
               @case ('invoicePools') { <jl-finance-pools /> }
               @case ('invoicePositions') { <jl-finance-positions /> }
               @case ('financeSettings') { <jl-finance-settings /> }
+              @case ('partyTypes') { <jl-party-types /> }
+              @case ('caseNumbering') { <jl-case-numbering /> }
+              @case ('folderTemplates') { <jl-folder-templates /> }
+              @case ('scanSettings') { <jl-scan-settings /> }
+              @case ('backupSettings') { <jl-backup-settings /> }
+              @case ('stirlingSettings') { <jl-stirling-settings /> }
+              @case ('beaSettings') { <jl-bea-settings /> }
             }
           </div>
         } @else {

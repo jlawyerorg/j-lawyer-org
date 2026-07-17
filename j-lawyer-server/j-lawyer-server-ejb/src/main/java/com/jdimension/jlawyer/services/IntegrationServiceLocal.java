@@ -676,5 +676,7 @@ public interface IntegrationServiceLocal {
     
     Collection<String> getAllEmailTemplateNames();
     EmailTemplate getEmailTemplate(String fileName) throws Exception;
-    
+
+    boolean validateExternalStorageLocation(String location) throws Exception;
+
 }

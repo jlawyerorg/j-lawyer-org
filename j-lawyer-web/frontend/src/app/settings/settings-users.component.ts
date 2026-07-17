@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
-import { switchMap } from 'rxjs';
+import { forkJoin, of, switchMap } from 'rxjs';
 import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
-import { AdminRole, AdminUser, UsersAdminService } from './users-admin.service';
+import { AdminGroup, AdminRole, AdminUser, IdName, UsersAdminService } from './users-admin.service';
 import { UserEditorComponent, UserEditResult } from './user-editor.component';
 
 /**
@@ -45,6 +45,10 @@ import { UserEditorComponent, UserEditResult } from './user-editor.component';
 
     @if (editorOpen()) {
       <jl-user-editor [user]="editUser()" [allRoles]="allRoles()" [assignedRoles]="assignedRoles()"
+                      [allGroups]="allGroups()" [assignedGroups]="assignedGroups()"
+                      [allCalendars]="allCalendars()" [assignedCalendars]="assignedCalendars()"
+                      [allMailboxes]="allMailboxes()" [assignedMailboxes]="assignedMailboxes()"
+                      [allInvoicePools]="allInvoicePools()" [assignedInvoicePools]="assignedInvoicePools()"
                       [saving]="saving()" [error]="saveError()"
                       (save)="onSave($event)" (close)="editorOpen.set(false)" />
     }
@@ -74,17 +78,29 @@ export class SettingsUsersComponent implements OnInit {
 
   protected readonly users = signal<AdminUser[]>([]);
   protected readonly allRoles = signal<AdminRole[]>([]);
+  protected readonly allGroups = signal<AdminGroup[]>([]);
+  protected readonly allCalendars = signal<IdName[]>([]);
+  protected readonly allMailboxes = signal<IdName[]>([]);
+  protected readonly allInvoicePools = signal<IdName[]>([]);
   protected readonly loading = signal(false);
   protected readonly loadError = signal(false);
 
   protected readonly editorOpen = signal(false);
   protected readonly editUser = signal<AdminUser | null>(null);
   protected readonly assignedRoles = signal<string[]>([]);
+  protected readonly assignedGroups = signal<string[]>([]);
+  protected readonly assignedCalendars = signal<string[]>([]);
+  protected readonly assignedMailboxes = signal<string[]>([]);
+  protected readonly assignedInvoicePools = signal<string[]>([]);
   protected readonly saving = signal(false);
   protected readonly saveError = signal<string | null>(null);
 
   ngOnInit(): void {
     this.api.listRoles().subscribe({ next: (r) => this.allRoles.set(r), error: () => {} });
+    this.api.listGroups().subscribe({ next: (g) => this.allGroups.set(g), error: () => {} });
+    this.api.listCalendars().subscribe({ next: (c) => this.allCalendars.set(c), error: () => {} });
+    this.api.listMailboxes().subscribe({ next: (m) => this.allMailboxes.set(m), error: () => {} });
+    this.api.listInvoicePools().subscribe({ next: (p) => this.allInvoicePools.set(p), error: () => {} });
     this.reload();
   }
 
@@ -100,6 +116,10 @@ export class SettingsUsersComponent implements OnInit {
   protected openNew(): void {
     this.editUser.set(null);
     this.assignedRoles.set([]);
+    this.assignedGroups.set([]);
+    this.assignedCalendars.set([]);
+    this.assignedMailboxes.set([]);
+    this.assignedInvoicePools.set([]);
     this.saveError.set(null);
     this.editorOpen.set(true);
   }
@@ -107,12 +127,18 @@ export class SettingsUsersComponent implements OnInit {
   protected openEdit(u: AdminUser): void {
     this.editUser.set(u);
     this.assignedRoles.set([]);
+    this.assignedGroups.set([]);
+    this.assignedCalendars.set([]);
+    this.assignedMailboxes.set([]);
+    this.assignedInvoicePools.set([]);
     this.saveError.set(null);
-    if (u.principalId) {
-      this.api.getUserRoles(u.principalId).subscribe({
-        next: (roles) => this.assignedRoles.set(roles.map((r) => r.role)),
-        error: () => {},
-      });
+    const pid = u.principalId;
+    if (pid) {
+      this.api.getUserRoles(pid).subscribe({ next: (roles) => this.assignedRoles.set(roles.map((r) => r.role)), error: () => {} });
+      this.api.userGroups(pid).subscribe({ next: (groups) => this.assignedGroups.set(groups.map((g) => g.id!).filter(Boolean)), error: () => {} });
+      this.api.userCalendars(pid).subscribe({ next: (ids) => this.assignedCalendars.set(ids), error: () => {} });
+      this.api.userMailboxes(pid).subscribe({ next: (ids) => this.assignedMailboxes.set(ids), error: () => {} });
+      this.api.userInvoicePools(pid).subscribe({ next: (ids) => this.assignedInvoicePools.set(ids), error: () => {} });
     }
     this.editorOpen.set(true);
   }
@@ -125,9 +151,29 @@ export class SettingsUsersComponent implements OnInit {
     const isNew = this.editUser() === null;
     const write$ = isNew ? this.api.createUser(result.user) : this.api.updateUser(result.user);
     const roleObjs: AdminRole[] = result.roles.map((role) => ({ role }));
-    write$.pipe(switchMap(() => this.api.setUserRoles(pid, roleObjs))).subscribe({
+    // Membership/access only supports add/remove, so diff each selection against the original set.
+    const assign$ = [
+      ...this.diff(this.assignedGroups(), result.groups, (id, add) => add ? this.api.addGroupMember(id, pid) : this.api.removeGroupMember(id, pid)),
+      ...this.diff(this.assignedCalendars(), result.calendars, (id, add) => add ? this.api.addUserCalendar(pid, id) : this.api.removeUserCalendar(pid, id)),
+      ...this.diff(this.assignedMailboxes(), result.mailboxes, (id, add) => add ? this.api.addUserMailbox(pid, id) : this.api.removeUserMailbox(pid, id)),
+      ...this.diff(this.assignedInvoicePools(), result.invoicePools, (id, add) => add ? this.api.addUserInvoicePool(pid, id) : this.api.removeUserInvoicePool(pid, id)),
+    ];
+    write$.pipe(
+      switchMap(() => this.api.setUserRoles(pid, roleObjs)),
+      switchMap(() => (assign$.length ? forkJoin(assign$) : of(null))),
+    ).subscribe({
       next: () => { this.saving.set(false); this.editorOpen.set(false); this.reload(); },
       error: () => { this.saving.set(false); this.saveError.set('save'); },
     });
+  }
+
+  /** Builds the add/remove calls needed to turn `orig` into `next`. */
+  private diff(orig: string[], next: string[], op: (id: string, add: boolean) => ReturnType<UsersAdminService['addGroupMember']>) {
+    const origSet = new Set(orig);
+    const nextSet = new Set(next);
+    return [
+      ...next.filter((id) => !origSet.has(id)).map((id) => op(id, true)),
+      ...orig.filter((id) => !nextSet.has(id)).map((id) => op(id, false)),
+    ];
   }
 }

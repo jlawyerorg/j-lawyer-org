@@ -664,8 +664,10 @@
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.GroupMembership;
+import com.jdimension.jlawyer.persistence.InvoicePoolAccess;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import java.util.Collection;
 import java.util.List;
@@ -679,7 +681,17 @@ import javax.ejb.Local;
 public interface SecurityServiceLocal {
 
     Collection<Group> getAllGroups();
-    
+
+    Group createGroup(Group group) throws Exception;
+
+    boolean deleteGroup(String groupId) throws Exception;
+
+    Group updateGroup(Group group) throws Exception;
+
+    boolean addUserToGroup(String principalId, String groupId) throws Exception;
+
+    boolean removeUserFromGroup(String principalId, String groupId) throws Exception;
+
     List<AppUserBean> getUsersHavingRole(String role) throws Exception;
 
     List<GroupMembership> getGroupMembershipsForUser(String principalId) throws Exception;
@@ -693,7 +705,19 @@ public interface SecurityServiceLocal {
     boolean addUserToCalendar(String principalId, String calendarId) throws Exception;
 
     boolean addUserToInvoicePool(String principalId, String poolId) throws Exception;
-    
+
+    boolean addUserToMailbox(String principalId, String mailboxId) throws Exception;
+
+    boolean removeUserFromCalendar(String principalId, String calendarId) throws Exception;
+
+    boolean removeUserFromMailbox(String principalId, String mailboxId) throws Exception;
+
+    boolean removeUserFromInvoicePool(String principalId, String poolId) throws Exception;
+
+    List<CalendarSetup> getCalendarsForUser(String principalId) throws Exception;
+
+    List<InvoicePoolAccess> getInvoicePoolAccessForUser(String principalId) throws Exception;
+
     public AppUserBean getUserByExternalId(String extId);
 
     /**

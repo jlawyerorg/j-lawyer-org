@@ -809,6 +809,22 @@ export class CasesService {
     );
   }
 
+  /** The document-folder templates available to apply to a case (GET /v3/cases/foldertemplates); [] on error. */
+  folderTemplates(): Observable<{ id: string; name: string }[]> {
+    return this.http.get<{ id: string; name: string }[]>(`${CASES_V3}/foldertemplates`).pipe(
+      map((rows) => (rows ?? []).map((t) => ({ id: t.id, name: t.name })).sort((a, b) => a.name.localeCompare(b.name))),
+      catchError(() => of([])),
+    );
+  }
+
+  /**
+   * Applies a document-folder template to a case, creating its folder structure
+   * (PUT /v3/cases/{caseId}/foldertemplates/{templateId}/apply).
+   */
+  applyFolderTemplate(caseId: string, templateId: string): Observable<unknown> {
+    return this.write(this.http.put(`${CASES_V3}/${encodeURIComponent(caseId)}/foldertemplates/${encodeURIComponent(templateId)}/apply`, {}));
+  }
+
   /** Existing (active) document names of a case (GET /v1/cases/{id}/documents/with-tags); [] on error. */
   caseDocumentNames(caseId: string): Observable<string[]> {
     return this.http.get<DocDto[]>(`${CASES_BASE}/${encodeURIComponent(caseId)}/documents/with-tags`).pipe(

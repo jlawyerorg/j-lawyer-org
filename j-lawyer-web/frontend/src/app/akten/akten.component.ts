@@ -353,11 +353,22 @@ interface TimesheetView extends CaseTimesheet {
                     <button type="button" class="folder-add" (click)="openNewFolder()" [title]="'akten.docs.newFolder' | transloco">
                       <jl-icon name="plus" [size]="14" />
                     </button>
+                    <button type="button" class="folder-add" (click)="openApplyTemplate()" [title]="'akten.docs.applyTemplate' | transloco">
+                      <jl-icon name="folder" [size]="14" />
+                    </button>
                     <button type="button" class="to-list" (click)="docMobilePane.set('list')">
                       {{ 'akten.docs.show' | transloco }} ({{ visibleDocs().length }}) ›
                     </button>
                   </header>
                   <div class="col-body">
+                    @if (hasNoRootFolder()) {
+                      <div class="fld-empty">
+                        <p>{{ 'akten.docs.noStructure' | transloco }}</p>
+                        <button type="button" class="fld-empty-btn" (click)="openApplyTemplate()">
+                          <jl-icon name="folder" [size]="14" /><span>{{ 'akten.docs.applyTemplate' | transloco }}</span>
+                        </button>
+                      </div>
+                    }
                     @for (f of docFolderRows(); track f.id) {
                       <div class="fld-row">
                         <button type="button" class="fld" [class.sel]="isFolderSelected(f.id)"
@@ -1013,6 +1024,37 @@ interface TimesheetView extends CaseTimesheet {
         </footer>
       </div>
     }
+    @if (templateDialog()) {
+      <div class="ov-backdrop" (click)="templateDialog.set(false)"></div>
+      <div class="ov-dialog" role="dialog" aria-modal="true">
+        <header class="ov-dh">
+          <h2>{{ 'akten.docs.applyTemplate' | transloco }}</h2>
+          <button type="button" class="ov-x" (click)="templateDialog.set(false)" [attr.aria-label]="'akten.editor.cancel' | transloco">
+            <jl-icon name="close" [size]="18" />
+          </button>
+        </header>
+        <div class="ov-db">
+          @if (folderTemplates().length === 0) {
+            <p class="ov-lbl">{{ 'akten.docs.noTemplates' | transloco }}</p>
+          } @else {
+            <label class="ov-fld">
+              <span class="ov-lbl">{{ 'akten.docs.template' | transloco }}</span>
+              <select [ngModel]="selectedTemplateId()" (ngModelChange)="selectedTemplateId.set($event)">
+                @for (t of folderTemplates(); track t.id) {
+                  <option [value]="t.id">{{ t.name }}</option>
+                }
+              </select>
+            </label>
+            <p class="ov-hint">{{ 'akten.docs.applyTemplateHint' | transloco }}</p>
+          }
+        </div>
+        <footer class="ov-df">
+          <span class="ov-spacer"></span>
+          <button type="button" class="ov-btn" (click)="templateDialog.set(false)">{{ 'akten.editor.cancel' | transloco }}</button>
+          <button type="button" class="ov-btn primary" [disabled]="!selectedTemplateId() || folderBusy() === 'apply'" (click)="applyTemplate()">{{ 'akten.docs.applyBtn' | transloco }}</button>
+        </footer>
+      </div>
+    }
   `,
   styleUrl: './akten.component.css',
 })
@@ -1125,11 +1167,17 @@ export class AktenComponent {
   protected readonly dragOver = signal(false);
   /** Id of the document currently being deleted, or null. */
   protected readonly docDeleting = signal<string | null>(null);
-  /** Folder-create dialog open state + its inputs; folderBusy = 'create' | <folderId being deleted> | null. */
+  /** Folder-create dialog open state + its inputs; folderBusy = 'create' | 'apply' | <folderId being deleted> | null. */
   protected readonly folderDialog = signal(false);
   protected readonly newFolderName = signal('');
   protected readonly newFolderParent = signal('');
   protected readonly folderBusy = signal<string | null>(null);
+  /** Apply-folder-template dialog: open state, the available templates, and the chosen template id. */
+  protected readonly templateDialog = signal(false);
+  protected readonly folderTemplates = signal<{ id: string; name: string }[]>([]);
+  protected readonly selectedTemplateId = signal('');
+  /** True while the case has no real folder structure yet (root folder not created). */
+  protected readonly hasNoRootFolder = computed(() => !this.selected()?.rootFolder);
   /** Id of the due date currently being deleted, or null. */
   protected readonly dueDeleting = signal<string | null>(null);
 
@@ -1559,6 +1607,30 @@ export class AktenComponent {
     this.folderBusy.set('create');
     this.cases.createFolder(id, name, this.newFolderParent()).subscribe({
       next: () => { this.folderBusy.set(null); this.folderDialog.set(false); this.reloadDetail(); },
+      error: () => this.folderBusy.set(null),
+    });
+  }
+
+  /** Opens the apply-folder-template dialog and (re)loads the available templates. */
+  protected openApplyTemplate(): void {
+    this.selectedTemplateId.set('');
+    this.templateDialog.set(true);
+    this.cases.folderTemplates().subscribe((list) => {
+      this.folderTemplates.set(list);
+      this.selectedTemplateId.set(list[0]?.id ?? '');
+    });
+  }
+
+  /** Applies the chosen folder template to the case, then reloads and closes the dialog. */
+  protected applyTemplate(): void {
+    const id = this.selectedId();
+    const templateId = this.selectedTemplateId();
+    if (!id || !templateId || this.folderBusy()) {
+      return;
+    }
+    this.folderBusy.set('apply');
+    this.cases.applyFolderTemplate(id, templateId).subscribe({
+      next: () => { this.folderBusy.set(null); this.templateDialog.set(false); this.reloadDetail(); },
       error: () => this.folderBusy.set(null),
     });
   }

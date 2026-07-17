@@ -704,7 +704,15 @@ public interface SystemManagementLocal {
     List<PartyTypeBean> getPartyTypes();
 
     PartyTypeBean getPartyType(String id);
-    
+
+    void clearCurrentBackup();
+
+    PartyTypeBean addPartyType(PartyTypeBean partyType) throws Exception;
+
+    PartyTypeBean updatePartyType(PartyTypeBean partyType) throws Exception;
+
+    void removePartyType(PartyTypeBean partyType) throws Exception;
+
     AppUserBean getUser(String principalId);
     AppUserBean getUserUnrestricted(String principalId);
     

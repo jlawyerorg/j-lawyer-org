@@ -13,24 +13,24 @@ public class RestfulRoleV6 {
     private static final Map<String, String> ROLE_DESCRIPTIONS = new HashMap<>();
 
     static {
-        ROLE_DESCRIPTIONS.put("loginRole", "Permission to log in to the system");
-        ROLE_DESCRIPTIONS.put("adminRole", "Administrative privileges for user and system management");
-        ROLE_DESCRIPTIONS.put("sysAdminRole", "System administrator privileges, can manage other administrators");
-        ROLE_DESCRIPTIONS.put("importRole", "Permission to import data");
-        ROLE_DESCRIPTIONS.put("createAddressRole", "Permission to create contacts");
-        ROLE_DESCRIPTIONS.put("readAddressRole", "Permission to read contacts");
-        ROLE_DESCRIPTIONS.put("writeAddressRole", "Permission to modify contacts");
-        ROLE_DESCRIPTIONS.put("removeAddressRole", "Permission to delete contacts");
-        ROLE_DESCRIPTIONS.put("createArchiveFileRole", "Permission to create cases");
-        ROLE_DESCRIPTIONS.put("readArchiveFileRole", "Permission to read cases");
-        ROLE_DESCRIPTIONS.put("writeArchiveFileRole", "Permission to modify cases");
-        ROLE_DESCRIPTIONS.put("removeArchiveFileRole", "Permission to delete cases");
-        ROLE_DESCRIPTIONS.put("createOptionGroupRole", "Permission to create option groups");
-        ROLE_DESCRIPTIONS.put("writeOptionGroupRole", "Permission to modify option groups");
-        ROLE_DESCRIPTIONS.put("deleteOptionGroupRole", "Permission to delete option groups");
-        ROLE_DESCRIPTIONS.put("commonReportRole", "Permission to access common reports");
-        ROLE_DESCRIPTIONS.put("confidentialReportRole", "Permission to access confidential reports");
-        ROLE_DESCRIPTIONS.put("aiAgentRole", "Permission to use AI agent integrations");
+        ROLE_DESCRIPTIONS.put("loginRole", "Anmeldung am System");
+        ROLE_DESCRIPTIONS.put("adminRole", "Administration (Nutzer & Einstellungen)");
+        ROLE_DESCRIPTIONS.put("sysAdminRole", "Systemadministration (inkl. anderer Administratoren)");
+        ROLE_DESCRIPTIONS.put("importRole", "Datenimport");
+        ROLE_DESCRIPTIONS.put("createAddressRole", "Kontakte anlegen");
+        ROLE_DESCRIPTIONS.put("readAddressRole", "Kontakte einsehen");
+        ROLE_DESCRIPTIONS.put("writeAddressRole", "Kontakte bearbeiten");
+        ROLE_DESCRIPTIONS.put("removeAddressRole", "Kontakte löschen");
+        ROLE_DESCRIPTIONS.put("createArchiveFileRole", "Akten anlegen");
+        ROLE_DESCRIPTIONS.put("readArchiveFileRole", "Akten einsehen");
+        ROLE_DESCRIPTIONS.put("writeArchiveFileRole", "Akten bearbeiten");
+        ROLE_DESCRIPTIONS.put("removeArchiveFileRole", "Akten löschen");
+        ROLE_DESCRIPTIONS.put("createOptionGroupRole", "Wertelisten anlegen");
+        ROLE_DESCRIPTIONS.put("writeOptionGroupRole", "Wertelisten bearbeiten");
+        ROLE_DESCRIPTIONS.put("deleteOptionGroupRole", "Wertelisten löschen");
+        ROLE_DESCRIPTIONS.put("commonReportRole", "Allgemeine Auswertungen");
+        ROLE_DESCRIPTIONS.put("confidentialReportRole", "Vertrauliche Auswertungen");
+        ROLE_DESCRIPTIONS.put("aiAgentRole", "KI-Agentenfunktionen");
     }
 
     private String role;

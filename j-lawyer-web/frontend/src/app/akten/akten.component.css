@@ -343,6 +343,14 @@
   border: 1px solid var(--jl-line-strong); background: var(--jl-surface); color: var(--jl-ink-soft); cursor: pointer;
 }
 .folder-add:hover { border-color: var(--jl-blue); color: var(--jl-blue); }
+/* Empty-state prompt shown in the folder column when a case has no folder structure yet. */
+.docs .fld-empty { padding: 12px 12px 6px; }
+.docs .fld-empty p { margin: 0 0 8px; font-size: .82rem; color: var(--jl-ink-faint); }
+.docs .fld-empty-btn {
+  display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: .82rem; padding: 6px 12px;
+  border: 1px solid var(--jl-line-strong); border-radius: 8px; background: var(--jl-surface); color: var(--jl-ink); cursor: pointer;
+}
+.docs .fld-empty-btn:hover { border-color: var(--jl-blue); color: var(--jl-blue); }
 /* Folder row = selectable button + (hover) delete affordance. */
 .docs .fld-row { position: relative; display: flex; align-items: center; }
 .docs .fld-row .fld { flex: 1; min-width: 0; }
@@ -558,6 +566,7 @@
 .ov-db { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
 .ov-fld { display: flex; flex-direction: column; gap: 5px; }
 .ov-lbl { font-size: .72rem; font-weight: 700; color: var(--jl-ink-faint); text-transform: uppercase; letter-spacing: .03em; }
+.ov-hint { margin: 10px 0 0; font-size: .78rem; color: var(--jl-ink-faint); }
 .ov-db input, .ov-db select { font: inherit; font-size: .88rem; padding: 8px 10px; border: 1px solid var(--jl-line-strong); border-radius: 8px; background: var(--jl-surface); color: var(--jl-ink); width: 100%; }
 .ov-db input:focus, .ov-db select:focus { outline: none; border-color: var(--jl-blue); }
 .ov-df { display: flex; align-items: center; gap: 10px; padding: 11px 16px; border-top: 1px solid var(--jl-line); }

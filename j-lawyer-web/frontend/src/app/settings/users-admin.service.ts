@@ -38,6 +38,23 @@ export interface AdminUser {
   taxNr?: string;
   taxVatId?: string;
   autoLockDocuments?: boolean;
+  /** Id of the user's primary group ('' = none). */
+  primaryGroupId?: string;
+  /** Nextcloud connection. The password is write-only (never returned; only applied when non-empty). */
+  cloudHost?: string;
+  cloudPort?: number;
+  cloudSsl?: boolean;
+  cloudUser?: string;
+  cloudPassword?: string;
+  cloudPath?: string;
+  /** Read-only: whether a beA certificate is stored for the user. */
+  beaCertificatePresent?: boolean;
+}
+
+/** A minimal id + display-name option (calendar / mailbox / invoice pool). */
+export interface IdName {
+  id: string;
+  name: string;
 }
 
 /** A system role with its human description (RestfulRoleV6). */
@@ -59,8 +76,8 @@ export interface AdminGroup {
  *
  * Limitation (server contract): creating a user assigns a dummy password and grants no login
  * permission — the web cannot set passwords or enable login; that stays a desktop/admin task. Role
- * assignment and master-data editing of existing users are fully supported. Groups are read-only
- * (no create/update endpoint yet).
+ * assignment and master-data editing of existing users are fully supported. Groups support full CRUD
+ * plus membership editing.
  */
 @Injectable({ providedIn: 'root' })
 export class UsersAdminService {
@@ -93,5 +110,62 @@ export class UsersAdminService {
 
   listGroups(): Observable<AdminGroup[]> {
     return this.http.get<AdminGroup[]>(`${SECURITY_V6}/groups`);
+  }
+
+  createGroup(group: AdminGroup): Observable<AdminGroup> {
+    return this.http.put<AdminGroup>(`${SECURITY_V6}/groups/create`, group);
+  }
+
+  updateGroup(group: AdminGroup): Observable<AdminGroup> {
+    return this.http.post<AdminGroup>(`${SECURITY_V6}/groups/update`, group);
+  }
+
+  deleteGroup(groupId: string): Observable<unknown> {
+    return this.http.delete(`${SECURITY_V6}/groups/${encodeURIComponent(groupId)}`);
+  }
+
+  /** Login names of the users that are members of the group. */
+  groupMembers(groupId: string): Observable<string[]> {
+    return this.http.get<string[]>(`${SECURITY_V6}/groups/${encodeURIComponent(groupId)}/members`);
+  }
+
+  /** The groups a user is a member of. */
+  userGroups(principalId: string): Observable<AdminGroup[]> {
+    return this.http.get<AdminGroup[]>(`${SECURITY_V6}/users/${encodeURIComponent(principalId)}/groups`);
+  }
+
+  addGroupMember(groupId: string, principalId: string): Observable<unknown> {
+    return this.http.put(`${SECURITY_V6}/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(principalId)}`, {});
+  }
+
+  removeGroupMember(groupId: string, principalId: string): Observable<unknown> {
+    return this.http.delete(`${SECURITY_V6}/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(principalId)}`);
+  }
+
+  // --- selectable resources (calendars, mailboxes, invoice pools) ---
+
+  listCalendars(): Observable<IdName[]> { return this.http.get<IdName[]>(`${SECURITY_V6}/calendars`); }
+  listMailboxes(): Observable<IdName[]> { return this.http.get<IdName[]>(`${SECURITY_V6}/mailboxes`); }
+  listInvoicePools(): Observable<IdName[]> { return this.http.get<IdName[]>(`${SECURITY_V6}/invoice-pools`); }
+
+  userCalendars(pid: string): Observable<string[]> { return this.http.get<string[]>(`${SECURITY_V6}/users/${encodeURIComponent(pid)}/calendars`); }
+  userMailboxes(pid: string): Observable<string[]> { return this.http.get<string[]>(`${SECURITY_V6}/users/${encodeURIComponent(pid)}/mailboxes`); }
+  userInvoicePools(pid: string): Observable<string[]> { return this.http.get<string[]>(`${SECURITY_V6}/users/${encodeURIComponent(pid)}/invoice-pools`); }
+
+  addUserCalendar(pid: string, id: string): Observable<unknown> { return this.http.put(`${SECURITY_V6}/users/${encodeURIComponent(pid)}/calendars/${encodeURIComponent(id)}`, {}); }
+  removeUserCalendar(pid: string, id: string): Observable<unknown> { return this.http.delete(`${SECURITY_V6}/users/${encodeURIComponent(pid)}/calendars/${encodeURIComponent(id)}`); }
+  addUserMailbox(pid: string, id: string): Observable<unknown> { return this.http.put(`${SECURITY_V6}/users/${encodeURIComponent(pid)}/mailboxes/${encodeURIComponent(id)}`, {}); }
+  removeUserMailbox(pid: string, id: string): Observable<unknown> { return this.http.delete(`${SECURITY_V6}/users/${encodeURIComponent(pid)}/mailboxes/${encodeURIComponent(id)}`); }
+  addUserInvoicePool(pid: string, id: string): Observable<unknown> { return this.http.put(`${SECURITY_V6}/users/${encodeURIComponent(pid)}/invoice-pools/${encodeURIComponent(id)}`, {}); }
+  removeUserInvoicePool(pid: string, id: string): Observable<unknown> { return this.http.delete(`${SECURITY_V6}/users/${encodeURIComponent(pid)}/invoice-pools/${encodeURIComponent(id)}`); }
+
+  /** Uploads (replaces) a user's beA certificate. */
+  uploadBeaCertificate(pid: string, contentBase64: string, password: string): Observable<unknown> {
+    return this.http.post(`${SECURITY_V6}/users/${encodeURIComponent(pid)}/bea-certificate`, { contentBase64, password });
+  }
+
+  /** Removes a user's beA certificate. */
+  removeBeaCertificate(pid: string): Observable<unknown> {
+    return this.http.delete(`${SECURITY_V6}/users/${encodeURIComponent(pid)}/bea-certificate`);
   }
 }

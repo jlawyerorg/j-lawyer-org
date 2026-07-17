@@ -666,8 +666,12 @@ package org.jlawyer.io.rest.v7;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
+import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import com.jdimension.jlawyer.services.IntegrationServiceLocal;
 import com.jdimension.jlawyer.services.SystemManagementLocal;
+import org.jlawyer.io.rest.v7.pojo.RestfulStorageLocationV7;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -688,8 +692,22 @@ import org.jlawyer.io.rest.v7.pojo.RestfulDocumentNameTemplateV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulFinanceSettingsV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulFirmProfileV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulMultiValueTagDefinitionV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulCaseNumberingV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulFolderNodeV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulFolderTemplateV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulFolderTemplateFolderV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulOptionV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulPartyTypeV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulScanSettingsV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulBackupSettingsV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulStirlingSettingsV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulBeaSettingsV7;
+import com.jdimension.jlawyer.persistence.DocumentFolder;
+import com.jdimension.jlawyer.persistence.DocumentFolderTemplate;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
+import com.jdimension.jlawyer.server.utils.CaseNumberGenerator;
+import javax.ws.rs.POST;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 
 /**
@@ -706,6 +724,10 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     private static final Logger log = Logger.getLogger(ConfigurationEndpointV7.class.getName());
     
     private static final String LOOKUP_SYSMAN="java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal";
+
+    private static final String LOOKUP_CASES="java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
+
+    private static final String LOOKUP_INTEGRATION="java:global/j-lawyer-server/j-lawyer-server-ejb/IntegrationService!com.jdimension.jlawyer.services.IntegrationServiceLocal";
 
     /**
      * Returns all option groups available in the system who have at least one
@@ -1156,6 +1178,779 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
         } catch (Exception ex) {
             log.error("can not update finance settings", ex);
             return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns all party types (Beteiligtentypen).
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/party-types")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @io.swagger.annotations.ApiOperation(value = "Returns all party types (Beteiligtentypen).", response = RestfulPartyTypeV7.class, responseContainer = "List")
+    public Response getPartyTypes() {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            List<RestfulPartyTypeV7> result = new ArrayList<>();
+            for (PartyTypeBean p : system.getPartyTypes()) {
+                result.add(RestfulPartyTypeV7.fromEntity(p));
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("can not determine party types", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Creates a new party type. Requires administrator permission. Any ID supplied by the caller is
+     * ignored; the created type (with its generated ID) is returned.
+     *
+     * @param partyType the party type to create
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 409 a party type with the same name or placeholder already exists, or the input is invalid
+     */
+    @Override
+    @Path("/party-types")
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Creates a new party type. Requires administrator permission.", response = RestfulPartyTypeV7.class)
+    public Response createPartyType(@io.swagger.annotations.ApiParam RestfulPartyTypeV7 partyType) {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            PartyTypeBean created = system.addPartyType(partyType.toEntity());
+            return Response.ok(RestfulPartyTypeV7.fromEntity(created)).build();
+        } catch (Exception ex) {
+            log.error("can not create party type " + partyType.getName(), ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Updates an existing party type. Requires administrator permission. The type is identified by
+     * its ID; the other attributes are updated.
+     *
+     * @param partyType the party type to update
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 409 a party type with the same name or placeholder already exists, or the input is invalid
+     */
+    @Override
+    @Path("/party-types")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Updates an existing party type. Requires administrator permission.", response = RestfulPartyTypeV7.class)
+    public Response updatePartyType(@io.swagger.annotations.ApiParam RestfulPartyTypeV7 partyType) {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            PartyTypeBean updated = system.updatePartyType(partyType.toEntity());
+            return Response.ok(RestfulPartyTypeV7.fromEntity(updated)).build();
+        } catch (Exception ex) {
+            log.error("can not update party type " + partyType.getName(), ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Deletes a party type. Requires administrator permission. A type that is still in use by a party
+     * cannot be deleted.
+     *
+     * @param partyType the party type to delete (identified by its ID)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 409 the party type is still in use and cannot be deleted
+     */
+    @Override
+    @Path("/party-types")
+    @DELETE
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Deletes a party type. Requires administrator permission.")
+    public Response deletePartyType(@io.swagger.annotations.ApiParam RestfulPartyTypeV7 partyType) {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            system.removePartyType(partyType.toEntity());
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not delete party type " + partyType.getName(), ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Returns the server-wide case-number (Aktenzeichen) configuration.
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/case-numbering")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @io.swagger.annotations.ApiOperation(value = "Returns the server-wide case-number (Aktenzeichen) configuration.", response = RestfulCaseNumberingV7.class)
+    public Response getCaseNumbering() {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            RestfulCaseNumberingV7 c = new RestfulCaseNumberingV7();
+            c.setPattern(readSetting(system, ServerSettingsKeys.SERVERCONF_CASENUMBERING_PATTERN, "nnnnn/YY"));
+            c.setStartFrom(readIntSetting(system, ServerSettingsKeys.SERVERCONF_CASENUMBERING_STARTFROM, 1));
+            c.setIncrement(readIntSetting(system, ServerSettingsKeys.SERVERCONF_CASENUMBERING_INCREMENT, 1));
+            c.setExtensionEnabled(readBoolSetting(system, ServerSettingsKeys.SERVERCONF_CASENUMBERING_EXT_ENABLED));
+            c.setDividerMain(readSetting(system, ServerSettingsKeys.SERVERCONF_CASENUMBERING_EXT_DIVIDER_MAIN, ""));
+            c.setDividerExt(readSetting(system, ServerSettingsKeys.SERVERCONF_CASENUMBERING_EXT_DIVIDER_EXT, ""));
+            c.setPrefixEnabled(readBoolSetting(system, ServerSettingsKeys.SERVERCONF_CASENUMBERING_EXT_PREFIX_ENABLED));
+            c.setPrefix(readSetting(system, ServerSettingsKeys.SERVERCONF_CASENUMBERING_EXT_PREFIX, ""));
+            c.setSuffixEnabled(readBoolSetting(system, ServerSettingsKeys.SERVERCONF_CASENUMBERING_EXT_SUFFIX_ENABLED));
+            c.setSuffix(readSetting(system, ServerSettingsKeys.SERVERCONF_CASENUMBERING_EXT_SUFFIX, ""));
+            c.setLawyerAbbrevEnabled(readBoolSetting(system, ServerSettingsKeys.SERVERCONF_CASENUMBERING_EXT_LAWYER_ENABLED));
+            c.setGroupAbbrevEnabled(readBoolSetting(system, ServerSettingsKeys.SERVERCONF_CASENUMBERING_EXT_GROUP_ENABLED));
+            return Response.ok(c).build();
+        } catch (Exception ex) {
+            log.error("can not determine case numbering configuration", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates the server-wide case-number (Aktenzeichen) configuration. Requires administrator
+     * permission. The pattern is validated before it is stored.
+     *
+     * @param config the case-number configuration to store
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 409 the numbering pattern is invalid
+     */
+    @Override
+    @Path("/case-numbering")
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Updates the server-wide case-number configuration. Requires administrator permission.", response = RestfulCaseNumberingV7.class)
+    public Response setCaseNumbering(@io.swagger.annotations.ApiParam RestfulCaseNumberingV7 config) {
+        try {
+            CaseNumberGenerator.compilePattern(config.getPattern());
+        } catch (Exception ex) {
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            int increment = config.getIncrement();
+            if (increment < 1 || increment > 10) {
+                increment = 1;
+            }
+            system.setSetting(ServerSettingsKeys.SERVERCONF_CASENUMBERING_PATTERN, nz(config.getPattern()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_CASENUMBERING_STARTFROM, String.valueOf(config.getStartFrom()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_CASENUMBERING_INCREMENT, String.valueOf(increment));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_CASENUMBERING_EXT_ENABLED, String.valueOf(config.isExtensionEnabled()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_CASENUMBERING_EXT_DIVIDER_MAIN, nz(config.getDividerMain()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_CASENUMBERING_EXT_DIVIDER_EXT, nz(config.getDividerExt()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_CASENUMBERING_EXT_PREFIX_ENABLED, String.valueOf(config.isPrefixEnabled()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_CASENUMBERING_EXT_PREFIX, nz(config.getPrefix()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_CASENUMBERING_EXT_SUFFIX_ENABLED, String.valueOf(config.isSuffixEnabled()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_CASENUMBERING_EXT_SUFFIX, nz(config.getSuffix()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_CASENUMBERING_EXT_LAWYER_ENABLED, String.valueOf(config.isLawyerAbbrevEnabled()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_CASENUMBERING_EXT_GROUP_ENABLED, String.valueOf(config.isGroupAbbrevEnabled()));
+            return Response.ok(config).build();
+        } catch (Exception ex) {
+            log.error("can not update case numbering configuration", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns a series of sample case numbers for the given configuration, without storing it (the
+     * same multi-entry preview the desktop shows: several consecutive numbers across a few dates).
+     * Lawyer/group abbreviations use the calling user's own abbreviations.
+     *
+     * @param config the case-number configuration to preview
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 409 the numbering pattern is invalid
+     */
+    @Override
+    @Path("/case-numbering/preview")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @io.swagger.annotations.ApiOperation(value = "Returns a series of sample case numbers for the given configuration, without storing it.", response = String.class, responseContainer = "List")
+    public Response previewCaseNumbering(@io.swagger.annotations.ApiParam RestfulCaseNumberingV7 config) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            String[] samples = cases.previewCaseNumbering(config.getPattern(), config.getStartFrom(), config.getIncrement(),
+                    config.isExtensionEnabled(), nz(config.getDividerMain()), nz(config.getDividerExt()),
+                    config.isPrefixEnabled(), nz(config.getPrefix()), config.isSuffixEnabled(), nz(config.getSuffix()),
+                    config.isLawyerAbbrevEnabled(), config.isGroupAbbrevEnabled());
+            return Response.ok(Arrays.asList(samples)).build();
+        } catch (Exception ex) {
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Returns all document-folder templates (Aktenstruktur-Vorlagen), each including its folder tree.
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/folder-templates")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @io.swagger.annotations.ApiOperation(value = "Returns all document-folder templates, each including its folder tree.", response = RestfulFolderTemplateV7.class, responseContainer = "List")
+    public Response getFolderTemplates() {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            List<RestfulFolderTemplateV7> result = new ArrayList<>();
+            for (DocumentFolderTemplate t : cases.getAllFolderTemplates()) {
+                result.add(RestfulFolderTemplateV7.fromEntity(t));
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("can not determine folder templates", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Creates a new (empty) document-folder template with a root folder. Requires administrator
+     * permission. The created template is returned.
+     *
+     * @param template the template to create (only the name is used)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 409 a template with the same name already exists
+     */
+    @Override
+    @Path("/folder-templates")
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Creates a new document-folder template. Requires administrator permission.", response = RestfulFolderTemplateV7.class)
+    public Response createFolderTemplate(@io.swagger.annotations.ApiParam RestfulFolderTemplateV7 template) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            DocumentFolderTemplate t = new DocumentFolderTemplate();
+            t.setName(template.getName());
+            cases.addFolderTemplate(t);
+            DocumentFolderTemplate created = cases.getFolderTemplate(template.getName());
+            return Response.ok(RestfulFolderTemplateV7.fromEntity(created)).build();
+        } catch (Exception ex) {
+            log.error("can not create folder template " + template.getName(), ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Renames an existing document-folder template. Requires administrator permission. The template is
+     * identified by its id.
+     *
+     * @param template the template to rename (id + new name)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 template not found
+     */
+    @Override
+    @Path("/folder-templates")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Renames a document-folder template. Requires administrator permission.", response = RestfulFolderTemplateV7.class)
+    public Response renameFolderTemplate(@io.swagger.annotations.ApiParam RestfulFolderTemplateV7 template) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            DocumentFolderTemplate existing = cases.getFolderTemplateById(template.getId());
+            if (existing == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            DocumentFolderTemplate t = new DocumentFolderTemplate();
+            t.setId(template.getId());
+            t.setName(template.getName());
+            cases.updateFolderTemplate(t);
+            return Response.ok(RestfulFolderTemplateV7.fromEntity(cases.getFolderTemplateById(template.getId()))).build();
+        } catch (Exception ex) {
+            log.error("can not rename folder template " + template.getName(), ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Deletes a document-folder template. Requires administrator permission. The template is
+     * identified by its name.
+     *
+     * @param template the template to delete (name)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/folder-templates")
+    @DELETE
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Deletes a document-folder template. Requires administrator permission.")
+    public Response deleteFolderTemplate(@io.swagger.annotations.ApiParam RestfulFolderTemplateV7 template) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            cases.removeFolderTemplate(template.getName());
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not delete folder template " + template.getName(), ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Clones a document-folder template under a new name (including its whole folder tree). Requires
+     * administrator permission. The new template is returned.
+     *
+     * @param request the clone request ({@code templateName} = source, {@code targetName} = new name)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 409 a template with the target name already exists
+     */
+    @Override
+    @Path("/folder-templates/clone")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Clones a document-folder template under a new name. Requires administrator permission.", response = RestfulFolderTemplateV7.class)
+    public Response cloneFolderTemplate(@io.swagger.annotations.ApiParam RestfulFolderTemplateFolderV7 request) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            cases.cloneFolderTemplate(request.getTemplateName(), request.getTargetName());
+            return Response.ok(RestfulFolderTemplateV7.fromEntity(cases.getFolderTemplate(request.getTargetName()))).build();
+        } catch (Exception ex) {
+            log.error("can not clone folder template " + request.getTemplateName(), ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Adds a folder to a document-folder template. Requires administrator permission. The created
+     * folder is returned.
+     *
+     * @param request the folder to add ({@code templateName} + {@code parentId} + {@code name})
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 409 the folder could not be created (e.g. empty name or unknown parent)
+     */
+    @Override
+    @Path("/folder-templates/folders")
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Adds a folder to a document-folder template. Requires administrator permission.", response = RestfulFolderNodeV7.class)
+    public Response addTemplateFolder(@io.swagger.annotations.ApiParam RestfulFolderTemplateFolderV7 request) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            DocumentFolder folder = new DocumentFolder();
+            folder.setName(request.getName());
+            folder.setParentId(request.getParentId());
+            DocumentFolder created = cases.addFolderToTemplate(request.getTemplateName(), folder);
+            return Response.ok(RestfulFolderNodeV7.fromEntity(created)).build();
+        } catch (Exception ex) {
+            log.error("can not add folder to template " + request.getTemplateName(), ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Renames a folder within a document-folder template. Requires administrator permission. The
+     * renamed folder is returned.
+     *
+     * @param request the folder to rename ({@code folderId} + new {@code name})
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 409 the folder could not be renamed
+     */
+    @Override
+    @Path("/folder-templates/folders")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Renames a folder within a document-folder template. Requires administrator permission.", response = RestfulFolderNodeV7.class)
+    public Response renameTemplateFolder(@io.swagger.annotations.ApiParam RestfulFolderTemplateFolderV7 request) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            DocumentFolder renamed = cases.renameFolderInTemplate(request.getFolderId(), request.getName());
+            return Response.ok(RestfulFolderNodeV7.fromEntity(renamed)).build();
+        } catch (Exception ex) {
+            log.error("can not rename folder " + request.getFolderId(), ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Removes a folder (and its sub-folders) from a document-folder template. Requires administrator
+     * permission.
+     *
+     * @param request the folder to remove ({@code folderId})
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 409 the folder could not be removed
+     */
+    @Override
+    @Path("/folder-templates/folders")
+    @DELETE
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Removes a folder from a document-folder template. Requires administrator permission.")
+    public Response removeTemplateFolder(@io.swagger.annotations.ApiParam RestfulFolderTemplateFolderV7 request) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            cases.removeFolderFromTemplate(request.getFolderId());
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not remove folder " + request.getFolderId(), ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Returns the server scan / OCR settings. Requires system administrator permission.
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/scan-settings")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the server scan / OCR settings. Requires system administrator permission.", response = RestfulScanSettingsV7.class)
+    public Response getScanSettings() {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            RestfulScanSettingsV7 s = new RestfulScanSettingsV7();
+            s.setServerDirectory(readSetting(system, ServerSettingsKeys.SERVERCONF_SCANNER_SERVERDIR, ""));
+            s.setOcrCommand(readSetting(system, ServerSettingsKeys.SERVERCONF_SCANNER_OCRCMD, ""));
+            return Response.ok(s).build();
+        } catch (Exception ex) {
+            log.error("can not determine scan settings", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates the server scan / OCR settings. Requires system administrator permission.
+     *
+     * @param settings the scan settings to store
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/scan-settings")
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Updates the server scan / OCR settings. Requires system administrator permission.", response = RestfulScanSettingsV7.class)
+    public Response setScanSettings(@io.swagger.annotations.ApiParam RestfulScanSettingsV7 settings) {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            system.setSetting(ServerSettingsKeys.SERVERCONF_SCANNER_SERVERDIR, nz(settings.getServerDirectory()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_SCANNER_OCRCMD, nz(settings.getOcrCommand()));
+            return Response.ok(settings).build();
+        } catch (Exception ex) {
+            log.error("can not update scan settings", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns the server data-backup (Datensicherung) configuration. Passwords are never returned;
+     * {@code *Set} flags indicate whether a value is stored. Requires system administrator permission.
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/backup-settings")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the server data-backup configuration. Requires system administrator permission.", response = RestfulBackupSettingsV7.class)
+    public Response getBackupSettings() {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            RestfulBackupSettingsV7 b = new RestfulBackupSettingsV7();
+            b.setEnabled(!"off".equalsIgnoreCase(readSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_MODE, "on")));
+            b.setHour(readIntSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_HOUR, 22));
+            b.setMonday(readBoolSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_MONDAY));
+            b.setTuesday(readBoolSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_TUESDAY));
+            b.setWednesday(readBoolSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_WEDNESDAY));
+            b.setThursday(readBoolSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_THURSDAY));
+            b.setFriday(readBoolSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_FRIDAY));
+            b.setSaturday(readBoolSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_SATURDAY));
+            b.setSunday(readBoolSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_SUNDAY));
+            b.setDbHost(readSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_DBHOST, "localhost"));
+            b.setDbPort(readIntSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_DBPORT, 3306));
+            b.setDbName(readSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_DBNAME, "jlawyerdb"));
+            b.setDbUser(readSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_DBUSER, "root"));
+            b.setDbPasswordSet(!readSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_DBPWD, "").isEmpty());
+            b.setEncryptionPasswordSet(!readSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_ENCRYPTPWD, "").isEmpty());
+            b.setSyncTarget(readSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_SYNCTARGET, ""));
+            b.setExportTarget(readSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_EXPORTTARGET, ""));
+            return Response.ok(b).build();
+        } catch (Exception ex) {
+            log.error("can not determine backup settings", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates the server data-backup configuration. Passwords are only (re)stored when a non-empty
+     * value is submitted (leaving them blank keeps the current value). Requires system administrator
+     * permission.
+     *
+     * @param settings the backup settings to store
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/backup-settings")
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Updates the server data-backup configuration. Requires system administrator permission.", response = RestfulBackupSettingsV7.class)
+    public Response setBackupSettings(@io.swagger.annotations.ApiParam RestfulBackupSettingsV7 settings) {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            system.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_MODE, settings.isEnabled() ? "on" : "off");
+            int hour = settings.getHour();
+            if (hour < 0 || hour > 23) {
+                hour = 22;
+            }
+            system.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_HOUR, String.valueOf(hour));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_MONDAY, String.valueOf(settings.isMonday()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_TUESDAY, String.valueOf(settings.isTuesday()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_WEDNESDAY, String.valueOf(settings.isWednesday()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_THURSDAY, String.valueOf(settings.isThursday()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_FRIDAY, String.valueOf(settings.isFriday()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_SATURDAY, String.valueOf(settings.isSaturday()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_SUNDAY, String.valueOf(settings.isSunday()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_DBHOST, nz(settings.getDbHost()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_DBPORT, String.valueOf(settings.getDbPort()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_DBNAME, nz(settings.getDbName()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_DBUSER, nz(settings.getDbUser()));
+            if (settings.getDbPassword() != null && !settings.getDbPassword().isEmpty()) {
+                system.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_DBPWD, settings.getDbPassword());
+            }
+            if (settings.getEncryptionPassword() != null && !settings.getEncryptionPassword().isEmpty()) {
+                String oldEncryptionPassword = readSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_ENCRYPTPWD, "");
+                system.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_ENCRYPTPWD, settings.getEncryptionPassword());
+                if (!oldEncryptionPassword.equals(settings.getEncryptionPassword())) {
+                    // The encryption password changed: existing backups were encrypted with the old
+                    // password, so the current backup must be cleared (matches the desktop behaviour).
+                    system.clearCurrentBackup();
+                }
+            }
+            system.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_SYNCTARGET, nz(settings.getSyncTarget()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_EXPORTTARGET, nz(settings.getExportTarget()));
+            return Response.ok(settings).build();
+        } catch (Exception ex) {
+            log.error("can not update backup settings", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Validates an external storage location (e.g. a backup sync target) server-side: whether it
+     * exists, is a directory and is writable. Requires system administrator permission.
+     *
+     * @param request the candidate location (its {@code location} field)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/validate-storage-location")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Validates an external storage location server-side. Requires system administrator permission.", response = RestfulStorageLocationV7.class)
+    public Response validateStorageLocation(@io.swagger.annotations.ApiParam RestfulStorageLocationV7 request) {
+        RestfulStorageLocationV7 result = new RestfulStorageLocationV7();
+        result.setLocation(request == null ? "" : request.getLocation());
+        try {
+            InitialContext ic = new InitialContext();
+            IntegrationServiceLocal integration = (IntegrationServiceLocal) ic.lookup(LOOKUP_INTEGRATION);
+            boolean valid = integration.validateExternalStorageLocation(result.getLocation());
+            result.setValid(valid);
+            if (!valid) {
+                result.setMessage("Die Angaben sind ungültig (nicht vorhanden / kein Verzeichnis / nicht schreibbar).");
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("can not validate storage location", ex);
+            result.setValid(false);
+            result.setMessage(ex.getMessage());
+            return Response.ok(result).build();
+        }
+    }
+
+    /**
+     * Returns the Stirling-PDF integration settings. Requires system administrator permission.
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/stirling-settings")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the Stirling-PDF integration settings. Requires system administrator permission.", response = RestfulStirlingSettingsV7.class)
+    public Response getStirlingSettings() {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            RestfulStirlingSettingsV7 s = new RestfulStirlingSettingsV7();
+            s.setEndpoint(readSetting(system, ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT, ""));
+            return Response.ok(s).build();
+        } catch (Exception ex) {
+            log.error("can not determine stirling settings", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates the Stirling-PDF integration settings. Requires system administrator permission.
+     *
+     * @param settings the Stirling-PDF settings to store
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/stirling-settings")
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Updates the Stirling-PDF integration settings. Requires system administrator permission.", response = RestfulStirlingSettingsV7.class)
+    public Response setStirlingSettings(@io.swagger.annotations.ApiParam RestfulStirlingSettingsV7 settings) {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            system.setSetting(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT, nz(settings.getEndpoint()).trim());
+            return Response.ok(settings).build();
+        } catch (Exception ex) {
+            log.error("can not update stirling settings", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns the beA integration settings. Requires system administrator permission.
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/bea-settings")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the beA integration settings. Requires system administrator permission.", response = RestfulBeaSettingsV7.class)
+    public Response getBeaSettings() {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            RestfulBeaSettingsV7 b = new RestfulBeaSettingsV7();
+            b.setEnabled(!"off".equalsIgnoreCase(readSetting(system, ServerSettingsKeys.SERVERCONF_BEAMODE, "on")));
+            b.setEndpoint(readSetting(system, ServerSettingsKeys.SERVERCONF_BEAENDPOINT, "http://localhost:7080"));
+            return Response.ok(b).build();
+        } catch (Exception ex) {
+            log.error("can not determine bea settings", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates the beA integration settings. Requires system administrator permission.
+     *
+     * @param settings the beA settings to store
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/bea-settings")
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Updates the beA integration settings. Requires system administrator permission.", response = RestfulBeaSettingsV7.class)
+    public Response setBeaSettings(@io.swagger.annotations.ApiParam RestfulBeaSettingsV7 settings) {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            system.setSetting(ServerSettingsKeys.SERVERCONF_BEAMODE, settings.isEnabled() ? "on" : "off");
+            system.setSetting(ServerSettingsKeys.SERVERCONF_BEAENDPOINT, nz(settings.getEndpoint()).trim());
+            return Response.ok(settings).build();
+        } catch (Exception ex) {
+            log.error("can not update bea settings", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /** Reads a server setting's value, or the given default when it is not set. */
+    private String readSetting(SystemManagementLocal system, String key, String defaultValue) {
+        ServerSettingsBean b = system.getSetting(key);
+        return (b == null || b.getSettingValue() == null) ? defaultValue : b.getSettingValue();
+    }
+
+    /** Reads a server setting as a boolean ("true"/"false"), defaulting to false when unset. */
+    private boolean readBoolSetting(SystemManagementLocal system, String key) {
+        return Boolean.parseBoolean(readSetting(system, key, "false"));
+    }
+
+    /** Reads a server setting as an int, falling back to the given default when unset or invalid. */
+    private int readIntSetting(SystemManagementLocal system, String key, int defaultValue) {
+        String v = readSetting(system, key, "");
+        if (v == null || v.trim().isEmpty()) {
+            return defaultValue;
+        }
+        try {
+            return Integer.parseInt(v.trim());
+        } catch (NumberFormatException nfe) {
+            return defaultValue;
         }
     }
 

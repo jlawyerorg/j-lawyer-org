@@ -9,7 +9,9 @@
 
 /** Which editor renders a section's detail pane. */
 export type SectionKind = 'optionGroup' | 'users' | 'groups' | 'firmProfile'
-  | 'invoiceTypes' | 'invoicePools' | 'invoicePositions' | 'financeSettings';
+  | 'invoiceTypes' | 'invoicePools' | 'invoicePositions' | 'financeSettings' | 'partyTypes'
+  | 'caseNumbering' | 'folderTemplates' | 'scanSettings' | 'backupSettings'
+  | 'stirlingSettings' | 'beaSettings';
 
 export interface SettingsSection {
   /** Stable id (also the list-selection key). */
@@ -38,6 +40,8 @@ const G_TIME = 'settings.group.timeTracking';
 const G_USERS = 'settings.group.users';
 const G_FIRM = 'settings.group.firm';
 const G_INVOICING = 'settings.group.invoicing';
+const G_PARTIES = 'settings.group.parties';
+const G_CASECONFIG = 'settings.group.caseConfig';
 
 /** "Allgemein" screen — dictionaries/value lists open to any user (edit needs option-group roles). */
 export const GENERAL_SECTIONS: SettingsSection[] = [
@@ -70,6 +74,9 @@ export const GENERAL_SECTIONS: SettingsSection[] = [
 /** "Administration" screen — needs adminRole. */
 export const ADMINISTRATION_SECTIONS: SettingsSection[] = [
   { id: 'firmProfile', titleKey: 'settings.section.firmProfile', groupKey: G_FIRM, kind: 'firmProfile', keywords: 'kanzlei kanzleidaten firma stammdaten bank' },
+  { id: 'partyTypes', titleKey: 'settings.section.partyTypes', groupKey: G_PARTIES, kind: 'partyTypes', keywords: 'beteiligte beteiligtentyp partei mandant gegner rolle' },
+  { id: 'caseNumbering', titleKey: 'settings.section.caseNumbering', groupKey: G_CASECONFIG, kind: 'caseNumbering', keywords: 'aktenzeichen nummerierung nummernschema akte schema az' },
+  { id: 'folderTemplates', titleKey: 'settings.section.folderTemplates', groupKey: G_CASECONFIG, kind: 'folderTemplates', keywords: 'aktenstruktur ordner ordnerstruktur vorlage dokumente ordnervorlage' },
   { id: 'invoiceTypes', titleKey: 'settings.section.invoiceTypes', groupKey: G_INVOICING, kind: 'invoiceTypes', keywords: 'belegart rechnung typ beleg' },
   { id: 'invoicePools', titleKey: 'settings.section.invoicePools', groupKey: G_INVOICING, kind: 'invoicePools', keywords: 'belegnummer nummernkreis rechnungsnummer' },
   { id: 'invoicePositions', titleKey: 'settings.section.invoicePositions', groupKey: G_INVOICING, kind: 'invoicePositions', keywords: 'belegposition vorlage position rechnung' },
@@ -78,5 +85,12 @@ export const ADMINISTRATION_SECTIONS: SettingsSection[] = [
   { id: 'groups', titleKey: 'settings.section.groups', groupKey: G_USERS, kind: 'groups', keywords: 'gruppen' },
 ];
 
-/** "System" screen — needs sysAdminRole. Empty in Wave 1 (all sections need new endpoints). */
-export const SYSTEM_SECTIONS: SettingsSection[] = [];
+const G_SYSTEM = 'settings.group.system';
+
+/** "System" screen — needs sysAdminRole. */
+export const SYSTEM_SECTIONS: SettingsSection[] = [
+  { id: 'scanSettings', titleKey: 'settings.section.scanSettings', groupKey: G_SYSTEM, kind: 'scanSettings', keywords: 'scan ocr texterkennung verzeichnis überwachung' },
+  { id: 'backupSettings', titleKey: 'settings.section.backupSettings', groupKey: G_SYSTEM, kind: 'backupSettings', keywords: 'backup datensicherung sicherung zeitplan datenbank verschlüsselung' },
+  { id: 'stirlingSettings', titleKey: 'settings.section.stirlingSettings', groupKey: G_SYSTEM, kind: 'stirlingSettings', keywords: 'stirling pdf endpoint dokumentenverarbeitung' },
+  { id: 'beaSettings', titleKey: 'settings.section.beaSettings', groupKey: G_SYSTEM, kind: 'beaSettings', keywords: 'bea anwaltspostfach endpoint integration' },
+];
