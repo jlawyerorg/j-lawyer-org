@@ -211,12 +211,24 @@
         "calendars": "Kalender",
         "mailboxes": "E-Mail-Postfächer",
         "invoicePools": "Belegnummernkreise",
-        "bea": "beA-Zertifikat"
+        "bea": "beA-Zertifikat",
+        "dropscan": "Dropscan"
       },
       "roles": "Rollen / Berechtigungen",
       "groups": "Gruppen",
       "groupsNewHint": "Gruppen werden nach dem Anlegen des Nutzers zugeordnet.",
-      "passwordNote": "Beim Anlegen wird kein Passwort gesetzt und keine Anmeldeberechtigung erteilt – dies erfolgt separat im Desktop-Client."
+      "passwordNote": "Beim Anlegen wird kein Passwort gesetzt und keine Anmeldeberechtigung erteilt – dies erfolgt separat im Desktop-Client.",
+      "dropscanToken": "API-Token",
+      "dropscanTokenHint": "Dropscan API-Token",
+      "dropscanTokenKeep": "unverändert lassen",
+      "dropscanScanboxes": "Scanboxen (optional)",
+      "dropscanScanboxesHint": "IDs, kommagetrennt — leer = alle",
+      "dropscanTest": "Test / Scanboxen ermitteln",
+      "dropscanTesting": "Verbinde …",
+      "dropscanTestOk": "Verbindung erfolgreich — {{count}} Scanbox(en)",
+      "dropscanTestFailed": "Verbindung fehlgeschlagen — Token prüfen.",
+      "dropscanNoToken": "Bitte zuerst einen API-Token eingeben.",
+      "dropscanNote": "Der API-Token wird verschlüsselt gespeichert. Ist er gesetzt, kann der Nutzer seinen Dropscan-Posteingang einsehen und abarbeiten."
     },
     "groups": {
       "create": "Neue Gruppe",
@@ -670,7 +682,8 @@
     "reporting": "Auswertungen",
     "einstellungen": "Einstellungen",
     "mehr": "Mehr",
-    "papierkorb": "Papierkorb"
+    "papierkorb": "Papierkorb",
+    "scans": "Scans"
   },
   "placeholder": {
     "eyebrow": "Modul",
@@ -1757,5 +1770,51 @@
     "confirmEmptyTitle": "Papierkorb leeren",
     "confirmEmpty": "Alle Dokumente im Papierkorb unwiderruflich löschen?",
     "emptyPartial": "{{n}} Dokument(e) konnten nicht gelöscht werden."
+  },
+  "scans": {
+    "title": "Scans (Dropscan)",
+    "allScanboxes": "Alle Scanboxen",
+    "allStatus": "Alle Status",
+    "refresh": "Aktualisieren",
+    "empty": "Keine Sendungen im Dropscan-Posteingang.",
+    "loadError": "Laden fehlgeschlagen (ist ein Dropscan-API-Token im Nutzerprofil hinterlegt?).",
+    "preview": "Vorschau",
+    "import": "In Akte übernehmen",
+    "requestScan": "Scannen anfordern",
+    "destroy": "Vernichten",
+    "destroyConfirm": "Diese Sendung bei Dropscan unwiderruflich vernichten lassen?",
+    "importTitle": "In Akte übernehmen",
+    "searchCase": "Akte suchen",
+    "searchCaseHint": "Aktenzeichen oder Name …",
+    "selected": "Ausgewählt",
+    "destroyAfter": "nach Übernahme vernichten",
+    "importBtn": "Übernehmen",
+    "importing": "Übernehme …",
+    "importError": "Übernahme fehlgeschlagen.",
+    "status": {
+      "received": "eingegangen",
+      "scan_requested": "Scan angefordert",
+      "scanned": "gescannt",
+      "destroy_requested": "Vernichtung angefordert",
+      "destroyed": "vernichtet",
+      "forward_requested": "Weiterleitung angefordert",
+      "forwarded": "weitergeleitet"
+    },
+    "item": "Poststück",
+    "box": "Scanbox",
+    "selectHint": "Sendung links wählen, um Vorschau und Aktenzuordnung zu sehen.",
+    "assignTitle": "Aktenzuordnung",
+    "notScanned": "Noch nicht gescannt — nur der Umschlag ist verfügbar.",
+    "notScannedHint": "Diese Sendung ist noch nicht gescannt. Fordern Sie zunächst einen Scan an.",
+    "noPreview": "Keine Vorschau verfügbar.",
+    "noSuggestions": "Keine passende Akte gefunden — bitte suchen.",
+    "openCase": "Akte öffnen",
+    "imported": "In Akte übernommen.",
+    "source": {
+      "text": "Aktenzeichen",
+      "reference": "Fremdzeichen",
+      "sender": "Absender",
+      "subjectBody": "Text"
+    }
   }
 }

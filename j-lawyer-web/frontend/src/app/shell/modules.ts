@@ -27,6 +27,7 @@ export const MODULES: ModuleLink[] = [
   { path: 'communication', labelKey: 'module.kommunikation', icon: 'mail', mobile: true },
   { path: 'bea', labelKey: 'module.bea', icon: 'shield' },
   { path: 'documents', labelKey: 'module.dokumente', icon: 'doc' },
+  { path: 'scans', labelKey: 'module.scans', icon: 'inbox' },
   { path: 'finance', labelKey: 'module.finanzen', icon: 'euro' },
   { path: 'reporting', labelKey: 'module.reporting', icon: 'chart' },
   { path: 'trash', labelKey: 'module.papierkorb', icon: 'trash', footer: true },

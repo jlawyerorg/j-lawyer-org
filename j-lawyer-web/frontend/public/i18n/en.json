@@ -211,12 +211,24 @@
         "calendars": "Calendars",
         "mailboxes": "Email mailboxes",
         "invoicePools": "Invoice number pools",
-        "bea": "beA certificate"
+        "bea": "beA certificate",
+        "dropscan": "Dropscan"
       },
       "roles": "Roles / permissions",
       "groups": "Groups",
       "groupsNewHint": "Groups are assigned once the user has been created.",
-      "passwordNote": "Creating a user does not set a password or grant login — do that separately in the desktop client."
+      "passwordNote": "Creating a user does not set a password or grant login — do that separately in the desktop client.",
+      "dropscanToken": "API token",
+      "dropscanTokenHint": "Dropscan API token",
+      "dropscanTokenKeep": "leave unchanged",
+      "dropscanScanboxes": "Scanboxes (optional)",
+      "dropscanScanboxesHint": "IDs, comma-separated — empty = all",
+      "dropscanTest": "Test / discover scanboxes",
+      "dropscanTesting": "Connecting …",
+      "dropscanTestOk": "Connection successful — {{count}} scanbox(es)",
+      "dropscanTestFailed": "Connection failed — check the token.",
+      "dropscanNoToken": "Please enter an API token first.",
+      "dropscanNote": "The API token is stored encrypted. When set, the user can view and process their Dropscan inbox."
     },
     "groups": {
       "create": "New group",
@@ -670,7 +682,8 @@
     "reporting": "Reports",
     "einstellungen": "Settings",
     "mehr": "More",
-    "papierkorb": "Recycle bin"
+    "papierkorb": "Recycle bin",
+    "scans": "Scans"
   },
   "placeholder": {
     "eyebrow": "Module",
@@ -1757,5 +1770,51 @@
     "confirmEmptyTitle": "Empty bin",
     "confirmEmpty": "Permanently delete all documents in the recycle bin?",
     "emptyPartial": "{{n}} document(s) could not be deleted."
+  },
+  "scans": {
+    "title": "Scans (Dropscan)",
+    "allScanboxes": "All scanboxes",
+    "allStatus": "All statuses",
+    "refresh": "Refresh",
+    "empty": "No mailings in the Dropscan inbox.",
+    "loadError": "Loading failed (is a Dropscan API token set in the user profile?).",
+    "preview": "Preview",
+    "import": "Import into case",
+    "requestScan": "Request scan",
+    "destroy": "Destroy",
+    "destroyConfirm": "Have Dropscan permanently destroy this mailing?",
+    "importTitle": "Import into case",
+    "searchCase": "Search case",
+    "searchCaseHint": "File number or name …",
+    "selected": "Selected",
+    "destroyAfter": "destroy after import",
+    "importBtn": "Import",
+    "importing": "Importing …",
+    "importError": "Import failed.",
+    "status": {
+      "received": "received",
+      "scan_requested": "scan requested",
+      "scanned": "scanned",
+      "destroy_requested": "destroy requested",
+      "destroyed": "destroyed",
+      "forward_requested": "forward requested",
+      "forwarded": "forwarded"
+    },
+    "item": "Mailing",
+    "box": "Scanbox",
+    "selectHint": "Select a mailing on the left to see preview and case assignment.",
+    "assignTitle": "Case assignment",
+    "notScanned": "Not scanned yet — only the envelope is available.",
+    "notScannedHint": "This mailing has not been scanned yet. Request a scan first.",
+    "noPreview": "No preview available.",
+    "noSuggestions": "No matching case found — please search.",
+    "openCase": "Open case",
+    "imported": "Imported into the case.",
+    "source": {
+      "text": "File number",
+      "reference": "Foreign reference",
+      "sender": "Sender",
+      "subjectBody": "Text"
+    }
   }
 }

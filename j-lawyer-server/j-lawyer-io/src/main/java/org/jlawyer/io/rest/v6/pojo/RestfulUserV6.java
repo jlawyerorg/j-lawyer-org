@@ -717,6 +717,14 @@ public class RestfulUserV6 {
      * managed via the dedicated upload endpoint, never returned here). */
     private boolean beaCertificatePresent = false;
 
+    /** Dropscan API token — write-only (never returned; {@link #dropscanApiTokenSet} indicates whether
+     * one is stored) and applied only when a non-empty value is submitted; stored encrypted. */
+    private String dropscanApiToken;
+    /** Read-only flag: whether a Dropscan API token is stored for the user. */
+    private boolean dropscanApiTokenSet = false;
+    /** Optional comma-separated Dropscan scanbox IDs the user is restricted to ('' = all). */
+    private String dropscanScanboxes;
+
     public RestfulUserV6() {
 
     }
@@ -757,8 +765,9 @@ public class RestfulUserV6 {
         au.setCloudSsl(cloudSsl);
         au.setCloudUser(cloudUser);
         au.setCloudPath(cloudPath);
-        // Note: cloudPassword, primaryGroup and the beA certificate are applied by the endpoint
-        // (password encryption / group resolution), not here.
+        au.setDropscanScanboxes(dropscanScanboxes);
+        // Note: cloudPassword, the Dropscan API token, primaryGroup and the beA certificate are
+        // applied by the endpoint (secret encryption / group resolution), not here.
 
         return au;
 
@@ -803,6 +812,10 @@ public class RestfulUserV6 {
         u.setCloudPath(au.getCloudPath());
         u.setCloudPassword(""); // never expose the stored password
         u.setBeaCertificatePresent(au.getBeaCertificate() != null && au.getBeaCertificate().length > 0);
+
+        u.setDropscanApiToken(""); // never expose the stored token
+        u.setDropscanApiTokenSet(au.getDropscanApiToken() != null && !au.getDropscanApiToken().isEmpty());
+        u.setDropscanScanboxes(au.getDropscanScanboxes());
 
         return u;
     }
@@ -1239,6 +1252,30 @@ public class RestfulUserV6 {
 
     public void setCloudPath(String cloudPath) {
         this.cloudPath = cloudPath;
+    }
+
+    public String getDropscanApiToken() {
+        return dropscanApiToken;
+    }
+
+    public void setDropscanApiToken(String dropscanApiToken) {
+        this.dropscanApiToken = dropscanApiToken;
+    }
+
+    public boolean isDropscanApiTokenSet() {
+        return dropscanApiTokenSet;
+    }
+
+    public void setDropscanApiTokenSet(boolean dropscanApiTokenSet) {
+        this.dropscanApiTokenSet = dropscanApiTokenSet;
+    }
+
+    public String getDropscanScanboxes() {
+        return dropscanScanboxes;
+    }
+
+    public void setDropscanScanboxes(String dropscanScanboxes) {
+        this.dropscanScanboxes = dropscanScanboxes;
     }
 
     public boolean isBeaCertificatePresent() {

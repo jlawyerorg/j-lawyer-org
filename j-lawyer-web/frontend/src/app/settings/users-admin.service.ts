@@ -4,6 +4,13 @@ import { Observable } from 'rxjs';
 import { API_ROOT } from '../core/api';
 
 const SECURITY_V6 = `${API_ROOT}/v6/security`;
+const DROPSCAN_V8 = `${API_ROOT}/v8/dropscan`;
+
+/** A Dropscan scanbox as returned by discovery (RestfulDropscanScanboxV8). */
+export interface DropscanScanbox {
+  id: number;
+  number: string;
+}
 
 /**
  * A user (RestfulUserV6). The full shape is round-tripped: the server's update applies the whole
@@ -49,6 +56,12 @@ export interface AdminUser {
   cloudPath?: string;
   /** Read-only: whether a beA certificate is stored for the user. */
   beaCertificatePresent?: boolean;
+  /** Dropscan API token — write-only (never returned; only applied when non-empty). */
+  dropscanApiToken?: string;
+  /** Read-only: whether a Dropscan API token is stored. */
+  dropscanApiTokenSet?: boolean;
+  /** Optional comma-separated Dropscan scanbox IDs the user is restricted to ('' = all). */
+  dropscanScanboxes?: string;
 }
 
 /** A minimal id + display-name option (calendar / mailbox / invoice pool). */
@@ -140,6 +153,16 @@ export class UsersAdminService {
 
   removeGroupMember(groupId: string, principalId: string): Observable<unknown> {
     return this.http.delete(`${SECURITY_V6}/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(principalId)}`);
+  }
+
+  /**
+   * Tests a Dropscan API token and lists its scanboxes ("Test / Scanboxen ermitteln"). Pass the
+   * freshly typed `apiToken`; when it is empty the server falls back to the stored token of the user
+   * identified by `principalId` (the token is write-only, so an already-saved token is never sent
+   * back to the browser). Requires `adminRole` (enforced server-side).
+   */
+  discoverScanboxes(apiToken?: string, principalId?: string): Observable<DropscanScanbox[]> {
+    return this.http.post<DropscanScanbox[]>(`${DROPSCAN_V8}/discover-scanboxes`, { apiToken: apiToken ?? '', principalId: principalId ?? '' });
   }
 
   // --- selectable resources (calendars, mailboxes, invoice pools) ---

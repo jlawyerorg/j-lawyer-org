@@ -1358,6 +1358,12 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
         if (cloudPwd != null && !cloudPwd.isEmpty()) {
             u.setCloudPassword(CryptoProvider.defaultCrypto().encrypt(cloudPwd));
         }
+        // Dropscan API token: write-only, only (re)set when a non-empty value was submitted; encrypted
+        // with the same scheme DropscanService decrypts with (CryptoProvider.newCrypto()).
+        String dropToken = userData.getDropscanApiToken();
+        if (dropToken != null && !dropToken.isEmpty()) {
+            u.setDropscanApiToken(CryptoProvider.newCrypto().encrypt(dropToken));
+        }
     }
 
         /**

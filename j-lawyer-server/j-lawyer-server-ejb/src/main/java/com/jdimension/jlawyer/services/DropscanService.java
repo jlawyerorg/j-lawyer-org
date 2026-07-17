@@ -179,6 +179,28 @@ public class DropscanService implements DropscanServiceRemote, DropscanServiceLo
     }
 
     @Override
+    @RolesAllowed({"adminRole"})
+    public List<DropscanScanbox> discoverScanboxes(String apiToken, String principalId) throws Exception {
+        String token = apiToken == null ? null : apiToken.trim();
+        if (token == null || token.isEmpty()) {
+            // no token typed: fall back to the stored token of the user being edited (or the caller)
+            AppUserBean user;
+            if (principalId != null && !principalId.trim().isEmpty()) {
+                user = this.sysMan.getUser(principalId.trim());
+            } else {
+                user = getCurrentUser();
+            }
+            if (user == null || user.getDropscanApiToken() == null || user.getDropscanApiToken().isEmpty()) {
+                throw new Exception("Kein Dropscan-API-Token hinterlegt.");
+            }
+            token = CryptoProvider.newCrypto().decrypt(user.getDropscanApiToken());
+        }
+        // raw, unfiltered list — this is used to discover which scanboxes to configure
+        DropscanApiClient client = new DropscanApiClient(token);
+        return client.getScanboxes();
+    }
+
+    @Override
     public List<DropscanMailing> getMailingsForUser(String principalId, String scanboxId, String status) throws Exception {
         AppUserBean user = this.sysMan.getUser(principalId);
         assertScanboxAllowed(user, scanboxId);

@@ -207,6 +207,32 @@ type EditorTab = 'master' | 'permissions' | 'access' | 'integrations';
             </fieldset>
 
             <fieldset class="ue-sec">
+              <legend>{{ 'settings.users.sec.dropscan' | transloco }}</legend>
+              <div class="ue-grid">
+                <label class="ue-field">
+                  <span>{{ 'settings.users.dropscanToken' | transloco }}</span>
+                  <input type="password" autocomplete="new-password" [value]="draft().dropscanApiToken ?? ''"
+                         [placeholder]="(draft().dropscanApiTokenSet ? 'settings.users.dropscanTokenKeep' : 'settings.users.dropscanTokenHint') | transloco"
+                         (input)="patchText('dropscanApiToken', $any($event.target).value)" />
+                </label>
+                <label class="ue-field">
+                  <span>{{ 'settings.users.dropscanScanboxes' | transloco }}</span>
+                  <input type="text" [value]="draft().dropscanScanboxes ?? ''"
+                         [placeholder]="'settings.users.dropscanScanboxesHint' | transloco"
+                         (input)="patchText('dropscanScanboxes', $any($event.target).value)" />
+                </label>
+              </div>
+              <div class="ue-bea-actions">
+                <button type="button" class="btn-ghost" [disabled]="scanboxBusy()" (click)="discoverScanboxes()">
+                  {{ (scanboxBusy() ? 'settings.users.dropscanTesting' : 'settings.users.dropscanTest') | transloco }}
+                </button>
+                @if (scanboxStatus() === 'ok') { <span class="ue-ok">{{ 'settings.users.dropscanTestOk' | transloco: { count: scanboxMsg() } }}</span> }
+                @if (scanboxStatus() === 'error') { <span class="ue-error">{{ scanboxMsg() | transloco }}</span> }
+              </div>
+              <p class="ue-note">{{ 'settings.users.dropscanNote' | transloco }}</p>
+            </fieldset>
+
+            <fieldset class="ue-sec">
               <legend>{{ 'settings.users.sec.bea' | transloco }}</legend>
               @if (isNew()) {
                 <p class="ue-hint">{{ 'settings.users.beaNewHint' | transloco }}</p>
@@ -369,6 +395,11 @@ export class UserEditorComponent implements OnInit {
   protected readonly certBusy = signal(false);
   protected readonly certStatus = signal<'ok' | 'error' | null>(null);
 
+  // Dropscan "Test / Scanboxen ermitteln"
+  protected readonly scanboxBusy = signal(false);
+  protected readonly scanboxStatus = signal<'ok' | 'error' | null>(null);
+  protected readonly scanboxMsg = signal('');
+
   protected readonly isNew = computed(() => !this.user());
   protected readonly canSave = computed(() => !!(this.draft().principalId ?? '').trim());
 
@@ -392,6 +423,37 @@ export class UserEditorComponent implements OnInit {
 
   protected patchText(key: keyof AdminUser, value: string): void {
     this.patch(key, value as AdminUser[typeof key]);
+  }
+
+  /**
+   * Tests the Dropscan API token and fills the scanbox field with the discovered ids — the web
+   * equivalent of the desktop "Test / Scanboxen ermitteln". Sends the freshly typed token if any;
+   * otherwise the server falls back to the user's stored token (write-only in the UI).
+   */
+  protected discoverScanboxes(): void {
+    if (this.scanboxBusy()) { return; }
+    const token = (this.draft().dropscanApiToken ?? '').trim();
+    if (!token && !this.draft().dropscanApiTokenSet) {
+      this.scanboxStatus.set('error');
+      this.scanboxMsg.set('settings.users.dropscanNoToken');
+      return;
+    }
+    this.scanboxBusy.set(true);
+    this.scanboxStatus.set(null);
+    this.scanboxMsg.set('');
+    this.api.discoverScanboxes(token, this.draft().principalId).subscribe({
+      next: (boxes) => {
+        this.scanboxBusy.set(false);
+        this.patch('dropscanScanboxes', (boxes ?? []).map((b) => b.id).join(','));
+        this.scanboxStatus.set('ok');
+        this.scanboxMsg.set(String((boxes ?? []).length));
+      },
+      error: () => {
+        this.scanboxBusy.set(false);
+        this.scanboxStatus.set('error');
+        this.scanboxMsg.set('settings.users.dropscanTestFailed');
+      },
+    });
   }
 
   protected patchPort(value: string): void {

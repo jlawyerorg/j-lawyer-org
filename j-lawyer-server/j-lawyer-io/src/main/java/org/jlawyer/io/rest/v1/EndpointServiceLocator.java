@@ -733,6 +733,7 @@ public class EndpointServiceLocator extends Application
         s.add(org.jlawyer.io.rest.tools.RestExceptionMapper.class);
         s.add(AssistantEndpointV8.class);
         s.add(DocumentsBinEndpointV8.class);
+        s.add(org.jlawyer.io.rest.v8.DropscanEndpointV8.class);
         s.add(AuthenticationEndpointV8.class);
         s.add(BeaEndpointV8.class);
         s.add(CalendarEndpointV8.class);
