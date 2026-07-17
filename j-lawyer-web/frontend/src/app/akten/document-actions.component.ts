@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, output, si
 import { FormsModule } from '@angular/forms';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
-import { CaseDocument, DocMetaWrite, DocTag } from './case.models';
+import { CaseDocument, DocMetaWrite, DocTag, MultiValueTagDef } from './case.models';
 import { CasesService } from './cases.service';
 import { baseMeta, CONVERTIBLE_EXT, HIGHLIGHT_NONE, HIGHLIGHTS, toLocalDate, toServerDate } from './document-actions.util';
 
@@ -161,6 +161,19 @@ type DialogKind = 'rename' | 'date' | 'move' | 'tags';
                 } @else {
                   <p class="muted">{{ 'akten.docs.noDictionary' | transloco }}</p>
                 }
+
+                @if (mvDefs().length) {
+                  <span class="lbl mv-head">{{ 'akten.docs.listLabels' | transloco }}</span>
+                  @for (def of mvDefs(); track def.tagName) {
+                    <label class="fld mv-row">
+                      <span class="mv-name">{{ def.tagName }}</span>
+                      <select [disabled]="busy()" [value]="mvValue(def.tagName)" (change)="setMvValue(def.tagName, $any($event.target).value)">
+                        <option value="">—</option>
+                        @for (v of def.values; track v) { <option [value]="v">{{ v }}</option> }
+                      </select>
+                    </label>
+                  }
+                }
               </div>
             }
           }
@@ -226,6 +239,10 @@ type DialogKind = 'rename' | 'date' | 'move' | 'tags';
     .tag-opt.on { background: color-mix(in srgb, var(--jl-blue) 14%, transparent); border-color: var(--jl-blue); color: var(--jl-blue); }
     .tag-opt:disabled { opacity: .55; cursor: default; }
     .muted { color: var(--jl-ink-faint); font-size: .84rem; margin: 0; }
+    .mv-head { margin-top: 6px; }
+    .mv-row { flex-direction: row; align-items: center; gap: 10px; }
+    .mv-row .mv-name { flex: 0 0 40%; font-size: .84rem; color: var(--jl-ink); }
+    .mv-row select { flex: 1 1 auto; }
     .df { display: flex; align-items: center; gap: 10px; padding: 11px 16px; border-top: 1px solid var(--jl-line); }
     .spacer { flex: 1; }
     .btn { font: inherit; font-size: .85rem; font-weight: 650; padding: 8px 15px; border-radius: 8px; border: 1px solid var(--jl-line-strong); background: var(--jl-surface); color: var(--jl-ink); cursor: pointer; }
@@ -260,16 +277,41 @@ export class DocumentActionsComponent {
   protected readonly moveFolderId = signal('');
   protected readonly tagList = signal<DocTag[]>([]);
   protected readonly dictionary = signal<string[]>([]);
+  /** Configured multi-value ("Listenetiketten") tag definitions for documents (name + value set). */
+  protected readonly mvDefs = signal<MultiValueTagDef[]>([]);
 
   protected readonly canConvert = computed(() => CONVERTIBLE_EXT.has(this.doc().ext));
   protected readonly canOcr = computed(() => this.doc().ext === 'PDF');
 
-  /** Selectable labels: the configured value set plus any already-set label not (any longer) in it. */
+  /**
+   * Selectable simple labels: the configured value set plus any already-set label not (any longer)
+   * in it — excluding multi-value ("Listenetiketten") tag names, which get their own value pickers.
+   */
   protected readonly tagOptions = computed(() => {
-    const names = new Set(this.dictionary());
-    this.tagList().forEach((t) => names.add(t.name));
+    const mv = new Set(this.mvDefs().map((d) => d.tagName));
+    const names = new Set(this.dictionary().filter((n) => !mv.has(n)));
+    this.tagList().forEach((t) => { if (!mv.has(t.name)) { names.add(t.name); } });
     return [...names].sort((a, b) => a.localeCompare(b));
   });
+
+  /** The currently selected value for a multi-value tag on this document ('' when unset). */
+  protected mvValue(name: string): string {
+    return this.tagList().find((t) => t.name === name)?.value ?? '';
+  }
+
+  /** Sets/clears a multi-value tag's value on the document (empty value removes it). */
+  protected setMvValue(name: string, value: string): void {
+    const existing = this.tagList().find((t) => t.name === name);
+    const call = value
+      ? this.cases.addDocumentTag(this.doc().id, name, value)
+      : (existing ? this.cases.deleteDocumentTag(existing.id) : null);
+    if (!call) { return; }
+    this.busy.set(true);
+    call.subscribe({
+      next: () => { this.busy.set(false); this.reloadTags(); this.changed.emit(); },
+      error: () => { this.busy.set(false); alert(this.transloco.translate('akten.docs.writeError')); },
+    });
+  }
 
   protected toggle(ev: Event): void {
     ev.stopPropagation();
@@ -291,6 +333,7 @@ export class DocumentActionsComponent {
     if (kind === 'tags') {
       this.cases.documentTags(d.id).subscribe((t) => this.tagList.set(t));
       this.cases.documentTagDictionary().subscribe((t) => this.dictionary.set(t));
+      this.cases.documentMultiValueTags().subscribe((m) => this.mvDefs.set(m));
     }
     this.dialog.set(kind);
   }

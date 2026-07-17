@@ -158,10 +158,10 @@ const NOTIFY_TOGGLES: NotifyToggle[] = [
 
               <fieldset class="up-sec">
                 <legend>{{ 'profile.sec.allowedGroups' | transloco }}</legend>
-                @if (!(profile()?.allGroups ?? []).length) {
+                @if (!(profile()?.memberGroups ?? []).length) {
                   <p class="up-note">{{ 'settings.empty' | transloco }}</p>
                 } @else {
-                  @for (g of profile()?.allGroups ?? []; track g.id) {
+                  @for (g of profile()?.memberGroups ?? []; track g.id) {
                     <label class="up-check">
                       <input type="checkbox" [checked]="isAllowed(g.id)" (change)="toggleAllowed(g.id)" />
                       <span>{{ g.name }}</span>

@@ -114,6 +114,7 @@ import { runningElapsed, toServerDateTime } from './timesheet.util';
 
     @if (capture(); as cap) {
       <jl-position-editor [mode]="cap.mode" [timesheetId]="cap.timesheetId" [position]="null"
+                          [parallelWarning]="tracking.warnBeforeParallelStart()"
                           (save)="onCapture($event)" (close)="capture.set(null)" />
     }
   `,
@@ -170,7 +171,7 @@ export class TimesheetLogComponent implements OnInit {
   readonly close = output<void>();
 
   private readonly cases = inject(CasesService);
-  private readonly tracking = inject(TimesheetTrackingService);
+  protected readonly tracking = inject(TimesheetTrackingService);
 
   protected readonly running = signal<RunningPosition[]>([]);
   protected readonly loadingRunning = signal(false);

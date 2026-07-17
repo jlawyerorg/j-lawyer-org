@@ -838,7 +838,8 @@
           "label": "Etikett für {{n}} Dokumente"
         }
       },
-      "noDictionary": "Keine Etiketten konfiguriert."
+      "noDictionary": "Keine Etiketten konfiguriert.",
+      "listLabels": "Listenetiketten"
     },
     "docLoading": "Dokument wird geladen …",
     "docError": "Dokument konnte nicht geladen werden.",
@@ -938,7 +939,10 @@
         "edit": "Position bearbeiten",
         "delete": "Position löschen",
         "deleteConfirm": "Position „{{name}}“ löschen?",
-        "user": "Benutzer"
+        "user": "Benutzer",
+        "duration": "Dauer",
+        "durationHint": "z. B. 2h15m · 90m · 1,5h · 1:30",
+        "durationError": "Ungültige Dauer — bitte Einheit angeben (h oder m)."
       },
       "showAll": "Alle Zeiten anzeigen ({{n}})",
       "since": "seit",
@@ -951,7 +955,8 @@
         "selected": "{{n}} ausgewählt",
         "selectAll": "Alle",
         "selectNone": "Keine"
-      }
+      },
+      "parallelWarning": "Es läuft bereits eine Zeiterfassung. Möchten Sie parallel eine weitere starten?"
     },
     "edit": "Bearbeiten",
     "editCase": "Akte bearbeiten",

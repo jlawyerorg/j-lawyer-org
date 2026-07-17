@@ -838,7 +838,8 @@
           "label": "Label for {{n}} documents"
         }
       },
-      "noDictionary": "No labels configured."
+      "noDictionary": "No labels configured.",
+      "listLabels": "List labels"
     },
     "docLoading": "Loading document …",
     "docError": "Could not load document.",
@@ -938,7 +939,10 @@
         "edit": "Edit entry",
         "delete": "Delete entry",
         "deleteConfirm": "Delete entry “{{name}}”?",
-        "user": "User"
+        "user": "User",
+        "duration": "Duration",
+        "durationHint": "e.g. 2h15m · 90m · 1.5h · 1:30",
+        "durationError": "Invalid duration — please specify a unit (h or m)."
       },
       "showAll": "Show all entries ({{n}})",
       "since": "since",
@@ -951,7 +955,8 @@
         "selected": "{{n}} selected",
         "selectAll": "All",
         "selectNone": "None"
-      }
+      },
+      "parallelWarning": "A time recording is already running. Start another one in parallel?"
     },
     "edit": "Edit",
     "editCase": "Edit case",

@@ -992,6 +992,7 @@ interface TimesheetView extends CaseTimesheet {
     }
     @if (positionEditor(); as pe) {
       <jl-position-editor [mode]="pe.mode" [timesheetId]="pe.timesheetId" [position]="pe.position"
+                          [parallelWarning]="tracking.warnBeforeParallelStart()"
                           (save)="onSavePosition($event)" (close)="positionEditor.set(null)" />
     }
     @if (editingAccountEntry(); as ae) {
@@ -1083,7 +1084,7 @@ export class AktenComponent {
   private readonly calendar = inject(CalendarService);
   private readonly transloco = inject(TranslocoService);
   private readonly auth = inject(AuthService);
-  private readonly tracking = inject(TimesheetTrackingService);
+  protected readonly tracking = inject(TimesheetTrackingService);
   private readonly customFieldsSvc = inject(CustomFieldsService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
