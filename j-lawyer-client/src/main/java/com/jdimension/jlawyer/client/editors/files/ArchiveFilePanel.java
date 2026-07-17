@@ -762,6 +762,7 @@ import com.jdimension.jlawyer.ui.folders.DocumentEntryPanel;
 import com.jdimension.jlawyer.ui.tagging.ArchiveFileTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.DocumentTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.TagSelectedAction;
+import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.ui.tagging.MultiValueTag;
 import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
@@ -4604,6 +4605,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private static String respiteDeleteLabel(ArchiveFileReviewsBean review, java.util.ResourceBundle bundle) {
+        String label = review.getSummary();
+        if (!review.isDone()) {
+            label = label + " " + bundle.getString("dialog.confirm.delete.respite.open");
+        }
+        return label;
+    }
+
     private void mnuRemoveReviewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemoveReviewActionPerformed
 
         int[] selectedRows = this.tblReviewReasons.getSelectedRows();
@@ -4611,9 +4620,39 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             return;
         }
 
-        int response = JOptionPane.showConfirmDialog(this, "Sollen " + selectedRows.length + " ausgewählte Kalendereinträge gelöscht werden?", "Kalendereinträge löschen", JOptionPane.YES_NO_OPTION);
-        if (response != JOptionPane.YES_OPTION) {
-            return;
+        java.util.List<ArchiveFileReviewsBean> respites = new ArrayList<>();
+        for (int i = 0; i < selectedRows.length; i++) {
+            ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
+            if (review.getEventType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
+                respites.add(review);
+            }
+        }
+
+        if (respites.isEmpty()) {
+            int response = JOptionPane.showConfirmDialog(this, "Sollen " + selectedRows.length + " ausgewählte Kalendereinträge gelöscht werden?", "Kalendereinträge löschen", JOptionPane.YES_NO_OPTION);
+            if (response != JOptionPane.YES_OPTION) {
+                return;
+            }
+        } else {
+            java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel");
+            Object[] deleteOptions = new Object[]{bundle.getString("dialog.confirm.delete.yes"), bundle.getString("dialog.confirm.delete.no")};
+            String message;
+            String title;
+            if (selectedRows.length == 1) {
+                message = java.text.MessageFormat.format(bundle.getString("dialog.confirm.delete.respite"), new Object[]{respiteDeleteLabel(respites.get(0), bundle)});
+                title = bundle.getString("dialog.confirm.delete.title");
+            } else {
+                StringBuilder reasons = new StringBuilder();
+                for (ArchiveFileReviewsBean r : respites) {
+                    reasons.append("- ").append(respiteDeleteLabel(r, bundle)).append(System.lineSeparator());
+                }
+                message = java.text.MessageFormat.format(bundle.getString("dialog.confirm.delete.respite.multiple"), new Object[]{selectedRows.length, reasons.toString()});
+                title = bundle.getString("dialog.confirm.delete.title.multiple");
+            }
+            int response = JOptionPane.showOptionDialog(this, message, title, JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, deleteOptions, deleteOptions[1]);
+            if (response != 0) {
+                return;
+            }
         }
 
         ClientSettings settings = ClientSettings.getInstance();
