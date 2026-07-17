@@ -2414,7 +2414,12 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                     }
                 }
                 if (pendingMessages) {
-                    JOptionPane.showMessageDialog(this, "Es sind noch Nachrichten im beA-Postausgang - bitte manuell prüfen!", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
+                    Object[] exitOptions = new Object[]{"Trotzdem beenden", "Abbrechen"};
+                    int response = JOptionPane.showOptionDialog(this, "Es sind noch Nachrichten im beA-Postausgang - bitte manuell prüfen!\nTrotzdem beenden?", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, exitOptions, exitOptions[1]);
+                    if (response != 0) {
+                        log.info("user cancelled closing the app because of pending beA outbox messages");
+                        return;
+                    }
                 }
             }
         } catch (Exception ex) {
