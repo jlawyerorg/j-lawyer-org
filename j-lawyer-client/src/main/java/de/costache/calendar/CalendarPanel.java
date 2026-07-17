@@ -1078,11 +1078,41 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
                     return;
                 }
 
-                int response = JOptionPane.showConfirmDialog(this,
-                        "Möchten Sie dieses Ereignis wirklich löschen?",
-                        "Bestätigung",
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.QUESTION_MESSAGE);
+                ArchiveFileReviewsBean reviewToDelete = findById(this.cachedEvents, ce.getEventId());
+                if (reviewToDelete == null) {
+                    reviewToDelete = findById(this.doneEvents, ce.getEventId());
+                }
+                if (reviewToDelete == null) {
+                    try {
+                        JLawyerServiceLocator deleteLocator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                        reviewToDelete = deleteLocator.lookupCalendarServiceRemote().getReview(ce.getEventId());
+                    } catch (Exception ex) {
+                        log.error("Unable to load event " + ce.getEventId() + " for delete confirmation", ex);
+                    }
+                }
+
+                int response;
+                if (reviewToDelete != null && reviewToDelete.getEventType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
+                    java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel");
+                    Object[] deleteOptions = new Object[]{bundle.getString("dialog.confirm.delete.yes"), bundle.getString("dialog.confirm.delete.no")};
+                    String label = reviewToDelete.getSummary();
+                    if (!reviewToDelete.isDone()) {
+                        label = label + " " + bundle.getString("dialog.confirm.delete.respite.open");
+                    }
+                    int optionResponse = JOptionPane.showOptionDialog(this,
+                            java.text.MessageFormat.format(bundle.getString("dialog.confirm.delete.respite"), new Object[]{label}),
+                            bundle.getString("dialog.confirm.delete.title"),
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.WARNING_MESSAGE,
+                            null, deleteOptions, deleteOptions[1]);
+                    response = (optionResponse == 0) ? JOptionPane.YES_OPTION : JOptionPane.NO_OPTION;
+                } else {
+                    response = JOptionPane.showConfirmDialog(this,
+                            "Möchten Sie dieses Ereignis wirklich löschen?",
+                            "Bestätigung",
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.QUESTION_MESSAGE);
+                }
 
                 if (response == JOptionPane.YES_OPTION) {
                     this.jCalendar.removeCalendarEvent(ce);
@@ -1264,6 +1294,22 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
         if (toRemove != null) {
             coll.remove(toRemove);
         }
+    }
+
+    /**
+     * Returns the review with the given id from the given cache collection,
+     * or null if the collection does not contain it.
+     */
+    private static ArchiveFileReviewsBean findById(Collection<ArchiveFileReviewsBean> coll, String eventId) {
+        if (eventId == null || coll == null) {
+            return null;
+        }
+        for (ArchiveFileReviewsBean r : coll) {
+            if (eventId.equals(r.getId())) {
+                return r;
+            }
+        }
+        return null;
     }
 
     public void setSelectedDay(Date selDate) {
