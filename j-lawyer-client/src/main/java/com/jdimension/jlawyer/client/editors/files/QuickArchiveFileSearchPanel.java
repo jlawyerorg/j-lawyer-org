@@ -1071,21 +1071,22 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
 
         int[] selectedIndices = this.tblResults.getSelectedRows();
         StringBuilder confirmMsg = new StringBuilder();
-        confirmMsg.append("<html>Ausgewählte Akte(n) löschen?<br/>");
+        confirmMsg.append("<html><b>Sie sind dabei, ").append(selectedIndices.length).append(" Akte(n) zu löschen:</b><br/>");
         if (selectedIndices.length > 20) {
             confirmMsg.append("<ul><li>mehr als 20 Akten</li></ul>");
-            confirmMsg.append("</html>");
         } else {
             confirmMsg.append("<ul>");
             for (int i = 0; i < selectedIndices.length; i++) {
                 QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(selectedIndices[i], 0);
                 confirmMsg.append("<li>").append(id.getArchiveFileDTO().getFileNumber()).append(" ").append(id.getArchiveFileDTO().getName()).append("</li>");
             }
-            confirmMsg.append("</ul></html>");
+            confirmMsg.append("</ul>");
         }
+        confirmMsg.append("Wirklich löschen?</html>");
 
-        int response = JOptionPane.showConfirmDialog(this, confirmMsg.toString(), "Akte löschen", JOptionPane.YES_NO_OPTION);
-        if (response != JOptionPane.YES_OPTION) {
+        Object[] deleteOptions = new Object[]{"Ja", "Nein"};
+        int response = JOptionPane.showOptionDialog(this, confirmMsg.toString(), "Akten löschen", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, deleteOptions, deleteOptions[1]);
+        if (response != 0) {
             return;
         }
 
