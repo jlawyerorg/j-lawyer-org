@@ -696,6 +696,51 @@ public interface SystemManagementLocal {
     public void statusMail(String subject, String body);
     public MonitoringSnapshot getMonitoringSnapshot();
 
+    /**
+     * Returns basic server information (host/version). Already implemented on the remote interface;
+     * exposed on the local interface so the self-contained system-report REST endpoint can use it.
+     *
+     * @return the server information
+     */
+    com.jdimension.jlawyer.server.utils.ServerInformation getServerInformation();
+
+    /**
+     * Returns the server JVM's system properties. Already implemented on the remote interface;
+     * exposed on the local interface for the system-report REST endpoint. Requires {@code adminRole}.
+     *
+     * @return the system properties
+     */
+    Properties getSystemProperties();
+
+    /**
+     * Returns the last {@code numberOfLines} lines of the server log. Already implemented on the
+     * remote interface; exposed on the local interface for the system-report REST endpoint. Requires
+     * {@code adminRole}.
+     *
+     * @param numberOfLines how many trailing log lines to return
+     * @return the log tail
+     * @throws Exception on read failure
+     */
+    String getServerLogs(int numberOfLines) throws Exception;
+
+    /**
+     * Sends a test e-mail via the given SMTP settings. Already implemented on the remote interface;
+     * exposed on the local interface so the system-mailbox REST endpoint can offer a "test" action.
+     *
+     * @param smtpHost SMTP server host
+     * @param smtpPort SMTP port (-1 for the protocol default)
+     * @param smtpUser login user
+     * @param smtpPwd login password (clear text)
+     * @param smtpSsl whether to use SSL
+     * @param smtpStartTls whether to use StartTLS
+     * @param mailAddress the recipient to send the test message to
+     * @param isMsExchange whether the server is MS Exchange (OAuth)
+     * @param authToken OAuth token (only for MS Exchange; may be null)
+     * @param customProps additional mail properties (may be empty)
+     * @throws Exception if sending fails
+     */
+    void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress, boolean isMsExchange, String authToken, Properties customProps) throws Exception;
+
     String getServerIpV4() throws Exception;
 
     String getServerInterfacesBoundTo() throws Exception;

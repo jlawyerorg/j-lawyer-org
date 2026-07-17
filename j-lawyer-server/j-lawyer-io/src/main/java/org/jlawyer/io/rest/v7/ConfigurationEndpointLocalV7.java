@@ -816,4 +816,22 @@ public interface ConfigurationEndpointLocalV7 {
 
     Response setTimesheetSettings(org.jlawyer.io.rest.v7.pojo.RestfulTimesheetSettingsV7 settings);
 
+    Response getSystemMailbox();
+
+    Response setSystemMailbox(org.jlawyer.io.rest.v7.pojo.RestfulSystemMailboxV7 mailbox);
+
+    Response testSystemMailbox(org.jlawyer.io.rest.v7.pojo.RestfulSystemMailboxV7 mailbox);
+
+    Response getSecuritySettings();
+
+    Response setSecuritySettings(org.jlawyer.io.rest.v7.pojo.RestfulSecuritySettingsV7 settings);
+
+    Response getMonitoringSettings();
+
+    Response setMonitoringSettings(org.jlawyer.io.rest.v7.pojo.RestfulMonitoringSettingsV7 settings);
+
+    Response getMonitoringSnapshot();
+
+    Response getSystemReport(int lines);
+
 }

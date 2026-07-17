@@ -37,7 +37,9 @@
       "caseConfig": "Akten",
       "calendar": "Kalender",
       "system": "System",
-      "assistant": "Assistent Ingo"
+      "assistant": "Assistent Ingo",
+      "security": "Sicherheit",
+      "integration": "Integration"
     },
     "section": {
       "salutation": "Anreden",
@@ -88,7 +90,12 @@
       "groups": "Gruppen",
       "assistantServers": "Ingo-Server",
       "assistantPrompts": "Eigene Prompts",
-      "assistantReplacements": "Automatische Ersetzungen"
+      "assistantReplacements": "Automatische Ersetzungen",
+      "systemMailbox": "Systempostfach",
+      "serverMonitoring": "Servermonitoring",
+      "systemReport": "Systemreport",
+      "security": "Sicherheit",
+      "webhooks": "Web Hooks"
     },
     "finance": {
       "typeCreate": "Neue Belegart",
@@ -522,7 +529,70 @@
       "replaceWith": "ersetzen durch",
       "caseInsensitive": "Groß-/Kleinschreibung ignorieren"
     },
-    "close": "Schließen"
+    "close": "Schließen",
+    "mailbox": {
+      "hint": "Dieses Postfach versendet administrative (z. B. Datensicherung) und fachliche (z. B. Terminerinnerungen) Mitteilungen.",
+      "server": "SMTP-Server",
+      "port": "Port (optional)",
+      "user": "SMTP-Benutzer / Login",
+      "password": "Passwort",
+      "passwordKeep": "unverändert lassen",
+      "senderEmail": "Absender-Adresse (From)",
+      "senderName": "Absendername",
+      "recipient": "Senden an",
+      "test": "Einstellungen testen",
+      "testing": "Sende Test …",
+      "testOk": "Testnachricht verschickt – bitte Posteingang prüfen.",
+      "testError": "Testversand fehlgeschlagen."
+    },
+    "security": {
+      "passwordTitle": "Anforderungen an komplexe Passwörter",
+      "forceComplex": "komplexe Passwörter erzwingen",
+      "allowAny": "beliebige Passwörter zulassen",
+      "hint": "Komplex = mind. 8 Zeichen mit Ziffer, Klein- und Großbuchstabe sowie einem Sonderzeichen."
+    },
+    "monitor": {
+      "snapshot": "Aktueller Zustand",
+      "refresh": "Aktualisieren",
+      "lastStatus": "Letzter Status",
+      "thresholds": "Schwellwerte",
+      "monitored": "überwachen",
+      "warn": "Warnung %",
+      "error": "Fehler %",
+      "cpu": "CPU",
+      "ram": "RAM+Swap",
+      "vm": "Java VM",
+      "disk": "Festplatte",
+      "notifications": "Benachrichtigungen",
+      "notify": "Warnungen aktivieren",
+      "notifyBackupSuccess": "bei erfolgreicher Datensicherung (Zusammenfassung)",
+      "notifyBackupFailure": "bei fehlgeschlagener Datensicherung",
+      "notifyHint": "Versand über das Systempostfach."
+    },
+    "report": {
+      "info": "Serverinformationen",
+      "version": "Server-Version",
+      "host": "Host",
+      "ip": "IP-Adresse",
+      "properties": "System-Eigenschaften",
+      "log": "Server-Protokoll",
+      "lines": "Zeilen",
+      "refresh": "Aktualisieren",
+      "download": "Log herunterladen"
+    },
+    "webhook": {
+      "create": "Web Hook anlegen",
+      "edit": "Web Hook bearbeiten",
+      "name": "Name",
+      "url": "URL",
+      "type": "Ereignistyp",
+      "authNote": "HTTP-Basic-Authentifizierung (optional)",
+      "user": "Nutzer",
+      "password": "Passwort",
+      "passwordKeep": "unverändert lassen",
+      "connectTimeout": "Timeout Verbinden (Sek.)",
+      "readTimeout": "Timeout Lesen (Sek.)"
+    }
   },
   "profile": {
     "title": "Nutzerprofil",

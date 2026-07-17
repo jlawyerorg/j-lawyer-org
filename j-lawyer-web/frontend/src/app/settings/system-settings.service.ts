@@ -71,14 +71,77 @@ export interface BackupSettings {
   exportTarget: string;
 }
 
+/** System mailbox / outbound SMTP (RestfulSystemMailboxV7). Password write-only. */
+export interface SystemMailbox {
+  smtpServer: string;
+  smtpPort: string;
+  smtpUser: string;
+  password: string;
+  passwordSet: boolean;
+  senderEmail: string;
+  senderName: string;
+  recipient: string;
+  ssl: boolean;
+  startTls: boolean;
+}
+
+/** Server security settings (RestfulSecuritySettingsV7). */
+export interface SecuritySettings {
+  forcePasswordComplexity: boolean;
+}
+
+/** Server monitoring configuration (RestfulMonitoringSettingsV7). */
+export interface MonitoringSettings {
+  cpuWarn: number; cpuError: number;
+  memWarn: number; memError: number;
+  diskWarn: number; diskError: number;
+  vmWarn: number; vmError: number;
+  monitorCpu: boolean; monitorRam: boolean; monitorDisk: boolean; monitorJava: boolean;
+  notify: boolean; notifyBackupSuccess: boolean; notifyBackupFailure: boolean;
+}
+
+/** Live server monitoring snapshot (RestfulMonitoringSnapshotV7). Sizes are bytes. */
+export interface MonitoringSnapshot {
+  taken: number;
+  cpuPercent: number;
+  diskUse: number; diskMax: number;
+  memoryUse: number; memoryMax: number;
+  vmMemoryUse: number; vmMemoryMax: number;
+  lastStatus: string;
+}
+
+/** Read-only system report (RestfulSystemReportV7). */
+export interface SystemReport {
+  serverVersion: string;
+  hostName: string;
+  ipAddress: string;
+  properties: { key: string; value: string }[];
+  serverLog: string;
+}
+
 /**
- * System-level settings (scan/OCR, data backup) over the v7 configuration endpoint. All require
- * `sysAdminRole` (enforced server-side). Backup passwords are write-only: they are never returned
- * (a `*Set` flag says whether one is stored) and only applied when a non-empty value is sent.
+ * System-level settings (scan/OCR, data backup, system mailbox, security, monitoring, system report)
+ * over the v7 configuration endpoint. All require `sysAdminRole` (security requires `adminRole`),
+ * enforced server-side. Passwords are write-only: never returned (a `*Set` flag says whether one is
+ * stored) and only applied when a non-empty value is sent.
  */
 @Injectable({ providedIn: 'root' })
 export class SystemSettingsService {
   private readonly http = inject(HttpClient);
+
+  getSystemMailbox(): Observable<SystemMailbox> { return this.http.get<SystemMailbox>(`${CONFIG_V7}/system-mailbox`); }
+  saveSystemMailbox(s: SystemMailbox): Observable<SystemMailbox> { return this.http.put<SystemMailbox>(`${CONFIG_V7}/system-mailbox`, s); }
+  /** Sends a test e-mail with the given settings (password falls back to the stored one when empty). */
+  testSystemMailbox(s: SystemMailbox): Observable<unknown> { return this.http.post(`${CONFIG_V7}/system-mailbox/test`, s); }
+
+  getSecurity(): Observable<SecuritySettings> { return this.http.get<SecuritySettings>(`${CONFIG_V7}/security-settings`); }
+  saveSecurity(s: SecuritySettings): Observable<SecuritySettings> { return this.http.put<SecuritySettings>(`${CONFIG_V7}/security-settings`, s); }
+
+  getMonitoring(): Observable<MonitoringSettings> { return this.http.get<MonitoringSettings>(`${CONFIG_V7}/monitoring-settings`); }
+  saveMonitoring(s: MonitoringSettings): Observable<MonitoringSettings> { return this.http.put<MonitoringSettings>(`${CONFIG_V7}/monitoring-settings`, s); }
+  getMonitoringSnapshot(): Observable<MonitoringSnapshot> { return this.http.get<MonitoringSnapshot>(`${CONFIG_V7}/monitoring-snapshot`); }
+
+  getSystemReport(lines = 500): Observable<SystemReport> { return this.http.get<SystemReport>(`${CONFIG_V7}/system-report?lines=${lines}`); }
 
   getScan(): Observable<ScanSettings> { return this.http.get<ScanSettings>(`${CONFIG_V7}/scan-settings`); }
   saveScan(s: ScanSettings): Observable<ScanSettings> { return this.http.put<ScanSettings>(`${CONFIG_V7}/scan-settings`, s); }

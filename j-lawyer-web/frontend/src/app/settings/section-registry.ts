@@ -14,7 +14,8 @@ export type SectionKind = 'optionGroup' | 'users' | 'groups' | 'firmProfile'
   | 'stirlingSettings' | 'beaSettings' | 'multiValueTags' | 'searchIndex' | 'customFields' | 'cardDavSync'
   | 'nameTemplates' | 'calendarSetups' | 'calendarEntryTemplates' | 'bankStatementConfigs'
   | 'timesheetTemplates' | 'timesheetSettings'
-  | 'assistantServers' | 'assistantPrompts' | 'assistantReplacements';
+  | 'assistantServers' | 'assistantPrompts' | 'assistantReplacements'
+  | 'systemMailbox' | 'security' | 'serverMonitoring' | 'systemReport' | 'webhooks';
 
 export interface SettingsSection {
   /** Stable id (also the list-selection key). */
@@ -50,6 +51,8 @@ const G_CASECONFIG = 'settings.group.caseConfig';
 const G_DOCCONFIG = 'settings.group.documents';
 const G_CALENDAR = 'settings.group.calendar';
 const G_ASSISTANT = 'settings.group.assistant';
+const G_SECURITY = 'settings.group.security';
+const G_INTEGRATION = 'settings.group.integration';
 
 /** "Allgemein" screen — dictionaries/value lists open to any user (edit needs option-group roles). */
 export const GENERAL_SECTIONS: SettingsSection[] = [
@@ -103,6 +106,8 @@ export const ADMINISTRATION_SECTIONS: SettingsSection[] = [
   { id: 'timesheetTemplates', titleKey: 'settings.section.timesheetTemplates', groupKey: G_TIME, kind: 'timesheetTemplates', keywords: 'zeiterfassung position vorlage taetigkeit stundensatz' },
   { id: 'timesheetSettings', titleKey: 'settings.section.timesheetSettings', groupKey: G_TIME, kind: 'timesheetSettings', keywords: 'zeiterfassung parallel eingabeformat einstellungen' },
   { id: 'assistantServers', titleKey: 'settings.section.assistantServers', groupKey: G_ASSISTANT, kind: 'assistantServers', keywords: 'ingo ki ai assistent server verbindung llm openai ollama' },
+  { id: 'security', titleKey: 'settings.section.security', groupKey: G_SECURITY, kind: 'security', keywords: 'sicherheit passwort komplexität security password' },
+  { id: 'webhooks', titleKey: 'settings.section.webhooks', groupKey: G_INTEGRATION, kind: 'webhooks', keywords: 'webhook web hook integration ereignis event url' },
   { id: 'users', titleKey: 'settings.section.users', groupKey: G_USERS, kind: 'users', keywords: 'nutzer benutzer rollen' },
   { id: 'groups', titleKey: 'settings.section.groups', groupKey: G_USERS, kind: 'groups', keywords: 'gruppen' },
 ];
@@ -117,4 +122,7 @@ export const SYSTEM_SECTIONS: SettingsSection[] = [
   { id: 'beaSettings', titleKey: 'settings.section.beaSettings', groupKey: G_SYSTEM, kind: 'beaSettings', keywords: 'bea anwaltspostfach endpoint integration' },
   { id: 'searchIndex', titleKey: 'settings.section.searchIndex', groupKey: G_SYSTEM, kind: 'searchIndex', keywords: 'volltextsuche suchindex lucene index neu erfassen' },
   { id: 'cardDavSync', titleKey: 'settings.section.cardDavSync', groupKey: G_SYSTEM, kind: 'cardDavSync', keywords: 'adressbuch nextcloud carddav synchronisation kontakte sync' },
+  { id: 'systemMailbox', titleKey: 'settings.section.systemMailbox', groupKey: G_SYSTEM, kind: 'systemMailbox', keywords: 'systempostfach smtp mail e-mail versand benachrichtigung postfach' },
+  { id: 'serverMonitoring', titleKey: 'settings.section.serverMonitoring', groupKey: G_SYSTEM, kind: 'serverMonitoring', keywords: 'monitoring überwachung cpu ram disk speicher auslastung schwellwert' },
+  { id: 'systemReport', titleKey: 'settings.section.systemReport', groupKey: G_SYSTEM, kind: 'systemReport', keywords: 'systemreport bericht protokoll log serverinformationen diagnose' },
 ];

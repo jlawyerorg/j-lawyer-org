@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.email.EmailTemplate;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.persistence.AssistantPrompt;
 import com.jdimension.jlawyer.persistence.AssistantReplacement;
+import com.jdimension.jlawyer.persistence.IntegrationHook;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -711,5 +712,15 @@ public interface IntegrationServiceLocal {
     AssistantReplacement addAssistantReplacement(AssistantReplacement ap) throws Exception;
     AssistantReplacement updateAssistantReplacement(AssistantReplacement ap) throws Exception;
     void removeAssistantReplacement(AssistantReplacement ap) throws Exception;
+
+    // --- integration hooks (webhooks) ---
+    // Already implemented on IntegrationService (remote); exposed on the local interface so the
+    // webhooks REST endpoint can offer CRUD. Listing types needs loginRole; CRUD needs adminRole.
+
+    String[] getHookTypes();
+    List<IntegrationHook> getAllIntegrationHooks() throws Exception;
+    IntegrationHook addIntegrationHook(IntegrationHook hook) throws Exception;
+    IntegrationHook updateIntegrationHook(IntegrationHook hook) throws Exception;
+    void removeIntegrationHook(IntegrationHook hook) throws Exception;
 
 }

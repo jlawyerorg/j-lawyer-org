@@ -674,9 +674,17 @@ import javax.ws.rs.core.Response;
 public interface WebHooksEndpointLocalV7 {
 
     public Response listHooks();
-    
+
     public Response getHookLog(String hookId);
-    
-    
-    
+
+    public Response getHookTypes();
+
+    public Response getHooks();
+
+    public Response createHook(org.jlawyer.io.rest.v7.pojo.RestfulIntegrationHookV7 hook);
+
+    public Response updateHook(org.jlawyer.io.rest.v7.pojo.RestfulIntegrationHookV7 hook);
+
+    public Response deleteHook(String name);
+
 }

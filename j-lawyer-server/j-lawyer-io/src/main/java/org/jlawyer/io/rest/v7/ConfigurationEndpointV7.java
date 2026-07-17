@@ -3071,6 +3071,329 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
         }
     }
 
+    // ===== system mailbox (outbound SMTP for notifications) =====
+
+    /**
+     * Returns the system mailbox (SMTP) configuration. The password is never returned (only whether
+     * one is set).
+     *
+     * @response 200 The system mailbox settings
+     */
+    @Override
+    @GET
+    @Path("/system-mailbox")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the system mailbox (SMTP) settings", response = org.jlawyer.io.rest.v7.pojo.RestfulSystemMailboxV7.class)
+    public Response getSystemMailbox() {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            org.jlawyer.io.rest.v7.pojo.RestfulSystemMailboxV7 m = new org.jlawyer.io.rest.v7.pojo.RestfulSystemMailboxV7();
+            m.setSmtpServer(readSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_SMTPSERVER));
+            m.setSmtpPort(readSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_SMTPPORT));
+            m.setSmtpUser(readSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_SMTPUSER));
+            m.setSenderEmail(readSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_SMTPFROM));
+            m.setSenderName(readSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_SMTPSENDERNAME));
+            m.setRecipient(readSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_SMTPTO));
+            m.setSsl(readBoolSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_SMTPSSL));
+            m.setStartTls(readBoolSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_SMTPSTARTTLS));
+            m.setPasswordSet(!readSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_SMTPPASSWORD).isEmpty());
+            return Response.ok(m).build();
+        } catch (Exception ex) {
+            log.error("can not get system mailbox", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates the system mailbox (SMTP) configuration. The password is only changed when a non-empty
+     * value is sent.
+     *
+     * @param mailbox the settings to store
+     * @response 200 The stored settings
+     */
+    @Override
+    @PUT
+    @Path("/system-mailbox")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Updates the system mailbox (SMTP) settings", response = org.jlawyer.io.rest.v7.pojo.RestfulSystemMailboxV7.class)
+    public Response setSystemMailbox(@io.swagger.annotations.ApiParam org.jlawyer.io.rest.v7.pojo.RestfulSystemMailboxV7 mailbox) {
+        try {
+            if (mailbox == null) {
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            }
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_SMTPSERVER, nz(mailbox.getSmtpServer()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_SMTPPORT, nz(mailbox.getSmtpPort()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_SMTPUSER, nz(mailbox.getSmtpUser()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_SMTPFROM, nz(mailbox.getSenderEmail()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_SMTPSENDERNAME, nz(mailbox.getSenderName()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_SMTPTO, nz(mailbox.getRecipient()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_SMTPSSL, mailbox.isSsl() ? "true" : "false");
+            system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_SMTPSTARTTLS, mailbox.isStartTls() ? "true" : "false");
+            if (mailbox.getPassword() != null && !mailbox.getPassword().isEmpty()) {
+                system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_SMTPPASSWORD, mailbox.getPassword());
+            }
+            mailbox.setPassword(null);
+            mailbox.setPasswordSet(!readSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_SMTPPASSWORD).isEmpty());
+            return Response.ok(mailbox).build();
+        } catch (Exception ex) {
+            log.error("can not update system mailbox", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Sends a test e-mail via the system mailbox. Uses the settings in the request; when the password
+     * is empty, the stored password is used (so an unchanged config can be tested without re-typing).
+     *
+     * @param mailbox the settings to test (recipient = the "send to" address)
+     * @response 200 Test message sent
+     * @response 400 Sending failed (message in the error body)
+     */
+    @Override
+    @POST
+    @Path("/system-mailbox/test")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Sends a test e-mail via the system mailbox")
+    public Response testSystemMailbox(@io.swagger.annotations.ApiParam org.jlawyer.io.rest.v7.pojo.RestfulSystemMailboxV7 mailbox) {
+        try {
+            if (mailbox == null) {
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            }
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            String pwd = mailbox.getPassword();
+            if (pwd == null || pwd.isEmpty()) {
+                pwd = readSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_SMTPPASSWORD);
+            }
+            int port = -1;
+            String portStr = mailbox.getSmtpPort();
+            if (portStr != null && !portStr.trim().isEmpty()) {
+                try {
+                    port = Integer.parseInt(portStr.trim());
+                } catch (NumberFormatException nfe) {
+                    return Response.status(Response.Status.BAD_REQUEST)
+                            .entity("{\"error\":\"invalid_port\"}")
+                            .type(MediaType.APPLICATION_JSON + ";charset=utf-8").build();
+                }
+            }
+            system.testSendMail(nz(mailbox.getSmtpServer()), port, nz(mailbox.getSmtpUser()), pwd,
+                    mailbox.isSsl(), mailbox.isStartTls(), nz(mailbox.getRecipient()), false, null, new java.util.Properties());
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("system mailbox test failed", ex);
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("{\"error\":\"" + (ex.getMessage() == null ? "test_failed" : ex.getMessage().replace("\"", "'")) + "\"}")
+                    .type(MediaType.APPLICATION_JSON + ";charset=utf-8")
+                    .build();
+        }
+    }
+
+    // ===== security =====
+
+    /**
+     * Returns the server security settings.
+     *
+     * @response 200 The security settings
+     */
+    @Override
+    @GET
+    @Path("/security-settings")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the server security settings", response = org.jlawyer.io.rest.v7.pojo.RestfulSecuritySettingsV7.class)
+    public Response getSecuritySettings() {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            org.jlawyer.io.rest.v7.pojo.RestfulSecuritySettingsV7 s = new org.jlawyer.io.rest.v7.pojo.RestfulSecuritySettingsV7();
+            s.setForcePasswordComplexity("true".equalsIgnoreCase(readSetting(system, ServerSettingsKeys.SERVERCONF_SECURITY_FORCE_PASSWORDCOMPLEXITY, "true")));
+            return Response.ok(s).build();
+        } catch (Exception ex) {
+            log.error("can not get security settings", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates the server security settings.
+     *
+     * @param settings the settings to store
+     * @response 200 The stored settings
+     */
+    @Override
+    @PUT
+    @Path("/security-settings")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Updates the server security settings", response = org.jlawyer.io.rest.v7.pojo.RestfulSecuritySettingsV7.class)
+    public Response setSecuritySettings(@io.swagger.annotations.ApiParam org.jlawyer.io.rest.v7.pojo.RestfulSecuritySettingsV7 settings) {
+        try {
+            if (settings == null) {
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            }
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            system.setSetting(ServerSettingsKeys.SERVERCONF_SECURITY_FORCE_PASSWORDCOMPLEXITY, settings.isForcePasswordComplexity() ? "true" : "false");
+            return Response.ok(settings).build();
+        } catch (Exception ex) {
+            log.error("can not update security settings", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    // ===== server monitoring (thresholds/notifications + live snapshot) =====
+
+    /**
+     * Returns the server monitoring configuration (thresholds, monitored resources, notifications).
+     *
+     * @response 200 The monitoring settings
+     */
+    @Override
+    @GET
+    @Path("/monitoring-settings")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the server monitoring settings", response = org.jlawyer.io.rest.v7.pojo.RestfulMonitoringSettingsV7.class)
+    public Response getMonitoringSettings() {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            org.jlawyer.io.rest.v7.pojo.RestfulMonitoringSettingsV7 s = new org.jlawyer.io.rest.v7.pojo.RestfulMonitoringSettingsV7();
+            s.setCpuWarn(readIntSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_CPUWARN, 80));
+            s.setCpuError(readIntSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_CPUERROR, 90));
+            s.setMemWarn(readIntSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_MEMWARN, 80));
+            s.setMemError(readIntSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_MEMERROR, 90));
+            s.setDiskWarn(readIntSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_DISKWARN, 80));
+            s.setDiskError(readIntSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_DISKERROR, 90));
+            s.setVmWarn(readIntSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_VMWARN, 75));
+            s.setVmError(readIntSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_VMERROR, 85));
+            s.setMonitorCpu(readOnFlag(system, ServerSettingsKeys.SERVERCONF_MONITOR_ENABLED_CPU, true));
+            s.setMonitorRam(readOnFlag(system, ServerSettingsKeys.SERVERCONF_MONITOR_ENABLED_RAM, true));
+            s.setMonitorDisk(readOnFlag(system, ServerSettingsKeys.SERVERCONF_MONITOR_ENABLED_DISK, true));
+            s.setMonitorJava(readOnFlag(system, ServerSettingsKeys.SERVERCONF_MONITOR_ENABLED_JAVA, true));
+            s.setNotify(readOnFlag(system, ServerSettingsKeys.SERVERCONF_MONITOR_NOTIFY, false));
+            s.setNotifyBackupSuccess(readOnFlag(system, ServerSettingsKeys.SERVERCONF_MONITOR_NOTIFY_BACKUPSUCCESS, true));
+            s.setNotifyBackupFailure(readOnFlag(system, ServerSettingsKeys.SERVERCONF_MONITOR_NOTIFY_BACKUPFAILURE, true));
+            return Response.ok(s).build();
+        } catch (Exception ex) {
+            log.error("can not get monitoring settings", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates the server monitoring configuration.
+     *
+     * @param settings the settings to store
+     * @response 200 The stored settings
+     */
+    @Override
+    @PUT
+    @Path("/monitoring-settings")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Updates the server monitoring settings", response = org.jlawyer.io.rest.v7.pojo.RestfulMonitoringSettingsV7.class)
+    public Response setMonitoringSettings(@io.swagger.annotations.ApiParam org.jlawyer.io.rest.v7.pojo.RestfulMonitoringSettingsV7 settings) {
+        try {
+            if (settings == null) {
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            }
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_CPUWARN, Integer.toString(settings.getCpuWarn()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_CPUERROR, Integer.toString(settings.getCpuError()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_MEMWARN, Integer.toString(settings.getMemWarn()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_MEMERROR, Integer.toString(settings.getMemError()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_DISKWARN, Integer.toString(settings.getDiskWarn()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_DISKERROR, Integer.toString(settings.getDiskError()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_VMWARN, Integer.toString(settings.getVmWarn()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_VMERROR, Integer.toString(settings.getVmError()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_ENABLED_CPU, settings.isMonitorCpu() ? "on" : "off");
+            system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_ENABLED_RAM, settings.isMonitorRam() ? "on" : "off");
+            system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_ENABLED_DISK, settings.isMonitorDisk() ? "on" : "off");
+            system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_ENABLED_JAVA, settings.isMonitorJava() ? "on" : "off");
+            system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_NOTIFY, settings.isNotify() ? "on" : "off");
+            system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_NOTIFY_BACKUPSUCCESS, settings.isNotifyBackupSuccess() ? "on" : "off");
+            system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_NOTIFY_BACKUPFAILURE, settings.isNotifyBackupFailure() ? "on" : "off");
+            return Response.ok(settings).build();
+        } catch (Exception ex) {
+            log.error("can not update monitoring settings", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns the current server monitoring snapshot (CPU/RAM/VM/disk usage + last status).
+     *
+     * @response 200 The snapshot
+     */
+    @Override
+    @GET
+    @Path("/monitoring-snapshot")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the current server monitoring snapshot", response = org.jlawyer.io.rest.v7.pojo.RestfulMonitoringSnapshotV7.class)
+    public Response getMonitoringSnapshot() {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            com.jdimension.jlawyer.server.services.MonitoringSnapshot s = system.getMonitoringSnapshot();
+            if (s == null) {
+                return Response.noContent().build();
+            }
+            return Response.ok(org.jlawyer.io.rest.v7.pojo.RestfulMonitoringSnapshotV7.fromSnapshot(s)).build();
+        } catch (Exception ex) {
+            log.error("can not get monitoring snapshot", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    // ===== system report =====
+
+    /**
+     * Returns a read-only system report: server version/host, JVM system properties and a tail of
+     * the server log.
+     *
+     * @param lines how many trailing server-log lines to include (default 500, capped at 5000)
+     * @response 200 The system report
+     */
+    @Override
+    @GET
+    @Path("/system-report")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns a read-only system report", response = org.jlawyer.io.rest.v7.pojo.RestfulSystemReportV7.class)
+    public Response getSystemReport(@javax.ws.rs.QueryParam("lines") int lines) {
+        try {
+            int n = lines <= 0 ? 500 : Math.min(lines, 5000);
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            org.jlawyer.io.rest.v7.pojo.RestfulSystemReportV7 report = new org.jlawyer.io.rest.v7.pojo.RestfulSystemReportV7();
+            report.setServerVersion(system.getServerVersion());
+            report.setHostName(com.jdimension.jlawyer.server.utils.ServerInformation.getHostName());
+            report.setIpAddress(com.jdimension.jlawyer.server.utils.ServerInformation.getIPv4Address());
+            java.util.Properties props = system.getSystemProperties();
+            if (props != null) {
+                java.util.List<String> keys = new java.util.ArrayList<>(props.stringPropertyNames());
+                java.util.Collections.sort(keys);
+                for (String k : keys) {
+                    report.getProperties().add(new org.jlawyer.io.rest.v7.pojo.RestfulSystemReportV7.Property(k, props.getProperty(k)));
+                }
+            }
+            report.setServerLog(system.getServerLogs(n));
+            return Response.ok(report).build();
+        } catch (Exception ex) {
+            log.error("can not build system report", ex);
+            return Response.serverError().build();
+        }
+    }
+
     /** Reads a server setting's value, or the given default when it is not set. */
     private String readSetting(SystemManagementLocal system, String key, String defaultValue) {
         ServerSettingsBean b = system.getSetting(key);

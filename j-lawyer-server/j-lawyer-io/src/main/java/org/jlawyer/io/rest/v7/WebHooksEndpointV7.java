@@ -663,15 +663,21 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest.v7;
 
+import com.jdimension.jlawyer.persistence.IntegrationHook;
 import com.jdimension.jlawyer.persistence.IntegrationHookLog;
 import com.jdimension.jlawyer.persistence.IntegrationHookLogFacadeLocal;
+import com.jdimension.jlawyer.security.CryptoProvider;
+import com.jdimension.jlawyer.services.IntegrationServiceLocal;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -680,6 +686,7 @@ import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 import org.jlawyer.io.rest.v7.pojo.RestfulIntegrationHookLog;
 import org.jlawyer.io.rest.v7.pojo.RestfulIntegrationHookLogOverview;
+import org.jlawyer.io.rest.v7.pojo.RestfulIntegrationHookV7;
 
 /**
  *
@@ -694,6 +701,7 @@ public class WebHooksEndpointV7 implements WebHooksEndpointLocalV7 {
     
     private static final Logger log = Logger.getLogger(WebHooksEndpointV7.class.getName());
     private static final String LOOKUP_HOOKS = "java:global/j-lawyer-server/j-lawyer-server-ejb/IntegrationHookLogFacade!com.jdimension.jlawyer.persistence.IntegrationHookLogFacadeLocal";
+    private static final String LOOKUP_INTEGRATION = "java:global/j-lawyer-server/j-lawyer-server-ejb/IntegrationService!com.jdimension.jlawyer.services.IntegrationServiceLocal";
     
 
     /**
@@ -784,5 +792,177 @@ public class WebHooksEndpointV7 implements WebHooksEndpointLocalV7 {
         }
 
     }
-    
+
+    /**
+     * Returns the available web hook event types.
+     *
+     * @return the event types
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Path("/types")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the available web hook event types", response = String.class, responseContainer = "List")
+    public Response getHookTypes() {
+        try {
+            InitialContext ic = new InitialContext();
+            IntegrationServiceLocal integration = (IntegrationServiceLocal) ic.lookup(LOOKUP_INTEGRATION);
+            String[] types = integration.getHookTypes();
+            return Response.ok(types == null ? new String[0] : types).build();
+        } catch (Exception ex) {
+            log.error("can not get web hook types", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns all configured web hooks. The auth password is never returned.
+     *
+     * @return the web hooks
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Path("/hooks")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns all configured web hooks", response = RestfulIntegrationHookV7.class, responseContainer = "List")
+    public Response getHooks() {
+        try {
+            InitialContext ic = new InitialContext();
+            IntegrationServiceLocal integration = (IntegrationServiceLocal) ic.lookup(LOOKUP_INTEGRATION);
+            ArrayList<RestfulIntegrationHookV7> result = new ArrayList<>();
+            for (IntegrationHook h : integration.getAllIntegrationHooks()) {
+                result.add(RestfulIntegrationHookV7.fromEntity(h));
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("can not list web hooks", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Creates a new web hook. The auth password (when given) is stored encrypted.
+     *
+     * @param hook the hook (name required)
+     * @return the created hook
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Path("/hooks")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Creates a web hook", response = RestfulIntegrationHookV7.class)
+    public Response createHook(RestfulIntegrationHookV7 hook) {
+        try {
+            if (hook == null || hook.getName() == null || hook.getName().trim().isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            }
+            InitialContext ic = new InitialContext();
+            IntegrationServiceLocal integration = (IntegrationServiceLocal) ic.lookup(LOOKUP_INTEGRATION);
+            IntegrationHook h = new IntegrationHook();
+            h.setName(hook.getName());
+            h.setUrl(hook.getUrl());
+            h.setHookType(hook.getHookType());
+            h.setAuthenticationUser(hook.getAuthUser());
+            h.setConnectionTimeout(hook.getConnectionTimeout());
+            h.setReadTimeout(hook.getReadTimeout());
+            h.setAuthenticationPwd((hook.getAuthPassword() == null || hook.getAuthPassword().isEmpty())
+                    ? "" : CryptoProvider.newCrypto().encrypt(hook.getAuthPassword()));
+            IntegrationHook created = integration.addIntegrationHook(h);
+            return Response.ok(RestfulIntegrationHookV7.fromEntity(created)).build();
+        } catch (Exception ex) {
+            log.error("can not create web hook", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates an existing web hook. The auth password is only changed when a non-empty value is sent.
+     *
+     * @param hook the hook (name required, identifies the hook)
+     * @return the updated hook
+     * @response 404 No hook with that name
+     */
+    @Override
+    @POST
+    @Path("/hooks")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Updates a web hook", response = RestfulIntegrationHookV7.class)
+    public Response updateHook(RestfulIntegrationHookV7 hook) {
+        try {
+            if (hook == null || hook.getName() == null || hook.getName().trim().isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            }
+            InitialContext ic = new InitialContext();
+            IntegrationServiceLocal integration = (IntegrationServiceLocal) ic.lookup(LOOKUP_INTEGRATION);
+            IntegrationHook existing = null;
+            for (IntegrationHook h : integration.getAllIntegrationHooks()) {
+                if (hook.getName().equals(h.getName())) {
+                    existing = h;
+                    break;
+                }
+            }
+            if (existing == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            existing.setUrl(hook.getUrl());
+            existing.setHookType(hook.getHookType());
+            existing.setAuthenticationUser(hook.getAuthUser());
+            existing.setConnectionTimeout(hook.getConnectionTimeout());
+            existing.setReadTimeout(hook.getReadTimeout());
+            if (hook.getAuthPassword() != null && !hook.getAuthPassword().isEmpty()) {
+                existing.setAuthenticationPwd(CryptoProvider.newCrypto().encrypt(hook.getAuthPassword()));
+            }
+            IntegrationHook updated = integration.updateIntegrationHook(existing);
+            return Response.ok(RestfulIntegrationHookV7.fromEntity(updated)).build();
+        } catch (Exception ex) {
+            log.error("can not update web hook", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Deletes a web hook by its name.
+     *
+     * @param name the hook name
+     * @response 200 Deleted
+     * @response 404 No hook with that name
+     */
+    @Override
+    @DELETE
+    @Path("/hooks/{name}")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Deletes a web hook")
+    public Response deleteHook(@PathParam("name") String name) {
+        try {
+            InitialContext ic = new InitialContext();
+            IntegrationServiceLocal integration = (IntegrationServiceLocal) ic.lookup(LOOKUP_INTEGRATION);
+            IntegrationHook existing = null;
+            for (IntegrationHook h : integration.getAllIntegrationHooks()) {
+                if (name.equals(h.getName())) {
+                    existing = h;
+                    break;
+                }
+            }
+            if (existing == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            integration.removeIntegrationHook(existing);
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not delete web hook " + name, ex);
+            return Response.serverError().build();
+        }
+    }
+
 }

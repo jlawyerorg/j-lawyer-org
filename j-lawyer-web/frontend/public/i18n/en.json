@@ -37,7 +37,9 @@
       "caseConfig": "Cases",
       "calendar": "Calendar",
       "system": "System",
-      "assistant": "Assistant Ingo"
+      "assistant": "Assistant Ingo",
+      "security": "Security",
+      "integration": "Integration"
     },
     "section": {
       "salutation": "Salutations",
@@ -88,7 +90,12 @@
       "groups": "Groups",
       "assistantServers": "Ingo servers",
       "assistantPrompts": "Custom prompts",
-      "assistantReplacements": "Automatic replacements"
+      "assistantReplacements": "Automatic replacements",
+      "systemMailbox": "System mailbox",
+      "serverMonitoring": "Server monitoring",
+      "systemReport": "System report",
+      "security": "Security",
+      "webhooks": "Web hooks"
     },
     "finance": {
       "typeCreate": "New invoice type",
@@ -522,7 +529,70 @@
       "replaceWith": "replace with",
       "caseInsensitive": "ignore case"
     },
-    "close": "Close"
+    "close": "Close",
+    "mailbox": {
+      "hint": "This mailbox sends administrative (e.g. backup) and business (e.g. deadline reminder) notifications.",
+      "server": "SMTP server",
+      "port": "Port (optional)",
+      "user": "SMTP user / login",
+      "password": "Password",
+      "passwordKeep": "leave unchanged",
+      "senderEmail": "Sender address (From)",
+      "senderName": "Sender name",
+      "recipient": "Send to",
+      "test": "Test settings",
+      "testing": "Sending test …",
+      "testOk": "Test message sent — please check the inbox.",
+      "testError": "Test send failed."
+    },
+    "security": {
+      "passwordTitle": "Complex password requirements",
+      "forceComplex": "enforce complex passwords",
+      "allowAny": "allow any passwords",
+      "hint": "Complex = at least 8 characters with a digit, a lower- and upper-case letter and a special character."
+    },
+    "monitor": {
+      "snapshot": "Current state",
+      "refresh": "Refresh",
+      "lastStatus": "Last status",
+      "thresholds": "Thresholds",
+      "monitored": "monitor",
+      "warn": "Warning %",
+      "error": "Error %",
+      "cpu": "CPU",
+      "ram": "RAM+Swap",
+      "vm": "Java VM",
+      "disk": "Disk",
+      "notifications": "Notifications",
+      "notify": "Enable warnings",
+      "notifyBackupSuccess": "on successful backup (summary)",
+      "notifyBackupFailure": "on failed backup",
+      "notifyHint": "Sent via the system mailbox."
+    },
+    "report": {
+      "info": "Server information",
+      "version": "Server version",
+      "host": "Host",
+      "ip": "IP address",
+      "properties": "System properties",
+      "log": "Server log",
+      "lines": "Lines",
+      "refresh": "Refresh",
+      "download": "Download log"
+    },
+    "webhook": {
+      "create": "Create web hook",
+      "edit": "Edit web hook",
+      "name": "Name",
+      "url": "URL",
+      "type": "Event type",
+      "authNote": "HTTP basic authentication (optional)",
+      "user": "User",
+      "password": "Password",
+      "passwordKeep": "leave unchanged",
+      "connectTimeout": "Connect timeout (sec.)",
+      "readTimeout": "Read timeout (sec.)"
+    }
   },
   "profile": {
     "title": "User profile",

@@ -33,6 +33,11 @@ import { TimesheetSettingsComponent } from './timesheet-settings.component';
 import { AssistantServersComponent } from './assistant-servers.component';
 import { AssistantPromptsComponent } from './assistant-prompts.component';
 import { AssistantReplacementsComponent } from './assistant-replacements.component';
+import { SystemMailboxComponent } from './system-mailbox.component';
+import { SecuritySettingsComponent } from './security-settings.component';
+import { ServerMonitoringComponent } from './server-monitoring.component';
+import { SystemReportComponent } from './system-report.component';
+import { WebhooksComponent } from './webhooks.component';
 
 interface SectionGroup {
   groupKey: string;
@@ -50,7 +55,7 @@ interface SectionGroup {
   selector: 'jl-settings-screen',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoModule, IconComponent, OptionListEditorComponent, SettingsUsersComponent, SettingsGroupsComponent, FirmProfileComponent, FinanceTypesComponent, FinancePoolsComponent, FinancePositionsComponent, FinanceSettingsComponent, PartyTypesComponent, CaseNumberingComponent, FolderTemplatesComponent, ScanSettingsComponent, BackupSettingsComponent, StirlingSettingsComponent, BeaSettingsComponent, MultiValueTagsComponent, SearchIndexComponent, CustomFieldsComponent, CardDavSyncComponent, NameTemplatesComponent, CalendarSetupsComponent, CalendarEntryTemplatesComponent, BankStatementConfigsComponent, TimesheetTemplatesComponent, TimesheetSettingsComponent, AssistantServersComponent, AssistantPromptsComponent, AssistantReplacementsComponent],
+  imports: [TranslocoModule, IconComponent, OptionListEditorComponent, SettingsUsersComponent, SettingsGroupsComponent, FirmProfileComponent, FinanceTypesComponent, FinancePoolsComponent, FinancePositionsComponent, FinanceSettingsComponent, PartyTypesComponent, CaseNumberingComponent, FolderTemplatesComponent, ScanSettingsComponent, BackupSettingsComponent, StirlingSettingsComponent, BeaSettingsComponent, MultiValueTagsComponent, SearchIndexComponent, CustomFieldsComponent, CardDavSyncComponent, NameTemplatesComponent, CalendarSetupsComponent, CalendarEntryTemplatesComponent, BankStatementConfigsComponent, TimesheetTemplatesComponent, TimesheetSettingsComponent, AssistantServersComponent, AssistantPromptsComponent, AssistantReplacementsComponent, SystemMailboxComponent, SecuritySettingsComponent, ServerMonitoringComponent, SystemReportComponent, WebhooksComponent],
   template: `
     <div class="st" [class.show-detail]="selected()">
       <section class="st-list">
@@ -117,6 +122,11 @@ interface SectionGroup {
               @case ('assistantServers') { <jl-assistant-servers /> }
               @case ('assistantPrompts') { <jl-assistant-prompts /> }
               @case ('assistantReplacements') { <jl-assistant-replacements /> }
+              @case ('systemMailbox') { <jl-system-mailbox /> }
+              @case ('security') { <jl-security-settings /> }
+              @case ('serverMonitoring') { <jl-server-monitoring /> }
+              @case ('systemReport') { <jl-system-report /> }
+              @case ('webhooks') { <jl-webhooks /> }
             }
           </div>
         } @else {
