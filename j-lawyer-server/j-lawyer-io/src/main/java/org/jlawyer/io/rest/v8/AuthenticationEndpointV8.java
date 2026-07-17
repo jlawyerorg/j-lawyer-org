@@ -17,6 +17,7 @@
  * along with j-lawyer.org.  If not, see <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v8;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.security.jwt.JwtClaims;
 import com.jdimension.jlawyer.security.jwt.JwtException;
@@ -118,7 +119,7 @@ public class AuthenticationEndpointV8 implements AuthenticationEndpointLocalV8 {
             return issueTokens(request.getUsername(), roles);
         } catch (Exception ex) {
             log.error("login failed for principal " + request.getUsername(), ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -154,7 +155,7 @@ public class AuthenticationEndpointV8 implements AuthenticationEndpointLocalV8 {
                     .build();
         } catch (Exception ex) {
             log.error("refresh failed", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 

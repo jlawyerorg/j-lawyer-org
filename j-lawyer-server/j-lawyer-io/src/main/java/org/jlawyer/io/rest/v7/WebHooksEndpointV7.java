@@ -662,6 +662,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v7;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.persistence.IntegrationHook;
 import com.jdimension.jlawyer.persistence.IntegrationHookLog;
@@ -737,7 +738,7 @@ public class WebHooksEndpointV7 implements WebHooksEndpointLocalV7 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("Could not list web hook logs", ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
 
@@ -788,7 +789,7 @@ public class WebHooksEndpointV7 implements WebHooksEndpointLocalV7 {
             }
         } catch (Exception ex) {
             log.error("can not get web hook log by id " + hookId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     }
@@ -814,7 +815,7 @@ public class WebHooksEndpointV7 implements WebHooksEndpointLocalV7 {
             return Response.ok(types == null ? new String[0] : types).build();
         } catch (Exception ex) {
             log.error("can not get web hook types", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -842,7 +843,7 @@ public class WebHooksEndpointV7 implements WebHooksEndpointLocalV7 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not list web hooks", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -880,7 +881,7 @@ public class WebHooksEndpointV7 implements WebHooksEndpointLocalV7 {
             return Response.ok(RestfulIntegrationHookV7.fromEntity(created)).build();
         } catch (Exception ex) {
             log.error("can not create web hook", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -926,7 +927,7 @@ public class WebHooksEndpointV7 implements WebHooksEndpointLocalV7 {
             return Response.ok(RestfulIntegrationHookV7.fromEntity(updated)).build();
         } catch (Exception ex) {
             log.error("can not update web hook", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -961,7 +962,7 @@ public class WebHooksEndpointV7 implements WebHooksEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete web hook " + name, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 

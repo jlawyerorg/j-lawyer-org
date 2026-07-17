@@ -662,6 +662,7 @@
  * <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v7;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.persistence.AddressDocumentsBean;
@@ -734,7 +735,7 @@ public class ContactsEndpointV7 implements ContactsEndpointLocalV7 {
             return Response.ok(docList).build();
         } catch (Exception ex) {
             log.error("can not get documents for contact " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -763,7 +764,7 @@ public class ContactsEndpointV7 implements ContactsEndpointLocalV7 {
             return Response.ok(docList).build();
         } catch (Exception ex) {
             log.error("can not get recycle-bin documents for contact " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -791,7 +792,7 @@ public class ContactsEndpointV7 implements ContactsEndpointLocalV7 {
             return Response.ok(RestfulAddressDocumentV7.fromDocumentsBean(doc)).build();
         } catch (Exception ex) {
             log.error("can not get document " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -832,7 +833,7 @@ public class ContactsEndpointV7 implements ContactsEndpointLocalV7 {
             return Response.ok(rdc).build();
         } catch (Exception ex) {
             log.error("can not get content of document " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -865,7 +866,7 @@ public class ContactsEndpointV7 implements ContactsEndpointLocalV7 {
             return Response.ok(preview.getText()).build();
         } catch (Exception ex) {
             log.error("can not get document " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -892,7 +893,7 @@ public class ContactsEndpointV7 implements ContactsEndpointLocalV7 {
             return Response.ok(RestfulAddressDocumentV7.fromDocumentsBean(newDoc, document.getContactId())).build();
         } catch (Exception ex) {
             log.error("can not create new document " + document.getFileName(), ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -922,7 +923,7 @@ public class ContactsEndpointV7 implements ContactsEndpointLocalV7 {
             return Response.ok(RestfulAddressDocumentV7.fromDocumentsBean(newDoc, request.getContactId())).build();
         } catch (Exception ex) {
             log.error("can not create new document from template " + request.getTemplateName(), ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -963,7 +964,7 @@ public class ContactsEndpointV7 implements ContactsEndpointLocalV7 {
             return Response.ok(RestfulAddressDocumentV7.fromDocumentsBean(updated)).build();
         } catch (Exception ex) {
             log.error("can not update document " + document.getId(), ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1102,7 +1103,7 @@ public class ContactsEndpointV7 implements ContactsEndpointLocalV7 {
             return Response.ok(rdc).build();
         } catch (Exception ex) {
             log.error("can not convert document " + id + " to PDF", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1127,7 +1128,7 @@ public class ContactsEndpointV7 implements ContactsEndpointLocalV7 {
             return Response.ok(ocred).build();
         } catch (Exception ex) {
             log.error("can not perform OCR for document " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 

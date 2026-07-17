@@ -662,6 +662,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v8;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.services.SearchServiceLocal;
 import io.swagger.annotations.Api;
@@ -735,13 +736,13 @@ public class SearchEndpointV8 implements SearchEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (NamingException ex) {
             log.error("can not lookup search service", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         } catch (SearchException ex) {
             log.error("can not search fulltext index", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         } catch (Exception ex) {
             log.error("unexpected error while searching fulltext index", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -768,10 +769,10 @@ public class SearchEndpointV8 implements SearchEndpointLocalV8 {
             return Response.status(Response.Status.ACCEPTED).build();
         } catch (NamingException ex) {
             log.error("can not lookup search service", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         } catch (Exception ex) {
             log.error("unexpected error while triggering fulltext re-index", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 

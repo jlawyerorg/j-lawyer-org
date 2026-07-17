@@ -662,6 +662,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v4;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
@@ -758,7 +759,7 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
             return Response.ok(ddList).build();
         } catch (Exception ex) {
             log.error("can not get case " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -815,7 +816,7 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
             return Response.ok(ddList).build();
         } catch (Exception ex) {
             log.error("can not get open due dates", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -924,7 +925,7 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
             return Response.ok(ddList).build();
         } catch (Exception ex) {
             log.error("Error retrieving due dates in range", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 

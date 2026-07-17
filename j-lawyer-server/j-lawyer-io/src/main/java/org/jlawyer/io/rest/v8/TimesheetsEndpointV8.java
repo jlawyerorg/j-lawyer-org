@@ -1,4 +1,5 @@
 package org.jlawyer.io.rest.v8;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.persistence.Timesheet;
 import com.jdimension.jlawyer.persistence.TimesheetPosition;
@@ -67,7 +68,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not get open timesheets", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -99,7 +100,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not get timesheets for case " + caseId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -130,7 +131,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(RestfulTimesheetV8.fromTimesheet(ts)).build();
         } catch (Exception ex) {
             log.error("can not get timesheet " + timesheetId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -161,7 +162,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not get positions for timesheet " + timesheetId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -192,7 +193,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not get templates for timesheet " + timesheetId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -223,7 +224,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not get all position templates", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -342,7 +343,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not set allowed templates for timesheet " + timesheetId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -373,7 +374,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not get running timesheet positions", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -399,7 +400,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(count).build();
         } catch (Exception ex) {
             log.error("can not get running timesheet positions count", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -431,7 +432,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not get last timesheet positions for case " + caseId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -469,7 +470,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(RestfulTimesheetPositionV8.fromTimesheetPosition(result)).build();
         } catch (Exception ex) {
             log.error("can not start timesheet position for timesheet " + timesheetId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -509,7 +510,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(RestfulTimesheetPositionV8.fromTimesheetPosition(result)).build();
         } catch (Exception ex) {
             log.error("can not stop timesheet position " + positionId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -544,7 +545,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(RestfulTimesheetPositionV8.fromTimesheetPosition(result)).build();
         } catch (Exception ex) {
             log.error("can not add timesheet position for timesheet " + timesheetId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -581,7 +582,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(RestfulTimesheetPositionV8.fromTimesheetPosition(result)).build();
         } catch (Exception ex) {
             log.error("can not update timesheet position " + positionId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -616,7 +617,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete timesheet position " + positionId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -643,7 +644,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(RestfulTimesheetV8.fromTimesheet(result)).build();
         } catch (Exception ex) {
             log.error("can not add timesheet for case " + caseId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -678,7 +679,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(RestfulTimesheetV8.fromTimesheet(result)).build();
         } catch (Exception ex) {
             log.error("can not update timesheet " + timesheetId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -703,7 +704,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete timesheet " + timesheetId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 

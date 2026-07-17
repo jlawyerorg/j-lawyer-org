@@ -662,6 +662,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v1;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBean;
@@ -729,7 +730,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
             return res;
         } catch (Exception ex) {
             log.error("Can not list form types", ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -765,7 +766,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
             return res;
         } catch (Exception ex) {
             log.error("Can not list form types", ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -806,7 +807,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("Can not list forms by type", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -899,7 +900,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
             return res;
         } catch (Exception ex) {
             log.error("Can not list form types", ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -937,7 +938,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
             return res;
         } catch (Exception ex) {
             log.error("Can not delete form", ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -1009,7 +1010,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
             return res;
         } catch (Exception ex) {
             log.error("Can not create form", ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
 

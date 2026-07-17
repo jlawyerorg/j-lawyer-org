@@ -662,6 +662,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v5;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
@@ -744,7 +745,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
             return res;
         } catch (Exception ex) {
             log.error("Can not list syncable cases", ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -775,7 +776,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
             return res;
         } catch (Exception ex) {
             log.error("Can not update sync flag for case " + syncSettings.getCaseId(), ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -823,7 +824,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
             return res;
         } catch (Exception ex) {
             log.error("can not get case " + id, ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -866,7 +867,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
             return Response.ok(tagList).build();
         } catch (Exception ex) {
             log.error("can not get document " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
     
@@ -899,7 +900,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete case tag " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
     
@@ -941,7 +942,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not create case tag " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
     
@@ -982,7 +983,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not create document tag " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
     
@@ -1015,7 +1016,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete document tag " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
         
     }

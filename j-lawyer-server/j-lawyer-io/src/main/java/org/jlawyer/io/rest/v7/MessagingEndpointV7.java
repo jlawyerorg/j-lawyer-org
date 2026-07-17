@@ -662,6 +662,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v7;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
@@ -724,7 +725,7 @@ public class MessagingEndpointV7 implements MessagingEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not mark mentioning as done for id " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
     
@@ -786,7 +787,7 @@ public class MessagingEndpointV7 implements MessagingEndpointLocalV7 {
             return res;
         } catch (Exception ex) {
             log.error("can not submit new message by " + msg.getSender(), ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -818,7 +819,7 @@ public class MessagingEndpointV7 implements MessagingEndpointLocalV7 {
             return res;
         } catch (Exception ex) {
             log.error("can not delete message " + id, ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -866,7 +867,7 @@ public class MessagingEndpointV7 implements MessagingEndpointLocalV7 {
             return Response.ok(msgList).build();
         } catch (Exception ex) {
             log.error("can not get messages for last " + seconds + " seconds", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
     

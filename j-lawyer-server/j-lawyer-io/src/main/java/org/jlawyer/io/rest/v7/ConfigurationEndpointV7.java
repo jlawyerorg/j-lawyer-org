@@ -662,6 +662,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v7;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
@@ -795,7 +796,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return res;
         } catch (Exception ex) {
             log.error("can not determine available option groups", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     }
@@ -832,7 +833,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return res;
         } catch (Exception ex) {
             log.error("can not determine values for option group " + optiongroup, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     }
@@ -880,7 +881,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(o).build();
         } catch (Exception ex) {
             log.error("can not create option " + option.getValue() + " for option group " + option.getOptionGroup(), ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     }
@@ -918,7 +919,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.status(Response.Status.NOT_FOUND).build();
         } catch (Exception ex) {
             log.error("can not remove option " + option.getValue() + " from option group " + option.getOptionGroup(), ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     }
@@ -955,7 +956,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.status(Response.Status.NOT_FOUND).build();
         } catch (Exception ex) {
             log.error("can not update option " + option.getValue() + " for option group " + option.getOptionGroup(), ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     }
@@ -1013,7 +1014,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not determine multi-value tag definitions for entity type " + entityType, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     }
@@ -1337,7 +1338,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not determine document name templates", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     }
@@ -1382,7 +1383,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(p).build();
         } catch (Exception ex) {
             log.error("can not determine firm profile", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1427,7 +1428,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(profile).build();
         } catch (Exception ex) {
             log.error("can not update firm profile", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1458,7 +1459,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(s).build();
         } catch (Exception ex) {
             log.error("can not determine finance settings", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1484,7 +1485,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(settings).build();
         } catch (Exception ex) {
             log.error("can not update finance settings", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1510,7 +1511,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not determine party types", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1629,7 +1630,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(c).build();
         } catch (Exception ex) {
             log.error("can not determine case numbering configuration", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1677,7 +1678,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(config).build();
         } catch (Exception ex) {
             log.error("can not update case numbering configuration", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1733,7 +1734,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not determine folder templates", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1967,7 +1968,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(s).build();
         } catch (Exception ex) {
             log.error("can not determine scan settings", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1994,7 +1995,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(settings).build();
         } catch (Exception ex) {
             log.error("can not update scan settings", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2036,7 +2037,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(b).build();
         } catch (Exception ex) {
             log.error("can not determine backup settings", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2094,7 +2095,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(settings).build();
         } catch (Exception ex) {
             log.error("can not update backup settings", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2154,7 +2155,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(s).build();
         } catch (Exception ex) {
             log.error("can not determine stirling settings", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2180,7 +2181,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(settings).build();
         } catch (Exception ex) {
             log.error("can not update stirling settings", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2206,7 +2207,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(b).build();
         } catch (Exception ex) {
             log.error("can not determine bea settings", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2233,7 +2234,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(settings).build();
         } catch (Exception ex) {
             log.error("can not update bea settings", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2261,7 +2262,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(s).build();
         } catch (Exception ex) {
             log.error("can not determine search index status", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2286,7 +2287,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not trigger search index rebuild", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2317,7 +2318,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(f).build();
         } catch (Exception ex) {
             log.error("can not determine custom fields for " + entityType, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2349,7 +2350,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(fields).build();
         } catch (Exception ex) {
             log.error("can not update custom fields for " + entityType, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2524,7 +2525,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(c).build();
         } catch (Exception ex) {
             log.error("can not determine carddav sync settings", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2557,7 +2558,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(settings).build();
         } catch (Exception ex) {
             log.error("can not update carddav sync settings", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2614,7 +2615,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not trigger carddav sync", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2674,7 +2675,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not determine calendar setups", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2817,7 +2818,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not trigger calendar sync", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2839,7 +2840,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not determine calendar entry templates", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2951,7 +2952,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not determine bank statement csv configs", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -3036,7 +3037,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(s).build();
         } catch (Exception ex) {
             log.error("can not determine timesheet settings", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -3067,7 +3068,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(settings).build();
         } catch (Exception ex) {
             log.error("can not update timesheet settings", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -3102,7 +3103,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(m).build();
         } catch (Exception ex) {
             log.error("can not get system mailbox", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -3142,7 +3143,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(mailbox).build();
         } catch (Exception ex) {
             log.error("can not update system mailbox", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -3216,7 +3217,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(s).build();
         } catch (Exception ex) {
             log.error("can not get security settings", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -3243,7 +3244,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(settings).build();
         } catch (Exception ex) {
             log.error("can not update security settings", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -3283,7 +3284,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(s).build();
         } catch (Exception ex) {
             log.error("can not get monitoring settings", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -3324,7 +3325,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(settings).build();
         } catch (Exception ex) {
             log.error("can not update monitoring settings", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -3350,7 +3351,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(org.jlawyer.io.rest.v7.pojo.RestfulMonitoringSnapshotV7.fromSnapshot(s)).build();
         } catch (Exception ex) {
             log.error("can not get monitoring snapshot", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -3390,7 +3391,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(report).build();
         } catch (Exception ex) {
             log.error("can not build system report", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 

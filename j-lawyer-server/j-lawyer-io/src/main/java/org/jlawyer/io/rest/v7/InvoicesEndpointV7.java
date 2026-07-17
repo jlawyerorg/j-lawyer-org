@@ -662,6 +662,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v7;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoiceType;
@@ -730,7 +731,7 @@ public class InvoicesEndpointV7 implements InvoicesEndpointLocalV7 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not get invoice types", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
     
@@ -763,7 +764,7 @@ public class InvoicesEndpointV7 implements InvoicesEndpointLocalV7 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not get invoice pools", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -789,7 +790,7 @@ public class InvoicesEndpointV7 implements InvoicesEndpointLocalV7 {
             return Response.ok(RestfulInvoiceTypeV7.fromInvoiceType(created)).build();
         } catch (Exception ex) {
             log.error("can not create invoice type", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -815,7 +816,7 @@ public class InvoicesEndpointV7 implements InvoicesEndpointLocalV7 {
             return Response.ok(RestfulInvoiceTypeV7.fromInvoiceType(updated)).build();
         } catch (Exception ex) {
             log.error("can not update invoice type", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -841,7 +842,7 @@ public class InvoicesEndpointV7 implements InvoicesEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete invoice type", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -867,7 +868,7 @@ public class InvoicesEndpointV7 implements InvoicesEndpointLocalV7 {
             return Response.ok(RestfulInvoicePoolV7.fromInvoicePool(created)).build();
         } catch (Exception ex) {
             log.error("can not create invoice pool", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -893,7 +894,7 @@ public class InvoicesEndpointV7 implements InvoicesEndpointLocalV7 {
             return Response.ok(RestfulInvoicePoolV7.fromInvoicePool(updated)).build();
         } catch (Exception ex) {
             log.error("can not update invoice pool", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -919,7 +920,7 @@ public class InvoicesEndpointV7 implements InvoicesEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete invoice pool", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -946,7 +947,7 @@ public class InvoicesEndpointV7 implements InvoicesEndpointLocalV7 {
             return Response.ok(preview).build();
         } catch (Exception ex) {
             log.error("can not preview invoice pool numbering", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -974,7 +975,7 @@ public class InvoicesEndpointV7 implements InvoicesEndpointLocalV7 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not get invoice position templates", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1000,7 +1001,7 @@ public class InvoicesEndpointV7 implements InvoicesEndpointLocalV7 {
             return Response.ok(RestfulInvoicePositionTemplateV7.fromEntity(created)).build();
         } catch (Exception ex) {
             log.error("can not create invoice position template", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1026,7 +1027,7 @@ public class InvoicesEndpointV7 implements InvoicesEndpointLocalV7 {
             return Response.ok(RestfulInvoicePositionTemplateV7.fromEntity(updated)).build();
         } catch (Exception ex) {
             log.error("can not update invoice position template", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1052,7 +1053,7 @@ public class InvoicesEndpointV7 implements InvoicesEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete invoice position template", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 

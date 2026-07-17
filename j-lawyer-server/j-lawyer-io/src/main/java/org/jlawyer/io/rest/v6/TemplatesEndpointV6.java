@@ -662,6 +662,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v6;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.documents.CommonTemplatesUtil;
 import com.jdimension.jlawyer.email.EmailTemplate;
@@ -746,7 +747,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             return Response.ok(nodeIds).build();
         } catch (Exception ex) {
             log.error("can not get document template folder structure ", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -785,7 +786,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not get document templates for folder " + folder, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -821,7 +822,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             return Response.ok(resultArray).build();
         } catch (Exception ex) {
             log.error("can not get placeholders for template " + template + "in folder " + folder + " using case " + caseId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -929,7 +930,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             return Response.ok(rdoc).build();
         } catch (Exception ex) {
             log.error("can not create document with template " + template + " in folder " + folder + " for case " + caseId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -975,7 +976,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
 
         } catch (Exception ex) {
             log.error("Cannot list email templates", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1093,7 +1094,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
 
         } catch (Exception ex) {
             log.error("Cannot get email template " + templateName + " for case " + caseId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 

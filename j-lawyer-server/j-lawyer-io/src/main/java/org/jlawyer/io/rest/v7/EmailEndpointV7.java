@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v7;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
@@ -129,7 +130,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not list mailboxes", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -170,7 +171,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not list folders for mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -204,7 +205,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not get counts for folder " + folderId + " in mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -238,7 +239,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not list hidden folders for mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -270,7 +271,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not set hidden state for folder " + folderId + " in mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -300,7 +301,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok(RestfulMailFolderV7.fromMailFolderDTO(created)).build();
         } catch (Exception ex) {
             log.error("can not create folder in mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -330,7 +331,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete folder " + folderId + " in mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -360,7 +361,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not empty trash in mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -422,7 +423,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not list messages in folder " + folderId + " of mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -455,7 +456,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok(RestfulMailMessageV7.fromMailMessageDTO(msg)).build();
         } catch (Exception ex) {
             log.error("can not get message " + messageRef + " from mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -485,7 +486,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete message " + messageRef + " from mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -518,7 +519,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not move message " + messageRef + " in mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -551,7 +552,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not mark message " + messageRef + " as read=" + read + " in mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -583,7 +584,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
                     .build();
         } catch (Exception ex) {
             log.error("can not get EML for message " + messageRef + " from mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -619,7 +620,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not get attachment " + attachmentId + " for message " + messageRef + " in mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -669,7 +670,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not send mail via mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -803,7 +804,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not compute case suggestions for mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -880,7 +881,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not append message to folder " + folderId + " in mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -913,7 +914,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             }
         } catch (Exception ex) {
             log.error("can not test connection for mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -942,7 +943,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not invalidate caches for mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 }

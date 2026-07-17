@@ -17,6 +17,7 @@
  * along with j-lawyer.org.  If not, see <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v8;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.Group;
@@ -133,7 +134,7 @@ public class ProfileEndpointV8 implements ProfileEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not get profile", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -174,7 +175,7 @@ public class ProfileEndpointV8 implements ProfileEndpointLocalV8 {
             return Response.ok(settings).build();
         } catch (Exception ex) {
             log.error("can not update profile settings", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -213,7 +214,7 @@ public class ProfileEndpointV8 implements ProfileEndpointLocalV8 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not change password", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 

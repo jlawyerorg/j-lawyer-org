@@ -662,6 +662,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v6;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.persistence.AppRoleBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
@@ -746,7 +747,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not determine enabled users", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     }
@@ -777,7 +778,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not get document template folder structure ", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     }
@@ -808,7 +809,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not determine enabled users", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     }
@@ -928,7 +929,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
             return Response.ok(members).build();
         } catch (Exception ex) {
             log.error("can not determine members of group " + groupId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -956,7 +957,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not determine groups for user " + principalId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1034,7 +1035,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not list calendars", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1056,7 +1057,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
             return Response.ok(ids).build();
         } catch (Exception ex) {
             log.error("can not determine calendars for user " + principalId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1117,7 +1118,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not list mailboxes", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1139,7 +1140,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
             return Response.ok(ids).build();
         } catch (Exception ex) {
             log.error("can not determine mailboxes for user " + principalId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1199,7 +1200,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not list invoice pools", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1221,7 +1222,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
             return Response.ok(ids).build();
         } catch (Exception ex) {
             log.error("can not determine invoice pools for user " + principalId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1389,7 +1390,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
             }
         } catch (Exception ex) {
             log.error("can not get user by external id " + extId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
         
     }
@@ -1435,7 +1436,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
             return Response.ok(userData).build();
         } catch (Exception ex) {
             log.error("can not create new user " + userData.getPrincipalId(), ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1486,7 +1487,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
             return Response.ok(userData).build();
         } catch (Exception ex) {
             log.error("can not update user " + userData.getPrincipalId(), ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1511,7 +1512,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not list all roles", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1548,7 +1549,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not get roles for user " + principalId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1598,7 +1599,7 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not update roles for user " + principalId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 

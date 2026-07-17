@@ -662,6 +662,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v7;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
@@ -824,7 +825,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(response).build();
         } catch (Exception ex) {
             log.error("can not get document " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -865,7 +866,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(msgList).build();
         } catch (Exception ex) {
             log.error("can not get message for case " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -905,7 +906,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(invoiceList).build();
         } catch (Exception ex) {
             log.error("can not get invoices for case " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
     
@@ -947,7 +948,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(positionList).build();
         } catch (Exception ex) {
             log.error("can not get invoice positions for invoice " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
     
@@ -1053,7 +1054,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(RestfulInvoiceV7.fromInvoice(updatedInvoice)).build();
         } catch (Exception ex) {
             log.error("can not create invoice for case " + invoice.getCaseId(), ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1184,7 +1185,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
 
         } catch (Exception ex) {
             log.error("Cannot update invoice " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1231,7 +1232,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(RestfulInvoicePositionV7.fromInvoicePosition(createdPosition)).build();
         } catch (Exception ex) {
             log.error("can not create invoice position for invoice " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1469,7 +1470,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
 
         } catch (Exception ex) {
             log.error("Error duplicating invoice", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1502,7 +1503,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(invList).build();
         } catch (Exception ex) {
             log.error("can not get open invoices", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1535,7 +1536,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             }
         } catch (Exception ex) {
             log.error("can not get case by external id " + extId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     }
@@ -1583,7 +1584,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(rcoList).build();
         } catch (Exception ex) {
             log.error("Can not list cases with tag " + tag, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     }
@@ -1632,7 +1633,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(rcoList).build();
         } catch (Exception ex) {
             log.error("Can not list cases with reference " + reference, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     }
@@ -1698,7 +1699,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(rcoList).build();
         } catch (Exception ex) {
             log.error("Can not search cases with searchString: " + searchString, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     }
@@ -1738,7 +1739,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(d).build();
         } catch (Exception ex) {
             log.error("can not get document for external id " + extId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     }
@@ -1779,7 +1780,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(docList).build();
         } catch (Exception ex) {
             log.error("can not get documents by tag " + tag, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1818,7 +1819,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(response).build();
         } catch (Exception ex) {
             log.error("can not load recycle bin contents", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1932,7 +1933,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not create history entry " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
     
@@ -1965,7 +1966,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not create history entry " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2003,7 +2004,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(entryList).build();
         } catch (Exception ex) {
             log.error("can not get account entries for case " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2073,7 +2074,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(RestfulCaseAccountEntryV7.fromCaseAccountEntry(createdEntry)).build();
         } catch (Exception ex) {
             log.error("can not create account entry for case " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2104,7 +2105,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(RestfulCaseAccountEntryV7.fromCaseAccountEntry(found)).build();
         } catch (Exception ex) {
             log.error("can not get account entry " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2173,7 +2174,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(RestfulCaseAccountEntryV7.fromCaseAccountEntry(found)).build();
         } catch (Exception ex) {
             log.error("can not update account entry " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2206,7 +2207,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete account entry " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2244,7 +2245,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not get timesheets for case " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2330,7 +2331,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(new RestfulDocumentNameV7(docName)).build();
         } catch (Exception ex) {
             log.error("can not compute document name for case " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 

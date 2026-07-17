@@ -17,6 +17,7 @@
  * along with j-lawyer.org.  If not, see <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v8;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
@@ -116,7 +117,7 @@ public class CalendarEndpointV8 implements CalendarEndpointLocalV8 {
             return Response.ok(items).build();
         } catch (Exception ex) {
             log.error("Can not list calendar events", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -163,7 +164,7 @@ public class CalendarEndpointV8 implements CalendarEndpointLocalV8 {
             return Response.noContent().build();
         } catch (Exception ex) {
             log.error("Can not delete calendar entry " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 

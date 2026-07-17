@@ -662,6 +662,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v1;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.persistence.AddressBean;
@@ -763,7 +764,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             return Response.ok(rcoList).build();
         } catch (Exception ex) {
             log.error("Can not list cases", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     }
@@ -812,7 +813,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             return Response.ok(rcoList).build();
         } catch (Exception ex) {
             log.error("Can not list cases", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     }
@@ -864,7 +865,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             return res;
         } catch (Exception ex) {
             log.error("can not get case " + id, ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -911,7 +912,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             return res;
         } catch (Exception ex) {
             log.error("can not get case " + id, ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -949,7 +950,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             return res;
         } catch (Exception ex) {
             log.error("can not create new case " + caseData.getName(), ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -1016,7 +1017,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             return res;
         } catch (Exception ex) {
             log.error("can not update case " + caseData.getName(), ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -1111,7 +1112,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             return res;
         } catch (Exception ex) {
             log.error("can not get case " + caseId, ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -1142,7 +1143,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             return Response.ok(RestfulDocumentV1.fromDocumentsBean(doc)).build();
         } catch (Exception ex) {
             log.error("can not get document " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
     
@@ -1193,7 +1194,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             return res;
         } catch (Exception ex) {
             log.error("can not get case " + id, ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -1233,7 +1234,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             return Response.ok(preview.getText()).build();
         } catch (Exception ex) {
             log.error("can not get document " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1286,7 +1287,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             return res;
         } catch (Exception ex) {
             log.error("can not get case " + id, ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -1340,7 +1341,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             return res;
         } catch (Exception ex) {
             log.error("can not get case " + id, ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -1386,7 +1387,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             return res;
         } catch (Exception ex) {
             log.error("can not create new document " + document.getFileName(), ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -1457,7 +1458,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             return res;
         } catch (Exception ex) {
             log.error("can not create new document " + document.getFileName(), ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
 
@@ -1533,7 +1534,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             return res;
         } catch (Exception ex) {
             log.error("can not update metadata of document " + document.getId() + " " + document.getName(), ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
 
@@ -1568,7 +1569,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             return res;
         } catch (Exception ex) {
             log.error("can not delete document " + id, ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -1660,7 +1661,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             return res;
         } catch (Exception ex) {
             log.error("can not create new party for address " + party.getAddressId(), ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -1744,7 +1745,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             return res;
         } catch (Exception ex) {
             log.error("can not update party " + party.getId(), ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -1776,7 +1777,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             return res;
         } catch (Exception ex) {
             log.error("can not delete party " + id, ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -1806,7 +1807,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete case " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1839,7 +1840,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             return res;
         } catch (Exception ex) {
             log.error("can not list party types", ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -1889,7 +1890,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             return res;
         } catch (Exception ex) {
             log.error("can not get case " + id, ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }

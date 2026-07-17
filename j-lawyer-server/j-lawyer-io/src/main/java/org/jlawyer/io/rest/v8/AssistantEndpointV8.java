@@ -17,6 +17,7 @@
  * along with j-lawyer.org.  If not, see <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v8;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.ai.AiModel;
 import com.jdimension.jlawyer.ai.AiUser;
@@ -95,7 +96,7 @@ public class AssistantEndpointV8 implements AssistantEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not list assistant configs", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -129,7 +130,7 @@ public class AssistantEndpointV8 implements AssistantEndpointLocalV8 {
             return Response.ok(RestfulAssistantConfigV8.fromEntity(created)).build();
         } catch (Exception ex) {
             log.error("can not create assistant config", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -170,7 +171,7 @@ public class AssistantEndpointV8 implements AssistantEndpointLocalV8 {
             return Response.ok(RestfulAssistantConfigV8.fromEntity(updated)).build();
         } catch (Exception ex) {
             log.error("can not update assistant config", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -198,7 +199,7 @@ public class AssistantEndpointV8 implements AssistantEndpointLocalV8 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete assistant config", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -253,7 +254,7 @@ public class AssistantEndpointV8 implements AssistantEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not get assistant status", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -284,7 +285,7 @@ public class AssistantEndpointV8 implements AssistantEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not get assistant request log for " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -311,7 +312,7 @@ public class AssistantEndpointV8 implements AssistantEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not list assistant prompts", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -339,7 +340,7 @@ public class AssistantEndpointV8 implements AssistantEndpointLocalV8 {
             return Response.ok(RestfulAssistantPromptV8.fromEntity(created)).build();
         } catch (Exception ex) {
             log.error("can not create assistant prompt", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -377,7 +378,7 @@ public class AssistantEndpointV8 implements AssistantEndpointLocalV8 {
             return Response.ok(RestfulAssistantPromptV8.fromEntity(updated)).build();
         } catch (Exception ex) {
             log.error("can not update assistant prompt", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -411,7 +412,7 @@ public class AssistantEndpointV8 implements AssistantEndpointLocalV8 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete assistant prompt", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -438,7 +439,7 @@ public class AssistantEndpointV8 implements AssistantEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not list assistant replacements", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -466,7 +467,7 @@ public class AssistantEndpointV8 implements AssistantEndpointLocalV8 {
             return Response.ok(RestfulAssistantReplacementV8.fromEntity(created)).build();
         } catch (Exception ex) {
             log.error("can not create assistant replacement", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -504,7 +505,7 @@ public class AssistantEndpointV8 implements AssistantEndpointLocalV8 {
             return Response.ok(RestfulAssistantReplacementV8.fromEntity(updated)).build();
         } catch (Exception ex) {
             log.error("can not update assistant replacement", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -538,7 +539,7 @@ public class AssistantEndpointV8 implements AssistantEndpointLocalV8 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete assistant replacement", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 

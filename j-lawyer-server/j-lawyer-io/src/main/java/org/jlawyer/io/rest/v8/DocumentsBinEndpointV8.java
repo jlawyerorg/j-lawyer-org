@@ -17,6 +17,7 @@
  * along with j-lawyer.org.  If not, see <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v8;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AddressDocumentsBean;
@@ -137,7 +138,7 @@ public class DocumentsBinEndpointV8 implements DocumentsBinEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not read documents bin", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -161,7 +162,7 @@ public class DocumentsBinEndpointV8 implements DocumentsBinEndpointLocalV8 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not restore case document " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -185,7 +186,7 @@ public class DocumentsBinEndpointV8 implements DocumentsBinEndpointLocalV8 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete case document " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -209,7 +210,7 @@ public class DocumentsBinEndpointV8 implements DocumentsBinEndpointLocalV8 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not restore address document " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -233,7 +234,7 @@ public class DocumentsBinEndpointV8 implements DocumentsBinEndpointLocalV8 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete address document " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -261,7 +262,7 @@ public class DocumentsBinEndpointV8 implements DocumentsBinEndpointLocalV8 {
             return Response.ok(body).build();
         } catch (Exception ex) {
             log.error("can not set bin retention days", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 

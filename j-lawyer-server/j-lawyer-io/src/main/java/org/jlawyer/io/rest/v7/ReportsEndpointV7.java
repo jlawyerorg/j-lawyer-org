@@ -662,6 +662,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v7;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.services.ReportServiceLocal;
 import java.text.SimpleDateFormat;
@@ -726,7 +727,7 @@ public class ReportsEndpointV7 implements ReportsEndpointLocalV7 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not get available reports", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -769,7 +770,7 @@ public class ReportsEndpointV7 implements ReportsEndpointLocalV7 {
             return Response.ok(restResult).build();
         } catch (Exception ex) {
             log.error("can not invoke report " + request.getReportId(), ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 

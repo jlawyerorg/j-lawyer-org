@@ -1,4 +1,5 @@
 package org.jlawyer.io.rest.v8;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
@@ -82,7 +83,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("beA login failed", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -106,7 +107,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("beA logout failed", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -130,7 +131,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(version).build();
         } catch (Exception ex) {
             log.error("can not get beA wrapper version", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -156,7 +157,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(info).build();
         } catch (Exception ex) {
             log.error("can not get certificate information", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -182,7 +183,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(postboxes).build();
         } catch (Exception ex) {
             log.error("can not get postboxes", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -207,7 +208,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(postbox).build();
         } catch (Exception ex) {
             log.error("can not get postbox " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -232,7 +233,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(empty).build();
         } catch (Exception ex) {
             log.error("can not check outbox for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -258,7 +259,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(egvp).build();
         } catch (Exception ex) {
             log.error("can not check EGVP status for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -285,7 +286,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(folders).build();
         } catch (Exception ex) {
             log.error("can not get folders for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -311,7 +312,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(folder).build();
         } catch (Exception ex) {
             log.error("can not get folder " + folderId + " for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -339,7 +340,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(created).build();
         } catch (Exception ex) {
             log.error("can not create folder for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -365,7 +366,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete folder " + folderId + " for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -393,7 +394,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(messages).build();
         } catch (Exception ex) {
             log.error("can not get messages for folder " + folderId + " in " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -421,7 +422,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(messages).build();
         } catch (Exception ex) {
             log.error("can not search messages for folder " + folderId + " in " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -447,7 +448,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(ids).build();
         } catch (Exception ex) {
             log.error("can not get message IDs for folder " + folderId + " in " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -475,7 +476,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(ids).build();
         } catch (Exception ex) {
             log.error("can not search message IDs for folder " + folderId + " in " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -503,7 +504,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(message).build();
         } catch (Exception ex) {
             log.error("can not get message " + messageId + " for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -548,7 +549,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not export message " + messageId + " for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -689,7 +690,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not compute beA case suggestions", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -742,7 +743,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(attachment).build();
         } catch (Exception ex) {
             log.error("can not get attachment " + attachmentName + " for message " + messageId + " in " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -773,7 +774,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(RestfulBeaAttachmentV8.fromBea(attachment)).build();
         } catch (Exception ex) {
             log.error("can not get attachment " + attachmentName + " for message " + messageId + " in " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -799,7 +800,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(header).build();
         } catch (Exception ex) {
             log.error("can not get message header " + messageId + " for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -826,7 +827,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(sent).build();
         } catch (Exception ex) {
             log.error("can not send message for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -853,7 +854,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(draftId).build();
         } catch (Exception ex) {
             log.error("can not save draft for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -879,7 +880,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete message " + messageId + " for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -905,7 +906,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(restored).build();
         } catch (Exception ex) {
             log.error("can not restore message " + messageId + " for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -933,7 +934,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(moved).build();
         } catch (Exception ex) {
             log.error("can not move message " + messageId + " for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -959,7 +960,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(marked).build();
         } catch (Exception ex) {
             log.error("can not mark message " + messageId + " as read for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -986,7 +987,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(read).build();
         } catch (Exception ex) {
             log.error("can not check read status for message " + messageId + " by " + targetSafeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1012,7 +1013,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(journal).build();
         } catch (Exception ex) {
             log.error("can not get journal for message " + messageId + " in " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1038,7 +1039,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(cards).build();
         } catch (Exception ex) {
             log.error("can not get process cards for message " + messageId + " in " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1064,7 +1065,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not verify message " + messageId + " in " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1097,7 +1098,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(identity).build();
         } catch (Exception ex) {
             log.error("can not get identity for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1123,7 +1124,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(identities).build();
         } catch (Exception ex) {
             log.error("can not search identities", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1149,7 +1150,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(authorities).build();
         } catch (Exception ex) {
             log.error("can not get legal authorities", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1173,7 +1174,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(authority).build();
         } catch (Exception ex) {
             log.error("can not get default legal authority", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1197,7 +1198,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(priorities).build();
         } catch (Exception ex) {
             log.error("can not get message priorities", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1225,7 +1226,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not check eEB request", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1251,7 +1252,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not check eEB response", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1277,7 +1278,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(attributes).build();
         } catch (Exception ex) {
             log.error("can not get eEB request attributes", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1303,7 +1304,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(attributes).build();
         } catch (Exception ex) {
             log.error("can not get eEB response attributes", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1329,7 +1330,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(html).build();
         } catch (Exception ex) {
             log.error("can not render eEB HTML", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1353,7 +1354,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(reasons).build();
         } catch (Exception ex) {
             log.error("can not get eEB rejection reasons", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1381,7 +1382,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not send eEB confirmation for message " + messageId + " in " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1409,7 +1410,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not send eEB rejection for message " + messageId + " in " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
