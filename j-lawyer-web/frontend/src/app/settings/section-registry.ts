@@ -11,7 +11,10 @@
 export type SectionKind = 'optionGroup' | 'users' | 'groups' | 'firmProfile'
   | 'invoiceTypes' | 'invoicePools' | 'invoicePositions' | 'financeSettings' | 'partyTypes'
   | 'caseNumbering' | 'folderTemplates' | 'scanSettings' | 'backupSettings'
-  | 'stirlingSettings' | 'beaSettings';
+  | 'stirlingSettings' | 'beaSettings' | 'multiValueTags' | 'searchIndex' | 'customFields' | 'cardDavSync'
+  | 'nameTemplates' | 'calendarSetups' | 'calendarEntryTemplates' | 'bankStatementConfigs'
+  | 'timesheetTemplates' | 'timesheetSettings'
+  | 'assistantServers' | 'assistantPrompts' | 'assistantReplacements';
 
 export interface SettingsSection {
   /** Stable id (also the list-selection key). */
@@ -25,6 +28,8 @@ export interface SettingsSection {
   kind: SectionKind;
   /** Option-group key for `kind === 'optionGroup'`. */
   optionGroup?: string;
+  /** Entity type ('case' | 'address' | 'document') for `kind === 'multiValueTags'`. */
+  entityType?: string;
 }
 
 /** Helper for the many option-group value-list sections. */
@@ -42,6 +47,9 @@ const G_FIRM = 'settings.group.firm';
 const G_INVOICING = 'settings.group.invoicing';
 const G_PARTIES = 'settings.group.parties';
 const G_CASECONFIG = 'settings.group.caseConfig';
+const G_DOCCONFIG = 'settings.group.documents';
+const G_CALENDAR = 'settings.group.calendar';
+const G_ASSISTANT = 'settings.group.assistant';
 
 /** "Allgemein" screen — dictionaries/value lists open to any user (edit needs option-group roles). */
 export const GENERAL_SECTIONS: SettingsSection[] = [
@@ -58,29 +66,43 @@ export const GENERAL_SECTIONS: SettingsSection[] = [
   optGroup('state', 'settings.section.state', G_ADDR, 'address.state', 'bundesland'),
   optGroup('country', 'settings.section.country', G_ADDR, 'address.country', 'land'),
   optGroup('addressTags', 'settings.section.addressTags', G_ADDR, 'address.tags', 'etikett label'),
+  { id: 'addressMvTags', titleKey: 'settings.section.addressMvTags', groupKey: G_ADDR, kind: 'multiValueTags', entityType: 'address', keywords: 'listenetikett etikett label werteliste mehrwert' },
 
   optGroup('subjectField', 'settings.section.subjectField', G_CASE, 'archiveFile.subjectField', 'sachgebiet'),
   optGroup('caseTags', 'settings.section.caseTags', G_CASE, 'archiveFile.tags', 'etikett label akte'),
+  { id: 'caseMvTags', titleKey: 'settings.section.caseMvTags', groupKey: G_CASE, kind: 'multiValueTags', entityType: 'case', keywords: 'listenetikett etikett label werteliste mehrwert akte' },
 
   optGroup('documentTags', 'settings.section.documentTags', G_DOC, 'document.tags', 'etikett label dokument'),
+  { id: 'documentMvTags', titleKey: 'settings.section.documentMvTags', groupKey: G_DOC, kind: 'multiValueTags', entityType: 'document', keywords: 'listenetikett etikett label werteliste mehrwert dokument' },
   optGroup('pdfStamps', 'settings.section.pdfStamps', G_DOC, 'document.pdfstamps', 'stempel'),
 
   optGroup('currency', 'settings.section.currency', G_FIN, 'invoice.currency', 'waehrung'),
   optGroup('taxRates', 'settings.section.taxRates', G_FIN, 'invoice.taxrates', 'steuersatz mwst'),
 
   optGroup('timeIncrements', 'settings.section.timeIncrements', G_TIME, 'timesheet.intervalminutes', 'taktung zeiterfassung'),
+
+  { id: 'assistantPrompts', titleKey: 'settings.section.assistantPrompts', groupKey: G_ASSISTANT, kind: 'assistantPrompts', keywords: 'ingo ki ai assistent prompt eigene vorlage' },
+  { id: 'assistantReplacements', titleKey: 'settings.section.assistantReplacements', groupKey: G_ASSISTANT, kind: 'assistantReplacements', keywords: 'ingo ki ai assistent ersetzung diktat transkription' },
 ];
 
 /** "Administration" screen — needs adminRole. */
 export const ADMINISTRATION_SECTIONS: SettingsSection[] = [
   { id: 'firmProfile', titleKey: 'settings.section.firmProfile', groupKey: G_FIRM, kind: 'firmProfile', keywords: 'kanzlei kanzleidaten firma stammdaten bank' },
   { id: 'partyTypes', titleKey: 'settings.section.partyTypes', groupKey: G_PARTIES, kind: 'partyTypes', keywords: 'beteiligte beteiligtentyp partei mandant gegner rolle' },
+  { id: 'customFields', titleKey: 'settings.section.customFields', groupKey: G_CASECONFIG, kind: 'customFields', keywords: 'eigene felder benutzerdefiniert adresse akte beteiligter custom' },
   { id: 'caseNumbering', titleKey: 'settings.section.caseNumbering', groupKey: G_CASECONFIG, kind: 'caseNumbering', keywords: 'aktenzeichen nummerierung nummernschema akte schema az' },
   { id: 'folderTemplates', titleKey: 'settings.section.folderTemplates', groupKey: G_CASECONFIG, kind: 'folderTemplates', keywords: 'aktenstruktur ordner ordnerstruktur vorlage dokumente ordnervorlage' },
   { id: 'invoiceTypes', titleKey: 'settings.section.invoiceTypes', groupKey: G_INVOICING, kind: 'invoiceTypes', keywords: 'belegart rechnung typ beleg' },
   { id: 'invoicePools', titleKey: 'settings.section.invoicePools', groupKey: G_INVOICING, kind: 'invoicePools', keywords: 'belegnummer nummernkreis rechnungsnummer' },
   { id: 'invoicePositions', titleKey: 'settings.section.invoicePositions', groupKey: G_INVOICING, kind: 'invoicePositions', keywords: 'belegposition vorlage position rechnung' },
   { id: 'financeSettings', titleKey: 'settings.section.financeSettings', groupKey: G_INVOICING, kind: 'financeSettings', keywords: 'girocode epc qr finanzen einstellungen' },
+  { id: 'bankStatementConfigs', titleKey: 'settings.section.bankStatementConfigs', groupKey: G_INVOICING, kind: 'bankStatementConfigs', keywords: 'kontoauszug import csv bank buchen umsatz' },
+  { id: 'nameTemplates', titleKey: 'settings.section.nameTemplates', groupKey: G_DOCCONFIG, kind: 'nameTemplates', keywords: 'dateiname benennung benennungsschema schema dokument name vorlage' },
+  { id: 'calendarSetups', titleKey: 'settings.section.calendarSetups', groupKey: G_CALENDAR, kind: 'calendarSetups', keywords: 'kalender caldav synchronisation nextcloud termine fristen wiedervorlage' },
+  { id: 'calendarEntryTemplates', titleKey: 'settings.section.calendarEntryTemplates', groupKey: G_CALENDAR, kind: 'calendarEntryTemplates', keywords: 'ereignisvorlage kalender termin vorlage wiedervorlage' },
+  { id: 'timesheetTemplates', titleKey: 'settings.section.timesheetTemplates', groupKey: G_TIME, kind: 'timesheetTemplates', keywords: 'zeiterfassung position vorlage taetigkeit stundensatz' },
+  { id: 'timesheetSettings', titleKey: 'settings.section.timesheetSettings', groupKey: G_TIME, kind: 'timesheetSettings', keywords: 'zeiterfassung parallel eingabeformat einstellungen' },
+  { id: 'assistantServers', titleKey: 'settings.section.assistantServers', groupKey: G_ASSISTANT, kind: 'assistantServers', keywords: 'ingo ki ai assistent server verbindung llm openai ollama' },
   { id: 'users', titleKey: 'settings.section.users', groupKey: G_USERS, kind: 'users', keywords: 'nutzer benutzer rollen' },
   { id: 'groups', titleKey: 'settings.section.groups', groupKey: G_USERS, kind: 'groups', keywords: 'gruppen' },
 ];
@@ -93,4 +115,6 @@ export const SYSTEM_SECTIONS: SettingsSection[] = [
   { id: 'backupSettings', titleKey: 'settings.section.backupSettings', groupKey: G_SYSTEM, kind: 'backupSettings', keywords: 'backup datensicherung sicherung zeitplan datenbank verschlüsselung' },
   { id: 'stirlingSettings', titleKey: 'settings.section.stirlingSettings', groupKey: G_SYSTEM, kind: 'stirlingSettings', keywords: 'stirling pdf endpoint dokumentenverarbeitung' },
   { id: 'beaSettings', titleKey: 'settings.section.beaSettings', groupKey: G_SYSTEM, kind: 'beaSettings', keywords: 'bea anwaltspostfach endpoint integration' },
+  { id: 'searchIndex', titleKey: 'settings.section.searchIndex', groupKey: G_SYSTEM, kind: 'searchIndex', keywords: 'volltextsuche suchindex lucene index neu erfassen' },
+  { id: 'cardDavSync', titleKey: 'settings.section.cardDavSync', groupKey: G_SYSTEM, kind: 'cardDavSync', keywords: 'adressbuch nextcloud carddav synchronisation kontakte sync' },
 ];

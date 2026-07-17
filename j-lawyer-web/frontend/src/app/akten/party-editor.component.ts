@@ -4,6 +4,7 @@ import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { CasesService } from './cases.service';
 import { Party, PartyTypeOption, PartyUpdate } from './case.models';
+import { CustomField, CustomFieldsService } from '../settings/custom-fields.service';
 
 /**
  * Modal editor for an existing party's detail fields (mirrors the desktop InvolvedPartyEntryPanel):
@@ -50,20 +51,16 @@ import { Party, PartyTypeOption, PartyUpdate } from './case.models';
           <input type="text" [ngModel]="f().contact" (ngModelChange)="upd('contact', $event)" />
         </label>
 
-        <div class="row">
-          <label class="fld">
-            <span class="lbl">{{ 'akten.party.custom1' | transloco }}</span>
-            <input type="text" [ngModel]="f().custom1" (ngModelChange)="upd('custom1', $event)" />
-          </label>
-          <label class="fld">
-            <span class="lbl">{{ 'akten.party.custom2' | transloco }}</span>
-            <input type="text" [ngModel]="f().custom2" (ngModelChange)="upd('custom2', $event)" />
-          </label>
-          <label class="fld">
-            <span class="lbl">{{ 'akten.party.custom3' | transloco }}</span>
-            <input type="text" [ngModel]="f().custom3" (ngModelChange)="upd('custom3', $event)" />
-          </label>
-        </div>
+        @if (customFields().length) {
+          <div class="row">
+            @for (cf of customFields(); track cf.key) {
+              <label class="fld">
+                <span class="lbl">{{ cf.label }}</span>
+                <input type="text" [ngModel]="f()[cf.key]" (ngModelChange)="upd(cf.key, $event)" />
+              </label>
+            }
+          </div>
+        }
       </div>
 
       <footer class="df">
@@ -111,7 +108,10 @@ export class PartyEditorComponent implements OnInit {
   readonly close = output<void>();
 
   private readonly cases = inject(CasesService);
+  private readonly customFieldsSvc = inject(CustomFieldsService);
 
+  /** Configured (non-empty) custom fields for parties. */
+  protected readonly customFields = signal<CustomField[]>([]);
   protected readonly partyTypes = signal<PartyTypeOption[]>([]);
   /** Working copy of the editable fields. */
   protected readonly f = signal<PartyUpdate>({
@@ -134,6 +134,7 @@ export class PartyEditorComponent implements OnInit {
       custom3: p.custom3,
     });
     this.cases.partyTypes().subscribe((types) => this.partyTypes.set(types));
+    this.customFieldsSvc.labels('party').subscribe((l) => this.customFields.set(this.customFieldsSvc.configuredFields(l)));
   }
 
   /**

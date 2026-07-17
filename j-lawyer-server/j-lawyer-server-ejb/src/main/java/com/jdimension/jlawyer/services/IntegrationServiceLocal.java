@@ -663,8 +663,16 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.ai.AiModel;
+import com.jdimension.jlawyer.ai.AiRequestLog;
+import com.jdimension.jlawyer.ai.AiUser;
 import com.jdimension.jlawyer.email.EmailTemplate;
+import com.jdimension.jlawyer.persistence.AssistantConfig;
+import com.jdimension.jlawyer.persistence.AssistantPrompt;
+import com.jdimension.jlawyer.persistence.AssistantReplacement;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import javax.ejb.Local;
 
 /**
@@ -673,10 +681,35 @@ import javax.ejb.Local;
  */
 @Local
 public interface IntegrationServiceLocal {
-    
+
     Collection<String> getAllEmailTemplateNames();
     EmailTemplate getEmailTemplate(String fileName) throws Exception;
 
     boolean validateExternalStorageLocation(String location) throws Exception;
+
+    // --- AI assistant ("Ingo") configuration ---
+    // All already implemented on IntegrationService (remote); exposed on the local interface so the
+    // self-contained REST endpoints (/v8/assistant) can reach them. Config CRUD requires adminRole;
+    // prompt/replacement create+update require loginRole, delete requires adminRole; the status
+    // lookups (models / user information) require loginRole (enforced on the bean).
+
+    List<AssistantConfig> getAllAssistantConfigs() throws Exception;
+    AssistantConfig addAssistantConfig(AssistantConfig ac) throws Exception;
+    AssistantConfig updateAssistantConfig(AssistantConfig ac) throws Exception;
+    void removeAssistantConfig(AssistantConfig ac) throws Exception;
+
+    Map<AssistantConfig, List<AiModel>> getAssistantModels() throws Exception;
+    Map<AssistantConfig, AiUser> getAssistantUserInformation() throws Exception;
+    List<AiRequestLog> getAssistantRequestLog(AssistantConfig config) throws Exception;
+
+    List<AssistantPrompt> getAllAssistantPrompts() throws Exception;
+    AssistantPrompt addAssistantPrompt(AssistantPrompt ap) throws Exception;
+    AssistantPrompt updateAssistantPrompt(AssistantPrompt ap) throws Exception;
+    void removeAssistantPrompt(AssistantPrompt ap) throws Exception;
+
+    List<AssistantReplacement> getAllAssistantReplacements() throws Exception;
+    AssistantReplacement addAssistantReplacement(AssistantReplacement ap) throws Exception;
+    AssistantReplacement updateAssistantReplacement(AssistantReplacement ap) throws Exception;
+    void removeAssistantReplacement(AssistantReplacement ap) throws Exception;
 
 }

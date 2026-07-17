@@ -26,6 +26,7 @@ public class RestfulDocumentNameTemplateV7 {
 
     protected String id = null;
     protected String displayName = null;
+    protected String pattern = null;
     protected boolean defaultTemplate = false;
 
     public RestfulDocumentNameTemplateV7() {
@@ -37,6 +38,14 @@ public class RestfulDocumentNameTemplateV7 {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getPattern() {
+        return pattern;
+    }
+
+    public void setPattern(String pattern) {
+        this.pattern = pattern;
     }
 
     public String getDisplayName() {

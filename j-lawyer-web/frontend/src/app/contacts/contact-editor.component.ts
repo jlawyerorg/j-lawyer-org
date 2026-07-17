@@ -4,6 +4,7 @@ import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { ContactData } from './contact.models';
 import { OptionGroupsService } from './option-groups.service';
+import { CustomFieldsService } from '../settings/custom-fields.service';
 
 type FieldType = 'text' | 'textarea' | 'flag' | 'select';
 interface SelectOption { value: string; labelKey: string; }
@@ -18,6 +19,8 @@ interface FieldDef {
   select?: SelectOption[];
   /** Preselected value for a `select` field when the contact has none. */
   defaultValue?: string;
+  /** Explicit label text (overrides the `kontakte.field.<key>` translation), e.g. a configured custom-field label. */
+  labelText?: string;
 }
 /** A titled cluster of fields within a tab (mirrors the desktop AddressPanel's TitledBorder groups). */
 interface GroupDef { titleKey?: string; fields: FieldDef[]; }
@@ -181,16 +184,16 @@ const TABS: TabDef[] = [
               @if (fd.type === 'flag') {
                 <label class="chk">
                   <input type="checkbox" [ngModel]="flagVal(fd.key)" (ngModelChange)="upd(fd.key, $event ? 1 : 0)" />
-                  {{ 'kontakte.field.' + fd.key | transloco }}
+                  {{ fd.labelText ? fd.labelText : ('kontakte.field.' + fd.key | transloco) }}
                 </label>
               } @else if (fd.type === 'textarea') {
                 <label class="fld wide">
-                  <span class="lbl">{{ 'kontakte.field.' + fd.key | transloco }}</span>
+                  <span class="lbl">{{ fd.labelText ? fd.labelText : ('kontakte.field.' + fd.key | transloco) }}</span>
                   <textarea rows="3" [ngModel]="strVal(fd.key)" (ngModelChange)="upd(fd.key, $event)"></textarea>
                 </label>
               } @else if (fd.type === 'select') {
                 <label class="fld" [class.sm]="fd.sm">
-                  <span class="lbl">{{ 'kontakte.field.' + fd.key | transloco }}</span>
+                  <span class="lbl">{{ fd.labelText ? fd.labelText : ('kontakte.field.' + fd.key | transloco) }}</span>
                   <select [ngModel]="strVal(fd.key) || fd.defaultValue" (ngModelChange)="upd(fd.key, $event)">
                     @for (o of fd.select; track o.value) {
                       <option [value]="o.value">{{ o.labelKey | transloco }}</option>
@@ -199,7 +202,7 @@ const TABS: TabDef[] = [
                 </label>
               } @else if (fd.group) {
                 <label class="fld" [class.sm]="fd.sm">
-                  <span class="lbl">{{ 'kontakte.field.' + fd.key | transloco }}</span>
+                  <span class="lbl">{{ fd.labelText ? fd.labelText : ('kontakte.field.' + fd.key | transloco) }}</span>
                   <input type="text" [attr.list]="'dl-' + fd.key" autocomplete="off"
                          [ngModel]="strVal(fd.key)" (ngModelChange)="upd(fd.key, $event)" />
                   <datalist [id]="'dl-' + fd.key">
@@ -208,7 +211,7 @@ const TABS: TabDef[] = [
                 </label>
               } @else {
                 <label class="fld" [class.sm]="fd.sm">
-                  <span class="lbl">{{ 'kontakte.field.' + fd.key | transloco }}</span>
+                  <span class="lbl">{{ fd.labelText ? fd.labelText : ('kontakte.field.' + fd.key | transloco) }}</span>
                   <input type="text" [ngModel]="strVal(fd.key)" (ngModelChange)="upd(fd.key, $event)" />
                 </label>
               }
@@ -282,13 +285,32 @@ export class ContactEditorComponent implements OnInit {
   readonly close = output<void>();
 
   private readonly optionGroups = inject(OptionGroupsService);
+  private readonly customFieldsSvc = inject(CustomFieldsService);
 
   protected readonly tabs = TABS;
   protected readonly activeTab = signal<string>(TABS[0].id);
   /** Working copy — a clone of the input contact (edit) or empty (create). */
   protected readonly f = signal<ContactData>({});
+  /** Configured (non-empty) custom-field labels for addresses, keyed by slot. */
+  private readonly customLabels = signal<Record<string, string>>({});
 
-  protected readonly activeGroups = computed(() => TABS.find((t) => t.id === this.activeTab())?.groups ?? []);
+  protected readonly activeGroups = computed(() => {
+    const groups = TABS.find((t) => t.id === this.activeTab())?.groups ?? [];
+    const labels = this.customLabels();
+    // Inject the configured labels onto custom1/2/3 and drop custom fields with no configured label.
+    return groups
+      .map((g) => ({
+        ...g,
+        fields: g.fields
+          .filter((fd) => !this.isCustom(fd.key) || labels[fd.key])
+          .map((fd) => (this.isCustom(fd.key) ? { ...fd, labelText: labels[fd.key] } : fd)),
+      }))
+      .filter((g) => g.fields.length > 0);
+  });
+
+  private isCustom(key: string): boolean {
+    return key === 'custom1' || key === 'custom2' || key === 'custom3';
+  }
 
   protected readonly canSave = computed(() => {
     const v = this.f();
@@ -300,6 +322,11 @@ export class ContactEditorComponent implements OnInit {
     if (c) {
       this.f.set({ ...c });
     }
+    this.customFieldsSvc.labels('address').subscribe((l) => {
+      const map: Record<string, string> = {};
+      for (const f of this.customFieldsSvc.configuredFields(l)) { map[f.key] = f.label; }
+      this.customLabels.set(map);
+    });
   }
 
   /** The configurable value list for a combo field's option group (datalist suggestions). */

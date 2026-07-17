@@ -666,10 +666,31 @@ package org.jlawyer.io.rest.v7;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
+import com.jdimension.jlawyer.services.AddressServiceLocal;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import com.jdimension.jlawyer.services.IntegrationServiceLocal;
+import com.jdimension.jlawyer.services.SearchServiceLocal;
 import com.jdimension.jlawyer.services.SystemManagementLocal;
 import org.jlawyer.io.rest.v7.pojo.RestfulStorageLocationV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulMultiValueTagOpV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulSearchIndexV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulCustomFieldsV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulCardDavSyncV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulCloudAddressBookV7;
+import com.jdimension.jlawyer.security.CryptoProvider;
+import com.jdimension.jlawyer.services.CalendarServiceLocal;
+import com.jdimension.jlawyer.services.InvoiceServiceLocal;
+import com.jdimension.jlawyer.persistence.BankStatementsCSVConfig;
+import org.jlawyer.io.rest.v7.pojo.RestfulBankStatementCsvConfigV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulTimesheetSettingsV7;
+import com.jdimension.jlawyer.persistence.CalendarSetup;
+import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
+import org.jlawyer.cloud.NextcloudContactsConnector;
+import org.jlawyer.cloud.contacts.CloudAddressBook;
+import org.jlawyer.cloud.calendar.CloudCalendar;
+import org.jlawyer.io.rest.v7.pojo.RestfulCalendarSetupV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulCalendarEntryTemplateV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulCloudCalendarV7;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -728,6 +749,14 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     private static final String LOOKUP_CASES="java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
 
     private static final String LOOKUP_INTEGRATION="java:global/j-lawyer-server/j-lawyer-server-ejb/IntegrationService!com.jdimension.jlawyer.services.IntegrationServiceLocal";
+
+    private static final String LOOKUP_ADDRESS="java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal";
+
+    private static final String LOOKUP_SEARCH="java:global/j-lawyer-server/j-lawyer-server-ejb/SearchService!com.jdimension.jlawyer.services.SearchServiceLocal";
+
+    private static final String LOOKUP_CALENDAR="java:global/j-lawyer-server/j-lawyer-server-ejb/CalendarService!com.jdimension.jlawyer.services.CalendarServiceLocal";
+
+    private static final String LOOKUP_INVOICE="java:global/j-lawyer-server/j-lawyer-server-ejb/InvoiceService!com.jdimension.jlawyer.services.InvoiceServiceLocal";
 
     /**
      * Returns all option groups available in the system who have at least one
@@ -990,6 +1019,283 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     }
 
     /**
+     * Adds an allowed value to a multi-value tag (creating the tag if it does not exist yet). Requires
+     * option-group create permission.
+     *
+     * @param entityType one of {@code case}, {@code document}, {@code address}
+     * @param op the operation payload ({@code tagName} + {@code value})
+     * @response 400 invalid entity type
+     * @response 409 invalid tag name or value
+     */
+    @Override
+    @Path("/tags/multivalue/{entityType}/values")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"createOptionGroupRole"})
+    @io.swagger.annotations.ApiOperation(value = "Adds an allowed value to a multi-value tag (Listenetikett).")
+    public Response addMultiValueTagValue(@PathParam("entityType") String entityType, @io.swagger.annotations.ApiParam RestfulMultiValueTagOpV7 op) {
+        String prefix = mvPrefix(entityType);
+        if (prefix == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid entity type: " + entityType).build();
+        }
+        String invalid = validateTagText(op.getTagName(), op.getValue());
+        if (invalid != null) {
+            return Response.status(Response.Status.CONFLICT).entity(invalid).build();
+        }
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            String group = prefix + op.getTagName().trim();
+            for (AppOptionGroupBean aog : system.getOptionGroup(group)) {
+                if (aog.getValue().equals(op.getValue().trim())) {
+                    return Response.ok().build(); // already present
+                }
+            }
+            AppOptionGroupBean bean = new AppOptionGroupBean();
+            bean.setOptionGroup(group);
+            bean.setValue(op.getValue().trim());
+            system.createOptionGroup(bean);
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not add multi-value tag value", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Removes an allowed value from a multi-value tag and, cascading, from all cases/addresses/documents
+     * it is attached to. Requires option-group delete permission.
+     *
+     * @param entityType one of {@code case}, {@code document}, {@code address}
+     * @param op the operation payload ({@code tagName} + {@code value})
+     */
+    @Override
+    @Path("/tags/multivalue/{entityType}/values")
+    @DELETE
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"deleteOptionGroupRole"})
+    @io.swagger.annotations.ApiOperation(value = "Removes an allowed value from a multi-value tag (cascades to attached tags).")
+    public Response removeMultiValueTagValue(@PathParam("entityType") String entityType, @io.swagger.annotations.ApiParam RestfulMultiValueTagOpV7 op) {
+        String prefix = mvPrefix(entityType);
+        if (prefix == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid entity type: " + entityType).build();
+        }
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            String group = prefix + op.getTagName();
+            for (AppOptionGroupBean aog : system.getOptionGroup(group)) {
+                if (aog.getValue().equals(op.getValue())) {
+                    system.removeOptionGroup(aog.getId());
+                }
+            }
+            cascadeDeleteByNameAndValue(ic, entityType, op.getTagName(), op.getValue());
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not remove multi-value tag value", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Renames an allowed value of a multi-value tag and, cascading, on all entities it is attached to.
+     * Requires option-group create permission.
+     */
+    @Override
+    @Path("/tags/multivalue/{entityType}/values/rename")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"createOptionGroupRole"})
+    @io.swagger.annotations.ApiOperation(value = "Renames an allowed value of a multi-value tag (cascades to attached tags).")
+    public Response renameMultiValueTagValue(@PathParam("entityType") String entityType, @io.swagger.annotations.ApiParam RestfulMultiValueTagOpV7 op) {
+        String prefix = mvPrefix(entityType);
+        if (prefix == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid entity type: " + entityType).build();
+        }
+        String invalid = validateTagText(op.getTagName(), op.getNewValue());
+        if (invalid != null) {
+            return Response.status(Response.Status.CONFLICT).entity(invalid).build();
+        }
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            String group = prefix + op.getTagName();
+            for (AppOptionGroupBean aog : system.getOptionGroup(group)) {
+                if (aog.getValue().equals(op.getValue())) {
+                    system.removeOptionGroup(aog.getId());
+                }
+            }
+            AppOptionGroupBean bean = new AppOptionGroupBean();
+            bean.setOptionGroup(group);
+            bean.setValue(op.getNewValue().trim());
+            system.createOptionGroup(bean);
+            cascadeRenameValue(ic, entityType, op.getTagName(), op.getValue(), op.getNewValue().trim());
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not rename multi-value tag value", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Renames a multi-value tag (all its values move to the new name) and, cascading, on all entities
+     * it is attached to. Requires option-group create permission.
+     */
+    @Override
+    @Path("/tags/multivalue/{entityType}/rename")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"createOptionGroupRole"})
+    @io.swagger.annotations.ApiOperation(value = "Renames a multi-value tag (cascades to attached tags).")
+    public Response renameMultiValueTag(@PathParam("entityType") String entityType, @io.swagger.annotations.ApiParam RestfulMultiValueTagOpV7 op) {
+        String prefix = mvPrefix(entityType);
+        if (prefix == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid entity type: " + entityType).build();
+        }
+        String invalid = validateTagText(op.getNewTagName(), null);
+        if (invalid != null) {
+            return Response.status(Response.Status.CONFLICT).entity(invalid).build();
+        }
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            String oldGroup = prefix + op.getTagName();
+            String newGroup = prefix + op.getNewTagName().trim();
+            AppOptionGroupBean[] values = system.getOptionGroup(oldGroup);
+            for (AppOptionGroupBean aog : values) {
+                system.removeOptionGroup(aog.getId());
+                AppOptionGroupBean bean = new AppOptionGroupBean();
+                bean.setOptionGroup(newGroup);
+                bean.setValue(aog.getValue());
+                system.createOptionGroup(bean);
+            }
+            cascadeRenameName(ic, entityType, op.getTagName(), op.getNewTagName().trim());
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not rename multi-value tag", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Removes a multi-value tag entirely (all values) and, cascading, from all entities it is attached
+     * to. Requires option-group delete permission.
+     */
+    @Override
+    @Path("/tags/multivalue/{entityType}")
+    @DELETE
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"deleteOptionGroupRole"})
+    @io.swagger.annotations.ApiOperation(value = "Removes a multi-value tag entirely (cascades to attached tags).")
+    public Response removeMultiValueTag(@PathParam("entityType") String entityType, @io.swagger.annotations.ApiParam RestfulMultiValueTagOpV7 op) {
+        String prefix = mvPrefix(entityType);
+        if (prefix == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid entity type: " + entityType).build();
+        }
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            for (AppOptionGroupBean aog : system.getOptionGroup(prefix + op.getTagName())) {
+                system.removeOptionGroup(aog.getId());
+            }
+            cascadeDeleteByName(ic, entityType, op.getTagName());
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not remove multi-value tag", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /** Maps a REST entity type to the multi-value option-group prefix, or null if unknown. */
+    private String mvPrefix(String entityType) {
+        if (entityType == null) {
+            return null;
+        }
+        switch (entityType) {
+            case "case": return OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS_MV_PREFIX;
+            case "document": return OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX;
+            case "address": return OptionConstants.OPTIONGROUP_ADDRESSTAGS_MV_PREFIX;
+            default: return null;
+        }
+    }
+
+    /** Validates a tag name and (optionally) a value against the reserved characters, returns an error message or null. */
+    private String validateTagText(String name, String value) {
+        if (name == null || name.trim().isEmpty()) {
+            return "Der Etikettname darf nicht leer sein.";
+        }
+        if (name.contains(":") || name.contains("=") || name.contains(",")) {
+            return "Der Etikettname darf die Zeichen : = , nicht enthalten.";
+        }
+        if (value != null) {
+            if (value.trim().isEmpty()) {
+                return "Der Wert darf nicht leer sein.";
+            }
+            if (value.contains(":") || value.contains("=") || value.contains(",")) {
+                return "Der Wert darf die Zeichen : = , nicht enthalten.";
+            }
+        }
+        return null;
+    }
+
+    private void cascadeRenameName(InitialContext ic, String entityType, String oldName, String newName) throws Exception {
+        if ("address".equals(entityType)) {
+            ((AddressServiceLocal) ic.lookup(LOOKUP_ADDRESS)).renameContactTagName(oldName, newName);
+        } else {
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            if ("document".equals(entityType)) {
+                cases.renameDocumentTagName(oldName, newName);
+            } else {
+                cases.renameCaseTagName(oldName, newName);
+            }
+        }
+    }
+
+    private void cascadeRenameValue(InitialContext ic, String entityType, String tagName, String oldValue, String newValue) throws Exception {
+        if ("address".equals(entityType)) {
+            ((AddressServiceLocal) ic.lookup(LOOKUP_ADDRESS)).renameContactTagValue(tagName, oldValue, newValue);
+        } else {
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            if ("document".equals(entityType)) {
+                cases.renameDocumentTagValue(tagName, oldValue, newValue);
+            } else {
+                cases.renameCaseTagValue(tagName, oldValue, newValue);
+            }
+        }
+    }
+
+    private void cascadeDeleteByName(InitialContext ic, String entityType, String tagName) throws Exception {
+        if ("address".equals(entityType)) {
+            ((AddressServiceLocal) ic.lookup(LOOKUP_ADDRESS)).deleteContactTagsByName(tagName);
+        } else {
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            if ("document".equals(entityType)) {
+                cases.deleteDocumentTagsByName(tagName);
+            } else {
+                cases.deleteCaseTagsByName(tagName);
+            }
+        }
+    }
+
+    private void cascadeDeleteByNameAndValue(InitialContext ic, String entityType, String tagName, String value) throws Exception {
+        if ("address".equals(entityType)) {
+            ((AddressServiceLocal) ic.lookup(LOOKUP_ADDRESS)).deleteContactTagsByNameAndValue(tagName, value);
+        } else {
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            if ("document".equals(entityType)) {
+                cases.deleteDocumentTagsByNameAndValue(tagName, value);
+            } else {
+                cases.deleteCaseTagsByNameAndValue(tagName, value);
+            }
+        }
+    }
+
+    /**
      * Returns all document name templates (Benennungsschemata) configured in the
      * system. Each template carries a flag indicating whether it is the default
      * template.
@@ -1024,6 +1330,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
                 RestfulDocumentNameTemplateV7 r = new RestfulDocumentNameTemplateV7();
                 r.setId(t.getId());
                 r.setDisplayName(t.getDisplayName());
+                r.setPattern(t.getPattern());
                 r.setDefaultTemplate(t.isDefaultTemplate() || (defaultId != null && defaultId.equals(t.getId())));
                 resultList.add(r);
             }
@@ -1926,6 +2233,840 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return Response.ok(settings).build();
         } catch (Exception ex) {
             log.error("can not update bea settings", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns the full-text search-index status: number of indexed documents vs. total documents.
+     * Requires system administrator permission.
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/search-index")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the full-text search-index status. Requires system administrator permission.", response = RestfulSearchIndexV7.class)
+    public Response getSearchIndexStatus() {
+        try {
+            InitialContext ic = new InitialContext();
+            SearchServiceLocal search = (SearchServiceLocal) ic.lookup(LOOKUP_SEARCH);
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            RestfulSearchIndexV7 s = new RestfulSearchIndexV7();
+            s.setIndexedDocuments(search.getNumberOfDocs());
+            s.setTotalDocuments(cases.getDocumentCount());
+            return Response.ok(s).build();
+        } catch (Exception ex) {
+            log.error("can not determine search index status", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Triggers a full rebuild of the search index. The rebuild runs asynchronously on the server; this
+     * call returns immediately. Requires system administrator permission.
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/search-index/reindex")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Triggers an asynchronous full rebuild of the search index. Requires system administrator permission.")
+    public Response reindexSearchIndex() {
+        try {
+            InitialContext ic = new InitialContext();
+            SearchServiceLocal search = (SearchServiceLocal) ic.lookup(LOOKUP_SEARCH);
+            search.reIndexAll();
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not trigger search index rebuild", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns the three custom-field labels (eigene Felder) for an entity type. Empty labels mean the
+     * field is not in use. Open to any authenticated user (labels are needed to render entity views).
+     *
+     * @param entityType one of {@code address}, {@code case}, {@code party}
+     * @response 400 invalid entity type
+     */
+    @Override
+    @Path("/custom-fields/{entityType}")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @io.swagger.annotations.ApiOperation(value = "Returns the three custom-field labels for an entity type.", response = RestfulCustomFieldsV7.class)
+    public Response getCustomFields(@PathParam("entityType") String entityType) {
+        String prefix = customFieldPrefix(entityType);
+        if (prefix == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid entity type: " + entityType).build();
+        }
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            RestfulCustomFieldsV7 f = new RestfulCustomFieldsV7();
+            f.setLabel1(readSetting(system, prefix + "1", ""));
+            f.setLabel2(readSetting(system, prefix + "2", ""));
+            f.setLabel3(readSetting(system, prefix + "3", ""));
+            return Response.ok(f).build();
+        } catch (Exception ex) {
+            log.error("can not determine custom fields for " + entityType, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates the three custom-field labels for an entity type. Requires administrator permission.
+     *
+     * @param entityType one of {@code address}, {@code case}, {@code party}
+     * @param fields the labels to store
+     * @response 400 invalid entity type
+     */
+    @Override
+    @Path("/custom-fields/{entityType}")
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Updates the three custom-field labels for an entity type. Requires administrator permission.", response = RestfulCustomFieldsV7.class)
+    public Response setCustomFields(@PathParam("entityType") String entityType, @io.swagger.annotations.ApiParam RestfulCustomFieldsV7 fields) {
+        String prefix = customFieldPrefix(entityType);
+        if (prefix == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid entity type: " + entityType).build();
+        }
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            system.setSetting(prefix + "1", nz(fields.getLabel1()).trim());
+            system.setSetting(prefix + "2", nz(fields.getLabel2()).trim());
+            system.setSetting(prefix + "3", nz(fields.getLabel3()).trim());
+            return Response.ok(fields).build();
+        } catch (Exception ex) {
+            log.error("can not update custom fields for " + entityType, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /** Maps a REST entity type to the custom-field settings-key prefix, or null if unknown. */
+    private String customFieldPrefix(String entityType) {
+        if (entityType == null) {
+            return null;
+        }
+        switch (entityType) {
+            case "address": return ServerSettingsKeys.DATA_CUSTOMFIELD_ADDRESS_PREFIX;
+            case "case": return ServerSettingsKeys.DATA_CUSTOMFIELD_ARCHIVEFILE_PREFIX;
+            case "party": return ServerSettingsKeys.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX;
+            default: return null;
+        }
+    }
+
+    /**
+     * Creates a document name template (Benennungsschema). Requires administrator permission. If the
+     * new template is marked default, the default flag is cleared on all others.
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/document-name-templates")
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Creates a document name template. Requires administrator permission.", response = RestfulDocumentNameTemplateV7.class)
+    public Response createDocumentNameTemplate(@io.swagger.annotations.ApiParam RestfulDocumentNameTemplateV7 template) {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            DocumentNameTemplate t = new DocumentNameTemplate();
+            t.setDisplayName(nz(template.getDisplayName()).trim());
+            t.setPattern(nz(template.getPattern()));
+            t.setDefaultTemplate(template.isDefaultTemplate());
+            DocumentNameTemplate created = system.addDocumentNameTemplate(t);
+            if (created.isDefaultTemplate()) {
+                clearOtherDefaultNameTemplates(system, created.getId());
+            }
+            template.setId(created.getId());
+            return Response.ok(template).build();
+        } catch (Exception ex) {
+            log.error("can not create document name template", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Updates a document name template. Requires administrator permission.
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/document-name-templates")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Updates a document name template. Requires administrator permission.", response = RestfulDocumentNameTemplateV7.class)
+    public Response updateDocumentNameTemplate(@io.swagger.annotations.ApiParam RestfulDocumentNameTemplateV7 template) {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            DocumentNameTemplate t = new DocumentNameTemplate();
+            t.setId(template.getId());
+            t.setDisplayName(nz(template.getDisplayName()).trim());
+            t.setPattern(nz(template.getPattern()));
+            t.setDefaultTemplate(template.isDefaultTemplate());
+            system.updateDocumentNameTemplate(t);
+            if (template.isDefaultTemplate()) {
+                clearOtherDefaultNameTemplates(system, template.getId());
+            }
+            return Response.ok(template).build();
+        } catch (Exception ex) {
+            log.error("can not update document name template", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Deletes a document name template. Requires administrator permission.
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/document-name-templates")
+    @DELETE
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Deletes a document name template. Requires administrator permission.")
+    public Response deleteDocumentNameTemplate(@io.swagger.annotations.ApiParam RestfulDocumentNameTemplateV7 template) {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            DocumentNameTemplate t = system.getDocumentNameTemplate(template.getId());
+            if (t != null) {
+                system.removeDocumentNameTemplate(t);
+            }
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not delete document name template", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Returns sample file names produced by the given template pattern, without storing it.
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/document-name-templates/preview")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @io.swagger.annotations.ApiOperation(value = "Returns sample file names for a document name template pattern.", response = String.class, responseContainer = "List")
+    public Response previewDocumentNameTemplate(@io.swagger.annotations.ApiParam RestfulDocumentNameTemplateV7 template) {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            DocumentNameTemplate t = new DocumentNameTemplate();
+            t.setDisplayName(nz(template.getDisplayName()));
+            t.setPattern(nz(template.getPattern()));
+            List<String> samples = system.previewDocumentNamesForTemplate(t, "Schriftsatz.pdf");
+            return Response.ok(samples).build();
+        } catch (Exception ex) {
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /** Clears the default flag on all document name templates except the given one. */
+    private void clearOtherDefaultNameTemplates(SystemManagementLocal system, String keepId) throws Exception {
+        for (DocumentNameTemplate other : system.getDocumentNameTemplates()) {
+            if (!other.getId().equals(keepId) && other.isDefaultTemplate()) {
+                other.setDefaultTemplate(false);
+                system.updateDocumentNameTemplate(other);
+            }
+        }
+    }
+
+    /**
+     * Returns the global address-book → Nextcloud/CardDAV sync configuration. The password is never
+     * returned. Requires system administrator permission.
+     */
+    @Override
+    @Path("/carddav-sync")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the address-book CardDAV sync configuration. Requires system administrator permission.", response = RestfulCardDavSyncV7.class)
+    public Response getCardDavSync() {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            RestfulCardDavSyncV7 c = new RestfulCardDavSyncV7();
+            c.setEnabled(readOnFlag(system, ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_ENABLED, false));
+            c.setBirthdaySync(readOnFlag(system, ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_BIRTHDAYSYNC, true));
+            c.setHost(readSetting(system, ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_HOST, ""));
+            c.setPort(readIntSetting(system, ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PORT, 443));
+            c.setSsl(readOnFlag(system, ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_SSL, true));
+            c.setPath(readSetting(system, ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PATH, ""));
+            c.setUser(readSetting(system, ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_USER, ""));
+            c.setHref(readSetting(system, ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_HREF, ""));
+            c.setPasswordSet(!readSetting(system, ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD, "").isEmpty());
+            return Response.ok(c).build();
+        } catch (Exception ex) {
+            log.error("can not determine carddav sync settings", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates the address-book CardDAV sync configuration. The password is only (re)stored when a
+     * non-empty value is submitted (and stored encrypted). Requires system administrator permission.
+     */
+    @Override
+    @Path("/carddav-sync")
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Updates the address-book CardDAV sync configuration. Requires system administrator permission.", response = RestfulCardDavSyncV7.class)
+    public Response setCardDavSync(@io.swagger.annotations.ApiParam RestfulCardDavSyncV7 settings) {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            system.setSetting(ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_ENABLED, String.valueOf(settings.isEnabled()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_BIRTHDAYSYNC, String.valueOf(settings.isBirthdaySync()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_HOST, nz(settings.getHost()).trim());
+            system.setSetting(ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PORT, String.valueOf(settings.getPort()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_SSL, String.valueOf(settings.isSsl()));
+            system.setSetting(ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PATH, nz(settings.getPath()).trim());
+            system.setSetting(ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_USER, nz(settings.getUser()).trim());
+            system.setSetting(ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_HREF, nz(settings.getHref()).trim());
+            if (settings.getPassword() != null && !settings.getPassword().isEmpty()) {
+                system.setSetting(ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD, CryptoProvider.newCrypto().encrypt(settings.getPassword()));
+            }
+            return Response.ok(settings).build();
+        } catch (Exception ex) {
+            log.error("can not update carddav sync settings", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Lists the CardDAV address books available with the given connection (for the target dropdown).
+     * If the password is left empty, the stored one is used. Requires system administrator permission.
+     */
+    @Override
+    @Path("/carddav-sync/addressbooks")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Lists CardDAV address books for a connection. Requires system administrator permission.", response = RestfulCloudAddressBookV7.class, responseContainer = "List")
+    public Response listCloudAddressBooks(@io.swagger.annotations.ApiParam RestfulCardDavSyncV7 connection) {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            String pwd = connection.getPassword();
+            if (pwd == null || pwd.isEmpty()) {
+                String stored = readSetting(system, ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD, "");
+                pwd = stored.isEmpty() ? "" : CryptoProvider.newCrypto().decrypt(stored);
+            }
+            NextcloudContactsConnector nc = new NextcloudContactsConnector(connection.getHost(), connection.isSsl(), connection.getPort(), connection.getUser(), pwd);
+            if (connection.getPath() != null && !connection.getPath().trim().isEmpty()) {
+                nc.setSubpathPrefix(connection.getPath().trim());
+            }
+            List<RestfulCloudAddressBookV7> result = new ArrayList<>();
+            for (CloudAddressBook ab : nc.getAllAddressBooks()) {
+                result.add(new RestfulCloudAddressBookV7(ab.getHref(), ab.getDisplayName()));
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("can not list cloud address books", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Triggers a full address-book sync now (asynchronous on the server). Requires system administrator
+     * permission.
+     */
+    @Override
+    @Path("/carddav-sync/run")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"sysAdminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Triggers a full address-book CardDAV sync. Requires system administrator permission.")
+    public Response runCardDavSync() {
+        try {
+            InitialContext ic = new InitialContext();
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup(LOOKUP_ADDRESS);
+            addresses.runFullAddressBookSync();
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not trigger carddav sync", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /** Reads a server setting as an on/1/true flag (matches the desktop's flag encoding). */
+    private boolean readOnFlag(SystemManagementLocal system, String key, boolean defaultValue) {
+        String v = readSetting(system, key, defaultValue ? "true" : "false");
+        return "on".equalsIgnoreCase(v) || "1".equalsIgnoreCase(v) || "true".equalsIgnoreCase(v);
+    }
+
+    // ===== calendar setups (CalDAV) + entry templates =====
+
+    /** Maps a persistent calendar setup to its REST representation (password masked). */
+    private RestfulCalendarSetupV7 toCalendarSetupPojo(CalendarSetup cs) {
+        RestfulCalendarSetupV7 r = new RestfulCalendarSetupV7();
+        r.setId(cs.getId());
+        r.setDisplayName(cs.getDisplayName());
+        r.setHref(cs.getHref());
+        r.setEventType(cs.getEventType());
+        r.setBackground(cs.getBackground());
+        r.setDeleteDone(cs.isDeleteDone());
+        r.setCloudHost(cs.getCloudHost());
+        r.setCloudPort(cs.getCloudPort());
+        r.setCloudSsl(cs.isCloudSsl());
+        r.setCloudPath(cs.getCloudPath());
+        r.setCloudUser(cs.getCloudUser());
+        r.setPasswordSet(cs.getCloudPassword() != null && !cs.getCloudPassword().isEmpty());
+        return r;
+    }
+
+    private CalendarSetup findCalendarSetup(CalendarServiceLocal cal, String id) {
+        if (id == null) {
+            return null;
+        }
+        for (CalendarSetup cs : cal.getAllCalendarSetups()) {
+            if (id.equals(cs.getId())) {
+                return cs;
+            }
+        }
+        return null;
+    }
+
+    /** Returns all calendar definitions. Requires administrator permission. */
+    @Override
+    @Path("/calendar-setups")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns all calendar definitions. Requires administrator permission.", response = RestfulCalendarSetupV7.class, responseContainer = "List")
+    public Response getCalendarSetups() {
+        try {
+            InitialContext ic = new InitialContext();
+            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup(LOOKUP_CALENDAR);
+            List<RestfulCalendarSetupV7> result = new ArrayList<>();
+            for (CalendarSetup cs : cal.getAllCalendarSetups()) {
+                result.add(toCalendarSetupPojo(cs));
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("can not determine calendar setups", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /** Creates a calendar definition. Requires administrator permission. */
+    @Override
+    @Path("/calendar-setups")
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Creates a calendar definition. Requires administrator permission.", response = RestfulCalendarSetupV7.class)
+    public Response createCalendarSetup(@io.swagger.annotations.ApiParam RestfulCalendarSetupV7 setup) {
+        try {
+            InitialContext ic = new InitialContext();
+            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup(LOOKUP_CALENDAR);
+            CalendarSetup cs = new CalendarSetup();
+            applyCalendarSetup(cs, setup, null);
+            CalendarSetup created = cal.addCalendarSetup(cs);
+            return Response.ok(toCalendarSetupPojo(created)).build();
+        } catch (Exception ex) {
+            log.error("can not create calendar setup", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /** Updates a calendar definition. Requires administrator permission. */
+    @Override
+    @Path("/calendar-setups")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Updates a calendar definition. Requires administrator permission.", response = RestfulCalendarSetupV7.class)
+    public Response updateCalendarSetup(@io.swagger.annotations.ApiParam RestfulCalendarSetupV7 setup) {
+        try {
+            InitialContext ic = new InitialContext();
+            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup(LOOKUP_CALENDAR);
+            CalendarSetup existing = findCalendarSetup(cal, setup.getId());
+            if (existing == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            CalendarSetup cs = new CalendarSetup();
+            cs.setId(setup.getId());
+            applyCalendarSetup(cs, setup, existing.getCloudPassword());
+            cal.updateCalendarSetup(cs);
+            return Response.ok(toCalendarSetupPojo(cs)).build();
+        } catch (Exception ex) {
+            log.error("can not update calendar setup", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /** Applies a POJO onto a CalendarSetup bean, encrypting a new password or keeping the previous one. */
+    private void applyCalendarSetup(CalendarSetup cs, RestfulCalendarSetupV7 s, String previousEncryptedPassword) throws Exception {
+        cs.setDisplayName(nz(s.getDisplayName()).trim());
+        cs.setHref(nz(s.getHref()).trim());
+        cs.setEventType(s.getEventType());
+        cs.setBackground(s.getBackground());
+        cs.setDeleteDone(s.isDeleteDone());
+        cs.setCloudHost(nz(s.getCloudHost()).trim());
+        cs.setCloudPort(s.getCloudPort());
+        cs.setCloudSsl(s.isCloudSsl());
+        cs.setCloudPath(nz(s.getCloudPath()).trim());
+        cs.setCloudUser(nz(s.getCloudUser()).trim());
+        if (s.getCloudPassword() != null && !s.getCloudPassword().isEmpty()) {
+            cs.setCloudPassword(CryptoProvider.newCrypto().encrypt(s.getCloudPassword()));
+        } else {
+            cs.setCloudPassword(previousEncryptedPassword);
+        }
+    }
+
+    /** Deletes a calendar definition. Requires administrator permission. */
+    @Override
+    @Path("/calendar-setups")
+    @DELETE
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Deletes a calendar definition. Requires administrator permission.")
+    public Response deleteCalendarSetup(@io.swagger.annotations.ApiParam RestfulCalendarSetupV7 setup) {
+        try {
+            InitialContext ic = new InitialContext();
+            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup(LOOKUP_CALENDAR);
+            CalendarSetup existing = findCalendarSetup(cal, setup.getId());
+            if (existing != null) {
+                cal.removeCalendarSetup(existing);
+            }
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not delete calendar setup", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /** Lists the CalDAV calendars available with the given connection (for the target dropdown). */
+    @Override
+    @Path("/calendar-setups/test-connection")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Lists CalDAV calendars for a connection. Requires administrator permission.", response = RestfulCloudCalendarV7.class, responseContainer = "List")
+    public Response testCalendarConnection(@io.swagger.annotations.ApiParam RestfulCalendarSetupV7 connection) {
+        try {
+            InitialContext ic = new InitialContext();
+            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup(LOOKUP_CALENDAR);
+            String pwd = connection.getCloudPassword();
+            if (pwd == null || pwd.isEmpty()) {
+                CalendarSetup existing = findCalendarSetup(cal, connection.getId());
+                if (existing != null && existing.getCloudPassword() != null && !existing.getCloudPassword().isEmpty()) {
+                    pwd = CryptoProvider.newCrypto().decrypt(existing.getCloudPassword());
+                } else {
+                    pwd = "";
+                }
+            }
+            List<RestfulCloudCalendarV7> result = new ArrayList<>();
+            for (Object o : cal.listCalendars(connection.getCloudHost(), connection.isCloudSsl(), connection.getCloudPort(), connection.getCloudUser(), pwd, connection.getCloudPath())) {
+                CloudCalendar cc = (CloudCalendar) o;
+                result.add(new RestfulCloudCalendarV7(cc.getHref(), cc.getDisplayName()));
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("can not list cloud calendars", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /** Triggers a full calendar sync now (asynchronous). Requires administrator permission. */
+    @Override
+    @Path("/calendar-setups/sync")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Triggers a full calendar sync. Requires administrator permission.")
+    public Response runCalendarSync() {
+        try {
+            InitialContext ic = new InitialContext();
+            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup(LOOKUP_CALENDAR);
+            cal.runFullCalendarSync();
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not trigger calendar sync", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /** Returns all calendar entry templates (Ereignisvorlagen). Requires administrator permission. */
+    @Override
+    @Path("/calendar-entry-templates")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns all calendar entry templates. Requires administrator permission.", response = RestfulCalendarEntryTemplateV7.class, responseContainer = "List")
+    public Response getCalendarEntryTemplates() {
+        try {
+            InitialContext ic = new InitialContext();
+            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup(LOOKUP_CALENDAR);
+            List<RestfulCalendarEntryTemplateV7> result = new ArrayList<>();
+            for (CalendarEntryTemplate t : cal.getCalendarEntryTemplates()) {
+                result.add(toEntryTemplatePojo(t));
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("can not determine calendar entry templates", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    private RestfulCalendarEntryTemplateV7 toEntryTemplatePojo(CalendarEntryTemplate t) {
+        RestfulCalendarEntryTemplateV7 r = new RestfulCalendarEntryTemplateV7();
+        r.setId(t.getId());
+        r.setName(t.getName());
+        r.setDescription(t.getDescription());
+        r.setRelated(t.isRelated());
+        r.setRelatedName(t.getRelatedName());
+        r.setRelatedDescription(t.getRelatedDescription());
+        r.setRelatedOffsetDays(t.getRelatedOffsetDays());
+        return r;
+    }
+
+    private void applyEntryTemplate(CalendarEntryTemplate t, RestfulCalendarEntryTemplateV7 s) {
+        t.setName(nz(s.getName()).trim());
+        t.setDescription(nz(s.getDescription()));
+        t.setRelated(s.isRelated());
+        t.setRelatedName(nz(s.getRelatedName()));
+        t.setRelatedDescription(nz(s.getRelatedDescription()));
+        t.setRelatedOffsetDays(s.getRelatedOffsetDays());
+    }
+
+    /** Creates a calendar entry template. Requires administrator permission. */
+    @Override
+    @Path("/calendar-entry-templates")
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Creates a calendar entry template. Requires administrator permission.", response = RestfulCalendarEntryTemplateV7.class)
+    public Response createCalendarEntryTemplate(@io.swagger.annotations.ApiParam RestfulCalendarEntryTemplateV7 template) {
+        try {
+            InitialContext ic = new InitialContext();
+            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup(LOOKUP_CALENDAR);
+            CalendarEntryTemplate t = new CalendarEntryTemplate();
+            applyEntryTemplate(t, template);
+            CalendarEntryTemplate created = cal.addCalendarEntryTemplate(t);
+            return Response.ok(toEntryTemplatePojo(created)).build();
+        } catch (Exception ex) {
+            log.error("can not create calendar entry template", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /** Updates a calendar entry template. Requires administrator permission. */
+    @Override
+    @Path("/calendar-entry-templates")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Updates a calendar entry template. Requires administrator permission.", response = RestfulCalendarEntryTemplateV7.class)
+    public Response updateCalendarEntryTemplate(@io.swagger.annotations.ApiParam RestfulCalendarEntryTemplateV7 template) {
+        try {
+            InitialContext ic = new InitialContext();
+            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup(LOOKUP_CALENDAR);
+            CalendarEntryTemplate t = new CalendarEntryTemplate();
+            t.setId(template.getId());
+            applyEntryTemplate(t, template);
+            cal.updateCalendarEntryTemplate(t);
+            return Response.ok(toEntryTemplatePojo(t)).build();
+        } catch (Exception ex) {
+            log.error("can not update calendar entry template", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /** Deletes a calendar entry template. Requires administrator permission. */
+    @Override
+    @Path("/calendar-entry-templates")
+    @DELETE
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Deletes a calendar entry template. Requires administrator permission.")
+    public Response deleteCalendarEntryTemplate(@io.swagger.annotations.ApiParam RestfulCalendarEntryTemplateV7 template) {
+        try {
+            InitialContext ic = new InitialContext();
+            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup(LOOKUP_CALENDAR);
+            CalendarEntryTemplate t = new CalendarEntryTemplate();
+            t.setId(template.getId());
+            cal.removeCalendarEntryTemplate(t);
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not delete calendar entry template", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    // ===== bank-statement CSV import profiles (Kontoauszug-Import) =====
+
+    /** Returns all CSV bank-statement import profiles. Requires administrator permission. */
+    @Override
+    @Path("/bankstatement-csv-configs")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns all CSV bank-statement import profiles. Requires administrator permission.", response = RestfulBankStatementCsvConfigV7.class, responseContainer = "List")
+    public Response getBankStatementCsvConfigs() {
+        try {
+            InitialContext ic = new InitialContext();
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICE);
+            List<RestfulBankStatementCsvConfigV7> result = new ArrayList<>();
+            for (BankStatementsCSVConfig c : invoices.getAllBankStatementsCSVConfigurations()) {
+                result.add(RestfulBankStatementCsvConfigV7.fromEntity(c));
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("can not determine bank statement csv configs", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /** Creates a CSV bank-statement import profile. Requires administrator permission. */
+    @Override
+    @Path("/bankstatement-csv-configs")
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Creates a CSV bank-statement import profile. Requires administrator permission.", response = RestfulBankStatementCsvConfigV7.class)
+    public Response createBankStatementCsvConfig(@io.swagger.annotations.ApiParam RestfulBankStatementCsvConfigV7 config) {
+        try {
+            InitialContext ic = new InitialContext();
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICE);
+            BankStatementsCSVConfig created = invoices.addBankStatementsCSVConfiguration(config.toEntity());
+            return Response.ok(RestfulBankStatementCsvConfigV7.fromEntity(created)).build();
+        } catch (Exception ex) {
+            log.error("can not create bank statement csv config", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /** Updates a CSV bank-statement import profile. Requires administrator permission. */
+    @Override
+    @Path("/bankstatement-csv-configs")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Updates a CSV bank-statement import profile. Requires administrator permission.", response = RestfulBankStatementCsvConfigV7.class)
+    public Response updateBankStatementCsvConfig(@io.swagger.annotations.ApiParam RestfulBankStatementCsvConfigV7 config) {
+        try {
+            InitialContext ic = new InitialContext();
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICE);
+            BankStatementsCSVConfig updated = invoices.updateBankStatementsCSVConfiguration(config.toEntity());
+            return Response.ok(RestfulBankStatementCsvConfigV7.fromEntity(updated)).build();
+        } catch (Exception ex) {
+            log.error("can not update bank statement csv config", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /** Deletes a CSV bank-statement import profile. Requires administrator permission. */
+    @Override
+    @Path("/bankstatement-csv-configs")
+    @DELETE
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Deletes a CSV bank-statement import profile. Requires administrator permission.")
+    public Response deleteBankStatementCsvConfig(@io.swagger.annotations.ApiParam RestfulBankStatementCsvConfigV7 config) {
+        try {
+            InitialContext ic = new InitialContext();
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICE);
+            invoices.removeBankStatementsCSVConfiguration(config.toEntity());
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not delete bank statement csv config", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Returns the global time-tracking settings (parallel-logs warning, numeric input mode).
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/timesheet-settings")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @io.swagger.annotations.ApiOperation(value = "Returns the global time-tracking settings.", response = RestfulTimesheetSettingsV7.class)
+    public Response getTimesheetSettings() {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            RestfulTimesheetSettingsV7 s = new RestfulTimesheetSettingsV7();
+            s.setParallelLogsWarning(readBoolSetting(system, ServerSettingsKeys.SERVERCONF_TIMESHEET_PARALLELLOGS_WARNING));
+            s.setNumericInput(readSetting(system, ServerSettingsKeys.SERVERCONF_TIMESHEET_NUMERICINPUT, "minutes"));
+            return Response.ok(s).build();
+        } catch (Exception ex) {
+            log.error("can not determine timesheet settings", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates the global time-tracking settings. Requires administrator permission.
+     *
+     * @param settings the settings to store
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/timesheet-settings")
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Updates the global time-tracking settings. Requires administrator permission.", response = RestfulTimesheetSettingsV7.class)
+    public Response setTimesheetSettings(@io.swagger.annotations.ApiParam RestfulTimesheetSettingsV7 settings) {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            system.setSetting(ServerSettingsKeys.SERVERCONF_TIMESHEET_PARALLELLOGS_WARNING, String.valueOf(settings.isParallelLogsWarning()));
+            String mode = settings.getNumericInput();
+            if (!"minutes".equals(mode) && !"hours".equals(mode) && !"reject".equals(mode)) {
+                mode = "minutes";
+            }
+            system.setSetting(ServerSettingsKeys.SERVERCONF_TIMESHEET_NUMERICINPUT, mode);
+            return Response.ok(settings).build();
+        } catch (Exception ex) {
+            log.error("can not update timesheet settings", ex);
             return Response.serverError().build();
         }
     }

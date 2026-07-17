@@ -737,4 +737,6 @@ public interface AddressServiceLocal {
      */
     long countContacts(String search, String kind);
 
+    void runFullAddressBookSync();
+
 }

@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
+import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -691,8 +692,26 @@ public interface CalendarServiceLocal {
     void removeReview(String reviewId) throws Exception;
 
     public List<CalendarSetup> getAllCalendarSetups();
-    
+
     public List<CalendarSetup> getCalendarSetupsForUser(String principalId);
+
+    CalendarSetup addCalendarSetup(CalendarSetup cs);
+
+    CalendarSetup updateCalendarSetup(CalendarSetup cs);
+
+    void removeCalendarSetup(CalendarSetup cs);
+
+    List listCalendars(String host, boolean ssl, int port, String user, String password, String path) throws Exception;
+
+    void runFullCalendarSync();
+
+    CalendarEntryTemplate addCalendarEntryTemplate(CalendarEntryTemplate template) throws Exception;
+
+    CalendarEntryTemplate updateCalendarEntryTemplate(CalendarEntryTemplate template) throws Exception;
+
+    void removeCalendarEntryTemplate(CalendarEntryTemplate template) throws Exception;
+
+    List<CalendarEntryTemplate> getCalendarEntryTemplates() throws Exception;
     
     ArchiveFileReviewsBean addReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception;
     

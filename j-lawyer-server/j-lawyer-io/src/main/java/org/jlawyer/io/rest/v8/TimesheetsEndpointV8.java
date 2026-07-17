@@ -228,6 +228,85 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     }
 
     /**
+     * Creates a global timesheet position template. Requires administrator permission.
+     *
+     * @param template the template to create
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/templates")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Creates a global timesheet position template. Requires administrator permission.", response = org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionTemplateV8.class)
+    public Response createTemplate(@io.swagger.annotations.ApiParam RestfulTimesheetPositionTemplateV8 template) {
+        try {
+            InitialContext ic = new InitialContext();
+            TimesheetServiceLocal tsService = (TimesheetServiceLocal) ic.lookup(LOOKUP_TIMESHEETS);
+            TimesheetPositionTemplate created = tsService.addTimesheetPositionTemplate(template.toTemplate());
+            return Response.ok(RestfulTimesheetPositionTemplateV8.fromTemplate(created)).build();
+        } catch (Exception ex) {
+            log.error("can not create position template", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Updates a global timesheet position template. Requires administrator permission.
+     *
+     * @param template the template to update
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @POST
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/templates")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Updates a global timesheet position template. Requires administrator permission.", response = org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionTemplateV8.class)
+    public Response updateTemplate(@io.swagger.annotations.ApiParam RestfulTimesheetPositionTemplateV8 template) {
+        try {
+            InitialContext ic = new InitialContext();
+            TimesheetServiceLocal tsService = (TimesheetServiceLocal) ic.lookup(LOOKUP_TIMESHEETS);
+            TimesheetPositionTemplate updated = tsService.updateTimesheetPositionTemplate(template.toTemplate());
+            return Response.ok(RestfulTimesheetPositionTemplateV8.fromTemplate(updated)).build();
+        } catch (Exception ex) {
+            log.error("can not update position template", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Deletes a global timesheet position template. Requires administrator permission.
+     *
+     * @param templateId the id of the template to delete
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/templates/{templateId}")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Deletes a global timesheet position template. Requires administrator permission.")
+    public Response deleteTemplate(@PathParam("templateId") String templateId) {
+        try {
+            InitialContext ic = new InitialContext();
+            TimesheetServiceLocal tsService = (TimesheetServiceLocal) ic.lookup(LOOKUP_TIMESHEETS);
+            RestfulTimesheetPositionTemplateV8 ref = new RestfulTimesheetPositionTemplateV8();
+            ref.setId(templateId);
+            tsService.removeTimesheetPositionTemplate(ref.toTemplate());
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not delete position template", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
      * Sets the allowed position templates for a timesheet (project), restricting which positions /
      * hourly rates can be booked. Only the template ids in the body are used. An empty list clears
      * the restriction.

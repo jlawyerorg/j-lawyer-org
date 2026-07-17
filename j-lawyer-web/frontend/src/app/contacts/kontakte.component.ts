@@ -12,6 +12,7 @@ import { PinsService } from '../shell/pins.service';
 import { ContactsService } from './contacts.service';
 import { ContactEditorComponent } from './contact-editor.component';
 import { ContactCase, ContactData, ContactDetail, ContactDocSortKey, ContactDocument, ContactFilter } from './contact.models';
+import { CustomField, CustomFieldsService } from '../settings/custom-fields.service';
 
 type ContactTab = 'overview' | 'cases' | 'documents';
 
@@ -184,6 +185,19 @@ type ContactTab = 'overview' | 'cases' | 'documents';
                   </div>
                 }
 
+                @if (addressCustomFields().length) {
+                  <div class="card">
+                    <div class="card-h"><h3>{{ 'kontakte.editor.group.custom' | transloco }}</h3></div>
+                    <div class="card-b">
+                      <dl class="kv">
+                        @for (cf of addressCustomFields(); track cf.key) {
+                          <dt>{{ cf.label }}</dt><dd>{{ cfVal(cf.key) || '—' }}</dd>
+                        }
+                      </dl>
+                    </div>
+                  </div>
+                }
+
                 @if (!c.channels.length && !c.addressLines.length && !c.sections.length && !c.notice) {
                   <p class="muted">{{ 'kontakte.noDetails' | transloco }}</p>
                 }
@@ -316,6 +330,13 @@ type ContactTab = 'overview' | 'cases' | 'documents';
 })
 export class KontakteComponent {
   protected readonly cases = inject(ContactsService);
+  private readonly customFieldsSvc = inject(CustomFieldsService);
+  /** Configured (non-empty) custom fields for addresses (shown read-only in the detail). */
+  protected readonly addressCustomFields = signal<CustomField[]>([]);
+  /** Reads the selected contact's custom-field value by slot key. */
+  protected cfVal(key: string): string {
+    return (this.cases.rawSelected() as unknown as Record<string, string> | null)?.[key] ?? '';
+  }
   protected readonly pins = inject(PinsService);
   private readonly content = inject(DocumentContentService);
   private readonly route = inject(ActivatedRoute);
@@ -355,6 +376,7 @@ export class KontakteComponent {
 
   constructor() {
     this.cases.reload();
+    this.customFieldsSvc.labels('address').subscribe((l) => this.addressCustomFields.set(this.customFieldsSvc.configuredFields(l)));
     // A :id route param (deep link / pinned shortcut) selects that contact.
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       const id = params.get('id');

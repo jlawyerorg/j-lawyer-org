@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.Invoice;
+import com.jdimension.jlawyer.persistence.BankStatementsCSVConfig;
 import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePositionTemplate;
 import com.jdimension.jlawyer.persistence.InvoiceStatusSummary;
@@ -707,5 +708,13 @@ public interface InvoiceServiceLocal {
     void checkInvoicesDue();
 
     byte[] getGiroCode(String senderPrincipalId, BigDecimal amount, String purpose) throws Exception;
-    
+
+    List<BankStatementsCSVConfig> getAllBankStatementsCSVConfigurations() throws Exception;
+
+    BankStatementsCSVConfig addBankStatementsCSVConfiguration(BankStatementsCSVConfig csv) throws Exception;
+
+    BankStatementsCSVConfig updateBankStatementsCSVConfiguration(BankStatementsCSVConfig csv) throws Exception;
+
+    void removeBankStatementsCSVConfiguration(BankStatementsCSVConfig csv) throws Exception;
+
 }

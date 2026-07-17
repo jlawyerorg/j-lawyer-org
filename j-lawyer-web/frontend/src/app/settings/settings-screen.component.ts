@@ -19,6 +19,20 @@ import { ScanSettingsComponent } from './scan-settings.component';
 import { BackupSettingsComponent } from './backup-settings.component';
 import { StirlingSettingsComponent } from './stirling-settings.component';
 import { BeaSettingsComponent } from './bea-settings.component';
+import { MultiValueTagsComponent } from './multi-value-tags.component';
+import { MvEntityType } from './multi-value-tag.service';
+import { SearchIndexComponent } from './search-index.component';
+import { CustomFieldsComponent } from './custom-fields.component';
+import { CardDavSyncComponent } from './carddav-sync.component';
+import { NameTemplatesComponent } from './name-templates.component';
+import { CalendarSetupsComponent } from './calendar-setups.component';
+import { CalendarEntryTemplatesComponent } from './calendar-entry-templates.component';
+import { BankStatementConfigsComponent } from './bank-statement-configs.component';
+import { TimesheetTemplatesComponent } from './timesheet-templates.component';
+import { TimesheetSettingsComponent } from './timesheet-settings.component';
+import { AssistantServersComponent } from './assistant-servers.component';
+import { AssistantPromptsComponent } from './assistant-prompts.component';
+import { AssistantReplacementsComponent } from './assistant-replacements.component';
 
 interface SectionGroup {
   groupKey: string;
@@ -36,7 +50,7 @@ interface SectionGroup {
   selector: 'jl-settings-screen',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoModule, IconComponent, OptionListEditorComponent, SettingsUsersComponent, SettingsGroupsComponent, FirmProfileComponent, FinanceTypesComponent, FinancePoolsComponent, FinancePositionsComponent, FinanceSettingsComponent, PartyTypesComponent, CaseNumberingComponent, FolderTemplatesComponent, ScanSettingsComponent, BackupSettingsComponent, StirlingSettingsComponent, BeaSettingsComponent],
+  imports: [TranslocoModule, IconComponent, OptionListEditorComponent, SettingsUsersComponent, SettingsGroupsComponent, FirmProfileComponent, FinanceTypesComponent, FinancePoolsComponent, FinancePositionsComponent, FinanceSettingsComponent, PartyTypesComponent, CaseNumberingComponent, FolderTemplatesComponent, ScanSettingsComponent, BackupSettingsComponent, StirlingSettingsComponent, BeaSettingsComponent, MultiValueTagsComponent, SearchIndexComponent, CustomFieldsComponent, CardDavSyncComponent, NameTemplatesComponent, CalendarSetupsComponent, CalendarEntryTemplatesComponent, BankStatementConfigsComponent, TimesheetTemplatesComponent, TimesheetSettingsComponent, AssistantServersComponent, AssistantPromptsComponent, AssistantReplacementsComponent],
   template: `
     <div class="st" [class.show-detail]="selected()">
       <section class="st-list">
@@ -90,6 +104,19 @@ interface SectionGroup {
               @case ('backupSettings') { <jl-backup-settings /> }
               @case ('stirlingSettings') { <jl-stirling-settings /> }
               @case ('beaSettings') { <jl-bea-settings /> }
+              @case ('multiValueTags') { <jl-multi-value-tags [entityType]="$any(s.entityType)" /> }
+              @case ('searchIndex') { <jl-search-index /> }
+              @case ('customFields') { <jl-custom-fields /> }
+              @case ('cardDavSync') { <jl-carddav-sync /> }
+              @case ('nameTemplates') { <jl-name-templates /> }
+              @case ('calendarSetups') { <jl-calendar-setups /> }
+              @case ('calendarEntryTemplates') { <jl-calendar-entry-templates /> }
+              @case ('bankStatementConfigs') { <jl-bank-statement-configs /> }
+              @case ('timesheetTemplates') { <jl-timesheet-templates /> }
+              @case ('timesheetSettings') { <jl-timesheet-settings /> }
+              @case ('assistantServers') { <jl-assistant-servers /> }
+              @case ('assistantPrompts') { <jl-assistant-prompts /> }
+              @case ('assistantReplacements') { <jl-assistant-replacements /> }
             }
           </div>
         } @else {

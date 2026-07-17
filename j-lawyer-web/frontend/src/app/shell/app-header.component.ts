@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
@@ -7,6 +7,7 @@ import { LanguageService } from '../core/language.service';
 import { AuthService } from '../core/auth/auth.service';
 import { TimesheetTrackingService } from '../akten/timesheet-tracking.service';
 import { TimesheetLogComponent } from '../akten/timesheet-log.component';
+import { UserProfileComponent } from '../settings/user-profile.component';
 
 /**
  * Navy top bar: wordmark (logo colors), global search, notifications, language switcher,
@@ -17,7 +18,7 @@ import { TimesheetLogComponent } from '../akten/timesheet-log.component';
   selector: 'jl-app-header',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, TranslocoModule, TimesheetLogComponent],
+  imports: [IconComponent, TranslocoModule, TimesheetLogComponent, UserProfileComponent],
   template: `
     <span class="wordmark">
       <span class="dots" aria-hidden="true"></span><b>j-lawyer</b>
@@ -70,7 +71,10 @@ import { TimesheetLogComponent } from '../akten/timesheet-log.component';
     >
       <jl-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
     </button>
-    <span class="avatar" [title]="auth.user()?.displayName ?? ''">{{ auth.user()?.initials ?? '' }}</span>
+    <button type="button" class="avatar" [title]="auth.user()?.displayName ?? ''"
+            [attr.aria-label]="'profile.open' | transloco" (click)="profileOpen.set(true)">
+      {{ auth.user()?.initials ?? '' }}
+    </button>
     <button
       type="button"
       class="icon-btn"
@@ -83,6 +87,10 @@ import { TimesheetLogComponent } from '../akten/timesheet-log.component';
 
     @if (tracking.dialogOpen()) {
       <jl-timesheet-log (close)="tracking.close()" />
+    }
+
+    @if (profileOpen()) {
+      <jl-user-profile (close)="profileOpen.set(false)" />
     }
   `,
   styles: [`
@@ -124,8 +132,10 @@ import { TimesheetLogComponent } from '../akten/timesheet-log.component';
     .avatar {
       width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
       background: linear-gradient(135deg, var(--jl-blue), #0a5b90); color: #fff;
-      font-size: .78rem; font-weight: 700;
+      font-size: .78rem; font-weight: 700; border: 0; padding: 0; cursor: pointer; font-family: inherit;
+      transition: box-shadow .13s ease;
     }
+    .avatar:hover { box-shadow: 0 0 0 2px #ffffff40; }
     /* Stopwatch: steady when idle; pulses green + shows a live count while a timer runs. */
     .stopwatch.running { color: #4ade80; background: #4ade8022; animation: jl-pulse 1.15s ease-in-out infinite; }
     .stopwatch.running:hover { color: #86efac; background: #4ade8033; }
@@ -141,6 +151,9 @@ export class AppHeaderComponent {
   protected readonly auth = inject(AuthService);
   protected readonly tracking = inject(TimesheetTrackingService);
   private readonly router = inject(Router);
+
+  /** Whether the self-service profile dialog (header avatar) is open. */
+  protected readonly profileOpen = signal(false);
 
   /** Global search: routes the term to the fulltext documents module (?q=). */
   protected search(term: string): void {

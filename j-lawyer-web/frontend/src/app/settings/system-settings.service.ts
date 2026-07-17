@@ -22,6 +22,32 @@ export interface BeaSettings {
   endpoint: string;
 }
 
+/** Full-text search-index status (RestfulSearchIndexV7). */
+export interface SearchIndexStatus {
+  indexedDocuments: number;
+  totalDocuments: number;
+}
+
+/** Address-book → Nextcloud/CardDAV sync config (RestfulCardDavSyncV7). Password write-only. */
+export interface CardDavSyncSettings {
+  enabled: boolean;
+  birthdaySync: boolean;
+  host: string;
+  port: number;
+  ssl: boolean;
+  path: string;
+  user: string;
+  password: string;
+  passwordSet: boolean;
+  href: string;
+}
+
+/** A CardDAV address book (RestfulCloudAddressBookV7). */
+export interface CloudAddressBook {
+  href: string;
+  displayName: string;
+}
+
 /** Data-backup configuration (RestfulBackupSettingsV7). Passwords are write-only. */
 export interface BackupSettings {
   enabled: boolean;
@@ -70,4 +96,12 @@ export class SystemSettingsService {
 
   getBea(): Observable<BeaSettings> { return this.http.get<BeaSettings>(`${CONFIG_V7}/bea-settings`); }
   saveBea(s: BeaSettings): Observable<BeaSettings> { return this.http.put<BeaSettings>(`${CONFIG_V7}/bea-settings`, s); }
+
+  getSearchIndex(): Observable<SearchIndexStatus> { return this.http.get<SearchIndexStatus>(`${CONFIG_V7}/search-index`); }
+  reindexSearchIndex(): Observable<unknown> { return this.http.post(`${CONFIG_V7}/search-index/reindex`, {}); }
+
+  getCardDavSync(): Observable<CardDavSyncSettings> { return this.http.get<CardDavSyncSettings>(`${CONFIG_V7}/carddav-sync`); }
+  saveCardDavSync(s: CardDavSyncSettings): Observable<CardDavSyncSettings> { return this.http.put<CardDavSyncSettings>(`${CONFIG_V7}/carddav-sync`, s); }
+  listCloudAddressBooks(s: CardDavSyncSettings): Observable<CloudAddressBook[]> { return this.http.post<CloudAddressBook[]>(`${CONFIG_V7}/carddav-sync/addressbooks`, s); }
+  runCardDavSync(): Observable<unknown> { return this.http.post(`${CONFIG_V7}/carddav-sync/run`, {}); }
 }

@@ -14,6 +14,7 @@ import { PinsService } from '../shell/pins.service';
 import { CaseEditorComponent } from './case-editor.component';
 import { PartyAddComponent } from './party-add.component';
 import { PartyEditorComponent } from './party-editor.component';
+import { CustomField, CustomFieldsService } from '../settings/custom-fields.service';
 import { TimesheetEditorComponent, TimesheetSaveResult } from './timesheet-editor.component';
 import { TimesheetDetailComponent } from './timesheet-detail.component';
 import { PositionEditorComponent, PositionEditResult, PositionMode } from './position-editor.component';
@@ -187,6 +188,20 @@ interface TimesheetView extends CaseTimesheet {
                     </dl>
                   </div>
                 </div>
+
+                <!-- Eigene Felder -->
+                @if (caseCustomFields().length) {
+                  <div class="card">
+                    <div class="card-h"><h3>{{ 'akten.editor.group.custom' | transloco }}</h3></div>
+                    <div class="card-b">
+                      <dl class="kv">
+                        @for (cf of caseCustomFields(); track cf.key) {
+                          <dt>{{ cf.label }}</dt><dd>{{ cfVal(c, cf.key) || '—' }}</dd>
+                        }
+                      </dl>
+                    </div>
+                  </div>
+                }
 
                 <!-- Etiketten -->
                 <div class="card">
@@ -513,6 +528,9 @@ interface TimesheetView extends CaseTimesheet {
                         <span class="nm">{{ p.contact || '—' }}</span>
                         @if (p.contactPerson) { <span class="ref">{{ 'akten.party.contactPerson' | transloco }}: {{ p.contactPerson }}</span> }
                         @if (p.reference) { <span class="ref">{{ 'akten.party.reference' | transloco }}: {{ p.reference }}</span> }
+                        @for (cf of partyCustomFields(); track cf.key) {
+                          @if (cfVal(p, cf.key)) { <span class="ref">{{ cf.label }}: {{ cfVal(p, cf.key) }}</span> }
+                        }
                       </span>
                       <span class="row-actions">
                         @if (p.addressId) {
@@ -1066,8 +1084,18 @@ export class AktenComponent {
   private readonly transloco = inject(TranslocoService);
   private readonly auth = inject(AuthService);
   private readonly tracking = inject(TimesheetTrackingService);
+  private readonly customFieldsSvc = inject(CustomFieldsService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+
+  /** Configured (non-empty) custom fields for cases (shown in the overview + editor). */
+  protected readonly caseCustomFields = signal<CustomField[]>([]);
+  /** Configured (non-empty) custom fields for parties (shown in the parties tab + editor). */
+  protected readonly partyCustomFields = signal<CustomField[]>([]);
+  /** Reads a case's or party's custom-field value by slot key. */
+  protected cfVal(obj: unknown, key: string): string {
+    return (obj as Record<string, string> | null)?.[key] ?? '';
+  }
 
   protected readonly tabs: CaseTab[] = ['overview', 'documents', 'parties', 'deadlines', 'finance', 'zeiten', 'history'];
   protected readonly filters: CaseFilter[] = ['all', 'open', 'closed'];
@@ -1209,6 +1237,8 @@ export class AktenComponent {
     // Invoice types + number-range pools for the invoice editor (cached app-wide in the service).
     this.cases.invoiceTypes().subscribe((t) => this.invoiceTypes.set(t));
     this.cases.invoicePools().subscribe((p) => this.invoicePools.set(p));
+    this.customFieldsSvc.labels('case').subscribe((l) => this.caseCustomFields.set(this.customFieldsSvc.configuredFields(l)));
+    this.customFieldsSvc.labels('party').subscribe((l) => this.partyCustomFields.set(this.customFieldsSvc.configuredFields(l)));
     // The route param (/cases/:id) is the source of truth for the selected case, so
     // deep links, browser back/forward and in-app navigation all stay in sync.
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {

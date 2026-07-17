@@ -20,6 +20,12 @@ public interface TimesheetsEndpointLocalV8 {
 
     Response getTimesheetTemplates(String timesheetId);
 
+    Response createTemplate(org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionTemplateV8 template);
+
+    Response updateTemplate(org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionTemplateV8 template);
+
+    Response deleteTemplate(String templateId);
+
     Response getRunningPositions();
 
     Response getRunningPositionsCount();

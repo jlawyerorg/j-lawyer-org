@@ -4,6 +4,7 @@ import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { CasesService } from './cases.service';
 import { CaseGroup, CaseUserRef, CaseWrite } from './case.models';
+import { CustomField, CustomFieldsService } from '../settings/custom-fields.service';
 
 /**
  * Modal editor for a case's master data (Stammdaten). Works on a clone of the full case DTO (from
@@ -95,6 +96,18 @@ import { CaseGroup, CaseUserRef, CaseWrite } from './case.models';
           </label>
         </div>
 
+        @if (customFields().length) {
+          <h4 class="grp">{{ 'akten.editor.group.custom' | transloco }}</h4>
+          <div class="grid">
+            @for (cf of customFields(); track cf.key) {
+              <label class="fld">
+                <span class="lbl">{{ cf.label }}</span>
+                <input type="text" [ngModel]="strVal(cf.key)" (ngModelChange)="upd(cf.key, $event)" />
+              </label>
+            }
+          </div>
+        }
+
         <h4 class="grp">{{ 'akten.note' | transloco }}</h4>
         <div class="grid">
           <label class="fld wide">
@@ -157,11 +170,14 @@ export class CaseEditorComponent implements OnInit {
   readonly close = output<void>();
 
   private readonly cases = inject(CasesService);
+  private readonly customFieldsSvc = inject(CustomFieldsService);
 
   /** Working copy — a clone of the input case (edit) or empty (create). */
   protected readonly f = signal<CaseWrite>({});
   protected readonly users = signal<CaseUserRef[]>([]);
   protected readonly groups = signal<CaseGroup[]>([]);
+  /** Configured (non-empty) custom fields for cases. */
+  protected readonly customFields = signal<CustomField[]>([]);
 
   protected readonly canSave = computed(() => !!(this.f().name ?? '').trim());
 
@@ -172,6 +188,7 @@ export class CaseEditorComponent implements OnInit {
     }
     this.cases.users().subscribe((u) => this.users.set(u));
     this.cases.allGroups().subscribe((g) => this.groups.set(g));
+    this.customFieldsSvc.labels('case').subscribe((l) => this.customFields.set(this.customFieldsSvc.configuredFields(l)));
   }
 
   /**

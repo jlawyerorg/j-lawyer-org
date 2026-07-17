@@ -677,6 +677,7 @@ import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Properties;
 import javax.ejb.Local;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.plugins.calculation.GenericCalculationTable;
@@ -762,6 +763,16 @@ public interface SystemManagementLocal {
 
     List<DocumentNameTemplate> getDocumentNameTemplates() throws Exception;
 
+    DocumentNameTemplate getDocumentNameTemplate(String templateId) throws Exception;
+
+    DocumentNameTemplate addDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
+
+    DocumentNameTemplate updateDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
+
+    void removeDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
+
+    List<String> previewDocumentNamesForTemplate(DocumentNameTemplate template, String fileName) throws Exception;
+
     List<DocumentTagRule> getAllDocumentTagRules();
 
     /**
@@ -782,5 +793,39 @@ public interface SystemManagementLocal {
      * @return {@code true} on success
      */
     boolean setSetting(String key, String value);
+
+    /**
+     * Changes the password of the currently authenticated caller. Already implemented for the remote
+     * interface; exposed on the local interface so the self-service profile REST endpoint can let a
+     * logged-in (non-admin) user change their own password. Requires only {@code loginRole} and
+     * operates on the caller principal — never another user.
+     *
+     * @param newPassword the new clear-text password (hashed before it is persisted)
+     * @return {@code true} on success
+     * @throws Exception if the caller cannot be resolved or persisting fails
+     */
+    boolean updatePassword(String newPassword) throws Exception;
+
+    /**
+     * Returns the per-user settings ({@link java.util.Properties}) of the given user. Already
+     * implemented for the remote interface; exposed on the local interface so the self-service
+     * profile REST endpoint can read the caller's own settings (notifications, default case groups,
+     * …). Only {@link AppUserBean#getPrincipalId()} of the argument is used to look up the record.
+     *
+     * @param user the user whose settings to read (only the principal id is used)
+     * @return the stored settings (empty when none are set)
+     */
+    Properties getUserSettings(AppUserBean user);
+
+    /**
+     * Replaces the per-user settings of the given user. Already implemented for the remote interface;
+     * exposed on the local interface so the self-service profile REST endpoint can persist the
+     * caller's own settings. Only {@link AppUserBean#getPrincipalId()} of the argument is used to
+     * locate the record.
+     *
+     * @param user the user whose settings to write (only the principal id is used)
+     * @param settings the settings to store
+     */
+    void setUserSettings(AppUserBean user, Properties settings);
 
 }
