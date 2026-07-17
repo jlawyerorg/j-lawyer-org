@@ -762,6 +762,7 @@ import com.jdimension.jlawyer.ui.folders.DocumentEntryPanel;
 import com.jdimension.jlawyer.ui.tagging.ArchiveFileTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.DocumentTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.TagSelectedAction;
+import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.ui.tagging.MultiValueTag;
 import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
@@ -4729,6 +4730,32 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
 
         int[] selectedRows = this.tblReviewReasons.getSelectedRows();
+
+        java.util.List<ArchiveFileReviewsBean> openRespites = new ArrayList<>();
+        for (int i = 0; i < selectedRows.length; i++) {
+            ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
+            if (!review.isDone() && review.getEventType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
+                openRespites.add(review);
+            }
+        }
+        if (!openRespites.isEmpty()) {
+            java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel");
+            int response;
+            if (openRespites.size() == 1) {
+                response = JOptionPane.showConfirmDialog(this, java.text.MessageFormat.format(bundle.getString("dialog.confirm.setdone"), new Object[]{openRespites.get(0).getSummary()}), bundle.getString("dialog.confirm.setdone.title"), JOptionPane.YES_NO_OPTION);
+            } else {
+                StringBuilder reasons = new StringBuilder();
+                for (ArchiveFileReviewsBean r : openRespites) {
+                    reasons.append("- ").append(r.getSummary()).append(System.lineSeparator());
+                }
+                response = JOptionPane.showConfirmDialog(this, java.text.MessageFormat.format(bundle.getString("dialog.confirm.setdone.multiple"), new Object[]{openRespites.size(), reasons.toString()}), bundle.getString("dialog.confirm.setdone.multiple.title"), JOptionPane.YES_NO_OPTION);
+            }
+            if (response != JOptionPane.YES_OPTION) {
+                EditorsRegistry.getInstance().clearStatus();
+                return;
+            }
+        }
+
         ArchiveFileReviewsBean relevantEvent = null;
         for (int i = 0; i < selectedRows.length; i++) {
 
@@ -6258,6 +6285,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 // click on checkbox in table
                 int row = this.tblReviewReasons.rowAtPoint(p);
                 ArchiveFileReviewsBean reviewDto = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(row, 0);
+                if (!reviewDto.isDone() && reviewDto.getEventType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
+                    int response = JOptionPane.showConfirmDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("dialog.confirm.setdone"), new Object[]{reviewDto.getSummary()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("dialog.confirm.setdone.title"), JOptionPane.YES_NO_OPTION);
+                    if (response != JOptionPane.YES_OPTION) {
+                        return;
+                    }
+                }
                 reviewDto.setDone(!reviewDto.isDone());
 
                 ClientSettings settings = ClientSettings.getInstance();
