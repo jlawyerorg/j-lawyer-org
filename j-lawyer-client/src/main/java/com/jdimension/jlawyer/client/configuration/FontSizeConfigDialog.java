@@ -676,7 +676,8 @@ import org.apache.log4j.Logger;
 public class FontSizeConfigDialog extends javax.swing.JDialog {
 
     private static final Logger log=Logger.getLogger(FontSizeConfigDialog.class.getName());
-    
+    private int initialFontOffset = 0;
+
     /**
      * Creates new form FontSizeConfigDialog
      * @param parent
@@ -699,12 +700,24 @@ public class FontSizeConfigDialog extends javax.swing.JDialog {
         String fontSizeOffset=settings.getConfiguration(ClientSettings.CONF_UI_FONTSIZEOFFSET, "0");
         try {
             int offset=Integer.parseInt(fontSizeOffset);
+            this.initialFontOffset = offset;
             this.sldFontScale.setValue(offset);
             lblFontScale.setText("" + offset);
         } catch (Throwable t) {
             lblScale.setText("0");
         }
-        
+
+        this.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                restorePreview();
+            }
+        });
+
+    }
+
+    private void restorePreview() {
+        FontUtils.getInstance().updateDefaults(this.initialFontOffset);
     }
 
     /**
@@ -897,34 +910,29 @@ public class FontSizeConfigDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOKActionPerformed
+        ClientSettings settings = ClientSettings.getInstance();
+        settings.setConfiguration(ClientSettings.CONF_UI_SCALING, "" + ((float) this.sldGlobalScale.getValue()) / 100f);
+        settings.setConfiguration(ClientSettings.CONF_UI_FONTSIZEOFFSET, "" + this.sldFontScale.getValue());
+        log.info("setting UI scaling factor to " + ((float) this.sldGlobalScale.getValue()) / 100f);
         JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/FontSizeConfigDialog").getString("dialog.restartrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/FontSizeConfigDialog").getString("dialog.title"), JOptionPane.INFORMATION_MESSAGE);
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdOKActionPerformed
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
+        this.restorePreview();
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCancelActionPerformed
 
     private void sldGlobalScaleStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sldGlobalScaleStateChanged
         this.lblScale.setText("" + this.sldGlobalScale.getValue());
-
-
-        ClientSettings settings=ClientSettings.getInstance();
-        settings.setConfiguration(ClientSettings.CONF_UI_SCALING, ""+((float)this.sldGlobalScale.getValue())/100f);
-        
-        log.info("setting UI scaling factor to " +""+((float)this.sldGlobalScale.getValue())/100f);
-
     }//GEN-LAST:event_sldGlobalScaleStateChanged
 
     private void sldFontScaleStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sldFontScaleStateChanged
         this.lblFontScale.setText("" + this.sldFontScale.getValue());
 
         FontUtils.getInstance().updateDefaults(this.sldFontScale.getValue());
-
-        ClientSettings settings=ClientSettings.getInstance();
-        settings.setConfiguration(ClientSettings.CONF_UI_FONTSIZEOFFSET, "" + this.sldFontScale.getValue());
 
         SwingUtilities.updateComponentTreeUI(this.jTextField1);
         SwingUtilities.updateComponentTreeUI(this.cmdOK);
