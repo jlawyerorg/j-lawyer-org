@@ -679,8 +679,8 @@ public class SortButton extends JButton {
     public static int SORT_ASC = 20;
     public static int SORT_DESC = 30;
     
-    private static final ImageIcon ICON_ASC=new javax.swing.ImageIcon(SortButton.class.getResource("/icons16/material/baseline_expand_less_white_48dp.png"));
-    private static final ImageIcon ICON_DESC=new javax.swing.ImageIcon(SortButton.class.getResource("/icons16/material/baseline_expand_more_white_48dp.png"));
+    private static final ImageIcon ICON_ASC=new javax.swing.ImageIcon(SortButton.class.getResource("/icons16/material/baseline_expand_more_white_48dp.png"));
+    private static final ImageIcon ICON_DESC=new javax.swing.ImageIcon(SortButton.class.getResource("/icons16/material/baseline_expand_less_white_48dp.png"));
     private ImageIcon ICON_NONE=new javax.swing.ImageIcon(SortButton.class.getResource("/icons16/material/empty_20_1px.png"));
 
     private int sortState = SORT_NONE;

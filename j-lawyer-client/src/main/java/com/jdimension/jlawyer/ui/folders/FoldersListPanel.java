@@ -1010,6 +1010,9 @@ public class FoldersListPanel extends javax.swing.JPanel {
 
     void folderUpdated(CaseFolder folder) {
         this.caseFolderPanel.updateDocumentsInFolder(folder);
+        // rebuild the "move to folder" menu so renamed folders show their new name,
+        // mirroring what folderAdded / folderRemoved already do
+        this.caseFolderPanel.setRootFolder(this.getRootFolder(), this.getUnselectedFolderIds());
         this.forceRelayout();
     }
 
