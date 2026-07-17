@@ -1252,7 +1252,7 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
             this.chkDescription.setSelected(postPonedDone);
 
             // Show the new date in the label so user can verify their selection
-            SimpleDateFormat dfDisplay = new SimpleDateFormat("dd.MM.yyyy");
+            SimpleDateFormat dfDisplay = new SimpleDateFormat("EEEE, dd.MM.yyyy");
             String newDateStr = dfDisplay.format(d);
             String reason = e.getReviewReason();
             if (reason == null || reason.isEmpty()) {
