@@ -702,6 +702,11 @@ public class LinuxOfficeLauncher extends OfficeLauncher {
                     odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
                     observer.addDocument(odoc);
 
+                    if (JavaUnoOfficeMonitor.launch(loBinary, url, odoc)) {
+                        odoc.setStatus(ObservedDocument.STATUS_OPEN);
+                        return;
+                    }
+
                     Process p = null;
                     boolean libreOffice = false;
                     try {
