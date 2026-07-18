@@ -809,6 +809,9 @@ public class DocumentObserver {
             }
 
             if (closed) {
+                if (doc instanceof ObservedOfficeDocument) {
+                    ((ObservedOfficeDocument) doc).closeUnoMonitorSession();
+                }
                 for (DocumentObserverListener l : listeners) {
                     if (l != null) {
                         l.documentClosed(doc);

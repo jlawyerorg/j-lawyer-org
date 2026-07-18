@@ -700,6 +700,11 @@ public class MacOfficeLauncher extends OfficeLauncher {
                 ServerSettings settings = ServerSettings.getInstance();
                 int waitForTime = settings.getSettingAsInt(ServerSettings.SERVERCONF_DOCUMENTS_WAITFOR_MAC, 4000);
                 
+                if (JavaUnoOfficeMonitor.launch(loBinary, url, odoc)) {
+                    odoc.setStatus(ObservedDocument.STATUS_OPEN);
+                    return;
+                }
+
                 Process p = null;
                 boolean libreOffice = false;
                 try {
