@@ -749,6 +749,7 @@ public interface ArchiveFileServiceLocal {
 
     public Collection<ArchiveFileTagsBean> getTags(String archiveFileId) throws Exception;
     public Collection<ArchiveFileTagsBean> getTagsUnrestricted(String archiveFileId) throws Exception;
+    HashMap<String, ArrayList<ArchiveFileTagsBean>> getTags(List<String> archiveFileId) throws Exception;
 
     Collection getDocumentsUnrestricted(String archiveFileKey);
 
@@ -770,6 +771,7 @@ public interface ArchiveFileServiceLocal {
     String getNewDocumentNameUnrestricted(String fileName, Date date, DocumentNameTemplate tpl) throws Exception;
     
     Collection<DocumentTagsBean> getDocumentTags(String documentId) throws Exception;
+    HashMap<String, ArrayList<DocumentTagsBean>> getDocumentTags(List<String> documentId) throws Exception;
     
     public boolean renameDocument(String id, String newName) throws Exception;
     

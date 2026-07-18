@@ -16,29 +16,32 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with j-lawyer.org.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v8;
-
-import javax.ejb.Local;
-import javax.ws.rs.core.Response;
+package org.jlawyer.io.rest.v8.pojo;
 
 /**
- * Local business interface of the v8 cases list endpoint (richer overview than v1).
+ * The web dashboard ("Mein Desktop") configuration of the current user: which widgets are visible and
+ * their per-widget settings. The server treats {@code config} as an opaque JSON string — it is stored
+ * and returned verbatim; the schema is owned by the web client. Empty means "no config stored yet"
+ * (the client applies its defaults). Mirrors how the desktop persists its grid layout as JSON.
  *
  * @author jens
  */
-@Local
-public interface CasesEndpointLocalV8 {
+public class RestfulDashboardConfigV8 {
 
-    Response listCases();
+    private String config = "";
 
-    Response listActiveCases();
+    public RestfulDashboardConfigV8() {
+    }
 
-    Response listPage(int offset, int limit, String filter, String q);
+    public RestfulDashboardConfigV8(String config) {
+        this.config = config;
+    }
 
-    Response getHistory(String id);
+    public String getConfig() {
+        return config;
+    }
 
-    Response getCasesByTag(String tag, String value);
-
-    Response getDocumentsByTag(String tag, String value);
-
+    public void setConfig(String config) {
+        this.config = config;
+    }
 }

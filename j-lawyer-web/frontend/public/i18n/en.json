@@ -1403,15 +1403,49 @@
     "loading": "Loading …",
     "error": "Could not be loaded.",
     "retry": "Try again",
+    "configure": "Configure widgets",
+    "cfg": {
+      "widgets": "Visible widgets",
+      "user": "User filter",
+      "userAll": "All users",
+      "userMe": "Only me",
+      "range": "Range"
+    },
+    "widget": {
+      "stats": "Statistics",
+      "status": "Quick access",
+      "recent": "Recently changed",
+      "due": "Due",
+      "invoices": "Open invoices",
+      "tagged": "By label",
+      "messages": "Messages to me"
+    },
+    "stats": {
+      "cases": "Cases total",
+      "open": "open cases",
+      "archived": "archived",
+      "contacts": "Contacts"
+    },
+    "status": {
+      "mail": "unread e-mails",
+      "scans": "new scans",
+      "bea": "beA unread",
+      "nothing": "Nothing new."
+    },
     "recent": {
       "title": "Recently changed",
       "empty": "No cases."
     },
     "due": {
-      "title": "Due & follow-ups",
+      "title": "Due",
+      "past": "days back",
+      "future": "days ahead",
+      "markDone": "Mark as done",
+      "reschedule": "Change date",
       "empty": "Nothing due.",
       "noSummary": "(no subject)",
       "type": {
+        "all": "All",
         "event": "Appointment",
         "respite": "Deadline",
         "followup": "Follow-up"
@@ -1422,6 +1456,21 @@
       "open": "open",
       "sum": "Total (gross)",
       "empty": "No open invoices."
+    },
+    "tagged": {
+      "title": "By label",
+      "allTab": "All",
+      "subscribe": "Subscribe to labels",
+      "caseTags": "Case labels",
+      "docTags": "Document labels",
+      "none": "None available",
+      "pick": "Subscribe to labels above (plus icon).",
+      "empty": "Nothing with this label."
+    },
+    "messages": {
+      "title": "Messages to me",
+      "done": "Mark as done",
+      "empty": "No open messages."
     }
   },
   "dokumente": {

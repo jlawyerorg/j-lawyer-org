@@ -1110,6 +1110,8 @@ export class AktenComponent {
 
   // Document preview — handed to the shared <jl-document-preview> overlay.
   protected readonly previewDoc = signal<PreviewDoc | null>(null);
+  /** A document id from a ?doc= deep link, opened once its case detail has loaded. */
+  private pendingDocId: string | null = null;
 
   // Documents tab: folder navigation. Multiple folders can be viewed at once (like the Swing
   // client) — docFolderSel holds the selected folder ids (default: all). docMobilePane drives the
@@ -1253,6 +1255,12 @@ export class AktenComponent {
         this.selectedId.set(null);
         this.selected.set(null);
       }
+    });
+    // Optional ?doc=<id> deep link (e.g. from the dashboard "Nach Etikett" widget): once the
+    // case detail is loaded, switch to the documents tab and open that document's preview.
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      this.pendingDocId = params.get('doc');
+      this.tryOpenPendingDoc();
     });
     // On wide screens with no deep link, open the first case once the list arrives (once).
     effect(() => {
@@ -1457,6 +1465,23 @@ export class AktenComponent {
     return previewKindOf(doc.ext) !== 'none';
   }
 
+  /**
+   * Opens a ?doc= deep-linked document once its case detail is available: selects the documents
+   * tab and opens the preview. No-op until both the id and the loaded detail are present.
+   */
+  private tryOpenPendingDoc(): void {
+    const docId = this.pendingDocId;
+    if (!docId) { return; }
+    const detail = this.selected();
+    if (!detail) { return; }
+    const doc = detail.documents.find((d) => d.id === docId);
+    if (doc) {
+      this.pendingDocId = null;
+      this.activeTab.set('documents');
+      this.preview(doc);
+    }
+  }
+
   /** Opens the shared preview overlay for a document (download-only kinds just download). */
   protected preview(doc: CaseDocument): void {
     if (previewKindOf(doc.ext) === 'none') {
@@ -1532,6 +1557,7 @@ export class AktenComponent {
         // Default: every folder selected (mirrors the Swing client's initial state).
         this.docFolderSel.set(new Set(collectFolderIds(detail)));
         this.detailLoading.set(false);
+        this.tryOpenPendingDoc();
       }
     });
     // Overview extras (labels, permissions, messages) load eagerly alongside the detail.

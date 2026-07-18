@@ -1403,15 +1403,49 @@
     "loading": "Wird geladen …",
     "error": "Konnte nicht geladen werden.",
     "retry": "Erneut versuchen",
+    "configure": "Widgets konfigurieren",
+    "cfg": {
+      "widgets": "Angezeigte Widgets",
+      "user": "Nutzer-Filter",
+      "userAll": "Alle Nutzer",
+      "userMe": "Nur ich",
+      "range": "Zeitraum"
+    },
+    "widget": {
+      "stats": "Statistik",
+      "status": "Schnellzugriff",
+      "recent": "Zuletzt geändert",
+      "due": "Fällig",
+      "invoices": "Offene Rechnungen",
+      "tagged": "Nach Etikett",
+      "messages": "Nachrichten an mich"
+    },
+    "stats": {
+      "cases": "Akten gesamt",
+      "open": "offene Akten",
+      "archived": "archiviert",
+      "contacts": "Kontakte"
+    },
+    "status": {
+      "mail": "ungelesene E-Mails",
+      "scans": "neue Scans",
+      "bea": "beA ungelesen",
+      "nothing": "Nichts Neues."
+    },
     "recent": {
       "title": "Zuletzt geändert",
       "empty": "Keine Akten."
     },
     "due": {
-      "title": "Fällig & Wiedervorlagen",
+      "title": "Fällig",
+      "past": "Tage zurück",
+      "future": "Tage voraus",
+      "markDone": "Als erledigt markieren",
+      "reschedule": "Datum neu setzen",
       "empty": "Nichts fällig.",
       "noSummary": "(ohne Betreff)",
       "type": {
+        "all": "Alle",
         "event": "Termin",
         "respite": "Frist",
         "followup": "Wiedervorlage"
@@ -1422,6 +1456,21 @@
       "open": "offen",
       "sum": "Summe (brutto)",
       "empty": "Keine offenen Rechnungen."
+    },
+    "tagged": {
+      "title": "Nach Etikett",
+      "allTab": "Alle",
+      "subscribe": "Etiketten abonnieren",
+      "caseTags": "Akten-Etiketten",
+      "docTags": "Dokument-Etiketten",
+      "none": "Keine vorhanden",
+      "pick": "Bitte oben Etiketten abonnieren (Plus-Symbol).",
+      "empty": "Nichts mit diesem Etikett."
+    },
+    "messages": {
+      "title": "Nachrichten an mich",
+      "done": "Als erledigt markieren",
+      "empty": "Keine offenen Nachrichten."
     }
   },
   "dokumente": {

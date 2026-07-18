@@ -19,7 +19,9 @@
 package org.jlawyer.io.rest.v8.pojo;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Richer case list row than {@code RestfulCaseOverviewV1}: adds the fields a case list UI
@@ -42,6 +44,8 @@ public class RestfulCaseOverviewV8 {
     private double claimValue;
     private boolean archived;
     private Date dateChanged;
+    /** The case's tag (label) names. Only populated by endpoints that need it (e.g. /bytag); empty otherwise. */
+    private List<String> tags = new ArrayList<>();
 
     public RestfulCaseOverviewV8() {
     }
@@ -64,6 +68,14 @@ public class RestfulCaseOverviewV8 {
         o.setArchived(afb.isArchived());
         o.setDateChanged(afb.getDateChanged());
         return o;
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
     }
 
     public String getId() {

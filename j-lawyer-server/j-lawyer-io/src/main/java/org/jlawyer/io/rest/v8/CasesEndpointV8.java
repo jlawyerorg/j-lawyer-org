@@ -20,10 +20,15 @@ package org.jlawyer.io.rest.v8;
 import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import org.jlawyer.io.rest.v8.pojo.RestfulTaggedDocumentV8;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
@@ -169,6 +174,121 @@ public class CasesEndpointV8 implements CasesEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("Can not get history for case " + id, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Returns cases carrying the given tag as a richer v8 overview (adds subject field, lawyer,
+     * assistant, archived flag) so a dashboard can filter by responsible user — the v7 equivalent
+     * only returns the leaner v1 overview.
+     *
+     * @param tag   the tag (label) name
+     * @param value optional multi-value tag value
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/bytag/{tag}")
+    @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns cases with a given tag as a richer v8 overview", response = RestfulCaseOverviewV8.class, responseContainer = "List")
+    public Response getCasesByTag(@PathParam("tag") String tag, @QueryParam("value") @DefaultValue("") String value) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            List<ArchiveFileBean> matches;
+            if (value != null && !value.isEmpty()) {
+                HashMap<String, String[]> tagValues = new HashMap<>();
+                tagValues.put(tag, new String[]{value});
+                matches = cases.getTagged(new String[]{tag}, null, Integer.MAX_VALUE, tagValues, null);
+            } else {
+                matches = cases.getTagged(new String[]{tag}, null, Integer.MAX_VALUE);
+            }
+            ArrayList<RestfulCaseOverviewV8> result = new ArrayList<>();
+            ArrayList<String> ids = new ArrayList<>();
+            if (matches != null) {
+                for (ArchiveFileBean afb : matches) {
+                    result.add(RestfulCaseOverviewV8.fromArchiveFile(afb));
+                    ids.add(afb.getId());
+                }
+            }
+            // one bulk call to attach every case's full tag list (so the UI can show all labels)
+            if (!ids.isEmpty()) {
+                HashMap<String, ArrayList<ArchiveFileTagsBean>> tagMap = cases.getTags(ids);
+                for (RestfulCaseOverviewV8 o : result) {
+                    ArrayList<ArchiveFileTagsBean> t = tagMap == null ? null : tagMap.get(o.getId());
+                    if (t != null) {
+                        ArrayList<String> names = new ArrayList<>();
+                        for (ArchiveFileTagsBean b : t) {
+                            if (b != null && b.getTagName() != null) {
+                                names.add(b.getTagName());
+                            }
+                        }
+                        o.setTags(names);
+                    }
+                }
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("Can not get cases by tag " + tag, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Returns documents carrying the given tag (with their containing case id and all their tags)
+     * for the dashboard "Nach Etikett" widget — the v7 document-by-tag endpoint returns no tags.
+     *
+     * @param tag   the tag (label) name
+     * @param value optional multi-value tag value
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/documents/bytag/{tag}")
+    @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns documents with a given tag (with case id + tags)", response = RestfulTaggedDocumentV8.class, responseContainer = "List")
+    public Response getDocumentsByTag(@PathParam("tag") String tag, @QueryParam("value") @DefaultValue("") String value) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            List<ArchiveFileDocumentsBean> matches = cases.getTaggedDocuments(new String[]{tag}, Integer.MAX_VALUE);
+            ArrayList<RestfulTaggedDocumentV8> result = new ArrayList<>();
+            ArrayList<String> ids = new ArrayList<>();
+            if (matches != null) {
+                for (ArchiveFileDocumentsBean doc : matches) {
+                    RestfulTaggedDocumentV8 d = new RestfulTaggedDocumentV8();
+                    d.setId(doc.getId());
+                    d.setName(doc.getName());
+                    if (doc.getArchiveFileKey() != null) {
+                        d.setCaseId(doc.getArchiveFileKey().getId());
+                    }
+                    result.add(d);
+                    ids.add(doc.getId());
+                }
+            }
+            if (!ids.isEmpty()) {
+                HashMap<String, ArrayList<DocumentTagsBean>> tagMap = cases.getDocumentTags(ids);
+                for (RestfulTaggedDocumentV8 d : result) {
+                    ArrayList<DocumentTagsBean> t = tagMap == null ? null : tagMap.get(d.getId());
+                    if (t != null) {
+                        ArrayList<String> names = new ArrayList<>();
+                        for (DocumentTagsBean b : t) {
+                            if (b != null && b.getTagName() != null) {
+                                names.add(b.getTagName());
+                            }
+                        }
+                        d.setTags(names);
+                    }
+                }
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("Can not get documents by tag " + tag, ex);
             return RestErrorResponses.serverError(ex);
         }
     }

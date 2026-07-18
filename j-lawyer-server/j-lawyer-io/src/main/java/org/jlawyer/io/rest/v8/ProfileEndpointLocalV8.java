@@ -20,6 +20,7 @@ package org.jlawyer.io.rest.v8;
 
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
+import org.jlawyer.io.rest.v8.pojo.RestfulDashboardConfigV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulPasswordChangeV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulProfileSettingsV8;
 
@@ -31,5 +32,9 @@ public interface ProfileEndpointLocalV8 {
     Response updateSettings(RestfulProfileSettingsV8 settings);
 
     Response changePassword(RestfulPasswordChangeV8 request);
+
+    Response getDashboard();
+
+    Response updateDashboard(RestfulDashboardConfigV8 request);
 
 }

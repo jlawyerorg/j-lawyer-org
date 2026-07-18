@@ -719,6 +719,10 @@ public class UserSettingsKeys {
     public static final String CONF_DESKTOP_SECTION_INVOICES_VISIBLE = "client.desktop.section.invoices.visible";
     public static final String CONF_DESKTOP_DUE_COMPACT_VIEW = "client.desktop.due.compactview";
 
+    // Web dashboard ("Mein Desktop") config: an opaque JSON blob owned by the web client
+    // (visible widgets + per-widget config). Stored as a single string, schema lives in the web client.
+    public static final String CONF_DESKTOP_WEB_CONFIG = "client.desktop.web.config";
+
     public static final String CONF_COLORS_RECENT = "client.colorchooser.recent";
 
     public static final String CONF_CALENDAR_DEFAULTTAB = "user.calendar.defaulttab";

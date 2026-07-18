@@ -3,20 +3,121 @@
 .dash { display: flex; flex-direction: column; height: 100%; min-height: 0; overflow-y: auto; }
 
 /* ---------- Header ---------- */
-.dash-head { flex-shrink: 0; padding: 4px 2px 18px; }
+.dash-head { flex-shrink: 0; padding: 4px 2px 18px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .dash-head h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; margin: 0; }
 .dash-head .greeting { margin: 4px 0 0; color: var(--jl-ink-soft); font-size: .95rem; }
+.dh-config { position: relative; flex: none; }
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px;
+  border: 1px solid var(--jl-line-strong); border-radius: 9px; background: var(--jl-surface);
+  color: var(--jl-ink-soft); cursor: pointer;
+}
+.icon-btn:hover { border-color: var(--jl-blue); color: var(--jl-blue); }
+
+/* Widget-visibility popover */
+.cfg-pop {
+  position: absolute; right: 0; top: 40px; z-index: 20; min-width: 220px;
+  background: var(--jl-surface); border: 1px solid var(--jl-line-strong); border-radius: 10px;
+  box-shadow: 0 14px 34px rgba(4, 12, 20, .28); padding: 10px 12px;
+}
+.cfg-pop h3 { margin: 2px 0 8px; font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--jl-ink-faint); font-weight: 700; }
+.cfg-row { display: flex; align-items: center; gap: 8px; padding: 5px 2px; font-size: .88rem; cursor: pointer; }
+
+/* ---------- Strips (stats / status) above the grid ---------- */
+.strip {
+  background: var(--jl-surface); border: 1px solid var(--jl-line); border-radius: 12px;
+  margin-bottom: 16px; overflow: hidden;
+  flex: 0 0 auto;  /* never let a taller grid below squeeze the KPI/status strips */
+}
+.kpis.wide { flex-wrap: wrap; border-bottom: 0; }
+.kpis.wide .kpi { min-width: 120px; }
+.strip.chips { display: flex; flex-wrap: wrap; gap: 10px; padding: 12px 16px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 7px; text-decoration: none; color: inherit;
+  border: 1px solid var(--jl-line-strong); border-radius: 20px; padding: 5px 12px 5px 10px;
+}
+.chip:hover { border-color: var(--jl-blue); background: var(--jl-surface-alt); }
+.chip jl-icon { color: var(--jl-blue); }
+.chip .c-val { font-weight: 800; font-variant-numeric: tabular-nums; }
+.chip .c-lbl { font-size: .82rem; color: var(--jl-ink-soft); }
+
+/* ---------- In-widget config controls ---------- */
+.usr-sel, .rng-sel, .w-cfg select, .w-cfg input {
+  font: inherit; font-size: .78rem; color: var(--jl-ink); background: var(--jl-surface);
+  border: 1px solid var(--jl-line-strong); border-radius: 7px; padding: 3px 6px; max-width: 100%;
+}
+.w-head .usr-sel { margin-left: auto; max-width: 42%; }
+.w-head .usr-sel + .rng-sel, .w-head .usr-sel + .w-more { margin-left: 8px; }
+.w-head .rng-sel { flex: none; }
+.icon-btn.sm { width: 28px; height: 28px; margin-left: 8px; }
+.w-cfg {
+  display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px 20px;
+  padding: 10px 16px; border-bottom: 1px solid var(--jl-line); background: var(--jl-surface-alt);
+  font-size: .78rem; color: var(--jl-ink-soft);
+}
+.w-cfg.subscribe .sub-col { flex: 1; min-width: 130px; display: flex; flex-direction: column; gap: 2px; }
+.w-cfg.subscribe h4 { margin: 0 0 4px; font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--jl-ink-faint); font-weight: 700; }
+.muted.sm { font-size: .74rem; }
+
+/* Type / tag tabs */
+.tabs { display: flex; gap: 4px; padding: 6px 10px; border-bottom: 1px solid var(--jl-line); overflow-x: auto; }
+.tabs.wrap { flex-wrap: wrap; }
+.tabs button {
+  display: inline-flex; align-items: center; gap: 5px; font: inherit; font-size: .78rem; font-weight: 600;
+  color: var(--jl-ink-soft); background: transparent; border: 1px solid transparent; border-radius: 7px;
+  padding: 4px 9px; cursor: pointer; white-space: nowrap;
+}
+.tabs button:hover { background: var(--jl-surface-alt); }
+.tabs button.on { color: var(--jl-blue); background: color-mix(in srgb, var(--jl-blue) 12%, transparent); }
+.tabs button jl-icon { opacity: .8; }
+.tab-count {
+  font-size: .68rem; font-weight: 700; font-variant-numeric: tabular-nums;
+  background: var(--jl-line); color: var(--jl-ink-soft); border-radius: 10px; padding: 0 6px; min-width: 1.4em; text-align: center;
+}
+.tabs button.on .tab-count { background: color-mix(in srgb, var(--jl-blue) 22%, transparent); color: var(--jl-blue); }
+
+/* Tagged row (case or document) */
+.tag-row jl-icon { color: var(--jl-ink-faint); flex: none; }
+.tag-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+.tag-chip { font-size: .66rem; font-weight: 600; color: var(--jl-ink-soft); background: var(--jl-surface-alt); border: 1px solid var(--jl-line); border-radius: 10px; padding: 0 6px; white-space: nowrap; }
+
+/* Multi-user filter (chip button + checkbox popover) */
+.w-spacer { flex: 1 1 auto; }
+.uf { position: relative; display: inline-flex; }
+.chip-btn {
+  display: inline-flex; align-items: center; gap: 5px; font: inherit; font-size: .76rem; font-weight: 600;
+  color: var(--jl-ink-soft); background: transparent; border: 1px solid var(--jl-line-strong);
+  border-radius: 20px; padding: 3px 10px; cursor: pointer; white-space: nowrap;
+}
+.chip-btn:hover { border-color: var(--jl-blue); color: var(--jl-blue); }
+.chip-btn.active { color: var(--jl-blue); border-color: var(--jl-blue); background: color-mix(in srgb, var(--jl-blue) 10%, transparent); }
+.chip-btn jl-icon { opacity: .8; }
+.uf .cfg-pop { top: 34px; }
+
+/* Compact "Fällig" range control in the header (days back … days ahead) */
+.due-range { display: inline-flex; align-items: center; gap: 4px; }
+.due-range jl-icon { color: var(--jl-ink-faint); }
+.due-range select {
+  font: inherit; font-size: .76rem; color: var(--jl-ink); background: var(--jl-surface);
+  border: 1px solid var(--jl-line-strong); border-radius: 7px; padding: 2px 4px;
+}
+.due-range .rsep { color: var(--jl-ink-faint); }
 
 /* ---------- Grid of widgets ---------- */
 .grid {
   display: grid; gap: 16px; align-items: start;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  flex: 0 0 auto;  /* take natural height and let .dash scroll, rather than shrinking the strips */
 }
 
 .widget {
   display: flex; flex-direction: column; min-width: 0;
-  background: var(--jl-surface); border: 1px solid var(--jl-line); border-radius: 12px; overflow: hidden;
+  background: var(--jl-surface); border: 1px solid var(--jl-line); border-radius: 12px;
+  /* NOT overflow:hidden — header popovers (config/user/subscribe) must be able to extend
+     beyond a short widget's bounds. The body clips its own rounded bottom corners instead. */
+  overflow: visible;
 }
+.w-body { border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; overflow: hidden; }
 .w-head {
   display: flex; align-items: center; gap: 9px; flex-shrink: 0;
   padding: 13px 16px; border-bottom: 1px solid var(--jl-line);
@@ -54,6 +155,25 @@
 /* Due row */
 .due-row .ddate { width: 3em; text-align: center; font-weight: 800; font-size: .82rem; font-variant-numeric: tabular-nums; flex: none; }
 .due-row .ddate.od { color: var(--jl-red); }
+
+/* Fällig: group header (case + day), shown once per case+day group */
+.dg-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; padding: 9px 16px 5px; border-top: 1px solid var(--jl-line); }
+.due-group:first-child .dg-head { border-top: 0; }
+.dg-date { font-weight: 700; font-size: .8rem; text-transform: capitalize; }
+.dg-head.od .dg-date { color: var(--jl-red); }
+.dg-case { font-size: .77rem; color: var(--jl-blue); text-decoration: none; }
+.dg-case:hover { text-decoration: underline; }
+.dg-head + .due-row { border-top: 0; }
+.due-group .due-row { padding-left: 16px; }
+
+/* Reschedule (date picker as an icon button) */
+.btn-date {
+  position: relative; flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border: 1px solid var(--jl-line-strong); border-radius: 7px;
+  color: var(--jl-ink-soft); cursor: pointer;
+}
+.btn-date:hover { border-color: var(--jl-blue); color: var(--jl-blue); }
+.btn-date input[type="date"] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 .due-row .bar { width: 3px; align-self: stretch; border-radius: 3px; flex: none; }
 .due-row .bar.event { background: var(--jl-blue); }
 .due-row .bar.respite { background: var(--jl-red); }
@@ -71,3 +191,16 @@
 .kpi .k-value { font-size: 1.25rem; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
 .kpi .k-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--jl-ink-faint); font-weight: 600; }
 .inv-row .inv-amount { font-weight: 700; font-size: .88rem; font-variant-numeric: tabular-nums; white-space: nowrap; flex: none; }
+
+/* Messenger row */
+.msg-row { align-items: flex-start; }
+.msg-row .rname { white-space: normal; }
+.msg-row .msg-date { font-weight: 500; font-size: .72rem; color: var(--jl-ink-faint); margin-left: 6px; }
+.msg-text { font-size: .8rem; color: var(--jl-ink-soft); white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.msg-case { font-size: .75rem; color: var(--jl-blue); text-decoration: none; margin-top: 2px; }
+.msg-case:hover { text-decoration: underline; }
+.btn-done {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px;
+  border: 1px solid var(--jl-line-strong); border-radius: 7px; background: transparent; color: var(--jl-ink-soft); cursor: pointer;
+}
+.btn-done:hover { border-color: var(--jl-green, var(--jl-blue)); color: var(--jl-green, var(--jl-blue)); }

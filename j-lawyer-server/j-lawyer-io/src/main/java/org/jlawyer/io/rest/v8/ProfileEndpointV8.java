@@ -45,6 +45,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import org.jboss.logging.Logger;
 import org.jlawyer.io.rest.v6.pojo.RestfulIdNameV6;
+import org.jlawyer.io.rest.v8.pojo.RestfulDashboardConfigV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulPasswordChangeV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulProfileSettingsV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulProfileV8;
@@ -214,6 +215,85 @@ public class ProfileEndpointV8 implements ProfileEndpointLocalV8 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not change password", ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Returns the web dashboard ("Mein Desktop") configuration of the current user — an opaque JSON
+     * string owned by the web client (visible widgets + per-widget settings). Empty when nothing has
+     * been stored yet, in which case the client applies its defaults.
+     *
+     * @response 200 The caller's dashboard config
+     * @response 401 Not authenticated
+     */
+    @Override
+    @GET
+    @Path("/dashboard")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the web dashboard config of the current user", response = RestfulDashboardConfigV8.class)
+    public Response getDashboard() {
+        try {
+            String principalId = securityContext.getUserPrincipal().getName();
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+
+            AppUserBean user = system.getUser(principalId);
+            if (user == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            Properties props = system.getUserSettings(user);
+            String config = props.getProperty(UserSettingsKeys.CONF_DESKTOP_WEB_CONFIG, "");
+            return Response.ok(new RestfulDashboardConfigV8(config)).build();
+        } catch (Exception ex) {
+            log.error("can not get dashboard config", ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Stores the web dashboard configuration of the current user. The body is treated as an opaque
+     * JSON object and persisted verbatim (the schema is owned by the web client). Rejects a
+     * non-object or oversized payload with 400.
+     *
+     * @param request the dashboard config to store
+     * @response 200 The stored config
+     * @response 400 Malformed or oversized config
+     * @response 401 Not authenticated
+     */
+    @Override
+    @PUT
+    @Path("/dashboard")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value = "Stores the web dashboard config of the current user", response = RestfulDashboardConfigV8.class)
+    public Response updateDashboard(RestfulDashboardConfigV8 request) {
+        try {
+            if (request == null) {
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            }
+            String config = request.getConfig() == null ? "" : request.getConfig().trim();
+            // opaque-JSON sanity guard: allow empty (= clear) or a plain JSON object, bounded in size
+            if (!config.isEmpty() && (config.length() > 16384 || !config.startsWith("{") || !config.endsWith("}"))) {
+                return error(Response.Status.BAD_REQUEST, "invalid_config");
+            }
+            String principalId = securityContext.getUserPrincipal().getName();
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+
+            AppUserBean user = system.getUser(principalId);
+            if (user == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            // merge onto the existing blob so unrelated keys are preserved
+            Properties props = system.getUserSettings(user);
+            props.setProperty(UserSettingsKeys.CONF_DESKTOP_WEB_CONFIG, config);
+            system.setUserSettings(user, props);
+
+            return Response.ok(new RestfulDashboardConfigV8(config)).build();
+        } catch (Exception ex) {
+            log.error("can not update dashboard config", ex);
             return RestErrorResponses.serverError(ex);
         }
     }
