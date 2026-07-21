@@ -1548,6 +1548,21 @@ public class LibreOfficeAccess {
                         }
                     }
 
+                    // if the placeholder is the last content of a paragraph, replace it without
+                    // appending a space - the auto-appended space would otherwise survive as a
+                    // trailing space artifact at the end of the line
+                    String regExKeyEol = PLACEHOLDER_REGEX_OPEN + key.substring(2, key.length() - 2) + PLACEHOLDER_REGEX_CLOSE + "$";
+                    String eolValue = value == null ? "" : value;
+                    TextNavigation eolSearch = new TextNavigation(regExKeyEol, outputOdt);
+                    while (eolSearch.hasNext()) {
+                        try {
+                            TextSelection item = (TextSelection) eolSearch.nextSelection();
+                            item.replaceWith(eolValue);
+                        } catch (Throwable t) {
+                            log.error("Error replacing " + regExKeyEol + " with " + eolValue + " in " + fileInFileSystem, t);
+                        }
+                    }
+
                     String regExKey = PLACEHOLDER_REGEX_OPEN + key.substring(2, key.length() - 2) + PLACEHOLDER_REGEX_CLOSE;
                     if (value == null) {
                         value = "";
@@ -2100,6 +2115,24 @@ public class LibreOfficeAccess {
                         } catch (Throwable t) {
                             log.error("Error replacing " + regExKey + " with " + value + " in " + fileInFileSystem, t);
                         }
+                    }
+                }
+
+                // if the placeholder is the last content of a cell text, replace it without
+                // appending a space - the auto-appended space would otherwise survive as a
+                // trailing space artifact
+                String regExKeyEol = PLACEHOLDER_REGEX_OPEN + key.substring(2, key.length() - 2) + PLACEHOLDER_REGEX_CLOSE + "$";
+                String eolValue = (String) values.get(key);
+                if (eolValue == null) {
+                    eolValue = "";
+                }
+                TextNavigation eolSearch = new TextNavigation(regExKeyEol, outputOds);
+                while (eolSearch.hasNext()) {
+                    try {
+                        TextSelection item = (TextSelection) eolSearch.nextSelection();
+                        item.replaceWith(eolValue);
+                    } catch (Throwable t) {
+                        log.error("Error replacing " + regExKeyEol + " with " + eolValue + " in " + fileInFileSystem, t);
                     }
                 }
 
