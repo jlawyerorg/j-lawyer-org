@@ -2115,6 +2115,95 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         throw new Exception("Attachment not found: " + attachmentId);
     }
 
+    static MimeMultipart buildMimeMultipart(String body, String contentType, List<MailAttachmentDTO> attachments) throws Exception {
+        String effectiveContentType = contentType != null && !contentType.trim().isEmpty()
+                ? contentType : "text/plain";
+        if (!effectiveContentType.toLowerCase().contains("charset")) {
+            effectiveContentType += "; charset=UTF-8";
+        }
+
+        MimeBodyPart bodyPart = new MimeBodyPart();
+        bodyPart.setContent(body != null ? body : "", effectiveContentType);
+
+        boolean htmlBody = effectiveContentType.toLowerCase().contains("text/html");
+        boolean hasInlineAttachments = false;
+        if (htmlBody && attachments != null) {
+            for (MailAttachmentDTO att : attachments) {
+                if (isInlineAttachment(att)) {
+                    hasInlineAttachments = true;
+                    break;
+                }
+            }
+        }
+
+        MimeMultipart bodyMultipart = new MimeMultipart(hasInlineAttachments ? "related" : "mixed");
+        bodyMultipart.addBodyPart(bodyPart);
+
+        if (hasInlineAttachments) {
+            for (MailAttachmentDTO att : attachments) {
+                if (isInlineAttachment(att)) {
+                    bodyMultipart.addBodyPart(createMimeAttachmentPart(att, true));
+                }
+            }
+        }
+
+        boolean hasRegularAttachments = false;
+        if (attachments != null) {
+            for (MailAttachmentDTO att : attachments) {
+                if (att != null && !(htmlBody && isInlineAttachment(att))) {
+                    hasRegularAttachments = true;
+                    break;
+                }
+            }
+        }
+
+        if (!hasRegularAttachments) {
+            return bodyMultipart;
+        }
+
+        MimeMultipart rootMultipart = bodyMultipart;
+        if (hasInlineAttachments) {
+            rootMultipart = new MimeMultipart("mixed");
+            MimeBodyPart relatedPart = new MimeBodyPart();
+            relatedPart.setContent(bodyMultipart);
+            rootMultipart.addBodyPart(relatedPart);
+        }
+
+        for (MailAttachmentDTO att : attachments) {
+            if (att != null && !(htmlBody && isInlineAttachment(att))) {
+                rootMultipart.addBodyPart(createMimeAttachmentPart(att, false));
+            }
+        }
+        return rootMultipart;
+    }
+
+    private static boolean isInlineAttachment(MailAttachmentDTO att) {
+        return att != null && att.isInline()
+                && att.getContentId() != null && !att.getContentId().trim().isEmpty();
+    }
+
+    private static MimeBodyPart createMimeAttachmentPart(MailAttachmentDTO att, boolean inline) throws Exception {
+        MimeBodyPart attachmentPart = new MimeBodyPart();
+        String attachmentContentType = att.getContentType() != null && !att.getContentType().trim().isEmpty()
+                ? att.getContentType() : "application/octet-stream";
+        DataSource dataSource = new ByteArrayDataSource(att.getContent(), attachmentContentType);
+        attachmentPart.setDataHandler(new DataHandler(dataSource));
+        if (att.getName() != null && !att.getName().isEmpty()) {
+            attachmentPart.setFileName(att.getName());
+        }
+        if (inline) {
+            String contentId = att.getContentId().trim();
+            if (contentId.startsWith("<") && contentId.endsWith(">") && contentId.length() > 2) {
+                contentId = contentId.substring(1, contentId.length() - 1);
+            }
+            attachmentPart.setDisposition(Part.INLINE);
+            attachmentPart.setContentID("<" + contentId + ">");
+        } else {
+            attachmentPart.setDisposition(Part.ATTACHMENT);
+        }
+        return attachmentPart;
+    }
+
     private void smtpSendMail(MailboxSetup ms, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, String priority, boolean readReceipt, String inReplyTo, String references) throws Exception {
         Properties props = new Properties();
         String server = ms.getEmailOutServer();
@@ -2184,28 +2273,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             msg.setHeader("Disposition-Notification-To", ms.getEmailAddress());
             msg.setHeader("Return-Receipt-To", ms.getEmailAddress());
         }
-        MimeMultipart multipart = new MimeMultipart();
-        MimeBodyPart bodyPart = new MimeBodyPart();
-        String ct = contentType != null ? contentType : "text/plain";
-        if (!ct.toLowerCase().contains("charset")) {
-            ct += "; charset=UTF-8";
-        }
-        bodyPart.setContent(body, ct);
-        multipart.addBodyPart(bodyPart);
-        if (attachments != null) {
-            for (MailAttachmentDTO att : attachments) {
-                MimeBodyPart attachPart = new MimeBodyPart();
-                DataSource ds = new ByteArrayDataSource(att.getContent(), att.getContentType());
-                attachPart.setDataHandler(new DataHandler(ds));
-                attachPart.setFileName(att.getName());
-                if (att.isInline() && att.getContentId() != null) {
-                    attachPart.setDisposition(Part.INLINE);
-                    attachPart.setContentID("<" + att.getContentId() + ">");
-                }
-                multipart.addBodyPart(attachPart);
-            }
-        }
-        msg.setContent(multipart);
+        msg.setContent(buildMimeMultipart(body, contentType, attachments));
         msg.saveChanges();
         Transport.send(msg);
 
@@ -3001,29 +3069,15 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         }
 
         String ct = dto.getBodyContentType() != null ? dto.getBodyContentType() : "text/plain";
-        MimeMultipart multipart = new MimeMultipart();
-        MimeBodyPart bodyPart = new MimeBodyPart();
-        bodyPart.setContent(dto.getBody() != null ? dto.getBody() : "", ct + "; charset=UTF-8");
-        multipart.addBodyPart(bodyPart);
-
+        List<MailAttachmentDTO> loadedAttachments = new ArrayList<>();
         if (atts != null) {
             for (MailAttachmentDTO att : atts) {
                 if (att.getContent() != null) {
-                    MimeBodyPart attPart = new MimeBodyPart();
-                    javax.activation.DataSource ds = new javax.mail.util.ByteArrayDataSource(
-                            att.getContent(), att.getContentType() != null ? att.getContentType() : "application/octet-stream");
-                    attPart.setDataHandler(new javax.activation.DataHandler(ds));
-                    attPart.setFileName(att.getName());
-                    if (att.isInline() && att.getContentId() != null) {
-                        attPart.setDisposition(javax.mail.Part.INLINE);
-                        attPart.setContentID("<" + att.getContentId() + ">");
-                    }
-                    multipart.addBodyPart(attPart);
+                    loadedAttachments.add(att);
                 }
             }
         }
-
-        emlMsg.setContent(multipart);
+        emlMsg.setContent(buildMimeMultipart(dto.getBody(), ct, loadedAttachments));
         emlMsg.saveChanges();
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -3057,20 +3111,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             msg.setSubject(subject, StandardCharsets.UTF_8.name());
             msg.setSentDate(new Date());
 
-            MimeMultipart multipart = new MimeMultipart();
-            MimeBodyPart bodyPart = new MimeBodyPart();
-            bodyPart.setContent(body != null ? body : "", (contentType != null ? contentType : "text/plain") + "; charset=UTF-8");
-            multipart.addBodyPart(bodyPart);
-            if (attachments != null) {
-                for (MailAttachmentDTO att : attachments) {
-                    MimeBodyPart attPart = new MimeBodyPart();
-                    javax.activation.DataSource ds = new javax.mail.util.ByteArrayDataSource(att.getContent(), att.getContentType() != null ? att.getContentType() : "application/octet-stream");
-                    attPart.setDataHandler(new javax.activation.DataHandler(ds));
-                    attPart.setFileName(att.getName());
-                    multipart.addBodyPart(attPart);
-                }
-            }
-            msg.setContent(multipart);
+            msg.setContent(buildMimeMultipart(body, contentType, attachments));
             msg.setFlag(Flags.Flag.SEEN, markAsRead);
             msg.saveChanges();
 
@@ -3112,6 +3153,12 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 a.put("name", att.getName());
                 a.put("contentType", att.getContentType());
                 a.put("contentBytes", java.util.Base64.getEncoder().encodeToString(att.getContent()));
+                if (att.isInline()) {
+                    a.put("isInline", true);
+                    if (att.getContentId() != null) {
+                        a.put("contentId", att.getContentId());
+                    }
+                }
                 atts.add(a);
             }
             message.put("attachments", atts);
