@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import de.costache.calendar.CalendarPanel;
@@ -687,6 +688,8 @@ public class ConflictingEventsDialog extends javax.swing.JDialog {
         initComponents();
         this.cmdConfirm.requestFocus();
         this.confirmed=false;
+
+        ComponentUtils.restoreDialogSize(this);
     }
     
     public void setCalendarEntries(Collection<ArchiveFileReviewsBean> dtos, ArchiveFileReviewsBean newOrChangedEvent, Date scrollTo) {
@@ -722,6 +725,11 @@ public class ConflictingEventsDialog extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Prüfung auf mögliche Terminkonflikte");
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                formComponentResized(evt);
+            }
+        });
 
         cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
         cmdCancel.setText("Abbrechen");
@@ -776,6 +784,10 @@ public class ConflictingEventsDialog extends javax.swing.JDialog {
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdConfirmActionPerformed
+
+    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
+        ComponentUtils.storeDialogSize(this);
+    }//GEN-LAST:event_formComponentResized
 
     /**
      * @param args the command line arguments
