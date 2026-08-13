@@ -6678,15 +6678,16 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             clone.setName(pos.getName());
             clone.setPosition(pos.getPosition());
             clone.setTaxRate(pos.getTaxRate());
-
+            clone.setUnits(pos.getUnits());
+            clone.setUnitPrice(pos.getUnitPrice());
+            
             if (pos.getUnitPrice() != null && pos.getTotal() != null && asCredit) {
-                clone.setUnitPrice(pos.getUnitPrice().negate());
+                clone.setUnits(pos.getUnits().negate());
                 clone.setTotal(pos.getTotal().negate());
             } else {
-                clone.setUnitPrice(pos.getUnitPrice());
                 clone.setTotal(pos.getTotal());
             }
-            clone.setUnits(pos.getUnits());
+            
             this.addInvoicePosition(newInvoice.getId(), clone);
         }
 
