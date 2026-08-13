@@ -1000,7 +1000,7 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
         cmbDocumentTag = new javax.swing.JComboBox<>();
         htmlContainerPanel = new javax.swing.JPanel();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         setIconImage(new ImageIcon(getClass().getResource("/icons/windowicon-note.png")).getImage());
         addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentResized(java.awt.event.ComponentEvent evt) {
@@ -1010,6 +1010,9 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosed(java.awt.event.WindowEvent evt) {
                 formWindowClosed(evt);
+            }
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
             }
         });
 
@@ -1452,6 +1455,10 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
         }
 
     }//GEN-LAST:event_formWindowClosed
+
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        this.cmdCancelActionPerformed(null);
+    }//GEN-LAST:event_formWindowClosing
 
     private void enableReviewElements(boolean enable) {
         this.cmbReviewAssignee.setEnabled(enable);
