@@ -1433,11 +1433,8 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
 
     private void addToRenderedCalendar(ArchiveFileReviewsBean rev, Date start, Date end, boolean allDay) {
 
-        // NOTE: the check-mark is wrapped in brackets on purpose. The calendar's shared
-        // text renderer (GraphicsUtil.drawString) drops standalone tokens of <= 2 chars,
-        // so a lone "✓" would vanish on timed events; "[✓]" is a 3-char token and survives.
-        // (The month view additionally needs a glyph-capable font - see DayContentPanel.)
-        String donePrefix = rev.isDone() ? "[✓] " : "";
+        // NOTE: the month view needs a glyph-capable font for the check mark - see DayContentPanel.
+        String donePrefix = rev.isDone() ? "✓ " : "";
         CalendarEvent calendarEvent = null;
         if (rev.getArchiveFileKey() != null) {
             calendarEvent = new CalendarEvent(donePrefix + rev.getSummary() + " (" + rev.getArchiveFileKey().getFileNumber() + " " + rev.getArchiveFileKey().getName() + ")", start, end);
