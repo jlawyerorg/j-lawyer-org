@@ -762,6 +762,35 @@ public class FolderContainer {
     }
 
     /**
+     * Returns the name as displayed in the folder tree, but without the message
+     * count suffix that toString() appends - suitable as a sort key.
+     *
+     * @return the mapped display name, never null
+     */
+    public String getDisplayName() {
+        if (this.mappedName != null) {
+            return this.mappedName;
+        }
+
+        String name = null;
+        if (this.folderDTO != null) {
+            name = this.folderDTO.getDisplayName();
+        } else if (this.folder != null) {
+            name = this.folder.getName();
+        }
+        if (name == null) {
+            return "";
+        }
+
+        for (Map.Entry<String, String> entry : folderNameMapping.entrySet()) {
+            if (entry.getKey().equalsIgnoreCase(name)) {
+                return entry.getValue();
+            }
+        }
+        return name;
+    }
+
+    /**
      * @return the folder DTO, or null if this is a legacy container
      */
     public com.jdimension.jlawyer.services.MailFolderDTO getFolderDTO() {

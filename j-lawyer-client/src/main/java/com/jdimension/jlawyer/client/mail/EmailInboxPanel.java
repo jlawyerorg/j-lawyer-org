@@ -715,6 +715,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -724,6 +725,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Hashtable;
+import java.util.Locale;
 import java.util.Set;
 import java.util.List;
 import java.util.Properties;
@@ -3155,34 +3157,100 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         return getFullPathImpl(tp, 2);
     }
 
+    // returns the full path including the mailboxes mail adress as root
     private String getFullPath(TreePath tp) {
         return getFullPathImpl(tp, 1);
     }
 
-    // returns the full path including the mailboxes mail adress as root
+    /**
+     * Sorts a nodes children and, independently of that, descends into the
+     * entire subtree. Standard folders (inbox, drafts, sent, trash) are pinned
+     * to the top in that order, all others follow sorted by their display name
+     * using a locale aware collator.
+     */
     private void sortTreeNodeChildren(DefaultMutableTreeNode parent) {
-        if (parent.getChildCount() <= 1) return;
+        Collator collator = Collator.getInstance(Locale.GERMAN);
+        // ignore case, but respect diacritics ("Ü" next to "U", not after "Z")
+        collator.setStrength(Collator.SECONDARY);
+        sortTreeNodeChildren(parent, collator);
+    }
 
-        // Collect children
-        java.util.List<DefaultMutableTreeNode> children = new java.util.ArrayList<>();
+    private void sortTreeNodeChildren(DefaultMutableTreeNode parent, Collator collator) {
+
+        if (parent.getChildCount() > 1) {
+
+            // Collect children
+            java.util.List<DefaultMutableTreeNode> children = new java.util.ArrayList<>();
+            for (int i = 0; i < parent.getChildCount(); i++) {
+                children.add((DefaultMutableTreeNode) parent.getChildAt(i));
+            }
+
+            // Standard folders first, everything else by display name
+            children.sort((a, b) -> {
+                int rankDiff = getFolderSortRank(a) - getFolderSortRank(b);
+                if (rankDiff != 0) {
+                    return rankDiff;
+                }
+                return collator.compare(getFolderSortName(a), getFolderSortName(b));
+            });
+
+            // Re-add in sorted order
+            parent.removeAllChildren();
+            for (DefaultMutableTreeNode child : children) {
+                parent.add(child);
+            }
+        }
+
+        // Descend regardless of the number of children - a node with a single
+        // child (e.g. a mailbox whose folders all live below INBOX) still has a
+        // subtree that needs sorting.
         for (int i = 0; i < parent.getChildCount(); i++) {
-            children.add((DefaultMutableTreeNode) parent.getChildAt(i));
+            sortTreeNodeChildren((DefaultMutableTreeNode) parent.getChildAt(i), collator);
         }
+    }
 
-        // Sort case-insensitive by display name
-        children.sort((a, b) -> {
-            String nameA = a.getUserObject() != null ? a.getUserObject().toString() : "";
-            String nameB = b.getUserObject() != null ? b.getUserObject().toString() : "";
-            return nameA.compareToIgnoreCase(nameB);
-        });
-
-        // Re-add in sorted order
-        parent.removeAllChildren();
-        for (DefaultMutableTreeNode child : children) {
-            parent.add(child);
-            // Recursively sort children of each child
-            sortTreeNodeChildren(child);
+    /**
+     * Sort rank pinning the standard folders to the top of their level. All
+     * other nodes - including the mailbox nodes below the tree root - share the
+     * last rank and are therefore sorted by name only.
+     */
+    private int getFolderSortRank(DefaultMutableTreeNode node) {
+        if (!(node.getUserObject() instanceof FolderContainer)) {
+            return 4;
         }
+        com.jdimension.jlawyer.services.MailFolderDTO dto = ((FolderContainer) node.getUserObject()).getFolderDTO();
+        if (dto == null) {
+            return 4;
+        }
+        if (dto.isInbox()) {
+            return 0;
+        }
+        if (dto.isDrafts()) {
+            return 1;
+        }
+        if (dto.isSent()) {
+            return 2;
+        }
+        if (dto.isTrash()) {
+            return 3;
+        }
+        return 4;
+    }
+
+    /**
+     * Sort key of a tree node: the display name without the message count that
+     * FolderContainer.toString() appends - the count must not influence the
+     * ordering.
+     */
+    private String getFolderSortName(DefaultMutableTreeNode node) {
+        Object userObject = node.getUserObject();
+        if (userObject == null) {
+            return "";
+        }
+        if (userObject instanceof FolderContainer) {
+            return ((FolderContainer) userObject).getDisplayName();
+        }
+        return userObject.toString();
     }
 
     private String buildDtoFolderPath(com.jdimension.jlawyer.services.MailFolderDTO dto, HashMap<String, com.jdimension.jlawyer.services.MailFolderDTO> dtoMap) {
