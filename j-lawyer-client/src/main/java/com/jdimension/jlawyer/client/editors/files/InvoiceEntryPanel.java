@@ -738,8 +738,10 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         StringBuilder tooltip = new StringBuilder();
         tooltip.append("<html>");
         tooltip.append("Belegdatum: ").append(df.format(invoice.getCreationDate()));
-        tooltip.append("<br/>");
-        tooltip.append("Leistungszeitraum: ").append(df.format(invoice.getPeriodFrom())).append(" - ").append(df.format(invoice.getPeriodTo()));
+        if(invoice.getPeriodFrom() != null && invoice.getPeriodTo() != null) {
+            tooltip.append("<br/>");
+            tooltip.append("Leistungszeitraum: ").append(df.format(invoice.getPeriodFrom())).append(" - ").append(df.format(invoice.getPeriodTo()));
+        }
         tooltip.append("<br/><br/>");
         if (!StringUtils.isEmpty(invoice.getDescription())) {
             tooltip.append(StringUtils.nonEmpty(invoice.getDescription()));
