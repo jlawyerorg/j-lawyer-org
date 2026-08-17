@@ -60,25 +60,29 @@ type DialogKind = 'rename' | 'date' | 'move' | 'tags';
         </button>
         <div class="hl">
           <span class="hl-lbl"><jl-icon name="palette" [size]="15" /> {{ 'akten.docs.highlight' | transloco }}</span>
+          <span class="hl-slot">{{ 'akten.docs.highlightSlot1' | transloco }}</span>
           <span class="hl-row">
             @for (h of highlights; track h.hex) {
               <button type="button" class="sw" [style.background]="h.hex"
                       [class.active]="doc().highlight1Value === h.value" (click)="setHighlight(1, h.value)"
-                      [attr.aria-label]="('akten.docs.highlight' | transloco) + ' 1'"></button>
+                      [attr.aria-label]="('akten.docs.highlightSlot1' | transloco) + ' ' + h.hex"></button>
             }
             <button type="button" class="sw none" [class.active]="doc().highlight1Value === none"
-                    (click)="setHighlight(1, none)" [attr.aria-label]="'akten.docs.highlightNone' | transloco">
+                    (click)="setHighlight(1, none)"
+                    [attr.aria-label]="('akten.docs.highlightSlot1' | transloco) + ': ' + ('akten.docs.highlightNone' | transloco)">
               <jl-icon name="close" [size]="12" />
             </button>
           </span>
+          <span class="hl-slot">{{ 'akten.docs.highlightSlot2' | transloco }}</span>
           <span class="hl-row">
             @for (h of highlights; track h.hex) {
               <button type="button" class="sw" [style.background]="h.hex"
                       [class.active]="doc().highlight2Value === h.value" (click)="setHighlight(2, h.value)"
-                      [attr.aria-label]="('akten.docs.highlight' | transloco) + ' 2'"></button>
+                      [attr.aria-label]="('akten.docs.highlightSlot2' | transloco) + ' ' + h.hex"></button>
             }
             <button type="button" class="sw none" [class.active]="doc().highlight2Value === none"
-                    (click)="setHighlight(2, none)" [attr.aria-label]="'akten.docs.highlightNone' | transloco">
+                    (click)="setHighlight(2, none)"
+                    [attr.aria-label]="('akten.docs.highlightSlot2' | transloco) + ': ' + ('akten.docs.highlightNone' | transloco)">
               <jl-icon name="close" [size]="12" />
             </button>
           </span>
@@ -214,7 +218,8 @@ type DialogKind = 'rename' | 'date' | 'move' | 'tags';
     .sep { height: 1px; margin: 4px 6px; background: var(--jl-line); }
     .hl { padding: 4px 10px 6px; display: flex; flex-direction: column; gap: 5px; }
     .hl-lbl { display: flex; align-items: center; gap: 10px; font-size: .86rem; color: var(--jl-ink); }
-    .hl-row { display: flex; gap: 6px; padding-left: 25px; }
+    .hl-slot { padding-left: 25px; font-size: .78rem; color: var(--jl-ink-soft); }
+    .hl-row { display: grid; grid-template-columns: repeat(8, 20px); gap: 6px; padding-left: 25px; }
     .sw { width: 20px; height: 20px; border-radius: 6px; border: 1px solid rgba(0,0,0,.18); cursor: pointer; display: inline-grid; place-items: center; color: var(--jl-ink-soft); padding: 0; }
     .sw.none { background: var(--jl-surface); }
     .sw.active { outline: 2px solid var(--jl-blue); outline-offset: 1px; }

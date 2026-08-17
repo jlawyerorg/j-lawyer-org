@@ -8,14 +8,31 @@ export const CONVERTIBLE_EXT = new Set([
   'JPEG', 'JPG', 'PCX', 'PNG', 'PSD', 'TIF', 'TIFF', 'WMF', 'HTML',
 ]);
 
-/** Highlight palette (CSS hex + server colour int = 0xFF000000 | rgb, as a signed 32-bit value). */
+/**
+ * Highlight palette (CSS hex + server colour int = 0xFF000000 | rgb, as a signed 32-bit value).
+ * Mirrors the desktop client's picker — keep in sync with
+ * `themes.colors.DefaultColorTheme.getHighlightColors()` (same colours, same order).
+ */
 export const HIGHLIGHTS: { hex: string; value: number }[] = [
-  { hex: '#ffd54f', value: (0xff000000 | 0xffd54f) | 0 },
-  { hex: '#81c784', value: (0xff000000 | 0x81c784) | 0 },
-  { hex: '#64b5f6', value: (0xff000000 | 0x64b5f6) | 0 },
-  { hex: '#e57373', value: (0xff000000 | 0xe57373) | 0 },
-  { hex: '#ffb74d', value: (0xff000000 | 0xffb74d) | 0 },
-  { hex: '#ba68c8', value: (0xff000000 | 0xba68c8) | 0 },
+  // red / orange / yellow
+  { hex: '#cc0033', value: (0xff000000 | 0xcc0033) | 0 },
+  { hex: '#f08000', value: (0xff000000 | 0xf08000) | 0 },
+  { hex: '#b5510e', value: (0xff000000 | 0xb5510e) | 0 },
+  { hex: '#ffcc00', value: (0xff000000 | 0xffcc00) | 0 },
+  // green / petrol / turquoise
+  { hex: '#1e9e4a', value: (0xff000000 | 0x1e9e4a) | 0 },
+  { hex: '#006400', value: (0xff000000 | 0x006400) | 0 },
+  { hex: '#0e8c8c', value: (0xff000000 | 0x0e8c8c) | 0 },
+  { hex: '#31ded5', value: (0xff000000 | 0x31ded5) | 0 },
+  // blue / violet / pink
+  { hex: '#330dbf', value: (0xff000000 | 0x330dbf) | 0 },
+  { hex: '#aa1eca', value: (0xff000000 | 0xaa1eca) | 0 },
+  { hex: '#e63b8c', value: (0xff000000 | 0xe63b8c) | 0 },
+  // neutral
+  { hex: '#ffffff', value: (0xff000000 | 0xffffff) | 0 },
+  { hex: '#aaaaaa', value: (0xff000000 | 0xaaaaaa) | 0 },
+  { hex: '#666666', value: (0xff000000 | 0x666666) | 0 },
+  { hex: '#000000', value: (0xff000000 | 0x000000) | 0 },
 ];
 
 export function isConvertible(ext: string): boolean {

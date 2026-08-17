@@ -802,6 +802,8 @@
       "favorite": "Mark as favorite",
       "unfavorite": "Remove favorite",
       "highlight": "Highlight",
+      "highlightSlot1": "first colour",
+      "highlightSlot2": "second colour",
       "highlightNone": "No colour",
       "move": "Move to folder",
       "moveBtn": "Move",

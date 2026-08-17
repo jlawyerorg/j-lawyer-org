@@ -41,6 +41,7 @@ type BulkDialog = 'date' | 'move' | 'label';
             <button type="button" role="menuitem" (click)="setFavorite(false)"><jl-icon name="star" [size]="15" /> {{ 'akten.docs.unfavorite' | transloco }}</button>
             <div class="hl">
               <span class="hl-lbl"><jl-icon name="palette" [size]="15" /> {{ 'akten.docs.highlight' | transloco }}</span>
+              <span class="hl-slot">{{ 'akten.docs.highlightSlot1' | transloco }}</span>
               <span class="hl-row">
                 @for (h of highlights; track h.hex) {
                   <button type="button" class="sw" [style.background]="h.hex" (click)="setHighlight(h.value)"></button>
@@ -139,7 +140,8 @@ type BulkDialog = 'date' | 'move' | 'label';
     .menu button[role=menuitem]:disabled { opacity: .45; cursor: default; }
     .hl { padding: 4px 10px 6px; display: flex; flex-direction: column; gap: 5px; }
     .hl-lbl { display: flex; align-items: center; gap: 10px; font-size: .86rem; }
-    .hl-row { display: flex; gap: 6px; padding-left: 25px; }
+    .hl-slot { padding-left: 25px; font-size: .78rem; color: var(--jl-ink-faint); }
+    .hl-row { display: grid; grid-template-columns: repeat(8, 20px); gap: 6px; padding-left: 25px; }
     .sw { width: 20px; height: 20px; border-radius: 6px; border: 1px solid rgba(0,0,0,.18); cursor: pointer; display: inline-grid; place-items: center; color: var(--jl-ink-soft); padding: 0; }
     .sw.none { background: var(--jl-surface); }
     .backdrop { position: fixed; inset: 0; z-index: 60; background: rgba(6,14,22,.5); }

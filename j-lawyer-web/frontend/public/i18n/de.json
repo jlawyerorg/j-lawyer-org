@@ -802,6 +802,8 @@
       "favorite": "Als Favorit markieren",
       "unfavorite": "Favorit entfernen",
       "highlight": "Hervorheben",
+      "highlightSlot1": "erste Farbe",
+      "highlightSlot2": "zweite Farbe",
       "highlightNone": "Keine Farbe",
       "move": "In Ordner verschieben",
       "moveBtn": "Verschieben",
