@@ -875,6 +875,7 @@ public interface ArchiveFileServiceLocal {
     List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit);
     List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit, HashMap<String, String[]> caseTagValues, HashMap<String, String[]> documentTagValues);
     List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit);
+    List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit, HashMap<String, String[]> documentTagValues);
     List<ArchiveFileAddressesBean> getArchiveFileAddressesByReference(String reference) throws Exception;
 
     boolean performOcr(String docId) throws Exception;

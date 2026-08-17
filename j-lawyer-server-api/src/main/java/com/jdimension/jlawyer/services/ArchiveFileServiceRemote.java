@@ -949,6 +949,18 @@ public interface ArchiveFileServiceRemote {
 
     List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit);
 
+    /**
+     * Returns documents matching the given tags, with optional tag-value filtering for multi-value tags.
+     * For a tag name contained in documentTagValues, a document only matches if its tag value is one of
+     * the given values; tag names not contained in the map match regardless of their value.
+     *
+     * @param docTagName document tag names to filter by
+     * @param limit maximum number of results
+     * @param documentTagValues optional map of document tag name to selected values for multi-value tag filtering
+     * @return matching documents
+     */
+    List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit, HashMap<String, String[]> documentTagValues);
+
     Hashtable<String, ArrayList<String>> getDocumentTagsForCase(String caseId);
 
     void renameTag(String fromName, String toName) throws Exception;

@@ -4809,6 +4809,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit) {
+        return getTaggedDocuments(docTagName, limit, null);
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit, HashMap<String, String[]> documentTagValues) {
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;
         ResultSet rs = null;
@@ -4816,6 +4822,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         List<ArchiveFileDocumentsBean> returnList = new ArrayList<>();
 
         String principalId = context.getCallerPrincipal().getName();
+
+        if (docTagName == null || docTagName.length == 0) {
+            return returnList;
+        }
 
         List<Group> userGroups = new ArrayList<>();
         try {
@@ -4827,20 +4837,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         try {
             con = utils.getConnection();
 
-            String inClause = "";
-            for (String t : docTagName) {
-                inClause = inClause + ",?";
-            }
-            inClause = inClause.replaceFirst(",", "");
+            List<String> params = new ArrayList<>();
+            String docTagCond = buildTagCondition("a4", docTagName, documentTagValues, params);
 
             st = con.prepareStatement("select docid, date_set from (select a5.id as docid, a4.date_set from "
                     + "    (SELECT id, date_changed, archived from cases) a1, "
                     + "    document_tags a4, case_documents a5 "
-                    + "    where a1.archived=0 and a5.deleted=0 and (((a4.tagName in (" + inClause + ") and a4.documentKey=a5.id and a5.archiveFileKey=a1.id))) order by a4.date_set DESC) allkeys order by date_set desc limit 0,?");
+                    + "    where a1.archived=0 and a5.deleted=0 and (((" + docTagCond + ") and a4.documentKey=a5.id and a5.archiveFileKey=a1.id)) order by a4.date_set DESC) allkeys order by date_set desc limit 0,?");
 
             int index = 1;
-            for (String t : docTagName) {
-                st.setString(index, t);
+            for (String p : params) {
+                st.setString(index, p);
                 index = index + 1;
             }
 

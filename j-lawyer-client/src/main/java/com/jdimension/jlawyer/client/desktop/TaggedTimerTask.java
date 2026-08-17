@@ -747,6 +747,67 @@ public class TaggedTimerTask extends java.util.TimerTask {
         this(owner, tagsPane, resultPanel,tagMenu, tagDocumentMenu, popTags, popDocumentTags, false);
     }
 
+    /**
+     * A tag filter split into plain tag names and, for multi-value tags, the selected values
+     * per tag name. The values map is null if no multi-value tag value is selected at all.
+     */
+    private static class TagFilter {
+
+        private final String[] names;
+        private final HashMap<String, String[]> values;
+
+        TagFilter(String[] names, HashMap<String, String[]> values) {
+            this.names = names;
+            this.values = values;
+        }
+
+        String[] getNames() {
+            return this.names;
+        }
+
+        HashMap<String, String[]> getValues() {
+            return this.values;
+        }
+    }
+
+    /**
+     * Splits the persisted tag filter entries into tag names and multi-value tag values.
+     * Multi-value tags are persisted in their display form "tagName: tagValue" - only the name
+     * is passed to the server as tag name, the value goes into the values map so that the server
+     * can restrict the tag to the selected values.
+     */
+    private static TagFilter parseFilterTags(String[] filterTags, HashMap<String, AppOptionGroupBean[]> mvTagDefs, String mvTagPrefix) {
+        java.util.Set<String> mvTagNames = new java.util.HashSet<>();
+        if (mvTagDefs != null) {
+            for (String key : mvTagDefs.keySet()) {
+                mvTagNames.add(key.substring(mvTagPrefix.length()));
+            }
+        }
+
+        java.util.Set<String> names = new java.util.LinkedHashSet<>();
+        HashMap<String, List<String>> valuesBuilder = new HashMap<>();
+        for (String ft : filterTags) {
+            int colonIdx = ft.indexOf(": ");
+            if (colonIdx > 0 && mvTagNames.contains(ft.substring(0, colonIdx))) {
+                String tagName = ft.substring(0, colonIdx);
+                names.add(tagName);
+                valuesBuilder.computeIfAbsent(tagName, k -> new ArrayList<>()).add(ft.substring(colonIdx + 2));
+            } else {
+                names.add(ft);
+            }
+        }
+
+        HashMap<String, String[]> values = null;
+        if (!valuesBuilder.isEmpty()) {
+            values = new HashMap<>();
+            for (java.util.Map.Entry<String, List<String>> e : valuesBuilder.entrySet()) {
+                values.put(e.getKey(), e.getValue().toArray(new String[0]));
+            }
+        }
+
+        return new TagFilter(names.toArray(new String[0]), values);
+    }
+
     private void buildPopup(JButton button, JPopupMenu popup, List<String> tagsInUse, String[] lastFilterTags, String userSettingsKey) {
         buildPopup(button, popup, tagsInUse, lastFilterTags, userSettingsKey, null, null);
     }
@@ -938,35 +999,10 @@ public class TaggedTimerTask extends java.util.TimerTask {
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
 
             // Parse filter tags into tag names and value maps for multi-value tag support
-            HashMap<String, AppOptionGroupBean[]> caseMvDefs = settings.getArchiveFileMvTagDefs();
-            java.util.Set<String> caseMvTagNames = new java.util.HashSet<>();
-            if (caseMvDefs != null) {
-                String prefix = com.jdimension.jlawyer.server.constants.OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS_MV_PREFIX;
-                for (String key : caseMvDefs.keySet()) {
-                    caseMvTagNames.add(key.substring(prefix.length()));
-                }
-            }
-            java.util.Set<String> tagNamesSet = new java.util.LinkedHashSet<>();
-            HashMap<String, java.util.List<String>> caseTagValuesBuilder = new HashMap<>();
-            for (String ft : lastFilterTags) {
-                int colonIdx = ft.indexOf(": ");
-                if (colonIdx > 0 && caseMvTagNames.contains(ft.substring(0, colonIdx))) {
-                    String tagName = ft.substring(0, colonIdx);
-                    String tagValue = ft.substring(colonIdx + 2);
-                    tagNamesSet.add(tagName);
-                    caseTagValuesBuilder.computeIfAbsent(tagName, k -> new ArrayList<>()).add(tagValue);
-                } else {
-                    tagNamesSet.add(ft);
-                }
-            }
-            String[] parsedTagNames = tagNamesSet.toArray(new String[0]);
-            HashMap<String, String[]> caseTagValues = null;
-            if (!caseTagValuesBuilder.isEmpty()) {
-                caseTagValues = new HashMap<>();
-                for (java.util.Map.Entry<String, java.util.List<String>> e : caseTagValuesBuilder.entrySet()) {
-                    caseTagValues.put(e.getKey(), e.getValue().toArray(new String[0]));
-                }
-            }
+            TagFilter caseFilter = parseFilterTags(lastFilterTags, settings.getArchiveFileMvTagDefs(),
+                    com.jdimension.jlawyer.server.constants.OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS_MV_PREFIX);
+            String[] parsedTagNames = caseFilter.getNames();
+            HashMap<String, String[]> caseTagValues = caseFilter.getValues();
 
             if (caseTagValues != null) {
                 myNewList = fileService.getTagged(parsedTagNames, null, 1000, caseTagValues, null);
@@ -997,26 +1033,17 @@ public class TaggedTimerTask extends java.util.TimerTask {
             tags = fileService.getTags(myNewListIds);
 
             if (stopped) return;
-            // Parse document filter tags: extract raw tag names for server query
-            HashMap<String, AppOptionGroupBean[]> docMvDefs = settings.getDocumentMvTagDefs();
-            java.util.Set<String> docMvTagNames = new java.util.HashSet<>();
-            if (docMvDefs != null) {
-                String docPrefix = com.jdimension.jlawyer.server.constants.OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX;
-                for (String key : docMvDefs.keySet()) {
-                    docMvTagNames.add(key.substring(docPrefix.length()));
-                }
+            // Parse document filter tags into tag names and value maps for multi-value tag support
+            TagFilter docFilter = parseFilterTags(lastFilterDocumentTags, settings.getDocumentMvTagDefs(),
+                    com.jdimension.jlawyer.server.constants.OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX);
+            String[] parsedDocTagNames = docFilter.getNames();
+            HashMap<String, String[]> documentTagValues = docFilter.getValues();
+
+            if (documentTagValues != null) {
+                myNewDocumentList = fileService.getTaggedDocuments(parsedDocTagNames, 1000, documentTagValues);
+            } else {
+                myNewDocumentList = fileService.getTaggedDocuments(parsedDocTagNames, 1000);
             }
-            java.util.Set<String> docTagNamesSet = new java.util.LinkedHashSet<>();
-            for (String ft : lastFilterDocumentTags) {
-                int colonIdx = ft.indexOf(": ");
-                if (colonIdx > 0 && docMvTagNames.contains(ft.substring(0, colonIdx))) {
-                    docTagNamesSet.add(ft.substring(0, colonIdx));
-                } else {
-                    docTagNamesSet.add(ft);
-                }
-            }
-            String[] parsedDocTagNames = docTagNamesSet.toArray(new String[0]);
-            myNewDocumentList = fileService.getTaggedDocuments(parsedDocTagNames, 1000);
             if (selectedUsers.length > 0) {
                 java.util.Set<String> selected = new java.util.HashSet<>(java.util.Arrays.asList(selectedUsers));
                 filteredDocumentList.clear();
