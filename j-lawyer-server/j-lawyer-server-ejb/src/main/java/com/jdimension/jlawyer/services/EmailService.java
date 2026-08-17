@@ -2964,28 +2964,24 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             message.put("isReadReceiptRequested", true);
         }
 
-        // Build internetMessageHeaders for priority, threading, etc.
+        // Build internetMessageHeaders. Graph only accepts custom headers whose name starts
+        // with "x-" / "X-" - standard headers such as Priority, Importance, In-Reply-To or
+        // References are rejected with "The internet message header name ... should start with x-".
+        // Importance is therefore set via the message's native "importance" property above;
+        // Exchange derives the Importance header on the wire from it. X-Priority is added on top
+        // for recipients that do not evaluate the Importance header.
         List<Map<String, String>> hdrs = new ArrayList<>();
-        // Priority headers for non-Outlook recipients
         if ("high".equals(graphPrio)) {
             hdrs.add(createHeader(HEADER_X_PRIORITY, "1"));
-            hdrs.add(createHeader(HEADER_PRIORITY, "Urgent"));
-            hdrs.add(createHeader(HEADER_IMPORTANCE, "high"));
         } else if ("low".equals(graphPrio)) {
             hdrs.add(createHeader(HEADER_X_PRIORITY, "5"));
-            hdrs.add(createHeader(HEADER_PRIORITY, "Non-Urgent"));
-            hdrs.add(createHeader(HEADER_IMPORTANCE, "low"));
-        }
-        // Threading headers
-        if (inReplyTo != null && !inReplyTo.isEmpty()) {
-            hdrs.add(createHeader("In-Reply-To", inReplyTo));
-        }
-        if (references != null && !references.isEmpty()) {
-            hdrs.add(createHeader("References", references));
         }
         if (!hdrs.isEmpty()) {
             message.put("internetMessageHeaders", hdrs);
         }
+        // inReplyTo / references cannot be passed through the Graph JSON sendMail payload for the
+        // same reason (non "x-" header names are rejected). Threading on Exchange side is handled
+        // by the conversation the message is sent from.
         if (attachments != null && !attachments.isEmpty()) {
             List<Map<String, Object>> atts = new ArrayList<>();
             for (MailAttachmentDTO att : attachments) {
