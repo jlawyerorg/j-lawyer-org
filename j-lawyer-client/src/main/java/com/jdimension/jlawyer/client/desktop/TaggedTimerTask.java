@@ -668,6 +668,7 @@ import com.google.common.collect.ListMultimap;
 import com.jdimension.jlawyer.client.editors.*;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
@@ -850,7 +851,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
         String selectedTabTitle=null;
         if(this.tagsPane.getSelectedIndex()>-1)
-            selectedTabTitle=this.tagsPane.getTitleAt(this.tagsPane.getSelectedIndex());
+            selectedTabTitle=ComponentUtils.getTabBaseTitle(this.tagsPane, this.tagsPane.getSelectedIndex());
                 
 
         List<ArchiveFileBean> myNewList = null;
@@ -1060,7 +1061,25 @@ public class TaggedTimerTask extends java.util.TimerTask {
             final String[] caseTags = lastFilterTags.clone();
             final String[] docTags = lastFilterDocumentTags.clone();
             final String reselectTabWithTitle=selectedTabTitle;
-            
+
+            // total number of elements per tag and in total - covering all elements, not only the rendered ones
+            final HashMap<String, Integer> countsByTag = new HashMap<>();
+            for (ArchiveFileBean aFile : l1) {
+                if (tags.get(aFile.getId()) != null) {
+                    for (ArchiveFileTagsBean aftb : tags.get(aFile.getId())) {
+                        countsByTag.merge(aftb.getTagValue() != null ? aftb.getTagName() + ": " + aftb.getTagValue() : aftb.getTagName(), 1, Integer::sum);
+                    }
+                }
+            }
+            for (ArchiveFileDocumentsBean aDoc : l2) {
+                if (documentTags.get(aDoc.getId()) != null) {
+                    for (DocumentTagsBean dtb : documentTags.get(aDoc.getId())) {
+                        countsByTag.merge(dtb.getTagValue() != null ? dtb.getTagName() + ": " + dtb.getTagValue() : dtb.getTagName(), 1, Integer::sum);
+                    }
+                }
+            }
+            final int totalCount = l1.size() + l2.size();
+
             if (stopped) return;
             SwingUtilities.invokeAndWait(
                     new Runnable() {
@@ -1178,30 +1197,31 @@ public class TaggedTimerTask extends java.util.TimerTask {
                                 tagToTep.get(s).forEach(taggedEntryPanel -> addEntryToTab(s, taggedEntryPanel));
                             });
 
-                            // Format tabs with icons and tooltips based on element count
+                            // Format tabs with element count, icons and tooltips
+                            ComponentUtils.setTabTitleWithCount(tagsPane, 0, totalCount);
+
                             int maxElementCount = 0;
                             // First pass: find maximum element count (skip "alle" tab at index 0)
                             for (int t = 1; t < tagsPane.getTabCount(); t++) {
-                                JScrollPane sp = (JScrollPane) tagsPane.getComponentAt(t);
-                                JViewport p = (JViewport) sp.getComponent(0);
-                                int count = ((JPanel) p.getComponent(0)).getComponentCount();
+                                int count = countsByTag.getOrDefault(ComponentUtils.getTabBaseTitle(tagsPane, t), 0);
                                 if (count > maxElementCount) {
                                     maxElementCount = count;
                                 }
                             }
 
-                            // Second pass: set icons and tooltips
-                            if (maxElementCount > 0) {
-                                for (int t = 1; t < tagsPane.getTabCount(); t++) {
-                                    String tabTitle = tagsPane.getTitleAt(t);
-                                    JScrollPane sp = (JScrollPane) tagsPane.getComponentAt(t);
-                                    JViewport p = (JViewport) sp.getComponent(0);
-                                    int count = ((JPanel) p.getComponent(0)).getComponentCount();
+                            // Second pass: set titles, icons and tooltips
+                            for (int t = 1; t < tagsPane.getTabCount(); t++) {
+                                String tabTitle = ComponentUtils.getTabBaseTitle(tagsPane, t);
+                                int count = countsByTag.getOrDefault(tabTitle, 0);
 
-                                    // Set tooltip
-                                    tagsPane.setToolTipTextAt(t, count + " Elemente mit dem Etikett " + tabTitle);
+                                // Set tooltip
+                                tagsPane.setToolTipTextAt(t, count + " Elemente mit dem Etikett " + tabTitle);
 
-                                    // Calculate percentage and set icon
+                                // Show the number of elements in the tab title
+                                ComponentUtils.setTabTitleWithCount(tagsPane, t, count);
+
+                                // Calculate percentage and set icon
+                                if (maxElementCount > 0) {
                                     double percentage = (count * 100.0) / maxElementCount;
                                     if (percentage <= 25) {
                                         tagsPane.setIconAt(t, new javax.swing.ImageIcon(getClass().getResource("/icons16/material/arrow_circle_down_20dp_97BF0D.png")));
@@ -1216,12 +1236,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                             // reselect the tab that was active before the refresh
                             int selectTabIndex=-1;
                             if(reselectTabWithTitle!=null) {
-                                for (int t = 0; t < tagsPane.getTabCount(); t++) {
-                                    if (tagsPane.getTitleAt(t).equals(reselectTabWithTitle)) {
-                                        selectTabIndex = t;
-                                        break;
-                                    }
-                                }
+                                selectTabIndex = ComponentUtils.indexOfTabByBaseTitle(tagsPane, reselectTabWithTitle);
                             }
                             if(selectTabIndex>-1) {
                                 tagsPane.setSelectedIndex(selectTabIndex);
@@ -1234,13 +1249,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                         private void addTagsTab(String tagName) {
                             if (Arrays.asList(caseTags).indexOf(tagName) > -1 || Arrays.asList(docTags).indexOf(tagName) > -1) {
 
-                                boolean hasTab = false;
-                                for (int i = 0; i < tagsPane.getTabCount(); i++) {
-                                    if (tagsPane.getTitleAt(i).equals(tagName)) {
-                                        hasTab = true;
-                                        break;
-                                    }
-                                }
+                                boolean hasTab = ComponentUtils.indexOfTabByBaseTitle(tagsPane, tagName) > -1;
                                 if (!hasTab) {
                                     JScrollPane scroll = new JScrollPane();
                                     scroll.getVerticalScrollBar().setUnitIncrement(16);
@@ -1255,19 +1264,18 @@ public class TaggedTimerTask extends java.util.TimerTask {
                                     scroll.setBorder(null);
                                     scroll.setOpaque(false);
                                     tagsPane.addTab(tagName, scroll);
+                                    ComponentUtils.setTabBaseTitle(tagsPane, tagsPane.getTabCount() - 1, tagName);
                                 }
                             }
                         }
 
                         private void addEntryToTab(String tagName, TaggedEntryPanelTransparent tep) {
 
-                            for (int i = 0; i < tagsPane.getTabCount(); i++) {
-                                if (tagsPane.getTitleAt(i).equals(tagName)) {
-                                    JScrollPane sp = (JScrollPane) tagsPane.getComponentAt(i);
-                                    JViewport p = (JViewport) sp.getComponent(0);
-                                    ((JPanel) p.getComponent(0)).add(tep);
-                                    break;
-                                }
+                            int i = ComponentUtils.indexOfTabByBaseTitle(tagsPane, tagName);
+                            if (i > -1) {
+                                JScrollPane sp = (JScrollPane) tagsPane.getComponentAt(i);
+                                JViewport p = (JViewport) sp.getComponent(0);
+                                ((JPanel) p.getComponent(0)).add(tep);
                             }
                         }
                     });
