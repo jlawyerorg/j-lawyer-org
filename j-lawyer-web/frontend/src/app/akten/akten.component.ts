@@ -25,6 +25,7 @@ import { InvoicePositionsComponent } from './invoice-positions.component';
 import { PaymentEditorComponent } from './payment-editor.component';
 import { DocumentActionsComponent, FolderOption } from './document-actions.component';
 import { DocumentBulkBarComponent } from './document-bulk-bar.component';
+import { CaseTimelineComponent } from './case-timeline.component';
 import {
   formatDurationMs, positionMillis, runningElapsed as elapsedOf, sumDuration, sumInvoiceable, sumNet, toServerDateTime,
 } from './timesheet.util';
@@ -72,7 +73,7 @@ interface TimesheetView extends CaseTimesheet {
     CaseEditorComponent, PartyAddComponent, PartyEditorComponent, EventEditorComponent,
     TimesheetEditorComponent, TimesheetDetailComponent, PositionEditorComponent, AccountEntryEditorComponent,
     InvoiceEditorComponent, InvoicePositionsComponent, PaymentEditorComponent, DocumentActionsComponent,
-    DocumentBulkBarComponent],
+    DocumentBulkBarComponent, CaseTimelineComponent],
   template: `
     <div class="master-detail" [class.show-detail]="selectedId()">
       <!-- Aktenliste -->
@@ -157,6 +158,7 @@ interface TimesheetView extends CaseTimesheet {
               <span><span class="k">{{ 'akten.meta.lawyer' | transloco }}</span> <b>{{ c.lawyer || '—' }}</b></span>
               <span><span class="k">{{ 'akten.meta.claimValue' | transloco }}</span> <b>{{ c.claimValue | number: '1.2-2' }} €</b></span>
             </div>
+            <jl-case-timeline [dueDates]="c.dueDates" (pick)="openEditDue($event)" />
             <div class="tabs" role="tablist">
               @for (t of tabs; track t) {
                 <button type="button" class="tab" [class.on]="activeTab() === t" (click)="selectTab(t)">

@@ -750,6 +750,20 @@
       "deadline": "Frist",
       "followup": "Wiedervorlage"
     },
+    "timeline": {
+      "aria": "Zeitstrahl der Fristen, Wiedervorlagen und Termine",
+      "hint": "Nicht-lineare Zeitachse: nahe Termine gedehnt, ferne gestaucht",
+      "today": "heute",
+      "week1": "1 Woche",
+      "month1": "1 Monat",
+      "month3": "3 Monate",
+      "month6": "6 Monate",
+      "year1": "1 Jahr",
+      "overdue": "überfällig",
+      "overdueCount": "{{n}} überfällig",
+      "done": "erledigt",
+      "entry": "{{date}}, {{kind}}: {{reason}}"
+    },
     "meta": {
       "fileNumber": "Aktenzeichen",
       "subjectField": "Rechtsgebiet",

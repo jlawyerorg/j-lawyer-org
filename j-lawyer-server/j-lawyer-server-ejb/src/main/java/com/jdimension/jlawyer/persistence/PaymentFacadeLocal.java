@@ -688,6 +688,8 @@ public interface PaymentFacadeLocal {
     int count();
     
     List<Payment> findByArchiveFileKey(ArchiveFileBean archiveFileKey);
+
+    List<Payment> findByAddress(AddressBean address);
     
     Payment findByPaymentNumber(String paymentNumber);
     

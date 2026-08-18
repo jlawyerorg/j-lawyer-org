@@ -678,6 +678,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -713,6 +714,12 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     private AddressTagsBeanFacadeLocal addressTagsFacade;
 
     @EJB
+    private InvoiceFacadeLocal invoicesFacade;
+
+    @EJB
+    private PaymentFacadeLocal paymentsFacade;
+
+    @EJB
     private ContactSyncServiceLocal contactSync;
 
     // custom hooks support
@@ -724,6 +731,8 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     Event<AddressUpdatedEvent> updatedAddressEvent;
     @Inject
     Event<AddressTagChangedEvent> tagChangedEvent;
+
+    private static final int MAX_LISTED_REFERENCES = 20;
 
     private static final String PS_SEARCHENHANCED_2 = "select id from contacts where ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(department) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(email_home) like ? or ucase(email_misc) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(city) like ? or ucase(birthName) like ? or zipCode like ?";
 
@@ -806,6 +815,24 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             }
         }
 
+        List<Invoice> invoices = this.invoicesFacade.findByAddress(dto);
+        if (invoices != null && !invoices.isEmpty()) {
+            List<String> references = new ArrayList<>();
+            for (Invoice i : invoices) {
+                references.add(toReference(i.getInvoiceNumber(), i.getArchiveFileKey()));
+            }
+            throw new EJBException(describeReferences("Rechnung(en)", references));
+        }
+
+        List<Payment> payments = this.paymentsFacade.findByAddress(dto);
+        if (payments != null && !payments.isEmpty()) {
+            List<String> references = new ArrayList<>();
+            for (Payment p : payments) {
+                references.add(toReference(p.getPaymentNumber(), p.getArchiveFileKey()));
+            }
+            throw new EJBException(describeReferences("Zahlung(en)", references));
+        }
+
         this.addressFacade.remove(dto);
 
         try {
@@ -817,6 +844,39 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
         AddressRemovedEvent evt = new AddressRemovedEvent();
         evt.setAddressId(id);
         this.removedAddressEvent.fireAsync(evt);
+    }
+
+    /**
+     * Renders a single blocking document as "number (file number)".
+     */
+    private static String toReference(String number, ArchiveFileBean aFile) {
+        String result = number;
+        if (result == null || result.trim().isEmpty()) {
+            result = "ohne Nummer";
+        }
+        if (aFile != null) {
+            result = result + " (" + aFile.getFileNumber() + ")";
+        }
+        return result;
+    }
+
+    /**
+     * Builds the error message for a contact that can not be deleted because it is
+     * still referenced. At most MAX_LISTED_REFERENCES entries are listed.
+     */
+    private static String describeReferences(String label, List<String> references) {
+        Collections.sort(references);
+        StringBuilder sb = new StringBuilder();
+        sb.append("Kontakt ist in ").append(references.size()).append(" ").append(label);
+        sb.append(" als Empfänger hinterlegt und kann nicht gelöscht werden:");
+        int listed = Math.min(references.size(), MAX_LISTED_REFERENCES);
+        for (int i = 0; i < listed; i++) {
+            sb.append("\n  ").append(references.get(i));
+        }
+        if (references.size() > listed) {
+            sb.append("\n... und ").append(references.size() - listed).append(" weitere.");
+        }
+        return sb.toString();
     }
 
     @Override

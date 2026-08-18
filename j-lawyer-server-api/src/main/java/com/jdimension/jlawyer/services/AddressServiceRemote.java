@@ -685,17 +685,32 @@ public interface AddressServiceRemote {
 
     void updateAddress(AddressBean dto);
 
+    /**
+     * Deletes a contact. The deletion is rejected if the contact is still
+     * referenced, i.e. if it is a party in at least one case, or if it is the
+     * recipient of at least one invoice or of at least one payment. In the
+     * latter two cases the exception message lists the blocking documents by
+     * their number and case file number, limited to 20 entries per document
+     * type. On success the contact is removed from the connected cloud address
+     * book and a removal event is fired.
+     *
+     * @param id ID of the address to delete
+     * @throws javax.ejb.EJBException if the contact is still referenced
+     */
     void removeAddress(String id);
 
     /**
      * Removes multiple addresses in a single batch operation. Each address is
      * processed individually so that a failure on one (e.g. still referenced
-     * in a case) does not prevent the others from being deleted. Cloud sync
-     * and removal events are fired for each successfully deleted address.
+     * in a case, or still the recipient of an invoice or payment) does not
+     * prevent the others from being deleted. Cloud sync and removal events are
+     * fired for each successfully deleted address. The reason for an individual
+     * failure is written to the server log only - use removeAddress to obtain it.
      *
      * @param ids list of address IDs to delete
      * @return list of address IDs that could not be deleted (e.g. still
-     *         referenced in a case); an empty list means all deletions succeeded
+     *         referenced in a case, or by an invoice or payment); an empty list
+     *         means all deletions succeeded
      */
     List<String> removeAddresses(List<String> ids);
 

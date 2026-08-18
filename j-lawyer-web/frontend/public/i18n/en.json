@@ -750,6 +750,20 @@
       "deadline": "Deadline",
       "followup": "Follow-up"
     },
+    "timeline": {
+      "aria": "Timeline of deadlines, follow-ups and appointments",
+      "hint": "Non-linear time axis: near dates stretched, distant dates compressed",
+      "today": "today",
+      "week1": "1 week",
+      "month1": "1 month",
+      "month3": "3 months",
+      "month6": "6 months",
+      "year1": "1 year",
+      "overdue": "overdue",
+      "overdueCount": "{{n}} overdue",
+      "done": "done",
+      "entry": "{{date}}, {{kind}}: {{reason}}"
+    },
     "meta": {
       "fileNumber": "File number",
       "subjectField": "Practice area",
