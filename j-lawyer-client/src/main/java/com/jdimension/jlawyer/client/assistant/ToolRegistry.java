@@ -10,6 +10,7 @@ import com.jdimension.jlawyer.ai.ToolParameter;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.AddressTagsBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
@@ -468,6 +469,19 @@ public class ToolRegistry {
                         new ToolParameter("active", "string", "true zum Setzen, false zum Entfernen (Standard: true)", false)),
                 ToolDefinition.RISK_MEDIUM));
 
+        TOOLS.add(new ToolDefinition("list_contact_tags",
+                "Gibt alle verfügbaren Etiketten (Tags) für Kontakte zurück, inkl. Listenetiketten mit ihren möglichen Werten.",
+                Arrays.asList()));
+
+        TOOLS.add(new ToolDefinition("set_contact_tag",
+                "Setzt ein Etikett auf einen Kontakt. Für Listenetiketten muss zusätzlich ein tagValue angegeben werden. Zum Entfernen active=false setzen.",
+                Arrays.asList(
+                        new ToolParameter("contactId", "string", "Interne ID des Kontakts", true),
+                        new ToolParameter("tagName", "string", "Name des Etiketts", true),
+                        new ToolParameter("tagValue", "string", "Wert bei Listenetiketten (optional, null für einfache Etiketten)", false),
+                        new ToolParameter("active", "string", "true zum Setzen, false zum Entfernen (Standard: true)", false)),
+                ToolDefinition.RISK_MEDIUM));
+
         // Template tools
 
         TOOLS.add(new ToolDefinition("search_templates",
@@ -663,6 +677,10 @@ public class ToolRegistry {
                     return executeSetDocumentTag(args);
                 case "set_case_tag":
                     return executeSetCaseTag(args);
+                case "list_contact_tags":
+                    return executeListContactTags(args);
+                case "set_contact_tag":
+                    return executeSetContactTag(args);
                 case "search_templates":
                     return executeSearchTemplates(args);
                 case "list_letter_heads":
@@ -834,6 +852,9 @@ public class ToolRegistry {
                     return "Ordner erstellen: " + args.getOrDefault("name", "");
                 case "move_document_to_folder":
                     return "Dokument in Ordner verschieben: " + args.getOrDefault("documentId", "");
+                case "move_document_to_case":
+                    return "Dokument in andere Akte verschieben: " + args.getOrDefault("documentId", "")
+                            + " nach Akte " + args.getOrDefault("targetCaseId", "");
                 case "list_folder_templates":
                     return "Verfügbare Ordnervorlagen auflisten";
                 case "apply_folder_template":
@@ -846,6 +867,10 @@ public class ToolRegistry {
                     return "Dokument-Etikett setzen: " + args.getOrDefault("tagName", "");
                 case "set_case_tag":
                     return "Akten-Etikett setzen: " + args.getOrDefault("tagName", "");
+                case "list_contact_tags":
+                    return "Verfügbare Kontakt-Etiketten auflisten";
+                case "set_contact_tag":
+                    return "Kontakt-Etikett setzen: " + args.getOrDefault("tagName", "");
                 case "search_templates":
                     return "Vorlagensuche: '" + args.getOrDefault("query", "") + "'";
                 case "list_letter_heads":
@@ -2211,6 +2236,9 @@ public class ToolRegistry {
                 }
                 if (addr.getStreet() != null && !addr.getStreet().isEmpty()) {
                     sb.append(", \"street\": \"").append(ToolJsonUtils.escapeJson(addr.getStreet())).append("\"");
+                }
+                if (addr.getStreetNumber() != null && !addr.getStreetNumber().isEmpty()) {
+                    sb.append(", \"streetNumber\": \"").append(ToolJsonUtils.escapeJson(addr.getStreetNumber())).append("\"");
                 }
                 if (addr.getZipCode() != null && !addr.getZipCode().isEmpty()) {
                     sb.append(", \"zipCode\": \"").append(ToolJsonUtils.escapeJson(addr.getZipCode())).append("\"");
@@ -4347,6 +4375,65 @@ public class ToolRegistry {
         return sbResult.toString();
     }
 
+    private String executeListContactTags(JsonObject args) throws Exception {
+        SystemManagementRemote sys = ToolJsonUtils.getLocator().lookupSystemManagementRemote();
+
+        AppOptionGroupBean[] boolTags = sys.getOptionGroup(OptionConstants.OPTIONGROUP_ADDRESSTAGS);
+        HashMap<String, AppOptionGroupBean[]> mvGroups = sys.getOptionGroupsByPrefix(OptionConstants.OPTIONGROUP_ADDRESSTAGS_MV_PREFIX);
+
+        return buildTagListJson(boolTags, mvGroups, OptionConstants.OPTIONGROUP_ADDRESSTAGS_MV_PREFIX);
+    }
+
+    private String executeSetContactTag(JsonObject args) throws Exception {
+        String contactId = (String) args.get("contactId");
+        String tagName = (String) args.get("tagName");
+        String tagValue = (String) args.get("tagValue");
+        String activeStr = (String) args.get("active");
+        if (contactId == null || contactId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Kontakt-ID (contactId) fehlt");
+        }
+        if (tagName == null || tagName.trim().isEmpty()) {
+            return ToolJsonUtils.error("Etikett-Name (tagName) fehlt");
+        }
+        boolean active = (activeStr == null || !"false".equalsIgnoreCase(activeStr.trim()));
+
+        SystemManagementRemote sys = ToolJsonUtils.getLocator().lookupSystemManagementRemote();
+        AppOptionGroupBean[] boolTags = sys.getOptionGroup(OptionConstants.OPTIONGROUP_ADDRESSTAGS);
+        HashMap<String, AppOptionGroupBean[]> mvGroups = sys.getOptionGroupsByPrefix(OptionConstants.OPTIONGROUP_ADDRESSTAGS_MV_PREFIX);
+
+        String validationError = validateTag(tagName.trim(), tagValue, boolTags, mvGroups, OptionConstants.OPTIONGROUP_ADDRESSTAGS_MV_PREFIX);
+        if (validationError != null) {
+            return validationError;
+        }
+
+        AddressServiceRemote addrSvc = ToolJsonUtils.getLocator().lookupAddressServiceRemote();
+
+        AddressBean contact = addrSvc.getAddress(contactId.trim());
+        if (contact == null) {
+            return ToolJsonUtils.error("Kontakt nicht gefunden: " + contactId);
+        }
+
+        AddressTagsBean tag = new AddressTagsBean();
+        tag.setTagName(tagName.trim());
+        if (tagValue != null && !tagValue.trim().isEmpty()) {
+            tag.setTagValue(tagValue.trim());
+        }
+
+        addrSvc.setTag(contactId.trim(), tag, active);
+
+        EventBroker.getInstance().publishEvent(new ContactUpdatedEvent(contact));
+
+        StringBuilder sbResult = new StringBuilder();
+        sbResult.append("{\"success\": true, \"contactId\": \"").append(ToolJsonUtils.escapeJson(contactId.trim()));
+        sbResult.append("\", \"tagName\": \"").append(ToolJsonUtils.escapeJson(tagName.trim()));
+        sbResult.append("\", \"active\": ").append(active);
+        if (tagValue != null && !tagValue.trim().isEmpty()) {
+            sbResult.append(", \"tagValue\": \"").append(ToolJsonUtils.escapeJson(tagValue.trim())).append("\"");
+        }
+        sbResult.append("}");
+        return sbResult.toString();
+    }
+
     // =========================================================================
     // Shared helpers
     // =========================================================================
@@ -4459,6 +4546,9 @@ public class ToolRegistry {
         }
         if (a.getStreet() != null && !a.getStreet().isEmpty()) {
             sb.append(", \"street\": \"").append(ToolJsonUtils.escapeJson(a.getStreet())).append("\"");
+        }
+        if (a.getStreetNumber() != null && !a.getStreetNumber().isEmpty()) {
+            sb.append(", \"streetNumber\": \"").append(ToolJsonUtils.escapeJson(a.getStreetNumber())).append("\"");
         }
         if (a.getZipCode() != null && !a.getZipCode().isEmpty()) {
             sb.append(", \"zipCode\": \"").append(ToolJsonUtils.escapeJson(a.getZipCode())).append("\"");
