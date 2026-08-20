@@ -698,6 +698,7 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
 
     private Invoice invoice = null;
     private String timesheetId = null;
+    private boolean positionsImported = false;
 
     /**
      * Creates new form TimesheetBillingDialog
@@ -1055,6 +1056,8 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
             }
         }
 
+        this.positionsImported = !aggregatedPositions.isEmpty();
+
         EventBroker eb = EventBroker.getInstance();
         for (InvoicePosition p : aggregatedPositions.values()) {
             // Round units to 2 decimal places using HALF_UP for consistent rounding
@@ -1068,6 +1071,16 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdBillingActionPerformed
+
+    /**
+     * Indicates whether the user actually transferred timesheet positions to the
+     * invoice, as opposed to closing the dialog without billing anything.
+     *
+     * @return true if at least one timesheet position was billed to the invoice
+     */
+    public boolean isPositionsImported() {
+        return this.positionsImported;
+    }
 
     private void cmdAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAllActionPerformed
         for (int i = 0; i < this.tblPositions.getRowCount(); i++) {

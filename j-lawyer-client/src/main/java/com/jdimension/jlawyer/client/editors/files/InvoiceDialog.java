@@ -3034,7 +3034,57 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         TimesheetBillingDialog dlg = new TimesheetBillingDialog(this, true, this.caseDto.getId(), this.currentEntry);
         FrameUtils.centerDialog(dlg, this);
         dlg.setVisible(true);
+        if (dlg.isPositionsImported()) {
+            this.offerPeriodUpdateFromTimesheets();
+        }
     }//GEN-LAST:event_cmdTimesheetPositionsActionPerformed
+
+    /**
+     * Offers to align the invoices service period with the timesheet positions
+     * linked to this invoice, using the earliest start and the latest end.
+     */
+    private void offerPeriodUpdateFromTimesheets() {
+        if (this.currentEntry == null || this.currentEntry.getId() == null) {
+            return;
+        }
+
+        Date earliest = null;
+        Date latest = null;
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            List<TimesheetPosition> times = locator.lookupArchiveFileServiceRemote().getTimesheetPositionsForInvoice(this.currentEntry.getId());
+            for (TimesheetPosition t : times) {
+                if (t.getStarted() != null && (earliest == null || t.getStarted().before(earliest))) {
+                    earliest = t.getStarted();
+                }
+                if (t.getStopped() != null && (latest == null || t.getStopped().after(latest))) {
+                    latest = t.getStopped();
+                }
+            }
+        } catch (Exception ex) {
+            log.error("error getting timesheet positions for invoice " + this.currentEntry.getId(), ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Zeiterfassungspositionen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (earliest == null || latest == null) {
+            return;
+        }
+
+        String fromText = df.format(earliest);
+        String toText = df.format(latest);
+        if (fromText.equals(this.dtFrom.getText()) && toText.equals(this.dtTo.getText())) {
+            return;
+        }
+
+        int response = JOptionPane.showConfirmDialog(this, "Soll der Leistungszeitraum auf " + fromText + " - " + toText + " (frühester und spätester Zeiterfassungseintrag) gesetzt werden?", "Leistungszeitraum aktualisieren", JOptionPane.YES_NO_OPTION);
+        if (response != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        this.dtFrom.setText(fromText);
+        this.dtTo.setText(toText);
+    }
 
     private void cmdGiroCodeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdGiroCodeActionPerformed
         try {
