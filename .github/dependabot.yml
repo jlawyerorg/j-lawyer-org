@@ -94,3 +94,11 @@ updates:
     ignore:
       - dependency-name: "@angular/*"
       - dependency-name: "@angular-devkit/*"
+      # Pinned BY Angular 19, not by us: @angular/core peers zone.js "~0.15.0", and
+      # @angular/compiler-cli + build-angular peer typescript ">=5.5 <5.9". Version
+      # updates for these therefore fail `npm ci` with ERESOLVE just like the ancestor
+      # bumps above (see the closed PRs #3548 for zone.js 0.16.2, #3549 for typescript
+      # 7.0.2). rxjs is deliberately NOT ignored — the peer range is "^6.5.3 || ^7.4.0",
+      # so it can still be updated normally.
+      - dependency-name: "typescript"
+      - dependency-name: "zone.js"
