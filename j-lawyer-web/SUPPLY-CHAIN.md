@@ -65,6 +65,47 @@ Angular als kuratierter First-Party-Monorepo (Router/Forms/HTTP/CLI/Material aus
 Hand) minimiert Dritt-transitive Pakete — kleinere Angriffsfläche als ein
 handzusammengestellter Stack (siehe Decision 2b).
 
+### 6. `overrides` für transitive Advisories
+Sicherheitsfixes in **transitiven** Paketen (die also nicht in `dependencies`/
+`devDependencies` stehen) kommen normalerweise erst mit einem Upgrade des direkten
+Vorfahren. Wenn dieser Vorfahre ein Major-Sprung wäre, der die restliche Toolchain
+mitreißt, ist stattdessen ein `overrides`-Eintrag in `frontend/package.json` das
+Mittel der Wahl: er pinnt das transitive Paket punktuell, ohne den Vorfahren anzufassen.
+
+Zulässig nur, wenn die erzwungene Version **semver-kompatibel** zur ursprünglich
+aufgelösten ist (Patch/Minor innerhalb derselben Major). Andernfalls: echtes Upgrade
+planen, nicht überschreiben.
+
+Aktuell gesetzt:
+- `postcss: 8.5.23` (statt der von `@angular-devkit/build-angular` 19.2.0 gepinnten
+  8.5.2) — schließt GHSA-6g55-p6wh-862q, GHSA-r28c-9q8g-f849 und GHSA-fxqj-rqcc-2cmp
+  (`sourceMappingURL`-gesteuertes Auslesen beliebiger `.map`-Dateien zur Build-Zeit).
+  Der Dependabot-Vorschlag hätte dafür `build-angular` auf 21.x gehoben — unvereinbar
+  mit Angular 19 (`@angular/compiler-cli`-Peer, TypeScript >=5.9, Node >=20.19).
+  **Entfällt** mit dem Upgrade auf Angular 20/21, das postcss ohnehin aktuell mitbringt.
+- `webpack-dev-server: 5.2.6` (statt der von `@angular-devkit/build-angular` 19.2.0
+  gepinnten 5.2.0) — schließt die CSRF-Lücke der eingebauten Routen
+  `/webpack-dev-server/invalidate` und `/webpack-dev-server/open-editor` (eine
+  fremde Seite konnte einen Rebuild auslösen bzw. eine Datei im Editor öffnen) sowie
+  den fehlerhaften Umgang mit manipulierten `Host`/`Origin`-Headern. Betrifft nur
+  `ng serve` auf Entwicklermaschinen — der Dev-Server ist nicht Teil des WAR.
+  Der Dependabot-Vorschlag (#3531) hätte dafür `build-angular` auf 22.1.5 gehoben —
+  unvereinbar mit Angular 19 (`@angular/compiler-cli`-Peer `^22.0.0`, TypeScript
+  `>=6.0 <6.1`, Node `^22.22.3 || ^24.15.0 || >=26.0.0`); `npm ci` gegen dieses
+  Lockfile scheitert mit ERESOLVE. 5.2.0 -> 5.2.6 ist ein Patch-Schritt; er tauscht
+  intern lediglich `node-forge` gegen `@peculiar/x509` für die Self-Signed-Zertifikate.
+  **Entfällt** mit dem Upgrade auf Angular 20+, dessen Toolchain 5.2.6+ mitbringt.
+
+  **Nicht** geschlossen wird damit GHSA-w5hq-g745-h8pq (`sockjs` -> `uuid` 8.3.2):
+  `npm audit` führt `webpack-dev-server` deshalb weiterhin (moderate). Ein Override
+  auf `uuid` 11.x wäre ein Major-Sprung innerhalb von `sockjs` und damit nach obiger
+  Regel unzulässig; die Lücke betrifft zudem nur `uuid` v3/v5/v6 mit übergebenem
+  `buf`, während `sockjs` v4 ohne `buf` nutzt. Bleibt bis zum Angular-Upgrade offen.
+
+Jeder Override wird hier dokumentiert — inklusive der Bedingung, unter der er wieder
+verschwindet. Ein undokumentierter Override ist ein Audit-Blocker.
+
+
 ## Dateien in diesem Modul
 Das npm/Angular-Projekt liegt unter `frontend/`; die Maven-WAR-Assembly im Modul-Root
 (`pom.xml`, `src/main/webapp/`). npm läuft ausschließlich in `frontend/`.
