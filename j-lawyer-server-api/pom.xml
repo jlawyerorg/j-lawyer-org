@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.jlawyer</groupId>
+        <artifactId>j-lawyer-parent</artifactId>
+        <version>2.8.0</version>
+    </parent>
+    <artifactId>j-lawyer-server-api</artifactId>
+    <packaging>jar</packaging>
+    <name>j-lawyer-server-api</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.jlawyer</groupId>
+            <artifactId>j-lawyer-server-entities</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jlawyer</groupId>
+            <artifactId>j-lawyer-server-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jlawyer</groupId>
+            <artifactId>j-lawyer-fax</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jlawyer.thirdparty</groupId>
+            <artifactId>jboss-client</artifactId>
+            <version>0.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>j-lawyer-server-api</finalName>
+    </build>
+</project>

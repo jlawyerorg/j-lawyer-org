@@ -1,0 +1,136 @@
+# j-lawyer-web — Supply-Chain-Härtung
+
+Guardrails für die npm-Build-Kette des Web-UI-Moduls. Umsetzung von `design.md`
+Decision 2c des Change `add-web-client`. **Diese Guardrails werden vor dem
+Angular-Scaffolding etabliert** („Guardrails first").
+
+## Bedrohungsmodell
+
+Zwei Vektoren (siehe Decision 2c):
+
+1. **Laufzeit (Browser)** — gelöst durch self-host + strikte CSP; **keinerlei
+   Remote-Ressourcen**. Kein npm-Thema (nur Deployment-Config des WAR).
+2. **Build-Zeit (npm)** — der eigentliche Supply-Chain-Vektor: bösartige/kompromittierte
+   Pakete (transitiv), `pre`/`postinstall`-Skripte, Typosquatting. **Dieses Dokument
+   adressiert Vektor 2.**
+
+## Controls
+
+### 1. Gepinnte, integritätsgeprüfte Abhängigkeiten
+- `package-lock.json` **committen**; Installation ausschließlich via `npm ci`
+  (nie `npm install` in CI/Release — `npm ci` schlägt bei Lockfile-Drift fehl).
+- `save-exact=true` → exakte Versionen, keine `^`/`~`-Ranges.
+- Lockfile enthält `integrity`-Hashes (SHA-512) je Paket → Manipulation wird erkannt.
+
+### 2. Install-Skripte neutralisieren
+- `ignore-scripts=true` in `.npmrc` → `pre`/`postinstall` von Abhängigkeiten werden
+  **nicht** ausgeführt (Haupt-Angriffsfläche für „install-time"-Schadcode).
+- **Gotcha**: Einzelne legitime Pakete des Angular-Toolchains (v. a. `esbuild`) nutzten
+  historisch `postinstall`, um ein Plattform-Binary zu holen. Moderne Versionen liefern
+  Plattform-Binaries über `optionalDependencies` (kein `postinstall` nötig) — im
+  Scaffold-Spike (Task 1.2a) verifizieren. Falls doch ein Skript nötig ist: **vetted
+  Allowlist** statt globalem Freischalten, z. B. via `@lavamoat/allow-scripts`
+  (`allow-scripts run`) — nur explizit geprüfte Pakete dürfen Skripte ausführen.
+
+### 3. Kontrollierte Registry (Analog zu `maven-repo/`)
+Das Projekt spiegelt Maven-Artefakte bereits in-project (`maven-repo/`, git-ignoriert,
+aus committeten `lib/`-Jars via `scripts/seed-maven-repo.sh` geseedet). npm-Analog:
+
+- **Option A — vendored Offline-Cache (empfohlen, faithful zum Maven-Muster):**
+  Die geprüften Paket-Tarballs werden committet (`vendor-npm/*.tgz`, Rolle wie `lib/`);
+  `scripts/seed-npm-cache.sh` befüllt daraus den npm-Cache; anschließend löst
+  `npm ci --offline --ignore-scripts` **vollständig offline** aus dem Cache auf. Der
+  generierte Cache/`node_modules` ist git-ignoriert (Rolle wie `maven-repo/`).
+- **Option B — Proxy-Registry (Verdaccio/Nexus):** interne Registry cached Upstream;
+  `.npmrc` zeigt per `registry=` darauf. Betrieb eines Dienstes nötig — weniger faithful
+  zum bestehenden file-basierten Muster, aber komfortabler bei vielen Updates.
+
+**Zwei-Phasen-Workflow** (unvermeidbar — der erste Bezug muss irgendwo herkommen):
+1. **Einmaliges, kontrolliertes Seeding** auf einer vertrauenswürdigen Maschine:
+   `npm ci --ignore-scripts` gegen die öffentliche Registry, Lockfile + Integrity
+   erzeugen, Tarballs nach `vendor-npm/` vendoren (`npm pack` je Abhängigkeit bzw.
+   Cache-Export). Ergebnis wird geprüft und committet.
+2. **Reproduzierbare Installs** danach: offline aus `vendor-npm/`/Cache, ohne Netz.
+   Updates durchlaufen erneut Phase 1 (bewusst, review-pflichtig).
+
+### 4. Scanning & Monitoring
+- `npm audit --audit-level=high` als **CI-Gate** (nicht bei jedem lokalen Install →
+  `audit=false` in `.npmrc`, dediziert in CI).
+- **Dependabot** (bereits aktiv) für npm aktivieren.
+- Reproduzierbare Builds ausschließlich in CI/auf der Build-Maschine, nicht auf
+  Entwickler-Maschinen (Node-Toolchain nur zur Build-Zeit — kein Node in Produktion).
+
+### 5. Kleinerer Abhängigkeitsbaum
+Angular als kuratierter First-Party-Monorepo (Router/Forms/HTTP/CLI/Material aus einer
+Hand) minimiert Dritt-transitive Pakete — kleinere Angriffsfläche als ein
+handzusammengestellter Stack (siehe Decision 2b).
+
+### 6. `overrides` für transitive Advisories
+Sicherheitsfixes in **transitiven** Paketen (die also nicht in `dependencies`/
+`devDependencies` stehen) kommen normalerweise erst mit einem Upgrade des direkten
+Vorfahren. Wenn dieser Vorfahre ein Major-Sprung wäre, der die restliche Toolchain
+mitreißt, ist stattdessen ein `overrides`-Eintrag in `frontend/package.json` das
+Mittel der Wahl: er pinnt das transitive Paket punktuell, ohne den Vorfahren anzufassen.
+
+Zulässig nur, wenn die erzwungene Version **semver-kompatibel** zur ursprünglich
+aufgelösten ist (Patch/Minor innerhalb derselben Major). Andernfalls: echtes Upgrade
+planen, nicht überschreiben.
+
+Aktuell gesetzt:
+- `postcss: 8.5.23` (statt der von `@angular-devkit/build-angular` 19.2.0 gepinnten
+  8.5.2) — schließt GHSA-6g55-p6wh-862q, GHSA-r28c-9q8g-f849 und GHSA-fxqj-rqcc-2cmp
+  (`sourceMappingURL`-gesteuertes Auslesen beliebiger `.map`-Dateien zur Build-Zeit).
+  Der Dependabot-Vorschlag hätte dafür `build-angular` auf 21.x gehoben — unvereinbar
+  mit Angular 19 (`@angular/compiler-cli`-Peer, TypeScript >=5.9, Node >=20.19).
+  **Entfällt** mit dem Upgrade auf Angular 20/21, das postcss ohnehin aktuell mitbringt.
+- `webpack-dev-server: 5.2.6` (statt der von `@angular-devkit/build-angular` 19.2.0
+  gepinnten 5.2.0) — schließt die CSRF-Lücke der eingebauten Routen
+  `/webpack-dev-server/invalidate` und `/webpack-dev-server/open-editor` (eine
+  fremde Seite konnte einen Rebuild auslösen bzw. eine Datei im Editor öffnen) sowie
+  den fehlerhaften Umgang mit manipulierten `Host`/`Origin`-Headern. Betrifft nur
+  `ng serve` auf Entwicklermaschinen — der Dev-Server ist nicht Teil des WAR.
+  Der Dependabot-Vorschlag (#3531) hätte dafür `build-angular` auf 22.1.5 gehoben —
+  unvereinbar mit Angular 19 (`@angular/compiler-cli`-Peer `^22.0.0`, TypeScript
+  `>=6.0 <6.1`, Node `^22.22.3 || ^24.15.0 || >=26.0.0`); `npm ci` gegen dieses
+  Lockfile scheitert mit ERESOLVE. 5.2.0 -> 5.2.6 ist ein Patch-Schritt; er tauscht
+  intern lediglich `node-forge` gegen `@peculiar/x509` für die Self-Signed-Zertifikate.
+  **Entfällt** mit dem Upgrade auf Angular 20+, dessen Toolchain 5.2.6+ mitbringt.
+
+- `@angular-devkit/build-angular` → `http-proxy-middleware: 3.0.6` (statt der gepinnten
+  3.0.3) — schließt GHSA-64mm-vxmg-q3vj (Host-Header-gesteuerte Umgehung des
+  `router`-Backend-Matchings). Der Dependabot-Vorschlag (#3541) hätte dafür
+  `build-angular` auf 21.2.21 gehoben — dieselbe Unverträglichkeit wie oben.
+
+  **Beachte die verschachtelte Form.** Ein pauschales `"http-proxy-middleware": "3.0.6"`
+  wäre falsch: `webpack-dev-server` bringt eine eigene Instanz auf **2.0.10** mit, die
+  damit über eine Major-Grenze gezwungen würde — genau der Verstoß gegen die Regel
+  oben. Der Override zielt deshalb nur auf den Zweig unter `build-angular`; 2.0.10
+  bleibt unangetastet und war nie betroffen (Advisory-Range ist `>= 3.0.0, < 3.0.6`).
+  Verifiziert: nach dem Override existiert keine Instanz in `[3.0.0, 3.0.6)` mehr.
+
+  **Nicht** geschlossen wird damit GHSA-w5hq-g745-h8pq (`sockjs` -> `uuid` 8.3.2):
+  `npm audit` führt `webpack-dev-server` deshalb weiterhin (moderate). Ein Override
+  auf `uuid` 11.x wäre ein Major-Sprung innerhalb von `sockjs` und damit nach obiger
+  Regel unzulässig; die Lücke betrifft zudem nur `uuid` v3/v5/v6 mit übergebenem
+  `buf`, während `sockjs` v4 ohne `buf` nutzt. Bleibt bis zum Angular-Upgrade offen.
+
+Jeder Override wird hier dokumentiert — inklusive der Bedingung, unter der er wieder
+verschwindet. Ein undokumentierter Override ist ein Audit-Blocker.
+
+
+## Dateien in diesem Modul
+Das npm/Angular-Projekt liegt unter `frontend/`; die Maven-WAR-Assembly im Modul-Root
+(`pom.xml`, `src/main/webapp/`). npm läuft ausschließlich in `frontend/`.
+- `frontend/.npmrc` — erzwingt `ignore-scripts`, `save-exact`, `package-lock`,
+  `engine-strict`, `fund=false`, `audit=false` (Audit dediziert in CI).
+- `frontend/.gitignore` — `node_modules/`, `dist/`, `.angular/` und der generierte
+  npm-Cache sind nicht committet (Rolle wie `maven-repo/`); `package-lock.json`
+  **wird** committet.
+- `frontend/scripts/seed-npm-cache.sh` — befüllt den npm-Cache aus
+  `frontend/vendor-npm/*.tgz` (Skelett; wird nach dem ersten Lockfile/Seeding in
+  Phase 1 scharf geschaltet).
+
+## Status
+Guardrail-Konfiguration und -Policy sind **vor** dem Scaffolding etabliert. Das
+tatsächliche Seeding (`vendor-npm/`, Cache) sowie das CI-Audit-Gate werden mit dem
+Angular-Scaffold (Task 2.2/2.2a) und der CI-Anbindung scharf geschaltet.

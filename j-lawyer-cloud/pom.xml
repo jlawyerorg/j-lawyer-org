@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.jlawyer</groupId>
+        <artifactId>j-lawyer-parent</artifactId>
+        <version>2.8.0</version>
+    </parent>
     <groupId>org.jlawyer.cloud</groupId>
     <artifactId>j-lawyer-cloud</artifactId>
     <version>1.0-SNAPSHOT</version>
@@ -18,6 +23,39 @@
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-core</artifactId>
                 <version>2.16.1</version>
+            </dependency>
+            <!-- nextcloud-api 13.1.0 is compiled against the Jakarta XML Binding 4.x API
+                 (jakarta.xml.bind namespace). The parent pom manages the JAXB/activation
+                 stack to the Jakarta EE 8 line (2.3.3 / 1.2.2, javax namespace) for the
+                 WildFly server and the client. Override that stack to the jakarta-namespace
+                 versions for this module only, so the self-contained shaded jar bundles the
+                 classes nextcloud-api actually calls (e.g. jakarta.xml.bind.JAXBException).
+                 Keep the whole stack (api/activation/runtime/core/txw2/istack) aligned to
+                 the JAXB 4.0.x release. -->
+            <dependency>
+                <groupId>jakarta.xml.bind</groupId>
+                <artifactId>jakarta.xml.bind-api</artifactId>
+                <version>4.0.2</version>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.activation</groupId>
+                <artifactId>jakarta.activation-api</artifactId>
+                <version>2.1.3</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.jaxb</groupId>
+                <artifactId>jaxb-runtime</artifactId>
+                <version>4.0.5</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.jaxb</groupId>
+                <artifactId>txw2</artifactId>
+                <version>4.0.5</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sun.istack</groupId>
+                <artifactId>istack-commons-runtime</artifactId>
+                <version>4.1.2</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -51,7 +89,7 @@
         <dependency>
             <groupId>com.googlecode.ez-vcard</groupId>
             <artifactId>ez-vcard</artifactId>
-            <version>0.11.2</version>
+            <!-- version managed by the parent pom (0.11.2) -->
         </dependency>
         
         <dependency>
@@ -62,11 +100,6 @@
         
         
     </dependencies>
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-    </properties>
     <build>
         <plugins>
             <!-- plugin>
@@ -89,30 +122,9 @@
                     </execution>
                 </executions>
             </plugin -->
-            <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>1.7</version>
-                <executions>
-                    <execution>
-                        <phase>install</phase>
-                        <configuration>
-                            <target>
- 
-                                <copy file="${project.build.directory}/j-lawyer-cloud-${project.version}.jar" tofile="${project.basedir}/../j-lawyer-client/lib/j-lawyer-cloud/j-lawyer-cloud.jar"/>
-                                <copy file="${project.build.directory}/j-lawyer-cloud-${project.version}.jar" tofile="${project.basedir}/../j-lawyer-server/j-lawyer-server-ejb/lib/j-lawyer-cloud.jar"/>
-                                
-                                <!-- bea ships with an older version of this jar, so try to take that instead -->
-                                <!-- delete file="${project.basedir}/../j-lawyer-client/lib/j-lawyer-cloud/httpclient-4.5.11.jar" / -->
-                                <!-- delete file="${project.basedir}/../j-lawyer-client/lib/j-lawyer-cloud/httpcore-4.4.13.jar" / -->
-                                
-                            </target>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+            <!-- Reactor migration: the install-phase antrun copy of the shaded jar into
+                 j-lawyer-client/lib and j-lawyer-server-ejb/lib has been removed.
+                 Downstream modules now depend on this artifact via the reactor. -->
             <!-- plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -147,6 +159,12 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <!-- attach the self-contained fat jar as a classified artifact so
+                                 consumers (incl. NetBeans, which otherwise resolves this reactor
+                                 module to its thin target/classes) get the bundled nextcloud-api /
+                                 ical4j etc. and do not leak conflicting transitives (groovy, ical4j) -->
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>shaded</shadedClassifierName>
                             <artifactSet>
                                 <excludes>
                                     <exclude>org.codehaus.groovy:groovy-all</exclude>
@@ -168,8 +186,16 @@
                                         <exclude>org.apache.logging.*</exclude>
                                     </excludes>
                                 </relocation>
-                                <!-- jackson core conflicts with the version that is part of bea-wrapper, therefore shade it -->
-                                <!-- relocation>
+                                <!-- Relocate the jackson that nextcloud-api uses into shaded.* so this
+                                     fat jar is self-contained. The client classpath carries several
+                                     competing jackson versions (WildFly's jboss-client.jar bundles
+                                     databind ~2.12 for EJB remoting; ez-vcard pulls jackson-core; this
+                                     jar bundles databind/core 2.16.1). Without relocation nextcloud-api
+                                     loads an inconsistent (databind, core) pair depending on classpath
+                                     order and fails with NoSuchMethodError (e.g. JsonParser.getRead
+                                     Capabilities / JsonFactory.requiresPropertyOrdering). Relocating
+                                     isolates nextcloud-api onto this jar's own 2.16.1 jackson. -->
+                                <relocation>
                                     <pattern>com.fasterxml.jackson.core</pattern>
                                     <shadedPattern>shaded.com.fasterxml.jackson.core</shadedPattern>
                                 </relocation>
@@ -180,7 +206,7 @@
                                 <relocation>
                                     <pattern>com.fasterxml.jackson.databind</pattern>
                                     <shadedPattern>shaded.com.fasterxml.jackson.databind</shadedPattern>
-                                </relocation -->
+                                </relocation>
                             </relocations>
                         </configuration>
                     </execution>

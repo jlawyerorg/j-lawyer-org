@@ -1,0 +1,66 @@
+/* ============================================================
+   j-lawyer Web-UI — Design-Tokens
+   Logo-Farben FÜHREND (ServerColorTheme) + Neutrale aus dem Website-Screenshot.
+   Abgeleitet aus der abgenommenen Design-Referenz (openspec .../design-mockup.html).
+   Theme-fähig: prefers-color-scheme + [data-theme] Override.
+   ============================================================ */
+
+:root {
+  /* Marken-Token — Logo-Farben führend (ServerColorTheme) */
+  --jl-blue:  #0e72b5;   /* COLOR_LOGO_BLUE  — primär, aktiv, Links */
+  --jl-red:   #de313b;   /* COLOR_LOGO_RED   — kritisch, Fristen, CTA */
+  --jl-green: #97bf0d;   /* COLOR_LOGO_GREEN — Erfolg, "offen" */
+  --jl-blue-strong: #0a5b90;
+  --jl-warning: #c8890b; /* abgeleitet (kein Logo-Ton) */
+
+  /* Neutrale aus dem Screenshot */
+  --jl-navy:       #0b1b2c;   /* Chrome / dunkler Grund */
+  --jl-navy-2:     #12293b;
+  --jl-navy-line:  #21384b;
+
+  /* Semantische Token — Light (Default) */
+  --jl-ground:       #eef0ee;
+  --jl-surface:      #ffffff;
+  --jl-surface-warm: #f4f0e8;  /* Creme */
+  --jl-surface-alt:  #f6f7f6;
+  --jl-line:         #e2e1db;
+  --jl-line-strong:  #cfd2cf;
+  --jl-ink:          #14222e;  /* Text, leicht Richtung Navy */
+  --jl-ink-soft:     #4e5b67;
+  --jl-ink-faint:    #8792a0;
+  --jl-accent:       var(--jl-blue);
+
+  /* Typografie — humanistische Grotesk-Sans (System-Stack als Platzhalter;
+     produktive self-hostbare Schrift wird gebündelt, siehe design.md) */
+  --jl-font: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --jl-ground:       #0b1b2c;
+    --jl-surface:      #10263a;
+    --jl-surface-warm: #143047;
+    --jl-surface-alt:  #0e2233;
+    --jl-line:         #21384b;
+    --jl-line-strong:  #2c465b;
+    --jl-ink:          #e9eff4;
+    --jl-ink-soft:     #a6b6c4;
+    --jl-ink-faint:    #6d8090;
+    --jl-blue:  #2f97dc;   /* auf Navy aufgehellt für Kontrast */
+    --jl-green: #a9d11a;
+    --jl-red:   #ef5661;
+    --jl-accent: var(--jl-blue);
+  }
+}
+
+/* Viewer-/App-Toggle überschreibt die Media-Query in beide Richtungen */
+:root[data-theme="light"] {
+  --jl-ground:#eef0ee; --jl-surface:#ffffff; --jl-surface-warm:#f4f0e8; --jl-surface-alt:#f6f7f6;
+  --jl-line:#e2e1db; --jl-line-strong:#cfd2cf; --jl-ink:#14222e; --jl-ink-soft:#4e5b67; --jl-ink-faint:#8792a0;
+  --jl-blue:#0e72b5; --jl-green:#97bf0d; --jl-red:#de313b; --jl-accent:var(--jl-blue);
+}
+:root[data-theme="dark"] {
+  --jl-ground:#0b1b2c; --jl-surface:#10263a; --jl-surface-warm:#143047; --jl-surface-alt:#0e2233;
+  --jl-line:#21384b; --jl-line-strong:#2c465b; --jl-ink:#e9eff4; --jl-ink-soft:#a6b6c4; --jl-ink-faint:#6d8090;
+  --jl-blue:#2f97dc; --jl-green:#a9d11a; --jl-red:#ef5661; --jl-accent:var(--jl-blue);
+}

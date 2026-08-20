@@ -703,6 +703,8 @@ public class RestoreExecutor {
 
     private int fileFailures = 0;
 
+    private long validationTempCounter = 0;
+
     public RestoreExecutor(String dataDir, String backupDir, String encryptionPassword, String dbHost, String dbPort, String dbName, String dbUser, String dbPassword) {
 
         this.dbHost=dbHost;
@@ -757,9 +759,9 @@ public class RestoreExecutor {
         if (progress != null) {
             progress.onProgress("Prüfe Datenbankverbindung...");
         }
-        Class.forName("com.mysql.jdbc.Driver");
+        Class.forName("com.mysql.cj.jdbc.Driver");
         boolean jlawyerdbFound = false;
-        try (Connection mysql = DriverManager.getConnection("jdbc:mysql://" + this.dbHost + ":" + this.dbPort + "/" + this.dbName + "?user=" + this.dbUser + "&serverTimezone=Europe/Berlin&useSSL=false&password=" + dbPassword)) {
+        try (Connection mysql = DriverManager.getConnection("jdbc:mysql://" + this.dbHost + ":" + this.dbPort + "/" + this.dbName + "?user=" + this.dbUser + "&serverTimezone=Europe/Berlin&sslMode=DISABLED&password=" + dbPassword)) {
             ResultSet rs = mysql.getMetaData().getCatalogs();
 
             while (rs.next()) {
@@ -848,7 +850,15 @@ public class RestoreExecutor {
                     if (progress != null) {
                         progress.onProgress("Nicht verschlüsselt: " + zip.getName());
                     }
-                    this.unzip(zip, System.getProperty("java.io.tmpdir") + File.separator + System.currentTimeMillis());
+                    // extract to a throwaway temp dir only to verify the archive is readable,
+                    // then delete it immediately so the temp partition never has to hold more
+                    // than a single archive at a time
+                    String tempDir = this.nextValidationTempDir();
+                    try {
+                        this.unzip(zip, tempDir);
+                    } finally {
+                        this.deleteQuietly(new File(tempDir));
+                    }
                 }
             }
         } else {
@@ -858,10 +868,34 @@ public class RestoreExecutor {
                     progress.onProgress("Prüfe Verschlüsselung: " + zip.getName());
                 }
                 if (zip.isFile() && zip.getName().toLowerCase().endsWith(".zip")) {
-                    this.unzipWithPassword(zip, System.getProperty("java.io.tmpdir") + File.separator + System.currentTimeMillis(), this.encryptionPassword);
+                    // see comment above: validate, then free the temp space right away
+                    String tempDir = this.nextValidationTempDir();
+                    try {
+                        this.unzipWithPassword(zip, tempDir, this.encryptionPassword);
+                    } finally {
+                        this.deleteQuietly(new File(tempDir));
+                    }
                 }
             }
         }
+    }
+
+    private String nextValidationTempDir() {
+        return System.getProperty("java.io.tmpdir") + File.separator
+                + "jlawyer-restore-validation-" + System.currentTimeMillis() + "-" + (this.validationTempCounter++);
+    }
+
+    private void deleteQuietly(File f) {
+        if (f == null || !f.exists()) {
+            return;
+        }
+        File[] children = f.listFiles();
+        if (children != null) {
+            for (File c : children) {
+                this.deleteQuietly(c);
+            }
+        }
+        f.delete();
     }
 
     private void unzipWithPassword(File source, String targetDir, String password) throws Exception {
@@ -1063,6 +1097,16 @@ public class RestoreExecutor {
             }
         }
 
+        // address documents - may be absent in backups created before this feature existed
+        dir = new File(backup + "addressfiles");
+        if (dir.exists() && dir.listFiles() != null) {
+            for (File child : dir.listFiles()) {
+                if (child.isDirectory()) {
+                    this.restoreFromTo(child.getAbsolutePath(), data + "addressfiles" + File.separator + child.getName(), progress);
+                }
+            }
+        }
+
     }
 
     private void restoreFromTo(String fromDir, String toDir, BackupProgressCallback progress) throws Exception {
@@ -1104,6 +1148,14 @@ public class RestoreExecutor {
         delDir.mkdirs();
 
         delDir = new File(data + "archivefiles-preview");
+        this.deleteRecursively(delDir, progress);
+        delDir.mkdirs();
+
+        delDir = new File(data + "addressfiles");
+        this.deleteRecursively(delDir, progress);
+        delDir.mkdirs();
+
+        delDir = new File(data + "addressfiles-preview");
         this.deleteRecursively(delDir, progress);
         delDir.mkdirs();
 

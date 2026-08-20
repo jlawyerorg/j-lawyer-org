@@ -1,0 +1,23 @@
+/* Shared list styles for the invoice type/pool sections. */
+:host { display: block; }
+.fl { max-width: 660px; }
+.fl-bar { margin-bottom: 14px; }
+.btn-primary { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: .86rem;
+  font-weight: 600; padding: 8px 14px; border: 0; border-radius: 8px; background: var(--jl-blue); color: #fff; cursor: pointer; }
+.btn-primary:hover { filter: brightness(1.06); }
+.fl-muted { color: var(--jl-ink-soft); font-size: .88rem; }
+.fl-error { color: var(--jl-red); font-size: .84rem; }
+.fl-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.fl-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--jl-line);
+  border-radius: 9px; background: var(--jl-surface); }
+.fl-row:hover { border-color: var(--jl-line-strong); }
+.fl-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; cursor: pointer; }
+.fl-name { font-size: .9rem; font-weight: 600; color: var(--jl-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fl-sub { font-size: .76rem; color: var(--jl-ink-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fl-badge { font-size: .72rem; font-weight: 700; color: var(--jl-blue); background: var(--jl-surface-alt); border-radius: 999px; padding: 2px 9px; }
+.fl-mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .78rem; color: var(--jl-ink-soft); }
+.icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px;
+  border: 1px solid transparent; border-radius: 7px; background: transparent; color: var(--jl-ink-soft); cursor: pointer; }
+.icon-btn:hover:not(:disabled) { background: var(--jl-surface-alt); color: var(--jl-ink); }
+.icon-btn.danger:hover:not(:disabled) { color: var(--jl-red); }
+.icon-btn:disabled { opacity: .5; cursor: default; }

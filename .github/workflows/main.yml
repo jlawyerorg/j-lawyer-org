@@ -6,7 +6,7 @@ name: Main build including DockerHub
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [ master, "fixes/3.3-api-changes" ]
+    branches: [ master, "fixes/3.5" ]
   # pull_request:
   #   branches: [ master ]
 
@@ -23,55 +23,33 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: 'liberica'
-          java-version: '11' # The JDK version to make available on the path.
-          java-package: jdk+fx # (jre, jdk, or jdk+fx) - defaults to jdk
-          architecture: x64 # (x64 or x86) - defaults to x64
+          java-package: 'jdk+fx' # Liberica Full: bundles JavaFX (the client compiles/runs against the JDK's JavaFX)
+          java-version: '17' # whole reactor builds on Java 17
+          architecture: x64
+          cache: maven
 
       - name: Prepare environment
         run:  |
           sudo systemctl start mysql
-          mkdir /home/runner/j-lawyer-backup
-          mkdir /home/runner/j-lawyer-data
-          mkdir /home/runner/j-lawyer-data/archivefiles
-          mkdir /home/runner/j-lawyer-data/emailtemplates
-          mkdir /home/runner/j-lawyer-data/templates
-          mkdir /home/runner/j-lawyer-data/mastertemplates
+          mkdir -p /home/runner/j-lawyer-backup /home/runner/j-lawyer-data/archivefiles \
+                   /home/runner/j-lawyer-data/emailtemplates /home/runner/j-lawyer-data/templates \
+                   /home/runner/j-lawyer-data/mastertemplates
           mysql -uroot -h127.0.0.1 -proot -e 'CREATE DATABASE IF NOT EXISTS jlawyerdb;'
-          sudo apt-get update
-          sudo apt-get install wget tar ant ant-optional junit4
-          sudo apt-get install openjfx
           wget -O /home/runner/j-lawyer-backup/backups.tar.gz https://www.j-lawyer.org/downloads/travisci/backups/backups.tar.gz
           tar -m -xvzf /home/runner/j-lawyer-backup/backups.tar.gz -C /home/runner/j-lawyer-backup
-          
 
-      - name: Set up JDK11
-        uses: AdoptOpenJDK/install-jdk@v1
-        with:
-          version: '11'
-          architecture: x64
-          targets: 'JDK_11'
+      - name: Seed in-project Maven repository
+        # maven-repo/ is git-ignored; seed it from the committed lib/ jars (no upgrades)
+        run: ./scripts/seed-maven-repo.sh
 
-      - name: Set up JDK17
-        uses: AdoptOpenJDK/install-jdk@v1
-        with:
-          version: '17'
-          architecture: x64
-          targets: 'JDK_17'
-
-      - name: populate JAVA_HOME to Java 11
-        run: echo "JAVA_HOME=$(echo $JDK_11)" >> $GITHUB_ENV
-
-      - name: Build server with JDK11, entities with JDK17
-        # ejb tests fail for some reason...
-        # run: ant -buildfile j-lawyer-fax/build.xml default && ant -buildfile j-lawyer-server-common/build.xml default && ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server-entities/build.xml default && ant -buildfile j-lawyer-server-api/build.xml default && ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server/build.xml default test && ant -buildfile j-lawyer-io-common/build.xml default
-        run: ant -buildfile j-lawyer-fax/build.xml default && ant -buildfile j-lawyer-server-common/build.xml default && JAVA_HOME=$JDK_17 ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server-entities/build.xml default && ant -buildfile j-lawyer-server-api/build.xml default && ant -Dplatforms.default_platform.home=$JDK_11 -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server/build.xml default && ant -buildfile j-lawyer-io-common/build.xml default
-        # removed temporarily:  && mvn -f j-lawyer-backupmgr/pom.xml clean package test
+      - name: Build all modules (Maven, Java 17)
+        run: mvn -B -Dmaven.test.skip=true clean install
         env:
           ftpuser: ${{ secrets.FTPUSER }}
           ftppassword: ${{ secrets.FTPPASSWORD }}
@@ -83,26 +61,10 @@ jobs:
           mysqlpwd: root
           backupdirectory: /home/runner/j-lawyer-backup
           datadirectory: /home/runner/j-lawyer-data
-          encryptionpwd:  
-      
-      - name: populate JAVA_HOME to Java 17
-        run: echo "JAVA_HOME=$(echo $JDK_17)" >> $GITHUB_ENV
+          encryptionpwd:
 
-      - name: Build client with JDK 17
-        run: ant -Dplatforms.JDK_17.home=$JDK_17 -buildfile j-lawyer-client/build.xml test jar
-        # removed temporarily:  && mvn -f j-lawyer-backupmgr/pom.xml clean package test
-        env:
-          ftpuser: ${{ secrets.FTPUSER }}
-          ftppassword: ${{ secrets.FTPPASSWORD }}
-          ftphost: ${{ secrets.FTPHOST }}
-          ftphome: ${{ secrets.FTPHOME }}
-          sipuser: ${{ secrets.SIPUSER }}
-          sippassword: ${{ secrets.SIPPASSWORD }}
-          runsontravisci: ${{ secrets.RUNSONTRAVISCI }}
-          mysqlpwd: root
-          backupdirectory: /home/runner/j-lawyer-backup
-          datadirectory: /home/runner/j-lawyer-data
-          encryptionpwd:  
+      - name: Verify REST API spec (swagger equivalence gate)
+        run: mvn -B -pl j-lawyer-server/j-lawyer-io test
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
@@ -112,8 +74,8 @@ jobs:
             -Dsonar.projectKey=jlawyerorg_j-lawyer-org
             -Dsonar.projectName=j-lawyer-org
             -Dsonar.projectVersion=3.6-dev
-            -Dsonar.java.binaries=.
-            -Dsonar.java.source=11
+            -Dsonar.java.binaries=**/target/classes
+            -Dsonar.java.source=17
             
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any

@@ -1,0 +1,603 @@
+<style>
+  /* ============================================================
+     j-lawyer Web-UI — Design-Ausarbeitung (Design-Referenz)
+     Farben: Logo-Farben führend (ServerColorTheme) + Screenshot-Neutrale
+     Typografie: humanistische Grotesk-Sans (System-Stack als Platzhalter
+     für die noch zu bestätigende, self-hostbare Produktionsschrift)
+     ============================================================ */
+
+  :root {
+    /* --- Marken-Token: LOGO-FARBEN FÜHREND (ServerColorTheme) --- */
+    --brand-blue:   #0e72b5;   /* COLOR_LOGO_BLUE  — primär, aktiv, Links */
+    --brand-red:    #de313b;   /* COLOR_LOGO_RED   — kritisch, Fristen, CTA */
+    --brand-green:  #97bf0d;   /* COLOR_LOGO_GREEN — Erfolg, "offen" */
+    --brand-blue-strong: #0a5b90;
+    --warning:      #c8890b;   /* abgeleitet (kein Logo-Ton) */
+
+    /* --- Neutrale aus dem Screenshot --- */
+    --navy:        #0b1b2c;    /* Chrome / dunkler Grund */
+    --navy-2:      #12293b;    /* Chrome-Erhebung */
+    --navy-line:   #21384b;
+
+    /* --- semantische Token (Light-Theme-Default) --- */
+    --ground:       #eef0ee;   /* Off-White-Grund, leicht kühl */
+    --surface:      #ffffff;
+    --surface-warm: #f4f0e8;   /* Creme (Screenshot) */
+    --surface-alt:  #f6f7f6;
+    --line:         #e2e1db;   /* warme Haarlinie */
+    --line-strong:  #cfd2cf;
+
+    --ink:        #14222e;     /* Text, leicht Richtung Navy gebogen */
+    --ink-soft:   #4e5b67;
+    --ink-faint:  #8792a0;
+    --on-brand:   #ffffff;
+
+    --accent:     var(--brand-blue);
+    --sel:        #e4f0f8;     /* selektierte Zeile (Blau-Tint) */
+
+    /* Typografie */
+    --font: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    --fs-display: 1.6rem;
+    --fs-h2: 1.2rem;
+    --fs-h3: 1.02rem;
+    --fs-body: 0.9375rem;
+    --fs-sm: 0.82rem;
+    --fs-label: 0.7rem;
+
+    --radius: 9px;
+    --radius-sm: 6px;
+    --shadow: 0 1px 2px rgba(11,27,44,.06), 0 6px 20px rgba(11,27,44,.07);
+    --shadow-sm: 0 1px 2px rgba(11,27,44,.08);
+
+    --nav-w: 232px;
+    --list-w: 360px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:       #0b1b2c;
+      --surface:      #10263a;
+      --surface-warm: #143047;
+      --surface-alt:  #0e2233;
+      --line:         #21384b;
+      --line-strong:  #2c465b;
+      --ink:        #e9eff4;
+      --ink-soft:   #a6b6c4;
+      --ink-faint:  #6d8090;
+      --sel:        #103551;
+      --brand-blue: #2f97dc;   /* auf Navy leicht aufgehellt für Kontrast */
+      --brand-green:#a9d11a;
+      --brand-red:  #ef5661;
+      --accent:     var(--brand-blue);
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.35);
+    }
+  }
+  /* Viewer-Toggle muss Media-Query in beide Richtungen überschreiben */
+  :root[data-theme="light"] {
+    --ground:#eef0ee; --surface:#ffffff; --surface-warm:#f4f0e8; --surface-alt:#f6f7f6;
+    --line:#e2e1db; --line-strong:#cfd2cf; --ink:#14222e; --ink-soft:#4e5b67; --ink-faint:#8792a0;
+    --sel:#e4f0f8; --brand-blue:#0e72b5; --brand-green:#97bf0d; --brand-red:#de313b;
+    --accent:var(--brand-blue);
+    --shadow:0 1px 2px rgba(11,27,44,.06),0 6px 20px rgba(11,27,44,.07);
+  }
+  :root[data-theme="dark"] {
+    --ground:#0b1b2c; --surface:#10263a; --surface-warm:#143047; --surface-alt:#0e2233;
+    --line:#21384b; --line-strong:#2c465b; --ink:#e9eff4; --ink-soft:#a6b6c4; --ink-faint:#6d8090;
+    --sel:#103551; --brand-blue:#2f97dc; --brand-green:#a9d11a; --brand-red:#ef5661;
+    --accent:var(--brand-blue);
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+
+  .dm {
+    font-family: var(--font);
+    font-size: var(--fs-body);
+    color: var(--ink);
+    background: var(--ground);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  .dm h1,.dm h2,.dm h3 { margin: 0; text-wrap: balance; letter-spacing: -.01em; }
+  .dm button { font-family: inherit; }
+  .tnum { font-variant-numeric: tabular-nums; }
+  .label {
+    font-size: var(--fs-label); text-transform: uppercase; letter-spacing: .09em;
+    font-weight: 600; color: var(--ink-faint);
+  }
+
+  /* ---------------- App-Shell ---------------- */
+  .app {
+    display: grid;
+    grid-template-areas: "nav head" "nav main";
+    grid-template-columns: var(--nav-w) 1fr;
+    grid-template-rows: 56px 1fr;
+    height: 760px;
+    max-height: 86vh;
+    margin: 22px auto;
+    max-width: 1240px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    background: var(--surface);
+  }
+
+  /* Header (Navy Chrome in beiden Themes) */
+  .head {
+    grid-area: head;
+    background: var(--navy);
+    color: #eaf1f7;
+    display: flex; align-items: center; gap: 16px;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--navy-line);
+  }
+  .wordmark { font-weight: 800; font-size: 1.05rem; letter-spacing: -.02em; display: flex; align-items: center; gap: 7px; }
+  .wordmark .dot { width: 9px; height: 9px; border-radius: 50%; box-shadow: 14px 0 0 var(--brand-green), 28px 0 0 var(--brand-blue); background: var(--brand-red); margin-right: 30px; }
+  .wordmark b { color: #fff; } .wordmark span { color: #7f97ab; font-weight: 600; }
+  .search {
+    flex: 1; max-width: 440px; display: flex; align-items: center; gap: 8px;
+    background: #ffffff14; border: 1px solid #ffffff1f; color: #cddae6;
+    padding: 7px 12px; border-radius: 8px; font-size: var(--fs-sm);
+  }
+  .search input { all: unset; flex: 1; color: #eaf1f7; min-width: 0; }
+  .search::placeholder { color: #8ba0b2; }
+  .head .spacer { flex: 1; }
+  .head-actions { display: flex; align-items: center; gap: 6px; }
+  .icon-btn {
+    width: 34px; height: 34px; display: grid; place-items: center; border-radius: 8px;
+    background: transparent; border: 1px solid transparent; color: #b9c9d6; cursor: pointer; position: relative;
+  }
+  .icon-btn:hover { background: #ffffff14; color: #fff; }
+  .icon-btn .badge {
+    position: absolute; top: 2px; right: 2px; min-width: 15px; height: 15px; padding: 0 3px;
+    background: var(--brand-red); color: #fff; font-size: .62rem; font-weight: 700;
+    border-radius: 8px; display: grid; place-items: center; border: 2px solid var(--navy);
+  }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg,var(--brand-blue),#0a5b90);
+    color: #fff; display: grid; place-items: center; font-size: .78rem; font-weight: 700;
+  }
+
+  /* Modulleiste */
+  .nav {
+    grid-area: nav; background: var(--navy); color: #b9c9d6;
+    border-right: 1px solid var(--navy-line);
+    display: flex; flex-direction: column; padding: 10px 10px; gap: 2px;
+  }
+  .nav .navlabel { padding: 12px 10px 6px; color: #6d8496; }
+  .nav a {
+    display: flex; align-items: center; gap: 11px; padding: 9px 11px; border-radius: 8px;
+    color: #b9c9d6; text-decoration: none; font-size: .9rem; font-weight: 500; cursor: pointer;
+    border: 1px solid transparent; white-space: nowrap;
+  }
+  .nav a svg { flex: none; }
+  .nav a .txt { overflow: hidden; }
+  .nav a:hover { background: #ffffff10; color: #eef4f9; }
+  .nav a.active { background: #ffffff16; color: #fff; border-color: #ffffff1a; }
+  .nav a.active::before {
+    content: ""; position: absolute; left: 0; width: 3px; height: 22px; border-radius: 3px; background: var(--brand-blue);
+    margin-left: -11px;
+  }
+  .nav a { position: relative; }
+  .nav .nav-badge { margin-left: auto; background: var(--brand-red); color: #fff; font-size: .62rem; font-weight: 700; border-radius: 8px; padding: 1px 6px; }
+  .nav .grow { flex: 1; }
+
+  /* Main: Master-Detail */
+  .main { grid-area: main; display: grid; grid-template-columns: var(--list-w) 1fr; min-height: 0; background: var(--ground); }
+
+  /* Aktenliste */
+  .list { border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; background: var(--surface); }
+  .list-head { padding: 13px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; }
+  .list-head h2 { font-size: var(--fs-h3); font-weight: 700; }
+  .list-head .count { color: var(--ink-faint); font-size: var(--fs-sm); font-weight: 600; }
+  .btn-primary {
+    margin-left: auto; background: var(--brand-blue); color: var(--on-brand); border: none;
+    padding: 7px 13px; border-radius: 8px; font-weight: 600; font-size: var(--fs-sm); cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-primary:hover { background: var(--brand-blue-strong); }
+  .filters { display: flex; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+  .chip {
+    font-size: var(--fs-sm); padding: 4px 11px; border-radius: 20px; border: 1px solid var(--line-strong);
+    color: var(--ink-soft); background: var(--surface); cursor: pointer; white-space: nowrap; font-weight: 500;
+  }
+  .chip.on { background: var(--sel); border-color: var(--brand-blue); color: var(--brand-blue); font-weight: 600; }
+
+  .rows { overflow-y: auto; min-height: 0; }
+  .row {
+    display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; padding: 12px 16px;
+    border-bottom: 1px solid var(--line); cursor: pointer; border-left: 3px solid transparent;
+  }
+  .row:hover { background: var(--surface-alt); }
+  .row.sel { background: var(--sel); border-left-color: var(--brand-blue); }
+  .row .az { font-size: var(--fs-label); letter-spacing: .04em; color: var(--ink-faint); font-weight: 600; }
+  .row .title { font-weight: 650; font-size: .92rem; grid-column: 1; }
+  .row .meta { grid-column: 1; color: var(--ink-soft); font-size: var(--fs-sm); }
+  .row .r-right { grid-column: 2; grid-row: 1 / span 3; display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; gap: 6px; }
+  .row .date { color: var(--ink-faint); font-size: .76rem; }
+
+  /* Status-Pills */
+  .pill { font-size: .72rem; font-weight: 650; padding: 3px 9px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .pill.open   { color: #5c7a08; background: color-mix(in srgb, var(--brand-green) 20%, transparent); }
+  .pill.due    { color: var(--brand-red); background: color-mix(in srgb, var(--brand-red) 14%, transparent); }
+  .pill.wait   { color: var(--warning); background: color-mix(in srgb, var(--warning) 16%, transparent); }
+  .pill.done   { color: var(--ink-soft); background: color-mix(in srgb, var(--ink-faint) 18%, transparent); }
+  @media (prefers-color-scheme: dark) { .pill.open { color: var(--brand-green); } }
+  :root[data-theme="dark"] .pill.open { color: var(--brand-green); }
+
+  /* Detail */
+  .detail { overflow-y: auto; min-height: 0; background: var(--ground); }
+  .detail-head { padding: 20px 26px 0; background: var(--surface); border-bottom: 1px solid var(--line); }
+  .crumbs { color: var(--ink-faint); font-size: var(--fs-sm); margin-bottom: 8px; }
+  .crumbs b { color: var(--ink-soft); font-weight: 600; }
+  .detail-head h1 { font-size: var(--fs-display); font-weight: 800; }
+  .head-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 8px 0 4px; }
+  .head-row .az { color: var(--ink-faint); font-weight: 600; font-size: var(--fs-sm); }
+  .head-meta { display: flex; gap: 18px; flex-wrap: wrap; color: var(--ink-soft); font-size: var(--fs-sm); margin: 10px 0 16px; }
+  .head-meta .k { color: var(--ink-faint); }
+  .tabs { display: flex; gap: 2px; overflow-x: auto; }
+  .tab {
+    padding: 10px 15px; font-size: var(--fs-sm); font-weight: 600; color: var(--ink-soft);
+    border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap;
+  }
+  .tab .n { color: var(--ink-faint); font-weight: 600; }
+  .tab:hover { color: var(--ink); }
+  .tab.on { color: var(--brand-blue); border-bottom-color: var(--brand-blue); }
+  .tab.on .n { color: var(--brand-blue); }
+
+  .detail-body { padding: 20px 26px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+  .card.full { grid-column: 1 / -1; }
+  .card-h { display: flex; align-items: center; gap: 8px; padding: 13px 16px; border-bottom: 1px solid var(--line); }
+  .card-h h3 { font-size: var(--fs-sm); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); }
+  .card-h .link { margin-left: auto; color: var(--brand-blue); font-size: var(--fs-sm); font-weight: 600; cursor: pointer; text-decoration: none; }
+  .card-b { padding: 14px 16px; }
+
+  /* Beteiligte */
+  .party { display: flex; align-items: center; gap: 11px; padding: 8px 0; }
+  .party + .party { border-top: 1px solid var(--line); }
+  .party .pa { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; font-weight: 700; font-size: .8rem; color: #fff; flex: none; }
+  .party .role { font-size: var(--fs-label); text-transform: uppercase; letter-spacing: .07em; color: var(--ink-faint); font-weight: 600; }
+  .party .nm { font-weight: 600; font-size: .9rem; }
+
+  /* Fristen */
+  .frist { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+  .frist + .frist { border-top: 1px solid var(--line); }
+  .frist .fdate { text-align: center; flex: none; width: 52px; }
+  .frist .fdate .d { font-size: 1.25rem; font-weight: 800; line-height: 1; }
+  .frist .fdate .m { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint); font-weight: 700; }
+  .frist .fx { flex: 1; }
+  .frist .fx .ft { font-weight: 600; font-size: .9rem; }
+  .frist .fx .fs { font-size: var(--fs-sm); color: var(--ink-soft); }
+  .bar { width: 3px; align-self: stretch; border-radius: 3px; flex: none; }
+  .bar.red { background: var(--brand-red); } .bar.amber { background: var(--warning); }
+
+  /* Dokumente */
+  .doc { display: flex; align-items: center; gap: 11px; padding: 9px 0; }
+  .doc + .doc { border-top: 1px solid var(--line); }
+  .doc .ext { width: 34px; height: 40px; border-radius: 5px; display: grid; place-items: center; color: #fff; font-size: .58rem; font-weight: 800; flex: none; letter-spacing: .02em; }
+  .doc .dn { font-weight: 550; font-size: .89rem; }
+  .doc .dmeta { font-size: .76rem; color: var(--ink-faint); }
+  .doc .dsz { margin-left: auto; font-size: .76rem; color: var(--ink-faint); }
+
+  /* Notiz */
+  .note textarea {
+    width: 100%; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-alt);
+    padding: 11px 13px; font-family: inherit; font-size: var(--fs-body); color: var(--ink); resize: vertical; min-height: 74px;
+  }
+  .note textarea:focus-visible { outline: 2px solid var(--brand-blue); outline-offset: 1px; border-color: var(--brand-blue); }
+
+  /* Mobile bottom-nav (nur schmal sichtbar) */
+  .botnav { display: none; }
+
+  :focus-visible { outline: 2px solid var(--brand-blue); outline-offset: 2px; border-radius: 4px; }
+
+  /* ---------------- Responsive ---------------- */
+  /* Tablet: Modulleiste als Icon-Rail */
+  @media (max-width: 1024px) {
+    :root { --nav-w: 64px; --list-w: 300px; }
+    .nav a .txt, .nav .navlabel, .nav .nav-badge { display: none; }
+    .nav a { justify-content: center; padding: 11px 0; }
+    .nav a.active::before { display: none; }
+    .detail-body { grid-template-columns: 1fr; }
+  }
+  /* Smartphone: Single-Pane + Bottom-Nav, Tabelle→Karten */
+  @media (max-width: 680px) {
+    .app {
+      grid-template-areas: "head" "main"; grid-template-columns: 1fr; grid-template-rows: 52px 1fr;
+      height: auto; max-height: none; min-height: 600px; margin: 0; border-radius: 0; border-left: none; border-right: none;
+    }
+    .nav { display: none; }
+    .search { display: none; }
+    .main { grid-template-columns: 1fr; }
+    /* Auf dem Telefon: Liste als Karten (Detail via Navigation) */
+    .detail { display: none; }
+    .list { border-right: none; }
+    .row { grid-template-columns: 1fr; padding: 14px 16px; }
+    .row .r-right { grid-column: 1; grid-row: auto; flex-direction: row; align-items: center; justify-content: flex-start; }
+    .botnav {
+      display: flex; position: sticky; bottom: 0; background: var(--navy); border-top: 1px solid var(--navy-line);
+      justify-content: space-around; padding: 7px 4px 9px;
+    }
+    .botnav a { color: #9db1c1; display: grid; justify-items: center; gap: 3px; font-size: .6rem; text-decoration: none; position: relative; }
+    .botnav a.active { color: #fff; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  .row, .chip, .tab, .icon-btn, .nav a, .btn-primary { transition: background .13s ease, color .13s ease, border-color .13s ease; }
+
+  /* ---------------- Token-Legende (Design-System-Referenz) ---------------- */
+  .legend { max-width: 1240px; margin: 0 auto 40px; padding: 0 22px; }
+  .legend h2 { font-size: var(--fs-h2); font-weight: 800; margin: 18px 0 4px; color: var(--ink); }
+  .legend .sub { color: var(--ink-soft); font-size: var(--fs-sm); margin-bottom: 18px; max-width: 66ch; }
+  .legend .grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(150px,1fr)); gap: 12px; }
+  .sw { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+  .sw .chip-c { height: 62px; }
+  .sw .cap { padding: 8px 10px; }
+  .sw .cap .nm { font-weight: 700; font-size: .8rem; }
+  .sw .cap .hex { font-size: .74rem; color: var(--ink-faint); font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  .sw .cap .use { font-size: .72rem; color: var(--ink-soft); }
+  .type-scale { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 16px 20px; margin-top: 6px; }
+  .type-scale > div { padding: 7px 0; border-bottom: 1px dashed var(--line); display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .type-scale > div:last-child { border-bottom: none; }
+  .type-scale .tag { font-size: .7rem; color: var(--ink-faint); font-family: ui-monospace,monospace; min-width: 118px; }
+  .note-box { margin-top: 16px; padding: 13px 16px; border-left: 3px solid var(--brand-blue); background: var(--surface-warm); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--fs-sm); color: var(--ink-soft); }
+  .note-box b { color: var(--ink); }
+
+  .topbar { max-width: 1240px; margin: 20px auto 0; padding: 0 22px; display: flex; align-items: center; gap: 12px; }
+  .topbar .t { font-weight: 800; font-size: 1.15rem; letter-spacing: -.02em; }
+  .topbar .s { color: var(--ink-faint); font-size: var(--fs-sm); }
+  .theme-toggle {
+    margin-left: auto; display: inline-flex; align-items: center; gap: 7px; background: var(--surface);
+    border: 1px solid var(--line-strong); color: var(--ink-soft); padding: 7px 13px; border-radius: 8px;
+    font-size: var(--fs-sm); font-weight: 600; cursor: pointer; font-family: var(--font);
+  }
+  .theme-toggle:hover { border-color: var(--brand-blue); color: var(--brand-blue); }
+  .hint { max-width: 1240px; margin: 8px auto 0; padding: 0 22px; color: var(--ink-faint); font-size: var(--fs-sm); }
+</style>
+
+<div class="dm">
+
+  <div class="topbar">
+    <div>
+      <div class="t">j-lawyer Web-UI — Design-Ausarbeitung</div>
+      <div class="s">Farben: Logo-Farben führend · Neutrale aus dem Website-Screenshot · responsives Master-Detail</div>
+    </div>
+    <button class="theme-toggle" id="themeBtn" aria-label="Theme wechseln">◐ Hell / Dunkel</button>
+  </div>
+  <div class="hint">Fenster verkleinern zeigt die Tablet- (Icon-Rail) und Smartphone-Ansicht (Karten + Bottom-Nav). Der Marketing-Seitenaufbau des Screenshots wird bewusst NICHT übernommen — nur Farbe und Typografie.</div>
+
+  <!-- ============ APP-SHELL ============ -->
+  <div class="app">
+
+    <!-- Header -->
+    <header class="head">
+      <div class="wordmark"><span class="dot"></span><b>j-lawyer</b>&nbsp;<span>Kanzlei München</span></div>
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input placeholder="Akten, Kontakte, Dokumente durchsuchen …" aria-label="Suche">
+      </div>
+      <div class="spacer"></div>
+      <div class="head-actions">
+        <button class="icon-btn" aria-label="Nachrichten"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="badge">3</span></button>
+        <button class="icon-btn" aria-label="Benachrichtigungen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="badge">5</span></button>
+        <div class="avatar" title="Dr. Kunze">DK</div>
+      </div>
+    </header>
+
+    <!-- Modulleiste -->
+    <nav class="nav">
+      <a><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span class="txt">Mein Desktop</span></a>
+      <a class="active"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span class="txt">Akten</span></a>
+      <a><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg><span class="txt">Adressen</span></a>
+      <a><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span class="txt">Kalender &amp; Fristen</span></a>
+      <a><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v12H5.2L4 17.2z"/></svg><span class="txt">Kommunikation</span><span class="nav-badge">3</span></a>
+      <a><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><span class="txt">Dokumente</span></a>
+      <a><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span class="txt">Finanzen</span></a>
+      <a><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg><span class="txt">Reporting</span></a>
+      <div class="grow"></div>
+      <a><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15H4.5a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 6 9.4l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 12 4.6a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 2.82 1.18l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 12v.6z"/></svg><span class="txt">Einstellungen</span></a>
+    </nav>
+
+    <!-- Main -->
+    <div class="main">
+
+      <!-- Aktenliste -->
+      <section class="list">
+        <div class="list-head">
+          <h2>Akten</h2><span class="count">142</span>
+          <button class="btn-primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Neue Akte</button>
+        </div>
+        <div class="filters">
+          <span class="chip on">Alle</span>
+          <span class="chip">Meine</span>
+          <span class="chip">Offen</span>
+          <span class="chip">Fristen</span>
+          <span class="chip">Abgeschlossen</span>
+        </div>
+        <div class="rows" id="rows">
+          <div class="row sel" data-title="Müller ./. Schneider GmbH" data-area="Verkehrsrecht" data-az="00142/25">
+            <div class="az tnum">00142/25</div>
+            <div class="title">Müller ./. Schneider GmbH</div>
+            <div class="meta">Verkehrsrecht · RA Dr. Kunze</div>
+            <div class="r-right"><span class="pill open">offen</span><span class="date tnum">07.07.</span></div>
+          </div>
+          <div class="row" data-title="Nachlass Weber" data-area="Erbrecht" data-az="00139/25">
+            <div class="az tnum">00139/25</div>
+            <div class="title">Nachlass Weber</div>
+            <div class="meta">Erbrecht · RAin Bauer</div>
+            <div class="r-right"><span class="pill due">Frist heute</span><span class="date tnum">07.07.</span></div>
+          </div>
+          <div class="row" data-title="Bauvorhaben Lindenstraße 12" data-area="Baurecht" data-az="00131/25">
+            <div class="az tnum">00131/25</div>
+            <div class="title">Bauvorhaben Lindenstraße 12</div>
+            <div class="meta">Baurecht · RA Dr. Kunze</div>
+            <div class="r-right"><span class="pill open">offen</span><span class="date tnum">05.07.</span></div>
+          </div>
+          <div class="row" data-title="Kündigung Bauer" data-area="Arbeitsrecht" data-az="00128/25">
+            <div class="az tnum">00128/25</div>
+            <div class="title">Kündigung Bauer</div>
+            <div class="meta">Arbeitsrecht · RAin Bauer</div>
+            <div class="r-right"><span class="pill wait">wartet</span><span class="date tnum">02.07.</span></div>
+          </div>
+          <div class="row" data-title="Meier GbR – Vertragsprüfung" data-area="Vertragsrecht" data-az="00120/25">
+            <div class="az tnum">00120/25</div>
+            <div class="title">Meier GbR – Vertragsprüfung</div>
+            <div class="meta">Vertragsrecht · RA Dr. Kunze</div>
+            <div class="r-right"><span class="pill done">abgeschlossen</span><span class="date tnum">28.06.</span></div>
+          </div>
+          <div class="row" data-title="Sorgerecht Fischer" data-area="Familienrecht" data-az="00118/25">
+            <div class="az tnum">00118/25</div>
+            <div class="title">Sorgerecht Fischer</div>
+            <div class="meta">Familienrecht · RAin Bauer</div>
+            <div class="r-right"><span class="pill open">offen</span><span class="date tnum">26.06.</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Aktendetail -->
+      <section class="detail">
+        <div class="detail-head">
+          <div class="crumbs">Akten <span>›</span> <b id="dCrumb">00142/25</b></div>
+          <div class="head-row">
+            <h1 id="dTitle">Müller ./. Schneider GmbH</h1>
+            <span class="pill open">offen</span>
+          </div>
+          <div class="head-meta">
+            <span><span class="k">Aktenzeichen</span> <b class="tnum" id="dAz">00142/25</b></span>
+            <span><span class="k">Rechtsgebiet</span> <b id="dArea">Verkehrsrecht</b></span>
+            <span><span class="k">Anwalt</span> <b>RA Dr. Kunze</b></span>
+            <span><span class="k">Angelegt</span> <b class="tnum">12.06.2026</b></span>
+          </div>
+          <div class="tabs">
+            <button class="tab on">Übersicht</button>
+            <button class="tab">Dokumente <span class="n">12</span></button>
+            <button class="tab">Beteiligte <span class="n">4</span></button>
+            <button class="tab">Fristen <span class="n">2</span></button>
+            <button class="tab">Finanzen</button>
+            <button class="tab">Historie</button>
+          </div>
+        </div>
+
+        <div class="detail-body">
+          <!-- Beteiligte -->
+          <div class="card">
+            <div class="card-h"><h3>Beteiligte</h3><a class="link">Alle anzeigen</a></div>
+            <div class="card-b">
+              <div class="party"><div class="pa" style="background:var(--brand-blue)">TM</div><div><div class="role">Mandant</div><div class="nm">Thomas Müller</div></div></div>
+              <div class="party"><div class="pa" style="background:var(--brand-red)">SG</div><div><div class="role">Gegner</div><div class="nm">Schneider GmbH</div></div></div>
+              <div class="party"><div class="pa" style="background:#5a6b78">AG</div><div><div class="role">Gericht</div><div class="nm">Amtsgericht München</div></div></div>
+              <div class="party"><div class="pa" style="background:var(--brand-green);color:#233">HU</div><div><div class="role">Versicherung Gegner</div><div class="nm">HUK-Coburg</div></div></div>
+            </div>
+          </div>
+
+          <!-- Fristen -->
+          <div class="card">
+            <div class="card-h"><h3>Fristen &amp; Wiedervorlagen</h3><a class="link">+ Frist</a></div>
+            <div class="card-b">
+              <div class="frist"><div class="bar red"></div><div class="fdate"><div class="d tnum">14</div><div class="m">Jul</div></div><div class="fx"><div class="ft">Klageerwiderung</div><div class="fs">in 7 Tagen fällig · RA Dr. Kunze</div></div><span class="pill due">dringend</span></div>
+              <div class="frist"><div class="bar amber"></div><div class="fdate"><div class="d tnum">21</div><div class="m">Jul</div></div><div class="fx"><div class="ft">Wiedervorlage Vergleichsangebot</div><div class="fs">in 14 Tagen · RAin Bauer</div></div><span class="pill wait">geplant</span></div>
+            </div>
+          </div>
+
+          <!-- Dokumente -->
+          <div class="card full">
+            <div class="card-h"><h3>Letzte Dokumente</h3><a class="link">Alle 12 anzeigen</a></div>
+            <div class="card-b">
+              <div class="doc"><div class="ext" style="background:#c0392b">PDF</div><div><div class="dn">Klageschrift_Müller.pdf</div><div class="dmeta tnum">01.07.2026 · RA Dr. Kunze</div></div><span class="dsz tnum">248 KB</span></div>
+              <div class="doc"><div class="ext" style="background:var(--brand-blue)">DOC</div><div><div class="dn">Unfallbericht_Entwurf.docx</div><div class="dmeta tnum">28.06.2026 · RAin Bauer</div></div><span class="dsz tnum">54 KB</span></div>
+              <div class="doc"><div class="ext" style="background:var(--brand-green);color:#233">JPG</div><div><div class="dn">Foto_Unfallstelle_01.jpg</div><div class="dmeta tnum">20.06.2026 · Import Scanner</div></div><span class="dsz tnum">2,1 MB</span></div>
+              <div class="doc"><div class="ext" style="background:#6b4fa0">EML</div><div><div class="dn">Korrespondenz_Gegner.eml</div><div class="dmeta tnum">18.06.2026 · Posteingang</div></div><span class="dsz tnum">31 KB</span></div>
+            </div>
+          </div>
+
+          <!-- Notiz -->
+          <div class="card full note">
+            <div class="card-h"><h3>Aktennotiz</h3></div>
+            <div class="card-b">
+              <textarea>Mandant meldet Nutzungsausfall für 9 Tage. Schadenshöhe laut Gutachten 4.850 €. Vergleichsbereitschaft der Gegenseite signalisiert — Vergleichsangebot bis 21.07. prüfen.</textarea>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Bottom-Nav (nur Smartphone) -->
+    <nav class="botnav">
+      <a><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Desktop</a>
+      <a class="active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Akten</a>
+      <a><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Fristen</a>
+      <a><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v12H5.2L4 17.2z"/></svg>Nachr.</a>
+      <a><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Mehr</a>
+    </nav>
+  </div>
+
+  <!-- ============ TOKEN-LEGENDE ============ -->
+  <div class="legend">
+    <h2>Design-Tokens</h2>
+    <p class="sub">Die Marken-Token stammen verbindlich aus <b>ServerColorTheme</b> (Logo-Farben führend). Navy, Off-White und Creme sind die aus dem Website-Screenshot übernommenen Neutralfarben, die das Logo nicht liefert.</p>
+    <div class="grid">
+      <div class="sw"><div class="chip-c" style="background:#0e72b5"></div><div class="cap"><div class="nm">Primär / Blau</div><div class="hex">#0e72b5</div><div class="use">Aktionen, aktiv, Links</div></div></div>
+      <div class="sw"><div class="chip-c" style="background:#de313b"></div><div class="cap"><div class="nm">Kritisch / Rot</div><div class="hex">#de313b</div><div class="use">Fristen, CTA, Warnung</div></div></div>
+      <div class="sw"><div class="chip-c" style="background:#97bf0d"></div><div class="cap"><div class="nm">Erfolg / Grün</div><div class="hex">#97bf0d</div><div class="use">Status „offen", Erfolg</div></div></div>
+      <div class="sw"><div class="chip-c" style="background:#0b1b2c"></div><div class="cap"><div class="nm">Navy (Chrome)</div><div class="hex">#0b1b2c</div><div class="use">Kopf, Modulleiste, Dunkelgrund</div></div></div>
+      <div class="sw"><div class="chip-c" style="background:#f0ece4"></div><div class="cap"><div class="nm">Creme</div><div class="hex">#f0ece4</div><div class="use">warme Sekundärfläche</div></div></div>
+      <div class="sw"><div class="chip-c" style="background:#eef0ee"></div><div class="cap"><div class="nm">Off-White</div><div class="hex">#eef0ee</div><div class="use">Grundfläche hell</div></div></div>
+      <div class="sw"><div class="chip-c" style="background:#666666"></div><div class="cap"><div class="nm">Neutralgrau</div><div class="hex">#666666</div><div class="use">Sekundärtext</div></div></div>
+      <div class="sw"><div class="chip-c" style="background:#c8890b"></div><div class="cap"><div class="nm">Warnung</div><div class="hex">#c8890b</div><div class="use">abgeleitet (kein Logo-Ton)</div></div></div>
+    </div>
+
+    <h2 style="margin-top:26px">Typografie</h2>
+    <p class="sub">Humanistische Grotesk-Sans. Im Prototyp ein System-Stack als Platzhalter — die produktive, <b>self-hostbare</b> Schrift (im WAR gebündelt, kein CDN) ist noch aus dem CSS der Live-Website zu bestätigen.</p>
+    <div class="type-scale">
+      <div><span class="tag">display · 800 · 1.6rem</span><span style="font-size:1.6rem;font-weight:800;letter-spacing:-.02em">Müller ./. Schneider GmbH</span></div>
+      <div><span class="tag">h2 · 700 · 1.2rem</span><span style="font-size:1.2rem;font-weight:700">Fristen &amp; Wiedervorlagen</span></div>
+      <div><span class="tag">body · 400 · 0.94rem</span><span style="font-size:.9375rem">Klageerwiderung in 7 Tagen fällig, Vergleichsangebot prüfen.</span></div>
+      <div><span class="tag">label · 600 · 0.7rem · caps</span><span class="label">Aktenzeichen · Rechtsgebiet</span></div>
+      <div><span class="tag">data · tabular-nums</span><span class="tnum" style="font-weight:600">00142/25 · 14.07.2026 · 4.850,00 €</span></div>
+    </div>
+
+    <div class="note-box"><b>Hinweis:</b> Diese Ausarbeitung ist die abzunehmende Design-Referenz (Task 1.0). Sie zeigt Farbsystem, Typografie und das responsive Master-Detail-Muster — nicht das Marketing-Layout des Screenshots. Aus dem abgenommenen Stand werden die Design-Tokens und der Angular-Komponentenkatalog abgeleitet.</div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    // Theme-Toggle: stempelt data-theme auf :root (überschreibt Media-Query)
+    var root = document.documentElement;
+    var btn = document.getElementById('themeBtn');
+    btn.addEventListener('click', function () {
+      var cur = root.getAttribute('data-theme');
+      if (!cur) {
+        var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        cur = dark ? 'dark' : 'light';
+      }
+      root.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
+    });
+
+    // Aktenauswahl → Detail aktualisieren (Interaktions-Demo)
+    var rows = document.getElementById('rows');
+    rows.addEventListener('click', function (e) {
+      var row = e.target.closest('.row');
+      if (!row) return;
+      rows.querySelectorAll('.row').forEach(function (r) { r.classList.remove('sel'); });
+      row.classList.add('sel');
+      document.getElementById('dTitle').textContent = row.dataset.title;
+      document.getElementById('dArea').textContent = row.dataset.area;
+      document.getElementById('dAz').textContent = row.dataset.az;
+      document.getElementById('dCrumb').textContent = row.dataset.az;
+    });
+
+    // Tabs (rein visuell)
+    document.querySelectorAll('.tab').forEach(function (t) {
+      t.addEventListener('click', function () {
+        document.querySelectorAll('.tab').forEach(function (x) { x.classList.remove('on'); });
+        t.classList.add('on');
+      });
+    });
+  })();
+</script>
