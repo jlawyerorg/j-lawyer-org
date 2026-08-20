@@ -820,9 +820,9 @@ public class ArchiveFileReviewsBean implements Serializable, EventTypes {
 
     @Override
     public String toString() {
-        SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+        SimpleDateFormat dateTimeFormat = new SimpleDateFormat("EEEE, dd.MM.yyyy HH:mm");
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, dd.MM.yyyy");
         return toString(dateTimeFormat, dateFormat, timeFormat);
     }
     
