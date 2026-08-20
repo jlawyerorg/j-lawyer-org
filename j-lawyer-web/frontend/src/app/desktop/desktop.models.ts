@@ -118,6 +118,13 @@ export type DashWidgetId = 'stats' | 'status' | 'recent' | 'due' | 'invoices' | 
 /** Due event types (also the tab keys, plus 'all'). */
 export type DueType = 'all' | 'event' | 'respite' | 'followup';
 
+/** The concrete entry types, i.e. every DueType except the aggregate 'all' tab. */
+export type DueTypeKey = Exclude<DueType, 'all'>;
+export const DUE_TYPE_KEYS: DueTypeKey[] = ['event', 'respite', 'followup'];
+
+/** Time window of the "Fällig" widget for a single entry type: days into the past / future. */
+export interface DueRange { since: number; in: number }
+
 /** All widgets in display order (strips first, then grid cards). */
 export const ALL_WIDGETS: DashWidgetId[] = ['stats', 'status', 'recent', 'due', 'invoices', 'tagged', 'messages'];
 
@@ -134,9 +141,12 @@ export interface DashboardConfig {
   widgets: DashWidgetId[];
   /** "Zuletzt geändert" user filter (principalIds; empty = all). */
   recentUsers: string[];
-  /** "Fällig" window: days into the past / future. */
-  dueSinceDays: number;
-  dueInDays: number;
+  /**
+   * "Fällig" window per entry type: days into the past / future. Replaces the former global
+   * dueSinceDays/dueInDays, which normalizeConfig still honours as a fallback for types that
+   * have no own value yet.
+   */
+  dueRanges: Record<DueTypeKey, DueRange>;
   /** "Fällig" active type tab. */
   dueType: DueType;
   /** "Fällig" user filter (assignee; principalIds; empty = all). */
@@ -157,8 +167,7 @@ export interface DashboardConfig {
 export const DEFAULT_DASHBOARD_CONFIG: DashboardConfig = {
   widgets: [...ALL_WIDGETS],
   recentUsers: [],
-  dueSinceDays: 7,
-  dueInDays: 14,
+  dueRanges: { event: { since: 7, in: 14 }, respite: { since: 7, in: 14 }, followup: { since: 7, in: 14 } },
   dueType: 'all',
   dueUsers: [],
   caseTags: [],
@@ -167,6 +176,34 @@ export const DEFAULT_DASHBOARD_CONFIG: DashboardConfig = {
   activeTag: '',
   limits: { recent: 8, due: 10, tagged: 15, messages: 8 },
 };
+
+/**
+ * Fields written by older versions of the web client that are still read as a fallback.
+ * `dueSinceDays`/`dueInDays` were the single window that applied to all entry types.
+ */
+interface LegacyDashboardConfig {
+  dueSinceDays?: unknown;
+  dueInDays?: unknown;
+}
+
+/**
+ * Resolves the per type windows. A type without its own value inherits the legacy global
+ * setting, so a configuration stored before this became type specific keeps working as before.
+ */
+function normalizeDueRanges(r: Partial<DashboardConfig>, d: DashboardConfig): Record<DueTypeKey, DueRange> {
+  const legacy = r as Partial<DashboardConfig> & LegacyDashboardConfig;
+  const legacySince = numOrZero(legacy.dueSinceDays, d.dueRanges.event.since);
+  const legacyIn = numOrZero(legacy.dueInDays, d.dueRanges.event.in);
+  const stored = r.dueRanges as Partial<Record<DueTypeKey, Partial<DueRange>>> | undefined;
+  const ranges = {} as Record<DueTypeKey, DueRange>;
+  for (const t of DUE_TYPE_KEYS) {
+    ranges[t] = {
+      since: numOrZero(stored?.[t]?.since, legacySince),
+      in: numOrZero(stored?.[t]?.in, legacyIn),
+    };
+  }
+  return ranges;
+}
 
 /** Merges a stored (possibly partial / older-schema) config onto the defaults. */
 export function normalizeConfig(raw: Partial<DashboardConfig> | null | undefined): DashboardConfig {
@@ -178,8 +215,7 @@ export function normalizeConfig(raw: Partial<DashboardConfig> | null | undefined
   return {
     widgets: widgets.length ? widgets : [...d.widgets],
     recentUsers: strArr(r.recentUsers),
-    dueSinceDays: numOrZero(r.dueSinceDays, d.dueSinceDays),
-    dueInDays: numOrZero(r.dueInDays, d.dueInDays),
+    dueRanges: normalizeDueRanges(r, d),
     dueType,
     dueUsers: strArr(r.dueUsers),
     caseTags: strArr(r.caseTags),

@@ -1456,6 +1456,7 @@
       "title": "Due",
       "past": "days back",
       "future": "days ahead",
+      "range": "Range per entry type",
       "markDone": "Mark as done",
       "reschedule": "Change date",
       "empty": "Nothing due.",

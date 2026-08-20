@@ -663,275 +663,153 @@
  */
 package com.jdimension.jlawyer.client.desktop;
 
-import com.jdimension.jlawyer.client.editors.*;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
-import com.jdimension.jlawyer.client.utils.StringUtils;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
-import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
-import com.jdimension.jlawyer.services.CalendarServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Component;
-import java.util.*;
-import java.util.concurrent.*;
-import javax.swing.*;
+import com.jdimension.jlawyer.persistence.EventTypes;
 import org.apache.log4j.Logger;
 
 /**
+ * Access to the per event type configuration of the "Fällig" desktop widget time window.
+ *
+ * Each event type (Termin, Frist, Wiedervorlage) has its own "days into the past" and "days
+ * into the future" setting. As long as no type specific value has been stored, the legacy
+ * global settings (CONF_DESKTOP_LASTFILTERDUESINCEDAYS / CONF_DESKTOP_LASTFILTERDUEINDAYS)
+ * remain in effect for that type, so existing configurations keep working unchanged.
  *
  * @author jens
  */
-public class ReviewsDueTimerTask extends java.util.TimerTask {
+public final class DueDaysSettings {
 
-    private static final Logger log = Logger.getLogger(ReviewsDueTimerTask.class.getName());
-    private Component owner;
-    private JPanel resultUI;
-    private boolean ignoreCurrentEditor = false;
-    private JTabbedPane eventPane = null;
-    private java.util.function.Consumer<ArrayList<ReviewDueEntry>> entriesCallback = null;
+    private static final Logger log = Logger.getLogger(DueDaysSettings.class.getName());
 
-    private volatile boolean stopped = false;
-    private volatile boolean dataLoaded = false;
+    /** Event types in the order the widget displays them: Termine, Fristen, Wiedervorlagen. */
+    public static final int[] EVENT_TYPES = new int[]{
+        EventTypes.EVENTTYPE_EVENT,
+        EventTypes.EVENTTYPE_RESPITE,
+        EventTypes.EVENTTYPE_FOLLOWUP
+    };
 
-    public void stop() {
-        stopped = true;
+    /** Default for the legacy "days into the past" setting. */
+    private static final int DEFAULT_SINCE_DAYS = 1;
+    /** Default for the legacy "days into the future" setting. */
+    private static final int DEFAULT_IN_DAYS = 0;
+
+    private DueDaysSettings() {
     }
 
     /**
-     * Creates a new instance of ReviewsDueTimerTask
-     *
-     * @param owner
-     * @param eventPane
-     * @param resultPanel
-     * @param ignoreCurrentEditor
+     * Returns the configured number of days into the past for the given event type, always as a
+     * negative number. Falls back to the legacy global setting if no type specific value is set.
      */
-    public ReviewsDueTimerTask(Component owner, JTabbedPane eventPane, JPanel resultPanel, boolean ignoreCurrentEditor) {
-        super();
-        this.owner = owner;
-        this.resultUI = resultPanel;
-        this.ignoreCurrentEditor = ignoreCurrentEditor;
-        this.eventPane = eventPane;
-    }
-
-    public ReviewsDueTimerTask(Component owner, JTabbedPane eventPane, JPanel resultPanel) {
-        this(owner, eventPane, resultPanel, false);
-    }
-
-    /**
-     * Creates a new instance of ReviewsDueTimerTask with a callback for caching entries.
-     *
-     * @param owner the owner component
-     * @param eventPane the tabbed pane for event types
-     * @param resultPanel the panel to render entries into
-     * @param ignoreCurrentEditor whether to ignore if the current editor is active
-     * @param entriesCallback callback to receive loaded entries for caching (may be null)
-     */
-    public ReviewsDueTimerTask(Component owner, JTabbedPane eventPane, JPanel resultPanel,
-                               boolean ignoreCurrentEditor,
-                               java.util.function.Consumer<ArrayList<ReviewDueEntry>> entriesCallback) {
-        this(owner, eventPane, resultPanel, ignoreCurrentEditor);
-        this.entriesCallback = entriesCallback;
-    }
-
-    @Override
-    public void run() {
-        if (stopped) {
-            return;
+    public static int getSinceDays(int eventType) {
+        int days = getValue(sinceKey(eventType), UserSettings.CONF_DESKTOP_LASTFILTERDUESINCEDAYS, DEFAULT_SINCE_DAYS);
+        if (days > 0) {
+            days = days * -1;
         }
+        return days;
+    }
 
-        ArrayList<ReviewDueEntry> entries = new ArrayList<>();
+    /**
+     * Returns the configured number of days into the future for the given event type, always as a
+     * positive number. Falls back to the legacy global setting if no type specific value is set.
+     */
+    public static int getInDays(int eventType) {
+        int days = getValue(inKey(eventType), UserSettings.CONF_DESKTOP_LASTFILTERDUEINDAYS, DEFAULT_IN_DAYS);
+        if (days < 0) {
+            days = days * -1;
+        }
+        return days;
+    }
 
-        // Check if compact view is enabled - skip loading tags if true
-        final boolean compactView = UserSettings.getInstance().getSettingAsBoolean(
-            UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, true);
+    /** Stores the number of days into the past for the given event type. */
+    public static void setSinceDays(int eventType, int days) {
+        UserSettings.getInstance().setSetting(sinceKey(eventType), "" + days);
+    }
 
+    /** Stores the number of days into the future for the given event type. */
+    public static void setInDays(int eventType, int days) {
+        UserSettings.getInstance().setSetting(inKey(eventType), "" + days);
+    }
+
+    /** Returns the largest window into the past across all event types (a negative number). */
+    public static int getMaxSinceDays() {
+        int max = 0;
+        for (int eventType : EVENT_TYPES) {
+            max = Math.min(max, getSinceDays(eventType));
+        }
+        return max;
+    }
+
+    /** Returns the largest window into the future across all event types (a positive number). */
+    public static int getMaxInDays() {
+        int max = 0;
+        for (int eventType : EVENT_TYPES) {
+            max = Math.max(max, getInDays(eventType));
+        }
+        return max;
+    }
+
+    /** Returns true if all event types share the same time window. */
+    public static boolean isUniform() {
+        int since = getSinceDays(EVENT_TYPES[0]);
+        int in = getInDays(EVENT_TYPES[0]);
+        for (int eventType : EVENT_TYPES) {
+            if (getSinceDays(eventType) != since || getInDays(eventType) != in) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** Returns the plural display name of an event type, as used for the menu entries. */
+    public static String getEventTypeName(int eventType) {
+        switch (eventType) {
+            case EventTypes.EVENTTYPE_EVENT:
+                return "Termine";
+            case EventTypes.EVENTTYPE_RESPITE:
+                return "Fristen";
+            default:
+                return "Wiedervorlagen";
+        }
+    }
+
+    private static String sinceKey(int eventType) {
+        switch (eventType) {
+            case EventTypes.EVENTTYPE_EVENT:
+                return UserSettings.CONF_DESKTOP_LASTFILTERDUESINCEDAYS_EVENT;
+            case EventTypes.EVENTTYPE_RESPITE:
+                return UserSettings.CONF_DESKTOP_LASTFILTERDUESINCEDAYS_RESPITE;
+            default:
+                return UserSettings.CONF_DESKTOP_LASTFILTERDUESINCEDAYS_FOLLOWUP;
+        }
+    }
+
+    private static String inKey(int eventType) {
+        switch (eventType) {
+            case EventTypes.EVENTTYPE_EVENT:
+                return UserSettings.CONF_DESKTOP_LASTFILTERDUEINDAYS_EVENT;
+            case EventTypes.EVENTTYPE_RESPITE:
+                return UserSettings.CONF_DESKTOP_LASTFILTERDUEINDAYS_RESPITE;
+            default:
+                return UserSettings.CONF_DESKTOP_LASTFILTERDUEINDAYS_FOLLOWUP;
+        }
+    }
+
+    /**
+     * Reads the type specific key and falls back to the legacy global key if it is not set.
+     * Parses defensively - a non numeric value must not break loading the desktop.
+     */
+    private static int getValue(String typeKey, String legacyKey, int defaultValue) {
+        UserSettings settings = UserSettings.getInstance();
+        String value = settings.getSetting(typeKey, null);
+        if (value == null || value.trim().isEmpty()) {
+            value = settings.getSetting(legacyKey, "" + defaultValue);
+        }
         try {
-
-            EditorsRegistry reg = EditorsRegistry.getInstance();
-            if (reg.isEditorActive(DesktopPanel.class.getName()) && dataLoaded) {
-                if (!this.ignoreCurrentEditor) {
-                    // do not refresh if desktop is active - this might interrupt user interactions
-                    return;
-                }
-            }
-
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-            if (stopped) {
-                return;
-            }
-            
-            
-
-            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
-
-            // each event type has its own time window - query them in parallel and merge the results
-            Collection<ArchiveFileReviewsBean> myNewList = new ArrayList<>();
-            ExecutorService executor = Executors.newFixedThreadPool(DueDaysSettings.EVENT_TYPES.length);
-            try {
-                List<Future<Collection<ArchiveFileReviewsBean>>> futures = new ArrayList<>();
-                for (int eventType : DueDaysSettings.EVENT_TYPES) {
-                    futures.add(executor.submit(() -> {
-                        // searchReviews modifies the dates passed in, so each call needs its own instances
-                        Calendar fromDate = Calendar.getInstance();
-                        fromDate.add(Calendar.DAY_OF_MONTH, DueDaysSettings.getSinceDays(eventType));
-                        Calendar toDate = Calendar.getInstance();
-                        toDate.add(Calendar.DAY_OF_MONTH, DueDaysSettings.getInDays(eventType));
-                        return calService.searchReviews(ArchiveFileConstants.REVIEWSTATUS_OPEN, eventType, fromDate.getTime(), toDate.getTime(), 2500);
-                    }));
-                }
-                for (Future<Collection<ArchiveFileReviewsBean>> f : futures) {
-                    Collection<ArchiveFileReviewsBean> typeResult = f.get();
-                    if (typeResult != null) {
-                        myNewList.addAll(typeResult);
-                    }
-                }
-            } catch (ExecutionException ee) {
-                // unwrap so the log shows the actual server side failure
-                throw ee.getCause() != null ? ee.getCause() : ee;
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-                return;
-            } finally {
-                executor.shutdown();
-            }
-
-            if (stopped) {
-                return;
-            }
-            String[] relevantUsers = UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS, new String[]{});
-            java.util.Set<String> relevantUsersSet = new java.util.HashSet<>(java.util.Arrays.asList(relevantUsers));
-            boolean filterEnabled = !relevantUsersSet.isEmpty();
-
-            if (myNewList != null) {
-
-                for (ArchiveFileReviewsBean ar : myNewList) {
-                    if (stopped) {
-                        return;
-                    }
-
-                    if (filterEnabled && !StringUtils.isEmpty(ar.getAssignee()) && !relevantUsersSet.contains(ar.getAssignee())) {
-                        continue;
-                    }
-
-                    ReviewDueEntry e = new ReviewDueEntry();
-                    ArchiveFileBean afb = ar.getArchiveFileKey();
-                    e.setArchiveFileId(afb.getId());
-                    e.setArchiveFileName(afb.getName());
-                    e.setArchiveFileNumber(afb.getFileNumber());
-                    e.setArchiveFileReason(afb.getReason());
-                    e.setDue(ar.getBeginDate());
-                    e.setId(ar.getId());
-                    e.setResponsible(ar.getAssignee());
-                    e.setReviewReason(ar.getSummary());
-                    e.setType(ar.getEventType());
-                    e.setReview(ar);
-                    if (ar.getCalendarSetup() != null) {
-                        e.setCalendarSetupColor(ar.getCalendarSetup().getBackground());
-                    }
-                    if (!compactView) {
-                        Collection<ArchiveFileTagsBean> tags = fileService.getTags(afb.getId());
-                        ArrayList<String> xTags = new ArrayList<>();
-                        if (tags != null) {
-                            for (ArchiveFileTagsBean aftb : tags) {
-                                String displayName = aftb.getTagValue() != null ? aftb.getTagName() + ": " + aftb.getTagValue() : aftb.getTagName();
-                                xTags.add(displayName);
-                            }
-                            Collections.sort(xTags);
-                            e.setTags(xTags);
-                        }
-                    }
-                    entries.add(e);
-                }
-            }
-
-            if (stopped) {
-                return;
-            }
-            // Sort entries for grouping: by event type, then by day, then by time, then by case
-            Collections.sort(entries, (ReviewDueEntry arg1, ReviewDueEntry arg2) -> {
-                // 1. Event type (descending - higher value first: EVENT=30, RESPITE=20, FOLLOWUP=10)
-                if (arg1.getType() != arg2.getType()) {
-                    return Integer.compare(arg2.getType(), arg1.getType());
-                }
-
-                // Null date handling
-                Date d1 = arg1.getDue();
-                Date d2 = arg2.getDue();
-                if (d1 == null && d2 == null) return 0;
-                if (d1 == null) return -1;
-                if (d2 == null) return 1;
-
-                // 2. Day comparison (group entries by day)
-                int dayCompare = compareDayOnly(d1, d2);
-                if (dayCompare != 0) return dayCompare;
-
-                // 3. Exact time (ascending - earlier times first within a day)
-                int timeCompare = d1.compareTo(d2);
-                if (timeCompare != 0) return timeCompare;
-
-                // 4. Archive file ID (group same cases together within same time)
-                String id1 = arg1.getArchiveFileId();
-                String id2 = arg2.getArchiveFileId();
-                if (id1 != null && id2 != null) {
-                    return id1.compareTo(id2);
-                } else if (id1 == null && id2 != null) {
-                    return -1;
-                } else if (id1 != null && id2 == null) {
-                    return 1;
-                }
-
-                return 0;
-            });
-
-        } catch (Throwable ex) {
-            log.error("Error connecting to server", ex);
-            return;
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException nfe) {
+            log.warn("Invalid value '" + value + "' for setting " + typeKey + " - using default " + defaultValue);
+            return defaultValue;
         }
-
-        if (stopped) {
-            return;
-        }
-        final ArrayList<ReviewDueEntry> list = entries;
-
-        // Delegate rendering to DesktopPanel to avoid code duplication
-        // Both caching and rendering must happen on the EDT for thread safety
-        if (owner instanceof DesktopPanel) {
-            final DesktopPanel desktopPanel = (DesktopPanel) owner;
-            final ArrayList<ReviewDueEntry> entriesCopy = new ArrayList<>(entries);
-            SwingUtilities.invokeLater(() -> {
-                // Notify callback with entries for caching (client-side search)
-                if (entriesCallback != null) {
-                    entriesCallback.accept(entriesCopy);
-                }
-                desktopPanel.renderDueEntries(list, compactView);
-                dataLoaded = true;
-            });
-        }
-
-    }
-
-    /**
-     * Compares two dates by day only (ignoring time).
-     *
-     * @param d1 first date
-     * @param d2 second date
-     * @return negative if d1 is before d2 (day-wise), positive if after, 0 if same day
-     */
-    private static int compareDayOnly(Date d1, Date d2) {
-        Calendar c1 = Calendar.getInstance();
-        Calendar c2 = Calendar.getInstance();
-        c1.setTime(d1);
-        c2.setTime(d2);
-        int yearCmp = Integer.compare(c1.get(Calendar.YEAR), c2.get(Calendar.YEAR));
-        if (yearCmp != 0) return yearCmp;
-        return Integer.compare(c1.get(Calendar.DAY_OF_YEAR), c2.get(Calendar.DAY_OF_YEAR));
     }
 
 }

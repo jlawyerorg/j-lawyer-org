@@ -705,6 +705,15 @@ public class UserSettingsKeys {
     public static final String CONF_DESKTOP_LASTFILTERUSERS_LASTCHANGED = "client.desktop.lastfilterusers.lastchanged";
     public static final String CONF_DESKTOP_LASTFILTERDUESINCEDAYS = "client.desktop.lastfilterduesincedays";
     public static final String CONF_DESKTOP_LASTFILTERDUEINDAYS = "client.desktop.lastfilterdueindays";
+
+    // Per event type overrides for the "Faellig" widget time window. If a type specific key is
+    // not set, the legacy global keys above remain in effect for that type.
+    public static final String CONF_DESKTOP_LASTFILTERDUESINCEDAYS_EVENT = "client.desktop.lastfilterduesincedays.event";
+    public static final String CONF_DESKTOP_LASTFILTERDUESINCEDAYS_RESPITE = "client.desktop.lastfilterduesincedays.respite";
+    public static final String CONF_DESKTOP_LASTFILTERDUESINCEDAYS_FOLLOWUP = "client.desktop.lastfilterduesincedays.followup";
+    public static final String CONF_DESKTOP_LASTFILTERDUEINDAYS_EVENT = "client.desktop.lastfilterdueindays.event";
+    public static final String CONF_DESKTOP_LASTFILTERDUEINDAYS_RESPITE = "client.desktop.lastfilterdueindays.respite";
+    public static final String CONF_DESKTOP_LASTFILTERDUEINDAYS_FOLLOWUP = "client.desktop.lastfilterdueindays.followup";
     public static final String CONF_DESKTOP_LASTFILTERDOCUMENTTAG = "client.desktop.lastfilterdocumenttag";
 
     // Desktop grid layout customization

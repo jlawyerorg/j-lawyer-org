@@ -1456,6 +1456,7 @@
       "title": "Fällig",
       "past": "Tage zurück",
       "future": "Tage voraus",
+      "range": "Zeitraum je Eintragstyp",
       "markDone": "Als erledigt markieren",
       "reschedule": "Datum neu setzen",
       "empty": "Nichts fällig.",

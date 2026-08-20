@@ -4,7 +4,7 @@ import { forkJoin, map, Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { API_ROOT } from '../core/api';
 import {
-  DashboardConfig, DashStats, DueItem, InvoiceSummary, MessageItem,
+  DashboardConfig, DashStats, DUE_TYPE_KEYS, DueItem, DueRange, DueTypeKey, InvoiceSummary, MessageItem,
   normalizeConfig, OpenInvoice, RecentCase, TaggedItem, UserOption,
 } from './desktop.models';
 
@@ -91,32 +91,25 @@ export class DashboardService {
   }
 
   /**
-   * All open deadlines/follow-ups/appointments in the window ({@link sinceDays} into the past +
-   * {@link inDays} into the future), unfiltered by type/user — the widget filters those client-side
-   * so the tabs switch instantly. Sorted soonest-first; overdue flagged.
+   * All open deadlines/follow-ups/appointments, each entry type queried with its own window
+   * ({@link ranges}). The three requests run in parallel; results are merged and sorted
+   * soonest-first, overdue flagged. The user filter is still applied client-side by the widget.
    */
-  dueWindow(sinceDays: number, inDays: number): Observable<DueItem[]> {
+  dueWindow(ranges: Record<DueTypeKey, DueRange>): Observable<DueItem[]> {
     const now = new Date();
-    const from = new Date(now.getTime() - sinceDays * 86_400_000);
-    const to = new Date(now.getTime() + inDays * 86_400_000);
-    const params = new HttpParams()
-      .set('status', 'open').set('type', 'all')
-      .set('from', ymd(from)).set('to', ymd(to)).set('limit', '300');
-    return this.http.get<EventDto[]>(`${CALENDAR_V8}/events`, { params }).pipe(
-      map((rows) => (rows ?? [])
-        .filter((e) => !e.done)
-        .map((e) => {
-          const due = new Date(e.begin);
-          return {
-            id: e.id, type: toType(e.type), summary: e.summary ?? '', due,
-            end: e.end != null ? new Date(e.end) : null,
-            overdue: due.getTime() < now.getTime(), done: !!e.done, assignee: e.assignee ?? '',
-            caseId: e.caseId ?? '', caseFileNumber: e.caseFileNumber ?? '', caseName: e.caseName ?? '',
-            description: e.description ?? '', location: e.location ?? '',
-            reminderMinutes: e.reminderMinutes ?? -1, calendarId: e.calendar ?? '',
-          } satisfies DueItem;
-        })
-        .sort((a, b) => a.due.getTime() - b.due.getTime())),
+    const requests = DUE_TYPE_KEYS.map((type) => {
+      const range = ranges[type];
+      const from = new Date(now.getTime() - range.since * 86_400_000);
+      const to = new Date(now.getTime() + range.in * 86_400_000);
+      const params = new HttpParams()
+        .set('status', 'open').set('type', type)
+        .set('from', ymd(from)).set('to', ymd(to)).set('limit', '300');
+      return this.http.get<EventDto[]>(`${CALENDAR_V8}/events`, { params }).pipe(
+        map((rows) => (rows ?? []).filter((e) => !e.done).map((e) => toDueItem(e, now))),
+      );
+    });
+    return forkJoin(requests).pipe(
+      map((perType) => perType.flat().sort((a, b) => a.due.getTime() - b.due.getTime())),
     );
   }
 
@@ -222,6 +215,19 @@ export class DashboardService {
       catchError(() => of(null)),
     );
   }
+}
+
+/** Maps one calendar event to the widget's row model. */
+function toDueItem(e: EventDto, now: Date): DueItem {
+  const due = new Date(e.begin);
+  return {
+    id: e.id, type: toType(e.type), summary: e.summary ?? '', due,
+    end: e.end != null ? new Date(e.end) : null,
+    overdue: due.getTime() < now.getTime(), done: !!e.done, assignee: e.assignee ?? '',
+    caseId: e.caseId ?? '', caseFileNumber: e.caseFileNumber ?? '', caseName: e.caseName ?? '',
+    description: e.description ?? '', location: e.location ?? '',
+    reminderMinutes: e.reminderMinutes ?? -1, calendarId: e.calendar ?? '',
+  } satisfies DueItem;
 }
 
 function toType(t: string): DueItem['type'] {

@@ -94,14 +94,19 @@
 .chip-btn jl-icon { opacity: .8; }
 .uf .cfg-pop { top: 34px; }
 
-/* Compact "Fällig" range control in the header (days back … days ahead) */
-.due-range { display: inline-flex; align-items: center; gap: 4px; }
+/* Compact "Fällig" range control in the header: a chip opening a per-type popover */
+.due-range { position: relative; display: inline-flex; align-items: center; gap: 4px; }
 .due-range jl-icon { color: var(--jl-ink-faint); }
 .due-range select {
   font: inherit; font-size: .76rem; color: var(--jl-ink); background: var(--jl-surface);
   border: 1px solid var(--jl-line-strong); border-radius: 7px; padding: 2px 4px;
 }
 .due-range .rsep { color: var(--jl-ink-faint); }
+.due-range .cfg-pop { top: 34px; min-width: 260px; }
+/* one row per entry type: label | days back | … | days ahead */
+.range-row { display: flex; align-items: center; gap: 6px; padding: 4px 2px; font-size: .88rem; }
+.range-row .rr-label { flex: 1 1 auto; }
+.range-row select { flex: 0 0 auto; }
 
 /* ---------- Grid of widgets ---------- */
 .grid {

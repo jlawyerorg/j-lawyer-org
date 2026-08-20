@@ -11,7 +11,7 @@ import { BeaService } from '../bea/bea.service';
 import { DashboardService } from './dashboard.service';
 import {
   ALL_WIDGETS, DashboardConfig, DashStats, DashWidgetId, DEFAULT_DASHBOARD_CONFIG, DUE_FUTURE_OPTIONS, DUE_PAST_OPTIONS,
-  DueItem, DueType, InvoiceSummary, MessageItem, RecentCase, TaggedItem, UserOption,
+  DUE_TYPE_KEYS, DueItem, DueRange, DueType, DueTypeKey, InvoiceSummary, MessageItem, RecentCase, TaggedItem, UserOption,
 } from './desktop.models';
 
 type UserWidget = 'recent' | 'due' | 'tagged';
@@ -131,14 +131,33 @@ interface TagTab { key: string; label: string; kind: 'case' | 'doc'; }
               <h2>{{ 'desktop.due.title' | transloco }}</h2>
               <span class="w-spacer"></span>
               <span class="due-range">
-                <jl-icon name="clock" [size]="14" />
-                <select [title]="'desktop.due.past' | transloco" [value]="cfg().dueSinceDays" (change)="setDueDays('since', $any($event.target).value)">
-                  @for (o of pastOptions; track o) { <option [value]="o">{{ o }}</option> }
-                </select>
-                <span class="rsep">…</span>
-                <select [title]="'desktop.due.future' | transloco" [value]="cfg().dueInDays" (change)="setDueDays('in', $any($event.target).value)">
-                  @for (o of futureOptions; track o) { <option [value]="o">{{ o }}</option> }
-                </select>
+                <button type="button" class="chip-btn" [class.active]="rangePop()" (click)="rangePop.set(!rangePop())"
+                        [title]="'desktop.due.range' | transloco">
+                  <jl-icon name="clock" [size]="14" /><span>{{ rangeSummary() }}</span>
+                </button>
+                @if (rangePop()) {
+                  <div class="cfg-pop">
+                    <h3>{{ 'desktop.due.range' | transloco }}</h3>
+                    @for (t of dueTypeKeys; track t) {
+                      <div class="range-row">
+                        <span class="rr-label">{{ ('desktop.due.type.' + t) | transloco }}</span>
+                        <select [title]="'desktop.due.past' | transloco"
+                                (change)="setDueDays(t, 'since', $any($event.target).value)">
+                          @for (o of pastOptions; track o) {
+                            <option [value]="o" [selected]="o === cfg().dueRanges[t].since">{{ o }}</option>
+                          }
+                        </select>
+                        <span class="rsep">…</span>
+                        <select [title]="'desktop.due.future' | transloco"
+                                (change)="setDueDays(t, 'in', $any($event.target).value)">
+                          @for (o of futureOptions; track o) {
+                            <option [value]="o" [selected]="o === cfg().dueRanges[t].in">{{ o }}</option>
+                          }
+                        </select>
+                      </div>
+                    }
+                  </div>
+                }
               </span>
               <ng-container *ngTemplateOutlet="userFilter; context: { w: 'due' }"></ng-container>
             </div>
@@ -301,6 +320,7 @@ export class DesktopComponent {
   protected readonly pastOptions = DUE_PAST_OPTIONS;
   protected readonly futureOptions = DUE_FUTURE_OPTIONS;
   protected readonly dueTabs: DueType[] = ['followup', 'respite', 'event', 'all'];
+  protected readonly dueTypeKeys = DUE_TYPE_KEYS;
   protected readonly userName = computed(() => this.auth.user()?.displayName ?? '');
 
   protected readonly cfg = signal<DashboardConfig>(DEFAULT_DASHBOARD_CONFIG);
@@ -308,6 +328,8 @@ export class DesktopComponent {
   protected readonly subscribeOpen = signal(false);
   /** Which widget's user-filter popover is open ('' = none). */
   protected readonly userPop = signal<'' | UserWidget>('');
+  /** Whether the "Fällig" per-type range popover is open. */
+  protected readonly rangePop = signal(false);
   private readonly persist$ = new Subject<void>();
 
   protected readonly users = signal<UserOption[]>([]);
@@ -346,6 +368,19 @@ export class DesktopComponent {
     let sum = 0;
     for (const list of Object.values(this.bea.folders())) { for (const f of list) { if ((f.unreadMessageCount ?? 0) > 0) { sum += f.unreadMessageCount; } } }
     return sum;
+  });
+
+  /**
+   * Compact label for the range chip: the shared window if all types agree, otherwise the widest
+   * window across all types marked with a '*' (mirrors the Swing DesktopPanel label).
+   */
+  protected readonly rangeSummary = computed(() => {
+    const ranges = this.cfg().dueRanges;
+    const first = ranges[DUE_TYPE_KEYS[0]];
+    const uniform = DUE_TYPE_KEYS.every((t) => ranges[t].since === first.since && ranges[t].in === first.in);
+    const since = Math.max(...DUE_TYPE_KEYS.map((t) => ranges[t].since));
+    const inDays = Math.max(...DUE_TYPE_KEYS.map((t) => ranges[t].in));
+    return `-${since} … +${inDays}${uniform ? '' : '*'}`;
   });
 
   protected readonly dueView = computed(() => {
@@ -495,9 +530,13 @@ export class DesktopComponent {
     if (w === 'recent') { this.loadRecent(); } // due & tagged filter client-side
   }
 
-  protected setDueDays(which: 'since' | 'in', value: string): void {
+  protected setDueDays(type: DueTypeKey, which: 'since' | 'in', value: string): void {
     const n = Math.max(0, parseInt(value, 10) || 0);
-    this.cfg.update((c) => ({ ...c, dueSinceDays: which === 'since' ? n : c.dueSinceDays, dueInDays: which === 'in' ? n : c.dueInDays }));
+    this.cfg.update((c) => {
+      const ranges: Record<DueTypeKey, DueRange> = { ...c.dueRanges };
+      ranges[type] = which === 'since' ? { ...ranges[type], since: n } : { ...ranges[type], in: n };
+      return { ...c, dueRanges: ranges };
+    });
     this.persist();
     this.loadDue();
   }
@@ -537,7 +576,7 @@ export class DesktopComponent {
 
   protected loadDue(): void {
     this.dueLoading.set(true); this.dueError.set(false);
-    this.dashboard.dueWindow(this.cfg().dueSinceDays, this.cfg().dueInDays).subscribe({
+    this.dashboard.dueWindow(this.cfg().dueRanges).subscribe({
       next: (rows) => { this.dueAll.set(rows); this.dueLoading.set(false); },
       error: () => { this.dueError.set(true); this.dueLoading.set(false); },
     });
