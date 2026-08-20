@@ -83,6 +83,24 @@ Aktuell gesetzt:
   Der Dependabot-Vorschlag hätte dafür `build-angular` auf 21.x gehoben — unvereinbar
   mit Angular 19 (`@angular/compiler-cli`-Peer, TypeScript >=5.9, Node >=20.19).
   **Entfällt** mit dem Upgrade auf Angular 20/21, das postcss ohnehin aktuell mitbringt.
+- `webpack-dev-server: 5.2.6` (statt der von `@angular-devkit/build-angular` 19.2.0
+  gepinnten 5.2.0) — schließt die CSRF-Lücke der eingebauten Routen
+  `/webpack-dev-server/invalidate` und `/webpack-dev-server/open-editor` (eine
+  fremde Seite konnte einen Rebuild auslösen bzw. eine Datei im Editor öffnen) sowie
+  den fehlerhaften Umgang mit manipulierten `Host`/`Origin`-Headern. Betrifft nur
+  `ng serve` auf Entwicklermaschinen — der Dev-Server ist nicht Teil des WAR.
+  Der Dependabot-Vorschlag (#3531) hätte dafür `build-angular` auf 22.1.5 gehoben —
+  unvereinbar mit Angular 19 (`@angular/compiler-cli`-Peer `^22.0.0`, TypeScript
+  `>=6.0 <6.1`, Node `^22.22.3 || ^24.15.0 || >=26.0.0`); `npm ci` gegen dieses
+  Lockfile scheitert mit ERESOLVE. 5.2.0 -> 5.2.6 ist ein Patch-Schritt; er tauscht
+  intern lediglich `node-forge` gegen `@peculiar/x509` für die Self-Signed-Zertifikate.
+  **Entfällt** mit dem Upgrade auf Angular 20+, dessen Toolchain 5.2.6+ mitbringt.
+
+  **Nicht** geschlossen wird damit GHSA-w5hq-g745-h8pq (`sockjs` -> `uuid` 8.3.2):
+  `npm audit` führt `webpack-dev-server` deshalb weiterhin (moderate). Ein Override
+  auf `uuid` 11.x wäre ein Major-Sprung innerhalb von `sockjs` und damit nach obiger
+  Regel unzulässig; die Lücke betrifft zudem nur `uuid` v3/v5/v6 mit übergebenem
+  `buf`, während `sockjs` v4 ohne `buf` nutzt. Bleibt bis zum Angular-Upgrade offen.
 
 Jeder Override wird hier dokumentiert — inklusive der Bedingung, unter der er wieder
 verschwindet. Ein undokumentierter Override ist ein Audit-Blocker.
