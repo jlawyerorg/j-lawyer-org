@@ -41,6 +41,7 @@ public class EmailMimeStructureTest {
                 Collections.singletonList(inlineImage)));
 
         Assert.assertTrue(multipart.getContentType().startsWith("multipart/related"));
+        Assert.assertTrue(multipart.getContentType().contains("type=\"text/html\""));
         Assert.assertEquals(2, multipart.getCount());
         Assert.assertTrue(multipart.getBodyPart(0).getContentType().startsWith("text/html"));
 
@@ -68,6 +69,7 @@ public class EmailMimeStructureTest {
 
         MimeMultipart related = (MimeMultipart) multipart.getBodyPart(0).getContent();
         Assert.assertTrue(related.getContentType().startsWith("multipart/related"));
+        Assert.assertTrue(related.getContentType().contains("type=\"text/html\""));
         Assert.assertEquals(2, related.getCount());
 
         MimeBodyPart attachmentPart = (MimeBodyPart) multipart.getBodyPart(1);

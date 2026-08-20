@@ -2136,7 +2136,8 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             }
         }
 
-        MimeMultipart bodyMultipart = new MimeMultipart(hasInlineAttachments ? "related" : "mixed");
+        // RFC 2387 requires the type parameter on multipart/related, naming the media type of the root part
+        MimeMultipart bodyMultipart = new MimeMultipart(hasInlineAttachments ? "related; type=\"text/html\"" : "mixed");
         bodyMultipart.addBodyPart(bodyPart);
 
         if (hasInlineAttachments) {
