@@ -670,8 +670,10 @@ import com.jdimension.jlawyer.events.AddressUpdatedEvent;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.server.utils.StringUtils;
+import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -835,6 +837,8 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
 
         this.addressFacade.remove(dto);
 
+        this.removeDocumentStorage(id);
+
         try {
             this.contactSync.contactDeleted(dto);
         } catch (Throwable ex) {
@@ -877,6 +881,38 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             sb.append("\n... und ").append(references.size() - listed).append(" weitere.");
         }
         return sb.toString();
+    }
+
+    /**
+     * Removes the file system storage of all documents attached to a contact.
+     * The database records in address_documents are removed by the databases
+     * ON DELETE CASCADE constraint, but the document content and its previews
+     * are stored outside of the database and need to be cleaned up explicitly.
+     *
+     * @param addressId id of the contact whose document storage is to be removed
+     */
+    private void removeDocumentStorage(String addressId) {
+        try {
+            String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
+            localBaseDir = localBaseDir.trim();
+            if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
+                localBaseDir = localBaseDir + System.getProperty("file.separator");
+            }
+
+            String dst = localBaseDir + "addressfiles" + System.getProperty("file.separator") + addressId + System.getProperty("file.separator");
+            File delFile = new File(dst);
+            if (delFile.exists()) {
+                ServerFileUtils.getInstance().delete(delFile);
+            }
+
+            dst = localBaseDir + "addressfiles-preview" + System.getProperty("file.separator") + addressId + System.getProperty("file.separator");
+            delFile = new File(dst);
+            if (delFile.exists()) {
+                ServerFileUtils.getInstance().delete(delFile);
+            }
+        } catch (Throwable t) {
+            log.error("could not remove documents for contact " + addressId, t);
+        }
     }
 
     @Override
