@@ -65,6 +65,29 @@ Angular als kuratierter First-Party-Monorepo (Router/Forms/HTTP/CLI/Material aus
 Hand) minimiert Dritt-transitive Pakete — kleinere Angriffsfläche als ein
 handzusammengestellter Stack (siehe Decision 2b).
 
+### 6. `overrides` für transitive Advisories
+Sicherheitsfixes in **transitiven** Paketen (die also nicht in `dependencies`/
+`devDependencies` stehen) kommen normalerweise erst mit einem Upgrade des direkten
+Vorfahren. Wenn dieser Vorfahre ein Major-Sprung wäre, der die restliche Toolchain
+mitreißt, ist stattdessen ein `overrides`-Eintrag in `frontend/package.json` das
+Mittel der Wahl: er pinnt das transitive Paket punktuell, ohne den Vorfahren anzufassen.
+
+Zulässig nur, wenn die erzwungene Version **semver-kompatibel** zur ursprünglich
+aufgelösten ist (Patch/Minor innerhalb derselben Major). Andernfalls: echtes Upgrade
+planen, nicht überschreiben.
+
+Aktuell gesetzt:
+- `postcss: 8.5.23` (statt der von `@angular-devkit/build-angular` 19.2.0 gepinnten
+  8.5.2) — schließt GHSA-6g55-p6wh-862q, GHSA-r28c-9q8g-f849 und GHSA-fxqj-rqcc-2cmp
+  (`sourceMappingURL`-gesteuertes Auslesen beliebiger `.map`-Dateien zur Build-Zeit).
+  Der Dependabot-Vorschlag hätte dafür `build-angular` auf 21.x gehoben — unvereinbar
+  mit Angular 19 (`@angular/compiler-cli`-Peer, TypeScript >=5.9, Node >=20.19).
+  **Entfällt** mit dem Upgrade auf Angular 20/21, das postcss ohnehin aktuell mitbringt.
+
+Jeder Override wird hier dokumentiert — inklusive der Bedingung, unter der er wieder
+verschwindet. Ein undokumentierter Override ist ein Audit-Blocker.
+
+
 ## Dateien in diesem Modul
 Das npm/Angular-Projekt liegt unter `frontend/`; die Maven-WAR-Assembly im Modul-Root
 (`pom.xml`, `src/main/webapp/`). npm läuft ausschließlich in `frontend/`.
