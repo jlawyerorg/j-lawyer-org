@@ -1157,17 +1157,13 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
                 ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
                 if (this.mode == MODE_EDIT) {
                     for (int i = 0; i < model.getRowCount(); i++) {
-                        Object modelRev = model.getValueAt(i, 0);
+                        Object modelRev = model.getValueAt(i, ArchiveFileReviewReasonsTableModel.COLUMN_EVENT);
                         if (modelRev instanceof ArchiveFileReviewsBean) {
                             if (((ArchiveFileReviewsBean) modelRev).getId().equals(targetReview.getId())) {
-                                model.setValueAt(targetReview, i, 0);
-                                model.setValueAt(targetReview.getEventTypeName(), i, 1);
-                                model.setValueAt(targetReview.getSummary(), i, 2);
-                                model.setValueAt(targetReview.getLocation(), i, 3);
-                                model.setValueAt(targetReview.isDone(), i, 4);
-                                model.setValueAt(targetReview.getAssignee(), i, 5);
-                                model.setValueAt(targetReview.getDescription(), i, 6);
-                                model.setValueAt(targetReview.getCalendarSetup().getDisplayName(), i, 7);
+                                Object[] row = ArchiveFileReviewReasonsTableModel.eventToRow(targetReview);
+                                for (int col = 0; col < row.length; col++) {
+                                    model.setValueAt(row[col], i, col);
+                                }
                             }
                         }
                     }

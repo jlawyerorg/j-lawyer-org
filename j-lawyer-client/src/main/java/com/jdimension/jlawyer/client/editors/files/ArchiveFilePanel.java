@@ -680,6 +680,7 @@ import com.jdimension.jlawyer.comparator.ReviewsComparator;
 import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.bea.BeaInboxPanel;
 import com.jdimension.jlawyer.client.bea.SendBeaMessageFrame;
+import com.jdimension.jlawyer.client.calendar.CalendarColorTableCellRenderer;
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.cloud.CloudInstance;
 import com.jdimension.jlawyer.client.cloud.SendCloudShare;
@@ -4622,7 +4623,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         java.util.List<ArchiveFileReviewsBean> respites = new ArrayList<>();
         for (int i = 0; i < selectedRows.length; i++) {
-            ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
+            ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], ArchiveFileReviewReasonsTableModel.COLUMN_EVENT);
             if (review.getEventType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
                 respites.add(review);
             }
@@ -4673,7 +4674,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         for (int i = selectedRows.length - 1; i > -1; i--) {
 
             try {
-                ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
+                ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], ArchiveFileReviewReasonsTableModel.COLUMN_EVENT);
 
                 if (DateUtils.containsToday(review.getBeginDate(), review.getEndDate()) && relevantEvent == null) {
                     relevantEvent = review;
@@ -4721,7 +4722,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ArchiveFileReviewsBean relevantEvent = null;
         for (int i = 0; i < selectedRows.length; i++) {
 
-            ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
+            ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], ArchiveFileReviewReasonsTableModel.COLUMN_EVENT);
             review.setDone(false);
 
             if (DateUtils.containsToday(review.getBeginDate(), review.getEndDate()) && relevantEvent == null) {
@@ -4740,7 +4741,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
 
                 EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
-                this.tblReviewReasons.setValueAt(Boolean.FALSE, selectedRows[i], 4);
+                this.tblReviewReasons.setValueAt(Boolean.FALSE, selectedRows[i], ArchiveFileReviewReasonsTableModel.COLUMN_DONE);
             }
         }
         if (relevantEvent != null) {
@@ -4771,7 +4772,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         java.util.List<ArchiveFileReviewsBean> openRespites = new ArrayList<>();
         for (int i = 0; i < selectedRows.length; i++) {
-            ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
+            ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], ArchiveFileReviewReasonsTableModel.COLUMN_EVENT);
             if (!review.isDone() && review.getEventType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
                 openRespites.add(review);
             }
@@ -4798,7 +4799,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         for (int i = 0; i < selectedRows.length; i++) {
 
             try {
-                ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
+                ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], ArchiveFileReviewReasonsTableModel.COLUMN_EVENT);
                 review.setDone(true);
 
                 if (DateUtils.containsToday(review.getBeginDate(), review.getEndDate()) && relevantEvent == null) {
@@ -4815,7 +4816,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
 
             EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
-            this.tblReviewReasons.setValueAt(Boolean.TRUE, selectedRows[i], 4);
+            this.tblReviewReasons.setValueAt(Boolean.TRUE, selectedRows[i], ArchiveFileReviewReasonsTableModel.COLUMN_DONE);
         }
         if (relevantEvent != null) {
             EventBroker eb = EventBroker.getInstance();
@@ -4842,7 +4843,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     int row = this.tblReviewReasons.getSelectedRow();
                     boolean enable = false;
                     if (row >= 0) {
-                        Object v = this.tblReviewReasons.getValueAt(row, 0);
+                        Object v = this.tblReviewReasons.getValueAt(row, ArchiveFileReviewReasonsTableModel.COLUMN_EVENT);
                         if (v instanceof ArchiveFileReviewsBean) {
                             ArchiveFileReviewsBean r = (ArchiveFileReviewsBean) v;
                             enable = (r.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT)
@@ -4865,9 +4866,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.tblReviewReasons.setDefaultRenderer(Object.class, new ConflictAwareDefaultRenderer());
         // Boolean renderer with real checkbox, also honoring conflict foreground color
         this.tblReviewReasons.setDefaultRenderer(Boolean.class, new ConflictAwareBooleanRenderer());
-        // Column 5 has a custom renderer: wrap it to keep user rendering + conflict style
+        // the calendar color column needs its dedicated renderer - the TableColumns are
+        // recreated whenever the model is replaced, so re-install it here as well
         try {
-            TableColumn col = this.tblReviewReasons.getColumnModel().getColumn(5);
+            CalendarColorTableCellRenderer.install(this.tblReviewReasons, ArchiveFileReviewReasonsTableModel.COLUMN_CALENDARCOLOR);
+        } catch (Throwable t) {
+            // ignore if column not available yet
+            log.error(t);
+        }
+        // the responsible user column has a custom renderer: wrap it to keep user rendering + conflict style
+        try {
+            TableColumn col = this.tblReviewReasons.getColumnModel().getColumn(ArchiveFileReviewReasonsTableModel.COLUMN_ASSIGNEE);
             TableCellRenderer base = col.getCellRenderer();
             if (!(base instanceof ConflictAwareUserRenderer)) {
                 base = new UserTableCellRenderer();
@@ -4886,7 +4895,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             java.awt.Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             try {
-                Object eventObj = table.getValueAt(row, 0);
+                Object eventObj = table.getValueAt(row, ArchiveFileReviewReasonsTableModel.COLUMN_EVENT);
                 if (eventObj instanceof ArchiveFileReviewsBean) {
                     ArchiveFileReviewsBean evt = (ArchiveFileReviewsBean) eventObj;
                     if (evt.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT && conflictingEventIds.contains(evt.getId())) {
@@ -4949,7 +4958,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
 
             try {
-                Object eventObj = table.getValueAt(row, 0);
+                Object eventObj = table.getValueAt(row, ArchiveFileReviewReasonsTableModel.COLUMN_EVENT);
                 if (eventObj instanceof ArchiveFileReviewsBean) {
                     ArchiveFileReviewsBean evt = (ArchiveFileReviewsBean) eventObj;
                     if (evt.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT && conflictingEventIds.contains(evt.getId())) {
@@ -4983,7 +4992,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             java.awt.Component c = delegate.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             try {
-                Object eventObj = table.getValueAt(row, 0);
+                Object eventObj = table.getValueAt(row, ArchiveFileReviewReasonsTableModel.COLUMN_EVENT);
                 if (eventObj instanceof ArchiveFileReviewsBean) {
                     ArchiveFileReviewsBean evt = (ArchiveFileReviewsBean) eventObj;
                     if (evt.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT && conflictingEventIds.contains(evt.getId())) {
@@ -5091,7 +5100,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 int rc = model.getRowCount();
                 List<ArchiveFileReviewsBean> localEvents = new ArrayList<>();
                 for (int i = 0; i < rc; i++) {
-                    Object value = model.getValueAt(i, 0);
+                    Object value = model.getValueAt(i, ArchiveFileReviewReasonsTableModel.COLUMN_EVENT);
                     if (value instanceof ArchiveFileReviewsBean) {
                         localEvents.add((ArchiveFileReviewsBean) value);
                     }
@@ -5311,7 +5320,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if (row < 0) {
             return;
         }
-        Object v = this.tblReviewReasons.getValueAt(row, 0);
+        Object v = this.tblReviewReasons.getValueAt(row, ArchiveFileReviewReasonsTableModel.COLUMN_EVENT);
         if (!(v instanceof ArchiveFileReviewsBean)) {
             return;
         }
@@ -6319,10 +6328,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if (evt.getClickCount() == 1 && !evt.isPopupTrigger() && evt.getComponent().isEnabled()) {
             Point p = evt.getPoint();
             int col = this.tblReviewReasons.columnAtPoint(p);
-            if (col == 4) {
+            if (col == ArchiveFileReviewReasonsTableModel.COLUMN_DONE) {
                 // click on checkbox in table
                 int row = this.tblReviewReasons.rowAtPoint(p);
-                ArchiveFileReviewsBean reviewDto = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(row, 0);
+                ArchiveFileReviewsBean reviewDto = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(row, ArchiveFileReviewReasonsTableModel.COLUMN_EVENT);
                 if (!reviewDto.isDone() && reviewDto.getEventType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
                     int response = JOptionPane.showConfirmDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("dialog.confirm.setdone"), new Object[]{reviewDto.getSummary()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("dialog.confirm.setdone.title"), JOptionPane.YES_NO_OPTION);
                     if (response != JOptionPane.YES_OPTION) {
@@ -6359,7 +6368,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         int[] selectedRows = this.tblReviewReasons.getSelectedRows();
         for (int i = 0; i < selectedRows.length; i++) {
             evt.getSource();
-            ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
+            ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], ArchiveFileReviewReasonsTableModel.COLUMN_EVENT);
             EditOrDuplicateEventDialog dlg = new EditOrDuplicateEventDialog(EditOrDuplicateEventDialog.MODE_DUPLICATE, EditorsRegistry.getInstance().getMainWindow(), true, this.dto, review, this.tblReviewReasons);
             dlg.setVisible(true);
 
@@ -7133,7 +7142,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         Date oldBegin = null;
         Date oldEnd = null;
         for (int i = 0; i < selectedRows.length; i++) {
-            ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
+            ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], ArchiveFileReviewReasonsTableModel.COLUMN_EVENT);
             if (DateUtils.containsToday(review.getBeginDate(), review.getEndDate()) && relevantEvent == null) {
                 relevantEvent = review;
                 oldBegin = review.getBeginDate();
@@ -7161,7 +7170,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 if (CalendarUtils.checkForConflicts(EditorsRegistry.getInstance().getMainWindow(), review)) {
                     calService.updateReview(this.dto.getId(), review);
                     EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
-                    this.tblReviewReasons.setValueAt(review, selectedRows[i], 0);
+                    this.tblReviewReasons.setValueAt(review, selectedRows[i], ArchiveFileReviewReasonsTableModel.COLUMN_EVENT);
                 }
 
             } catch (Exception ex) {
@@ -7372,7 +7381,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         int[] selectedRows = this.tblReviewReasons.getSelectedRows();
         for (int i = 0; i < selectedRows.length; i++) {
             //evt.getSource();
-            ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
+            ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], ArchiveFileReviewReasonsTableModel.COLUMN_EVENT);
             EditOrDuplicateEventDialog dlg = new EditOrDuplicateEventDialog(EditOrDuplicateEventDialog.MODE_EDIT, EditorsRegistry.getInstance().getMainWindow(), true, this.dto, review, this.tblReviewReasons);
             dlg.setVisible(true);
 
@@ -9527,7 +9536,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         int moved = 0;
 
         for (int i = selectedRows.length - 1; i > -1; i--) {
-            ArchiveFileReviewsBean source = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
+            ArchiveFileReviewsBean source = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], ArchiveFileReviewReasonsTableModel.COLUMN_EVENT);
 
             ArchiveFileReviewsBean copy = (ArchiveFileReviewsBean) source.getClone();
             copy.setId(null);
@@ -9699,7 +9708,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if (withReviews) {
             ArchiveFileReviewReasonsTableModel reviewsModel = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
             for (int i = 0; i < reviewsModel.getRowCount(); i++) {
-                Object row = reviewsModel.getValueAt(i, 0);
+                Object row = reviewsModel.getValueAt(i, ArchiveFileReviewReasonsTableModel.COLUMN_EVENT);
                 ArchiveFileReviewsBean reviewDTO = (ArchiveFileReviewsBean) row;
                 aFile.addReview(reviewDTO);
             }
@@ -9893,7 +9902,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         boolean reviewsValid = false;
         ArchiveFileReviewReasonsTableModel reviewsModel = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
         for (int i = 0; i < reviewsModel.getRowCount(); i++) {
-            Object row = reviewsModel.getValueAt(i, 0);
+            Object row = reviewsModel.getValueAt(i, ArchiveFileReviewReasonsTableModel.COLUMN_EVENT);
             ArchiveFileReviewsBean reviewDTO = (ArchiveFileReviewsBean) row;
             if (!reviewDTO.isDone()) {
                 reviewsValid = true;
@@ -10710,10 +10719,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 this.tblReviewReasons.setModel(model3);
                 ReviewsComparator reviewsComparator = new ReviewsComparator();
                 TableRowSorter rtrs = new TableRowSorter(model3);
-                rtrs.setComparator(0, reviewsComparator);
+                rtrs.setComparator(ArchiveFileReviewReasonsTableModel.COLUMN_EVENT, reviewsComparator);
+                rtrs.setSortable(ArchiveFileReviewReasonsTableModel.COLUMN_CALENDARCOLOR, false);
                 this.tblReviewReasons.setRowSorter(rtrs);
+                CalendarColorTableCellRenderer.install(this.tblReviewReasons, ArchiveFileReviewReasonsTableModel.COLUMN_CALENDARCOLOR);
                 // ensure conflict-aware rendering on the responsible-user column as well
-                this.tblReviewReasons.getColumnModel().getColumn(5).setCellRenderer(new ConflictAwareUserRenderer(new UserTableCellRenderer()));
+                this.tblReviewReasons.getColumnModel().getColumn(ArchiveFileReviewReasonsTableModel.COLUMN_ASSIGNEE).setCellRenderer(new ConflictAwareUserRenderer(new UserTableCellRenderer()));
                 if (reviews != null) {
                     for (Object reviewObject : reviews) {
                         ArchiveFileReviewsBean reviewDto = (ArchiveFileReviewsBean) reviewObject;
@@ -10722,7 +10733,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     }
                 }
                 ArrayList list = new ArrayList();
-                list.add(new RowSorter.SortKey(0, SortOrder.DESCENDING));
+                list.add(new RowSorter.SortKey(ArchiveFileReviewReasonsTableModel.COLUMN_EVENT, SortOrder.DESCENDING));
                 rtrs.setSortKeys(list);
                 rtrs.sort();
                 SwingUtilities.invokeLater(

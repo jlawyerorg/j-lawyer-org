@@ -672,7 +672,29 @@ import javax.swing.table.DefaultTableModel;
  */
 public class ArchiveFileReviewReasonsTableModel extends DefaultTableModel {
     
-    private static String[] columnNames=new String[]{"Datum / Zeit", "Typ", "Grund", "Ort", "erledigt", "verantwortlich", "Beschreibung", "Kalender"};
+    /**
+     * column index of the calendar color cell - it has no header and renders the
+     * color of the events calendar
+     */
+    public static final int COLUMN_CALENDARCOLOR = 0;
+
+    /**
+     * column index holding the ArchiveFileReviewsBean itself - rendered as its
+     * date / time via toString()
+     */
+    public static final int COLUMN_EVENT = 1;
+
+    /**
+     * column index of the responsible user
+     */
+    public static final int COLUMN_ASSIGNEE = 3;
+
+    /**
+     * column index of the "done" checkbox
+     */
+    public static final int COLUMN_DONE = 4;
+
+    private static String[] columnNames=new String[]{"", "Datum / Zeit", "Typ", "verantwortlich", "erledigt", "Grund", "Ort", "Beschreibung"};
 
     public static String[] getColumnNames() {
         return columnNames;
@@ -680,17 +702,14 @@ public class ArchiveFileReviewReasonsTableModel extends DefaultTableModel {
     
     public static Object[] eventToRow(ArchiveFileReviewsBean event) {
         Object[] row = new Object[8];
-        row[0] = event;
-        row[1] = event.getEventTypeName();
-        row[2] = event.getSummary();
-        row[3] = event.getLocation();
+        row[0] = event.getCalendarSetup();
+        row[1] = event;
+        row[2] = event.getEventTypeName();
+        row[3] = event.getAssignee();
         row[4] = event.isDone();
-        row[5] = event.getAssignee();
-        row[6] = event.getDescription();
-        String calendar="";
-        if(event.getCalendarSetup()!=null)
-            calendar=event.getCalendarSetup().getDisplayName();
-        row[7] = calendar;
+        row[5] = event.getSummary();
+        row[6] = event.getLocation();
+        row[7] = event.getDescription();
         return row;
     }
     
@@ -715,7 +734,9 @@ public class ArchiveFileReviewReasonsTableModel extends DefaultTableModel {
     @Override
     public Class<?> getColumnClass(int index) {
         switch (index) {
-            case 4:
+            case COLUMN_CALENDARCOLOR:
+                return Object.class;
+            case COLUMN_DONE:
                 return Boolean.class;
             default:
                 return String.class;

@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.calendar.CalendarColorTableCellRenderer;
 import com.jdimension.jlawyer.client.configuration.GroupMembershipsTableModel;
 import com.jdimension.jlawyer.comparator.ReviewsComparator;
 import com.jdimension.jlawyer.client.configuration.UserTableCellRenderer;
@@ -1070,9 +1071,11 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.tblReviews.setModel(model3);
         Comparator reviewsComparator = new ReviewsComparator();
         TableRowSorter rtrs = new TableRowSorter(model3);
-        rtrs.setComparator(0, reviewsComparator);
+        rtrs.setComparator(ArchiveFileReviewReasonsTableModel.COLUMN_EVENT, reviewsComparator);
+        rtrs.setSortable(ArchiveFileReviewReasonsTableModel.COLUMN_CALENDARCOLOR, false);
         this.tblReviews.setRowSorter(rtrs);
-        this.tblReviews.getColumnModel().getColumn(5).setCellRenderer(new UserTableCellRenderer());
+        CalendarColorTableCellRenderer.install(this.tblReviews, ArchiveFileReviewReasonsTableModel.COLUMN_CALENDARCOLOR);
+        this.tblReviews.getColumnModel().getColumn(ArchiveFileReviewReasonsTableModel.COLUMN_ASSIGNEE).setCellRenderer(new UserTableCellRenderer());
         if (events != null) {
             for (Object reviewObject : events) {
                 ArchiveFileReviewsBean reviewDto = (ArchiveFileReviewsBean) reviewObject;
@@ -1081,7 +1084,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             }
         }
         ArrayList list = new ArrayList();
-        list.add(new RowSorter.SortKey(0, SortOrder.DESCENDING));
+        list.add(new RowSorter.SortKey(ArchiveFileReviewReasonsTableModel.COLUMN_EVENT, SortOrder.DESCENDING));
         rtrs.setSortKeys(list);
         rtrs.sort();
         
