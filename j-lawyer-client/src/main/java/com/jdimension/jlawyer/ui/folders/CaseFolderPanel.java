@@ -1953,9 +1953,13 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         }
 
         // document might have been dragged onto a different folder
+        // and may carry a fresh change date / size / version after re-upload
         for (ArchiveFileDocumentsBean db : this.documents) {
             if (db.getId().equals(doc.getId())) {
                 db.setFolder(doc.getFolder());
+                db.setChangeDate(doc.getChangeDate());
+                db.setSize(doc.getSize());
+                db.setVersion(doc.getVersion());
             }
         }
 
