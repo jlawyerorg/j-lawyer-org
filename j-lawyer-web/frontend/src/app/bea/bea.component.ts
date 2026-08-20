@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { trustBlobResourceUrl } from '../shared/safe-url.util';
 import { RouterLink } from '@angular/router';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
@@ -668,7 +669,7 @@ export class BeaComponent {
       return;
     }
     this.bodyBlobUrl = URL.createObjectURL(new Blob([sandboxDoc(body)], { type: 'text/html' }));
-    this.bodyUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(this.bodyBlobUrl));
+    this.bodyUrl.set(trustBlobResourceUrl(this.sanitizer, this.bodyBlobUrl));
   }
 
   protected verify(): void {
@@ -681,7 +682,7 @@ export class BeaComponent {
         this.revokeVerify();
         if (res.html) {
           this.verifyBlobUrl = URL.createObjectURL(new Blob([sandboxDoc(res.html)], { type: 'text/html' }));
-          this.verifyUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(this.verifyBlobUrl));
+          this.verifyUrl.set(trustBlobResourceUrl(this.sanitizer, this.verifyBlobUrl));
         }
         this.verifying.set(false);
       },

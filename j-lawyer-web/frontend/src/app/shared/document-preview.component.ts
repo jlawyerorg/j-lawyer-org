@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
-import { DomSanitizer, SafeResourceUrl, SafeUrl } from '@angular/platform-browser';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { trustBlobResourceUrl } from './safe-url.util';
 import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from './icon.component';
 import { DocumentContentService } from './document-content.service';
@@ -96,7 +97,7 @@ export class DocumentPreviewComponent {
   protected readonly kind = signal<DocPreviewKind>('none');
   protected readonly loading = signal(false);
   protected readonly error = signal(false);
-  protected readonly image = signal<SafeUrl | null>(null);
+  protected readonly image = signal<string | null>(null);
   protected readonly text = signal('');
   protected readonly pdfSafeUrl = signal<SafeResourceUrl | null>(null);
 
@@ -189,14 +190,18 @@ export class DocumentPreviewComponent {
     const b64 = (rawB64 ?? '').replace(/\s/g, '');
     const mime = mimeOf(d.ext);
     if (kind === 'image') {
-      this.image.set(this.sanitizer.bypassSecurityTrustUrl(`data:${mime};base64,${b64}`));
+      // Bind the data: URL as a plain string. Angular's built-in URL sanitizer
+      // (img [src] is a URL context) already allows raster data URLs, and mimeOf()
+      // only yields image/{png,jpeg,gif,webp,bmp} for the 'image' kind (never SVG),
+      // so no bypassSecurityTrust* is needed here.
+      this.image.set(`data:${mime};base64,${b64}`);
     } else if (kind === 'text') {
       this.text.set(bytesToText(base64ToBytes(b64)));
     } else if (kind === 'pdf') {
       this.pdfBlobUrl = URL.createObjectURL(new Blob([base64ToBytes(b64)], { type: mime }));
       // iframe [src] is a RESOURCE_URL context; the blob is our own same-origin data.
       // CSP frame-src 'self' blob: permits embedding it (see index.html).
-      this.pdfSafeUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(this.pdfBlobUrl));
+      this.pdfSafeUrl.set(trustBlobResourceUrl(this.sanitizer, this.pdfBlobUrl));
     }
     this.loading.set(false);
   }

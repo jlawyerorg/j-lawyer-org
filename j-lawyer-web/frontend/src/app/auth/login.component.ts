@@ -190,8 +190,23 @@ export class LoginComponent {
 function shuffle<T>(items: T[]): T[] {
   const out = [...items];
   for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = randomInt(i + 1);
     [out[i], out[j]] = [out[j], out[i]];
   }
   return out;
+}
+
+/**
+ * Uniform random integer in [0, max) drawn from the Web Crypto CSPRNG.
+ * Used instead of Math.random() so no pseudo-random generator is involved
+ * (purely cosmetic here — picking a background image — but keeps the code
+ * free of weak-RNG usage). Rejection sampling avoids modulo bias.
+ */
+function randomInt(max: number): number {
+  const limit = Math.floor(0x1_0000_0000 / max) * max;
+  const buf = new Uint32Array(1);
+  do {
+    crypto.getRandomValues(buf);
+  } while (buf[0] >= limit);
+  return buf[0] % max;
 }

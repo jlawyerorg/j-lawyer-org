@@ -5,6 +5,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, debounceTime, distinctUntilChanged, of, switchMap } from 'rxjs';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { trustBlobResourceUrl } from '../shared/safe-url.util';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { CasesService } from '../akten/cases.service';
@@ -308,7 +309,7 @@ export class ScansComponent implements OnInit {
         next: (blob) => {
           if (this.selected()?.uuid !== m.uuid) { return; }
           this.objectUrl = URL.createObjectURL(blob);
-          this.previewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(this.objectUrl));
+          this.previewUrl.set(trustBlobResourceUrl(this.sanitizer, this.objectUrl));
           this.previewKind.set('pdf');
         },
         error: () => { if (this.selected()?.uuid === m.uuid) { this.previewKind.set('error'); } },

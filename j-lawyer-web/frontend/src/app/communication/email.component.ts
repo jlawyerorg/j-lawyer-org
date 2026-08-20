@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { trustBlobResourceUrl } from '../shared/safe-url.util';
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
@@ -656,7 +657,7 @@ export class EmailComponent {
     this.bodyBlobUrl = URL.createObjectURL(new Blob([doc], { type: 'text/html' }));
     // iframe [src] is a RESOURCE_URL context; the blob is our own same-origin data. CSP
     // frame-src 'self' blob: permits embedding it; sandbox="" keeps scripts/same-origin off.
-    this.bodyUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(this.bodyBlobUrl));
+    this.bodyUrl.set(trustBlobResourceUrl(this.sanitizer, this.bodyBlobUrl));
   }
 
   protected toggleRead(): void {
