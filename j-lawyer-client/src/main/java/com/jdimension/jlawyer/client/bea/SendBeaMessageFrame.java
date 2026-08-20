@@ -701,6 +701,8 @@ import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -712,6 +714,7 @@ import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.io.File;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -727,7 +730,9 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelEvent;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 import org.apache.log4j.Logger;
 import com.jdimension.jlawyer.services.bea.rest.BeaAttachment;
 import com.jdimension.jlawyer.services.bea.rest.BeaIdentity;
@@ -746,6 +751,16 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
     private static final Logger log = Logger.getLogger(SendBeaMessageFrame.class.getName());
 
     private static final String PLACEHOLDER_CURSOR = "{{CURSOR}}";
+
+    // column indices of tblAttachments - view index equals model index because
+    // neither a row sorter nor column reordering is enabled for this table
+    private static final int COLUMN_OPEN = 0;
+    private static final int COLUMN_SCHRIFTSATZ = 1;
+    private static final int COLUMN_ANLAGE = 2;
+    private static final int COLUMN_AZSENDER = 3;
+    private static final int COLUMN_AZRECIPIENT = 4;
+    private static final int COLUMN_ALIAS = 5;
+    private static final int COLUMN_FILENAME = 6;
 
     private AppUserBean cu = null;
     private Hashtable<String, String> attachments = new Hashtable<>();
@@ -949,21 +964,21 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         this.updateAttachmentSize();
 
         this.tblAttachments.getModel().addTableModelListener((TableModelEvent evt) -> {
-            if (evt.getColumn() >= 0 && evt.getColumn() <= 3) {
-                if (evt.getColumn() == 0) {
+            if (evt.getColumn() >= COLUMN_SCHRIFTSATZ && evt.getColumn() <= COLUMN_AZRECIPIENT) {
+                if (evt.getColumn() == COLUMN_SCHRIFTSATZ) {
                     // user clicked "Schriftsatz" --> disable as attachment
-                    boolean schriftsatz = (Boolean) tblAttachments.getValueAt(evt.getFirstRow(), 0);
-                    boolean attachment = (Boolean) tblAttachments.getValueAt(evt.getFirstRow(), 1);
+                    boolean schriftsatz = (Boolean) tblAttachments.getValueAt(evt.getFirstRow(), COLUMN_SCHRIFTSATZ);
+                    boolean attachment = (Boolean) tblAttachments.getValueAt(evt.getFirstRow(), COLUMN_ANLAGE);
                     if (schriftsatz == attachment) {
-                        tblAttachments.setValueAt(!schriftsatz, evt.getFirstRow(), 1);
+                        tblAttachments.setValueAt(!schriftsatz, evt.getFirstRow(), COLUMN_ANLAGE);
                     }
 
-                } else if (evt.getColumn() == 1) {
+                } else if (evt.getColumn() == COLUMN_ANLAGE) {
                     // user clicked "Anlage" --> disable as Schriftsatz
-                    boolean schriftsatz = (Boolean) tblAttachments.getValueAt(evt.getFirstRow(), 0);
-                    boolean attachment = (Boolean) tblAttachments.getValueAt(evt.getFirstRow(), 1);
+                    boolean schriftsatz = (Boolean) tblAttachments.getValueAt(evt.getFirstRow(), COLUMN_SCHRIFTSATZ);
+                    boolean attachment = (Boolean) tblAttachments.getValueAt(evt.getFirstRow(), COLUMN_ANLAGE);
                     if (schriftsatz == attachment) {
-                        tblAttachments.setValueAt(!attachment, evt.getFirstRow(), 0);
+                        tblAttachments.setValueAt(!attachment, evt.getFirstRow(), COLUMN_SCHRIFTSATZ);
                     }
                 }
 
@@ -979,6 +994,8 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         // required to be able to drop on an empty table
         this.tblAttachments.setFillsViewportHeight(true);
 
+        this.initAttachmentOpenColumn();
+
         this.calendarSelectionButton1.refreshCalendarSetups();
         this.calendarSelectionButton1.setEnabled(false);
         
@@ -986,13 +1003,53 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         ComponentUtils.persistSplitPane(jSplitPane1, this.getClass(), "jSplitPane1");
     }
     
+    /**
+     * Sets up the leftmost column of the attachments table: it shows a preview
+     * icon in every row, a single click on it opens the attachment for review.
+     */
+    private void initAttachmentOpenColumn() {
+
+        this.tblAttachments.setRowHeight(24);
+        // all column accesses assume view index == model index
+        this.tblAttachments.getTableHeader().setReorderingAllowed(false);
+
+        TableColumn openColumn = this.tblAttachments.getColumnModel().getColumn(COLUMN_OPEN);
+        openColumn.setMinWidth(28);
+        openColumn.setMaxWidth(28);
+        openColumn.setPreferredWidth(28);
+        openColumn.setCellRenderer(new DefaultTableCellRenderer() {
+
+            private final Icon openIcon = new ImageIcon(getClass().getResource("/icons16/material/preview_24dp_0E72B5.png"));
+
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel l = (JLabel) super.getTableCellRendererComponent(table, null, isSelected, hasFocus, row, column);
+                l.setHorizontalAlignment(SwingConstants.CENTER);
+                l.setText("");
+                l.setIcon(openIcon);
+                return l;
+            }
+        });
+
+        // hand cursor as an additional hint that the icon is clickable
+        this.tblAttachments.addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent evt) {
+                boolean overIcon = tblAttachments.columnAtPoint(evt.getPoint()) == COLUMN_OPEN
+                        && tblAttachments.rowAtPoint(evt.getPoint()) > -1;
+                tblAttachments.setCursor(Cursor.getPredefinedCursor(overIcon ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
+            }
+        });
+
+    }
+
     private void updateAlias() {
 
         int schriftsatzCount = 0;
         int attachmentCount = 0;
         for (int i = 0; i < this.tblAttachments.getRowCount(); i++) {
-            boolean schriftsatz = (Boolean) this.tblAttachments.getValueAt(i, 0);
-            boolean anlage = (Boolean) this.tblAttachments.getValueAt(i, 1);
+            boolean schriftsatz = (Boolean) this.tblAttachments.getValueAt(i, COLUMN_SCHRIFTSATZ);
+            boolean anlage = (Boolean) this.tblAttachments.getValueAt(i, COLUMN_ANLAGE);
             if (schriftsatz) {
                 schriftsatzCount++;
             }
@@ -1005,10 +1062,10 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         int currentSchriftsatzIndex = 0;
         DecimalFormat df = new DecimalFormat("00");
         for (int i = 0; i < this.tblAttachments.getRowCount(); i++) {
-            boolean schriftsatz = (Boolean) this.tblAttachments.getValueAt(i, 0);
-            boolean anlage = (Boolean) this.tblAttachments.getValueAt(i, 1);
-            boolean azsender = (Boolean) this.tblAttachments.getValueAt(i, 2);
-            boolean azempf = (Boolean) this.tblAttachments.getValueAt(i, 3);
+            boolean schriftsatz = (Boolean) this.tblAttachments.getValueAt(i, COLUMN_SCHRIFTSATZ);
+            boolean anlage = (Boolean) this.tblAttachments.getValueAt(i, COLUMN_ANLAGE);
+            boolean azsender = (Boolean) this.tblAttachments.getValueAt(i, COLUMN_AZSENDER);
+            boolean azempf = (Boolean) this.tblAttachments.getValueAt(i, COLUMN_AZRECIPIENT);
 
             StringBuilder sb = new StringBuilder();
             if (schriftsatz) {
@@ -1035,16 +1092,16 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
             }
 
             // assume user has already changed the alias
-            int lastUnderScore = this.tblAttachments.getValueAt(i, 4).toString().lastIndexOf("_");
+            int lastUnderScore = this.tblAttachments.getValueAt(i, COLUMN_ALIAS).toString().lastIndexOf("_");
             if (lastUnderScore > 0) {
-                String lastPart = this.tblAttachments.getValueAt(i, 4).toString().substring(lastUnderScore + 1);
+                String lastPart = this.tblAttachments.getValueAt(i, COLUMN_ALIAS).toString().substring(lastUnderScore + 1);
                 sb.append(lastPart);
             } else {
                 // user has removed all underscores - use filename
-                sb.append(this.tblAttachments.getValueAt(i, 5));
+                sb.append(this.tblAttachments.getValueAt(i, COLUMN_FILENAME));
             }
 
-            this.tblAttachments.setValueAt(sb.toString(), i, 4);
+            this.tblAttachments.setValueAt(sb.toString(), i, COLUMN_ALIAS);
 
         }
 
@@ -1177,7 +1234,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         this.attachments.put(new File(tempUrl).getName(), tempUrl);
 
         DefaultTableModel tm = (DefaultTableModel) this.tblAttachments.getModel();
-        tm.addRow(new Object[]{false, true, false, false, alias, new File(tempUrl).getName()});
+        tm.addRow(new Object[]{null, false, true, false, false, alias, new File(tempUrl).getName()});
 
         this.updateAttachmentSize();
         this.updateAlias();
@@ -1195,9 +1252,9 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
 
         ArrayList<BeaAttachmentMetadata> attachmentMetadata = new ArrayList<>();
         for (int i = 0; i < this.tblAttachments.getRowCount(); i++) {
-            String name = this.tblAttachments.getValueAt(i, 5).toString();
-            String alias = this.tblAttachments.getValueAt(i, 4).toString();
-            Boolean schriftsatz = (Boolean) this.tblAttachments.getValueAt(i, 0);
+            String name = this.tblAttachments.getValueAt(i, COLUMN_FILENAME).toString();
+            String alias = this.tblAttachments.getValueAt(i, COLUMN_ALIAS).toString();
+            Boolean schriftsatz = (Boolean) this.tblAttachments.getValueAt(i, COLUMN_SCHRIFTSATZ);
             for (String fileName : this.attachments.keySet()) {
                 if (name.equals(fileName)) {
                     BeaAttachmentMetadata meta = new BeaAttachmentMetadata();
@@ -1258,7 +1315,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
     private void updateAttachmentSize() {
         long totalSize = 0;
         for (int i = 0; i < this.tblAttachments.getRowCount(); i++) {
-            String fileName = this.tblAttachments.getValueAt(i, 5).toString();
+            String fileName = this.tblAttachments.getValueAt(i, COLUMN_FILENAME).toString();
             String url = this.attachments.get(fileName);
             if (url != null) {
                 File f = new File(url);
@@ -1321,7 +1378,10 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
                 int row = rowAtPoint(point);
                 int column = columnAtPoint(point);
 
-                if (row >= 0 && column >= 0) {
+                if (row >= 0 && column == 0) {
+                    return "Anhang öffnen";
+                }
+                if (row >= 0 && column > 0) {
                     Object value = getValueAt(row, column);
                     if(value instanceof Boolean)
                     return null;
@@ -1495,14 +1555,14 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
 
             },
             new String [] {
-                "Schriftsatz", "Anlage", "AZ Sender", "AZ Empfänger", "Alias", "Dateiname"
+                "", "Schriftsatz", "Anlage", "AZ Sender", "AZ Empfänger", "Alias", "Dateiname"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.Boolean.class, java.lang.Boolean.class, java.lang.Boolean.class, java.lang.Boolean.class, java.lang.String.class, java.lang.String.class
+                java.lang.Object.class, java.lang.Boolean.class, java.lang.Boolean.class, java.lang.Boolean.class, java.lang.Boolean.class, java.lang.String.class, java.lang.String.class
             };
             boolean[] canEdit = new boolean [] {
-                true, true, true, true, true, false
+                false, true, true, true, true, true, false
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -1973,7 +2033,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
             int[] selectedRows = this.tblAttachments.getSelectedRows();
             DefaultTableModel tm = (DefaultTableModel) this.tblAttachments.getModel();
             for (int k = selectedRows.length - 1; k > -1; k--) {
-                this.attachments.remove(tm.getValueAt(selectedRows[k], 5).toString());
+                this.attachments.remove(tm.getValueAt(selectedRows[k], COLUMN_FILENAME).toString());
                 tm.removeRow(this.tblAttachments.convertRowIndexToModel(selectedRows[k]));
 
             }
@@ -2027,33 +2087,57 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
     }//GEN-LAST:event_contentPanelComponentResized
 
     private void tblAttachmentsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblAttachmentsMouseClicked
-        if (evt.getClickCount() == 2 && this.tblAttachments.getSelectedRow() > -1) {
-            try {
+        if (evt.isPopupTrigger()) {
+            return;
+        }
 
-                String selectedFileName = this.tblAttachments.getValueAt(this.tblAttachments.getSelectedRow(), 5).toString();
+        int row = this.tblAttachments.rowAtPoint(evt.getPoint());
+        if (row < 0) {
+            return;
+        }
 
-                String requestedAttachmentUrl = null;
-                for (String url : this.attachments.values()) {
-                    if (new File(url).getName().equals(selectedFileName)) {
-                        // found the relevant attachment
-                        requestedAttachmentUrl = url;
-                    }
-                }
-                if (requestedAttachmentUrl == null) {
-                    return;
-                }
-                byte[] data = FileUtils.readFile(new File(requestedAttachmentUrl));
-                ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("mailattachment-" + selectedFileName, selectedFileName);
-                Launcher launcher = LauncherFactory.getLauncher(selectedFileName, data, store, this);
-                launcher.launch(false);
-            } catch (Exception ex) {
-                log.error("Error opening attachment", ex);
-                JOptionPane.showMessageDialog(this, "Fehler Öffnen des Anhangs: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-
-            }
-
+        if (SwingUtilities.isLeftMouseButton(evt) && this.tblAttachments.columnAtPoint(evt.getPoint()) == COLUMN_OPEN) {
+            // single click on the preview icon
+            this.tblAttachments.setRowSelectionInterval(row, row);
+            this.openAttachment(row);
+        } else if (SwingUtilities.isLeftMouseButton(evt) && evt.getClickCount() == 2) {
+            this.openAttachment(row);
         }
     }//GEN-LAST:event_tblAttachmentsMouseClicked
+
+    /**
+     * Opens the attachment of the given table row in its designated launcher,
+     * so the user can review it before sending.
+     *
+     * @param row row index in tblAttachments
+     */
+    private void openAttachment(int row) {
+
+        try {
+
+            String selectedFileName = this.tblAttachments.getValueAt(row, COLUMN_FILENAME).toString();
+
+            String requestedAttachmentUrl = null;
+            for (String url : this.attachments.values()) {
+                if (new File(url).getName().equals(selectedFileName)) {
+                    // found the relevant attachment
+                    requestedAttachmentUrl = url;
+                }
+            }
+            if (requestedAttachmentUrl == null) {
+                return;
+            }
+            byte[] data = FileUtils.readFile(new File(requestedAttachmentUrl));
+            ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("mailattachment-" + selectedFileName, selectedFileName);
+            Launcher launcher = LauncherFactory.getLauncher(selectedFileName, data, store, this);
+            launcher.launch(false);
+        } catch (Exception ex) {
+            log.error("Error opening attachment", ex);
+            JOptionPane.showMessageDialog(this, "Fehler Öffnen des Anhangs: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+
+        }
+
+    }
 
     private void tblAttachmentsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblAttachmentsMousePressed
         if (evt.getModifiers() == MouseEvent.BUTTON2_MASK || evt.getModifiers() == MouseEvent.BUTTON2_DOWN_MASK || evt.getModifiers() == MouseEvent.BUTTON3_MASK || evt.getModifiers() == MouseEvent.BUTTON3_DOWN_MASK) {

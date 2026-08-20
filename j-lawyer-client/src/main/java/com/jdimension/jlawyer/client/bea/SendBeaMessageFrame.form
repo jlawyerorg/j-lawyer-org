@@ -391,7 +391,8 @@
                 <Component class="javax.swing.JTable" name="tblAttachments">
                   <Properties>
                     <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.editors2.TableModelEditor">
-                      <Table columnCount="6" rowCount="0">
+                      <Table columnCount="7" rowCount="0">
+                        <Column editable="false" title="" type="java.lang.Object"/>
                         <Column editable="true" title="Schriftsatz" type="java.lang.Boolean"/>
                         <Column editable="true" title="Anlage" type="java.lang.Boolean"/>
                         <Column editable="true" title="AZ Sender" type="java.lang.Boolean"/>
@@ -407,7 +408,7 @@
                     <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="tblAttachmentsMousePressed"/>
                   </Events>
                   <AuxValues>
-                    <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new JTable() {&#xa;@Override&#xa;                public String getToolTipText(MouseEvent event) {&#xa;                    Point point = event.getPoint();&#xa;                    int row = rowAtPoint(point);&#xa;                    int column = columnAtPoint(point);&#xa;                    &#xa;                    if (row &gt;= 0 &amp;&amp; column &gt;= 0) {&#xa;                        Object value = getValueAt(row, column);&#xa;                        if(value instanceof Boolean)&#xa;                            return null;&#xa;                        else&#xa;                            return &quot;&quot; + value;&#xa;                    }&#xa;                    return null;  // No tooltip&#xa;                }&#xa;};"/>
+                    <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new JTable() {&#xa;@Override&#xa;                public String getToolTipText(MouseEvent event) {&#xa;                    Point point = event.getPoint();&#xa;                    int row = rowAtPoint(point);&#xa;                    int column = columnAtPoint(point);&#xa;                    &#xa;                    if (row &gt;= 0 &amp;&amp; column == 0) {&#xa;                        return &quot;Anhang &#xf6;ffnen&quot;;&#xa;                    }&#xa;                    if (row &gt;= 0 &amp;&amp; column &gt; 0) {&#xa;                        Object value = getValueAt(row, column);&#xa;                        if(value instanceof Boolean)&#xa;                            return null;&#xa;                        else&#xa;                            return &quot;&quot; + value;&#xa;                    }&#xa;                    return null;  // No tooltip&#xa;                }&#xa;};"/>
                   </AuxValues>
                 </Component>
               </SubComponents>
