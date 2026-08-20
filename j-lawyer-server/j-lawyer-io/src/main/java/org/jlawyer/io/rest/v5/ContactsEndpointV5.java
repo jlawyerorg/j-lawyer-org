@@ -662,6 +662,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v5;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AddressTagsBean;
@@ -740,7 +741,7 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
             return Response.ok(tagList).build();
         } catch (Exception ex) {
             log.error("can not get address " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
     
@@ -770,7 +771,7 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
 
         } catch (Exception ex) {
             log.error("can not case tag " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
     
@@ -811,7 +812,7 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not create contact tag " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
     
@@ -857,7 +858,7 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
             return Response.ok(caseList).build();
         } catch (Exception ex) {
             log.error("can not get address " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 

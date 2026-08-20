@@ -662,6 +662,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v3;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
@@ -732,7 +733,7 @@ public class CasesEndpointV3 implements CasesEndpointLocalV3 {
             return res;
         } catch (Exception ex) {
             log.error("can not get document folder templates", ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -775,7 +776,7 @@ public class CasesEndpointV3 implements CasesEndpointLocalV3 {
             return res;
         } catch (Exception ex) {
             log.error("can not get folders for case " + id, ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
 
@@ -835,7 +836,7 @@ public class CasesEndpointV3 implements CasesEndpointLocalV3 {
            
         } catch (Exception ex) {
             log.error("can not apply folder template to case " + id, ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -897,7 +898,7 @@ public class CasesEndpointV3 implements CasesEndpointLocalV3 {
             return res;
         } catch (Exception ex) {
             log.error("can not create folder in case " + id, ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }
@@ -954,7 +955,7 @@ public class CasesEndpointV3 implements CasesEndpointLocalV3 {
             return res;
         } catch (Exception ex) {
             log.error("can not delete folder " + folderId + " from case " + id, ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }

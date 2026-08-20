@@ -711,11 +711,27 @@ public interface ArchiveFileServiceLocal {
     public int getArchiveFileCount();
     public ArchiveFileBean getArchiveFile(String id) throws Exception;
     public ArrayList<String> getAllArchiveFileIds();
+
+    /**
+     * Returns one ACL-restricted, filtered, paginated page of cases for the current caller
+     * (server-side pagination for the web-UI case list — OpenSpec change {@code add-web-client}).
+     *
+     * @param search   case-insensitive term over name/file number/reason/subject/lawyer, or null
+     * @param archived {@code true}/{@code false} to filter by archived state, or {@code null} for both
+     * @param offset   0-based row offset
+     * @param limit    page size (clamped server-side)
+     */
+    public List<ArchiveFileBean> getManagedCasesPage(String search, Boolean archived, int offset, int limit);
+
+    /** Total cases matching {@link #getManagedCasesPage} for the current caller (ignores offset/limit). */
+    public long countManagedCases(String search, Boolean archived);
     public Date getLastChangedForArchiveFile(String archiveFileKey);
     public ArrayList<String> getAllArchiveFileNumbers(boolean activeCasesOnly) throws Exception;
     public ArrayList<String> getAllArchiveFileNumbersUnrestricted(boolean activeCasesOnly) throws Exception;
     public ArchiveFileBean getArchiveFileByFileNumber(String fileNumber) throws Exception;
     public ArchiveFileBean getArchiveFileByFileNumberUnrestricted(String fileNumber) throws Exception;
+    public java.util.Collection<Keyword> extractKeywordsFromText(String text) throws Exception;
+    public ArrayList<String> getAllReferencedFileNumbers(int minChars, boolean activeCasesOnly) throws Exception;
     
     
     public int getDocumentCount();
@@ -733,6 +749,7 @@ public interface ArchiveFileServiceLocal {
 
     public Collection<ArchiveFileTagsBean> getTags(String archiveFileId) throws Exception;
     public Collection<ArchiveFileTagsBean> getTagsUnrestricted(String archiveFileId) throws Exception;
+    HashMap<String, ArrayList<ArchiveFileTagsBean>> getTags(List<String> archiveFileId) throws Exception;
 
     Collection getDocumentsUnrestricted(String archiveFileKey);
 
@@ -754,6 +771,7 @@ public interface ArchiveFileServiceLocal {
     String getNewDocumentNameUnrestricted(String fileName, Date date, DocumentNameTemplate tpl) throws Exception;
     
     Collection<DocumentTagsBean> getDocumentTags(String documentId) throws Exception;
+    HashMap<String, ArrayList<DocumentTagsBean>> getDocumentTags(List<String> documentId) throws Exception;
     
     public boolean renameDocument(String id, String newName) throws Exception;
     
@@ -790,6 +808,8 @@ public interface ArchiveFileServiceLocal {
     ArchiveFileHistoryBean addHistory(String archiveFileId, ArchiveFileHistoryBean history) throws Exception;
 
     void removeFolderFromTemplate(String folderId) throws Exception;
+
+    DocumentFolder renameFolderInTemplate(String folderId, String newName) throws Exception;
 
     void cloneFolderTemplate(String sourceTemplateName, String targetTemplateName) throws Exception;
     
@@ -855,6 +875,7 @@ public interface ArchiveFileServiceLocal {
     List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit);
     List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit, HashMap<String, String[]> caseTagValues, HashMap<String, String[]> documentTagValues);
     List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit);
+    List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit, HashMap<String, String[]> documentTagValues);
     List<ArchiveFileAddressesBean> getArchiveFileAddressesByReference(String reference) throws Exception;
 
     boolean performOcr(String docId) throws Exception;
@@ -881,6 +902,7 @@ public interface ArchiveFileServiceLocal {
     List<CaseAccountEntry> getAccountEntriesUnrestricted(String caseId) throws Exception;
 
     // Timesheets
+    List<Timesheet> getTimesheets(String caseId) throws Exception;
     List<Timesheet> getOpenTimesheets(String caseId) throws Exception;
     List<Timesheet> getOpenTimesheets() throws Exception;
     Timesheet getTimesheet(String timesheetId) throws Exception;
@@ -893,5 +915,10 @@ public interface ArchiveFileServiceLocal {
     TimesheetPosition timesheetPositionAdd(String timesheetId, TimesheetPosition position) throws Exception;
     int hasOpenTimesheetPositions(String principal) throws Exception;
     void removeTimesheetPosition(String timesheetId, TimesheetPosition position) throws Exception;
+    Timesheet addTimesheet(String caseId, Timesheet timesheet) throws Exception;
+    Timesheet updateTimesheet(String caseId, Timesheet timesheet) throws Exception;
+    void removeTimesheet(String timesheetId) throws Exception;
+
+    String[] previewCaseNumbering(String pattern, int startFrom, int increment, boolean extension, String dividerMain, String dividerExt, boolean bPrefix, String prefix, boolean bSuffix, String suffix, boolean userAbbr, boolean groupAbbr) throws Exception;
 
 }

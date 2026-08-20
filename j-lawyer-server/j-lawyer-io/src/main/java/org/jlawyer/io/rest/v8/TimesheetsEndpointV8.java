@@ -1,4 +1,5 @@
 package org.jlawyer.io.rest.v8;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.persistence.Timesheet;
 import com.jdimension.jlawyer.persistence.TimesheetPosition;
@@ -67,7 +68,39 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not get open timesheets", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Returns all timesheets of a case, both open and closed (unlike the
+     * v7 /cases/{id}/timesheets endpoint which returns only open ones).
+     *
+     * @param caseId case (archive file) ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/cases/{caseId}")
+    @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="Returns all timesheets of a case, both open and closed", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetV8.class, responseContainer="List")
+    public Response getCaseTimesheets(@PathParam("caseId") String caseId) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            List<Timesheet> timesheets = cases.getTimesheets(caseId);
+
+            ArrayList<RestfulTimesheetV8> resultList = new ArrayList<>();
+            for (Timesheet ts : timesheets) {
+                resultList.add(RestfulTimesheetV8.fromTimesheet(ts));
+            }
+
+            return Response.ok(resultList).build();
+        } catch (Exception ex) {
+            log.error("can not get timesheets for case " + caseId, ex);
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -98,7 +131,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(RestfulTimesheetV8.fromTimesheet(ts)).build();
         } catch (Exception ex) {
             log.error("can not get timesheet " + timesheetId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -129,7 +162,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not get positions for timesheet " + timesheetId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -160,7 +193,157 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not get templates for timesheet " + timesheetId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Returns the global pool of position templates (name, description, hourly rate, tax rate) that
+     * can be assigned as the allowed positions of a timesheet.
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/templates")
+    @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="Returns all configured position templates (the global pool)", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionTemplateV8.class, responseContainer="List")
+    public Response getAllTemplates() {
+        try {
+            InitialContext ic = new InitialContext();
+            TimesheetServiceLocal tsService = (TimesheetServiceLocal) ic.lookup(LOOKUP_TIMESHEETS);
+            List<TimesheetPositionTemplate> templates = tsService.getAllTimesheetPositionTemplates();
+
+            ArrayList<RestfulTimesheetPositionTemplateV8> resultList = new ArrayList<>();
+            for (TimesheetPositionTemplate tpl : templates) {
+                resultList.add(RestfulTimesheetPositionTemplateV8.fromTemplate(tpl));
+            }
+
+            return Response.ok(resultList).build();
+        } catch (Exception ex) {
+            log.error("can not get all position templates", ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Creates a global timesheet position template. Requires administrator permission.
+     *
+     * @param template the template to create
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/templates")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Creates a global timesheet position template. Requires administrator permission.", response = org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionTemplateV8.class)
+    public Response createTemplate(@io.swagger.annotations.ApiParam RestfulTimesheetPositionTemplateV8 template) {
+        try {
+            InitialContext ic = new InitialContext();
+            TimesheetServiceLocal tsService = (TimesheetServiceLocal) ic.lookup(LOOKUP_TIMESHEETS);
+            TimesheetPositionTemplate created = tsService.addTimesheetPositionTemplate(template.toTemplate());
+            return Response.ok(RestfulTimesheetPositionTemplateV8.fromTemplate(created)).build();
+        } catch (Exception ex) {
+            log.error("can not create position template", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Updates a global timesheet position template. Requires administrator permission.
+     *
+     * @param template the template to update
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @POST
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/templates")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Updates a global timesheet position template. Requires administrator permission.", response = org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionTemplateV8.class)
+    public Response updateTemplate(@io.swagger.annotations.ApiParam RestfulTimesheetPositionTemplateV8 template) {
+        try {
+            InitialContext ic = new InitialContext();
+            TimesheetServiceLocal tsService = (TimesheetServiceLocal) ic.lookup(LOOKUP_TIMESHEETS);
+            TimesheetPositionTemplate updated = tsService.updateTimesheetPositionTemplate(template.toTemplate());
+            return Response.ok(RestfulTimesheetPositionTemplateV8.fromTemplate(updated)).build();
+        } catch (Exception ex) {
+            log.error("can not update position template", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Deletes a global timesheet position template. Requires administrator permission.
+     *
+     * @param templateId the id of the template to delete
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/templates/{templateId}")
+    @RolesAllowed({"adminRole"})
+    @io.swagger.annotations.ApiOperation(value = "Deletes a global timesheet position template. Requires administrator permission.")
+    public Response deleteTemplate(@PathParam("templateId") String templateId) {
+        try {
+            InitialContext ic = new InitialContext();
+            TimesheetServiceLocal tsService = (TimesheetServiceLocal) ic.lookup(LOOKUP_TIMESHEETS);
+            RestfulTimesheetPositionTemplateV8 ref = new RestfulTimesheetPositionTemplateV8();
+            ref.setId(templateId);
+            tsService.removeTimesheetPositionTemplate(ref.toTemplate());
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not delete position template", ex);
+            return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Sets the allowed position templates for a timesheet (project), restricting which positions /
+     * hourly rates can be booked. Only the template ids in the body are used. An empty list clears
+     * the restriction.
+     *
+     * @param timesheetId timesheet ID
+     * @param templates the allowed position templates (only their ids are read)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Timesheet not found
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{timesheetId}/templates")
+    @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="Sets the allowed position templates (project positions / hourly rates) for a timesheet")
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
+    public Response setTimesheetTemplates(@PathParam("timesheetId") String timesheetId, @io.swagger.annotations.ApiParam List<RestfulTimesheetPositionTemplateV8> templates) {
+        try {
+            InitialContext ic = new InitialContext();
+            TimesheetServiceLocal tsService = (TimesheetServiceLocal) ic.lookup(LOOKUP_TIMESHEETS);
+
+            ArrayList<TimesheetPositionTemplate> list = new ArrayList<>();
+            if (templates != null) {
+                for (RestfulTimesheetPositionTemplateV8 t : templates) {
+                    TimesheetPositionTemplate tpl = new TimesheetPositionTemplate();
+                    tpl.setId(t.getId());
+                    list.add(tpl);
+                }
+            }
+            tsService.setPositionTemplatesForTimesheet(timesheetId, list);
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not set allowed templates for timesheet " + timesheetId, ex);
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -191,7 +374,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not get running timesheet positions", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -217,7 +400,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(count).build();
         } catch (Exception ex) {
             log.error("can not get running timesheet positions count", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -249,7 +432,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not get last timesheet positions for case " + caseId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -287,7 +470,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(RestfulTimesheetPositionV8.fromTimesheetPosition(result)).build();
         } catch (Exception ex) {
             log.error("can not start timesheet position for timesheet " + timesheetId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -327,7 +510,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(RestfulTimesheetPositionV8.fromTimesheetPosition(result)).build();
         } catch (Exception ex) {
             log.error("can not stop timesheet position " + positionId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -362,7 +545,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(RestfulTimesheetPositionV8.fromTimesheetPosition(result)).build();
         } catch (Exception ex) {
             log.error("can not add timesheet position for timesheet " + timesheetId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -399,7 +582,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok(RestfulTimesheetPositionV8.fromTimesheetPosition(result)).build();
         } catch (Exception ex) {
             log.error("can not update timesheet position " + positionId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -434,7 +617,94 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete timesheet position " + positionId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Creates a new timesheet (project) for a case
+     *
+     * @param caseId case (archive file) ID
+     * @param timesheet timesheet data (name required)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @POST
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/cases/{caseId}")
+    @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="Creates a new timesheet for a case", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetV8.class)
+    public Response addTimesheet(@PathParam("caseId") String caseId, @io.swagger.annotations.ApiParam RestfulTimesheetV8 timesheet) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            Timesheet result = cases.addTimesheet(caseId, timesheet.toTimesheet());
+            return Response.ok(RestfulTimesheetV8.fromTimesheet(result)).build();
+        } catch (Exception ex) {
+            log.error("can not add timesheet for case " + caseId, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Updates an existing timesheet (project)
+     *
+     * @param timesheetId timesheet ID
+     * @param timesheet updated timesheet data (name required)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Timesheet not found
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{timesheetId}")
+    @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="Updates an existing timesheet", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetV8.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
+    public Response updateTimesheet(@PathParam("timesheetId") String timesheetId, @io.swagger.annotations.ApiParam RestfulTimesheetV8 timesheet) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            Timesheet existing = cases.getTimesheet(timesheetId);
+            if (existing == null || existing.getArchiveFileKey() == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            Timesheet toSave = timesheet.toTimesheet();
+            toSave.setId(timesheetId);
+            Timesheet result = cases.updateTimesheet(existing.getArchiveFileKey().getId(), toSave);
+            return Response.ok(RestfulTimesheetV8.fromTimesheet(result)).build();
+        } catch (Exception ex) {
+            log.error("can not update timesheet " + timesheetId, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Deletes an existing timesheet (project) including its positions
+     *
+     * @param timesheetId timesheet ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/{timesheetId}")
+    @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value="Deletes an existing timesheet including its positions")
+    public Response deleteTimesheet(@PathParam("timesheetId") String timesheetId) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            cases.removeTimesheet(timesheetId);
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not delete timesheet " + timesheetId, ex);
+            return RestErrorResponses.serverError(ex);
         }
     }
 

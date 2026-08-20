@@ -662,6 +662,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v6;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.pojo.DataBucket;
 import com.jdimension.jlawyer.security.Base64;
@@ -729,7 +730,7 @@ public class DataBucketEndpointV6 implements DataBucketEndpointLocalV6 {
             return res;
         } catch (Exception ex) {
             log.error("can not get next bucket for " + bucket.getId(), ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
     }

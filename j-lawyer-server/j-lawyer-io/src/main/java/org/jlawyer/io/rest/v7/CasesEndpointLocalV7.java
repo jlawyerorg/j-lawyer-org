@@ -667,6 +667,7 @@ import java.util.Collection;
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
 import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
+import org.jlawyer.io.rest.v7.pojo.RestfulDocumentNameRequestV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulDocumentValidationRequestV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceDuplicateRequestV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionV7;
@@ -726,5 +727,7 @@ public interface CasesEndpointLocalV7 {
     Response duplicateInvoice(String id, RestfulInvoiceDuplicateRequestV7 request);
 
     Response getCaseTimesheets(String id);
+
+    Response computeDocumentName(String id, RestfulDocumentNameRequestV7 request);
 
 }

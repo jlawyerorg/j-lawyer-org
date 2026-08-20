@@ -707,8 +707,10 @@ public class ShareInfoPanel extends javax.swing.JPanel {
         this.share = s;
         this.parent = parent;
         this.listener = listener;
-        this.cmdCopyLinkToClipboard.setEnabled(s.getShareType().equals(ShareType.PUBLIC_LINK));
-        this.cmdBrowser.setEnabled(s.getShareType().equals(ShareType.PUBLIC_LINK));
+        // the share type may be null: Nextcloud returns share types (circles, Talk rooms, Deck, ...)
+        // that the Nextcloud API library does not map to its ShareType enum
+        this.cmdCopyLinkToClipboard.setEnabled(ShareType.PUBLIC_LINK.equals(s.getShareType()));
+        this.cmdBrowser.setEnabled(ShareType.PUBLIC_LINK.equals(s.getShareType()));
         if (this.cmdCopyLinkToClipboard.isEnabled()) {
             this.cmdCopyLinkToClipboard.setToolTipText("<html>Freigabelink in die Zwischenablage kopieren<br/>" + this.share.getUrl() + "</html>");
         }
@@ -732,17 +734,21 @@ public class ShareInfoPanel extends javax.swing.JPanel {
             this.lblExpiration.setForeground(this.lblShareType.getForeground());
         }
         this.lblOwner.setText(s.getOwnerDisplayName() + " (" + s.getOwnerId() + ")");
-        this.lblShareTime.setText(df.format(Date.from(s.getShareTime())));
+        if (s.getShareTime() != null) {
+            this.lblShareTime.setText(df.format(Date.from(s.getShareTime())));
+        } else {
+            this.lblShareTime.setText("");
+        }
         String shareType = "unbekannter Freigabetyp";
-        if (s.getShareType().equals(ShareType.EMAIL)) {
+        if (ShareType.EMAIL.equals(s.getShareType())) {
             shareType = "E-Mail-Freigabe";
-        } else if (s.getShareType().equals(ShareType.FEDERATED_CLOUD_SHARE)) {
+        } else if (ShareType.FEDERATED_CLOUD_SHARE.equals(s.getShareType())) {
             shareType = "Federated Cloud-Freigabe";
-        } else if (s.getShareType().equals(ShareType.GROUP)) {
+        } else if (ShareType.GROUP.equals(s.getShareType())) {
             shareType = "Gruppen-Freigabe";
-        } else if (s.getShareType().equals(ShareType.USER)) {
+        } else if (ShareType.USER.equals(s.getShareType())) {
             shareType = "Nutzer-Freigabe";
-        } else if (s.getShareType().equals(ShareType.PUBLIC_LINK)) {
+        } else if (ShareType.PUBLIC_LINK.equals(s.getShareType())) {
             shareType = "Link-Freigabe";
         }
         this.lblShareType.setText(shareType);

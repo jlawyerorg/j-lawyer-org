@@ -681,40 +681,34 @@ public class DefaultColorTheme extends ServerColorTheme {
     public static final Color DESKTOP_ENTRY_BACKGROUND=new Color(238,238,238);
     
     static {
-        
-        
-        highlightColors.add(new Color(-3407821));
-        highlightColors.add(new Color(-13312));
-        highlightColors.add(new Color(-16751616)); // Dark green
-        //highlightColors.add(COLOR_LOGO_GREEN);
-        
-        // red-ish
-        //highlightColors.add(COLOR_LOGO_RED);
-        //highlightColors.add(new Color(-3407821));
-        highlightColors.add(new Color(170,30,202));
-        //highlightColors.add(new Color(191,13,152));
-        
-        // yellow-ish
-        //highlightColors.add(new Color(-13312));
-        //highlightColors.add(new Color(207,133,30));
-        highlightColors.add(new Color(181,81,14));
-        
-        // green-ish
-        //highlightColors.add(COLOR_LOGO_GREEN);
-//        highlightColors.add(new Color(14,186,68));
-//        highlightColors.add(new Color(57,222,49));
-        
-        // blue-ish
-        highlightColors.add(new Color(51,13,191));
-        //highlightColors.add(COLOR_LOGO_BLUE);
-        highlightColors.add(new Color(49,222,213));
-        
-        
-        
-        highlightColors.add(Color.WHITE);
-        //highlightColors.add(COLOR_LIGHT_GREY);
-        highlightColors.add(COLOR_DARK_GREY);
-        highlightColors.add(Color.BLACK);
+
+        // ordered by color family - 15 colors plus the pickers reset button
+        // result in a 4x4 grid in HighlightPicker
+        // colors from ServerColorTheme are avoided because they carry a
+        // semantic meaning elsewhere in the UI (status, party types, ...)
+
+        // red / orange / yellow
+        highlightColors.add(new Color(204,0,51));    // #CC0033
+        highlightColors.add(new Color(240,128,0));   // #F08000
+        highlightColors.add(new Color(181,81,14));   // #B5510E
+        highlightColors.add(new Color(255,204,0));   // #FFCC00
+
+        // green / petrol / turquoise
+        highlightColors.add(new Color(30,158,74));   // #1E9E4A
+        highlightColors.add(new Color(0,100,0));     // #006400
+        highlightColors.add(new Color(14,140,140));  // #0E8C8C
+        highlightColors.add(new Color(49,222,213));  // #31DED5
+
+        // blue / violet / pink
+        highlightColors.add(new Color(51,13,191));   // #330DBF
+        highlightColors.add(new Color(170,30,202));  // #AA1ECA
+        highlightColors.add(new Color(230,59,140));  // #E63B8C
+
+        // neutral
+        highlightColors.add(Color.WHITE);            // #FFFFFF
+        highlightColors.add(new Color(170,170,170)); // #AAAAAA
+        highlightColors.add(COLOR_DARK_GREY);        // #666666
+        highlightColors.add(Color.BLACK);            // #000000
     }
     
     public static List<Color> getHighlightColors() {

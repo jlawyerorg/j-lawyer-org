@@ -3,6 +3,7 @@ package org.jlawyer.io.rest.v8;
 import com.jdimension.jlawyer.services.bea.rest.*;
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
+import org.jlawyer.io.rest.v8.pojo.RestfulBeaCaseSuggestionRequestV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulBeaEebConfirmationV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulBeaEebRejectionV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulBeaEebRenderRequestV8;
@@ -39,6 +40,7 @@ public interface BeaEndpointLocalV8 {
     Response searchMessageIds(String safeId, long folderId, BeaMessageFilter filter);
     Response getMessage(String safeId, String messageId, Boolean includeAttachments);
     Response getAttachmentContent(String safeId, String messageId, String attachmentName);
+    Response getAttachmentContentBase64(String safeId, String messageId, String attachmentName);
     Response getMessageHeader(String safeId, String messageId);
     Response sendMessage(String safeId, BeaSendMessageRequest request);
     Response saveDraft(String safeId, BeaSaveDraftRequest request);
@@ -69,5 +71,9 @@ public interface BeaEndpointLocalV8 {
     Response getEebRejectionReasons();
     Response sendEebConfirmation(String safeId, String messageId, RestfulBeaEebConfirmationV8 request);
     Response sendEebRejection(String safeId, String messageId, RestfulBeaEebRejectionV8 request);
+
+    Response exportMessage(String safeId, String messageId);
+
+    Response caseSuggestions(RestfulBeaCaseSuggestionRequestV8 request);
 
 }

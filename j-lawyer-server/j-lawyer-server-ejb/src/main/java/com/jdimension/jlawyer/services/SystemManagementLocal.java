@@ -673,9 +673,11 @@ import com.jdimension.jlawyer.persistence.DocumentTagRule;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.MappingTable;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Properties;
 import javax.ejb.Local;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.plugins.calculation.GenericCalculationTable;
@@ -694,6 +696,43 @@ public interface SystemManagementLocal {
     public void statusMail(String subject, String body);
     public MonitoringSnapshot getMonitoringSnapshot();
 
+    /**
+     * Returns the server JVM's system properties. Already implemented on the remote interface;
+     * exposed on the local interface for the system-report REST endpoint. Requires {@code adminRole}.
+     *
+     * @return the system properties
+     */
+    Properties getSystemProperties();
+
+    /**
+     * Returns the last {@code numberOfLines} lines of the server log. Already implemented on the
+     * remote interface; exposed on the local interface for the system-report REST endpoint. Requires
+     * {@code adminRole}.
+     *
+     * @param numberOfLines how many trailing log lines to return
+     * @return the log tail
+     * @throws Exception on read failure
+     */
+    String getServerLogs(int numberOfLines) throws Exception;
+
+    /**
+     * Sends a test e-mail via the given SMTP settings. Already implemented on the remote interface;
+     * exposed on the local interface so the system-mailbox REST endpoint can offer a "test" action.
+     *
+     * @param smtpHost SMTP server host
+     * @param smtpPort SMTP port (-1 for the protocol default)
+     * @param smtpUser login user
+     * @param smtpPwd login password (clear text)
+     * @param smtpSsl whether to use SSL
+     * @param smtpStartTls whether to use StartTLS
+     * @param mailAddress the recipient to send the test message to
+     * @param isMsExchange whether the server is MS Exchange (OAuth)
+     * @param authToken OAuth token (only for MS Exchange; may be null)
+     * @param customProps additional mail properties (may be empty)
+     * @throws Exception if sending fails
+     */
+    void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress, boolean isMsExchange, String authToken, Properties customProps) throws Exception;
+
     String getServerIpV4() throws Exception;
 
     String getServerInterfacesBoundTo() throws Exception;
@@ -703,7 +742,15 @@ public interface SystemManagementLocal {
     List<PartyTypeBean> getPartyTypes();
 
     PartyTypeBean getPartyType(String id);
-    
+
+    void clearCurrentBackup();
+
+    PartyTypeBean addPartyType(PartyTypeBean partyType) throws Exception;
+
+    PartyTypeBean updatePartyType(PartyTypeBean partyType) throws Exception;
+
+    void removePartyType(PartyTypeBean partyType) throws Exception;
+
     AppUserBean getUser(String principalId);
     AppUserBean getUserUnrestricted(String principalId);
     
@@ -751,6 +798,71 @@ public interface SystemManagementLocal {
     
     DocumentNameTemplate getDefaultDocumentNameTemplate() throws Exception;
 
+    List<DocumentNameTemplate> getDocumentNameTemplates() throws Exception;
+
+    DocumentNameTemplate getDocumentNameTemplate(String templateId) throws Exception;
+
+    DocumentNameTemplate addDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
+
+    DocumentNameTemplate updateDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
+
+    void removeDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
+
+    List<String> previewDocumentNamesForTemplate(DocumentNameTemplate template, String fileName) throws Exception;
+
     List<DocumentTagRule> getAllDocumentTagRules();
-    
+
+    /**
+     * Returns a single server setting by its key, or {@code null} if it is not set. Already
+     * implemented for the remote interface; exposed on the local interface so REST endpoints can
+     * read server-wide settings (e.g. the firm profile).
+     *
+     * @param key the setting key
+     * @return the setting, or {@code null}
+     */
+    ServerSettingsBean getSetting(String key);
+
+    /**
+     * Creates or updates a single server setting.
+     *
+     * @param key the setting key
+     * @param value the value to store
+     * @return {@code true} on success
+     */
+    boolean setSetting(String key, String value);
+
+    /**
+     * Changes the password of the currently authenticated caller. Already implemented for the remote
+     * interface; exposed on the local interface so the self-service profile REST endpoint can let a
+     * logged-in (non-admin) user change their own password. Requires only {@code loginRole} and
+     * operates on the caller principal — never another user.
+     *
+     * @param newPassword the new clear-text password (hashed before it is persisted)
+     * @return {@code true} on success
+     * @throws Exception if the caller cannot be resolved or persisting fails
+     */
+    boolean updatePassword(String newPassword) throws Exception;
+
+    /**
+     * Returns the per-user settings ({@link java.util.Properties}) of the given user. Already
+     * implemented for the remote interface; exposed on the local interface so the self-service
+     * profile REST endpoint can read the caller's own settings (notifications, default case groups,
+     * …). Only {@link AppUserBean#getPrincipalId()} of the argument is used to look up the record.
+     *
+     * @param user the user whose settings to read (only the principal id is used)
+     * @return the stored settings (empty when none are set)
+     */
+    Properties getUserSettings(AppUserBean user);
+
+    /**
+     * Replaces the per-user settings of the given user. Already implemented for the remote interface;
+     * exposed on the local interface so the self-service profile REST endpoint can persist the
+     * caller's own settings. Only {@link AppUserBean#getPrincipalId()} of the argument is used to
+     * locate the record.
+     *
+     * @param user the user whose settings to write (only the principal id is used)
+     * @param settings the settings to store
+     */
+    void setUserSettings(AppUserBean user, Properties settings);
+
 }

@@ -750,5 +750,45 @@ public class AddressBeanFacade extends AbstractFacade<AddressBean> implements Ad
             return null;
         }
     }
-    
+
+    @Override
+    public List<AddressBean> findOverviewPage(String search, String kind, int offset, int limit) {
+        javax.persistence.TypedQuery<AddressBean> q = em.createQuery(
+                overviewJpql("SELECT a", search, kind) + " ORDER BY a.name, a.company, a.firstName", AddressBean.class);
+        applyOverviewParameters(q, search);
+        q.setFirstResult(Math.max(0, offset));
+        q.setMaxResults(limit <= 0 ? 50 : Math.min(limit, 200));
+        return q.getResultList();
+    }
+
+    @Override
+    public long countOverview(String search, String kind) {
+        javax.persistence.TypedQuery<Long> q = em.createQuery(
+                overviewJpql("SELECT COUNT(a)", search, kind), Long.class);
+        applyOverviewParameters(q, search);
+        return q.getSingleResult();
+    }
+
+    /** Builds the shared WHERE clause for the contact overview page/count queries. */
+    private static String overviewJpql(String select, String search, String kind) {
+        StringBuilder jpql = new StringBuilder(select).append(" FROM AddressBean a WHERE 1=1");
+        if ("people".equalsIgnoreCase(kind)) {
+            jpql.append(" AND (a.company IS NULL OR a.company = '')");
+        } else if ("companies".equalsIgnoreCase(kind)) {
+            jpql.append(" AND a.company IS NOT NULL AND a.company <> ''");
+        }
+        if (search != null && !search.trim().isEmpty()) {
+            jpql.append(" AND (LOWER(a.name) LIKE :q OR LOWER(a.firstName) LIKE :q")
+                .append(" OR LOWER(a.company) LIKE :q OR LOWER(a.city) LIKE :q")
+                .append(" OR LOWER(a.zipCode) LIKE :q OR LOWER(a.email) LIKE :q)");
+        }
+        return jpql.toString();
+    }
+
+    private static void applyOverviewParameters(javax.persistence.TypedQuery<?> q, String search) {
+        if (search != null && !search.trim().isEmpty()) {
+            q.setParameter("q", "%" + search.trim().toLowerCase() + "%");
+        }
+    }
+
 }

@@ -679,4 +679,6 @@ public interface SearchServiceLocal {
 
     void reIndexAll();
 
+    int getNumberOfDocs() throws SearchException;
+
 }

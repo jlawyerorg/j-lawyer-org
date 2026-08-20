@@ -3668,6 +3668,28 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<ArchiveFileBean> getManagedCasesPage(String search, Boolean archived, int offset, int limit) {
+        return this.archiveFileFacade.findOverviewPage(allowedCaseIdsForCaller(), search, archived, offset, limit);
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public long countManagedCases(String search, Boolean archived) {
+        return this.archiveFileFacade.countOverview(allowedCaseIdsForCaller(), search, archived);
+    }
+
+    /** Case ids the current caller may access (owner group / allowed group / unprotected). */
+    private ArrayList<String> allowedCaseIdsForCaller() {
+        try {
+            return SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
+        } catch (Exception ex) {
+            log.error("Unable to determine allowed cases for user " + context.getCallerPrincipal().getName(), ex);
+            throw new EJBException("Akten für Nutzer '" + context.getCallerPrincipal().getName() + "' konnten nicht ermittelt werden.", ex);
+        }
+    }
+
+    @Override
     public Date getLastChangedForArchiveFile(String archiveFileKey) {
         JDBCUtils utils = new JDBCUtils();
         ResultSet rs = null;
@@ -4787,6 +4809,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit) {
+        return getTaggedDocuments(docTagName, limit, null);
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit, HashMap<String, String[]> documentTagValues) {
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;
         ResultSet rs = null;
@@ -4794,6 +4822,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         List<ArchiveFileDocumentsBean> returnList = new ArrayList<>();
 
         String principalId = context.getCallerPrincipal().getName();
+
+        if (docTagName == null || docTagName.length == 0) {
+            return returnList;
+        }
 
         List<Group> userGroups = new ArrayList<>();
         try {
@@ -4805,20 +4837,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         try {
             con = utils.getConnection();
 
-            String inClause = "";
-            for (String t : docTagName) {
-                inClause = inClause + ",?";
-            }
-            inClause = inClause.replaceFirst(",", "");
+            List<String> params = new ArrayList<>();
+            String docTagCond = buildTagCondition("a4", docTagName, documentTagValues, params);
 
             st = con.prepareStatement("select docid, date_set from (select a5.id as docid, a4.date_set from "
                     + "    (SELECT id, date_changed, archived from cases) a1, "
                     + "    document_tags a4, case_documents a5 "
-                    + "    where a1.archived=0 and a5.deleted=0 and (((a4.tagName in (" + inClause + ") and a4.documentKey=a5.id and a5.archiveFileKey=a1.id))) order by a4.date_set DESC) allkeys order by date_set desc limit 0,?");
+                    + "    where a1.archived=0 and a5.deleted=0 and (((" + docTagCond + ") and a4.documentKey=a5.id and a5.archiveFileKey=a1.id)) order by a4.date_set DESC) allkeys order by date_set desc limit 0,?");
 
             int index = 1;
-            for (String t : docTagName) {
-                st.setString(index, t);
+            for (String p : params) {
+                st.setString(index, p);
                 index = index + 1;
             }
 
@@ -6656,15 +6685,16 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             clone.setName(pos.getName());
             clone.setPosition(pos.getPosition());
             clone.setTaxRate(pos.getTaxRate());
-
+            clone.setUnits(pos.getUnits());
+            clone.setUnitPrice(pos.getUnitPrice());
+            
             if (pos.getUnitPrice() != null && pos.getTotal() != null && asCredit) {
-                clone.setUnitPrice(pos.getUnitPrice().negate());
+                clone.setUnits(pos.getUnits().negate());
                 clone.setTotal(pos.getTotal().negate());
             } else {
-                clone.setUnitPrice(pos.getUnitPrice());
                 clone.setTotal(pos.getTotal());
             }
-            clone.setUnits(pos.getUnits());
+            
             this.addInvoicePosition(newInvoice.getId(), clone);
         }
 
@@ -7053,9 +7083,15 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             throw new Exception(MSG_MISSING_TIMESHEET);
         }
 
+        // Time can be logged for another user: honour an explicitly provided principal, otherwise
+        // fall back to the authenticated caller (the desktop client always sends its own principal).
+        String effectivePrincipal = (position.getPrincipal() != null && !position.getPrincipal().trim().isEmpty())
+                ? position.getPrincipal()
+                : context.getCallerPrincipal().getName();
+
         if (position.getId() == null) {
 
-            List openForUserInTimesheet = this.timesheetPositionsFacade.findOpenByPrincipalAndTimesheet(context.getCallerPrincipal().getName(), sheet);
+            List openForUserInTimesheet = this.timesheetPositionsFacade.findOpenByPrincipalAndTimesheet(effectivePrincipal, sheet);
             if (!openForUserInTimesheet.isEmpty()) {
                 throw new Exception("In einem Zeiterfassungsprojekt kann immer nur eine offene Position für einen Nutzer existieren!");
             }
@@ -7074,7 +7110,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             position.setStarted(start);
             position.setStopped(null);
-            position.setPrincipal(context.getCallerPrincipal().getName());
+            position.setPrincipal(effectivePrincipal);
             position.setTimesheet(sheet);
 
             // newly added position cannot be part of an invoice
@@ -7128,7 +7164,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             TimesheetPosition newPos = new TimesheetPosition();
             StringGenerator idGen = new StringGenerator();
             String id = idGen.getID().toString();
-            newPos.setPrincipal(context.getCallerPrincipal().getName());
+            newPos.setPrincipal(effectivePrincipal);
             newPos.setDescription(position.getDescription());
             newPos.setName(position.getName());
 
@@ -7228,6 +7264,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             existing.setUnitPrice(position.getUnitPrice());
             existing.setStarted(position.getStarted());
             existing.setStopped(position.getStopped());
+            // Time can be reassigned to another user: honour an explicitly provided principal.
+            if (position.getPrincipal() != null && !position.getPrincipal().trim().isEmpty()) {
+                existing.setPrincipal(position.getPrincipal());
+            }
             existing.setTotal(existing.calculateTotal(sheet.getInterval()));
             this.timesheetPositionsFacade.edit(existing);
 

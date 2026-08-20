@@ -686,8 +686,22 @@ public class RestfulInvoiceTypeV7 {
         invoiceType.setDisplayName(i.getDisplayName());
         invoiceType.setId(i.getId());
         invoiceType.setTurnOver(i.isTurnOver());
-        
+
         return invoiceType;
+    }
+
+    /**
+     * Maps this POJO to an {@link InvoiceType} entity (for create/update).
+     *
+     * @return the entity
+     */
+    public InvoiceType toInvoiceType() {
+        InvoiceType i = new InvoiceType();
+        i.setId(this.id);
+        i.setDisplayName(this.displayName);
+        i.setDescription(this.description);
+        i.setTurnOver(this.turnOver);
+        return i;
     }
 
     /**

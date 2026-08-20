@@ -62,8 +62,12 @@ public class GraphicsUtil {
 				wordWidth = fm.stringWidth(word + " ");
 				textTrimmed = true;
 			}
-			word = word.length() > 3 && textTrimmed ? word.substring(0, word.length() - 3) + "..."
-					: word.length() > 2 ? word : "";
+			// only text that actually had to be cut down may be replaced by an
+			// ellipsis or - if nothing meaningful is left - dropped entirely.
+			// Text that fits is always rendered as is, no matter how short it is.
+			if (textTrimmed) {
+				word = word.length() > 3 ? word.substring(0, word.length() - 3) + "..." : "";
+			}
 
 			if (textHeight + lineHeight > height) {
 				g.drawString("...", curX, curY);
@@ -131,7 +135,12 @@ public class GraphicsUtil {
 			wordWidth = fm.stringWidth(s + " ");
 			textTrimmed = true;
 		}
-		s = s.length() > 3 && textTrimmed ? s.substring(0, s.length() - 3) + "..." : s.length() > 2 ? s : "";
+		// only text that actually had to be cut down may be replaced by an
+		// ellipsis or - if nothing meaningful is left - dropped entirely.
+		// Text that fits is always rendered as is, no matter how short it is.
+		if (textTrimmed) {
+			s = s.length() > 3 ? s.substring(0, s.length() - 3) + "..." : "";
+		}
 
 		g.drawString(s, x, y);
 

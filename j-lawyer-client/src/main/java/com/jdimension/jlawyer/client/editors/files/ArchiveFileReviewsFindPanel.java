@@ -664,14 +664,17 @@
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
+import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.print.PrintStubGenerator;
 import com.jdimension.jlawyer.client.print.ReviewsStub;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
@@ -701,6 +704,8 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     
     private String detailsEditorClass;
     private Image backgroundImage=null;
+    // guards against triggering a search while the assignee combo box is being filled
+    private boolean populatingAssignees=false;
     
     /**
      * Creates new form ArchiveFileReviewsFindPanel
@@ -717,10 +722,45 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
         String[] colNames=new String[] {"Datum / Zeit" , "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "erledigt", "Anwalt", "verantwortlich", "Kalender"};
         QuickArchiveFileSearchTableModel model=new QuickArchiveFileSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
-        
+
+        this.populateAssignees();
+
         this.cmdRefreshActionPerformed(null);
     }
-    
+
+    private void populateAssignees() {
+        this.populatingAssignees = true;
+        try {
+            AppUserBean[] assistUsers = UserSettings.getInstance().getAssistantUsers();
+            List<AppUserBean> allUsers = UserSettings.getInstance().getLoginEnabledUsers();
+
+            List<String> assignees = new ArrayList<>();
+            // empty entry - selected by default, meaning "do not filter by assignee"
+            assignees.add("");
+            for (AppUserBean aub : assistUsers) {
+                if (allUsers.contains(aub)) {
+                    assignees.add(aub.getPrincipalId());
+                }
+            }
+            String[] assigneeItems = assignees.toArray(new String[0]);
+            StringUtils.sortIgnoreCase(assigneeItems);
+
+            this.cmbAssignee.setModel(new OptionsComboBoxModel(assigneeItems));
+            this.cmbAssignee.setRenderer(new UserListCellRenderer());
+            this.cmbAssignee.setSelectedItem("");
+        } finally {
+            this.populatingAssignees = false;
+        }
+    }
+
+    private String getSelectedAssignee() {
+        Object selected = this.cmbAssignee.getSelectedItem();
+        if (selected == null) {
+            return null;
+        }
+        return selected.toString().trim();
+    }
+
     @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage=image;
@@ -768,6 +808,8 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
         labelSearchAZ = new javax.swing.JLabel();
         inputFulltextSearch = new javax.swing.JTextField();
         jLabel6 = new javax.swing.JLabel();
+        jLabel7 = new javax.swing.JLabel();
+        cmbAssignee = new javax.swing.JComboBox<>();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
@@ -918,6 +960,15 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
         jLabel6.setText("↵");
         jLabel6.setToolTipText("Zum Suchen <Enter> drücken");
 
+        jLabel7.setText("verantwortlich:");
+
+        cmbAssignee.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbAssignee.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbAssigneeActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -965,7 +1016,11 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(inputFulltextSearch, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 127, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jLabel6)))
+                        .add(jLabel6)
+                        .add(18, 18, 18)
+                        .add(jLabel7)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmbAssignee, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
@@ -997,11 +1052,13 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                             .add(rdDoneStatus)
                             .add(rdAllStatuses)))
                     .add(cmdReset))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 6, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(labelSearchAZ)
                     .add(inputFulltextSearch, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel6))
+                    .add(jLabel6)
+                    .add(jLabel7)
+                    .add(cmbAssignee, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
 
@@ -1174,7 +1231,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
         if(this.rdTypeEvent.isSelected())
             type=ArchiveFileConstants.REVIEWTYPE_EVENT;
         
-        new Thread(new ArchiveFileReviewsAdvancedSearchThread(this, this.tblResults, status, type, fromDate, toDate, inputFulltextSearch.getText())).start();
+        new Thread(new ArchiveFileReviewsAdvancedSearchThread(this, this.tblResults, status, type, fromDate, toDate, inputFulltextSearch.getText(), this.getSelectedAssignee())).start();
         
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
@@ -1252,6 +1309,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
         this.rdAllTypes.setSelected(true);
         this.txtFromDate.setDate(null);
         this.txtToDate.setDate(null);
+        this.cmbAssignee.setSelectedItem("");
         this.cmdRefreshActionPerformed(null);
     }//GEN-LAST:event_cmdResetActionPerformed
 
@@ -1272,11 +1330,17 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     }//GEN-LAST:event_rdTypeEventActionPerformed
 
     private void inputFulltextSearchKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_inputFulltextSearchKeyPressed
-        if(evt.getKeyCode() == KeyEvent.VK_ENTER){            
-            this.cmdRefreshActionPerformed(null);            
+        if(evt.getKeyCode() == KeyEvent.VK_ENTER){
+            this.cmdRefreshActionPerformed(null);
         }
     }//GEN-LAST:event_inputFulltextSearchKeyPressed
-    
+
+    private void cmbAssigneeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbAssigneeActionPerformed
+        if(this.populatingAssignees)
+            return;
+        this.cmdRefreshActionPerformed(null);
+    }//GEN-LAST:event_cmbAssigneeActionPerformed
+
     private ReviewsStub getPrintValues() {
         ArrayList<ArchiveFileReviewsBean> revList=new ArrayList<>();
         ArrayList<ArchiveFileBean> fileList=new ArrayList<>();
@@ -1312,9 +1376,12 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
         if(this.rdNotDoneStatus.isSelected())
             statusString="offen";
         critBuffer.append("  Status: ").append(statusString);
-        
-        
-        
+
+        String assignee=this.getSelectedAssignee();
+        if(assignee!=null && !assignee.isEmpty())
+            critBuffer.append("  verantwortlich: ").append(assignee);
+
+
         for(int i=0;i<this.tblResults.getRowCount();i++) {
             ArchiveFileReviewsRowIdentifier id=(ArchiveFileReviewsRowIdentifier)this.tblResults.getValueAt(i, 0);
             ArchiveFileReviewsBean rev=id.getReviewDTO();
@@ -1328,6 +1395,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<String> cmbAssignee;
     private javax.swing.JButton cmdExport;
     private javax.swing.JButton cmdPrint;
     private javax.swing.JButton cmdRefresh;
@@ -1342,6 +1410,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;

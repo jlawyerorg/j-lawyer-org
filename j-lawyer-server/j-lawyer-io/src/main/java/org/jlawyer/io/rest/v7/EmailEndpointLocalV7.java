@@ -19,6 +19,7 @@ package org.jlawyer.io.rest.v7;
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
 import org.jlawyer.io.rest.v7.pojo.RestfulAppendMailRequestV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulCaseSuggestionRequestV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulCreateFolderRequestV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulSendMailRequestV7;
 
@@ -27,7 +28,13 @@ public interface EmailEndpointLocalV7 {
 
     Response listMailboxes();
 
-    Response listFolders(String mailboxId);
+    Response listFolders(String mailboxId, boolean includeHidden, boolean includeCounts);
+
+    Response getFolderCounts(String mailboxId, String folderId);
+
+    Response getHiddenFolders(String mailboxId);
+
+    Response setFolderHidden(String mailboxId, String folderId, org.jlawyer.io.rest.v7.pojo.RestfulSetHiddenRequestV7 request);
 
     Response createFolder(String mailboxId, RestfulCreateFolderRequestV7 request);
 
@@ -50,6 +57,8 @@ public interface EmailEndpointLocalV7 {
     Response getAttachment(String mailboxId, String messageRef, String attachmentId);
 
     Response sendMail(String mailboxId, RestfulSendMailRequestV7 request);
+
+    Response caseSuggestions(String mailboxId, RestfulCaseSuggestionRequestV7 request);
 
     Response appendToFolder(String mailboxId, String folderId, RestfulAppendMailRequestV7 request);
 

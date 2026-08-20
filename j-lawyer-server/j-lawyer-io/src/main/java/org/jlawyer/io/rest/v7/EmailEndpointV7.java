@@ -15,17 +15,29 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v7;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
+import com.jdimension.jlawyer.services.AddressServiceLocal;
+import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import com.jdimension.jlawyer.services.EmailServiceLocal;
+import com.jdimension.jlawyer.services.Keyword;
 import com.jdimension.jlawyer.services.MailAttachmentDTO;
 import com.jdimension.jlawyer.services.MailFolderDTO;
 import com.jdimension.jlawyer.services.MailMessageDTO;
 import com.jdimension.jlawyer.services.SecurityServiceLocal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
@@ -45,7 +57,11 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import org.jboss.logging.Logger;
 import org.jlawyer.io.rest.v7.pojo.RestfulAppendMailRequestV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulCaseSuggestionRequestV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulCaseSuggestionsV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulCreateFolderRequestV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulSuggestedCaseV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulSuggestedContactV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulMailAttachmentV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulMailFolderV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulMailMessageV7;
@@ -63,6 +79,11 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
 
     private static final String LOOKUP_EMAIL = "java:global/j-lawyer-server/j-lawyer-server-ejb/EmailService!com.jdimension.jlawyer.services.EmailServiceLocal";
     private static final String LOOKUP_SECURITY = "java:global/j-lawyer-server/j-lawyer-server-ejb/SecurityService!com.jdimension.jlawyer.services.SecurityServiceLocal";
+    private static final String LOOKUP_CASES = "java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
+    private static final String LOOKUP_ADDRESS = "java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal";
+
+    /** Cap on the number of suggested cases collected, mirroring the desktop client's guard. */
+    private static final int MAX_SUGGESTED_CASES = 50;
 
     @Context
     private SecurityContext securityContext;
@@ -109,14 +130,18 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not list mailboxes", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
     /**
-     * Returns all folders for the given mailbox.
+     * Returns all folders for the given mailbox. Two optional query parameters allow faster loading;
+     * their defaults reproduce the legacy behaviour, so existing clients are unaffected.
      *
      * @param mailboxId mailbox ID
+     * @param includeHidden when {@code false}, folders the user hid (and their descendants) are omitted (default {@code true})
+     * @param includeCounts when {@code false}, per-folder unread/total counts are not computed and are
+     *                      returned as {@code -1}; fetch them lazily via the counts endpoint (default {@code true})
      * @response 401 User not authorized
      * @response 403 User not authenticated / no mailbox access
      */
@@ -126,7 +151,9 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
     @Path("/mailboxes/{mailboxId}/folders")
     @RolesAllowed({"loginRole"})
     @io.swagger.annotations.ApiOperation(value="Returns all folders for the given mailbox.", response=org.jlawyer.io.rest.v7.pojo.RestfulMailFolderV7.class, responseContainer="List")
-    public Response listFolders(@PathParam("mailboxId") String mailboxId) {
+    public Response listFolders(@PathParam("mailboxId") String mailboxId,
+            @QueryParam("includeHidden") @DefaultValue("true") boolean includeHidden,
+            @QueryParam("includeCounts") @DefaultValue("true") boolean includeCounts) {
         try {
             InitialContext ic = new InitialContext();
             if (!hasMailboxAccess(ic, mailboxId)) {
@@ -134,7 +161,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             }
 
             EmailServiceLocal emailService = (EmailServiceLocal) ic.lookup(LOOKUP_EMAIL);
-            List<MailFolderDTO> folders = emailService.listFolders(mailboxId);
+            List<MailFolderDTO> folders = emailService.listFolders(mailboxId, includeHidden, includeCounts);
             ArrayList<RestfulMailFolderV7> result = new ArrayList<>();
             if (folders != null) {
                 for (MailFolderDTO f : folders) {
@@ -144,7 +171,107 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not list folders for mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Returns the unread/total message counts for a single folder — for lazily filling in counts
+     * after a fast {@code ?includeCounts=false} folder listing.
+     *
+     * @param mailboxId mailbox ID
+     * @param folderId folder ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated / no mailbox access
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/mailboxes/{mailboxId}/folders/{folderId}/counts")
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="Returns unread/total counts for a single folder.", response=org.jlawyer.io.rest.v7.pojo.RestfulFolderCountsV7.class)
+    public Response getFolderCounts(@PathParam("mailboxId") String mailboxId, @PathParam("folderId") String folderId) {
+        try {
+            InitialContext ic = new InitialContext();
+            if (!hasMailboxAccess(ic, mailboxId)) {
+                return Response.status(Response.Status.FORBIDDEN).build();
+            }
+            EmailServiceLocal emailService = (EmailServiceLocal) ic.lookup(LOOKUP_EMAIL);
+            int[] counts = emailService.getFolderCounts(mailboxId, folderId);
+            org.jlawyer.io.rest.v7.pojo.RestfulFolderCountsV7 result = new org.jlawyer.io.rest.v7.pojo.RestfulFolderCountsV7();
+            result.setFolderId(folderId);
+            result.setUnreadCount(counts[0]);
+            result.setTotalCount(counts[1]);
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("can not get counts for folder " + folderId + " in mailbox " + mailboxId, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Returns the folders the user explicitly hid (that still exist) — for an "unhide" management UI.
+     *
+     * @param mailboxId mailbox ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated / no mailbox access
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/mailboxes/{mailboxId}/hidden-folders")
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="Returns the folders hidden for the given mailbox.", response=org.jlawyer.io.rest.v7.pojo.RestfulMailFolderV7.class, responseContainer="List")
+    public Response getHiddenFolders(@PathParam("mailboxId") String mailboxId) {
+        try {
+            InitialContext ic = new InitialContext();
+            if (!hasMailboxAccess(ic, mailboxId)) {
+                return Response.status(Response.Status.FORBIDDEN).build();
+            }
+            EmailServiceLocal emailService = (EmailServiceLocal) ic.lookup(LOOKUP_EMAIL);
+            List<MailFolderDTO> folders = emailService.getHiddenFolders(mailboxId);
+            ArrayList<RestfulMailFolderV7> result = new ArrayList<>();
+            if (folders != null) {
+                for (MailFolderDTO f : folders) {
+                    result.add(RestfulMailFolderV7.fromMailFolderDTO(f));
+                }
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("can not list hidden folders for mailbox " + mailboxId, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Hides or unhides a folder for the given mailbox.
+     *
+     * @param mailboxId mailbox ID
+     * @param folderId folder ID
+     * @param request whether the folder should be hidden
+     * @response 401 User not authorized
+     * @response 403 User not authenticated / no mailbox access
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/mailboxes/{mailboxId}/folders/{folderId}/hidden")
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="Hides or unhides a folder for the given mailbox.")
+    public Response setFolderHidden(@PathParam("mailboxId") String mailboxId, @PathParam("folderId") String folderId,
+            @io.swagger.annotations.ApiParam org.jlawyer.io.rest.v7.pojo.RestfulSetHiddenRequestV7 request) {
+        try {
+            InitialContext ic = new InitialContext();
+            if (!hasMailboxAccess(ic, mailboxId)) {
+                return Response.status(Response.Status.FORBIDDEN).build();
+            }
+            EmailServiceLocal emailService = (EmailServiceLocal) ic.lookup(LOOKUP_EMAIL);
+            emailService.setFolderHidden(mailboxId, folderId, request != null && request.isHidden());
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not set hidden state for folder " + folderId + " in mailbox " + mailboxId, ex);
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -174,7 +301,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok(RestfulMailFolderV7.fromMailFolderDTO(created)).build();
         } catch (Exception ex) {
             log.error("can not create folder in mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -204,7 +331,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete folder " + folderId + " in mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -234,7 +361,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not empty trash in mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -296,7 +423,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not list messages in folder " + folderId + " of mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -329,7 +456,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok(RestfulMailMessageV7.fromMailMessageDTO(msg)).build();
         } catch (Exception ex) {
             log.error("can not get message " + messageRef + " from mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -359,7 +486,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete message " + messageRef + " from mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -392,7 +519,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not move message " + messageRef + " in mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -425,7 +552,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not mark message " + messageRef + " as read=" + read + " in mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -457,7 +584,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
                     .build();
         } catch (Exception ex) {
             log.error("can not get EML for message " + messageRef + " from mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -493,7 +620,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not get attachment " + attachmentId + " for message " + messageRef + " in mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -543,8 +670,168 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not send mail via mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
+    }
+
+    /**
+     * Computes case suggestions for an opened email from its subject, body and sender. Reproduces
+     * the desktop client's heuristic server-side (own/foreign file numbers found in subject/body,
+     * plus cases linked to contacts matching the sender) and additionally extracts phone numbers.
+     * All returned cases are access-controlled for the authenticated user.
+     *
+     * @param mailboxId mailbox ID (used to authorize the caller)
+     * @param request the email's subject, body and from header
+     * @response 401 User not authorized
+     * @response 403 User not authenticated / no mailbox access
+     */
+    @Override
+    @POST
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/mailboxes/{mailboxId}/case-suggestions")
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="Suggests cases, contacts and phone numbers for an opened email.", response=RestfulCaseSuggestionsV7.class)
+    public Response caseSuggestions(@PathParam("mailboxId") String mailboxId, @io.swagger.annotations.ApiParam RestfulCaseSuggestionRequestV7 request) {
+        try {
+            InitialContext ic = new InitialContext();
+            if (!hasMailboxAccess(ic, mailboxId)) {
+                return Response.status(Response.Status.FORBIDDEN).build();
+            }
+
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup(LOOKUP_ADDRESS);
+
+            String subject = request.getSubject() != null ? request.getSubject().toLowerCase() : "";
+            String bodyRaw = request.getBody() != null ? request.getBody() : "";
+            String body = bodyRaw.toLowerCase();
+
+            RestfulCaseSuggestionsV7 result = new RestfulCaseSuggestionsV7();
+
+            // Parse the sender: "Name <mail@host>" or a bare address.
+            String from = request.getFrom() != null ? request.getFrom() : "";
+            String senderName = "";
+            String senderEmail = from.trim();
+            if (from.contains("<") && from.contains(">")) {
+                senderEmail = from.substring(from.indexOf('<') + 1, from.indexOf('>')).trim();
+                senderName = from.substring(0, from.indexOf('<')).trim();
+            }
+            result.setSenderName(senderName);
+            result.setSenderEmail(senderEmail);
+
+            // Phone numbers from the body.
+            List<String> phoneNumbers = new ArrayList<>();
+            try {
+                Collection<Keyword> keywords = cases.extractKeywordsFromText(bodyRaw);
+                if (keywords != null) {
+                    for (Keyword w : keywords) {
+                        if (w.getType() == Keyword.TYPE_PHONENR && w.getValue() != null && !phoneNumbers.contains(w.getValue())) {
+                            phoneNumbers.add(w.getValue());
+                        }
+                    }
+                }
+            } catch (Throwable t) {
+                log.warn("could not extract keywords from email body", t);
+            }
+            result.setPhoneNumbers(phoneNumbers);
+
+            // Collect suggested cases, de-duplicated by id; ACL is enforced by the service methods.
+            Map<String, RestfulSuggestedCaseV7> byId = new LinkedHashMap<>();
+
+            // 1) own file numbers appearing in subject/body
+            for (String fn : cases.getAllArchiveFileNumbers(true)) {
+                if (fn == null || fn.isEmpty()) {
+                    continue;
+                }
+                String fnLower = fn.toLowerCase();
+                if (subject.contains(fnLower) || body.contains(fnLower)) {
+                    addCase(byId, cases.getArchiveFileByFileNumber(fn), "subjectBody");
+                }
+                if (byId.size() >= MAX_SUGGESTED_CASES) {
+                    break;
+                }
+            }
+
+            // 2) foreign/referenced file numbers appearing in subject/body
+            for (String fn : cases.getAllReferencedFileNumbers(5, true)) {
+                if (fn == null || fn.isEmpty()) {
+                    continue;
+                }
+                String fnLower = fn.toLowerCase();
+                if (subject.contains(fnLower) || body.contains(fnLower)) {
+                    List<ArchiveFileAddressesBean> refs = cases.getArchiveFileAddressesByReference(fn);
+                    if (refs != null) {
+                        for (ArchiveFileAddressesBean aab : refs) {
+                            addCase(byId, aab.getArchiveFileKey(), "reference");
+                        }
+                    }
+                }
+                if (byId.size() >= MAX_SUGGESTED_CASES) {
+                    break;
+                }
+            }
+
+            // 3) sender -> matching contacts -> their cases
+            List<RestfulSuggestedContactV7> contacts = new ArrayList<>();
+            if (!senderEmail.isEmpty()) {
+                AddressBean[] hits = addresses.searchSimple(senderEmail);
+                if (hits != null) {
+                    Set<String> seenContacts = new HashSet<>();
+                    for (AddressBean h : hits) {
+                        if (h == null || h.getId() == null || !seenContacts.add(h.getId())) {
+                            continue;
+                        }
+                        RestfulSuggestedContactV7 c = new RestfulSuggestedContactV7();
+                        c.setId(h.getId());
+                        c.setDisplayName(contactDisplayName(h));
+                        c.setEmail(h.getEmail());
+                        contacts.add(c);
+
+                        Collection<?> caseCol = cases.getArchiveFileAddressesForAddress(h.getId());
+                        if (caseCol != null) {
+                            for (Object o : caseCol) {
+                                addCase(byId, ((ArchiveFileAddressesBean) o).getArchiveFileKey(), "sender");
+                            }
+                        }
+                        if (byId.size() >= MAX_SUGGESTED_CASES) {
+                            break;
+                        }
+                    }
+                }
+            }
+            result.setContacts(contacts);
+            result.setSuggestedCases(new ArrayList<>(byId.values()));
+
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("can not compute case suggestions for mailbox " + mailboxId, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /** Adds a case to the deduplicated suggestion map (first source wins; null/duplicate ignored). */
+    private static void addCase(Map<String, RestfulSuggestedCaseV7> byId, ArchiveFileBean a, String source) {
+        if (a == null || a.getId() == null || byId.containsKey(a.getId())) {
+            return;
+        }
+        RestfulSuggestedCaseV7 c = new RestfulSuggestedCaseV7();
+        c.setId(a.getId());
+        c.setFileNumber(a.getFileNumber());
+        c.setName(a.getName());
+        c.setReason(a.getReason());
+        c.setArchived(a.isArchived());
+        c.setSource(source);
+        byId.put(a.getId(), c);
+    }
+
+    /** Builds a readable contact label: "Firstname Name (Company)", or the company/name alone. */
+    private static String contactDisplayName(AddressBean h) {
+        String company = h.getCompany() != null ? h.getCompany().trim() : "";
+        String person = ((h.getFirstName() != null ? h.getFirstName() : "") + " "
+                + (h.getName() != null ? h.getName() : "")).trim();
+        if (person.isEmpty()) {
+            return company;
+        }
+        return company.isEmpty() ? person : person + " (" + company + ")";
     }
 
     /**
@@ -594,7 +881,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not append message to folder " + folderId + " in mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -627,7 +914,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             }
         } catch (Exception ex) {
             log.error("can not test connection for mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -656,7 +943,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not invalidate caches for mailbox " + mailboxId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 }

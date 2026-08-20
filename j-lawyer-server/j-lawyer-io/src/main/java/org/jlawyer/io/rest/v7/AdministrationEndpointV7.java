@@ -662,6 +662,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v7;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.pojo.JobStatus;
@@ -758,7 +759,7 @@ public class AdministrationEndpointV7 implements AdministrationEndpointLocalV7 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("could not initiate backup", ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
 
@@ -797,7 +798,7 @@ public class AdministrationEndpointV7 implements AdministrationEndpointLocalV7 {
 
         } catch (Exception ex) {
             log.error("could not initiate backup", ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
 
@@ -830,7 +831,7 @@ public class AdministrationEndpointV7 implements AdministrationEndpointLocalV7 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("Could not list jobs", ex);
-            Response res = Response.serverError().build();
+            Response res = RestErrorResponses.serverError(ex);
             return res;
         }
 

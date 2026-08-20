@@ -662,6 +662,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v4;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
@@ -741,7 +742,7 @@ public class CalendarEndpointV4 implements CalendarEndpointLocalV4 {
             return Response.ok(ddList).build();
         } catch (Exception ex) {
             log.error("can not get calendars", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
     
@@ -789,7 +790,7 @@ public class CalendarEndpointV4 implements CalendarEndpointLocalV4 {
             return Response.ok(ddList).build();
         } catch (Exception ex) {
             log.error("can not get calendars", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 

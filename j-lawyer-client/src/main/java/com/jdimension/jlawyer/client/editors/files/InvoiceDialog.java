@@ -1054,6 +1054,11 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
         this.clearPositionsPanel();
 
+        this.dtFrom.setText("");
+        this.dtTo.setText("");
+        this.dtDue.setText("");
+        this.dtCreated.setText("");
+        
         if (invoice == null) {
             this.setTitle("neue Rechnung erstellen");
 
@@ -1066,10 +1071,6 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             this.txtName.setText("");
             this.taDescription.setText("");
             this.cmbStatus.setSelectedItem("");
-            this.dtFrom.setText("");
-            this.dtTo.setText("");
-            this.dtDue.setText("");
-            this.dtCreated.setText("");
             this.lblRecipient.setText("");
             this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
             this.chkTaxes.setSelected(true);
@@ -1091,10 +1092,14 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             this.txtName.setText(invoice.getName());
             this.taDescription.setText(invoice.getDescription());
             this.cmbStatus.setSelectedItem(invoice.getStatusString());
-            this.dtFrom.setText(df.format(invoice.getPeriodFrom()));
-            this.dtTo.setText(df.format(invoice.getPeriodTo()));
-            this.dtDue.setText(df.format(invoice.getDueDate()));
-            this.dtCreated.setText(df.format(invoice.getCreationDate()));
+            if(invoice.getPeriodFrom()!=null)
+                this.dtFrom.setText(df.format(invoice.getPeriodFrom()));
+            if(invoice.getPeriodTo()!=null)
+                this.dtTo.setText(df.format(invoice.getPeriodTo()));
+            if(invoice.getDueDate()!=null)
+                this.dtDue.setText(df.format(invoice.getDueDate()));
+            if(invoice.getCreationDate()!=null)
+                this.dtCreated.setText(df.format(invoice.getCreationDate()));
             this.chkTaxes.setSelected(invoice.isSmallBusiness());
             if (invoice.getInvoiceType() != null) {
                 this.cmbInvoiceType.setSelectedItem(invoice.getInvoiceType());

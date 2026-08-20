@@ -662,6 +662,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v1;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.services.AddressServiceLocal;
@@ -721,7 +722,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             return Response.ok(RestfulContactV1.fromAddressBean(adr)).build();
         } catch (Exception ex) {
             log.error("can not get address " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -748,7 +749,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             return Response.ok(RestfulContactV1.fromAddressBean(a)).build();
         } catch (Exception ex) {
             log.error("can not create new address " + contact.toString(), ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     
@@ -794,7 +795,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             return Response.ok(rcoList).build();
         } catch (Exception ex) {
             log.error("Can not list contacts", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -842,7 +843,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             return Response.ok(rcoList).build();
         } catch (Exception ex) {
             log.error("Can not list similar contacts", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
     
@@ -926,7 +927,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             return Response.ok(RestfulContactV1.fromAddressBean(addressData)).build();
         } catch (Exception ex) {
             log.error("can not update address " + contact.getId(), ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
     

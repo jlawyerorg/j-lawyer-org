@@ -666,6 +666,7 @@ package org.jlawyer.io.rest.v6;
 import java.util.List;
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
+import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
 import org.jlawyer.io.rest.v6.pojo.RestfulRoleV6;
 import org.jlawyer.io.rest.v6.pojo.RestfulUserV6;
 
@@ -693,5 +694,47 @@ public interface SecurityEndpointLocalV6 {
     Response getUserRoles(String principalId);
 
     Response updateUserRoles(String principalId, List<RestfulRoleV6> roles);
+
+    Response createGroup(RestfulGroupV6 group);
+
+    Response updateGroup(RestfulGroupV6 group);
+
+    Response deleteGroup(String groupId);
+
+    Response getGroupMembers(String groupId);
+
+    Response getUserGroups(String principalId);
+
+    Response listCalendars();
+
+    Response getUserCalendars(String principalId);
+
+    Response addUserCalendar(String principalId, String calendarId);
+
+    Response removeUserCalendar(String principalId, String calendarId);
+
+    Response listMailboxes();
+
+    Response getUserMailboxes(String principalId);
+
+    Response addUserMailbox(String principalId, String mailboxId);
+
+    Response removeUserMailbox(String principalId, String mailboxId);
+
+    Response listInvoicePools();
+
+    Response getUserInvoicePools(String principalId);
+
+    Response addUserInvoicePool(String principalId, String poolId);
+
+    Response removeUserInvoicePool(String principalId, String poolId);
+
+    Response uploadBeaCertificate(String principalId, org.jlawyer.io.rest.v6.pojo.RestfulBeaCertificateV6 cert);
+
+    Response removeBeaCertificate(String principalId);
+
+    Response addGroupMember(String groupId, String principalId);
+
+    Response removeGroupMember(String groupId, String principalId);
 
 }

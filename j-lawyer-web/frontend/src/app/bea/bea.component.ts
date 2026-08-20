@@ -1,0 +1,1064 @@
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { trustBlobResourceUrl } from '../shared/safe-url.util';
+import { RouterLink } from '@angular/router';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { IconComponent } from '../shared/icon.component';
+import { base64ToBytes, PreviewDoc } from '../shared/document-preview.models';
+import { DocumentPreviewComponent } from '../shared/document-preview.component';
+import { CaseSuggestions } from '../communication/email.models';
+import { BeaService } from './bea.service';
+import { BeaComposeComponent } from './bea-compose.component';
+import { BeaBulkSaveComponent, TargetCase } from './bea-bulk-save.component';
+import { BeaEebDialogComponent, EebMode } from './bea-eeb-dialog.component';
+import {
+  BeaAttachment, BeaComposeMode, BeaFolder, BeaFolderNode, beaFolderOrder, BeaMessage, BeaMessageHeader,
+  BeaProcessCard, BeaRestriction, BEA_RESTRICTIONS, Postbox,
+} from './bea.models';
+
+/** A postbox header or an (indented) folder row in the left navigation. */
+type NavRow =
+  | { kind: 'postbox'; postbox: Postbox }
+  | { kind: 'folder'; safeId: string; folder: BeaFolderNode };
+
+/** The folder tree of one postbox. */
+interface PostboxFolders {
+  postbox: Postbox;
+  nodes: BeaFolderNode[];
+}
+
+/**
+ * beA module — the web equivalent of the Swing client's BeaInboxPanel (read & triage scope).
+ * Three panes: postbox/folder tree, message list (download-restriction presets + sender search),
+ * and a reader that shows the beA-specifics a plain mailbox lacks: the two Aktenzeichen (sender /
+ * court), the two attachment groups (documents vs. technical/VHN), the message journal, and the
+ * signature-verification status. The HTML body (beA bodies are usually plain text) renders in a
+ * sandboxed blob iframe (CSP frame-src 'self' blob:). Triage: mark read (auto on open), delete,
+ * move. Compose/send, eEB confirm/reject and save-to-case are a later phase. The beA session is
+ * established server-side from the user's stored certificate — the browser never sees it. All data
+ * comes from /v8/bea/** (BeaService).
+ */
+@Component({
+  selector: 'jl-bea',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TranslocoModule, IconComponent, RouterLink, BeaComposeComponent, BeaBulkSaveComponent, BeaEebDialogComponent, DocumentPreviewComponent],
+  template: `
+    <div class="bea" [class.show-reader]="selectedId()"
+         [class.m-folders]="mobilePane() === 'folders'"
+         [class.m-list]="mobilePane() === 'list'"
+         [class.m-reader]="mobilePane() === 'reader'">
+      <!-- ---------- Left: postboxes + folders ---------- -->
+      <aside class="folders">
+        <header class="col-head">
+          <h1><jl-icon name="shield" [size]="16" /> {{ 'bea.title' | transloco }}</h1>
+          <button type="button" class="icon-btn" [disabled]="loginState() !== 'ok'"
+                  (click)="refresh()" [title]="'bea.refresh' | transloco" [attr.aria-label]="'bea.refresh' | transloco">
+            <jl-icon name="refresh" [size]="15" />
+          </button>
+        </header>
+        <div class="col-body">
+          @switch (loginState()) {
+            @case ('loading') { <p class="muted pad">{{ 'bea.connecting' | transloco }}</p> }
+            @case ('error') {
+              <p class="pad">
+                {{ 'bea.loginError' | transloco }}
+                <button type="button" class="btn-retry" (click)="connect()">{{ 'bea.retry' | transloco }}</button>
+              </p>
+            }
+            @default {
+              @if (!postboxes().length) {
+                <p class="muted pad">{{ 'bea.noPostboxes' | transloco }}</p>
+              } @else {
+                @for (row of navRows(); track rowKey(row)) {
+                  @if (row.kind === 'postbox') {
+                    <div class="mbx" [title]="row.postbox.userName">
+                      <jl-icon name="shield" [size]="13" />
+                      <span class="mbx-name">{{ row.postbox.label }}</span>
+                    </div>
+                  } @else {
+                    <button type="button" class="fld"
+                            [class.sel]="row.safeId === selectedSafeId() && row.folder.id === selectedFolderId()"
+                            [style.padding-left.px]="18 + row.folder.depth * 14"
+                            (click)="selectFolder(row.safeId, row.folder)">
+                      <span class="fld-name">{{ folderLabel(row.folder) }}</span>
+                      @if (row.folder.unreadMessageCount > 0) {
+                        <span class="fld-badge">{{ row.folder.unreadMessageCount }}</span>
+                      }
+                    </button>
+                  }
+                }
+              }
+            }
+          }
+        </div>
+      </aside>
+
+      <!-- ---------- Middle: message list ---------- -->
+      <section class="list">
+        <header class="col-head list-head">
+          <div class="list-title">
+            <button type="button" class="to-folders" (click)="mobilePane.set('folders')">‹ {{ 'bea.navBack' | transloco }}</button>
+            <h2>{{ selectedFolder() ? folderLabel(selectedFolder()!) : ('bea.selectFolder' | transloco) }}</h2>
+            @if (messages()?.length) { <span class="count">{{ messages()!.length }}</span> }
+            <button type="button" class="compose-btn" [disabled]="!sendableSafeId()" (click)="composeNew()"
+                    [title]="'beaCompose.new' | transloco">
+              <jl-icon name="edit" [size]="14" /><span>{{ 'beaCompose.new' | transloco }}</span>
+            </button>
+          </div>
+          <div class="list-tools">
+            <div class="search">
+              <jl-icon name="search" [size]="14" />
+              <input type="search" [value]="searchInput()" [placeholder]="'bea.searchPlaceholder' | transloco"
+                     [disabled]="!selectedFolderId()"
+                     (input)="searchInput.set($any($event.target).value)"
+                     (keydown.enter)="applySearch()" />
+              @if (search()) { <button type="button" class="clear" (click)="clearSearch()" aria-label="clear">✕</button> }
+            </div>
+            <select class="restrict" [disabled]="!selectedFolderId()"
+                    [value]="restrictionId()" (change)="changeRestriction($any($event.target).value)">
+              @for (r of restrictions; track r.id) { <option [value]="r.id">{{ r.labelKey | transloco }}</option> }
+            </select>
+          </div>
+        </header>
+        <div class="col-body">
+          @if (loginState() !== 'ok') {
+            <p class="muted pad">{{ 'bea.selectFolderHint' | transloco }}</p>
+          } @else if (!selectedFolderId()) {
+            <p class="muted pad">{{ 'bea.selectFolderHint' | transloco }}</p>
+          } @else if (messagesLoading()) {
+            <p class="muted pad">{{ 'bea.loading' | transloco }}</p>
+          } @else if (messagesError()) {
+            <p class="pad">
+              {{ 'bea.listError' | transloco }}
+              <button type="button" class="btn-retry" (click)="loadMessages()">{{ 'bea.retry' | transloco }}</button>
+            </p>
+          } @else if (!messages()?.length) {
+            <p class="muted pad">{{ 'bea.empty' | transloco }}</p>
+          } @else {
+            @for (m of messages()!; track m.id) {
+              <button type="button" class="msg" [class.unread]="!m.read" [class.sel]="m.id === selectedId()"
+                      (click)="selectMessage(m)">
+                @if (!m.read) { <span class="dot" aria-hidden="true"></span> }
+                <div class="msg-main">
+                  <div class="msg-top">
+                    <span class="msg-from">{{ m.sender || ('bea.noSender' | transloco) }}</span>
+                    <span class="msg-date">{{ formatDate(m.receptionTime || m.sentTime) }}</span>
+                  </div>
+                  <div class="msg-sub">
+                    @if (m.confidential) { <jl-icon name="shield" [size]="12" /> }
+                    @if (m.signed) { <jl-icon name="check" [size]="12" /> }
+                    <span class="msg-subject">{{ m.subject || ('bea.noSubject' | transloco) }}</span>
+                  </div>
+                  @if (m.referenceNumber || m.referenceJustice) {
+                    <div class="msg-refs">
+                      @if (m.referenceNumber) { <span>{{ 'bea.refSender' | transloco }}: {{ m.referenceNumber }}</span> }
+                      @if (m.referenceJustice) { <span>{{ 'bea.refCourt' | transloco }}: {{ m.referenceJustice }}</span> }
+                    </div>
+                  }
+                </div>
+              </button>
+            }
+          }
+        </div>
+      </section>
+
+      <!-- ---------- Right: reader ---------- -->
+      <section class="reader">
+        @if (selectedId()) {
+          <header class="col-head reader-head">
+            <button type="button" class="back" (click)="closeReader()">‹ {{ 'bea.back' | transloco }}</button>
+            <div class="reader-actions">
+              <button type="button" class="icon-btn" [disabled]="acting() || !message() || !sendableSafeId()" (click)="reply()"
+                      [title]="'beaCompose.reply' | transloco"><jl-icon name="reply" [size]="15" /></button>
+              <button type="button" class="icon-btn" [disabled]="acting() || !message() || !sendableSafeId()" (click)="forward()"
+                      [title]="'beaCompose.forward' | transloco"><jl-icon name="forward" [size]="15" /></button>
+              <button type="button" class="icon-btn" [disabled]="acting() || !message()" (click)="openSaveToCase(null)"
+                      [title]="'bulkSave.title' | transloco"><jl-icon name="inbox" [size]="15" /></button>
+              <button type="button" class="icon-btn" [disabled]="acting() || verifying()" (click)="verify()"
+                      [title]="'bea.verify' | transloco"><jl-icon name="shield" [size]="15" /></button>
+              <div class="menu-wrap">
+                <button type="button" class="icon-btn" [disabled]="acting() || !moveTargets().length"
+                        (click)="moveOpen.set(!moveOpen())" [title]="'bea.move' | transloco">
+                  <jl-icon name="cases" [size]="15" />
+                </button>
+                @if (moveOpen()) {
+                  <div class="menu" (mouseleave)="moveOpen.set(false)">
+                    @for (t of moveTargets(); track t.id) {
+                      <button type="button" class="menu-item" (click)="move(t)">{{ folderLabel(t) }}</button>
+                    }
+                  </div>
+                }
+              </div>
+              <button type="button" class="icon-btn danger" [disabled]="acting()" (click)="remove()"
+                      [title]="'bea.delete' | transloco">✕</button>
+            </div>
+          </header>
+          <div class="col-body reader-body">
+            @if (messageLoading()) {
+              <p class="muted pad">{{ 'bea.loadingMessage' | transloco }}</p>
+            } @else if (messageError()) {
+              <p class="pad">
+                {{ 'bea.messageError' | transloco }}
+                <button type="button" class="btn-retry" (click)="reloadMessage()">{{ 'bea.retry' | transloco }}</button>
+              </p>
+            } @else if (message()) {
+              @let msg = message()!;
+              <div class="headers">
+                <h3 class="subject">{{ msg.subject || ('bea.noSubject' | transloco) }}</h3>
+                <div class="badges">
+                  @if (msg.confidential) { <span class="badge warn">{{ 'bea.confidential' | transloco }}</span> }
+                  @if (msg.eebRequested) { <span class="badge accent">{{ 'bea.eebRequested' | transloco }}</span> }
+                  @if (statusBadge(); as sb) { <span class="badge" [class]="sb.cls">{{ sb.label | transloco }}</span> }
+                </div>
+                <dl class="hdr-grid">
+                  <dt>{{ 'bea.from' | transloco }}</dt><dd>{{ msg.senderName || msg.senderSafeId }}</dd>
+                  @if (msg.recipients.length) {
+                    <dt>{{ 'bea.to' | transloco }}</dt><dd>{{ recipientNames(msg) }}</dd>
+                  }
+                  <dt>{{ 'bea.date' | transloco }}</dt><dd>{{ formatDateTime(msg.receptionTime || msg.createdTime) }}</dd>
+                  @if (msg.referenceNumber) { <dt>{{ 'bea.refSender' | transloco }}</dt><dd>{{ msg.referenceNumber }}</dd> }
+                  @if (msg.referenceJustice) { <dt>{{ 'bea.refCourt' | transloco }}</dt><dd>{{ msg.referenceJustice }}</dd> }
+                </dl>
+              </div>
+
+              @if (msg.eebRequested) {
+                <div class="eeb-bar">
+                  <jl-icon name="bell" [size]="15" />
+                  <span class="eeb-bar-text">{{ 'beaEeb.requested' | transloco }}</span>
+                  <button type="button" class="eeb-confirm" [disabled]="acting()" (click)="openEeb('confirm')">
+                    <jl-icon name="check" [size]="14" /> {{ 'beaEeb.confirm' | transloco }}
+                  </button>
+                  <button type="button" class="eeb-reject" [disabled]="acting()" (click)="openEeb('reject')">
+                    <jl-icon name="close" [size]="14" /> {{ 'beaEeb.reject' | transloco }}
+                  </button>
+                </div>
+              }
+
+              @if (suggestions(); as sg) {
+                @if (sg.suggestedCases.length || sg.contacts.length) {
+                  <div class="suggest">
+                    @if (sg.suggestedCases.length) {
+                      <div class="suggest-group">
+                        <span class="suggest-label">{{ 'bea.suggest.cases' | transloco }}</span>
+                        <div class="suggest-items">
+                          @for (c of sg.suggestedCases; track c.id) {
+                            <span class="suggest-case">
+                              <a class="sc-open" [routerLink]="['/cases', c.id]" [title]="c.name" (click)="mobilePane.set('reader')">
+                                <jl-icon name="cases" [size]="13" />
+                                <span class="sc-fn">{{ c.fileNumber }}</span>
+                                <span class="sc-name">{{ c.name }}</span>
+                                @if (c.archived) { <span class="sc-arch">{{ 'bea.suggest.archived' | transloco }}</span> }
+                              </a>
+                              <button type="button" class="sc-save"
+                                      (click)="openSaveToCase({ id: c.id, fileNumber: c.fileNumber, name: c.name })"
+                                      [title]="'bulkSave.title' | transloco" [attr.aria-label]="'bulkSave.title' | transloco">
+                                <jl-icon name="inbox" [size]="13" />
+                              </button>
+                            </span>
+                          }
+                        </div>
+                      </div>
+                    }
+                    @if (sg.contacts.length) {
+                      <div class="suggest-group">
+                        <span class="suggest-label">{{ 'bea.suggest.contacts' | transloco }}</span>
+                        <div class="suggest-items">
+                          @for (ct of sg.contacts; track ct.id) {
+                            <a class="suggest-contact" [routerLink]="['/contacts', ct.id]" [title]="ct.displayName">
+                              <jl-icon name="contacts" [size]="12" />
+                              <span class="sc-name">{{ ct.displayName }}</span>
+                            </a>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              }
+
+              <div class="body">
+                @if (bodyUrl()) {
+                  <iframe class="body-frame" sandbox="allow-popups allow-popups-to-escape-sandbox"
+                          [src]="bodyUrl()" [title]="msg.subject"></iframe>
+                } @else if (bodyText()) {
+                  <pre class="body-text">{{ bodyText() }}</pre>
+                } @else {
+                  <p class="muted">{{ 'bea.noBody' | transloco }}</p>
+                }
+              </div>
+
+              @if (verifyUrl()) {
+                <div class="atts">
+                  <h4>{{ 'bea.verifyResult' | transloco }}</h4>
+                  <iframe class="verify-frame" sandbox="" [src]="verifyUrl()" title="verification"></iframe>
+                </div>
+              }
+
+              @if (documents().length) {
+                <div class="atts">
+                  <h4>{{ 'bea.documents' | transloco }} ({{ documents().length }})</h4>
+                  <ul>
+                    @for (a of documents(); track a.name) {
+                      <li class="att-row">
+                        <button type="button" class="att" [disabled]="viewingAtt() === a.name" (click)="view(a)"
+                                [title]="'bea.view' | transloco">
+                          <jl-icon name="eye" [size]="14" />
+                          <span class="att-name">{{ a.alias || a.name }}</span>
+                          <span class="att-size">{{ formatSize(a.size) }}</span>
+                        </button>
+                        <button type="button" class="att-dl" [disabled]="downloadingAtt() === a.name" (click)="download(a)"
+                                [title]="'bea.download' | transloco" [attr.aria-label]="'bea.download' | transloco">
+                          <jl-icon name="download" [size]="14" />
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                </div>
+              }
+
+              @if (technical().length) {
+                <div class="atts">
+                  <h4>{{ 'bea.technical' | transloco }} ({{ technical().length }})</h4>
+                  <ul>
+                    @for (a of technical(); track a.name) {
+                      <li class="att-row">
+                        <button type="button" class="att tech" [disabled]="viewingAtt() === a.name" (click)="view(a)"
+                                [title]="'bea.view' | transloco">
+                          <jl-icon name="eye" [size]="14" />
+                          <span class="att-name">{{ a.alias || a.name }}</span>
+                          <span class="att-size">{{ formatSize(a.size) }}</span>
+                        </button>
+                        <button type="button" class="att-dl tech" [disabled]="downloadingAtt() === a.name" (click)="download(a)"
+                                [title]="'bea.download' | transloco" [attr.aria-label]="'bea.download' | transloco">
+                          <jl-icon name="download" [size]="14" />
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                </div>
+              }
+
+              @if (attError()) { <p class="att-error">{{ attError() }}</p> }
+
+              @if (msg.journal.length) {
+                <div class="atts">
+                  <h4>{{ 'bea.journal' | transloco }} ({{ msg.journal.length }})</h4>
+                  <div class="rpt-scroll">
+                    <table class="jtable">
+                      <thead>
+                        <tr>
+                          <th>{{ 'bea.jEvent' | transloco }}</th>
+                          <th>{{ 'bea.jFrom' | transloco }}</th>
+                          <th>{{ 'bea.jWhen' | transloco }}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (j of msg.journal; track $index) {
+                          <tr>
+                            <td>{{ journalEvent(j.eventType) }}</td>
+                            <td>{{ j.fromSurnameFirstname || j.fromUsername }}</td>
+                            <td>{{ formatDateTime(j.timestamp) }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              }
+
+              @if (processCards().length) {
+                <div class="atts">
+                  <h4>{{ 'bea.processCards' | transloco }} ({{ processCards().length }})</h4>
+                  @for (pc of processCards(); track $index) {
+                    <div class="pcard">
+                      <div class="pcard-head">
+                        <span class="pcard-status" [class.ok]="pc.success" [class.bad]="!pc.success">
+                          <jl-icon [name]="pc.success ? 'check' : 'close'" [size]="12" />
+                          {{ (pc.success ? 'bea.pcSuccess' : 'bea.pcFailed') | transloco }}
+                        </span>
+                        @if (pc.osciMessage) {
+                          <button type="button" class="pcard-xml-btn" (click)="xmlView.set(pc.osciMessage)">
+                            <jl-icon name="file-text" [size]="12" /> {{ 'bea.pcShowXml' | transloco }}
+                          </button>
+                        }
+                      </div>
+                      @if (pc.entries.length) {
+                        <ul class="pcard-entries">
+                          @for (e of pc.entries; track $index) {
+                            <li><span class="pcard-code">{{ e.code }}</span>{{ e.text }}</li>
+                          }
+                        </ul>
+                      }
+                      @if (pc.exceptionMessage) { <p class="pcard-error">{{ pc.exceptionMessage }}</p> }
+                    </div>
+                  }
+                </div>
+              }
+            }
+          </div>
+        } @else {
+          <p class="empty reader-empty">{{ 'bea.selectMessageHint' | transloco }}</p>
+        }
+      </section>
+    </div>
+
+    @if (compose(); as c) {
+      <jl-bea-compose [senderSafeId]="sendableSafeId()!" [senderLabel]="senderLabel()" [mode]="c.mode" [seed]="c.seed"
+                      (sent)="onSent()" (draftSaved)="onDraftSaved()" (closed)="compose.set(null)" />
+    }
+
+    @if (saveOpen() && saveMessage() && selectedSafeId()) {
+      <jl-bea-bulk-save [safeId]="selectedSafeId()!" [message]="saveMessage()!" [suggestions]="suggestions()"
+                        [preselect]="savePreselect()"
+                        (saved)="onSavedToCase()" (closed)="saveOpen.set(false)" />
+    }
+
+    @if (eebMode(); as m) {
+      @if (message(); as msg) {
+        <jl-bea-eeb-dialog [safeId]="selectedSafeId()!" [messageId]="msg.id" [recipientSafeId]="msg.senderSafeId"
+                           [eebId]="msg.eebId" [mode]="m"
+                           (done)="onEebDone($event)" (closed)="eebMode.set(null)" />
+      }
+    }
+
+    @if (xmlView(); as xml) {
+      <div class="xmlv-backdrop" (click)="xmlView.set(null)"></div>
+      <div class="xmlv-dialog" role="dialog" aria-modal="true">
+        <header class="xmlv-head">
+          <h2>{{ 'bea.pcXmlTitle' | transloco }}</h2>
+          <button type="button" class="icon-btn" (click)="xmlView.set(null)" [attr.aria-label]="'bea.pcClose' | transloco">
+            <jl-icon name="close" [size]="18" />
+          </button>
+        </header>
+        <div class="xmlv-body"><pre>{{ xml }}</pre></div>
+        <footer class="xmlv-foot">
+          <button type="button" class="btn-ghost" (click)="copyXml(xml)">{{ (xmlCopied() ? 'bea.pcCopied' : 'bea.pcCopy') | transloco }}</button>
+          <button type="button" class="btn-ghost" (click)="xmlView.set(null)">{{ 'bea.pcClose' | transloco }}</button>
+        </footer>
+      </div>
+    }
+
+    @if (previewDoc(); as pd) {
+      <jl-document-preview [doc]="pd" [inlineContent]="previewContent()" (closed)="closePreview()" />
+    }
+  `,
+  styleUrl: './bea.component.css',
+})
+export class BeaComponent {
+  private readonly api = inject(BeaService);
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly transloco = inject(TranslocoService);
+
+  protected readonly restrictions = BEA_RESTRICTIONS;
+
+  // beA session (login state, postboxes, folders) is cached in the service and survives view
+  // open/close; the component derives the folder tree. Only the message list is component-local.
+  protected readonly loginState = this.api.sessionState;
+  protected readonly postboxes = this.api.postboxes;
+
+  protected readonly selectedSafeId = signal<string | null>(null);
+  protected readonly selectedFolderId = signal<number | null>(null);
+
+  // Phone drill-down: which single pane is visible (folder tree → list → reader). Ignored on
+  // wider viewports where the panes sit side by side.
+  protected readonly mobilePane = signal<'folders' | 'list' | 'reader'>('folders');
+
+  protected readonly messages = signal<BeaMessageHeader[] | null>(null);
+  protected readonly messagesLoading = signal(false);
+  protected readonly messagesError = signal(false);
+  protected readonly restrictionId = signal<string>(BEA_RESTRICTIONS[0].id);
+  protected readonly searchInput = signal('');
+  protected readonly search = signal('');
+
+  protected readonly selectedId = signal<string | null>(null);
+  protected readonly message = signal<BeaMessage | null>(null);
+  protected readonly messageLoading = signal(false);
+  protected readonly messageError = signal(false);
+  protected readonly bodyUrl = signal<SafeResourceUrl | null>(null);
+  protected readonly bodyText = signal('');
+  protected readonly verifyUrl = signal<SafeResourceUrl | null>(null);
+  protected readonly verifying = signal(false);
+  protected readonly acting = signal(false);
+  protected readonly moveOpen = signal(false);
+  protected readonly downloadingAtt = signal<string | null>(null);
+  /** The attachment currently being fetched for preview (by name), for the button spinner/disable state. */
+  protected readonly viewingAtt = signal<string | null>(null);
+  /** Attachment being previewed in the overlay, plus its already-fetched Base64 bytes; null when closed. */
+  protected readonly previewDoc = signal<PreviewDoc | null>(null);
+  protected readonly previewContent = signal<string | null>(null);
+  /** Transient error shown under the attachment lists when a view/download fails. */
+  protected readonly attError = signal<string | null>(null);
+
+  /** Composer state (new/reply/forward), or null when closed. `seed` is the original for reply/forward. */
+  protected readonly compose = signal<{ mode: BeaComposeMode; seed: BeaMessage | null } | null>(null);
+  /** Whether the save-to-case dialog is open, plus an optional case preselected from a suggestion chip. */
+  protected readonly saveOpen = signal(false);
+  protected readonly savePreselect = signal<TargetCase | null>(null);
+  /** The message the save-to-case dialog operates on (the opened message, or a sent eEB response). */
+  protected readonly saveMessage = signal<BeaMessage | null>(null);
+  /** Process cards (Laufzettel) for the opened message; loaded lazily. */
+  protected readonly processCards = signal<BeaProcessCard[]>([]);
+  /** The OSCI XML currently shown in the modal viewer, or null when closed (it can be very long). */
+  protected readonly xmlView = signal<string | null>(null);
+  protected readonly xmlCopied = signal(false);
+  /** Server-computed case/contact suggestions for the opened message. */
+  protected readonly suggestions = signal<CaseSuggestions | null>(null);
+  /** Open eEB reply dialog mode ('confirm' | 'reject'), or null when closed. */
+  protected readonly eebMode = signal<EebMode | null>(null);
+
+  /** The Safe-ID to send from: the selected postbox, else the first available one. */
+  protected readonly sendableSafeId = computed<string | null>(() =>
+    this.selectedSafeId() ?? this.postboxes()[0]?.safeId ?? null);
+  /** Readable label of the postbox we send from. */
+  protected readonly senderLabel = computed<string>(() => {
+    const sid = this.sendableSafeId();
+    return this.postboxes().find((p) => p.safeId === sid)?.label ?? '';
+  });
+
+  private msgSeq = 0;
+  private bodyBlobUrl: string | null = null;
+  private verifyBlobUrl: string | null = null;
+
+  /** Folder trees derived from the cached (flat) folder lists — one per postbox, in order. */
+  private readonly folderTrees = computed<PostboxFolders[]>(() => {
+    const raw = this.api.folders();
+    return this.postboxes().map((pb) => ({ postbox: pb, nodes: buildTree(raw[pb.safeId] ?? []) }));
+  });
+
+  protected readonly navRows = computed<NavRow[]>(() => {
+    const rows: NavRow[] = [];
+    for (const pf of this.folderTrees()) {
+      rows.push({ kind: 'postbox', postbox: pf.postbox });
+      flatten(pf.nodes, (f) => rows.push({ kind: 'folder', safeId: pf.postbox.safeId, folder: f }));
+    }
+    return rows;
+  });
+
+  protected readonly selectedFolder = computed<BeaFolderNode | null>(() => {
+    const sid = this.selectedSafeId(); const fid = this.selectedFolderId();
+    if (!sid || fid == null) { return null; }
+    const pf = this.folderTrees().find((x) => x.postbox.safeId === sid);
+    return pf ? findFolder(pf.nodes, fid) : null;
+  });
+
+  protected readonly moveTargets = computed<BeaFolderNode[]>(() => {
+    const sid = this.selectedSafeId(); const fid = this.selectedFolderId();
+    const pf = this.folderTrees().find((x) => x.postbox.safeId === sid);
+    if (!pf) { return []; }
+    const flat: BeaFolderNode[] = [];
+    flatten(pf.nodes, (f) => flat.push(f));
+    return flat.filter((f) => f.id !== fid);
+  });
+
+  /** Real documents (non-technical attachments). */
+  protected readonly documents = computed(() => (this.message()?.attachments ?? []).filter((a) => !a.technicalAttachment));
+  /** Technical attachments + VHN (signatures, structured data). */
+  protected readonly technical = computed(() => [
+    ...(this.message()?.attachments ?? []).filter((a) => a.technicalAttachment),
+    ...(this.message()?.vhnAttachments ?? []),
+  ]);
+
+  /** Signature-verification badge derived from the message's verificationStatus. */
+  protected readonly statusBadge = computed<{ label: string; cls: string } | null>(() => {
+    const s = (this.message()?.verificationStatus ?? '').toUpperCase();
+    if (!s) { return null; }
+    if (s.includes('SUCCESS')) { return { label: 'bea.sigSuccess', cls: 'ok' }; }
+    if (s.includes('PARTIAL')) { return { label: 'bea.sigPartial', cls: 'warn' }; }
+    if (s.includes('FAIL')) { return { label: 'bea.sigFailed', cls: 'bad' }; }
+    return null;
+  });
+
+  private autoSelected = false;
+
+  constructor() {
+    // Establish the session only if not already cached; the effect opens the first inbox as soon
+    // as the (cached or freshly fetched) tree is available — once per component instance.
+    this.api.ensureSession();
+    effect(() => {
+      const trees = this.folderTrees();
+      if (!this.autoSelected && trees.length && this.selectedFolderId() == null) {
+        this.autoSelected = true;
+        this.autoSelectInbox();
+      }
+    });
+    inject(DestroyRef).onDestroy(() => { this.revokeBody(); this.revokeVerify(); });
+  }
+
+  /** Re-establishes the beA session (used by the error-state retry). */
+  protected connect(): void {
+    this.api.ensureSession(true);
+  }
+
+  private autoSelectInbox(): void {
+    if (this.selectedFolderId() != null) { return; }
+    for (const pf of this.folderTrees()) {
+      const inbox = firstMatch(pf.nodes, (f) => f.type === 'INBOX') ?? pf.nodes[0];
+      if (inbox) { this.selectFolder(pf.postbox.safeId, inbox); return; }
+    }
+  }
+
+  protected selectFolder(safeId: string, folder: BeaFolderNode): void {
+    this.selectedSafeId.set(safeId);
+    this.selectedFolderId.set(folder.id);
+    this.search.set('');
+    this.searchInput.set('');
+    this.closeReader();
+    this.mobilePane.set('list');
+    this.loadMessages();
+  }
+
+  protected loadMessages(): void {
+    const sid = this.selectedSafeId(); const fid = this.selectedFolderId();
+    if (!sid || fid == null) { return; }
+    this.messagesLoading.set(true);
+    this.messagesError.set(false);
+    this.api.searchMessages(sid, fid, this.currentRestriction(), this.search() || undefined).subscribe({
+      next: (rows) => { this.messages.set(rows); this.messagesLoading.set(false); },
+      error: () => { this.messagesError.set(true); this.messagesLoading.set(false); },
+    });
+  }
+
+  protected changeRestriction(id: string): void { this.restrictionId.set(id); this.loadMessages(); }
+  protected applySearch(): void { this.search.set(this.searchInput().trim()); this.loadMessages(); }
+  protected clearSearch(): void { this.search.set(''); this.searchInput.set(''); this.loadMessages(); }
+
+  protected selectMessage(m: BeaMessageHeader): void {
+    this.selectedId.set(m.id);
+    this.mobilePane.set('reader');
+    this.reloadMessage();
+    if (!m.read) {
+      this.patchMessage(m.id, { read: true });
+      this.bumpUnread(-1);
+      this.api.markRead(this.selectedSafeId()!, m.id).subscribe({ error: () => {} });
+    }
+  }
+
+  protected reloadMessage(): void {
+    const sid = this.selectedSafeId(); const id = this.selectedId();
+    if (!sid || !id) { return; }
+    const seq = ++this.msgSeq;
+    this.messageLoading.set(true);
+    this.messageError.set(false);
+    this.message.set(null);
+    this.attError.set(null);
+    this.closePreview();
+    this.resetBody();
+    this.api.getMessage(sid, id, true).subscribe({
+      next: (msg) => {
+        if (seq !== this.msgSeq) { return; }
+        this.message.set(msg);
+        this.renderBody(msg);
+        this.loadSuggestions(msg, seq);
+        this.loadProcessCards(sid, id, seq);
+        this.messageLoading.set(false);
+      },
+      error: () => {
+        if (seq !== this.msgSeq) { return; }
+        this.messageError.set(true);
+        this.messageLoading.set(false);
+      },
+    });
+  }
+
+  /** Renders the body: HTML in a sandboxed blob iframe (no remote loads), plain text in a <pre>. */
+  private renderBody(msg: BeaMessage): void {
+    const body = msg.body ?? '';
+    if (!/<[a-z!][\s\S]*>/i.test(body)) {
+      this.bodyText.set(body);
+      return;
+    }
+    this.bodyBlobUrl = URL.createObjectURL(new Blob([sandboxDoc(body)], { type: 'text/html' }));
+    this.bodyUrl.set(trustBlobResourceUrl(this.sanitizer, this.bodyBlobUrl));
+  }
+
+  protected verify(): void {
+    const sid = this.selectedSafeId(); const id = this.selectedId();
+    if (!sid || !id) { return; }
+    this.verifying.set(true);
+    this.api.verify(sid, id).subscribe({
+      next: (res) => {
+        this.message.update((m) => (m ? { ...m, verificationStatus: res.status } : m));
+        this.revokeVerify();
+        if (res.html) {
+          this.verifyBlobUrl = URL.createObjectURL(new Blob([sandboxDoc(res.html)], { type: 'text/html' }));
+          this.verifyUrl.set(trustBlobResourceUrl(this.sanitizer, this.verifyBlobUrl));
+        }
+        this.verifying.set(false);
+      },
+      error: () => this.verifying.set(false),
+    });
+  }
+
+  protected move(target: BeaFolderNode): void {
+    const sid = this.selectedSafeId(); const id = this.selectedId();
+    if (!sid || !id) { return; }
+    this.moveOpen.set(false);
+    this.acting.set(true);
+    this.api.moveMessage(sid, id, target.id).subscribe({
+      next: () => { this.acting.set(false); this.removeFromList(id); this.closeReader(); },
+      error: () => this.acting.set(false),
+    });
+  }
+
+  protected remove(): void {
+    const sid = this.selectedSafeId(); const id = this.selectedId();
+    if (!sid || !id) { return; }
+    this.acting.set(true);
+    this.api.deleteMessage(sid, id).subscribe({
+      next: () => { this.acting.set(false); this.removeFromList(id); this.closeReader(); },
+      error: () => this.acting.set(false),
+    });
+  }
+
+  /** Downloads an attachment, fetching its bytes on demand when the message carried only metadata. */
+  protected download(a: BeaAttachment): void {
+    const sid = this.selectedSafeId(); const id = this.selectedId();
+    if (!sid || !id) { return; }
+    this.attError.set(null);
+    if (a.content) {
+      triggerDownload(bytesBlob(a.content), a.alias || a.name);
+      return;
+    }
+    this.downloadingAtt.set(a.name);
+    this.api.getAttachment(sid, id, a.name).subscribe({
+      next: (full) => {
+        this.downloadingAtt.set(null);
+        if (full.content) {
+          triggerDownload(bytesBlob(full.content), full.alias || full.name || a.name);
+        } else {
+          this.attError.set(this.transloco.translate('bea.attError', { name: a.alias || a.name }));
+        }
+      },
+      error: () => {
+        this.downloadingAtt.set(null);
+        this.attError.set(this.transloco.translate('bea.attError', { name: a.alias || a.name }));
+      },
+    });
+  }
+
+  /** Opens an attachment in the preview overlay, fetching its bytes on demand if not already inline. */
+  protected view(a: BeaAttachment): void {
+    const sid = this.selectedSafeId(); const id = this.selectedId();
+    if (!sid || !id) { return; }
+    this.attError.set(null);
+    const name = a.alias || a.name;
+    const open = (content: string) => {
+      this.previewContent.set(content);
+      this.previewDoc.set({ id: a.name, name, ext: extOf(name) });
+      this.viewingAtt.set(null);
+    };
+    if (a.content) { open(a.content); return; }
+    this.viewingAtt.set(a.name);
+    this.api.getAttachment(sid, id, a.name).subscribe({
+      next: (full) => {
+        if (full.content) {
+          open(full.content);
+        } else {
+          this.viewingAtt.set(null);
+          this.attError.set(this.transloco.translate('bea.attError', { name }));
+        }
+      },
+      error: () => {
+        this.viewingAtt.set(null);
+        this.attError.set(this.transloco.translate('bea.attError', { name }));
+      },
+    });
+  }
+
+  protected closePreview(): void {
+    this.previewDoc.set(null);
+    this.previewContent.set(null);
+  }
+
+  protected refresh(): void {
+    this.api.ensureSession(true);
+    if (this.selectedFolderId() != null) { this.loadMessages(); }
+  }
+
+  protected closeReader(): void {
+    this.msgSeq++;
+    this.selectedId.set(null);
+    this.message.set(null);
+    this.suggestions.set(null);
+    this.processCards.set([]);
+    this.xmlView.set(null);
+    this.closePreview();
+    this.attError.set(null);
+    this.saveOpen.set(false);
+    this.savePreselect.set(null);
+    this.saveMessage.set(null);
+    this.eebMode.set(null);
+    this.moveOpen.set(false);
+    this.mobilePane.set('list');
+    this.resetBody();
+  }
+
+  // ----- compose / save-to-case / suggestions -----
+
+  /** Lazily fetches server-side case suggestions for the opened message (best-effort). */
+  private loadSuggestions(msg: BeaMessage, seq: number): void {
+    this.suggestions.set(null);
+    this.api.caseSuggestions({
+      subject: msg.subject,
+      body: msg.body,
+      referenceNumber: msg.referenceNumber,
+      referenceJustice: msg.referenceJustice,
+      senderName: msg.senderName,
+    }).subscribe({
+      next: (sg) => { if (seq === this.msgSeq) { this.suggestions.set(sg); } },
+      error: () => { /* suggestions are best-effort */ },
+    });
+  }
+
+  /** Lazily fetches the message's process cards (Laufzettel), best-effort. */
+  private loadProcessCards(safeId: string, messageId: string, seq: number): void {
+    this.processCards.set([]);
+    this.api.getProcessCards(safeId, messageId).subscribe({
+      next: (cards) => { if (seq === this.msgSeq) { this.processCards.set(cards); } },
+      error: () => { /* best-effort */ },
+    });
+  }
+
+  /** Copies the OSCI XML shown in the modal to the clipboard (best-effort). */
+  protected copyXml(xml: string): void {
+    navigator.clipboard?.writeText(xml).then(
+      () => { this.xmlCopied.set(true); setTimeout(() => this.xmlCopied.set(false), 2000); },
+      () => { /* clipboard unavailable */ },
+    );
+  }
+
+  protected composeNew(): void {
+    if (!this.sendableSafeId()) { return; }
+    this.compose.set({ mode: 'new', seed: null });
+  }
+
+  protected reply(): void { this.openCompose('reply'); }
+  protected forward(): void { this.openCompose('forward'); }
+
+  private openCompose(mode: BeaComposeMode): void {
+    const msg = this.message();
+    if (!msg || !this.sendableSafeId()) { return; }
+    this.compose.set({ mode, seed: msg });
+  }
+
+  /** Called after a message is sent: close the composer and refresh the list. */
+  protected onSent(): void {
+    this.compose.set(null);
+    this.loadMessages();
+  }
+
+  /** Called after a draft is saved: close the composer and refresh (the draft appears in Drafts). */
+  protected onDraftSaved(): void {
+    this.compose.set(null);
+    this.loadMessages();
+  }
+
+  /** Opens the save-to-case dialog for the opened message, optionally with a case preselected. */
+  protected openSaveToCase(preselect: TargetCase | null): void {
+    const msg = this.message();
+    if (!msg) { return; }
+    this.saveMessage.set(msg);
+    this.savePreselect.set(preselect);
+    this.saveOpen.set(true);
+  }
+
+  /** The save dialog stays open to offer a calendar entry; it closes itself via (closed). */
+  protected onSavedToCase(): void {
+    // nothing to refresh on the beA side
+  }
+
+  /** Opens the eEB reply dialog (confirm/reject) for the opened message. */
+  protected openEeb(mode: EebMode): void {
+    if (!this.message() || !this.selectedSafeId()) { return; }
+    this.eebMode.set(mode);
+  }
+
+  /**
+   * After an eEB reply is sent: clear the request flag, close the eEB dialog, and offer to save the
+   * sent eEB response (.bea) to a case — mirroring the desktop's saveEebResponse.
+   */
+  protected onEebDone(sent: BeaMessage): void {
+    this.eebMode.set(null);
+    this.message.update((m) => (m ? { ...m, eebRequested: false } : m));
+    this.saveMessage.set(sent);
+    this.savePreselect.set(null);
+    this.saveOpen.set(true);
+  }
+
+  // ----- helpers -----
+
+  protected rowKey(row: NavRow): string {
+    return row.kind === 'postbox' ? `p:${row.postbox.safeId}` : `f:${row.safeId}:${row.folder.id}`;
+  }
+
+  protected folderLabel(f: BeaFolder): string {
+    const key = folderTypeKey(f.type);
+    return key ? this.transloco.translate(key) : f.name;
+  }
+
+  protected recipientNames(msg: BeaMessage): string {
+    return msg.recipients.map((r) => r.name || r.safeId).filter(Boolean).join(', ');
+  }
+
+  /**
+   * Human-readable journal event name, mirroring the desktop client's
+   * BeaJournalEventTypes.getDisplayName: a localized name for the known event types, else a
+   * generic fallback (drop the MESSAGE_ prefix, underscores → spaces, capitalize).
+   */
+  protected journalEvent(eventType: string): string {
+    if (!eventType) { return ''; }
+    const key = `bea.event.${eventType.toUpperCase()}`;
+    const translated = this.transloco.translate(key);
+    if (translated && translated !== key) { return translated; }
+    let r = eventType;
+    if (r.toUpperCase().startsWith('MESSAGE_')) { r = r.substring(8); }
+    r = r.replace(/_/g, ' ').toLowerCase().trim();
+    return r ? r.charAt(0).toUpperCase() + r.slice(1) : '';
+  }
+
+  private currentRestriction(): BeaRestriction {
+    return this.restrictions.find((r) => r.id === this.restrictionId()) ?? this.restrictions[0];
+  }
+
+  private patchMessage(id: string, patch: Partial<BeaMessageHeader>): void {
+    this.messages.update((list) => list?.map((m) => (m.id === id ? { ...m, ...patch } : m)) ?? list);
+  }
+
+  private removeFromList(id: string): void {
+    this.messages.update((list) => list?.filter((m) => m.id !== id) ?? list);
+  }
+
+  private bumpUnread(delta: number): void {
+    const sid = this.selectedSafeId(); const fid = this.selectedFolderId();
+    if (!sid || fid == null) { return; }
+    this.api.adjustUnread(sid, fid, delta);
+  }
+
+  protected formatDate(iso: string | null): string {
+    if (!iso) { return ''; }
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) { return ''; }
+    const sameDay = d.toDateString() === new Date().toDateString();
+    return new Intl.DateTimeFormat(this.transloco.getActiveLang(), sameDay
+      ? { hour: '2-digit', minute: '2-digit' }
+      : { day: '2-digit', month: '2-digit', year: '2-digit' }).format(d);
+  }
+
+  protected formatDateTime(iso: string | null): string {
+    if (!iso) { return ''; }
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) { return ''; }
+    return new Intl.DateTimeFormat(this.transloco.getActiveLang(), { dateStyle: 'medium', timeStyle: 'short' }).format(d);
+  }
+
+  protected formatSize(bytes: number): string {
+    if (!bytes) { return ''; }
+    if (bytes < 1024) { return `${bytes} B`; }
+    if (bytes < 1024 * 1024) { return `${Math.round(bytes / 1024)} KB`; }
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  private resetBody(): void {
+    this.revokeBody();
+    this.revokeVerify();
+    this.bodyUrl.set(null);
+    this.bodyText.set('');
+    this.verifyUrl.set(null);
+  }
+
+  private revokeBody(): void {
+    if (this.bodyBlobUrl) { URL.revokeObjectURL(this.bodyBlobUrl); this.bodyBlobUrl = null; }
+  }
+
+  private revokeVerify(): void {
+    if (this.verifyBlobUrl) { URL.revokeObjectURL(this.verifyBlobUrl); this.verifyBlobUrl = null; }
+  }
+}
+
+// ---------- module-scope helpers ----------
+
+function buildTree(flat: BeaFolder[]): BeaFolderNode[] {
+  const byId = new Map<number, BeaFolderNode>();
+  for (const f of flat) {
+    byId.set(f.id, { ...f, children: [], depth: 0 });
+  }
+  const roots: BeaFolderNode[] = [];
+  for (const node of byId.values()) {
+    const parent = node.parentId ? byId.get(node.parentId) : undefined;
+    if (parent) { parent.children.push(node); } else { roots.push(node); }
+  }
+  const sortRec = (nodes: BeaFolderNode[], depth: number) => {
+    nodes.sort((a, b) => beaFolderOrder(a.type) - beaFolderOrder(b.type) || a.name.localeCompare(b.name));
+    for (const n of nodes) { n.depth = depth; sortRec(n.children, depth + 1); }
+  };
+  sortRec(roots, 0);
+  return roots;
+}
+
+function flatten(nodes: BeaFolderNode[], visit: (n: BeaFolderNode) => void): void {
+  for (const n of nodes) { visit(n); flatten(n.children, visit); }
+}
+
+function findFolder(nodes: BeaFolderNode[], id: number): BeaFolderNode | null {
+  for (const n of nodes) {
+    if (n.id === id) { return n; }
+    const found = findFolder(n.children, id);
+    if (found) { return found; }
+  }
+  return null;
+}
+
+function firstMatch(nodes: BeaFolderNode[], pred: (n: BeaFolderNode) => boolean): BeaFolderNode | null {
+  for (const n of nodes) {
+    if (pred(n)) { return n; }
+    const found = firstMatch(n.children, pred);
+    if (found) { return found; }
+  }
+  return null;
+}
+
+/** i18n key for a well-known folder type, or '' to fall back to the server-provided name. */
+function folderTypeKey(type: string): string {
+  switch (type) {
+    case 'INBOX': return 'bea.folder.inbox';
+    case 'SENT': return 'bea.folder.sent';
+    case 'DRAFT': return 'bea.folder.drafts';
+    case 'OUTBOX': return 'bea.folder.outbox';
+    case 'TRASH': return 'bea.folder.trash';
+    default: return '';
+  }
+}
+
+/** Wraps untrusted HTML in a strict-CSP, script-disabled document for a sandboxed blob iframe. */
+function sandboxDoc(html: string): string {
+  return '<!doctype html><html><head><meta charset="utf-8">' +
+    '<meta http-equiv="Content-Security-Policy" ' +
+    `content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; font-src data:">` +
+    '<base target="_blank">' +
+    '<style>html,body{margin:0;padding:12px;font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;' +
+    'color:#16232e;word-break:break-word;} img{max-width:100%;height:auto;} a{color:#0b5cad;} table{border-collapse:collapse;}' +
+    'td,th{border:1px solid #ccc;padding:4px 8px;}</style>' +
+    `</head><body>${html}</body></html>`;
+}
+
+/** Upper-case file extension of a name (empty when it has none), for preview-kind detection. */
+function extOf(name: string): string {
+  const dot = name.lastIndexOf('.');
+  return dot > 0 && dot < name.length - 1 ? name.slice(dot + 1).toUpperCase() : '';
+}
+
+function bytesBlob(base64: string): Blob {
+  return new Blob([base64ToBytes(base64.replace(/\s/g, ''))], { type: 'application/octet-stream' });
+}
+
+function triggerDownload(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename || 'download';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}

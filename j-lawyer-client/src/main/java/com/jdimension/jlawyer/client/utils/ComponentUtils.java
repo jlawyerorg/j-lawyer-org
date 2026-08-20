@@ -695,6 +695,7 @@ import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.JTree;
@@ -719,6 +720,62 @@ import themes.colors.DefaultColorTheme;
 public class ComponentUtils {
 
     private static final Logger log = Logger.getLogger(ComponentUtils.class.getName());
+
+    private static final String TAB_BASE_TITLE = "jlawyer.tabBaseTitle";
+
+    /**
+     * Returns the logical title of a tab, i.e. the title without any count
+     * suffix added by setTabTitleWithCount. For tabs that never got a count
+     * suffix, the current title is returned.
+     */
+    public static String getTabBaseTitle(JTabbedPane pane, int index) {
+        Component c = pane.getComponentAt(index);
+        if (c instanceof JComponent) {
+            Object baseTitle = ((JComponent) c).getClientProperty(TAB_BASE_TITLE);
+            if (baseTitle instanceof String) {
+                return (String) baseTitle;
+            }
+        }
+        return pane.getTitleAt(index);
+    }
+
+    /**
+     * Returns the index of the tab with the given logical title, or -1 if there
+     * is no such tab. Use this instead of comparing against getTitleAt when
+     * tabs may carry a count suffix.
+     */
+    public static int indexOfTabByBaseTitle(JTabbedPane pane, String baseTitle) {
+        for (int i = 0; i < pane.getTabCount(); i++) {
+            String title = getTabBaseTitle(pane, i);
+            if (title != null && title.equals(baseTitle)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Remembers the given logical title for a tab so that later calls to
+     * getTabBaseTitle and indexOfTabByBaseTitle keep working once a count
+     * suffix is applied.
+     */
+    public static void setTabBaseTitle(JTabbedPane pane, int index, String baseTitle) {
+        Component c = pane.getComponentAt(index);
+        if (c instanceof JComponent) {
+            ((JComponent) c).putClientProperty(TAB_BASE_TITLE, baseTitle);
+        }
+    }
+
+    /**
+     * Sets the tab title to its logical title followed by the given element
+     * count, e.g. "Frist (7)". The logical title is preserved, so calling this
+     * repeatedly does not stack suffixes.
+     */
+    public static void setTabTitleWithCount(JTabbedPane pane, int index, int count) {
+        String baseTitle = getTabBaseTitle(pane, index);
+        setTabBaseTitle(pane, index, baseTitle);
+        pane.setTitleAt(index, baseTitle + " (" + count + ")");
+    }
 
     public static void expandTree(JTree tree) {
 

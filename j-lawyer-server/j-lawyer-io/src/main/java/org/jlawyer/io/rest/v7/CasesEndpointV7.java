@@ -662,9 +662,16 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
 package org.jlawyer.io.rest.v7;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
+import com.jdimension.jlawyer.documents.CommonTemplatesUtil;
+import com.jdimension.jlawyer.documents.ServerTemplatesUtil;
+import com.jdimension.jlawyer.server.utils.ServerFileUtils;
+import com.jdimension.jlawyer.services.FormsServiceLocal;
+import com.jdimension.jlawyer.services.SystemManagementLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
@@ -714,6 +721,8 @@ import org.jlawyer.io.rest.v1.pojo.RestfulCaseV2;
 import org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1;
 import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
 import org.jlawyer.io.rest.v7.pojo.RestfulCaseAccountEntryV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulDocumentNameRequestV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulDocumentNameV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulDocumentValidationRequestV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulInstantMessageV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceDuplicateRequestV7;
@@ -744,6 +753,8 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     private static final String LOOKUP_INVOICE_POSITION_FACADE = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoicePositionFacade!com.jdimension.jlawyer.persistence.InvoicePositionFacadeLocal";
     private static final String LOOKUP_ADDRESSES = "java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal";
     private static final String LOOKUP_ACCOUNT_ENTRIES = "java:global/j-lawyer-server/j-lawyer-server-ejb/CaseAccountEntryFacade!com.jdimension.jlawyer.persistence.CaseAccountEntryFacadeLocal";
+    private static final String LOOKUP_SYSMAN = "java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal";
+    private static final String LOOKUP_FORMSSVC = "java:global/j-lawyer-server/j-lawyer-server-ejb/FormsService!com.jdimension.jlawyer.services.FormsServiceLocal";
 
     /**
      * Checks whether or not a document (as specified in the request) may
@@ -814,7 +825,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(response).build();
         } catch (Exception ex) {
             log.error("can not get document " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -855,7 +866,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(msgList).build();
         } catch (Exception ex) {
             log.error("can not get message for case " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -895,7 +906,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(invoiceList).build();
         } catch (Exception ex) {
             log.error("can not get invoices for case " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
     
@@ -937,7 +948,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(positionList).build();
         } catch (Exception ex) {
             log.error("can not get invoice positions for invoice " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
     
@@ -1043,7 +1054,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(RestfulInvoiceV7.fromInvoice(updatedInvoice)).build();
         } catch (Exception ex) {
             log.error("can not create invoice for case " + invoice.getCaseId(), ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1153,7 +1164,9 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
                 invoiceToUpdate.setDescription(invoice.getDescription());
                 invoiceToUpdate.setCreationDate(invoice.getCreationDate());
                 invoiceToUpdate.setDueDate(invoice.getDueDate());
-                invoiceToUpdate.setInvoiceNumber(invoice.getInvoiceNumber());
+                // Preserve the server-generated invoice number: on a pool-unchanged update the number
+                // is immutable, and the request DTO does not carry it (would otherwise be nulled out).
+                invoiceToUpdate.setInvoiceNumber(existingInvoice.getInvoiceNumber());
                 invoiceToUpdate.setName(invoice.getName());
                 invoiceToUpdate.setPeriodFrom(invoice.getPeriodFrom());
                 invoiceToUpdate.setPeriodTo(invoice.getPeriodTo());
@@ -1172,7 +1185,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
 
         } catch (Exception ex) {
             log.error("Cannot update invoice " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1219,7 +1232,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(RestfulInvoicePositionV7.fromInvoicePosition(createdPosition)).build();
         } catch (Exception ex) {
             log.error("can not create invoice position for invoice " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1457,7 +1470,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
 
         } catch (Exception ex) {
             log.error("Error duplicating invoice", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1490,7 +1503,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(invList).build();
         } catch (Exception ex) {
             log.error("can not get open invoices", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1523,7 +1536,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             }
         } catch (Exception ex) {
             log.error("can not get case by external id " + extId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     }
@@ -1571,7 +1584,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(rcoList).build();
         } catch (Exception ex) {
             log.error("Can not list cases with tag " + tag, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     }
@@ -1620,7 +1633,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(rcoList).build();
         } catch (Exception ex) {
             log.error("Can not list cases with reference " + reference, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     }
@@ -1686,7 +1699,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(rcoList).build();
         } catch (Exception ex) {
             log.error("Can not search cases with searchString: " + searchString, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     }
@@ -1726,7 +1739,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(d).build();
         } catch (Exception ex) {
             log.error("can not get document for external id " + extId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
 
     }
@@ -1767,7 +1780,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(docList).build();
         } catch (Exception ex) {
             log.error("can not get documents by tag " + tag, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1806,7 +1819,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(response).build();
         } catch (Exception ex) {
             log.error("can not load recycle bin contents", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1920,7 +1933,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not create history entry " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
     
@@ -1953,7 +1966,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not create history entry " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1991,7 +2004,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(entryList).build();
         } catch (Exception ex) {
             log.error("can not get account entries for case " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2061,7 +2074,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(RestfulCaseAccountEntryV7.fromCaseAccountEntry(createdEntry)).build();
         } catch (Exception ex) {
             log.error("can not create account entry for case " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2092,7 +2105,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(RestfulCaseAccountEntryV7.fromCaseAccountEntry(found)).build();
         } catch (Exception ex) {
             log.error("can not get account entry " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2161,7 +2174,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(RestfulCaseAccountEntryV7.fromCaseAccountEntry(found)).build();
         } catch (Exception ex) {
             log.error("can not update account entry " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2194,7 +2207,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete account entry " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -2232,7 +2245,93 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not get timesheets for case " + id, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Computes a document file name for a case by applying a document name
+     * template (Benennungsschema). The template's placeholders are resolved
+     * against the case, the resulting name is sanitized and the extension of the
+     * given source file name is preserved. This mirrors the desktop client's
+     * "bulk save" file naming, but entirely server-side.
+     *
+     * @param id case ID
+     * @param request the source file name, document date (epoch ms) and the id
+     * of the template to apply (empty/null uses the default template)
+     * @return the computed document file name
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 There is no case with the given id
+     */
+    @Override
+    @POST
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/document-name")
+    @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Computes a document file name for a case by applying a document name template (Benennungsschema).", response = RestfulDocumentNameV7.class)
+    public Response computeDocumentName(@PathParam("id") String id, @io.swagger.annotations.ApiParam RestfulDocumentNameRequestV7 request) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            FormsServiceLocal forms = (FormsServiceLocal) ic.lookup(LOOKUP_FORMSSVC);
+
+            ArchiveFileBean afb = cases.getArchiveFile(id);
+            if (afb == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("There is no case with id " + id).build();
+            }
+
+            String fileName = request == null ? null : request.getFileName();
+            if (ServerStringUtils.isEmpty(fileName)) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("A non-empty file name is required.").build();
+            }
+
+            Date date = (request != null && request.getDate() > 0L) ? new Date(request.getDate()) : new Date();
+
+            // resolve the requested template (or the default when none is given)
+            DocumentNameTemplate template = null;
+            String templateId = request == null ? null : request.getTemplate();
+            if (!ServerStringUtils.isEmpty(templateId)) {
+                for (DocumentNameTemplate t : system.getDocumentNameTemplates()) {
+                    if (templateId.equals(t.getId())) {
+                        template = t;
+                        break;
+                    }
+                }
+            }
+            if (template == null) {
+                template = system.getDefaultDocumentNameTemplate();
+            }
+            if (template == null) {
+                // no templates configured at all - return the sanitized original name
+                return Response.ok(new RestfulDocumentNameV7(ServerFileUtils.sanitizeFileName(fileName))).build();
+            }
+
+            String extension = ServerFileUtils.getExtension(fileName);
+            String docName = cases.getNewDocumentName(fileName, date, template);
+
+            List<ArchiveFileAddressesBean> involved = cases.getInvolvementDetailsForCase(id);
+            if (involved == null) {
+                involved = new ArrayList<>();
+            }
+
+            ServerTemplatesUtil templatesUtil = new ServerTemplatesUtil(system, forms);
+            HashMap<String, Object> placeHolders = templatesUtil.getPlaceHolderValues(docName, afb, involved, null, null, null, null, null, null, null);
+            docName = CommonTemplatesUtil.replacePlaceHolders(docName, placeHolders);
+            docName = ServerFileUtils.sanitizeFileName(docName);
+
+            // the template may have injected the extension somewhere in the middle; strip it, then re-append
+            if (!ServerStringUtils.isEmpty(extension)) {
+                docName = docName.replace("." + extension, "");
+            }
+            docName = ServerFileUtils.preserveExtension(fileName, docName);
+
+            return Response.ok(new RestfulDocumentNameV7(docName)).build();
+        } catch (Exception ex) {
+            log.error("can not compute document name for case " + id, ex);
+            return RestErrorResponses.serverError(ex);
         }
     }
 

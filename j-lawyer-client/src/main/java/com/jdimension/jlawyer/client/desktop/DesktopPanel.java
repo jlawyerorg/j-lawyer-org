@@ -2545,6 +2545,12 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         String lastGroupKey = null;
         int lastEventType = -1;
 
+        // total number of entries per event type - covering all entries, not only the rendered ones
+        java.util.HashMap<String, Integer> countsByEventType = new java.util.HashMap<>();
+        for (ReviewDueEntry entry : entries) {
+            countsByEventType.merge(entry.getReview().getEventTypeName(), 1, Integer::sum);
+        }
+
         for (int k = 0; k < maxCount; k++) {
             ReviewDueEntry entry = entries.get(k);
             String currentGroupKey = buildDueGroupKey(entry);
@@ -2589,6 +2595,13 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             ReviewDueEntryPanelTransparent ep2 = new ReviewDueEntryPanelTransparent();
             ep2.setEntry(entry);
             addDueEntryToTab(entry.getReview().getEventTypeName(), ep2);
+        }
+
+        // show the number of elements in each tab title
+        ComponentUtils.setTabTitleWithCount(tabPaneDue, 0, entries.size());
+        for (int i = 1; i < tabPaneDue.getTabCount(); i++) {
+            ComponentUtils.setTabTitleWithCount(tabPaneDue, i,
+                    countsByEventType.getOrDefault(ComponentUtils.getTabBaseTitle(tabPaneDue, i), 0));
         }
 
         pnlRevDue.revalidate();
@@ -2692,13 +2705,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
      * Adds an event type tab if it doesn't exist.
      */
     private void addDueEventTypeTab(String eventTypeName) {
-        boolean hasTab = false;
-        for (int i = 0; i < tabPaneDue.getTabCount(); i++) {
-            if (tabPaneDue.getTitleAt(i).equals(eventTypeName)) {
-                hasTab = true;
-                break;
-            }
-        }
+        boolean hasTab = ComponentUtils.indexOfTabByBaseTitle(tabPaneDue, eventTypeName) > -1;
         if (!hasTab) {
             javax.swing.JScrollPane scroll = new javax.swing.JScrollPane();
             scroll.getVerticalScrollBar().setUnitIncrement(16);
@@ -2713,6 +2720,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             scroll.setBorder(null);
             scroll.setOpaque(false);
             tabPaneDue.addTab(eventTypeName, scroll);
+            ComponentUtils.setTabBaseTitle(tabPaneDue, tabPaneDue.getTabCount() - 1, eventTypeName);
         }
     }
 
@@ -2720,16 +2728,14 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
      * Adds a case header to the specified event type tab.
      */
     private void addDueHeaderToTab(String eventTypeName, ReviewDueEntry entry, String displayReason, ArrayList<String> displayTags) {
-        for (int i = 0; i < tabPaneDue.getTabCount(); i++) {
-            if (tabPaneDue.getTitleAt(i).equals(eventTypeName)) {
-                javax.swing.JScrollPane sp = (javax.swing.JScrollPane) tabPaneDue.getComponentAt(i);
-                javax.swing.JViewport p = (javax.swing.JViewport) sp.getComponent(0);
-                CaseGroupHeaderPanel header = new CaseGroupHeaderPanel();
-                header.setGroupInfo(entry.getArchiveFileId(), entry.getArchiveFileNumber(),
-                                   entry.getArchiveFileName(), displayReason, entry.getDue(), displayTags);
-                ((javax.swing.JPanel) p.getComponent(0)).add(header);
-                break;
-            }
+        int i = ComponentUtils.indexOfTabByBaseTitle(tabPaneDue, eventTypeName);
+        if (i > -1) {
+            javax.swing.JScrollPane sp = (javax.swing.JScrollPane) tabPaneDue.getComponentAt(i);
+            javax.swing.JViewport p = (javax.swing.JViewport) sp.getComponent(0);
+            CaseGroupHeaderPanel header = new CaseGroupHeaderPanel();
+            header.setGroupInfo(entry.getArchiveFileId(), entry.getArchiveFileNumber(),
+                               entry.getArchiveFileName(), displayReason, entry.getDue(), displayTags);
+            ((javax.swing.JPanel) p.getComponent(0)).add(header);
         }
     }
 
@@ -2737,13 +2743,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
      * Adds an entry panel to the specified event type tab.
      */
     private void addDueEntryToTab(String eventTypeName, ReviewDueEntryPanelTransparent ep) {
-        for (int i = 0; i < tabPaneDue.getTabCount(); i++) {
-            if (tabPaneDue.getTitleAt(i).equals(eventTypeName)) {
-                javax.swing.JScrollPane sp = (javax.swing.JScrollPane) tabPaneDue.getComponentAt(i);
-                javax.swing.JViewport p = (javax.swing.JViewport) sp.getComponent(0);
-                ((javax.swing.JPanel) p.getComponent(0)).add(ep);
-                break;
-            }
+        int i = ComponentUtils.indexOfTabByBaseTitle(tabPaneDue, eventTypeName);
+        if (i > -1) {
+            javax.swing.JScrollPane sp = (javax.swing.JScrollPane) tabPaneDue.getComponentAt(i);
+            javax.swing.JViewport p = (javax.swing.JViewport) sp.getComponent(0);
+            ((javax.swing.JPanel) p.getComponent(0)).add(ep);
         }
     }
 

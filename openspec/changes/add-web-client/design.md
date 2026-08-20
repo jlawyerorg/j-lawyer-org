@@ -170,6 +170,9 @@ funktional erreichbar.
    bauen, wenn die Bibliothek nichts Passendes bietet (headless Primitive erwünscht).
 6. **Keine laufenden Lizenzkosten** — weder Framework noch benötigte
    UI-Komponenten dürfen wiederkehrende Lizenzkosten verursachen.
+6a. **Supply-Chain-Angriffsfläche** — kleiner Dritt-Abhängigkeitsbaum; keine
+   Remote-Ressourcen zur Laufzeit (self-host + strikte CSP durchsetzbar); Build-Zeit-
+   Abhängigkeiten kontrollierbar (siehe Decision 2c).
 7. **Responsive-/Mobile-Fähigkeit** — touch-taugliche, adaptive Komponenten und ein
    ausgereiftes Breakpoint-/Layout-Modell (siehe Decision 3a); optional PWA-fähig
    (Installierbarkeit/Offline-Shell) als spätere Ausbaustufe.
@@ -234,17 +237,18 @@ Gewichtete Bewertung (Score 1–5 × Gewicht, Maximum 500):
 
 | Kriterium | Gewicht | Angular | React | Vue | Svelte |
 |---|---:|---:|---:|---:|---:|
-| Lesbarkeit/Verständlichkeit für Leser (Struktur, Explizitheit, wenig „Magie") | 20 | 4 | 3 | 4 | 5 |
-| Enterprise-Ökosystem „aus einer Hand" | 20 | 5 | 4 | 3 | 2 |
-| AI-Generierbarkeit & Konsistenz (großer Korpus, einheitliche Patterns) | 15 | 5 | 5 | 4 | 3 |
+| Lesbarkeit/Verständlichkeit für Leser (Struktur, Explizitheit, wenig „Magie") | 18 | 4 | 3 | 4 | 5 |
+| Enterprise-Ökosystem „aus einer Hand" | 18 | 5 | 4 | 3 | 2 |
+| AI-Generierbarkeit & Konsistenz (großer Korpus, einheitliche Patterns) | 14 | 5 | 5 | 4 | 3 |
 | Struktur/Konventionen & Konsistenz über Module | 12 | 5 | 3 | 4 | 3 |
 | API-Stabilität (keine häufigen Breaking Changes) | 10 | 4 | 5 | 3 | 2 |
 | Customizing / eigene Komponenten möglich | 8 | 5 | 5 | 4 | 4 |
+| Supply-Chain-Angriffsfläche (kleiner Dritt-Abhängigkeitsbaum) | 6 | 5 | 3 | 4 | 4 |
 | Keine laufenden Lizenzkosten (Framework + Komponenten) | 5 | 5 | 5 | 5 | 5 |
 | Langzeit-Reife / Community | 5 | 5 | 5 | 4 | 3 |
-| Responsive-/Mobile-Komponenten | 3 | 4 | 5 | 4 | 4 |
+| Responsive-/Mobile-Komponenten | 2 | 4 | 5 | 4 | 4 |
 | Build-/WAR-Integration (statisches Bundle) | 2 | 5 | 5 | 5 | 5 |
-| **Gewichtete Summe** | **100** | **467** | **416** | **377** | **335** |
+| **Gewichtete Summe** | **100** | **470** | **410** | **379** | **338** |
 
 **Ergebnis: Angular.** Begründung im Autoren-/Leser-Modell:
 - **Konsistenz fürs Reviewen (Hauptvorteil bei AI-Autorenschaft)**: Wenn Claude Code den
@@ -303,11 +307,42 @@ Phase; `maven-war-plugin` verpackt die statischen Assets. Damit bleibt „ein
 `mvn install`, ein EAR/WAR-Set" erhalten und der Node-Toolchain-Bedarf ist auf die
 Buildmaschine beschränkt.
 
+### Decision 2c — Supply-Chain-Härtung (keine Remote-Ressourcen zur Laufzeit)
+
+Ziel (Auftraggeber): Supply-Chain-Angriffe minimieren; die deployte Anwendung soll
+**keinerlei Code von remote laden**. Zwei getrennte Vektoren:
+
+**A) Laufzeit (Browser) — garantierbar auf Null.** Die App wird als statisches Bundle
+ausschließlich aus dem eigenen WAR (same-origin) geliefert:
+- **Alles self-hosten**: JS/CSS (vom CLI gebündelt), Schriften (kein Font-CDN, siehe
+  Decision 1), Icons als Inline-SVG/Font. Kein externer Aufruf außer der eigenen REST-API.
+- **Strikte Content Security Policy** (per WildFly-/`web.xml`-Header) erzwingt das
+  browserseitig, z. B. `default-src 'self'; script-src 'self'; connect-src 'self';
+  font-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'`. Component-
+  Styles über Nonce (`ngCspNonce`) statt `unsafe-inline`; zusätzlich Angulars eingebaute
+  **Trusted-Types**-Unterstützung gegen DOM-XSS.
+- **Kein Node in Produktion** (Decision 2a) → keine serverseitige npm-Laufzeit-Angriffsfläche.
+
+**B) Build-Zeit (npm) — der eigentliche Supply-Chain-Vektor.** „Kein Remote zur Laufzeit"
+verhindert nicht, dass Schadcode beim Bauen ins Bundle gelangt. Kontrollen:
+- **Lockfile + `npm ci`** mit gepinnten, integritätsgehashten Versionen.
+- **Install-Skripte deaktivieren** (`npm ci --ignore-scripts`) gegen `postinstall`-Angriffe.
+- **Gespiegelte/vendorte Registry** analog zum bestehenden `maven-repo/`-Muster des
+  Projekts (private Registry wie Verdaccio/Nexus oder committeter Offline-Cache) → Builds
+  ziehen nichts Unkontrolliertes aus dem Netz.
+- **SCA/Scanning**: `npm audit` + Dependabot (bereits aktiv) + reproduzierbare Builds in CI
+  statt auf Dev-Maschinen.
+
+Dieses Ziel begünstigt **Angular** zusätzlich: der kuratierte First-Party-Monorepo
+(Router, Forms, HTTP, CLI, Material aus einer Hand) hat einen **deutlich kleineren
+Dritt-Abhängigkeitsbaum** als ein handzusammengestellter React-Stack → kleinere
+Build-Zeit-Angriffsfläche (siehe zusätzliches Kriterium in Decision 2b).
+
 **Authentifizierung**: Die REST-API nutzt heute HTTP Basic Auth — für eine Browser-SPA
-ungeeignet (kein Logout, kein 2FA, Credential-Handling). Es wird ein
-session-/tokenbasierter Login-Flow benötigt (z. B. serverseitige Session-Cookie- oder
-Bearer-Token-Ausgabe nach Login), abgestimmt mit `add-two-factor-auth`. Same-Origin-
-Deployment (WAR auf demselben WildFly) vermeidet CORS und erleichtert sichere Cookies.
+ungeeignet (kein Logout, kein 2FA, Credential-Handling). Es wird ein additiver,
+tokenbasierter Login-Flow ergänzt — **Details und Kompatibilitätsentscheidung siehe
+Decision 5**. Same-Origin-Deployment (WAR auf demselben WildFly) vermeidet CORS und
+erleichtert sichere Cookies.
 
 ## Decision 3 — Besonders herausfordernde Funktionen
 
@@ -356,6 +391,103 @@ festgelegt:
 7. **Diktat/Audio.** Aufnahme im Browser via MediaRecorder-API möglich, aber
    Diktiergeräte-Hardware (Fußschalter etc.) nicht — reiner Web-Workaround.
 
+## Decision 4 — Mehrsprachigkeit (i18n)
+
+**Anforderung (Auftraggeber):** Die UI muss mehrsprachig sein (Deutsch + Englisch), und
+weitere Sprachen müssen später einfach hinzufügbar sein (inkl. Umschaltung zur Laufzeit).
+
+**Verworfen — Angulars eingebautes i18n (`@angular/localize`):** kompiliert **einen
+Build pro Sprache** und unterstützt **kein Umschalten zur Laufzeit** (Sprachwechsel =
+andere ausgelieferte App unter anderem Pfad). Passt nicht zu „umschaltbar + einfach
+erweiterbar".
+
+**Entscheidung — Runtime-i18n mit Transloco (`@jsverse/transloco`, MIT):**
+- **Laufzeit-Umschaltung** über einen Sprachwähler im Header; kein Rebuild/Redeploy.
+- **Neue Sprache = eine JSON-Datei** (`public/i18n/<code>.json`) **+ ein Listeneintrag**
+  in `core/i18n.ts` (`APP_LANGUAGES`). Verfügbare Sprachen und der Header-Wähler werden
+  daraus abgeleitet — keine weiteren Codeänderungen.
+- **Self-hosted JSON** im WAR (`/j-lawyer-web/i18n/*.json`), geladen via `HttpClient`
+  relativ zum `<base href>` → **kein CDN, CSP-konform** (`connect-src 'self'`).
+- **Persistenz**: gewählte Sprache in `localStorage`; Initialsprache = gespeichert >
+  Browser (`navigator.language`) > Default (`de`).
+- Alle sichtbaren Strings (inkl. `aria-label`/Placeholder) laufen über Transloco-Keys.
+
+**Alternative:** `@ngx-translate/core` (funktional gleichwertig, etwas simpler) — leicht
+austauschbar, falls gewünscht.
+
+**Trade-off:** eine zusätzliche Laufzeit-Abhängigkeit (Transloco, 5 Pakete, MIT) —
+gegen den Gewinn an Laufzeit-Umschaltung und triviale Sprach-Erweiterung. Bewusst
+akzeptiert; passt zur Supply-Chain-Leitplanke (kleiner, reputabler, self-hosted).
+
+## Decision 5 — Authentifizierung der Web-UI (additiv, kompatibel)
+
+**Anforderung/Constraint:** Der bestehende **Swing-Client** (EJB-Remoting gegen die
+Security-Domain `jlawyer-application-security-domain`) und bestehende **REST-Clients**
+(**HTTP Basic Auth**, Realm `jlawyerRealm`, `@RolesAllowed({"loginRole"})`) müssen
+unverändert weiterlaufen. Die Browser-SPA braucht dennoch einen browsergeeigneten Login
+(kein natives Basic-Popup, Logout, 2FA-fähig).
+
+**Prinzip: rein additiv.** Kein bestehender Mechanismus wird entfernt; ein
+browsergeeigneter kommt daneben.
+
+| Client | Auth-Weg | Änderung |
+|---|---|---|
+| Swing-Client | EJB-Remoting + Security-Domain | keine (anderer Transport) |
+| Bestehende REST-Clients | HTTP Basic | keine (Basic bleibt gültig) |
+| Web-SPA (neu) | Token/Session via neuem Login-Endpunkt | additiv, neue API-Version `v{n}/auth/*` |
+
+**Flow (SPA):**
+1. `POST /j-lawyer-io/rest/v{n}/auth/login` `{username, password, otp?}` — validiert gegen
+   **denselben** Nutzer-Store via `SecurityService.login` + die 2FA-Verifikation aus
+   `add-two-factor-auth`.
+2. Erfolg → **kurzlebiges Access-Token (JWT)** + optional **httpOnly-Refresh-Cookie**;
+   Token trägt dieselbe Rolle (`loginRole`), damit `@RolesAllowed` unverändert greift.
+3. SPA sendet `Authorization: Bearer <jwt>` (same-origin, kein CORS).
+4. `POST …/auth/refresh` (Refresh-Cookie) und `POST …/auth/logout` (invalidieren).
+
+**Server-seitige Umsetzung — Entscheidung: Elytron-Bearer-Mechanismus (Option B).**
+> **Revidiert 2026-07-08.** Ursprünglich war Option A (portabler App-Level-JAX-RS-Filter,
+> der Basic *oder* Bearer selbst validiert und den JAX-RS-`SecurityContext` setzt) gewählt.
+> Eine Code-Analyse widerlegt deren Tragfähigkeit: Die EJB-Schicht stützt sich **durchgängig**
+> auf die vom Container etablierte Aufrufer-Identität — allein `ArchiveFileService` hat **180×
+> `@RolesAllowed`** und nutzt überall `context.getCallerPrincipal().getName()` für
+> Akten-Sichtbarkeit (`getAllowedCasesForUser`), Gruppen-Checks (`checkGroupsForCase`),
+> Sperren und Audit-Felder (`setCreatedBy`). Ein rein portabler JAX-RS-`SecurityContext`
+> propagiert **nicht** zur EJB-Ebene; `getCallerPrincipal()` bliebe „anonymous", und
+> Autorisierung/Gruppenfilter/Audit brächen. Damit ein JWT-Login korrekt bis in die EJBs
+> trägt, **muss** die Identität auf Elytron-Ebene entstehen.
+
+Elytron erhält **neben BASIC** einen Bearer-/JWT-Mechanismus (WildFly `BEARER_TOKEN` +
+`token-realm`). Der Login-Endpunkt stellt ein **RS256-JWT** aus (privater Schlüssel im
+Server); Elytron verifiziert es gegen den öffentlichen Schlüssel/das Zertifikat aus einem
+gemeinsamen Keystore und etabliert die `SecurityIdentity` → sie propagiert zur EJB-Ebene,
+`getCallerPrincipal()` und `@RolesAllowed` funktionieren unverändert. Rollen kommen aus einem
+JWT-Claim (bzw. werden aus `security_roles` gemappt). Bestehende Basic-Clients laufen über
+denselben `security-domain` unverändert weiter (derselbe Store). Die `/rest/v{n}/auth/*`-Pfade
+sind vom `security-constraint` ausgenommen (öffentlich), damit der Login ohne Auth erreichbar
+ist. Konfiguration liegt in `docker/wildfly/standalone.xml` (versioniert); der lokale WildFly
+braucht die gleiche Ergänzung + Keystore-Erzeugung.
+- *Verworfen (Option A):* Portabler App-Level-Filter — scheitert an der EJB-seitigen
+  `getCallerPrincipal()`-Abhängigkeit (s. o.); JAX-RS-`SecurityContext` propagiert nicht.
+
+**2FA-Einbindung:** Zweiter Faktor wird **nur am interaktiven Login-Endpunkt** erzwungen
+(dort wird das Token ausgestellt); maschinelle Basic-Clients bleiben außen vor — gewollt
+und deckungsgleich mit `add-two-factor-auth`.
+
+**Client-seitig (Angular):** Login-Route, `AuthService` (Token-State als Signal,
+Login/Logout/Refresh), `HttpInterceptor` (hängt Bearer an, behandelt 401 → Refresh sonst
+Redirect), Route-Guard für Modulrouten. **Token-Speicherung:** Access-Token **nur im
+Speicher** (nicht `localStorage` → XSS-resistenter), Refresh im **httpOnly-Cookie** —
+passt zur strikten CSP (Decision 2c).
+
+**Sicherheit:** Cookie `HttpOnly; Secure; SameSite=Lax` (+ CSRF-Token bei
+zustandsändernden Calls, falls cookie-basiert); Token kurzlebig + Refresh; Logout
+serverseitig invalidieren.
+
+**Abhängigkeit:** Der Server-Teil (Filter + Login-/Refresh-/Logout-Endpunkte) ist Arbeit
+in `j-lawyer-io`/`j-lawyer-server` und **muss mit `add-two-factor-auth` koordiniert**
+werden.
+
 ## Risks / Trade-offs
 
 - **Scope-Risiko**: Vollparität ist sehr groß (16+ Module). → Phasenplan mit MVP und
@@ -398,7 +530,12 @@ Rollback pro Phase: Web-UI ist additiv; bei Problemen weiter Swing-Client nutzen
   offen nur noch der Bestätigungs-Spike vor finaler Festschreibung.
 - WOPI-Editing: Collabora Online vs. OnlyOffice; als optionaler Dienst neben WildFly
   akzeptabel? Lizenz-/Betriebskosten?
-- Auth-Modell: serverseitige Session-Cookies vs. Bearer-Token; Zusammenspiel mit 2FA.
+- ~~Auth-Modell: Session-Cookies vs. Bearer-Token; Zusammenspiel mit 2FA.~~ —
+  **entschieden** (siehe Decision 5, revidiert 2026-07-08): Elytron-Bearer-Mechanismus
+  (`BEARER_TOKEN` + `token-realm`, RS256) **neben** BASIC, damit die JWT-Identität zur
+  EJB-Ebene propagiert; SPA nutzt kurzlebiges JWT + httpOnly-Refresh-Cookie; 2FA nur am
+  Login-Endpunkt. (Der zuvor gewählte portable App-Level-Filter scheitert an der
+  EJB-seitigen `getCallerPrincipal()`-Abhängigkeit.)
 - Push-Mechanismus: WebSocket vs. SSE vs. Polling für Messenger/Erinnerungen.
 - Companion-App für Scanner/Edit-in-place: gewünscht oder bewusst verzichten?
 - ~~Wird die Web-UI als eigenes WAR oder als Overlay ausgeliefert?~~ — **entschieden:

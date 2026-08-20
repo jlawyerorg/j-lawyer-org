@@ -16,7 +16,9 @@ import java.io.File;
  * swagger-core generated specification:
  * <ul>
  *   <li>the HTTP Basic securityDefinition (with description) and the global security requirement</li>
- *   <li>the uniform 401/403/500 responses every secured endpoint may return</li>
+ *   <li>the uniform 401/403/500 responses every secured endpoint may return, each documenting the
+ *       {@code RestError} body ({@code status}/{@code error}/{@code message}) that the REST layer
+ *       actually returns on failure (see {@code RestErrorResponses})</li>
  * </ul>
  * Everything else (paths, parameters, request bodies, models, 200 responses, operationIds and the
  * endpoint-specific 400/404 via {@code @ApiResponses}) comes from the annotations on the resource
@@ -25,6 +27,9 @@ import java.io.File;
  * <p>Usage: {@code SwaggerFinalizer <generated.json> <output.json>}</p>
  */
 public final class SwaggerFinalizer {
+
+    /** Name of the shared error-body model added to {@code definitions}. */
+    private static final String ERROR_MODEL = "RestError";
 
     private SwaggerFinalizer() {
     }
@@ -48,6 +53,24 @@ public final class SwaggerFinalizer {
         ArrayNode security = mapper.createArrayNode();
         security.add(securityRequirement);
         root.set("security", security);
+
+        // the uniform error body returned on failure (see RestErrorResponses)
+        ObjectNode definitions = root.has("definitions")
+                ? (ObjectNode) root.get("definitions") : mapper.createObjectNode();
+        if (!definitions.has(ERROR_MODEL)) {
+            ObjectNode error = mapper.createObjectNode();
+            error.put("type", "object");
+            ObjectNode props = mapper.createObjectNode();
+            ObjectNode status = mapper.createObjectNode();
+            status.put("type", "integer");
+            status.put("format", "int32");
+            props.set("status", status);
+            props.set("error", stringProp(mapper));
+            props.set("message", stringProp(mapper));
+            error.set("properties", props);
+            definitions.set(ERROR_MODEL, error);
+        }
+        root.set("definitions", definitions);
 
         JsonNode paths = root.get("paths");
         if (paths != null) {
@@ -78,7 +101,28 @@ public final class SwaggerFinalizer {
             ObjectNode response = mapper.createObjectNode();
             response.put("description", description);
             response.set("headers", mapper.createObjectNode());
+            response.set("schema", errorRef(mapper));
             responses.set(code, response);
+        } else {
+            // document the error body on a response that was declared (e.g. via @ApiResponses) but
+            // carries no schema yet — without overwriting an existing one
+            JsonNode existing = responses.get(code);
+            if (existing != null && existing.isObject() && !existing.has("schema")) {
+                ((ObjectNode) existing).set("schema", errorRef(mapper));
+            }
         }
+    }
+
+    /** A Swagger-2.0 {@code $ref} to the shared {@link #ERROR_MODEL} definition. */
+    private static ObjectNode errorRef(ObjectMapper mapper) {
+        ObjectNode schema = mapper.createObjectNode();
+        schema.put("$ref", "#/definitions/" + ERROR_MODEL);
+        return schema;
+    }
+
+    private static ObjectNode stringProp(ObjectMapper mapper) {
+        ObjectNode p = mapper.createObjectNode();
+        p.put("type", "string");
+        return p;
     }
 }

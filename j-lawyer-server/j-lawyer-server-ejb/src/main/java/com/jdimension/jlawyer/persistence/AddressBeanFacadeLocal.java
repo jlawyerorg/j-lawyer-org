@@ -693,5 +693,27 @@ public interface AddressBeanFacadeLocal {
     List<AddressBean> findRange(int[] range);
 
     int count();
-    
+
+    /**
+     * Returns one filtered, ordered page of contacts for a server-paginated overview.
+     *
+     * @param search optional case-insensitive term matched against name, first name, company,
+     *               city, zip code and e-mail (null/blank matches all)
+     * @param kind   {@code people} (no company), {@code companies} (has a company) or anything
+     *               else / null for no kind restriction
+     * @param offset 0-based row offset
+     * @param limit  page size (clamped to 1..200; defaults to 50 when &lt;= 0)
+     * @return the matching contacts ordered by name, company, first name
+     */
+    List<AddressBean> findOverviewPage(String search, String kind, int offset, int limit);
+
+    /**
+     * Counts the contacts matching the same filter as {@link #findOverviewPage}.
+     *
+     * @param search optional case-insensitive term (see {@link #findOverviewPage})
+     * @param kind   {@code people}, {@code companies} or null (see {@link #findOverviewPage})
+     * @return the total number of matching contacts
+     */
+    long countOverview(String search, String kind);
+
 }

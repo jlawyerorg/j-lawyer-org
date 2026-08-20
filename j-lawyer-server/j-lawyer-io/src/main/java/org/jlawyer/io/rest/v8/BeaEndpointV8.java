@@ -1,9 +1,24 @@
 package org.jlawyer.io.rest.v8;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
 
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.services.AddressServiceLocal;
+import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import com.jdimension.jlawyer.services.BeaServiceLocal;
+import com.jdimension.jlawyer.services.Keyword;
 import com.jdimension.jlawyer.services.bea.rest.*;
+import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Marshaller;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
@@ -21,7 +36,13 @@ import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 import org.jlawyer.io.rest.v8.pojo.RestfulBeaEebConfirmationV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulBeaEebRejectionV8;
+import org.jlawyer.io.rest.v8.pojo.RestfulBeaCaseSuggestionRequestV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulBeaEebRenderRequestV8;
+import org.jlawyer.io.rest.v8.pojo.RestfulBeaExportV8;
+import org.jlawyer.io.rest.v8.pojo.RestfulBeaAttachmentV8;
+import org.jlawyer.io.rest.v7.pojo.RestfulCaseSuggestionsV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulSuggestedCaseV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulSuggestedContactV7;
 
 /**
  * REST API for beA (besonderes elektronisches Anwaltspostfach) operations.
@@ -36,6 +57,9 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
 
     private static final Logger log = Logger.getLogger(BeaEndpointV8.class.getName());
     private static final String BEA_SERVICE_JNDI = "java:global/j-lawyer-server/j-lawyer-server-ejb/BeaService!com.jdimension.jlawyer.services.BeaServiceLocal";
+    private static final String LOOKUP_CASES = "java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
+    private static final String LOOKUP_ADDRESS = "java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal";
+    private static final int MAX_SUGGESTED_CASES = 50;
 
     // ========== Auth & Session ==========
 
@@ -59,7 +83,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("beA login failed", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -83,7 +107,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("beA logout failed", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -107,7 +131,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(version).build();
         } catch (Exception ex) {
             log.error("can not get beA wrapper version", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -133,7 +157,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(info).build();
         } catch (Exception ex) {
             log.error("can not get certificate information", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -159,7 +183,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(postboxes).build();
         } catch (Exception ex) {
             log.error("can not get postboxes", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -184,7 +208,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(postbox).build();
         } catch (Exception ex) {
             log.error("can not get postbox " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -209,7 +233,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(empty).build();
         } catch (Exception ex) {
             log.error("can not check outbox for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -235,7 +259,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(egvp).build();
         } catch (Exception ex) {
             log.error("can not check EGVP status for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -262,7 +286,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(folders).build();
         } catch (Exception ex) {
             log.error("can not get folders for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -288,7 +312,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(folder).build();
         } catch (Exception ex) {
             log.error("can not get folder " + folderId + " for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -316,7 +340,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(created).build();
         } catch (Exception ex) {
             log.error("can not create folder for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -342,7 +366,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete folder " + folderId + " for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -370,7 +394,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(messages).build();
         } catch (Exception ex) {
             log.error("can not get messages for folder " + folderId + " in " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -398,7 +422,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(messages).build();
         } catch (Exception ex) {
             log.error("can not search messages for folder " + folderId + " in " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -424,7 +448,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(ids).build();
         } catch (Exception ex) {
             log.error("can not get message IDs for folder " + folderId + " in " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -452,7 +476,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(ids).build();
         } catch (Exception ex) {
             log.error("can not search message IDs for folder " + folderId + " in " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -480,8 +504,220 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(message).build();
         } catch (Exception ex) {
             log.error("can not get message " + messageId + " for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
+    }
+
+    /**
+     * Exports a beA message as a {@code .bea} file: the whole message (including its attachments) is
+     * serialized to XML, the same format the desktop client produces, so it can be stored in a case
+     * as a single document. The response carries a suggested file name and the Base64-encoded
+     * content.
+     *
+     * @param safeId the Safe-ID of the postbox
+     * @param messageId the message ID
+     * @return the exported message
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 There is no message with the given id
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/postboxes/{safeId}/messages/{messageId}/export")
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value = "Exports a beA message as a .bea file (the whole message serialized to XML).", response = RestfulBeaExportV8.class)
+    public Response exportMessage(@PathParam("safeId") String safeId, @PathParam("messageId") String messageId) {
+        try {
+            InitialContext ic = new InitialContext();
+            BeaServiceLocal bea = (BeaServiceLocal) ic.lookup(BEA_SERVICE_JNDI);
+            BeaMessage message = bea.getMessage(safeId, messageId, true);
+            if (message == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("There is no message with id " + messageId).build();
+            }
+
+            JAXBContext ctx = JAXBContext.newInstance(BeaMessage.class);
+            Marshaller m = ctx.createMarshaller();
+            m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+            m.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            m.marshal(message, out);
+
+            RestfulBeaExportV8 result = new RestfulBeaExportV8();
+            result.setFileName(buildBeaFileName(message));
+            result.setContentBase64(java.util.Base64.getEncoder().encodeToString(out.toByteArray()));
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("can not export message " + messageId + " for " + safeId, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Builds the {@code .bea} file name for a message, mirroring the desktop client
+     * (referenceNumber_subject_sender--recipient.bea, with unsafe characters replaced).
+     */
+    private static String buildBeaFileName(BeaMessage msg) {
+        String refNum = msg.getReferenceNumber() != null ? msg.getReferenceNumber() : "";
+        String subj = msg.getSubject() != null ? msg.getSubject() : "";
+        String sender = msg.getSenderName() != null ? msg.getSenderName() : "";
+        String recipient = "";
+        if (msg.getRecipients() != null && !msg.getRecipients().isEmpty() && msg.getRecipients().get(0).getName() != null) {
+            recipient = msg.getRecipients().get(0).getName();
+        }
+        String fileName = refNum + "_" + subj + "_" + sender + "--" + recipient + ".bea";
+        return fileName.replaceAll("[^a-zA-Z0-9äöüÄÖÜß._\\-]", "_");
+    }
+
+    /**
+     * Suggests cases for an opened beA message: the two beA reference numbers plus subject and body
+     * are matched against known own and referenced file numbers, and the sender name against the
+     * address book. All case lookups are ACL-filtered by the service layer. Mirrors the email
+     * case-suggestion heuristic, adapted to beA (references instead of an e-mail address).
+     *
+     * @param request the message's subject, body, reference numbers and sender name
+     * @return the suggested cases, matching contacts and extracted phone numbers
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/case-suggestions")
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value = "Suggests cases and contacts for an opened beA message.", response = RestfulCaseSuggestionsV7.class)
+    public Response caseSuggestions(@io.swagger.annotations.ApiParam RestfulBeaCaseSuggestionRequestV8 request) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup(LOOKUP_ADDRESS);
+
+            String subject = request.getSubject() != null ? request.getSubject() : "";
+            String bodyRaw = request.getBody() != null ? request.getBody() : "";
+            String refNumber = request.getReferenceNumber() != null ? request.getReferenceNumber() : "";
+            String refJustice = request.getReferenceJustice() != null ? request.getReferenceJustice() : "";
+            String senderName = request.getSenderName() != null ? request.getSenderName().trim() : "";
+
+            // The beA reference numbers are part of the searchable text, so a file number appearing
+            // in either reference field is matched just like one appearing in the subject or body.
+            String haystack = (subject + " " + bodyRaw + " " + refNumber + " " + refJustice).toLowerCase();
+
+            RestfulCaseSuggestionsV7 result = new RestfulCaseSuggestionsV7();
+            result.setSenderName(senderName);
+            result.setSenderEmail("");
+
+            // Phone numbers from the body (best-effort).
+            List<String> phoneNumbers = new ArrayList<>();
+            try {
+                Collection<Keyword> keywords = cases.extractKeywordsFromText(bodyRaw);
+                if (keywords != null) {
+                    for (Keyword w : keywords) {
+                        if (w.getType() == Keyword.TYPE_PHONENR && w.getValue() != null && !phoneNumbers.contains(w.getValue())) {
+                            phoneNumbers.add(w.getValue());
+                        }
+                    }
+                }
+            } catch (Throwable t) {
+                log.warn("could not extract keywords from beA body", t);
+            }
+            result.setPhoneNumbers(phoneNumbers);
+
+            Map<String, RestfulSuggestedCaseV7> byId = new LinkedHashMap<>();
+
+            // 1) own file numbers appearing in the searchable text
+            for (String fn : cases.getAllArchiveFileNumbers(true)) {
+                if (fn == null || fn.isEmpty()) {
+                    continue;
+                }
+                if (haystack.contains(fn.toLowerCase())) {
+                    addCase(byId, cases.getArchiveFileByFileNumber(fn), "subjectBody");
+                }
+                if (byId.size() >= MAX_SUGGESTED_CASES) {
+                    break;
+                }
+            }
+
+            // 2) foreign/referenced file numbers appearing in the searchable text
+            for (String fn : cases.getAllReferencedFileNumbers(5, true)) {
+                if (fn == null || fn.isEmpty()) {
+                    continue;
+                }
+                if (haystack.contains(fn.toLowerCase())) {
+                    List<ArchiveFileAddressesBean> refs = cases.getArchiveFileAddressesByReference(fn);
+                    if (refs != null) {
+                        for (ArchiveFileAddressesBean aab : refs) {
+                            addCase(byId, aab.getArchiveFileKey(), "reference");
+                        }
+                    }
+                }
+                if (byId.size() >= MAX_SUGGESTED_CASES) {
+                    break;
+                }
+            }
+
+            // 3) sender name -> matching contacts -> their cases
+            List<RestfulSuggestedContactV7> contacts = new ArrayList<>();
+            if (!senderName.isEmpty()) {
+                AddressBean[] hits = addresses.searchSimple(senderName);
+                if (hits != null) {
+                    Set<String> seenContacts = new HashSet<>();
+                    for (AddressBean h : hits) {
+                        if (h == null || h.getId() == null || !seenContacts.add(h.getId())) {
+                            continue;
+                        }
+                        RestfulSuggestedContactV7 c = new RestfulSuggestedContactV7();
+                        c.setId(h.getId());
+                        c.setDisplayName(contactDisplayName(h));
+                        c.setEmail(h.getEmail());
+                        contacts.add(c);
+
+                        Collection<?> caseCol = cases.getArchiveFileAddressesForAddress(h.getId());
+                        if (caseCol != null) {
+                            for (Object o : caseCol) {
+                                addCase(byId, ((ArchiveFileAddressesBean) o).getArchiveFileKey(), "sender");
+                            }
+                        }
+                        if (byId.size() >= MAX_SUGGESTED_CASES) {
+                            break;
+                        }
+                    }
+                }
+            }
+            result.setContacts(contacts);
+            result.setSuggestedCases(new ArrayList<>(byId.values()));
+
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("can not compute beA case suggestions", ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /** Adds a case to the deduplicated suggestion map (first source wins; null/duplicate ignored). */
+    private static void addCase(Map<String, RestfulSuggestedCaseV7> byId, ArchiveFileBean a, String source) {
+        if (a == null || a.getId() == null || byId.containsKey(a.getId())) {
+            return;
+        }
+        RestfulSuggestedCaseV7 c = new RestfulSuggestedCaseV7();
+        c.setId(a.getId());
+        c.setFileNumber(a.getFileNumber());
+        c.setName(a.getName());
+        c.setReason(a.getReason());
+        c.setArchived(a.isArchived());
+        c.setSource(source);
+        byId.put(a.getId(), c);
+    }
+
+    /** Builds a readable contact label: "Firstname Name (Company)", or the company/name alone. */
+    private static String contactDisplayName(AddressBean h) {
+        String company = h.getCompany() != null ? h.getCompany().trim() : "";
+        String person = ((h.getFirstName() != null ? h.getFirstName() : "") + " "
+                + (h.getName() != null ? h.getName() : "")).trim();
+        if (person.isEmpty()) {
+            return company;
+        }
+        return company.isEmpty() ? person : person + " (" + company + ")";
     }
 
     /**
@@ -507,7 +743,38 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(attachment).build();
         } catch (Exception ex) {
             log.error("can not get attachment " + attachmentName + " for message " + messageId + " in " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Retrieves the content of a single attachment with the content Base64-encoded. This is a
+     * variant of {@link #getAttachmentContent(String, String, String)} intended for browser clients:
+     * it returns the content as a Base64 {@code String} ({@code contentBase64}) rather than a raw
+     * {@code byte[]}, which is serialized inconsistently across JSON providers and cannot be decoded
+     * reliably in JavaScript. The response therefore carries only one copy of the content.
+     *
+     * @param safeId the Safe-ID of the postbox
+     * @param messageId the message ID
+     * @param attachmentName the name of the attachment
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/postboxes/{safeId}/messages/{messageId}/attachments/{attachmentName}/base64")
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value="Retrieves the content of a single attachment, Base64-encoded (for browser clients).", response=RestfulBeaAttachmentV8.class)
+    public Response getAttachmentContentBase64(@PathParam("safeId") String safeId, @PathParam("messageId") String messageId, @PathParam("attachmentName") String attachmentName) {
+        try {
+            InitialContext ic = new InitialContext();
+            BeaServiceLocal bea = (BeaServiceLocal) ic.lookup(BEA_SERVICE_JNDI);
+            BeaAttachment attachment = bea.getAttachmentContent(safeId, messageId, attachmentName);
+            return Response.ok(RestfulBeaAttachmentV8.fromBea(attachment)).build();
+        } catch (Exception ex) {
+            log.error("can not get attachment " + attachmentName + " for message " + messageId + " in " + safeId, ex);
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -533,7 +800,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(header).build();
         } catch (Exception ex) {
             log.error("can not get message header " + messageId + " for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -560,7 +827,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(sent).build();
         } catch (Exception ex) {
             log.error("can not send message for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -587,7 +854,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(draftId).build();
         } catch (Exception ex) {
             log.error("can not save draft for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -613,7 +880,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok().build();
         } catch (Exception ex) {
             log.error("can not delete message " + messageId + " for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -639,7 +906,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(restored).build();
         } catch (Exception ex) {
             log.error("can not restore message " + messageId + " for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -667,7 +934,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(moved).build();
         } catch (Exception ex) {
             log.error("can not move message " + messageId + " for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -693,7 +960,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(marked).build();
         } catch (Exception ex) {
             log.error("can not mark message " + messageId + " as read for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -720,7 +987,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(read).build();
         } catch (Exception ex) {
             log.error("can not check read status for message " + messageId + " by " + targetSafeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -746,7 +1013,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(journal).build();
         } catch (Exception ex) {
             log.error("can not get journal for message " + messageId + " in " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -772,7 +1039,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(cards).build();
         } catch (Exception ex) {
             log.error("can not get process cards for message " + messageId + " in " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -798,7 +1065,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not verify message " + messageId + " in " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -831,7 +1098,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(identity).build();
         } catch (Exception ex) {
             log.error("can not get identity for " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -857,7 +1124,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(identities).build();
         } catch (Exception ex) {
             log.error("can not search identities", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -883,7 +1150,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(authorities).build();
         } catch (Exception ex) {
             log.error("can not get legal authorities", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -907,7 +1174,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(authority).build();
         } catch (Exception ex) {
             log.error("can not get default legal authority", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -931,7 +1198,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(priorities).build();
         } catch (Exception ex) {
             log.error("can not get message priorities", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -959,7 +1226,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not check eEB request", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -985,7 +1252,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not check eEB response", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1011,7 +1278,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(attributes).build();
         } catch (Exception ex) {
             log.error("can not get eEB request attributes", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1037,7 +1304,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(attributes).build();
         } catch (Exception ex) {
             log.error("can not get eEB response attributes", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1063,7 +1330,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(html).build();
         } catch (Exception ex) {
             log.error("can not render eEB HTML", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1087,7 +1354,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(reasons).build();
         } catch (Exception ex) {
             log.error("can not get eEB rejection reasons", ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1115,7 +1382,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not send eEB confirmation for message " + messageId + " in " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 
@@ -1143,7 +1410,7 @@ public class BeaEndpointV8 implements BeaEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("can not send eEB rejection for message " + messageId + " in " + safeId, ex);
-            return Response.serverError().build();
+            return RestErrorResponses.serverError(ex);
         }
     }
 

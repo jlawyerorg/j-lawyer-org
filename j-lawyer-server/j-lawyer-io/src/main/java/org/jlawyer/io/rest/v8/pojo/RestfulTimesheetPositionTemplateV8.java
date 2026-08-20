@@ -24,6 +24,17 @@ public class RestfulTimesheetPositionTemplateV8 {
         return r;
     }
 
+    /** Maps this REST representation to a persistent timesheet position template. */
+    public TimesheetPositionTemplate toTemplate() {
+        TimesheetPositionTemplate tpl = new TimesheetPositionTemplate();
+        tpl.setId(this.id);
+        tpl.setName(this.name);
+        tpl.setDescription(this.description);
+        tpl.setUnitPrice(this.unitPrice == null ? java.math.BigDecimal.ZERO : this.unitPrice);
+        tpl.setTaxRate(this.taxRate == null ? java.math.BigDecimal.ZERO : this.taxRate);
+        return tpl;
+    }
+
     public String getId() {
         return id;
     }

@@ -693,6 +693,7 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
     private Date toDate = null;
     private Date fromDate = null;
     private String search = null;
+    private String assignee = null;
 
     /**
      * Creates a new instance of ArchiveFileReviewsAdvancedSearchThread
@@ -704,8 +705,10 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
      * @param fromDate
      * @param toDate
      * @param search
+     * @param assignee principal id the reviews are assigned to, null or empty
+     * to not filter by assignee
      */
-    public ArchiveFileReviewsAdvancedSearchThread(Component owner, JTable target, int statusSearchMode, int typeSearchMode, Date fromDate, Date toDate, String search) {
+    public ArchiveFileReviewsAdvancedSearchThread(Component owner, JTable target, int statusSearchMode, int typeSearchMode, Date fromDate, Date toDate, String search, String assignee) {
         this.owner = owner;
         this.target = target;
         this.statusSearchMode = statusSearchMode;
@@ -713,6 +716,7 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
         this.toDate = toDate;
         this.fromDate = fromDate;
         this.search = search;
+        this.assignee = assignee;
     }
 
     private boolean isMatch(ArchiveFileReviewsBean dto, String searchText) {
@@ -760,14 +764,17 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
             CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
             dtos = calService.searchReviews(statusSearchMode, typeSearchMode, fromDate, toDate);
 
-            if (search != null && !search.isEmpty()) {
+            boolean filterBySearch = search != null && !search.isEmpty();
+            boolean filterByAssignee = assignee != null && !assignee.isEmpty();
+            if (filterBySearch) {
                 search=search.toLowerCase();
-                for(ArchiveFileReviewsBean dto: dtos) {
-                    if(isMatch(dto, search))
-                        filteredDtos.add(dto);
-                }
-            } else {
-                filteredDtos.addAll(dtos);
+            }
+            for(ArchiveFileReviewsBean dto: dtos) {
+                if(filterBySearch && !isMatch(dto, search))
+                    continue;
+                if(filterByAssignee && !assignee.equalsIgnoreCase(dto.getAssignee()))
+                    continue;
+                filteredDtos.add(dto);
             }
 
         } catch (Exception ex) {

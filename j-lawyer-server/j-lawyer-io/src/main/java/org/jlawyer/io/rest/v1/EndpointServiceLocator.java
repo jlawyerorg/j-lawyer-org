@@ -687,10 +687,17 @@ import org.jlawyer.io.rest.v7.MessagingEndpointV7;
 import org.jlawyer.io.rest.v7.ReportsEndpointV7;
 import org.jlawyer.io.rest.v7.EmailEndpointV7;
 import org.jlawyer.io.rest.v7.WebHooksEndpointV7;
+import org.jlawyer.io.rest.v8.AuthenticationEndpointV8;
 import org.jlawyer.io.rest.v8.BeaEndpointV8;
+import org.jlawyer.io.rest.v8.CalendarEndpointV8;
+import org.jlawyer.io.rest.v8.CasesEndpointV8;
+import org.jlawyer.io.rest.v8.ContactsEndpointV8;
 import org.jlawyer.io.rest.v8.PaymentsEndpointV8;
 import org.jlawyer.io.rest.v8.SearchEndpointV8;
 import org.jlawyer.io.rest.v8.TimesheetsEndpointV8;
+import org.jlawyer.io.rest.v8.ProfileEndpointV8;
+import org.jlawyer.io.rest.v8.AssistantEndpointV8;
+import org.jlawyer.io.rest.v8.DocumentsBinEndpointV8;
 
 @ApplicationPath("/rest")
 public class EndpointServiceLocator extends Application
@@ -723,8 +730,17 @@ public class EndpointServiceLocator extends Application
         s.add(InvoicesEndpointV7.class);
         s.add(ReportsEndpointV7.class);
         s.add(EmailEndpointV7.class);
+        s.add(org.jlawyer.io.rest.tools.RestExceptionMapper.class);
+        s.add(AssistantEndpointV8.class);
+        s.add(DocumentsBinEndpointV8.class);
+        s.add(org.jlawyer.io.rest.v8.DropscanEndpointV8.class);
+        s.add(AuthenticationEndpointV8.class);
         s.add(BeaEndpointV8.class);
+        s.add(CalendarEndpointV8.class);
+        s.add(CasesEndpointV8.class);
+        s.add(ContactsEndpointV8.class);
         s.add(PaymentsEndpointV8.class);
+        s.add(ProfileEndpointV8.class);
         s.add(SearchEndpointV8.class);
         s.add(TimesheetsEndpointV8.class);
         return s;

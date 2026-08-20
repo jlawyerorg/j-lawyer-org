@@ -98,6 +98,43 @@ erfordert.
 - **WHEN** das Projekt gebaut wird
 - **THEN** wird das Frontend-Bundle innerhalb des bestehenden Maven-Builds erzeugt und verpackt, und der Node-Toolchain-Bedarf ist auf die Buildmaschine beschränkt
 
+### Requirement: Keine Remote-Ressourcen zur Laufzeit und Supply-Chain-Härtung
+Die deployte Web-Anwendung MUST NOT zur Laufzeit Code oder andere Ressourcen von externen
+Hosts laden; alle Assets (JS, CSS, Schriften, Icons) SHALL aus dem eigenen Ursprung
+(same-origin) ausgeliefert werden, und einzige Netzwerk-Gegenstelle SHALL die eigene
+REST-API sein. Eine strikte Content Security Policy SHALL dies browserseitig erzwingen.
+Zusätzlich SHALL die Build-Kette gegen Supply-Chain-Angriffe gehärtet sein (gepinnte,
+integritätsgeprüfte Abhängigkeiten; deaktivierte Install-Skripte; gespiegelte/vendorte
+Registry; Abhängigkeits-Scanning).
+
+#### Scenario: Kein Laden von Remote-Code im Browser
+- **WHEN** die Web-Anwendung im Browser geladen und benutzt wird
+- **THEN** werden keinerlei Skripte, Styles, Schriften oder sonstige Ressourcen von externen Hosts angefordert, und eine strikte CSP blockiert entsprechende Versuche
+
+#### Scenario: Gehärtete Build-Kette
+- **WHEN** das Frontend-Bundle gebaut wird
+- **THEN** werden Abhängigkeiten gepinnt und integritätsgeprüft aus einer kontrollierten (gespiegelten/vendorten) Registry ohne Ausführung von Install-Skripten aufgelöst
+
+### Requirement: Mehrsprachige Oberfläche mit Laufzeit-Umschaltung
+Die Web-UI SHALL mehrsprachig sein (mindestens Deutsch und Englisch) und die Sprache
+**zur Laufzeit** umschaltbar anbieten (ohne Rebuild/Redeploy). Das Hinzufügen einer
+weiteren Sprache SHALL ohne Codeänderung an den Modulen möglich sein (eine
+Übersetzungsdatei plus ein zentraler Listeneintrag). Alle sichtbaren Texte SHALL über
+Übersetzungsschlüssel aufgelöst werden; Übersetzungsressourcen MUST NOT von externen
+Hosts geladen werden (self-hosted, same-origin — vgl. Supply-Chain/CSP).
+
+#### Scenario: Sprache zur Laufzeit wechseln
+- **WHEN** ein Anwender im Sprachwähler von Deutsch auf Englisch wechselt
+- **THEN** werden die sichtbaren Texte sofort auf Englisch dargestellt, ohne Neuladen/Redeploy, und die Wahl bleibt für die nächste Sitzung erhalten
+
+#### Scenario: Weitere Sprache hinzufügen
+- **WHEN** eine neue Übersetzungsdatei plus zentraler Listeneintrag ergänzt wird
+- **THEN** erscheint die Sprache im Wähler und ist nutzbar, ohne die Module zu ändern
+
+#### Scenario: Initiale Sprachwahl
+- **WHEN** ein Anwender die Anwendung erstmals öffnet
+- **THEN** wird die Sprache aus vorheriger Wahl, sonst aus der Browsersprache, sonst aus dem Default (Deutsch) bestimmt
+
 ### Requirement: Kostenfreie und anpassbare Komponentenbasis
 Das gewählte Framework und die genutzten UI-Komponenten MUST NOT wiederkehrende
 Lizenzkosten verursachen (permissive Lizenzen wie MIT/Apache). Das Framework SHALL das
@@ -136,7 +173,11 @@ durchsetzen, sodass generierter Code gleichförmig und ohne den Autor verständl
 Das System SHALL für die Web-UI einen session- oder tokenbasierten Anmelde-Flow
 bereitstellen (inklusive Abmeldung) und MUST NOT sich auf HTTP-Basic-Auth als
 alleinigen Mechanismus für die interaktive Web-Anmeldung stützen. Der Flow SHALL mit
-der Zwei-Faktor-Authentifizierung kompatibel sein.
+der Zwei-Faktor-Authentifizierung kompatibel sein. Der neue Mechanismus SHALL **additiv**
+eingeführt werden: bestehende REST-Clients mit HTTP Basic Auth und der EJB-basierte
+Desktop-Client MUST weiterhin unverändert funktionieren; die Auth-Endpunkte werden in
+einer neuen API-Version ergänzt, ohne bestehende Versionen zu brechen. Der Anmelde-Flow
+SHALL denselben Nutzer-/Rollen-Store wie die bestehende Authentifizierung verwenden.
 
 #### Scenario: Anmeldung und Abmeldung
 - **WHEN** ein Anwender sich in der Web-UI anmeldet
@@ -145,6 +186,18 @@ der Zwei-Faktor-Authentifizierung kompatibel sein.
 #### Scenario: Kompatibilität mit Zwei-Faktor-Authentifizierung
 - **WHEN** für ein Konto Zwei-Faktor-Authentifizierung aktiviert ist
 - **THEN** verlangt der Web-Anmelde-Flow den zweiten Faktor
+
+#### Scenario: Bestehende Clients bleiben kompatibel
+- **WHEN** ein bestehender REST-Client mit HTTP Basic Auth oder der Desktop-Client (EJB) auf den Server zugreift
+- **THEN** funktioniert die Authentifizierung unverändert, weil der browsergeeignete Mechanismus additiv neben Basic/EJB besteht
+
+#### Scenario: Kein natives Browser-Basic-Popup
+- **WHEN** eine nicht authentifizierte Anfrage der Web-UI abgewiesen wird
+- **THEN** antwortet der Server mit einem für die SPA geeigneten 401 (ohne `WWW-Authenticate: Basic`), sodass kein natives Browser-Anmeldefenster erscheint
+
+#### Scenario: Token-Identität propagiert zur EJB-Ebene
+- **WHEN** eine Web-UI-Anfrage mit gültigem Token einen Endpunkt aufruft, der Business-EJBs verwendet
+- **THEN** entspricht die vom Server etablierte Aufrufer-Identität (`getCallerPrincipal()`) dem angemeldeten Nutzer und seinen Rollen, sodass EJB-seitige Autorisierung (Akten-/Gruppen-Sichtbarkeit) und Audit-Felder korrekt greifen — identisch zum Basic-authentifizierten Zugriff
 
 ### Requirement: Funktionsparität mit dem Desktop-Client als Zielbild
 Das System SHALL schrittweise Funktionsparität mit dem Swing-Client anstreben und die

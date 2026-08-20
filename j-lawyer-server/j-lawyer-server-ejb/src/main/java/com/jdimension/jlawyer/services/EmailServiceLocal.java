@@ -700,6 +700,22 @@ public interface EmailServiceLocal {
     List<MailFolderDTO> listFolders(String mailboxId) throws Exception;
 
     /**
+     * Lists a mailbox's folders, optionally omitting hidden folders and/or per-folder counts.
+     * @param includeHidden when false, hidden folders (and their descendants) are omitted
+     * @param includeCounts when false, unread/total counts are not computed (returned as -1)
+     */
+    List<MailFolderDTO> listFolders(String mailboxId, boolean includeHidden, boolean includeCounts) throws Exception;
+
+    /** Returns the folders the user explicitly hid (that still exist), without counts. */
+    List<MailFolderDTO> getHiddenFolders(String mailboxId) throws Exception;
+
+    /** Hides or unhides a folder for a mailbox (persisted under folders.hidden). */
+    void setFolderHidden(String mailboxId, String folderId, boolean hidden) throws Exception;
+
+    /** Computes unread/total counts for a single folder: int[]{unread, total}. */
+    int[] getFolderCounts(String mailboxId, String folderId) throws Exception;
+
+    /**
      * Lists messages in a folder with pagination support.
      * @param mailboxId the mailbox ID
      * @param folderId the folder ID

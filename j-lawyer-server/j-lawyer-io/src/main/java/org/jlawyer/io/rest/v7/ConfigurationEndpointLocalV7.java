@@ -665,7 +665,13 @@ package org.jlawyer.io.rest.v7;
 
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
+import org.jlawyer.io.rest.v7.pojo.RestfulFinanceSettingsV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulFirmProfileV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulCaseNumberingV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulFolderTemplateV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulFolderTemplateFolderV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulOptionV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulPartyTypeV7;
 
 /**
  *
@@ -685,5 +691,147 @@ public interface ConfigurationEndpointLocalV7 {
     Response renameOption(RestfulOptionV7 option);
 
     Response getMultiValueTagDefinitions(String entityType);
+
+    Response getDocumentNameTemplates();
+
+    Response createDocumentNameTemplate(org.jlawyer.io.rest.v7.pojo.RestfulDocumentNameTemplateV7 template);
+
+    Response updateDocumentNameTemplate(org.jlawyer.io.rest.v7.pojo.RestfulDocumentNameTemplateV7 template);
+
+    Response deleteDocumentNameTemplate(org.jlawyer.io.rest.v7.pojo.RestfulDocumentNameTemplateV7 template);
+
+    Response previewDocumentNameTemplate(org.jlawyer.io.rest.v7.pojo.RestfulDocumentNameTemplateV7 template);
+
+    Response getFirmProfile();
+
+    Response setFirmProfile(RestfulFirmProfileV7 profile);
+
+    Response getFinanceSettings();
+
+    Response setFinanceSettings(RestfulFinanceSettingsV7 settings);
+
+    Response getPartyTypes();
+
+    Response createPartyType(RestfulPartyTypeV7 partyType);
+
+    Response updatePartyType(RestfulPartyTypeV7 partyType);
+
+    Response deletePartyType(RestfulPartyTypeV7 partyType);
+
+    Response getCaseNumbering();
+
+    Response setCaseNumbering(RestfulCaseNumberingV7 config);
+
+    Response previewCaseNumbering(RestfulCaseNumberingV7 config);
+
+    Response getFolderTemplates();
+
+    Response createFolderTemplate(RestfulFolderTemplateV7 template);
+
+    Response renameFolderTemplate(RestfulFolderTemplateV7 template);
+
+    Response deleteFolderTemplate(RestfulFolderTemplateV7 template);
+
+    Response cloneFolderTemplate(RestfulFolderTemplateFolderV7 request);
+
+    Response addTemplateFolder(RestfulFolderTemplateFolderV7 request);
+
+    Response renameTemplateFolder(RestfulFolderTemplateFolderV7 request);
+
+    Response removeTemplateFolder(RestfulFolderTemplateFolderV7 request);
+
+    Response getScanSettings();
+
+    Response setScanSettings(org.jlawyer.io.rest.v7.pojo.RestfulScanSettingsV7 settings);
+
+    Response getBackupSettings();
+
+    Response setBackupSettings(org.jlawyer.io.rest.v7.pojo.RestfulBackupSettingsV7 settings);
+
+    Response validateStorageLocation(org.jlawyer.io.rest.v7.pojo.RestfulStorageLocationV7 request);
+
+    Response getStirlingSettings();
+
+    Response setStirlingSettings(org.jlawyer.io.rest.v7.pojo.RestfulStirlingSettingsV7 settings);
+
+    Response getBeaSettings();
+
+    Response setBeaSettings(org.jlawyer.io.rest.v7.pojo.RestfulBeaSettingsV7 settings);
+
+    Response addMultiValueTagValue(String entityType, org.jlawyer.io.rest.v7.pojo.RestfulMultiValueTagOpV7 op);
+
+    Response removeMultiValueTagValue(String entityType, org.jlawyer.io.rest.v7.pojo.RestfulMultiValueTagOpV7 op);
+
+    Response renameMultiValueTagValue(String entityType, org.jlawyer.io.rest.v7.pojo.RestfulMultiValueTagOpV7 op);
+
+    Response renameMultiValueTag(String entityType, org.jlawyer.io.rest.v7.pojo.RestfulMultiValueTagOpV7 op);
+
+    Response removeMultiValueTag(String entityType, org.jlawyer.io.rest.v7.pojo.RestfulMultiValueTagOpV7 op);
+
+    Response getSearchIndexStatus();
+
+    Response reindexSearchIndex();
+
+    Response getCustomFields(String entityType);
+
+    Response setCustomFields(String entityType, org.jlawyer.io.rest.v7.pojo.RestfulCustomFieldsV7 fields);
+
+    Response getCardDavSync();
+
+    Response setCardDavSync(org.jlawyer.io.rest.v7.pojo.RestfulCardDavSyncV7 settings);
+
+    Response listCloudAddressBooks(org.jlawyer.io.rest.v7.pojo.RestfulCardDavSyncV7 connection);
+
+    Response runCardDavSync();
+
+    Response getCalendarSetups();
+
+    Response createCalendarSetup(org.jlawyer.io.rest.v7.pojo.RestfulCalendarSetupV7 setup);
+
+    Response updateCalendarSetup(org.jlawyer.io.rest.v7.pojo.RestfulCalendarSetupV7 setup);
+
+    Response deleteCalendarSetup(org.jlawyer.io.rest.v7.pojo.RestfulCalendarSetupV7 setup);
+
+    Response testCalendarConnection(org.jlawyer.io.rest.v7.pojo.RestfulCalendarSetupV7 connection);
+
+    Response runCalendarSync();
+
+    Response getCalendarEntryTemplates();
+
+    Response createCalendarEntryTemplate(org.jlawyer.io.rest.v7.pojo.RestfulCalendarEntryTemplateV7 template);
+
+    Response updateCalendarEntryTemplate(org.jlawyer.io.rest.v7.pojo.RestfulCalendarEntryTemplateV7 template);
+
+    Response deleteCalendarEntryTemplate(org.jlawyer.io.rest.v7.pojo.RestfulCalendarEntryTemplateV7 template);
+
+    Response getBankStatementCsvConfigs();
+
+    Response createBankStatementCsvConfig(org.jlawyer.io.rest.v7.pojo.RestfulBankStatementCsvConfigV7 config);
+
+    Response updateBankStatementCsvConfig(org.jlawyer.io.rest.v7.pojo.RestfulBankStatementCsvConfigV7 config);
+
+    Response deleteBankStatementCsvConfig(org.jlawyer.io.rest.v7.pojo.RestfulBankStatementCsvConfigV7 config);
+
+    Response getTimesheetSettings();
+
+    Response setTimesheetSettings(org.jlawyer.io.rest.v7.pojo.RestfulTimesheetSettingsV7 settings);
+
+    Response getSystemMailbox();
+
+    Response setSystemMailbox(org.jlawyer.io.rest.v7.pojo.RestfulSystemMailboxV7 mailbox);
+
+    Response testSystemMailbox(org.jlawyer.io.rest.v7.pojo.RestfulSystemMailboxV7 mailbox);
+
+    Response getSecuritySettings();
+
+    Response setSecuritySettings(org.jlawyer.io.rest.v7.pojo.RestfulSecuritySettingsV7 settings);
+
+    Response getMonitoringSettings();
+
+    Response setMonitoringSettings(org.jlawyer.io.rest.v7.pojo.RestfulMonitoringSettingsV7 settings);
+
+    Response getMonitoringSnapshot();
+
+    Response getSystemReport(int lines);
 
 }

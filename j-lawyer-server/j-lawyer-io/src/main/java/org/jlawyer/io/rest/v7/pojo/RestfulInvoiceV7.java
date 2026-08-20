@@ -695,6 +695,7 @@ public class RestfulInvoiceV7 {
     private String lastPoolId;
     private String paymentType;
     private String buyerOrderReference;
+    private String invoiceTypeId;
 
 
     public RestfulInvoiceV7() {
@@ -712,6 +713,8 @@ public class RestfulInvoiceV7 {
         invoice.setPeriodFrom(i.getPeriodFrom());
         invoice.setPeriodTo(i.getPeriodTo());
         invoice.setInvoiceType(i.getInvoiceType().getDisplayName());
+        invoice.setInvoiceTypeId(i.getInvoiceType().getId());
+        invoice.setLastPoolId(i.getLastPoolId());
         invoice.setCaseId(i.getArchiveFileKey().getId());
         invoice.setSmallBusiness(i.isSmallBusiness());
         if(i.getContact()!=null)
@@ -1008,6 +1011,20 @@ public class RestfulInvoiceV7 {
      */
     public void setLastPoolId(String lastPoolId) {
         this.lastPoolId = lastPoolId;
+    }
+
+    /**
+     * @return the id of the invoice type (for round-tripping the type selection on edit)
+     */
+    public String getInvoiceTypeId() {
+        return invoiceTypeId;
+    }
+
+    /**
+     * @param invoiceTypeId the invoiceTypeId to set
+     */
+    public void setInvoiceTypeId(String invoiceTypeId) {
+        this.invoiceTypeId = invoiceTypeId;
     }
 
     /**
