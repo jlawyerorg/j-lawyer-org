@@ -96,6 +96,18 @@ Aktuell gesetzt:
   intern lediglich `node-forge` gegen `@peculiar/x509` für die Self-Signed-Zertifikate.
   **Entfällt** mit dem Upgrade auf Angular 20+, dessen Toolchain 5.2.6+ mitbringt.
 
+- `@angular-devkit/build-angular` → `http-proxy-middleware: 3.0.6` (statt der gepinnten
+  3.0.3) — schließt GHSA-64mm-vxmg-q3vj (Host-Header-gesteuerte Umgehung des
+  `router`-Backend-Matchings). Der Dependabot-Vorschlag (#3541) hätte dafür
+  `build-angular` auf 21.2.21 gehoben — dieselbe Unverträglichkeit wie oben.
+
+  **Beachte die verschachtelte Form.** Ein pauschales `"http-proxy-middleware": "3.0.6"`
+  wäre falsch: `webpack-dev-server` bringt eine eigene Instanz auf **2.0.10** mit, die
+  damit über eine Major-Grenze gezwungen würde — genau der Verstoß gegen die Regel
+  oben. Der Override zielt deshalb nur auf den Zweig unter `build-angular`; 2.0.10
+  bleibt unangetastet und war nie betroffen (Advisory-Range ist `>= 3.0.0, < 3.0.6`).
+  Verifiziert: nach dem Override existiert keine Instanz in `[3.0.0, 3.0.6)` mehr.
+
   **Nicht** geschlossen wird damit GHSA-w5hq-g745-h8pq (`sockjs` -> `uuid` 8.3.2):
   `npm audit` führt `webpack-dev-server` deshalb weiterhin (moderate). Ein Override
   auf `uuid` 11.x wäre ein Major-Sprung innerhalb von `sockjs` und damit nach obiger

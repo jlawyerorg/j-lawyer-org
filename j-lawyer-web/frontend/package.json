@@ -37,6 +37,9 @@
   },
   "overrides": {
     "postcss": "8.5.23",
-    "webpack-dev-server": "5.2.6"
+    "webpack-dev-server": "5.2.6",
+    "@angular-devkit/build-angular": {
+      "http-proxy-middleware": "3.0.6"
+    }
   }
 }
