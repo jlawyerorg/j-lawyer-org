@@ -3156,9 +3156,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuPdfStampsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuPdfStampsActionPerformed
         if (checkAdmin()) {
-            OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
-            dlg.setTitle("verfügbare PDF-Stempel");
-            dlg.setOptionGroup(OptionConstants.OPTIONGROUP_PDFSTAMPS);
+            PdfStampConfigurationDialog dlg = new PdfStampConfigurationDialog(this, true);
             FrameUtils.centerDialog(dlg, this);
             dlg.setVisible(true);
         }

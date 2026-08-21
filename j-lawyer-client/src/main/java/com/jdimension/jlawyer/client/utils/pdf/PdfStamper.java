@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.utils.pdf;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import org.apache.log4j.Logger;
@@ -678,45 +679,110 @@ import org.apache.pdfbox.util.Matrix;
  * @author jens
  */
 public class PdfStamper {
-    
-    private static final Logger log=Logger.getLogger(PdfStamper.class.getName());
 
-    public static void stampPdf(String pdfPath, String stampText, int fontSize) {
-        try {
-            
+    private static final Logger log = Logger.getLogger(PdfStamper.class.getName());
 
-            try (PDDocument document = PDDocument.load(new File(pdfPath))) {
+    private static final PDType1Font FONT = PDType1Font.HELVETICA_BOLD;
+    private static final float MARGIN = 20f;
+    private static final float TOP_OFFSET = 50f;
+    private static final float ALPHA = 0.3f;
+
+    /**
+     * Stamps all pages of a PDF in place.
+     *
+     * @param pdfPath path of the PDF to be modified
+     * @param stamp text and rendering attributes of the stamp
+     * @throws IOException if the document cannot be read, stamped or written
+     */
+    public static void stampPdf(String pdfPath, PdfStampConfig stamp) throws IOException {
+        try (PDDocument document = PDDocument.load(new File(pdfPath))) {
             for (PDPage page : document.getPages()) {
-                float pageWidth = page.getMediaBox().getWidth();
-                float pageHeight = page.getMediaBox().getHeight();
-                float textWidth = getTextWidth(stampText, PDType1Font.HELVETICA_BOLD, fontSize);
-                
-                // Calculate X position dynamically based on text width
-                float textX = pageWidth - textWidth - 20; // 20px margin from the right edge
-                float textY = pageHeight - 50; // Always near the top
-                float rotationAngle = (float) Math.toRadians(-20); // Slight rotation
-
-                try (PDPageContentStream contentStream = new PDPageContentStream(document, page, PDPageContentStream.AppendMode.APPEND, true, true)) {
-                    // Set transparency
-                    PDExtendedGraphicsState graphicsState = new PDExtendedGraphicsState();
-                    graphicsState.setNonStrokingAlphaConstant(0.3f); // 30% transparency
-                    contentStream.setGraphicsStateParameters(graphicsState);
-
-                    contentStream.beginText();
-                    contentStream.setFont(PDType1Font.HELVETICA_BOLD, fontSize);
-                    contentStream.setNonStrokingColor(1f, 0f, 0f); // Red color
-                    contentStream.setTextMatrix(Matrix.getRotateInstance(rotationAngle, textX, textY));
-                    contentStream.showText(stampText);
-                    contentStream.endText();
-                }
+                stampPage(document, page, stamp);
             }
             document.save(new File(pdfPath));
-        }
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (IOException ex) {
+            log.error("unable to stamp PDF " + pdfPath, ex);
+            throw ex;
+        } catch (RuntimeException ex) {
+            // e.g. characters the fonts encoding cannot represent
+            log.error("unable to stamp PDF " + pdfPath, ex);
+            throw new IOException(ex.getMessage(), ex);
         }
     }
-    
+
+    private static void stampPage(PDDocument document, PDPage page, PdfStampConfig stamp) throws IOException {
+        float pageWidth = page.getMediaBox().getWidth();
+        float pageHeight = page.getMediaBox().getHeight();
+        int fontSize = stamp.getFontSize();
+        String stampText = stamp.getText();
+
+        float textWidth = getTextWidth(stampText, FONT, fontSize);
+        float capHeight = FONT.getFontDescriptor().getCapHeight() / 1000f * fontSize;
+        double rotationAngle = Math.toRadians(stamp.getRotation());
+
+        // horizontal extent shrinks when the text is rotated
+        float effectiveWidth = (float) Math.abs(Math.cos(rotationAngle)) * textWidth;
+        // vertical offset of the far end of the text relative to its baseline:
+        // positive means it points upwards, negative means it drops below
+        float rise = (float) Math.sin(rotationAngle) * textWidth;
+        float above = Math.max(0f, rise);
+        float below = Math.max(0f, -rise);
+
+        float textX;
+        switch (stamp.getPosition()) {
+            case TOPLEFT:
+            case BOTTOMLEFT:
+                textX = MARGIN;
+                break;
+            case TOPCENTER:
+            case BOTTOMCENTER:
+            case MIDDLE:
+                textX = (pageWidth - effectiveWidth) / 2f;
+                break;
+            default:
+                textX = pageWidth - effectiveWidth - MARGIN;
+                break;
+        }
+
+        float textY;
+        switch (stamp.getPosition()) {
+            case MIDDLE:
+                textY = (pageHeight - capHeight - above - below) / 2f + below;
+                break;
+            case BOTTOMLEFT:
+            case BOTTOMCENTER:
+            case BOTTOMRIGHT:
+                textY = MARGIN + below;
+                break;
+            default:
+                textY = pageHeight - TOP_OFFSET - above;
+                break;
+        }
+
+        textX = clamp(textX, MARGIN, Math.max(MARGIN, pageWidth - MARGIN));
+        textY = clamp(textY, MARGIN, Math.max(MARGIN, pageHeight - MARGIN));
+
+        Color color = stamp.getColor() == null ? PdfStampConfig.DEFAULT_COLOR : stamp.getColor();
+
+        try (PDPageContentStream contentStream = new PDPageContentStream(document, page, PDPageContentStream.AppendMode.APPEND, true, true)) {
+            // Set transparency
+            PDExtendedGraphicsState graphicsState = new PDExtendedGraphicsState();
+            graphicsState.setNonStrokingAlphaConstant(ALPHA);
+            contentStream.setGraphicsStateParameters(graphicsState);
+
+            contentStream.beginText();
+            contentStream.setFont(FONT, fontSize);
+            contentStream.setNonStrokingColor(color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f);
+            contentStream.setTextMatrix(Matrix.getRotateInstance(rotationAngle, textX, textY));
+            contentStream.showText(stampText);
+            contentStream.endText();
+        }
+    }
+
+    private static float clamp(float value, float min, float max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
     private static float getTextWidth(String text, PDType1Font font, float fontSize) {
         float textWidth = 0;
         try {

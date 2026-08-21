@@ -663,555 +663,260 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.utils.pdf;
 
-import com.jdimension.jlawyer.client.editors.documents.viewer.PdfImagePanel;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.ComponentUtils;
-import com.jdimension.jlawyer.client.utils.FileUtils;
-import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
-import com.jdimension.jlawyer.server.constants.OptionConstants;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import javax.swing.JColorChooser;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-import org.apache.log4j.Logger;
-import themes.colors.DefaultColorTheme;
 
 /**
+ * Configuration of a single PDF stamp: its text plus the attributes that
+ * determine how it is rendered onto a page.
+ *
+ * Stamps are persisted as plain option group entries (table server_options,
+ * option group document.pdfstamps) which offer nothing but a single string
+ * value. The rendering attributes are therefore encoded into that value:
+ *
+ * <pre>KOPIE|size=48|color=FF0000|pos=TOPRIGHT|rot=0</pre>
+ *
+ * Legacy entries carry the stamp text only; all attributes then fall back to
+ * their defaults. The separator must not occur within the stamp text - use
+ * {@link #validateText(java.lang.String)} before storing user input.
  *
  * @author jens
  */
-public class PdfStamperDialog extends javax.swing.JDialog {
+public class PdfStampConfig {
 
-    private static final Logger log = Logger.getLogger(PdfStamperDialog.class.getName());
+    public static final String SEPARATOR = "|";
 
-    private byte[] content = null;
-    private String tempFilePath = null;
-    private boolean failed = true;
-    private String lastStampText="";
-    private boolean saveRequested = false;
-    private final Map<String, PdfStampConfig> stampConfigs = new HashMap<>();
-    private Color stampColor = PdfStampConfig.DEFAULT_COLOR;
-    private String lastAppliedStampText = null;
+    public static final int DEFAULT_FONT_SIZE = 50;
+    public static final int MIN_FONT_SIZE = 6;
+    public static final int MAX_FONT_SIZE = 80;
+
+    public static final int DEFAULT_ROTATION = 0;
+    public static final int MIN_ROTATION = -90;
+    public static final int MAX_ROTATION = 90;
+
+    public static final Color DEFAULT_COLOR = Color.RED;
+    public static final Position DEFAULT_POSITION = Position.TOPRIGHT;
+
+    public static final int MAX_TEXT_LENGTH = 180;
+
+    private static final String KEY_SIZE = "size";
+    private static final String KEY_COLOR = "color";
+    private static final String KEY_POSITION = "pos";
+    private static final String KEY_ROTATION = "rot";
 
     /**
-     * Creates new form PdfStamperDialog
+     * Where on the page a stamp is placed.
+     */
+    public enum Position {
+        TOPLEFT("oben links"),
+        TOPCENTER("oben Mitte"),
+        TOPRIGHT("oben rechts"),
+        MIDDLE("Mitte"),
+        BOTTOMLEFT("unten links"),
+        BOTTOMCENTER("unten Mitte"),
+        BOTTOMRIGHT("unten rechts");
+
+        private final String label;
+
+        private Position(String label) {
+            this.label = label;
+        }
+
+        public String getLabel() {
+            return this.label;
+        }
+
+        @Override
+        public String toString() {
+            return this.label;
+        }
+    }
+
+    private String text = "";
+    private int fontSize = DEFAULT_FONT_SIZE;
+    private Color color = DEFAULT_COLOR;
+    private Position position = DEFAULT_POSITION;
+    private int rotation = DEFAULT_ROTATION;
+
+    public PdfStampConfig() {
+        super();
+    }
+
+    public PdfStampConfig(String text) {
+        this.text = text;
+    }
+
+    /**
+     * Reads a stamp configuration from its stored representation. Never fails -
+     * anything that cannot be interpreted falls back to the defaults.
      *
-     * @param parent
-     * @param modal
-     * @param fileName
-     * @param content
-     * @param tempFilePath
+     * @param storedValue value of the option group entry, may be null
+     * @return the stamp configuration
      */
-    public PdfStamperDialog(java.awt.Frame parent, boolean modal, String fileName, byte[] content, String tempFilePath) {
-        super(parent, modal);
-        initComponents();
-
-        this.pnlTitle.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
-        this.lblFileName.setText(fileName);
-        this.content = content;
-        this.tempFilePath = tempFilePath;
-        
-        this.cmbPosition.setModel(new javax.swing.DefaultComboBoxModel<>(PdfStampConfig.Position.values()));
-        this.cmbPosition.setSelectedItem(PdfStampConfig.DEFAULT_POSITION);
-        this.setStampColor(PdfStampConfig.DEFAULT_COLOR);
-
-        this.cmbStampText.removeAllItems();
-        this.cmbStampText.addItem("");
-        
-        try {
-            ClientSettings settings=ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-            AppOptionGroupBean[] stamps=locator.lookupSystemManagementRemote().getOptionGroup(OptionConstants.OPTIONGROUP_PDFSTAMPS);
-            for(AppOptionGroupBean stamp: stamps) {
-                PdfStampConfig config=PdfStampConfig.parse(stamp.getValue());
-                this.stampConfigs.put(config.getText(), config);
-                this.cmbStampText.addItem(config.getText());
-            }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden der PDF-Stempel: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+    public static PdfStampConfig parse(String storedValue) {
+        PdfStampConfig config = new PdfStampConfig();
+        if (storedValue == null) {
+            return config;
         }
-        this.cmbStampText.setSelectedItem("");
 
-        ComponentUtils.restoreDialogSize(this);
-
-        ComponentUtils.decorateSplitPane(this.splitMain);
-        ComponentUtils.restoreSplitPane(this.splitMain, this.getClass(), "splitMain");
-        ComponentUtils.persistSplitPane(this.splitMain, this.getClass(), "splitMain");
-
-        SwingUtilities.invokeLater(() -> {
-            try {
-                PdfImagePanel pdfP = new PdfImagePanel(new File(this.tempFilePath).getName(), content);
-                this.pnlPreview.removeAll();
-                this.pnlPreview.add(pdfP, BorderLayout.CENTER);
-                this.pnlPreview.revalidate();
-                this.pnlPreview.doLayout();
-                this.pnlPreview.updateUI();
-
-                int width = Math.max(290, this.pnlPreview.getWidth());
-                int height = Math.max(400, this.pnlPreview.getHeight());
-
-                pdfP.setSize(new Dimension(width, height));
-                pdfP.setMaximumSize(new Dimension(width, height));
-                pdfP.setPreferredSize(new Dimension(width, height));
-                pdfP.showContent(content);
-            } catch (Exception ex) {
-
+        String[] segments = storedValue.split("\\" + SEPARATOR, -1);
+        StringBuilder textBuffer = new StringBuilder(segments[0]);
+        for (int i = 1; i < segments.length; i++) {
+            if (!config.applyAttribute(segments[i])) {
+                // no known attribute - legacy text that contained the separator
+                textBuffer.append(SEPARATOR).append(segments[i]);
             }
-
-        });
-
+        }
+        config.text = textBuffer.toString();
+        return config;
     }
 
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
-
-        popAssistant = new javax.swing.JPopupMenu();
-        pnlTitle = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
-        lblFileName = new javax.swing.JLabel();
-        cmdCancel = new javax.swing.JButton();
-        splitMain = new javax.swing.JSplitPane();
-        jPanel1 = new javax.swing.JPanel();
-        progress = new javax.swing.JProgressBar();
-        cmdSubmit = new javax.swing.JButton();
-        jLabel2 = new javax.swing.JLabel();
-        spnFontSize = new javax.swing.JSpinner();
-        jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
-        cmbPosition = new javax.swing.JComboBox<>();
-        jLabel5 = new javax.swing.JLabel();
-        spnRotation = new javax.swing.JSpinner();
-        jLabel6 = new javax.swing.JLabel();
-        cmdColor = new javax.swing.JButton();
-        cmbStampText = new javax.swing.JComboBox<>();
-        pnlPreview = new javax.swing.JPanel();
-        cmdSave = new javax.swing.JButton();
-
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("PDF stempeln");
-        addComponentListener(new java.awt.event.ComponentAdapter() {
-            public void componentResized(java.awt.event.ComponentEvent evt) {
-                formComponentResized(evt);
-            }
-        });
-
-        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() | java.awt.Font.BOLD, jLabel1.getFont().getSize()+2));
-        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel1.setText("PDF stempeln");
-
-        lblFileName.setFont(lblFileName.getFont());
-        lblFileName.setForeground(new java.awt.Color(255, 255, 255));
-        lblFileName.setText("dings.pdf");
-
-        javax.swing.GroupLayout pnlTitleLayout = new javax.swing.GroupLayout(pnlTitle);
-        pnlTitle.setLayout(pnlTitleLayout);
-        pnlTitleLayout.setHorizontalGroup(
-            pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnlTitleLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnlTitleLayout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-        pnlTitleLayout.setVerticalGroup(
-            pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnlTitleLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblFileName)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        cmdCancel.setFont(cmdCancel.getFont());
-        cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
-        cmdCancel.setText("Abbrechen");
-        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdCancelActionPerformed(evt);
-            }
-        });
-
-        progress.setFont(progress.getFont());
-        progress.setStringPainted(true);
-
-        cmdSubmit.setFont(cmdSubmit.getFont());
-        cmdSubmit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/approval_24dp_0E72B5.png"))); // NOI18N
-        cmdSubmit.setText("Stempeln");
-        cmdSubmit.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSubmitActionPerformed(evt);
-            }
-        });
-
-        jLabel2.setText("Stempel:");
-
-        spnFontSize.setModel(new javax.swing.SpinnerNumberModel(50, 6, 80, 1));
-
-        jLabel3.setText("Schriftgröße:");
-
-        jLabel4.setText("Position:");
-
-        cmbPosition.setModel(new javax.swing.DefaultComboBoxModel<>(new com.jdimension.jlawyer.client.utils.pdf.PdfStampConfig.Position[] {}));
-
-        jLabel5.setText("Drehung (°):");
-
-        spnRotation.setModel(new javax.swing.SpinnerNumberModel(0, -90, 90, 5));
-
-        jLabel6.setText("Farbe:");
-
-        cmdColor.setText("        ");
-        cmdColor.setOpaque(true);
-        cmdColor.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdColorActionPerformed(evt);
-            }
-        });
-
-        cmbStampText.setEditable(true);
-        cmbStampText.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        cmbStampText.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmbStampTextActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(cmdSubmit))
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
-                        .addGap(33, 33, 33)
-                        .addComponent(progress, javax.swing.GroupLayout.DEFAULT_SIZE, 268, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel3)
-                            .addComponent(jLabel4)
-                            .addComponent(jLabel5)
-                            .addComponent(jLabel6))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(spnFontSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(spnRotation, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(cmdColor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addComponent(cmbPosition, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(cmbStampText, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                .addGap(40, 40, 40))
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(cmbStampText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(spnFontSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel3))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel4)
-                    .addComponent(cmbPosition, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel5)
-                    .addComponent(spnRotation, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel6)
-                    .addComponent(cmdColor))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 204, Short.MAX_VALUE)
-                .addComponent(progress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(cmdSubmit)
-                .addContainerGap())
-        );
-
-        splitMain.setLeftComponent(jPanel1);
-
-        javax.swing.GroupLayout pnlPreviewLayout = new javax.swing.GroupLayout(pnlPreview);
-        pnlPreview.setLayout(pnlPreviewLayout);
-        pnlPreviewLayout.setHorizontalGroup(
-            pnlPreviewLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 822, Short.MAX_VALUE)
-        );
-        pnlPreviewLayout.setVerticalGroup(
-            pnlPreviewLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 444, Short.MAX_VALUE)
-        );
-
-        splitMain.setRightComponent(pnlPreview);
-
-        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
-        cmdSave.setText("zur Akte speichern");
-        cmdSave.setEnabled(false);
-        cmdSave.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSaveActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(pnlTitle, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(splitMain)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(cmdSave)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdCancel)))
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(pnlTitle, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(splitMain)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmdCancel)
-                    .addComponent(cmdSave))
-                .addContainerGap())
-        );
-
-        pack();
-    }// </editor-fold>//GEN-END:initComponents
-
-    private void cmdSubmitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSubmitActionPerformed
-        Object editorItem = this.cmbStampText.getEditor().getItem();
-        String stampText = (editorItem == null ? "" : editorItem.toString());
-        String validationError = PdfStampConfig.validateText(stampText);
-        if (validationError != null) {
-            JOptionPane.showMessageDialog(this, validationError, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            return;
+    private boolean applyAttribute(String segment) {
+        int equals = segment.indexOf('=');
+        if (equals < 1) {
+            return false;
         }
 
-        try {
-            this.progress.setMaximum(3);
-            this.progress.setValue(1);
-            this.progress.setString("Stempel werden angebracht...");
-            this.cmdSave.setEnabled(false);
-
-            PdfStampConfig stamp = new PdfStampConfig(stampText);
-            stamp.setFontSize((int) this.spnFontSize.getValue());
-            stamp.setRotation((int) this.spnRotation.getValue());
-            stamp.setColor(this.stampColor);
-            if (this.cmbPosition.getSelectedItem() != null) {
-                stamp.setPosition((PdfStampConfig.Position) this.cmbPosition.getSelectedItem());
-            }
-            PdfStamper.stampPdf(this.tempFilePath, stamp);
-            
-            this.progress.setValue(2);
-            this.progress.setString("Vorschau laden...");
-            SwingUtilities.invokeLater(() -> {
-                try {
-                    byte[] previewContent = FileUtils.readFile(new File(this.tempFilePath));
-                    PdfImagePanel pdfP = new PdfImagePanel(new File(this.tempFilePath).getName(), previewContent);
-                    this.pnlPreview.removeAll();
-                    this.pnlPreview.add(pdfP, BorderLayout.CENTER);
-                    this.pnlPreview.revalidate();
-                    this.pnlPreview.doLayout();
-                    this.pnlPreview.updateUI();
-
-                    int width = Math.max(290, this.pnlPreview.getWidth());
-                    int height = Math.max(400, this.pnlPreview.getHeight());
-
-                    pdfP.setSize(new Dimension(width, height));
-                    pdfP.setMaximumSize(new Dimension(width, height));
-                    pdfP.setPreferredSize(new Dimension(width, height));
-                    pdfP.showContent(previewContent);
-                    this.progress.setValue(3);
-                } catch (Exception ex) {
-
+        String key = segment.substring(0, equals);
+        String value = segment.substring(equals + 1);
+        switch (key) {
+            case KEY_SIZE:
+                Integer size = toInt(value);
+                if (size != null && size >= MIN_FONT_SIZE && size <= MAX_FONT_SIZE) {
+                    this.fontSize = size;
                 }
-
-            });
-            this.progress.setString("Stempeln abgeschlossen");
-            this.lastStampText=stampText;
-
-            this.failed = false;
-            this.cmdSave.setEnabled(true);
-
-        } catch (Exception ex) {
-            log.error("unable to stamp PDF", ex);
-            this.progress.setString("Fehler");
-            JOptionPane.showMessageDialog(this, "PDF konnte nicht gestempelt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            this.failed = true;
+                return true;
+            case KEY_COLOR:
+                Color parsedColor = toColor(value);
+                if (parsedColor != null) {
+                    this.color = parsedColor;
+                }
+                return true;
+            case KEY_POSITION:
+                Position parsedPosition = toPosition(value);
+                if (parsedPosition != null) {
+                    this.position = parsedPosition;
+                }
+                return true;
+            case KEY_ROTATION:
+                Integer rot = toInt(value);
+                if (rot != null && rot >= MIN_ROTATION && rot <= MAX_ROTATION) {
+                    this.rotation = rot;
+                }
+                return true;
+            default:
+                return false;
         }
-    }//GEN-LAST:event_cmdSubmitActionPerformed
-
-    private void cmbStampTextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbStampTextActionPerformed
-        Object selected = this.cmbStampText.getSelectedItem();
-        if (selected == null) {
-            return;
-        }
-
-        String stampText = selected.toString();
-        if (stampText.equals(this.lastAppliedStampText)) {
-            // same stamp as before - do not discard manual adjustments
-            return;
-        }
-        this.lastAppliedStampText = stampText;
-
-        // stamps that are not configured (freely entered text) fall back to the defaults
-        PdfStampConfig config = this.stampConfigs.get(stampText);
-        if (config == null) {
-            config = new PdfStampConfig(stampText);
-        }
-        this.spnFontSize.setValue(config.getFontSize());
-        this.spnRotation.setValue(config.getRotation());
-        this.cmbPosition.setSelectedItem(config.getPosition());
-        this.setStampColor(config.getColor());
-    }//GEN-LAST:event_cmbStampTextActionPerformed
-
-    private void cmdColorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdColorActionPerformed
-        Color chosen = JColorChooser.showDialog(this, "Farbe des Stempels", this.stampColor);
-        if (chosen != null) {
-            this.setStampColor(chosen);
-        }
-    }//GEN-LAST:event_cmdColorActionPerformed
-
-    private void setStampColor(Color color) {
-        this.stampColor = (color == null ? PdfStampConfig.DEFAULT_COLOR : color);
-        this.cmdColor.setBackground(this.stampColor);
-        this.cmdColor.setForeground(this.stampColor);
     }
 
-    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
-        this.saveRequested = true;
-
-        this.setVisible(false);
-        this.dispose();
-
-    }//GEN-LAST:event_cmdSaveActionPerformed
-
-    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
-        ComponentUtils.storeDialogSize(this);
-    }//GEN-LAST:event_formComponentResized
-
-    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
-        this.saveRequested = false;
-        this.setVisible(false);
-        this.dispose();
-    }//GEN-LAST:event_cmdCancelActionPerformed
-
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
+    private static Integer toInt(String value) {
         try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(PdfStamperDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(PdfStamperDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(PdfStamperDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(PdfStamperDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            return Integer.valueOf(value);
+        } catch (NumberFormatException nfe) {
+            return null;
         }
-        //</editor-fold>
-        //</editor-fold>
-
-        /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(() -> {
-            PdfStamperDialog dialog = new PdfStamperDialog(new javax.swing.JFrame(), true, null, null, null);
-            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                @Override
-                public void windowClosing(java.awt.event.WindowEvent e) {
-                    System.exit(0);
-                }
-            });
-            dialog.setVisible(true);
-        });
     }
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox<com.jdimension.jlawyer.client.utils.pdf.PdfStampConfig.Position> cmbPosition;
-    private javax.swing.JComboBox<String> cmbStampText;
-    private javax.swing.JButton cmdCancel;
-    private javax.swing.JButton cmdColor;
-    private javax.swing.JButton cmdSave;
-    private javax.swing.JButton cmdSubmit;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JLabel lblFileName;
-    private javax.swing.JPanel pnlPreview;
-    private javax.swing.JPanel pnlTitle;
-    private javax.swing.JPopupMenu popAssistant;
-    private javax.swing.JProgressBar progress;
-    private javax.swing.JSplitPane splitMain;
-    private javax.swing.JSpinner spnFontSize;
-    private javax.swing.JSpinner spnRotation;
-    // End of variables declaration//GEN-END:variables
-
-    /**
-     * @return the failed
-     */
-    public boolean isFailed() {
-        return failed;
+    private static Color toColor(String value) {
+        if (value == null || !value.matches("[0-9a-fA-F]{6}")) {
+            return null;
+        }
+        return new Color(Integer.parseInt(value, 16));
     }
-    
-    public String getLastStampText() {
-        return this.lastStampText;
+
+    private static Position toPosition(String value) {
+        for (Position p : Position.values()) {
+            if (p.name().equalsIgnoreCase(value)) {
+                return p;
+            }
+        }
+        return null;
     }
 
     /**
-     * @return the saveRequested
+     * Renders this configuration into the string stored as the option group
+     * value. All attributes are written, even if they equal the defaults.
+     *
+     * @return the stored representation
      */
-    public boolean isSaveRequested() {
-        return saveRequested;
+    public String toStoredValue() {
+        StringBuilder sb = new StringBuilder(this.text == null ? "" : this.text);
+        sb.append(SEPARATOR).append(KEY_SIZE).append("=").append(this.fontSize);
+        sb.append(SEPARATOR).append(KEY_COLOR).append("=").append(toHex(this.color));
+        sb.append(SEPARATOR).append(KEY_POSITION).append("=").append(this.position.name());
+        sb.append(SEPARATOR).append(KEY_ROTATION).append("=").append(this.rotation);
+        return sb.toString();
+    }
+
+    private static String toHex(Color color) {
+        return String.format("%06X", (color == null ? DEFAULT_COLOR : color).getRGB() & 0xFFFFFF);
+    }
+
+    /**
+     * Checks whether a stamp text can be stored.
+     *
+     * @param text the stamp text
+     * @return an error message ready to be displayed, or null if the text is valid
+     */
+    public static String validateText(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return "Der Stempeltext darf nicht leer sein.";
+        }
+        if (text.contains(SEPARATOR)) {
+            return "Der Stempeltext darf kein '" + SEPARATOR + "' enthalten.";
+        }
+        if (text.length() > MAX_TEXT_LENGTH) {
+            return "Der Stempeltext darf höchstens " + MAX_TEXT_LENGTH + " Zeichen lang sein.";
+        }
+        return null;
+    }
+
+    public static boolean isValidText(String text) {
+        return validateText(text) == null;
+    }
+
+    @Override
+    public String toString() {
+        return this.text;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public int getFontSize() {
+        return fontSize;
+    }
+
+    public void setFontSize(int fontSize) {
+        this.fontSize = fontSize;
+    }
+
+    public Color getColor() {
+        return color;
+    }
+
+    public void setColor(Color color) {
+        this.color = color;
+    }
+
+    public Position getPosition() {
+        return position;
+    }
+
+    public void setPosition(Position position) {
+        this.position = position;
+    }
+
+    public int getRotation() {
+        return rotation;
+    }
+
+    public void setRotation(int rotation) {
+        this.rotation = rotation;
     }
 
 }
