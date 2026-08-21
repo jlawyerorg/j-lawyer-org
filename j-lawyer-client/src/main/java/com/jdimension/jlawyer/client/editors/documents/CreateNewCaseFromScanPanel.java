@@ -661,53 +661,29 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.mail.sidebar;
+package com.jdimension.jlawyer.client.editors.documents;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.mail.EmailInboxPanel;
-import com.jdimension.jlawyer.client.mail.EmailUtils;
-import com.jdimension.jlawyer.client.mail.MailContentUI;
-import com.jdimension.jlawyer.client.utils.FrameUtils;
-import com.jdimension.jlawyer.client.wizard.WizardDataContainer;
-import com.jdimension.jlawyer.client.wizard.WizardSteps;
-import com.jdimension.jlawyer.persistence.AddressBean;
 import themes.colors.DefaultColorTheme;
 
 /**
- *
- * @author jens
+ * Sidebar entry offering to create a new case from the currently selected scan. It mirrors
+ * the "neue Akte erstellen" entry of the mail inbox sidebar
+ * (com.jdimension.jlawyer.client.mail.sidebar.CreateNewCasePanel) so that both inboxes
+ * behave the same way.
  */
-public class CreateNewCasePanel extends javax.swing.JPanel {
+public class CreateNewCaseFromScanPanel extends javax.swing.JPanel {
 
-    private String editorClass = null;
-    
-    private AddressBean[] relevantAddresses=null;
-    private String subject=null;
-    private String senderAddress=null;
-    private MailContentUI mailContentUI=null;
-    private String senderName=null;
-    private EmailInboxPanel panelParent=null;
+    private final ScannerPanel panelParent;
 
     /**
-     * Creates new form CreateNewCasePanel
-     * @param editorClassName
-     * @param parent
-     * @param senderAddress
-     * @param relevantAddresses
-     * @param mailContentUI
-     * @param subject
-     * @param senderName
+     * Creates new form CreateNewCaseFromScanPanel
+     *
+     * @param parent the scanner panel that holds the selected document
      */
-    public CreateNewCasePanel(String editorClassName, EmailInboxPanel parent, AddressBean[] relevantAddresses, String subject, MailContentUI mailContentUI, String senderName, String senderAddress) {
+    public CreateNewCaseFromScanPanel(ScannerPanel parent) {
         initComponents();
-        this.editorClass = editorClassName;
-        this.relevantAddresses=relevantAddresses;
-        this.subject=subject;
-        this.mailContentUI=mailContentUI;
-        this.senderName=senderName;
-        this.panelParent=parent;
-        this.senderAddress=senderAddress;
-        
+        this.panelParent = parent;
+
         setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
     }
 
@@ -720,16 +696,17 @@ public class CreateNewCasePanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        lblAddress = new javax.swing.JLabel();
+        lblNewCase = new javax.swing.JLabel();
         cmdNewCase = new javax.swing.JButton();
 
-        lblAddress.setFont(lblAddress.getFont().deriveFont(lblAddress.getFont().getStyle() | java.awt.Font.BOLD));
-        lblAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png"))); // NOI18N
-        lblAddress.setText("neue Akte erstellen");
-        lblAddress.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-        lblAddress.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblNewCase.setFont(lblNewCase.getFont().deriveFont(lblNewCase.getFont().getStyle() | java.awt.Font.BOLD));
+        lblNewCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png"))); // NOI18N
+        lblNewCase.setText("neue Akte erstellen");
+        lblNewCase.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        lblNewCase.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
         cmdNewCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
+        cmdNewCase.setToolTipText("neue Akte aus diesem Scan anlegen");
         cmdNewCase.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdNewCaseActionPerformed(evt);
@@ -743,7 +720,7 @@ public class CreateNewCasePanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblAddress)
+                    .addComponent(lblNewCase)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(12, 12, 12)
                         .addComponent(cmdNewCase)))
@@ -753,7 +730,7 @@ public class CreateNewCasePanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lblAddress)
+                .addComponent(lblNewCase)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdNewCase)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -761,45 +738,13 @@ public class CreateNewCasePanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdNewCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewCaseActionPerformed
-        
-        NewCaseWizardDialog dlg = new NewCaseWizardDialog(EditorsRegistry.getInstance().getMainWindow(), true);
-
-        WizardSteps steps = new WizardSteps(dlg);
-        steps.addStep(new NewCaseStep());
-        steps.addStep(new CreateAddressStep());
-        steps.addStep(new CreateAddressDetailsStep());
-        steps.addStep(new SelectAddressStep());
-        steps.addStep(new AddCalendarEventStep());
-        steps.addStep(new ConfirmationStep());
-        
-        String textBody = this.mailContentUI.getBody();
-        if (this.mailContentUI.getContentType() != null && this.mailContentUI.getContentType().toLowerCase().contains("html")) {
-            textBody = EmailUtils.html2Text(this.mailContentUI.getBody());
+        if (this.panelParent != null) {
+            this.panelParent.startCreateCaseWizardForSelectedScan();
         }
-        
-        WizardDataContainer data = steps.getData();
-        data.put("newcase.addresses", this.relevantAddresses);
-        data.put("newcase.subject", this.subject);
-        data.put("newcase.body", textBody);
-        data.put("newcase.source", "email");
-        data.put("newcase.senderaddress", this.senderAddress);
-        data.put("newcase.sendername", this.senderName);
-        data.put("newcase.parties", new java.util.ArrayList<com.jdimension.jlawyer.client.wizard.PartyEntry>());
-                        
-        
-        dlg.setSteps(steps);
-        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-        dlg.setVisible(true);
-        
-        // reload sidebar
-        if(this.panelParent!=null)
-            this.panelParent.tblMailsMouseClicked();
-        
     }//GEN-LAST:event_cmdNewCaseActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdNewCase;
-    private javax.swing.JLabel lblAddress;
+    private javax.swing.JLabel lblNewCase;
     // End of variables declaration//GEN-END:variables
-
 }

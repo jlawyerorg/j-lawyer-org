@@ -685,6 +685,13 @@ import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.mail.SaveToCaseExecutor;
+import com.jdimension.jlawyer.client.mail.sidebar.AddCalendarEventStep;
+import com.jdimension.jlawyer.client.mail.sidebar.ConfirmationStep;
+import com.jdimension.jlawyer.client.mail.sidebar.CreateAddressDetailsStep;
+import com.jdimension.jlawyer.client.mail.sidebar.CreateAddressStep;
+import com.jdimension.jlawyer.client.mail.sidebar.NewCaseStep;
+import com.jdimension.jlawyer.client.mail.sidebar.NewCaseWizardDialog;
+import com.jdimension.jlawyer.client.mail.sidebar.SelectAddressStep;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
@@ -699,6 +706,9 @@ import com.jdimension.jlawyer.dropscan.DropscanScanbox;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
+import com.jdimension.jlawyer.client.wizard.PartyEntry;
+import com.jdimension.jlawyer.client.wizard.WizardDataContainer;
+import com.jdimension.jlawyer.client.wizard.WizardSteps;
 import com.jdimension.jlawyer.pojo.FileMetadata;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.DropscanServiceRemote;
@@ -728,6 +738,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.JTable;
+import javax.swing.SwingWorker;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
@@ -1906,6 +1917,12 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             dsp.setDetails(fileNames, this);
             actionPanelEntries.add(dsp);
 
+            // the case creation wizard works on a single document only
+            if (fileNames.size() == 1) {
+                log.info("creating CreateNewCaseFromScanPanel");
+                actionPanelEntries.add(new CreateNewCaseFromScanPanel(this));
+            }
+
             log.info("creating SaveScanToCasePanel");
             // empty case reference - will trigger a search
             SaveScanToCasePanel sp = new SaveScanToCasePanel(this.getClass().getName());
@@ -2092,6 +2109,94 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             this.displayLocalScanDir();
         }
     }//GEN-LAST:event_mnuSelectLocalFolderActionPerformed
+
+    /**
+     * Starts the "create case" wizard for the currently selected scan. The document text is
+     * fetched in the background so that the EDT is not blocked while the server extracts it.
+     */
+    public void startCreateCaseWizardForSelectedScan() {
+        int selectedRow = this.tblDirContent.getSelectedRow();
+        if (selectedRow < 0) {
+            JOptionPane.showMessageDialog(this, "Bitte wählen Sie zunächst ein Dokument aus.", DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        int modelRow = this.tblDirContent.convertRowIndexToModel(selectedRow);
+        Object metaObj = this.tblDirContent.getModel().getValueAt(modelRow, 1);
+        if (!(metaObj instanceof FileMetadata)) {
+            JOptionPane.showMessageDialog(this, "Zu dem ausgewählten Dokument konnten keine Metadaten ermittelt werden.", DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        final FileMetadata metadata = (FileMetadata) metaObj;
+        ThreadUtils.setWaitCursor(this);
+
+        new SwingWorker<String, Void>() {
+            @Override
+            protected String doInBackground() throws Exception {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                // -1 returns the entire text; extraction happens server side via Tika and
+                // therefore also covers formats other than PDF
+                return locator.lookupIntegrationServiceRemote().getObservedFileText(metadata.getFileName(), -1);
+            }
+
+            @Override
+            protected void done() {
+                ThreadUtils.setDefaultCursor(ScannerPanel.this);
+                try {
+                    String textBody = get();
+                    openCreateCaseWizard(metadata, textBody != null ? textBody : "");
+                } catch (Exception ex) {
+                    log.error("Unable to start case wizard from scan", ex);
+                    JOptionPane.showMessageDialog(ScannerPanel.this, "Der Assistent zum Anlegen einer Akte konnte nicht gestartet werden: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
+    }
+
+    /**
+     * Builds and shows the "create case" wizard for a scanned document. Must be called on the EDT.
+     *
+     * @param metadata metadata of the scanned document
+     * @param textBody the extracted document text, used for address extraction
+     */
+    private void openCreateCaseWizard(FileMetadata metadata, String textBody) {
+        NewCaseWizardDialog dlg = new NewCaseWizardDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+        WizardSteps steps = new WizardSteps(dlg);
+        steps.addStep(new NewCaseStep());
+        steps.addStep(new CreateAddressStep());
+        steps.addStep(new CreateAddressDetailsStep());
+        steps.addStep(new SelectAddressStep());
+        steps.addStep(new AddCalendarEventStep());
+        steps.addStep(new ConfirmationStep());
+
+        WizardDataContainer data = steps.getData();
+        data.put("newcase.addresses", null);
+        data.put("newcase.subject", deriveSubject(metadata));
+        data.put("newcase.body", textBody);
+        data.put("newcase.source", "scanner");
+        data.put("newcase.parties", new ArrayList<PartyEntry>());
+        // the case name is up to the user - do not preset it with the scanning user
+        data.put("newcase.sendername", "");
+        data.put("newcase.senderaddress", "");
+
+        dlg.setSteps(steps);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+    }
+
+    private String deriveSubject(FileMetadata metadata) {
+        if (metadata == null || metadata.getFileName() == null) {
+            return "Scan";
+        }
+        String fileName = metadata.getFileName();
+        int idx = fileName.lastIndexOf('.');
+        if (idx > 0) {
+            fileName = fileName.substring(0, idx);
+        }
+        return fileName;
+    }
 
     private void mnuDeactivateLocalFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDeactivateLocalFolderActionPerformed
         ScannerUtils.getInstance().setLocalScanDir("");

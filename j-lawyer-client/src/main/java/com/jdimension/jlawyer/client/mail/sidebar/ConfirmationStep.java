@@ -667,7 +667,6 @@ import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.events.CasesChangedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
@@ -678,7 +677,6 @@ import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -781,128 +779,205 @@ public class ConfirmationStep extends javax.swing.JPanel implements WizardStepIn
 
     @Override
     public void display() {
+        this.pnlStatus.removeAll();
 
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            SystemManagementRemote sys = locator.lookupSystemManagementRemote();
 
-            AddressBean newAddress = null;
-
-            boolean create = (Boolean) this.data.get("newaddress.create");
-            if (create) {
-
-                JLabel label1 = new JLabel();
-                label1.setText("Adresse erstellen");
-                label1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
-                this.pnlStatus.add(label1);
-
-                List<AddressBean> similarAddresses = locator.lookupAddressServiceRemote().similaritySearch((AddressBean) this.data.get("newaddress.addressbean"), 0.85f);
-                if (!similarAddresses.isEmpty()) {
-                    StringBuilder html = new StringBuilder();
-                    html.append("<html>Es wurden &auml;hnliche Eintr&auml;ge gefunden - trotzdem speichern?<br/>");
-                    html.append("<ul>");
-                    for (AddressBean s : similarAddresses) {
-                        html.append("<li>").append(s.toShortHtml(false)).append("</li>");
-                    }
-                    html.append("</ul>");
-                    html.append("</html>");
-                    int simResponse = JOptionPane.showConfirmDialog(this, html.toString(), "Ähnlichkeitssuche", JOptionPane.YES_NO_OPTION);
-                    if (simResponse == JOptionPane.YES_OPTION) {
-                        newAddress = locator.lookupAddressServiceRemote().createAddress((AddressBean) this.data.get("newaddress.addressbean"));
-                    }
-                } else {
-                    newAddress = locator.lookupAddressServiceRemote().createAddress((AddressBean) this.data.get("newaddress.addressbean"));
-                }
-                
-                label1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
-            } else {
-                newAddress = (AddressBean) this.data.get("newaddress.selectedaddress");
+            List<PartyEntry> parties = (List<PartyEntry>) this.data.get("newcase.parties");
+            if (parties == null || parties.isEmpty()) {
+                throw new IllegalStateException("Es wurde kein Beteiligter erfasst - die Akte kann nicht angelegt werden.");
             }
 
-            JLabel label2 = new JLabel();
-            label2.setText("Akte erstellen");
-            label2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
-            this.pnlStatus.add(label2);
-
-            ArchiveFileBean newCase = new ArchiveFileBean();
-            newCase.setAssistant(this.data.get("newcase.assistant").toString());
-            newCase.setLawyer(this.data.get("newcase.lawyer").toString());
-            if(this.data.get("newcase.group")!=null)
-                newCase.setGroup((Group)this.data.get("newcase.group"));
-            newCase.setName(this.data.get("newcase.name").toString());
-            newCase.setReason(this.data.get("newcase.reason").toString());
-            newCase.setSubjectField(this.data.get("newcase.subjectfield").toString());
-
-            if (newAddress != null) {
-                ArchiveFileAddressesBean aab = new ArchiveFileAddressesBean();
-                aab.setAddressKey(newAddress);
-                aab.setArchiveFileKey(newCase);
-                aab.setReferenceType((PartyTypeBean) this.data.get("newaddress.partytype"));
-                newCase.addParty(aab);
+            JLabel addressStatus = null;
+            if (requiresAddressCreation(parties)) {
+                addressStatus = createStatusLabel("Adressen erstellen");
             }
 
+            List<PartyEntry> resolvedParties = resolveParties(locator, parties, addressStatus);
+
+            JLabel caseStatus = createStatusLabel("Akte erstellen");
+            ArchiveFileBean newCase = buildArchiveFile(resolvedParties);
             newCase = locator.lookupArchiveFileServiceRemote().createArchiveFile(newCase);
+            applyTags(locator, newCase);
+            applyAllowedGroups(locator, newCase);
+            caseStatus.setIcon(successIcon());
 
-            ArrayList<String> tags = (ArrayList<String>) this.data.get("newcase.tags");
-            for (String t : tags) {
-                ArchiveFileTagsBean tag = new ArchiveFileTagsBean();
-                tag.setArchiveFileKey(newCase);
-                tag.setTagName(t);
-                locator.lookupArchiveFileServiceRemote().setTag(newCase.getId(), tag, true);
-            }
-
-            HashMap<String, String> mvTags = (HashMap<String, String>) this.data.get("newcase.mvtags");
-            if (mvTags != null) {
-                for (String tagName : mvTags.keySet()) {
-                    ArchiveFileTagsBean mvTag = new ArchiveFileTagsBean();
-                    mvTag.setArchiveFileKey(newCase);
-                    mvTag.setTagName(tagName);
-                    mvTag.setTagValue(mvTags.get(tagName));
-                    locator.lookupArchiveFileServiceRemote().setTag(newCase.getId(), mvTag, true);
-                }
-            }
-
-            // Set allowed groups for permissions
-            ArrayList<Group> allowedGroups = (ArrayList<Group>) this.data.get("newcase.allowedgroups");
-            if (allowedGroups != null && !allowedGroups.isEmpty()) {
-                locator.lookupArchiveFileServiceRemote().updateAllowedGroups(newCase.getId(), allowedGroups);
-            }
-
-            label2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
-
-            JLabel label3 = new JLabel();
-            label3.setText("Kalendereintrag erstellen");
-            label3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
-            this.pnlStatus.add(label3);
-            
             EventBroker eb = EventBroker.getInstance();
             eb.publishEvent(new CasesChangedEvent());
 
-            ArchiveFileReviewsBean newEvent = (ArchiveFileReviewsBean) this.data.get("newevent.event");
-            CalendarEntryTemplate newEventTpl = (CalendarEntryTemplate)this.data.get("newevent.template");
-            if(newEvent!=null) {
-                newEvent.setArchiveFileKey(newCase);
-                try {
-                    CalendarUtils.getInstance().storeCalendarEntry(newEvent, newCase, newEventTpl, WindowUtils.findWindow(this));
-                } catch (Exception ex) {
-                    log.error("Error adding review", ex);
-                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Kalendereintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                }
-            }
+            JLabel calendarStatus = createStatusLabel("Kalendereintrag erstellen");
+            storeCalendarEntry(newCase);
+            calendarStatus.setIcon(successIcon());
 
-            label3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
+            JLabel doneStatus = new JLabel("fertig");
+            doneStatus.setIcon(successIcon());
+            this.pnlStatus.add(doneStatus);
 
-            JLabel label4 = new JLabel();
-            label4.setText("fertig");
-            label4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
-            this.pnlStatus.add(label4);
+            this.data.put("newcase.parties", resolvedParties);
 
         } catch (Throwable t) {
             log.error("Unable to process wizard", t);
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
+        this.pnlStatus.revalidate();
+        this.pnlStatus.repaint();
+    }
+
+    private boolean requiresAddressCreation(List<PartyEntry> parties) {
+        for (PartyEntry entry : parties) {
+            if (entry == null) {
+                continue;
+            }
+            AddressBean address = entry.getAddress();
+            if (entry.isCreateNewAddress() || address == null || address.getId() == null || "".equals(address.getId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private List<PartyEntry> resolveParties(JLawyerServiceLocator locator, List<PartyEntry> parties, JLabel addressStatus) throws Exception {
+        List<PartyEntry> resolved = new ArrayList<>();
+        for (PartyEntry entry : parties) {
+            if (entry == null) {
+                continue;
+            }
+            AddressBean address = entry.getAddress();
+            boolean needsCreation = entry.isCreateNewAddress() || address == null || address.getId() == null || "".equals(address.getId());
+            if (needsCreation) {
+                if (address == null) {
+                    continue;
+                }
+                AddressBean created = createAddress(locator, address);
+                if (created == null) {
+                    continue;
+                }
+                address = created;
+            }
+
+            PartyEntry resolvedEntry = new PartyEntry();
+            resolvedEntry.setAddress(address);
+            resolvedEntry.setCreateNewAddress(false);
+            resolvedEntry.setRole(entry.getRole());
+            resolvedEntry.setReference(entry.getReference());
+            resolvedEntry.setSource(entry.getSource());
+            resolved.add(resolvedEntry);
+        }
+
+        if (addressStatus != null) {
+            addressStatus.setIcon(successIcon());
+        }
+
+        return resolved;
+    }
+
+    private AddressBean createAddress(JLawyerServiceLocator locator, AddressBean candidate) throws Exception {
+        List<AddressBean> similarAddresses = locator.lookupAddressServiceRemote().similaritySearch(candidate, 0.85f);
+        if (!similarAddresses.isEmpty()) {
+            StringBuilder html = new StringBuilder();
+            html.append("<html>Es wurden &auml;hnliche Eintr&auml;ge gefunden - trotzdem speichern?<br/>");
+            html.append("<ul>");
+            for (AddressBean s : similarAddresses) {
+                html.append("<li>").append(s.toShortHtml(false)).append("</li>");
+            }
+            html.append("</ul>");
+            html.append("</html>");
+            int simResponse = JOptionPane.showConfirmDialog(this, html.toString(), "Ähnlichkeitssuche", JOptionPane.YES_NO_OPTION);
+            if (simResponse != JOptionPane.YES_OPTION) {
+                return null;
+            }
+        }
+        return locator.lookupAddressServiceRemote().createAddress(candidate);
+    }
+
+    private ArchiveFileBean buildArchiveFile(List<PartyEntry> parties) {
+        ArchiveFileBean newCase = new ArchiveFileBean();
+        newCase.setAssistant(this.data.get("newcase.assistant").toString());
+        newCase.setLawyer(this.data.get("newcase.lawyer").toString());
+        if (this.data.get("newcase.group") != null) {
+            newCase.setGroup((Group) this.data.get("newcase.group"));
+        }
+        newCase.setName(this.data.get("newcase.name").toString());
+        newCase.setReason(this.data.get("newcase.reason").toString());
+        newCase.setSubjectField(this.data.get("newcase.subjectfield").toString());
+
+        for (PartyEntry entry : parties) {
+            if (entry == null) {
+                continue;
+            }
+            AddressBean address = entry.getAddress();
+            PartyTypeBean role = entry.getRole();
+            if (address == null || role == null) {
+                continue;
+            }
+            ArchiveFileAddressesBean involvement = new ArchiveFileAddressesBean();
+            involvement.setAddressKey(address);
+            involvement.setArchiveFileKey(newCase);
+            involvement.setReferenceType(role);
+            involvement.setReference(entry.getReference());
+            newCase.addParty(involvement);
+        }
+
+        return newCase;
+    }
+
+    private void applyTags(JLawyerServiceLocator locator, ArchiveFileBean newCase) throws Exception {
+        ArrayList<String> tags = (ArrayList<String>) this.data.get("newcase.tags");
+        if (tags != null) {
+            for (String t : tags) {
+                ArchiveFileTagsBean tag = new ArchiveFileTagsBean();
+                tag.setArchiveFileKey(newCase);
+                tag.setTagName(t);
+                locator.lookupArchiveFileServiceRemote().setTag(newCase.getId(), tag, true);
+            }
+        }
+
+        HashMap<String, String> mvTags = (HashMap<String, String>) this.data.get("newcase.mvtags");
+        if (mvTags != null) {
+            for (String tagName : mvTags.keySet()) {
+                ArchiveFileTagsBean mvTag = new ArchiveFileTagsBean();
+                mvTag.setArchiveFileKey(newCase);
+                mvTag.setTagName(tagName);
+                mvTag.setTagValue(mvTags.get(tagName));
+                locator.lookupArchiveFileServiceRemote().setTag(newCase.getId(), mvTag, true);
+            }
+        }
+    }
+
+    private void applyAllowedGroups(JLawyerServiceLocator locator, ArchiveFileBean newCase) throws Exception {
+        ArrayList<Group> allowedGroups = (ArrayList<Group>) this.data.get("newcase.allowedgroups");
+        if (allowedGroups != null && !allowedGroups.isEmpty()) {
+            locator.lookupArchiveFileServiceRemote().updateAllowedGroups(newCase.getId(), allowedGroups);
+        }
+    }
+
+    private void storeCalendarEntry(ArchiveFileBean newCase) {
+        ArchiveFileReviewsBean newEvent = (ArchiveFileReviewsBean) this.data.get("newevent.event");
+        CalendarEntryTemplate newEventTpl = (CalendarEntryTemplate) this.data.get("newevent.template");
+        if (newEvent != null) {
+            newEvent.setArchiveFileKey(newCase);
+            try {
+                CalendarUtils.getInstance().storeCalendarEntry(newEvent, newCase, newEventTpl, WindowUtils.findWindow(this));
+            } catch (Exception ex) {
+                log.error("Error adding review", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Kalendereintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private JLabel createStatusLabel(String text) {
+        JLabel label = new JLabel();
+        label.setText(text);
+        label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
+        this.pnlStatus.add(label);
+        return label;
+    }
+
+    private javax.swing.ImageIcon successIcon() {
+        return new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"));
     }
 
     @Override
