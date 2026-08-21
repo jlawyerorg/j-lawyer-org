@@ -66,6 +66,19 @@ jobs:
       - name: Verify REST API spec (swagger equivalence gate)
         run: mvn -B -pl j-lawyer-server/j-lawyer-io test
 
+      # Build the Angular web UI (j-lawyer-web) so the frontend is actually exercised in
+      # CI. The module sits behind the -Pweb profile, so the plain build above does not
+      # touch it. npm.install.args is overridden to drop --offline: the default offline
+      # install expects a seeded/vendored npm cache (SUPPLY-CHAIN.md; tasks 2.2/2.2b),
+      # which is not in place, so CI installs online from the registry instead. Still
+      # lockfile-pinned (npm ci) and scripts stay ignored (.npmrc + explicit flag). The
+      # frontend-maven-plugin provisions its own Node/npm, so nothing else is needed.
+      - name: Build web UI (Angular, -Pweb)
+        run: >
+          mvn -B -Pweb -pl j-lawyer-web -am
+          -Dnpm.install.args="ci --ignore-scripts"
+          -Dmaven.test.skip=true install
+
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         with:
