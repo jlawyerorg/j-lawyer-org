@@ -21,7 +21,7 @@
     "@angular/common": "21.2.21",
     "@angular/compiler": "21.2.21",
     "@angular/core": "21.2.21",
-    "@angular/forms": "21.2.21",
+    "@angular/forms": "22.1.2",
     "@angular/platform-browser": "21.2.21",
     "@angular/router": "21.2.21",
     "@jsverse/transloco": "8.4.0",
