@@ -65,8 +65,15 @@ export function mimeOf(ext: string): string {
   }
 }
 
-/** Decodes a (whitespace-stripped) Base64 string into raw bytes. */
-export function base64ToBytes(b64: string): Uint8Array {
+/**
+ * Decodes a (whitespace-stripped) Base64 string into raw bytes.
+ *
+ * The return type is pinned to `Uint8Array<ArrayBuffer>` (not the default
+ * `Uint8Array<ArrayBufferLike>` since TypeScript 5.7): the bytes are backed by a
+ * freshly allocated `ArrayBuffer`, and `BlobPart` / `new Blob([...])` requires an
+ * `ArrayBuffer`-backed view — a plain `Uint8Array` no longer satisfies it.
+ */
+export function base64ToBytes(b64: string): Uint8Array<ArrayBuffer> {
   const bin = atob(b64);
   const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) {

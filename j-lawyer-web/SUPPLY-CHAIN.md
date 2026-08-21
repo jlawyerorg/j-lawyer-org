@@ -76,46 +76,29 @@ Zulässig nur, wenn die erzwungene Version **semver-kompatibel** zur ursprüngli
 aufgelösten ist (Patch/Minor innerhalb derselben Major). Andernfalls: echtes Upgrade
 planen, nicht überschreiben.
 
-Aktuell gesetzt:
-- `postcss: 8.5.23` (statt der von `@angular-devkit/build-angular` 19.2.0 gepinnten
-  8.5.2) — schließt GHSA-6g55-p6wh-862q, GHSA-r28c-9q8g-f849 und GHSA-fxqj-rqcc-2cmp
-  (`sourceMappingURL`-gesteuertes Auslesen beliebiger `.map`-Dateien zur Build-Zeit).
-  Der Dependabot-Vorschlag hätte dafür `build-angular` auf 21.x gehoben — unvereinbar
-  mit Angular 19 (`@angular/compiler-cli`-Peer, TypeScript >=5.9, Node >=20.19).
-  **Entfällt** mit dem Upgrade auf Angular 20/21, das postcss ohnehin aktuell mitbringt.
-- `webpack-dev-server: 5.2.6` (statt der von `@angular-devkit/build-angular` 19.2.0
-  gepinnten 5.2.0) — schließt die CSRF-Lücke der eingebauten Routen
-  `/webpack-dev-server/invalidate` und `/webpack-dev-server/open-editor` (eine
-  fremde Seite konnte einen Rebuild auslösen bzw. eine Datei im Editor öffnen) sowie
-  den fehlerhaften Umgang mit manipulierten `Host`/`Origin`-Headern. Betrifft nur
-  `ng serve` auf Entwicklermaschinen — der Dev-Server ist nicht Teil des WAR.
-  Der Dependabot-Vorschlag (#3531) hätte dafür `build-angular` auf 22.1.5 gehoben —
-  unvereinbar mit Angular 19 (`@angular/compiler-cli`-Peer `^22.0.0`, TypeScript
-  `>=6.0 <6.1`, Node `^22.22.3 || ^24.15.0 || >=26.0.0`); `npm ci` gegen dieses
-  Lockfile scheitert mit ERESOLVE. 5.2.0 -> 5.2.6 ist ein Patch-Schritt; er tauscht
-  intern lediglich `node-forge` gegen `@peculiar/x509` für die Self-Signed-Zertifikate.
-  **Entfällt** mit dem Upgrade auf Angular 20+, dessen Toolchain 5.2.6+ mitbringt.
+Aktuell gesetzt: **keine.**
 
-- `@angular-devkit/build-angular` → `http-proxy-middleware: 3.0.6` (statt der gepinnten
-  3.0.3) — schließt GHSA-64mm-vxmg-q3vj (Host-Header-gesteuerte Umgehung des
-  `router`-Backend-Matchings). Der Dependabot-Vorschlag (#3541) hätte dafür
-  `build-angular` auf 21.2.21 gehoben — dieselbe Unverträglichkeit wie oben.
+Mit dem Upgrade auf **Angular 21** (Issue #3547) sind die drei zuvor nötigen Overrides
+entfallen — die 21er-Toolchain bringt die betroffenen Pakete ohnehin aktuell mit:
+- `postcss` — jetzt 8.5.23 aus der 21er-Toolchain (die 19er-Version hätte GHSA-6g55-p6wh-862q
+  / -r28c-9q8g-f849 / -fxqj-rqcc-2cmp getragen). Override weg.
+- `webpack-dev-server` / `http-proxy-middleware` — **komplett aus dem Baum verschwunden.**
+  Der devDependency wurde von `@angular-devkit/build-angular` auf das schlanke
+  **`@angular/build`** umgestellt (esbuild/vite-Builder `@angular/build:application` +
+  `:dev-server`); damit fällt die gesamte Legacy-Webpack-Kette weg — inklusive
+  `webpack-dev-server`, `@angular-devkit/build-webpack`, `sockjs` und der zuvor offenen
+  `sockjs -> uuid`-Lücke (GHSA-w5hq-g745-h8pq). Beide Overrides weg.
+- `less -> image-size` (GHSA, DoS-Endlosschleifen in ICNS/JXL/HEIF-Parsern) tauchte nach
+  dem Wechsel kurz auf und wurde **ohne** Override geschlossen: ein reiner transitiver
+  Bump auf `less@4.9.0` (nutzt `probe-image-size` statt des verwundbaren `image-size`),
+  fixiert übers Lockfile. `less` ist ein optionaler CSS-Präprozessor von `@angular/build`
+  und wird von uns nicht genutzt (nur reine CSS-Dateien).
 
-  **Beachte die verschachtelte Form.** Ein pauschales `"http-proxy-middleware": "3.0.6"`
-  wäre falsch: `webpack-dev-server` bringt eine eigene Instanz auf **2.0.10** mit, die
-  damit über eine Major-Grenze gezwungen würde — genau der Verstoß gegen die Regel
-  oben. Der Override zielt deshalb nur auf den Zweig unter `build-angular`; 2.0.10
-  bleibt unangetastet und war nie betroffen (Advisory-Range ist `>= 3.0.0, < 3.0.6`).
-  Verifiziert: nach dem Override existiert keine Instanz in `[3.0.0, 3.0.6)` mehr.
+Ergebnis nach dem Upgrade: `npm audit` meldet **0 Vulnerabilities**.
 
-  **Nicht** geschlossen wird damit GHSA-w5hq-g745-h8pq (`sockjs` -> `uuid` 8.3.2):
-  `npm audit` führt `webpack-dev-server` deshalb weiterhin (moderate). Ein Override
-  auf `uuid` 11.x wäre ein Major-Sprung innerhalb von `sockjs` und damit nach obiger
-  Regel unzulässig; die Lücke betrifft zudem nur `uuid` v3/v5/v6 mit übergebenem
-  `buf`, während `sockjs` v4 ohne `buf` nutzt. Bleibt bis zum Angular-Upgrade offen.
-
-Jeder Override wird hier dokumentiert — inklusive der Bedingung, unter der er wieder
-verschwindet. Ein undokumentierter Override ist ein Audit-Blocker.
+Sollte künftig wieder ein Override nötig werden, wird er hier dokumentiert — inklusive der
+Bedingung, unter der er wieder verschwindet. Ein undokumentierter Override ist ein
+Audit-Blocker.
 
 
 ## Dateien in diesem Modul

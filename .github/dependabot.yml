@@ -60,23 +60,11 @@ updates:
   # regardless of configuration — that is why the frontend produced a burst of PRs with
   # no grouping and no ignore rules.
   #
-  # The @angular*/@angular-devkit* ignores are deliberate and TEMPORARY. The frontend is
-  # pinned to Angular 19, which is out of support and receives no backports, so for
-  # nearly every transitive advisory (vite, tar, esbuild, webpack, rollup, piscina, the
-  # sigstore chain, ...) Dependabot's only available remedy is to bump the *ancestor*
-  # (@angular/cli or @angular-devkit/build-angular) to 21/22 while the rest of the
-  # toolchain stays on 19. Those PRs cannot be merged: `npm ci` fails with ERESOLVE on
-  # the @angular/compiler-cli peer, and TypeScript/Node requirements do not match either
-  # (see the closed PRs #3530, #3531, #3538, #3540-#3545).
-  #
-  # Suppressing them is not risk acceptance — the alerts stay visible in the Security tab.
-  # It only stops Dependabot from filing PRs it cannot make mergeable. Transitive
-  # advisories that CAN be fixed in place are handled with npm `overrides` (see
-  # j-lawyer-web/SUPPLY-CHAIN.md section 6), and lockfile-only PRs remain unaffected by
-  # these ignores and stay mergeable as before.
-  #
-  # REMOVE both ignore entries as part of the Angular 19 -> 21 upgrade; they hide exactly
-  # the updates that upgrade is meant to deliver.
+  # The frontend is on Angular 21 (a supported line). Advisory fixes therefore arrive as
+  # a *patch within the major* (e.g. 21.2.21 -> 21.2.25), which `npm ci` resolves cleanly,
+  # so the former @angular*/@angular-devkit* ignores were removed with the 19 -> 21 upgrade
+  # (issue #3547) — those PRs are now wanted rather than unmergeable noise. Only the peer-
+  # pinned TypeScript / zone.js MAJOR bumps stay ignored (see below).
   - package-ecosystem: "npm"
     directory: "/j-lawyer-web/frontend"
     schedule:
@@ -92,13 +80,15 @@ updates:
           - "minor"
           - "patch"
     ignore:
-      - dependency-name: "@angular/*"
-      - dependency-name: "@angular-devkit/*"
-      # Pinned BY Angular 19, not by us: @angular/core peers zone.js "~0.15.0", and
-      # @angular/compiler-cli + build-angular peer typescript ">=5.5 <5.9". Version
-      # updates for these therefore fail `npm ci` with ERESOLVE just like the ancestor
-      # bumps above (see the closed PRs #3548 for zone.js 0.16.2, #3549 for typescript
-      # 7.0.2). rxjs is deliberately NOT ignored — the peer range is "^6.5.3 || ^7.4.0",
-      # so it can still be updated normally.
+      # TypeScript and zone.js are peer-pinned BY Angular on every version (Angular 21
+      # peers typescript ">=5.9 <6.0"; @angular/core peers zone.js "~0.15.0"). A standalone
+      # MAJOR bump breaks `npm ci` with ERESOLVE (see the closed PRs #3548 for zone.js
+      # 0.16.2, #3549 for typescript 7.0.2), so their majors must always move *with*
+      # Angular via `ng update`, never on their own. Only majors are ignored — patch/minor
+      # still flows normally. rxjs is deliberately NOT ignored (peer "^6.5.3 || ^7.4.0").
+      # NOTE: verify whether `update-types` ignores also suppress the *security* channel;
+      # that is documented for version updates, less clearly for security updates.
       - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
       - dependency-name: "zone.js"
+        update-types: ["version-update:semver-major"]
