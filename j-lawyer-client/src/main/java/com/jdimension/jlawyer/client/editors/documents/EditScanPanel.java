@@ -695,7 +695,6 @@ public class EditScanPanel extends javax.swing.JPanel {
     public EditScanPanel(String openedFromClassName) {
         initComponents();
         this.openedFromEditorClass = openedFromClassName;
-        this.cmdCreateCase.setEnabled(false);
 
     }
 
@@ -717,8 +716,6 @@ public class EditScanPanel extends javax.swing.JPanel {
                 }
             }
         }
-
-        this.cmdCreateCase.setEnabled(selectedDocuments.size() == 1 && this.executor instanceof ScannerPanel);
 
         this.cmdOcr.setEnabled(false);
         this.cmdOcr.setToolTipText(null);
@@ -778,7 +775,6 @@ public class EditScanPanel extends javax.swing.JPanel {
         cmdRenameScan = new javax.swing.JButton();
         cmdSplitPdf = new javax.swing.JButton();
         cmdOcr = new javax.swing.JButton();
-        cmdCreateCase = new javax.swing.JButton();
 
         lblDescription.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_documents.png"))); // NOI18N
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel"); // NOI18N
@@ -817,14 +813,6 @@ public class EditScanPanel extends javax.swing.JPanel {
             }
         });
 
-        cmdCreateCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
-        cmdCreateCase.setToolTipText("Neue Akte anlegen");
-        cmdCreateCase.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdCreateCaseActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -840,9 +828,7 @@ public class EditScanPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdSplitPdf)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdOcr)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdCreateCase)))
+                        .addComponent(cmdOcr)))
                 .addContainerGap(115, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -855,8 +841,7 @@ public class EditScanPanel extends javax.swing.JPanel {
                     .addComponent(cmdDeleteScan)
                     .addComponent(cmdRenameScan)
                     .addComponent(cmdSplitPdf)
-                    .addComponent(cmdOcr)
-                    .addComponent(cmdCreateCase))
+                    .addComponent(cmdOcr))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -904,16 +889,7 @@ public class EditScanPanel extends javax.swing.JPanel {
 
     }//GEN-LAST:event_cmdOcrActionPerformed
 
-    private void cmdCreateCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCreateCaseActionPerformed
-        if (this.executor instanceof ScannerPanel) {
-            ((ScannerPanel) this.executor).startCreateCaseWizardForSelectedScan();
-        } else {
-            log.warn("Create case wizard not supported for executor " + (this.executor != null ? this.executor.getClass().getName() : "null"));
-        }
-    }//GEN-LAST:event_cmdCreateCaseActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton cmdCreateCase;
     private javax.swing.JButton cmdDeleteScan;
     private javax.swing.JButton cmdOcr;
     private javax.swing.JButton cmdRenameScan;

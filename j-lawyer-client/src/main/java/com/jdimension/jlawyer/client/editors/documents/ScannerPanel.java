@@ -1917,6 +1917,12 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             dsp.setDetails(fileNames, this);
             actionPanelEntries.add(dsp);
 
+            // the case creation wizard works on a single document only
+            if (fileNames.size() == 1) {
+                log.info("creating CreateNewCaseFromScanPanel");
+                actionPanelEntries.add(new CreateNewCaseFromScanPanel(this));
+            }
+
             log.info("creating SaveScanToCasePanel");
             // empty case reference - will trigger a search
             SaveScanToCasePanel sp = new SaveScanToCasePanel(this.getClass().getName());
