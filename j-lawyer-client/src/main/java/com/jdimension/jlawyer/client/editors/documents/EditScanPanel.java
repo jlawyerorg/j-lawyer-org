@@ -913,8 +913,8 @@ public class EditScanPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cmdCreateCaseActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton cmdDeleteScan;
     private javax.swing.JButton cmdCreateCase;
+    private javax.swing.JButton cmdDeleteScan;
     private javax.swing.JButton cmdOcr;
     private javax.swing.JButton cmdRenameScan;
     private javax.swing.JButton cmdSplitPdf;

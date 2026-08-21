@@ -670,12 +670,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
+import javax.swing.JList;
 
 /**
  * Panel used inside the wizard to present one pending party entry.
  */
 public class PartyPanelRenderer extends javax.swing.JPanel {
+
+    private static final String ROLE_PLACEHOLDER = "-- Rolle wählen --";
 
     private PartyEntry partyEntry;
     private List<PartyTypeBean> availableRoles = Collections.emptyList();
@@ -685,6 +689,18 @@ public class PartyPanelRenderer extends javax.swing.JPanel {
      */
     public PartyPanelRenderer() {
         initComponents();
+        this.cmbRole.setRenderer(new RoleRenderer());
+    }
+
+    /**
+     * Keeps the panel from being stretched vertically when it is placed in a
+     * container using a vertical {@code BoxLayout}.
+     *
+     * @return the preferred height, but an unconstrained width
+     */
+    @Override
+    public java.awt.Dimension getMaximumSize() {
+        return new java.awt.Dimension(Integer.MAX_VALUE, getPreferredSize().height);
     }
 
     /**
@@ -712,6 +728,9 @@ public class PartyPanelRenderer extends javax.swing.JPanel {
         }
 
         DefaultComboBoxModel<PartyTypeBean> model = new DefaultComboBoxModel<>();
+        // leading placeholder so that an unassigned role stays null and the
+        // validation in SelectAddressStep.nextEvent() can catch it
+        model.addElement(null);
         for (PartyTypeBean bean : this.availableRoles) {
             model.addElement(bean);
         }
@@ -719,7 +738,7 @@ public class PartyPanelRenderer extends javax.swing.JPanel {
 
         if (this.partyEntry != null && this.partyEntry.getRole() != null) {
             selectRole(this.partyEntry.getRole());
-        } else if (this.cmbRole.getItemCount() > 0) {
+        } else {
             this.cmbRole.setSelectedIndex(0);
         }
     }
@@ -748,9 +767,7 @@ public class PartyPanelRenderer extends javax.swing.JPanel {
         if (this.partyEntry == null) {
             this.lblName.setText("Beteiligter");
             this.txtReference.setText("");
-            if (this.cmbRole.getItemCount() > 0) {
-                this.cmbRole.setSelectedIndex(0);
-            }
+            this.cmbRole.setSelectedIndex(0);
             return;
         }
 
@@ -758,6 +775,8 @@ public class PartyPanelRenderer extends javax.swing.JPanel {
         this.txtReference.setText(this.partyEntry.getReference() != null ? this.partyEntry.getReference() : "");
         if (this.partyEntry.getRole() != null) {
             selectRole(this.partyEntry.getRole());
+        } else {
+            this.cmbRole.setSelectedIndex(0);
         }
     }
 
@@ -828,11 +847,34 @@ public class PartyPanelRenderer extends javax.swing.JPanel {
         if (entry.isCreateNewAddress()) {
             label.append("<br/><i>wird neu angelegt</i>");
         }
-        if (entry.getSource() != null && !entry.getSource().isEmpty()) {
-            label.append("<br/><i>").append(entry.getSource()).append("</i>");
+        String source = describeSource(entry.getSource());
+        if (source != null) {
+            label.append("<br/><i>").append(source).append("</i>");
         }
         label.append("</html>");
         return label.toString();
+    }
+
+    /**
+     * Translates the internal source key of a party entry into a text that can be shown to the user.
+     *
+     * @param source internal source key, may be {@code null}
+     * @return a display text, or {@code null} if the source is unknown or not set
+     */
+    private String describeSource(String source) {
+        if (source == null || source.isEmpty()) {
+            return null;
+        }
+        if ("scanner".equalsIgnoreCase(source)) {
+            return "aus Dokument";
+        }
+        if ("email".equalsIgnoreCase(source)) {
+            return "aus E-Mail";
+        }
+        if ("search".equalsIgnoreCase(source)) {
+            return "vorhandene Adresse";
+        }
+        return null;
     }
 
     /**
@@ -904,4 +946,19 @@ public class PartyPanelRenderer extends javax.swing.JPanel {
     private javax.swing.JLabel lblName;
     private javax.swing.JTextField txtReference;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * Renders the role combo box, showing a placeholder for the {@code null} entry.
+     */
+    private static class RoleRenderer extends DefaultListCellRenderer {
+
+        @Override
+        public java.awt.Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            if (value == null) {
+                setText(ROLE_PLACEHOLDER);
+            }
+            return this;
+        }
+    }
 }

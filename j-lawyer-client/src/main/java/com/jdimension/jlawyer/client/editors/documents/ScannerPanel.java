@@ -709,7 +709,6 @@ import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.client.wizard.PartyEntry;
 import com.jdimension.jlawyer.client.wizard.WizardDataContainer;
 import com.jdimension.jlawyer.client.wizard.WizardSteps;
-import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.pojo.FileMetadata;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.DropscanServiceRemote;
@@ -739,12 +738,11 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.JTable;
+import javax.swing.SwingWorker;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.log4j.Logger;
 
 /**
@@ -2106,6 +2104,10 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         }
     }//GEN-LAST:event_mnuSelectLocalFolderActionPerformed
 
+    /**
+     * Starts the "create case" wizard for the currently selected scan. The document text is
+     * fetched in the background so that the EDT is not blocked while the server extracts it.
+     */
     public void startCreateCaseWizardForSelectedScan() {
         int selectedRow = this.tblDirContent.getSelectedRow();
         if (selectedRow < 0) {
@@ -2120,50 +2122,62 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             return;
         }
 
-        FileMetadata metadata = (FileMetadata) metaObj;
+        final FileMetadata metadata = (FileMetadata) metaObj;
+        ThreadUtils.setWaitCursor(this);
 
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            IntegrationServiceRemote integrationService = locator.lookupIntegrationServiceRemote();
-
-            DocumentPreview preview = integrationService.getObservedFilePreview(metadata.getFileName());
-            log.info("DocumentPreview object retrieved for " + metadata.getFileName());
-            log.info("Preview has text: " + (preview != null && preview.getText() != null));
-            log.info("Preview text length: " + (preview != null && preview.getText() != null ? preview.getText().length() : "null"));
-
-            String textBody = extractPreviewText(preview, integrationService, metadata.getFileName());
-            log.info("FINAL extracted text length for wizard: " + (textBody != null ? textBody.length() : "null"));
-            if (textBody != null && textBody.length() > 0) {
-                log.info("First 100 chars of extracted text: " + textBody.substring(0, Math.min(100, textBody.length())));
+        new SwingWorker<String, Void>() {
+            @Override
+            protected String doInBackground() throws Exception {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                // -1 returns the entire text; extraction happens server side via Tika and
+                // therefore also covers formats other than PDF
+                return locator.lookupIntegrationServiceRemote().getObservedFileText(metadata.getFileName(), -1);
             }
 
-            NewCaseWizardDialog dlg = new NewCaseWizardDialog(EditorsRegistry.getInstance().getMainWindow(), true);
-            WizardSteps steps = new WizardSteps(dlg);
-            steps.addStep(new NewCaseStep());
-            steps.addStep(new CreateAddressStep());
-            steps.addStep(new CreateAddressDetailsStep());
-            steps.addStep(new SelectAddressStep());
-            steps.addStep(new AddCalendarEventStep());
-            steps.addStep(new ConfirmationStep());
+            @Override
+            protected void done() {
+                ThreadUtils.setDefaultCursor(ScannerPanel.this);
+                try {
+                    String textBody = get();
+                    openCreateCaseWizard(metadata, textBody != null ? textBody : "");
+                } catch (Exception ex) {
+                    log.error("Unable to start case wizard from scan", ex);
+                    JOptionPane.showMessageDialog(ScannerPanel.this, "Der Assistent zum Anlegen einer Akte konnte nicht gestartet werden: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
+    }
 
-            WizardDataContainer data = steps.getData();
-            data.put("newcase.addresses", null);
-            data.put("newcase.subject", deriveSubject(metadata));
-            data.put("newcase.body", textBody);
-            log.info("Text body stored in wizard data container with key 'newcase.body'");
-            data.put("newcase.source", "scanner");
-            data.put("newcase.parties", new ArrayList<PartyEntry>());
-            data.put("newcase.sendername", metadata.getPrincipalId() != null ? metadata.getPrincipalId() : "Scan");
-            data.put("newcase.senderaddress", "");
+    /**
+     * Builds and shows the "create case" wizard for a scanned document. Must be called on the EDT.
+     *
+     * @param metadata metadata of the scanned document
+     * @param textBody the extracted document text, used for address extraction
+     */
+    private void openCreateCaseWizard(FileMetadata metadata, String textBody) {
+        NewCaseWizardDialog dlg = new NewCaseWizardDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+        WizardSteps steps = new WizardSteps(dlg);
+        steps.addStep(new NewCaseStep());
+        steps.addStep(new CreateAddressStep());
+        steps.addStep(new CreateAddressDetailsStep());
+        steps.addStep(new SelectAddressStep());
+        steps.addStep(new AddCalendarEventStep());
+        steps.addStep(new ConfirmationStep());
 
-            dlg.setSteps(steps);
-            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-            dlg.setVisible(true);
-        } catch (Throwable t) {
-            log.error("Unable to start case wizard from scan", t);
-            JOptionPane.showMessageDialog(this, "Der Assistent zum Anlegen einer Akte konnte nicht gestartet werden: " + t.getMessage(), DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
+        WizardDataContainer data = steps.getData();
+        data.put("newcase.addresses", null);
+        data.put("newcase.subject", deriveSubject(metadata));
+        data.put("newcase.body", textBody);
+        data.put("newcase.source", "scanner");
+        data.put("newcase.parties", new ArrayList<PartyEntry>());
+        // the case name is up to the user - do not preset it with the scanning user
+        data.put("newcase.sendername", "");
+        data.put("newcase.senderaddress", "");
+
+        dlg.setSteps(steps);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
     }
 
     private String deriveSubject(FileMetadata metadata) {
@@ -2176,43 +2190,6 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             fileName = fileName.substring(0, idx);
         }
         return fileName;
-    }
-
-    private String extractPreviewText(DocumentPreview preview, IntegrationServiceRemote integrationService, String fileName) {
-        String textBody = "";
-
-        // Try to get text from preview object first
-        if (preview != null && preview.getText() != null && !preview.getText().trim().isEmpty()) {
-            log.info("Using text from DocumentPreview object for " + fileName);
-            textBody = preview.getText();
-            return textBody;
-        }
-
-        // If preview text is empty, try to extract from PDF bytes
-        byte[] bytes = preview != null ? preview.getBytes() : null;
-        if ((bytes == null || bytes.length == 0) && integrationService != null) {
-            try {
-                log.info("Loading observed file bytes for text extraction: " + fileName);
-                bytes = integrationService.getObservedFile(fileName);
-            } catch (Exception ex) {
-                log.warn("Unable to download observed file for text extraction: " + fileName, ex);
-            }
-        }
-
-        // Try to extract text from PDF bytes if we have them
-        if (bytes != null && bytes.length > 0) {
-            try (PDDocument document = PDDocument.load(bytes)) {
-                PDFTextStripper stripper = new PDFTextStripper();
-                textBody = stripper.getText(document);
-                log.info("Extracted " + textBody.length() + " characters from PDF using PDFTextStripper for " + fileName);
-            } catch (Exception ex) {
-                log.warn("Unable to extract text from document: " + fileName + " (maybe not a PDF or corrupted)", ex);
-            }
-        } else {
-            log.warn("Cannot extract text from " + fileName + " - no bytes available");
-        }
-
-        return textBody != null ? textBody : "";
     }
 
     private void mnuDeactivateLocalFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDeactivateLocalFolderActionPerformed

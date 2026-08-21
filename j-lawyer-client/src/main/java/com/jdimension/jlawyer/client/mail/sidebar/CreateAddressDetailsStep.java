@@ -672,7 +672,6 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import java.awt.Component;
 import java.util.HashMap;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.JLabel;
 import org.apache.log4j.Logger;
 
@@ -856,7 +855,7 @@ public class CreateAddressDetailsStep extends javax.swing.JPanel implements Wiza
         jLabel1.setBackground(new java.awt.Color(153, 153, 153));
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("<html><p>Vervollst&auml;ndigen Sie hier die wichtigsten Adressinformationen.</html>");
-        jLabel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        jLabel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
         jLabel1.setOpaque(true);
 
         jLabel2.setText("Anrede:");

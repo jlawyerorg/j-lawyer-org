@@ -786,19 +786,16 @@ public class ConfirmationStep extends javax.swing.JPanel implements WizardStepIn
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
             List<PartyEntry> parties = (List<PartyEntry>) this.data.get("newcase.parties");
-            List<PartyEntry> resolvedParties;
+            if (parties == null || parties.isEmpty()) {
+                throw new IllegalStateException("Es wurde kein Beteiligter erfasst - die Akte kann nicht angelegt werden.");
+            }
 
-            boolean hasPartyList = parties != null && !parties.isEmpty();
             JLabel addressStatus = null;
-            if (hasPartyList && requiresAddressCreation(parties)) {
+            if (requiresAddressCreation(parties)) {
                 addressStatus = createStatusLabel("Adressen erstellen");
             }
 
-            if (hasPartyList) {
-                resolvedParties = resolveParties(locator, parties, addressStatus);
-            } else {
-                resolvedParties = resolveFallback(locator);
-            }
+            List<PartyEntry> resolvedParties = resolveParties(locator, parties, addressStatus);
 
             JLabel caseStatus = createStatusLabel("Akte erstellen");
             ArchiveFileBean newCase = buildArchiveFile(resolvedParties);
@@ -875,35 +872,6 @@ public class ConfirmationStep extends javax.swing.JPanel implements WizardStepIn
         }
 
         return resolved;
-    }
-
-    private List<PartyEntry> resolveFallback(JLawyerServiceLocator locator) throws Exception {
-        List<PartyEntry> fallback = new ArrayList<>();
-        boolean create = Boolean.TRUE.equals(this.data.get("newaddress.create"));
-        AddressBean address;
-        if (create) {
-            JLabel status = createStatusLabel("Adresse erstellen");
-            address = createAddress(locator, (AddressBean) this.data.get("newaddress.addressbean"));
-            if (status != null) {
-                status.setIcon(successIcon());
-            }
-        } else {
-            address = (AddressBean) this.data.get("newaddress.selectedaddress");
-        }
-
-        if (address != null) {
-            PartyEntry entry = new PartyEntry();
-            entry.setAddress(address);
-            entry.setCreateNewAddress(false);
-            entry.setRole((PartyTypeBean) this.data.get("newaddress.partytype"));
-            Object reference = this.data.get("newaddress.reference");
-            if (reference != null) {
-                entry.setReference(reference.toString());
-            }
-            fallback.add(entry);
-        }
-
-        return fallback;
     }
 
     private AddressBean createAddress(JLawyerServiceLocator locator, AddressBean candidate) throws Exception {

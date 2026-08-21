@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.mail.sidebar;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.files.AddAddressSearchDialog;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
@@ -686,6 +687,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
@@ -713,7 +715,6 @@ public class SelectAddressStep extends javax.swing.JPanel implements WizardStepI
      */
     public SelectAddressStep() {
         initComponents();
-        this.setName("Beteiligte auswählen");
 
         this.cmbRecipient.setModel(recipientModel);
         this.cmbRecipient.setRenderer(new RecipientRenderer());
@@ -727,7 +728,7 @@ public class SelectAddressStep extends javax.swing.JPanel implements WizardStepI
         this.cmbRefType.removeAllItems();
 
         try {
-            com.jdimension.jlawyer.client.settings.ClientSettings settings = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
+            ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             SystemManagementRemote sys = locator.lookupSystemManagementRemote();
             List<PartyTypeBean> fetched = sys.getPartyTypes();
@@ -741,13 +742,21 @@ public class SelectAddressStep extends javax.swing.JPanel implements WizardStepI
             }
         } catch (Throwable t) {
             log.error("Unable to get party types", t);
-            JOptionPane.showMessageDialog(this, "Parteitypen konnten nicht geladen werden: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Parteitypen konnten nicht geladen werden: " + t.getMessage(), DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }
 
     @Override
     public void nextEvent() {
         persistParties();
+        if (hasUnacceptedNewAddress()) {
+            int response = JOptionPane.showConfirmDialog(this,
+                    "Die erfasste Adresse wurde noch nicht als Beteiligter übernommen und geht sonst verloren.\nTrotzdem fortfahren?",
+                    DesktopUtils.POPUP_TITLE_HINT, JOptionPane.YES_NO_OPTION);
+            if (response != JOptionPane.YES_OPTION) {
+                throw new IllegalStateException("Bitte übernehmen Sie die erfasste Adresse mit \"Beteiligten übernehmen\".");
+            }
+        }
         if (this.currentParties.isEmpty()) {
             throw new IllegalStateException("Bitte mindestens einen Beteiligten übernehmen.");
         }
@@ -934,6 +943,11 @@ public class SelectAddressStep extends javax.swing.JPanel implements WizardStepI
                 return;
             }
 
+            if (address.getId() != null && collectUsedAddressIds().contains(address.getId())) {
+                JOptionPane.showMessageDialog(this, "Diese Adresse ist bereits als Beteiligter erfasst.", DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
             PartyEntry entry = new PartyEntry();
             entry.setAddress(address);
             entry.setCreateNewAddress(false);
@@ -1036,7 +1050,30 @@ public class SelectAddressStep extends javax.swing.JPanel implements WizardStepI
             this.partyPanels.add(renderer);
             this.pnlParties.add(renderer);
         }
+        appendVerticalGlue();
         refreshPartyContainer();
+    }
+
+    /**
+     * Keeps the party rows aligned at the top of the vertical BoxLayout instead of
+     * spreading them over the full height of the scroll pane.
+     */
+    private void appendVerticalGlue() {
+        this.pnlParties.add(Box.createVerticalGlue());
+    }
+
+    /**
+     * Returns true if the previous steps produced an address that the user has not yet
+     * turned into a party - it would silently be lost when leaving this step.
+     */
+    private boolean hasUnacceptedNewAddress() {
+        for (int i = 0; i < this.recipientModel.getSize(); i++) {
+            PartyEntry candidate = this.recipientModel.getElementAt(i);
+            if (candidate != null && candidate.isCreateNewAddress()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void refreshCandidates() {
@@ -1148,7 +1185,8 @@ public class SelectAddressStep extends javax.swing.JPanel implements WizardStepI
         renderer.setPartyEntry(copyPartyEntry(entry), this.partyTypes);
         renderer.addRemoveListener(new RemovePartyListener(renderer));
         this.partyPanels.add(renderer);
-        this.pnlParties.add(renderer);
+        // insert in front of the trailing glue added by rebuildPartyPanels()
+        this.pnlParties.add(renderer, Math.max(0, this.pnlParties.getComponentCount() - 1));
         refreshPartyContainer();
     }
 
