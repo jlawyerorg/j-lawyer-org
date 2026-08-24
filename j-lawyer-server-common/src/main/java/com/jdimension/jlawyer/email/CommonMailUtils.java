@@ -758,6 +758,42 @@ public class CommonMailUtils {
         }
     }
 
+    /**
+     * Returns the Multipart content of a part that is itself of type
+     * multipart/*, or null if the part is not a multipart container or its
+     * content cannot be read.
+     *
+     * Some sending gateways wrap an entire signed message as a single body part
+     * and flag it with Content-Disposition: attachment and a file name of
+     * smime.p7m, while its Content-Type remains multipart/signed. Such a part
+     * still carries the original attachments as children, so walkers must
+     * descend into it instead of treating it as a leaf attachment.
+     *
+     * The multipart/* check is done first on purpose: without it, every binary
+     * attachment would be needlessly materialized just to find out it is not a
+     * container.
+     *
+     * @param part the part to inspect
+     * @return the nested Multipart, or null - never throws
+     */
+    public static Multipart getWrappedMultipart(Part part) {
+        if (part == null) {
+            return null;
+        }
+        try {
+            if (!part.isMimeType("multipart/*")) {
+                return null;
+            }
+            Object content = part.getContent();
+            if (content instanceof Multipart) {
+                return (Multipart) content;
+            }
+        } catch (Exception e) {
+            log.warn("Unable to get content of nested multipart MIME part: " + e.getMessage());
+        }
+        return null;
+    }
+
     public static Folder getSentFolder(Store store) throws Exception {
         Folder[] accountFolders = null;
         try {
@@ -1036,7 +1072,14 @@ public class CommonMailUtils {
                 } else if (Part.ATTACHMENT.equalsIgnoreCase(disposition)) {
                     //Anhang wird in ein Verzeichnis gespeichert
                     //saveFile(part.getFileName(), part.getInputStream());
-                    if (part.getFileName() != null) {
+
+                    // a part that is flagged as an attachment may still be a multipart
+                    // container (gateways wrapping a signed message as "smime.p7m") -
+                    // in that case the real attachments are its children
+                    Multipart wrapped = getWrappedMultipart(part);
+                    if (wrapped != null) {
+                        attachmentInfos.addAll(getAttachmentInfo(wrapped));
+                    } else if (part.getFileName() != null) {
                         attachmentInfos.add(new AttachmentInfo(decodeText(part.getFileName()), false));
                     } else {
                         if (part.getContentType().toLowerCase().contains("message/rfc822")) {
@@ -1118,7 +1161,15 @@ public class CommonMailUtils {
                 }
 
             } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
-                if (name.equals(decodeText(part.getFileName()))) {
+                // see getAttachmentInfo: an attachment may be a multipart container
+                // whose children are the actual attachments
+                Multipart wrapped = getWrappedMultipart(part);
+                if (wrapped != null) {
+                    Part attPart = getAttachmentPart(name, wrapped);
+                    if (attPart != null) {
+                        return attPart;
+                    }
+                } else if (name.equals(decodeText(part.getFileName()))) {
                     return part;
                 } else if (name.equals("Nachricht_" + part.getSize() + ".eml")) {
                     return part;

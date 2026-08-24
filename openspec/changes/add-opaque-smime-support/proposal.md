@@ -1,5 +1,22 @@
 # Change: Add support for opaque-signed S/MIME emails
 
+## Status: deferred — pending a real opaque-signed sample
+
+Investigating #3387 produced a sample mail that shows the reported symptom (only
+`smime.p7m` visible, PDF attachment inaccessible) but is **not** opaque-signed: a sending
+gateway had wrapped an ordinary clear-signed message as a single body part with
+`Content-Type: multipart/signed`, `Content-Disposition: attachment; filename=smime.p7m`.
+There is no PKCS#7 blob, the content is in the clear, and the cause was a missing
+recursion in the `ATTACHMENT` disposition branch of the `CommonMailUtils` walkers. That is
+fixed separately under #3566 and needs no BouncyCastle.
+
+This change remains valid for **genuine** opaque-signed S/MIME
+(`application/pkcs7-mime; smime-type=signed-data` with a CMS SignedData blob), which does
+occur in the wild — but no such sample has been observed in this installation so far, and
+the #3566 finding makes it less likely that #3387 was ever about this variant. Implement
+only once a real `application/pkcs7-mime` message is available to verify against;
+otherwise the BouncyCastle dependency would be introduced on an unverified premise.
+
 ## Why
 
 When the user receives an S/MIME-signed email, only a single attachment `smime.p7m` is

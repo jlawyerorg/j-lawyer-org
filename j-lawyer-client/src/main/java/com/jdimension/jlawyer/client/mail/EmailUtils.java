@@ -998,7 +998,19 @@ public class EmailUtils extends CommonMailUtils {
                 }
 
             } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
-                if (name.equals(EmailUtils.decodeText(part.getFileName()))) {
+                // an attachment may itself be a multipart container (gateways wrapping
+                // a signed message as "smime.p7m") - descend into it, see
+                // CommonMailUtils.getWrappedMultipart
+                Multipart wrapped = getWrappedMultipart(part);
+                if (wrapped != null) {
+                    Part attPart = getAttachmentPart(name, wrapped, folder);
+                    if (attPart != null) {
+                        if (opened) {
+                            closeIfIMAP(folder);
+                        }
+                        return attPart;
+                    }
+                } else if (name.equals(EmailUtils.decodeText(part.getFileName()))) {
                     if (opened) {
                         closeIfIMAP(folder);
                     }

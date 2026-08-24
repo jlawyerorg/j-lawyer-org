@@ -1794,6 +1794,19 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                     }
                 }
 
+            } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
+                // an attachment may itself be a multipart container (gateways wrapping
+                // a signed message as "smime.p7m") - its children may carry inline
+                // images referenced by the body via cid:
+                Multipart wrapped = EmailUtils.getWrappedMultipart(part);
+                if (wrapped != null) {
+                    try {
+                        recursiveLoadInlineImages(wrapped, cids);
+                    } catch (Throwable t) {
+                        log.error("Unable to load inline image(s) from nested multipart", t);
+                    }
+                }
+
             } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
                 try {
                     //Object content = part.getContent();

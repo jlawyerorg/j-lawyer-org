@@ -1,0 +1,50 @@
+Date: Wed, 29 Apr 2026 10:25:12 +0200 (CEST)
+From: Absender Test <absender@example.invalid>
+To: Empfaenger Test <empfaenger@example.invalid>
+Message-ID: <wrapped-smime-fixture@example.invalid>
+Subject: Testmail mit verpacktem Anhang
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1_OUTER"
+
+------=_Part_1_OUTER
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+<html><body><p>Aeusserer Body</p></body></html>
+------=_Part_1_OUTER
+Content-Type: multipart/signed; name=smime.p7m
+Content-Disposition: attachment; filename=smime.p7m
+
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----INNER-SIGNED"
+
+This is an S/MIME signed message
+
+------INNER-SIGNED
+CONTENT-TYPE: MULTIPART/MIXED; BOUNDARY="ZQINNERMIXED"
+CONTENT-DISPOSITION: INLINE ; 
+
+--ZQINNERMIXED
+CONTENT-TYPE: TEXT/HTML; 
+CONTENT-DISPOSITION: INLINE ; 
+
+<html><body><p>Innerer Body</p></body></html>
+--ZQINNERMIXED
+CONTENT-TYPE: APPLICATION/OCTET-STREAM; NAME=ATTACH-001.PDF
+CONTENT-DISPOSITION: ATTACHMENT ; FILENAME=ATTACH-001.PDF
+CONTENT-TRANSFER-ENCODING: BASE64
+
+JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8
+PC9Sb290IDEgMCBSPj4KJSVFT0YK
+--ZQINNERMIXED--
+
+------INNER-SIGNED
+Content-Type: application/x-pkcs7-signature; name="smime.p7s"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="smime.p7s"
+
+MIIBdummySignatureBytesForTestFixtureOnly==
+
+------INNER-SIGNED--
+
+------=_Part_1_OUTER--
