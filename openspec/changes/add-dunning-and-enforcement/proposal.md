@@ -25,10 +25,11 @@ work cannot use j-lawyer for it today; they keep a second system. Since 1 Octobe
 revised official ZVFV forms are mandatory and enforcement communication is moving to fully
 electronic transmission, so hand-typed forms are no longer a viable workaround.
 
-The pending change `implement-xjustiz-dunning-export` already covers one building block — the
-XJustiz/EDA data record for the dunning application. This change supplies the workflow, the
-procedural state, the deadlines, the costs and the enforcement side around it, and feeds that
-exporter instead of duplicating it.
+The change `implement-xjustiz-dunning-export` had carved out one building block — the XJustiz/EDA
+data record for the dunning application plus its viewer. It is not implemented separately: its
+scope is absorbed here, because the exporter only becomes useful together with the procedural
+state that feeds it (court, Kennziffer, parties, amounts at application time) and the response
+messages that come back.
 
 ## What Changes
 
@@ -50,14 +51,23 @@ exporter instead of duplicating it.
   (Saldenliste), installment plan (Tilgungsplan), and a service API that books procedural fees
   and disbursements into the ledger (and optionally the case account).
 
+**Court directory (new capability `court-directory`)**
+- Central court master data — name, XJustiz identifier, address, electronic recipient (EGVP/beA
+  SAFE-ID), validity — replacing free-text courts, with scopes (dunning, enforcement, litigation,
+  insolvency, land registry, labour) that drive the selection fields, administrable without a
+  software update and seeded with the central dunning courts. Introduced here because dunning and
+  enforcement need court data in four different roles; it is deliberately general so later features
+  (case court and file number, beA recipients, document placeholders, further XJustiz messages) use
+  the same records.
+
 **Dunning (new capability `dunning-procedure`)**
 - Pre-court reminder stages per ledger with templates, default interest per § 288 BGB from the
   stored base rate, reminder charges and the § 288 Abs. 5 BGB lump sum, deadline follow-ups.
 - A court dunning case record with an explicit status model (beantragt → erlassen → zugestellt →
   Widerspruch / Vollstreckungsbescheid → Einspruch → rechtskräftig / Abgabe an das Streitgericht),
   court file number and the applicant's Kennziffer.
-- Determination of the competent central dunning court from a maintainable table (§ 689 Abs. 2,
-  3 ZPO) with manual override.
+- Determination of the competent central dunning court from an administrable rule table over the
+  new court directory (§ 689 Abs. 2, 3 ZPO) with manual override.
 - Automatic statutory deadlines and follow-ups: two-week Widerspruch period, VB application
   window, the six-month lapse of § 701 ZPO, two-week Einspruch period.
 - Fee/cost booking for the applications: Nr. 3305 and Nr. 3308 VV RVG including the Nr. 1008
@@ -66,6 +76,20 @@ exporter instead of duplicating it.
   court's response messages** (service, objection, costs, referral) which updates the status,
   the dates and the ledger (MB-Zustellung booking).
 - A dunning worklist across all cases.
+
+**XJustiz/EDA export (absorbed from `implement-xjustiz-dunning-export`)**
+- Generation of the XJustiz "Mahn" EDA file from the dunning case against the schemas already
+  shipped in `j-lawyer-server-common/xjustiz` (XJustiz 3.5.1, `xjustiz_0600_mahn_3_3.xsd`),
+  including the documented mapping of main claims, interest (including interest from service),
+  costs and ancillary claims, and the message metadata.
+- Validation in two steps: the application data set first (all problems in one list), then the
+  generated document against the XSD — no unvalidated file is ever stored or returned.
+- Export confirmation step pre-filled from the dunning case, values changed there written back.
+- Storage of every export as a tagged case document linked to the dunning case, re-export keeping
+  the history, plus a readable viewer for EDA files (formatted view and raw XML) in the document
+  viewer.
+- Kennziffer (lawyer identification number) on user accounts flagged as lawyers, used by the
+  export and required by its validation.
 
 **Enforcement (new capability `enforcement-proceedings`)**
 - Enforcement measures (Vollstreckungsmaßnahmen) attached to a ledger/title, from a catalog:
@@ -91,16 +115,18 @@ exporter instead of duplicating it.
 ## Impact
 
 - **Affected specs**: `claim-ledger` (new), `dunning-procedure` (new), `enforcement-proceedings`
-  (new).
-- **Depends on**: pending change `implement-xjustiz-dunning-export` (owns the XJustiz "Mahn"
-  EDA record and its viewer). This change consumes it; if it is not implemented first, the EDA
-  hand-off requirement here degrades to "export data assembled and stored", and the export itself
-  stays with that change.
+  (new), `xjustiz-eda-export` (new), `court-directory` (new).
+- **Supersedes**: `implement-xjustiz-dunning-export` — that change is withdrawn and its scope
+  (export, mapping, schema validation, document storage, EDA viewer, lawyer Kennziffer) is part of
+  this one, as capability `xjustiz-eda-export`. Its Ant-based JAXB step is replaced by the Maven
+  reactor.
 - **Affected code**
   - `j-lawyer-server-entities`: new entities next to `ClaimLedger`/`ClaimComponent`
     (`ClaimLedgerParty`, `EnforcementTitle`, `DunningCase`, `EnforcementMeasure`,
-    `EnforcementFormTemplate`, `PaymentPlan`, …) plus Flyway migrations under
+    `EnforcementFormTemplate`, `PaymentPlan`, `Court`, `CourtScope`, …) plus Flyway migrations under
     `src/main/resources/db/migration/` (next free numbers after `V3_6_0_6`).
+  - `j-lawyer-server-common`: new `com.jdimension.jlawyer.xjustiz` package (mapper, writer,
+    validator) with JAXB classes generated from the committed XSDs during the Maven build.
   - `j-lawyer-server/j-lawyer-server-ejb`: extend `ClaimLedgerService`/`ArchiveFileService`, new
     `DunningService` and `EnforcementService`, fee/interest calculation, reuse of
     `com.jdimension.jlawyer.documents.PdfFormsAccess` for AcroForm filling and of
@@ -108,7 +134,10 @@ exporter instead of duplicating it.
   - `j-lawyer-server-api`: new remote interfaces (JavaDoc in English, per project convention).
   - `j-lawyer-io`: new `DunningEndpointV7` / `EnforcementEndpointV7` (swagger is generated).
   - `j-lawyer-client`: extend `ClaimLedgerDialog` (+ `.form`), new dialogs/panels for title,
-    dunning case, measures and forms; new worklist panel.
+    dunning case, measures and forms; EDA viewer panel in the document viewer of `ArchiveFilePanel`;
+    Kennziffer field in user administration; new worklist frame.
+  - `j-lawyer-server-entities`: `AppUserBean` gains the lawyer identification number (Kennziffer)
+    with its migration.
 - **Not affected / explicit non-goals**
   - Direct transmission to courts and bailiffs: generated EDA files and PDFs are handed to the
     existing beA (beAstie), E-Post and print paths — no new transport is built here.
@@ -136,7 +165,7 @@ Phased so that each phase is independently useful:
 
 1. Ledger master data, title data, extended component types, statement document.
 2. Pre-court dunning stages.
-3. Court dunning case, deadlines, fees, EDA hand-off and response import.
+3. Court dunning case, deadlines, fees, XJustiz/EDA export incl. viewer, and response import.
 4. Enforcement measures, ZVFV form generation, § 788 ZPO costs, deadlines.
 5. Payment plans, portfolio views/reports, REST API.
 

@@ -40,20 +40,42 @@
 ## 3. Phase 3 — Court dunning procedure
 
 - [ ] 3.1 `DunningCase` entity, status model and history with migration
-- [ ] 3.2 Administrable dunning court table incl. default data and § 689 Abs. 2, 3 ZPO derivation
-- [ ] 3.3 Deadline engine: rules for Widerspruch (2 weeks), VB application, § 701 ZPO six-month
+- [ ] 3.2 Court directory: `courts` and `court_scopes` with migration, service and remote interface
+      (English JavaDoc), administration UI (+ `.form`) and a repeatable seed of the central dunning
+      courts matched on the XJustiz identifier
+- [ ] 3.3 Dunning rule table over the directory (selection key incl. OLG district / postal-code
+      range, special-rule marker, channels, Kennziffer and direct-debit flags) and the § 689
+      Abs. 2, 3 ZPO derivation with manual override
+- [ ] 3.4 Deadline engine: rules for Widerspruch (2 weeks), VB application, § 701 ZPO six-month
       lapse, Einspruch (2 weeks); creation, recalculation and closing of case events
-- [ ] 3.4 Fee/cost proposal and booking for MB/VB (Nr. 3305, 3308, 1008 VV RVG, Vorbem. 3 Abs. 4
+- [ ] 3.5 Fee/cost proposal and booking for MB/VB (Nr. 3305, 3308, 1008 VV RVG, Vorbem. 3 Abs. 4
       credit, Nr. 1100 KV GKG) with data-driven fee tables
-- [ ] 3.5 Assembly and validation of the application data set; hand-off to the XJustiz/EDA exporter;
-      link the produced file to the dunning case
-- [ ] 3.6 Import of court response messages with matching, status/date update, ledger service
+- [ ] 3.6 Assembly and validation of the application data set (all problems reported in one list),
+      callable as a readiness check from client and REST
+- [ ] 3.7 Import of court response messages with matching, status/date update, ledger service
       booking and an inbox for unmatched messages
-- [ ] 3.7 Dunning worklist (filters, CSV, navigation, start VB application from the list)
-- [ ] 3.8 `DunningServiceRemote` (English JavaDoc) and `DunningEndpointV7`
-- [ ] 3.9 Desktop UI: `Mahnverfahren` tab of the ledger workspace (reminder stages, dunning case,
+- [ ] 3.8 Dunning worklist (filters, CSV, navigation, start VB application from the list)
+- [ ] 3.9 `DunningServiceRemote` (English JavaDoc) and `DunningEndpointV7`
+- [ ] 3.10 Desktop UI: `Mahnverfahren` tab of the ledger workspace (reminder stages, dunning case,
       status timeline, message import) (+ `.form` files)
-- [ ] 3.10 Tests: status transitions, deadline generation/recalculation, fee credit, message import
+- [ ] 3.11 JAXB generation from the committed XJustiz XSDs in the Maven build of
+      `j-lawyer-server-common` (replaces the withdrawn Ant-based step)
+- [ ] 3.12 `com.jdimension.jlawyer.xjustiz`: mapper (main claims, interest incl. "ab Zustellung",
+      costs/ancillary claims, payments), writer and message metadata, with the mapping documented
+      in the code
+- [ ] 3.13 Schema validator against `xjustiz_0600_mahn_3_3.xsd` incl. violation reporting and the
+      missing-schema configuration error
+- [ ] 3.14 `AppUserBean` lawyer identification number (Kennziffer) with migration and the user
+      administration field shown only for lawyer users (+ `.form`)
+- [ ] 3.15 Export operation in the EJB layer and the REST endpoint (export + validate), storing the
+      file as a tagged case document linked to the dunning case
+- [ ] 3.16 Export confirmation step in the ledger workspace, pre-filled from the dunning case, with
+      write-back of changed values (+ `.form`)
+- [ ] 3.17 EDA viewer: parser, formatted view, raw XML view, tabbed panel and integration into the
+      document viewer of `ArchiveFilePanel` (+ `.form` files)
+- [ ] 3.18 Tests: status transitions, deadline generation/recalculation, fee credit, message import
+- [ ] 3.19 Tests: mapping per claim type against the shipped XSD, validation failure paths, export
+      document storage and re-export history
 
 ## 4. Phase 4 — Enforcement
 

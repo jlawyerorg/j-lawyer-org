@@ -44,12 +44,25 @@ Related infrastructure that is reused rather than rebuilt:
   `EnforcementMeasure` both book money exclusively through one ledger service operation
   (`bookProceduralCost`), which also owns the optional `CaseAccountEntry` and the reversal
   semantics. That keeps § 788 ZPO costs, MB/VB fees and reminder charges consistent and reversible.
+- **Decision: a general court directory, not a dunning-specific court table.** j-lawyer has no
+  court entity today (cases carry no court field, courts appear as parties or free text, and
+  `server_options` is a plain key/value list that cannot hold identifiers and addresses). This
+  change alone needs court data in four roles — dunning court, enforcement court, the Amtsgericht
+  for a search order, and the litigation court after referral under § 696 ZPO — so a dunning-only
+  table would need a sibling immediately. `courts` plus `court_scopes` therefore hold the master
+  data, and each feature adds only its own rules. Determining competence is deliberately kept out
+  of the directory: for dunning it is a static assignment (`dunning_court_rules`), for enforcement
+  it derives from the debtor's residence (§ 828 Abs. 2 ZPO), which needs a postal-code to district
+  mapping — that mapping is not part of this change, the user picks the enforcement court and the
+  directory supplies its address and identifiers. The directory is seeded with the central dunning
+  courts only; a later import from the XJustiz code list or a court register stays possible because
+  the XJustiz identifier is the matching key.
 - **Decision: legal parameters as data.**
   - Fee tables (RVG value table, Nr. 1100 KV GKG, GvKostG positions) live in configuration/lookup
     tables so a statutory change is an update, not a release. Where a firm already uses a Groovy
     calculation plugin for RVG, the same table is the source.
-  - The dunning court assignment (§ 689 Abs. 2, 3 ZPO) is an administrable table, because the
-    central courts and their assignments change.
+  - The dunning court assignment (§ 689 Abs. 2, 3 ZPO) is an administrable rule table over the
+    court directory, because the central courts and their assignments change.
   - Official forms are administrable templates (PDF + field mapping + validity range), because the
     ZVFV forms changed in 2022, 2024 and again with mandatory use from 1 October 2025. The
     published PDFs are not committed to the repository; a default set can be delivered as an
@@ -59,9 +72,27 @@ Related infrastructure that is reused rather than rebuilt:
   they appear in the existing calendar, reminders and follow-up views, and can be recalculated when
   the underlying date changes. Alternative considered: a private deadline table — rejected, it
   would be invisible to the firm's normal work organisation.
-- **Decision: the EDA record stays in `implement-xjustiz-dunning-export`.** The dunning case
-  assembles and validates the application data and calls that exporter. This change adds only the
-  *inbound* direction (court response messages), which that proposal explicitly does not cover.
+- **Decision: the EDA export is part of this change.** `implement-xjustiz-dunning-export` is
+  withdrawn; keeping the exporter separate would have split one workflow across two changes, since
+  the exporter needs the dunning case (court, Kennziffer, parties, amounts at application time) and
+  the inbound court messages need the same mapping. The exporter lives in `j-lawyer-server-common`
+  (`com.jdimension.jlawyer.xjustiz`: mapper, writer, validator) so EJB, REST and future tools share
+  it; JAXB classes are generated from the XSDs already committed under `j-lawyer-server-common/
+  xjustiz` **during the Maven build** (the withdrawn proposal still assumed the removed Ant build).
+  Validation is two-staged — application data first, then the produced document against the XSD —
+  and no unvalidated file is ever stored or returned.
+- **Decision: exports are ordinary case documents.** Each export is stored through the normal
+  document path (naming rules, tag, case document list) and linked to the dunning case; re-exports
+  add a document instead of overwriting, so the procedural history stays reconstructable. The EDA
+  viewer is a viewer panel in the existing document viewer, with a formatted view and the raw XML,
+  degrading to raw content with a notice for files it cannot interpret.
+- **Decision: the Kennziffer lives on the user, with per-court overrides.** The identification
+  number belongs to the acting lawyer, so `AppUserBean` carries the nationwide one (shown in user
+  administration only for users flagged as lawyers). Because the courts exchange Kennziffer data
+  but not all of them accept a foreign one — Uelzen and Hamburg issue and require their own — a
+  user may store additional court-specific numbers, and the export picks the court-specific number
+  when the selected court is flagged as requiring it. The dunning case records the number actually
+  used.
 - **Decision: German domain wording in the UI, English identifiers in code and JavaDoc**, matching
   the existing code base and the JavaDoc rule for `*Remote` interfaces.
 
@@ -80,18 +111,33 @@ New tables (Flyway, next free numbers after `V3_6_0_6`):
 - `dunning_cases` — ledger id, court, court file number, Kennziffer, status, status date, amounts
   snapshot, contested amount, export reference.
 - `dunning_case_history` — status transitions with user, date and source.
-- `dunning_court_table` — federal state / criterion → court, editable by administrators.
+- `courts` — central court master data: official name, additional designation, XJustiz identifier
+  from the code list `urn:xoev-de:xjustiz:codeliste:gds.gerichte`, postal and Postfach address,
+  phone/fax/web, electronic recipient (EGVP/beA SAFE-ID), optional bank details for court fees,
+  validity range, active flag, note.
+- `court_scopes` — n:m assignment of scopes (`DUNNING`, `ENFORCEMENT`, `LITIGATION`, `INSOLVENCY`,
+  `LAND_REGISTRY`, `LABOUR`, …) driving which courts a selection field offers.
+- `dunning_court_rules` — the dunning-specific layer on top: selection key (federal state and,
+  where a state is split, OLG district or postal-code range), special-rule marker (applicant
+  without a domestic general venue, § 703d ZPO, condominium claims), accepted channels, the flags
+  `requires_own_kennziffer` (Uelzen, Hamburg) and `direct_debit_must_be_nationwide` (Hünfeld),
+  validity range — each row referencing a court of `courts`.
 - `dunning_stages` (configuration) and `dunning_stage_events` (per ledger: stage, date, deadline,
   document, charge booking).
 - `enforcement_measures` — ledger id, title id, type, debtors, addressee, dates, outcome, notes.
 - `enforcement_third_party_debtors` — measure id, contact, attached claim type, § 840 declaration
   state and date.
+- `app_user` addition — lawyer identification number (Kennziffer) for users flagged as lawyers.
 - `enforcement_form_templates` — name, form key (ZVFV annex), validity from/to, PDF reference,
   mapping profile.
 - `payment_plans` / `payment_plan_installments` — ledger id, mode, start, interval, amounts,
   paid/missed state, optional link to an `enforcement_measures` row (§ 802b agreement).
 - Ledger entries gain an origin reference (dunning case or measure) so bookings can be traced and
   reversed.
+
+Export code: `com.jdimension.jlawyer.xjustiz` in `j-lawyer-server-common` (mapper, writer,
+validator, parser used by the viewer) with generated JAXB classes; the client viewer panel sits
+next to the other document viewers.
 
 Services: `ClaimLedgerServiceRemote` (currently empty) takes the ledger operations that
 `ArchiveFileServiceRemote` accumulated plus the new ones; `DunningServiceRemote` and
@@ -111,9 +157,14 @@ endpoints; swagger is generated by the build.
 - **Multiple debtors.** Joint-and-several vs. single-debtor bookings complicate every total.
   Mitigation: model it in phase 1 (not retrofitted later), and keep per-debtor totals part of
   `ClaimLedgerTotals` from the start.
-- **Overlap with `implement-xjustiz-dunning-export`.** Mitigation: that change owns the export and
-  the viewer; this one owns the workflow that feeds it. If the exporter lands later, the dunning
-  case still works and stores its validated data set.
+- **XJustiz schema drift.** The shipped schema set is XJustiz 3.5.1; courts move to newer versions
+  and the accepted record can change. Mitigation: mapper and writer are isolated behind one
+  interface, the schema files stay data in `j-lawyer-server-common/xjustiz`, and tests validate
+  against the shipped XSD so a schema update surfaces as failing tests rather than as a rejected
+  application.
+- **Court acceptance.** A schema-valid file is not automatically an accepted application.
+  Mitigation: start from the minimum mandatory data set, keep the mapping documented next to the
+  code, and treat rejections as mapping bugs with a test each.
 
 ## Migration Plan
 

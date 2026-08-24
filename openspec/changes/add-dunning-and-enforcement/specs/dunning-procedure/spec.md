@@ -71,22 +71,40 @@ and source (manual or imported court message).
 
 ### Requirement: Competent Dunning Court Determination
 
-The system SHALL determine the competent central dunning court (zentrales Mahngericht) from a
-maintainable table that maps the relevant federal state to the court, following § 689 Abs. 2 and
-Abs. 3 ZPO — by default the court for the applicant's general venue, and for applicants without a
-general venue in Germany or in the constellations covered by the table the court designated there.
-The determined court SHALL always be overridable by the user, and the table SHALL be editable by
-an administrator without a software update.
+The system SHALL determine the competent central dunning court (zentrales Mahngericht) following
+§ 689 Abs. 2 and Abs. 3 ZPO — by default the court for the applicant's general venue, and for
+applicants without a general venue in Germany the court designated for that case. The courts
+themselves SHALL come from the court directory with the scope "dunning court"; this capability
+SHALL only add the selection rules and the dunning-specific attributes, in an administrable rule
+table holding the selection key (federal state and, where a state is split between several courts,
+the OLG district or postal-code range), the special-rule marker it implements, the accepted
+submission channels, whether the court issues and requires its own Kennziffer, and whether a direct
+debit authorisation must be registered as nationwide. Rules SHALL reference a court of the
+directory instead of repeating its address or identifier. The determined court SHALL always be
+overridable by the user, and both the rules and the courts SHALL be editable by an administrator
+without a software update; the system SHALL ship a seed rule set for the central dunning courts.
 
 #### Scenario: Court proposed from the creditor's seat
 
 - **WHEN** a dunning case is created for a creditor whose seat is in Bavaria
 - **THEN** the dunning court configured for Bavaria is proposed
-- **AND** the user can select a different court from the table
+- **AND** the user can select a different court with the dunning scope
 
-#### Scenario: Table maintained by an administrator
+#### Scenario: State split between two courts
 
-- **WHEN** an administrator changes the court assigned to a federal state
+- **WHEN** a dunning case is created for a creditor whose seat lies in the OLG district Köln
+- **THEN** the court configured for that district is proposed, not the one configured for the other
+  districts of the same federal state
+
+#### Scenario: Applicant without a domestic general venue
+
+- **WHEN** the creditor's seat is outside Germany
+- **THEN** the court marked for applicants without a domestic general venue is proposed
+- **AND** the reason for that proposal is shown to the user
+
+#### Scenario: Rules maintained by an administrator
+
+- **WHEN** an administrator changes the court a federal state points to
 - **THEN** subsequently created dunning cases use the changed assignment
 - **AND** existing dunning cases keep the court they were created with
 

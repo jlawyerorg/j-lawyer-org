@@ -4,8 +4,8 @@
 
 The system SHALL record enforcement measures (Zwangsvollstreckungsmaßnahmen) attached to a claim
 ledger and to one of its titles. A measure SHALL hold its type, the debtors it is directed
-against, the addressee (bailiff, enforcement court, third-party debtor, land registry, other), the
-date it was ordered, the date it was dispatched, the outcome with its date, free-text notes, the
+against, the addressee (bailiff, enforcement court, third-party debtor, land registry, other) — courts and
+registries taken from the court directory by their scope — the date it was ordered, the date it was dispatched, the outcome with its date, free-text notes, the
 documents generated for it, the deadlines it created and the ledger bookings it caused. Outcomes
 SHALL at least distinguish pending, successful, partially successful, unsuccessful (fruchtlos),
 withdrawn and stayed.
