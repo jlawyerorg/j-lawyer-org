@@ -235,10 +235,11 @@ public class ToolRegistry {
                         new ToolParameter("calendar", "string", "Name des Kalenders", true),
                         new ToolParameter("assignee", "string", "Benutzername des Verantwortlichen (optional)", false),
                         new ToolParameter("description", "string", "Beschreibung (optional)", false),
-                        new ToolParameter("location", "string", "Ort (optional)", false)),
+                        new ToolParameter("location", "string", "Ort (optional)", false),
+                        new ToolParameter("reminderMinutes", "integer", "Erinnerung in Minuten vor Beginn (optional, nur für Typ 'Termin'; 0 = bei Beginn, max. 1440 = 1 Tag, -1 = keine Erinnerung)", false)),
                 ToolDefinition.RISK_MEDIUM));
 
-        TOOLS.add(new ToolDefinition("update_event", "Aktualisiert ein bestehendes Kalenderereignis. Nur summary, beginDate, endDate, assignee, description und location können geändert werden.",
+        TOOLS.add(new ToolDefinition("update_event", "Aktualisiert ein bestehendes Kalenderereignis. Nur summary, beginDate, endDate, assignee, description, location und reminderMinutes können geändert werden.",
                 Arrays.asList(
                         new ToolParameter("eventId", "string", "ID des zu ändernden Ereignisses", true),
                         new ToolParameter("summary", "string", "Neue Zusammenfassung/Betreff (optional)", false),
@@ -246,7 +247,8 @@ public class ToolRegistry {
                         new ToolParameter("endDate", "string", "Neues Enddatum im ISO-8601-Format (optional)", false),
                         new ToolParameter("assignee", "string", "Neuer Verantwortlicher Benutzername (optional)", false),
                         new ToolParameter("description", "string", "Neue Beschreibung (optional)", false),
-                        new ToolParameter("location", "string", "Neuer Ort (optional)", false)),
+                        new ToolParameter("location", "string", "Neuer Ort (optional)", false),
+                        new ToolParameter("reminderMinutes", "integer", "Neue Erinnerung in Minuten vor Beginn (optional, nur für Typ 'Termin'; 0 = bei Beginn, max. 1440 = 1 Tag, -1 = keine Erinnerung)", false)),
                 ToolDefinition.RISK_MEDIUM));
 
         TOOLS.add(new ToolDefinition("create_note", "Erstellt eine Aktennotiz als HTML-Dokument in einer Akte.",
@@ -758,6 +760,20 @@ public class ToolRegistry {
         return null;
     }
 
+    private static String formatReminderSummary(Object rawValue) {
+        Integer reminderMinutes = ToolJsonUtils.toInteger(rawValue);
+        if (reminderMinutes == null) {
+            return "";
+        }
+        if (reminderMinutes < 0) {
+            return " (ohne Erinnerung)";
+        }
+        if (reminderMinutes == 0) {
+            return " (Erinnerung: bei Beginn)";
+        }
+        return " (Erinnerung: " + reminderMinutes + " Min. vorher)";
+    }
+
     public String formatToolCallSummary(ToolCall tc) {
         try {
             JsonObject args = (JsonObject) Jsoner.deserialize(tc.getArguments());
@@ -809,9 +825,9 @@ public class ToolRegistry {
                 case "list_calendars":
                     return "Verfügbare Kalender auflisten";
                 case "create_event":
-                    return "Termin erstellen: " + args.getOrDefault("summary", "");
+                    return "Termin erstellen: " + args.getOrDefault("summary", "") + formatReminderSummary(args.get("reminderMinutes"));
                 case "update_event":
-                    return "Termin aktualisieren: " + args.getOrDefault("eventId", "");
+                    return "Termin aktualisieren: " + args.getOrDefault("eventId", "") + formatReminderSummary(args.get("reminderMinutes"));
                 case "create_note":
                     return "Notiz erstellen in Akte: " + args.getOrDefault("caseId", "");
                 case "create_or_get_contact":
@@ -2631,6 +2647,33 @@ public class ToolRegistry {
     // New write tool implementations
     // =========================================================================
 
+    /**
+     * Validates the optional reminderMinutes argument of create_event and
+     * update_event. Allowed are -1 (no reminder) and 0 to 1440 minutes - 1440
+     * is the maximum because ReminderNotificationTimerTask only looks ahead 24
+     * hours.
+     *
+     * @param rawValue the raw argument as delivered by the AI backend, null if absent
+     * @param parsedValue the result of ToolJsonUtils.toInteger(rawValue)
+     * @return an error JSON string if the value is present but invalid, null otherwise
+     */
+    private String validateReminderMinutes(Object rawValue, Integer parsedValue) {
+        if (rawValue == null) {
+            return null;
+        }
+        if (parsedValue == null) {
+            if (rawValue.toString().trim().isEmpty()) {
+                // leerer String wird wie "nicht angegeben" behandelt
+                return null;
+            }
+            return ToolJsonUtils.error("Ungültige Erinnerung: " + rawValue + ". Erlaubt: -1 (keine Erinnerung) oder 0 bis 1440 Minuten");
+        }
+        if (parsedValue < -1 || parsedValue > 1440) {
+            return ToolJsonUtils.error("Ungültige Erinnerung: " + parsedValue + ". Erlaubt: -1 (keine Erinnerung) oder 0 bis 1440 Minuten");
+        }
+        return null;
+    }
+
     private String executeCreateEvent(JsonObject args) throws Exception {
         String caseId = (String) args.get("caseId");
         String summary = (String) args.get("summary");
@@ -2641,6 +2684,8 @@ public class ToolRegistry {
         String assignee = (String) args.get("assignee");
         String description = (String) args.get("description");
         String location = (String) args.get("location");
+        Object reminderArg = args.get("reminderMinutes");
+        Integer reminderMinutes = ToolJsonUtils.toInteger(reminderArg);
 
         if (caseId == null || caseId.trim().isEmpty()) {
             return ToolJsonUtils.error("Akten-ID fehlt");
@@ -2685,6 +2730,11 @@ public class ToolRegistry {
         }
         if (endDate == null) {
             return ToolJsonUtils.error("Enddatum konnte nicht geparst werden: " + endDateStr);
+        }
+
+        String reminderError = validateReminderMinutes(reminderArg, reminderMinutes);
+        if (reminderError != null) {
+            return reminderError;
         }
 
         // Find calendar by name (case-insensitive)
@@ -2756,6 +2806,11 @@ public class ToolRegistry {
         if (location != null && !location.trim().isEmpty()) {
             review.setLocation(location);
         }
+        // Erinnerungen sind nur fuer den Typ Termin wirksam - bei Wiedervorlage
+        // und Frist wird der Wert still ignoriert (wie in der Oberflaeche auch)
+        if (reminderMinutes != null && eventType == EventTypes.EVENTTYPE_EVENT) {
+            review.setReminderMinutes(reminderMinutes);
+        }
 
         CalendarServiceRemote calSvc = locator.lookupCalendarServiceRemote();
         ArchiveFileReviewsBean created = calSvc.addReview(caseId, review);
@@ -2772,6 +2827,7 @@ public class ToolRegistry {
         if (created.getCalendarSetup() != null) {
             sb.append(", \"calendar\": \"").append(ToolJsonUtils.escapeJson(created.getCalendarSetup().getDisplayName())).append("\"");
         }
+        sb.append(", \"reminderMinutes\": ").append(created.getReminderMinutes());
         sb.append(", \"caseFileNumber\": \"").append(ToolJsonUtils.escapeJson(caseBean.getFileNumber())).append("\"");
         sb.append("}");
         return sb.toString();
@@ -2789,6 +2845,8 @@ public class ToolRegistry {
         String assignee = (String) args.get("assignee");
         String description = (String) args.get("description");
         String location = (String) args.get("location");
+        Object reminderArg = args.get("reminderMinutes");
+        Integer reminderMinutes = ToolJsonUtils.toInteger(reminderArg);
 
         // Mindestens ein Feld muss angegeben sein
         boolean hasUpdate = (summary != null && !summary.trim().isEmpty())
@@ -2796,9 +2854,15 @@ public class ToolRegistry {
                 || (endDateStr != null && !endDateStr.trim().isEmpty())
                 || (assignee != null && !assignee.trim().isEmpty())
                 || (description != null)
-                || (location != null);
+                || (location != null)
+                || (reminderMinutes != null);
         if (!hasUpdate) {
-            return ToolJsonUtils.error("Mindestens ein zu änderndes Feld muss angegeben werden (summary, beginDate, endDate, assignee, description, location)");
+            return ToolJsonUtils.error("Mindestens ein zu änderndes Feld muss angegeben werden (summary, beginDate, endDate, assignee, description, location, reminderMinutes)");
+        }
+
+        String reminderError = validateReminderMinutes(reminderArg, reminderMinutes);
+        if (reminderError != null) {
+            return reminderError;
         }
 
         JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
@@ -2858,6 +2922,11 @@ public class ToolRegistry {
         }
         if (location != null) {
             review.setLocation(location.trim());
+        }
+        // Erinnerungen sind nur fuer den Typ Termin wirksam - bei Wiedervorlage
+        // und Frist wird der Wert still ignoriert (wie in der Oberflaeche auch)
+        if (reminderMinutes != null && review.hasEndDateAndTime()) {
+            review.setReminderMinutes(reminderMinutes);
         }
 
         String archiveFileId = review.getArchiveFileKey().getId();
@@ -4507,6 +4576,7 @@ public class ToolRegistry {
             sb.append(", \"endDate\": \"").append(ToolJsonUtils.formatDate(ev.getEndDate())).append("\"");
         }
         sb.append(", \"done\": ").append(ev.isDone());
+        sb.append(", \"reminderMinutes\": ").append(ev.getReminderMinutes());
         if (ev.getAssignee() != null) {
             sb.append(", \"assignee\": \"").append(ToolJsonUtils.escapeJson(ev.getAssignee())).append("\"");
         }

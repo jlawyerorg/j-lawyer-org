@@ -65,6 +65,32 @@ public class ToolJsonUtils {
         }
     }
 
+    /**
+     * Converts a tool argument to an Integer, accepting both JSON numbers and
+     * numeric strings. Returns null if the value is absent, blank or not
+     * numeric.
+     *
+     * @param value raw argument value as delivered by the AI backend
+     * @return the numeric value or null
+     */
+    public static Integer toInteger(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        String stringValue = value.toString().trim();
+        if (stringValue.isEmpty()) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(stringValue);
+        } catch (NumberFormatException nfe) {
+            return null;
+        }
+    }
+
     public static JLawyerServiceLocator getLocator() throws Exception {
         return JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
     }
