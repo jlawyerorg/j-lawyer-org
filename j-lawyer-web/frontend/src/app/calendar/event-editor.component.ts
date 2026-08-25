@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, OnInit, output, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
@@ -29,7 +30,7 @@ const REMINDER_OPTIONS: { value: number; key: string }[] = [
   selector: 'jl-event-editor',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, TranslocoModule, IconComponent],
+  imports: [DatePipe, FormsModule, TranslocoModule, IconComponent],
   template: `
     <div class="backdrop" (click)="close.emit()"></div>
     <div class="dialog" role="dialog" aria-modal="true">
@@ -157,6 +158,20 @@ const REMINDER_OPTIONS: { value: number; key: string }[] = [
           <input type="checkbox" [ngModel]="done()" (ngModelChange)="done.set($event)" />
           {{ 'kalender.editor.done' | transloco }}
         </label>
+
+        @if (conflicts().length) {
+          <div class="conflict-warn">
+            <jl-icon name="clock" [size]="15" />
+            <div class="cw-body">
+              <strong>{{ 'kalender.editor.conflictTitle' | transloco }}</strong>
+              <ul>
+                @for (c of conflicts(); track c.id) {
+                  <li>{{ c.begin | date: 'EEE dd.MM. HH:mm' }} · {{ c.summary || ('kalender.noSummary' | transloco) }}{{ c.assignee ? ' · ' + c.assignee : '' }}</li>
+                }
+              </ul>
+            </div>
+          </div>
+        }
       </div>
 
       <footer class="df">
@@ -210,6 +225,14 @@ const REMINDER_OPTIONS: { value: number; key: string }[] = [
     .res { display: block; width: 100%; text-align: left; padding: 8px 10px; border: 0; background: transparent; color: var(--jl-ink); font: inherit; font-size: .84rem; cursor: pointer; }
     .res:hover { background: var(--jl-surface-alt); }
     .chk { display: flex; align-items: center; gap: 8px; font-size: .88rem; font-weight: 600; }
+    .conflict-warn { display: flex; gap: 9px; padding: 9px 11px; border-radius: 9px;
+      background: color-mix(in srgb, var(--jl-warning, #d98a00) 12%, transparent);
+      border: 1px solid color-mix(in srgb, var(--jl-warning, #d98a00) 40%, transparent); color: var(--jl-ink); }
+    .conflict-warn > jl-icon { color: var(--jl-warning, #d98a00); flex: none; margin-top: 1px; }
+    .conflict-warn .cw-body { min-width: 0; }
+    .conflict-warn strong { font-size: .82rem; }
+    .conflict-warn ul { margin: 4px 0 0; padding-left: 16px; }
+    .conflict-warn li { font-size: .8rem; color: var(--jl-ink-soft); }
     .chk input { width: auto; }
     .df { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-top: 1px solid var(--jl-line); }
     .spacer { flex: 1; }
@@ -278,6 +301,28 @@ export class EventEditorComponent implements OnInit {
   protected readonly timed = computed(() => {
     const c = this.cal.calendars().find((x) => x.id === this.calendarId());
     return c?.eventType === 'event';
+  });
+
+  /**
+   * Appointments already loaded that overlap the entry's time window — a soft, non-blocking
+   * conflict warning (mirrors the desktop's getConflictingEvents). Only for timed entries and,
+   * when an assignee is set, only for that same assignee. Limited to the events currently loaded
+   * for the calendar's view range (which covers the edited day); saving is never blocked.
+   */
+  protected readonly conflicts = computed<CalendarEvent[]>(() => {
+    if (!this.timed() || !this.beginDateStr()) {
+      return [];
+    }
+    const begin = combine(this.beginDateStr(), this.startTime()).getTime();
+    const end = Math.max(combine(this.endDateStr() || this.beginDateStr(), this.endTime()).getTime(), begin + 1);
+    const selfId = this.event()?.id;
+    const who = this.assignee().trim();
+    return this.cal.events().filter((e) =>
+      e.timed && !e.done && e.id !== selfId
+      && (!who || e.assignee === who)
+      && e.begin.getTime() < end
+      && (e.end ?? new Date(e.begin.getTime() + 3_600_000)).getTime() > begin,
+    );
   });
 
   protected readonly caseLabel = computed(() => {

@@ -1409,6 +1409,7 @@
       "delete": "Löschen",
       "time": "Uhrzeit",
       "assigneeNone": "— niemand —",
+      "conflictTitle": "Terminüberschneidung mit:",
       "rem": {
         "none": "Keine Erinnerung",
         "atStart": "Bei Beginn",
