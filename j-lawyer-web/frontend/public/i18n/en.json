@@ -822,6 +822,7 @@
       "move": "Move to folder",
       "moveBtn": "Move",
       "labels": "Labels",
+      "editExternal": "Edit externally",
       "toPdf": "Save as PDF to case",
       "ocr": "Run OCR",
       "name": "Name",
@@ -851,7 +852,16 @@
         "rename": "Rename document",
         "date": "Adjust creation date",
         "move": "Move to folder",
-        "tags": "Labels"
+        "tags": "Labels",
+        "replace": "Edit externally"
+      },
+      "replace": {
+        "intro": "Download document “{{name}}”, edit it locally and upload the edited file again. The document's content is replaced; its name, labels and folder stay, and a new version is stored.",
+        "step1": "Download the document:",
+        "step2": "Edit and save the file locally in the appropriate application.",
+        "step3": "Choose the edited file:",
+        "note": "Please upload the same file type as the original.",
+        "submit": "Upload & replace"
       },
       "bulk": {
         "selected": "{{n}} selected",

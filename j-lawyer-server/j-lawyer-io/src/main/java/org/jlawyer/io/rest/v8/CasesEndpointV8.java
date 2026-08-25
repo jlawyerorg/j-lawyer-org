@@ -26,8 +26,10 @@ import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
+import org.jlawyer.io.rest.v8.pojo.RestfulDocumentContentUpdateV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulTaggedDocumentV8;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
@@ -35,6 +37,7 @@ import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -289,6 +292,57 @@ public class CasesEndpointV8 implements CasesEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("Can not get documents by tag " + tag, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Replaces the content of an existing case document with new Base64-encoded bytes — the
+     * server side of the web client's "download → edit locally → re-upload" Office fallback. Only
+     * the content changes (name/extension/folder/tags stay); the service creates a history entry
+     * for the change. The caller's access to the document's containing case is verified.
+     *
+     * @param id   the document id
+     * @param body the new content ({@code base64content})
+     * @response 400 Missing or invalid content
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Document (or its case) not found / not accessible
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/document/{id}/content")
+    @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Replaces the content of an existing case document (creates a history entry)")
+    public Response updateDocumentContent(@PathParam("id") String id, RestfulDocumentContentUpdateV8 body) {
+        try {
+            if (body == null || body.getBase64content() == null || body.getBase64content().trim().isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            }
+            byte[] content;
+            try {
+                content = Base64.getDecoder().decode(body.getBase64content().replaceAll("\\s", ""));
+            } catch (IllegalArgumentException iae) {
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            }
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+
+            // getDocument throws when the document does not exist and enforces the caller's ACL on
+            // the containing case (checkGroupsForCase) — so a missing or inaccessible document maps
+            // to 404 (without leaking which of the two it is).
+            try {
+                cases.getDocument(id);
+            } catch (Exception notFoundOrForbidden) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            cases.setDocumentContent(id, content);
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("Can not update content of document " + id, ex);
             return RestErrorResponses.serverError(ex);
         }
     }

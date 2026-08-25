@@ -16,32 +16,29 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with j-lawyer.org.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v8;
-
-import javax.ejb.Local;
-import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.v8.pojo.RestfulDocumentContentUpdateV8;
+package org.jlawyer.io.rest.v8.pojo;
 
 /**
- * Local business interface of the v8 cases list endpoint (richer overview than v1).
+ * Request body for {@code PUT /v8/cases/document/{id}/content}: the new Base64-encoded bytes that
+ * replace an existing document's content (the "download → edit locally → re-upload" fallback of the
+ * web client). Only the content is replaced; the document's name, extension, folder and tags stay.
+ * The server creates a history/version entry for the change.
  *
  * @author jens
  */
-@Local
-public interface CasesEndpointLocalV8 {
+public class RestfulDocumentContentUpdateV8 {
 
-    Response listCases();
+    private String base64content;
 
-    Response listActiveCases();
+    public RestfulDocumentContentUpdateV8() {
+    }
 
-    Response listPage(int offset, int limit, String filter, String q);
+    public String getBase64content() {
+        return base64content;
+    }
 
-    Response getHistory(String id);
-
-    Response getCasesByTag(String tag, String value);
-
-    Response getDocumentsByTag(String tag, String value);
-
-    Response updateDocumentContent(String id, RestfulDocumentContentUpdateV8 body);
+    public void setBase64content(String base64content) {
+        this.base64content = base64content;
+    }
 
 }
