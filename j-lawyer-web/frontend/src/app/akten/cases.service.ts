@@ -732,6 +732,15 @@ export class CasesService {
     return this.http.put<{ id: string }>(`${CASES_BASE}/document/create`, body);
   }
 
+  /**
+   * Replaces an existing document's content with new base64-encoded bytes (PUT
+   * /v8/cases/document/{id}/content) — the "download → edit locally → re-upload" Office fallback.
+   * Only the content changes (name/extension/folder/tags stay); the server creates a version entry.
+   */
+  replaceDocumentContent(id: string, base64content: string): Observable<unknown> {
+    return this.http.put(`${CASES_V8}/document/${id}/content`, { base64content });
+  }
+
   /** Deletes a case document (DELETE /v1/cases/document/{id}/delete). */
   deleteDocument(documentId: string): Observable<unknown> {
     return this.http.delete(`${CASES_BASE}/document/${encodeURIComponent(documentId)}/delete`);

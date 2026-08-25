@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
@@ -14,7 +15,7 @@ export interface FolderOption {
   isRoot: boolean;
 }
 
-type DialogKind = 'rename' | 'date' | 'move' | 'tags';
+type DialogKind = 'rename' | 'date' | 'move' | 'tags' | 'replace';
 
 /**
  * Per-document overflow ("⋯") menu mirroring the desktop document context menu — but only the
@@ -29,7 +30,7 @@ type DialogKind = 'rename' | 'date' | 'move' | 'tags';
   selector: 'jl-document-actions',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, TranslocoModule, IconComponent],
+  imports: [DecimalPipe, FormsModule, TranslocoModule, IconComponent],
   template: `
     <button type="button" class="kebab" [class.on]="open()" (click)="toggle($event)"
             [attr.aria-label]="'akten.docs.actions' | transloco" [disabled]="busy()">
@@ -92,6 +93,9 @@ type DialogKind = 'rename' | 'date' | 'move' | 'tags';
         </button>
         <button type="button" role="menuitem" (click)="openDialog('tags')">
           <jl-icon name="tag" [size]="15" /> {{ 'akten.docs.labels' | transloco }}
+        </button>
+        <button type="button" role="menuitem" (click)="openDialog('replace')">
+          <jl-icon name="edit" [size]="15" /> {{ 'akten.docs.editExternal' | transloco }}
         </button>
 
         @if (canConvert() || canOcr()) {
@@ -180,6 +184,28 @@ type DialogKind = 'rename' | 'date' | 'move' | 'tags';
                 }
               </div>
             }
+            @case ('replace') {
+              <div class="replace">
+                <p class="muted">{{ 'akten.docs.replace.intro' | transloco: { name: doc().name } }}</p>
+                <ol class="steps">
+                  <li>
+                    <span>{{ 'akten.docs.replace.step1' | transloco }}</span>
+                    <button type="button" class="btn sm" [disabled]="busy()" (click)="downloadForEdit()">
+                      <jl-icon name="download" [size]="14" /> {{ 'akten.docs.download' | transloco }}
+                    </button>
+                  </li>
+                  <li>{{ 'akten.docs.replace.step2' | transloco }}</li>
+                  <li>
+                    <span>{{ 'akten.docs.replace.step3' | transloco }}</span>
+                    <input type="file" [disabled]="busy()" (change)="onReplaceFile($event)" />
+                  </li>
+                </ol>
+                @if (replaceFile(); as f) {
+                  <p class="picked"><jl-icon name="file-text" [size]="14" /> {{ f.name }} · {{ (f.size / 1024) | number: '1.0-0' }} KB</p>
+                }
+                <p class="muted sm">{{ 'akten.docs.replace.note' | transloco }}</p>
+              </div>
+            }
           }
         </div>
         <footer class="df">
@@ -196,6 +222,9 @@ type DialogKind = 'rename' | 'date' | 'move' | 'tags';
             }
             @case ('move') {
               <button type="button" class="btn primary" [disabled]="busy()" (click)="doMove()">{{ 'akten.docs.moveBtn' | transloco }}</button>
+            }
+            @case ('replace') {
+              <button type="button" class="btn primary" [disabled]="!replaceFile() || busy()" (click)="doReplace()">{{ 'akten.docs.replace.submit' | transloco }}</button>
             }
           }
         </footer>
@@ -248,6 +277,13 @@ type DialogKind = 'rename' | 'date' | 'move' | 'tags';
     .mv-row { flex-direction: row; align-items: center; gap: 10px; }
     .mv-row .mv-name { flex: 0 0 40%; font-size: .84rem; color: var(--jl-ink); }
     .mv-row select { flex: 1 1 auto; }
+    .replace { display: flex; flex-direction: column; gap: 10px; }
+    .replace .steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 10px; }
+    .replace .steps li { font-size: .86rem; color: var(--jl-ink); }
+    .replace .steps li span { display: block; margin-bottom: 5px; }
+    .replace input[type=file] { font-size: .82rem; padding: 6px 0; border: 0; }
+    .replace .picked { display: flex; align-items: center; gap: 7px; margin: 0; font-size: .84rem; color: var(--jl-ink); }
+    .replace .sm { font-size: .8rem; padding: 5px 11px; display: inline-flex; align-items: center; gap: 6px; }
     .df { display: flex; align-items: center; gap: 10px; padding: 11px 16px; border-top: 1px solid var(--jl-line); }
     .spacer { flex: 1; }
     .btn { font: inherit; font-size: .85rem; font-weight: 650; padding: 8px 15px; border-radius: 8px; border: 1px solid var(--jl-line-strong); background: var(--jl-surface); color: var(--jl-ink); cursor: pointer; }
@@ -280,6 +316,8 @@ export class DocumentActionsComponent {
   protected readonly renameValue = signal('');
   protected readonly dateValue = signal('');
   protected readonly moveFolderId = signal('');
+  /** The picked replacement file for the "edit externally" (download → edit → re-upload) flow. */
+  protected readonly replaceFile = signal<File | null>(null);
   protected readonly tagList = signal<DocTag[]>([]);
   protected readonly dictionary = signal<string[]>([]);
   /** Configured multi-value ("Listenetiketten") tag definitions for documents (name + value set). */
@@ -340,7 +378,37 @@ export class DocumentActionsComponent {
       this.cases.documentTagDictionary().subscribe((t) => this.dictionary.set(t));
       this.cases.documentMultiValueTags().subscribe((m) => this.mvDefs.set(m));
     }
+    if (kind === 'replace') { this.replaceFile.set(null); }
     this.dialog.set(kind);
+  }
+
+  // ----- edit externally (download → edit locally → re-upload) -----
+
+  /** Delegates to the parent's download handler so the user can edit the file locally. */
+  protected downloadForEdit(): void {
+    this.download.emit();
+  }
+
+  protected onReplaceFile(ev: Event): void {
+    const input = ev.target as HTMLInputElement;
+    this.replaceFile.set(input.files && input.files.length ? input.files[0] : null);
+  }
+
+  /** Reads the picked file and replaces the document's content (server creates a version). */
+  protected doReplace(): void {
+    const file = this.replaceFile();
+    if (!file) { return; }
+    this.busy.set(true);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = ((reader.result as string) || '').split(',')[1] ?? '';
+      this.cases.replaceDocumentContent(this.doc().id, base64).subscribe({
+        next: () => { this.busy.set(false); this.replaceFile.set(null); this.dialog.set(null); this.changed.emit(); },
+        error: () => { this.busy.set(false); alert(this.transloco.translate('akten.docs.writeError')); },
+      });
+    };
+    reader.onerror = () => { this.busy.set(false); alert(this.transloco.translate('akten.docs.writeError')); };
+    reader.readAsDataURL(file);
   }
 
   protected rootLabel(): string {

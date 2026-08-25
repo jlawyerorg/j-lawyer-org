@@ -822,6 +822,7 @@
       "move": "In Ordner verschieben",
       "moveBtn": "Verschieben",
       "labels": "Etiketten",
+      "editExternal": "Extern bearbeiten",
       "toPdf": "Als PDF zur Akte speichern",
       "ocr": "OCR ausführen",
       "name": "Bezeichnung",
@@ -851,7 +852,16 @@
         "rename": "Dokument umbenennen",
         "date": "Erstellungsdatum anpassen",
         "move": "In Ordner verschieben",
-        "tags": "Etiketten"
+        "tags": "Etiketten",
+        "replace": "Extern bearbeiten"
+      },
+      "replace": {
+        "intro": "Dokument „{{name}}“ herunterladen, lokal bearbeiten und die bearbeitete Datei wieder hochladen. Der Inhalt des Dokuments wird ersetzt; Name, Etiketten und Ablage bleiben erhalten, und es wird eine neue Version gespeichert.",
+        "step1": "Dokument herunterladen:",
+        "step2": "Datei lokal im passenden Programm bearbeiten und speichern.",
+        "step3": "Bearbeitete Datei auswählen:",
+        "note": "Bitte denselben Dateityp hochladen wie das Original.",
+        "submit": "Hochladen & ersetzen"
       },
       "bulk": {
         "selected": "{{n}} ausgewählt",
