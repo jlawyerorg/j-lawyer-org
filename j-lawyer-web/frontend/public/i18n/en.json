@@ -801,6 +801,7 @@
       "dateModeHint": "Toggle between modified and created date",
       "uploading": "Uploading …",
       "uploadError": "Upload failed",
+      "capturePhoto": "Take photo",
       "dropHint": "Drop files here or click · into: {{folder}}",
       "dropHintFolder": "Drop files here or click · folder: {{folder}}",
       "delete": "Delete",

@@ -505,6 +505,19 @@
 .dropzone:hover { border-color: var(--jl-blue); background: color-mix(in srgb, var(--jl-blue) 8%, var(--jl-surface-alt)); color: var(--jl-blue); }
 .dropzone.over { border-color: var(--jl-blue); background: color-mix(in srgb, var(--jl-blue) 12%, transparent); color: var(--jl-blue); }
 .dropzone.busy { opacity: .7; pointer-events: none; }
+/* "Foto aufnehmen" — the mobile scanner replacement. capture="environment" opens the camera
+   on touch devices; on desktop (fine pointer) it would only re-open a file picker, so the
+   button is hidden there (drag-drop / file picker already cover desktop). */
+.cam-btn { display: none; }
+@media (pointer: coarse) {
+  .cam-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+    margin: 0 0 10px; padding: 12px 14px; border: 1px solid var(--jl-blue); border-radius: 10px;
+    background: color-mix(in srgb, var(--jl-blue) 10%, var(--jl-surface)); color: var(--jl-blue);
+    font: inherit; font-size: .85rem; font-weight: 700; cursor: pointer;
+  }
+  .cam-btn:disabled { opacity: .6; cursor: default; }
+}
 .up-error { margin: 0 0 10px; font-size: .78rem; font-weight: 600; color: var(--jl-red); }
 
 /* Removable chips (tags / authorized groups) + add-dropdown. */
