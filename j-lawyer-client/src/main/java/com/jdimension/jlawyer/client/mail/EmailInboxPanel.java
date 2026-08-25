@@ -1254,6 +1254,10 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         UserSettings uset = UserSettings.getInstance();
         List<MailboxSetup> mailboxes = uset.getMailboxes(uset.getCurrentUser().getPrincipalId());
 
+        // the mailboxes are initialized in parallel, so the nodes do not arrive in the
+        // order of the mailbox list - keep them by id to restore that order below
+        final HashMap<String, DefaultMutableTreeNode> mailboxNodes = new HashMap<>();
+
         // Limit thread pool to max 6 threads for better resource management
         int poolSize = Math.min(mailboxes.size(), 6);
         ExecutorService pool = Executors.newFixedThreadPool(poolSize);
@@ -1316,6 +1320,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                             DefaultMutableTreeNode mailboxRootNode = new DefaultMutableTreeNode(ms.getEmailAddress());
                             synchronized (rootNode) {
                                 rootNode.add(mailboxRootNode);
+                                mailboxNodes.put(ms.getId(), mailboxRootNode);
                             }
 
                             // Build folder tree from server DTOs with parent-child hierarchy
@@ -1411,8 +1416,12 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         }
         log.info("Parallel mailbox initialization took " + (System.currentTimeMillis() - initStart) + "ms");
 
-        // Sort mailboxes alphabetically by email address
-        sortTreeNodeChildren(rootNode);
+        // Sort the folders within each mailbox, but leave the mailbox level alone - it
+        // follows the order of the mailbox list, which honours the user defined order.
+        for (int i = 0; i < rootNode.getChildCount(); i++) {
+            sortTreeNodeChildren((DefaultMutableTreeNode) rootNode.getChildAt(i));
+        }
+        orderMailboxNodes(rootNode, mailboxes, mailboxNodes);
 
         Runnable r = () -> {
             try {
@@ -1479,6 +1488,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         mnuRemoveFolder = new javax.swing.JMenuItem();
         mnuHideFolder = new javax.swing.JMenuItem();
         mnuShowFolders = new javax.swing.JMenu();
+        sepSortMailboxes = new javax.swing.JPopupMenu.Separator();
+        mnuSortMailboxes = new javax.swing.JMenuItem();
         popEmailList = new javax.swing.JPopupMenu();
         mnuMarkRead = new javax.swing.JMenuItem();
         mnuMarkUnread = new javax.swing.JMenuItem();
@@ -1557,6 +1568,16 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         mnuShowFolders.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_visibility_black_48dp.png"))); // NOI18N
         mnuShowFolders.setText("Ordner einblenden");
         popFolders.add(mnuShowFolders);
+        popFolders.add(sepSortMailboxes);
+
+        mnuSortMailboxes.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_keyboard_arrow_up_blue_36dp.png"))); // NOI18N
+        mnuSortMailboxes.setText("Postfächer sortieren...");
+        mnuSortMailboxes.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSortMailboxesActionPerformed(evt);
+            }
+        });
+        popFolders.add(mnuSortMailboxes);
 
         mnuMarkRead.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         mnuMarkRead.setText("als gelesen markieren");
@@ -2204,8 +2225,22 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             int row = this.treeFolders.getRowForLocation(evt.getX(), evt.getY());
             this.treeFolders.setSelectionRow(row);
 
-            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
-            if (tn.getUserObject() instanceof FolderContainer) {
+            TreePath selectionPath = this.treeFolders.getSelectionPath();
+            if (selectionPath == null) {
+                // right click below the last node - nothing is selected
+                return;
+            }
+            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) selectionPath.getLastPathComponent();
+            if (!(tn.getUserObject() instanceof FolderContainer)) {
+                // a mailbox or the tree root: only the mailbox ordering applies here
+                this.showMailboxOnlyPopup(evt);
+                return;
+            }
+            {
+                // showMailboxOnlyPopup() may have disabled these before
+                this.mnuShowFolders.setEnabled(true);
+                this.mnuSortMailboxes.setEnabled(true);
+
                 FolderContainer folderC = (FolderContainer) tn.getUserObject();
                 if (folderC.isServerBased()) {
                     // Server-based: use wellKnownName from DTO
@@ -3084,8 +3119,22 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             int row = this.treeFolders.getRowForLocation(evt.getX(), evt.getY());
             this.treeFolders.setSelectionRow(row);
 
-            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
-            if (tn.getUserObject() instanceof FolderContainer) {
+            TreePath selectionPath = this.treeFolders.getSelectionPath();
+            if (selectionPath == null) {
+                // right click below the last node - nothing is selected
+                return;
+            }
+            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) selectionPath.getLastPathComponent();
+            if (!(tn.getUserObject() instanceof FolderContainer)) {
+                // a mailbox or the tree root: only the mailbox ordering applies here
+                this.showMailboxOnlyPopup(evt);
+                return;
+            }
+            {
+                // showMailboxOnlyPopup() may have disabled these before
+                this.mnuShowFolders.setEnabled(true);
+                this.mnuSortMailboxes.setEnabled(true);
+
                 FolderContainer folderC = (FolderContainer) tn.getUserObject();
                 if (folderC.isServerBased()) {
                     com.jdimension.jlawyer.services.MailFolderDTO fDto = folderC.getFolderDTO();
@@ -3130,6 +3179,63 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         }
     }//GEN-LAST:event_treeFoldersMousePressed
 
+    /**
+     * Shows the folder popup on a mailbox node or the tree root, where only the mailbox
+     * ordering makes sense - all folder related entries are disabled.
+     */
+    private void showMailboxOnlyPopup(java.awt.event.MouseEvent evt) {
+        this.mnuNewFolder.setEnabled(false);
+        this.mnuEmptyTrash.setEnabled(false);
+        this.mnuRemoveFolder.setEnabled(false);
+        this.mnuHideFolder.setEnabled(false);
+        this.mnuShowFolders.setEnabled(false);
+        this.mnuShowFolders.removeAll();
+        this.mnuSortMailboxes.setEnabled(true);
+        this.popFolders.show(evt.getComponent(), evt.getX(), evt.getY());
+    }
+
+    private void mnuSortMailboxesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSortMailboxesActionPerformed
+        UserSettings uset = UserSettings.getInstance();
+        List<MailboxSetup> mailboxes = uset.getMailboxes(uset.getCurrentUser().getPrincipalId());
+        if (mailboxes == null || mailboxes.isEmpty()) {
+            return;
+        }
+
+        ArrayList<ReorderListDialog.ReorderEntry> entries = new ArrayList<>();
+        for (MailboxSetup ms : mailboxes) {
+            entries.add(new ReorderListDialog.ReorderEntry(ms.getId(), getMailboxLabel(ms)));
+        }
+
+        ReorderListDialog dlg = new ReorderListDialog(EditorsRegistry.getInstance().getMainWindow(), true, "Postfächer sortieren", entries);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+        if (!dlg.isConfirmed()) {
+            return;
+        }
+
+        List<String> newOrder = dlg.getOrderedIds();
+        String[] currentOrder = uset.getSettingArray(UserSettings.CONF_MAIL_MAILBOXORDER, new String[0]);
+        if (!StoredOrderUtils.orderChanged(currentOrder, newOrder)) {
+            return;
+        }
+
+        uset.setMailboxOrder(newOrder);
+        this.cmdRefreshActionPerformed(null);
+    }//GEN-LAST:event_mnuSortMailboxesActionPerformed
+
+    /**
+     * Label of a mailbox in the ordering dialog: the display name plus the e-mail address
+     * the tree shows, so the entries stay recognizable either way.
+     */
+    private static String getMailboxLabel(MailboxSetup ms) {
+        String displayName = ms.getDisplayName();
+        String address = ms.getEmailAddress() == null ? "" : ms.getEmailAddress();
+        if (displayName == null || displayName.trim().isEmpty() || displayName.equals(address)) {
+            return address;
+        }
+        return displayName + " (" + address + ")";
+    }
+
     private MailboxSetup getMailboxSetup(DefaultMutableTreeNode dm) {
         while (dm.getParent() != null && dm.getParent().getParent() != null) {
             dm = (DefaultMutableTreeNode) dm.getParent();
@@ -3160,6 +3266,37 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     // returns the full path including the mailboxes mail adress as root
     private String getFullPath(TreePath tp) {
         return getFullPathImpl(tp, 1);
+    }
+
+    /**
+     * Rebuilds the mailbox level of the tree so that it follows the order of the given
+     * mailbox list - which is the order the user has configured (see
+     * {@link UserSettings#getMailboxes(java.lang.String)}). Mailboxes whose
+     * initialization failed have no node and are simply skipped.
+     */
+    private void orderMailboxNodes(DefaultMutableTreeNode rootNode, List<MailboxSetup> mailboxes, HashMap<String, DefaultMutableTreeNode> mailboxNodes) {
+        if (rootNode.getChildCount() < 2) {
+            return;
+        }
+        ArrayList<DefaultMutableTreeNode> ordered = new ArrayList<>();
+        for (MailboxSetup ms : mailboxes) {
+            DefaultMutableTreeNode node = mailboxNodes.get(ms.getId());
+            if (node != null) {
+                ordered.add(node);
+            }
+        }
+        // never drop a node just because it is not covered by the mailbox list
+        for (int i = 0; i < rootNode.getChildCount(); i++) {
+            DefaultMutableTreeNode child = (DefaultMutableTreeNode) rootNode.getChildAt(i);
+            if (!ordered.contains(child)) {
+                ordered.add(child);
+            }
+        }
+
+        rootNode.removeAllChildren();
+        for (DefaultMutableTreeNode node : ordered) {
+            rootNode.add(node);
+        }
     }
 
     /**
@@ -3211,8 +3348,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
     /**
      * Sort rank pinning the standard folders to the top of their level. All
-     * other nodes - including the mailbox nodes below the tree root - share the
-     * last rank and are therefore sorted by name only.
+     * other nodes share the last rank and are therefore sorted by name only.
+     * Mailbox nodes are never passed through here - their order is set by
+     * {@link #orderMailboxNodes(javax.swing.tree.DefaultMutableTreeNode, java.util.List, java.util.HashMap)}.
      */
     private int getFolderSortRank(DefaultMutableTreeNode node) {
         if (!(node.getUserObject() instanceof FolderContainer)) {
@@ -4237,6 +4375,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     private javax.swing.JMenuItem mnuSearchSaveOnlyAttachments;
     private javax.swing.JMenuItem mnuSearchSaveSeparate;
     private javax.swing.JMenu mnuShowFolders;
+    private javax.swing.JMenuItem mnuSortMailboxes;
+    private javax.swing.JPopupMenu.Separator sepSortMailboxes;
     private javax.swing.JPanel pnlActions;
     private javax.swing.JPanel pnlActionsChild;
     private javax.swing.JPopupMenu popEmailList;

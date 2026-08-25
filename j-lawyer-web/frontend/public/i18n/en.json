@@ -1577,7 +1577,8 @@
       "none": "No folders hidden.",
       "unhide": "Show",
       "close": "Close"
-    }
+    },
+    "reorderHint": "Drag to reorder mailboxes"
   },
   "compose": {
     "new": "Compose",
@@ -1719,7 +1720,8 @@
     "pcXmlTitle": "OSCI message (XML)",
     "pcCopy": "Copy",
     "pcCopied": "Copied ✓",
-    "pcClose": "Close"
+    "pcClose": "Close",
+    "reorderHint": "Drag to reorder postboxes"
   },
   "beaCompose": {
     "new": "Compose",

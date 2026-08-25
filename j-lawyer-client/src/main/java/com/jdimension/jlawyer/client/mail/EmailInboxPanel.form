@@ -60,6 +60,19 @@
             <Property name="text" type="java.lang.String" value="Ordner einblenden"/>
           </Properties>
         </Menu>
+        <MenuItem class="javax.swing.JPopupMenu$Separator" name="sepSortMailboxes">
+        </MenuItem>
+        <MenuItem class="javax.swing.JMenuItem" name="mnuSortMailboxes">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons16/material/baseline_keyboard_arrow_up_blue_36dp.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="Postf&#xe4;cher sortieren..."/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSortMailboxesActionPerformed"/>
+          </Events>
+        </MenuItem>
       </SubComponents>
     </Container>
     <Container class="javax.swing.JPopupMenu" name="popEmailList">

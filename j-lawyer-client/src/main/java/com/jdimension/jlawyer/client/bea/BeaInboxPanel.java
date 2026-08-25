@@ -950,7 +950,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         BeaAccess bea = BeaAccess.getInstance();
         EditorsRegistry.getInstance().updateStatus("beA-Postfächer werden geladen...");
         DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("beA-Postfächer");
-        Collection<BeaPostbox> inboxes = bea.getPostBoxes();
+        Collection<BeaPostbox> inboxes = bea.getPostBoxesOrdered();
         HashMap<String, BeaFolder> inboxFolders = new HashMap<>();
         for (BeaPostbox pb : inboxes) {
             EditorsRegistry.getInstance().updateStatus("Lade beA-Postfach" + pb.getSafeId() + "...");
@@ -1065,6 +1065,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         mnuNewFolder = new javax.swing.JMenuItem();
         mnuRemoveFolder = new javax.swing.JMenuItem();
         mnuEmptyTrash = new javax.swing.JMenuItem();
+        sepSortPostboxes = new javax.swing.JPopupMenu.Separator();
+        mnuSortPostboxes = new javax.swing.JMenuItem();
         popEmailList = new javax.swing.JPopupMenu();
         mnuMarkRead = new javax.swing.JMenuItem();
         mnuSearchSave = new javax.swing.JMenuItem();
@@ -1128,6 +1130,16 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             }
         });
         popFolders.add(mnuEmptyTrash);
+        popFolders.add(sepSortPostboxes);
+
+        mnuSortPostboxes.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_keyboard_arrow_up_blue_36dp.png"))); // NOI18N
+        mnuSortPostboxes.setText("Postfächer sortieren...");
+        mnuSortPostboxes.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSortPostboxesActionPerformed(evt);
+            }
+        });
+        popFolders.add(mnuSortPostboxes);
 
         mnuMarkRead.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         mnuMarkRead.setText("als gelesen markieren");
@@ -1610,25 +1622,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     private void treeFoldersMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_treeFoldersMouseReleased
         if (evt.isPopupTrigger()) {
-            int row = this.treeFolders.getRowForLocation(evt.getX(), evt.getY());
-            this.treeFolders.setSelectionRow(row);
-
-            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
-            BeaFolder f = (BeaFolder) tn.getUserObject();
-
-            if (f.getType().equals(BeaFolder.TYPE_INBOX) || f.getType().equals(BeaFolder.TYPE_SENT) || f.getType().equals(BeaFolder.TYPE_TRASH)) {
-                this.mnuRemoveFolder.setEnabled(false);
-            } else {
-                this.mnuRemoveFolder.setEnabled(true);
-            }
-
-            if (f.getType().equals(BeaFolder.TYPE_TRASH)) {
-                this.mnuEmptyTrash.setEnabled(true);
-            } else {
-                this.mnuEmptyTrash.setEnabled(false);
-            }
-
-            this.popFolders.show(evt.getComponent(), evt.getX(), evt.getY());
+            this.showFolderPopup(evt);
         }
     }//GEN-LAST:event_treeFoldersMouseReleased
 
@@ -1659,31 +1653,104 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     private void treeFoldersMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_treeFoldersMousePressed
         if (evt.isPopupTrigger()) {
-            int row = this.treeFolders.getRowForLocation(evt.getX(), evt.getY());
-            this.treeFolders.setSelectionRow(row);
+            this.showFolderPopup(evt);
+        }
+    }//GEN-LAST:event_treeFoldersMousePressed
 
-            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
-            if (tn.getUserObject() instanceof BeaFolder) {
-                BeaFolder f = (BeaFolder) tn.getUserObject();
-                System.out.println(f.getType());
-                if (f.getType().equals(BeaFolder.TYPE_INBOX) || f.getType().equals(BeaFolder.TYPE_SENT) || f.getType().equals(BeaFolder.TYPE_TRASH)) {
-                    this.mnuRemoveFolder.setEnabled(false);
-                } else {
-                    this.mnuRemoveFolder.setEnabled(true);
-                }
+    /**
+     * Shows the folder popup for the node that was right clicked. Depending on the
+     * platform the popup trigger fires on press or on release, so both handlers share
+     * this implementation. Postbox nodes carry a {@link BeaIdentity} and the tree root a
+     * plain string - there only the postbox ordering applies.
+     */
+    private void showFolderPopup(java.awt.event.MouseEvent evt) {
+        int row = this.treeFolders.getRowForLocation(evt.getX(), evt.getY());
+        this.treeFolders.setSelectionRow(row);
 
-                if (f.getType().equals(BeaFolder.TYPE_TRASH)) {
-                    this.mnuEmptyTrash.setEnabled(true);
-                } else {
-                    this.mnuEmptyTrash.setEnabled(false);
-                }
-
-                this.popFolders.show(evt.getComponent(), evt.getX(), evt.getY());
-            }
+        TreePath selectionPath = this.treeFolders.getSelectionPath();
+        if (selectionPath == null) {
+            // right click below the last node - nothing is selected
+            return;
         }
 
+        DefaultMutableTreeNode tn = (DefaultMutableTreeNode) selectionPath.getLastPathComponent();
+        this.mnuSortPostboxes.setEnabled(true);
 
-    }//GEN-LAST:event_treeFoldersMousePressed
+        if (!(tn.getUserObject() instanceof BeaFolder)) {
+            this.mnuNewFolder.setEnabled(false);
+            this.mnuRemoveFolder.setEnabled(false);
+            this.mnuEmptyTrash.setEnabled(false);
+            this.popFolders.show(evt.getComponent(), evt.getX(), evt.getY());
+            return;
+        }
+
+        BeaFolder f = (BeaFolder) tn.getUserObject();
+        this.mnuNewFolder.setEnabled(true);
+
+        boolean systemFolder = BeaFolder.TYPE_INBOX.equals(f.getType())
+                || BeaFolder.TYPE_SENT.equals(f.getType())
+                || BeaFolder.TYPE_TRASH.equals(f.getType());
+        this.mnuRemoveFolder.setEnabled(!systemFolder);
+        this.mnuEmptyTrash.setEnabled(BeaFolder.TYPE_TRASH.equals(f.getType()));
+
+        this.popFolders.show(evt.getComponent(), evt.getX(), evt.getY());
+    }
+
+    private void mnuSortPostboxesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSortPostboxesActionPerformed
+        try {
+            BeaAccess bea = BeaAccess.getInstance();
+            // the raw list - the dialog gets the entries in the order shown in the tree
+            List<BeaPostbox> postboxes = bea.getPostBoxesOrdered();
+            if (postboxes == null || postboxes.isEmpty()) {
+                return;
+            }
+
+            ArrayList<ReorderListDialog.ReorderEntry> entries = new ArrayList<>();
+            for (BeaPostbox pb : postboxes) {
+                entries.add(new ReorderListDialog.ReorderEntry(pb.getSafeId(), getPostboxLabel(bea, pb)));
+            }
+
+            ReorderListDialog dlg = new ReorderListDialog(EditorsRegistry.getInstance().getMainWindow(), true, "Postfächer sortieren", entries);
+            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+            dlg.setVisible(true);
+            if (!dlg.isConfirmed()) {
+                return;
+            }
+
+            UserSettings uset = UserSettings.getInstance();
+            List<String> newOrder = dlg.getOrderedIds();
+            String[] currentOrder = uset.getSettingArray(UserSettings.CONF_BEA_POSTBOXORDER, new String[0]);
+            if (!StoredOrderUtils.orderChanged(currentOrder, newOrder)) {
+                return;
+            }
+
+            uset.setSettingArray(UserSettings.CONF_BEA_POSTBOXORDER, newOrder.toArray(new String[0]));
+            this.refreshFolders(true);
+        } catch (Exception ex) {
+            log.error("Error sorting bea postboxes", ex);
+            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Sortieren der Postfächer: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+        }
+    }//GEN-LAST:event_mnuSortPostboxesActionPerformed
+
+    /**
+     * Label of a postbox in the ordering dialog - the identity's display name, which is
+     * what the tree shows, falling back to the safe id.
+     */
+    private static String getPostboxLabel(BeaAccess bea, BeaPostbox pb) {
+        try {
+            BeaIdentity identity = bea.getIdentity(pb.getSafeId());
+            if (identity != null && identity.toString() != null && !identity.toString().isEmpty()) {
+                return identity.toString();
+            }
+        } catch (Exception ex) {
+            log.error("Unable to determine identity of postbox " + pb.getSafeId(), ex);
+        }
+        String displayName = pb.getDisplayName();
+        if (displayName != null && !displayName.trim().isEmpty()) {
+            return displayName;
+        }
+        return pb.getSafeId();
+    }
 
     private void mnuRemoveFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemoveFolderActionPerformed
         DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
@@ -3670,6 +3737,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     private javax.swing.JMenuItem mnuMarkRead;
     private javax.swing.JMenuItem mnuNewFolder;
     private javax.swing.JMenuItem mnuRemoveFolder;
+    private javax.swing.JMenuItem mnuSortPostboxes;
+    private javax.swing.JPopupMenu.Separator sepSortPostboxes;
     private javax.swing.JMenuItem mnuRestoreFromTrash;
     private javax.swing.JMenuItem mnuSearchSave;
     private javax.swing.JMenuItem mnuSearchSaveNoAttachments;

@@ -8,6 +8,8 @@ import { base64ToBytes, PreviewDoc } from '../shared/document-preview.models';
 import { DocumentPreviewComponent } from '../shared/document-preview.component';
 import { CaseSuggestions } from '../communication/email.models';
 import { BeaService } from './bea.service';
+import { InboxOrderService } from '../shared/inbox-order.service';
+import { moveItem } from '../shared/ordering';
 import { BeaComposeComponent } from './bea-compose.component';
 import { BeaBulkSaveComponent, TargetCase } from './bea-bulk-save.component';
 import { BeaEebDialogComponent, EebMode } from './bea-eeb-dialog.component';
@@ -18,7 +20,7 @@ import {
 
 /** A postbox header or an (indented) folder row in the left navigation. */
 type NavRow =
-  | { kind: 'postbox'; postbox: Postbox }
+  | { kind: 'postbox'; postbox: Postbox; index: number }
   | { kind: 'folder'; safeId: string; folder: BeaFolderNode };
 
 /** The folder tree of one postbox. */
@@ -72,8 +74,21 @@ interface PostboxFolders {
               } @else {
                 @for (row of navRows(); track rowKey(row)) {
                   @if (row.kind === 'postbox') {
-                    <div class="mbx" [title]="row.postbox.userName">
-                      <jl-icon name="shield" [size]="13" />
+                    <div class="mbx" [title]="row.postbox.userName"
+                         [attr.draggable]="reorderable() ? 'true' : null"
+                         [class.dragging]="dragIndex() === row.index"
+                         [class.drop-target]="overIndex() === row.index && dragIndex() !== null && dragIndex() !== row.index"
+                         (dragstart)="onPostboxDragStart(row.index, $event)" (dragend)="onPostboxDragEnd()"
+                         (dragover)="onPostboxDragOver(row.index, $event)" (dragleave)="onPostboxDragLeave(row.index)"
+                         (drop)="onPostboxDrop(row.index, $event)">
+                      @if (reorderable()) {
+                        <span class="mbx-grip" [title]="'bea.reorderHint' | transloco"
+                              [attr.aria-label]="'bea.reorderHint' | transloco">
+                          <jl-icon name="grip" [size]="13" />
+                        </span>
+                      } @else {
+                        <jl-icon name="shield" [size]="13" />
+                      }
                       <span class="mbx-name">{{ row.postbox.label }}</span>
                     </div>
                   } @else {
@@ -447,6 +462,7 @@ interface PostboxFolders {
 })
 export class BeaComponent {
   private readonly api = inject(BeaService);
+  private readonly inboxOrder = inject(InboxOrderService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly transloco = inject(TranslocoService);
 
@@ -528,10 +544,10 @@ export class BeaComponent {
 
   protected readonly navRows = computed<NavRow[]>(() => {
     const rows: NavRow[] = [];
-    for (const pf of this.folderTrees()) {
-      rows.push({ kind: 'postbox', postbox: pf.postbox });
+    this.folderTrees().forEach((pf, index) => {
+      rows.push({ kind: 'postbox', postbox: pf.postbox, index });
       flatten(pf.nodes, (f) => rows.push({ kind: 'folder', safeId: pf.postbox.safeId, folder: f }));
-    }
+    });
     return rows;
   });
 
@@ -887,6 +903,50 @@ export class BeaComponent {
   }
 
   // ----- helpers -----
+
+  // --- postbox reordering (drag & drop on the postbox headers) ---
+
+  protected readonly dragIndex = signal<number | null>(null);
+  protected readonly overIndex = signal<number | null>(null);
+
+  /** Reordering only makes sense with more than one postbox. */
+  protected readonly reorderable = computed(() => this.postboxes().length > 1);
+
+  protected onPostboxDragStart(i: number, event: DragEvent): void {
+    if (!this.reorderable()) { return; }
+    this.dragIndex.set(i);
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      // Firefox requires data to be set for a drag to start.
+      event.dataTransfer.setData('text/plain', String(i));
+    }
+  }
+
+  protected onPostboxDragOver(i: number, event: DragEvent): void {
+    if (this.dragIndex() === null) { return; }
+    event.preventDefault();
+    if (event.dataTransfer) { event.dataTransfer.dropEffect = 'move'; }
+    this.overIndex.set(i);
+  }
+
+  protected onPostboxDragLeave(i: number): void {
+    if (this.overIndex() === i) { this.overIndex.set(null); }
+  }
+
+  protected onPostboxDragEnd(): void {
+    this.dragIndex.set(null);
+    this.overIndex.set(null);
+  }
+
+  protected onPostboxDrop(i: number, event: DragEvent): void {
+    event.preventDefault();
+    const from = this.dragIndex();
+    this.dragIndex.set(null);
+    this.overIndex.set(null);
+    if (from === null || from === i) { return; }
+    // persisting the ids is enough - the service's ordered computed() re-renders the sidebar
+    this.inboxOrder.saveBeaPostboxOrder(moveItem(this.postboxes(), from, i).map((pb) => pb.safeId));
+  }
 
   protected rowKey(row: NavRow): string {
     return row.kind === 'postbox' ? `p:${row.postbox.safeId}` : `f:${row.safeId}:${row.folder.id}`;

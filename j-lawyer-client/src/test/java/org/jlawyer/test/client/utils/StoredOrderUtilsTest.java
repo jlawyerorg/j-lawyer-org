@@ -661,144 +661,128 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.server.services.settings;
+package org.jlawyer.test.client.utils;
+
+import com.jdimension.jlawyer.client.utils.StoredOrderUtils;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 /**
- *
- * @author jens
+ * Tests for the user defined mailbox / postbox ordering.
  */
-public class UserSettingsKeys {
-    
-    public static final String USER_AVATAR = "user.avatar";
+public class StoredOrderUtilsTest {
 
-    public static final String ROLE_READCASE = "readArchiveFileRole";
-    public static final String ROLE_WRITECASE = "writeArchiveFileRole";
-    public static final String ROLE_READADDRESS = "readAddressRole";
-    public static final String ROLE_WRITEADDRESS = "writeAddressRole";
-    public static final String ROLE_LOGIN = "loginRole";
+    /** Minimal stand-in for a mailbox or postbox: something with an id. */
+    private static class Item {
 
-    // key
-    public static final String CLOUD_SHARE_FOLDERTEMPLATE = "cloud.share.foldertemplate";
-    // values
-    public static final String CLOUD_SHARE_FOLDERTEMPLATE_CASE = "case";
-    public static final String CLOUD_SHARE_FOLDERTEMPLATE_ADDRESS = "address";
-    public static final String CLOUD_SHARE_FOLDERTEMPLATE_CASEADDRESS = "case-address";
-    public static final String CLOUD_SHARE_FOLDERTEMPLATE_ADDRESSCASE = "address-case";
+        private final String id;
 
-    // key
-    public static final String CLOUD_SHARE_PERMISSIONS = "cloud.share.permissions";
-    // values
-    public static final String CLOUD_SHARE_PERMISSIONS_READONLY = "readonly";
-    public static final String CLOUD_SHARE_PERMISSIONS_UPLOAD = "upload";
-    public static final String CLOUD_SHARE_PERMISSIONS_UPLOADEDIT = "uploadedit";
+        Item(String id) {
+            this.id = id;
+        }
 
-    public static final String CONF_SEARCH_WITHARCHIVE = "user.conf.search.witharchive";
+        String getId() {
+            return this.id;
+        }
 
-    public static final String CONF_DESKTOP_RANDOM_BACKGROUND = "client.desktop.background.random";
+        @Override
+        public String toString() {
+            return this.id;
+        }
+    }
 
-    public static final String CONF_DESKTOP_ONLYMYCASES = "client.desktop.onlymycases";
-    public static final String CONF_DESKTOP_ONLYMYREVIEWS = "client.desktop.onlymyreviews";
-    public static final String CONF_DESKTOP_ONLYMYTAGGED = "client.desktop.onlymytagged";
-    public static final String CONF_DESKTOP_LASTFILTERTAG = "client.desktop.lastfiltertag";
-    public static final String CONF_DESKTOP_LASTFILTERUSERS = "client.desktop.lastfilterusers";
-    public static final String CONF_DESKTOP_LASTFILTERUSERS_TAGGED = "client.desktop.lastfilterusers.tagged";
-    public static final String CONF_DESKTOP_LASTFILTERUSERS_LASTCHANGED = "client.desktop.lastfilterusers.lastchanged";
-    public static final String CONF_DESKTOP_LASTFILTERDUESINCEDAYS = "client.desktop.lastfilterduesincedays";
-    public static final String CONF_DESKTOP_LASTFILTERDUEINDAYS = "client.desktop.lastfilterdueindays";
+    private static List<Item> items(String... ids) {
+        List<Item> result = new ArrayList<>();
+        for (String id : ids) {
+            result.add(new Item(id));
+        }
+        return result;
+    }
 
-    // Per event type overrides for the "Faellig" widget time window. If a type specific key is
-    // not set, the legacy global keys above remain in effect for that type.
-    public static final String CONF_DESKTOP_LASTFILTERDUESINCEDAYS_EVENT = "client.desktop.lastfilterduesincedays.event";
-    public static final String CONF_DESKTOP_LASTFILTERDUESINCEDAYS_RESPITE = "client.desktop.lastfilterduesincedays.respite";
-    public static final String CONF_DESKTOP_LASTFILTERDUESINCEDAYS_FOLLOWUP = "client.desktop.lastfilterduesincedays.followup";
-    public static final String CONF_DESKTOP_LASTFILTERDUEINDAYS_EVENT = "client.desktop.lastfilterdueindays.event";
-    public static final String CONF_DESKTOP_LASTFILTERDUEINDAYS_RESPITE = "client.desktop.lastfilterdueindays.respite";
-    public static final String CONF_DESKTOP_LASTFILTERDUEINDAYS_FOLLOWUP = "client.desktop.lastfilterdueindays.followup";
-    public static final String CONF_DESKTOP_LASTFILTERDOCUMENTTAG = "client.desktop.lastfilterdocumenttag";
+    private static String idsOf(List<Item> items) {
+        StringBuilder sb = new StringBuilder();
+        for (Item i : items) {
+            if (sb.length() > 0) {
+                sb.append(",");
+            }
+            sb.append(i.getId());
+        }
+        return sb.toString();
+    }
 
-    // Desktop grid layout customization
-    public static final String CONF_DESKTOP_GRID_ROWS = "client.desktop.grid.rows";
-    public static final String CONF_DESKTOP_GRID_COLS = "client.desktop.grid.cols";
-    public static final String CONF_DESKTOP_PANEL_LAYOUT = "client.desktop.panel.layout";
-    public static final String CONF_DESKTOP_SECTION_LASTCHANGED_VISIBLE = "client.desktop.section.lastchanged.visible";
-    public static final String CONF_DESKTOP_SECTION_DUE_VISIBLE = "client.desktop.section.due.visible";
-    public static final String CONF_DESKTOP_SECTION_TAGGED_VISIBLE = "client.desktop.section.tagged.visible";
-    public static final String CONF_DESKTOP_SECTION_MESSAGES_TO_ME_VISIBLE = "client.desktop.section.messagestome.visible";
-    public static final String CONF_DESKTOP_SECTION_MESSAGES_TO_OTHERS_VISIBLE = "client.desktop.section.messagestoothers.visible";
-    public static final String CONF_DESKTOP_SECTION_INVOICES_VISIBLE = "client.desktop.section.invoices.visible";
-    public static final String CONF_DESKTOP_DUE_COMPACT_VIEW = "client.desktop.due.compactview";
+    @Test
+    public void testAppliesStoredOrder() {
+        List<Item> result = StoredOrderUtils.applyStoredOrder(items("a", "b", "c"), new String[]{"c", "a", "b"}, Item::getId);
+        assertEquals("c,a,b", idsOf(result));
+    }
 
-    // Web dashboard ("Mein Desktop") config: an opaque JSON blob owned by the web client
-    // (visible widgets + per-widget config). Stored as a single string, schema lives in the web client.
-    public static final String CONF_DESKTOP_WEB_CONFIG = "client.desktop.web.config";
+    @Test
+    public void testUnknownIdsAreIgnored() {
+        // "x" no longer resolves to an item - e.g. a mailbox that was deleted meanwhile
+        List<Item> result = StoredOrderUtils.applyStoredOrder(items("a", "b"), new String[]{"x", "b", "a"}, Item::getId);
+        assertEquals("b,a", idsOf(result));
+    }
 
-    public static final String CONF_COLORS_RECENT = "client.colorchooser.recent";
+    @Test
+    public void testUncoveredItemsGoToTheEnd() {
+        // "c" was added after the order was stored and must not disappear
+        List<Item> result = StoredOrderUtils.applyStoredOrder(items("a", "b", "c"), new String[]{"b"}, Item::getId);
+        assertEquals("b,a,c", idsOf(result));
+    }
 
-    public static final String CONF_CALENDAR_DEFAULTTAB = "user.calendar.defaulttab";
-    
-    public static final String CONF_SCAN_DIVIDERKEYWORD = "user.scans.dividerkeyword";
-    
-    public static final String CONF_MAIL_LASTUSEDSETUP = "user.mail.lastusedsetup";
-    
-    public static final String CONF_MAIL_LASTUSEDTEMPLATE = "user.mail.lastusedtemplate";
-    public static final String CONF_MAIL_WARNSENDERUNKNOWN = "user.mail.unknownsender.warn";
-    public static final String CONF_BEA_LASTUSEDTEMPLATE = "user.bea.lastusedtemplate";
-    public static final String CONF_BEA_LASTUSEDMAILBOX = "user.bea.lastusedmailbox";
+    @Test
+    public void testEmptyOrderKeepsOriginalOrder() {
+        assertEquals("a,b,c", idsOf(StoredOrderUtils.applyStoredOrder(items("a", "b", "c"), new String[0], Item::getId)));
+    }
 
-    // user defined order of the mailboxes / bea postboxes shown in the inbox panels,
-    // stored as a "#####"-delimited array of MailboxSetup ids resp. bea safe ids
-    public static final String CONF_MAIL_MAILBOXORDER = "user.mail.mailboxorder";
-    public static final String CONF_BEA_POSTBOXORDER = "user.bea.postboxorder";
-    
-    public static final String CONF_DOCUMENTS_LASTSORTMODE="client.documents.lastsortmode";
+    @Test
+    public void testNullOrderKeepsOriginalOrder() {
+        assertEquals("a,b,c", idsOf(StoredOrderUtils.applyStoredOrder(items("a", "b", "c"), (String[]) null, Item::getId)));
+    }
 
-    public static final String CONF_CASE_LASTPARTYTYPE = "user.case.lastpartytype";
-    public static final String CONF_CASE_LASTPARTYTYPE_NEWCASEASSISTANT = "user.case.lastpartytype.newcase";
-    
-    public static final String CONF_CASES_EXPORT_TOLOCAL="user.case.pdfexport.tolocal";
-    public static final String CONF_CASES_EXPORT_TOCASE="user.case.pdfexport.tocase";
-    public static final String CONF_CASES_EXPORT_TOC="user.case.pdfexport.toc";
-    public static final String CONF_CASES_EXPORT_PAGENUMBERS="user.case.pdfexport.pagenumbers";
-    // setting this to false will disable full text search within a case
-    public static final String CONF_CASES_SEARCH_FULLTEXT_INCASE="user.case.search.fulltext.incase";
+    @Test
+    public void testEmptyEntriesInStoredOrderAreSkipped() {
+        // setSettingArray appends a delimiter after each element, so a trailing empty entry can occur
+        List<Item> result = StoredOrderUtils.applyStoredOrder(items("a", "b"), new String[]{"b", "", null, "a"}, Item::getId);
+        assertEquals("b,a", idsOf(result));
+    }
 
-    public static final String CONF_CASE_DEFAULT_OWNERGROUP = "user.case.default.ownergroup";
-    public static final String CONF_CASE_DEFAULT_ALLOWEDGROUPS = "user.case.default.allowedgroups";
+    @Test
+    public void testNullItemsAreDropped() {
+        List<Item> input = items("a", "b");
+        input.add(null);
+        assertEquals("b,a", idsOf(StoredOrderUtils.applyStoredOrder(input, new String[]{"b", "a"}, Item::getId)));
+    }
 
-    // will be used with a suffix indicating the event type (see CalendarSetup class)
-    public static final String CONF_CALENDAR_LASTSELECTED = "user.calendar.lastcalsetup.";
-    public static final String CONF_CALENDAR_LASTFILTERUSERS = "client.calendar.lastfilterusers";
-    
-    // for new bulk save dialog
-    public static final String CONF_BULKSAVE_LASTCASETAGS_PREFIX="user.bulksave.lastcasetags.";
-    public static final String CONF_BULKSAVE_LASTDOCTAGS_PREFIX="user.bulksave.lastdoctags.";
-    public static final String CONF_BULKSAVE_LASTNAMETEMPLATE_PREFIX="user.bulksave.lastnametpl.";
-    
-    // invoice related
-    public static final String INVOICE_LASTUSEDCURRENCY="invoice.currency.lastused";
-    public static final String INVOICE_LASTUSEDTYPE="invoice.type.lastused";
-    
-    // bank statement related
-    public static final String BANKSTATEMENT_LASTCONFIG="bankstatement.csv.lastconfig";
-    
-    // E-POST related
-    public static final String EPOST_LAST_SENDER_ADRLINE="epost.sender.last.adrline";
-    public static final String EPOST_LAST_SENDER_STREET="epost.sender.last.street";
-    public static final String EPOST_LAST_SENDER_ZIPCODE="epost.sender.last.zipcode";
-    public static final String EPOST_LAST_SENDER_CITY="epost.sender.last.city";
-    
-    public static final String NOTIFICATION_EVENT_INSTANTMESSAGEMENTION="notify.event.immention";
-    public static final String NOTIFICATION_EVENT_INSTANTMESSAGEMENTION_DONE="notify.event.immention.done";
-    public static final String NOTIFICATION_EVENT_CALENDARENTRY="notify.event.calendarentry";
-    public static final String NOTIFICATION_EVENT_CALENDARENTRY_AUTHORED="notify.event.calendarentry.authored";
-    public static final String NOTIFICATION_EVENT_CALENDARENTRY_REMINDER="notify.event.calendarentry.reminder";
-    public static final String NOTIFICATION_EVENT_INVOICE_DUE="notify.event.invoice.due";
-    
-    public static final String NOTIFICATION_SCHEDULED_DAILY_AGENDA="notify.sched.daily.agenda";
-    public static final String NOTIFICATION_SCHEDULED_WEEKLY_DIGEST="notify.sched.weekly.digest";
+    @Test
+    public void testNullItemListYieldsEmptyResult() {
+        assertTrue(StoredOrderUtils.applyStoredOrder(null, new String[]{"a"}, Item::getId).isEmpty());
+    }
 
-    public static final String CONF_EDITOR_DEFAULT_HTML_FONT = "user.editor.defaulthtmlfont";
-    public static final String CONF_EDITOR_DEFAULT_HTML_FONTSIZE = "user.editor.defaulthtmlfontsize";
+    @Test
+    public void testListOverloadBehavesLikeArrayOverload() {
+        List<Item> result = StoredOrderUtils.applyStoredOrder(items("a", "b", "c"), Arrays.asList("c", "b"), Item::getId);
+        assertEquals("c,b,a", idsOf(result));
+    }
 
+    @Test
+    public void testToIdList() {
+        assertEquals(Arrays.asList("a", "b"), StoredOrderUtils.toIdList(items("a", "b"), Item::getId));
+    }
+
+    @Test
+    public void testOrderChanged() {
+        assertFalse(StoredOrderUtils.orderChanged(new String[]{"a", "b"}, Arrays.asList("a", "b")));
+        // a trailing empty entry from the "#####" array format must not count as a change
+        assertFalse(StoredOrderUtils.orderChanged(new String[]{"a", "b", ""}, Arrays.asList("a", "b")));
+        assertTrue(StoredOrderUtils.orderChanged(new String[]{"a", "b"}, Arrays.asList("b", "a")));
+        assertTrue(StoredOrderUtils.orderChanged(null, Arrays.asList("a")));
+        assertFalse(StoredOrderUtils.orderChanged(null, new ArrayList<>()));
+    }
 
 }

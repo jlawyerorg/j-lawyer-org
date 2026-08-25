@@ -1577,7 +1577,8 @@
       "none": "Keine Ordner ausgeblendet.",
       "unhide": "Einblenden",
       "close": "Schließen"
-    }
+    },
+    "reorderHint": "Postfächer zum Sortieren ziehen"
   },
   "compose": {
     "new": "Verfassen",
@@ -1719,7 +1720,8 @@
     "pcXmlTitle": "OSCI-Nachricht (XML)",
     "pcCopy": "Kopieren",
     "pcCopied": "Kopiert ✓",
-    "pcClose": "Schließen"
+    "pcClose": "Schließen",
+    "reorderHint": "Postfächer zum Sortieren ziehen"
   },
   "beaCompose": {
     "new": "Verfassen",

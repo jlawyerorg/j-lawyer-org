@@ -829,7 +829,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
             HashMap<String,BeaIdentity> allMailboxes=new HashMap<>();
             BeaAccess bea = BeaAccess.getInstance();
             String firstSafeId = null;
-            for (BeaPostbox pb : bea.getPostBoxes()) {
+            for (BeaPostbox pb : bea.getPostBoxesOrdered()) {
                 BeaIdentity ident=bea.getIdentity(pb.getSafeId());
                 ((DefaultComboBoxModel) this.cmbFrom.getModel()).addElement(ident);
                 allMailboxes.put(pb.getSafeId(), ident);

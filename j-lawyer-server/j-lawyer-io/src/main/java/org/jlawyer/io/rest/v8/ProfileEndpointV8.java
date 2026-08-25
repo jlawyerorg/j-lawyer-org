@@ -46,6 +46,7 @@ import javax.ws.rs.core.SecurityContext;
 import org.jboss.logging.Logger;
 import org.jlawyer.io.rest.v6.pojo.RestfulIdNameV6;
 import org.jlawyer.io.rest.v8.pojo.RestfulDashboardConfigV8;
+import org.jlawyer.io.rest.v8.pojo.RestfulInboxOrderV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulPasswordChangeV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulProfileSettingsV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulProfileV8;
@@ -298,6 +299,81 @@ public class ProfileEndpointV8 implements ProfileEndpointLocalV8 {
         }
     }
 
+    /**
+     * Returns the order in which the current user wants their mailboxes and beA postboxes to be
+     * presented. Empty lists mean "no order stored yet", in which case the caller keeps the order
+     * the respective listing endpoint returned.
+     *
+     * @response 200 The caller's inbox order
+     * @response 401 Not authenticated
+     */
+    @Override
+    @GET
+    @Path("/inbox-order")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the mailbox and beA postbox order of the current user", response = RestfulInboxOrderV8.class)
+    public Response getInboxOrder() {
+        try {
+            String principalId = securityContext.getUserPrincipal().getName();
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+
+            AppUserBean user = system.getUser(principalId);
+            if (user == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            Properties props = system.getUserSettings(user);
+            return Response.ok(toInboxOrder(props)).build();
+        } catch (Exception ex) {
+            log.error("can not get inbox order", ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Stores the order in which the current user wants their mailboxes and beA postboxes to be
+     * presented. Uses the same per-user settings keys as the desktop client, so the order applies
+     * to both. Ids are stored as given; unknown ids are harmless because every consumer treats the
+     * order as a hint.
+     *
+     * @param request the order to store
+     * @response 200 The stored order
+     * @response 400 Missing body
+     * @response 401 Not authenticated
+     */
+    @Override
+    @PUT
+    @Path("/inbox-order")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value = "Stores the mailbox and beA postbox order of the current user", response = RestfulInboxOrderV8.class)
+    public Response updateInboxOrder(RestfulInboxOrderV8 request) {
+        try {
+            if (request == null) {
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            }
+            String principalId = securityContext.getUserPrincipal().getName();
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+
+            AppUserBean user = system.getUser(principalId);
+            if (user == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            // merge onto the existing blob so unrelated keys are preserved
+            Properties props = system.getUserSettings(user);
+            props.setProperty(UserSettingsKeys.CONF_MAIL_MAILBOXORDER, joinArray(request.getMailboxOrder()));
+            props.setProperty(UserSettingsKeys.CONF_BEA_POSTBOXORDER, joinArray(request.getBeaPostboxOrder()));
+            system.setUserSettings(user, props);
+
+            return Response.ok(toInboxOrder(props)).build();
+        } catch (Exception ex) {
+            log.error("can not update inbox order", ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
     // --- helpers ---
 
     private boolean readBoolSetting(SystemManagementLocal system, String key, boolean defaultValue) {
@@ -343,6 +419,13 @@ public class ProfileEndpointV8 implements ProfileEndpointLocalV8 {
         props.setProperty(UserSettingsKeys.CONF_MAIL_WARNSENDERUNKNOWN, Boolean.toString(s.isWarnUnknownSenders()));
         props.setProperty(UserSettingsKeys.CONF_CASE_DEFAULT_OWNERGROUP, s.getDefaultOwnerGroup() == null ? "" : s.getDefaultOwnerGroup());
         props.setProperty(UserSettingsKeys.CONF_CASE_DEFAULT_ALLOWEDGROUPS, joinArray(s.getDefaultAllowedGroups()));
+    }
+
+    /** Maps the stored settings blob to the inbox order DTO, using the desktop's keys and format. */
+    private RestfulInboxOrderV8 toInboxOrder(Properties props) {
+        return new RestfulInboxOrderV8(
+                splitArray(props.getProperty(UserSettingsKeys.CONF_MAIL_MAILBOXORDER, "")),
+                splitArray(props.getProperty(UserSettingsKeys.CONF_BEA_POSTBOXORDER, "")));
     }
 
     /** Splits a "#####"-delimited array value (the desktop's {@code UserSettings} array format). */

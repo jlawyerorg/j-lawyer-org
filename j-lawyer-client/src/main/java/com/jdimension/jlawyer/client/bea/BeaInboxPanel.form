@@ -41,6 +41,19 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuEmptyTrashActionPerformed"/>
           </Events>
         </MenuItem>
+        <MenuItem class="javax.swing.JPopupMenu$Separator" name="sepSortPostboxes">
+        </MenuItem>
+        <MenuItem class="javax.swing.JMenuItem" name="mnuSortPostboxes">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons16/material/baseline_keyboard_arrow_up_blue_36dp.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="Postf&#xe4;cher sortieren..."/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSortPostboxesActionPerformed"/>
+          </Events>
+        </MenuItem>
       </SubComponents>
     </Container>
     <Container class="javax.swing.JPopupMenu" name="popEmailList">

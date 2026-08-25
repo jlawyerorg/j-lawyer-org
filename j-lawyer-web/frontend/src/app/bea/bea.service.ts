@@ -1,8 +1,10 @@
 import { HttpClient } from '@angular/common/http';
-import { effect, inject, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import { catchError, map, Observable, of, shareReplay } from 'rxjs';
 import { API_ROOT } from '../core/api';
 import { AuthService } from '../core/auth/auth.service';
+import { InboxOrderService } from '../shared/inbox-order.service';
+import { applyStoredOrder } from '../shared/ordering';
 import { CaseSuggestions } from '../communication/email.models';
 import {
   BeaAttachment, BeaExport, BeaFolder, BeaIdentity, BeaIdentitySearchCriteria, BeaJournalEntry,
@@ -66,6 +68,7 @@ interface ProcessCardDto {
 export class BeaService {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly inboxOrder = inject(InboxOrderService);
 
   // Cached session state, held for the whole app session so re-opening the module is instant
   // (and the slow beAstie login runs once, not on every view open). The message list is fetched
@@ -77,7 +80,13 @@ export class BeaService {
   private loadingInFlight = false;
 
   readonly sessionState = this._sessionState.asReadonly();
-  readonly postboxes = this._postboxes.asReadonly();
+  /**
+   * The postboxes in the order the user has configured. Every consumer (sidebar, default
+   * sender, compose) goes through this, so the order applies everywhere. `_postboxes` keeps
+   * the raw list as returned by the login result.
+   */
+  readonly postboxes = computed<Postbox[]>(
+    () => applyStoredOrder(this._postboxes(), this.inboxOrder.beaPostboxOrder(), (pb) => pb.safeId));
   /** Flat folder lists keyed by postbox safe-id (the component builds the tree). */
   readonly folders = this._folders.asReadonly();
 
@@ -96,6 +105,7 @@ export class BeaService {
    */
   ensureSession(force = false): void {
     if (!force && (this.sessionLoaded || this.loadingInFlight)) { return; }
+    this.inboxOrder.ensureLoaded(force);
     this.loadingInFlight = true;
     this._sessionState.set('loading');
     this.login().subscribe({

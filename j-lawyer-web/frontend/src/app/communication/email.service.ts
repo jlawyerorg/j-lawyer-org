@@ -1,8 +1,10 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { effect, inject, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import { catchError, from, map, mergeMap, Observable, of } from 'rxjs';
 import { API_ROOT } from '../core/api';
 import { AuthService } from '../core/auth/auth.service';
+import { InboxOrderService } from '../shared/inbox-order.service';
+import { applyStoredOrder } from '../shared/ordering';
 import { CaseSuggestions, MailAttachment, Mailbox, MailFolder, MailMessage, SendMailRequest } from './email.models';
 
 const EMAIL_V7 = `${API_ROOT}/v7/email`;
@@ -37,6 +39,7 @@ interface MessageDto {
 export class EmailService {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly inboxOrder = inject(InboxOrderService);
 
   // Cached mailbox/folder structure, held for the whole app session so re-opening the module
   // is instant. Loaded once (or on manual refresh); the message list is always fetched fresh.
@@ -46,7 +49,16 @@ export class EmailService {
   private readonly _structureError = signal(false);
   private structureLoaded = false;
 
-  readonly mailboxes = this._mailboxes.asReadonly();
+  /**
+   * The mailboxes in the order the user has configured. Every consumer (sidebar, compose
+   * sender select, auto-select of the first inbox) goes through this, so the order applies
+   * everywhere. `_mailboxes` keeps the raw, server-ordered list.
+   */
+  readonly mailboxes = computed<Mailbox[] | null>(() => {
+    const boxes = this._mailboxes();
+    if (!boxes) return boxes;
+    return applyStoredOrder(boxes, this.inboxOrder.mailboxOrder(), (mb) => mb.id);
+  });
   /** Flat folder lists keyed by mailbox id (the component builds the tree). */
   readonly folders = this._folders.asReadonly();
   readonly structureLoading = this._structureLoading.asReadonly();
@@ -68,6 +80,7 @@ export class EmailService {
    */
   ensureStructure(force = false): void {
     if ((this.structureLoaded || this._structureLoading()) && !force) { return; }
+    this.inboxOrder.ensureLoaded(force);
     this._structureLoading.set(true);
     this._structureError.set(false);
     this.listMailboxes().subscribe({

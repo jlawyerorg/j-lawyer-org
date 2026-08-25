@@ -6,6 +6,8 @@ import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { base64ToBytes } from '../shared/document-preview.models';
 import { EmailService } from './email.service';
+import { InboxOrderService } from '../shared/inbox-order.service';
+import { moveItem } from '../shared/ordering';
 import { EmailComposeComponent } from './email-compose.component';
 import { EmailBulkSaveComponent, TargetCase } from './email-bulk-save.component';
 import {
@@ -15,7 +17,7 @@ import {
 
 /** A mailbox header or an (indented) folder row in the left navigation. */
 type NavRow =
-  | { kind: 'mailbox'; mailbox: Mailbox }
+  | { kind: 'mailbox'; mailbox: Mailbox; index: number }
   | { kind: 'folder'; mailboxId: string; folder: FolderNode };
 
 /** The folder tree of one mailbox. */
@@ -64,8 +66,21 @@ interface MailboxFolders {
           } @else {
             @for (row of navRows(); track rowKey(row)) {
               @if (row.kind === 'mailbox') {
-                <div class="mbx" [title]="row.mailbox.emailAddress">
-                  <jl-icon name="mail" [size]="13" />
+                <div class="mbx" [title]="row.mailbox.emailAddress"
+                     [attr.draggable]="reorderable() ? 'true' : null"
+                     [class.dragging]="dragIndex() === row.index"
+                     [class.drop-target]="overIndex() === row.index && dragIndex() !== null && dragIndex() !== row.index"
+                     (dragstart)="onMailboxDragStart(row.index, $event)" (dragend)="onMailboxDragEnd()"
+                     (dragover)="onMailboxDragOver(row.index, $event)" (dragleave)="onMailboxDragLeave(row.index)"
+                     (drop)="onMailboxDrop(row.index, $event)">
+                  @if (reorderable()) {
+                    <span class="mbx-grip" [title]="'email.reorderHint' | transloco"
+                          [attr.aria-label]="'email.reorderHint' | transloco">
+                      <jl-icon name="grip" [size]="13" />
+                    </span>
+                  } @else {
+                    <jl-icon name="mail" [size]="13" />
+                  }
                   <span class="mbx-name">{{ row.mailbox.displayName || row.mailbox.emailAddress }}</span>
                   <button type="button" class="mbx-hidden" (click)="openHidden(row.mailbox.id)"
                           [title]="'email.hidden.manage' | transloco" [attr.aria-label]="'email.hidden.manage' | transloco">
@@ -369,6 +384,7 @@ interface MailboxFolders {
 })
 export class EmailComponent {
   private readonly api = inject(EmailService);
+  private readonly inboxOrder = inject(InboxOrderService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly transloco = inject(TranslocoService);
   private readonly router = inject(Router);
@@ -436,10 +452,10 @@ export class EmailComponent {
   /** Flattened left navigation: each mailbox header followed by its folder rows. */
   protected readonly navRows = computed<NavRow[]>(() => {
     const rows: NavRow[] = [];
-    for (const mf of this.folderTrees()) {
-      rows.push({ kind: 'mailbox', mailbox: mf.mailbox });
+    this.folderTrees().forEach((mf, index) => {
+      rows.push({ kind: 'mailbox', mailbox: mf.mailbox, index });
       flatten(mf.nodes, (f) => rows.push({ kind: 'folder', mailboxId: mf.mailbox.id, folder: f }));
-    }
+    });
     return rows;
   });
 
@@ -791,6 +807,51 @@ export class EmailComponent {
   }
 
   // ----- helpers -----
+
+  // --- mailbox reordering (drag & drop on the mailbox headers) ---
+
+  protected readonly dragIndex = signal<number | null>(null);
+  protected readonly overIndex = signal<number | null>(null);
+
+  /** Reordering only makes sense with more than one mailbox. */
+  protected readonly reorderable = computed(() => (this.mailboxes()?.length ?? 0) > 1);
+
+  protected onMailboxDragStart(i: number, event: DragEvent): void {
+    if (!this.reorderable()) { return; }
+    this.dragIndex.set(i);
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      // Firefox requires data to be set for a drag to start.
+      event.dataTransfer.setData('text/plain', String(i));
+    }
+  }
+
+  protected onMailboxDragOver(i: number, event: DragEvent): void {
+    if (this.dragIndex() === null) { return; }
+    event.preventDefault();
+    if (event.dataTransfer) { event.dataTransfer.dropEffect = 'move'; }
+    this.overIndex.set(i);
+  }
+
+  protected onMailboxDragLeave(i: number): void {
+    if (this.overIndex() === i) { this.overIndex.set(null); }
+  }
+
+  protected onMailboxDragEnd(): void {
+    this.dragIndex.set(null);
+    this.overIndex.set(null);
+  }
+
+  protected onMailboxDrop(i: number, event: DragEvent): void {
+    event.preventDefault();
+    const from = this.dragIndex();
+    this.dragIndex.set(null);
+    this.overIndex.set(null);
+    if (from === null || from === i) { return; }
+    const boxes = this.mailboxes() ?? [];
+    // persisting the ids is enough - the service's ordered computed() re-renders the sidebar
+    this.inboxOrder.saveMailboxOrder(moveItem(boxes, from, i).map((mb) => mb.id));
+  }
 
   protected rowKey(row: NavRow): string {
     return row.kind === 'mailbox' ? `m:${row.mailbox.id}` : `f:${row.mailboxId}:${row.folder.folderId}`;

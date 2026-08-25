@@ -21,6 +21,7 @@ package org.jlawyer.io.rest.v8;
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
 import org.jlawyer.io.rest.v8.pojo.RestfulDashboardConfigV8;
+import org.jlawyer.io.rest.v8.pojo.RestfulInboxOrderV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulPasswordChangeV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulProfileSettingsV8;
 
@@ -36,5 +37,9 @@ public interface ProfileEndpointLocalV8 {
     Response getDashboard();
 
     Response updateDashboard(RestfulDashboardConfigV8 request);
+
+    Response getInboxOrder();
+
+    Response updateInboxOrder(RestfulInboxOrderV8 request);
 
 }

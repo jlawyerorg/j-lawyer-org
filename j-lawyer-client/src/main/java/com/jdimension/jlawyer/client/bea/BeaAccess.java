@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.StoredOrderUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.services.BeaServiceRemote;
@@ -1040,6 +1041,29 @@ public class BeaAccess {
             }
         }
         return this.inboxes;
+    }
+
+    /**
+     * Returns the postboxes in the order the current user has configured, as a copy.
+     *
+     * The cached list returned by {@link #getPostBoxes()} is deliberately left untouched:
+     * {@link #getLoggedInSafeId()} takes its first element as "the postbox we
+     * authenticated with", and reordering it would silently change that meaning
+     * everywhere. Use this method for presentation only.
+     *
+     * @return the ordered postboxes
+     * @throws Exception if the postboxes cannot be determined
+     */
+    public List<BeaPostbox> getPostBoxesOrdered() throws Exception {
+        List<BeaPostbox> postboxes = new ArrayList<>(this.getPostBoxes());
+        try {
+            String[] order = UserSettings.getInstance().getSettingArray(UserSettings.CONF_BEA_POSTBOXORDER, new String[0]);
+            return StoredOrderUtils.applyStoredOrder(postboxes, order, BeaPostbox::getSafeId);
+        } catch (Throwable t) {
+            // a broken order must never keep the user from seeing their postboxes
+            log.error("Error applying postbox order", t);
+            return postboxes;
+        }
     }
     
     public String findOwnSafeId(List<String> safeIds) throws Exception {

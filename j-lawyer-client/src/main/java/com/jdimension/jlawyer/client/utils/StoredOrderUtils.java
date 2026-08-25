@@ -661,496 +661,127 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.settings;
+package com.jdimension.jlawyer.client.utils;
 
-import static com.jdimension.jlawyer.client.settings.UserSettings.USER_AVATAR;
-import com.jdimension.jlawyer.client.utils.StoredOrderUtils;
-import com.jdimension.jlawyer.persistence.AppRoleBean;
-import com.jdimension.jlawyer.persistence.AppUserBean;
-import com.jdimension.jlawyer.persistence.MailboxSetup;
-import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.services.SecurityServiceRemote;
-import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Properties;
-import javax.swing.ImageIcon;
-import org.apache.log4j.Logger;
+import java.util.function.Function;
 
 /**
+ * Applies a user defined order, persisted as a list of ids, to a list of items.
  *
- * @author jens
+ * Used for the mailbox order in the e-mail inbox and the postbox order in the beA
+ * inbox. The stored order is deliberately treated as a hint only: ids that no longer
+ * resolve to an item are dropped, and items that are not covered by the stored order
+ * (e.g. a mailbox that was added after the order was saved) are appended at the end.
  */
-public class UserSettings extends UserSettingsKeys {
+public class StoredOrderUtils {
 
-    private static final String ARRAY_DELIMITER = "#####";
-
-    private static final Logger log = Logger.getLogger(UserSettings.class.getName());
-    private static UserSettings instance = null;
-    
-    private AppUserBean currentUser = null;
-
-    private AppUserBean[] lawyerUsers = null;
-    private AppUserBean[] assistantUsers = null;
-    private AppUserBean[] allUsers = null;
-    private List<AppUserBean> loginEnabledUsers = null;
-    private List<AppUserBean> messagingEnabledUsers = null;
-
-    private SystemManagementRemote mgmt = null;
-
-    private Properties settingCache = null;
-    private ImageIcon smallIcon = null;
-    private ImageIcon bigIcon = null;
-
-    private Hashtable<String, ImageIcon> userIconsSmall = new Hashtable<>();
-    private Hashtable<String, ImageIcon> userIconsBig = new Hashtable<>();
-    private Hashtable<String, List<String>> userRoles = new Hashtable<>();
-
-    private Hashtable<String, List<MailboxSetup>> userMailboxes = new Hashtable<>();
-
-    private ArrayList<String> invalidUsers = new ArrayList<>();
-
-    /**
-     * Creates a new instance of ClientSettings
-     */
-    private UserSettings() {
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            mgmt = locator.lookupSystemManagementRemote();
-        } catch (Exception ex) {
-            log.error("Error connecting to server", ex);
-        }
-    }
-
-    private void loadCache() {
-        if (this.settingCache == null && this.mgmt!=null) {
-            this.settingCache = this.mgmt.getUserSettings(this.currentUser);
-        }
-    }
-
-    public List<MailboxSetup> getMailboxes(String principalId) {
-        if (!this.userMailboxes.containsKey(principalId)) {
-            ClientSettings settings = ClientSettings.getInstance();
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                SecurityServiceRemote svc = locator.lookupSecurityServiceRemote();
-                List<MailboxSetup> mailboxes = svc.getMailboxesForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
-                this.userMailboxes.put(principalId, this.applyMailboxOrder(principalId, mailboxes));
-
-            } catch (Exception ex) {
-                log.error("Error determining mailbox for user " + principalId, ex);
-                this.userMailboxes.put(principalId, new ArrayList<>());
-            }
-        }
-        return this.userMailboxes.get(principalId);
+    private StoredOrderUtils() {
     }
 
     /**
-     * Applies the order the user has configured. The setting is per user, so it is only
-     * applied when the mailboxes of the currently logged in user are requested.
-     */
-    private List<MailboxSetup> applyMailboxOrder(String principalId, List<MailboxSetup> mailboxes) {
-        try {
-            if (this.currentUser == null || !this.currentUser.getPrincipalId().equals(principalId)) {
-                return mailboxes;
-            }
-            String[] order = this.getSettingArray(CONF_MAIL_MAILBOXORDER, new String[0]);
-            return StoredOrderUtils.applyStoredOrder(mailboxes, order, MailboxSetup::getId);
-        } catch (Throwable t) {
-            // a broken order must never keep the user from seeing their mailboxes
-            log.error("Error applying mailbox order for user " + principalId, t);
-            return mailboxes;
-        }
-    }
-
-    /**
-     * Stores the order in which the mailboxes are to be presented to the current user and
-     * drops the cached mailbox list so that the new order takes effect on the next read.
+     * Returns a new list containing all items, ordered by the given ids.
      *
-     * @param mailboxIds ids of the mailboxes, in the order chosen by the user
+     * @param <T> item type
+     * @param items the items to order, in their natural (server side) order
+     * @param storedIds the ids in the order the user has chosen, may be null or empty
+     * @param idFn extracts the id an item is identified by
+     * @return a new, ordered list; never null
      */
-    public void setMailboxOrder(List<String> mailboxIds) {
-        if (mailboxIds == null) {
-            return;
+    public static <T> List<T> applyStoredOrder(List<T> items, String[] storedIds, Function<T, String> idFn) {
+        List<T> result = new ArrayList<>();
+        if (items == null) {
+            return result;
         }
-        this.setSettingArray(CONF_MAIL_MAILBOXORDER, mailboxIds.toArray(new String[0]));
-        if (this.currentUser != null) {
-            this.invalidateMailboxes(this.currentUser.getPrincipalId());
-        }
-    }
-
-    public void invalidateMailboxes(String principalId) {
-        if (this.userMailboxes.containsKey(principalId)) {
-            this.userMailboxes.remove(principalId);
-        }
-    }
-
-    public String getSetting(String key, String defaultValue) {
-        this.loadCache();
-        String value = this.settingCache.getProperty(key);
-        if (value == null) {
-            value = defaultValue;
-        }
-        return value;
-    }
-
-    public String[] getSettingArray(String key, String[] defaultValue) {
-        String value = this.getSetting(key, null);
-        if (value == null) {
-            return defaultValue;
+        if (storedIds == null || storedIds.length == 0) {
+            result.addAll(items);
+            return result;
         }
 
-        String[] ary = value.split(ARRAY_DELIMITER);
-        if(ary==null)
-            return defaultValue;
-
-        return ary;
-    }
-
-    public void migrateFrom(ClientSettings cs, String key) {
-        this.loadCache();
-        if (!(this.settingCache.containsKey(key))) {
-            String csValue = cs.getConfiguration(key, null);
-            cs.removeConfiguration(key);
-            if (csValue == null) {
-                return;
+        // keep the items in a map so that lookup by id stays cheap and the
+        // remaining (unordered) items keep their original relative order
+        LinkedHashMap<String, T> remaining = new LinkedHashMap<>();
+        for (T item : items) {
+            if (item == null) {
+                continue;
             }
-            this.setSetting(key, csValue);
-
-        }
-
-    }
-
-    public void removeSetting(String key) {
-        // reload from server before removing a key
-        this.settingCache = null;
-        if (USER_AVATAR.equalsIgnoreCase(key)) {
-            this.smallIcon = null;
-            this.bigIcon = null;
-            this.userIconsBig.clear();
-            this.userIconsSmall.clear();
-        }
-        this.loadCache();
-
-        if (this.settingCache.containsKey(key)) {
-            this.settingCache.remove(key);
-        }
-
-        this.mgmt.setUserSettings(currentUser, settingCache);
-    }
-
-    public Properties getAllSettings() {
-        return this.settingCache;
-    }
-
-    public void setSetting(String key, String value) {
-
-        if (key == null) {
-            log.error("Key is null when setting user properties");
-            return;
-        }
-        if (value == null) {
-            log.error("Value is null when setting user properties with key " + key, new Exception());
-            return;
-        }
-
-        // reload from server before changing a key
-        this.settingCache = null;
-        if (USER_AVATAR.equalsIgnoreCase(key)) {
-            this.smallIcon = null;
-            this.bigIcon = null;
-            this.userIconsBig.clear();
-            this.userIconsSmall.clear();
-        }
-        this.loadCache();
-        if (!this.settingCache.containsKey(key)) {
-            this.settingCache.setProperty(key, value);
-            this.mgmt.setUserSettings(currentUser, settingCache);
-        } else {
-            if (!(this.settingCache.getProperty(key).equals(value))) {
-                this.settingCache.setProperty(key, value);
-                this.mgmt.setUserSettings(currentUser, settingCache);
-            }
-        }
-    }
-    
-    public void setSettingAsBoolean(String key, boolean value) {
-        setSetting(key, "" + value);
-    }
-    
-    public boolean getSettingAsBoolean(String key, boolean defaultValue) {
-        String s=getSetting(key, "" + defaultValue);
-        return Boolean.parseBoolean(s);
-    }
-    
-    public int getSettingAsInt(String key, int defaultValue) {
-        String s=getSetting(key, "" + defaultValue);
-        return Integer.parseInt(s);
-    }
-
-    public void setSettingArray(String key, String[] value) {
-        StringBuilder sb = new StringBuilder();
-        if (value == null) {
-            value = new String[]{""};
-        }
-        for (String v : value) {
-            sb.append(v).append(ARRAY_DELIMITER);
-        }
-        this.setSetting(key, sb.toString());
-    }
-
-    public static synchronized UserSettings getInstance() {
-        if (instance == null) {
-            instance = new UserSettings();
-        }
-        return instance;
-    }
-
-    /**
-     * @return the loginEnabledUsers
-     */
-    public List<AppUserBean> getLoginEnabledUsers() {
-        return loginEnabledUsers;
-    }
-
-    /**
-     * @param loginEnabledUsers the loginEnabledUsers to set
-     */
-    public void setLoginEnabledUsers(List<AppUserBean> loginEnabledUsers) {
-        this.loginEnabledUsers = loginEnabledUsers;
-    }
-
-    /**
-     * @return the lawyerUsers
-     */
-    public AppUserBean[] getLawyerUsers() {
-        return lawyerUsers;
-    }
-
-    /**
-     * @param lawyerUsers the lawyerUsers to set
-     */
-    public void setLawyerUsers(AppUserBean[] lawyerUsers) {
-        this.lawyerUsers = lawyerUsers;
-    }
-
-    /**
-     * @return the assistantUsers
-     */
-    public AppUserBean[] getAssistantUsers() {
-        return assistantUsers;
-    }
-
-    /**
-     * @param assistantUsers the assistantUsers to set
-     */
-    public void setAssistantUsers(AppUserBean[] assistantUsers) {
-        this.assistantUsers = assistantUsers;
-    }
-
-    /**
-     * @return the currentUser
-     */
-    public AppUserBean getCurrentUser() {
-        return currentUser;
-    }
-
-    /**
-     * @param currentUser the currentUser to set
-     */
-    public void setCurrentUser(AppUserBean currentUser) {
-        this.currentUser = currentUser;
-    }
-
-    /**
-     * @return the allUsers
-     */
-    public AppUserBean[] getAllUsers() {
-        return allUsers;
-    }
-    
-    public AppUserBean getUser(String principalId) {
-        if(allUsers != null) {
-            for (AppUserBean u : allUsers) {
-                if(u.getPrincipalId().equals(principalId))
-                    return u;
-            }
-        }
-        return null;
-    }
-    
-    // updates any cached objects for this user
-    public void applyChangedUser(AppUserBean user) {
-        
-        if(currentUser!=null && currentUser.equals(user))
-            currentUser=user;
-        
-        if(loginEnabledUsers.indexOf(user)>-1)
-            loginEnabledUsers.set(loginEnabledUsers.indexOf(user), user);
-        
-        if(messagingEnabledUsers.indexOf(user)>-1)
-            messagingEnabledUsers.set(messagingEnabledUsers.indexOf(user), user);
-        
-        for(int i=0;i<lawyerUsers.length;i++) {
-            if(lawyerUsers[i].equals(user)) {
-                lawyerUsers[i]=user;
-                break;
-            }
-        }
-        
-        for(int i=0;i<assistantUsers.length;i++) {
-            if(assistantUsers[i].equals(user)) {
-                assistantUsers[i]=user;
-                break;
-            }
-        }
-        
-        for(int i=0;i<allUsers.length;i++) {
-            if(allUsers[i].equals(user)) {
-                allUsers[i]=user;
-                break;
+            String id = idFn.apply(item);
+            if (id != null) {
+                remaining.put(id, item);
             }
         }
 
+        for (String storedId : storedIds) {
+            if (storedId == null || storedId.isEmpty()) {
+                continue;
+            }
+            T item = remaining.remove(storedId);
+            if (item != null) {
+                result.add(item);
+            }
+        }
+
+        // anything the stored order does not know about goes to the end
+        result.addAll(remaining.values());
+        return result;
     }
 
     /**
-     * @param allUsers the allUsers to set
+     * Convenience overload for a stored order that is held as a list.
+     *
+     * @param <T> item type
+     * @param items the items to order, in their natural (server side) order
+     * @param storedIds the ids in the order the user has chosen, may be null or empty
+     * @param idFn extracts the id an item is identified by
+     * @return a new, ordered list; never null
      */
-    public void setAllUsers(AppUserBean[] allUsers) {
-        this.allUsers = allUsers;
-    }
-
-    public void setCurrentUserIcon(String name) {
-        this.setSetting(USER_AVATAR, name);
-    }
-
-    public ImageIcon getCurrentUserSmallIcon() {
-        if (this.smallIcon == null) {
-            String avatar = this.getSetting(USER_AVATAR, "identity.png");
-            this.smallIcon = new ImageIcon(getClass().getResource("/avatar16/" + avatar));
-        }
-        return this.smallIcon;
-    }
-
-    public ImageIcon getCurrentUserBigIcon() {
-        if (this.bigIcon == null) {
-            String avatar = this.getSetting(USER_AVATAR, "identity.png");
-            this.bigIcon = new ImageIcon(getClass().getResource("/avatar32/" + avatar));
-        }
-        return this.bigIcon;
-    }
-
-    public ImageIcon getUserBigIcon(String principalId) {
-        if (principalId == null) {
-            return null;
-        }
-
-        if (!this.userIconsBig.containsKey(principalId)) {
-            this.loadUserIconsToCache(principalId);
-
-        }
-        return this.userIconsBig.get(principalId);
-    }
-
-    public ImageIcon getUserSmallIcon(String principalId) {
-        if (principalId == null) {
-            return null;
-        }
-
-        if (!this.userIconsBig.containsKey(principalId)) {
-            this.loadUserIconsToCache(principalId);
-
-        }
-        return this.userIconsSmall.get(principalId);
-    }
-
-    public boolean isCurrentUserInRole(String role) {
-        boolean inRole = getUserRoles(getCurrentUser().getPrincipalId()).contains(role);
-        return inRole;
-    }
-
-    public List<String> getUserRoles(String principalId) {
-        if (principalId == null) {
-            return new ArrayList();
-        }
-
-        if (!this.userRoles.containsKey(principalId)) {
-            ClientSettings settings = ClientSettings.getInstance();
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                mgmt = locator.lookupSystemManagementRemote();
-                List<AppRoleBean> roles = mgmt.getRoles(principalId);
-                if (roles == null) {
-                    // user might have been removed
-                    return new ArrayList();
-                }
-                ArrayList roleList = new ArrayList();
-                for (AppRoleBean arb : roles) {
-                    roleList.add(arb.getRole());
-                }
-                this.userRoles.put(principalId, roleList);
-            } catch (Throwable t) {
-                log.error("Error loading roles for user " + principalId, t);
-                return new ArrayList();
-            }
-
-        }
-        return this.userRoles.get(principalId);
-    }
-
-    private void loadUserIconsToCache(String principalId) {
-        if (principalId == null) {
-            return;
-        }
-        if (this.invalidUsers.contains(principalId)) {
-            return;
-        }
-
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            mgmt = locator.lookupSystemManagementRemote();
-            AppUserBean aub = null;
-            try {
-                aub = mgmt.getUser(principalId);
-            } catch (Throwable nre) {
-                // not found
-            }
-            if (aub == null) {
-                // user might have been removed
-                this.invalidUsers.add(principalId);
-                return;
-            }
-            Properties p = mgmt.getUserSettings(aub);
-            String avatar = p.getProperty(USER_AVATAR);
-            if (avatar == null || "".equalsIgnoreCase(avatar)) {
-                avatar = "identity.png";
-            }
-            this.userIconsBig.put(principalId, new ImageIcon(getClass().getResource("/avatar32/" + avatar)));
-            this.userIconsSmall.put(principalId, new ImageIcon(getClass().getResource("/avatar16/" + avatar)));
-        } catch (Throwable t) {
-            // just ignore - user could have been deleted
-            // also, having no icon is not a big issue - but the logging of the error can cause some performance issues because it is invoked frequently
-
-        }
+    public static <T> List<T> applyStoredOrder(List<T> items, List<String> storedIds, Function<T, String> idFn) {
+        String[] ary = storedIds == null ? null : storedIds.toArray(new String[0]);
+        return applyStoredOrder(items, ary, idFn);
     }
 
     /**
-     * @return the messagingEnabledUsers
+     * Extracts the ids of the given items, e.g. to persist the order the user has just
+     * confirmed.
+     *
+     * @param <T> item type
+     * @param items the items in the order to be stored
+     * @param idFn extracts the id an item is identified by
+     * @return the ids, in the order of the items; never null
      */
-    public List<AppUserBean> getMessagingEnabledUsers() {
-        return messagingEnabledUsers;
+    public static <T> List<String> toIdList(List<T> items, Function<T, String> idFn) {
+        List<String> ids = new ArrayList<>();
+        if (items == null) {
+            return ids;
+        }
+        for (T item : items) {
+            if (item == null) {
+                continue;
+            }
+            String id = idFn.apply(item);
+            if (id != null) {
+                ids.add(id);
+            }
+        }
+        return ids;
     }
 
     /**
-     * @param messagingEnabledUsers the messagingEnabledUsers to set
+     * Returns true if the two id sequences differ - used to avoid pointless writes to
+     * the (remote) user settings.
+     *
+     * @param storedIds the currently stored order, may be null
+     * @param newIds the order the user has just confirmed
+     * @return true if the order has changed
      */
-    public void setMessagingEnabledUsers(List<AppUserBean> messagingEnabledUsers) {
-        this.messagingEnabledUsers = messagingEnabledUsers;
+    public static boolean orderChanged(String[] storedIds, List<String> newIds) {
+        List<String> current = storedIds == null ? new ArrayList<>() : new ArrayList<>(Arrays.asList(storedIds));
+        current.removeIf(s -> s == null || s.isEmpty());
+        List<String> updated = newIds == null ? new ArrayList<>() : newIds;
+        return !current.equals(updated);
     }
 
 }

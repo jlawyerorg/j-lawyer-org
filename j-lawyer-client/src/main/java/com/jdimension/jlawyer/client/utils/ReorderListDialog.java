@@ -661,496 +661,305 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.settings;
+package com.jdimension.jlawyer.client.utils;
 
-import static com.jdimension.jlawyer.client.settings.UserSettings.USER_AVATAR;
-import com.jdimension.jlawyer.client.utils.StoredOrderUtils;
-import com.jdimension.jlawyer.persistence.AppRoleBean;
-import com.jdimension.jlawyer.persistence.AppUserBean;
-import com.jdimension.jlawyer.persistence.MailboxSetup;
-import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.services.SecurityServiceRemote;
-import com.jdimension.jlawyer.services.SystemManagementRemote;
+import java.text.Collator;
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.List;
-import java.util.Properties;
-import javax.swing.ImageIcon;
-import org.apache.log4j.Logger;
+import java.util.Locale;
+import javax.swing.DefaultListModel;
 
 /**
- *
- * @author jens
+ * Generic dialog letting the user arrange a list of named entries. Used for the mailbox
+ * order in the e-mail inbox and the postbox order in the beA inbox, but deliberately
+ * kept free of any knowledge about those domains - callers pass in id/label pairs and
+ * read the confirmed order back.
  */
-public class UserSettings extends UserSettingsKeys {
+public class ReorderListDialog extends javax.swing.JDialog {
 
-    private static final String ARRAY_DELIMITER = "#####";
-
-    private static final Logger log = Logger.getLogger(UserSettings.class.getName());
-    private static UserSettings instance = null;
-    
-    private AppUserBean currentUser = null;
-
-    private AppUserBean[] lawyerUsers = null;
-    private AppUserBean[] assistantUsers = null;
-    private AppUserBean[] allUsers = null;
-    private List<AppUserBean> loginEnabledUsers = null;
-    private List<AppUserBean> messagingEnabledUsers = null;
-
-    private SystemManagementRemote mgmt = null;
-
-    private Properties settingCache = null;
-    private ImageIcon smallIcon = null;
-    private ImageIcon bigIcon = null;
-
-    private Hashtable<String, ImageIcon> userIconsSmall = new Hashtable<>();
-    private Hashtable<String, ImageIcon> userIconsBig = new Hashtable<>();
-    private Hashtable<String, List<String>> userRoles = new Hashtable<>();
-
-    private Hashtable<String, List<MailboxSetup>> userMailboxes = new Hashtable<>();
-
-    private ArrayList<String> invalidUsers = new ArrayList<>();
+    private boolean confirmed = false;
 
     /**
-     * Creates a new instance of ClientSettings
+     * One entry of the list: an id used for persisting the order and a label shown to
+     * the user.
      */
-    private UserSettings() {
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            mgmt = locator.lookupSystemManagementRemote();
-        } catch (Exception ex) {
-            log.error("Error connecting to server", ex);
+    public static class ReorderEntry {
+
+        private final String id;
+        private final String label;
+
+        public ReorderEntry(String id, String label) {
+            this.id = id;
+            this.label = label == null ? "" : label;
         }
-    }
 
-    private void loadCache() {
-        if (this.settingCache == null && this.mgmt!=null) {
-            this.settingCache = this.mgmt.getUserSettings(this.currentUser);
+        public String getId() {
+            return this.id;
         }
-    }
 
-    public List<MailboxSetup> getMailboxes(String principalId) {
-        if (!this.userMailboxes.containsKey(principalId)) {
-            ClientSettings settings = ClientSettings.getInstance();
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                SecurityServiceRemote svc = locator.lookupSecurityServiceRemote();
-                List<MailboxSetup> mailboxes = svc.getMailboxesForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
-                this.userMailboxes.put(principalId, this.applyMailboxOrder(principalId, mailboxes));
-
-            } catch (Exception ex) {
-                log.error("Error determining mailbox for user " + principalId, ex);
-                this.userMailboxes.put(principalId, new ArrayList<>());
-            }
+        public String getLabel() {
+            return this.label;
         }
-        return this.userMailboxes.get(principalId);
-    }
 
-    /**
-     * Applies the order the user has configured. The setting is per user, so it is only
-     * applied when the mailboxes of the currently logged in user are requested.
-     */
-    private List<MailboxSetup> applyMailboxOrder(String principalId, List<MailboxSetup> mailboxes) {
-        try {
-            if (this.currentUser == null || !this.currentUser.getPrincipalId().equals(principalId)) {
-                return mailboxes;
-            }
-            String[] order = this.getSettingArray(CONF_MAIL_MAILBOXORDER, new String[0]);
-            return StoredOrderUtils.applyStoredOrder(mailboxes, order, MailboxSetup::getId);
-        } catch (Throwable t) {
-            // a broken order must never keep the user from seeing their mailboxes
-            log.error("Error applying mailbox order for user " + principalId, t);
-            return mailboxes;
+        @Override
+        public String toString() {
+            return this.label;
         }
     }
 
     /**
-     * Stores the order in which the mailboxes are to be presented to the current user and
-     * drops the cached mailbox list so that the new order takes effect on the next read.
+     * Creates the dialog and fills the list with the given entries in their current
+     * order.
      *
-     * @param mailboxIds ids of the mailboxes, in the order chosen by the user
+     * @param parent parent frame
+     * @param modal true to block the caller
+     * @param title dialog title
+     * @param entries the entries in their current order
      */
-    public void setMailboxOrder(List<String> mailboxIds) {
-        if (mailboxIds == null) {
-            return;
-        }
-        this.setSettingArray(CONF_MAIL_MAILBOXORDER, mailboxIds.toArray(new String[0]));
-        if (this.currentUser != null) {
-            this.invalidateMailboxes(this.currentUser.getPrincipalId());
-        }
-    }
+    public ReorderListDialog(java.awt.Frame parent, boolean modal, String title, List<ReorderEntry> entries) {
+        super(parent, modal);
+        initComponents();
 
-    public void invalidateMailboxes(String principalId) {
-        if (this.userMailboxes.containsKey(principalId)) {
-            this.userMailboxes.remove(principalId);
-        }
-    }
-
-    public String getSetting(String key, String defaultValue) {
-        this.loadCache();
-        String value = this.settingCache.getProperty(key);
-        if (value == null) {
-            value = defaultValue;
-        }
-        return value;
-    }
-
-    public String[] getSettingArray(String key, String[] defaultValue) {
-        String value = this.getSetting(key, null);
-        if (value == null) {
-            return defaultValue;
+        if (title != null) {
+            this.setTitle(title);
         }
 
-        String[] ary = value.split(ARRAY_DELIMITER);
-        if(ary==null)
-            return defaultValue;
-
-        return ary;
-    }
-
-    public void migrateFrom(ClientSettings cs, String key) {
-        this.loadCache();
-        if (!(this.settingCache.containsKey(key))) {
-            String csValue = cs.getConfiguration(key, null);
-            cs.removeConfiguration(key);
-            if (csValue == null) {
-                return;
-            }
-            this.setSetting(key, csValue);
-
-        }
-
-    }
-
-    public void removeSetting(String key) {
-        // reload from server before removing a key
-        this.settingCache = null;
-        if (USER_AVATAR.equalsIgnoreCase(key)) {
-            this.smallIcon = null;
-            this.bigIcon = null;
-            this.userIconsBig.clear();
-            this.userIconsSmall.clear();
-        }
-        this.loadCache();
-
-        if (this.settingCache.containsKey(key)) {
-            this.settingCache.remove(key);
-        }
-
-        this.mgmt.setUserSettings(currentUser, settingCache);
-    }
-
-    public Properties getAllSettings() {
-        return this.settingCache;
-    }
-
-    public void setSetting(String key, String value) {
-
-        if (key == null) {
-            log.error("Key is null when setting user properties");
-            return;
-        }
-        if (value == null) {
-            log.error("Value is null when setting user properties with key " + key, new Exception());
-            return;
-        }
-
-        // reload from server before changing a key
-        this.settingCache = null;
-        if (USER_AVATAR.equalsIgnoreCase(key)) {
-            this.smallIcon = null;
-            this.bigIcon = null;
-            this.userIconsBig.clear();
-            this.userIconsSmall.clear();
-        }
-        this.loadCache();
-        if (!this.settingCache.containsKey(key)) {
-            this.settingCache.setProperty(key, value);
-            this.mgmt.setUserSettings(currentUser, settingCache);
-        } else {
-            if (!(this.settingCache.getProperty(key).equals(value))) {
-                this.settingCache.setProperty(key, value);
-                this.mgmt.setUserSettings(currentUser, settingCache);
-            }
-        }
-    }
-    
-    public void setSettingAsBoolean(String key, boolean value) {
-        setSetting(key, "" + value);
-    }
-    
-    public boolean getSettingAsBoolean(String key, boolean defaultValue) {
-        String s=getSetting(key, "" + defaultValue);
-        return Boolean.parseBoolean(s);
-    }
-    
-    public int getSettingAsInt(String key, int defaultValue) {
-        String s=getSetting(key, "" + defaultValue);
-        return Integer.parseInt(s);
-    }
-
-    public void setSettingArray(String key, String[] value) {
-        StringBuilder sb = new StringBuilder();
-        if (value == null) {
-            value = new String[]{""};
-        }
-        for (String v : value) {
-            sb.append(v).append(ARRAY_DELIMITER);
-        }
-        this.setSetting(key, sb.toString());
-    }
-
-    public static synchronized UserSettings getInstance() {
-        if (instance == null) {
-            instance = new UserSettings();
-        }
-        return instance;
-    }
-
-    /**
-     * @return the loginEnabledUsers
-     */
-    public List<AppUserBean> getLoginEnabledUsers() {
-        return loginEnabledUsers;
-    }
-
-    /**
-     * @param loginEnabledUsers the loginEnabledUsers to set
-     */
-    public void setLoginEnabledUsers(List<AppUserBean> loginEnabledUsers) {
-        this.loginEnabledUsers = loginEnabledUsers;
-    }
-
-    /**
-     * @return the lawyerUsers
-     */
-    public AppUserBean[] getLawyerUsers() {
-        return lawyerUsers;
-    }
-
-    /**
-     * @param lawyerUsers the lawyerUsers to set
-     */
-    public void setLawyerUsers(AppUserBean[] lawyerUsers) {
-        this.lawyerUsers = lawyerUsers;
-    }
-
-    /**
-     * @return the assistantUsers
-     */
-    public AppUserBean[] getAssistantUsers() {
-        return assistantUsers;
-    }
-
-    /**
-     * @param assistantUsers the assistantUsers to set
-     */
-    public void setAssistantUsers(AppUserBean[] assistantUsers) {
-        this.assistantUsers = assistantUsers;
-    }
-
-    /**
-     * @return the currentUser
-     */
-    public AppUserBean getCurrentUser() {
-        return currentUser;
-    }
-
-    /**
-     * @param currentUser the currentUser to set
-     */
-    public void setCurrentUser(AppUserBean currentUser) {
-        this.currentUser = currentUser;
-    }
-
-    /**
-     * @return the allUsers
-     */
-    public AppUserBean[] getAllUsers() {
-        return allUsers;
-    }
-    
-    public AppUserBean getUser(String principalId) {
-        if(allUsers != null) {
-            for (AppUserBean u : allUsers) {
-                if(u.getPrincipalId().equals(principalId))
-                    return u;
-            }
-        }
-        return null;
-    }
-    
-    // updates any cached objects for this user
-    public void applyChangedUser(AppUserBean user) {
-        
-        if(currentUser!=null && currentUser.equals(user))
-            currentUser=user;
-        
-        if(loginEnabledUsers.indexOf(user)>-1)
-            loginEnabledUsers.set(loginEnabledUsers.indexOf(user), user);
-        
-        if(messagingEnabledUsers.indexOf(user)>-1)
-            messagingEnabledUsers.set(messagingEnabledUsers.indexOf(user), user);
-        
-        for(int i=0;i<lawyerUsers.length;i++) {
-            if(lawyerUsers[i].equals(user)) {
-                lawyerUsers[i]=user;
-                break;
-            }
-        }
-        
-        for(int i=0;i<assistantUsers.length;i++) {
-            if(assistantUsers[i].equals(user)) {
-                assistantUsers[i]=user;
-                break;
-            }
-        }
-        
-        for(int i=0;i<allUsers.length;i++) {
-            if(allUsers[i].equals(user)) {
-                allUsers[i]=user;
-                break;
-            }
-        }
-
-    }
-
-    /**
-     * @param allUsers the allUsers to set
-     */
-    public void setAllUsers(AppUserBean[] allUsers) {
-        this.allUsers = allUsers;
-    }
-
-    public void setCurrentUserIcon(String name) {
-        this.setSetting(USER_AVATAR, name);
-    }
-
-    public ImageIcon getCurrentUserSmallIcon() {
-        if (this.smallIcon == null) {
-            String avatar = this.getSetting(USER_AVATAR, "identity.png");
-            this.smallIcon = new ImageIcon(getClass().getResource("/avatar16/" + avatar));
-        }
-        return this.smallIcon;
-    }
-
-    public ImageIcon getCurrentUserBigIcon() {
-        if (this.bigIcon == null) {
-            String avatar = this.getSetting(USER_AVATAR, "identity.png");
-            this.bigIcon = new ImageIcon(getClass().getResource("/avatar32/" + avatar));
-        }
-        return this.bigIcon;
-    }
-
-    public ImageIcon getUserBigIcon(String principalId) {
-        if (principalId == null) {
-            return null;
-        }
-
-        if (!this.userIconsBig.containsKey(principalId)) {
-            this.loadUserIconsToCache(principalId);
-
-        }
-        return this.userIconsBig.get(principalId);
-    }
-
-    public ImageIcon getUserSmallIcon(String principalId) {
-        if (principalId == null) {
-            return null;
-        }
-
-        if (!this.userIconsBig.containsKey(principalId)) {
-            this.loadUserIconsToCache(principalId);
-
-        }
-        return this.userIconsSmall.get(principalId);
-    }
-
-    public boolean isCurrentUserInRole(String role) {
-        boolean inRole = getUserRoles(getCurrentUser().getPrincipalId()).contains(role);
-        return inRole;
-    }
-
-    public List<String> getUserRoles(String principalId) {
-        if (principalId == null) {
-            return new ArrayList();
-        }
-
-        if (!this.userRoles.containsKey(principalId)) {
-            ClientSettings settings = ClientSettings.getInstance();
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                mgmt = locator.lookupSystemManagementRemote();
-                List<AppRoleBean> roles = mgmt.getRoles(principalId);
-                if (roles == null) {
-                    // user might have been removed
-                    return new ArrayList();
+        DefaultListModel<ReorderEntry> model = new DefaultListModel<>();
+        if (entries != null) {
+            for (ReorderEntry e : entries) {
+                if (e != null) {
+                    model.addElement(e);
                 }
-                ArrayList roleList = new ArrayList();
-                for (AppRoleBean arb : roles) {
-                    roleList.add(arb.getRole());
-                }
-                this.userRoles.put(principalId, roleList);
-            } catch (Throwable t) {
-                log.error("Error loading roles for user " + principalId, t);
-                return new ArrayList();
             }
-
         }
-        return this.userRoles.get(principalId);
-    }
-
-    private void loadUserIconsToCache(String principalId) {
-        if (principalId == null) {
-            return;
+        this.lstEntries.setModel(model);
+        if (!model.isEmpty()) {
+            this.lstEntries.setSelectedIndex(0);
         }
-        if (this.invalidUsers.contains(principalId)) {
-            return;
-        }
+        this.updateButtonStates();
+        this.lstEntries.addListSelectionListener(evt -> updateButtonStates());
 
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            mgmt = locator.lookupSystemManagementRemote();
-            AppUserBean aub = null;
-            try {
-                aub = mgmt.getUser(principalId);
-            } catch (Throwable nre) {
-                // not found
-            }
-            if (aub == null) {
-                // user might have been removed
-                this.invalidUsers.add(principalId);
-                return;
-            }
-            Properties p = mgmt.getUserSettings(aub);
-            String avatar = p.getProperty(USER_AVATAR);
-            if (avatar == null || "".equalsIgnoreCase(avatar)) {
-                avatar = "identity.png";
-            }
-            this.userIconsBig.put(principalId, new ImageIcon(getClass().getResource("/avatar32/" + avatar)));
-            this.userIconsSmall.put(principalId, new ImageIcon(getClass().getResource("/avatar16/" + avatar)));
-        } catch (Throwable t) {
-            // just ignore - user could have been deleted
-            // also, having no icon is not a big issue - but the logging of the error can cause some performance issues because it is invoked frequently
-
-        }
+        ComponentUtils.restoreDialogSize(this);
     }
 
     /**
-     * @return the messagingEnabledUsers
+     * @return true if the user confirmed the dialog with OK
      */
-    public List<AppUserBean> getMessagingEnabledUsers() {
-        return messagingEnabledUsers;
+    public boolean isConfirmed() {
+        return this.confirmed;
     }
 
     /**
-     * @param messagingEnabledUsers the messagingEnabledUsers to set
+     * @return the entries in the order the user has arranged them
      */
-    public void setMessagingEnabledUsers(List<AppUserBean> messagingEnabledUsers) {
-        this.messagingEnabledUsers = messagingEnabledUsers;
+    public List<ReorderEntry> getOrderedEntries() {
+        List<ReorderEntry> result = new ArrayList<>();
+        DefaultListModel<ReorderEntry> model = (DefaultListModel<ReorderEntry>) this.lstEntries.getModel();
+        for (int i = 0; i < model.getSize(); i++) {
+            result.add(model.get(i));
+        }
+        return result;
     }
 
+    /**
+     * @return the ids in the order the user has arranged them
+     */
+    public List<String> getOrderedIds() {
+        List<String> ids = new ArrayList<>();
+        for (ReorderEntry e : this.getOrderedEntries()) {
+            ids.add(e.getId());
+        }
+        return ids;
+    }
+
+    private void updateButtonStates() {
+        int index = this.lstEntries.getSelectedIndex();
+        int size = this.lstEntries.getModel().getSize();
+        this.cmdUp.setEnabled(index > 0);
+        this.cmdDown.setEnabled(index > -1 && index < size - 1);
+        this.cmdSortAlphabetically.setEnabled(size > 1);
+    }
+
+    private void move(int offset) {
+        int index = this.lstEntries.getSelectedIndex();
+        int target = index + offset;
+        DefaultListModel<ReorderEntry> model = (DefaultListModel<ReorderEntry>) this.lstEntries.getModel();
+        if (index < 0 || target < 0 || target >= model.getSize()) {
+            return;
+        }
+        ReorderEntry entry = model.remove(index);
+        model.add(target, entry);
+        // keep the moved entry selected so repeated clicks keep moving it
+        this.lstEntries.setSelectedIndex(target);
+        this.lstEntries.ensureIndexIsVisible(target);
+        this.updateButtonStates();
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form. WARNING:
+     * Do NOT modify this code. The content of this method is always regenerated by the
+     * Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        lblHint = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        lstEntries = new javax.swing.JList<>();
+        cmdUp = new javax.swing.JButton();
+        cmdDown = new javax.swing.JButton();
+        cmdSortAlphabetically = new javax.swing.JButton();
+        cmdOk = new javax.swing.JButton();
+        cmdCancel = new javax.swing.JButton();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Reihenfolge festlegen");
+
+        lblHint.setText("Reihenfolge mit den Schaltflächen ändern:");
+
+        lstEntries.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        jScrollPane1.setViewportView(lstEntries);
+
+        cmdUp.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_keyboard_arrow_up_blue_36dp.png"))); // NOI18N
+        cmdUp.setText("nach oben");
+        cmdUp.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdUpActionPerformed(evt);
+            }
+        });
+
+        cmdDown.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_keyboard_arrow_down_blue_36dp.png"))); // NOI18N
+        cmdDown.setText("nach unten");
+        cmdDown.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDownActionPerformed(evt);
+            }
+        });
+
+        cmdSortAlphabetically.setText("alphabetisch");
+        cmdSortAlphabetically.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSortAlphabeticallyActionPerformed(evt);
+            }
+        });
+
+        cmdOk.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdOk.setText("OK");
+        cmdOk.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdOkActionPerformed(evt);
+            }
+        });
+
+        cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdCancel.setText("Abbrechen");
+        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCancelActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblHint, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 380, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cmdUp, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(cmdDown, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(cmdSortAlphabetically, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdOk)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdCancel)))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(lblHint)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(cmdUp)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdDown)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(cmdSortAlphabetically)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdOk)
+                    .addComponent(cmdCancel))
+                .addContainerGap())
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void cmdUpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUpActionPerformed
+        this.move(-1);
+    }//GEN-LAST:event_cmdUpActionPerformed
+
+    private void cmdDownActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDownActionPerformed
+        this.move(1);
+    }//GEN-LAST:event_cmdDownActionPerformed
+
+    private void cmdSortAlphabeticallyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSortAlphabeticallyActionPerformed
+        List<ReorderEntry> entries = this.getOrderedEntries();
+        // ignore case, but respect diacritics ("Ü" next to "U", not after "Z")
+        Collator collator = Collator.getInstance(Locale.GERMAN);
+        collator.setStrength(Collator.SECONDARY);
+        entries.sort((a, b) -> collator.compare(a.getLabel(), b.getLabel()));
+
+        ReorderEntry selected = this.lstEntries.getSelectedValue();
+        DefaultListModel<ReorderEntry> model = new DefaultListModel<>();
+        for (ReorderEntry e : entries) {
+            model.addElement(e);
+        }
+        this.lstEntries.setModel(model);
+        if (selected != null) {
+            this.lstEntries.setSelectedValue(selected, true);
+        } else if (!model.isEmpty()) {
+            this.lstEntries.setSelectedIndex(0);
+        }
+        this.updateButtonStates();
+    }//GEN-LAST:event_cmdSortAlphabeticallyActionPerformed
+
+    private void cmdOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOkActionPerformed
+        this.confirmed = true;
+        this.close();
+    }//GEN-LAST:event_cmdOkActionPerformed
+
+    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
+        this.confirmed = false;
+        this.close();
+    }//GEN-LAST:event_cmdCancelActionPerformed
+
+    private void close() {
+        ComponentUtils.storeDialogSize(this);
+        this.setVisible(false);
+        this.dispose();
+    }
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdCancel;
+    private javax.swing.JButton cmdDown;
+    private javax.swing.JButton cmdOk;
+    private javax.swing.JButton cmdSortAlphabetically;
+    private javax.swing.JButton cmdUp;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblHint;
+    private javax.swing.JList<com.jdimension.jlawyer.client.utils.ReorderListDialog.ReorderEntry> lstEntries;
+    // End of variables declaration//GEN-END:variables
 }
