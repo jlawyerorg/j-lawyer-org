@@ -31,8 +31,12 @@ Two constraints shape the design:
 - New Maven module `j-lawyer-server/j-lawyer-mcp`, packaged into the existing EAR with
   context root `/j-lawyer-mcp`, alongside `j-lawyer-io`. Own `web.xml`, own security
   constraints, independently disableable.
-- MCP endpoint at `POST /j-lawyer-mcp/mcp`; OAuth and discovery endpoints under
-  `/j-lawyer-mcp/oauth/*` and `/j-lawyer-mcp/.well-known/*`.
+- MCP endpoint at `POST /j-lawyer-mcp/mcp`; OAuth endpoints under `/j-lawyer-mcp/oauth/*`.
+  The discovery documents are served module-locally, but RFC 9728 places the protected
+  resource metadata at a **host-root** path
+  (`/.well-known/oauth-protected-resource/j-lawyer-mcp/mcp`) that a module under
+  `/j-lawyer-mcp` cannot serve itself -- the reverse proxy maps it (see `design.md`,
+  Decision 1a).
 - **Disabled by default.** An administrator must enable the MCP server explicitly and
   configure the public base URL and allowed origins before it serves any request.
 
@@ -102,7 +106,9 @@ Two constraints shape the design:
 
 ### Hardening for public exposure
 
-- Mandatory `Origin` validation (403 on mismatch), HTTPS-only, tokens never in URLs or logs.
+- Mandatory `Origin` validation (403 on mismatch); HTTPS enforced on the **effective external**
+  scheme reported by the reverse proxy, never on the container's own plaintext connector;
+  tokens never in URLs or logs.
 - Audience binding: tokens not issued for this MCP server's canonical URI are rejected and
   never forwarded upstream (confused-deputy / token-passthrough prevention).
 - Per-principal and per-client rate limiting on tool calls; brute-force protection and
@@ -134,8 +140,11 @@ Two constraints shape the design:
 - **Affected code (modified)**:
   - `j-lawyer-server/pom.xml`, `j-lawyer-server/j-lawyer-server-ear/pom.xml` -- new module
     and `webModule` entry
-  - `docker/wildfly/standalone.xml` and `j-lawyer-server/j-lawyer-io/AUTH-SETUP.md` --
-    add `j-lawyer-mcp` to the Elytron `token-realm` audience list
+  - `docker/wildfly/standalone.xml` -- add `j-lawyer-mcp` to the Elytron `token-realm`
+    audience list, and set `proxy-address-forwarding="true"` on the `http-listener` so the
+    forwarded scheme is honoured behind the reverse proxy
+  - `j-lawyer-server/j-lawyer-io/AUTH-SETUP.md` -- document both, plus the reference reverse
+    proxy configuration
   - `SecurityServiceRemote` / `SystemManagementRemote` -- new remote methods for PAT and
     MCP administration (JavaDoc in English, per project convention)
 - **Not affected**: `ToolRegistry.java` and the client-side Ingo tool-calling loop stay

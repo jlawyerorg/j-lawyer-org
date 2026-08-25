@@ -29,8 +29,18 @@ The system SHALL NOT log token values and SHALL NOT include them in error respon
 
 ### Requirement: Protected Resource Metadata
 
-The system SHALL publish an OAuth 2.0 Protected Resource Metadata document (RFC 9728) at a
-well-known location under the configured public base URL, without requiring authentication.
+The system SHALL publish an OAuth 2.0 Protected Resource Metadata document (RFC 9728) without
+requiring authentication.
+
+RFC 9728 constructs the document's location by inserting the well-known path suffix **between
+the host and the resource path**, so for a resource at `https://host/j-lawyer-mcp/mcp` the
+canonical location is `https://host/.well-known/oauth-protected-resource/j-lawyer-mcp/mcp` --
+a host-root path that a web module deployed under `/j-lawyer-mcp` cannot itself serve. The
+system SHALL therefore serve the document from a module-local path, SHALL name that path in
+the `resource_metadata` parameter of every `WWW-Authenticate` challenge, and SHALL document
+the reverse proxy mapping that also exposes it at the RFC 9728 canonical location for clients
+that probe there directly. The activation self-test SHALL verify that the document is
+retrievable at the canonical location.
 
 The document SHALL declare the canonical `resource` URI of the MCP server, the
 `authorization_servers` the client is to use, `bearer_methods_supported` of `header`, and
@@ -40,6 +50,13 @@ The document SHALL declare the canonical `resource` URI of the MCP server, the
 - **WHEN** a client fetches the `resource_metadata` URI named in a `401` challenge
 - **THEN** the document SHALL be returned without authentication
 - **AND** SHALL name the canonical resource URI and the authorization server
+
+#### Scenario: Document is also reachable at the RFC 9728 canonical location
+- **WHEN** a client probes
+  `https://host/.well-known/oauth-protected-resource/j-lawyer-mcp/mcp` directly instead of
+  following the `WWW-Authenticate` pointer
+- **THEN** the configured reverse proxy mapping SHALL deliver the same document
+- **AND** the activation self-test SHALL fail if it does not
 
 #### Scenario: Minimal scope is advertised
 - **WHEN** the protected resource metadata is fetched
@@ -353,18 +370,54 @@ all users.
 - **WHEN** an administrator opens the MCP administration view
 - **THEN** they SHALL see the grants of all users and SHALL be able to revoke any of them
 
-### Requirement: Transport Security of Authorization Endpoints
+### Requirement: Transport Security Behind a TLS-Terminating Reverse Proxy
 
-The system SHALL serve the MCP, OAuth and discovery endpoints over HTTPS. Where the
-installation is reachable over plaintext HTTP, the system SHALL refuse to complete
-authorization flows and SHALL NOT issue tokens.
+The system SHALL be implemented for a deployment topology in which a reverse proxy terminates
+TLS in front of the application server, and the application server itself serves plaintext
+HTTP on a non-public interface.
+
+The system SHALL determine the effective external scheme of a request from the forwarded
+request metadata supplied by the reverse proxy, and SHALL NOT derive it from the local
+connector, which will always report plaintext. The system SHALL refuse to complete
+authorization flows and SHALL NOT issue tokens when the effective external scheme is not
+`https`.
+
+Because forwarded headers are supplied by whoever connects, the system SHALL treat them as
+trustworthy only when the application server is configured to honour them **and** its
+plaintext listener is not reachable other than through the reverse proxy. The administration
+interface SHALL state this requirement, and the activation self-test SHALL fail when the
+application server is not honouring forwarded scheme information.
+
+All externally visible URLs the system emits -- the `resource` identifier, the metadata
+document locations, the authorization and token endpoint URLs, and the `issuer` -- SHALL be
+derived from the administrator-configured public base URL. The system SHALL NOT construct
+them from the `Host` header or the scheme as observed by the container.
 
 Redirect URIs SHALL be required to use HTTPS, except for loopback redirect URIs used by
 locally installed clients.
 
-#### Scenario: Plaintext request does not yield a token
-- **WHEN** an authorization or token request arrives over plaintext HTTP
+#### Scenario: Request forwarded as HTTPS completes normally
+- **WHEN** the reverse proxy terminates TLS and forwards an authorization request declaring
+  an external scheme of `https`
+- **THEN** the system SHALL complete the flow and issue a token
+- **AND** SHALL NOT refuse it merely because the application server received plaintext HTTP
+
+#### Scenario: Request forwarded as plaintext yields no token
+- **WHEN** a request arrives whose effective external scheme is `http`
 - **THEN** the system SHALL refuse it and SHALL NOT issue a token
+
+#### Scenario: Emitted URLs use the public base URL
+- **WHEN** any discovery document or endpoint URL is produced
+- **THEN** every externally visible URL in it SHALL be built from the configured public base
+  URL
+- **AND** SHALL NOT contain the application server's internal host, port or scheme
+
+#### Scenario: Self-test detects a proxy that does not forward the scheme
+- **WHEN** an administrator activates MCP while the application server is not configured to
+  honour forwarded scheme information
+- **THEN** the self-test SHALL fail
+- **AND** the interface SHALL name the required application server and reverse proxy
+  configuration
 
 #### Scenario: Non-HTTPS redirect URI is rejected at registration
 - **WHEN** a client registers a redirect URI with a non-HTTPS, non-loopback scheme

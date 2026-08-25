@@ -28,6 +28,36 @@ administrative action, and SHALL NOT execute any tool.
 - **THEN** HTTP Basic authenticated requests to `/j-lawyer-io/rest/v1` through `/rest/v8` and
   EJB remote invocations from the desktop client SHALL behave exactly as before
 
+### Requirement: Reverse Proxy Deployment
+
+The system SHALL be deployable behind a TLS-terminating reverse proxy as the normal
+topology, with the application server serving plaintext HTTP on a non-public interface.
+
+The system SHALL emit `X-Accel-Buffering: no` on every Server-Sent Events response so that a
+proxy does not buffer the stream, and SHALL document the reverse proxy settings its response
+shapes require: disabled response buffering, HTTP/1.1 upstream with the hop-by-hop
+`Connection` header cleared, a read timeout long enough for a long-lived SSE stream, and
+pass-through of the `Origin` and forwarded-scheme headers.
+
+The system SHALL ship a reference reverse proxy configuration covering the MCP endpoint, the
+OAuth endpoints and the RFC 9728 canonical metadata location.
+
+#### Scenario: SSE stream is not buffered by the proxy
+- **WHEN** a tool call is answered with a `text/event-stream` response through the reverse
+  proxy
+- **THEN** the response SHALL carry `X-Accel-Buffering: no`
+- **AND** events SHALL reach the client as they are produced rather than on stream close
+
+#### Scenario: Long-lived stream survives the proxy read timeout
+- **WHEN** a legacy-era `GET` SSE stream or a `subscriptions/listen` stream stays open longer
+  than a reverse proxy's default read timeout
+- **THEN** the reference configuration SHALL raise that timeout
+- **AND** the documentation SHALL state that the default value terminates such streams
+
+#### Scenario: Origin header survives the proxy
+- **WHEN** a request passes through the reverse proxy carrying an `Origin` header
+- **THEN** the header SHALL reach the MCP endpoint unmodified so origin validation can apply
+
 ### Requirement: Dual-Era Protocol Support
 
 The system SHALL support both MCP protocol eras on the same endpoint: the modern
@@ -437,6 +467,12 @@ On activation the system SHALL run a self-test that issues a token and verifies 
 authenticates against the MCP endpoint, and SHALL report a specific remediation message when
 the server-level Elytron configuration does not yet accept the MCP token audience.
 
+The self-test SHALL additionally verify, through the configured public base URL, that the
+effective external scheme is `https`, that the application server is honouring the forwarded
+scheme, and that the protected resource metadata document is retrievable at its RFC 9728
+canonical location. Each failure SHALL name the specific application server or reverse proxy
+setting that is missing.
+
 The administration interface SHALL state, at the point of activation, that enabling MCP
 exposes case data to an external AI host.
 
@@ -445,6 +481,19 @@ exposes case data to an external AI host.
   the MCP token audience
 - **THEN** the self-test SHALL fail
 - **AND** the interface SHALL name the required `standalone.xml` change
+
+#### Scenario: Self-test detects a proxy that does not forward the scheme
+- **WHEN** an administrator enables MCP while the application server is not configured to
+  honour the forwarded scheme, so every request appears to be plaintext
+- **THEN** the self-test SHALL fail
+- **AND** the interface SHALL name the required listener setting rather than reporting a
+  generic transport error
+
+#### Scenario: Self-test detects a missing canonical metadata mapping
+- **WHEN** the reverse proxy does not expose the protected resource metadata at its RFC 9728
+  canonical location
+- **THEN** the self-test SHALL report it
+- **AND** SHALL show the reverse proxy mapping that resolves it
 
 #### Scenario: Administrator revokes an active grant
 - **WHEN** an administrator revokes a grant listed in the administration interface

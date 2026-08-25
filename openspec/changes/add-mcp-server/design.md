@@ -80,6 +80,53 @@ The MCP endpoint ships as its own web module with context root `/j-lawyer-mcp`, 
 version axes, shares one security constraint, and would place `/.well-known/oauth-*` inside
 the REST war where the SPA also lives.
 
+### Decision 1a -- The reverse proxy is part of the design, not an afterthought
+
+j-lawyer installations run WildFly behind nginx, and **WildFly never terminates TLS** -- that
+is always the proxy's job. The MCP server is specified for that topology rather than for a
+directly exposed container, because three of its requirements break silently otherwise.
+
+**Effective scheme, not connector scheme.** OAuth 2.1 requires HTTPS for authorization flows.
+Behind a terminating proxy the container sees plaintext HTTP on every request, so a check
+written against the connector (`SecurityContext.isSecure()`) reports `false` always and would
+refuse every token -- the MCP server would simply not work. The check must therefore run
+against the *forwarded* scheme, which means `proxy-address-forwarding="true"` on the
+`http-listener`. The committed `docker/wildfly/standalone.xml:586` does not set it today.
+
+That trust has a precondition: forwarded headers are supplied by whoever connects, so a
+directly reachable plaintext listener lets a client assert `X-Forwarded-Proto: https` itself.
+The listener must not be reachable other than through the proxy. This is a network-level
+guarantee, not something the application can verify, so it is stated in the administration
+interface and probed by the activation self-test rather than assumed.
+
+*Note for a separate change:* `AuthenticationEndpointV8.java:196` decides the `Secure` flag of
+the web client's refresh cookie from the same `isSecure()`. Behind nginx without
+`proxy-address-forwarding`, that cookie is issued **without** `Secure` today. Same root cause,
+pre-existing, and not fixed here.
+
+**The metadata document does not live where the module does.** RFC 9728 inserts the well-known
+suffix *between host and path*: the metadata for `https://host/j-lawyer-mcp/mcp` belongs at
+`https://host/.well-known/oauth-protected-resource/j-lawyer-mcp/mcp`. A WAR at context root
+`/j-lawyer-mcp` cannot serve a host-root path. Two mechanisms together resolve this: the
+`resource_metadata` parameter of the `WWW-Authenticate` challenge may point anywhere and is
+authoritative for conforming MCP clients, and an nginx `location` maps the canonical path to
+the module-local one for clients that probe directly. Relying on the header alone would be
+brittle.
+
+**SSE needs proxy settings that are not the defaults.** Tool results may be `text/event-stream`,
+and the legacy era additionally has a long-lived GET stream. nginx buffers responses and times
+reads out after 60s by default; both break MCP. The server emits `X-Accel-Buffering: no`, and
+the reference configuration adds `proxy_buffering off`, `proxy_http_version 1.1`,
+`proxy_set_header Connection ""` and a raised `proxy_read_timeout`.
+
+All externally visible URLs -- `resource`, `issuer`, endpoint URLs in the discovery documents
+-- are built from the administrator-configured public base URL, never from the `Host` header
+or the container's view of the scheme. This is why that setting is mandatory at activation.
+
+*Rejected:* terminating TLS in WildFly for the MCP context only. It contradicts how these
+installations are operated, would need a second certificate lifecycle next to the one nginx
+already manages, and buys nothing the forwarded-scheme check does not.
+
 ### Decision 2 -- Hand-rolled protocol layer on `json-simple`, not the MCP Java SDK
 
 The official `io.modelcontextprotocol.sdk` core builds its HTTP transport on
@@ -347,10 +394,13 @@ Secrets are stored hashed; tokens themselves are never persisted, only their `jt
   implementing exactly the subset MCP requires, reusing the audited `JwtService`, and keeping
   the AS scoped to the MCP resource only. External review of the authorization endpoints
   before the first release is strongly advised.
-- **Standalone.xml drift.** The Elytron audience change must be applied to every existing
-  installation, not just `docker/wildfly/standalone.xml`. Mitigation: the MCP admin panel
-  performs a self-test at activation (mint a token, verify it authenticates against the
-  endpoint) and reports a precise remediation message if the audience is missing.
+- **Server and proxy configuration drift.** Three settings live outside the deployment and
+  must be applied per installation: the Elytron audience, `proxy-address-forwarding`, and the
+  nginx location blocks. Each fails in a different and initially confusing way -- `401` on
+  every request, refusal to issue any token, and clients that cannot discover the
+  authorization server. Mitigation: the activation self-test probes all three through the
+  public base URL and names the specific missing setting rather than reporting a generic
+  transport error.
 - **Long-lived PATs.** See Decision 6. Capped expiry, revocation, `last_used_at`, and an
   admin-level kill switch.
 
@@ -358,13 +408,19 @@ Secrets are stored hashed; tokens themselves are never persisted, only their `jt
 
 1. Ship the module disabled. No behaviour change on upgrade; the WAR deploys and answers
    `503` with a clear message until an administrator enables it.
-2. Administrator generates or reuses `j-lawyer-jwt.p12` (already required by `add-web-client`),
-   adds `j-lawyer-mcp` to the Elytron `token-realm` audience list, and restarts.
-3. Administrator enables MCP in the admin panel, sets the public base URL and origin
-   allowlist, and runs the built-in self-test.
-4. Users with `aiAgentRole` connect a host: Claude Cowork / claude.ai via the OAuth flow,
+2. Administrator generates or reuses `j-lawyer-jwt.p12` (already required by
+   `add-web-client`), adds `j-lawyer-mcp` to the Elytron `token-realm` audience list, sets
+   `proxy-address-forwarding="true"` on the `http-listener`, and restarts.
+3. Administrator applies the reference nginx configuration: the `/j-lawyer-mcp/` location with
+   SSE-compatible buffering and timeouts, and the `location =` mapping for the RFC 9728
+   canonical metadata path. Where a catch-all `/.well-known/` block exists for ACME, the more
+   specific MCP block must precede it.
+4. Administrator enables MCP in the admin panel, sets the public base URL and origin
+   allowlist, and runs the built-in self-test, which verifies audience, forwarded scheme and
+   canonical metadata reachability.
+5. Users with `aiAgentRole` connect a host: Claude Cowork / claude.ai via the OAuth flow,
    Claude Code / n8n via a PAT.
-5. Rollback: disable in the admin panel (immediate; all grants stop working), or remove the
+6. Rollback: disable in the admin panel (immediate; all grants stop working), or remove the
    `webModule` entry from the EAR and redeploy. No data migration is reversed -- the new
    tables are additive and unused when the feature is off.
 

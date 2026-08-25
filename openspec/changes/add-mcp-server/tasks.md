@@ -34,20 +34,29 @@
 
 - [ ] 3.1 Add the `j-lawyer-mcp` audience to the Elytron `token-realm` in
       `docker/wildfly/standalone.xml`
-- [ ] 3.2 Extend `j-lawyer-server/j-lawyer-io/AUTH-SETUP.md` (or add an MCP-specific
-      `MCP-SETUP.md`) documenting the audience addition and the keystore requirement
-- [ ] 3.3 Implement `McpJwtIssuer` on top of `JwtService` / `JwtKeyProvider`, issuing RS256
+- [ ] 3.2 Set `proxy-address-forwarding="true"` on the `http-listener` in
+      `docker/wildfly/standalone.xml:586` so the forwarded scheme is honoured behind nginx
+- [ ] 3.3 Implement effective-external-scheme resolution from the forwarded request metadata,
+      used by every HTTPS check; never read the scheme from the local connector
+- [ ] 3.4 Build every externally visible URL (`resource`, `issuer`, endpoint URLs in the
+      discovery documents) from the configured public base URL, never from the `Host` header
+- [ ] 3.5 Extend `j-lawyer-server/j-lawyer-io/AUTH-SETUP.md` (or add an MCP-specific
+      `MCP-SETUP.md`) documenting the audience addition, the keystore, the listener setting
+      and the requirement that the plaintext listener be reachable only via the proxy
+- [ ] 3.6 Implement `McpJwtIssuer` on top of `JwtService` / `JwtKeyProvider`, issuing RS256
       tokens with `aud=j-lawyer-mcp`, subject, `roles`, `scope`, `jti` and bounded `exp`
-- [ ] 3.4 Implement the request filter that runs after container authentication and, before
+- [ ] 3.7 Implement the request filter that runs after container authentication and, before
       any tool executes, validates audience, checks `jti` against `McpAccessGrant`, verifies
       `aiAgentRole`, and updates `last_used_at`
-- [ ] 3.5 Verify end-to-end that `getCallerPrincipal()` inside an invoked EJB returns the
+- [ ] 3.8 Verify end-to-end that `getCallerPrincipal()` inside an invoked EJB returns the
       MCP user
 
 ## 4. Authorization server
 
 - [ ] 4.1 Implement the protected resource metadata endpoint (RFC 9728) with `resource`,
-      `authorization_servers`, `scopes_supported`, `bearer_methods_supported`
+      `authorization_servers`, `scopes_supported`, `bearer_methods_supported`, served from a
+      module-local path and named in every `WWW-Authenticate` `resource_metadata` parameter
+      (the RFC 9728 canonical host-root location is mapped by the reverse proxy, task 9.5)
 - [ ] 4.2 Implement the authorization server metadata endpoint (RFC 8414) with `issuer`,
       endpoints, `code_challenge_methods_supported: ["S256"]`, grant/response types, scopes
       and `authorization_response_iss_parameter_supported: true`
@@ -72,8 +81,8 @@
 - [ ] 4.12 Implement Client ID Metadata Document resolution: HTTPS fetch, `client_id`/URL
       match validation, `redirect_uris` validation, caching, and the SSRF guard from task 12.3
 - [ ] 4.13 Implement administrator pre-registration of clients
-- [ ] 4.14 Enforce HTTPS on all authorization flows; reject non-HTTPS, non-loopback redirect
-      URIs at registration time
+- [ ] 4.14 Enforce HTTPS on all authorization flows against the *effective external* scheme
+      (task 3.3); reject non-HTTPS, non-loopback redirect URIs at registration time
 - [ ] 4.15 Implement rate limiting, failed-login throttling and non-disclosing error responses
       on the authorization, token, registration and revocation endpoints
 
@@ -132,6 +141,13 @@
       `Retry-After`
 - [ ] 9.3 Implement request and response size limits
 - [ ] 9.4 Ensure no token, secret or stack trace can reach a response body or a log line
+- [ ] 9.5 Write the reference nginx configuration: `/j-lawyer-mcp/` with `proxy_buffering off`,
+      `proxy_http_version 1.1`, `proxy_set_header Connection ""`, a raised
+      `proxy_read_timeout` for SSE, and `Host` / `X-Forwarded-Proto` / `X-Forwarded-For` /
+      `Origin` pass-through; plus the `location =` mapping of
+      `/.well-known/oauth-protected-resource/j-lawyer-mcp/mcp` to the module-local path
+- [ ] 9.6 Document that the MCP `location` blocks must precede any catch-all `/.well-known/`
+      block used for ACME/Let's Encrypt
 
 ## 10. Tool layer — read tools (36)
 
@@ -203,8 +219,11 @@
       file alongside the `.java`)
 - [ ] 14.2 Admin panel: display the activation warning that enabling MCP exposes case data to
       an external AI host
-- [ ] 14.3 Admin panel: activation self-test that mints a token, calls the MCP endpoint and
-      reports the exact `standalone.xml` remediation when the audience is missing
+- [ ] 14.3 Admin panel: activation self-test that mints a token, calls the MCP endpoint
+      through the configured public base URL, and reports the exact remediation for each of
+      the three external settings — missing Elytron audience, missing
+      `proxy-address-forwarding` (effective scheme not `https`), and missing RFC 9728
+      canonical metadata mapping
 - [ ] 14.4 Admin panel: registered clients list with delete
 - [ ] 14.5 Admin panel: all grants across all users, with revoke
 - [ ] 14.6 User panel: create/label/revoke personal access tokens, value shown once
@@ -234,6 +253,11 @@
 - [ ] 15.10 SSRF tests on Client ID Metadata Document resolution: loopback, RFC 1918,
       link-local, metadata address, non-HTTPS scheme and redirect-into-internal all refused
 - [ ] 15.11 Error hygiene test: no stack trace, SQL or internal path in any response body
+- [ ] 15.12 Forwarded-scheme tests: a request forwarded as `https` completes although the
+      connector saw plaintext; a request whose effective external scheme is `http` yields no
+      token
+- [ ] 15.13 Public-base-URL test: no discovery document or emitted endpoint URL contains the
+      container's internal host, port or scheme
 
 ## 16. Interoperability verification
 
@@ -241,14 +265,17 @@
 - [ ] 16.2 Claude Cowork / claude.ai custom connector: complete OAuth, list and call tools
 - [ ] 16.3 Claude Code: connect with a personal access token, list and call tools
 - [ ] 16.4 One non-Anthropic host (n8n or Open WebUI): connect and call tools
-- [ ] 16.5 Record the verified protocol revision and auth mechanism per host in the setup
+- [ ] 16.5 Run every interoperability check through nginx, not against the container
+      directly, so proxy-dependent behaviour is exercised
+- [ ] 16.6 Record the verified protocol revision and auth mechanism per host in the setup
       documentation
 
 ## 17. Documentation
 
 - [ ] 17.1 Write `j-lawyer-server/j-lawyer-mcp/README.md`: architecture, endpoints, protocol
       revisions supported, scope model, tool catalogue
-- [ ] 17.2 Write the administrator setup guide: keystore, Elytron audience, activation, base
+- [ ] 17.2 Write the administrator setup guide: keystore, Elytron audience,
+      `proxy-address-forwarding`, the reference nginx configuration, activation, public base
       URL, origins, self-test
 - [ ] 17.3 Write the end-user connection guide per host (Claude Cowork, Claude Code, generic)
 - [ ] 17.4 Document the security model and its residual risks, including prompt injection
