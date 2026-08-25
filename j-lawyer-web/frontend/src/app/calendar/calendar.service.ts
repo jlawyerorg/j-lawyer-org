@@ -126,6 +126,13 @@ export class CalendarService {
     this.reload();
   }
 
+  /** Jumps to the day view for a specific date (e.g. the month grid's "+N more" link). */
+  goToDay(date: Date): void {
+    this.anchor.set(startOfDay(date));
+    this.view.set('day');
+    this.reload();
+  }
+
   /** Moves the anchor by one unit of the current view (day/week/month) and reloads. */
   shift(direction: number): void {
     const a = this.anchor();
