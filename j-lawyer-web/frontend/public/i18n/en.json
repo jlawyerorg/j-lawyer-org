@@ -1409,6 +1409,7 @@
       "delete": "Delete",
       "time": "Time",
       "assigneeNone": "— nobody —",
+      "conflictTitle": "Scheduling conflict with:",
       "rem": {
         "none": "No reminder",
         "atStart": "At start",
