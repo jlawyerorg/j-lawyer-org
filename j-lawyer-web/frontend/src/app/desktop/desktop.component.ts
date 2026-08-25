@@ -181,7 +181,7 @@ interface TagTab { key: string; label: string; kind: 'case' | 'doc'; }
                     </div>
                     @for (d of g.items; track d.id) {
                       <div class="row due-row" [class.overdue]="d.overdue">
-                        <span class="bar" [class]="d.type"></span>
+                        <span class="bar" [class]="d.type" [style.background-color]="d.calendarColor || null" [title]="d.calendarName || null"></span>
                         <span class="rmain">
                           <span class="rname">{{ d.summary || ('desktop.due.noSummary' | transloco) }}</span>
                           <span class="rsub">{{ ('desktop.due.type.' + d.type) | transloco }}@if (d.type === 'event') { · {{ d.due | date: 'HH:mm' }} }@if (d.assignee) { · {{ d.assignee }} }</span>

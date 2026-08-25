@@ -38,6 +38,10 @@ export interface DueItem {
   location: string;
   reminderMinutes: number;
   calendarId: string;
+  /** CSS colour (#rrggbb) of the entry's calendar setup, or '' when it has no calendar. */
+  calendarColor: string;
+  /** Display name of the entry's calendar setup, or '' when it has no calendar. */
+  calendarName: string;
 }
 
 /** An open invoice (from GET /v7/cases/invoices). */
