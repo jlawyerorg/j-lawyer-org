@@ -1367,6 +1367,7 @@
     "allDay": "ganztägig",
     "noSummary": "(ohne Betreff)",
     "more": "+{{n}} weitere",
+    "newOnDay": "Termin an diesem Tag anlegen",
     "view": {
       "agenda": "Agenda",
       "day": "Tag",

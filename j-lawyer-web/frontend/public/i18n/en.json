@@ -1367,6 +1367,7 @@
     "allDay": "all-day",
     "noSummary": "(no subject)",
     "more": "+{{n}} more",
+    "newOnDay": "New entry on this day",
     "view": {
       "agenda": "Agenda",
       "day": "Day",

@@ -40,6 +40,8 @@ interface GridColumn {
 /** One cell of the month grid. */
 interface MonthCell {
   key: string;
+  /** Local midnight of the cell's day (for click-to-create / jump-to-day). */
+  date: Date;
   dayNum: number;
   inMonth: boolean;
   isToday: boolean;
@@ -165,17 +167,18 @@ const HOUR_PX = 46;
               </div>
               <div class="month-grid">
                 @for (cell of monthCells(); track cell.key) {
-                  <div class="mcell" [class.out]="!cell.inMonth" [class.today]="cell.isToday">
+                  <div class="mcell" [class.out]="!cell.inMonth" [class.today]="cell.isToday"
+                       (click)="createOnDay(cell)" [title]="'kalender.newOnDay' | transloco">
                     <span class="mday">{{ cell.dayNum }}</span>
                     @for (r of cell.events.slice(0, 3); track r.ev.id) {
                       <button type="button" class="mchip" [class]="r.ev.type" [class.done]="r.ev.done"
                               [style.background]="r.ev.color ? tint(r.ev.color) : null"
-                              (click)="openEdit(r.ev)" [title]="'kalender.edit' | transloco">
+                              (click)="$event.stopPropagation(); openEdit(r.ev)" [title]="'kalender.edit' | transloco">
                         <span class="mdot" [style.background]="r.ev.color || null"></span>{{ r.time }}{{ r.ev.summary || ('kalender.noSummary' | transloco) }}
                       </button>
                     }
                     @if (cell.events.length > 3) {
-                      <span class="mmore">{{ 'kalender.more' | transloco: { n: cell.events.length - 3 } }}</span>
+                      <button type="button" class="mmore" (click)="$event.stopPropagation(); cal.goToDay(cell.date)">{{ 'kalender.more' | transloco: { n: cell.events.length - 3 } }}</button>
                     }
                   </div>
                 }
@@ -375,6 +378,7 @@ export class KalenderComponent {
       const events = (byDay.get(key) ?? []).map((ev) => ({ ev, time: ev.timed ? timeFmt.format(ev.begin) + ' ' : '' }));
       return {
         key,
+        date: startOfDay(date),
         dayNum: date.getDate(),
         inMonth: date.getMonth() === anchorMonth,
         isToday: sameDay(date, today),
@@ -424,6 +428,11 @@ export class KalenderComponent {
 
   protected openCreate(): void {
     this.editing.set({ event: null, begin: startOfDay(this.cal.anchor()), end: null, timed: false });
+  }
+
+  /** Click on an empty day cell in the month grid: create an all-day entry on that day. */
+  protected createOnDay(cell: MonthCell): void {
+    this.editing.set({ event: null, begin: cell.date, end: null, timed: false });
   }
 
   protected openEdit(ev: CalendarEvent): void {
@@ -576,11 +585,16 @@ export class KalenderComponent {
     }
     const s = this.dragState();
     this.dragState.set(null);
-    if (!s || Math.abs(s.y1 - s.y0) < 6) {
-      return; // too small — treat as a click, not a range selection
+    if (!s) {
+      return;
     }
-    const startMin = this.yToMinutes(Math.min(s.y0, s.y1));
-    const endMin = Math.max(this.yToMinutes(Math.max(s.y0, s.y1)), startMin + 15);
+    // A plain click (no meaningful drag) creates a default 60-minute entry at that time;
+    // a real drag creates an entry spanning the selected range.
+    const click = Math.abs(s.y1 - s.y0) < 6;
+    const startMin = this.yToMinutes(click ? s.y0 : Math.min(s.y0, s.y1));
+    const endMin = click
+      ? startMin + 60
+      : Math.max(this.yToMinutes(Math.max(s.y0, s.y1)), startMin + 15);
     this.editing.set({
       event: null,
       begin: atMinutes(s.date, startMin),
