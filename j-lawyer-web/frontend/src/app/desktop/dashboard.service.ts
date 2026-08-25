@@ -26,6 +26,7 @@ interface EventDto {
   id: string; type: string; summary: string; begin: number; end: number | null; done: boolean; assignee: string;
   caseId: string; caseFileNumber: string; caseName: string;
   description?: string; location?: string; reminderMinutes?: number; calendar?: string;
+  calendarColor?: number; calendarName?: string;
 }
 interface InvoiceDto { id: string; invoiceNumber: string; status: string; totalGross: number; currency: string; caseId: string; dueDate: string; }
 interface CaseByTagDto { id: string; fileNumber: string; name: string; lawyer: string; assistant: string; tags: string[]; }
@@ -220,6 +221,7 @@ export class DashboardService {
 /** Maps one calendar event to the widget's row model. */
 function toDueItem(e: EventDto, now: Date): DueItem {
   const due = new Date(e.begin);
+  const hasCalendar = !!(e.calendar && e.calendar.trim());
   return {
     id: e.id, type: toType(e.type), summary: e.summary ?? '', due,
     end: e.end != null ? new Date(e.end) : null,
@@ -227,7 +229,17 @@ function toDueItem(e: EventDto, now: Date): DueItem {
     caseId: e.caseId ?? '', caseFileNumber: e.caseFileNumber ?? '', caseName: e.caseName ?? '',
     description: e.description ?? '', location: e.location ?? '',
     reminderMinutes: e.reminderMinutes ?? -1, calendarId: e.calendar ?? '',
+    calendarColor: hasCalendar ? rgbIntToCss(e.calendarColor ?? 0) : '',
+    calendarName: hasCalendar ? (e.calendarName ?? '') : '',
   } satisfies DueItem;
+}
+
+/**
+ * Converts a Java RGB int (`CalendarSetup.background`, rendered in Swing as `new Color(int)`)
+ * to a CSS `#rrggbb` string. Masks off any alpha byte so both plain-RGB and ARGB ints work.
+ */
+function rgbIntToCss(rgb: number): string {
+  return '#' + (rgb & 0xffffff).toString(16).padStart(6, '0');
 }
 
 function toType(t: string): DueItem['type'] {
