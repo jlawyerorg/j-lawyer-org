@@ -456,6 +456,10 @@ interface TimesheetView extends CaseTimesheet {
                       <span>{{ (docUploading() ? 'akten.docs.uploading' : uploadHint()) | transloco: { folder: uploadTargetName() } }}</span>
                     </div>
                     <input #fileInput type="file" multiple hidden (change)="onUpload($event)" />
+                    <input #cameraInput type="file" accept="image/*" capture="environment" hidden (change)="onUpload($event)" />
+                    <button type="button" class="cam-btn" [disabled]="docUploading()" (click)="cameraInput.click()">
+                      <jl-icon name="camera" [size]="16" /> {{ 'akten.docs.capturePhoto' | transloco }}
+                    </button>
                     @if (docUploadError()) { <p class="up-error">{{ 'akten.docs.uploadError' | transloco }}</p> }
                     @if (selectedDocs().length) {
                       <jl-document-bulk-bar [docs]="selectedDocs()" [caseId]="selectedId() ?? ''" [folders]="docFolderOptions()"

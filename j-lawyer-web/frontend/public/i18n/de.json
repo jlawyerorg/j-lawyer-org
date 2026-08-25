@@ -801,6 +801,7 @@
       "dateModeHint": "Zwischen Änderungs- und Erstelldatum umschalten",
       "uploading": "Wird hochgeladen …",
       "uploadError": "Upload fehlgeschlagen",
+      "capturePhoto": "Foto aufnehmen",
       "dropHint": "Dateien hier ablegen oder klicken · Ablage: {{folder}}",
       "dropHintFolder": "Dateien hier ablegen oder klicken · Ordner: {{folder}}",
       "delete": "Löschen",
