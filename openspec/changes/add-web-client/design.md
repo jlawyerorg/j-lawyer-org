@@ -488,6 +488,108 @@ serverseitig invalidieren.
 in `j-lawyer-io`/`j-lawyer-server` und **muss mit `add-two-factor-auth` koordiniert**
 werden.
 
+## Decision 6 — In-Browser-Office-Editing (ODT/DOCX)
+
+Betrifft Task **1.6** (Strategie) und **6.1** (Umsetzung). Der MVP-Fallback ist bereits
+ausgeliefert (Task **3.5**: Download → lokal bearbeiten → Re-Upload mit Versionierung).
+Diese Entscheidung betrifft das **echte In-Browser-Editieren**.
+
+**Anforderungen (Auftraggeber):** kostenfreie self-hosted-Nutzung; gute Kompatibilität für
+**ODT und DOCX**; **Erweiterbarkeit** (Textbausteine + Transkription in die Editor-Oberfläche
+einpluggbar); **Last möglichst im Browser**. **Ausschlusskriterium:** in der kostenfreien
+Variante **White-Labeling erlaubt** und **keine Verbindungsbeschränkung**.
+
+**Marktbefund (verifiziert 2026).** Realistisch nur zwei self-hostbare Engines: **OnlyOffice
+Docs** und **Collabora Online** (EuroOffice = LibreOffice-**Desktop**, keine Browser-Engine;
+Rich-Text-Editoren kein DOCX/ODT-Roundtrip; Cloud-SaaS nicht self-hosted).
+
+| | OnlyOffice CE (frei, AGPL-3.0) | Collabora CODE (frei, MPL-2.0) |
+|---|---|---|
+| Verbindungslimit | **entfällt ab v9.4** ✅ | Testing-Edition, „nicht für Produktion", hist. 10 Dok./20 Verb. ❌ |
+| White-Labeling frei? | **nein** — nur Developer Edition (kostenpflichtig) ❌ | **nein** — nur Collabora Online/COOL (kostenpflichtig) ❌ |
+| Last im Browser | clientseitig ✅ | serverseitig (LibreOffice je Sitzung) |
+| Erweiterbarkeit | Plugin-SDK ✅ | schwach (postMessage) |
+| ODT / DOCX | DOCX top, ODT gut (Konvertierung) | ODT nativ/erstklassig, DOCX gut |
+
+→ **Keine kostenfreie Engine erfüllt „white-label + unbeschränkt"**; White-Labeling ist bei
+**beiden** an eine **kostenpflichtige Edition** gekoppelt. „Kostenfrei + White-Label" schließt
+sich im Markt aus.
+
+**Entscheidung (Auftraggeber, 2026-08-26): provider-abstrahierte Anbindung über WOPI, Start mit
+Collabora, OnlyOffice als spätere zweite Option, aktive Suite per Systemeinstellung wählbar.**
+So bleibt j-lawyer **vendor-/lizenzneutral** — die deployende Kanzlei wählt **Provider und
+Edition** (kostenfrei-mit-Branding oder kostenpflichtig-white-label) selbst; die
+White-Label/Kosten-Frage wird an den Betreiber je Installation delegiert.
+
+**Warum diese Struktur.**
+- **WOPI als gemeinsamer Standard:** Collabora ist WOPI-nativ, OnlyOffice unterstützt WOPI
+  ebenfalls → **ein** serverseitiger WOPI-Host bedient beide; nur die Editor-Einbettung im
+  Frontend ist providerspezifisch.
+- **Collabora zuerst:** WOPI-Referenzintegration und LibreOffice-Kern (beste ODT-Treue bei
+  gemischten Formaten); die WOPI-Zentrierung erzwingt gleich die saubere Abstraktion.
+
+**Architektur.**
+- **WOPI-Host in j-lawyer:** `CheckFileInfo` (Metadaten + Rechte), `GetFile` (Bytes),
+  `PutFile` (Speichern → vorhandene `setDocumentContent(id, bytes)` → **Version**, reuse 3.5).
+- **Provider-Abstraktion (`OfficeEditorProvider`):** je Provider die Embed-Parameter — Collabora:
+  `WOPISrc` + `access_token` → Collabora-`cool`-iframe; OnlyOffice: `api.js` + Config (WOPI-Modus
+  oder nativ). Gemeinsamer WOPI-Host, providerspezifischer Frontend-Embed.
+- **Provider-Auswahl per Systemeinstellung (adminRole):** aktiver Provider (`none`/`collabora`/
+  `onlyoffice`) + Base-URL + Secret. Ohne Konfiguration → Feature aus, **3.5-Fallback**.
+- **Sicherheit:** kurzlebiger **WOPI-Access-Token** (nicht Session-Creds), pro Dokument+Nutzer+
+  Recht; Fall-ACL beim Ausstellen (`writeArchiveFileRole` + `getArchiveFile`). **CSP**
+  (`frame-src`/`script-src`/`connect-src`) nur um die **konfigurierte** Provider-Herkunft
+  erweitern; ohne Provider unverändert.
+- **Sperre:** Einzelbearbeitung — Dokument beim Öffnen sperren, weitere Zugriffe read-only
+  (`UserCanWrite=false`), bis der Abschluss die Sperre löst.
+- **ODT:** Original wird über WOPI geliefert/zurückgeschrieben; Konvertierung übernimmt die
+  Engine (Collabora ODT nativ). ODT bleibt ODT.
+- **Verteiltes Deployment:** Office-Server erreicht den WOPI-Host (Server-zu-Server), Browser
+  erreicht den Office-Server — getrennte Netze/Reverse-Proxy berücksichtigen.
+
+**Detailentwurf — WOPI-Host, Konfiguration, ODT (Vorbereitung Phase 2/3).**
+- **WOPI-Endpunkte** (Subset für Collabora), `fileId` = j-lawyer-Dokument-ID:
+  - `GET /wopi/files/{fileId}` — **CheckFileInfo** → JSON (`BaseFileName`, `Size`, `Version`,
+    `UserId`, `UserFriendlyName`, `UserCanWrite`, `LastModifiedTime`, `SupportsLocks`,
+    `SupportsUpdate`, `PostMessageOrigin`); Rechte/ACL aus dem Access-Token.
+  - `GET /wopi/files/{fileId}/contents` — **GetFile** → Originalbytes.
+  - `POST /wopi/files/{fileId}/contents` — **PutFile** (mit `X-WOPI-Lock`) → Rückschreiben via
+    `setDocumentContent` (**Version**).
+  - `POST /wopi/files/{fileId}` mit `X-WOPI-Override: LOCK|UNLOCK|REFRESH_LOCK|GET_LOCK` —
+    **Sperren** (Einzelbearbeitung).
+- **Einbettung/Discovery:** Host holt/cacht Collaboras `GET /hosting/discovery` (XML) und wählt
+  je Dateiendung + Aktion (`edit`/`view`) die `urlsrc`. Frontend bettet
+  `urlsrc?WOPISrc={enc. WOPI-Datei-URL}` im iframe ein und übergibt `access_token`(+`_ttl`) per
+  Formular-POST.
+- **Access-Token:** kurzlebig, signiert, gebunden an `fileId` + Nutzer + Recht + Ablauf; jede
+  WOPI-Anfrage trägt `?access_token=…`, der Host validiert; **keine** Session-Credentials.
+- **Provider-Konfiguration** (Systemeinstellung, adminRole; analog Stirling-/CalDAV-/Dropscan-
+  Config): `office.provider` (`none`/`collabora`/`onlyoffice`), `office.baseUrl` (Editor-Herkunft
+  für Browser + CSP), `office.wopiPublicUrl` (vom Office-Server erreichbare WOPI-Host-Basis —
+  entscheidend bei verteiltem Deployment), `office.secret` (OnlyOffice-JWT; bei Collabora optional
+  Proof-Key-Verifikation aus Discovery). Ohne `provider` → Feature aus.
+- **ODT-Handling:** Mit **Collabora entfällt jede Konvertierung** — der LibreOffice-Kern editiert
+  ODT **und** DOCX **nativ**: `GetFile` liefert das Original, `PutFile` schreibt dasselbe Format
+  zurück. Der ODT↔OOXML-Konvertierungsbedarf betrifft **nur** den späteren OnlyOffice-Provider
+  (Option: ODT dann über Collabora routen oder OnlyOffices Conversion-API nutzen).
+
+**Erweiterbarkeit (später, providerspezifisch):** Textbausteine + Transkription — bei
+**OnlyOffice** über das Plugin-SDK (eigene Editor-Panels + Insert-API), bei **Collabora** über
+die eingeschränkteren UI-/`postMessage`-Hooks. Die Kernanforderung „Erweiterbarkeit" ist ein
+Hauptgrund, OnlyOffice als zweiten Provider vorzusehen.
+
+**Offene Verifikationen:** Collabora-CODE-Produktionsgrenzen/Branding vs. COOL; WOPI-Abdeckung
+bei OnlyOffice (welche Funktionen nur nativ); ODT↔OOXML-Roundtrip-Treue.
+
+**Phasen (6.1).** (1) Entscheidung/Doku — dieser Abschnitt, 1.6 erledigt. (2) Spike: Collabora
+per Docker + minimaler WOPI-Host (`CheckFileInfo`/`GetFile`/`PutFile`) für **ein** Dokument,
+Editor einbetten, Roundtrip verifizieren. (3) Server: WOPI-Host produktiv, Access-Token, Sperre,
+`OfficeEditorProvider`-Abstraktion, Systemeinstellung (Provider + URL + Secret). (4) Frontend:
+„Im Browser bearbeiten"-Aktion (nur bei konfiguriertem Provider) + Collabora-Embed + CSP. (5)
+Zweiter Provider **OnlyOffice** (Embed + WOPI/nativ) + Provider-Auswahl im Frontend. (6)
+Erweiterbarkeit (Textbausteine/Transkription) + Härtung + Deployment-Doku (verteilt) +
+Sicherheits-Review.
+
 ## Risks / Trade-offs
 
 - **Scope-Risiko**: Vollparität ist sehr groß (16+ Module). → Phasenplan mit MVP und
