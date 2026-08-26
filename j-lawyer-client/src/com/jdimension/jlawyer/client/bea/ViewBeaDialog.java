@@ -712,6 +712,7 @@ public class ViewBeaDialog extends javax.swing.JDialog {
     }
 
     public void setMessage(BeaMessage msg) {
+        this.content.setCase(this.contextArchiveFile);
         if (this.odoc != null) {
             this.content.setMessage(msg, this.odoc.getStore().getDocumentIdentifier());
         } else {

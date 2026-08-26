@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.client.bea;
 
-import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.mail.*;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ResetOnDisplayEditor;
@@ -691,7 +690,6 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
@@ -750,7 +748,7 @@ import com.jdimension.jlawyer.services.bea.rest.BeaRecipient;
  *
  * @author jens
  */
-public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecutor, EebExecutor, ThemeableEditor, StatusBarProvider, ResetOnDisplayEditor, DropTargetListener, DragGestureListener {
+public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecutor, ThemeableEditor, StatusBarProvider, ResetOnDisplayEditor, DropTargetListener, DragGestureListener {
 
     private static final Logger log = Logger.getLogger(BeaInboxPanel.class.getName());
     private Image backgroundImage = null;
@@ -2586,19 +2584,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                         actionPanelEntries.add(pnp);
                     }
 
-                    if (msg.isEebRequested()) {
-                        // send eEB
-                        BeaEebReplyPanel berp = new BeaEebReplyPanel(BeaInboxPanel.this.getClass().getName());
-                        berp.setEntry(BeaInboxPanel.this);
-                        berp.enableButtons(true);
-                        actionPanelEntries.add(berp);
-                    } else if (msg.getAttachments() != null && msg.getAttachments().stream().anyMatch(a -> "xjustiz_nachricht.xml".equalsIgnoreCase(a.getName()))) {
-                        // received eEB
-                        BeaEebReplyPanel berp = new BeaEebReplyPanel(BeaInboxPanel.this.getClass().getName());
-                        berp.setEntry(BeaInboxPanel.this);
-                        berp.enableButtons(false);
-                        actionPanelEntries.add(berp);
-                    }
+                    // eEB responses are offered in the header of the message view itself, see BeaMessageContentUI
 
                     // add reference-based cases (first pass: referenceJustice)
                     addCasePanelsFromData(refCasesJustice, actionPanelEntries);
@@ -3213,250 +3199,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             }
         }
         return null;
-    }
-
-    @Override
-    public boolean confirmEeb() {
-        if (this.tblMails.getSelectedRowCount() == 1) {
-            try {
-
-                BeaMessageHeader mh = (BeaMessageHeader) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 1);
-                Collection<BeaPostbox> inboxes = BeaAccess.getInstance().getPostBoxes();
-                String senderSafeId = null;
-                for (BeaPostbox inbox : inboxes) {
-                    String recipientSafeId = mh.getRecipientSafeId();
-                    if (recipientSafeId != null && recipientSafeId.equals(inbox.getSafeId())) {
-                        senderSafeId = recipientSafeId;
-                        break;
-                    }
-                    if (senderSafeId != null) {
-                        break;
-                    }
-                }
-                if (senderSafeId == null) {
-                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Absender-Postfach für eEB kann nicht ermittelt werden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-                    return false;
-                }
-
-                for (BeaPostbox inbox : inboxes) {
-                    // prevent sendingn eEBs for SENT messages (where i am the recipient)
-                    if (mh.getSender() != null) {
-
-                        String senderName = "";
-                        try {
-                            BeaIdentity senderIdent = BeaAccess.getInstance().getIdentity(inbox.getSafeId());
-                            senderName = senderIdent.getUserName();
-                        } catch (Throwable t) {
-                            log.error(t);
-                        }
-
-                    }
-                }
-
-                JTextField hiddenField = new JTextField();
-                MultiCalDialog dlg = new MultiCalDialog(hiddenField, EditorsRegistry.getInstance().getMainWindow(), true);
-                Calendar c = Calendar.getInstance();
-                dlg.setMaxDate(c.getTime());
-                Calendar c2 = Calendar.getInstance();
-                c2.add(Calendar.MONTH, -2);
-                dlg.setMinDate(c2.getTime());
-                dlg.setVisible(true);
-                Date abgabeDate = null;
-                try {
-                    SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-                    abgabeDate = df.parse(hiddenField.getText());
-                } catch (Throwable t) {
-                    JOptionPane.showMessageDialog(this, "Abgabedatum ungültig", "eEB abgeben", JOptionPane.WARNING_MESSAGE);
-                    return false;
-                }
-
-                DefaultMutableTreeNode tn = (DefaultMutableTreeNode) treeFolders.getSelectionPath().getLastPathComponent();
-                BeaFolder tf = (BeaFolder) tn.getUserObject();
-
-                String safeId = tf.getSafeId();
-                if (StringUtils.isEmpty(safeId))
-                    safeId = BeaAccess.getInstance().getLoggedInSafeId();
-                
-                BeaMessage m = BeaAccess.getInstance().getMessage(mh.getId(), safeId);
-                log.info("eEB ID of the incoming message from " + m.getSenderSafeId() + " / " + m.getSenderName() + " is : " + m.getEebId());
-                if (m.getEebId() == null || "".equals(m.getEebId())) {
-                    JOptionPane.showMessageDialog(this, "Eingehende eEB-ID ist leer - eEB bitte über beA im Browser abgeben!", "eEB abgeben", JOptionPane.WARNING_MESSAGE);
-                    return false;
-                }
-                BeaMessage sentMessage = BeaAccess.getInstance().sendEebConfirmation(senderSafeId, m.getId(), m.getSenderSafeId(), abgabeDate);
-                this.saveEebResponse(sentMessage, mh, "Abgabe");
-
-                return true;
-
-            } catch (Exception ex) {
-                log.error(ex);
-                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Senden der eEB-Bestätigung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public boolean rejectEeb() {
-        if (this.tblMails.getSelectedRowCount() == 1) {
-            try {
-
-                BeaMessageHeader mh = (BeaMessageHeader) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 1);
-                Collection<BeaPostbox> inboxes = BeaAccess.getInstance().getPostBoxes();
-                String senderSafeId = null;
-                for (BeaPostbox inbox : inboxes) {
-                    String recipientSafeId = mh.getRecipientSafeId();
-                    if (recipientSafeId != null && recipientSafeId.equals(inbox.getSafeId())) {
-                        senderSafeId = recipientSafeId;
-                        break;
-                    }
-                    if (senderSafeId != null) {
-                        break;
-                    }
-                }
-                if (senderSafeId == null) {
-                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Absender-Postfach für eEB kann nicht ermittelt werden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-                    return false;
-                }
-
-                for (BeaPostbox inbox : inboxes) {
-                    // prevent sendingn eEBs for SENT messages (where i am the recipient)
-                    if (mh.getSender() != null) {
-
-                        String senderName = "";
-                        try {
-                            BeaIdentity senderIdent = BeaAccess.getInstance().getIdentity(inbox.getSafeId());
-                            senderName = senderIdent.getUserName();
-                        } catch (Throwable t) {
-                            log.error(t);
-                        }
-                    }
-                }
-
-                String comment = "";
-                EebRejectDialog dlg = new EebRejectDialog(EditorsRegistry.getInstance().getMainWindow(), true);
-                FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-                dlg.setVisible(true);
-                if (dlg.getRejectionCode() == null) {
-                    // user decided to cancel
-                    return false;
-                }
-                String code = dlg.getRejectionCode();
-                if (dlg.getRejectionComment() != null) {
-                    comment = dlg.getRejectionComment();
-                }
-
-                DefaultMutableTreeNode tn = (DefaultMutableTreeNode) treeFolders.getSelectionPath().getLastPathComponent();
-                BeaFolder tf = (BeaFolder) tn.getUserObject();
-
-                String safeId = tf.getSafeId();
-                if (StringUtils.isEmpty(safeId))
-                    safeId = BeaAccess.getInstance().getLoggedInSafeId();
-                
-                BeaMessage m = BeaAccess.getInstance().getMessage(mh.getId(), safeId);
-
-                BeaMessage sentMessage = BeaAccess.getInstance().sendEebRejection(senderSafeId, m.getId(), m.getSenderSafeId(), code, comment);
-                this.saveEebResponse(sentMessage, mh, "Ablehnung");
-
-                return true;
-
-            } catch (Exception ex) {
-                log.error(ex);
-                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Senden der eEB-Zurückweisung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-            }
-        }
-        return false;
-    }
-
-    private void saveEebResponse(BeaMessage m, BeaMessageHeader originalMessage, String rejectionOrConfirmation) {
-
-        try {
-
-            SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + originalMessage.getReferenceJustice() + originalMessage.getReferenceNumber() + m.getSubject() + m.getBody(), null);
-            dlg.setVisible(true);
-            ArchiveFileBean targetCase = dlg.getCaseSelection();
-            CaseFolder targetFolder = dlg.getFolderSelection();
-            dlg.dispose();
-
-            // user decided to cancel
-            if (dlg.getCaseSelection() == null) {
-                return;
-            }
-
-            CaseUtils.optionalUnarchiveCase(dlg.getCaseSelection(), this);
-
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-
-            BeaMessageExport mex = BeaAccess.exportMessage(m);
-            String newName = FileUtils.getNewFileName(targetCase, m.getId() + "_eEb-" + rejectionOrConfirmation + ".bea", new Date(), true, EditorsRegistry.getInstance().getMainWindow(), "eEb-Antwort speichern");
-            if (newName == null || "".equals(newName)) {
-                newName = m.getId() + "_eEb-" + rejectionOrConfirmation + ".bea";
-            }
-            newName = FileUtils.sanitizeFileName(newName);
-            ArchiveFileDocumentsBean newDoc = remote.addDocument(targetCase.getId(), newName, mex.getContent(), "", null);
-
-            if (targetFolder != null) {
-                ArrayList<String> docId = new ArrayList<>();
-                docId.add(newDoc.getId());
-                remote.moveDocumentsToFolder(docId, targetFolder.getId());
-
-            }
-
-        } catch (Exception ioe) {
-            log.error("Error saving eEb response", ioe);
-            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der eEb-Abgabe: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
-
-    }
-
-    @Override
-    public boolean displayEeb() {
-        if (this.tblMails.getSelectedRowCount() == 1) {
-            try {
-
-                BeaMessageHeader mh = (BeaMessageHeader) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 1);
-                BeaAccess beaAccess = BeaAccess.getInstance();
-
-                DefaultMutableTreeNode tn = (DefaultMutableTreeNode) treeFolders.getSelectionPath().getLastPathComponent();
-                BeaFolder tf = (BeaFolder) tn.getUserObject();
-
-                String safeId = tf.getSafeId();
-                if (StringUtils.isEmpty(safeId)) {
-                    safeId = beaAccess.getLoggedInSafeId();
-                }
-
-                BeaMessage m = beaAccess.getMessage(mh.getId(), safeId);
-                for (BeaAttachment att : m.getAttachments()) {
-                    if (att.getName().equalsIgnoreCase("xjustiz_nachricht.xml")) {
-                        String xjustiz = new String(att.getContent());
-                        String html = "<html>Unbekannter XJustiz-Datensatztyp</html>";
-                        if (beaAccess.isEebRequest(xjustiz)) {
-                            html = beaAccess.getEebAsHtml(xjustiz, null);
-
-                        } else if (beaAccess.isEebResponse(xjustiz)) {
-                            log.warn("TODO: find matching XJustiz file - see ticket https://github.com/jlawyerorg/j-lawyer-org/issues/917");
-                            html = beaAccess.getEebAsHtml(null, xjustiz);
-                        } else {
-                            log.error("Unknown XJustiz file type!");
-                        }
-
-                        BeaEebDisplayDialog dlg = new BeaEebDisplayDialog(EditorsRegistry.getInstance().getMainWindow());
-                        dlg.setHtml(html);
-                        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-                        dlg.setVisible(true);
-                    }
-                }
-
-                return true;
-
-            } catch (Exception ex) {
-                log.error(ex);
-                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Senden der eEB-Bestätigung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-            }
-        }
-        return false;
     }
 
     @Override
