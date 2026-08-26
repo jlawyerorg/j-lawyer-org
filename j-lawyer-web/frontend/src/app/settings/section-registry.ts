@@ -15,7 +15,7 @@ export type SectionKind = 'optionGroup' | 'users' | 'groups' | 'firmProfile'
   | 'nameTemplates' | 'calendarSetups' | 'calendarEntryTemplates' | 'bankStatementConfigs'
   | 'timesheetTemplates' | 'timesheetSettings'
   | 'assistantServers' | 'assistantPrompts' | 'assistantReplacements'
-  | 'systemMailbox' | 'security' | 'serverMonitoring' | 'systemReport' | 'webhooks';
+  | 'systemMailbox' | 'security' | 'serverMonitoring' | 'systemReport' | 'webhooks' | 'officeSettings';
 
 export interface SettingsSection {
   /** Stable id (also the list-selection key). */
@@ -119,6 +119,7 @@ export const SYSTEM_SECTIONS: SettingsSection[] = [
   { id: 'scanSettings', titleKey: 'settings.section.scanSettings', groupKey: G_SYSTEM, kind: 'scanSettings', keywords: 'scan ocr texterkennung verzeichnis überwachung' },
   { id: 'backupSettings', titleKey: 'settings.section.backupSettings', groupKey: G_SYSTEM, kind: 'backupSettings', keywords: 'backup datensicherung sicherung zeitplan datenbank verschlüsselung' },
   { id: 'stirlingSettings', titleKey: 'settings.section.stirlingSettings', groupKey: G_SYSTEM, kind: 'stirlingSettings', keywords: 'stirling pdf endpoint dokumentenverarbeitung' },
+  { id: 'officeSettings', titleKey: 'settings.section.officeSettings', groupKey: G_SYSTEM, kind: 'officeSettings', keywords: 'office collabora onlyoffice wopi editor browser bearbeiten dokument bearbeitung word writer' },
   { id: 'beaSettings', titleKey: 'settings.section.beaSettings', groupKey: G_SYSTEM, kind: 'beaSettings', keywords: 'bea anwaltspostfach endpoint integration' },
   { id: 'searchIndex', titleKey: 'settings.section.searchIndex', groupKey: G_SYSTEM, kind: 'searchIndex', keywords: 'volltextsuche suchindex lucene index neu erfassen' },
   { id: 'cardDavSync', titleKey: 'settings.section.cardDavSync', groupKey: G_SYSTEM, kind: 'cardDavSync', keywords: 'adressbuch nextcloud carddav synchronisation kontakte sync' },

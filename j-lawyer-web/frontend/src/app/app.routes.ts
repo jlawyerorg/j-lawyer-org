@@ -75,6 +75,14 @@ export const routes: Routes = [
     title: 'j-lawyer',
   },
   {
+    // Standalone in-browser Office editor (opened in a separate tab/window); full-screen, no shell
+    // chrome, but still auth-guarded. See akten.component popOutOffice() (OpenSpec Decision 6).
+    path: 'office/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./akten/office-page.component').then((c) => c.OfficePageComponent),
+    title: 'j-lawyer',
+  },
+  {
     // Shell layout route: all module routes are children, guarded so unauthenticated
     // users are redirected to /login (auth.guard). Login lives outside this subtree.
     path: '',

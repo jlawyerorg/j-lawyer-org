@@ -35,6 +35,18 @@ export const HIGHLIGHTS: { hex: string; value: number }[] = [
   { hex: '#000000', value: (0xff000000 | 0x000000) | 0 },
 ];
 
+/**
+ * File extensions an Office editor (Collabora / OnlyOffice) can EDIT in the browser — the text /
+ * spreadsheet / presentation subset of {@link CONVERTIBLE_EXT} (excludes images/HTML, which the
+ * editor cannot edit as documents). The server still resolves the exact editor per type and returns
+ * 415 for anything it cannot edit; this set only gates whether the menu action is offered.
+ */
+export const OFFICE_EDITABLE_EXT = new Set([
+  'ODT', 'OTT', 'FODT', 'SXW', 'STW', 'DOC', 'DOCX', 'DOT', 'DOCM', 'DOTX', 'DOTM', 'RTF', 'TXT', 'CSV',
+  'ODS', 'OTS', 'FODS', 'SXC', 'STC', 'XLS', 'XLSX', 'XLSM', 'XLT', 'XLTX', 'XLTM', 'XLW',
+  'ODP', 'OTP', 'FODP', 'PPT', 'PPTX', 'PPTM', 'POT', 'POTX', 'POTM', 'PPS',
+]);
+
 export function isConvertible(ext: string): boolean {
   return CONVERTIBLE_EXT.has(ext);
 }
