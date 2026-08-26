@@ -57,7 +57,7 @@ unverändert (siehe `project.md`, „REST API Versioning").
 | **Zeiterfassung** | v8: Timesheets/Positionen, Start/Stop, laufende Positionen | ✅ **abgedeckt** |
 | **Volltextsuche** | v8: fulltext + reindex | ✅ **abgedeckt** |
 | **E-Mail** | v7: Postfächer, Ordner, Nachrichten CRUD, senden, EML, Anhänge | ✅ **abgedeckt** |
-| **beA** | v8: Postfächer, Ordner, Nachrichten, eEB, Identitäten, Journal | ✅ **abgedeckt** |
+| **beA** | v8: Postfächer, Ordner, Nachrichten, eEB, Identitäten, Journal | ⚠️ **teilweise** — für den Posteingang abgedeckt; die eEB-Endpunkte sind über `{safeId}/messages/{messageId}` **postfachgebunden** und tragen daher den Desktop-Weg „eEB aus der Akte heraus" (Commit `1e473d619`) nicht — dafür fehlt ein dokumentbasierter Pfad über das gespeicherte `.bea`-Dokument plus eine REST-Entsprechung zu `BeaAccess.getOwnRecipientSafeId()` (siehe `tasks.md` 5.3a) |
 | **Reporting** | v7: list + invoke | ✅ **abgedeckt** |
 | **Rechnungen/Zahlungen** | v7 (Rechnungen/Positionen/Kontoauszüge/Typen/Pools) + v8 (Payments) | ⚠️ **teilweise** — Kern da; ZUGFeRD/XRechnung-Export, Rechnungs-Belegerzeugung, Bankauszug-Import, Girocode/EPC-QR, Mahnwesen prüfen/ergänzen |
 | **Kalender/Fristen** | v4: `list calendars` + Fristen (duedates); Eintrags-CRUD via v6 cases (`duedate/create`+`update`, alle 3 Typen) + **v8 `DELETE /v8/calendar/events/{id}` (ergänzt 2026-07-10)** | ⚠️ **CRUD vorhanden** (create/update/delete/done über die Web-UI verifiziert) — offen: **Kalender-Setups (CalDAV), Terminvorlagen, Feiertage, Terminkonflikte (`getConflictingEvents`)** als eigenständige Endpunkte; v6-`update` kann den Eintragstyp nicht wechseln |
