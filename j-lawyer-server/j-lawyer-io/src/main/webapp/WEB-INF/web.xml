@@ -14,6 +14,19 @@
             <url-pattern>/rest/v8/auth/*</url-pattern>
         </web-resource-collection>
     </security-constraint>
+    <!--
+        WOPI host endpoints (OpenSpec add-web-client, Decision 6): the external document server
+        (Collabora / OnlyOffice) calls these server-to-server WITHOUT a j-lawyer login; each request
+        is authorised by the short-lived access token minted by /v8/office/editor-config (validated
+        in-code). So these paths must be public — otherwise the container's Basic challenge fires.
+    -->
+    <security-constraint>
+        <display-name>PublicWopiEndpoints</display-name>
+        <web-resource-collection>
+            <web-resource-name>wopi</web-resource-name>
+            <url-pattern>/rest/wopi/*</url-pattern>
+        </web-resource-collection>
+    </security-constraint>
     <security-constraint>
         <display-name>Constraint1</display-name>
         <web-resource-collection>

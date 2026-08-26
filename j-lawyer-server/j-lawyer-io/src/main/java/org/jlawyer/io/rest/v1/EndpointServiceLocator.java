@@ -739,6 +739,8 @@ public class EndpointServiceLocator extends Application
         s.add(CalendarEndpointV8.class);
         s.add(CasesEndpointV8.class);
         s.add(ContactsEndpointV8.class);
+        s.add(org.jlawyer.io.rest.v8.OfficeEndpointV8.class);
+        s.add(org.jlawyer.io.rest.v8.WopiEndpoint.class);
         s.add(PaymentsEndpointV8.class);
         s.add(ProfileEndpointV8.class);
         s.add(SearchEndpointV8.class);

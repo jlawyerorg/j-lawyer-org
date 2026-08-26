@@ -803,4 +803,11 @@ public class ServerSettingsKeys {
 
     public static final String SERVERCONF_DROPSCAN_POLLINGINTERVAL="jlawyer.server.dropscan.pollinginterval";
 
+    // In-browser Office editing (OpenSpec add-web-client, Decision 6): connection to the external
+    // document server (Collabora / OnlyOffice). provider = none|collabora|onlyoffice.
+    public static final String SERVERCONF_OFFICE_PROVIDER="jlawyer.server.office.provider";
+    public static final String SERVERCONF_OFFICE_BASEURL="jlawyer.server.office.baseurl";
+    public static final String SERVERCONF_OFFICE_WOPIPUBLICURL="jlawyer.server.office.wopipublicurl";
+    public static final String SERVERCONF_OFFICE_SECRET="jlawyer.server.office.secret";
+
 }
