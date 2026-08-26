@@ -1082,11 +1082,39 @@ public class BeaAccess {
     public ArrayList<String> getRecipientSafeIds(List<BeaRecipient> recipients) {
         ArrayList<String> safeIds=new ArrayList<>();
         for(BeaRecipient r: recipients) {
-            if(!StringUtils.isEmpty(beaEnabledVersions)) {
+            if(!StringUtils.isEmpty(r.getSafeId())) {
                 safeIds.add(r.getSafeId());
             }
         }
         return safeIds;
+    }
+
+    /**
+     * Returns the safeId of the postbox the given message was addressed to,
+     * provided the current user has access to that postbox. In contrast to
+     * findOwnSafeId there is no fallback to the first postbox - a null return
+     * value reliably indicates that the user is not among the recipients (e.g.
+     * for messages sent by the user) or that there is no beA session.
+     *
+     * @param msg the message
+     * @return the own postbox the message was addressed to, or null
+     * @throws Exception
+     */
+    public String getOwnRecipientSafeId(BeaMessage msg) throws Exception {
+        if(msg==null || msg.getRecipients()==null || msg.getRecipients().isEmpty())
+            return null;
+        List<BeaPostbox> postboxes=this.getPostBoxes();
+        if(postboxes==null)
+            return null;
+        for(BeaRecipient r: msg.getRecipients()) {
+            if(StringUtils.isEmpty(r.getSafeId()))
+                continue;
+            for(BeaPostbox pb: postboxes) {
+                if(r.getSafeId().equalsIgnoreCase(pb.getSafeId()))
+                    return pb.getSafeId();
+            }
+        }
+        return null;
     }
     
     public ArrayList<String> getInvolvedSafeIds(BeaMessage msg) {

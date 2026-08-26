@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.bea;
 
 import com.jdimension.jlawyer.client.components.GenericTextViewer;
+import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.mail.*;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
@@ -682,12 +683,16 @@ import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -718,6 +723,13 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     private BeaMessage msgContainer = null;
     private String documentId = null;
     private ArchiveFileBean caseContext=null;
+
+    private static final Color COLOR_EEB_OPEN=new Color(255, 153, 0);
+    private static final Color COLOR_EEB_DONE=DefaultColorTheme.COLOR_LOGO_GREEN;
+
+    // safeId of the own postbox the displayed message was addressed to - null if the user has no access to it
+    private String eebOwnSafeId = null;
+    private boolean eebSubmitted = false;
     
     private static final ImageIcon ICON_SENDSTATUS_INVALID=new javax.swing.ImageIcon(BeaMessageContentUI.class.getResource("/com/jdimension/jlawyer/client/bea/send-invalid.png"));
     private static final ImageIcon ICON_SENDSTATUS_UNKNOWN=new javax.swing.ImageIcon(BeaMessageContentUI.class.getResource("/com/jdimension/jlawyer/client/bea/send-unknown.png"));
@@ -854,6 +866,81 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             log.error("Error getting contents of beA message", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Öffnen der Nachricht: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
+
+        this.updateEebRow();
+    }
+
+    /**
+     * Shows or hides the eEB action row in the message header. The row is only
+     * offered when an eEB was requested for the displayed message - resolving
+     * whether the user actually has access to the recipient postbox requires a
+     * beA session and is therefore done in the background.
+     */
+    private void updateEebRow() {
+
+        this.eebOwnSafeId = null;
+        this.eebSubmitted = false;
+        this.cmdEebConfirm.setEnabled(false);
+        this.cmdEebReject.setEnabled(false);
+        this.cmdEebShow.setEnabled(false);
+        this.pnlEeb.setBackground(COLOR_EEB_OPEN);
+
+        if (this.msgContainer == null || !this.msgContainer.isEebRequested()) {
+            this.pnlEeb.setVisible(false);
+            return;
+        }
+
+        final BeaMessage msg = this.msgContainer;
+        this.lblEebInfo.setText("Zugang zum Empfängerpostfach wird geprüft...");
+        this.lblEebInfo.setToolTipText(null);
+        this.pnlEeb.setVisible(true);
+        this.pnlEeb.revalidate();
+        this.pnlEeb.repaint();
+
+        new SwingWorker<String, Object>() {
+
+            @Override
+            protected String doInBackground() throws Exception {
+                BeaAccess bea = BeaAccess.getInstance();
+                if (!bea.ensureLoggedIn()) {
+                    return null;
+                }
+                return bea.getOwnRecipientSafeId(msg);
+            }
+
+            @Override
+            protected void done() {
+
+                // the displayed message may have changed while we were resolving the postbox
+                if (BeaMessageContentUI.this.msgContainer != msg) {
+                    return;
+                }
+
+                String ownSafeId = null;
+                try {
+                    ownSafeId = get();
+                } catch (Exception ex) {
+                    log.error("Error resolving own postbox for message " + msg.getId(), ex);
+                }
+
+                if (ownSafeId == null) {
+                    lblEebInfo.setText("Es wurde ein eEB angefordert.");
+                    lblEebInfo.setToolTipText("Das eEB kann hier nicht abgegeben werden: die Nachricht ging nicht an ein Postfach, auf das Sie Zugriff haben, oder Sie sind nicht an beA angemeldet.");
+                    return;
+                }
+
+                eebOwnSafeId = ownSafeId;
+                lblEebInfo.setText("Es wurde ein elektronisches Empfangsbekenntnis angefordert.");
+                lblEebInfo.setToolTipText(null);
+                cmdEebConfirm.setEnabled(true);
+                cmdEebReject.setEnabled(true);
+                cmdEebShow.setEnabled(true);
+                pnlEeb.revalidate();
+                pnlEeb.repaint();
+            }
+
+        }.execute();
+
     }
 
     public static void setMessageImpl(BeaMessage msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblFrom, JLabel lblCaseNumber, JLabel lblReferenceJustice, JEditorPane editBody, JList lstAttachments, JList lstAttachmentsTechnical, JTable journalTable, JTable processCardTable, JLabel lblEeb, JTabbedPane tabs, JButton cmdVerify, JLabel lblSndStatus) throws Exception {
@@ -1006,6 +1093,11 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         cmdVerifySignatures = new javax.swing.JButton();
         lblSendStatus = new javax.swing.JLabel();
         lblEeb = new javax.swing.JLabel();
+        pnlEeb = new javax.swing.JPanel();
+        lblEebInfo = new javax.swing.JLabel();
+        cmdEebConfirm = new javax.swing.JButton();
+        cmdEebReject = new javax.swing.JButton();
+        cmdEebShow = new javax.swing.JButton();
         jPanel4 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         tblJournal = new javax.swing.JTable();
@@ -1226,6 +1318,70 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         lblEeb.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/lassists.png"))); // NOI18N
         lblEeb.setEnabled(false);
 
+        pnlEeb.setBackground(new java.awt.Color(255, 153, 0));
+        pnlEeb.setVisible(false);
+
+        lblEebInfo.setForeground(new java.awt.Color(0, 0, 0));
+        lblEebInfo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/lassists.png"))); // NOI18N
+        lblEebInfo.setText("Es wurde ein elektronisches Empfangsbekenntnis angefordert.");
+
+        cmdEebConfirm.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdEebConfirm.setText("eEB abgeben");
+        cmdEebConfirm.setToolTipText("elektronisches Empfangsbekenntnis abgeben");
+        cmdEebConfirm.setEnabled(false);
+        cmdEebConfirm.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdEebConfirmActionPerformed(evt);
+            }
+        });
+
+        cmdEebReject.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdEebReject.setText("eEB zurückweisen");
+        cmdEebReject.setToolTipText("elektronisches Empfangsbekenntnis zurückweisen");
+        cmdEebReject.setEnabled(false);
+        cmdEebReject.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdEebRejectActionPerformed(evt);
+            }
+        });
+
+        cmdEebShow.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
+        cmdEebShow.setText("anzeigen");
+        cmdEebShow.setToolTipText("XJustiz-Strukturdatensatz anzeigen");
+        cmdEebShow.setEnabled(false);
+        cmdEebShow.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdEebShowActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout pnlEebLayout = new javax.swing.GroupLayout(pnlEeb);
+        pnlEeb.setLayout(pnlEebLayout);
+        pnlEebLayout.setHorizontalGroup(
+            pnlEebLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlEebLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(lblEebInfo)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(cmdEebConfirm)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdEebReject)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdEebShow)
+                .addContainerGap())
+        );
+        pnlEebLayout.setVerticalGroup(
+            pnlEebLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlEebLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(pnlEebLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblEebInfo)
+                    .addComponent(cmdEebConfirm)
+                    .addComponent(cmdEebReject)
+                    .addComponent(cmdEebShow))
+                .addContainerGap())
+        );
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -1235,6 +1391,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jSplitPane1)
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(pnlEeb, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addComponent(cmdToPdf)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1256,6 +1413,8 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                     .addComponent(lblEeb, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(pnlEeb, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 336, Short.MAX_VALUE)
                 .addContainerGap())
@@ -1670,12 +1829,277 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         }
     }
     
+    private void cmdEebConfirmActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEebConfirmActionPerformed
+
+        if (this.msgContainer == null || this.eebOwnSafeId == null || this.eebSubmitted) {
+            return;
+        }
+
+        JTextField hiddenField = new JTextField();
+        MultiCalDialog calDlg = new MultiCalDialog(hiddenField, EditorsRegistry.getInstance().getMainWindow(), true);
+        Calendar today = Calendar.getInstance();
+        calDlg.setMaxDate(today.getTime());
+        Calendar twoMonthsAgo = Calendar.getInstance();
+        twoMonthsAgo.add(Calendar.MONTH, -2);
+        calDlg.setMinDate(twoMonthsAgo.getTime());
+        calDlg.setVisible(true);
+
+        SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+        Date abgabeDate;
+        try {
+            abgabeDate = df.parse(hiddenField.getText());
+        } catch (Throwable t) {
+            // user cancelled the dialog or entered an invalid date
+            JOptionPane.showMessageDialog(this, "Abgabedatum ungültig", "eEB abgeben", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        try {
+
+            BeaMessage m = this.getMessageFromPostbox("eEB abgeben");
+            if (m == null) {
+                return;
+            }
+
+            log.info("eEB ID of the incoming message from " + m.getSenderSafeId() + " / " + m.getSenderName() + " is : " + m.getEebId());
+            if (StringUtils.isEmpty(m.getEebId())) {
+                JOptionPane.showMessageDialog(this, "Eingehende eEB-ID ist leer - eEB bitte über beA im Browser abgeben!", "eEB abgeben", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            BeaMessage sentMessage = BeaAccess.getInstance().sendEebConfirmation(this.eebOwnSafeId, m.getId(), m.getSenderSafeId(), abgabeDate);
+            this.setEebDone("eEB abgegeben am " + df.format(abgabeDate) + ".");
+            this.saveEebResponse(sentMessage, "Abgabe");
+
+        } catch (Exception ex) {
+            log.error("Error sending eEB confirmation", ex);
+            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Senden der eEB-Bestätigung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+        } finally {
+            this.setCursor(Cursor.getDefaultCursor());
+        }
+
+    }//GEN-LAST:event_cmdEebConfirmActionPerformed
+
+    private void cmdEebRejectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEebRejectActionPerformed
+
+        if (this.msgContainer == null || this.eebOwnSafeId == null || this.eebSubmitted) {
+            return;
+        }
+
+        EebRejectDialog rejectDlg = new EebRejectDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+        FrameUtils.centerDialog(rejectDlg, EditorsRegistry.getInstance().getMainWindow());
+        rejectDlg.setVisible(true);
+        if (rejectDlg.getRejectionCode() == null) {
+            // user decided to cancel
+            return;
+        }
+        String code = rejectDlg.getRejectionCode();
+        String comment = "";
+        if (rejectDlg.getRejectionComment() != null) {
+            comment = rejectDlg.getRejectionComment();
+        }
+
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        try {
+
+            BeaMessage m = this.getMessageFromPostbox("eEB zurückweisen");
+            if (m == null) {
+                return;
+            }
+
+            BeaMessage sentMessage = BeaAccess.getInstance().sendEebRejection(this.eebOwnSafeId, m.getId(), m.getSenderSafeId(), code, comment);
+            this.setEebDone("eEB zurückgewiesen.");
+            this.saveEebResponse(sentMessage, "Ablehnung");
+
+        } catch (Exception ex) {
+            log.error("Error sending eEB rejection", ex);
+            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Senden der eEB-Zurückweisung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+        } finally {
+            this.setCursor(Cursor.getDefaultCursor());
+        }
+
+    }//GEN-LAST:event_cmdEebRejectActionPerformed
+
+    private void cmdEebShowActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEebShowActionPerformed
+
+        if (this.msgContainer == null) {
+            return;
+        }
+
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        try {
+
+            BeaAccess beaAccess = BeaAccess.getInstance();
+
+            List<BeaAttachment> attachments = this.msgContainer.getAttachments();
+            if (!containsXjustizDataset(attachments) && this.eebOwnSafeId != null) {
+                // messages displayed in the inbox are loaded without their attachments
+                BeaMessage complete = beaAccess.getMessage(this.msgContainer.getId(), this.eebOwnSafeId);
+                if (complete != null) {
+                    attachments = complete.getAttachments();
+                }
+            }
+            if (attachments == null) {
+                attachments = new ArrayList<>();
+            }
+
+            boolean found = false;
+            for (BeaAttachment att : attachments) {
+                if (!"xjustiz_nachricht.xml".equalsIgnoreCase(att.getName())) {
+                    continue;
+                }
+                found = true;
+
+                byte[] data = this.ensureAttachmentContent(att);
+                if (data == null) {
+                    JOptionPane.showMessageDialog(this, "Der XJustiz-Strukturdatensatz enthält keine Daten.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                String xjustiz = new String(data);
+                String html = "<html>Unbekannter XJustiz-Datensatztyp</html>";
+                if (beaAccess.isEebRequest(xjustiz)) {
+                    html = beaAccess.getEebAsHtml(xjustiz, null);
+                } else if (beaAccess.isEebResponse(xjustiz)) {
+                    log.warn("TODO: find matching XJustiz file - see ticket https://github.com/jlawyerorg/j-lawyer-org/issues/917");
+                    html = beaAccess.getEebAsHtml(null, xjustiz);
+                } else {
+                    log.error("Unknown XJustiz file type!");
+                }
+
+                BeaEebDisplayDialog dlg = new BeaEebDisplayDialog(EditorsRegistry.getInstance().getMainWindow());
+                dlg.setHtml(html);
+                FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+                dlg.setVisible(true);
+            }
+
+            if (!found) {
+                JOptionPane.showMessageDialog(this, "Die Nachricht enthält keinen XJustiz-Strukturdatensatz.", "eEB anzeigen", JOptionPane.INFORMATION_MESSAGE);
+            }
+
+        } catch (Exception ex) {
+            log.error("Error displaying eEB", ex);
+            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Anzeigen des Strukturdatensatzes: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+        } finally {
+            this.setCursor(Cursor.getDefaultCursor());
+        }
+
+    }//GEN-LAST:event_cmdEebShowActionPerformed
+
+    private static boolean containsXjustizDataset(List<BeaAttachment> attachments) {
+        if (attachments == null) {
+            return false;
+        }
+        for (BeaAttachment att : attachments) {
+            if ("xjustiz_nachricht.xml".equalsIgnoreCase(att.getName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Loads the displayed message from its beA postbox. This is the only way to
+     * find out whether an eEB can still be responded to - a message archived in
+     * a case may long have been deleted from the postbox.
+     */
+    private BeaMessage getMessageFromPostbox(String dialogTitle) {
+        BeaMessage m = null;
+        try {
+            m = BeaAccess.getInstance().getMessageWithoutAttachments(this.msgContainer.getId(), this.eebOwnSafeId);
+        } catch (Exception ex) {
+            log.error("Error loading message " + this.msgContainer.getId() + " from postbox " + this.eebOwnSafeId, ex);
+        }
+        if (m == null) {
+            JOptionPane.showMessageDialog(this, "Die Nachricht ist im beA-Postfach nicht mehr auffindbar - ein eEB kann dazu nicht abgegeben oder zurückgewiesen werden.", dialogTitle, JOptionPane.WARNING_MESSAGE);
+        }
+        return m;
+    }
+
+    private void setEebDone(String text) {
+        this.eebSubmitted = true;
+        this.cmdEebConfirm.setEnabled(false);
+        this.cmdEebReject.setEnabled(false);
+        this.pnlEeb.setBackground(COLOR_EEB_DONE);
+        this.lblEebInfo.setText(text);
+        this.lblEebInfo.setToolTipText(null);
+        this.pnlEeb.revalidate();
+        this.pnlEeb.repaint();
+    }
+
+    /**
+     * Stores the eEB response as a document. When the message is displayed from
+     * within a case, the response is filed there without asking - otherwise the
+     * user picks a case.
+     */
+    private void saveEebResponse(BeaMessage response, String rejectionOrConfirmation) {
+
+        try {
+
+            ArchiveFileBean targetCase = this.caseContext;
+            CaseFolder targetFolder = null;
+
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+
+            if (targetCase == null) {
+                SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + this.msgContainer.getReferenceJustice() + this.msgContainer.getReferenceNumber() + response.getSubject() + response.getBody(), null);
+                dlg.setVisible(true);
+                targetCase = dlg.getCaseSelection();
+                targetFolder = dlg.getFolderSelection();
+                dlg.dispose();
+
+                // user decided to cancel
+                if (targetCase == null) {
+                    return;
+                }
+            } else if (this.documentId != null) {
+                // file the response next to the message it belongs to
+                try {
+                    ArchiveFileDocumentsBean sourceDoc = remote.getDocument(this.documentId);
+                    if (sourceDoc != null) {
+                        targetFolder = sourceDoc.getFolder();
+                    }
+                } catch (Exception ex) {
+                    log.error("Error determining folder of document " + this.documentId, ex);
+                }
+            }
+
+            CaseUtils.optionalUnarchiveCase(targetCase, this);
+
+            BeaMessageExport mex = BeaAccess.exportMessage(response);
+            String newName = response.getId() + "_eEb-" + rejectionOrConfirmation + ".bea";
+            newName = FileUtils.sanitizeFileName(newName);
+            ArchiveFileDocumentsBean newDoc = remote.addDocument(targetCase.getId(), newName, mex.getContent(), "", null);
+
+            if (targetFolder != null) {
+                ArrayList<String> docId = new ArrayList<>();
+                docId.add(newDoc.getId());
+                remote.moveDocumentsToFolder(docId, targetFolder.getId());
+                newDoc.setFolder(targetFolder);
+            }
+
+            EventBroker.getInstance().publishEvent(new DocumentAddedEvent(newDoc));
+
+        } catch (Exception ioe) {
+            log.error("Error saving eEb response", ioe);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der eEb-Antwort: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+
+    }
+
     private byte[] ensureAttachmentContent(BeaAttachment att) throws Exception {
         byte[] data = att.getContent();
         if (data == null) {
             BeaAccess bea = BeaAccess.getInstance();
+            String safeId = this.eebOwnSafeId;
+            if (StringUtils.isEmpty(safeId)) {
+                safeId = bea.getLoggedInSafeId();
+            }
             BeaAttachment loaded = bea.getAttachmentContent(
-                    bea.getLoggedInSafeId(), this.msgContainer.getId(), att.getName());
+                    safeId, this.msgContainer.getId(), att.getName());
             att.setContent(loaded.getContent());
             data = att.getContent();
         }
@@ -1705,6 +2129,9 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdEebConfirm;
+    private javax.swing.JButton cmdEebReject;
+    private javax.swing.JButton cmdEebShow;
     private javax.swing.JButton cmdRefreshJournal;
     private javax.swing.JButton cmdRefreshProcessCard;
     private javax.swing.JButton cmdShowProcessCard;
@@ -1729,6 +2156,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLabel lblCaseNumber;
     private javax.swing.JLabel lblEeb;
+    private javax.swing.JLabel lblEebInfo;
     private javax.swing.JLabel lblFrom;
     private javax.swing.JLabel lblReferenceJustice;
     private javax.swing.JLabel lblSendStatus;
@@ -1740,6 +2168,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     private javax.swing.JMenu mnuSave;
     private javax.swing.JMenuItem mnuSaveAsFile;
     private javax.swing.JMenuItem mnuSearchSave;
+    private javax.swing.JPanel pnlEeb;
     private javax.swing.JPopupMenu popAttachments;
     private javax.swing.JTabbedPane tabAttachments;
     private javax.swing.JTable tblJournal;
