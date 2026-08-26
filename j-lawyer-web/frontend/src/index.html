@@ -28,9 +28,14 @@
     deliberate allowance; object-src stays 'none'. IMPORTANT: if/when the AUTHORITATIVE
     CSP is added as an Undertow response header, it MUST also carry frame-src 'self'
     blob:, otherwise it overrides this <meta> and re-breaks embedded PDF preview.
+
+    NOTE (Decision 6, spike): http://localhost:9980 in frame-src/form-action is the Collabora
+    Office server for in-browser editing. This is a SPIKE value — in Phase 3 the allowed origin
+    must come from the configured office.baseUrl (a per-installation Undertow response header),
+    not be hard-coded here.
   -->
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self' blob: http://localhost:9980; object-src 'none'; base-uri 'self'; form-action 'self' http://localhost:9980">
 
   <meta name="color-scheme" content="light dark">
 </head>

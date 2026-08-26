@@ -2094,15 +2094,40 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public boolean setDocumentContent(String id, byte[] content, boolean createHistoryEntry) throws Exception {
+        // ACL + lock enforced against the authenticated caller; the caller is recorded in the history.
+        return this.setDocumentContentImpl(id, content, createHistoryEntry, context.getCallerPrincipal().getName(), true);
+    }
+
+    /**
+     * Replaces a document's content WITHOUT the per-case ACL / lock check, recording {@code actingUser}
+     * as the change author in the case history. Intended ONLY for callers that authorised the operation
+     * out-of-band — currently the token-guarded WOPI host for in-browser Office editing, where the
+     * access token was minted for {@code actingUser} after a full ACL check. Must NOT be exposed
+     * directly over REST.
+     *
+     * @param id         the document id
+     * @param content    the new bytes
+     * @param actingUser the principal id recorded as the change author (from the WOPI access token)
+     * @return true on success
+     * @throws Exception on I/O or persistence failure
+     */
+    @Override
+    public boolean setDocumentContentUnrestricted(String id, byte[] content, String actingUser) throws Exception {
+        return this.setDocumentContentImpl(id, content, true, actingUser, false);
+    }
+
+    private boolean setDocumentContentImpl(String id, byte[] content, boolean createHistoryEntry, String actingUser, boolean enforceAcl) throws Exception {
 
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
 
-        if (db.isLocked() && !context.getCallerPrincipal().getName().equals(db.getLockedBy())) {
+        if (enforceAcl && db.isLocked() && !actingUser.equals(db.getLockedBy())) {
             throw new Exception(db.getName() + " ist gesperrt für Nutzer '" + db.getLockedBy() + "'");
         }
 
         String aId = db.getArchiveFileKey().getId();
-        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), db.getArchiveFileKey(), this.securityFacade, this.getAllowedGroups(aId));
+        if (enforceAcl) {
+            SecurityUtils.checkGroupsForCase(actingUser, db.getArchiveFileKey(), this.securityFacade, this.getAllowedGroups(aId));
+        }
 
         if (content != null) {
             db.setSize(content.length);
@@ -2161,7 +2186,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         if(createHistoryEntry) {
             StringGenerator idGen = new StringGenerator();
-            this.addCaseHistory(idGen.getID().toString(), db.getArchiveFileKey(), "Dokument geändert: " + db.getName());
+            // Explicit-principal overload so the WOPI path records the token's user (not a missing caller).
+            this.addCaseHistory(idGen.getID().toString(), db.getArchiveFileKey(), "Dokument geändert: " + db.getName(), actingUser, new Date());
         }
 
         DocumentUpdatedEvent evt = new DocumentUpdatedEvent();
@@ -3749,6 +3775,16 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     public byte[] getDocumentContentUnrestricted(String id) throws Exception {
         return getDocumentContentImpl(id, null);
+    }
+
+    @Override
+    public ArchiveFileDocumentsBean getDocumentUnrestricted(String id) throws Exception {
+        // Metadata (name/size/version) without the per-case ACL check — for the token-guarded WOPI host.
+        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
+        if (db == null) {
+            throw new Exception("Dokument mit ID " + id + " existiert nicht!");
+        }
+        return db;
     }
 
     @Override

@@ -24,6 +24,9 @@ import { InvoiceEditorComponent } from './invoice-editor.component';
 import { InvoicePositionsComponent } from './invoice-positions.component';
 import { PaymentEditorComponent } from './payment-editor.component';
 import { DocumentActionsComponent, FolderOption } from './document-actions.component';
+import { OfficeEditorComponent } from './office-editor.component';
+import { OFFICE_EDITABLE_EXT } from './document-actions.util';
+import { OfficeConfigService } from '../settings/office-config.service';
 import { DocumentBulkBarComponent } from './document-bulk-bar.component';
 import { CaseTimelineComponent } from './case-timeline.component';
 import {
@@ -72,7 +75,7 @@ interface TimesheetView extends CaseTimesheet {
   imports: [TranslocoModule, FormsModule, IconComponent, DatePipe, DecimalPipe, DocumentPreviewComponent,
     CaseEditorComponent, PartyAddComponent, PartyEditorComponent, EventEditorComponent,
     TimesheetEditorComponent, TimesheetDetailComponent, PositionEditorComponent, AccountEntryEditorComponent,
-    InvoiceEditorComponent, InvoicePositionsComponent, PaymentEditorComponent, DocumentActionsComponent,
+    InvoiceEditorComponent, InvoicePositionsComponent, PaymentEditorComponent, DocumentActionsComponent, OfficeEditorComponent,
     DocumentBulkBarComponent, CaseTimelineComponent],
   template: `
     <div class="master-detail" [class.show-detail]="selectedId()">
@@ -498,6 +501,11 @@ interface TimesheetView extends CaseTimesheet {
                           @if (canPreview(doc)) {
                             <button type="button" class="doc-btn" (click)="$event.stopPropagation(); preview(doc)">
                               {{ 'akten.docPreview' | transloco }}
+                            </button>
+                          }
+                          @if (canEditInBrowser(doc)) {
+                            <button type="button" class="doc-btn" (click)="$event.stopPropagation(); openOfficeEditor(doc)">
+                              <jl-icon name="edit" [size]="14" />{{ 'akten.docs.editInBrowser' | transloco }}
                             </button>
                           }
                           <button type="button" class="doc-btn primary" (click)="$event.stopPropagation(); download(doc)">
@@ -1080,6 +1088,29 @@ interface TimesheetView extends CaseTimesheet {
         </footer>
       </div>
     }
+
+    @if (officeDoc(); as od) {
+      <div class="office-ov-backdrop"></div>
+      <div class="office-ov" role="dialog" aria-modal="true">
+        <header class="office-ov-head">
+          <jl-icon name="edit" [size]="16" />
+          <h2>{{ od.name }}</h2>
+          <span class="office-ov-spacer"></span>
+          <button type="button" class="office-ov-btn" (click)="popOutOffice(od, 'tab')">
+            <jl-icon name="external" [size]="15" /> {{ 'akten.docs.office.openInTab' | transloco }}
+          </button>
+          <button type="button" class="office-ov-btn" (click)="popOutOffice(od, 'window')">
+            <jl-icon name="external" [size]="15" /> {{ 'akten.docs.office.openInWindow' | transloco }}
+          </button>
+          <button type="button" class="office-ov-x" (click)="officeDoc.set(null)" [attr.aria-label]="'akten.docs.close' | transloco">
+            <jl-icon name="close" [size]="18" />
+          </button>
+        </header>
+        <div class="office-ov-body">
+          <jl-office-editor [documentId]="od.id" />
+        </div>
+      </div>
+    }
   `,
   styleUrl: './akten.component.css',
 })
@@ -1094,6 +1125,27 @@ export class AktenComponent {
   private readonly customFieldsSvc = inject(CustomFieldsService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly office = inject(OfficeConfigService);
+
+  /** The document currently open in the in-browser Office editor overlay (null = closed). */
+  protected readonly officeDoc = signal<{ id: string; name: string } | null>(null);
+
+  /** Whether a document may be edited in the browser (a document server is configured + the type is editable). */
+  protected canEditInBrowser(doc: CaseDocument): boolean {
+    return this.office.enabled() && OFFICE_EDITABLE_EXT.has(doc.ext);
+  }
+
+  /** Opens the in-browser Office editor overlay for a document. */
+  protected openOfficeEditor(doc: CaseDocument): void {
+    this.officeDoc.set({ id: doc.id, name: doc.name });
+  }
+
+  /** Moves the current editor into a separate browser tab or window (so several documents stay open). */
+  protected popOutOffice(od: { id: string; name: string }, target: 'tab' | 'window'): void {
+    const url = new URL(`office/${encodeURIComponent(od.id)}?name=${encodeURIComponent(od.name)}`, document.baseURI).href;
+    window.open(url, '_blank', target === 'window' ? 'popup=yes,width=1280,height=860' : '');
+    this.officeDoc.set(null);
+  }
 
   /** Configured (non-empty) custom fields for cases (shown in the overview + editor). */
   protected readonly caseCustomFields = signal<CustomField[]>([]);
@@ -1239,6 +1291,7 @@ export class AktenComponent {
 
   constructor() {
     this.cases.reload();
+    this.office.ensureStatus();
     // Editing lookups (cached app-wide in the service): all groups + tag templates + list-tags.
     this.cases.allGroups().subscribe((g) => this.allGroups.set(g));
     this.cases.tagTemplates().subscribe((t) => this.tagTemplates.set(t));

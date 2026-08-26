@@ -588,3 +588,17 @@
 .ov-btn:hover:not(:disabled) { border-color: var(--jl-blue); }
 .ov-btn:disabled { opacity: .5; cursor: default; }
 .ov-btn.primary { background: var(--jl-blue); border-color: var(--jl-blue); color: #fff; }
+
+/* In-browser Office editor overlay (Decision 6) */
+.office-ov-backdrop { position: fixed; inset: 0; z-index: 200; background: rgba(6,14,22,.6); }
+.office-ov { position: fixed; inset: 24px; z-index: 201; display: flex; flex-direction: column; overflow: hidden;
+  background: var(--jl-surface); border: 1px solid var(--jl-line); border-radius: 14px; box-shadow: 0 24px 70px rgba(0,0,0,.4); }
+.office-ov-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--jl-line); }
+.office-ov-head h2 { margin: 0; font-size: 1rem; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.office-ov-spacer { flex: 1; }
+.office-ov-btn { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: .8rem; font-weight: 600;
+  padding: 6px 11px; border-radius: 8px; border: 1px solid var(--jl-line-strong); background: var(--jl-surface); color: var(--jl-ink-soft); cursor: pointer; }
+.office-ov-btn:hover { border-color: var(--jl-blue); color: var(--jl-blue); }
+.office-ov-x { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; border: 0; background: transparent; color: var(--jl-ink-soft); cursor: pointer; }
+.office-ov-x:hover { background: var(--jl-surface-alt); color: var(--jl-ink); }
+.office-ov-body { flex: 1; min-height: 0; }

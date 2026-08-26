@@ -755,6 +755,16 @@ public interface ArchiveFileServiceLocal {
 
     byte[] getDocumentContentUnrestricted(String id) throws Exception;
 
+    /** Document metadata without the per-case ACL — for the token-guarded WOPI host (in-browser Office editing). */
+    ArchiveFileDocumentsBean getDocumentUnrestricted(String id) throws Exception;
+
+    /**
+     * Replaces a document's content WITHOUT the per-case ACL/lock check, recording {@code actingUser} as
+     * the change author in the case history. ONLY for callers that authorised the operation out-of-band —
+     * the token-guarded WOPI host (the access token was minted for {@code actingUser} after an ACL check).
+     */
+    boolean setDocumentContentUnrestricted(String id, byte[] content, String actingUser) throws Exception;
+
     public List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey);
     public List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey, boolean includeCases);
     
