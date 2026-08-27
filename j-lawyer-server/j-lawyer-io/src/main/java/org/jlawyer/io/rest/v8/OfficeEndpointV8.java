@@ -196,10 +196,13 @@ public class OfficeEndpointV8 implements OfficeEndpointLocalV8 {
             String token = jwt.issue(JwtKeyProvider.getPrivateKey(), user, Collections.emptyList(),
                     WopiEndpoint.TOKEN_ISSUER, WopiEndpoint.TOKEN_AUDIENCE, now, WopiEndpoint.WOPI_TTL_SECONDS, documentId);
 
+            String wopiSrc = trimSlash(orEmpty(wopiPublicUrl)) + "/j-lawyer-io/rest/wopi/files/" + documentId;
             RestfulEditorConfigV8 cfg = new RestfulEditorConfigV8();
             cfg.setProvider(provider);
-            cfg.setUrlsrc(urlsrc);
-            cfg.setWopiSrc(trimSlash(orEmpty(wopiPublicUrl)) + "/j-lawyer-io/rest/wopi/files/" + documentId);
+            // Return the complete editor action URL (WOPISrc embedded), handling both the "bare"
+            // Collabora urlsrc and OnlyOffice's WOPI-discovery placeholders.
+            cfg.setUrlsrc(buildActionUrl(urlsrc, wopiSrc));
+            cfg.setWopiSrc(wopiSrc);
             cfg.setAccessToken(token);
             cfg.setAccessTokenTtl(WopiEndpoint.WOPI_TTL_SECONDS);
             cfg.setFileName(fileName);
@@ -235,6 +238,47 @@ public class OfficeEndpointV8 implements OfficeEndpointLocalV8 {
         } finally {
             con.disconnect();
         }
+    }
+
+    /**
+     * WOPI discovery placeholder, e.g. {@code <wopisrc=WOPI_SOURCE&>} — parameter name and the
+     * placeholder value the host must substitute or strip.
+     */
+    private static final java.util.regex.Pattern PLACEHOLDER = java.util.regex.Pattern.compile("<([^=<>]+)=([^<>&]+)&>");
+
+    /**
+     * Builds the final editor action URL from a discovery {@code urlsrc}: OnlyOffice-style urlsrc
+     * carries WOPI placeholders (sets {@code WOPI_SOURCE} → WOPISrc + the UI language, strips the
+     * rest); a "bare" Collabora-style urlsrc simply gets WOPISrc appended.
+     */
+    private static String buildActionUrl(String urlsrc, String wopiSrc) {
+        String enc;
+        try {
+            enc = java.net.URLEncoder.encode(wopiSrc, "UTF-8");
+        } catch (Exception ex) {
+            enc = wopiSrc;
+        }
+        if (urlsrc.contains("<")) {
+            java.util.regex.Matcher m = PLACEHOLDER.matcher(urlsrc);
+            StringBuffer sb = new StringBuffer();
+            while (m.find()) {
+                String param = m.group(1);
+                String value = m.group(2);
+                String repl;
+                if ("WOPI_SOURCE".equals(value)) {
+                    repl = param + "=" + enc + "&";
+                } else if ("UI_LLCC".equals(value) || "DC_LLCC".equals(value)) {
+                    repl = param + "=de-DE&";
+                } else {
+                    repl = "";
+                }
+                m.appendReplacement(sb, java.util.regex.Matcher.quoteReplacement(repl));
+            }
+            m.appendTail(sb);
+            return sb.toString();
+        }
+        String sep = (urlsrc.endsWith("?") || urlsrc.endsWith("&")) ? "" : (urlsrc.contains("?") ? "&" : "?");
+        return urlsrc + sep + "WOPISrc=" + enc + "&lang=de-DE";
     }
 
     private static boolean isConfigured(String provider, String baseUrl) {
