@@ -59,7 +59,8 @@ export class OfficeEditorComponent {
           this.token.set(cfg.accessToken);
           // access_token_ttl is the expiry as epoch millis (Collabora/WOPI convention).
           this.tokenTtl.set(String(Date.now() + cfg.accessTokenTtl * 1000));
-          this.action.set(cfg.urlsrc + 'WOPISrc=' + encodeURIComponent(cfg.wopiSrc) + '&lang=de-DE');
+          // The server returns the complete action URL (WOPISrc + provider placeholders resolved).
+          this.action.set(cfg.urlsrc);
           this.loading.set(false);
         },
         error: () => { this.error.set(true); this.loading.set(false); },
