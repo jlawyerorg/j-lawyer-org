@@ -752,6 +752,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     private static final String MSG_MISSING_TIMESHEET = "Zeiterfassungsprojekt kann nicht gefunden werden";
     private static final String MSG_MISSING_TIMESHEETPOS = "Zeiterfassungsposition kann nicht gefunden werden";
 
+    // column sizes of the payments table - values exceeding them would fail the flush and
+    // roll back the entire call instead of just losing the surplus characters
+    private static final int MAXLEN_PAYMENT_NAME = 250;
+    private static final int MAXLEN_PAYMENT_DESCRIPTION = 160;
+    private static final int MAXLEN_PAYMENT_REASON = 160;
+
     @Resource
     private SessionContext context;
     @EJB
@@ -6391,6 +6397,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         if (allowed) {
 
+            this.enforcePaymentFieldLengths(payment);
+
             Payment updatedPayment = this.paymentsFacade.find(payment.getId());
             updatedPayment.setContact(payment.getContact());
             updatedPayment.setDescription(payment.getDescription());
@@ -8012,6 +8020,35 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
     }
 
+    /**
+     * shortens the free text fields of a payment to the length of their database columns
+     *
+     * @param payment payment to be adjusted in place
+     */
+    private void enforcePaymentFieldLengths(Payment payment) {
+        if (payment == null) {
+            return;
+        }
+
+        String name = ServerStringUtils.limitLength(payment.getName(), MAXLEN_PAYMENT_NAME);
+        if (name != null && !name.equals(payment.getName())) {
+            log.warn("truncating name of payment " + payment.getId() + " to " + MAXLEN_PAYMENT_NAME + " characters");
+            payment.setName(name);
+        }
+
+        String description = ServerStringUtils.limitLength(payment.getDescription(), MAXLEN_PAYMENT_DESCRIPTION);
+        if (description != null && !description.equals(payment.getDescription())) {
+            log.warn("truncating description of payment " + payment.getId() + " to " + MAXLEN_PAYMENT_DESCRIPTION + " characters");
+            payment.setDescription(description);
+        }
+
+        String reason = ServerStringUtils.limitLength(payment.getReason(), MAXLEN_PAYMENT_REASON);
+        if (reason != null && !reason.equals(payment.getReason())) {
+            log.warn("truncating reason of payment " + payment.getId() + " to " + MAXLEN_PAYMENT_REASON + " characters");
+            payment.setReason(reason);
+        }
+    }
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public Payment addPayment(String caseId, Payment payment) throws Exception {
@@ -8056,6 +8093,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             payment.setId(idGen.getID().toString());
             payment.setCreationDate(new Date());
             payment.setArchiveFileKey(aFile);
+            this.enforcePaymentFieldLengths(payment);
 
             // check for conflicting invoice numbers
             Payment conflictingPayment = this.paymentsFacade.findByPaymentNumber(payment.getPaymentNumber());

@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.DocumentSizeFilter;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
@@ -693,6 +694,7 @@ import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.text.AbstractDocument;
 import org.apache.log4j.Logger;
 import org.java.sepaxml.validator.SEPAValidatorIBAN;
 import themes.colors.DefaultColorTheme;
@@ -706,6 +708,11 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
     private static final String ICON_SUCCESS = "/icons/agt_action_success.png";
 
     private static final Logger log = Logger.getLogger(PaymentDialog.class.getName());
+
+    // column sizes of the payments table
+    private static final int MAXLEN_NAME = 250;
+    private static final int MAXLEN_DESCRIPTION = 160;
+    private static final int MAXLEN_REASON = 160;
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
     private final DecimalFormat cf = new DecimalFormat(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.numberFormat", "#,##0.00"));
     private final DecimalFormat accountEntryFormat = new DecimalFormat("#,##0.00");
@@ -732,6 +739,11 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
         initComponents();
         ComponentUtils.restoreDialogSize(this);
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
+
+        // keep the input within the size of the respective columns of the payments table
+        ((AbstractDocument) this.txtName.getDocument()).setDocumentFilter(new DocumentSizeFilter(MAXLEN_NAME));
+        ((AbstractDocument) this.taDescription.getDocument()).setDocumentFilter(new DocumentSizeFilter(MAXLEN_DESCRIPTION));
+        ((AbstractDocument) this.txtReason.getDocument()).setDocumentFilter(new DocumentSizeFilter(MAXLEN_REASON));
 
         this.lblHeader.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
 

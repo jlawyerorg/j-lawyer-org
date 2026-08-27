@@ -669,6 +669,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import javax.persistence.*;
+import javax.validation.constraints.Size;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -723,13 +724,17 @@ public class Payment implements Serializable {
     @Basic(optional = false)
     @Column(name = "id")
     protected String id;
-    @Column(name = "name")
+    @Size(max = 250)
+    @Column(name = "name", length = 250)
     protected String name;
-    @Column(name = "description")
+    @Size(max = 160)
+    @Column(name = "description", length = 160)
     protected String description;
-    @Column(name = "reason")
+    @Size(max = 160)
+    @Column(name = "reason", length = 160)
     private String reason;
-    @Column(name = "payment_no")
+    @Size(max = 50)
+    @Column(name = "payment_no", length = 50)
     protected String paymentNumber;
     @Column(name = "payment_status")
     protected int status=STATUS_NEW;
@@ -762,7 +767,8 @@ public class Payment implements Serializable {
 //    @OneToOne(fetch = FetchType.EAGER)
 //    protected ArchiveFileDocumentsBean paymentDocument;
     
-    @Column(name = "currency")
+    @Size(max = 20)
+    @Column(name = "currency", length = 20)
     protected String currency="EUR";
     
     @Column(name = "payment_type")

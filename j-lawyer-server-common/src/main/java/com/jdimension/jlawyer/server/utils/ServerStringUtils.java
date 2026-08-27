@@ -715,6 +715,19 @@ public class ServerStringUtils {
         return s;
     }
     
+    /**
+     * shortens a string to a given maximum length, e.g. to make it fit into a database column
+     * @param s string to be shortened, may be null
+     * @param maxLength maximum number of characters to keep
+     * @return the unchanged string if it is null or short enough, its first maxLength characters otherwise
+     */
+    public static String limitLength(String s, int maxLength) {
+        if (s == null || s.length() <= maxLength) {
+            return s;
+        }
+        return s.substring(0, maxLength);
+    }
+    
     public static boolean isEmpty(String s) {
         if(s==null)
             return true;
