@@ -26,11 +26,13 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.security.PermitAll;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -92,7 +94,7 @@ public class WopiEndpoint {
             // A valid token is only ever minted after a writeArchiveFileRole + case-ACL check.
             info.put("UserCanWrite", true);
             info.put("SupportsUpdate", true);
-            info.put("SupportsLocks", false);
+            info.put("SupportsLocks", true);
             info.put("PostMessageOrigin", "*");
             return Response.ok(info).build();
         } catch (JwtException je) {
@@ -124,9 +126,14 @@ public class WopiEndpoint {
     @POST
     @Path("/{id}/contents")
     @Consumes(MediaType.WILDCARD)
-    public Response putFile(@PathParam("id") String id, @QueryParam("access_token") String token, byte[] content) {
+    public Response putFile(@PathParam("id") String id, @QueryParam("access_token") String token,
+            @HeaderParam("X-WOPI-Lock") String lock, byte[] content) {
         try {
             JwtClaims claims = validate(token, id);
+            String current = currentLock(id);
+            if (current != null && !current.equals(lock)) {
+                return Response.status(Response.Status.CONFLICT).header("X-WOPI-Lock", current).build();
+            }
             cases().setDocumentContentUnrestricted(id, content, claims.getSubject());
             return Response.ok().build();
         } catch (JwtException je) {
@@ -134,6 +141,58 @@ public class WopiEndpoint {
         } catch (Exception ex) {
             log.error("WOPI PutFile failed for " + id, ex);
             return Response.serverError().build();
+        }
+    }
+
+    /**
+     * WOPI lock operations (LOCK / UNLOCK / REFRESH_LOCK / GET_LOCK / UNLOCK_AND_RELOCK) — required by
+     * OnlyOffice's edit action and providing single-editor locking (in-memory, per node; sufficient
+     * for a single WildFly). On a lock mismatch WOPI expects 409 with the current lock in X-WOPI-Lock.
+     */
+    @POST
+    @Path("/{id}")
+    public Response lockOperation(@PathParam("id") String id, @QueryParam("access_token") String token,
+            @HeaderParam("X-WOPI-Override") String override,
+            @HeaderParam("X-WOPI-Lock") String lock,
+            @HeaderParam("X-WOPI-OldLock") String oldLock) {
+        try {
+            validate(token, id);
+        } catch (JwtException je) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        if (override == null) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+        String current = currentLock(id);
+        switch (override) {
+            case "GET_LOCK":
+                return Response.ok().header("X-WOPI-Lock", current == null ? "" : current).build();
+            case "LOCK":
+                if (current == null || current.equals(lock)) {
+                    putLock(id, lock);
+                    return Response.ok().build();
+                }
+                return Response.status(Response.Status.CONFLICT).header("X-WOPI-Lock", current).build();
+            case "REFRESH_LOCK":
+                if (current != null && current.equals(lock)) {
+                    putLock(id, lock);
+                    return Response.ok().build();
+                }
+                return Response.status(Response.Status.CONFLICT).header("X-WOPI-Lock", current == null ? "" : current).build();
+            case "UNLOCK":
+                if (current != null && current.equals(lock)) {
+                    LOCKS.remove(id);
+                    return Response.ok().build();
+                }
+                return Response.status(Response.Status.CONFLICT).header("X-WOPI-Lock", current == null ? "" : current).build();
+            case "UNLOCK_AND_RELOCK":
+                if (current != null && current.equals(oldLock)) {
+                    putLock(id, lock);
+                    return Response.ok().build();
+                }
+                return Response.status(Response.Status.CONFLICT).header("X-WOPI-Lock", current == null ? "" : current).build();
+            default:
+                return Response.status(Response.Status.BAD_REQUEST).build();
         }
     }
 
@@ -154,6 +213,37 @@ public class WopiEndpoint {
 
     private ArchiveFileServiceLocal cases() throws Exception {
         return (ArchiveFileServiceLocal) new InitialContext().lookup(LOOKUP_CASES);
+    }
+
+    // ---- in-memory WOPI lock store (per node; sufficient for a single WildFly) ----
+
+    private static final long LOCK_TTL_SECONDS = 30 * 60L;
+    private static final ConcurrentHashMap<String, LockInfo> LOCKS = new ConcurrentHashMap<>();
+
+    private static final class LockInfo {
+        final String lockId;
+        final long expiresAt;
+        LockInfo(String lockId, long expiresAt) {
+            this.lockId = lockId;
+            this.expiresAt = expiresAt;
+        }
+    }
+
+    /** The current, non-expired lock id for a document, or null. */
+    private static String currentLock(String id) {
+        LockInfo li = LOCKS.get(id);
+        if (li == null) {
+            return null;
+        }
+        if (li.expiresAt < Instant.now().getEpochSecond()) {
+            LOCKS.remove(id, li);
+            return null;
+        }
+        return li.lockId;
+    }
+
+    private static void putLock(String id, String lockId) {
+        LOCKS.put(id, new LockInfo(lockId == null ? "" : lockId, Instant.now().getEpochSecond() + LOCK_TTL_SECONDS));
     }
 
 }
