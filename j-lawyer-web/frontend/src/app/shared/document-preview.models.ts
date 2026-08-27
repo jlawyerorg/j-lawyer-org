@@ -22,11 +22,67 @@ export interface DocumentContentDto {
   base64content: string;
 }
 
-/** How a document can be previewed in the browser (constrained by the app CSP). */
-export type DocPreviewKind = 'pdf' | 'image' | 'text' | 'none';
+/**
+ * How a document can be previewed in the browser (constrained by the app CSP). `office` documents
+ * are rendered via a server-produced PDF (StirlingPDF); `eml`/`bea` via a server-parsed structured view.
+ */
+export type DocPreviewKind = 'pdf' | 'image' | 'text' | 'html' | 'office' | 'eml' | 'bea' | 'none';
 
 const IMAGE_EXTS = new Set(['PNG', 'JPG', 'JPEG', 'GIF', 'WEBP', 'BMP']);
-const TEXT_EXTS = new Set(['TXT', 'MD', 'CSV', 'LOG', 'XML', 'JSON', 'HTML', 'HTM', 'EML', 'YML', 'YAML']);
+const TEXT_EXTS = new Set(['TXT', 'MD', 'CSV', 'LOG', 'XML', 'JSON', 'YML', 'YAML']);
+/** HTML documents get an editable rich-text (WYSIWYG) editor rather than a read-only viewer. */
+const HTML_EXTS = new Set(['HTML', 'HTM']);
+/** Office formats previewed via server-side conversion to PDF (mirrors FileTypes.LO_OFFICEFILETYPES, minus text/image). */
+const OFFICE_EXTS = new Set([
+  'DOC', 'DOCX', 'DOT', 'DOCM', 'DOTX', 'DOTM', 'ODT', 'OTT', 'FODT', 'SXW', 'STW', 'RTF', 'WPD', 'WPS',
+  'ODS', 'OTS', 'FODS', 'SXC', 'STC', 'XLS', 'XLSX', 'XLSM', 'XLT', 'XLTX', 'XLW',
+  'ODP', 'OTP', 'FODP', 'PPT', 'PPS', 'PPTX', 'PPTM', 'POT', 'POTX',
+]);
+
+/**
+ * Office preview from the server (GET /v8/cases/document/{id}/preview-pdf): a PDF rendering when
+ * available (StirlingPDF), else the extracted text (Tika) as a fallback.
+ */
+export interface OfficePreview {
+  kind: 'pdf' | 'text';
+  fileName: string;
+  /** Base64 PDF when kind === 'pdf'. */
+  base64content?: string;
+  /** Extracted text when kind === 'text'. */
+  text?: string;
+}
+
+/** An attachment shown in the EML / beA preview. */
+export interface PreviewAttachment {
+  name: string;
+  size: number;
+}
+
+/** Parsed email (.eml) for preview — from the server (GET /v8/cases/document/{id}/eml). */
+export interface EmailPreview {
+  subject: string;
+  from: string;
+  to: string;
+  cc: string;
+  date: string;
+  /** Sanitised HTML body when the mail has one, else ''. */
+  htmlBody: string;
+  /** Plain-text body when there is no HTML body, else ''. */
+  textBody: string;
+  attachments: PreviewAttachment[];
+}
+
+/** Parsed beA message (.bea) for preview — from the server (GET /v8/cases/document/{id}/bea). */
+export interface BeaPreview {
+  subject: string;
+  from: string;
+  to: string;
+  sent: string;
+  caseNumber: string;
+  justizReference: string;
+  body: string;
+  attachments: PreviewAttachment[];
+}
 
 /** Decides how (or whether) a document can be previewed, based on its extension. */
 export function previewKindOf(ext: string): DocPreviewKind {
@@ -34,11 +90,23 @@ export function previewKindOf(ext: string): DocPreviewKind {
   if (e === 'PDF') {
     return 'pdf';
   }
+  if (e === 'EML') {
+    return 'eml';
+  }
+  if (e === 'BEA') {
+    return 'bea';
+  }
+  if (HTML_EXTS.has(e)) {
+    return 'html';
+  }
   if (IMAGE_EXTS.has(e)) {
     return 'image';
   }
   if (TEXT_EXTS.has(e)) {
     return 'text';
+  }
+  if (OFFICE_EXTS.has(e)) {
+    return 'office';
   }
   return 'none';
 }
@@ -85,6 +153,16 @@ export function base64ToBytes(b64: string): Uint8Array<ArrayBuffer> {
 /** Decodes UTF-8 bytes into a string (for text previews). */
 export function bytesToText(bytes: Uint8Array): string {
   return new TextDecoder('utf-8').decode(bytes);
+}
+
+/** Encodes a string as Base64 of its UTF-8 bytes (for saving edited text/HTML content). */
+export function textToBase64(text: string): string {
+  const bytes = new TextEncoder().encode(text);
+  let bin = '';
+  for (const b of bytes) {
+    bin += String.fromCharCode(b);
+  }
+  return btoa(bin);
 }
 
 /** Display category derived from a file extension (drives the file-type badge icon + colour). */

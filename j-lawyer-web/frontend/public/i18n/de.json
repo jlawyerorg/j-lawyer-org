@@ -840,6 +840,7 @@
       "labels": "Etiketten",
       "editExternal": "Extern bearbeiten",
       "editInBrowser": "Im Browser bearbeiten",
+      "previewHint": "Dokument in der Liste anklicken, um es hier anzuzeigen.",
       "office": {
         "title": "Office-Editor",
         "loading": "Editor wird geladen …",
@@ -1547,7 +1548,18 @@
     "close": "Schließen",
     "loading": "Dokument wird geladen …",
     "error": "Dokument konnte nicht geladen werden.",
-    "noPreview": "Für dieses Format ist keine Vorschau verfügbar."
+    "noPreview": "Für dieses Format ist keine Vorschau verfügbar.",
+    "mail": {
+      "subject": "Betreff",
+      "from": "Von",
+      "to": "An",
+      "cc": "Kopie (CC)",
+      "date": "Datum",
+      "sent": "Gesendet",
+      "caseNumber": "Aktenzeichen",
+      "justizReference": "Justiz-Aktenzeichen"
+    },
+    "editSeparate": "In separatem Tab bearbeiten"
   },
   "email": {
     "title": "E-Mail",
@@ -1920,5 +1932,34 @@
       "sender": "Absender",
       "subjectBody": "Text"
     }
+  },
+  "editor": {
+    "loading": "Dokument wird geladen …",
+    "loadError": "Dokument konnte nicht geladen werden.",
+    "saving": "Speichern …",
+    "saved": "Gespeichert",
+    "saveError": "Speichern fehlgeschlagen",
+    "undo": "Rückgängig",
+    "redo": "Wiederholen",
+    "bold": "Fett",
+    "italic": "Kursiv",
+    "underline": "Unterstrichen",
+    "strike": "Durchgestrichen",
+    "h1": "Überschrift 1",
+    "h2": "Überschrift 2",
+    "h3": "Überschrift 3",
+    "paragraph": "Absatz",
+    "bulletList": "Aufzählung",
+    "orderedList": "Nummerierte Liste",
+    "link": "Link",
+    "alignLeft": "Linksbündig",
+    "alignCenter": "Zentriert",
+    "alignRight": "Rechtsbündig",
+    "table": "Tabelle einfügen",
+    "fontFamily": "Schriftart",
+    "fontDefault": "Standardschrift",
+    "textColor": "Textfarbe",
+    "highlight": "Texthervorhebung",
+    "clearFormat": "Formatierung entfernen"
   }
 }

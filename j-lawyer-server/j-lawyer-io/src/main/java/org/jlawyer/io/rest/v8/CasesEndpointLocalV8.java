@@ -44,4 +44,10 @@ public interface CasesEndpointLocalV8 {
 
     Response updateDocumentContent(String id, RestfulDocumentContentUpdateV8 body);
 
+    Response getDocumentPreviewPdf(String id);
+
+    Response getDocumentEmlPreview(String id);
+
+    Response getDocumentBeaPreview(String id);
+
 }

@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
+import { Observable } from 'rxjs';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { trustBlobResourceUrl } from './safe-url.util';
 import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from './icon.component';
+import { HtmlEditorComponent } from './html-editor.component';
 import { DocumentContentService } from './document-content.service';
 import {
-  base64ToBytes, bytesToText, DocPreviewKind, mimeOf, previewKindOf, PreviewDoc,
+  base64ToBytes, BeaPreview, bytesToText, DocPreviewKind, EmailPreview, mimeOf, previewKindOf, PreviewDoc,
 } from './document-preview.models';
 
 /**
@@ -18,19 +20,22 @@ import {
   selector: 'jl-document-preview',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoModule, IconComponent],
+  imports: [TranslocoModule, IconComponent, HtmlEditorComponent],
   template: `
     @if (doc(); as pd) {
-      <div class="viewer" (click)="close()">
+      <div class="viewer" [class.embedded]="embedded()" (click)="embedded() ? null : close()">
         <div class="viewer-box" (click)="$event.stopPropagation()">
           <header class="viewer-head">
             <span class="ext">{{ pd.ext || '—' }}</span>
             <span class="viewer-name">{{ pd.name }}</span>
-            @if (kind() === 'pdf' && pdfSafeUrl()) {
-              <button type="button" class="doc-btn" (click)="openPdfTab()">{{ 'preview.openTab' | transloco }}</button>
+            @if (kind() === 'html') {
+              <button type="button" class="doc-btn" (click)="popOutHtml()" [title]="'preview.editSeparate' | transloco"><jl-icon name="external" [size]="14" /></button>
             }
-            <button type="button" class="doc-btn" (click)="triggerDownload()">
-              <jl-icon name="download" [size]="14" />{{ 'preview.download' | transloco }}
+            @if (pdfSafeUrl()) {
+              <button type="button" class="doc-btn" (click)="openPdfTab()" [title]="'preview.openTab' | transloco"><jl-icon name="external" [size]="14" /></button>
+            }
+            <button type="button" class="doc-btn" (click)="triggerDownload()" [title]="'preview.download' | transloco">
+              <jl-icon name="download" [size]="14" />
             </button>
             <button type="button" class="viewer-close" (click)="close()" [attr.aria-label]="'preview.close' | transloco">✕</button>
           </header>
@@ -43,7 +48,52 @@ import {
               <img class="viewer-img" [src]="image()" [alt]="pd.name" />
             } @else if (kind() === 'text') {
               <pre class="viewer-text">{{ text() }}</pre>
-            } @else if (kind() === 'pdf' && pdfSafeUrl()) {
+            } @else if (kind() === 'html') {
+              <jl-html-editor [documentId]="pd.id" [embedded]="embedded()" />
+            } @else if (kind() === 'eml' && eml(); as em) {
+              <div class="mailview">
+                <dl class="mail-head">
+                  <dt>{{ 'preview.mail.subject' | transloco }}</dt><dd>{{ em.subject || '—' }}</dd>
+                  <dt>{{ 'preview.mail.from' | transloco }}</dt><dd>{{ em.from || '—' }}</dd>
+                  <dt>{{ 'preview.mail.to' | transloco }}</dt><dd>{{ em.to || '—' }}</dd>
+                  @if (em.cc) { <dt>{{ 'preview.mail.cc' | transloco }}</dt><dd>{{ em.cc }}</dd> }
+                  @if (em.date) { <dt>{{ 'preview.mail.date' | transloco }}</dt><dd>{{ em.date }}</dd> }
+                </dl>
+                @if (em.attachments.length) {
+                  <div class="mail-atts">
+                    <jl-icon name="paperclip" [size]="13" />
+                    @for (a of em.attachments; track $index) {
+                      <span class="att-chip">{{ a.name }}@if (a.size > 0) { <em>({{ fmtSize(a.size) }})</em> }</span>
+                    }
+                  </div>
+                }
+                @if (em.htmlBody) {
+                  <div class="mail-body" [innerHTML]="em.htmlBody"></div>
+                } @else {
+                  <pre class="mail-body-text">{{ em.textBody }}</pre>
+                }
+              </div>
+            } @else if (kind() === 'bea' && bea(); as bm) {
+              <div class="mailview">
+                <dl class="mail-head">
+                  <dt>{{ 'preview.mail.subject' | transloco }}</dt><dd>{{ bm.subject || '—' }}</dd>
+                  <dt>{{ 'preview.mail.from' | transloco }}</dt><dd>{{ bm.from || '—' }}</dd>
+                  <dt>{{ 'preview.mail.to' | transloco }}</dt><dd>{{ bm.to || '—' }}</dd>
+                  @if (bm.sent) { <dt>{{ 'preview.mail.sent' | transloco }}</dt><dd>{{ bm.sent }}</dd> }
+                  @if (bm.caseNumber) { <dt>{{ 'preview.mail.caseNumber' | transloco }}</dt><dd>{{ bm.caseNumber }}</dd> }
+                  @if (bm.justizReference) { <dt>{{ 'preview.mail.justizReference' | transloco }}</dt><dd>{{ bm.justizReference }}</dd> }
+                </dl>
+                @if (bm.attachments.length) {
+                  <div class="mail-atts">
+                    <jl-icon name="paperclip" [size]="13" />
+                    @for (a of bm.attachments; track $index) {
+                      <span class="att-chip">{{ a.name }}@if (a.size > 0) { <em>({{ fmtSize(a.size) }})</em> }</span>
+                    }
+                  </div>
+                }
+                <pre class="mail-body-text">{{ bm.body }}</pre>
+              </div>
+            } @else if (pdfSafeUrl()) {
               <iframe class="viewer-frame" [src]="pdfSafeUrl()" [title]="pd.name"></iframe>
             } @else {
               <p class="pad">{{ 'preview.noPreview' | transloco }}</p>
@@ -79,6 +129,25 @@ import {
     .viewer-text { margin: 0; padding: 16px 18px; width: 100%; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
       font-size: .82rem; line-height: 1.5; color: var(--jl-ink); white-space: pre-wrap; word-break: break-word; }
     .viewer-frame { width: 100%; height: 100%; border: 0; background: #fff; }
+    /* Structured mail / beA preview */
+    .mailview { width: 100%; display: flex; flex-direction: column; background: var(--jl-surface); }
+    .mail-head { margin: 0; padding: 14px 18px; display: grid; grid-template-columns: auto 1fr; gap: 4px 14px;
+      border-bottom: 1px solid var(--jl-line); font-size: .84rem; }
+    .mail-head dt { color: var(--jl-ink-soft); font-weight: 650; white-space: nowrap; }
+    .mail-head dd { margin: 0; color: var(--jl-ink); min-width: 0; word-break: break-word; }
+    .mail-atts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 18px;
+      border-bottom: 1px solid var(--jl-line); color: var(--jl-ink-soft); }
+    .att-chip { display: inline-flex; align-items: center; gap: 5px; font-size: .78rem; color: var(--jl-ink);
+      background: var(--jl-surface-alt); border: 1px solid var(--jl-line); border-radius: 6px; padding: 3px 8px; }
+    .att-chip em { color: var(--jl-ink-soft); font-style: normal; }
+    .mail-body { padding: 16px 18px; overflow: auto; font-size: .88rem; line-height: 1.5; color: var(--jl-ink);
+      background: #fff; }
+    .mail-body img { max-width: 100%; height: auto; }
+    .mail-body-text { margin: 0; padding: 16px 18px; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: .82rem; line-height: 1.5; color: var(--jl-ink); white-space: pre-wrap; word-break: break-word; }
+    /* Embedded (side-panel) mode: fill the host, no overlay/backdrop/shadow. */
+    .viewer.embedded { position: static; inset: auto; z-index: auto; padding: 0; background: transparent; height: 100%; display: block; }
+    .viewer.embedded .viewer-box { width: 100%; height: 100%; border: 0; border-radius: 0; box-shadow: none; }
   `],
 })
 export class DocumentPreviewComponent {
@@ -89,6 +158,8 @@ export class DocumentPreviewComponent {
    * come from a non-document source (e.g. beA message attachments).
    */
   readonly inlineContent = input<string | null>(null);
+  /** When true, renders in-flow filling the host (a side panel) instead of a fixed overlay. */
+  readonly embedded = input(false);
   readonly closed = output<void>();
 
   private readonly contentService = inject(DocumentContentService);
@@ -100,6 +171,8 @@ export class DocumentPreviewComponent {
   protected readonly image = signal<string | null>(null);
   protected readonly text = signal('');
   protected readonly pdfSafeUrl = signal<SafeResourceUrl | null>(null);
+  protected readonly eml = signal<EmailPreview | null>(null);
+  protected readonly bea = signal<BeaPreview | null>(null);
 
   private pdfBlobUrl: string | null = null;
   private seq = 0;
@@ -142,6 +215,17 @@ export class DocumentPreviewComponent {
     this.contentService.download(d);
   }
 
+  /** Opens the HTML rich-text editor for this document in a separate tab/window (pop-out). */
+  protected popOutHtml(): void {
+    const d = this.doc();
+    if (!d) {
+      return;
+    }
+    const url = new URL(`htmledit/${encodeURIComponent(d.id)}?name=${encodeURIComponent(d.name)}`, document.baseURI).href;
+    window.open(url, '_blank', 'noopener');
+    this.close();
+  }
+
   /** Opens the already-fetched PDF blob in a new tab (native viewer; CSP blocks embedding). */
   protected openPdfTab(): void {
     if (this.pdfBlobUrl) {
@@ -158,10 +242,93 @@ export class DocumentPreviewComponent {
     this.pdfSafeUrl.set(null);
     this.image.set(null);
     this.text.set('');
+    this.eml.set(null);
+    this.bea.set(null);
     this.error.set(false);
     this.kind.set(kind);
     if (kind === 'none') {
       this.loading.set(false);
+      return;
+    }
+    // Office documents: render the server-produced PDF (StirlingPDF); case documents only.
+    if (kind === 'office') {
+      if (d.source === 'contact') {
+        this.loading.set(false);
+        return;
+      }
+      this.loading.set(true);
+      this.contentService.previewPdf(d.id).subscribe({
+        next: (dto) => {
+          if (seq !== this.seq) {
+            return;
+          }
+          if (dto.kind === 'pdf' && dto.base64content) {
+            this.render(d, dto.base64content, 'pdf', seq);
+          } else {
+            // No PDF rendering available (StirlingPDF not configured) — show the extracted text.
+            this.kind.set('text');
+            this.text.set(dto.text ?? '');
+            this.loading.set(false);
+          }
+        },
+        error: () => {
+          if (seq === this.seq) {
+            this.error.set(true);
+            this.loading.set(false);
+          }
+        },
+      });
+      return;
+    }
+    // HTML: editable rich-text (WYSIWYG) editor. Case documents only — contact documents have no
+    // write endpoint, so they fall back to a read-only text view of the raw HTML.
+    if (kind === 'html') {
+      if (d.source === 'contact') {
+        this.kind.set('text');
+        this.loading.set(true);
+        this.contentService.content(d.id, 'contact').subscribe({
+          next: (dto) => this.render(d, dto.base64content ?? '', 'text', seq),
+          error: () => {
+            if (seq === this.seq) {
+              this.error.set(true);
+              this.loading.set(false);
+            }
+          },
+        });
+        return;
+      }
+      this.loading.set(false); // the embedded <jl-html-editor> loads and auto-saves itself
+      return;
+    }
+    // EML / beA: server-parsed structured previews (headers, body, attachments); case documents only.
+    if (kind === 'eml' || kind === 'bea') {
+      if (d.source === 'contact') {
+        this.loading.set(false);
+        return;
+      }
+      this.loading.set(true);
+      const req: Observable<EmailPreview | BeaPreview> = kind === 'eml'
+        ? this.contentService.emlPreview(d.id)
+        : this.contentService.beaPreview(d.id);
+      req.subscribe({
+        next: (dto) => {
+          if (seq !== this.seq) {
+            return;
+          }
+          if (kind === 'eml') {
+            this.eml.set(dto as EmailPreview);
+          } else {
+            this.bea.set(dto as BeaPreview);
+          }
+          this.loading.set(false);
+        },
+        error: () => {
+          if (seq === this.seq) {
+            this.error.set(true);
+            this.loading.set(false);
+          }
+        },
+      });
       return;
     }
     if (inline != null) {
@@ -210,10 +377,23 @@ export class DocumentPreviewComponent {
     this.seq++;
     this.image.set(null);
     this.text.set('');
+    this.eml.set(null);
+    this.bea.set(null);
     this.pdfSafeUrl.set(null);
     this.loading.set(false);
     this.error.set(false);
     this.revokePdfUrl();
+  }
+
+  /** Human-readable byte size for an attachment chip. */
+  protected fmtSize(bytes: number): string {
+    if (bytes < 1024) {
+      return `${bytes} B`;
+    }
+    if (bytes < 1024 * 1024) {
+      return `${Math.round(bytes / 1024)} KB`;
+    }
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
   private revokePdfUrl(): void {

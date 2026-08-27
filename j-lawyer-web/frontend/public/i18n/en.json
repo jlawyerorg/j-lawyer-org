@@ -840,6 +840,7 @@
       "labels": "Labels",
       "editExternal": "Edit externally",
       "editInBrowser": "Edit in browser",
+      "previewHint": "Click a document in the list to preview it here.",
       "office": {
         "title": "Office editor",
         "loading": "Loading editor …",
@@ -1547,7 +1548,18 @@
     "close": "Close",
     "loading": "Loading document …",
     "error": "The document could not be loaded.",
-    "noPreview": "No preview available for this format."
+    "noPreview": "No preview available for this format.",
+    "mail": {
+      "subject": "Subject",
+      "from": "From",
+      "to": "To",
+      "cc": "Cc",
+      "date": "Date",
+      "sent": "Sent",
+      "caseNumber": "Case number",
+      "justizReference": "Court reference"
+    },
+    "editSeparate": "Edit in separate tab"
   },
   "email": {
     "title": "Email",
@@ -1920,5 +1932,34 @@
       "sender": "Sender",
       "subjectBody": "Text"
     }
+  },
+  "editor": {
+    "loading": "Loading document …",
+    "loadError": "The document could not be loaded.",
+    "saving": "Saving …",
+    "saved": "Saved",
+    "saveError": "Save failed",
+    "undo": "Undo",
+    "redo": "Redo",
+    "bold": "Bold",
+    "italic": "Italic",
+    "underline": "Underline",
+    "strike": "Strikethrough",
+    "h1": "Heading 1",
+    "h2": "Heading 2",
+    "h3": "Heading 3",
+    "paragraph": "Paragraph",
+    "bulletList": "Bullet list",
+    "orderedList": "Numbered list",
+    "link": "Link",
+    "alignLeft": "Align left",
+    "alignCenter": "Align center",
+    "alignRight": "Align right",
+    "table": "Insert table",
+    "fontFamily": "Font",
+    "fontDefault": "Default font",
+    "textColor": "Text color",
+    "highlight": "Highlight color",
+    "clearFormat": "Clear formatting"
   }
 }

@@ -602,3 +602,13 @@
 .office-ov-x { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; border: 0; background: transparent; color: var(--jl-ink-soft); cursor: pointer; }
 .office-ov-x:hover { background: var(--jl-surface-alt); color: var(--jl-ink); }
 .office-ov-body { flex: 1; min-height: 0; }
+
+/* Documents tab: side preview panel (wide screens) + icon action buttons */
+.docs.has-preview { grid-template-columns: minmax(0, 230px) minmax(0, 1fr) minmax(0, 1.5fr); }
+.docs .doc-preview { display: flex; flex-direction: column; min-height: 0; overflow: hidden;
+  background: var(--jl-surface); border: 1px solid var(--jl-line); border-radius: 12px; }
+.docs .doc-preview jl-document-preview { display: block; flex: 1 1 auto; min-height: 0; }
+.docs .doc-preview-empty { margin: auto; padding: 24px; color: var(--jl-ink-faint); font-size: .86rem; text-align: center; }
+.docs .doc-ibtn { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 7px; flex: none;
+  border: 1px solid var(--jl-line-strong); background: var(--jl-surface); color: var(--jl-ink-soft); cursor: pointer; }
+.docs .doc-ibtn:hover { border-color: var(--jl-blue); color: var(--jl-blue); }

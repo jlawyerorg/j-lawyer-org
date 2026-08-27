@@ -83,6 +83,14 @@ export const routes: Routes = [
     title: 'j-lawyer',
   },
   {
+    // Standalone HTML rich-text editor (pop-out tab/window); full-screen, auth-guarded.
+    // See document-preview.component popOutHtml().
+    path: 'htmledit/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./akten/html-editor-page.component').then((c) => c.HtmlEditorPageComponent),
+    title: 'j-lawyer',
+  },
+  {
     // Shell layout route: all module routes are children, guarded so unauthenticated
     // users are redirected to /login (auth.guard). Login lives outside this subtree.
     path: '',

@@ -24,11 +24,14 @@ import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
+import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.jlawyer.io.rest.v8.pojo.RestfulDocumentContentUpdateV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulTaggedDocumentV8;
 import javax.annotation.security.RolesAllowed;
@@ -345,6 +348,285 @@ public class CasesEndpointV8 implements CasesEndpointLocalV8 {
             log.error("Can not update content of document " + id, ex);
             return RestErrorResponses.serverError(ex);
         }
+    }
+
+    /**
+     * Returns a Base64-encoded PDF rendering of a document for in-browser preview. Office formats
+     * (docx/odt/xls/xlsx/ppt/pptx/rtf/…) are converted server-side (StirlingPDF via the preview
+     * generator); the client renders the result like any PDF. 415 when no PDF preview is available.
+     *
+     * @param id the document id
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Document not found / not accessible
+     * @response 415 No PDF preview available for this document
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/document/{id}/preview-pdf")
+    @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns a Base64 PDF rendering of a document for preview (Office formats via server conversion)")
+    public Response getDocumentPreviewPdf(@PathParam("id") String id) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileDocumentsBean doc;
+            try {
+                doc = cases.getDocument(id); // enforces the per-case ACL for the caller
+            } catch (Exception notFoundOrForbidden) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            Map<String, Object> out = new LinkedHashMap<>();
+            out.put("fileName", doc.getName());
+            // Prefer the (best-fidelity) cached PDF rendering; it exists only where StirlingPDF is
+            // configured and the async generation ran. Otherwise fall back to the always-available
+            // Tika text preview (generated synchronously on every document change).
+            DocumentPreview pdf = null;
+            try {
+                pdf = cases.getDocumentPreview(id, DocumentPreview.TYPE_PDF);
+            } catch (Exception noPdf) {
+                // no cached PDF preview — fall back to text below
+            }
+            if (pdf != null && pdf.getBytes() != null) {
+                out.put("kind", "pdf");
+                out.put("base64content", Base64.getEncoder().encodeToString(pdf.getBytes()));
+            } else {
+                DocumentPreview txt = null;
+                try {
+                    txt = cases.getDocumentPreview(id, DocumentPreview.TYPE_TEXT);
+                } catch (Exception noText) {
+                    // neither preview available
+                }
+                out.put("kind", "text");
+                out.put("text", (txt != null && txt.getText() != null) ? txt.getText() : "");
+            }
+            return Response.ok(out).build();
+        } catch (Exception ex) {
+            log.error("Can not build PDF preview for document " + id, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Structured preview of an e-mail document (.eml): parses the MIME message and returns
+     * headers, an HTML or plain-text body and the attachment list. Mirrors the Swing e-mail
+     * viewer. Case documents only.
+     *
+     * @param id the document id
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Document not found / not accessible
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/document/{id}/eml")
+    @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns a structured preview of an e-mail (.eml) document")
+    public Response getDocumentEmlPreview(@PathParam("id") String id) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            try {
+                cases.getDocument(id); // enforces the per-case ACL for the caller
+            } catch (Exception notFoundOrForbidden) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            byte[] content = cases.getDocumentContent(id);
+
+            javax.mail.Session session = javax.mail.Session.getInstance(new java.util.Properties());
+            javax.mail.internet.MimeMessage msg = new javax.mail.internet.MimeMessage(session,
+                    new java.io.ByteArrayInputStream(content == null ? new byte[0] : content));
+
+            StringBuilder html = new StringBuilder();
+            StringBuilder text = new StringBuilder();
+            List<Map<String, Object>> atts = new ArrayList<>();
+            walkMimePart(msg, html, text, atts);
+
+            Map<String, Object> out = new LinkedHashMap<>();
+            out.put("subject", nullSafe(decodeMime(msg.getSubject())));
+            out.put("from", addressList(msg.getFrom()));
+            out.put("to", addressList(msg.getRecipients(javax.mail.Message.RecipientType.TO)));
+            out.put("cc", addressList(msg.getRecipients(javax.mail.Message.RecipientType.CC)));
+            out.put("date", msg.getSentDate() != null ? formatDate(msg.getSentDate()) : "");
+            out.put("htmlBody", html.toString());
+            out.put("textBody", html.length() > 0 ? "" : text.toString());
+            out.put("attachments", atts);
+            return Response.ok(out).build();
+        } catch (Exception ex) {
+            log.error("Can not build EML preview for document " + id, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Structured preview of a beA message document (.bea): unmarshals the stored JAXB
+     * representation and returns headers, the message body and the attachment list. Mirrors the
+     * Swing beA viewer. Case documents only.
+     *
+     * @param id the document id
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Document not found / not accessible
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/document/{id}/bea")
+    @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns a structured preview of a beA (.bea) message document")
+    public Response getDocumentBeaPreview(@PathParam("id") String id) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            try {
+                cases.getDocument(id); // enforces the per-case ACL for the caller
+            } catch (Exception notFoundOrForbidden) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            byte[] content = cases.getDocumentContent(id);
+            if (content == null) {
+                content = new byte[0];
+            }
+
+            com.jdimension.jlawyer.services.bea.rest.BeaMessage msg = unmarshalBeaMessage(content);
+
+            StringBuilder from = new StringBuilder();
+            if (msg.getSenderName() != null) {
+                from.append(msg.getSenderName());
+            }
+            if (msg.getSenderSafeId() != null && !msg.getSenderSafeId().isEmpty()) {
+                from.append(from.length() > 0 ? " (" : "(").append(msg.getSenderSafeId()).append(")");
+            }
+            StringBuilder to = new StringBuilder();
+            if (msg.getRecipients() != null) {
+                for (com.jdimension.jlawyer.services.bea.rest.BeaRecipient r : msg.getRecipients()) {
+                    if (to.length() > 0) {
+                        to.append(", ");
+                    }
+                    if (r.getName() != null) {
+                        to.append(r.getName());
+                    }
+                    if (r.getSafeId() != null && !r.getSafeId().isEmpty()) {
+                        to.append(to.length() > 0 && r.getName() != null ? " (" : "(").append(r.getSafeId()).append(")");
+                    }
+                }
+            }
+            java.util.Date sent = msg.getReceptionTime() != null ? msg.getReceptionTime() : msg.getCreatedTime();
+            List<Map<String, Object>> atts = new ArrayList<>();
+            if (msg.getAttachments() != null) {
+                for (com.jdimension.jlawyer.services.bea.rest.BeaAttachment a : msg.getAttachments()) {
+                    String name = a.getName() != null ? a.getName() : a.getAlias();
+                    atts.add(attachment(name, a.getSize()));
+                }
+            }
+
+            Map<String, Object> out = new LinkedHashMap<>();
+            out.put("subject", nullSafe(msg.getSubject()));
+            out.put("from", from.toString());
+            out.put("to", to.toString());
+            out.put("sent", sent != null ? formatDate(sent) : "");
+            out.put("caseNumber", nullSafe(msg.getReferenceNumber()));
+            out.put("justizReference", nullSafe(msg.getReferenceJustice()));
+            out.put("body", nullSafe(msg.getBody()));
+            out.put("attachments", atts);
+            return Response.ok(out).build();
+        } catch (Exception ex) {
+            log.error("Can not build beA preview for document " + id, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /** Unmarshals a stored .bea document (JAXB-serialised {@link com.jdimension.jlawyer.services.bea.rest.BeaMessage}). */
+    private static com.jdimension.jlawyer.services.bea.rest.BeaMessage unmarshalBeaMessage(byte[] xml) throws Exception {
+        javax.xml.bind.JAXBContext ctx = javax.xml.bind.JAXBContext.newInstance(
+                com.jdimension.jlawyer.services.bea.rest.BeaMessage.class);
+        javax.xml.bind.Unmarshaller u = ctx.createUnmarshaller();
+        try {
+            return (com.jdimension.jlawyer.services.bea.rest.BeaMessage) u.unmarshal(new java.io.ByteArrayInputStream(xml));
+        } catch (javax.xml.bind.UnmarshalException ex) {
+            // fallback: data may be encoded in ISO-8859-1 instead of UTF-8 (mirrors the Swing client)
+            java.io.InputStreamReader reader = new java.io.InputStreamReader(
+                    new java.io.ByteArrayInputStream(xml), java.nio.charset.StandardCharsets.ISO_8859_1);
+            return (com.jdimension.jlawyer.services.bea.rest.BeaMessage) u.unmarshal(new javax.xml.transform.stream.StreamSource(reader));
+        }
+    }
+
+    /**
+     * Recursively walks a MIME part, collecting the HTML body, the plain-text body and any
+     * attachments (parts that carry a file name). Prefers HTML over plain text for display.
+     */
+    private void walkMimePart(javax.mail.Part part, StringBuilder html, StringBuilder text,
+            List<Map<String, Object>> atts) throws Exception {
+        String fileName = null;
+        try {
+            fileName = part.getFileName();
+        } catch (Exception ignore) {
+            // some malformed parts throw on getFileName — treat as bodyless
+        }
+        if (fileName != null && !fileName.isEmpty()) {
+            atts.add(attachment(decodeMime(fileName), (long) part.getSize()));
+            return;
+        }
+        if (part.isMimeType("multipart/*")) {
+            javax.mail.Multipart mp = (javax.mail.Multipart) part.getContent();
+            for (int i = 0; i < mp.getCount(); i++) {
+                walkMimePart(mp.getBodyPart(i), html, text, atts);
+            }
+        } else if (part.isMimeType("text/html")) {
+            html.append(String.valueOf(part.getContent()));
+        } else if (part.isMimeType("text/plain")) {
+            text.append(String.valueOf(part.getContent()));
+        }
+        // other single parts without a file name (e.g. inline images without a name) are ignored
+    }
+
+    /** Builds an {name,size} attachment map for the preview payload. */
+    private static Map<String, Object> attachment(String name, long size) {
+        Map<String, Object> a = new LinkedHashMap<>();
+        a.put("name", nullSafe(name));
+        a.put("size", size);
+        return a;
+    }
+
+    /** Joins mail addresses to a display string, MIME-decoding personal names. */
+    private static String addressList(javax.mail.Address[] addresses) {
+        if (addresses == null || addresses.length == 0) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (javax.mail.Address a : addresses) {
+            if (sb.length() > 0) {
+                sb.append(", ");
+            }
+            if (a instanceof javax.mail.internet.InternetAddress) {
+                sb.append(((javax.mail.internet.InternetAddress) a).toUnicodeString());
+            } else {
+                sb.append(decodeMime(a.toString()));
+            }
+        }
+        return sb.toString();
+    }
+
+    /** MIME-decodes an encoded-word header value, falling back to the raw value on error. */
+    private static String decodeMime(String value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return javax.mail.internet.MimeUtility.decodeText(value);
+        } catch (Exception ex) {
+            return value;
+        }
+    }
+
+    private static String formatDate(java.util.Date d) {
+        return new java.text.SimpleDateFormat("dd.MM.yyyy, HH:mm").format(d);
+    }
+
+    private static String nullSafe(String s) {
+        return s == null ? "" : s;
     }
 
     private Response list(boolean activeOnly) {

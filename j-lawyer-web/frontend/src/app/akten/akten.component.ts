@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -362,7 +362,7 @@ interface TimesheetView extends CaseTimesheet {
                 </div>
               </div>
             } @else if (activeTab() === 'documents') {
-              <div class="docs" [class.m-folders]="docMobilePane() === 'folders'" [class.m-list]="docMobilePane() === 'list'">
+              <div class="docs" [class.m-folders]="docMobilePane() === 'folders'" [class.m-list]="docMobilePane() === 'list'" [class.has-preview]="docWide()">
                 <!-- Folder tree (multi-select; default all selected, like the Swing client) -->
                 <aside class="doc-folders">
                   <header class="col-head">
@@ -499,17 +499,17 @@ interface TimesheetView extends CaseTimesheet {
                         </span>
                         <span class="doc-actions">
                           @if (canPreview(doc)) {
-                            <button type="button" class="doc-btn" (click)="$event.stopPropagation(); preview(doc)">
-                              {{ 'akten.docPreview' | transloco }}
+                            <button type="button" class="doc-ibtn" (click)="$event.stopPropagation(); preview(doc)" [title]="'akten.docPreview' | transloco" [attr.aria-label]="'akten.docPreview' | transloco">
+                              <jl-icon name="eye" [size]="16" />
                             </button>
                           }
                           @if (canEditInBrowser(doc)) {
-                            <button type="button" class="doc-btn" (click)="$event.stopPropagation(); openOfficeEditor(doc)">
-                              <jl-icon name="edit" [size]="14" />{{ 'akten.docs.editInBrowser' | transloco }}
+                            <button type="button" class="doc-ibtn" (click)="$event.stopPropagation(); openOfficeEditor(doc)" [title]="'akten.docs.editInBrowser' | transloco" [attr.aria-label]="'akten.docs.editInBrowser' | transloco">
+                              <jl-icon name="edit" [size]="16" />
                             </button>
                           }
-                          <button type="button" class="doc-btn primary" (click)="$event.stopPropagation(); download(doc)">
-                            <jl-icon name="download" [size]="14" />{{ 'akten.docDownload' | transloco }}
+                          <button type="button" class="doc-ibtn" (click)="$event.stopPropagation(); download(doc)" [title]="'akten.docDownload' | transloco" [attr.aria-label]="'akten.docDownload' | transloco">
+                            <jl-icon name="download" [size]="16" />
                           </button>
                           <jl-document-actions (click)="$event.stopPropagation()" [doc]="doc" [caseId]="selectedId() ?? ''"
                                                [folders]="docFolderOptions()" (changed)="reloadDetail()"
@@ -521,6 +521,15 @@ interface TimesheetView extends CaseTimesheet {
                     }
                   </div>
                 </section>
+                @if (docWide()) {
+                  <aside class="doc-preview">
+                    @if (previewDoc()) {
+                      <jl-document-preview [doc]="previewDoc()" [embedded]="true" (closed)="previewDoc.set(null)" />
+                    } @else {
+                      <div class="doc-preview-empty">{{ 'akten.docs.previewHint' | transloco }}</div>
+                    }
+                  </aside>
+                }
               </div>
             } @else if (activeTab() === 'parties') {
               <div class="card full">
@@ -977,7 +986,9 @@ interface TimesheetView extends CaseTimesheet {
       </section>
     </div>
 
-    <jl-document-preview [doc]="previewDoc()" (closed)="previewDoc.set(null)" />
+    @if (!docWide()) {
+      <jl-document-preview [doc]="previewDoc()" (closed)="previewDoc.set(null)" />
+    }
 
     @if (editingCase(); as ed) {
       <jl-case-editor [caseData]="ed.data" (save)="onSaveCase($event)" (close)="editingCase.set(null)" />
@@ -1166,8 +1177,12 @@ export class AktenComponent {
   protected readonly selected = signal<CaseDetail | null>(null);
   protected readonly detailLoading = signal(false);
 
-  // Document preview — handed to the shared <jl-document-preview> overlay.
+  // Document preview — shown in the side panel on wide screens, else the overlay.
   protected readonly previewDoc = signal<PreviewDoc | null>(null);
+  /** True when the viewport is wide enough for the side preview panel (else the preview is an overlay). */
+  private readonly wideQuery = typeof window !== 'undefined' && window.matchMedia
+    ? window.matchMedia('(min-width: 1200px)') : null;
+  protected readonly docWide = signal(this.wideQuery?.matches ?? false);
   /** A document id from a ?doc= deep link, opened once its case detail has loaded. */
   private pendingDocId: string | null = null;
 
@@ -1292,6 +1307,11 @@ export class AktenComponent {
   constructor() {
     this.cases.reload();
     this.office.ensureStatus();
+    if (this.wideQuery) {
+      const onChange = (e: MediaQueryListEvent) => this.docWide.set(e.matches);
+      this.wideQuery.addEventListener('change', onChange);
+      inject(DestroyRef).onDestroy(() => this.wideQuery?.removeEventListener('change', onChange));
+    }
     // Editing lookups (cached app-wide in the service): all groups + tag templates + list-tags.
     this.cases.allGroups().subscribe((g) => this.allGroups.set(g));
     this.cases.tagTemplates().subscribe((t) => this.tagTemplates.set(t));
