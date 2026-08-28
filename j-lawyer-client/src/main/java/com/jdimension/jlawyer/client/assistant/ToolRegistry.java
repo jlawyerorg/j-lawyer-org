@@ -45,6 +45,12 @@ import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.InvoiceServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.MessagingServiceRemote;
+import com.jdimension.jlawyer.services.EmailServiceRemote;
+import com.jdimension.jlawyer.services.MailAttachmentDTO;
+import com.jdimension.jlawyer.services.MailFolderDTO;
+import com.jdimension.jlawyer.services.MailMessageDTO;
+import com.jdimension.jlawyer.persistence.MailboxSetup;
+import com.jdimension.jlawyer.email.CommonMailUtils;
 import org.jlawyer.data.tree.GenericNode;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -101,6 +107,10 @@ public class ToolRegistry {
     private static final int WEB_TIMEOUT_MS = 10000;
     private static final int MAX_CONTENT_CHARS = 8000;
     private static final String WEB_USER_AGENT = "Mozilla/5.0 (compatible; j-lawyer.org Legal Assistant)";
+
+    private static final int MAX_MAIL_RESULTS = 50;
+    private static final int MAX_SEARCH_FOLDERS = 15;
+    private static final int MAX_MAIL_BODY_CHARS = 30000;
 
     private static final List<ToolDefinition> TOOLS = new ArrayList<>();
 
@@ -539,6 +549,28 @@ public class ToolRegistry {
                         new ToolParameter("description", "string", "Beschreibung des Falldatenblatts", false)
                 ),
                 ToolDefinition.RISK_MEDIUM));
+
+        TOOLS.add(new ToolDefinition("list_mailboxes",
+                "Listet alle E-Mail-Postfächer auf, auf die der angemeldete Benutzer Zugriff hat. Gibt ID, Anzeigename und E-Mail-Adresse zurück.",
+                Arrays.asList()));
+
+        TOOLS.add(new ToolDefinition("search_emails",
+                "Durchsucht E-Mail-Postfächer. Der Suchbegriff wird in Betreff, Absender, Empfänger und Nachrichtentext gesucht. WICHTIG: Es wird ausschließlich wörtlich nach der übergebenen Zeichenfolge gesucht (Teilübereinstimmung, Groß-/Kleinschreibung wird ignoriert). Der Suchtext darf Leerzeichen enthalten und wird dann als zusammenhängende Zeichenfolge gesucht ('jens müller' findet 'Jens Müller'). Suchoperatoren wie OR/AND/NOT, Anführungszeichen und Platzhalter werden NICHT unterstützt, sondern als Teil des Suchtexts gesucht - 'rechnung OR invoice' liefert deshalb keine Treffer. Für Synonyme oder Wortvarianten sind mehrere getrennte Aufrufe nötig; ein kurzer Wortstamm ('Rechnung') findet auch längere Formen ('Rechnungen'). Standardmäßig wird nur der Posteingang aller zugänglichen Postfächer durchsucht. Gibt eine Trefferliste ohne Nachrichtentext zurück (max. 50 Treffer); den Volltext einer Nachricht liefert get_email.",
+                Arrays.asList(
+                        new ToolParameter("query", "string", "Suchtext, der wörtlich in Betreff, Absender, Empfänger und Nachrichtentext gesucht wird. Darf Leerzeichen enthalten und wird dann als zusammenhängende Zeichenfolge gesucht. Keine Suchoperatoren, keine Platzhalter, keine Anführungszeichen.", true),
+                        new ToolParameter("mailboxId", "string", "ID des zu durchsuchenden Postfachs (aus list_mailboxes). Optional, Standard: alle zugänglichen Postfächer", false),
+                        new ToolParameter("folder", "string", "Anzeigename des zu durchsuchenden Ordners, z. B. 'Gesendet'. Optional, Standard: Posteingang", false),
+                        new ToolParameter("scope", "string", "'inbox' (Standard) oder 'all', um alle Ordner zu durchsuchen. 'all' ist deutlich langsamer.", false),
+                        new ToolParameter("fromDate", "string", "Nur Nachrichten ab diesem Datum, Format yyyy-MM-dd (optional)", false),
+                        new ToolParameter("unreadOnly", "string", "'true', um nur ungelesene Nachrichten zu berücksichtigen (optional)", false),
+                        new ToolParameter("maxResults", "integer", "Maximale Trefferzahl. Standard und Obergrenze: 50", false))));
+
+        TOOLS.add(new ToolDefinition("get_email",
+                "Lädt eine einzelne E-Mail mit Nachrichtentext und Liste der Anhänge. mailboxId und messageRef stammen aus search_emails.",
+                Arrays.asList(
+                        new ToolParameter("mailboxId", "string", "ID des Postfachs", true),
+                        new ToolParameter("messageRef", "string", "Referenz der Nachricht aus search_emails", true),
+                        new ToolParameter("maxChars", "integer", "Optional: maximale Zeichenzahl des Nachrichtentexts. Standard und Obergrenze: 30000", false))));
     }
 
     public boolean hasAiAgentRole() {
@@ -699,6 +731,12 @@ public class ToolRegistry {
                     return executeListFormTypes(args);
                 case "create_case_form":
                     return executeCreateCaseForm(args);
+                case "list_mailboxes":
+                    return executeListMailboxes(args);
+                case "search_emails":
+                    return executeSearchEmails(args);
+                case "get_email":
+                    return executeGetEmail(args);
                 default:
                     return ToolJsonUtils.error("Unbekanntes Werkzeug: " + toolId);
             }
@@ -903,6 +941,14 @@ public class ToolRegistry {
                     return "Verfügbare Falldatenblätter auflisten";
                 case "create_case_form":
                     return "Falldatenblatt erstellen: " + args.getOrDefault("placeHolder", "");
+                case "list_mailboxes":
+                    return "E-Mail-Postfächer auflisten";
+                case "search_emails":
+                    return "E-Mails durchsuchen: '" + args.getOrDefault("query", "") + "'"
+                            + (args.containsKey("folder") ? " (Ordner: " + args.get("folder") + ")" : "")
+                            + ("all".equalsIgnoreCase(String.valueOf(args.getOrDefault("scope", ""))) ? " (alle Ordner)" : "");
+                case "get_email":
+                    return "E-Mail lesen";
                 default:
                     return tc.getToolName() + ": " + tc.getArguments();
             }
@@ -4884,6 +4930,350 @@ public class ToolRegistry {
             PDFTextStripper stripper = new PDFTextStripper();
             stripper.setSortByPosition(true);
             return stripper.getText(document);
+        }
+    }
+
+    // =========================================================================
+    // E-Mail tool implementations
+    // =========================================================================
+
+    private String executeListMailboxes(JsonObject args) throws Exception {
+        List<MailboxSetup> mailboxes = getAccessibleMailboxes();
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"mailboxes\": [");
+        for (int i = 0; i < mailboxes.size(); i++) {
+            MailboxSetup mb = mailboxes.get(i);
+            if (i > 0) {
+                sb.append(", ");
+            }
+            sb.append("{\"id\": \"").append(ToolJsonUtils.escapeJson(mb.getId())).append("\"");
+            sb.append(", \"displayName\": \"").append(ToolJsonUtils.escapeJson(mb.getDisplayName())).append("\"");
+            sb.append(", \"emailAddress\": \"").append(ToolJsonUtils.escapeJson(mb.getEmailAddress())).append("\"");
+            sb.append("}");
+        }
+        sb.append("]}");
+        return sb.toString();
+    }
+
+    private String executeSearchEmails(JsonObject args) throws Exception {
+        String query = (String) args.get("query");
+        if (query == null || query.trim().isEmpty()) {
+            return ToolJsonUtils.error("Suchbegriff fehlt");
+        }
+        query = query.trim();
+
+        int maxResults = MAX_MAIL_RESULTS;
+        Integer requestedMax = ToolJsonUtils.toInteger(args.get("maxResults"));
+        if (requestedMax != null) {
+            if (requestedMax <= 0) {
+                return ToolJsonUtils.error("maxResults muss größer als 0 sein, angegeben: " + requestedMax);
+            }
+            maxResults = Math.min(requestedMax, MAX_MAIL_RESULTS);
+        }
+
+        String fromDateStr = (String) args.get("fromDate");
+        Date fromDate = null;
+        if (fromDateStr != null && !fromDateStr.trim().isEmpty()) {
+            fromDate = ToolJsonUtils.parseIsoDate(fromDateStr);
+            if (fromDate == null) {
+                return ToolJsonUtils.error("fromDate konnte nicht geparst werden: " + fromDateStr);
+            }
+        }
+
+        boolean unreadOnly = args.get("unreadOnly") != null
+                && Boolean.parseBoolean(String.valueOf(args.get("unreadOnly")).trim());
+        String folderName = (String) args.get("folder");
+        boolean allFolders = "all".equalsIgnoreCase(String.valueOf(args.getOrDefault("scope", "inbox")).trim());
+
+        List<MailboxSetup> mailboxes;
+        String mailboxId = (String) args.get("mailboxId");
+        if (mailboxId != null && !mailboxId.trim().isEmpty()) {
+            MailboxSetup mailbox = findAccessibleMailbox(mailboxId.trim());
+            if (mailbox == null) {
+                return ToolJsonUtils.error("Postfach nicht gefunden oder kein Zugriff: " + mailboxId);
+            }
+            mailboxes = Arrays.asList(mailbox);
+        } else {
+            mailboxes = getAccessibleMailboxes();
+        }
+
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        EmailServiceRemote svc = locator.lookupEmailServiceRemote();
+
+        List<MailHit> hits = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
+        if (mailboxes.isEmpty()) {
+            warnings.add("Für den angemeldeten Benutzer ist kein E-Mail-Postfach freigeschaltet.");
+        }
+        int searchedFolders = 0;
+        boolean foldersTruncated = false;
+
+        for (MailboxSetup mb : mailboxes) {
+            List<MailFolderDTO> folders;
+            try {
+                folders = svc.listFolders(mb.getId());
+            } catch (Exception ex) {
+                log.warn("Unable to list folders of mailbox " + mb.getId(), ex);
+                warnings.add("Ordner des Postfachs " + mb.getEmailAddress() + " konnten nicht gelesen werden: " + ex.getMessage());
+                continue;
+            }
+
+            List<MailFolderDTO> selected = selectSearchFolders(folders, folderName, allFolders);
+            if (selected.isEmpty()) {
+                warnings.add("Im Postfach " + mb.getEmailAddress() + " wurde kein passender Ordner gefunden.");
+                continue;
+            }
+            if (selected.size() > MAX_SEARCH_FOLDERS) {
+                selected = selected.subList(0, MAX_SEARCH_FOLDERS);
+                foldersTruncated = true;
+            }
+
+            for (MailFolderDTO folder : selected) {
+                try {
+                    List<MailMessageDTO> messages = svc.listMessages(mb.getId(), folder.getFolderId(), maxResults, 0, fromDate, unreadOnly, query);
+                    searchedFolders++;
+                    if (messages == null) {
+                        continue;
+                    }
+                    for (MailMessageDTO m : messages) {
+                        hits.add(new MailHit(mb, folder.getDisplayName(), m));
+                    }
+                } catch (Exception ex) {
+                    // a single unreachable folder must not abort the entire search
+                    log.warn("Unable to search folder " + folder.getDisplayName() + " of mailbox " + mb.getId(), ex);
+                    warnings.add("Ordner '" + folder.getDisplayName() + "' im Postfach " + mb.getEmailAddress() + " konnte nicht durchsucht werden: " + ex.getMessage());
+                }
+            }
+        }
+
+        hits.sort((h1, h2) -> {
+            Date d1 = h1.message.getDate();
+            Date d2 = h2.message.getDate();
+            if (d1 == null && d2 == null) {
+                return 0;
+            }
+            if (d1 == null) {
+                return 1;
+            }
+            if (d2 == null) {
+                return -1;
+            }
+            return d2.compareTo(d1);
+        });
+
+        int total = hits.size();
+        int limit = Math.min(total, maxResults);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"results\": [");
+        for (int i = 0; i < limit; i++) {
+            if (i > 0) {
+                sb.append(",");
+            }
+            MailHit hit = hits.get(i);
+            MailMessageDTO m = hit.message;
+            sb.append("{\"mailboxId\": \"").append(ToolJsonUtils.escapeJson(hit.mailbox.getId())).append("\"");
+            sb.append(", \"mailbox\": \"").append(ToolJsonUtils.escapeJson(hit.mailbox.getEmailAddress())).append("\"");
+            sb.append(", \"folder\": \"").append(ToolJsonUtils.escapeJson(hit.folderName)).append("\"");
+            sb.append(", \"messageRef\": \"").append(ToolJsonUtils.escapeJson(m.getMessageRef())).append("\"");
+            sb.append(", \"subject\": \"").append(ToolJsonUtils.escapeJson(m.getSubject())).append("\"");
+            sb.append(", \"from\": \"").append(ToolJsonUtils.escapeJson(m.getFrom())).append("\"");
+            appendStringArrayJson(sb, "to", m.getTo());
+            if (m.getDate() != null) {
+                sb.append(", \"date\": \"").append(ToolJsonUtils.formatDate(m.getDate())).append("\"");
+            }
+            sb.append(", \"read\": ").append(m.isRead());
+            sb.append(", \"hasAttachments\": ").append(m.isHasAttachments());
+            sb.append("}");
+        }
+        sb.append("], \"totalResults\": ").append(total);
+        sb.append(", \"searchedFolders\": ").append(searchedFolders);
+        if (total > limit) {
+            sb.append(", \"truncated\": true");
+        }
+        if (foldersTruncated) {
+            sb.append(", \"foldersTruncated\": true");
+        }
+        if (!warnings.isEmpty()) {
+            sb.append(", \"warnings\": [");
+            for (int i = 0; i < warnings.size(); i++) {
+                if (i > 0) {
+                    sb.append(", ");
+                }
+                sb.append("\"").append(ToolJsonUtils.escapeJson(warnings.get(i))).append("\"");
+            }
+            sb.append("]");
+        }
+        sb.append("}");
+        return sb.toString();
+    }
+
+    private String executeGetEmail(JsonObject args) throws Exception {
+        String mailboxId = (String) args.get("mailboxId");
+        if (mailboxId == null || mailboxId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Postfach-ID fehlt");
+        }
+        String messageRef = (String) args.get("messageRef");
+        if (messageRef == null || messageRef.trim().isEmpty()) {
+            return ToolJsonUtils.error("Nachrichtenreferenz fehlt");
+        }
+
+        MailboxSetup mailbox = findAccessibleMailbox(mailboxId.trim());
+        if (mailbox == null) {
+            return ToolJsonUtils.error("Postfach nicht gefunden oder kein Zugriff: " + mailboxId);
+        }
+
+        int effectiveMax = MAX_MAIL_BODY_CHARS;
+        Integer maxChars = ToolJsonUtils.toInteger(args.get("maxChars"));
+        if (maxChars != null) {
+            if (maxChars <= 0) {
+                return ToolJsonUtils.error("maxChars muss größer als 0 sein, angegeben: " + maxChars);
+            }
+            effectiveMax = Math.min(maxChars, MAX_MAIL_BODY_CHARS);
+        }
+
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        EmailServiceRemote svc = locator.lookupEmailServiceRemote();
+        MailMessageDTO m = svc.getMessage(mailbox.getId(), messageRef.trim(), true);
+        if (m == null) {
+            return ToolJsonUtils.error("Nachricht nicht gefunden: " + messageRef);
+        }
+
+        String body = m.getBody();
+        if (body == null) {
+            body = "";
+        } else if (m.getBodyContentType() != null && m.getBodyContentType().toLowerCase().contains("html")) {
+            body = CommonMailUtils.html2Text(body);
+        }
+        boolean truncated = false;
+        if (body.length() > effectiveMax) {
+            body = body.substring(0, effectiveMax);
+            truncated = true;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"mailboxId\": \"").append(ToolJsonUtils.escapeJson(mailbox.getId())).append("\"");
+        sb.append(", \"messageRef\": \"").append(ToolJsonUtils.escapeJson(m.getMessageRef())).append("\"");
+        sb.append(", \"subject\": \"").append(ToolJsonUtils.escapeJson(m.getSubject())).append("\"");
+        sb.append(", \"from\": \"").append(ToolJsonUtils.escapeJson(m.getFrom())).append("\"");
+        appendStringArrayJson(sb, "to", m.getTo());
+        appendStringArrayJson(sb, "cc", m.getCc());
+        if (m.getDate() != null) {
+            sb.append(", \"date\": \"").append(ToolJsonUtils.formatDate(m.getDate())).append("\"");
+        }
+        sb.append(", \"read\": ").append(m.isRead());
+        sb.append(", \"hasAttachments\": ").append(m.isHasAttachments());
+        sb.append(", \"body\": \"").append(ToolJsonUtils.escapeJson(body)).append("\"");
+        if (truncated) {
+            sb.append(", \"truncated\": true");
+        }
+        sb.append(", \"attachments\": [");
+        List<MailAttachmentDTO> attachments = m.getAttachments();
+        if (attachments != null) {
+            for (int i = 0; i < attachments.size(); i++) {
+                if (i > 0) {
+                    sb.append(", ");
+                }
+                MailAttachmentDTO a = attachments.get(i);
+                sb.append("{\"attachmentId\": \"").append(ToolJsonUtils.escapeJson(a.getAttachmentId())).append("\"");
+                sb.append(", \"name\": \"").append(ToolJsonUtils.escapeJson(a.getName())).append("\"");
+                sb.append(", \"contentType\": \"").append(ToolJsonUtils.escapeJson(a.getContentType())).append("\"");
+                sb.append(", \"size\": ").append(a.getSize());
+                sb.append("}");
+            }
+        }
+        sb.append("]}");
+        return sb.toString();
+    }
+
+    /**
+     * Returns the mailboxes the currently logged in user has been granted
+     * access to. This implicitly enforces the mailbox ACL for all e-mail tools.
+     */
+    private List<MailboxSetup> getAccessibleMailboxes() {
+        List<MailboxSetup> mailboxes = UserSettings.getInstance().getMailboxes(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+        if (mailboxes == null) {
+            return new ArrayList<>();
+        }
+        return mailboxes;
+    }
+
+    private MailboxSetup findAccessibleMailbox(String mailboxId) {
+        for (MailboxSetup mb : getAccessibleMailboxes()) {
+            if (mailboxId.equals(mb.getId())) {
+                return mb;
+            }
+        }
+        return null;
+    }
+
+    private List<MailFolderDTO> selectSearchFolders(List<MailFolderDTO> folders, String folderName, boolean allFolders) {
+        List<MailFolderDTO> selected = new ArrayList<>();
+        if (folders == null) {
+            return selected;
+        }
+        if (folderName != null && !folderName.trim().isEmpty()) {
+            for (MailFolderDTO f : folders) {
+                if (folderName.trim().equalsIgnoreCase(f.getDisplayName())) {
+                    selected.add(f);
+                }
+            }
+        } else if (allFolders) {
+            // MAX_SEARCH_FOLDERS truncates this list, and listFolders returns the
+            // server-defined (usually alphabetical) order - so the well-known
+            // folders are put up front to make sure the cap never drops them
+            for (MailFolderDTO f : folders) {
+                if (f.isInbox()) {
+                    selected.add(f);
+                }
+            }
+            for (MailFolderDTO f : folders) {
+                if (f.isSent()) {
+                    selected.add(f);
+                }
+            }
+            for (MailFolderDTO f : folders) {
+                if (!f.isTrash() && !f.isInbox() && !f.isSent()) {
+                    selected.add(f);
+                }
+            }
+        } else {
+            for (MailFolderDTO f : folders) {
+                if (f.isInbox()) {
+                    selected.add(f);
+                }
+            }
+        }
+        return selected;
+    }
+
+    private void appendStringArrayJson(StringBuilder sb, String name, String[] values) {
+        sb.append(", \"").append(name).append("\": [");
+        if (values != null) {
+            for (int i = 0; i < values.length; i++) {
+                if (i > 0) {
+                    sb.append(", ");
+                }
+                sb.append("\"").append(ToolJsonUtils.escapeJson(values[i])).append("\"");
+            }
+        }
+        sb.append("]");
+    }
+
+    /**
+     * A single search hit, keeping the message together with the mailbox and
+     * folder it was found in.
+     */
+    private static class MailHit {
+
+        private final MailboxSetup mailbox;
+        private final String folderName;
+        private final MailMessageDTO message;
+
+        MailHit(MailboxSetup mailbox, String folderName, MailMessageDTO message) {
+            this.mailbox = mailbox;
+            this.folderName = folderName;
+            this.message = message;
         }
     }
 
