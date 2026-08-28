@@ -51,6 +51,9 @@ import com.jdimension.jlawyer.services.MailFolderDTO;
 import com.jdimension.jlawyer.services.MailMessageDTO;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.email.CommonMailUtils;
+import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
+import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.TemplatesUtil;
 import org.jlawyer.data.tree.GenericNode;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -111,6 +114,8 @@ public class ToolRegistry {
     private static final int MAX_MAIL_RESULTS = 50;
     private static final int MAX_SEARCH_FOLDERS = 15;
     private static final int MAX_MAIL_BODY_CHARS = 30000;
+    private static final int MAX_DOCUMENT_NAME_CHARS = 250;
+    private static final int MAX_NAME_CLASH_RETRIES = 5;
 
     private static final List<ToolDefinition> TOOLS = new ArrayList<>();
 
@@ -566,11 +571,22 @@ public class ToolRegistry {
                         new ToolParameter("maxResults", "integer", "Maximale Trefferzahl. Standard und Obergrenze: 50", false))));
 
         TOOLS.add(new ToolDefinition("get_email",
-                "Lädt eine einzelne E-Mail mit Nachrichtentext und Liste der Anhänge. mailboxId und messageRef stammen aus search_emails.",
+                "Lädt eine einzelne E-Mail mit Nachrichtentext und Liste der Anhänge. mailboxId und messageRef stammen aus search_emails oder aus den Kopfdaten einer im Kontext übergebenen E-Mail.",
                 Arrays.asList(
                         new ToolParameter("mailboxId", "string", "ID des Postfachs", true),
-                        new ToolParameter("messageRef", "string", "Referenz der Nachricht aus search_emails", true),
+                        new ToolParameter("messageRef", "string", "Referenz der Nachricht aus search_emails oder aus dem Kontext (messageRef)", true),
                         new ToolParameter("maxChars", "integer", "Optional: maximale Zeichenzahl des Nachrichtentexts. Standard und Obergrenze: 30000", false))));
+
+        TOOLS.add(new ToolDefinition("save_email_to_case",
+                "Speichert eine E-Mail als .eml-Datei in einer Akte. mailboxId und messageRef stammen aus search_emails oder aus den Kopfdaten einer im Kontext übergebenen E-Mail, die caseId aus search_cases. Der Dateiname wird aus dem Betreff nach der konfigurierten Dateinamensvorschrift der Kanzlei gebildet; existiert der Name bereits, wird automatisch eine Nummer angehängt. Anhänge bleiben in der .eml enthalten, werden aber nicht als separate Dokumente abgelegt.",
+                Arrays.asList(
+                        new ToolParameter("mailboxId", "string", "ID des Postfachs", true),
+                        new ToolParameter("messageRef", "string", "Referenz der Nachricht aus search_emails oder aus dem Kontext (messageRef)", true),
+                        new ToolParameter("caseId", "string", "Interne ID der Akte", true),
+                        new ToolParameter("fileName", "string", "Dateiname übersteuern (optional). Die Endung .eml wird immer erzwungen, die Dateinamensvorschrift wird trotzdem angewendet.", false),
+                        new ToolParameter("folderId", "string", "ID des Zielordners in der Akte (optional, aus list_case_folders). Ohne Angabe landet die Datei im Wurzelordner der Akte.", false),
+                        new ToolParameter("tags", "string", "Kommagetrennte Dokument-Etiketten (optional, aus list_document_tags). Nur einfache Etiketten ohne Wert; Mehrwert-Etiketten über set_document_tag setzen.", false)),
+                ToolDefinition.RISK_MEDIUM));
     }
 
     public boolean hasAiAgentRole() {
@@ -737,6 +753,8 @@ public class ToolRegistry {
                     return executeSearchEmails(args);
                 case "get_email":
                     return executeGetEmail(args);
+                case "save_email_to_case":
+                    return executeSaveEmailToCase(args);
                 default:
                     return ToolJsonUtils.error("Unbekanntes Werkzeug: " + toolId);
             }
@@ -949,6 +967,8 @@ public class ToolRegistry {
                             + ("all".equalsIgnoreCase(String.valueOf(args.getOrDefault("scope", ""))) ? " (alle Ordner)" : "");
                 case "get_email":
                     return "E-Mail lesen";
+                case "save_email_to_case":
+                    return "E-Mail in Akte speichern: " + args.getOrDefault("caseId", "");
                 default:
                     return tc.getToolName() + ": " + tc.getArguments();
             }
@@ -5184,6 +5204,232 @@ public class ToolRegistry {
         }
         sb.append("]}");
         return sb.toString();
+    }
+
+    private String executeSaveEmailToCase(JsonObject args) throws Exception {
+        String mailboxId = (String) args.get("mailboxId");
+        if (mailboxId == null || mailboxId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Postfach-ID fehlt");
+        }
+        String messageRef = (String) args.get("messageRef");
+        if (messageRef == null || messageRef.trim().isEmpty()) {
+            return ToolJsonUtils.error("Nachrichtenreferenz fehlt");
+        }
+        String caseId = (String) args.get("caseId");
+        if (caseId == null || caseId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Akten-ID (caseId) fehlt");
+        }
+        mailboxId = mailboxId.trim();
+        messageRef = messageRef.trim();
+        caseId = caseId.trim();
+
+        MailboxSetup mailbox = findAccessibleMailbox(mailboxId);
+        if (mailbox == null) {
+            return ToolJsonUtils.error("Postfach nicht gefunden oder kein Zugriff: " + mailboxId);
+        }
+
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        ArchiveFileServiceRemote archiveSvc = locator.lookupArchiveFileServiceRemote();
+
+        ArchiveFileBean caseBean = archiveSvc.getArchiveFile(caseId);
+        if (caseBean == null) {
+            return ToolJsonUtils.error("Akte nicht gefunden: " + caseId);
+        }
+        if (caseBean.isArchived()) {
+            return ToolJsonUtils.error("Akte ist archiviert (abgelegt). Bitte die Akte zuerst reaktivieren.");
+        }
+
+        // validate the tags before anything is written, so that a typo does not
+        // leave a stored document behind with a failed tag call
+        List<String> tagNames = new ArrayList<>();
+        String tagsArg = (String) args.get("tags");
+        if (tagsArg != null && !tagsArg.trim().isEmpty()) {
+            SystemManagementRemote sys = locator.lookupSystemManagementRemote();
+            AppOptionGroupBean[] boolTags = sys.getOptionGroup(OptionConstants.OPTIONGROUP_DOCUMENTTAGS);
+            HashMap<String, AppOptionGroupBean[]> mvGroups = sys.getOptionGroupsByPrefix(OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX);
+            for (String tagName : tagsArg.split(",")) {
+                tagName = tagName.trim();
+                if (tagName.isEmpty()) {
+                    continue;
+                }
+                String validationError = validateTag(tagName, null, boolTags, mvGroups, OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX);
+                if (validationError != null) {
+                    return validationError;
+                }
+                tagNames.add(tagName);
+            }
+        }
+
+        EmailServiceRemote emailSvc = locator.lookupEmailServiceRemote();
+        MailMessageDTO message = emailSvc.getMessage(mailboxId, messageRef);
+        if (message == null) {
+            return ToolJsonUtils.error("Nachricht nicht gefunden: " + messageRef);
+        }
+        byte[] eml = emailSvc.getMessageAsEml(mailboxId, messageRef);
+        if (eml == null || eml.length == 0) {
+            return ToolJsonUtils.error("E-Mail konnte nicht als .eml gelesen werden: " + messageRef);
+        }
+
+        String rawName = (String) args.get("fileName");
+        if (rawName == null || rawName.trim().isEmpty()) {
+            rawName = message.getSubject();
+        }
+        if (rawName == null || rawName.trim().isEmpty()) {
+            rawName = "E-Mail ohne Betreff";
+        }
+        Date documentDate = message.getDate() != null ? message.getDate() : new Date();
+        String docName = buildEmlDocumentName(caseBean, rawName, documentDate);
+
+        // resolve naming clashes the same way the mailbox scanner does
+        String uniqueName = docName;
+        int index = 2;
+        while (archiveSvc.doesDocumentExist(caseId, uniqueName) && index <= MAX_NAME_CLASH_RETRIES) {
+            uniqueName = appendNameIndex(docName, index);
+            index++;
+        }
+        if (archiveSvc.doesDocumentExist(caseId, uniqueName)) {
+            return ToolJsonUtils.error("Es existiert bereits ein Dokument mit dem Namen " + docName
+                    + " in der Akte " + caseBean.getFileNumber() + " - bitte einen abweichenden fileName angeben.");
+        }
+
+        ArchiveFileDocumentsBean doc;
+        try {
+            doc = archiveSvc.addDocument(caseId, uniqueName, eml, "", null);
+        } catch (Exception ex) {
+            // doesDocumentExist ignores the recycle bin while the server side check
+            // of addDocument does not, so a clash can still surface here
+            log.warn("Unable to store email " + messageRef + " in case " + caseId, ex);
+            return ToolJsonUtils.error("Dokument konnte nicht in der Akte angelegt werden: " + ex.getMessage());
+        }
+
+        String folderId = (String) args.get("folderId");
+        boolean hasFolder = folderId != null && !folderId.trim().isEmpty();
+        if (hasFolder) {
+            archiveSvc.moveDocumentsToFolder(Arrays.asList(doc.getId()), folderId.trim());
+        }
+
+        for (String tagName : tagNames) {
+            DocumentTagsBean tag = new DocumentTagsBean();
+            tag.setTagName(tagName);
+            archiveSvc.setDocumentTag(doc.getId(), tag, true);
+        }
+
+        // re-read the document, the bean returned by addDocument does not know
+        // about the folder the document was just moved into
+        ArchiveFileDocumentsBean storedDoc = archiveSvc.getDocument(doc.getId());
+        EventBroker.getInstance().publishEvent(new DocumentAddedEvent(storedDoc != null ? storedDoc : doc));
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"success\": true");
+        sb.append(", \"documentId\": \"").append(ToolJsonUtils.escapeJson(doc.getId())).append("\"");
+        // "name" next to "documentId" is what makes the chat panel offer the
+        // "open document" button, see AssistantChatPanel.extractDocumentReferences
+        sb.append(", \"name\": \"").append(ToolJsonUtils.escapeJson(uniqueName)).append("\"");
+        sb.append(", \"fileName\": \"").append(ToolJsonUtils.escapeJson(uniqueName)).append("\"");
+        sb.append(", \"caseId\": \"").append(ToolJsonUtils.escapeJson(caseId)).append("\"");
+        sb.append(", \"caseFileNumber\": \"").append(ToolJsonUtils.escapeJson(caseBean.getFileNumber())).append("\"");
+        if (hasFolder) {
+            sb.append(", \"folderId\": \"").append(ToolJsonUtils.escapeJson(folderId.trim())).append("\"");
+        }
+        if (!tagNames.isEmpty()) {
+            sb.append(", \"tags\": [");
+            for (int i = 0; i < tagNames.size(); i++) {
+                if (i > 0) {
+                    sb.append(", ");
+                }
+                sb.append("\"").append(ToolJsonUtils.escapeJson(tagNames.get(i))).append("\"");
+            }
+            sb.append("]");
+        }
+        sb.append("}");
+        return sb.toString();
+    }
+
+    /**
+     * Builds the document name for a stored e-mail: sanitized subject with an
+     * .eml extension, run through the configured document name template exactly
+     * like BulkSaveEntry.setNameTemplate does for the manual filing dialog.
+     */
+    private String buildEmlDocumentName(ArchiveFileBean caseBean, String rawName, Date documentDate) throws Exception {
+        String docName = FileUtils.sanitizeFileName(rawName.trim());
+        if (!docName.toLowerCase().endsWith(".eml")) {
+            docName = docName + ".eml";
+        }
+
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        SystemManagementRemote sys = locator.lookupSystemManagementRemote();
+        DocumentNameTemplate nameTemplate = sys.getDefaultDocumentNameTemplate();
+        if (nameTemplate == null) {
+            return limitDocumentNameLength(docName);
+        }
+
+        ArchiveFileServiceRemote archiveSvc = locator.lookupArchiveFileServiceRemote();
+        FormsServiceRemote formsSvc = locator.lookupFormsServiceRemote();
+
+        String templatedName = archiveSvc.getNewDocumentName(docName, documentDate, nameTemplate);
+
+        List<PartiesTriplet> parties = new ArrayList<>();
+        List<ArchiveFileAddressesBean> involvements = archiveSvc.getInvolvementDetailsForCase(caseBean.getId());
+        if (involvements != null) {
+            for (ArchiveFileAddressesBean aab : involvements) {
+                parties.add(new PartiesTriplet(aab.getAddressKey(), aab.getReferenceType(), aab));
+            }
+        }
+        Collection<String> formPlaceHolders = formsSvc.getPlaceHoldersForCase(caseBean.getId());
+        HashMap<String, String> formPlaceHolderValues = formsSvc.getPlaceHolderValuesForCase(caseBean.getId());
+
+        HashMap<String, Object> placeHolders = TemplatesUtil.getPlaceHolderValues(templatedName, caseBean, parties,
+                null, null, getCachedPartyTypes(), formPlaceHolders, formPlaceHolderValues,
+                resolveUserQuietly(sys, caseBean.getLawyer()), resolveUserQuietly(sys, caseBean.getAssistant()));
+        templatedName = TemplatesUtil.replacePlaceHolders(templatedName, placeHolders);
+        templatedName = FileUtils.sanitizeFileName(templatedName);
+        // the template may put the extension anywhere in the name, so strip it and add it back
+        templatedName = templatedName.replace(".eml", "");
+        return limitDocumentNameLength(FileUtils.preserveExtension(docName, templatedName));
+    }
+
+    private AppUserBean resolveUserQuietly(SystemManagementRemote sys, String principalId) {
+        if (principalId == null || principalId.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return sys.getUser(principalId);
+        } catch (Exception ex) {
+            log.warn("Could not resolve user: " + principalId, ex);
+            return null;
+        }
+    }
+
+    /**
+     * The documents.name column holds 250 characters, and a long mail subject
+     * exceeds that easily. Shorten the stem, always keep the extension.
+     */
+    private String limitDocumentNameLength(String docName) {
+        if (docName.length() <= MAX_DOCUMENT_NAME_CHARS) {
+            return docName;
+        }
+        String extension = "";
+        int dotIndex = docName.lastIndexOf('.');
+        if (dotIndex >= 0) {
+            extension = docName.substring(dotIndex);
+        }
+        return docName.substring(0, MAX_DOCUMENT_NAME_CHARS - extension.length()) + extension;
+    }
+
+    private String appendNameIndex(String docName, int index) {
+        String extension = "";
+        String stem = docName;
+        int dotIndex = docName.lastIndexOf('.');
+        if (dotIndex >= 0) {
+            extension = docName.substring(dotIndex);
+            stem = docName.substring(0, dotIndex);
+        }
+        String suffix = " (" + index + ")";
+        int maxStem = MAX_DOCUMENT_NAME_CHARS - extension.length() - suffix.length();
+        if (stem.length() > maxStem) {
+            stem = stem.substring(0, maxStem);
+        }
+        return stem + suffix + extension;
     }
 
     /**

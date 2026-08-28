@@ -2609,15 +2609,65 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             selectedText = selection.toString();
         }
 
+        String contextData = selectedText;
+        if (c != null && AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType())) {
+            // only the chat flow gets the header block - for translate/summarize/generate
+            // the headers would end up translated and prepended to the reply mail
+            contextData = buildMailChatContext(selectedText);
+        }
+
         ArrayList<InputData> inputs = new ArrayList<>();
         InputData i = new InputData();
         //i.setFileName("sound.wav");
         i.setType(InputData.TYPE_STRING);
         i.setBase64(false);
         //i.setData(selectedText);
-        i.setStringData(selectedText);
+        i.setStringData(contextData);
         inputs.add(i);
         return inputs;
+    }
+
+    /**
+     * Prefixes the message body with its header data for the assistant chat. For
+     * server based mailboxes this includes mailboxId and messageRef - without
+     * those two the assistant cannot address this very message with its e-mail
+     * tools, e.g. to file it into a case via save_email_to_case.
+     */
+    private String buildMailChatContext(String body) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("--- E-Mail ---").append(System.lineSeparator());
+        if (this.emlMsgContainer != null && this.emlMsgContainer.isServerBased()) {
+            appendMailContextLine(sb, "Postfach-ID (mailboxId)", this.emlMsgContainer.getMailboxId());
+            appendMailContextLine(sb, "Nachrichten-Referenz (messageRef)", this.emlMsgContainer.getMessageRef());
+        }
+        appendMailContextLine(sb, "Von", this.lblFrom.getText());
+        appendMailContextLine(sb, "An", this.lblTo.getText());
+        appendMailContextLine(sb, "Kopie", this.lblCC.getText());
+        appendMailContextLine(sb, "Blindkopie", this.lblBCC.getText());
+        appendMailContextLine(sb, "Datum", this.lblSentDate.getText());
+        appendMailContextLine(sb, "Betreff", this.lblSubject.getText());
+        if (this.lstAttachments.getModel().getSize() > 0) {
+            StringBuilder attachmentNames = new StringBuilder();
+            for (int a = 0; a < this.lstAttachments.getModel().getSize(); a++) {
+                if (a > 0) {
+                    attachmentNames.append(", ");
+                }
+                attachmentNames.append(String.valueOf(this.lstAttachments.getModel().getElementAt(a)));
+            }
+            appendMailContextLine(sb, "Anhänge", attachmentNames.toString());
+        }
+        sb.append("--- Nachrichtentext ---").append(System.lineSeparator());
+        if (body != null) {
+            sb.append(body);
+        }
+        return sb.toString();
+    }
+
+    private void appendMailContextLine(StringBuilder sb, String label, String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return;
+        }
+        sb.append(label).append(": ").append(value.trim()).append(System.lineSeparator());
     }
 
     @Override
