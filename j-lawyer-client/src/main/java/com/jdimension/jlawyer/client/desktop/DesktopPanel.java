@@ -2570,6 +2570,9 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     void renderDueEntries(ArrayList<ReviewDueEntry> entries, boolean compactView) {
         pnlRevDue.removeAll();
 
+        // remember the selected tab so that a refresh does not jump back to "alle"
+        String selectedTab = ComponentUtils.getSelectedTabBaseTitle(tabPaneDue);
+
         // Remove all tabs except for the first one ("alle")
         for (int i = tabPaneDue.getTabCount() - 1; i > 0; i--) {
             tabPaneDue.removeTabAt(i);
@@ -2637,6 +2640,10 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             ComponentUtils.setTabTitleWithCount(tabPaneDue, i,
                     countsByEventType.getOrDefault(ComponentUtils.getTabBaseTitle(tabPaneDue, i), 0));
         }
+
+        // restore the previously selected tab - if its event type has no entries
+        // any longer, the selection stays on "alle"
+        ComponentUtils.selectTabByBaseTitle(tabPaneDue, selectedTab);
 
         pnlRevDue.revalidate();
         pnlRevDue.repaint();

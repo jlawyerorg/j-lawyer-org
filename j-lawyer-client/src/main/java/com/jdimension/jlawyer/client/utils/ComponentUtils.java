@@ -755,6 +755,32 @@ public class ComponentUtils {
     }
 
     /**
+     * Returns the logical title of the currently selected tab, or null if the
+     * pane has no selection.
+     */
+    public static String getSelectedTabBaseTitle(JTabbedPane pane) {
+        int index = pane.getSelectedIndex();
+        if (index < 0 || index >= pane.getTabCount()) {
+            return null;
+        }
+        return getTabBaseTitle(pane, index);
+    }
+
+    /**
+     * Selects the tab with the given logical title. Does nothing if there is no
+     * such tab, e.g. because it was not recreated during a refresh.
+     */
+    public static void selectTabByBaseTitle(JTabbedPane pane, String baseTitle) {
+        if (baseTitle == null) {
+            return;
+        }
+        int index = indexOfTabByBaseTitle(pane, baseTitle);
+        if (index > -1 && index != pane.getSelectedIndex()) {
+            pane.setSelectedIndex(index);
+        }
+    }
+
+    /**
      * Remembers the given logical title for a tab so that later calls to
      * getTabBaseTitle and indexOfTabByBaseTitle keep working once a count
      * suffix is applied.
