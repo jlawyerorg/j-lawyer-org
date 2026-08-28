@@ -17,8 +17,8 @@
 - [x] 3.3 Mention the chat context as a source for `mailboxId`/`messageRef` in the tool and parameter descriptions
 
 ## 4. Verification
-- [ ] 4.1 Build `j-lawyer-client`
-- [ ] 4.2 File a mail into a case from the assistant chat; check name, approval dialog, "open document" button and automatic case refresh
-- [ ] 4.3 Verify the optional parameters `fileName`, `folderId` and `tags`
-- [ ] 4.4 Verify edge cases: duplicate filing yields ` (2)`, name only in the recycle bin gives a readable error, mail without subject, very long subject, archived case, inaccessible mailbox, unknown tag
-- [ ] 4.5 Start a chat from an open mail and verify the context panel shows the header block; ask to file the mail without a prior search
+- [x] 4.1 Build `j-lawyer-client`
+- [x] 4.2 File a mail into a case from the assistant chat; check name, approval dialog, "open document" button and automatic case refresh
+- [x] 4.3 Verify the optional parameters `fileName`, `folderId` and `tags`
+- [x] 4.4 Verify edge cases: duplicate filing yields ` (2)`, name only in the recycle bin gives a readable error, mail without subject, very long subject, archived case, inaccessible mailbox, unknown tag
+- [x] 4.5 Start a chat from an open mail and verify the context panel shows the header block; ask to file the mail without a prior search
