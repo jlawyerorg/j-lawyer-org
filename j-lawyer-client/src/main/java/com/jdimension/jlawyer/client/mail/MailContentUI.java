@@ -2918,7 +2918,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                                 try {
                                     com.jdimension.jlawyer.client.settings.ClientSettings cs = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
                                     com.jdimension.jlawyer.services.JLawyerServiceLocator loc = com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(cs.getLookupProperties());
-                                    loc.lookupEmailServiceRemote().sendMail(finalMs.getId(), receiptTo, null, null, "Lesebestätigung: " + receiptSubject, "Ihre Nachricht \"" + receiptSubject + "\" wurde gelesen.", "text/plain", null, "normal", false, null, null);
+                                    loc.lookupEmailServiceRemote().sendMail(finalMs.getId(), receiptTo, null, null, "Lesebestätigung: " + receiptSubject, "Ihre Nachricht \"" + receiptSubject + "\" wurde gelesen.", "text/plain", null, "normal", false, false, null, null);
                                 } catch (Exception ex2) {
                                     log.error("Could not send read receipt", ex2);
                                 }

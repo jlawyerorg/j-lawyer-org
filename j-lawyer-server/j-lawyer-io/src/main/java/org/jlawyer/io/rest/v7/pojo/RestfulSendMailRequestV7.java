@@ -30,6 +30,7 @@ public class RestfulSendMailRequestV7 implements Serializable {
     protected List<RestfulMailAttachmentV7> attachments;
     protected String priority;
     protected boolean readReceipt;
+    protected boolean deliveryReceipt;
     protected String inReplyTo;
     protected String references;
 
@@ -103,6 +104,14 @@ public class RestfulSendMailRequestV7 implements Serializable {
 
     public void setReadReceipt(boolean readReceipt) {
         this.readReceipt = readReceipt;
+    }
+
+    public boolean isDeliveryReceipt() {
+        return deliveryReceipt;
+    }
+
+    public void setDeliveryReceipt(boolean deliveryReceipt) {
+        this.deliveryReceipt = deliveryReceipt;
     }
 
     public String getInReplyTo() {

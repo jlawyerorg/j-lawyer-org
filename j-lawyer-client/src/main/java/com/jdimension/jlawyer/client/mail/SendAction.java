@@ -696,6 +696,7 @@ public class SendAction extends ProgressableAction {
     private List<String> attachments = null;
     private MailboxSetup ms = null;
     private boolean readReceipt = false;
+    private boolean deliveryReceipt = false;
     private String to = "";
     private String cc = "";
     private String bcc = "";
@@ -708,11 +709,12 @@ public class SendAction extends ProgressableAction {
     private String draftDocumentId = null;
     private String priority = null;
 
-    public SendAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag, String priority) {
+    public SendAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, boolean deliveryReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag, String priority) {
         super(i, false, cleanAfter);
         this.attachments = attachments;
         this.ms = ms;
         this.readReceipt = readReceipt;
+        this.deliveryReceipt = deliveryReceipt;
         this.to = to;
         this.cc = cc;
         this.bcc = bcc;
@@ -723,22 +725,23 @@ public class SendAction extends ProgressableAction {
         this.priority = priority;
     }
 
-    public SendAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder, String priority) {
-        this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, documentTag, priority);
+    public SendAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, boolean deliveryReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder, String priority) {
+        this(i, cleanAfter, attachments, ms, readReceipt, deliveryReceipt, to, cc, bcc, subject, body, contentType, documentTag, priority);
         this.archiveFile = af;
         this.caseFolder = folder;
     }
 
-    public SendAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder, String draftDocumentId, String priority) {
-        this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, af, documentTag, folder, priority);
+    public SendAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, boolean deliveryReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder, String draftDocumentId, String priority) {
+        this(i, cleanAfter, attachments, ms, readReceipt, deliveryReceipt, to, cc, bcc, subject, body, contentType, af, documentTag, folder, priority);
         this.draftDocumentId = draftDocumentId;
     }
     
-    public SendAction(ProgressIndicator i, JFrame cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag, String priority) {
+    public SendAction(ProgressIndicator i, JFrame cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, boolean deliveryReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag, String priority) {
         super(i, false, cleanAfter);
         this.attachments = attachments;
         this.ms = ms;
         this.readReceipt = readReceipt;
+        this.deliveryReceipt = deliveryReceipt;
         this.to = to;
         this.cc = cc;
         this.bcc = bcc;
@@ -749,14 +752,14 @@ public class SendAction extends ProgressableAction {
         this.priority = priority;
     }
 
-    public SendAction(ProgressIndicator i, JFrame cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder, String priority) {
-        this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, documentTag, priority);
+    public SendAction(ProgressIndicator i, JFrame cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, boolean deliveryReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder, String priority) {
+        this(i, cleanAfter, attachments, ms, readReceipt, deliveryReceipt, to, cc, bcc, subject, body, contentType, documentTag, priority);
         this.archiveFile = af;
         this.caseFolder = folder;
     }
 
-    public SendAction(ProgressIndicator i, JFrame cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder, String draftDocumentId, String priority) {
-        this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, af, documentTag, folder, priority);
+    public SendAction(ProgressIndicator i, JFrame cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, boolean deliveryReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder, String draftDocumentId, String priority) {
+        this(i, cleanAfter, attachments, ms, readReceipt, deliveryReceipt, to, cc, bcc, subject, body, contentType, af, documentTag, folder, priority);
         this.draftDocumentId = draftDocumentId;
     }
 
@@ -1229,7 +1232,7 @@ public class SendAction extends ProgressableAction {
                 com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             locator.lookupEmailServiceRemote().sendMail(
                 ms.getId(), this.to, this.cc, this.bcc, this.subject, this.body,
-                this.contentType, attDTOs, this.priority, this.readReceipt, null, null);
+                this.contentType, attDTOs, this.priority, this.readReceipt, this.deliveryReceipt, null, null);
 
             this.progress("Speichere in Akte...");
 

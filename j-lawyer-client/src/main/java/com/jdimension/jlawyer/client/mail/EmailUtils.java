@@ -1469,7 +1469,7 @@ public class EmailUtils extends CommonMailUtils {
 
             com.jdimension.jlawyer.client.settings.ClientSettings settings = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
             com.jdimension.jlawyer.services.JLawyerServiceLocator locator = com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            locator.lookupEmailServiceRemote().sendMail(ms.getId(), to, null, null, receiptSubject, receiptBody, "text/plain", null, "normal", false, null, null);
+            locator.lookupEmailServiceRemote().sendMail(ms.getId(), to, null, null, receiptSubject, receiptBody, "text/plain", null, "normal", false, false, null, null);
         } catch (Throwable t) {
             log.error("Could not send read receipt", t);
         }

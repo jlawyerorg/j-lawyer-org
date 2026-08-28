@@ -1355,12 +1355,12 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
 
     @Override
     @RolesAllowed({"loginRole"})
-    public void sendMail(String mailboxId, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, String priority, boolean readReceipt, String inReplyTo, String references) throws Exception {
+    public void sendMail(String mailboxId, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, String priority, boolean readReceipt, boolean deliveryReceipt, String inReplyTo, String references) throws Exception {
         MailboxSetup ms = getMailboxOrThrow(mailboxId);
         if (ms.isMsExchange()) {
-            graphSendMail(ms, to, cc, bcc, subject, body, contentType, attachments, priority, readReceipt, inReplyTo, references);
+            graphSendMail(ms, to, cc, bcc, subject, body, contentType, attachments, priority, readReceipt, deliveryReceipt, inReplyTo, references);
         } else {
-            smtpSendMail(ms, to, cc, bcc, subject, body, contentType, attachments, priority, readReceipt, inReplyTo, references);
+            smtpSendMail(ms, to, cc, bcc, subject, body, contentType, attachments, priority, readReceipt, deliveryReceipt, inReplyTo, references);
         }
         // Invalidate sent folder cache
         invalidateAllFolderCaches(mailboxId);
@@ -2458,7 +2458,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         return attachmentPart;
     }
 
-    private void smtpSendMail(MailboxSetup ms, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, String priority, boolean readReceipt, String inReplyTo, String references) throws Exception {
+    private void smtpSendMail(MailboxSetup ms, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, String priority, boolean readReceipt, boolean deliveryReceipt, String inReplyTo, String references) throws Exception {
         Properties props = new Properties();
         String server = ms.getEmailOutServer();
         final String user = ms.getEmailOutUser();
@@ -2477,6 +2477,15 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         if (port != null && !port.isEmpty()) {
             props.put("mail.smtp.port", port);
             props.put("mail.smtps.port", port);
+        }
+        if (deliveryReceipt) {
+            // RFC 3461 DSN: requested on the SMTP envelope (MAIL FROM ... RET=, RCPT TO ... NOTIFY=),
+            // not via message headers. SMTPTransport only emits these if the server announces the
+            // DSN extension in its EHLO response - otherwise they are silently omitted.
+            props.put("mail.smtp.dsn.notify", "SUCCESS,FAILURE,DELAY");
+            props.put("mail.smtp.dsn.ret", "HDRS");
+            props.put("mail.smtps.dsn.notify", "SUCCESS,FAILURE,DELAY");
+            props.put("mail.smtps.dsn.ret", "HDRS");
         }
         ms.applyCustomProperties(ms.customConfigurationsSendProperties(), props);
         Session session = Session.getInstance(props, new Authenticator() {
@@ -3010,7 +3019,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     }
 
     @SuppressWarnings("unchecked")
-    private void graphSendMail(MailboxSetup ms, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, String priority, boolean readReceipt, String inReplyTo, String references) throws Exception {
+    private void graphSendMail(MailboxSetup ms, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, String priority, boolean readReceipt, boolean deliveryReceipt, String inReplyTo, String references) throws Exception {
         String url = GRAPH_BASE + "/users/" + URLEncoder.encode(ms.getEmailAddress(), StandardCharsets.UTF_8) + "/sendMail";
         Map<String, Object> message = new HashMap<>();
         message.put("subject", subject);
@@ -3031,6 +3040,11 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         message.put("importance", graphPrio);
         if (readReceipt) {
             message.put("isReadReceiptRequested", true);
+        }
+        if (deliveryReceipt) {
+            // Native message property - the equivalent MIME headers cannot be injected through
+            // internetMessageHeaders, see the note on the "x-" prefix restriction below.
+            message.put("isDeliveryReceiptRequested", true);
         }
 
         // Build internetMessageHeaders. Graph only accepts custom headers whose name starts

@@ -664,6 +664,7 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
                     attachments,
                     request.getPriority(),
                     request.isReadReceipt(),
+                    request.isDeliveryReceipt(),
                     request.getInReplyTo(),
                     request.getReferences());
 

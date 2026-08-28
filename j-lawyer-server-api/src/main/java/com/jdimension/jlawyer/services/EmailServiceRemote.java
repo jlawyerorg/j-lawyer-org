@@ -797,11 +797,12 @@ public interface EmailServiceRemote {
      * @param attachments list of attachments to include
      * @param priority email priority (high, normal, low)
      * @param readReceipt whether to request a read receipt
+     * @param deliveryReceipt whether to request a delivery receipt (DSN)
      * @param inReplyTo Message-ID of the message being replied to
      * @param references References header for threading
      * @throws Exception if sending fails
      */
-    void sendMail(String mailboxId, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, String priority, boolean readReceipt, String inReplyTo, String references) throws Exception;
+    void sendMail(String mailboxId, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, String priority, boolean readReceipt, boolean deliveryReceipt, String inReplyTo, String references) throws Exception;
 
     /**
      * Moves a message to another folder.

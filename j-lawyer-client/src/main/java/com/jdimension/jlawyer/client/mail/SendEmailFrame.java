@@ -2116,6 +2116,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         chkSaveAsDocument = new javax.swing.JCheckBox();
         chkDocumentTagging = new javax.swing.JCheckBox();
         cmbDocumentTag = new javax.swing.JComboBox<>();
+        chkDeliveryReceipt = new javax.swing.JCheckBox();
         jPanel4 = new javax.swing.JPanel();
         cmbReviewReason = new javax.swing.JComboBox();
         jLabel12 = new javax.swing.JLabel();
@@ -2450,7 +2451,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             }
         });
 
-        chkReadReceipt.setText("Lesebestätigung anfordern");
+        chkReadReceipt.setText("Lesebestätigung");
 
         chkEncryption.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/gpg-disabled-red.png"))); // NOI18N
         chkEncryption.setBorder(null);
@@ -2482,6 +2483,8 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             }
         });
 
+        chkDeliveryReceipt.setText("Übermittlungsbestätigung");
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -2504,7 +2507,10 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                                 .addComponent(chkDocumentTagging)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(cmbDocumentTag, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(chkReadReceipt))
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(chkReadReceipt)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(chkDeliveryReceipt)))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -2515,7 +2521,9 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                     .addComponent(html)
                     .addComponent(text))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(chkReadReceipt)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(chkReadReceipt)
+                    .addComponent(chkDeliveryReceipt))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(chkSaveAsDocument)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -2970,10 +2978,10 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                         return;
                     }
                 }
-                a = new SendEncryptedAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, this.contextArchiveFile, createDocumentTag, this.contextArchiveFileFolder, this.currentDraftDocumentId, (String) this.cmbPriority.getSelectedItem());
+                a = new SendEncryptedAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.chkDeliveryReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, this.contextArchiveFile, createDocumentTag, this.contextArchiveFileFolder, this.currentDraftDocumentId, (String) this.cmbPriority.getSelectedItem());
             } else {
 
-                a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, this.contextArchiveFile, createDocumentTag, this.contextArchiveFileFolder, this.currentDraftDocumentId, (String) this.cmbPriority.getSelectedItem());
+                a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.chkDeliveryReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, this.contextArchiveFile, createDocumentTag, this.contextArchiveFileFolder, this.currentDraftDocumentId, (String) this.cmbPriority.getSelectedItem());
             }
 
         } else if (this.chkEncryption.isSelected()) {
@@ -2990,9 +2998,9 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                     return;
                 }
             }
-            a = new SendEncryptedAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, createDocumentTag, (String) this.cmbPriority.getSelectedItem());
+            a = new SendEncryptedAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.chkDeliveryReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, createDocumentTag, (String) this.cmbPriority.getSelectedItem());
         } else {
-            a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, createDocumentTag, (String) this.cmbPriority.getSelectedItem());
+            a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.chkDeliveryReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, createDocumentTag, (String) this.cmbPriority.getSelectedItem());
         }
 
         // Hand the auto-saved draft id to the send action so it gets deleted after a
@@ -3606,6 +3614,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     private javax.swing.ButtonGroup btGroupReviews;
     private javax.swing.ButtonGroup buttonGroupTextHtml;
     private com.jdimension.jlawyer.client.calendar.CalendarSelectionButton calendarSelectionButton1;
+    private javax.swing.JCheckBox chkDeliveryReceipt;
     private javax.swing.JCheckBox chkDocumentTagging;
     private javax.swing.JToggleButton chkEncryption;
     private javax.swing.JCheckBox chkReadReceipt;

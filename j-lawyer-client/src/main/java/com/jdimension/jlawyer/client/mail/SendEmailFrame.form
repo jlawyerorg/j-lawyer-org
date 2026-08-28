@@ -594,7 +594,11 @@
                                           <EmptySpace max="-2" attributes="0"/>
                                           <Component id="cmbDocumentTag" min="-2" max="-2" attributes="0"/>
                                       </Group>
-                                      <Component id="chkReadReceipt" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Group type="102" alignment="0" attributes="0">
+                                          <Component id="chkReadReceipt" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Component id="chkDeliveryReceipt" min="-2" max="-2" attributes="0"/>
+                                      </Group>
                                   </Group>
                                   <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                               </Group>
@@ -611,7 +615,10 @@
                               <Component id="text" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                          <Component id="chkReadReceipt" min="-2" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="3" attributes="0">
+                              <Component id="chkReadReceipt" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="chkDeliveryReceipt" alignment="3" min="-2" max="-2" attributes="0"/>
+                          </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="chkSaveAsDocument" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
@@ -655,7 +662,7 @@
                 </Component>
                 <Component class="javax.swing.JCheckBox" name="chkReadReceipt">
                   <Properties>
-                    <Property name="text" type="java.lang.String" value="Lesebest&#xe4;tigung anfordern"/>
+                    <Property name="text" type="java.lang.String" value="Lesebest&#xe4;tigung"/>
                   </Properties>
                 </Component>
                 <Component class="javax.swing.JToggleButton" name="chkEncryption">
@@ -710,6 +717,11 @@
                   <AuxValues>
                     <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
                   </AuxValues>
+                </Component>
+                <Component class="javax.swing.JCheckBox" name="chkDeliveryReceipt">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="&#xdc;bermittlungsbest&#xe4;tigung"/>
+                  </Properties>
                 </Component>
               </SubComponents>
             </Container>
