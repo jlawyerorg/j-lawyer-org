@@ -13,7 +13,7 @@
 - [x] 2.4 Add the helpers `getAccessibleMailboxes`, `findAccessibleMailbox`, `selectSearchFolders`, `appendStringArrayJson` and the `MailHit` holder
 
 ## 3. Verification
-- [ ] 3.1 Build `j-lawyer-client`
-- [ ] 3.2 Verify in the assistant chat: list mailboxes, search a known mail, read it, search with `scope="all"`
-- [ ] 3.3 Verify the three tools do NOT appear in the permission table of `UserProfileDialog` (RISK_LOW)
-- [ ] 3.4 Verify edge cases: no hits, unknown `mailboxId`, user without `aiAgentRole`, unreachable mailbox reported in `warnings`
+- [x] 3.1 Build `j-lawyer-client`
+- [x] 3.2 Verify in the assistant chat: list mailboxes, search a known mail, read it, search with `scope="all"`
+- [x] 3.3 Verify the three tools do NOT appear in the permission table of `UserProfileDialog` (RISK_LOW)
+- [x] 3.4 Verify edge cases: no hits, unknown `mailboxId`, user without `aiAgentRole`, unreachable mailbox reported in `warnings`
