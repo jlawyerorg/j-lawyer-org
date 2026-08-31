@@ -68,7 +68,7 @@
       charge
 - [x] 2.3 § 288 BGB default interest proposal (5/9 percentage points from `interest_base`) and the
       § 288 Abs. 5 BGB lump sum incl. the consumer exclusion
-- [ ] 2.4 Ledger view showing the dunning stage state and the next escalation
+- [x] 2.4 Ledger view showing the dunning stage state and the next escalation
 - [ ] 2.5 Tests for stage escalation, charge bookings and interest proposals
 
 ## 3. Phase 3 — Court dunning procedure

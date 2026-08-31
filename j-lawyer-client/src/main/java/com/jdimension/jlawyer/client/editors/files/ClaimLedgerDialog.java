@@ -939,6 +939,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         ClaimLedger savedLedger = (ledger != null && ledger.getId() != null) ? ledger : null;
         this.pnlParties.setLedger(this.caseDto, savedLedger);
         this.pnlTitles.setLedger(savedLedger);
+        this.pnlDunning.setLedger(savedLedger);
 
         if (ledger == null) {
             this.setTitle("neues Forderungskonto erstellen");
@@ -1082,6 +1083,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         jTabbedPane1 = new javax.swing.JTabbedPane();
         pnlParties = new com.jdimension.jlawyer.client.editors.files.ClaimLedgerPartiesPanel();
         pnlTitles = new com.jdimension.jlawyer.client.editors.files.ClaimLedgerTitlesPanel();
+        pnlDunning = new com.jdimension.jlawyer.client.editors.files.ClaimLedgerDunningPanel();
         jPanel1 = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
@@ -1330,6 +1332,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         jTabbedPane1.addTab("Stammdaten", pnlParties);
 
         jTabbedPane1.addTab("Titel", pnlTitles);
+
+        jTabbedPane1.addTab("Mahnverfahren", pnlDunning);
 
         jTabbedPane1.addTab("Positionen", jPanel1);
 
@@ -2324,6 +2328,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JTabbedPane jTabbedPane1;
     private com.jdimension.jlawyer.client.editors.files.ClaimLedgerPartiesPanel pnlParties;
+    private com.jdimension.jlawyer.client.editors.files.ClaimLedgerDunningPanel pnlDunning;
     private com.jdimension.jlawyer.client.editors.files.ClaimLedgerTitlesPanel pnlTitles;
     private javax.swing.JPanel lblHeader;
     private javax.swing.JLabel lblOpenValue;
