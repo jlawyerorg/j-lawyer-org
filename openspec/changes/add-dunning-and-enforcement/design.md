@@ -52,6 +52,18 @@ Related infrastructure that is reused rather than rebuilt:
   types become part of the ledger model, so totals, allocation and statements keep one
   implementation. Alternative considered: a separate "enforcement account" — rejected, it would
   duplicate interest and allocation logic that is already correct.
+- **Decision: parties are a contact reference plus a snapshot.** A ledger party points at the
+  address book contact (`AddressBean`), the same reference `Invoice`, `payments` and
+  `case_account_entries` already use, with the `ON DELETE SET NULL` behaviour established by
+  `V3_6_0_6`; the case party record (`ArchiveFileAddressesBean`) is only an optional back-reference
+  to the role the party holds in the case, because a ledger party need not be a case party and a
+  role removed from the case must not change who the ledger runs against. On top of the reference,
+  the designation and address used towards the court are frozen on first use, because a title stays
+  enforceable for 30 years and its debtor designation has to remain reconstructable — the same
+  reasoning that makes the court directory keep the designation a document was produced with.
+  Alternatives considered: a pure reference like the invoice model — rejected, deleting or
+  renaming a contact would silently invalidate an enforcement file; and a pure copy of the party
+  data — rejected, ordinary corrections would then never reach the ledger.
 - **Decision: two new workflow entities, one shared cost path.** `DunningCase` and
   `EnforcementMeasure` both book money exclusively through one ledger service operation
   (`bookProceduralCost`), which also owns the optional `CaseAccountEntry` and the reversal
@@ -141,8 +153,10 @@ Related infrastructure that is reused rather than rebuilt:
 
 New tables (Flyway, next free numbers after the highest existing migration, currently `V3_6_0_8`):
 
-- `claimledger_parties` — ledger id, role (CREDITOR/DEBTOR), sequence, contact reference,
-  representative, authorised representative, consumer flag.
+- `claimledger_parties` — ledger id, role (CREDITOR/DEBTOR), sequence, contact reference
+  (`contacts`, `ON DELETE SET NULL`), optional case-party reference (`case_contacts`) for the role
+  it was derived from, designation and address snapshot, representative, authorised representative,
+  consumer flag.
 - `claimledgers` additions — parent ledger id (sub-ledger), effective creditor count, allocation
   mode, surplus handling, consumer-loan flag, VAT handling, dunning stage state.
 - `enforcement_titles` — ledger id, type, issuing body, file number, dates (issue, clause,

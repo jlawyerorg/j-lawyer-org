@@ -20,7 +20,10 @@
 ## 1. Phase 1 — Claim ledger foundation
 
 - [ ] 1.1 Add ledger party model (creditors/debtors, sequence, representatives, effective creditor
-      count, consumer flag) with migration and entity classes
+      count, consumer flag) with migration and entity classes: `AddressBean` reference as the
+      party's identity with `ON DELETE SET NULL` like `invoices.contact_id`, an optional
+      `ArchiveFileAddressesBean` reference for the case role it was derived from, and the
+      designation/address snapshot written on first use towards a court
 - [ ] 1.2 Add sub-ledger reference, allocation mode, surplus handling and consumer-loan flag to
       `ClaimLedger`
 - [ ] 1.3 Add `EnforcementTitle` entity with prerequisites (Titel/Klausel/Zustellung) and 30-year

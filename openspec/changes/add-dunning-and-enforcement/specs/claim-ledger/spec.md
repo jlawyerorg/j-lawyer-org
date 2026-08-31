@@ -2,9 +2,22 @@
 
 ### Requirement: Claim Ledger Parties
 
-A claim ledger SHALL store its own creditor (Gläubiger) and debtor (Schuldner) lists, each entry
-referencing a contact of the case (`ArchiveFileAddressesBean`) or, if not present there, a
-contact from the address book. Each party entry SHALL carry a sequence number, an optional legal
+A claim ledger SHALL store its own creditor (Gläubiger) and debtor (Schuldner) lists. Each entry
+SHALL reference the address book contact (`AddressBean`) that identifies the party, following the
+reference the invoicing model already uses, and deleting that contact SHALL NOT delete the party or
+the ledger. A party entry MAY additionally reference the case party record
+(`ArchiveFileAddressesBean`) it was derived from, so the party can be proposed from the case and
+the role it holds there stays visible; that reference SHALL be optional, because a ledger party
+need not be a party of the case, and losing it SHALL NOT change who the ledger runs against.
+
+Because an enforcement title stays enforceable for 30 years, a party entry SHALL additionally hold
+a snapshot of the designation and postal address as they were used towards the court. The snapshot
+SHALL be written when the party is first used in a dunning application, a title or an enforcement
+document, SHALL NOT be overwritten by later changes to the contact, and SHALL be what documents
+reproducing an earlier state resolve to. Current work SHALL use the referenced contact, so an
+address correction takes effect without touching the history.
+
+Each party entry SHALL carry a sequence number, an optional legal
 representative and an optional authorised representative (Bevollmächtigter). The ledger SHALL
 store the effective number of creditors separately from the number of creditor entries, because
 one contact may represent several creditors (e.g. spouses under one address), and fee increases
@@ -17,6 +30,19 @@ a single-debtor position.
 - **WHEN** a claim ledger is created for a case that has a client and an opponent
 - **THEN** the client is proposed as creditor and the opponent as debtor
 - **AND** the proposed number of creditors equals the number of creditor entries
+
+#### Scenario: Party outlives its contact
+
+- **WHEN** the address book contact referenced by a debtor is deleted
+- **THEN** the ledger, its bookings and the debtor entry remain
+- **AND** the debtor stays identifiable by the snapshot taken when the title was obtained
+
+#### Scenario: Address correction does not rewrite the title
+
+- **GIVEN** a debtor against whom a Vollstreckungsbescheid was obtained under a former address
+- **WHEN** the contact's address is corrected after the debtor has moved
+- **THEN** new enforcement documents use the corrected address
+- **AND** the designation and address recorded with the title stay as they were
 
 #### Scenario: Single-debtor cost booking
 
