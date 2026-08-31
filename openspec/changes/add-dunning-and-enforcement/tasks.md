@@ -81,7 +81,7 @@
 
 ## 3. Phase 3 — Court dunning procedure
 
-- [ ] 3.1 `DunningCase` entity, status model and history with migration
+- [x] 3.1 `DunningCase` entity, status model and history with migration
 - [ ] 3.2 Court directory: `courts` and `court_scopes` with migration, service and remote interface
       (English JavaDoc), administration UI (+ `.form`) and the repeatable seed from 0.2, matched on
       the XJustiz identifier. This is where the court reference data stops being carried in code:
