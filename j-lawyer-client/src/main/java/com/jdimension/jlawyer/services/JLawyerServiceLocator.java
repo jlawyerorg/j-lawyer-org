@@ -759,6 +759,18 @@ public class JLawyerServiceLocator {
         }
     }
     
+    /**
+     * @return the central court master data
+     */
+    public CourtServiceRemote lookupCourtServiceRemote() {
+        try {
+            return (CourtServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//CourtService!com.jdimension.jlawyer.services.CourtServiceRemote");
+        } catch (NamingException ne) {
+            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
+            throw new RuntimeException(ne);
+        }
+    }
+
     public ClaimLedgerServiceRemote lookupClaimLedgerServiceRemote() {
         try {
             return (ClaimLedgerServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//ClaimLedgerService!com.jdimension.jlawyer.services.ClaimLedgerServiceRemote");

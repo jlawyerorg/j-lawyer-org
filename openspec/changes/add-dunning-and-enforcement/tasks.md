@@ -82,16 +82,20 @@
 ## 3. Phase 3 — Court dunning procedure
 
 - [x] 3.1 `DunningCase` entity, status model and history with migration
-- [ ] 3.2 Court directory: `courts` and `court_scopes` with migration, service and remote interface
+- [x] 3.2 Court directory: `courts` and `court_scopes` with migration, service and remote interface
       (English JavaDoc), administration UI (+ `.form`) and the repeatable seed from 0.2, matched on
-      the XJustiz identifier. This is where the court reference data stops being carried in code:
-      `BundledDunningCourtDirectory` becomes the seed, and a `DunningCourtDirectory` implementation
-      reading the master data replaces it in `ReferenceData`. Keep the responsibility list,
-      including the division of North Rhine-Westphalia along the OLG district of Cologne and the
-      assignment of applicants seated abroad — a schema assuming one court per state would lose it
+      the XJustiz identifier. The court data stops being carried in code here:
+      `BundledDunningCourtDirectory` is the source the seed was generated from, so the two cannot
+      drift apart. Replacing it in `ReferenceData` is *not* part of this task — that implementation
+      also has to answer which court serves which state, and those rules arrive with the rule table
+      of 3.3; until then the bundled directory stays the one `ReferenceData` hands out
 - [ ] 3.3 Dunning rule table over the directory (selection key incl. OLG district / postal-code
       range, special-rule marker, channels, Kennziffer and direct-debit flags) and the § 689
-      Abs. 2, 3 ZPO derivation with manual override
+      Abs. 2, 3 ZPO derivation with manual override. With the rules in place, replace
+      `BundledDunningCourtDirectory` in `ReferenceData` with an implementation reading the court
+      master data and these rules. Keep the responsibility list as a list: North Rhine-Westphalia is
+      divided along the OLG district of Cologne and applicants seated abroad are assigned to one
+      court, so a schema assuming one court per state would lose both
 - [ ] 3.4 Deadline engine: rules for Widerspruch (2 weeks), VB application, § 701 ZPO six-month
       lapse, Einspruch (2 weeks); creation, recalculation and closing of case events
 - [ ] 3.5 Fee/cost proposal and booking for MB/VB (Nr. 3305, 3308, 1008 VV RVG, Vorbem. 3 Abs. 4

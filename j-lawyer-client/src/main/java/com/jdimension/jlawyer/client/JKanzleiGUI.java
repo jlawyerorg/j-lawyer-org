@@ -1305,6 +1305,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuCalendarSyncNow = new javax.swing.JMenuItem();
         mnuFinance = new javax.swing.JMenu();
         mnuDunningStages = new javax.swing.JMenuItem();
+        mnuCourts = new javax.swing.JMenuItem();
         mnuInvoicePools = new javax.swing.JMenuItem();
         mnuInvoiceTypes = new javax.swing.JMenuItem();
         mnuInvoiceCurrencies = new javax.swing.JMenuItem();
@@ -1809,6 +1810,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         });
         mnuArchiveFileOptions.add(mnuArchiveFileCustomFieldsInvolvements);
 
+
         mnuOptions.add(mnuArchiveFileOptions);
 
         mnuDocumentOptions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
@@ -2043,6 +2045,16 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuFinance.add(mnuDunningStages);
+        mnuCourts.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/account_balance_20dp_0E72B5_FILL0_wght400_GRAD0_opsz20.png"))); // NOI18N
+        mnuCourts.setText("Gerichte");
+        mnuCourts.setToolTipText("zentrale Stammdaten der Gerichte");
+        mnuCourts.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuCourtsActionPerformed(evt);
+            }
+        });
+        mnuFinance.add(mnuCourts);
+
 
         mnuOptions.add(mnuFinance);
 
@@ -3188,6 +3200,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuStirlingPdfActionPerformed
 
+    private void mnuCourtsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCourtsActionPerformed
+
+        if (checkAdmin()) {
+            CourtsConfigurationDialog dlg = new CourtsConfigurationDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
+    }//GEN-LAST:event_mnuCourtsActionPerformed
+
     private void mnuDunningStagesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDunningStagesActionPerformed
         if (checkSysAdmin()) {
             DunningStagesConfigurationDialog dlg = new DunningStagesConfigurationDialog(this, true);
@@ -3324,6 +3345,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuExit;
     private javax.swing.JMenuItem mnuExportSyncedCases;
     private javax.swing.JMenu mnuFile;
+    private javax.swing.JMenuItem mnuCourts;
     private javax.swing.JMenuItem mnuDunningStages;
     private javax.swing.JMenu mnuFinance;
     private javax.swing.JMenuItem mnuFontSize;

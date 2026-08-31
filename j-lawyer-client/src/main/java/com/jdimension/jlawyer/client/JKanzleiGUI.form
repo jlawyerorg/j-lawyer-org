@@ -787,6 +787,18 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuDunningStagesActionPerformed"/>
                   </Events>
                 </MenuItem>
+                <MenuItem class="javax.swing.JMenuItem" name="mnuCourts">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons16/material/account_balance_20dp_0E72B5_FILL0_wght400_GRAD0_opsz20.png"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="Gerichte"/>
+                    <Property name="toolTipText" type="java.lang.String" value="zentrale Stammdaten der Gerichte"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuCourtsActionPerformed"/>
+                  </Events>
+                </MenuItem>
               </SubComponents>
             </Menu>
             <Menu class="javax.swing.JMenu" name="mnuTimesheet">
