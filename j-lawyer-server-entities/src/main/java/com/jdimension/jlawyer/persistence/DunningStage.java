@@ -664,455 +664,178 @@ package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 import javax.persistence.Basic;
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
+ * One stage of the pre-court reminder cycle, configured firm-wide.
+ *
+ * A stage says what is sent, how long the debtor is given, what it costs him and whether sending it
+ * puts him in default (Verzug) - which is what starts default interest under § 286 BGB running.
  *
  * @author jens
  */
 @Entity
-@Table(name = "claimcomponents")
+@Table(name = "dunning_stages")
 @XmlRootElement
 @NamedQueries({
-    @NamedQuery(name = "ClaimComponent.findAll", query = "SELECT c FROM ClaimComponent c"),
-    @NamedQuery(name = "ClaimComponent.findById", query = "SELECT c FROM ClaimComponent c WHERE c.id = :id"),
-    @NamedQuery(name = "ClaimComponent.findByLedger", query = "SELECT c FROM ClaimComponent c WHERE c.ledger = :ledger")
+    @NamedQuery(name = "DunningStage.findAll", query = "SELECT s FROM DunningStage s ORDER BY s.sequenceNumber ASC"),
+    @NamedQuery(name = "DunningStage.findById", query = "SELECT s FROM DunningStage s WHERE s.id = :id"),
+    @NamedQuery(name = "DunningStage.findActive", query = "SELECT s FROM DunningStage s WHERE s.active = true ORDER BY s.sequenceNumber ASC")
 })
-public class ClaimComponent implements Serializable {
+public class DunningStage implements Serializable {
 
-    private static long serialVersionUID = 1L;
-    
+    private static final long serialVersionUID = 1L;
+
     @Id
     @Basic(optional = false)
     @Column(name = "id")
     private String id;
 
-    @JoinColumn(name = "ledger_id", referencedColumnName = "id")
-    @ManyToOne(optional = false)
-    private ClaimLedger ledger;
-
-    @Column(name = "principal_amount", precision = 15, scale = 2)
-    private BigDecimal principalAmount = BigDecimal.ZERO;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "component_type", nullable = false, length = 50)
-    private ClaimComponentType type;
-
-    @Column(name = "name")
+    @Column(name = "name", nullable = false)
     private String name;
-    
-    @Column(name = "comment")
-    private String comment;
 
     /**
-     * Whether interest on this component runs from a fixed date or only from service of the dunning
-     * order.
+     * Position in the escalation. The stage offered next is the active one with the lowest sequence
+     * number above the one last sent.
      */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "interest_start_mode", nullable = false, length = 20)
-    private InterestStartMode interestStartMode = InterestStartMode.FIXED_DATE;
+    @Column(name = "sequence_number")
+    private int sequenceNumber = 0;
+
+    @Column(name = "template_folder")
+    private String templateFolder;
+
+    @Column(name = "template_name")
+    private String templateName;
 
     /**
-     * First month a recurring monthly main claim is due, as YYYY-MM.
+     * How many days the debtor is given to pay before the stage counts as expired.
      */
-    @Column(name = "recurrence_start_month")
-    private String recurrenceStartMonth;
+    @Column(name = "payment_period_days")
+    private int paymentPeriodDays = 14;
 
     /**
-     * Last month a recurring monthly main claim is due, as YYYY-MM; null means open-ended.
+     * Reminder charge booked into the ledger when the stage is sent, zero for none.
      */
-    @Column(name = "recurrence_end_month")
-    private String recurrenceEndMonth;
+    @Column(name = "charge_amount", precision = 10, scale = 2)
+    private BigDecimal chargeAmount = BigDecimal.ZERO;
 
     /**
-     * Reference to what caused this component, e.g. a reminder stage or an enforcement measure.
+     * Whether sending this stage puts the debtor in default (§ 286 Abs. 1 BGB). Typically the first
+     * proper reminder does, a mere payment reminder does not.
      */
-    @Column(name = "origin_reference")
-    private String originReference;
+    @Column(name = "triggers_default")
+    private boolean triggersDefault = false;
 
-    /**
-     * Number of the main claim catalogue (Hauptforderungskatalog) published by the dunning courts.
-     * Null for a free-text claim.
-     */
-    /**
-     * Whether this is a payment claim (Entgeltforderung). § 288 Abs. 2 BGB grants the higher
-     * default interest only for those, and § 288 Abs. 5 BGB ties the lump sum to the same
-     * condition.
-     */
-    @Column(name = "payment_claim")
-    private boolean paymentClaim = false;
+    @Column(name = "active")
+    private boolean active = true;
 
-    @Column(name = "catalogue_number")
-    private String catalogueNumber;
-
-    /**
-     * Whether this main claim is submitted as a free-text claim ("sonstiger Anspruch") because the
-     * catalogue holds no fitting entry.
-     */
-    @Column(name = "free_text_claim")
-    private boolean freeTextClaim = false;
-
-    /**
-     * Postal code of the property, required by the catalogue numbers for residential and
-     * condominium claims.
-     */
-    @Column(name = "catalogue_property_zip")
-    private String cataloguePropertyZip;
-
-    /**
-     * Place of the property, required by the catalogue numbers for residential and condominium
-     * claims.
-     */
-    @Column(name = "catalogue_property_city")
-    private String cataloguePropertyCity;
-
-    /**
-     * Contract designation, required by the catalogue number for damages arising from a contract.
-     */
-    @Column(name = "catalogue_contract_designation")
-    private String catalogueContractDesignation;
-
-    /**
-     * Account, meter or service detail demanded by those catalogue numbers that require one.
-     */
-    @Column(name = "catalogue_reference_detail")
-    private String catalogueReferenceDetail;
-
-    @OneToMany(mappedBy = "component", cascade = CascadeType.REMOVE)
-    private List<InterestRule> interestRules = new ArrayList<>();
-    
-    /**
-     * Eine Komponente ist verzinslich, wenn mindestens eine Zinsregel existiert.
-     */
-    public boolean isInterestBearing() {
-        return getInterestRules() != null && !interestRules.isEmpty();
-    }
-
-    /**
-     * Whether interest on this component only starts once the dunning order has been served.
-     *
-     * @return true if the interest start depends on the service date
-     */
-    public boolean isInterestStartingOnService() {
-        return this.interestStartMode == InterestStartMode.ON_SERVICE;
-    }
-
-    /**
-     * Whether this component is classified by a catalogue number rather than submitted as a
-     * free-text claim.
-     *
-     * @return true if a catalogue number is set and the component is not marked as free text
-     */
-    public boolean isCatalogued() {
-        return !this.freeTextClaim && this.catalogueNumber != null && !this.catalogueNumber.isEmpty();
-    }
+    @Column(name = "description")
+    private String description;
 
     @Override
     public int hashCode() {
-        int hash = 0;
-        hash += (getId() != null ? getId().hashCode() : 0);
-        return hash;
+        return (id != null ? id.hashCode() : 0);
     }
 
     @Override
     public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
-        if (!(object instanceof ClaimComponent)) {
+        if (!(object instanceof DunningStage)) {
             return false;
         }
-        ClaimComponent other = (ClaimComponent) object;
-        if ((this.getId() == null && other.getId() != null) || (this.getId() != null && !this.id.equals(other.id))) {
-            return false;
-        }
-        return true;
+        DunningStage other = (DunningStage) object;
+        return (this.id == null) ? (other.id == null) : this.id.equals(other.id);
     }
 
     @Override
     public String toString() {
-        return this.name + " (" + this.type.toString() + ")";
+        return this.name == null ? "" : this.name;
     }
 
-    /**
-     * @return the serialVersionUID
-     */
-    public static long getSerialVersionUID() {
-        return serialVersionUID;
-    }
-
-    /**
-     * @param aSerialVersionUID the serialVersionUID to set
-     */
-    public static void setSerialVersionUID(long aSerialVersionUID) {
-        serialVersionUID = aSerialVersionUID;
-    }
-
-    /**
-     * @return the id
-     */
     public String getId() {
         return id;
     }
 
-    /**
-     * @param id the id to set
-     */
     public void setId(String id) {
         this.id = id;
     }
 
-    /**
-     * @return the ledger
-     */
-    public ClaimLedger getLedger() {
-        return ledger;
-    }
-
-    /**
-     * @param ledger the ledger to set
-     */
-    public void setLedger(ClaimLedger ledger) {
-        this.ledger = ledger;
-    }
-
-    /**
-     * @return the principalAmount
-     */
-    public BigDecimal getPrincipalAmount() {
-        return principalAmount;
-    }
-
-    /**
-     * @param principalAmount the principalAmount to set
-     */
-    public void setPrincipalAmount(BigDecimal principalAmount) {
-        this.principalAmount = principalAmount;
-    }
-
-    /**
-     * @return the type
-     */
-    public ClaimComponentType getType() {
-        return type;
-    }
-
-    /**
-     * @param type the type to set
-     */
-    public void setType(ClaimComponentType type) {
-        this.type = type;
-    }
-
-    /**
-     * @return the comment
-     */
-    public String getComment() {
-        return comment;
-    }
-
-    /**
-     * @param comment the comment to set
-     */
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
-    /**
-     * @return the name
-     */
     public String getName() {
         return name;
     }
 
-    /**
-     * @param name the name to set
-     */
     public void setName(String name) {
         this.name = name;
     }
 
-    /**
-     * @return the interestRules
-     */
-    public List<InterestRule> getInterestRules() {
-        return interestRules;
+    public int getSequenceNumber() {
+        return sequenceNumber;
     }
 
-    /**
-     * @param interestRules the interestRules to set
-     */
-    public void setInterestRules(List<InterestRule> interestRules) {
-        this.interestRules = interestRules;
-    }
-    
-
-    /**
-     * @return the interestStartMode
-     */
-    public InterestStartMode getInterestStartMode() {
-        return interestStartMode;
+    public void setSequenceNumber(int sequenceNumber) {
+        this.sequenceNumber = sequenceNumber;
     }
 
-    /**
-     * @param interestStartMode the interestStartMode to set
-     */
-    public void setInterestStartMode(InterestStartMode interestStartMode) {
-        this.interestStartMode = interestStartMode;
+    public String getTemplateFolder() {
+        return templateFolder;
     }
 
-    /**
-     * @return the recurrenceStartMonth
-     */
-    public String getRecurrenceStartMonth() {
-        return recurrenceStartMonth;
+    public void setTemplateFolder(String templateFolder) {
+        this.templateFolder = templateFolder;
     }
 
-    /**
-     * @param recurrenceStartMonth the recurrenceStartMonth to set
-     */
-    public void setRecurrenceStartMonth(String recurrenceStartMonth) {
-        this.recurrenceStartMonth = recurrenceStartMonth;
+    public String getTemplateName() {
+        return templateName;
     }
 
-    /**
-     * @return the recurrenceEndMonth
-     */
-    public String getRecurrenceEndMonth() {
-        return recurrenceEndMonth;
+    public void setTemplateName(String templateName) {
+        this.templateName = templateName;
     }
 
-    /**
-     * @param recurrenceEndMonth the recurrenceEndMonth to set
-     */
-    public void setRecurrenceEndMonth(String recurrenceEndMonth) {
-        this.recurrenceEndMonth = recurrenceEndMonth;
+    public int getPaymentPeriodDays() {
+        return paymentPeriodDays;
     }
 
-    /**
-     * @return the originReference
-     */
-    public String getOriginReference() {
-        return originReference;
+    public void setPaymentPeriodDays(int paymentPeriodDays) {
+        this.paymentPeriodDays = paymentPeriodDays;
     }
 
-    /**
-     * @param originReference the originReference to set
-     */
-    public void setOriginReference(String originReference) {
-        this.originReference = originReference;
+    public BigDecimal getChargeAmount() {
+        return chargeAmount;
     }
 
-    /**
-     * @return the catalogueNumber
-     */
-    public String getCatalogueNumber() {
-        return catalogueNumber;
+    public void setChargeAmount(BigDecimal chargeAmount) {
+        this.chargeAmount = chargeAmount;
     }
 
-    /**
-     * @param catalogueNumber the catalogueNumber to set
-     */
-    public void setCatalogueNumber(String catalogueNumber) {
-        this.catalogueNumber = catalogueNumber;
+    public boolean isTriggersDefault() {
+        return triggersDefault;
     }
 
-    /**
-     * @return the freeTextClaim
-     */
-    public boolean isFreeTextClaim() {
-        return freeTextClaim;
+    public void setTriggersDefault(boolean triggersDefault) {
+        this.triggersDefault = triggersDefault;
     }
 
-    /**
-     * @param freeTextClaim the freeTextClaim to set
-     */
-    public void setFreeTextClaim(boolean freeTextClaim) {
-        this.freeTextClaim = freeTextClaim;
+    public boolean isActive() {
+        return active;
     }
 
-    /**
-     * @return the cataloguePropertyZip
-     */
-    public String getCataloguePropertyZip() {
-        return cataloguePropertyZip;
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
-    /**
-     * @param cataloguePropertyZip the cataloguePropertyZip to set
-     */
-    public void setCataloguePropertyZip(String cataloguePropertyZip) {
-        this.cataloguePropertyZip = cataloguePropertyZip;
+    public String getDescription() {
+        return description;
     }
 
-    /**
-     * @return the cataloguePropertyCity
-     */
-    public String getCataloguePropertyCity() {
-        return cataloguePropertyCity;
-    }
-
-    /**
-     * @param cataloguePropertyCity the cataloguePropertyCity to set
-     */
-    public void setCataloguePropertyCity(String cataloguePropertyCity) {
-        this.cataloguePropertyCity = cataloguePropertyCity;
-    }
-
-    /**
-     * @return the catalogueContractDesignation
-     */
-    public String getCatalogueContractDesignation() {
-        return catalogueContractDesignation;
-    }
-
-    /**
-     * @param catalogueContractDesignation the catalogueContractDesignation to set
-     */
-    public void setCatalogueContractDesignation(String catalogueContractDesignation) {
-        this.catalogueContractDesignation = catalogueContractDesignation;
-    }
-
-    /**
-     * @return the catalogueReferenceDetail
-     */
-    public String getCatalogueReferenceDetail() {
-        return catalogueReferenceDetail;
-    }
-
-    /**
-     * @param catalogueReferenceDetail the catalogueReferenceDetail to set
-     */
-    public void setCatalogueReferenceDetail(String catalogueReferenceDetail) {
-        this.catalogueReferenceDetail = catalogueReferenceDetail;
-    }
-
-
-    /**
-     * @return whether this is a payment claim (Entgeltforderung)
-     */
-    public boolean isPaymentClaim() {
-        return paymentClaim;
-    }
-
-    /**
-     * @param paymentClaim the paymentClaim to set
-     */
-    public void setPaymentClaim(boolean paymentClaim) {
-        this.paymentClaim = paymentClaim;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
 }

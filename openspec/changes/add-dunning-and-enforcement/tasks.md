@@ -66,7 +66,7 @@
 - [ ] 2.1 Reminder stage configuration (template, period, charge, default-triggering) with admin UI
 - [ ] 2.2 Stage execution: generate document, record stage and deadline, create follow-up, book the
       charge
-- [ ] 2.3 § 288 BGB default interest proposal (5/9 percentage points from `interest_base`) and the
+- [x] 2.3 § 288 BGB default interest proposal (5/9 percentage points from `interest_base`) and the
       § 288 Abs. 5 BGB lump sum incl. the consumer exclusion
 - [ ] 2.4 Ledger view showing the dunning stage state and the next escalation
 - [ ] 2.5 Tests for stage escalation, charge bookings and interest proposals

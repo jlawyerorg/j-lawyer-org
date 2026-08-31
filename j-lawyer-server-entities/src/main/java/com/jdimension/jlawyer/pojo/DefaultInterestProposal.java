@@ -660,459 +660,127 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.pojo;
 
+import com.jdimension.jlawyer.persistence.InterestType;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Date;
 
 /**
+ * A proposed default interest rule under § 288 BGB, together with the lump sum of § 288 Abs. 5 BGB
+ * where the creditor is entitled to it.
+ *
+ * Every value is a proposal the user may change: the ledger cannot know for certain whether a claim
+ * is a payment claim or the debtor acts as a consumer, and getting either wrong changes what may be
+ * demanded. The reason is carried along so the user can see why a margin was proposed.
  *
  * @author jens
  */
-@Entity
-@Table(name = "claimcomponents")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "ClaimComponent.findAll", query = "SELECT c FROM ClaimComponent c"),
-    @NamedQuery(name = "ClaimComponent.findById", query = "SELECT c FROM ClaimComponent c WHERE c.id = :id"),
-    @NamedQuery(name = "ClaimComponent.findByLedger", query = "SELECT c FROM ClaimComponent c WHERE c.ledger = :ledger")
-})
-public class ClaimComponent implements Serializable {
+public class DefaultInterestProposal implements Serializable {
 
-    private static long serialVersionUID = 1L;
-    
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
-
-    @JoinColumn(name = "ledger_id", referencedColumnName = "id")
-    @ManyToOne(optional = false)
-    private ClaimLedger ledger;
-
-    @Column(name = "principal_amount", precision = 15, scale = 2)
-    private BigDecimal principalAmount = BigDecimal.ZERO;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "component_type", nullable = false, length = 50)
-    private ClaimComponentType type;
-
-    @Column(name = "name")
-    private String name;
-    
-    @Column(name = "comment")
-    private String comment;
+    private static final long serialVersionUID = 1L;
 
     /**
-     * Whether interest on this component runs from a fixed date or only from service of the dunning
-     * order.
+     * The lump sum of § 288 Abs. 5 S. 1 BGB.
      */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "interest_start_mode", nullable = false, length = 20)
-    private InterestStartMode interestStartMode = InterestStartMode.FIXED_DATE;
+    public static final BigDecimal LUMP_SUM = new BigDecimal("40.00");
 
-    /**
-     * First month a recurring monthly main claim is due, as YYYY-MM.
-     */
-    @Column(name = "recurrence_start_month")
-    private String recurrenceStartMonth;
+    private InterestType interestType = InterestType.BASIS_RELATED;
+    private BigDecimal marginPercent = BigDecimal.ZERO;
+    private Date runningFrom;
+    private String legalBasis;
+    private String reason;
 
-    /**
-     * Last month a recurring monthly main claim is due, as YYYY-MM; null means open-ended.
-     */
-    @Column(name = "recurrence_end_month")
-    private String recurrenceEndMonth;
+    private boolean lumpSumApplicable = false;
+    private BigDecimal lumpSumAmount = BigDecimal.ZERO;
+    private String lumpSumReason;
 
-    /**
-     * Reference to what caused this component, e.g. a reminder stage or an enforcement measure.
-     */
-    @Column(name = "origin_reference")
-    private String originReference;
+    public InterestType getInterestType() {
+        return interestType;
+    }
 
-    /**
-     * Number of the main claim catalogue (Hauptforderungskatalog) published by the dunning courts.
-     * Null for a free-text claim.
-     */
-    /**
-     * Whether this is a payment claim (Entgeltforderung). § 288 Abs. 2 BGB grants the higher
-     * default interest only for those, and § 288 Abs. 5 BGB ties the lump sum to the same
-     * condition.
-     */
-    @Column(name = "payment_claim")
-    private boolean paymentClaim = false;
-
-    @Column(name = "catalogue_number")
-    private String catalogueNumber;
-
-    /**
-     * Whether this main claim is submitted as a free-text claim ("sonstiger Anspruch") because the
-     * catalogue holds no fitting entry.
-     */
-    @Column(name = "free_text_claim")
-    private boolean freeTextClaim = false;
-
-    /**
-     * Postal code of the property, required by the catalogue numbers for residential and
-     * condominium claims.
-     */
-    @Column(name = "catalogue_property_zip")
-    private String cataloguePropertyZip;
-
-    /**
-     * Place of the property, required by the catalogue numbers for residential and condominium
-     * claims.
-     */
-    @Column(name = "catalogue_property_city")
-    private String cataloguePropertyCity;
-
-    /**
-     * Contract designation, required by the catalogue number for damages arising from a contract.
-     */
-    @Column(name = "catalogue_contract_designation")
-    private String catalogueContractDesignation;
-
-    /**
-     * Account, meter or service detail demanded by those catalogue numbers that require one.
-     */
-    @Column(name = "catalogue_reference_detail")
-    private String catalogueReferenceDetail;
-
-    @OneToMany(mappedBy = "component", cascade = CascadeType.REMOVE)
-    private List<InterestRule> interestRules = new ArrayList<>();
-    
-    /**
-     * Eine Komponente ist verzinslich, wenn mindestens eine Zinsregel existiert.
-     */
-    public boolean isInterestBearing() {
-        return getInterestRules() != null && !interestRules.isEmpty();
+    public void setInterestType(InterestType interestType) {
+        this.interestType = interestType;
     }
 
     /**
-     * Whether interest on this component only starts once the dunning order has been served.
-     *
-     * @return true if the interest start depends on the service date
+     * @return the margin above the base rate in percentage points
      */
-    public boolean isInterestStartingOnService() {
-        return this.interestStartMode == InterestStartMode.ON_SERVICE;
+    public BigDecimal getMarginPercent() {
+        return marginPercent;
+    }
+
+    public void setMarginPercent(BigDecimal marginPercent) {
+        this.marginPercent = marginPercent;
     }
 
     /**
-     * Whether this component is classified by a catalogue number rather than submitted as a
-     * free-text claim.
-     *
-     * @return true if a catalogue number is set and the component is not marked as free text
+     * @return the date from which the interest runs, that is the date of default
      */
-    public boolean isCatalogued() {
-        return !this.freeTextClaim && this.catalogueNumber != null && !this.catalogueNumber.isEmpty();
+    public Date getRunningFrom() {
+        return runningFrom;
     }
 
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (getId() != null ? getId().hashCode() : 0);
-        return hash;
+    public void setRunningFrom(Date runningFrom) {
+        this.runningFrom = runningFrom;
     }
 
-    @Override
-    public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
-        if (!(object instanceof ClaimComponent)) {
-            return false;
-        }
-        ClaimComponent other = (ClaimComponent) object;
-        if ((this.getId() == null && other.getId() != null) || (this.getId() != null && !this.id.equals(other.id))) {
-            return false;
-        }
-        return true;
+    /**
+     * @return the provision the margin rests on, e.g. "§ 288 Abs. 2 BGB"
+     */
+    public String getLegalBasis() {
+        return legalBasis;
+    }
+
+    public void setLegalBasis(String legalBasis) {
+        this.legalBasis = legalBasis;
+    }
+
+    /**
+     * @return why this margin and not another, in words for the user
+     */
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
+    /**
+     * @return whether the creditor may demand the lump sum of § 288 Abs. 5 BGB
+     */
+    public boolean isLumpSumApplicable() {
+        return lumpSumApplicable;
+    }
+
+    public void setLumpSumApplicable(boolean lumpSumApplicable) {
+        this.lumpSumApplicable = lumpSumApplicable;
+    }
+
+    public BigDecimal getLumpSumAmount() {
+        return lumpSumAmount;
+    }
+
+    public void setLumpSumAmount(BigDecimal lumpSumAmount) {
+        this.lumpSumAmount = lumpSumAmount;
+    }
+
+    /**
+     * @return why the lump sum is or is not proposed
+     */
+    public String getLumpSumReason() {
+        return lumpSumReason;
+    }
+
+    public void setLumpSumReason(String lumpSumReason) {
+        this.lumpSumReason = lumpSumReason;
     }
 
     @Override
     public String toString() {
-        return this.name + " (" + this.type.toString() + ")";
-    }
-
-    /**
-     * @return the serialVersionUID
-     */
-    public static long getSerialVersionUID() {
-        return serialVersionUID;
-    }
-
-    /**
-     * @param aSerialVersionUID the serialVersionUID to set
-     */
-    public static void setSerialVersionUID(long aSerialVersionUID) {
-        serialVersionUID = aSerialVersionUID;
-    }
-
-    /**
-     * @return the id
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * @param id the id to set
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the ledger
-     */
-    public ClaimLedger getLedger() {
-        return ledger;
-    }
-
-    /**
-     * @param ledger the ledger to set
-     */
-    public void setLedger(ClaimLedger ledger) {
-        this.ledger = ledger;
-    }
-
-    /**
-     * @return the principalAmount
-     */
-    public BigDecimal getPrincipalAmount() {
-        return principalAmount;
-    }
-
-    /**
-     * @param principalAmount the principalAmount to set
-     */
-    public void setPrincipalAmount(BigDecimal principalAmount) {
-        this.principalAmount = principalAmount;
-    }
-
-    /**
-     * @return the type
-     */
-    public ClaimComponentType getType() {
-        return type;
-    }
-
-    /**
-     * @param type the type to set
-     */
-    public void setType(ClaimComponentType type) {
-        this.type = type;
-    }
-
-    /**
-     * @return the comment
-     */
-    public String getComment() {
-        return comment;
-    }
-
-    /**
-     * @param comment the comment to set
-     */
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
-    /**
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return the interestRules
-     */
-    public List<InterestRule> getInterestRules() {
-        return interestRules;
-    }
-
-    /**
-     * @param interestRules the interestRules to set
-     */
-    public void setInterestRules(List<InterestRule> interestRules) {
-        this.interestRules = interestRules;
-    }
-    
-
-    /**
-     * @return the interestStartMode
-     */
-    public InterestStartMode getInterestStartMode() {
-        return interestStartMode;
-    }
-
-    /**
-     * @param interestStartMode the interestStartMode to set
-     */
-    public void setInterestStartMode(InterestStartMode interestStartMode) {
-        this.interestStartMode = interestStartMode;
-    }
-
-    /**
-     * @return the recurrenceStartMonth
-     */
-    public String getRecurrenceStartMonth() {
-        return recurrenceStartMonth;
-    }
-
-    /**
-     * @param recurrenceStartMonth the recurrenceStartMonth to set
-     */
-    public void setRecurrenceStartMonth(String recurrenceStartMonth) {
-        this.recurrenceStartMonth = recurrenceStartMonth;
-    }
-
-    /**
-     * @return the recurrenceEndMonth
-     */
-    public String getRecurrenceEndMonth() {
-        return recurrenceEndMonth;
-    }
-
-    /**
-     * @param recurrenceEndMonth the recurrenceEndMonth to set
-     */
-    public void setRecurrenceEndMonth(String recurrenceEndMonth) {
-        this.recurrenceEndMonth = recurrenceEndMonth;
-    }
-
-    /**
-     * @return the originReference
-     */
-    public String getOriginReference() {
-        return originReference;
-    }
-
-    /**
-     * @param originReference the originReference to set
-     */
-    public void setOriginReference(String originReference) {
-        this.originReference = originReference;
-    }
-
-    /**
-     * @return the catalogueNumber
-     */
-    public String getCatalogueNumber() {
-        return catalogueNumber;
-    }
-
-    /**
-     * @param catalogueNumber the catalogueNumber to set
-     */
-    public void setCatalogueNumber(String catalogueNumber) {
-        this.catalogueNumber = catalogueNumber;
-    }
-
-    /**
-     * @return the freeTextClaim
-     */
-    public boolean isFreeTextClaim() {
-        return freeTextClaim;
-    }
-
-    /**
-     * @param freeTextClaim the freeTextClaim to set
-     */
-    public void setFreeTextClaim(boolean freeTextClaim) {
-        this.freeTextClaim = freeTextClaim;
-    }
-
-    /**
-     * @return the cataloguePropertyZip
-     */
-    public String getCataloguePropertyZip() {
-        return cataloguePropertyZip;
-    }
-
-    /**
-     * @param cataloguePropertyZip the cataloguePropertyZip to set
-     */
-    public void setCataloguePropertyZip(String cataloguePropertyZip) {
-        this.cataloguePropertyZip = cataloguePropertyZip;
-    }
-
-    /**
-     * @return the cataloguePropertyCity
-     */
-    public String getCataloguePropertyCity() {
-        return cataloguePropertyCity;
-    }
-
-    /**
-     * @param cataloguePropertyCity the cataloguePropertyCity to set
-     */
-    public void setCataloguePropertyCity(String cataloguePropertyCity) {
-        this.cataloguePropertyCity = cataloguePropertyCity;
-    }
-
-    /**
-     * @return the catalogueContractDesignation
-     */
-    public String getCatalogueContractDesignation() {
-        return catalogueContractDesignation;
-    }
-
-    /**
-     * @param catalogueContractDesignation the catalogueContractDesignation to set
-     */
-    public void setCatalogueContractDesignation(String catalogueContractDesignation) {
-        this.catalogueContractDesignation = catalogueContractDesignation;
-    }
-
-    /**
-     * @return the catalogueReferenceDetail
-     */
-    public String getCatalogueReferenceDetail() {
-        return catalogueReferenceDetail;
-    }
-
-    /**
-     * @param catalogueReferenceDetail the catalogueReferenceDetail to set
-     */
-    public void setCatalogueReferenceDetail(String catalogueReferenceDetail) {
-        this.catalogueReferenceDetail = catalogueReferenceDetail;
-    }
-
-
-    /**
-     * @return whether this is a payment claim (Entgeltforderung)
-     */
-    public boolean isPaymentClaim() {
-        return paymentClaim;
-    }
-
-    /**
-     * @param paymentClaim the paymentClaim to set
-     */
-    public void setPaymentClaim(boolean paymentClaim) {
-        this.paymentClaim = paymentClaim;
+        return this.marginPercent + " Prozentpunkte (" + this.legalBasis + ")";
     }
 
 }

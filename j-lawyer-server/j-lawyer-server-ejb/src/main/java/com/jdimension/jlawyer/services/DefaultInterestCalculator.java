@@ -660,459 +660,140 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.services;
 
-import java.io.Serializable;
+import com.jdimension.jlawyer.persistence.ClaimComponent;
+import com.jdimension.jlawyer.persistence.ClaimLedger;
+import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
+import com.jdimension.jlawyer.persistence.ClaimPartyRole;
+import com.jdimension.jlawyer.persistence.InterestType;
+import com.jdimension.jlawyer.pojo.DefaultInterestProposal;
 import java.math.BigDecimal;
-import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import javax.xml.bind.annotation.XmlRootElement;
 
 /**
+ * Proposes the default interest of § 288 BGB and the lump sum of § 288 Abs. 5 BGB for a claim.
+ *
+ * The distinction that matters here is easy to get wrong: § 288 Abs. 1 BGB grants five percentage
+ * points above the base rate for any monetary debt, while the nine percentage points of Abs. 2 are
+ * reserved for payment claims (Entgeltforderungen) in which no consumer is involved. Demanding nine
+ * points on a claim that is not a payment claim, or against a consumer, overcharges the debtor.
+ *
+ * The same condition governs the lump sum: § 288 Abs. 5 S. 1 BGB gives it to the creditor of a
+ * payment claim when the debtor is not a consumer.
+ *
+ * Everything this class returns is a proposal. Whether a claim is a payment claim and whether the
+ * debtor acted as a consumer are facts of the case that the ledger cannot decide on its own.
  *
  * @author jens
  */
-@Entity
-@Table(name = "claimcomponents")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "ClaimComponent.findAll", query = "SELECT c FROM ClaimComponent c"),
-    @NamedQuery(name = "ClaimComponent.findById", query = "SELECT c FROM ClaimComponent c WHERE c.id = :id"),
-    @NamedQuery(name = "ClaimComponent.findByLedger", query = "SELECT c FROM ClaimComponent c WHERE c.ledger = :ledger")
-})
-public class ClaimComponent implements Serializable {
-
-    private static long serialVersionUID = 1L;
-    
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
-
-    @JoinColumn(name = "ledger_id", referencedColumnName = "id")
-    @ManyToOne(optional = false)
-    private ClaimLedger ledger;
-
-    @Column(name = "principal_amount", precision = 15, scale = 2)
-    private BigDecimal principalAmount = BigDecimal.ZERO;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "component_type", nullable = false, length = 50)
-    private ClaimComponentType type;
-
-    @Column(name = "name")
-    private String name;
-    
-    @Column(name = "comment")
-    private String comment;
+public class DefaultInterestCalculator {
 
     /**
-     * Whether interest on this component runs from a fixed date or only from service of the dunning
-     * order.
+     * The general default interest of § 288 Abs. 1 S. 2 BGB, in percentage points above the base
+     * rate.
      */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "interest_start_mode", nullable = false, length = 20)
-    private InterestStartMode interestStartMode = InterestStartMode.FIXED_DATE;
+    public static final BigDecimal MARGIN_GENERAL = new BigDecimal("5");
 
     /**
-     * First month a recurring monthly main claim is due, as YYYY-MM.
+     * The default interest of § 288 Abs. 2 BGB for payment claims without consumer involvement.
      */
-    @Column(name = "recurrence_start_month")
-    private String recurrenceStartMonth;
+    public static final BigDecimal MARGIN_PAYMENT_CLAIM = new BigDecimal("9");
 
     /**
-     * Last month a recurring monthly main claim is due, as YYYY-MM; null means open-ended.
-     */
-    @Column(name = "recurrence_end_month")
-    private String recurrenceEndMonth;
-
-    /**
-     * Reference to what caused this component, e.g. a reminder stage or an enforcement measure.
-     */
-    @Column(name = "origin_reference")
-    private String originReference;
-
-    /**
-     * Number of the main claim catalogue (Hauptforderungskatalog) published by the dunning courts.
-     * Null for a free-text claim.
-     */
-    /**
-     * Whether this is a payment claim (Entgeltforderung). § 288 Abs. 2 BGB grants the higher
-     * default interest only for those, and § 288 Abs. 5 BGB ties the lump sum to the same
-     * condition.
-     */
-    @Column(name = "payment_claim")
-    private boolean paymentClaim = false;
-
-    @Column(name = "catalogue_number")
-    private String catalogueNumber;
-
-    /**
-     * Whether this main claim is submitted as a free-text claim ("sonstiger Anspruch") because the
-     * catalogue holds no fitting entry.
-     */
-    @Column(name = "free_text_claim")
-    private boolean freeTextClaim = false;
-
-    /**
-     * Postal code of the property, required by the catalogue numbers for residential and
-     * condominium claims.
-     */
-    @Column(name = "catalogue_property_zip")
-    private String cataloguePropertyZip;
-
-    /**
-     * Place of the property, required by the catalogue numbers for residential and condominium
-     * claims.
-     */
-    @Column(name = "catalogue_property_city")
-    private String cataloguePropertyCity;
-
-    /**
-     * Contract designation, required by the catalogue number for damages arising from a contract.
-     */
-    @Column(name = "catalogue_contract_designation")
-    private String catalogueContractDesignation;
-
-    /**
-     * Account, meter or service detail demanded by those catalogue numbers that require one.
-     */
-    @Column(name = "catalogue_reference_detail")
-    private String catalogueReferenceDetail;
-
-    @OneToMany(mappedBy = "component", cascade = CascadeType.REMOVE)
-    private List<InterestRule> interestRules = new ArrayList<>();
-    
-    /**
-     * Eine Komponente ist verzinslich, wenn mindestens eine Zinsregel existiert.
-     */
-    public boolean isInterestBearing() {
-        return getInterestRules() != null && !interestRules.isEmpty();
-    }
-
-    /**
-     * Whether interest on this component only starts once the dunning order has been served.
+     * Proposes the default interest for a component of a claim ledger.
      *
-     * @return true if the interest start depends on the service date
+     * @param ledger the ledger, whose debtors decide whether a consumer is involved
+     * @param component the component the interest is to run on
+     * @param defaultSince the date the debtor fell into default, may be null
+     * @return the proposal, never null
      */
-    public boolean isInterestStartingOnService() {
-        return this.interestStartMode == InterestStartMode.ON_SERVICE;
+    public DefaultInterestProposal propose(ClaimLedger ledger, ClaimComponent component, Date defaultSince) {
+
+        DefaultInterestProposal proposal = new DefaultInterestProposal();
+        proposal.setInterestType(InterestType.BASIS_RELATED);
+        proposal.setRunningFrom(defaultSince);
+
+        boolean paymentClaim = component != null && component.isPaymentClaim();
+        boolean consumerInvolved = hasConsumerDebtor(ledger);
+
+        if (paymentClaim && !consumerInvolved) {
+            proposal.setMarginPercent(MARGIN_PAYMENT_CLAIM);
+            proposal.setLegalBasis("§ 288 Abs. 2 BGB");
+            proposal.setReason("Entgeltforderung ohne Beteiligung eines Verbrauchers: "
+                    + "9 Prozentpunkte über dem Basiszinssatz.");
+        } else {
+            proposal.setMarginPercent(MARGIN_GENERAL);
+            proposal.setLegalBasis("§ 288 Abs. 1 BGB");
+            if (consumerInvolved) {
+                proposal.setReason("An dem Rechtsgeschäft ist ein Verbraucher beteiligt: "
+                        + "es bleibt bei 5 Prozentpunkten über dem Basiszinssatz.");
+            } else if (!paymentClaim) {
+                proposal.setReason("Die Forderung ist nicht als Entgeltforderung gekennzeichnet; "
+                        + "der erhöhte Satz des § 288 Abs. 2 BGB gilt nur für diese. "
+                        + "Es bleibt bei 5 Prozentpunkten über dem Basiszinssatz.");
+            } else {
+                proposal.setReason("5 Prozentpunkte über dem Basiszinssatz.");
+            }
+        }
+
+        applyLumpSum(proposal, paymentClaim, consumerInvolved);
+
+        return proposal;
     }
 
     /**
-     * Whether this component is classified by a catalogue number rather than submitted as a
-     * free-text claim.
+     * Decides whether the lump sum of § 288 Abs. 5 BGB may be demanded and explains the outcome.
      *
-     * @return true if a catalogue number is set and the component is not marked as free text
+     * @param proposal the proposal to complete
+     * @param paymentClaim whether the claim is a payment claim
+     * @param consumerInvolved whether a consumer is on the debtor side
      */
-    public boolean isCatalogued() {
-        return !this.freeTextClaim && this.catalogueNumber != null && !this.catalogueNumber.isEmpty();
+    private void applyLumpSum(DefaultInterestProposal proposal, boolean paymentClaim, boolean consumerInvolved) {
+
+        if (consumerInvolved) {
+            proposal.setLumpSumApplicable(false);
+            proposal.setLumpSumReason("Die Pauschale nach § 288 Abs. 5 BGB steht dem Gläubiger nur zu, "
+                    + "wenn der Schuldner kein Verbraucher ist.");
+            return;
+        }
+        if (!paymentClaim) {
+            proposal.setLumpSumApplicable(false);
+            proposal.setLumpSumReason("Die Pauschale nach § 288 Abs. 5 BGB setzt eine Entgeltforderung voraus.");
+            return;
+        }
+
+        proposal.setLumpSumApplicable(true);
+        proposal.setLumpSumAmount(DefaultInterestProposal.LUMP_SUM);
+        proposal.setLumpSumReason("Pauschale nach § 288 Abs. 5 S. 1 BGB. Sie ist auf einen "
+                + "Schadensersatz anzurechnen, soweit der Schaden in Kosten der Rechtsverfolgung "
+                + "begründet ist (§ 288 Abs. 5 S. 3 BGB).");
     }
 
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (getId() != null ? getId().hashCode() : 0);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
-        if (!(object instanceof ClaimComponent)) {
+    /**
+     * Whether a consumer is among the debtors of the ledger.
+     *
+     * @param ledger the ledger
+     * @return true if at least one debtor is flagged as a consumer
+     */
+    private boolean hasConsumerDebtor(ClaimLedger ledger) {
+        if (ledger == null) {
             return false;
         }
-        ClaimComponent other = (ClaimComponent) object;
-        if ((this.getId() == null && other.getId() != null) || (this.getId() != null && !this.id.equals(other.id))) {
+        if (ledger.isConsumerLoan()) {
+            return true;
+        }
+        List<ClaimLedgerParty> parties = ledger.getParties();
+        if (parties == null) {
             return false;
         }
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        return this.name + " (" + this.type.toString() + ")";
-    }
-
-    /**
-     * @return the serialVersionUID
-     */
-    public static long getSerialVersionUID() {
-        return serialVersionUID;
-    }
-
-    /**
-     * @param aSerialVersionUID the serialVersionUID to set
-     */
-    public static void setSerialVersionUID(long aSerialVersionUID) {
-        serialVersionUID = aSerialVersionUID;
-    }
-
-    /**
-     * @return the id
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * @param id the id to set
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the ledger
-     */
-    public ClaimLedger getLedger() {
-        return ledger;
-    }
-
-    /**
-     * @param ledger the ledger to set
-     */
-    public void setLedger(ClaimLedger ledger) {
-        this.ledger = ledger;
-    }
-
-    /**
-     * @return the principalAmount
-     */
-    public BigDecimal getPrincipalAmount() {
-        return principalAmount;
-    }
-
-    /**
-     * @param principalAmount the principalAmount to set
-     */
-    public void setPrincipalAmount(BigDecimal principalAmount) {
-        this.principalAmount = principalAmount;
-    }
-
-    /**
-     * @return the type
-     */
-    public ClaimComponentType getType() {
-        return type;
-    }
-
-    /**
-     * @param type the type to set
-     */
-    public void setType(ClaimComponentType type) {
-        this.type = type;
-    }
-
-    /**
-     * @return the comment
-     */
-    public String getComment() {
-        return comment;
-    }
-
-    /**
-     * @param comment the comment to set
-     */
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
-    /**
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return the interestRules
-     */
-    public List<InterestRule> getInterestRules() {
-        return interestRules;
-    }
-
-    /**
-     * @param interestRules the interestRules to set
-     */
-    public void setInterestRules(List<InterestRule> interestRules) {
-        this.interestRules = interestRules;
-    }
-    
-
-    /**
-     * @return the interestStartMode
-     */
-    public InterestStartMode getInterestStartMode() {
-        return interestStartMode;
-    }
-
-    /**
-     * @param interestStartMode the interestStartMode to set
-     */
-    public void setInterestStartMode(InterestStartMode interestStartMode) {
-        this.interestStartMode = interestStartMode;
-    }
-
-    /**
-     * @return the recurrenceStartMonth
-     */
-    public String getRecurrenceStartMonth() {
-        return recurrenceStartMonth;
-    }
-
-    /**
-     * @param recurrenceStartMonth the recurrenceStartMonth to set
-     */
-    public void setRecurrenceStartMonth(String recurrenceStartMonth) {
-        this.recurrenceStartMonth = recurrenceStartMonth;
-    }
-
-    /**
-     * @return the recurrenceEndMonth
-     */
-    public String getRecurrenceEndMonth() {
-        return recurrenceEndMonth;
-    }
-
-    /**
-     * @param recurrenceEndMonth the recurrenceEndMonth to set
-     */
-    public void setRecurrenceEndMonth(String recurrenceEndMonth) {
-        this.recurrenceEndMonth = recurrenceEndMonth;
-    }
-
-    /**
-     * @return the originReference
-     */
-    public String getOriginReference() {
-        return originReference;
-    }
-
-    /**
-     * @param originReference the originReference to set
-     */
-    public void setOriginReference(String originReference) {
-        this.originReference = originReference;
-    }
-
-    /**
-     * @return the catalogueNumber
-     */
-    public String getCatalogueNumber() {
-        return catalogueNumber;
-    }
-
-    /**
-     * @param catalogueNumber the catalogueNumber to set
-     */
-    public void setCatalogueNumber(String catalogueNumber) {
-        this.catalogueNumber = catalogueNumber;
-    }
-
-    /**
-     * @return the freeTextClaim
-     */
-    public boolean isFreeTextClaim() {
-        return freeTextClaim;
-    }
-
-    /**
-     * @param freeTextClaim the freeTextClaim to set
-     */
-    public void setFreeTextClaim(boolean freeTextClaim) {
-        this.freeTextClaim = freeTextClaim;
-    }
-
-    /**
-     * @return the cataloguePropertyZip
-     */
-    public String getCataloguePropertyZip() {
-        return cataloguePropertyZip;
-    }
-
-    /**
-     * @param cataloguePropertyZip the cataloguePropertyZip to set
-     */
-    public void setCataloguePropertyZip(String cataloguePropertyZip) {
-        this.cataloguePropertyZip = cataloguePropertyZip;
-    }
-
-    /**
-     * @return the cataloguePropertyCity
-     */
-    public String getCataloguePropertyCity() {
-        return cataloguePropertyCity;
-    }
-
-    /**
-     * @param cataloguePropertyCity the cataloguePropertyCity to set
-     */
-    public void setCataloguePropertyCity(String cataloguePropertyCity) {
-        this.cataloguePropertyCity = cataloguePropertyCity;
-    }
-
-    /**
-     * @return the catalogueContractDesignation
-     */
-    public String getCatalogueContractDesignation() {
-        return catalogueContractDesignation;
-    }
-
-    /**
-     * @param catalogueContractDesignation the catalogueContractDesignation to set
-     */
-    public void setCatalogueContractDesignation(String catalogueContractDesignation) {
-        this.catalogueContractDesignation = catalogueContractDesignation;
-    }
-
-    /**
-     * @return the catalogueReferenceDetail
-     */
-    public String getCatalogueReferenceDetail() {
-        return catalogueReferenceDetail;
-    }
-
-    /**
-     * @param catalogueReferenceDetail the catalogueReferenceDetail to set
-     */
-    public void setCatalogueReferenceDetail(String catalogueReferenceDetail) {
-        this.catalogueReferenceDetail = catalogueReferenceDetail;
-    }
-
-
-    /**
-     * @return whether this is a payment claim (Entgeltforderung)
-     */
-    public boolean isPaymentClaim() {
-        return paymentClaim;
-    }
-
-    /**
-     * @param paymentClaim the paymentClaim to set
-     */
-    public void setPaymentClaim(boolean paymentClaim) {
-        this.paymentClaim = paymentClaim;
+        for (ClaimLedgerParty p : parties) {
+            if (p.getRole() == ClaimPartyRole.DEBTOR && p.isConsumer()) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }
