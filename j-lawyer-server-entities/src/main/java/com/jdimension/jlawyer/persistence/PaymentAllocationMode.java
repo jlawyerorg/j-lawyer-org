@@ -663,84 +663,38 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.persistence;
 
 /**
- * Kind of position a claim ledger component represents.
- *
- * The pre-court cost categories are kept apart deliberately: the EDA dunning application places
- * each of them in its own record area (AUSL, MAHNK, AUSK, BKRL, INKB, VV23, ANF) and will not
- * accept them merged into one position.
+ * Determines how a payment is distributed over the positions of a claim ledger.
  *
  * @author jens
  */
-public enum ClaimComponentType {
-    MAIN_CLAIM("Hauptforderung", false),
+public enum PaymentAllocationMode {
     /**
-     * Recurring monthly main claim, e.g. maintenance, posted as a due item per month.
+     * Statutory allocation under §§ 366 Abs. 2, 367 BGB.
      */
-    MAIN_CLAIM_RECURRING("laufende monatliche Hauptforderung", false),
-    COST_INTEREST_BEARING("Kosten (verzinslich)", false),
-    COST_NON_INTEREST_BEARING("Kosten (unverzinslich)", false),
+    LEGAL("gesetzlich (§§ 366, 367 BGB)"),
     /**
-     * Assessed costs, interest-bearing under § 104 Abs. 1 S. 2 ZPO.
+     * Allocation for consumer loans under § 497 Abs. 3 BGB: costs of legal prosecution first, then
+     * the principal, then default interest.
      */
-    COST_ASSESSED("festgesetzte Kosten", false),
+    CONSUMER_LOAN("Verbraucherdarlehen (§ 497 Abs. 3 BGB)"),
     /**
-     * Interest arrears booked as a fixed amount rather than computed.
+     * Allocation to a named target (interest on costs, costs, interest on the main claim, main
+     * claim).
      */
-    INTEREST_ARREARS("Zinsrückstand", false),
+    TARGETED("gezielte Tilgung"),
     /**
-     * Outlays of the creditor - EDA record area AUSL.
+     * Allocation to the positions of a single debtor.
      */
-    PRECOURT_EXPENSES("Auslagen des Gläubigers", true),
+    SINGLE_DEBTOR("auf einen Schuldner"),
     /**
-     * Reminder charges - EDA record area MAHNK.
+     * Free distribution entered by the user.
      */
-    PRECOURT_REMINDER_COSTS("Mahnkosten", true),
-    /**
-     * Costs of obtaining information about the debtor - EDA record area AUSK.
-     */
-    PRECOURT_INFORMATION_COSTS("Auskunftskosten", true),
-    /**
-     * Costs of a returned direct debit - EDA record area BKRL.
-     */
-    PRECOURT_BANK_RETURN_COSTS("Bankrücklastkosten", true),
-    /**
-     * Collection costs - EDA record area INKB.
-     */
-    PRECOURT_COLLECTION_COSTS("Inkassokosten", true),
-    /**
-     * Pre-court lawyer's fee under Nr. 2300 VV RVG - EDA record area VV23.
-     */
-    PRECOURT_LAWYER_FEE("vorgerichtliche Anwaltsvergütung (Nr. 2300 VV RVG)", true),
-    /**
-     * Any other ancillary claim - EDA record area ANF.
-     */
-    OTHER_ANCILLARY_CLAIM("andere Nebenforderung", true);
+    MANUAL("manuell");
 
     private final String label;
-    private final boolean precourtCost;
 
-    ClaimComponentType(String label, boolean precourtCost) {
+    PaymentAllocationMode(String label) {
         this.label = label;
-        this.precourtCost = precourtCost;
-    }
-
-    /**
-     * Whether this type is one of the pre-court cost categories the dunning application reports as
-     * an ancillary claim of its own.
-     *
-     * @return true for the pre-court cost categories
-     */
-    public boolean isPrecourtCost() {
-        return precourtCost;
-    }
-
-    /**
-     * Whether this type represents a main claim rather than a cost or ancillary position.
-     *
-     * @return true for main claims
-     */
-    public boolean isMainClaim() {
-        return this == MAIN_CLAIM || this == MAIN_CLAIM_RECURRING;
     }
 
     public String getLabel() {
@@ -751,14 +705,4 @@ public enum ClaimComponentType {
     public String toString() {
         return label;
     }
-
-    public static ClaimComponentType fromLabel(String label) {
-        for (ClaimComponentType t : values()) {
-            if (t.label.equalsIgnoreCase(label)) {
-                return t;
-            }
-        }
-        throw new IllegalArgumentException("Unknown label: " + label);
-    }
-
 }

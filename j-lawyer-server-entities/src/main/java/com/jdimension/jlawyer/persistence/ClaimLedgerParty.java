@@ -662,103 +662,313 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.persistence;
 
+import java.io.Serializable;
+import java.util.Date;
+import javax.persistence.Basic;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.xml.bind.annotation.XmlRootElement;
+
 /**
- * Kind of position a claim ledger component represents.
+ * A creditor or debtor of a claim ledger.
  *
- * The pre-court cost categories are kept apart deliberately: the EDA dunning application places
- * each of them in its own record area (AUSL, MAHNK, AUSK, BKRL, INKB, VV23, ANF) and will not
- * accept them merged into one position.
+ * The party is identified by its address book contact, the same reference invoices and payments
+ * use; deleting that contact does not delete the party (the foreign key is ON DELETE SET NULL).
+ * The case party record is only an optional back-reference to the role the party holds in the
+ * case - a ledger party need not be a party of the case at all.
+ *
+ * Because an enforcement title stays enforceable for 30 years (§ 197 Abs. 1 Nr. 3 BGB), the
+ * designation and address used towards a court are frozen in a snapshot on first use. Current work
+ * reads the referenced contact so that corrections take effect; documents reproducing an earlier
+ * state resolve to the snapshot.
  *
  * @author jens
  */
-public enum ClaimComponentType {
-    MAIN_CLAIM("Hauptforderung", false),
-    /**
-     * Recurring monthly main claim, e.g. maintenance, posted as a due item per month.
-     */
-    MAIN_CLAIM_RECURRING("laufende monatliche Hauptforderung", false),
-    COST_INTEREST_BEARING("Kosten (verzinslich)", false),
-    COST_NON_INTEREST_BEARING("Kosten (unverzinslich)", false),
-    /**
-     * Assessed costs, interest-bearing under § 104 Abs. 1 S. 2 ZPO.
-     */
-    COST_ASSESSED("festgesetzte Kosten", false),
-    /**
-     * Interest arrears booked as a fixed amount rather than computed.
-     */
-    INTEREST_ARREARS("Zinsrückstand", false),
-    /**
-     * Outlays of the creditor - EDA record area AUSL.
-     */
-    PRECOURT_EXPENSES("Auslagen des Gläubigers", true),
-    /**
-     * Reminder charges - EDA record area MAHNK.
-     */
-    PRECOURT_REMINDER_COSTS("Mahnkosten", true),
-    /**
-     * Costs of obtaining information about the debtor - EDA record area AUSK.
-     */
-    PRECOURT_INFORMATION_COSTS("Auskunftskosten", true),
-    /**
-     * Costs of a returned direct debit - EDA record area BKRL.
-     */
-    PRECOURT_BANK_RETURN_COSTS("Bankrücklastkosten", true),
-    /**
-     * Collection costs - EDA record area INKB.
-     */
-    PRECOURT_COLLECTION_COSTS("Inkassokosten", true),
-    /**
-     * Pre-court lawyer's fee under Nr. 2300 VV RVG - EDA record area VV23.
-     */
-    PRECOURT_LAWYER_FEE("vorgerichtliche Anwaltsvergütung (Nr. 2300 VV RVG)", true),
-    /**
-     * Any other ancillary claim - EDA record area ANF.
-     */
-    OTHER_ANCILLARY_CLAIM("andere Nebenforderung", true);
+@Entity
+@Table(name = "claimledger_parties")
+@XmlRootElement
+@NamedQueries({
+    @NamedQuery(name = "ClaimLedgerParty.findAll", query = "SELECT p FROM ClaimLedgerParty p"),
+    @NamedQuery(name = "ClaimLedgerParty.findById", query = "SELECT p FROM ClaimLedgerParty p WHERE p.id = :id"),
+    @NamedQuery(name = "ClaimLedgerParty.findByLedger", query = "SELECT p FROM ClaimLedgerParty p WHERE p.ledger = :ledger ORDER BY p.role ASC, p.sequenceNumber ASC"),
+    @NamedQuery(name = "ClaimLedgerParty.findByLedgerAndRole", query = "SELECT p FROM ClaimLedgerParty p WHERE p.ledger = :ledger AND p.role = :role ORDER BY p.sequenceNumber ASC")
+})
+public class ClaimLedgerParty implements Serializable {
 
-    private final String label;
-    private final boolean precourtCost;
+    private static final long serialVersionUID = 1L;
 
-    ClaimComponentType(String label, boolean precourtCost) {
-        this.label = label;
-        this.precourtCost = precourtCost;
-    }
+    @Id
+    @Basic(optional = false)
+    @Column(name = "id")
+    private String id;
+
+    @JoinColumn(name = "ledger_id", referencedColumnName = "id")
+    @ManyToOne(optional = false)
+    private ClaimLedger ledger;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "party_role", nullable = false, length = 20)
+    private ClaimPartyRole role;
+
+    @Column(name = "sequence_number")
+    private int sequenceNumber = 0;
+
+    @JoinColumn(name = "contact_id", referencedColumnName = "id")
+    @ManyToOne
+    private AddressBean contact;
+
+    @JoinColumn(name = "case_contact_id", referencedColumnName = "id")
+    @ManyToOne
+    private ArchiveFileAddressesBean caseContact;
+
+    @JoinColumn(name = "legal_representative_id", referencedColumnName = "id")
+    @ManyToOne
+    private AddressBean legalRepresentative;
+
+    @JoinColumn(name = "authorised_representative_id", referencedColumnName = "id")
+    @ManyToOne
+    private AddressBean authorisedRepresentative;
+
+    @Column(name = "consumer")
+    private boolean consumer = false;
+
+    @Column(name = "snapshot_taken")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date snapshotTaken;
+
+    @Column(name = "snapshot_designation")
+    private String snapshotDesignation;
+
+    @Column(name = "snapshot_address")
+    private String snapshotAddress;
 
     /**
-     * Whether this type is one of the pre-court cost categories the dunning application reports as
-     * an ancillary claim of its own.
+     * Whether the designation and address of this party have been frozen for use towards a court.
      *
-     * @return true for the pre-court cost categories
+     * @return true once a snapshot was taken
      */
-    public boolean isPrecourtCost() {
-        return precourtCost;
+    public boolean hasSnapshot() {
+        return this.snapshotTaken != null;
     }
 
     /**
-     * Whether this type represents a main claim rather than a cost or ancillary position.
+     * The designation to use in a document. Returns the snapshot once one was taken, so a document
+     * reproducing an earlier state stays reconstructable, and the current contact's designation
+     * otherwise.
      *
-     * @return true for main claims
+     * @return the designation to display, may be null if neither is available
      */
-    public boolean isMainClaim() {
-        return this == MAIN_CLAIM || this == MAIN_CLAIM_RECURRING;
+    public String getEffectiveDesignation() {
+        if (hasSnapshot()) {
+            return this.snapshotDesignation;
+        }
+        if (this.contact != null) {
+            return this.contact.toDisplayName();
+        }
+        return null;
     }
 
-    public String getLabel() {
-        return label;
+    @Override
+    public int hashCode() {
+        int hash = 0;
+        hash += (getId() != null ? getId().hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (!(object instanceof ClaimLedgerParty)) {
+            return false;
+        }
+        ClaimLedgerParty other = (ClaimLedgerParty) object;
+        if ((this.getId() == null && other.getId() != null) || (this.getId() != null && !this.id.equals(other.id))) {
+            return false;
+        }
+        return true;
     }
 
     @Override
     public String toString() {
-        return label;
+        String designation = getEffectiveDesignation();
+        return (designation == null ? "" : designation) + " (" + (this.role == null ? "" : this.role.toString()) + ")";
     }
 
-    public static ClaimComponentType fromLabel(String label) {
-        for (ClaimComponentType t : values()) {
-            if (t.label.equalsIgnoreCase(label)) {
-                return t;
-            }
-        }
-        throw new IllegalArgumentException("Unknown label: " + label);
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @return the ledger
+     */
+    public ClaimLedger getLedger() {
+        return ledger;
+    }
+
+    /**
+     * @param ledger the ledger to set
+     */
+    public void setLedger(ClaimLedger ledger) {
+        this.ledger = ledger;
+    }
+
+    /**
+     * @return the role
+     */
+    public ClaimPartyRole getRole() {
+        return role;
+    }
+
+    /**
+     * @param role the role to set
+     */
+    public void setRole(ClaimPartyRole role) {
+        this.role = role;
+    }
+
+    /**
+     * @return the sequenceNumber
+     */
+    public int getSequenceNumber() {
+        return sequenceNumber;
+    }
+
+    /**
+     * @param sequenceNumber the sequenceNumber to set
+     */
+    public void setSequenceNumber(int sequenceNumber) {
+        this.sequenceNumber = sequenceNumber;
+    }
+
+    /**
+     * @return the contact
+     */
+    public AddressBean getContact() {
+        return contact;
+    }
+
+    /**
+     * @param contact the contact to set
+     */
+    public void setContact(AddressBean contact) {
+        this.contact = contact;
+    }
+
+    /**
+     * @return the caseContact
+     */
+    public ArchiveFileAddressesBean getCaseContact() {
+        return caseContact;
+    }
+
+    /**
+     * @param caseContact the caseContact to set
+     */
+    public void setCaseContact(ArchiveFileAddressesBean caseContact) {
+        this.caseContact = caseContact;
+    }
+
+    /**
+     * @return the legalRepresentative
+     */
+    public AddressBean getLegalRepresentative() {
+        return legalRepresentative;
+    }
+
+    /**
+     * @param legalRepresentative the legalRepresentative to set
+     */
+    public void setLegalRepresentative(AddressBean legalRepresentative) {
+        this.legalRepresentative = legalRepresentative;
+    }
+
+    /**
+     * @return the authorisedRepresentative
+     */
+    public AddressBean getAuthorisedRepresentative() {
+        return authorisedRepresentative;
+    }
+
+    /**
+     * @param authorisedRepresentative the authorisedRepresentative to set
+     */
+    public void setAuthorisedRepresentative(AddressBean authorisedRepresentative) {
+        this.authorisedRepresentative = authorisedRepresentative;
+    }
+
+    /**
+     * @return the consumer
+     */
+    public boolean isConsumer() {
+        return consumer;
+    }
+
+    /**
+     * @param consumer the consumer to set
+     */
+    public void setConsumer(boolean consumer) {
+        this.consumer = consumer;
+    }
+
+    /**
+     * @return the snapshotTaken
+     */
+    public Date getSnapshotTaken() {
+        return snapshotTaken;
+    }
+
+    /**
+     * @param snapshotTaken the snapshotTaken to set
+     */
+    public void setSnapshotTaken(Date snapshotTaken) {
+        this.snapshotTaken = snapshotTaken;
+    }
+
+    /**
+     * @return the snapshotDesignation
+     */
+    public String getSnapshotDesignation() {
+        return snapshotDesignation;
+    }
+
+    /**
+     * @param snapshotDesignation the snapshotDesignation to set
+     */
+    public void setSnapshotDesignation(String snapshotDesignation) {
+        this.snapshotDesignation = snapshotDesignation;
+    }
+
+    /**
+     * @return the snapshotAddress
+     */
+    public String getSnapshotAddress() {
+        return snapshotAddress;
+    }
+
+    /**
+     * @param snapshotAddress the snapshotAddress to set
+     */
+    public void setSnapshotAddress(String snapshotAddress) {
+        this.snapshotAddress = snapshotAddress;
     }
 
 }

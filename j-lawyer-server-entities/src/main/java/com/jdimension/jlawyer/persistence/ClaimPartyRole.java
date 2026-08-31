@@ -663,84 +663,17 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.persistence;
 
 /**
- * Kind of position a claim ledger component represents.
- *
- * The pre-court cost categories are kept apart deliberately: the EDA dunning application places
- * each of them in its own record area (AUSL, MAHNK, AUSK, BKRL, INKB, VV23, ANF) and will not
- * accept them merged into one position.
  *
  * @author jens
  */
-public enum ClaimComponentType {
-    MAIN_CLAIM("Hauptforderung", false),
-    /**
-     * Recurring monthly main claim, e.g. maintenance, posted as a due item per month.
-     */
-    MAIN_CLAIM_RECURRING("laufende monatliche Hauptforderung", false),
-    COST_INTEREST_BEARING("Kosten (verzinslich)", false),
-    COST_NON_INTEREST_BEARING("Kosten (unverzinslich)", false),
-    /**
-     * Assessed costs, interest-bearing under § 104 Abs. 1 S. 2 ZPO.
-     */
-    COST_ASSESSED("festgesetzte Kosten", false),
-    /**
-     * Interest arrears booked as a fixed amount rather than computed.
-     */
-    INTEREST_ARREARS("Zinsrückstand", false),
-    /**
-     * Outlays of the creditor - EDA record area AUSL.
-     */
-    PRECOURT_EXPENSES("Auslagen des Gläubigers", true),
-    /**
-     * Reminder charges - EDA record area MAHNK.
-     */
-    PRECOURT_REMINDER_COSTS("Mahnkosten", true),
-    /**
-     * Costs of obtaining information about the debtor - EDA record area AUSK.
-     */
-    PRECOURT_INFORMATION_COSTS("Auskunftskosten", true),
-    /**
-     * Costs of a returned direct debit - EDA record area BKRL.
-     */
-    PRECOURT_BANK_RETURN_COSTS("Bankrücklastkosten", true),
-    /**
-     * Collection costs - EDA record area INKB.
-     */
-    PRECOURT_COLLECTION_COSTS("Inkassokosten", true),
-    /**
-     * Pre-court lawyer's fee under Nr. 2300 VV RVG - EDA record area VV23.
-     */
-    PRECOURT_LAWYER_FEE("vorgerichtliche Anwaltsvergütung (Nr. 2300 VV RVG)", true),
-    /**
-     * Any other ancillary claim - EDA record area ANF.
-     */
-    OTHER_ANCILLARY_CLAIM("andere Nebenforderung", true);
+public enum ClaimPartyRole {
+    CREDITOR("Gläubiger"),
+    DEBTOR("Schuldner");
 
     private final String label;
-    private final boolean precourtCost;
 
-    ClaimComponentType(String label, boolean precourtCost) {
+    ClaimPartyRole(String label) {
         this.label = label;
-        this.precourtCost = precourtCost;
-    }
-
-    /**
-     * Whether this type is one of the pre-court cost categories the dunning application reports as
-     * an ancillary claim of its own.
-     *
-     * @return true for the pre-court cost categories
-     */
-    public boolean isPrecourtCost() {
-        return precourtCost;
-    }
-
-    /**
-     * Whether this type represents a main claim rather than a cost or ancillary position.
-     *
-     * @return true for main claims
-     */
-    public boolean isMainClaim() {
-        return this == MAIN_CLAIM || this == MAIN_CLAIM_RECURRING;
     }
 
     public String getLabel() {
@@ -752,13 +685,12 @@ public enum ClaimComponentType {
         return label;
     }
 
-    public static ClaimComponentType fromLabel(String label) {
-        for (ClaimComponentType t : values()) {
-            if (t.label.equalsIgnoreCase(label)) {
-                return t;
+    public static ClaimPartyRole fromLabel(String label) {
+        for (ClaimPartyRole r : values()) {
+            if (r.label.equalsIgnoreCase(label)) {
+                return r;
             }
         }
         throw new IllegalArgumentException("Unknown label: " + label);
     }
-
 }

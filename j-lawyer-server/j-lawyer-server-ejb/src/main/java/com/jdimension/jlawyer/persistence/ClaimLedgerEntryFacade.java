@@ -706,7 +706,7 @@ public class ClaimLedgerEntryFacade extends AbstractFacade<ClaimLedgerEntry> imp
     @Override
     public List<ClaimLedgerEntry> findByComponentAndType(ClaimComponent component, LedgerEntryType type) {
         
-        return (List<ClaimLedgerEntry>) em.createNamedQuery("ClaimLedgerEntry.findByComponent").setParameter("component", component).setParameter("type", type).getResultList();
+        return (List<ClaimLedgerEntry>) em.createNamedQuery("ClaimLedgerEntry.findByComponentAndType").setParameter("component", component).setParameter("type", type).getResultList();
         
     }
     

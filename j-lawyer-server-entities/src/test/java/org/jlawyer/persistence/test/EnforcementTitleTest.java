@@ -660,105 +660,83 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package org.jlawyer.persistence.test;
+
+import com.jdimension.jlawyer.persistence.EnforcementTitle;
+import com.jdimension.jlawyer.persistence.EnforcementTitleType;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
+import java.util.List;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 /**
- * Kind of position a claim ledger component represents.
- *
- * The pre-court cost categories are kept apart deliberately: the EDA dunning application places
- * each of them in its own record area (AUSL, MAHNK, AUSK, BKRL, INKB, VV23, ANF) and will not
- * accept them merged into one position.
+ * Verifies the formal prerequisites of enforcement and the 30-year limitation of § 197 Abs. 1
+ * Nr. 3 BGB.
  *
  * @author jens
  */
-public enum ClaimComponentType {
-    MAIN_CLAIM("Hauptforderung", false),
-    /**
-     * Recurring monthly main claim, e.g. maintenance, posted as a due item per month.
-     */
-    MAIN_CLAIM_RECURRING("laufende monatliche Hauptforderung", false),
-    COST_INTEREST_BEARING("Kosten (verzinslich)", false),
-    COST_NON_INTEREST_BEARING("Kosten (unverzinslich)", false),
-    /**
-     * Assessed costs, interest-bearing under § 104 Abs. 1 S. 2 ZPO.
-     */
-    COST_ASSESSED("festgesetzte Kosten", false),
-    /**
-     * Interest arrears booked as a fixed amount rather than computed.
-     */
-    INTEREST_ARREARS("Zinsrückstand", false),
-    /**
-     * Outlays of the creditor - EDA record area AUSL.
-     */
-    PRECOURT_EXPENSES("Auslagen des Gläubigers", true),
-    /**
-     * Reminder charges - EDA record area MAHNK.
-     */
-    PRECOURT_REMINDER_COSTS("Mahnkosten", true),
-    /**
-     * Costs of obtaining information about the debtor - EDA record area AUSK.
-     */
-    PRECOURT_INFORMATION_COSTS("Auskunftskosten", true),
-    /**
-     * Costs of a returned direct debit - EDA record area BKRL.
-     */
-    PRECOURT_BANK_RETURN_COSTS("Bankrücklastkosten", true),
-    /**
-     * Collection costs - EDA record area INKB.
-     */
-    PRECOURT_COLLECTION_COSTS("Inkassokosten", true),
-    /**
-     * Pre-court lawyer's fee under Nr. 2300 VV RVG - EDA record area VV23.
-     */
-    PRECOURT_LAWYER_FEE("vorgerichtliche Anwaltsvergütung (Nr. 2300 VV RVG)", true),
-    /**
-     * Any other ancillary claim - EDA record area ANF.
-     */
-    OTHER_ANCILLARY_CLAIM("andere Nebenforderung", true);
+public class EnforcementTitleTest {
 
-    private final String label;
-    private final boolean precourtCost;
-
-    ClaimComponentType(String label, boolean precourtCost) {
-        this.label = label;
-        this.precourtCost = precourtCost;
+    private static Date date(int year, int month, int day) {
+        return Date.from(LocalDate.of(year, month, day).atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 
-    /**
-     * Whether this type is one of the pre-court cost categories the dunning application reports as
-     * an ancillary claim of its own.
-     *
-     * @return true for the pre-court cost categories
-     */
-    public boolean isPrecourtCost() {
-        return precourtCost;
+    private static LocalDate toLocalDate(Date d) {
+        return d.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
-    /**
-     * Whether this type represents a main claim rather than a cost or ancillary position.
-     *
-     * @return true for main claims
-     */
-    public boolean isMainClaim() {
-        return this == MAIN_CLAIM || this == MAIN_CLAIM_RECURRING;
+    @Test
+    public void limitationIsThirtyYearsAfterIssue() {
+        EnforcementTitle title = new EnforcementTitle();
+        title.setTitleType(EnforcementTitleType.VOLLSTRECKUNGSBESCHEID);
+        title.setIssueDate(date(2026, 4, 8));
+
+        Date limitation = title.computeLimitationDate();
+
+        assertEquals(LocalDate.of(2056, 4, 8), toLocalDate(limitation));
     }
 
-    public String getLabel() {
-        return label;
+    @Test
+    public void limitationOfALeapDayTitleStaysValid() {
+        EnforcementTitle title = new EnforcementTitle();
+        title.setIssueDate(date(2024, 2, 29));
+
+        // 2054 is not a leap year - the date has to fall back to 28 February rather than overflow
+        assertEquals(LocalDate.of(2054, 2, 28), toLocalDate(title.computeLimitationDate()));
     }
 
-    @Override
-    public String toString() {
-        return label;
+    @Test
+    public void limitationIsUnknownWithoutIssueDate() {
+        EnforcementTitle title = new EnforcementTitle();
+
+        assertNull(title.computeLimitationDate());
     }
 
-    public static ClaimComponentType fromLabel(String label) {
-        for (ClaimComponentType t : values()) {
-            if (t.label.equalsIgnoreCase(label)) {
-                return t;
-            }
-        }
-        throw new IllegalArgumentException("Unknown label: " + label);
+    @Test
+    public void titleIsEnforceableOnlyWithAllThreePrerequisites() {
+        EnforcementTitle title = new EnforcementTitle();
+        title.setIssueDate(date(2026, 4, 8));
+        title.setClauseDate(date(2026, 4, 20));
+
+        assertFalse("service is still missing", title.isEnforceable());
+        assertEquals(List.of("Zustellung"), title.getMissingPrerequisites());
+
+        title.setServiceDate(date(2026, 4, 25));
+
+        assertTrue(title.isEnforceable());
+        assertTrue(title.getMissingPrerequisites().isEmpty());
+    }
+
+    @Test
+    public void emptyTitleReportsAllPrerequisites() {
+        EnforcementTitle title = new EnforcementTitle();
+
+        assertEquals(List.of("Titel", "Klausel", "Zustellung"), title.getMissingPrerequisites());
     }
 
 }

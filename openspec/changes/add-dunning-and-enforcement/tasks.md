@@ -19,24 +19,24 @@
 
 ## 1. Phase 1 — Claim ledger foundation
 
-- [ ] 1.1 Add ledger party model (creditors/debtors, sequence, representatives, effective creditor
+- [x] 1.1 Add ledger party model (creditors/debtors, sequence, representatives, effective creditor
       count, consumer flag) with migration and entity classes: `AddressBean` reference as the
       party's identity with `ON DELETE SET NULL` like `invoices.contact_id`, an optional
       `ArchiveFileAddressesBean` reference for the case role it was derived from, and the
       designation/address snapshot written on first use towards a court
-- [ ] 1.2 Add sub-ledger reference, allocation mode, surplus handling and consumer-loan flag to
+- [x] 1.2 Add sub-ledger reference, allocation mode, surplus handling and consumer-loan flag to
       `ClaimLedger`
 - [ ] 1.3 Add `EnforcementTitle` entity with prerequisites (Titel/Klausel/Zustellung) and 30-year
       limitation computation plus follow-up creation
-- [ ] 1.4 Extend `ClaimComponentType` (the EDA pre-court cost categories Auslagen, Mahnkosten,
+- [x] 1.4 Extend `ClaimComponentType` (the EDA pre-court cost categories Auslagen, Mahnkosten,
       Auskunftskosten, Bankrücklastkosten, Inkassokosten, Nr. 2300 VV RVG, andere Nebenforderungen;
       assessed costs; interest arrears; recurring monthly claims) and add the interest start mode
       "on service"
-- [ ] 1.5 Add the main claim classification to `ClaimComponent`: catalogue number or free-text
+- [x] 1.5 Add the main claim classification to `ClaimComponent`: catalogue number or free-text
       marker, plus the additional entries certain numbers require (property postal code/place for
       17/19/20/90, contract designation for 28, and the account, meter or service details of the
       remaining special numbers), with migration
-- [ ] 1.6 Consolidate the two interest implementations: make `PaymentSplitCalculator` use the
+- [x] 1.6 Consolidate the two interest implementations: make `PaymentSplitCalculator` use the
       period-splitting engine of `ArchiveFileService` (removing its hard-coded `3.62` base rate),
       and fix `ClaimLedgerEntryFacade.findByComponentAndType`, which runs the wrong named query
       with an undeclared parameter

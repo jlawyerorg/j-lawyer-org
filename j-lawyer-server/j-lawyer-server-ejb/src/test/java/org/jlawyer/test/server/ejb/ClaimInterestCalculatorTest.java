@@ -660,105 +660,376 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package org.jlawyer.test.server.ejb;
+
+import com.jdimension.jlawyer.persistence.BaseInterest;
+import com.jdimension.jlawyer.persistence.BaseInterestFacadeLocal;
+import com.jdimension.jlawyer.persistence.ClaimComponent;
+import com.jdimension.jlawyer.persistence.ClaimComponentType;
+import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
+import com.jdimension.jlawyer.persistence.ClaimLedgerEntryFacadeLocal;
+import com.jdimension.jlawyer.persistence.InterestRule;
+import com.jdimension.jlawyer.persistence.InterestStartMode;
+import com.jdimension.jlawyer.persistence.InterestType;
+import com.jdimension.jlawyer.persistence.LedgerEntryType;
+import com.jdimension.jlawyer.services.ClaimInterestCalculator;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 /**
- * Kind of position a claim ledger component represents.
- *
- * The pre-court cost categories are kept apart deliberately: the EDA dunning application places
- * each of them in its own record area (AUSL, MAHNK, AUSK, BKRL, INKB, VV23, ANF) and will not
- * accept them merged into one position.
+ * The claim ledger must compute interest from the stored base rate, splitting the period wherever
+ * that rate changes. A hard-coded rate would produce a wrong claim, and two implementations would
+ * let a claim statement and the itemisation annexed to an enforcement application disagree.
  *
  * @author jens
  */
-public enum ClaimComponentType {
-    MAIN_CLAIM("Hauptforderung", false),
-    /**
-     * Recurring monthly main claim, e.g. maintenance, posted as a due item per month.
-     */
-    MAIN_CLAIM_RECURRING("laufende monatliche Hauptforderung", false),
-    COST_INTEREST_BEARING("Kosten (verzinslich)", false),
-    COST_NON_INTEREST_BEARING("Kosten (unverzinslich)", false),
-    /**
-     * Assessed costs, interest-bearing under § 104 Abs. 1 S. 2 ZPO.
-     */
-    COST_ASSESSED("festgesetzte Kosten", false),
-    /**
-     * Interest arrears booked as a fixed amount rather than computed.
-     */
-    INTEREST_ARREARS("Zinsrückstand", false),
-    /**
-     * Outlays of the creditor - EDA record area AUSL.
-     */
-    PRECOURT_EXPENSES("Auslagen des Gläubigers", true),
-    /**
-     * Reminder charges - EDA record area MAHNK.
-     */
-    PRECOURT_REMINDER_COSTS("Mahnkosten", true),
-    /**
-     * Costs of obtaining information about the debtor - EDA record area AUSK.
-     */
-    PRECOURT_INFORMATION_COSTS("Auskunftskosten", true),
-    /**
-     * Costs of a returned direct debit - EDA record area BKRL.
-     */
-    PRECOURT_BANK_RETURN_COSTS("Bankrücklastkosten", true),
-    /**
-     * Collection costs - EDA record area INKB.
-     */
-    PRECOURT_COLLECTION_COSTS("Inkassokosten", true),
-    /**
-     * Pre-court lawyer's fee under Nr. 2300 VV RVG - EDA record area VV23.
-     */
-    PRECOURT_LAWYER_FEE("vorgerichtliche Anwaltsvergütung (Nr. 2300 VV RVG)", true),
-    /**
-     * Any other ancillary claim - EDA record area ANF.
-     */
-    OTHER_ANCILLARY_CLAIM("andere Nebenforderung", true);
+public class ClaimInterestCalculatorTest {
 
-    private final String label;
-    private final boolean precourtCost;
-
-    ClaimComponentType(String label, boolean precourtCost) {
-        this.label = label;
-        this.precourtCost = precourtCost;
+    private static Date date(int year, int month, int day) {
+        return Date.from(LocalDate.of(year, month, day).atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 
     /**
-     * Whether this type is one of the pre-court cost categories the dunning application reports as
-     * an ancillary claim of its own.
-     *
-     * @return true for the pre-court cost categories
+     * Base rates as they are stored in interest_base, resolved by date.
      */
-    public boolean isPrecourtCost() {
-        return precourtCost;
-    }
+    private static class BaseRates implements BaseInterestFacadeLocal {
 
-    /**
-     * Whether this type represents a main claim rather than a cost or ancillary position.
-     *
-     * @return true for main claims
-     */
-    public boolean isMainClaim() {
-        return this == MAIN_CLAIM || this == MAIN_CLAIM_RECURRING;
-    }
+        private final List<BaseInterest> rates = new ArrayList<>();
 
-    public String getLabel() {
-        return label;
-    }
-
-    @Override
-    public String toString() {
-        return label;
-    }
-
-    public static ClaimComponentType fromLabel(String label) {
-        for (ClaimComponentType t : values()) {
-            if (t.label.equalsIgnoreCase(label)) {
-                return t;
-            }
+        void add(Date validFrom, String rate) {
+            BaseInterest bi = new BaseInterest();
+            bi.setValidFrom(validFrom);
+            bi.setRate(new BigDecimal(rate));
+            rates.add(bi);
+            rates.sort(Comparator.comparing(BaseInterest::getValidFrom));
         }
-        throw new IllegalArgumentException("Unknown label: " + label);
+
+        @Override
+        public BigDecimal findRateByDate(Date date) {
+            BigDecimal result = null;
+            for (BaseInterest bi : rates) {
+                if (!bi.getValidFrom().after(date)) {
+                    result = bi.getRate();
+                }
+            }
+            return result;
+        }
+
+        @Override
+        public List<BaseInterest> findByDateRange(Date fromDate, Date toDate) {
+            List<BaseInterest> result = new ArrayList<>();
+            for (BaseInterest bi : rates) {
+                if (!bi.getValidFrom().before(fromDate) && !bi.getValidFrom().after(toDate)) {
+                    result.add(bi);
+                }
+            }
+            return result;
+        }
+
+        @Override
+        public void create(BaseInterest baseInterest) {
+        }
+
+        @Override
+        public void edit(BaseInterest baseInterest) {
+        }
+
+        @Override
+        public void remove(BaseInterest baseInterest) {
+        }
+
+        @Override
+        public BaseInterest find(Object id) {
+            return null;
+        }
+
+        @Override
+        public List<BaseInterest> findAll() {
+            return rates;
+        }
+
+        @Override
+        public List<BaseInterest> findRange(int[] range) {
+            return rates;
+        }
+
+        @Override
+        public int count() {
+            return rates.size();
+        }
+
+        @Override
+        public void removeAll() {
+            rates.clear();
+        }
+    }
+
+    /**
+     * Ledger entries of one component, ordered by date as the named queries deliver them.
+     */
+    private static class Entries implements ClaimLedgerEntryFacadeLocal {
+
+        private final List<ClaimLedgerEntry> entries = new ArrayList<>();
+
+        void add(LedgerEntryType type, Date when, String amount) {
+            ClaimLedgerEntry e = new ClaimLedgerEntry();
+            e.setType(type);
+            e.setEntryDate(when);
+            e.setAmount(new BigDecimal(amount));
+            entries.add(e);
+            entries.sort(Comparator.comparing(ClaimLedgerEntry::getEntryDate));
+        }
+
+        @Override
+        public List<ClaimLedgerEntry> findByComponent(ClaimComponent component) {
+            return entries;
+        }
+
+        @Override
+        public ClaimLedgerEntry findLatestInterestEntry(ClaimComponent component) {
+            ClaimLedgerEntry latest = null;
+            for (ClaimLedgerEntry e : entries) {
+                if (e.getType() == LedgerEntryType.INTEREST) {
+                    latest = e;
+                }
+            }
+            return latest;
+        }
+
+        @Override
+        public ClaimLedgerEntry findEarliestEntry(ClaimComponent component) {
+            return entries.isEmpty() ? null : entries.get(0);
+        }
+
+        @Override
+        public ClaimLedgerEntry findLatestEntry(ClaimComponent component) {
+            return entries.isEmpty() ? null : entries.get(entries.size() - 1);
+        }
+
+        @Override
+        public void create(ClaimLedgerEntry claimLedgerEntry) {
+        }
+
+        @Override
+        public void edit(ClaimLedgerEntry claimLedgerEntry) {
+        }
+
+        @Override
+        public void remove(ClaimLedgerEntry claimLedgerEntry) {
+        }
+
+        @Override
+        public ClaimLedgerEntry find(Object id) {
+            return null;
+        }
+
+        @Override
+        public List<ClaimLedgerEntry> findAll() {
+            return entries;
+        }
+
+        @Override
+        public List<ClaimLedgerEntry> findRange(int[] range) {
+            return entries;
+        }
+
+        @Override
+        public List<ClaimLedgerEntry> findByLedger(com.jdimension.jlawyer.persistence.ClaimLedger ledger) {
+            return entries;
+        }
+
+        @Override
+        public List<ClaimLedgerEntry> findByComponentAndType(ClaimComponent component, LedgerEntryType type) {
+            List<ClaimLedgerEntry> result = new ArrayList<>();
+            for (ClaimLedgerEntry e : entries) {
+                if (e.getType() == type) {
+                    result.add(e);
+                }
+            }
+            return result;
+        }
+
+        @Override
+        public List<ClaimLedgerEntry> findByComponentAndTypeUpToDate(ClaimComponent component, LedgerEntryType type, Date upToDate) {
+            List<ClaimLedgerEntry> result = new ArrayList<>();
+            for (ClaimLedgerEntry e : findByComponentAndType(component, type)) {
+                if (!e.getEntryDate().after(upToDate)) {
+                    result.add(e);
+                }
+            }
+            return result;
+        }
+
+        @Override
+        public int count() {
+            return entries.size();
+        }
+    }
+
+    private static ClaimComponent componentWithRule(InterestType type, String rateOrMargin, Date validFrom) {
+        ClaimComponent cmp = new ClaimComponent();
+        cmp.setType(ClaimComponentType.MAIN_CLAIM);
+        cmp.setName("Kaufpreis Warenlieferung");
+
+        InterestRule rule = new InterestRule();
+        rule.setInterestType(type);
+        rule.setValidFrom(validFrom);
+        if (type == InterestType.FIXED) {
+            rule.setFixedRate(new BigDecimal(rateOrMargin));
+        } else {
+            rule.setBaseMargin(new BigDecimal(rateOrMargin));
+        }
+        List<InterestRule> rules = new ArrayList<>();
+        rules.add(rule);
+        cmp.setInterestRules(rules);
+        return cmp;
+    }
+
+    @Test
+    public void fixedRateInterestOverAFullYear() {
+        Entries entries = new Entries();
+        entries.add(LedgerEntryType.MAIN_CLAIM, date(2025, 1, 1), "1000.00");
+
+        ClaimComponent cmp = componentWithRule(InterestType.FIXED, "5.00", date(2025, 1, 1));
+        ClaimInterestCalculator calc = new ClaimInterestCalculator(new BaseRates(), entries);
+
+        // 365 days at 5 % of 1000.00
+        assertEquals(new BigDecimal("50.00"), calc.calculateAccruedInterest(cmp, date(2026, 1, 1)));
+    }
+
+    @Test
+    public void baseRelatedInterestUsesTheStoredRateNotAConstant() {
+        Entries entries = new Entries();
+        entries.add(LedgerEntryType.MAIN_CLAIM, date(2025, 1, 1), "1000.00");
+
+        BaseRates rates = new BaseRates();
+        rates.add(date(2024, 7, 1), "2.00");
+
+        ClaimComponent cmp = componentWithRule(InterestType.BASIS_RELATED, "5.00", date(2025, 1, 1));
+        ClaimInterestCalculator calc = new ClaimInterestCalculator(rates, entries);
+
+        // base 2 % + margin 5 % = 7 % of 1000.00 over 365 days
+        assertEquals(new BigDecimal("70.00"), calc.calculateAccruedInterest(cmp, date(2026, 1, 1)));
+    }
+
+    @Test
+    public void periodIsSplitAtEveryBaseRateChange() {
+        Entries entries = new Entries();
+        entries.add(LedgerEntryType.MAIN_CLAIM, date(2025, 1, 1), "1000.00");
+
+        BaseRates rates = new BaseRates();
+        rates.add(date(2024, 7, 1), "2.00");
+        rates.add(date(2025, 7, 1), "3.00");
+
+        ClaimComponent cmp = componentWithRule(InterestType.BASIS_RELATED, "5.00", date(2025, 1, 1));
+        ClaimInterestCalculator calc = new ClaimInterestCalculator(rates, entries);
+
+        List<ClaimInterestCalculator.ClaimInterestPeriod> periods = calc.calculateInterestPeriods(cmp, date(2026, 1, 1));
+
+        assertEquals("one period before and one after the base rate change", 2, periods.size());
+        assertEquals(LocalDate.of(2025, 1, 1), periods.get(0).getStart());
+        assertEquals(LocalDate.of(2025, 7, 1), periods.get(0).getEnd());
+        assertEquals(181, periods.get(0).getDays());
+        assertEquals(LocalDate.of(2026, 1, 1), periods.get(1).getEnd());
+
+        // 181 days at 7 % + 184 days at 8 %, both on 1000.00
+        BigDecimal expected = new BigDecimal("34.71").add(new BigDecimal("40.33"));
+        assertEquals(expected, calc.calculateAccruedInterest(cmp, date(2026, 1, 1)));
+    }
+
+    @Test
+    public void periodIsSplitWhenAPaymentReducesThePrincipal() {
+        Entries entries = new Entries();
+        entries.add(LedgerEntryType.MAIN_CLAIM, date(2025, 1, 1), "1000.00");
+        entries.add(LedgerEntryType.PAYMENT, date(2025, 7, 1), "400.00");
+
+        ClaimComponent cmp = componentWithRule(InterestType.FIXED, "5.00", date(2025, 1, 1));
+        ClaimInterestCalculator calc = new ClaimInterestCalculator(new BaseRates(), entries);
+
+        List<ClaimInterestCalculator.ClaimInterestPeriod> periods = calc.calculateInterestPeriods(cmp, date(2026, 1, 1));
+
+        assertEquals(2, periods.size());
+        assertEquals(new BigDecimal("1000.00"), periods.get(0).getPrincipal());
+        assertEquals("the payment lowers the principal the second period bears interest on",
+                new BigDecimal("600.00"), periods.get(1).getPrincipal());
+    }
+
+    @Test
+    public void interestFromServiceDoesNotAccrueBeforeTheServiceDateIsKnown() {
+        Entries entries = new Entries();
+        entries.add(LedgerEntryType.MAIN_CLAIM, date(2025, 1, 1), "1000.00");
+
+        ClaimComponent cmp = componentWithRule(InterestType.FIXED, "5.00", date(2025, 1, 1));
+        cmp.setInterestStartMode(InterestStartMode.ON_SERVICE);
+        // service has not been recorded, so the rule carries no effective date yet
+        cmp.getInterestRules().get(0).setValidFrom(null);
+
+        ClaimInterestCalculator calc = new ClaimInterestCalculator(new BaseRates(), entries);
+
+        assertEquals(BigDecimal.ZERO, calc.calculateAccruedInterest(cmp, date(2026, 1, 1)));
+    }
+
+    @Test
+    public void interestFromServiceRunsFromTheRecordedServiceDate() {
+        Entries entries = new Entries();
+        entries.add(LedgerEntryType.MAIN_CLAIM, date(2025, 1, 1), "1000.00");
+
+        ClaimComponent cmp = componentWithRule(InterestType.FIXED, "5.00", date(2025, 7, 1));
+        cmp.setInterestStartMode(InterestStartMode.ON_SERVICE);
+
+        ClaimInterestCalculator calc = new ClaimInterestCalculator(new BaseRates(), entries);
+
+        List<ClaimInterestCalculator.ClaimInterestPeriod> periods = calc.calculateInterestPeriods(cmp, date(2026, 1, 1));
+
+        assertEquals(1, periods.size());
+        assertEquals("interest runs from service, not from the booking of the claim",
+                LocalDate.of(2025, 7, 1), periods.get(0).getStart());
+
+        // 184 days at 5 % of 1000.00
+        assertEquals(new BigDecimal("25.21"), calc.calculateAccruedInterest(cmp, date(2026, 1, 1)));
+    }
+
+    @Test
+    public void componentWithoutInterestRulesBearsNoInterest() {
+        Entries entries = new Entries();
+        entries.add(LedgerEntryType.MAIN_CLAIM, date(2025, 1, 1), "1000.00");
+
+        ClaimComponent cmp = new ClaimComponent();
+        cmp.setType(ClaimComponentType.COST_NON_INTEREST_BEARING);
+
+        ClaimInterestCalculator calc = new ClaimInterestCalculator(new BaseRates(), entries);
+
+        assertEquals(BigDecimal.ZERO, calc.calculateAccruedInterest(cmp, date(2026, 1, 1)));
+    }
+
+    @Test
+    public void sumOfPeriodsEqualsTheAccruedTotal() {
+        Entries entries = new Entries();
+        entries.add(LedgerEntryType.MAIN_CLAIM, date(2025, 1, 1), "5000.00");
+        entries.add(LedgerEntryType.PAYMENT, date(2025, 4, 15), "1500.00");
+
+        BaseRates rates = new BaseRates();
+        rates.add(date(2024, 7, 1), "2.00");
+        rates.add(date(2025, 7, 1), "3.00");
+
+        ClaimComponent cmp = componentWithRule(InterestType.BASIS_RELATED, "9.00", date(2025, 1, 1));
+        ClaimInterestCalculator calc = new ClaimInterestCalculator(rates, entries);
+
+        BigDecimal fromPeriods = BigDecimal.ZERO;
+        for (ClaimInterestCalculator.ClaimInterestPeriod p : calc.calculateInterestPeriods(cmp, date(2026, 1, 1))) {
+            fromPeriods = fromPeriods.add(p.getAmount());
+        }
+
+        assertTrue("the statement and the itemisation must not be able to disagree",
+                fromPeriods.compareTo(calc.calculateAccruedInterest(cmp, date(2026, 1, 1))) == 0);
     }
 
 }

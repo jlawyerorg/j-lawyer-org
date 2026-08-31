@@ -44,11 +44,13 @@ public class PaymentSplitCalculator {
     private ClaimComponentFacadeLocal claimComponentsFacade;
     private ClaimLedgerEntryFacadeLocal claimLedgerEntriesFacade;
     private InterestRuleFacadeLocal claimComponentInterestRuleFacade;
+    private ClaimInterestCalculator interestCalculator;
 
-    public PaymentSplitCalculator(ClaimComponentFacadeLocal claimComponentsFacade, InterestRuleFacadeLocal claimComponentInterestRuleFacade, ClaimLedgerEntryFacadeLocal claimLedgerEntriesFacade) {
+    public PaymentSplitCalculator(ClaimComponentFacadeLocal claimComponentsFacade, InterestRuleFacadeLocal claimComponentInterestRuleFacade, ClaimLedgerEntryFacadeLocal claimLedgerEntriesFacade, ClaimInterestCalculator interestCalculator) {
         this.claimComponentsFacade=claimComponentsFacade;
         this.claimComponentInterestRuleFacade=claimComponentInterestRuleFacade;
         this.claimLedgerEntriesFacade=claimLedgerEntriesFacade;
+        this.interestCalculator=interestCalculator;
     }
 
     /**
@@ -129,8 +131,10 @@ public class PaymentSplitCalculator {
                         legalRef += " (Kosten, unverzinslich)";
                     } else if (component.getType() == ClaimComponentType.COST_INTEREST_BEARING) {
                         legalRef += " (Kosten, verzinslich)";
-                    } else {
+                    } else if (component.getType() != null && component.getType().isMainClaim()) {
                         legalRef += " (Hauptforderung)";
+                    } else {
+                        legalRef += " (" + component.getType() + ")";
                     }
                     principalAllocation.setLegalReference(legalRef);
                     principalAllocation.setAllocationDescription("Kapitalzahlung für " + component.getName());
@@ -183,15 +187,23 @@ public class PaymentSplitCalculator {
      * @return Priority value (1 = highest, 3 = lowest)
      */
     private int getTilgungsPriority(ClaimComponent component) {
-        switch (component.getType()) {
-            case COST_NON_INTEREST_BEARING:
-                return 1; // Highest priority
+        ClaimComponentType type = component.getType();
+        if (type == null) {
+            return 99;
+        }
+        if (type.isMainClaim()) {
+            return 3; // Lowest priority
+        }
+        switch (type) {
             case COST_INTEREST_BEARING:
+            case COST_ASSESSED:
+            case INTEREST_ARREARS:
+                // costs that carry interest by their nature - § 104 Abs. 1 S. 2 ZPO for assessed
+                // costs - are settled after the ones that do not
                 return 2;
-            case MAIN_CLAIM:
-                return 3; // Lowest priority
             default:
-                return 99;
+                // remaining costs and the pre-court ancillary claims
+                return 1; // Highest priority
         }
     }
 
@@ -243,8 +255,9 @@ public class PaymentSplitCalculator {
                 return BigDecimal.ZERO; // No interest applicable
             }
 
-            // Calculate accrued interest based on rules
-            totalInterest = calculateAccruedInterest(component, rules, upToDate);
+            // Accrued interest comes from the shared interest engine, so that the split and the
+            // ledger totals can never disagree
+            totalInterest = this.interestCalculator.calculateAccruedInterest(component, upToDate);
 
             // Add any INTEREST entries already booked
             List<ClaimLedgerEntry> interestEntries = this.claimLedgerEntriesFacade.findByComponentAndTypeUpToDate(component, LedgerEntryType.INTEREST, upToDate);
@@ -264,80 +277,6 @@ public class PaymentSplitCalculator {
         return totalInterest.max(BigDecimal.ZERO);
     }
 
-    /**
-     * Calculates accrued interest based on interest rules.
-     * This is a simplified calculation - the full implementation should consider
-     * payment dates, interest periods, base interest rate changes, etc.
-     *
-     * @param component The component
-     * @param rules The interest rules
-     * @param upToDate Calculate up to this date
-     * @return Accrued interest amount
-     */
-    private BigDecimal calculateAccruedInterest(ClaimComponent component, List<InterestRule> rules, Date upToDate) {
-        BigDecimal accruedInterest = BigDecimal.ZERO;
-
-        try {
-            for (InterestRule rule : rules) {
-                Date startDate = rule.getValidFrom();
-                if (startDate.after(upToDate)) {
-                    continue; // Rule not yet active
-                }
-
-                // Calculate days between start date and upToDate
-                long diffInMillis = upToDate.getTime() - startDate.getTime();
-                long days = diffInMillis / (1000 * 60 * 60 * 24);
-
-                if (days <= 0) {
-                    continue;
-                }
-
-                BigDecimal principal = component.getPrincipalAmount();
-                if (principal == null || principal.compareTo(BigDecimal.ZERO) <= 0) {
-                    continue;
-                }
-
-                BigDecimal rate;
-                if (rule.getInterestType() == InterestType.FIXED) {
-                    // Fixed interest rate
-                    rate = rule.getFixedRate();
-                } else {
-                    // Base interest rate + margin
-                    // In a full implementation, we'd look up the base interest rate for each period
-                    // For now, use a simplified calculation with a default base rate
-                    BigDecimal baseRate = getBaseInterestRate(startDate);
-                    rate = baseRate.add(rule.getBaseMargin());
-                }
-
-                // Calculate interest: principal * rate * days / 365 / 100
-                BigDecimal interest = principal
-                        .multiply(rate)
-                        .multiply(BigDecimal.valueOf(days))
-                        .divide(BigDecimal.valueOf(365), 2, RoundingMode.HALF_UP)
-                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-
-                accruedInterest = accruedInterest.add(interest);
-            }
-        } catch (Exception ex) {
-            log.error("Error calculating accrued interest", ex);
-        }
-
-        return accruedInterest;
-    }
-
-    /**
-     * Gets the base interest rate for a specific date.
-     * This is a simplified implementation - full version should query BaseInterest table.
-     *
-     * @param date The date
-     * @return Base interest rate (as percentage)
-     */
-    private BigDecimal getBaseInterestRate(Date date) {
-        // Simplified: return a default base rate
-        // Full implementation should query:
-        // SELECT bi FROM BaseInterest bi WHERE bi.validFrom <= :date ORDER BY bi.validFrom DESC
-        return new BigDecimal("3.62"); // Example base rate
-    }
 
     /**
      * Validates a payment split proposal.

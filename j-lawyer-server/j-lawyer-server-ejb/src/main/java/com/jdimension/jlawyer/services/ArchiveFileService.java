@@ -812,6 +812,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     private InterestRuleFacadeLocal claimComponentInterestRuleFacade;
     @EJB
     private BaseInterestFacadeLocal baseInterestFacade;
+
+    /**
+     * The one interest engine of the claim ledger. Ledger totals, component balances, the payment
+     * split and the periodic interest bookings all compute through it, so that they cannot
+     * disagree.
+     *
+     * @return the interest calculator bound to this bean's facades
+     */
+    private ClaimInterestCalculator claimInterestCalculator() {
+        return new ClaimInterestCalculator(this.baseInterestFacade, this.claimLedgerEntriesFacade);
+    }
     @EJB
     private PaymentFacadeLocal paymentsFacade;
     @EJB
@@ -8714,76 +8725,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             // need to load claim component from database, becuase it came in as a parameter and will not automatically load its interest rules
             cmp=this.claimComponentsFacade.find(cmp.getId());
             
-            LocalDate startDate = this.claimLedgerEntriesFacade.findLatestInterestEntry(cmp) != null
-                    ? this.claimLedgerEntriesFacade.findLatestInterestEntry(cmp).getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
-                    : this.claimLedgerEntriesFacade.findEarliestEntry(cmp).getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-
-            LocalDate endDate = entry.getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-
-            if (!startDate.isBefore(endDate)) {
-                return new ArrayList<>(); // nichts zu tun
-            }
-
-            // 1️⃣ Liste der Basiszinsänderungen im Zeitraum ermitteln
-            List<LocalDate> changeDates = getBaseRateChangeDatesBetween(startDate, endDate);
-
-            // 1.5️⃣ Zusätzlich alle Daten hinzufügen, an denen sich der Principal ändert
-            List<LocalDate> principalChangeDates = getPrincipalChangeDatesBetween(cmp, startDate, endDate);
-            for (LocalDate principalChangeDate : principalChangeDates) {
-                if (!changeDates.contains(principalChangeDate)) {
-                    changeDates.add(principalChangeDate);
-                }
-            }
-            Collections.sort(changeDates); // Kombinierte Liste sortieren
-
-            // 2️⃣ Erstelle Teilzeiträume
-            List<ClaimInterestPeriod> periods = new ArrayList<>();
-            LocalDate periodStart = startDate;
-            for (LocalDate changeDate : changeDates) {
-                if (!changeDate.isAfter(periodStart)) {
-                    continue;
-                }
-                periods.add(new ClaimInterestPeriod(periodStart, changeDate));
-                periodStart = changeDate;
-            }
-            periods.add(new ClaimInterestPeriod(periodStart, endDate)); // letzter Zeitraum bis entryDate
-
-            // 3️⃣ Für jeden Zeitraum eine Buchung erstellen
-            for (ClaimInterestPeriod p : periods) {
-
-                // finde für das datum gültige rule
-                // Iteriere über alle InterestRules, die für das Startdatum gültig sind
-                InterestRule effectiveRule = null;
-                for (InterestRule rule : cmp.getInterestRules()) {
-                    LocalDate ruleStart = rule.getValidFrom().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                    if (p.start.isBefore(ruleStart)) {
-                        continue;
-                    } else {
-                        effectiveRule = rule;
-                    }
-
-                }
-                if (effectiveRule == null) {
-                    System.out.println("TODO: handle this case");
-                }
-
-                BigDecimal rate = effectiveRule.getEffectiveRate(getBaseRateForDate(p.getStart()));
-                // Dynamischer Principal: berücksichtigt Zahlungen und Anpassungen bis zum Start des Zinszeitraums
-                BigDecimal principal = calculateDynamicPrincipal(cmp, Date.from(p.getStart().atStartOfDay(ZoneId.systemDefault()).toInstant()));
-
-                long days = ChronoUnit.DAYS.between(p.getStart(), p.getEnd());
-                // Zinsberechnung: Kapital × Zinssatz (dezimal) × Tage / 360 (deutsche Zinsmethode)
-                BigDecimal interestAmount = principal.multiply(rate)
-                        .multiply(BigDecimal.valueOf(days))
-                        .divide(BigDecimal.valueOf(365), 2, RoundingMode.HALF_UP)
-                        .setScale(2, RoundingMode.HALF_UP);
+            for (ClaimInterestCalculator.ClaimInterestPeriod p : claimInterestCalculator().calculateInterestPeriods(cmp, entry.getEntryDate())) {
 
                 ClaimLedgerEntry periodEntry = new ClaimLedgerEntry();
                 periodEntry.setLedger(entry.getLedger());
                 periodEntry.setComponent(cmp);
                 periodEntry.setType(LedgerEntryType.INTEREST);
                 periodEntry.setEntryDate(Date.from(p.getEnd().atStartOfDay(ZoneId.systemDefault()).toInstant()));
-                periodEntry.setAmount(interestAmount);
+                periodEntry.setAmount(p.getAmount());
                 periodEntry.setDescription(entry.getDescription());
                 periodEntry.setComment(entry.getComment());
                 if(periodEntry.getComment()!=null) {
@@ -8791,7 +8740,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                         periodEntry.setComment(periodEntry.getComment() + ", " );
                 }
                 // davon 7,27% Zinsen aus 100,00 EUR ab dem 01.01.2025 bis zum 30.06.2025 (181 Zinstage) aus "kosten verz"
-                periodEntry.setComment(periodEntry.getComment() + decf.format(rate.multiply(BigDecimal.valueOf(100d)).setScale(2, RoundingMode.HALF_UP)) + "% Zinsen aus " +decf.format(principal) + " EUR ab dem " + datef.format(Date.from(p.getStart().atStartOfDay(ZoneId.systemDefault()).toInstant())) + " bis zum " + datef.format(Date.from(p.getEnd().atStartOfDay(ZoneId.systemDefault()).toInstant())) + " (" + days + " Zinstage) aus " + cmp.getName());
+                periodEntry.setComment(periodEntry.getComment() + decf.format(p.getRate().multiply(BigDecimal.valueOf(100d)).setScale(2, RoundingMode.HALF_UP)) + "% Zinsen aus " +decf.format(p.getPrincipal()) + " EUR ab dem " + datef.format(Date.from(p.getStart().atStartOfDay(ZoneId.systemDefault()).toInstant())) + " bis zum " + datef.format(Date.from(p.getEnd().atStartOfDay(ZoneId.systemDefault()).toInstant())) + " (" + p.getDays() + " Zinstage) aus " + cmp.getName());
 
                 periodEntry.setId(idGen.getID().toString());
                 this.claimLedgerEntriesFacade.create(periodEntry);
@@ -8904,7 +8853,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         // Validate proposal
-        PaymentSplitCalculator calculator = new PaymentSplitCalculator(claimComponentsFacade, claimComponentInterestRuleFacade, claimLedgerEntriesFacade);
+        PaymentSplitCalculator calculator = new PaymentSplitCalculator(claimComponentsFacade, claimComponentInterestRuleFacade, claimLedgerEntriesFacade, claimInterestCalculator());
         if (!calculator.validateProposal(proposal)) {
             throw new Exception("Ungültiger Zahlungsaufteilungs-Vorschlag: Summe der Teilzahlungen stimmt nicht mit Gesamtbetrag überein!");
         }
@@ -9026,47 +8975,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.claimLedgerEntriesFacade.remove(currentEntry);
     }
 
-    /**
-     * Gibt alle Tage zurück, an denen sich der Basiszins im Zeitraum geändert hat
-     */
-    private List<LocalDate> getBaseRateChangeDatesBetween(LocalDate start, LocalDate end) {
-        // Konvertiere LocalDate zu Date
-        java.util.Date startDate = java.util.Date.from(start.atStartOfDay(ZoneId.systemDefault()).toInstant());
-        java.util.Date endDate = java.util.Date.from(end.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
-        // Hole alle BaseInterest-Einträge im Zeitraum
-        List<BaseInterest> rates = this.baseInterestFacade.findByDateRange(startDate, endDate);
-
-        // Konvertiere validFrom Dates zu LocalDates
-        List<LocalDate> changeDates = new ArrayList<>();
-        for (BaseInterest rate : rates) {
-            java.util.Date validFrom = rate.getValidFrom();
-            LocalDate changeDate;
-
-            // JPA kann java.sql.Date zurückgeben, das direkt toLocalDate() unterstützt
-            if (validFrom instanceof java.sql.Date) {
-                changeDate = ((java.sql.Date) validFrom).toLocalDate();
-            } else {
-                // Fallback für java.util.Date
-                changeDate = validFrom.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            }
-
-            changeDates.add(changeDate);
-        }
-
-        return changeDates;
-    }
-
-    private BigDecimal getBaseRateForDate(LocalDate start) {
-        // Konvertiere LocalDate zu Date
-        java.util.Date date = java.util.Date.from(start.atStartOfDay(ZoneId.systemDefault()).toInstant());
-
-        // Hole Basiszinssatz für das Datum
-        BigDecimal rate = this.baseInterestFacade.findRateByDate(date);
-
-        // Wenn kein Zinssatz gefunden wurde, gib 0.0 zurück
-        return (rate != null) ? rate : BigDecimal.ZERO;
-    }
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
@@ -9210,14 +9119,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     totalCosts = totalCosts.add(amount);
                     break;
                 case INTEREST:
-                    if (cmpType == ClaimComponentType.MAIN_CLAIM) {
+                    if (cmpType != null && cmpType.isMainClaim()) {
                         totalInterestMain = totalInterestMain.add(amount);
                     } else {
                         totalInterestCosts = totalInterestCosts.add(amount);
                     }
                     break;
                 case ADJUSTMENT:
-                    if (cmpType == ClaimComponentType.MAIN_CLAIM) {
+                    if (cmpType != null && cmpType.isMainClaim()) {
                         totalMain = totalMain.add(amount);
                     } else {
                         totalCosts = totalCosts.add(amount);
@@ -9232,9 +9141,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 continue;
             }
 
-            BigDecimal accruedInterest = calculateAccruedInterest(cmp, forDate);
+            BigDecimal accruedInterest = claimInterestCalculator().calculateAccruedInterest(cmp, forDate);
 
-            if (cmp.getType() == ClaimComponentType.MAIN_CLAIM) {
+            if (cmp.getType() != null && cmp.getType().isMainClaim()) {
                 totalInterestMain = totalInterestMain.add(accruedInterest);
             } else {
                 totalInterestCosts = totalInterestCosts.add(accruedInterest);
@@ -9273,182 +9182,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         return totals;
     }
 
-    /**
-     * Berechnet die dynamischen Zinsen für eine Komponente ab der letzten
-     * Zinsbuchung bis zum heutigen Datum.
-     */
-    private BigDecimal calculateAccruedInterest(ClaimComponent cmp, Date upTo) {
-        if (!cmp.isInterestBearing()) {
-            return BigDecimal.ZERO;
-        }
 
-        // Letzte Zinsbuchung
-        ClaimLedgerEntry lastInterestEntry = this.claimLedgerEntriesFacade.findLatestInterestEntry(cmp);
-        LocalDate startDate = (lastInterestEntry != null)
-                ? lastInterestEntry.getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
-                : this.claimLedgerEntriesFacade.findEarliestEntry(cmp).getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
-        LocalDate endDate = upTo.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        if (!startDate.isBefore(endDate)) {
-            return BigDecimal.ZERO;
-        }
-
-        // Basiszinsänderungen und Principal-Änderungen im Zeitraum ermitteln
-        List<LocalDate> changeDates = getBaseRateChangeDatesBetween(startDate, endDate);
-        List<LocalDate> principalChangeDates = getPrincipalChangeDatesBetween(cmp, startDate, endDate);
-        for (LocalDate principalChangeDate : principalChangeDates) {
-            if (!changeDates.contains(principalChangeDate)) {
-                changeDates.add(principalChangeDate);
-            }
-        }
-        Collections.sort(changeDates);
-
-        // Teilzeiträume erstellen
-        List<ClaimInterestPeriod> periods = new ArrayList<>();
-        LocalDate periodStart = startDate;
-        for (LocalDate changeDate : changeDates) {
-            if (!changeDate.isAfter(periodStart)) {
-                continue;
-            }
-            periods.add(new ClaimInterestPeriod(periodStart, changeDate));
-            periodStart = changeDate;
-        }
-        periods.add(new ClaimInterestPeriod(periodStart, endDate));
-
-        BigDecimal totalInterest = BigDecimal.ZERO;
-
-        // Für jeden Teilzeitraum Zinsen berechnen
-        for (ClaimInterestPeriod p : periods) {
-            long days = ChronoUnit.DAYS.between(p.getStart(), p.getEnd());
-            if (days <= 0) {
-                continue;
-            }
-
-            // Finde die für diesen Zeitraum gültige InterestRule
-            InterestRule effectiveRule = null;
-            for (InterestRule rule : cmp.getInterestRules()) {
-                LocalDate ruleStart = rule.getValidFrom().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                if (p.getStart().isBefore(ruleStart)) {
-                    continue;
-                } else {
-                    effectiveRule = rule;
-                }
-            }
-            if (effectiveRule == null) {
-                continue;
-            }
-
-            BigDecimal principal = calculateDynamicPrincipal(cmp, Date.from(p.getStart().atStartOfDay(ZoneId.systemDefault()).toInstant()));
-
-            BigDecimal rate = effectiveRule.getEffectiveRate(getBaseRateForDate(p.getStart()));
-
-            BigDecimal interest = principal
-                    .multiply(rate)
-                    .multiply(BigDecimal.valueOf(days))
-                    .divide(BigDecimal.valueOf(365), 2, RoundingMode.HALF_UP)
-                    .setScale(2, RoundingMode.HALF_UP);
-
-            totalInterest = totalInterest.add(interest);
-        }
-
-        return totalInterest;
-    }
-
-    /**
-     * Berechnet den dynamischen Principal einer Komponente zu einem bestimmten Datum.
-     * Der Principal ergibt sich aus der Summe aller relevanten Buchungen:
-     * - Forderungen (MAIN_CLAIM, COST) erhöhen den Principal
-     * - Zahlungen (PAYMENT) reduzieren den Principal
-     * - Anpassungen (ADJUSTMENT) können den Principal erhöhen oder verringern
-     * - Zinsbuchungen (INTEREST) haben keinen Einfluss auf den Principal
-     *
-     * WICHTIG: Der principalAmount der Component wird NICHT verwendet, da dieser Wert
-     * redundant zur ersten MAIN_CLAIM/COST Buchung ist und sonst doppelt gezählt würde.
-     *
-     * @param cmp Die Komponente
-     * @param upTo Das Datum, bis zu dem berechnet werden soll
-     * @return Der dynamische Principal zu diesem Datum
-     */
-    private BigDecimal calculateDynamicPrincipal(ClaimComponent cmp, Date upTo) {
-        BigDecimal principal = BigDecimal.ZERO; // Start bei 0, nicht bei cmp.getPrincipalAmount()!
-
-        // Alle Buchungen dieser Component bis zum Stichtag
-        List<ClaimLedgerEntry> entries = this.claimLedgerEntriesFacade.findByComponent(cmp);
-
-        for (ClaimLedgerEntry entry : entries) {
-            // Nur Buchungen bis zum Stichtag berücksichtigen
-            if (entry.getEntryDate().after(upTo)) {
-                break; // Einträge sind nach Datum sortiert
-            }
-
-            switch (entry.getType()) {
-                case PAYMENT:
-                    // Zahlungen reduzieren den Principal
-                    principal = principal.subtract(entry.getAmount());
-                    break;
-                case ADJUSTMENT:
-                    // Anpassungen können den Principal erhöhen oder verringern
-                    principal = principal.add(entry.getAmount());
-                    break;
-                case MAIN_CLAIM:
-                case COST:
-                    // Forderungen erhöhen den Principal (inkl. initialer Buchung)
-                    principal = principal.add(entry.getAmount());
-                    break;
-                case INTEREST:
-                    // Zinsen erhöhen NICHT den Principal für zukünftige Zinsberechnungen
-                    break;
-            }
-        }
-
-        return principal.max(BigDecimal.ZERO); // Principal kann nicht negativ werden
-    }
-
-    /**
-     * Ermittelt alle Daten zwischen startDate und endDate, an denen sich der Principal
-     * einer Component ändert (durch Zahlungen, Anpassungen oder zusätzliche Forderungen).
-     * Zinsbuchungen (INTEREST) werden NICHT berücksichtigt, da sie den Principal nicht ändern.
-     *
-     * @param cmp Die Component
-     * @param startDate Startdatum des Zeitraums
-     * @param endDate Enddatum des Zeitraums
-     * @return Liste der Daten, an denen sich der Principal ändert (sortiert)
-     */
-    private List<LocalDate> getPrincipalChangeDatesBetween(ClaimComponent cmp, LocalDate startDate, LocalDate endDate) {
-        List<LocalDate> changeDates = new ArrayList<>();
-
-        // Alle Buchungen dieser Component durchsuchen
-        List<ClaimLedgerEntry> entries = this.claimLedgerEntriesFacade.findByComponent(cmp);
-
-        for (ClaimLedgerEntry entry : entries) {
-            LocalDate entryDate = entry.getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-
-            // Nur Buchungen im relevanten Zeitraum
-            if (entryDate.isBefore(startDate) || !entryDate.isBefore(endDate)) {
-                continue;
-            }
-
-            // Nur Buchungstypen, die den Principal ändern
-            switch (entry.getType()) {
-                case PAYMENT:
-                case ADJUSTMENT:
-                case MAIN_CLAIM:
-                case COST:
-                    if (!changeDates.contains(entryDate)) {
-                        changeDates.add(entryDate);
-                    }
-                    break;
-                case INTEREST:
-                    // Zinsbuchungen ändern den Principal NICHT
-                    break;
-            }
-        }
-
-        // Sortieren
-        Collections.sort(changeDates);
-
-        return changeDates;
-    }
 
     /**
      * Calculates the balance information for a single claim component.
@@ -9494,7 +9229,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         // Add accrued (not yet booked) interest
-        BigDecimal accruedInterest = calculateAccruedInterest(cmp, upTo);
+        BigDecimal accruedInterest = claimInterestCalculator().calculateAccruedInterest(cmp, upTo);
         BigDecimal totalInterest = interestFromEntries.add(accruedInterest);
 
         // According to § 367 BGB: payments first go to interest, then to principal
@@ -9521,23 +9256,5 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     /**
      * Hilfsklasse für Zeiträume
      */
-    private static class ClaimInterestPeriod {
-
-        private final LocalDate start;
-        private final LocalDate end;
-
-        public ClaimInterestPeriod(LocalDate start, LocalDate end) {
-            this.start = start;
-            this.end = end;
-        }
-
-        public LocalDate getStart() {
-            return start;
-        }
-
-        public LocalDate getEnd() {
-            return end;
-        }
-    }
 
 }

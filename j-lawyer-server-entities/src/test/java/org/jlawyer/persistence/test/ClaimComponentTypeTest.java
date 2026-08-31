@@ -660,105 +660,75 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package org.jlawyer.persistence.test;
+
+import com.jdimension.jlawyer.persistence.ClaimComponentType;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 /**
- * Kind of position a claim ledger component represents.
- *
- * The pre-court cost categories are kept apart deliberately: the EDA dunning application places
- * each of them in its own record area (AUSL, MAHNK, AUSK, BKRL, INKB, VV23, ANF) and will not
- * accept them merged into one position.
+ * The EDA dunning application places each pre-court cost category in its own record area and will
+ * not accept them merged, so the categories have to stay distinguishable.
  *
  * @author jens
  */
-public enum ClaimComponentType {
-    MAIN_CLAIM("Hauptforderung", false),
-    /**
-     * Recurring monthly main claim, e.g. maintenance, posted as a due item per month.
-     */
-    MAIN_CLAIM_RECURRING("laufende monatliche Hauptforderung", false),
-    COST_INTEREST_BEARING("Kosten (verzinslich)", false),
-    COST_NON_INTEREST_BEARING("Kosten (unverzinslich)", false),
-    /**
-     * Assessed costs, interest-bearing under § 104 Abs. 1 S. 2 ZPO.
-     */
-    COST_ASSESSED("festgesetzte Kosten", false),
-    /**
-     * Interest arrears booked as a fixed amount rather than computed.
-     */
-    INTEREST_ARREARS("Zinsrückstand", false),
-    /**
-     * Outlays of the creditor - EDA record area AUSL.
-     */
-    PRECOURT_EXPENSES("Auslagen des Gläubigers", true),
-    /**
-     * Reminder charges - EDA record area MAHNK.
-     */
-    PRECOURT_REMINDER_COSTS("Mahnkosten", true),
-    /**
-     * Costs of obtaining information about the debtor - EDA record area AUSK.
-     */
-    PRECOURT_INFORMATION_COSTS("Auskunftskosten", true),
-    /**
-     * Costs of a returned direct debit - EDA record area BKRL.
-     */
-    PRECOURT_BANK_RETURN_COSTS("Bankrücklastkosten", true),
-    /**
-     * Collection costs - EDA record area INKB.
-     */
-    PRECOURT_COLLECTION_COSTS("Inkassokosten", true),
-    /**
-     * Pre-court lawyer's fee under Nr. 2300 VV RVG - EDA record area VV23.
-     */
-    PRECOURT_LAWYER_FEE("vorgerichtliche Anwaltsvergütung (Nr. 2300 VV RVG)", true),
-    /**
-     * Any other ancillary claim - EDA record area ANF.
-     */
-    OTHER_ANCILLARY_CLAIM("andere Nebenforderung", true);
+public class ClaimComponentTypeTest {
 
-    private final String label;
-    private final boolean precourtCost;
-
-    ClaimComponentType(String label, boolean precourtCost) {
-        this.label = label;
-        this.precourtCost = precourtCost;
+    @Test
+    public void bothMainClaimTypesCountAsMainClaims() {
+        assertTrue(ClaimComponentType.MAIN_CLAIM.isMainClaim());
+        assertTrue(ClaimComponentType.MAIN_CLAIM_RECURRING.isMainClaim());
     }
 
-    /**
-     * Whether this type is one of the pre-court cost categories the dunning application reports as
-     * an ancillary claim of its own.
-     *
-     * @return true for the pre-court cost categories
-     */
-    public boolean isPrecourtCost() {
-        return precourtCost;
+    @Test
+    public void costsAreNotMainClaims() {
+        assertFalse(ClaimComponentType.COST_INTEREST_BEARING.isMainClaim());
+        assertFalse(ClaimComponentType.COST_NON_INTEREST_BEARING.isMainClaim());
+        assertFalse(ClaimComponentType.COST_ASSESSED.isMainClaim());
+        assertFalse(ClaimComponentType.INTEREST_ARREARS.isMainClaim());
+        assertFalse(ClaimComponentType.PRECOURT_REMINDER_COSTS.isMainClaim());
     }
 
-    /**
-     * Whether this type represents a main claim rather than a cost or ancillary position.
-     *
-     * @return true for main claims
-     */
-    public boolean isMainClaim() {
-        return this == MAIN_CLAIM || this == MAIN_CLAIM_RECURRING;
-    }
+    @Test
+    public void theSevenEdaAncillaryCategoriesAreMarkedAsPrecourtCosts() {
+        ClaimComponentType[] ancillary = {
+            ClaimComponentType.PRECOURT_EXPENSES,
+            ClaimComponentType.PRECOURT_REMINDER_COSTS,
+            ClaimComponentType.PRECOURT_INFORMATION_COSTS,
+            ClaimComponentType.PRECOURT_BANK_RETURN_COSTS,
+            ClaimComponentType.PRECOURT_COLLECTION_COSTS,
+            ClaimComponentType.PRECOURT_LAWYER_FEE,
+            ClaimComponentType.OTHER_ANCILLARY_CLAIM
+        };
 
-    public String getLabel() {
-        return label;
-    }
+        for (ClaimComponentType t : ancillary) {
+            assertTrue(t + " must be a pre-court cost category", t.isPrecourtCost());
+        }
 
-    @Override
-    public String toString() {
-        return label;
-    }
-
-    public static ClaimComponentType fromLabel(String label) {
-        for (ClaimComponentType t : values()) {
-            if (t.label.equalsIgnoreCase(label)) {
-                return t;
+        int count = 0;
+        for (ClaimComponentType t : ClaimComponentType.values()) {
+            if (t.isPrecourtCost()) {
+                count++;
             }
         }
-        throw new IllegalArgumentException("Unknown label: " + label);
+        assertEquals("the EDA application distinguishes exactly seven ancillary areas", 7, count);
+    }
+
+    @Test
+    public void ledgerPositionsAreNotPrecourtCosts() {
+        assertFalse(ClaimComponentType.MAIN_CLAIM.isPrecourtCost());
+        assertFalse(ClaimComponentType.COST_INTEREST_BEARING.isPrecourtCost());
+        assertFalse(ClaimComponentType.COST_ASSESSED.isPrecourtCost());
+    }
+
+    @Test
+    public void theOriginalTypesKeepTheirLabels() {
+        // labels are persisted in existing installations through fromLabel()
+        assertEquals(ClaimComponentType.MAIN_CLAIM, ClaimComponentType.fromLabel("Hauptforderung"));
+        assertEquals(ClaimComponentType.COST_INTEREST_BEARING, ClaimComponentType.fromLabel("Kosten (verzinslich)"));
+        assertEquals(ClaimComponentType.COST_NON_INTEREST_BEARING, ClaimComponentType.fromLabel("Kosten (unverzinslich)"));
     }
 
 }

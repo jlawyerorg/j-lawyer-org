@@ -713,6 +713,14 @@ public class ClaimLedgerEntry implements Serializable {
     @Column(name = "entry_type", nullable = false, length = 50)
     private LedgerEntryType type;
 
+    /**
+     * Debtor this booking is attributable to, where it is owed by a single debtor rather than by
+     * all of them jointly and severally (§ 788 Abs. 1 S. 2 ZPO). Null for a joint position.
+     */
+    @JoinColumn(name = "debtor_party_id", referencedColumnName = "id")
+    @ManyToOne
+    private ClaimLedgerParty debtorParty;
+
     @JoinColumn(name = "component_id", referencedColumnName = "id")
     @ManyToOne
     private ClaimComponent component;
@@ -867,6 +875,30 @@ public class ClaimLedgerEntry implements Serializable {
      */
     public void setComponent(ClaimComponent component) {
         this.component = component;
+    }
+
+
+    /**
+     * Whether this booking is owed by one debtor alone instead of by all debtors jointly.
+     *
+     * @return true if the booking is attributed to a single debtor
+     */
+    public boolean isSingleDebtorPosition() {
+        return this.debtorParty != null;
+    }
+
+    /**
+     * @return the debtorParty
+     */
+    public ClaimLedgerParty getDebtorParty() {
+        return debtorParty;
+    }
+
+    /**
+     * @param debtorParty the debtorParty to set
+     */
+    public void setDebtorParty(ClaimLedgerParty debtorParty) {
+        this.debtorParty = debtorParty;
     }
 
 }

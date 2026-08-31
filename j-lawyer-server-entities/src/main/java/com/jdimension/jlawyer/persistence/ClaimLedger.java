@@ -701,8 +701,45 @@ public class ClaimLedger implements Serializable {
     
     @OneToMany(mappedBy = "ledger", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ClaimComponent> components = new ArrayList<>();
-    
-    
+
+    @OneToMany(mappedBy = "ledger", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ClaimLedgerParty> parties = new ArrayList<>();
+
+    @OneToMany(mappedBy = "ledger", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<EnforcementTitle> titles = new ArrayList<>();
+
+    /**
+     * Parent ledger, if this ledger is a sub-ledger (Unterkonto) used for a claim that is titled,
+     * calculated or enforced separately.
+     */
+    @JoinColumn(name = "parent_ledger_id", referencedColumnName = "id")
+    @ManyToOne
+    private ClaimLedger parentLedger;
+
+    /**
+     * Number of creditors the ledger effectively runs for. One contact may stand for several
+     * creditors (e.g. spouses under one address), and the Nr. 1008 VV RVG increase is derived from
+     * this number rather than from the number of creditor entries. Null means "as many as there are
+     * creditor entries".
+     */
+    @Column(name = "effective_creditor_count")
+    private Integer effectiveCreditorCount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "allocation_mode", nullable = false, length = 30)
+    private PaymentAllocationMode allocationMode = PaymentAllocationMode.LEGAL;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "surplus_handling", nullable = false, length = 30)
+    private SurplusHandling surplusHandling = SurplusHandling.REALLOCATE;
+
+    /**
+     * Whether the claim arises from a consumer loan, which makes § 497 Abs. 3 BGB the applicable
+     * payment allocation.
+     */
+    @Column(name = "consumer_loan")
+    private boolean consumerLoan = false;
+
     @JoinColumn(name = "case_id", referencedColumnName = "id")
     @ManyToOne
     protected ArchiveFileBean archiveFileKey;
@@ -791,4 +828,155 @@ public class ClaimLedger implements Serializable {
         this.description = description;
     }
     
+
+    /**
+     * @return the parties
+     */
+    public List<ClaimLedgerParty> getParties() {
+        return parties;
+    }
+
+    /**
+     * @param parties the parties to set
+     */
+    public void setParties(List<ClaimLedgerParty> parties) {
+        this.parties = parties;
+    }
+
+    /**
+     * Returns the parties holding the given role, in their stored sequence.
+     *
+     * @param role the role to filter by
+     * @return the matching parties, never null
+     */
+    public List<ClaimLedgerParty> getParties(ClaimPartyRole role) {
+        List<ClaimLedgerParty> result = new ArrayList<>();
+        for (ClaimLedgerParty p : this.parties) {
+            if (p.getRole() == role) {
+                result.add(p);
+            }
+        }
+        result.sort((a, b) -> Integer.compare(a.getSequenceNumber(), b.getSequenceNumber()));
+        return result;
+    }
+
+    /**
+     * The number of creditors to base the Nr. 1008 VV RVG increase on: the stored effective count
+     * where one is set, the number of creditor entries otherwise.
+     *
+     * @return the effective number of creditors
+     */
+    public int resolveCreditorCount() {
+        if (this.effectiveCreditorCount != null && this.effectiveCreditorCount > 0) {
+            return this.effectiveCreditorCount;
+        }
+        return getParties(ClaimPartyRole.CREDITOR).size();
+    }
+
+    /**
+     * Whether a consumer is party to this ledger on the debtor side, which excludes the § 288
+     * Abs. 5 BGB lump sum and the higher default interest of § 288 Abs. 2 BGB.
+     *
+     * @return true if at least one debtor is flagged as a consumer
+     */
+    public boolean hasConsumerDebtor() {
+        for (ClaimLedgerParty p : this.parties) {
+            if (p.getRole() == ClaimPartyRole.DEBTOR && p.isConsumer()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @return the titles
+     */
+    public List<EnforcementTitle> getTitles() {
+        return titles;
+    }
+
+    /**
+     * @param titles the titles to set
+     */
+    public void setTitles(List<EnforcementTitle> titles) {
+        this.titles = titles;
+    }
+
+    /**
+     * @return the parentLedger
+     */
+    public ClaimLedger getParentLedger() {
+        return parentLedger;
+    }
+
+    /**
+     * @param parentLedger the parentLedger to set
+     */
+    public void setParentLedger(ClaimLedger parentLedger) {
+        this.parentLedger = parentLedger;
+    }
+
+    /**
+     * @return whether this ledger is a sub-ledger of another one
+     */
+    public boolean isSubLedger() {
+        return this.parentLedger != null;
+    }
+
+    /**
+     * @return the effectiveCreditorCount
+     */
+    public Integer getEffectiveCreditorCount() {
+        return effectiveCreditorCount;
+    }
+
+    /**
+     * @param effectiveCreditorCount the effectiveCreditorCount to set
+     */
+    public void setEffectiveCreditorCount(Integer effectiveCreditorCount) {
+        this.effectiveCreditorCount = effectiveCreditorCount;
+    }
+
+    /**
+     * @return the allocationMode
+     */
+    public PaymentAllocationMode getAllocationMode() {
+        return allocationMode;
+    }
+
+    /**
+     * @param allocationMode the allocationMode to set
+     */
+    public void setAllocationMode(PaymentAllocationMode allocationMode) {
+        this.allocationMode = allocationMode;
+    }
+
+    /**
+     * @return the surplusHandling
+     */
+    public SurplusHandling getSurplusHandling() {
+        return surplusHandling;
+    }
+
+    /**
+     * @param surplusHandling the surplusHandling to set
+     */
+    public void setSurplusHandling(SurplusHandling surplusHandling) {
+        this.surplusHandling = surplusHandling;
+    }
+
+    /**
+     * @return the consumerLoan
+     */
+    public boolean isConsumerLoan() {
+        return consumerLoan;
+    }
+
+    /**
+     * @param consumerLoan the consumerLoan to set
+     */
+    public void setConsumerLoan(boolean consumerLoan) {
+        this.consumerLoan = consumerLoan;
+    }
+
 }
