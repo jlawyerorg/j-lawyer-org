@@ -110,6 +110,41 @@ single operation that removes or reduces the original positions and records the 
 - **AND** a single assessed-cost component of 402.50 EUR with the given interest rule exists
 - **AND** the conversion is recorded in the ledger history
 
+### Requirement: Main Claim Classification
+
+A main claim SHALL be classifiable by a number of the main claim catalogue the dunning courts
+publish (Hauptforderungskatalog), or SHALL be marked as a free-text claim where the catalogue holds
+no fitting entry. The catalogue SHALL be shipped as maintainable reference data — number,
+designation and the additional entries the number requires — so it can be updated without a
+software release, and the classification SHALL be offered wherever a main claim is created or
+edited, with the free-text designation remaining available.
+
+Where a catalogue number requires further data, the ledger SHALL hold it with the claim: the postal
+code and place of the property for residential and condominium claims (catalogue numbers 17, 19,
+20 and 90), the contract designation for damages from contract (28), and the account, meter or
+service details the catalogue demands for the numbers that require them. The classification and
+these additions SHALL be validated when a dunning application is prepared, because the EDA format
+rejects a catalogued claim whose required additional record is missing.
+
+#### Scenario: Claim classified by catalogue number
+
+- **WHEN** a main claim "Kaufpreis Warenlieferung" is created and the matching catalogue number is
+  selected
+- **THEN** the number is stored with the claim alongside its designation
+- **AND** the dunning application can write it as a catalogued claim
+
+#### Scenario: Claim without a fitting catalogue entry
+
+- **WHEN** no catalogue number fits the claim
+- **THEN** the claim is marked as a free-text claim with its designation
+- **AND** the dunning application writes it as a "sonstiger Anspruch"
+
+#### Scenario: Catalogue number demanding additional data
+
+- **WHEN** a main claim is classified with a catalogue number for a residential property claim
+- **THEN** the postal code and place of the property are requested and stored with the claim
+- **AND** preparing a dunning application without them reports the missing entry
+
 ### Requirement: Interest Starting on Service
 
 A claim component SHALL be able to define its interest start as "on service of the dunning order"

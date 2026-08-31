@@ -186,9 +186,15 @@ dunning worklist, enforcement/title portfolio) gets its own frame next to the ex
 
 ## Rollout
 
+Reference data and the EDA approval procedure (main claim catalogue, dunning court seed, fee
+tables, ZVFV form PDFs, Kennziffer and test exchange) are prepared alongside the phases, starting
+with phase 1 — none of them can be derived from the repository, and phase 3 cannot be verified end
+to end until the test exchange has run.
+
 Phased so that each phase is independently useful:
 
-1. Ledger master data, title data, extended component types, statement document.
+1. Ledger master data, title data, main claim classification, extended component types, statement
+   document.
 2. Pre-court dunning stages.
 3. Court dunning case, deadlines, fees, EDA export incl. viewer, and response import.
 4. Enforcement measures, ZVFV form generation, § 788 ZPO costs, deadlines.

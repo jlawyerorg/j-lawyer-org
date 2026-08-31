@@ -78,6 +78,10 @@ Related infrastructure that is reused rather than rebuilt:
     calculation plugin for RVG, the same table is the source.
   - The dunning court assignment (§ 689 Abs. 2, 3 ZPO) is an administrable rule table over the
     court directory, because the central courts and their assignments change.
+  - The main claim catalogue (Hauptforderungskatalog) of the dunning courts is shipped as
+    reference data, not as an enum: the courts amend it, and each catalogued claim is stored on the
+    component with the additional entries its number demands. It is published separately by the
+    dunning courts and is not part of the Satzbeschreibungen.
   - Official forms are administrable templates (PDF + field mapping + validity range), because the
     ZVFV forms changed in 2022, 2024 and again with mandatory use from 1 October 2025. The
     published PDFs are not committed to the repository; a default set can be delivered as an
@@ -192,6 +196,13 @@ endpoints in `org.jlawyer.io.rest.v8`, the current API version; swagger is gener
   range; using a form outside its validity warns the user; the version used is recorded.
 - **Scope.** This is large. Mitigation: five phases, each shippable on its own; phase 1 alone
   already improves the existing ledger.
+- **External data and approval are on the critical path.** Four data sets are not in the repository
+  and none of them can be derived from it — the main claim catalogue, the dunning court seed, the
+  fee tables and the official ZVFV form PDFs — and EDA participation additionally requires a
+  Kennziffer from the dunning court plus a test and approval exchange with the OLG Stuttgart
+  – IuK-Fachzentrum Justiz. A structurally valid file is not an accepted one until that test has
+  run. Mitigation: these are pulled out as their own work items (section 0 of the tasks) and
+  started alongside phase 1, not when the phase that consumes them begins.
 - **Multiple debtors.** Joint-and-several vs. single-debtor bookings complicate every total.
   Mitigation: model it in phase 1 (not retrofitted later), and keep per-debtor totals part of
   `ClaimLedgerTotals` from the start.
