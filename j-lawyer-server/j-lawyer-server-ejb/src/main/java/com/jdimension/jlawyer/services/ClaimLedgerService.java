@@ -1685,42 +1685,10 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
     public DunningStatus getDunningStatus(String ledgerId, Date at) throws Exception {
 
         ClaimLedger ledger = requireLedger(ledgerId);
-        Date effectiveDate = at == null ? new Date() : at;
 
-        DunningStatus status = new DunningStatus();
-        status.setLedgerId(ledgerId);
-
-        List<DunningStageEvent> sent = this.dunningStageEventsFacade.findByLedger(ledger);
-        if (sent != null) {
-            status.getSentStages().addAll(sent);
-        }
-
-        DunningStageEvent last = null;
-        int highestSequence = -1;
-        for (DunningStageEvent e : status.getSentStages()) {
-            if (last == null || !e.getSentDate().before(last.getSentDate())) {
-                last = e;
-            }
-            if (e.getSequenceNumber() > highestSequence) {
-                highestSequence = e.getSequenceNumber();
-            }
-            // default starts with the first reminder that triggers it and does not move afterwards
-            if (e.isTriggeredDefault()
-                    && (status.getDefaultSince() == null || e.getSentDate().before(status.getDefaultSince()))) {
-                status.setDefaultSince(e.getSentDate());
-            }
-        }
-        status.setLastStage(last);
-        status.setLastStageOverdue(last != null && last.isOverdue(effectiveDate));
-
-        for (DunningStage candidate : this.dunningStagesFacade.findActive()) {
-            if (candidate.getSequenceNumber() > highestSequence) {
-                status.setNextStage(candidate);
-                break;
-            }
-        }
-
-        return status;
+        return new DunningStagePlanner().deriveStatus(ledgerId,
+                this.dunningStageEventsFacade.findByLedger(ledger),
+                this.dunningStagesFacade.findActive(), at);
     }
 
     @Override
@@ -1739,44 +1707,23 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
             throw new Exception("Die Mahnstufe existiert nicht!");
         }
 
-        Date effectiveSentDate = sentDate == null ? new Date() : sentDate;
-        LocalDate sent = effectiveSentDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        Date dueDate = Date.from(sent.plusDays(Math.max(0, stage.getPaymentPeriodDays()))
-                .atStartOfDay(ZoneId.systemDefault()).toInstant());
-
-        StringGenerator idGen = new StringGenerator();
-
-        DunningStageEvent event = new DunningStageEvent();
-        event.setId(idGen.getID().toString());
-        event.setLedger(ledger);
-        event.setStage(stage);
-        // copied, not only referenced: the reminder that went out has to stay readable even if the
-        // stage is later renamed or removed
-        event.setStageName(stage.getName());
-        event.setSequenceNumber(stage.getSequenceNumber());
-        event.setSentDate(effectiveSentDate);
-        event.setDueDate(dueDate);
-        event.setTriggeredDefault(stage.isTriggersDefault());
-        event.setChargeAmount(stage.getChargeAmount() == null ? BigDecimal.ZERO : stage.getChargeAmount());
+        DunningStagePlanner planner = new DunningStagePlanner();
+        DunningStageEvent event = planner.planEvent(ledger, stage, sentDate,
+                new StringGenerator().getID().toString());
+        Date effectiveSentDate = event.getSentDate();
 
         ArchiveFileDocumentsBean document = createDunningDocument(caseFile, stage, ledger, effectiveSentDate);
         if (document != null) {
             event.setDocumentId(document.getId());
         }
 
-        if (event.getChargeAmount().compareTo(BigDecimal.ZERO) > 0) {
-            ProceduralCostBooking charge = new ProceduralCostBooking(ledgerId, event.getChargeAmount(),
-                    "Mahnkosten " + stage.getName());
-            charge.setCostType(ClaimComponentType.PRECOURT_REMINDER_COSTS);
-            charge.setBookingDate(effectiveSentDate);
-            charge.setOriginReference(event.getId());
-            charge.setComment("Mahngebühr der Stufe " + stage.getName()
-                    + " vom " + DATE_FORMAT.format(effectiveSentDate));
-            ClaimLedgerEntry chargeEntry = bookProceduralCost(charge);
-            event.setChargeEntryId(chargeEntry.getId());
+        ProceduralCostBooking charge = planner.planCharge(event, stage, ledgerId);
+        if (charge != null) {
+            event.setChargeEntryId(bookProceduralCost(charge).getId());
         }
 
-        ArchiveFileReviewsBean followUp = createDunningFollowUp(caseFile, stage, dueDate, followUpLeadTimeDays);
+        ArchiveFileReviewsBean followUp = createDunningFollowUp(caseFile, stage, event.getDueDate(),
+                followUpLeadTimeDays);
         if (followUp != null) {
             event.setReviewId(followUp.getId());
         }
