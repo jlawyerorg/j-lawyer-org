@@ -16,7 +16,17 @@
       two courts. Carried in code for now rather than seeded into the court master data — that
       decision is revisited in 5.7 and acted on in 5.8
 - [ ] 0.3 Decide source and storage format of the fee tables (RVG value table, Nr. 1100 KV GKG,
-      GvKostG positions), then ship them as maintainable data; consumed by 3.5 and 4.6
+      GvKostG positions), then ship them as maintainable data; consumed by 3.5 and 4.6.
+      *Decided and shipped for the value scales:* § 13 Abs. 1 RVG and § 34 Abs. 1 GKG are not tables
+      but one algorithm with different numbers, and the printed Anlage 2 of each act is only a
+      rendering of it that stops at 500,000 euro while the rule does not. Stored is therefore the
+      rule — `fee_scales` plus `fee_scale_brackets`, with validity ranges, because fee law changes on
+      a fixed date and § 60 RVG has earlier matters billed under the previous law. Seeded with the
+      state after the KostBRÄG 2025 (in force 1 June 2025), verified against all 42 published rows of
+      each table. *Still open:* the fee items that sit on top of the scales — Nr. 1100 KV GKG (0,5,
+      minimum 38 EUR since 1 June 2025) and Nr. 3305, 3308, 1008 VV RVG for 3.5, and the GvKostG
+      positions for 4.6. Also open: the pre-2025 scale, which an installation needs for matters
+      commissioned before 1 June 2025
 - [ ] 0.4 Obtain at least one official ZVFV form PDF per annex in scope and record its AcroForm
       field names, so the mapping profiles of 4.2/4.3 and the tests of 4.10 can be written against
       the real forms rather than assumptions
