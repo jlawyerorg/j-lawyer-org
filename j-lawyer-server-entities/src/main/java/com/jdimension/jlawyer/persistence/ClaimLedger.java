@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.persistence;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -739,6 +740,21 @@ public class ClaimLedger implements Serializable {
      */
     @Column(name = "consumer_loan")
     private boolean consumerLoan = false;
+
+    /**
+     * When a claim statement was last produced for this ledger, and by whom - a statement is handed
+     * out or annexed to an application, so it stays visible which figures were communicated when.
+     */
+    @Column(name = "last_statement_date")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date lastStatementDate;
+
+    @Column(name = "last_statement_key_date")
+    @Temporal(TemporalType.DATE)
+    private Date lastStatementKeyDate;
+
+    @Column(name = "last_statement_by")
+    private String lastStatementBy;
 
     @JoinColumn(name = "case_id", referencedColumnName = "id")
     @ManyToOne
@@ -977,6 +993,49 @@ public class ClaimLedger implements Serializable {
      */
     public void setConsumerLoan(boolean consumerLoan) {
         this.consumerLoan = consumerLoan;
+    }
+
+
+    /**
+     * @return when a claim statement was last produced for this ledger
+     */
+    public Date getLastStatementDate() {
+        return lastStatementDate;
+    }
+
+    /**
+     * @param lastStatementDate the lastStatementDate to set
+     */
+    public void setLastStatementDate(Date lastStatementDate) {
+        this.lastStatementDate = lastStatementDate;
+    }
+
+    /**
+     * @return the key date that last statement was computed to
+     */
+    public Date getLastStatementKeyDate() {
+        return lastStatementKeyDate;
+    }
+
+    /**
+     * @param lastStatementKeyDate the lastStatementKeyDate to set
+     */
+    public void setLastStatementKeyDate(Date lastStatementKeyDate) {
+        this.lastStatementKeyDate = lastStatementKeyDate;
+    }
+
+    /**
+     * @return the user who produced the last statement
+     */
+    public String getLastStatementBy() {
+        return lastStatementBy;
+    }
+
+    /**
+     * @param lastStatementBy the lastStatementBy to set
+     */
+    public void setLastStatementBy(String lastStatementBy) {
+        this.lastStatementBy = lastStatementBy;
     }
 
 }

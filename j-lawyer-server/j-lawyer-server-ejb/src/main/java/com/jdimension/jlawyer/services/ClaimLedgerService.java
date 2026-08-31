@@ -683,6 +683,8 @@ import com.jdimension.jlawyer.persistence.InterestRule;
 import com.jdimension.jlawyer.persistence.InterestRuleFacadeLocal;
 import com.jdimension.jlawyer.persistence.LedgerEntryType;
 import com.jdimension.jlawyer.services.SecurityServiceLocal;
+import com.jdimension.jlawyer.documents.ClaimStatementPdfWriter;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.BaseInterestFacadeLocal;
 import com.jdimension.jlawyer.persistence.ClaimPartyRole;
@@ -724,6 +726,8 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
     private static final Logger log = Logger.getLogger(ClaimLedgerService.class.getName());
 
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy");
+
+    private static final SimpleDateFormat FILE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
     @Resource
     private SessionContext context;
@@ -1257,6 +1261,51 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         }
 
         return statement;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public ArchiveFileDocumentsBean storeClaimStatement(String ledgerId, Date keyDate,
+            boolean includeSubLedgers, String fileName) throws Exception {
+
+        ClaimLedger ledger = requireLedger(ledgerId);
+        if (ledger.getArchiveFileKey() == null) {
+            throw new Exception("Das Forderungskonto ist keiner Akte zugeordnet!");
+        }
+
+        Date effectiveKeyDate = keyDate == null ? new Date() : keyDate;
+        ClaimStatement statement = assembleClaimStatement(ledgerId, effectiveKeyDate, includeSubLedgers);
+
+        byte[] pdf;
+        try {
+            pdf = new ClaimStatementPdfWriter().write(statement);
+        } catch (Exception ex) {
+            log.error("Unable to render the claim statement of ledger " + ledgerId, ex);
+            throw new Exception("Die Forderungsaufstellung konnte nicht erzeugt werden!", ex);
+        }
+
+        String documentName = fileName;
+        if (documentName == null || documentName.trim().isEmpty()) {
+            documentName = "Forderungsaufstellung_" + FILE_DATE_FORMAT.format(effectiveKeyDate) + ".pdf";
+        } else if (!documentName.toLowerCase().endsWith(".pdf")) {
+            documentName = documentName + ".pdf";
+        }
+
+        ArchiveFileDocumentsBean document = this.archiveFileService.addDocument(
+                ledger.getArchiveFileKey().getId(), documentName, pdf, "", null);
+
+        // the ledger records that a statement went out, so it stays visible which figures were
+        // communicated and to which key date
+        ledger.setLastStatementDate(new Date());
+        ledger.setLastStatementKeyDate(effectiveKeyDate);
+        try {
+            ledger.setLastStatementBy(context.getCallerPrincipal().getName());
+        } catch (Throwable t) {
+            log.warn("Unable to determine the caller when storing a claim statement", t);
+        }
+        this.ledgers.edit(ledger);
+
+        return document;
     }
 
     @Override

@@ -48,7 +48,7 @@
       reference + reversal)
 - [ ] 1.11 Move ledger operations from `ArchiveFileServiceRemote` to `ClaimLedgerServiceRemote`
       (English JavaDoc) keeping the old methods delegating for compatibility
-- [ ] 1.12 Claim statement document (PDF/editable, key date, storable in the case, CSV/JSON export)
+- [x] 1.12 Claim statement document (PDF/editable, key date, storable in the case, CSV/JSON export)
 - [x] 1.13 Balance list over all accessible ledgers with filters, sums and CSV export
 - [ ] 1.14 Desktop UI: restructure `ClaimLedgerDialog` (+ `.form`) into the tabbed ledger workspace
       and implement the tabs `Stammdaten`, `Titel` and `Buchungen` (parties, title, new component

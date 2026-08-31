@@ -868,6 +868,28 @@ public class ClaimInterestCalculatorTest {
             return result;
         }
 
+
+        @Override
+        public List<ClaimLedgerEntry> findByOrigin(String originReference) {
+            List<ClaimLedgerEntry> result = new ArrayList<>();
+            for (ClaimLedgerEntry e : entries) {
+                if (originReference != null && originReference.equals(e.getOriginReference())) {
+                    result.add(e);
+                }
+            }
+            return result;
+        }
+
+        @Override
+        public ClaimLedgerEntry findReversalOf(ClaimLedgerEntry entry) {
+            for (ClaimLedgerEntry e : entries) {
+                if (e.getReversalOf() == entry) {
+                    return e;
+                }
+            }
+            return null;
+        }
+
         @Override
         public int count() {
             return entries.size();

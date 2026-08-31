@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.services;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.EnforcementTitle;
 import com.jdimension.jlawyer.persistence.InterestRule;
 import com.jdimension.jlawyer.pojo.BalanceListFilter;
@@ -866,6 +867,26 @@ public interface ClaimLedgerServiceLocal {
      * @throws Exception if the ledger does not exist or the user may not access its case
      */
     ClaimStatement assembleClaimStatement(String ledgerId, Date keyDate, boolean includeSubLedgers) throws Exception;
+
+    /**
+     * Assembles a claim statement, renders it as a PDF and files it in the case.
+     *
+     * Unlike {@link #assembleClaimStatement(String, java.util.Date, boolean)} this operation
+     * changes the case: it stores a document and records on the ledger that a statement was
+     * produced, with its key date and the user who produced it, so it stays visible which figures
+     * were communicated and when.
+     *
+     * @param ledgerId id of the claim ledger
+     * @param keyDate the date to compute to; today if null
+     * @param includeSubLedgers whether the sub-ledgers are stated as well
+     * @param fileName name of the document to create; a name derived from the key date is used if
+     * null or empty
+     * @return the stored document
+     * @throws Exception if the ledger does not exist, the user may not access its case, or the
+     * document cannot be created
+     */
+    ArchiveFileDocumentsBean storeClaimStatement(String ledgerId, Date keyDate,
+            boolean includeSubLedgers, String fileName) throws Exception;
 
     /**
      * Renders a claim statement as CSV, for creditors who process it further.

@@ -660,494 +660,432 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.test.server.ejb;
+package com.jdimension.jlawyer.documents;
 
-import com.jdimension.jlawyer.persistence.BaseInterest;
-import com.jdimension.jlawyer.persistence.BaseInterestFacadeLocal;
-import com.jdimension.jlawyer.persistence.ClaimComponent;
-import com.jdimension.jlawyer.persistence.ClaimComponentFacadeLocal;
-import com.jdimension.jlawyer.persistence.ClaimComponentType;
-import com.jdimension.jlawyer.persistence.ClaimLedger;
-import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
-import com.jdimension.jlawyer.persistence.ClaimLedgerEntryFacadeLocal;
-import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
-import com.jdimension.jlawyer.persistence.InterestRule;
-import com.jdimension.jlawyer.persistence.InterestRuleFacadeLocal;
-import com.jdimension.jlawyer.persistence.InterestType;
-import com.jdimension.jlawyer.persistence.LedgerEntryType;
-import com.jdimension.jlawyer.persistence.PaymentAllocation;
-import com.jdimension.jlawyer.persistence.PaymentAllocationMode;
-import com.jdimension.jlawyer.persistence.PaymentSplitProposal;
-import com.jdimension.jlawyer.services.ClaimInterestCalculator;
-import com.jdimension.jlawyer.services.PaymentSplitCalculator;
+import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
+import com.jdimension.jlawyer.pojo.ClaimStatement;
+import com.jdimension.jlawyer.pojo.ClaimStatementBooking;
+import com.jdimension.jlawyer.pojo.ClaimStatementInterestPeriod;
+import com.jdimension.jlawyer.pojo.ClaimStatementPosition;
+import com.jdimension.jlawyer.pojo.ContinuingInterest;
+import com.jdimension.jlawyer.pojo.DebtorBalance;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.math.RoundingMode;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import org.junit.Test;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
 
 /**
- * The statutory allocation of §§ 366 Abs. 2, 367 BGB settles costs, then interest, then the
- * principal. § 497 Abs. 3 BGB reverses the last two for consumer loans, so that a consumer's
- * payments reduce the debt that keeps producing interest. Getting this the wrong way round
- * systematically overcharges a consumer, which is why the order is asserted on the produced
- * allocations rather than on the enum.
+ * Renders a claim statement (Forderungsaufstellung) to a PDF document.
+ *
+ * The layout is deliberately plain: the statement is a document about numbers, and every amount has
+ * to be traceable to the position and the interest period it came from. Rows that would run past
+ * the bottom of a page continue on the next one, with the column headings repeated.
  *
  * @author jens
  */
-public class PaymentAllocationModeTest {
+public class ClaimStatementPdfWriter {
 
-    private static Date date(int year, int month, int day) {
-        return Date.from(LocalDate.of(year, month, day).atStartOfDay(ZoneId.systemDefault()).toInstant());
+    private static final PDRectangle PAGE_SIZE = PDRectangle.A4;
+
+    private static final float MARGIN_LEFT = 45f;
+    private static final float MARGIN_RIGHT = 45f;
+    private static final float MARGIN_TOP = 50f;
+    private static final float MARGIN_BOTTOM = 55f;
+
+    private static final float LINE_HEIGHT = 12f;
+    private static final float FONT_SIZE = 8.5f;
+    private static final float HEADING_SIZE = 13f;
+    private static final float SECTION_SIZE = 9.5f;
+
+    private static final PDFont FONT = PDType1Font.HELVETICA;
+    private static final PDFont FONT_BOLD = PDType1Font.HELVETICA_BOLD;
+
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+
+    private PDDocument document;
+    private PDPageContentStream content;
+    private float y;
+    private int pageNumber;
+
+    /**
+     * Renders the statement.
+     *
+     * @param statement the statement to render
+     * @return the PDF as a byte array
+     * @throws IOException if the document cannot be written
+     */
+    public byte[] write(ClaimStatement statement) throws IOException {
+
+        try (PDDocument doc = new PDDocument()) {
+            this.document = doc;
+            this.pageNumber = 0;
+            newPage();
+
+            writeHeader(statement);
+            writeParties(statement);
+            writePositions(statement);
+            writeBookings(statement);
+            writeTotals(statement);
+            writeSubLedgers(statement);
+
+            finishPage();
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            doc.save(out);
+            return out.toByteArray();
+        }
     }
 
-    private final List<ClaimComponent> components = new ArrayList<>();
-    private final List<ClaimLedgerEntry> entries = new ArrayList<>();
+    private void writeHeader(ClaimStatement statement) throws IOException {
+        text("Forderungsaufstellung", FONT_BOLD, HEADING_SIZE);
+        gap(4f);
 
-    private ClaimComponent addComponent(String id, ClaimComponentType type, String name, String amount, String fixedRate) {
-        ClaimComponent c = new ClaimComponent();
-        c.setId(id);
-        c.setType(type);
-        c.setName(name);
+        if (statement.getCaseFileNumber() != null) {
+            labelled("Akte", statement.getCaseFileNumber()
+                    + (statement.getCaseName() == null ? "" : " - " + statement.getCaseName()));
+        }
+        if (statement.getLedgerName() != null) {
+            labelled("Forderungskonto", statement.getLedgerName());
+        }
+        labelled("Stichtag", date(statement.getKeyDate()));
+        labelled("Erstellt am", date(statement.getCreatedAt())
+                + (statement.getCreatedBy() == null ? "" : " durch " + statement.getCreatedBy()));
+        gap(6f);
+    }
 
-        if (fixedRate != null) {
-            InterestRule rule = new InterestRule();
-            rule.setInterestType(InterestType.FIXED);
-            rule.setFixedRate(new BigDecimal(fixedRate));
-            rule.setValidFrom(date(2025, 1, 1));
-            List<InterestRule> rules = new ArrayList<>();
-            rules.add(rule);
-            c.setInterestRules(rules);
+    private void writeParties(ClaimStatement statement) throws IOException {
+        if (!statement.getCreditors().isEmpty()) {
+            labelled("Gläubiger", String.join(", ", statement.getCreditors()));
+        }
+        if (!statement.getDebtors().isEmpty()) {
+            labelled("Schuldner", String.join(", ", statement.getDebtors()));
+        }
+        if (!statement.getTitles().isEmpty()) {
+            labelled("Titel", String.join("; ", statement.getTitles()));
+        }
+        gap(8f);
+    }
+
+    private void writePositions(ClaimStatement statement) throws IOException {
+        if (statement.getPositions().isEmpty()) {
+            return;
         }
 
-        components.add(c);
+        section("Forderungspositionen");
+        positionHeadings();
 
-        ClaimLedgerEntry e = new ClaimLedgerEntry();
-        e.setComponent(c);
-        e.setType(type.isMainClaim() ? LedgerEntryType.MAIN_CLAIM : LedgerEntryType.COST);
-        e.setEntryDate(date(2025, 1, 1));
-        e.setAmount(new BigDecimal(amount));
-        entries.add(e);
-        entries.sort(Comparator.comparing(ClaimLedgerEntry::getEntryDate));
+        for (ClaimStatementPosition p : statement.getPositions()) {
+            ensureSpace(2);
+            row(new String[]{
+                trim(p.getDesignation(), 44),
+                p.getType() == null ? "" : trim(p.getType().getLabel(), 22),
+                amount(p.getPrincipal()),
+                amount(p.getInterest()),
+                amount(p.getOpenAmount())
+            }, POSITION_COLUMNS, false);
 
-        return c;
+            if (p.getInterestRuleDescription() != null && !p.getInterestRuleDescription().isEmpty()) {
+                ensureSpace(1);
+                indented("Verzinsung: " + p.getInterestRuleDescription());
+            }
+
+            for (ClaimStatementInterestPeriod ip : p.getInterestPeriods()) {
+                ensureSpace(1);
+                indented(amount(ip.getRatePercent()) + " % aus " + amount(ip.getPrincipal())
+                        + " EUR vom " + date(ip.getFrom()) + " bis " + date(ip.getTo())
+                        + " (" + ip.getDays() + " Tage) = " + amount(ip.getAmount()) + " EUR");
+            }
+        }
+        gap(8f);
     }
 
-    private PaymentSplitCalculator calculator() {
-        ClaimLedgerEntryFacadeLocal entryFacade = new EntryFacade();
-        return new PaymentSplitCalculator(new ComponentFacade(), new RuleFacade(), entryFacade,
-                new ClaimInterestCalculator(new NoBaseRates(), entryFacade));
+    private void writeBookings(ClaimStatement statement) throws IOException {
+        if (statement.getBookings().isEmpty()) {
+            return;
+        }
+
+        section("Buchungen");
+        bookingHeadings();
+
+        for (ClaimStatementBooking b : statement.getBookings()) {
+            ensureSpace(1);
+            String designation = b.getPositionDesignation() == null ? "" : b.getPositionDesignation();
+            if (b.getDebtorDesignation() != null) {
+                designation = designation + " [" + b.getDebtorDesignation() + "]";
+            }
+            row(new String[]{
+                date(b.getEntryDate()),
+                b.getType() == null ? "" : trim(b.getType().getLabel(), 18),
+                trim(designation, 40),
+                trim(b.isReversal() ? "Storno: " + nullSafe(b.getDescription()) : nullSafe(b.getDescription()), 30),
+                amount(b.getAmount())
+            }, BOOKING_COLUMNS, false);
+        }
+        gap(8f);
     }
 
-    @Test
-    public void statutoryModeSettlesInterestBeforeThePrincipal() {
-        addComponent("c1", ClaimComponentType.MAIN_CLAIM, "Darlehen", "1000.00", "10.00");
+    private void writeTotals(ClaimStatement statement) throws IOException {
+        ClaimLedgerTotals totals = statement.getTotals();
+        if (totals == null) {
+            return;
+        }
 
-        ClaimLedger ledger = new ClaimLedger("l1");
-        ledger.setAllocationMode(PaymentAllocationMode.LEGAL);
+        section("Saldo zum " + date(statement.getKeyDate()));
 
-        PaymentSplitProposal p = calculator().calculateSplit(ledger, new BigDecimal("50.00"), null,
-                date(2026, 1, 1), PaymentAllocationMode.LEGAL, null);
+        totalLine("Hauptforderung", totals.getTotalMain());
+        totalLine("Kosten", totals.getTotalCosts());
+        totalLine("Zinsen auf Hauptforderung", totals.getTotalInterestMain());
+        totalLine("Zinsen auf Kosten", totals.getTotalInterestCosts());
+        totalLine("abzüglich Zahlungen", totals.getTotalPayments());
+        gap(2f);
+        totalLine("Offene Forderung", totals.getOpenClaim(), true);
 
-        List<PaymentAllocation> allocations = p.getAllocations();
-        assertFalse("the payment has to be allocated somewhere", allocations.isEmpty());
-        assertTrue("§ 367 BGB settles interest first", allocations.get(0).isInterestAllocation());
-        assertEquals(PaymentAllocationMode.LEGAL, p.getAllocationMode());
-        assertTrue(p.isFollowsLegalOrder());
-    }
-
-    @Test
-    public void consumerLoanModeSettlesThePrincipalBeforeTheInterest() {
-        addComponent("c1", ClaimComponentType.MAIN_CLAIM, "Verbraucherdarlehen", "1000.00", "10.00");
-
-        ClaimLedger ledger = new ClaimLedger("l1");
-        ledger.setConsumerLoan(true);
-        ledger.setAllocationMode(PaymentAllocationMode.CONSUMER_LOAN);
-
-        PaymentSplitProposal p = calculator().calculateSplit(ledger, new BigDecimal("50.00"), null,
-                date(2026, 1, 1), PaymentAllocationMode.CONSUMER_LOAN, null);
-
-        List<PaymentAllocation> allocations = p.getAllocations();
-        assertFalse(allocations.isEmpty());
-        assertFalse("§ 497 Abs. 3 BGB settles the principal before the default interest",
-                allocations.get(0).isInterestAllocation());
-        assertEquals("§ 497 Abs. 3 BGB", allocations.get(0).getLegalReference());
-    }
-
-    @Test
-    public void aDeviatingModeIsMarkedAndExplained() {
-        addComponent("c1", ClaimComponentType.MAIN_CLAIM, "Verbraucherdarlehen", "1000.00", "10.00");
-
-        ClaimLedger ledger = new ClaimLedger("l1");
-
-        PaymentSplitProposal p = calculator().calculateSplit(ledger, new BigDecimal("50.00"), null,
-                date(2026, 1, 1), PaymentAllocationMode.CONSUMER_LOAN, null);
-
-        assertFalse("the proposal must not claim to follow the statutory order", p.isFollowsLegalOrder());
-        assertNotNull("a deviation has to be explained to the user", p.getLegalOrderWarning());
-        assertTrue(p.getLegalOrderWarning().contains("497"));
-    }
-
-    @Test
-    public void costsAreSettledBeforeMainClaims() {
-        addComponent("c1", ClaimComponentType.MAIN_CLAIM, "Hauptforderung", "1000.00", null);
-        addComponent("c2", ClaimComponentType.COST_NON_INTEREST_BEARING, "Kosten", "100.00", null);
-
-        ClaimLedger ledger = new ClaimLedger("l1");
-
-        PaymentSplitProposal p = calculator().calculateSplit(ledger, new BigDecimal("60.00"), null,
-                date(2026, 1, 1), PaymentAllocationMode.LEGAL, null);
-
-        assertFalse(p.getAllocations().isEmpty());
-        assertEquals("§ 366 Abs. 2 BGB settles costs first",
-                "Kosten", p.getAllocations().get(0).getComponent().getName());
-    }
-
-    @Test
-    public void singleDebtorModeOnlySettlesThatDebtorsOwnPositions() {
-        ClaimComponent joint = addComponent("c1", ClaimComponentType.MAIN_CLAIM, "Hauptforderung", "1000.00", null);
-        ClaimComponent individual = addComponent("c2", ClaimComponentType.COST_NON_INTEREST_BEARING, "Vollstreckungskosten", "25.00", null);
-
-        ClaimLedgerParty debtorTwo = new ClaimLedgerParty();
-        debtorTwo.setId("p2");
-
-        // the enforcement cost was caused by debtor 2 alone (§ 788 Abs. 1 S. 2 ZPO)
-        for (ClaimLedgerEntry e : entries) {
-            if (e.getComponent() == individual) {
-                e.setDebtorParty(debtorTwo);
+        List<DebtorBalance> debtors = totals.getDebtorBalances();
+        if (debtors != null && debtors.size() > 1) {
+            gap(6f);
+            section("Haftung der Schuldner");
+            indented("Die Schuldner haften gesamtschuldnerisch; die Beträge überschneiden sich "
+                    + "und dürfen nicht addiert werden.");
+            for (DebtorBalance d : debtors) {
+                ensureSpace(1);
+                totalLine(nullSafe(d.getDesignation()), d.getTotalOwed());
             }
         }
 
-        ClaimLedger ledger = new ClaimLedger("l1");
-
-        PaymentSplitProposal p = calculator().calculateSplit(ledger, new BigDecimal("25.00"), null,
-                date(2026, 1, 1), PaymentAllocationMode.SINGLE_DEBTOR, debtorTwo);
-
-        assertEquals(1, p.getAllocations().size());
-        assertEquals("Vollstreckungskosten", p.getAllocations().get(0).getComponent().getName());
-        assertEquals("the joint main claim is not settled by a single-debtor payment",
-                "Hauptforderung", joint.getName());
-    }
-
-    @Test
-    public void surplusIsReportedWhenThePaymentExceedsTheDebt() {
-        addComponent("c1", ClaimComponentType.COST_NON_INTEREST_BEARING, "Kosten", "100.00", null);
-
-        ClaimLedger ledger = new ClaimLedger("l1");
-
-        PaymentSplitProposal p = calculator().calculateSplit(ledger, new BigDecimal("150.00"), null,
-                date(2026, 1, 1), PaymentAllocationMode.LEGAL, null);
-
-        assertEquals(new BigDecimal("50.00"), p.getSurplus());
-    }
-
-    @Test
-    public void targetedModeSettlesTheChosenPositionFirst() {
-        addComponent("c1", ClaimComponentType.COST_NON_INTEREST_BEARING, "Kosten", "100.00", null);
-        ClaimComponent main = addComponent("c2", ClaimComponentType.MAIN_CLAIM, "Hauptforderung", "1000.00", null);
-
-        ClaimLedger ledger = new ClaimLedger("l1");
-
-        PaymentSplitProposal p = calculator().calculateSplit(ledger, new BigDecimal("60.00"), null,
-                date(2026, 1, 1), PaymentAllocationMode.TARGETED, null, main);
-
-        assertEquals("the directed position is settled before the statutory sequence",
-                "Hauptforderung", p.getAllocations().get(0).getComponent().getName());
-        assertFalse(p.isFollowsLegalOrder());
-    }
-
-    @Test
-    public void manualDistributionIsAcceptedButMarkedAsDeviating() {
-        ClaimComponent main = addComponent("c1", ClaimComponentType.MAIN_CLAIM, "Hauptforderung", "1000.00", null);
-
-        PaymentAllocation a = new PaymentAllocation();
-        a.setComponent(main);
-        a.setAmount(new BigDecimal("100.00"));
-        List<PaymentAllocation> allocations = new ArrayList<>();
-        allocations.add(a);
-
-        PaymentSplitProposal p = calculator().createManualSplit(new ClaimLedger("l1"),
-                new BigDecimal("100.00"), date(2026, 1, 1), allocations);
-
-        assertTrue(p.isManuallyAdjusted());
-        assertFalse(p.isFollowsLegalOrder());
-        assertEquals(PaymentAllocationMode.MANUAL, p.getAllocationMode());
-        assertNotNull(p.getLegalOrderWarning());
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void manualDistributionMustAddUpToThePayment() {
-        ClaimComponent main = addComponent("c1", ClaimComponentType.MAIN_CLAIM, "Hauptforderung", "1000.00", null);
-
-        PaymentAllocation a = new PaymentAllocation();
-        a.setComponent(main);
-        a.setAmount(new BigDecimal("40.00"));
-        List<PaymentAllocation> allocations = new ArrayList<>();
-        allocations.add(a);
-
-        // 40.00 allocated out of a 100.00 payment - the rest is unaccounted for
-        calculator().createManualSplit(new ClaimLedger("l1"), new BigDecimal("100.00"),
-                date(2026, 1, 1), allocations);
-    }
-
-    // ---------------------------------------------------------------- stubs
-
-    private class ComponentFacade implements ClaimComponentFacadeLocal {
-
-        @Override
-        public List<ClaimComponent> findByLedger(ClaimLedger ledger) {
-            return new ArrayList<>(components);
-        }
-
-        @Override
-        public void create(ClaimComponent claimComponent) {
-        }
-
-        @Override
-        public void edit(ClaimComponent claimComponent) {
-        }
-
-        @Override
-        public void remove(ClaimComponent claimComponent) {
-        }
-
-        @Override
-        public ClaimComponent find(Object id) {
-            return null;
-        }
-
-        @Override
-        public List<ClaimComponent> findAll() {
-            return components;
-        }
-
-        @Override
-        public List<ClaimComponent> findRange(int[] range) {
-            return components;
-        }
-
-        @Override
-        public int count() {
-            return components.size();
-        }
-    }
-
-    private class RuleFacade implements InterestRuleFacadeLocal {
-
-        @Override
-        public List<InterestRule> findByComponent(ClaimComponent cmp) {
-            return cmp.getInterestRules();
-        }
-
-        @Override
-        public void create(InterestRule interestRule) {
-        }
-
-        @Override
-        public void edit(InterestRule interestRule) {
-        }
-
-        @Override
-        public void remove(InterestRule interestRule) {
-        }
-
-        @Override
-        public InterestRule find(Object id) {
-            return null;
-        }
-
-        @Override
-        public List<InterestRule> findAll() {
-            return new ArrayList<>();
-        }
-
-        @Override
-        public List<InterestRule> findRange(int[] range) {
-            return new ArrayList<>();
-        }
-
-        @Override
-        public int count() {
-            return 0;
-        }
-    }
-
-    private class EntryFacade implements ClaimLedgerEntryFacadeLocal {
-
-        private List<ClaimLedgerEntry> of(ClaimComponent component) {
-            List<ClaimLedgerEntry> result = new ArrayList<>();
-            for (ClaimLedgerEntry e : entries) {
-                if (e.getComponent() == component) {
-                    result.add(e);
+        if (totals.hasContinuingInterest()) {
+            gap(6f);
+            section("Weitere Zinsen");
+            for (ContinuingInterest ci : totals.getContinuingInterest()) {
+                ensureSpace(1);
+                StringBuilder sb = new StringBuilder();
+                sb.append("weitere Zinsen aus ").append(amount(ci.getBaseAmount())).append(" EUR");
+                if (ci.isBaseRateRelated() && ci.getMarginPercent() != null) {
+                    sb.append(" in Höhe von ").append(amount(ci.getMarginPercent()))
+                            .append(" Prozentpunkten über dem Basiszinssatz");
+                } else {
+                    sb.append(" in Höhe von ").append(amount(ci.getRatePercent())).append(" %");
                 }
-            }
-            return result;
-        }
-
-        @Override
-        public List<ClaimLedgerEntry> findByComponent(ClaimComponent component) {
-            return of(component);
-        }
-
-        @Override
-        public ClaimLedgerEntry findLatestInterestEntry(ClaimComponent component) {
-            ClaimLedgerEntry latest = null;
-            for (ClaimLedgerEntry e : of(component)) {
-                if (e.getType() == LedgerEntryType.INTEREST) {
-                    latest = e;
+                sb.append(" seit dem ").append(date(ci.getRunningFrom()));
+                if (ci.getDesignation() != null) {
+                    sb.append(" (").append(ci.getDesignation()).append(")");
                 }
+                indented(sb.toString());
             }
-            return latest;
-        }
-
-        @Override
-        public ClaimLedgerEntry findEarliestEntry(ClaimComponent component) {
-            List<ClaimLedgerEntry> of = of(component);
-            return of.isEmpty() ? null : of.get(0);
-        }
-
-        @Override
-        public ClaimLedgerEntry findLatestEntry(ClaimComponent component) {
-            List<ClaimLedgerEntry> of = of(component);
-            return of.isEmpty() ? null : of.get(of.size() - 1);
-        }
-
-        @Override
-        public List<ClaimLedgerEntry> findByComponentAndType(ClaimComponent component, LedgerEntryType type) {
-            List<ClaimLedgerEntry> result = new ArrayList<>();
-            for (ClaimLedgerEntry e : of(component)) {
-                if (e.getType() == type) {
-                    result.add(e);
-                }
-            }
-            return result;
-        }
-
-        @Override
-        public List<ClaimLedgerEntry> findByComponentAndTypeUpToDate(ClaimComponent component, LedgerEntryType type, Date upToDate) {
-            List<ClaimLedgerEntry> result = new ArrayList<>();
-            for (ClaimLedgerEntry e : findByComponentAndType(component, type)) {
-                if (!e.getEntryDate().after(upToDate)) {
-                    result.add(e);
-                }
-            }
-            return result;
-        }
-
-        @Override
-        public List<ClaimLedgerEntry> findByLedger(ClaimLedger ledger) {
-            return entries;
-        }
-
-        @Override
-        public void create(ClaimLedgerEntry claimLedgerEntry) {
-        }
-
-        @Override
-        public void edit(ClaimLedgerEntry claimLedgerEntry) {
-        }
-
-        @Override
-        public void remove(ClaimLedgerEntry claimLedgerEntry) {
-        }
-
-        @Override
-        public ClaimLedgerEntry find(Object id) {
-            return null;
-        }
-
-        @Override
-        public List<ClaimLedgerEntry> findAll() {
-            return entries;
-        }
-
-        @Override
-        public List<ClaimLedgerEntry> findRange(int[] range) {
-            return entries;
-        }
-
-
-        @Override
-        public List<ClaimLedgerEntry> findByOrigin(String originReference) {
-            List<ClaimLedgerEntry> result = new ArrayList<>();
-            for (ClaimLedgerEntry e : entries) {
-                if (originReference != null && originReference.equals(e.getOriginReference())) {
-                    result.add(e);
-                }
-            }
-            return result;
-        }
-
-        @Override
-        public ClaimLedgerEntry findReversalOf(ClaimLedgerEntry entry) {
-            for (ClaimLedgerEntry e : entries) {
-                if (e.getReversalOf() == entry) {
-                    return e;
-                }
-            }
-            return null;
-        }
-
-        @Override
-        public int count() {
-            return entries.size();
         }
     }
 
-    private static class NoBaseRates implements BaseInterestFacadeLocal {
-
-        @Override
-        public BigDecimal findRateByDate(Date date) {
-            return BigDecimal.ZERO;
+    private void writeSubLedgers(ClaimStatement statement) throws IOException {
+        if (statement.getSubLedgerStatements().isEmpty()) {
+            return;
         }
 
-        @Override
-        public List<BaseInterest> findByDateRange(Date fromDate, Date toDate) {
-            return new ArrayList<>();
+        for (ClaimStatement sub : statement.getSubLedgerStatements()) {
+            newPage();
+            text("Unterkonto: " + nullSafe(sub.getLedgerName()), FONT_BOLD, HEADING_SIZE);
+            gap(6f);
+            writePositions(sub);
+            writeBookings(sub);
+            writeTotals(sub);
         }
 
-        @Override
-        public void create(BaseInterest baseInterest) {
-        }
+        newPage();
+        text("Gesamtsumme über alle Konten", FONT_BOLD, HEADING_SIZE);
+        gap(6f);
+        totalLine("Offene Forderung gesamt", statement.getCombinedOpenAmount(), true);
+    }
 
-        @Override
-        public void edit(BaseInterest baseInterest) {
-        }
+    // ------------------------------------------------------------------ layout
 
-        @Override
-        public void remove(BaseInterest baseInterest) {
-        }
+    private static final float[] POSITION_COLUMNS = {0f, 200f, 300f, 375f, 450f};
+    private static final float[] BOOKING_COLUMNS = {0f, 55f, 140f, 320f, 450f};
 
-        @Override
-        public BaseInterest find(Object id) {
-            return null;
-        }
+    private void positionHeadings() throws IOException {
+        row(new String[]{"Position", "Art", "Kapital", "Zinsen", "Offen"}, POSITION_COLUMNS, true);
+        line();
+    }
 
-        @Override
-        public List<BaseInterest> findAll() {
-            return new ArrayList<>();
-        }
+    private void bookingHeadings() throws IOException {
+        row(new String[]{"Datum", "Art", "Position", "Beschreibung", "Betrag"}, BOOKING_COLUMNS, true);
+        line();
+    }
 
-        @Override
-        public List<BaseInterest> findRange(int[] range) {
-            return new ArrayList<>();
-        }
+    private void newPage() throws IOException {
+        finishPage();
+        PDPage page = new PDPage(PAGE_SIZE);
+        this.document.addPage(page);
+        this.content = new PDPageContentStream(this.document, page);
+        this.y = PAGE_SIZE.getHeight() - MARGIN_TOP;
+        this.pageNumber++;
+    }
 
-        @Override
-        public int count() {
-            return 0;
+    private void finishPage() throws IOException {
+        if (this.content == null) {
+            return;
         }
+        this.content.beginText();
+        this.content.setFont(FONT, 7.5f);
+        this.content.newLineAtOffset(PAGE_SIZE.getWidth() - MARGIN_RIGHT - 40f, MARGIN_BOTTOM - 20f);
+        this.content.showText("Seite " + this.pageNumber);
+        this.content.endText();
+        this.content.close();
+        this.content = null;
+    }
 
-        @Override
-        public void removeAll() {
+    /**
+     * Starts a new page when the given number of lines would not fit on the current one.
+     *
+     * @param lines how many lines are about to be written
+     * @throws IOException if the page cannot be written
+     */
+    private void ensureSpace(int lines) throws IOException {
+        if (this.y - (lines * LINE_HEIGHT) < MARGIN_BOTTOM) {
+            newPage();
         }
+    }
+
+    private void text(String value, PDFont font, float size) throws IOException {
+        ensureSpace(1);
+        this.content.beginText();
+        this.content.setFont(font, size);
+        this.content.newLineAtOffset(MARGIN_LEFT, this.y);
+        this.content.showText(sanitise(value));
+        this.content.endText();
+        this.y -= (size + 3f);
+    }
+
+    private void section(String title) throws IOException {
+        ensureSpace(3);
+        gap(2f);
+        text(title, FONT_BOLD, SECTION_SIZE);
+    }
+
+    private void labelled(String label, String value) throws IOException {
+        ensureSpace(1);
+        this.content.beginText();
+        this.content.setFont(FONT_BOLD, FONT_SIZE);
+        this.content.newLineAtOffset(MARGIN_LEFT, this.y);
+        this.content.showText(sanitise(label + ":"));
+        this.content.endText();
+
+        this.content.beginText();
+        this.content.setFont(FONT, FONT_SIZE);
+        this.content.newLineAtOffset(MARGIN_LEFT + 90f, this.y);
+        this.content.showText(sanitise(trim(value, 80)));
+        this.content.endText();
+        this.y -= LINE_HEIGHT;
+    }
+
+    private void indented(String value) throws IOException {
+        this.content.beginText();
+        this.content.setFont(FONT, FONT_SIZE - 0.5f);
+        this.content.newLineAtOffset(MARGIN_LEFT + 12f, this.y);
+        this.content.showText(sanitise(trim(value, 110)));
+        this.content.endText();
+        this.y -= (LINE_HEIGHT - 2f);
+    }
+
+    private void row(String[] values, float[] columns, boolean bold) throws IOException {
+        PDFont font = bold ? FONT_BOLD : FONT;
+        for (int i = 0; i < values.length && i < columns.length; i++) {
+            this.content.beginText();
+            this.content.setFont(font, FONT_SIZE);
+            this.content.newLineAtOffset(MARGIN_LEFT + columns[i], this.y);
+            this.content.showText(sanitise(values[i]));
+            this.content.endText();
+        }
+        this.y -= LINE_HEIGHT;
+    }
+
+    private void totalLine(String label, BigDecimal value) throws IOException {
+        totalLine(label, value, false);
+    }
+
+    private void totalLine(String label, BigDecimal value, boolean bold) throws IOException {
+        ensureSpace(1);
+        PDFont font = bold ? FONT_BOLD : FONT;
+        this.content.beginText();
+        this.content.setFont(font, FONT_SIZE);
+        this.content.newLineAtOffset(MARGIN_LEFT, this.y);
+        this.content.showText(sanitise(trim(label, 60)));
+        this.content.endText();
+
+        this.content.beginText();
+        this.content.setFont(font, FONT_SIZE);
+        this.content.newLineAtOffset(MARGIN_LEFT + 400f, this.y);
+        this.content.showText(sanitise(amount(value) + " EUR"));
+        this.content.endText();
+        this.y -= LINE_HEIGHT;
+    }
+
+    private void line() throws IOException {
+        this.content.setLineWidth(0.4f);
+        this.content.moveTo(MARGIN_LEFT, this.y + 8f);
+        this.content.lineTo(PAGE_SIZE.getWidth() - MARGIN_RIGHT, this.y + 8f);
+        this.content.stroke();
+        this.y -= 2f;
+    }
+
+    private void gap(float points) {
+        this.y -= points;
+    }
+
+    // ------------------------------------------------------------------ helpers
+
+    private String date(Date value) {
+        return value == null ? "" : this.dateFormat.format(value);
+    }
+
+    private String amount(BigDecimal value) {
+        if (value == null) {
+            return "0,00";
+        }
+        return value.setScale(2, RoundingMode.HALF_UP).toPlainString().replace('.', ',');
+    }
+
+    private String nullSafe(String value) {
+        return value == null ? "" : value;
+    }
+
+    private String trim(String value, int maxLength) {
+        String safe = nullSafe(value);
+        if (safe.length() <= maxLength) {
+            return safe;
+        }
+        return safe.substring(0, Math.max(0, maxLength - 1)) + "…";
+    }
+
+    /**
+     * Replaces characters the standard PDF font cannot encode.
+     *
+     * The built-in Helvetica uses WinAnsi, which covers German text including umlauts and the
+     * section sign, but not everything a party designation may contain. An unencodable character
+     * would abort the whole document, so it is replaced rather than allowed to fail.
+     *
+     * @param value the text
+     * @return the text with unencodable characters replaced
+     */
+    private String sanitise(String value) {
+        String safe = nullSafe(value);
+        StringBuilder sb = new StringBuilder(safe.length());
+        for (int i = 0; i < safe.length(); i++) {
+            char c = safe.charAt(i);
+            try {
+                FONT.encode(String.valueOf(c));
+                sb.append(c);
+            } catch (IOException | IllegalArgumentException ex) {
+                sb.append('?');
+            }
+        }
+        return sb.toString();
     }
 
 }
