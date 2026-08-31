@@ -6,26 +6,33 @@
       `ClaimLedger`
 - [ ] 1.3 Add `EnforcementTitle` entity with prerequisites (Titel/Klausel/Zustellung) and 30-year
       limitation computation plus follow-up creation
-- [ ] 1.4 Extend `ClaimComponentType` (pre-court costs, assessed costs, interest arrears, recurring
-      monthly claims) and add the interest start mode "on service"
-- [ ] 1.5 Extend `PaymentSplitCalculator` with § 497 Abs. 3 BGB, target-directed, per-debtor and
+- [ ] 1.4 Extend `ClaimComponentType` (the EDA pre-court cost categories Auslagen, Mahnkosten,
+      Auskunftskosten, Bankrücklastkosten, Inkassokosten, Nr. 2300 VV RVG, andere Nebenforderungen;
+      assessed costs; interest arrears; recurring monthly claims) and add the interest start mode
+      "on service"
+- [ ] 1.5 Consolidate the two interest implementations: make `PaymentSplitCalculator` use the
+      period-splitting engine of `ArchiveFileService` (removing its hard-coded `3.62` base rate),
+      and fix `ClaimLedgerEntryFacade.findByComponentAndType`, which runs the wrong named query
+      with an undeclared parameter
+- [ ] 1.6 Extend `PaymentSplitCalculator` with § 497 Abs. 3 BGB, target-directed, per-debtor and
       manual allocation; persist the mode and the deviation warning
-- [ ] 1.6 Extend `ClaimLedgerTotals` with per-debtor totals and continuing-interest data
-- [ ] 1.7 Implement the conversion of non-interest-bearing costs into assessed costs
-- [ ] 1.8 Implement `bookProceduralCost` (ledger booking + optional `CaseAccountEntry` + origin
+- [ ] 1.7 Extend `ClaimLedgerTotals` with per-debtor totals and continuing-interest data
+- [ ] 1.8 Implement the conversion of non-interest-bearing costs into assessed costs
+- [ ] 1.9 Implement `bookProceduralCost` (ledger booking + optional `CaseAccountEntry` + origin
       reference + reversal)
-- [ ] 1.9 Move ledger operations from `ArchiveFileServiceRemote` to `ClaimLedgerServiceRemote`
+- [ ] 1.10 Move ledger operations from `ArchiveFileServiceRemote` to `ClaimLedgerServiceRemote`
       (English JavaDoc) keeping the old methods delegating for compatibility
-- [ ] 1.10 Claim statement document (PDF/editable, key date, storable in the case, CSV/JSON export)
-- [ ] 1.11 Balance list over all accessible ledgers with filters, sums and CSV export
-- [ ] 1.12 Desktop UI: restructure `ClaimLedgerDialog` (+ `.form`) into the tabbed ledger workspace
+- [ ] 1.11 Claim statement document (PDF/editable, key date, storable in the case, CSV/JSON export)
+- [ ] 1.12 Balance list over all accessible ledgers with filters, sums and CSV export
+- [ ] 1.13 Desktop UI: restructure `ClaimLedgerDialog` (+ `.form`) into the tabbed ledger workspace
       and implement the tabs `Stammdaten`, `Titel` and `Buchungen` (parties, title, new component
       types, allocation modes)
-- [ ] 1.13 Desktop UI: status badges on the `ClaimLedgerEntryPanel` cards in
+- [ ] 1.14 Desktop UI: status badges on the `ClaimLedgerEntryPanel` cards in
       `Finanzen → Forderungskonto` (open total, next deadline) and the claim statement dialog
       (+ `.form`)
-- [ ] 1.14 Unit tests for interest, allocation modes, per-debtor totals and statement/itemisation
-      consistency
+- [ ] 1.15 Unit tests for interest (incl. base-rate changes inside a period), allocation modes,
+      per-debtor totals and statement/itemisation consistency, asserting that the payment split and
+      the ledger totals report the same interest
 
 ## 2. Phase 2 — Pre-court dunning
 
@@ -52,48 +59,57 @@
       credit, Nr. 1100 KV GKG) with data-driven fee tables
 - [ ] 3.6 Assembly and validation of the application data set (all problems reported in one list),
       callable as a readiness check from client and REST
-- [ ] 3.7 Import of court response messages with matching, status/date update, ledger service
-      booking and an inbox for unmatched messages
+- [ ] 3.7 Import of the court EDA messages (record types `03`, `05`, `16`, `18`, `20`, `22`, `90`)
+      with matching on the echoed own reference, status/date update, ledger service booking and an
+      inbox for unmatched messages
 - [ ] 3.8 Dunning worklist (filters, CSV, navigation, start VB application from the list)
-- [ ] 3.9 `DunningServiceRemote` (English JavaDoc) and `DunningEndpointV7`
+- [ ] 3.9 `DunningServiceRemote` (English JavaDoc) and `DunningEndpointV8`
 - [ ] 3.10 Desktop UI: `Mahnverfahren` tab of the ledger workspace (reminder stages, dunning case,
       status timeline, message import) (+ `.form` files)
-- [ ] 3.11 JAXB generation from the committed XJustiz XSDs in the Maven build of
-      `j-lawyer-server-common` (replaces the withdrawn Ant-based step)
-- [ ] 3.12 `com.jdimension.jlawyer.xjustiz`: mapper (main claims, interest incl. "ab Zustellung",
-      costs/ancillary claims, payments), writer and message metadata, with the mapping documented
-      in the code
-- [ ] 3.13 Schema validator against `xjustiz_0600_mahn_3_3.xsd` incl. violation reporting and the
-      missing-schema configuration error
+- [ ] 3.11 `com.jdimension.jlawyer.eda` core: data-driven record layouts (field, offset, length,
+      type), the 128-byte fixed-length writer and parser, `AA`/`BB` framing and the CP-850 codec
+      that refuses unencodable characters
+- [ ] 3.12 EDA mapper for the Mahnbescheid application (record type `01`, format 4.0.00): key
+      record, parties and their representatives, catalogued and free-text claims, running and
+      already computed interest, consumer-credit data, and the seven ancillary-claim areas — with
+      the mapping documented in the code
+- [ ] 3.13 Structural verifier (record length, framing, record order, per-area frequency, trailer
+      counts, character set) with violations reported per record and field
 - [ ] 3.14 `AppUserBean` lawyer identification number (Kennziffer) with migration and the user
       administration field shown only for lawyer users (+ `.form`)
 - [ ] 3.15 Export operation in the EJB layer and the REST endpoint (export + validate), storing the
       file as a tagged case document linked to the dunning case
-- [ ] 3.16 Export confirmation step in the ledger workspace, pre-filled from the dunning case, with
+- [ ] 3.16 EDA mapper and export for the Vollstreckungsbescheid application (record type `08`,
+      format 4.1.00), reusing the record core
+- [ ] 3.17 Export confirmation step in the ledger workspace, pre-filled from the dunning case, with
       write-back of changed values (+ `.form`)
-- [ ] 3.17 EDA viewer: parser, formatted view, raw XML view, tabbed panel and integration into the
-      document viewer of `ArchiveFilePanel` (+ `.form` files)
-- [ ] 3.18 Tests: status transitions, deadline generation/recalculation, fee credit, message import
-- [ ] 3.19 Tests: mapping per claim type against the shipped XSD, validation failure paths, export
-      document storage and re-export history
+- [ ] 3.18 EDA viewer: formatted view resolving record types, section markers and fields, raw
+      record view, tabbed panel and integration into the document viewer of `ArchiveFilePanel`
+      (+ `.form` files)
+- [ ] 3.19 Tests: status transitions, deadline generation/recalculation, fee credit, message import
+- [ ] 3.20 Tests: record layouts against the worked examples of the Satzbeschreibungen, mapping per
+      claim and ancillary-claim type, interest from service written with an empty start date,
+      CP-850 round-trip incl. umlauts, validation and verification failure paths, export document
+      storage and re-export history
 
 ## 4. Phase 4 — Enforcement
 
 - [ ] 4.1 `EnforcementMeasure` entity, catalog of measure types and their configuration
-- [ ] 4.2 Form template management (PDF + field mapping + validity) with admin UI and import of a
-      default package
-- [ ] 4.3 Form generation through `PdfFormsAccess` incl. mandatory-field validation, storage in the
-      case, recording of the form version
+- [ ] 4.2 Form template management (PDF + field mapping + validity) with admin UI, listing of the
+      AcroForm field names of an uploaded PDF, and import of a default package
+- [ ] 4.3 New name-based AcroForm filler beside `PdfFormsAccess` (fields addressed by name,
+      on-state values for check boxes and radio groups), form generation incl. mandatory-field
+      validation, storage in the case, recording of the form version
 - [ ] 4.4 Claim itemisation for ZVFV Anlagen 6–8 from the ledger, sharing the statement calculation
 - [ ] 4.5 Third-party debtors incl. § 840 ZPO declaration deadline and payment booking
 - [ ] 4.6 Enforcement cost proposal and booking (§ 788 ZPO, Nr. 3309/3310 VV RVG, GvKostG, court
       fees), joint or single debtor, advanced-by-firm handling
 - [ ] 4.7 Measure follow-ups incl. outcome-driven closing and § 802d ZPO re-attempt scheduling
-- [ ] 4.8 `EnforcementServiceRemote` (English JavaDoc) and `EnforcementEndpointV7`
+- [ ] 4.8 `EnforcementServiceRemote` (English JavaDoc) and `EnforcementEndpointV8`
 - [ ] 4.9 Desktop UI: `Zwangsvollstreckung` tab (measures, third-party debtors, form generation) and
       `Fristen & Dokumente` tab of the ledger workspace (+ `.form` files)
-- [ ] 4.10 Tests: form field mapping per annex, itemisation vs. statement equality, cost bookings,
-      follow-up lifecycle
+- [ ] 4.10 Tests: form field mapping per annex incl. check-box on-states, itemisation vs. statement
+      equality, cost bookings, follow-up lifecycle
 
 ## 5. Phase 5 — Plans, portfolio, polish
 

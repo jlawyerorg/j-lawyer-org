@@ -76,20 +76,31 @@ sub-ledgers SHALL be available as an explicit option in statements and lists.
 ### Requirement: Extended Claim Component Types
 
 The claim component types SHALL be extended beyond `MAIN_CLAIM`, `COST_INTEREST_BEARING` and
-`COST_NON_INTEREST_BEARING` by: pre-court costs of the creditor (vorgerichtliche Kosten, to be
-carried into the dunning application as "andere Nebenforderungen"), assessed costs (festgesetzte
-Kosten) which are interest-bearing under § 104 Abs. 1 S. 2 ZPO, interest arrears booked as a
-fixed amount (Zinsforderung/Zinsrückstand), and recurring monthly main claims (laufende monatliche
+`COST_NON_INTEREST_BEARING` by: the pre-court cost categories that the EDA dunning application
+distinguishes as separate record areas — the creditor's outlays (Auslagen), reminder costs
+(Mahnkosten), information costs (Auskunftskosten), bank return costs (Bankrücklastkosten),
+collection costs (Inkassokosten), the pre-court lawyer's fee under Nr. 2300 VV RVG, and other
+ancillary claims (andere Nebenforderungen) — assessed costs (festgesetzte Kosten) which are
+interest-bearing under § 104 Abs. 1 S. 2 ZPO, interest arrears booked as a fixed amount
+(Zinsforderung/Zinsrückstand), and recurring monthly main claims (laufende monatliche
 Hauptforderung, e.g. maintenance) with a start month, an optional end month and an amount that is
-posted as a due item per month. Converting non-interest-bearing costs into assessed
-interest-bearing costs after a cost assessment order SHALL be supported as a single operation
-that removes or reduces the original positions and records the conversion.
+posted as a due item per month. Keeping these categories apart is a requirement of the dunning
+application, which will not accept them merged into one position. Converting non-interest-bearing
+costs into assessed interest-bearing costs after a cost assessment order SHALL be supported as a
+single operation that removes or reduces the original positions and records the conversion.
 
 #### Scenario: Monthly maintenance claim
 
 - **WHEN** a recurring monthly main claim of 350.00 EUR starting 2026-01 without end month exists
 - **THEN** the ledger shows a due item of 350.00 EUR for every month up to the key date
 - **AND** the totals designate the claim as continuing monthly
+
+#### Scenario: Pre-court costs kept in their categories
+
+- **WHEN** reminder charges of 10.00 EUR and a pre-court Nr. 2300 VV RVG fee of 480.20 EUR are
+  booked on one ledger
+- **THEN** each is stored under its own component type
+- **AND** the dunning application can place them in the record areas the EDA format requires
 
 #### Scenario: Conversion after a cost assessment order
 
@@ -138,6 +149,30 @@ deviates from the statutory order.
   claim carries a higher interest rate
 - **THEN** the proposal is accepted and stored
 - **AND** it is marked as deviating from § 366 Abs. 2 BGB with an explanatory warning text
+
+### Requirement: Single Interest and Balance Calculation Path
+
+Interest accrual, component balances and ledger totals SHALL be computed by exactly one
+implementation, shared by the ledger totals, the payment split, the claim statement, the
+enforcement itemisation and every export. The system SHALL NOT keep a second, simplified
+calculation beside it, and SHALL NOT use a hard-coded base rate anywhere: the base rate SHALL
+always be resolved from `interest_base` for the period being computed, splitting the period at
+every base-rate and principal change. Where two implementations exist today, they SHALL be
+consolidated before the statement and the itemisation are built on them.
+
+#### Scenario: Payment split and totals agree
+
+- **WHEN** a payment is allocated and the ledger totals are computed for the same key date
+- **THEN** the interest amounts both use are identical
+- **AND** both were derived from the base rate stored for that period, not from a constant
+
+#### Scenario: Base rate change inside the interest period
+
+- **GIVEN** a component bearing interest of 5 percentage points above the base rate across a date
+  on which the base rate changes
+- **WHEN** interest is computed to a key date after that change
+- **THEN** the period is split at the change date and each part uses the rate valid for it
+- **AND** the statement, the itemisation and the totals report the same amount
 
 ### Requirement: Claim Statement Document
 
