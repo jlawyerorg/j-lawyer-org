@@ -1,5 +1,4 @@
-/*                    
-                GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -83,25 +82,19 @@ permission, would make you directly or secondarily liable for
 infringement under applicable copyright law, except executing it on a
 computer or modifying a private copy.  Propagation includes copying,
 distribution (with or without modification), making available to the
-public
-
-, and in some countries other activities as well.
+public, and in some countries other activities as well.
 
   To "convey" a work means any kind of propagation that enables other
 parties to make or receive copies.  Mere interaction with a user through
 a computer network, with no transfer of a copy, is not conveying.
 
-  An interactive user interface displays 
-
-"Appropriate Legal Notices"
+  An interactive user interface displays "Appropriate Legal Notices"
 to the extent that it includes a convenient and prominently visible
 feature that (1) displays an appropriate copyright notice, and (2)
 tells the user that there is no warranty for the work (except to the
 extent that warranties are provided), that licensees may convey the
 work under this License, and how to view a copy of this License.  If
-the interface presents 
-
-a list of user commands or options, such as a
+the interface presents a list of user commands or options, such as a
 menu, a prominent item in the list meets this criterion.
 
   1. Source Code.
@@ -110,8 +103,7 @@ menu, a prominent item in the list meets this criterion.
 for making modifications to it.  "Object code" means any non-source
 form of a work.
 
-  A "Standard Interface" means an interface that 
-either is an official
+  A "Standard Interface" means an interface that either is an official
 standard defined by a recognized standards body, or, in the case of
 interfaces specified for a particular programming language, one that
 is widely used among developers working in that language.
@@ -121,9 +113,7 @@ than the work as a whole, that (a) is included in the normal form of
 packaging a Major Component, but which is not part of that Major
 Component, and (b) serves only to enable use of the work with that
 Major Component, or to implement a Standard Interface for which an
-implementation is available to the public in 
-
-source code form.  A
+implementation is available to the public in source code form.  A
 "Major Component", in this context, means a major essential component
 (kernel, window system, and so on) of the specific operating system
 (if any) on which the executable work runs, or a compiler used to
@@ -136,8 +126,7 @@ control those activities.  However, it does not include the work's
 System Libraries, or general-purpose tools or generally available free
 programs which are used unmodified in performing those activities but
 which are not part of the work.  For example, Corresponding Source
-includes interface definition 
-files associated with source files for
+includes interface definition files associated with source files for
 the work, and the source code for shared libraries and dynamically
 linked subprograms that the work is specifically designed to require,
 such as by intimate data communication or control flow between those
@@ -286,9 +275,7 @@ in one of these ways:
 
     e) Convey the object code using peer-to-peer transmission, provided
     you inform other peers where the object code and Corresponding
-    Source of the work are being offered to the general public at 
-
-no
+    Source of the work are being offered to the general public at no
     charge under subsection 6d.
 
   A separable portion of the object code, whose source code is excluded
@@ -301,8 +288,7 @@ or household purposes, or (2) anything designed or sold for incorporation
 into a dwelling.  In determining whether a product is a consumer product,
 doubtful cases shall be resolved in favor of coverage.  For a particular
 product received by a particular user, "normally used" refers to a
-typical or common use of that class of 
-product, regardless of the status
+typical or common use of that class of product, regardless of the status
 of the particular user or of the way in which the particular user
 actually uses, or expects or is expected to use, the product.  A product
 is a consumer product regardless of whether the product has substantial
@@ -652,9 +638,7 @@ the "copyright" line and a pointer to where the full notice is found.
     (at your option) any later version.
 
     This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without 
-
-even the implied warranty of
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Affero General Public License for more details.
 
@@ -666,8 +650,7 @@ Also add information on how to contact you by electronic and paper mail.
   If your software can interact with users remotely through a computer
 network, you should also make sure that it provides a way for users to
 get its source.  For example, if your program is a web application, its
-interface could 
-display a "Source" link that leads users to an archive
+interface could display a "Source" link that leads users to an archive
 of the code.  There are many ways you could offer source, and different
 solutions will be better for different programs; see section 13 for the
 specific requirements.
@@ -676,62 +659,392 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
+ */
+package com.jdimension.jlawyer.client.configuration;
 
-package com.jdimension.jlawyer.services;
-
-
-
-import com.jdimension.jlawyer.referencedata.ReferenceData;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.ejb.EJB;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.persistence.DunningCourtRule;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
 
 /**
+ * Administration of the rules assigning a dunning court to applicants (§ 689 Abs. 2, 3 ZPO).
+ *
+ * A federal state may appear more than once. North Rhine-Westphalia is divided between two courts
+ * along the OLG district of Cologne, and the system cannot evaluate that division - it offers both
+ * candidates with their restriction and lets the user decide. A firm that can express its own
+ * division as a postcode range turns that choice into a determination by filling the range in.
  *
  * @author jens
  */
-@Startup
-@Singleton
-public class ContainerLifecycleBean implements ContainerLifecycleBeanRemote, ContainerLifecycleBeanLocal {
-    
-    private static Logger log = Logger.getLogger(ContainerLifecycleBean.class.getName());
+public class DunningCourtRulesConfigurationDialog extends javax.swing.JDialog {
 
-    @EJB
-    private com.jdimension.jlawyer.persistence.CourtFacadeLocal courtsFacade;
+    private static final Logger log = Logger.getLogger(DunningCourtRulesConfigurationDialog.class.getName());
 
-    @EJB
-    private com.jdimension.jlawyer.persistence.DunningCourtRuleFacadeLocal dunningCourtRulesFacade;
+    private List<DunningCourtRule> rules = new ArrayList<>();
 
-    @PostConstruct
-    public void initialize() {
-        // From here on the dunning courts come from this installation's master data instead of the
-        // list compiled into the software, so a firm's own correction to an address or to the
-        // assignment of a federal state takes effect without a release.
-        ReferenceData.setDunningCourtDirectory(
-                new MasterDataDunningCourtDirectory(this.courtsFacade, this.dunningCourtRulesFacade));
+    /**
+     * Creates the dialog.
+     *
+     * @param parent the parent frame
+     * @param modal whether the dialog is modal
+     */
+    public DunningCourtRulesConfigurationDialog(java.awt.Frame parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
 
-        log.info("j-lawyer.org Server initialized");
+        this.txtHint.setText("Diese Zuordnung bestimmt, welches Mahngericht für einen Antragsteller "
+                + "vorgeschlagen wird - nach § 689 Abs. 2 ZPO das Gericht am allgemeinen "
+                + "Gerichtsstand, für Antragsteller ohne inländischen Gerichtsstand das dafür "
+                + "bestimmte Gericht. Ist ein Bundesland auf mehrere Gerichte aufgeteilt, werden "
+                + "beide zur Auswahl angeboten; die Aufteilung richtet sich nach dem OLG-Bezirk und "
+                + "lässt sich aus dem Bundesland allein nicht bestimmen. Der Vorschlag ist immer "
+                + "änderbar.");
+
+        this.tblRules.setModel(new DefaultTableModel(
+                new Object[][]{},
+                new String[]{"Bundesland", "Einschränkung", "PLZ von", "PLZ bis", "Mahngericht", "aktiv"}) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        });
+
+        loadRules();
     }
 
-    @PreDestroy
-    public void terminate() {
-        // Hand the registry back its bundled implementation. What it holds now points at beans of
-        // this deployment, and those are gone in a moment; leaving them in a static would outlive
-        // the deployment that owns them.
-        ReferenceData.setDunningCourtDirectory(null);
+    private static String nz(String s) {
+        return s == null ? "" : s;
+    }
 
-        // Close the Lucene search index here (while the deployment classloader is still
-        // available) rather than via a JVM shutdown hook, which would run after undeploy
-        // and fail to lazily load Lucene classes during the final commit.
+    private void loadRules() {
         try {
-            org.jlawyer.search.SearchAPI.shutdownInstance();
-        } catch (Throwable t) {
-            log.error("Error closing search index during shutdown", t);
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            this.rules = locator.lookupDunningCourtRuleServiceRemote().getRules(false);
+        } catch (Exception ex) {
+            log.error("Unable to load dunning court rules", ex);
+            JOptionPane.showMessageDialog(this, "Die Zuordnung konnte nicht geladen werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            this.rules = new ArrayList<>();
         }
-        log.info("j-lawyer.org Server terminated");
+
+        DefaultTableModel model = (DefaultTableModel) this.tblRules.getModel();
+        model.setRowCount(0);
+        for (DunningCourtRule r : this.rules) {
+            model.addRow(new Object[]{
+                r.isForeignApplicant() ? "Ausland" : nz(r.getFederalState()),
+                nz(r.getRestriction()),
+                nz(r.getPostalCodeFrom()),
+                nz(r.getPostalCodeTo()),
+                r.getCourt() == null ? "" : r.getCourt().getName(),
+                r.isActive() ? "ja" : "nein"});
+        }
+
+        // an empty table looks like a defect rather than like an empty configuration, so it says
+        // which it is
+        if (this.rules.isEmpty()) {
+            this.txtHint.setText("Es ist noch keine Zuordnung hinterlegt. Ohne sie schlägt das "
+                    + "System kein Mahngericht vor; es muss dann bei jedem Antrag von Hand gewählt "
+                    + "werden.\n\nMit \"Hinzufügen\" legen Sie eine Zuordnung an: ein Bundesland "
+                    + "und das dafür zuständige Mahngericht.");
+        }
+
+        updateButtons();
     }
+
+    private DunningCourtRule selectedRule() {
+        int row = this.tblRules.getSelectedRow();
+        if (row < 0 || row >= this.rules.size()) {
+            return null;
+        }
+        return this.rules.get(this.tblRules.convertRowIndexToModel(row));
+    }
+
+    private void updateButtons() {
+        DunningCourtRule selected = selectedRule();
+        this.cmdEdit.setEnabled(selected != null);
+        this.cmdRemove.setEnabled(selected != null);
+        this.cmdUp.setEnabled(selected != null);
+        this.cmdDown.setEnabled(selected != null);
+    }
+
+    /**
+     * Moves the selected rule within the rules that share its selection key.
+     *
+     * The order only decides which of several rules for the same state is offered first, so moving
+     * across states would change nothing and is not offered.
+     *
+     * @param offset -1 to move up, 1 to move down
+     */
+    private void moveSelected(int offset) {
+        DunningCourtRule selected = selectedRule();
+        if (selected == null) {
+            return;
+        }
+        List<DunningCourtRule> siblings = new ArrayList<>();
+        for (DunningCourtRule r : this.rules) {
+            boolean sameKey = selected.isForeignApplicant()
+                    ? r.isForeignApplicant()
+                    : !r.isForeignApplicant() && r.getFederalState() != null
+                        && r.getFederalState().equalsIgnoreCase(nz(selected.getFederalState()));
+            if (sameKey) {
+                siblings.add(r);
+            }
+        }
+        int index = siblings.indexOf(selected);
+        int target = index + offset;
+        if (index < 0 || target < 0 || target >= siblings.size()) {
+            return;
+        }
+        siblings.remove(index);
+        siblings.add(target, selected);
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            // the user sees a position, the stored value is a number - it is recalculated here so
+            // nobody has to maintain sequence numbers by hand
+            for (int i = 0; i < siblings.size(); i++) {
+                DunningCourtRule r = siblings.get(i);
+                if (r.getSequenceNumber() != i) {
+                    r.setSequenceNumber(i);
+                    locator.lookupDunningCourtRuleServiceRemote().updateRule(r);
+                }
+            }
+            loadRules();
+        } catch (Exception ex) {
+            log.error("Unable to reorder dunning court rules", ex);
+            JOptionPane.showMessageDialog(this, "Die Reihenfolge konnte nicht geändert werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        jScrollPaneHint = new javax.swing.JScrollPane();
+        txtHint = new javax.swing.JTextArea();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblRules = new javax.swing.JTable();
+        cmdUp = new javax.swing.JButton();
+        cmdDown = new javax.swing.JButton();
+        cmdAdd = new javax.swing.JButton();
+        cmdEdit = new javax.swing.JButton();
+        cmdRemove = new javax.swing.JButton();
+        cmdClose = new javax.swing.JButton();
+
+        txtHint.setEditable(false);
+        txtHint.setColumns(20);
+        txtHint.setLineWrap(true);
+        txtHint.setRows(4);
+        txtHint.setWrapStyleWord(true);
+        txtHint.setOpaque(false);
+        jScrollPaneHint.setViewportView(txtHint);
+
+        tblRules.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+
+            }
+        ));
+        tblRules.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblRulesMouseClicked(evt);
+            }
+        });
+        jScrollPane1.setViewportView(tblRules);
+
+        cmdUp.setText("nach oben");
+        cmdUp.setToolTipText("innerhalb desselben Bundeslands weiter nach vorn");
+        cmdUp.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdUpActionPerformed(evt);
+            }
+        });
+
+        cmdDown.setText("nach unten");
+        cmdDown.setToolTipText("innerhalb desselben Bundeslands weiter nach hinten");
+        cmdDown.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDownActionPerformed(evt);
+            }
+        });
+
+        cmdAdd.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdAdd.setText("Zuordnung anlegen");
+        cmdAdd.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddActionPerformed(evt);
+            }
+        });
+
+        cmdEdit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfind.png"))); // NOI18N
+        cmdEdit.setText("Bearbeiten");
+        cmdEdit.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdEditActionPerformed(evt);
+            }
+        });
+
+        cmdRemove.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdRemove.setText("Entfernen");
+        cmdRemove.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRemoveActionPerformed(evt);
+            }
+        });
+
+        cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdClose.setText("Schließen");
+        cmdClose.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCloseActionPerformed(evt);
+            }
+        });
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Mahngerichts-Zuordnung");
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPaneHint, javax.swing.GroupLayout.DEFAULT_SIZE, 900, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 760, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(cmdUp, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(cmdDown, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(cmdAdd)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdEdit)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdRemove)
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdClose)))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPaneHint, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(cmdUp)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdDown)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdAdd)
+                    .addComponent(cmdEdit)
+                    .addComponent(cmdRemove)
+                    .addComponent(cmdClose))
+                .addContainerGap())
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void cmdAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddActionPerformed
+
+        DunningCourtRuleDialog dlg = new DunningCourtRuleDialog((java.awt.Frame) this.getParent(), true, null);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+        if (dlg.isSaved()) {
+            loadRules();
+        }
+    }//GEN-LAST:event_cmdAddActionPerformed
+
+    private void cmdEditActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditActionPerformed
+
+        DunningCourtRule selected = selectedRule();
+        if (selected == null) {
+            return;
+        }
+        DunningCourtRuleDialog dlg = new DunningCourtRuleDialog((java.awt.Frame) this.getParent(), true, selected);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+        if (dlg.isSaved()) {
+            loadRules();
+        }
+    }//GEN-LAST:event_cmdEditActionPerformed
+
+    private void cmdRemoveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveActionPerformed
+
+        DunningCourtRule selected = selectedRule();
+        if (selected == null) {
+            return;
+        }
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Die Zuordnung wird gelöscht.\n\n"
+                + "Für Antragsteller, die dadurch keiner Regel mehr unterliegen, schlägt das\n"
+                + "System kein Mahngericht mehr vor - es muss dann von Hand gewählt werden.\n\n"
+                + "Wirklich löschen?",
+                "Zuordnung löschen", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupDunningCourtRuleServiceRemote().removeRule(selected.getId());
+            loadRules();
+        } catch (Exception ex) {
+            log.error("Unable to remove dunning court rule", ex);
+            JOptionPane.showMessageDialog(this, "Die Zuordnung konnte nicht gelöscht werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdRemoveActionPerformed
+
+    private void cmdUpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUpActionPerformed
+        moveSelected(-1);
+    }//GEN-LAST:event_cmdUpActionPerformed
+
+    private void cmdDownActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDownActionPerformed
+        moveSelected(1);
+    }//GEN-LAST:event_cmdDownActionPerformed
+
+    private void tblRulesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblRulesMouseClicked
+
+        updateButtons();
+        if (evt.getClickCount() == 2) {
+            cmdEditActionPerformed(null);
+        }
+    }//GEN-LAST:event_tblRulesMouseClicked
+
+    private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdCloseActionPerformed
+
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdAdd;
+    private javax.swing.JButton cmdDown;
+    private javax.swing.JButton cmdEdit;
+    private javax.swing.JButton cmdClose;
+    private javax.swing.JButton cmdRemove;
+    private javax.swing.JButton cmdUp;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPaneHint;
+    private javax.swing.JTable tblRules;
+    private javax.swing.JTextArea txtHint;
+    // End of variables declaration//GEN-END:variables
 }

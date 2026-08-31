@@ -760,6 +760,18 @@ public class JLawyerServiceLocator {
     }
     
     /**
+     * @return the selection rules for the central dunning courts
+     */
+    public DunningCourtRuleServiceRemote lookupDunningCourtRuleServiceRemote() {
+        try {
+            return (DunningCourtRuleServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//DunningCourtRuleService!com.jdimension.jlawyer.services.DunningCourtRuleServiceRemote");
+        } catch (NamingException ne) {
+            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
+            throw new RuntimeException(ne);
+        }
+    }
+
+    /**
      * @return the central court master data
      */
     public CourtServiceRemote lookupCourtServiceRemote() {

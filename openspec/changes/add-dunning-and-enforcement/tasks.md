@@ -89,7 +89,7 @@
       drift apart. Replacing it in `ReferenceData` is *not* part of this task — that implementation
       also has to answer which court serves which state, and those rules arrive with the rule table
       of 3.3; until then the bundled directory stays the one `ReferenceData` hands out
-- [ ] 3.3 Dunning rule table over the directory (selection key incl. OLG district / postal-code
+- [x] 3.3 Dunning rule table over the directory (selection key incl. OLG district / postal-code
       range, special-rule marker, channels, Kennziffer and direct-debit flags) and the § 689
       Abs. 2, 3 ZPO derivation with manual override. With the rules in place, replace
       `BundledDunningCourtDirectory` in `ReferenceData` with an implementation reading the court

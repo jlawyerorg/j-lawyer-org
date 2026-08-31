@@ -1,5 +1,4 @@
-/*                    
-                GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -83,25 +82,19 @@ permission, would make you directly or secondarily liable for
 infringement under applicable copyright law, except executing it on a
 computer or modifying a private copy.  Propagation includes copying,
 distribution (with or without modification), making available to the
-public
-
-, and in some countries other activities as well.
+public, and in some countries other activities as well.
 
   To "convey" a work means any kind of propagation that enables other
 parties to make or receive copies.  Mere interaction with a user through
 a computer network, with no transfer of a copy, is not conveying.
 
-  An interactive user interface displays 
-
-"Appropriate Legal Notices"
+  An interactive user interface displays "Appropriate Legal Notices"
 to the extent that it includes a convenient and prominently visible
 feature that (1) displays an appropriate copyright notice, and (2)
 tells the user that there is no warranty for the work (except to the
 extent that warranties are provided), that licensees may convey the
 work under this License, and how to view a copy of this License.  If
-the interface presents 
-
-a list of user commands or options, such as a
+the interface presents a list of user commands or options, such as a
 menu, a prominent item in the list meets this criterion.
 
   1. Source Code.
@@ -110,8 +103,7 @@ menu, a prominent item in the list meets this criterion.
 for making modifications to it.  "Object code" means any non-source
 form of a work.
 
-  A "Standard Interface" means an interface that 
-either is an official
+  A "Standard Interface" means an interface that either is an official
 standard defined by a recognized standards body, or, in the case of
 interfaces specified for a particular programming language, one that
 is widely used among developers working in that language.
@@ -121,9 +113,7 @@ than the work as a whole, that (a) is included in the normal form of
 packaging a Major Component, but which is not part of that Major
 Component, and (b) serves only to enable use of the work with that
 Major Component, or to implement a Standard Interface for which an
-implementation is available to the public in 
-
-source code form.  A
+implementation is available to the public in source code form.  A
 "Major Component", in this context, means a major essential component
 (kernel, window system, and so on) of the specific operating system
 (if any) on which the executable work runs, or a compiler used to
@@ -136,8 +126,7 @@ control those activities.  However, it does not include the work's
 System Libraries, or general-purpose tools or generally available free
 programs which are used unmodified in performing those activities but
 which are not part of the work.  For example, Corresponding Source
-includes interface definition 
-files associated with source files for
+includes interface definition files associated with source files for
 the work, and the source code for shared libraries and dynamically
 linked subprograms that the work is specifically designed to require,
 such as by intimate data communication or control flow between those
@@ -286,9 +275,7 @@ in one of these ways:
 
     e) Convey the object code using peer-to-peer transmission, provided
     you inform other peers where the object code and Corresponding
-    Source of the work are being offered to the general public at 
-
-no
+    Source of the work are being offered to the general public at no
     charge under subsection 6d.
 
   A separable portion of the object code, whose source code is excluded
@@ -301,8 +288,7 @@ or household purposes, or (2) anything designed or sold for incorporation
 into a dwelling.  In determining whether a product is a consumer product,
 doubtful cases shall be resolved in favor of coverage.  For a particular
 product received by a particular user, "normally used" refers to a
-typical or common use of that class of 
-product, regardless of the status
+typical or common use of that class of product, regardless of the status
 of the particular user or of the way in which the particular user
 actually uses, or expects or is expected to use, the product.  A product
 is a consumer product regardless of whether the product has substantial
@@ -652,9 +638,7 @@ the "copyright" line and a pointer to where the full notice is found.
     (at your option) any later version.
 
     This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without 
-
-even the implied warranty of
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Affero General Public License for more details.
 
@@ -666,8 +650,7 @@ Also add information on how to contact you by electronic and paper mail.
   If your software can interact with users remotely through a computer
 network, you should also make sure that it provides a way for users to
 get its source.  For example, if your program is a web application, its
-interface could 
-display a "Source" link that leads users to an archive
+interface could display a "Source" link that leads users to an archive
 of the code.  There are many ways you could offer source, and different
 solutions will be better for different programs; see section 13 for the
 specific requirements.
@@ -676,62 +659,222 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
+ */
+package org.jlawyer.test.server.ejb;
 
-package com.jdimension.jlawyer.services;
-
-
-
-import com.jdimension.jlawyer.referencedata.ReferenceData;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.ejb.EJB;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
-import org.apache.log4j.Logger;
+import com.jdimension.jlawyer.persistence.Court;
+import com.jdimension.jlawyer.persistence.DunningCourtRule;
+import com.jdimension.jlawyer.pojo.DunningCourtProposal;
+import com.jdimension.jlawyer.services.DunningCourtSelector;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 /**
+ * Determination of the competent dunning court under § 689 Abs. 2, 3 ZPO.
+ *
+ * Filing at the wrong dunning court costs the creditor weeks, so the interesting cases here are the
+ * ones where the answer is not a single court: a state divided between two courts, an applicant
+ * seated abroad, and a state nobody configured.
  *
  * @author jens
  */
-@Startup
-@Singleton
-public class ContainerLifecycleBean implements ContainerLifecycleBeanRemote, ContainerLifecycleBeanLocal {
-    
-    private static Logger log = Logger.getLogger(ContainerLifecycleBean.class.getName());
+public class DunningCourtSelectorTest {
 
-    @EJB
-    private com.jdimension.jlawyer.persistence.CourtFacadeLocal courtsFacade;
+    private final DunningCourtSelector selector = new DunningCourtSelector();
 
-    @EJB
-    private com.jdimension.jlawyer.persistence.DunningCourtRuleFacadeLocal dunningCourtRulesFacade;
-
-    @PostConstruct
-    public void initialize() {
-        // From here on the dunning courts come from this installation's master data instead of the
-        // list compiled into the software, so a firm's own correction to an address or to the
-        // assignment of a federal state takes effect without a release.
-        ReferenceData.setDunningCourtDirectory(
-                new MasterDataDunningCourtDirectory(this.courtsFacade, this.dunningCourtRulesFacade));
-
-        log.info("j-lawyer.org Server initialized");
+    private DunningCourtRule rule(String state, String courtName, String restriction) {
+        Court c = new Court();
+        c.setId("court-" + courtName);
+        c.setName(courtName);
+        DunningCourtRule r = new DunningCourtRule();
+        r.setId("rule-" + courtName + "-" + state + "-" + restriction);
+        r.setCourt(c);
+        r.setFederalState(state);
+        r.setRestriction(restriction);
+        r.setActive(true);
+        return r;
     }
 
-    @PreDestroy
-    public void terminate() {
-        // Hand the registry back its bundled implementation. What it holds now points at beans of
-        // this deployment, and those are gone in a moment; leaving them in a static would outlive
-        // the deployment that owns them.
-        ReferenceData.setDunningCourtDirectory(null);
+    private DunningCourtRule foreignRule(String courtName) {
+        DunningCourtRule r = rule(null, courtName, "Antragsteller mit Sitz im Ausland");
+        r.setForeignApplicant(true);
+        return r;
+    }
 
-        // Close the Lucene search index here (while the deployment classloader is still
-        // available) rather than via a JVM shutdown hook, which would run after undeploy
-        // and fail to lazily load Lucene classes during the final commit.
-        try {
-            org.jlawyer.search.SearchAPI.shutdownInstance();
-        } catch (Throwable t) {
-            log.error("Error closing search index during shutdown", t);
+    private List<DunningCourtRule> standardRules() {
+        return new ArrayList<>(Arrays.asList(
+                rule("Bayern", "Amtsgericht Coburg", null),
+                rule("Baden-Württemberg", "Amtsgericht Stuttgart", null),
+                rule("Nordrhein-Westfalen", "Amtsgericht Euskirchen", "OLG-Bezirk Köln"),
+                rule("Nordrhein-Westfalen", "Amtsgericht Hagen", "Im Übrigen"),
+                foreignRule("Amtsgericht Wedding")));
+    }
+
+    @Test
+    public void theCourtOfTheApplicantsStateIsProposed() {
+        DunningCourtProposal p = selector.determine(standardRules(), "Bayern", "96450", false);
+
+        assertTrue(p.isUnambiguous());
+        assertEquals("Amtsgericht Coburg", p.getDeterminedRule().getCourt().getName());
+        assertTrue("the reason has to name the provision it follows", p.getReason().contains("§ 689"));
+    }
+
+    @Test
+    public void theStateIsMatchedRegardlessOfCase() {
+        DunningCourtProposal p = selector.determine(standardRules(), "  bayern  ", null, false);
+
+        assertTrue(p.isUnambiguous());
+        assertEquals("Amtsgericht Coburg", p.getDeterminedRule().getCourt().getName());
+    }
+
+    @Test
+    public void aDividedStateReturnsBothCourtsRatherThanAGuess() {
+        DunningCourtProposal p = selector.determine(standardRules(), "Nordrhein-Westfalen", "50667", false);
+
+        assertTrue("both courts have to be offered", p.isAmbiguous());
+        assertEquals(2, p.getCandidates().size());
+        assertNull("nothing may be preselected while the choice is open", p.getDeterminedRule());
+        assertTrue("the reason has to explain why the user must choose",
+                p.getReason().contains("OLG-Bezirk"));
+        for (DunningCourtRule r : p.getCandidates()) {
+            assertTrue("each candidate has to state its restriction", r.isRestricted());
         }
-        log.info("j-lawyer.org Server terminated");
+    }
+
+    @Test
+    public void anApplicantWithoutADomesticVenueGetsTheDesignatedCourt() {
+        // the state is deliberately set as well: it must not win over the foreign-applicant rule
+        DunningCourtProposal p = selector.determine(standardRules(), "Bayern", "96450", true);
+
+        assertTrue(p.isUnambiguous());
+        assertEquals("Amtsgericht Wedding", p.getDeterminedRule().getCourt().getName());
+        assertTrue(p.getReason().contains("§ 689 Abs. 2 S. 2 ZPO"));
+    }
+
+    @Test
+    public void aStateWithoutARuleProposesNothingAndSaysSo() {
+        DunningCourtProposal p = selector.determine(standardRules(), "Helvetien", null, false);
+
+        assertTrue(p.isEmpty());
+        assertNull(p.getDeterminedRule());
+        assertTrue(p.getReason().contains("Helvetien"));
+    }
+
+    @Test
+    public void anUnknownStateIsNotTreatedAsAnApplicantAbroad() {
+        DunningCourtProposal p = selector.determine(standardRules(), null, null, false);
+
+        assertTrue("without a state nothing may be proposed", p.isEmpty());
+        assertFalse("in particular not the court for applicants seated abroad",
+                p.getReason().contains("Ausland"));
+    }
+
+    @Test
+    public void anEmptyRuleSetProposesNothing() {
+        assertTrue(selector.determine(Collections.emptyList(), "Bayern", null, false).isEmpty());
+        assertTrue(selector.determine(null, "Bayern", null, false).isEmpty());
+    }
+
+    @Test
+    public void inactiveRulesAreIgnored() {
+        List<DunningCourtRule> rules = standardRules();
+        for (DunningCourtRule r : rules) {
+            r.setActive(false);
+        }
+        assertTrue(selector.determine(rules, "Bayern", null, false).isEmpty());
+        assertTrue(selector.determine(rules, null, null, true).isEmpty());
+    }
+
+    @Test
+    public void aNumericDivisionNarrowsTheChoiceWhenItIsConfigured() {
+        List<DunningCourtRule> rules = standardRules();
+        rules.get(2).setPostalCodeFrom("50000");
+        rules.get(2).setPostalCodeTo("53999");
+        rules.get(3).setPostalCodeFrom("54000");
+        rules.get(3).setPostalCodeTo("59999");
+
+        DunningCourtProposal cologne = selector.determine(rules, "Nordrhein-Westfalen", "50667", false);
+        assertTrue("with a numeric division the court is determined", cologne.isUnambiguous());
+        assertEquals("Amtsgericht Euskirchen", cologne.getDeterminedRule().getCourt().getName());
+
+        DunningCourtProposal hagen = selector.determine(rules, "Nordrhein-Westfalen", "58095", false);
+        assertTrue(hagen.isUnambiguous());
+        assertEquals("Amtsgericht Hagen", hagen.getDeterminedRule().getCourt().getName());
+    }
+
+    @Test
+    public void aPostcodeOutsideEveryRangeFallsBackToTheWholeState() {
+        List<DunningCourtRule> rules = standardRules();
+        rules.get(2).setPostalCodeFrom("50000");
+        rules.get(2).setPostalCodeTo("53999");
+        rules.get(3).setPostalCodeFrom("54000");
+        rules.get(3).setPostalCodeTo("59999");
+
+        // a postcode nobody configured must leave the user with the candidates, not with nothing
+        DunningCourtProposal p = selector.determine(rules, "Nordrhein-Westfalen", "99999", false);
+
+        assertTrue(p.isAmbiguous());
+        assertEquals(2, p.getCandidates().size());
+    }
+
+    @Test
+    public void withoutAPostcodeADivisionCannotNarrowAnything() {
+        List<DunningCourtRule> rules = standardRules();
+        rules.get(2).setPostalCodeFrom("50000");
+        rules.get(2).setPostalCodeTo("53999");
+
+        DunningCourtProposal p = selector.determine(rules, "Nordrhein-Westfalen", null, false);
+
+        assertTrue("an unknown postcode must not silently pick one of the courts", p.isAmbiguous());
+    }
+
+    @Test
+    public void theOutcomeDoesNotDependOnTheOrderTheRulesArriveIn() {
+        List<DunningCourtRule> rules = standardRules();
+        Collections.reverse(rules);
+
+        DunningCourtProposal p = selector.determine(rules, "Bayern", null, false);
+        assertTrue(p.isUnambiguous());
+        assertEquals("Amtsgericht Coburg", p.getDeterminedRule().getCourt().getName());
+
+        List<DunningCourtRule> forward = standardRules();
+        List<String> a = new ArrayList<>();
+        for (DunningCourtRule r : selector.determine(forward, "Nordrhein-Westfalen", null, false).getCandidates()) {
+            a.add(r.getCourt().getName());
+        }
+        List<String> b = new ArrayList<>();
+        for (DunningCourtRule r : selector.determine(rules, "Nordrhein-Westfalen", null, false).getCandidates()) {
+            b.add(r.getCourt().getName());
+        }
+        assertEquals("the candidates must come back in a stable order", a, b);
+    }
+
+    @Test
+    public void aRuleWithoutARangeCoversEveryPostcode() {
+        DunningCourtRule r = rule("Bayern", "Amtsgericht Coburg", null);
+
+        assertFalse(r.hasPostalCodeRange());
+        assertTrue(r.coversPostalCode("96450"));
+        assertTrue(r.coversPostalCode(null));
+    }
+
+    @Test
+    public void aRangeIncludesItsBoundaries() {
+        DunningCourtRule r = rule("Bayern", "Amtsgericht Coburg", null);
+        r.setPostalCodeFrom("50000");
+        r.setPostalCodeTo("53999");
+
+        assertTrue(r.coversPostalCode("50000"));
+        assertTrue(r.coversPostalCode("53999"));
+        assertFalse(r.coversPostalCode("49999"));
+        assertFalse(r.coversPostalCode("54000"));
+        assertFalse("a rule with a range cannot cover an unknown postcode", r.coversPostalCode(null));
     }
 }

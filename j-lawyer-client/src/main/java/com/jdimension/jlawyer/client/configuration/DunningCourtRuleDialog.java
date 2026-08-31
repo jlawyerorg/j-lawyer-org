@@ -1,5 +1,4 @@
-/*                    
-                GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -83,25 +82,19 @@ permission, would make you directly or secondarily liable for
 infringement under applicable copyright law, except executing it on a
 computer or modifying a private copy.  Propagation includes copying,
 distribution (with or without modification), making available to the
-public
-
-, and in some countries other activities as well.
+public, and in some countries other activities as well.
 
   To "convey" a work means any kind of propagation that enables other
 parties to make or receive copies.  Mere interaction with a user through
 a computer network, with no transfer of a copy, is not conveying.
 
-  An interactive user interface displays 
-
-"Appropriate Legal Notices"
+  An interactive user interface displays "Appropriate Legal Notices"
 to the extent that it includes a convenient and prominently visible
 feature that (1) displays an appropriate copyright notice, and (2)
 tells the user that there is no warranty for the work (except to the
 extent that warranties are provided), that licensees may convey the
 work under this License, and how to view a copy of this License.  If
-the interface presents 
-
-a list of user commands or options, such as a
+the interface presents a list of user commands or options, such as a
 menu, a prominent item in the list meets this criterion.
 
   1. Source Code.
@@ -110,8 +103,7 @@ menu, a prominent item in the list meets this criterion.
 for making modifications to it.  "Object code" means any non-source
 form of a work.
 
-  A "Standard Interface" means an interface that 
-either is an official
+  A "Standard Interface" means an interface that either is an official
 standard defined by a recognized standards body, or, in the case of
 interfaces specified for a particular programming language, one that
 is widely used among developers working in that language.
@@ -121,9 +113,7 @@ than the work as a whole, that (a) is included in the normal form of
 packaging a Major Component, but which is not part of that Major
 Component, and (b) serves only to enable use of the work with that
 Major Component, or to implement a Standard Interface for which an
-implementation is available to the public in 
-
-source code form.  A
+implementation is available to the public in source code form.  A
 "Major Component", in this context, means a major essential component
 (kernel, window system, and so on) of the specific operating system
 (if any) on which the executable work runs, or a compiler used to
@@ -136,8 +126,7 @@ control those activities.  However, it does not include the work's
 System Libraries, or general-purpose tools or generally available free
 programs which are used unmodified in performing those activities but
 which are not part of the work.  For example, Corresponding Source
-includes interface definition 
-files associated with source files for
+includes interface definition files associated with source files for
 the work, and the source code for shared libraries and dynamically
 linked subprograms that the work is specifically designed to require,
 such as by intimate data communication or control flow between those
@@ -286,9 +275,7 @@ in one of these ways:
 
     e) Convey the object code using peer-to-peer transmission, provided
     you inform other peers where the object code and Corresponding
-    Source of the work are being offered to the general public at 
-
-no
+    Source of the work are being offered to the general public at no
     charge under subsection 6d.
 
   A separable portion of the object code, whose source code is excluded
@@ -301,8 +288,7 @@ or household purposes, or (2) anything designed or sold for incorporation
 into a dwelling.  In determining whether a product is a consumer product,
 doubtful cases shall be resolved in favor of coverage.  For a particular
 product received by a particular user, "normally used" refers to a
-typical or common use of that class of 
-product, regardless of the status
+typical or common use of that class of product, regardless of the status
 of the particular user or of the way in which the particular user
 actually uses, or expects or is expected to use, the product.  A product
 is a consumer product regardless of whether the product has substantial
@@ -652,9 +638,7 @@ the "copyright" line and a pointer to where the full notice is found.
     (at your option) any later version.
 
     This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without 
-
-even the implied warranty of
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Affero General Public License for more details.
 
@@ -666,8 +650,7 @@ Also add information on how to contact you by electronic and paper mail.
   If your software can interact with users remotely through a computer
 network, you should also make sure that it provides a way for users to
 get its source.  For example, if your program is a web application, its
-interface could 
-display a "Source" link that leads users to an archive
+interface could display a "Source" link that leads users to an archive
 of the code.  There are many ways you could offer source, and different
 solutions will be better for different programs; see section 13 for the
 specific requirements.
@@ -676,62 +659,419 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
+ */
+package com.jdimension.jlawyer.client.configuration;
 
-package com.jdimension.jlawyer.services;
-
-
-
-import com.jdimension.jlawyer.referencedata.ReferenceData;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.ejb.EJB;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.persistence.Court;
+import com.jdimension.jlawyer.persistence.DunningCourtRule;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.util.List;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
 /**
+ * Creates or changes one rule assigning a dunning court to applicants.
+ *
+ * Only courts carrying the dunning scope are offered, because a rule pointing at a court that is
+ * not a dunning court can never produce a usable application.
+ *
+ * The restriction is free text on purpose. Where a federal state is divided between two courts the
+ * division follows the OLG district, which the system cannot evaluate; it therefore shows both
+ * candidates with their restriction and lets the user choose. The postcode range next to it is for
+ * a firm that can express its own division numerically - filling it in turns the choice into a
+ * determination.
  *
  * @author jens
  */
-@Startup
-@Singleton
-public class ContainerLifecycleBean implements ContainerLifecycleBeanRemote, ContainerLifecycleBeanLocal {
-    
-    private static Logger log = Logger.getLogger(ContainerLifecycleBean.class.getName());
+public class DunningCourtRuleDialog extends javax.swing.JDialog {
 
-    @EJB
-    private com.jdimension.jlawyer.persistence.CourtFacadeLocal courtsFacade;
+    private static final Logger log = Logger.getLogger(DunningCourtRuleDialog.class.getName());
 
-    @EJB
-    private com.jdimension.jlawyer.persistence.DunningCourtRuleFacadeLocal dunningCourtRulesFacade;
+    private DunningCourtRule rule = null;
+    private boolean saved = false;
 
-    @PostConstruct
-    public void initialize() {
-        // From here on the dunning courts come from this installation's master data instead of the
-        // list compiled into the software, so a firm's own correction to an address or to the
-        // assignment of a federal state takes effect without a release.
-        ReferenceData.setDunningCourtDirectory(
-                new MasterDataDunningCourtDirectory(this.courtsFacade, this.dunningCourtRulesFacade));
-
-        log.info("j-lawyer.org Server initialized");
+    /**
+     * Creates the dialog.
+     *
+     * @param parent the parent frame
+     * @param modal whether the dialog is modal
+     * @param rule the rule to edit, or null to create a new one
+     */
+    public DunningCourtRuleDialog(java.awt.Frame parent, boolean modal, DunningCourtRule rule) {
+        super(parent, modal);
+        initComponents();
+        this.rule = rule;
+        loadCourts();
+        showRule();
     }
 
-    @PreDestroy
-    public void terminate() {
-        // Hand the registry back its bundled implementation. What it holds now points at beans of
-        // this deployment, and those are gone in a moment; leaving them in a static would outlive
-        // the deployment that owns them.
-        ReferenceData.setDunningCourtDirectory(null);
+    /**
+     * @return whether the user saved, so the caller knows to refresh
+     */
+    public boolean isSaved() {
+        return saved;
+    }
 
-        // Close the Lucene search index here (while the deployment classloader is still
-        // available) rather than via a JVM shutdown hook, which would run after undeploy
-        // and fail to lazily load Lucene classes during the final commit.
-        try {
-            org.jlawyer.search.SearchAPI.shutdownInstance();
-        } catch (Throwable t) {
-            log.error("Error closing search index during shutdown", t);
+    /**
+     * @return the rule as it was stored, or null if the user cancelled
+     */
+    public DunningCourtRule getRule() {
+        return rule;
+    }
+
+    private static String nz(String s) {
+        return s == null ? "" : s;
+    }
+
+    private static String trimToNull(String s) {
+        if (s == null) {
+            return null;
         }
-        log.info("j-lawyer.org Server terminated");
+        String t = s.trim();
+        return t.isEmpty() ? null : t;
     }
+
+    private void loadCourts() {
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<Court> courts = locator.lookupCourtServiceRemote()
+                    .getCourtsByScope(com.jdimension.jlawyer.persistence.CourtScopeType.DUNNING);
+            this.cmbCourt.setModel(new DefaultComboBoxModel(courts.toArray()));
+            if (courts.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "Es ist kein Gericht mit der Zuständigkeit \"Mahngericht\" hinterlegt.\n"
+                        + "Legen Sie zuerst unter Einstellungen - Finanzen - Gerichte ein solches an.",
+                        "Kein Mahngericht vorhanden", JOptionPane.WARNING_MESSAGE);
+            }
+        } catch (Exception ex) {
+            log.error("Unable to load dunning courts", ex);
+            JOptionPane.showMessageDialog(this, "Die Gerichte konnten nicht geladen werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void showRule() {
+        if (this.rule == null) {
+            this.chkActive.setSelected(true);
+            this.txtSequenceNumber.setText("0");
+            return;
+        }
+        if (this.rule.getCourt() != null) {
+            for (int i = 0; i < this.cmbCourt.getItemCount(); i++) {
+                Court c = (Court) this.cmbCourt.getItemAt(i);
+                if (c != null && c.getId().equals(this.rule.getCourt().getId())) {
+                    this.cmbCourt.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
+        this.txtFederalState.setText(nz(this.rule.getFederalState()));
+        this.chkForeignApplicant.setSelected(this.rule.isForeignApplicant());
+        this.txtRestriction.setText(nz(this.rule.getRestriction()));
+        this.txtPostalCodeFrom.setText(nz(this.rule.getPostalCodeFrom()));
+        this.txtPostalCodeTo.setText(nz(this.rule.getPostalCodeTo()));
+        this.txtAcceptedChannels.setText(nz(this.rule.getAcceptedChannels()));
+        this.chkRequiresOwnKennziffer.setSelected(this.rule.isRequiresOwnKennziffer());
+        this.chkDirectDebitNationwide.setSelected(this.rule.isDirectDebitNationwide());
+        this.txtSequenceNumber.setText(String.valueOf(this.rule.getSequenceNumber()));
+        this.chkActive.setSelected(this.rule.isActive());
+        this.txtNotes.setText(nz(this.rule.getNotes()));
+    }
+
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        lbl_cmbCourt = new javax.swing.JLabel();
+        cmbCourt = new javax.swing.JComboBox();
+        lbl_txtFederalState = new javax.swing.JLabel();
+        txtFederalState = new javax.swing.JTextField();
+        lbl_chkForeignApplicant = new javax.swing.JLabel();
+        chkForeignApplicant = new javax.swing.JCheckBox();
+        lbl_txtRestriction = new javax.swing.JLabel();
+        txtRestriction = new javax.swing.JTextField();
+        lbl_txtPostalCodeFrom = new javax.swing.JLabel();
+        txtPostalCodeFrom = new javax.swing.JTextField();
+        lbl_txtPostalCodeTo = new javax.swing.JLabel();
+        txtPostalCodeTo = new javax.swing.JTextField();
+        lbl_txtAcceptedChannels = new javax.swing.JLabel();
+        txtAcceptedChannels = new javax.swing.JTextField();
+        lbl_chkRequiresOwnKennziffer = new javax.swing.JLabel();
+        chkRequiresOwnKennziffer = new javax.swing.JCheckBox();
+        lbl_chkDirectDebitNationwide = new javax.swing.JLabel();
+        chkDirectDebitNationwide = new javax.swing.JCheckBox();
+        lbl_txtSequenceNumber = new javax.swing.JLabel();
+        txtSequenceNumber = new javax.swing.JTextField();
+        lbl_chkActive = new javax.swing.JLabel();
+        chkActive = new javax.swing.JCheckBox();
+        lbl_txtNotes = new javax.swing.JLabel();
+        scr_txtNotes = new javax.swing.JScrollPane();
+        txtNotes = new javax.swing.JTextArea();
+        cmdSave = new javax.swing.JButton();
+        cmdCancel = new javax.swing.JButton();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Mahngerichts-Zuordnung");
+
+        lbl_cmbCourt.setText("Mahngericht:");
+        lbl_txtFederalState.setText("Bundesland:");
+        lbl_chkForeignApplicant.setText("Antragsteller ohne inländischen Gerichtsstand:");
+        chkForeignApplicant.setText("");
+        lbl_txtRestriction.setText("Einschränkung (z. B. OLG-Bezirk):");
+        lbl_txtPostalCodeFrom.setText("PLZ von:");
+        lbl_txtPostalCodeTo.setText("PLZ bis:");
+        lbl_txtAcceptedChannels.setText("Einreichungswege (mit ; getrennt):");
+        lbl_chkRequiresOwnKennziffer.setText("eigene Kennziffer erforderlich:");
+        chkRequiresOwnKennziffer.setText("");
+        lbl_chkDirectDebitNationwide.setText("Lastschrift bundesweit anzumelden:");
+        chkDirectDebitNationwide.setText("");
+        lbl_txtSequenceNumber.setText("Reihenfolge:");
+        lbl_chkActive.setText("Regel anwenden:");
+        chkActive.setText("");
+        lbl_txtNotes.setText("Notiz:");
+        txtNotes.setColumns(20);
+        txtNotes.setRows(4);
+        txtNotes.setLineWrap(true);
+        txtNotes.setWrapStyleWord(true);
+        scr_txtNotes.setViewportView(txtNotes);
+
+        cmdSave.setText("Speichern");
+        cmdSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveActionPerformed(evt);
+            }
+        });
+        cmdCancel.setText("Abbrechen");
+        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCancelActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(lbl_cmbCourt, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lbl_txtFederalState, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lbl_chkForeignApplicant, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lbl_txtRestriction, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lbl_txtPostalCodeFrom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lbl_txtPostalCodeTo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lbl_txtAcceptedChannels, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lbl_chkRequiresOwnKennziffer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lbl_chkDirectDebitNationwide, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lbl_txtSequenceNumber, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lbl_chkActive, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lbl_txtNotes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        )
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cmbCourt, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE)
+                            .addComponent(txtFederalState, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE)
+                            .addComponent(chkForeignApplicant, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE)
+                            .addComponent(txtRestriction, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE)
+                            .addComponent(txtPostalCodeFrom, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE)
+                            .addComponent(txtPostalCodeTo, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE)
+                            .addComponent(txtAcceptedChannels, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE)
+                            .addComponent(chkRequiresOwnKennziffer, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE)
+                            .addComponent(chkDirectDebitNationwide, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE)
+                            .addComponent(txtSequenceNumber, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE)
+                            .addComponent(chkActive, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE)
+                            .addComponent(scr_txtNotes, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE)
+                        ))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdSave)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdCancel)
+                    ))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lbl_cmbCourt)
+                    .addComponent(cmbCourt))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lbl_txtFederalState)
+                    .addComponent(txtFederalState, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lbl_chkForeignApplicant)
+                    .addComponent(chkForeignApplicant))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lbl_txtRestriction)
+                    .addComponent(txtRestriction, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lbl_txtPostalCodeFrom)
+                    .addComponent(txtPostalCodeFrom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lbl_txtPostalCodeTo)
+                    .addComponent(txtPostalCodeTo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lbl_txtAcceptedChannels)
+                    .addComponent(txtAcceptedChannels, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lbl_chkRequiresOwnKennziffer)
+                    .addComponent(chkRequiresOwnKennziffer))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lbl_chkDirectDebitNationwide)
+                    .addComponent(chkDirectDebitNationwide))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lbl_txtSequenceNumber)
+                    .addComponent(txtSequenceNumber, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lbl_chkActive)
+                    .addComponent(chkActive))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lbl_txtNotes)
+                    .addComponent(scr_txtNotes, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdSave)
+                    .addComponent(cmdCancel)
+                )
+                .addContainerGap())
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+
+        Court court = (Court) this.cmbCourt.getSelectedItem();
+        if (court == null) {
+            JOptionPane.showMessageDialog(this, "Bitte wählen Sie ein Mahngericht aus.",
+                    "Gericht fehlt", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        boolean foreign = this.chkForeignApplicant.isSelected();
+        String state = trimToNull(this.txtFederalState.getText());
+        if (!foreign && state == null) {
+            JOptionPane.showMessageDialog(this,
+                    "Eine Regel braucht ein Bundesland - oder sie gilt für Antragsteller ohne\n"
+                    + "inländischen Gerichtsstand (§ 689 Abs. 2 S. 2 ZPO). Ohne beides greift sie nie.",
+                    "Auswahlschlüssel fehlt", JOptionPane.WARNING_MESSAGE);
+            this.txtFederalState.requestFocus();
+            return;
+        }
+
+        String from = trimToNull(this.txtPostalCodeFrom.getText());
+        String to = trimToNull(this.txtPostalCodeTo.getText());
+        if ((from == null) != (to == null)) {
+            JOptionPane.showMessageDialog(this,
+                    "Ein PLZ-Bereich braucht beide Grenzen. Mit nur einer Grenze wäre unklar,\n"
+                    + "welche Postleitzahlen die Regel erfasst - lassen Sie beide leer, wenn die\n"
+                    + "Regel für das ganze Bundesland gilt.",
+                    "PLZ-Bereich unvollständig", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (from != null && from.compareTo(to) > 0) {
+            JOptionPane.showMessageDialog(this, "Die untere PLZ-Grenze liegt über der oberen.",
+                    "PLZ-Bereich ungültig", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int sequence = 0;
+        try {
+            String seq = trimToNull(this.txtSequenceNumber.getText());
+            sequence = seq == null ? 0 : Integer.parseInt(seq);
+        } catch (NumberFormatException nfe) {
+            JOptionPane.showMessageDialog(this, "Die Reihenfolge muss eine ganze Zahl sein.",
+                    "Reihenfolge ungültig", JOptionPane.WARNING_MESSAGE);
+            this.txtSequenceNumber.requestFocus();
+            return;
+        }
+
+        DunningCourtRule edited = this.rule == null ? new DunningCourtRule() : this.rule;
+        edited.setCourt(court);
+        // a rule for applicants seated abroad is selected by that alone; a state on it would only
+        // suggest a second, competing key
+        edited.setFederalState(foreign ? null : state);
+        edited.setForeignApplicant(foreign);
+        edited.setRestriction(trimToNull(this.txtRestriction.getText()));
+        edited.setPostalCodeFrom(from);
+        edited.setPostalCodeTo(to);
+        edited.setAcceptedChannels(trimToNull(this.txtAcceptedChannels.getText()));
+        edited.setRequiresOwnKennziffer(this.chkRequiresOwnKennziffer.isSelected());
+        edited.setDirectDebitNationwide(this.chkDirectDebitNationwide.isSelected());
+        edited.setSequenceNumber(sequence);
+        edited.setActive(this.chkActive.isSelected());
+        edited.setNotes(trimToNull(this.txtNotes.getText()));
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            if (edited.getId() == null) {
+                this.rule = locator.lookupDunningCourtRuleServiceRemote().addRule(edited);
+            } else {
+                this.rule = locator.lookupDunningCourtRuleServiceRemote().updateRule(edited);
+            }
+            this.saved = true;
+            this.setVisible(false);
+            this.dispose();
+        } catch (Exception ex) {
+            log.error("Unable to save dunning court rule", ex);
+            JOptionPane.showMessageDialog(this, "Die Regel konnte nicht gespeichert werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdSaveActionPerformed
+
+    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
+        this.saved = false;
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdCancelActionPerformed
+
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdCancel;
+    private javax.swing.JButton cmdSave;
+    private javax.swing.JCheckBox chkActive;
+    private javax.swing.JCheckBox chkDirectDebitNationwide;
+    private javax.swing.JCheckBox chkForeignApplicant;
+    private javax.swing.JCheckBox chkRequiresOwnKennziffer;
+    private javax.swing.JComboBox cmbCourt;
+    private javax.swing.JLabel lbl_chkActive;
+    private javax.swing.JLabel lbl_chkDirectDebitNationwide;
+    private javax.swing.JLabel lbl_chkForeignApplicant;
+    private javax.swing.JLabel lbl_chkRequiresOwnKennziffer;
+    private javax.swing.JLabel lbl_cmbCourt;
+    private javax.swing.JLabel lbl_txtAcceptedChannels;
+    private javax.swing.JLabel lbl_txtFederalState;
+    private javax.swing.JLabel lbl_txtNotes;
+    private javax.swing.JLabel lbl_txtPostalCodeFrom;
+    private javax.swing.JLabel lbl_txtPostalCodeTo;
+    private javax.swing.JLabel lbl_txtRestriction;
+    private javax.swing.JLabel lbl_txtSequenceNumber;
+    private javax.swing.JScrollPane scr_txtNotes;
+    private javax.swing.JTextArea txtNotes;
+    private javax.swing.JTextField txtAcceptedChannels;
+    private javax.swing.JTextField txtFederalState;
+    private javax.swing.JTextField txtPostalCodeFrom;
+    private javax.swing.JTextField txtPostalCodeTo;
+    private javax.swing.JTextField txtRestriction;
+    private javax.swing.JTextField txtSequenceNumber;
+    // End of variables declaration//GEN-END:variables
 }

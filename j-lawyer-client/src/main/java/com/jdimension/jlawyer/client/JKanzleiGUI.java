@@ -1306,6 +1306,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuFinance = new javax.swing.JMenu();
         mnuDunningStages = new javax.swing.JMenuItem();
         mnuCourts = new javax.swing.JMenuItem();
+        mnuDunningCourtRules = new javax.swing.JMenuItem();
         mnuInvoicePools = new javax.swing.JMenuItem();
         mnuInvoiceTypes = new javax.swing.JMenuItem();
         mnuInvoiceCurrencies = new javax.swing.JMenuItem();
@@ -2054,6 +2055,17 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuFinance.add(mnuCourts);
+
+        mnuDunningCourtRules.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/account_balance_20dp_0E72B5_FILL0_wght400_GRAD0_opsz20.png"))); // NOI18N
+        mnuDunningCourtRules.setText("Mahngerichts-Zuordnung");
+        mnuDunningCourtRules.setToolTipText("welches Mahngericht für welchen Antragsteller zuständig ist");
+        mnuDunningCourtRules.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDunningCourtRulesActionPerformed(evt);
+            }
+        });
+        mnuFinance.add(mnuDunningCourtRules);
+
 
 
         mnuOptions.add(mnuFinance);
@@ -3200,6 +3212,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuStirlingPdfActionPerformed
 
+    private void mnuDunningCourtRulesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDunningCourtRulesActionPerformed
+
+        if (checkAdmin()) {
+            DunningCourtRulesConfigurationDialog dlg = new DunningCourtRulesConfigurationDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
+    }//GEN-LAST:event_mnuDunningCourtRulesActionPerformed
+
     private void mnuCourtsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCourtsActionPerformed
 
         if (checkAdmin()) {
@@ -3346,6 +3367,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuExportSyncedCases;
     private javax.swing.JMenu mnuFile;
     private javax.swing.JMenuItem mnuCourts;
+    private javax.swing.JMenuItem mnuDunningCourtRules;
     private javax.swing.JMenuItem mnuDunningStages;
     private javax.swing.JMenu mnuFinance;
     private javax.swing.JMenuItem mnuFontSize;
