@@ -84,7 +84,11 @@
 - [ ] 3.1 `DunningCase` entity, status model and history with migration
 - [ ] 3.2 Court directory: `courts` and `court_scopes` with migration, service and remote interface
       (English JavaDoc), administration UI (+ `.form`) and the repeatable seed from 0.2, matched on
-      the XJustiz identifier
+      the XJustiz identifier. This is where the court reference data stops being carried in code:
+      `BundledDunningCourtDirectory` becomes the seed, and a `DunningCourtDirectory` implementation
+      reading the master data replaces it in `ReferenceData`. Keep the responsibility list,
+      including the division of North Rhine-Westphalia along the OLG district of Cologne and the
+      assignment of applicants seated abroad — a schema assuming one court per state would lose it
 - [ ] 3.3 Dunning rule table over the directory (selection key incl. OLG district / postal-code
       range, special-rule marker, channels, Kennziffer and direct-debit flags) and the § 689
       Abs. 2, 3 ZPO derivation with manual override
@@ -103,7 +107,10 @@
       status timeline, message import) (+ `.form` files)
 - [ ] 3.11 `com.jdimension.jlawyer.eda` core: data-driven record layouts (field, offset, length,
       type), the 128-byte fixed-length writer and parser, `AA`/`BB` framing and the CP-850 codec
-      that refuses unencodable characters
+      that refuses unencodable characters. The Satzbeschreibungen are published as PDFs at
+      https://www.mahngerichte.de/publikationen/eda-konditionen/ — freely downloadable, individually
+      and as one archive, without registration; only the barcode application is tied to the test and
+      approval procedure of 0.5
 - [ ] 3.12 EDA mapper for the Mahnbescheid application (record type `01`, format 4.0.00): key
       record, parties and their representatives, catalogued claims (number from 1.5, with the
       additional record each special number demands) and free-text claims, running and already
@@ -160,20 +167,15 @@
       tables, reminder stages and form templates
 - [ ] 5.6 End-to-end test: claim → reminder → Mahnbescheid → Vollstreckungsbescheid → bailiff order
       → PfÜB → payments → statement, verifying bookings, deadlines and documents
-- [ ] 5.7 Revisit the reference data decision. The main claim catalogue, the contract types for
-      catalogue no. 28 and the dunning courts currently ship as `Bundled*` implementations behind
-      interfaces in `com.jdimension.jlawyer.referencedata`, selected in `ReferenceData`. By this
-      point the EDA approval procedure has run and it is known how often the courts actually change
-      this data and whether firms need to correct it themselves. Decide per data set whether it
-      stays in code or moves to maintainable data, and record the reasoning — the seam exists so
-      the answer can be "it stays", not only "it moves"
-- [ ] 5.8 If 5.7 so decides: replace `BundledDunningCourtDirectory` with an implementation reading
-      the court master data of the court-directory capability, so an administrator can correct an
-      address without a release. The bundled data becomes the seed, matching on the XJustiz
-      identifier so re-seeding does not duplicate. Keep the responsibility list, including the
-      division of North Rhine-Westphalia and the assignment of applicants seated abroad — a
-      database schema that assumes one court per state would lose it
-- [ ] 5.9 If 5.7 so decides: replace the bundled catalogues with a maintainable implementation and
+- [ ] 5.7 Revisit the reference data decision for the two catalogues. The main claim catalogue and
+      the contract types for catalogue no. 28 ship as `Bundled*` implementations behind interfaces
+      in `com.jdimension.jlawyer.referencedata`, selected in `ReferenceData`; the courts have
+      already moved to the master data in 3.2. By this point the EDA approval procedure has run and
+      it is known how often the courts actually change these catalogues and whether firms need to
+      correct them themselves. Decide per catalogue whether it stays in code or moves to
+      maintainable data, and record the reasoning — the seam exists so the answer can be "it
+      stays", not only "it moves"
+- [ ] 5.8 If 5.7 so decides: replace the bundled catalogues with a maintainable implementation and
       give it an update path. Since a catalogue number goes into a filed application, record which
       version of the catalogue an application was built against — `ReferenceDataSource` already
       carries origin and date for that purpose. Where the providers become injected services,

@@ -660,120 +660,62 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.referencedata;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-
 /**
- * The contract types admitted for catalogue number 28, carried in code.
+ * Reference data of the German dunning procedure, and where every value in it came from.
  *
- * The courts publish them in capitals and that spelling is kept, because it is what goes into the
- * application. The check is case-insensitive all the same, so a caller may hold the type however
- * the user typed it.
+ * Everything in this package was transcribed from what the judiciary publishes. Since these values
+ * end up in applications filed with a court, the origin of each set is recorded here as well as on
+ * the provider itself through {@link com.jdimension.jlawyer.referencedata.ReferenceDataSource}, so
+ * that a value can always be traced back and checked against its source.
  *
- * This is the provisional implementation; see {@link BundledMainClaimCatalogue} for why. Nothing
- * outside this package should depend on it - use {@link ReferenceData#getContractTypeCatalogue()}.
+ * <h2>Sources</h2>
  *
- * <h2>Source</h2>
+ * <dl>
+ * <dt>Main claim catalogue (Hauptforderungskatalog), 56 entries</dt>
+ * <dd>https://www.mahngerichte.de/verzeichnisse/katalognummern/ — retrieved 2026-08-31.
+ * Published by the Koordinierungsstelle für das automatisierte gerichtliche Mahnverfahren at the
+ * Ministry of Justice of Baden-Württemberg. Offered as an HTML table only; there is no
+ * machine-readable download. See
+ * {@link com.jdimension.jlawyer.referencedata.BundledMainClaimCatalogue} for the traps in reading
+ * it.</dd>
  *
- * https://www.mahngerichte.de/verzeichnisse/vertragsarten-zu-katalog-nr28/ — retrieved 2026-08-31;
- * the page states "Stand: 29.01.2020", which is what {@link #getSourceDate()} reports, because the
- * age of this list is more useful to a reader than the day it happened to be copied.
+ * <dt>Contract types for catalogue number 28, 278 entries</dt>
+ * <dd>https://www.mahngerichte.de/verzeichnisse/vertragsarten-zu-katalog-nr28/ — retrieved
+ * 2026-08-31, the page itself states "Stand: 29.01.2020".</dd>
  *
- * <p>A few types contain a lower-case sharp s inside an otherwise capitalised word, e.g.
- * AUSSCHLIEßLICHKEIT. That is the published spelling and it is kept: upper-casing it would turn the
- * character into SS and change the word that goes into the application.
+ * <dt>The twelve central dunning courts, and which state each serves</dt>
+ * <dd>https://www.mahngerichte.de/mahngerichte/ for the assignment of the federal states, and one
+ * page per court below it (e.g. https://www.mahngerichte.de/mahngerichte/stuttgart/) for
+ * addresses, telephone, fax, e-mail, web address and accepted channels — all retrieved
+ * 2026-08-31.</dd>
+ *
+ * <dt>XJustiz court identifiers</dt>
+ * <dd>Code list {@code urn:xoev-de:xjustiz:codeliste:gds.gerichte}, version 3.5, published by the
+ * BLK-AG IT-Standards in der Justiz in the XRepository of KoSIT:
+ * https://www.xrepository.de/details/urn:xoev-de:xjustiz:codeliste:gds.gerichte — the machine
+ * readable form used was
+ * https://www.xrepository.de/api/xrepository/urn:xoev-de:xjustiz:codeliste:gds.gerichte_3.5/download/GDS.Gerichte_3.5.json
+ * (2566 entries, retrieved 2026-08-31; also offered as Genericode XML, XLSX and Markdown).
+ *
+ * <p>Two properties of that list shaped this package. It carries exactly two columns, {@code code}
+ * and {@code wert} — an identifier and a name, and <em>no addresses</em>; postcode and place had to
+ * come from the court pages above, which matters because the EDA application addresses the court by
+ * exactly those two. And it contains test entries such as {@code 9A0000 "ZZ Test-Bund"}, which have
+ * no place in production data.</p>
+ *
+ * <p>The list is a code list of type 3: the XSD shipped with XJustiz
+ * ({@code xjustiz/XJustiz 3.5.1 XSD/xjustiz_0020_cl_gerichte_3_3.xsd} in this repository) declares
+ * the type but contains no enumeration values at all, and refers to the XRepository instead. The
+ * values therefore cannot be generated from the schema files.</p></dd>
+ * </dl>
+ *
+ * <h2>Keeping it current</h2>
+ *
+ * None of these sources offers a feed, so a change is noticed only by looking. Where a source
+ * states its own date it is carried through to {@code getSourceDate()}; otherwise that method
+ * reports when the data was taken. Whether these sets stay in code or move to maintainable data is
+ * decided again later in the plan — see the tasks of the change {@code add-dunning-and-enforcement}.
  *
  * @author jens
  */
-public class BundledContractTypeCatalogue implements ContractTypeCatalogue {
-
-    private static final List<String> TYPES = Collections.unmodifiableList(Arrays.asList(
-            "ABÄNDERUNG", "ABBRUCH", "ABFINDUNG", "ABHOLZUNG", "ABONNEMENT", "ABTRETUNG", "AGENTUR",
-            "ANLAGEBERATUNGS", "ANLAGEN", "ANLERN", "ANLIEFERUNG", "ANSTELLUNG", "ANWALT", "ANZEIGEN",
-            "ARBEITNEHMERÜBERLASSUNG", "ARCHITEKTEN", "ARZT", "AUFBAU", "AUFHEBUNG", "AUFTRAG",
-            "AUFWERTUNG", "AUSBILDUNG", "AUSEINANDERSETZUNG", "AUSKUNFT", "AUSKUNFTEI",
-            "AUSKUNFTSERTEILUNG", "AUSSCHLIEßLICHKEIT", "AUTOMATENAUFSTELL", "AUTOMIET", "AUTOVERMIETUNG",
-            "BANKVERTRAG", "BANKGARANTIE", "BARKAUF", "BASSIN", "BAU", "BAUBETREUUNG",
-            "BAUBEVOLLMÄCHTIGUNG", "BAUFINANZIERUNGS", "BAUSPAR", "BAUTRÄGER", "BEFÖRDERUNG",
-            "BEHANDLUNGS", "BEHERBERGUNG", "BELEGARZT", "BENUTZUNGS", "BERATER", "BERATUNG", "BERGUNG",
-            "BETREUER-BAUHERRN", "BEVOLLMÄCHTIGUNG", "BEWACHUNG", "BEWERBER", "BEWIRTUNGS", "BIERBEZUG",
-            "BIERLIEFERUNG", "BORDELL", "BRAUEREI", "BUEHNENAUFFUEHRUNG", "BÜRGSCHAFT", "CHARTER",
-            "CONTROLLING", "COOPERATIONS", "COPRODUKTIONS", "DARLEHEN", "DARLEHNSVERMITTL.",
-            "DAUERNUTZUNGS", "DECK", "DEPOT", "DIENST", "DIENSTLEISTUNG", "DIENSTVERSCHAFFUNG", "DRESCH",
-            "EHE", "EHEMÄKLER", "EHEMAKLER", "EIGENHÄNDLER", "ENERGIELIEFER", "ENERGIELIEFERUNG",
-            "ENTTRÜMMERUNG", "ERB", "ERBAUSEINANDERSETZUNG", "ERBVERZICHT", "ERFÜLLUNG", "FACTORING",
-            "FERNLEHR", "FERNSCHREIBANLAGEMIET", "FERNSCHREIBMIET", "FERNSPRECHANLAGEMIET",
-            "FERNSPRECHANLAGEN", "FERNSPRECHANLAGENMIET", "FERNSPRECHMIET", "FILMBEZUG", "FILMMIET",
-            "FILMVERWERTUNG", "FINANZ", "FINANZIERUNGSVERM.", "FLUCHTHILFE", "FLUGGASTBEFÖRDERUNGS",
-            "FRACHT", "FRANCHISING", "GARANTIE", "GASTAUFNAHME", "GEBÄUDEREINIGUNG", "GEBIETSLEITER",
-            "GEBRAUCHSÜBERLASSUNG", "GERÄTEMIET", "GESCHÄFTSBESORGUNG", "GESCHÄFTSÜBERNAHME",
-            "GESELLSCHAFT", "GETRÄNKELIEFERUNG", "GEWÄHR", "GEWAEHRUNGS", "GIRO", "GRABPFLEGE",
-            "GRUNDSCHULDBESTELLUNG", "GRUNDSTÜCK", "GRUNDSTÜCKSERWERB", "GRUNDSTÜCKSKAUF",
-            "GRUNDSTUECKSVERAEUßER", "GUTACHTEN", "GUTSÜBERNAHME", "VERTRAGSHÄNDLER", "HANDELSVERTRETER",
-            "HAUSMEISTER", "HEIMPFLEGE", "HEUERLING", "HOFÜBERGABE", "HYPOTHEKENBESTELLUNG",
-            "IMMOBILIENBETEILIGUNG", "INGENIEUR", "JAHRESKARTENABONNEMENT", "KAUF", "KAUFANWÄRTER",
-            "KEHRWOCHEN", "KFZ-KAUF", "KFZ-MIET", "KNOW-HOW", "KOMMISSION", "KONNOSSEMENT", "KONTO",
-            "KONTOKORRENT", "KOOPERATIONS", "KREDIT", "KREDITERÖFFNUNG", "KREDITKARTEN", "KREDITSICHERUNG",
-            "KREDITVERMITTLUNGS", "KUNSTVERLAG", "LABEL", "LAGER", "LAGERHALTUNG", "LEASING",
-            "LEBENSVERSICHERUNG", "LEHR", "LEHRLING", "LEIBRENTEN", "LEIH", "LEISTUNGS- U. GETRÄNKEBEZUGS",
-            "LIEFERUNG", "LIZENZ", "LOGISTIK", "LOTTO", "LUFTBEFÖRDERUNG", "LUFTFRACHT", "MÄKLER",
-            "MAKLER", "MIET", "MIET.U.DIENSTL.", "MIET- U.DIENSTLEIST.-", "MIETKAUF", "MIETOPTION",
-            "MIETVOR", "MIET- U. WARTUNGS", "MITGLIEDSCHAFT", "MITWIRKUNG", "MOBILFUNK", "MUSIKVERLAG",
-            "NACHRICHTENBESCHAFFUN", "NAHVERKEHRS-VERSICHER", "NUTZUNGS", "PACHT", "PARTNERSCHAFTS",
-            "PARZELLIERUNG", "PASSAGIER", "PFANDHALTER", "PKW-KAUF", "PKW-MIET", "POSTSCHECK",
-            "PROSPEKTHAFTUNG", "PROVISION", "RATENKAUF", "RATENSPAR", "REINIGUNGS", "REISE", "REISEBÜRO",
-            "REISEVERMITTLUNG", "REPARATUR", "SAMMELBESTELL", "SAMMELBESTELLER", "SCHENKUNG", "SCHIEDS",
-            "SCHIEDSGUTACHTER", "SCHIEDSRICHTER", "SCHLEPP", "SCHRANKFACH", "SCHULD", "SCHULDMITÜBERNAHME",
-            "SCHULDUEBERNAHME", "SEEFRACHT", "SERVICE", "SIEDLER", "SPAR", "SPEDITION",
-            "STADTBÜCHEREILEIH", "STEUERBERATUNGS", "STROMLIEFERUNG", "STUECKGUT", "SUKZESSIVVERTRAG",
-            "SUKZESSIVLIEFERUNG", "TANKSTELLEN", "TARIF", "TAUSCH", "TEILAUSEINANDERSETZUN",
-            "TEILLIEFERUNG", "TELEFON-MIET", "TELEKOMMUNIKATIONS", "TIERHALTERHAFTUNG", "TIERHALTUNGS",
-            "TOTO", "TOURISTIK", "TRÄGER-BAU", "TRAEGER-BEWERBER", "TRÄGER-SIEDLER", "TRAININGS",
-            "TRANSPORT", "TREUHAND", "UEBERGABE", "ÜBERLASSUNG", "UMTAUSCH", "UNTERHALT",
-            "UNTERHALTSABFINDUNG", "UNTERLASSUNG", "UNTERMIET", "VERÄUßERUNG", "VERFÜGUNGSUNTERLASSUN",
-            "VERKEHRS", "VERLAG", "VERMÄCHTNIS", "VERMITTLUNGS", "VERMÖGENSBETREUUNG", "VERSENDUNGSKAUF -",
-            "VERSICHERUNG", "VERSICHERUNGSVERM.", "VERSORGUNGS", "VERTRETER", "VERWAHRUNG",
-            "VIDEOFILMMIET", "VIDEOMIET", "VIDEO-MIETKASSETTEN", "VIEHMAST", "VOB.",
-            "VOLLKASKO-HAFTPFLICHT", "VOR", "WÄRMELIEFERUNGS-", "WÄSCHEREI", "WARENLIEFERUNG", "WARTUNG",
-            "WERBE", "WERBEMITTLUNGS", "WERK", "WERKFÖRDERUNGS-", "WERKLIEFERUNG", "WERK-/WERKLIEFERUNGS",
-            "WOHNUNGSMIET", "WOHNUNGSVERMITTLUNG", "ZEIT-", "ZEITSCHRIFTENBEZ.", "ZEITSCHRIFTENL."
-));
-
-    private static final Set<String> LOOKUP = new LinkedHashSet<>();
-
-    static {
-        for (String t : TYPES) {
-            LOOKUP.add(t.toUpperCase(Locale.GERMAN));
-        }
-    }
-
-    @Override
-    public List<String> getContractTypes() {
-        return TYPES;
-    }
-
-    @Override
-    public boolean isAdmitted(String contractType) {
-        if (contractType == null) {
-            return false;
-        }
-        return LOOKUP.contains(contractType.trim().toUpperCase(Locale.GERMAN));
-    }
-
-    @Override
-    public String getSourceDescription() {
-        return "Vertragsarten zu Katalog Nr. 28 der Mahngerichte, "
-                + "https://www.mahngerichte.de/verzeichnisse/vertragsarten-zu-katalog-nr28/";
-    }
-
-    @Override
-    public String getSourceDate() {
-        return "2020-01-29";
-    }
-}
+package com.jdimension.jlawyer.referencedata;

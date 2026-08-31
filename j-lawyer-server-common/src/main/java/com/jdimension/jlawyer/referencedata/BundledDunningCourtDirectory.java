@@ -680,6 +680,22 @@ import java.util.Map;
  * address of postcode and place without a street, which is the address applications go to; the
  * street address is the one for visitors and couriers.
  *
+ * <h2>Sources</h2>
+ *
+ * <ul>
+ * <li>Which court serves which federal state: https://www.mahngerichte.de/mahngerichte/ —
+ * retrieved 2026-08-31.
+ * <li>Addresses, telephone, fax, e-mail, web address and accepted channels: one page per court
+ * below it, e.g. https://www.mahngerichte.de/mahngerichte/stuttgart/ — all retrieved 2026-08-31.
+ * <li>XJustiz identifiers: code list {@code urn:xoev-de:xjustiz:codeliste:gds.gerichte}, version
+ * 3.5, from the XRepository — see the package documentation. That list holds identifier and name
+ * only, so every address here comes from the court pages, not from it.
+ * </ul>
+ *
+ * <p>The Amtsgericht Wedding publishes no list of accepted channels, so none is claimed for it; the
+ * other eleven publish the same three. Its fax number is published as a group of three extensions
+ * and is carried verbatim rather than split.
+ *
  * @author jens
  */
 public class BundledDunningCourtDirectory implements DunningCourtDirectory {

@@ -683,6 +683,24 @@ import java.util.Map;
  * spelling mistake in the source ("Pflegevorsicherung" in the note of number 41) is reproduced
  * corrected, since that note is read by people rather than matched on.
  *
+ * <h2>Source</h2>
+ *
+ * https://www.mahngerichte.de/verzeichnisse/katalognummern/ — retrieved 2026-08-31, published by
+ * the Koordinierungsstelle für das automatisierte gerichtliche Mahnverfahren. An HTML table; no
+ * machine-readable download exists. The same catalogue is reproduced in the brochure "Die
+ * maschinelle Bearbeitung der gerichtlichen Mahnverfahren", published by several state judicial
+ * administrations, which is useful as a second source when checking a transcription.
+ *
+ * <p>Two things make that table easy to read wrongly, and both were read wrongly before the values
+ * below were taken from the markup itself. Its columns are <em>designation first, catalogue number
+ * second</em>, and its rows are sorted alphabetically by designation rather than by number. Anyone
+ * re-taking this data should parse the table rather than read it off, and should verify against the
+ * assertions in {@code ReferenceDataTest}.
+ *
+ * <p>The asterisk the catalogue prints on some entries marks a note or addition by the coordination
+ * office rather than part of the form catalogue; it is carried as
+ * {@link MainClaimCatalogueEntry#isMarkedByCoordinationOffice()}.
+ *
  * @author jens
  */
 public class BundledMainClaimCatalogue implements MainClaimCatalogue {
