@@ -1,8 +1,9 @@
 ## Context
 
 The claim ledger already exists and is used: `claimledgers`, `claimcomponents`, `interest_rules`,
-`claimledger_entries`, `interest_base` (migrations `V3_4_0_7`, `V3_4_0_9`, `V3_4_0_19`), served by
-`ClaimLedgerService`/`PaymentSplitCalculator` and exposed through `ArchiveFileServiceRemote`
+`claimledger_entries` (migrations `V3_4_0_7`, `V3_4_0_9`, `V3_4_0_19`) and `interest_base`
+(migration `V3_4_0_12`), served by `ClaimLedgerService`/`PaymentSplitCalculator` and exposed
+through `ArchiveFileServiceRemote`
 (`getClaimLedgers`, `addClaimComponent`, `createPaymentSplit`, `calculateClaimLedgerTotals`, …),
 with `ClaimLedgerDialog` as the desktop UI. `ClaimLedgerServiceRemote` is an empty marker
 interface today.
@@ -72,13 +73,15 @@ Related infrastructure that is reused rather than rebuilt:
   they appear in the existing calendar, reminders and follow-up views, and can be recalculated when
   the underlying date changes. Alternative considered: a private deadline table — rejected, it
   would be invisible to the firm's normal work organisation.
-- **Decision: the EDA export is part of this change.** `implement-xjustiz-dunning-export` is
-  withdrawn; keeping the exporter separate would have split one workflow across two changes, since
-  the exporter needs the dunning case (court, Kennziffer, parties, amounts at application time) and
-  the inbound court messages need the same mapping. The exporter lives in `j-lawyer-server-common`
-  (`com.jdimension.jlawyer.xjustiz`: mapper, writer, validator) so EJB, REST and future tools share
-  it; JAXB classes are generated from the XSDs already committed under `j-lawyer-server-common/
-  xjustiz` **during the Maven build** (the withdrawn proposal still assumed the removed Ant build).
+- **Decision: the EDA export is part of this change.** The separate proposal
+  `implement-xjustiz-dunning-export` was withdrawn and removed from `openspec/changes/` without
+  being implemented; keeping the exporter separate would have split one workflow across two
+  changes, since the exporter needs the dunning case (court, Kennziffer, parties, amounts at
+  application time) and the inbound court messages need the same mapping. The exporter lives in
+  `j-lawyer-server-common` (`com.jdimension.jlawyer.xjustiz`: mapper, writer, validator) so EJB,
+  REST and future tools share it; JAXB classes are generated from the XSDs already committed under
+  `j-lawyer-server-common/xjustiz` **during the Maven build** (the withdrawn proposal still assumed
+  the removed Ant build).
   Validation is two-staged — application data first, then the produced document against the XSD —
   and no unvalidated file is ever stored or returned.
 - **Decision: exports are ordinary case documents.** Each export is stored through the normal
@@ -98,7 +101,7 @@ Related infrastructure that is reused rather than rebuilt:
 
 ## Data Model Sketch
 
-New tables (Flyway, next free numbers after `V3_6_0_6`):
+New tables (Flyway, next free numbers after the highest existing migration, currently `V3_6_0_8`):
 
 - `claimledger_parties` — ledger id, role (CREDITOR/DEBTOR), sequence, contact reference,
   representative, authorised representative, consumer flag.

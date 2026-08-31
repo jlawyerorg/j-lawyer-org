@@ -25,11 +25,12 @@ work cannot use j-lawyer for it today; they keep a second system. Since 1 Octobe
 revised official ZVFV forms are mandatory and enforcement communication is moving to fully
 electronic transmission, so hand-typed forms are no longer a viable workaround.
 
-The change `implement-xjustiz-dunning-export` had carved out one building block — the XJustiz/EDA
-data record for the dunning application plus its viewer. It is not implemented separately: its
-scope is absorbed here, because the exporter only becomes useful together with the procedural
-state that feeds it (court, Kennziffer, parties, amounts at application time) and the response
-messages that come back.
+An earlier change proposal, `implement-xjustiz-dunning-export`, had carved out one building block —
+the XJustiz/EDA data record for the dunning application plus its viewer. It was never implemented
+and has already been removed from `openspec/changes/` (see commit `68a95819c`); its scope is
+absorbed here, because the exporter only becomes useful together with the procedural state that
+feeds it (court, Kennziffer, parties, amounts at application time) and the response messages that
+come back.
 
 ## What Changes
 
@@ -77,7 +78,7 @@ messages that come back.
   the dates and the ledger (MB-Zustellung booking).
 - A dunning worklist across all cases.
 
-**XJustiz/EDA export (absorbed from `implement-xjustiz-dunning-export`)**
+**XJustiz/EDA export (absorbed from the withdrawn `implement-xjustiz-dunning-export`)**
 - Generation of the XJustiz "Mahn" EDA file from the dunning case against the schemas already
   shipped in `j-lawyer-server-common/xjustiz` (XJustiz 3.5.1, `xjustiz_0600_mahn_3_3.xsd`),
   including the documented mapping of main claims, interest (including interest from service),
@@ -116,15 +117,16 @@ messages that come back.
 
 - **Affected specs**: `claim-ledger` (new), `dunning-procedure` (new), `enforcement-proceedings`
   (new), `xjustiz-eda-export` (new), `court-directory` (new).
-- **Supersedes**: `implement-xjustiz-dunning-export` — that change is withdrawn and its scope
-  (export, mapping, schema validation, document storage, EDA viewer, lawyer Kennziffer) is part of
-  this one, as capability `xjustiz-eda-export`. Its Ant-based JAXB step is replaced by the Maven
-  reactor.
+- **Supersedes**: `implement-xjustiz-dunning-export` — that change proposal was withdrawn and
+  removed from `openspec/changes/` before any of it was implemented; its scope (export, mapping,
+  schema validation, document storage, EDA viewer, lawyer Kennziffer) is part of this one, as
+  capability `xjustiz-eda-export`. Its Ant-based JAXB step is replaced by the Maven reactor.
 - **Affected code**
   - `j-lawyer-server-entities`: new entities next to `ClaimLedger`/`ClaimComponent`
     (`ClaimLedgerParty`, `EnforcementTitle`, `DunningCase`, `EnforcementMeasure`,
     `EnforcementFormTemplate`, `PaymentPlan`, `Court`, `CourtScope`, …) plus Flyway migrations under
-    `src/main/resources/db/migration/` (next free numbers after `V3_6_0_6`).
+    `src/main/resources/db/migration/` (next free numbers after the highest existing migration,
+    currently `V3_6_0_8`).
   - `j-lawyer-server-common`: new `com.jdimension.jlawyer.xjustiz` package (mapper, writer,
     validator) with JAXB classes generated from the committed XSDs during the Maven build.
   - `j-lawyer-server/j-lawyer-server-ejb`: extend `ClaimLedgerService`/`ArchiveFileService`, new
