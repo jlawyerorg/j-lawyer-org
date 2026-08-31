@@ -660,249 +660,161 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.pojo;
 
-import com.jdimension.jlawyer.persistence.ClaimComponent;
-import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
-import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
-import com.jdimension.jlawyer.persistence.EnforcementTitle;
-import com.jdimension.jlawyer.persistence.InterestRule;
-import com.jdimension.jlawyer.pojo.BalanceListFilter;
-import com.jdimension.jlawyer.pojo.ClaimLedgerSummary;
-import com.jdimension.jlawyer.pojo.ClaimStatement;
-import com.jdimension.jlawyer.pojo.ProceduralCostBooking;
-import java.math.BigDecimal;
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import javax.ejb.Local;
 
 /**
- * Operations on a claim ledger (Forderungskonto) that go beyond its bookings: the parties it runs
- * for and against, the enforcement titles it rests on, and the procedural costs that the dunning
- * and enforcement workflows book into it.
+ * A claim statement (Forderungsaufstellung) for a claim ledger to a key date.
+ *
+ * The statement is assembled once and then rendered - as a document for the debtor, as the
+ * itemisation annexed to an enforcement application, or as structured data for a creditor who
+ * processes it further. Because all of those come from this one object, the form annexed to an
+ * application and the statement handed to the debtor cannot state different amounts.
  *
  * @author jens
  */
-@Local
-public interface ClaimLedgerServiceLocal {
+public class ClaimStatement implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private String ledgerId;
+    private String ledgerName;
+    private String caseId;
+    private String caseFileNumber;
+    private String caseName;
+
+    private Date keyDate;
+    private Date createdAt;
+    private String createdBy;
+
+    private final List<String> creditors = new ArrayList<>();
+    private final List<String> debtors = new ArrayList<>();
+    private final List<String> titles = new ArrayList<>();
+
+    private final List<ClaimStatementPosition> positions = new ArrayList<>();
+    private final List<ClaimStatementBooking> bookings = new ArrayList<>();
+
+    private ClaimLedgerTotals totals;
 
     /**
-     * Returns the creditors and debtors of a claim ledger, ordered by role and sequence number.
-     *
-     * @param ledgerId id of the claim ledger
-     * @return the parties of the ledger, empty if none are recorded yet
-     * @throws Exception if the ledger does not exist or the user may not access its case
+     * Statements of the sub-ledgers, present only when the statement was requested with sub-ledgers
+     * included. Each sub-ledger is stated separately; the combined total is
+     * {@link #getCombinedOpenAmount()}.
      */
-    List<ClaimLedgerParty> getParties(String ledgerId) throws Exception;
+    private final List<ClaimStatement> subLedgerStatements = new ArrayList<>();
 
     /**
-     * Adds a creditor or debtor to a claim ledger.
+     * The open amount of this ledger and, where sub-ledgers were included, of those as well.
      *
-     * The party is identified by the address book contact it references; deleting that contact
-     * later does not delete the party. Where the party is also a party of the case, the case party
-     * record may be referenced as well, but it does not determine who the ledger runs against.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param party the party to add; its id is assigned by the server
-     * @return the stored party
-     * @throws Exception if the ledger does not exist or the user may not access its case
+     * @return the combined open amount
      */
-    ClaimLedgerParty addParty(String ledgerId, ClaimLedgerParty party) throws Exception;
+    public java.math.BigDecimal getCombinedOpenAmount() {
+        java.math.BigDecimal combined = this.totals == null
+                ? java.math.BigDecimal.ZERO : this.totals.getOpenClaim();
+        for (ClaimStatement sub : this.subLedgerStatements) {
+            combined = combined.add(sub.getCombinedOpenAmount());
+        }
+        return combined;
+    }
 
-    /**
-     * Updates a party of a claim ledger.
-     *
-     * The designation and address snapshot taken for use towards a court is not changed by this
-     * operation: once a party has been named in a dunning application or a title, that wording has
-     * to stay reproducible.
-     *
-     * @param party the party to update
-     * @return the stored party
-     * @throws Exception if the party does not exist or the user may not access its case
-     */
-    ClaimLedgerParty updateParty(ClaimLedgerParty party) throws Exception;
+    public String getLedgerId() {
+        return ledgerId;
+    }
 
-    /**
-     * Removes a party from a claim ledger.
-     *
-     * @param partyId id of the party
-     * @throws Exception if the party does not exist, the user may not access its case, or bookings
-     * are attributed to that party alone
-     */
-    void removeParty(String partyId) throws Exception;
+    public void setLedgerId(String ledgerId) {
+        this.ledgerId = ledgerId;
+    }
 
-    /**
-     * Freezes the designation and postal address of a party as they are to be used towards a court.
-     *
-     * Called when a party is first named in a dunning application, a title or an enforcement
-     * document. A snapshot that already exists is kept, so an application filed earlier stays
-     * reproducible; later corrections to the contact reach current work but not the history.
-     *
-     * @param partyId id of the party
-     * @return the party including its snapshot
-     * @throws Exception if the party does not exist or the user may not access its case
-     */
-    ClaimLedgerParty freezePartyDesignation(String partyId) throws Exception;
+    public String getLedgerName() {
+        return ledgerName;
+    }
 
-    /**
-     * Returns the enforcement titles recorded for a claim ledger, oldest first.
-     *
-     * @param ledgerId id of the claim ledger
-     * @return the titles of the ledger, empty if none are recorded
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    List<EnforcementTitle> getTitles(String ledgerId) throws Exception;
+    public void setLedgerName(String ledgerName) {
+        this.ledgerName = ledgerName;
+    }
 
-    /**
-     * Records an enforcement title for a claim ledger.
-     *
-     * The limitation date under § 197 Abs. 1 Nr. 3 BGB is computed from the date of issue, and a
-     * follow-up is created on the case ahead of it, so that a title does not lapse unnoticed over
-     * the thirty years it stays enforceable.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param title the title to record; its id is assigned by the server
-     * @param followUpLeadTimeDays how many days before the limitation date the follow-up is due; a
-     * value of zero or less suppresses the follow-up
-     * @return the stored title including its computed limitation date
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    EnforcementTitle addTitle(String ledgerId, EnforcementTitle title, int followUpLeadTimeDays) throws Exception;
+    public String getCaseId() {
+        return caseId;
+    }
 
-    /**
-     * Updates an enforcement title.
-     *
-     * The limitation date is recomputed from the date of issue and the follow-up guarding it is
-     * moved accordingly. A follow-up already marked as done is left untouched and reported to the
-     * caller rather than silently reopened.
-     *
-     * @param title the title to update
-     * @param followUpLeadTimeDays how many days before the limitation date the follow-up is due
-     * @return the stored title
-     * @throws Exception if the title does not exist or the user may not access its case
-     */
-    EnforcementTitle updateTitle(EnforcementTitle title, int followUpLeadTimeDays) throws Exception;
+    public void setCaseId(String caseId) {
+        this.caseId = caseId;
+    }
 
-    /**
-     * Removes an enforcement title and the follow-up created for its limitation date.
-     *
-     * @param titleId id of the title
-     * @throws Exception if the title does not exist or the user may not access its case
-     */
-    void removeTitle(String titleId) throws Exception;
+    public String getCaseFileNumber() {
+        return caseFileNumber;
+    }
 
-    /**
-     * Converts costs that do not bear interest into assessed costs that do.
-     *
-     * After a cost assessment order the assessed amount bears interest under § 104 Abs. 1 S. 2 ZPO.
-     * The operation reduces or removes the original positions, creates one assessed-cost component
-     * carrying the given interest rule, and records the conversion in the ledger history, so the
-     * amount is not claimed twice.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param componentIds ids of the cost components to convert
-     * @param assessedAmount the amount the court assessed, which may be lower than the sum of the
-     * original positions
-     * @param interestRule the interest rule to apply to the assessed costs, with its effective date
-     * @param description designation of the resulting component
-     * @return the created assessed-cost component
-     * @throws Exception if the ledger or a component does not exist, the user may not access the
-     * case, or the assessed amount exceeds the positions being converted
-     */
-    ClaimComponent convertToAssessedCosts(String ledgerId, List<String> componentIds,
-            BigDecimal assessedAmount, InterestRule interestRule, String description) throws Exception;
+    public void setCaseFileNumber(String caseFileNumber) {
+        this.caseFileNumber = caseFileNumber;
+    }
 
-    /**
-     * Books a procedural fee or disbursement into a claim ledger.
-     *
-     * This is the single path by which the dunning and enforcement workflows put money into a
-     * ledger. The booking records which cost category it belongs to, whether it bears interest,
-     * whether it is owed by all debtors jointly or by one alone, and which dunning case or
-     * enforcement measure caused it. Where the firm advanced the amount, a matching case account
-     * entry records the outlay.
-     *
-     * @param booking the cost to book
-     * @return the created ledger entry
-     * @throws Exception if the ledger does not exist, the user may not access its case, or the
-     * booking is incomplete
-     */
-    ClaimLedgerEntry bookProceduralCost(ProceduralCostBooking booking) throws Exception;
+    public String getCaseName() {
+        return caseName;
+    }
 
-    /**
-     * Reverses a procedural cost booking.
-     *
-     * The original entry is kept and an adjustment of the opposite sign is booked against it, so
-     * that the history of the ledger stays complete and a reversal remains visible as such.
-     *
-     * @param entryId id of the ledger entry to reverse
-     * @param reason why the booking is reversed, recorded on the adjustment
-     * @return the created adjustment entry
-     * @throws Exception if the entry does not exist, the user may not access its case, or the entry
-     * has already been reversed
-     */
-    ClaimLedgerEntry reverseProceduralCost(String entryId, String reason) throws Exception;
+    public void setCaseName(String caseName) {
+        this.caseName = caseName;
+    }
 
-    /**
-     * Assembles a claim statement (Forderungsaufstellung) for a claim ledger to a key date.
-     *
-     * This operation only reads: it computes the statement and returns it, without storing anything
-     * in the case and without changing the ledger. Filing the statement as a document is a separate
-     * operation and requires write permission.
-     *
-     * The statement carries the parties, the titles, every position with the interest rule applied
-     * to it and the periods that interest was computed over, every booking in chronological order,
-     * and the resulting balance split into main claims, interest and costs, together with the
-     * interest that keeps running afterwards. Only bookings up to the key date are taken into
-     * account, so a statement to a past date reproduces what was owed then.
-     *
-     * Documents for the debtor and the itemisation annexed to an enforcement application are both
-     * rendered from this object, so they cannot state different amounts.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param keyDate the date to compute to; today if null
-     * @param includeSubLedgers whether the ledger's sub-ledgers are stated as well, each separately
-     * and with a combined total
-     * @return the assembled statement
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    ClaimStatement assembleClaimStatement(String ledgerId, Date keyDate, boolean includeSubLedgers) throws Exception;
+    public Date getKeyDate() {
+        return keyDate;
+    }
 
-    /**
-     * Renders a claim statement as CSV, for creditors who process it further.
-     *
-     * @param statement the statement to render
-     * @return the statement as CSV, one row per position followed by one row per booking
-     * @throws Exception if the statement cannot be rendered
-     */
-    String exportClaimStatementAsCsv(ClaimStatement statement) throws Exception;
+    public void setKeyDate(Date keyDate) {
+        this.keyDate = keyDate;
+    }
 
-    /**
-     * Returns the balance list (Saldenliste) over all claim ledgers of the cases the user may
-     * access, narrowed by the given filter.
-     *
-     * @param filter the criteria to apply; all ledgers of accessible cases if null
-     * @param keyDate the date to compute the open amounts to; today if null
-     * @return one row per matching ledger
-     * @throws Exception if the list cannot be assembled
-     */
-    List<ClaimLedgerSummary> getBalanceList(BalanceListFilter filter, Date keyDate) throws Exception;
+    public Date getCreatedAt() {
+        return createdAt;
+    }
 
-    /**
-     * Renders a balance list as CSV.
-     *
-     * @param rows the rows to render
-     * @return the balance list as CSV, including a sum row over the rendered rows
-     * @throws Exception if the list cannot be rendered
-     */
-    String exportBalanceListAsCsv(List<ClaimLedgerSummary> rows) throws Exception;
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
 
-    /**
-     * Returns the bookings a dunning case or enforcement measure caused.
-     *
-     * @param originReference the originating dunning case or enforcement measure
-     * @return the ledger entries created for it, empty if none exist
-     * @throws Exception if the user may not access the affected cases
-     */
-    List<ClaimLedgerEntry> getBookingsByOrigin(String originReference) throws Exception;
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public List<String> getCreditors() {
+        return creditors;
+    }
+
+    public List<String> getDebtors() {
+        return debtors;
+    }
+
+    public List<String> getTitles() {
+        return titles;
+    }
+
+    public List<ClaimStatementPosition> getPositions() {
+        return positions;
+    }
+
+    public List<ClaimStatementBooking> getBookings() {
+        return bookings;
+    }
+
+    public ClaimLedgerTotals getTotals() {
+        return totals;
+    }
+
+    public void setTotals(ClaimLedgerTotals totals) {
+        this.totals = totals;
+    }
+
+    public List<ClaimStatement> getSubLedgerStatements() {
+        return subLedgerStatements;
+    }
 
 }

@@ -682,6 +682,19 @@ import com.jdimension.jlawyer.persistence.EnforcementTitleFacadeLocal;
 import com.jdimension.jlawyer.persistence.InterestRule;
 import com.jdimension.jlawyer.persistence.InterestRuleFacadeLocal;
 import com.jdimension.jlawyer.persistence.LedgerEntryType;
+import com.jdimension.jlawyer.services.SecurityServiceLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.BaseInterestFacadeLocal;
+import com.jdimension.jlawyer.persistence.ClaimPartyRole;
+import com.jdimension.jlawyer.persistence.Group;
+import com.jdimension.jlawyer.server.utils.SecurityUtils;
+import com.jdimension.jlawyer.pojo.BalanceListFilter;
+import com.jdimension.jlawyer.pojo.ClaimLedgerSummary;
+import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
+import com.jdimension.jlawyer.pojo.ClaimStatement;
+import com.jdimension.jlawyer.pojo.ClaimStatementBooking;
+import com.jdimension.jlawyer.pojo.ClaimStatementInterestPeriod;
+import com.jdimension.jlawyer.pojo.ClaimStatementPosition;
 import com.jdimension.jlawyer.pojo.ProceduralCostBooking;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import java.math.BigDecimal;
@@ -731,6 +744,14 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
     private ArchiveFileReviewsBeanFacadeLocal reviews;
     @EJB
     private CaseAccountEntryFacadeLocal accountEntries;
+    @EJB
+    private ArchiveFileServiceLocal archiveFileService;
+    @EJB
+    private BaseInterestFacadeLocal baseInterest;
+    @EJB
+    private SecurityServiceLocal securityFacade;
+    @EJB
+    private ArchiveFileGroupsBeanFacadeLocal caseGroupsFacade;
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
@@ -1111,22 +1132,471 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         if (originReference == null) {
             return new ArrayList<>();
         }
-        return this.ledgerEntries.findByOrigin(originReference);
+
+        // the lookup is by origin reference alone and therefore spans cases: entries of cases the
+        // user may not access have to be filtered out rather than returned
+        List<ClaimLedgerEntry> accessible = new ArrayList<>();
+        for (ClaimLedgerEntry entry : this.ledgerEntries.findByOrigin(originReference)) {
+            ClaimLedger ledger = entry.getLedger();
+            if (ledger != null && mayAccess(ledger.getArchiveFileKey())) {
+                accessible.add(entry);
+            }
+        }
+        return accessible;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public ClaimStatement assembleClaimStatement(String ledgerId, Date keyDate, boolean includeSubLedgers) throws Exception {
+
+        ClaimLedger ledger = requireLedger(ledgerId);
+
+        Date effectiveKeyDate = keyDate == null ? new Date() : keyDate;
+
+        ClaimStatement statement = new ClaimStatement();
+        statement.setLedgerId(ledger.getId());
+        statement.setLedgerName(ledger.getName());
+        statement.setKeyDate(effectiveKeyDate);
+        statement.setCreatedAt(new Date());
+        try {
+            statement.setCreatedBy(context.getCallerPrincipal().getName());
+        } catch (Throwable t) {
+            log.warn("Unable to determine caller when creating a claim statement", t);
+        }
+
+        ArchiveFileBean caseFile = ledger.getArchiveFileKey();
+        if (caseFile != null) {
+            statement.setCaseId(caseFile.getId());
+            statement.setCaseFileNumber(caseFile.getFileNumber());
+            statement.setCaseName(caseFile.getName());
+        }
+
+        for (ClaimLedgerParty p : this.ledgerParties.findByLedgerAndRole(ledger, ClaimPartyRole.CREDITOR)) {
+            statement.getCreditors().add(p.getEffectiveDesignation());
+        }
+        for (ClaimLedgerParty p : this.ledgerParties.findByLedgerAndRole(ledger, ClaimPartyRole.DEBTOR)) {
+            statement.getDebtors().add(p.getEffectiveDesignation());
+        }
+        for (EnforcementTitle t : this.titles.findByLedger(ledger)) {
+            statement.getTitles().add(t.toString());
+        }
+
+        // totals and per-component balances share the one interest engine, so the statement cannot
+        // disagree with the ledger it is taken from
+        ClaimLedgerTotals totals = this.archiveFileService.calculateClaimLedgerTotals(ledgerId, effectiveKeyDate);
+        statement.setTotals(totals);
+
+        ClaimInterestCalculator interestCalculator = new ClaimInterestCalculator(baseInterest, this.ledgerEntries);
+
+        for (ClaimComponent cmp : this.claimComponents.findByLedger(ledger)) {
+            ClaimStatementPosition position = new ClaimStatementPosition();
+            position.setComponentId(cmp.getId());
+            position.setDesignation(cmp.getName());
+            position.setType(cmp.getType());
+            position.setCatalogueNumber(cmp.isCatalogued() ? cmp.getCatalogueNumber() : null);
+            position.setInterestRuleDescription(describeInterestRules(cmp));
+
+            BigDecimal principal = interestCalculator.calculateDynamicPrincipal(cmp, effectiveKeyDate);
+            position.setPrincipal(principal.setScale(2, RoundingMode.HALF_UP));
+
+            BigDecimal interest = BigDecimal.ZERO;
+            for (ClaimInterestCalculator.ClaimInterestPeriod p : interestCalculator.calculateInterestPeriods(cmp, effectiveKeyDate)) {
+                ClaimStatementInterestPeriod sp = new ClaimStatementInterestPeriod();
+                sp.setFrom(Date.from(p.getStart().atStartOfDay(ZoneId.systemDefault()).toInstant()));
+                sp.setTo(Date.from(p.getEnd().atStartOfDay(ZoneId.systemDefault()).toInstant()));
+                sp.setDays(p.getDays());
+                sp.setPrincipal(p.getPrincipal());
+                sp.setRatePercent(p.getRate().multiply(BigDecimal.valueOf(100d)).setScale(2, RoundingMode.HALF_UP));
+                sp.setAmount(p.getAmount());
+                position.getInterestPeriods().add(sp);
+                interest = interest.add(p.getAmount());
+                if (position.getInterestFrom() == null) {
+                    position.setInterestFrom(sp.getFrom());
+                }
+            }
+            position.setInterest(interest.setScale(2, RoundingMode.HALF_UP));
+
+            BigDecimal paid = BigDecimal.ZERO;
+            for (ClaimLedgerEntry e : this.ledgerEntries.findByComponentAndTypeUpToDate(cmp, LedgerEntryType.PAYMENT, effectiveKeyDate)) {
+                paid = paid.add(e.getAmount());
+            }
+            position.setPayments(paid.setScale(2, RoundingMode.HALF_UP));
+            position.setOpenAmount(position.getPrincipal().add(position.getInterest()).max(BigDecimal.ZERO));
+
+            statement.getPositions().add(position);
+        }
+
+        for (ClaimLedgerEntry e : this.ledgerEntries.findByLedger(ledger)) {
+            if (e.getEntryDate().after(effectiveKeyDate)) {
+                // entries are ordered by date, so everything beyond the key date follows
+                break;
+            }
+            ClaimStatementBooking b = new ClaimStatementBooking();
+            b.setEntryDate(e.getEntryDate());
+            b.setType(e.getType());
+            b.setDescription(e.getDescription());
+            b.setComment(e.getComment());
+            b.setAmount(e.getAmount());
+            b.setReversal(e.getReversalOf() != null);
+            if (e.getComponent() != null) {
+                b.setPositionDesignation(e.getComponent().getName());
+            }
+            if (e.getDebtorParty() != null) {
+                b.setDebtorDesignation(e.getDebtorParty().getEffectiveDesignation());
+            }
+            statement.getBookings().add(b);
+        }
+
+        if (includeSubLedgers) {
+            for (ClaimLedger candidate : this.ledgers.findAll()) {
+                if (candidate.getParentLedger() != null && ledgerId.equals(candidate.getParentLedger().getId())) {
+                    statement.getSubLedgerStatements().add(
+                            assembleClaimStatement(candidate.getId(), effectiveKeyDate, true));
+                }
+            }
+        }
+
+        return statement;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public String exportClaimStatementAsCsv(ClaimStatement statement) throws Exception {
+
+        if (statement == null) {
+            throw new Exception("Es wurde keine Forderungsaufstellung übergeben!");
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Forderungsaufstellung;").append(csv(statement.getLedgerName())).append("\n");
+        sb.append("Akte;").append(csv(statement.getCaseFileNumber())).append("\n");
+        sb.append("Stichtag;").append(statement.getKeyDate() == null ? "" : DATE_FORMAT.format(statement.getKeyDate())).append("\n");
+        sb.append("Gläubiger;").append(csv(String.join(", ", statement.getCreditors()))).append("\n");
+        sb.append("Schuldner;").append(csv(String.join(", ", statement.getDebtors()))).append("\n");
+        sb.append("\n");
+
+        sb.append("Position;Art;Katalognummer;Zinsregel;Kapital;Zinsen;Zahlungen;Offen\n");
+        for (ClaimStatementPosition p : statement.getPositions()) {
+            sb.append(csv(p.getDesignation())).append(";");
+            sb.append(csv(p.getType() == null ? "" : p.getType().getLabel())).append(";");
+            sb.append(csv(p.getCatalogueNumber())).append(";");
+            sb.append(csv(p.getInterestRuleDescription())).append(";");
+            sb.append(amount(p.getPrincipal())).append(";");
+            sb.append(amount(p.getInterest())).append(";");
+            sb.append(amount(p.getPayments())).append(";");
+            sb.append(amount(p.getOpenAmount())).append("\n");
+        }
+
+        sb.append("\n");
+        sb.append("Datum;Buchungsart;Position;Beschreibung;Schuldner;Betrag\n");
+        for (ClaimStatementBooking b : statement.getBookings()) {
+            sb.append(b.getEntryDate() == null ? "" : DATE_FORMAT.format(b.getEntryDate())).append(";");
+            sb.append(csv(b.getType() == null ? "" : b.getType().getLabel())).append(";");
+            sb.append(csv(b.getPositionDesignation())).append(";");
+            sb.append(csv(b.getDescription())).append(";");
+            sb.append(csv(b.getDebtorDesignation())).append(";");
+            sb.append(amount(b.getAmount())).append("\n");
+        }
+
+        ClaimLedgerTotals totals = statement.getTotals();
+        if (totals != null) {
+            sb.append("\n");
+            sb.append("Hauptforderung;").append(amount(totals.getTotalMain())).append("\n");
+            sb.append("Kosten;").append(amount(totals.getTotalCosts())).append("\n");
+            sb.append("Zinsen Hauptforderung;").append(amount(totals.getTotalInterestMain())).append("\n");
+            sb.append("Zinsen Kosten;").append(amount(totals.getTotalInterestCosts())).append("\n");
+            sb.append("Zahlungen;").append(amount(totals.getTotalPayments())).append("\n");
+            sb.append("Offene Forderung;").append(amount(totals.getOpenClaim())).append("\n");
+
+            if (totals.hasContinuingInterest()) {
+                sb.append("\n");
+                sb.append("Weitere Zinsen aus;Zinssatz;seit\n");
+                for (com.jdimension.jlawyer.pojo.ContinuingInterest ci : totals.getContinuingInterest()) {
+                    sb.append(amount(ci.getBaseAmount())).append(";");
+                    sb.append(amount(ci.getRatePercent())).append("%;");
+                    sb.append(ci.getRunningFrom() == null ? "" : DATE_FORMAT.format(ci.getRunningFrom())).append("\n");
+                }
+            }
+        }
+
+        return sb.toString();
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<ClaimLedgerSummary> getBalanceList(BalanceListFilter filter, Date keyDate) throws Exception {
+
+        BalanceListFilter effectiveFilter = filter == null ? new BalanceListFilter() : filter;
+        Date effectiveKeyDate = keyDate == null ? new Date() : keyDate;
+
+        List<String> allowedCases;
+        try {
+            allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
+        } catch (Exception ex) {
+            log.error("Unable to determine allowed cases for the balance list", ex);
+            throw new Exception("Akten des Nutzers konnten nicht ermittelt werden!", ex);
+        }
+
+        List<ClaimLedgerSummary> rows = new ArrayList<>();
+
+        for (ClaimLedger ledger : this.ledgers.findAll()) {
+            ArchiveFileBean caseFile = ledger.getArchiveFileKey();
+            if (caseFile == null || !allowedCases.contains(caseFile.getId())) {
+                continue;
+            }
+            if (caseFile.isArchived() && !effectiveFilter.isIncludeArchivedCases()) {
+                continue;
+            }
+            if (!matches(effectiveFilter.getResponsibleLawyer(), caseFile.getLawyer())) {
+                continue;
+            }
+            if (effectiveFilter.getCaseReference() != null
+                    && !matches(effectiveFilter.getCaseReference(), caseFile.getFileNumber())
+                    && !matches(effectiveFilter.getCaseReference(), caseFile.getName())) {
+                continue;
+            }
+
+            String creditors = designations(ledger, ClaimPartyRole.CREDITOR);
+            String debtors = designations(ledger, ClaimPartyRole.DEBTOR);
+            if (!matches(effectiveFilter.getCreditor(), creditors)) {
+                continue;
+            }
+            if (!matches(effectiveFilter.getDebtor(), debtors)) {
+                continue;
+            }
+
+            List<EnforcementTitle> ledgerTitles = this.titles.findByLedger(ledger);
+            if (effectiveFilter.isTitledOnly() && ledgerTitles.isEmpty()) {
+                continue;
+            }
+
+            ClaimLedgerTotals totals = this.archiveFileService.calculateClaimLedgerTotals(ledger.getId(), effectiveKeyDate);
+
+            if (effectiveFilter.getMinimumOpenAmount() != null
+                    && totals.getOpenClaim().compareTo(effectiveFilter.getMinimumOpenAmount()) < 0) {
+                continue;
+            }
+
+            ClaimLedgerSummary row = new ClaimLedgerSummary();
+            row.setLedgerId(ledger.getId());
+            row.setLedgerName(ledger.getName());
+            row.setCaseId(caseFile.getId());
+            row.setCaseFileNumber(caseFile.getFileNumber());
+            row.setCaseName(caseFile.getName());
+            row.setResponsibleLawyer(caseFile.getLawyer());
+            row.setCaseArchived(caseFile.isArchived());
+            row.setCreditors(creditors);
+            row.setDebtors(debtors);
+            row.setOpenMainClaim(totals.getTotalMain());
+            row.setAccruedInterest(totals.getTotalInterestMain().add(totals.getTotalInterestCosts()));
+            row.setOpenCosts(totals.getTotalCosts());
+            row.setOpenTotal(totals.getOpenClaim());
+            row.setTitled(!ledgerTitles.isEmpty());
+
+            Date earliestLimitation = null;
+            for (EnforcementTitle t : ledgerTitles) {
+                if (t.getLimitationDate() == null) {
+                    continue;
+                }
+                if (earliestLimitation == null || t.getLimitationDate().before(earliestLimitation)) {
+                    earliestLimitation = t.getLimitationDate();
+                }
+            }
+            row.setLimitationDate(earliestLimitation);
+
+            rows.add(row);
+        }
+
+        return rows;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public String exportBalanceListAsCsv(List<ClaimLedgerSummary> rows) throws Exception {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Akte;Bezeichnung;Forderungskonto;Gläubiger;Schuldner;Anwalt;Hauptforderung;Zinsen;Kosten;Offen gesamt;Tituliert;Verjährung\n");
+
+        BigDecimal sumMain = BigDecimal.ZERO;
+        BigDecimal sumInterest = BigDecimal.ZERO;
+        BigDecimal sumCosts = BigDecimal.ZERO;
+        BigDecimal sumTotal = BigDecimal.ZERO;
+
+        if (rows != null) {
+            for (ClaimLedgerSummary r : rows) {
+                sb.append(csv(r.getCaseFileNumber())).append(";");
+                sb.append(csv(r.getCaseName())).append(";");
+                sb.append(csv(r.getLedgerName())).append(";");
+                sb.append(csv(r.getCreditors())).append(";");
+                sb.append(csv(r.getDebtors())).append(";");
+                sb.append(csv(r.getResponsibleLawyer())).append(";");
+                sb.append(amount(r.getOpenMainClaim())).append(";");
+                sb.append(amount(r.getAccruedInterest())).append(";");
+                sb.append(amount(r.getOpenCosts())).append(";");
+                sb.append(amount(r.getOpenTotal())).append(";");
+                sb.append(r.isTitled() ? "ja" : "nein").append(";");
+                sb.append(r.getLimitationDate() == null ? "" : DATE_FORMAT.format(r.getLimitationDate())).append("\n");
+
+                sumMain = sumMain.add(r.getOpenMainClaim());
+                sumInterest = sumInterest.add(r.getAccruedInterest());
+                sumCosts = sumCosts.add(r.getOpenCosts());
+                sumTotal = sumTotal.add(r.getOpenTotal());
+            }
+        }
+
+        sb.append("Summe;;;;;;");
+        sb.append(amount(sumMain)).append(";");
+        sb.append(amount(sumInterest)).append(";");
+        sb.append(amount(sumCosts)).append(";");
+        sb.append(amount(sumTotal)).append(";;\n");
+
+        return sb.toString();
     }
 
     /**
-     * Loads a ledger and fails if it does not exist.
+     * Joins the designations of a ledger's parties in one role.
+     *
+     * @param ledger the ledger
+     * @param role the role
+     * @return the designations, comma separated
+     */
+    private String designations(ClaimLedger ledger, ClaimPartyRole role) {
+        List<String> names = new ArrayList<>();
+        for (ClaimLedgerParty p : this.ledgerParties.findByLedgerAndRole(ledger, role)) {
+            String designation = p.getEffectiveDesignation();
+            if (designation != null) {
+                names.add(designation);
+            }
+        }
+        return String.join(", ", names);
+    }
+
+    /**
+     * Whether a value satisfies a filter criterion. An unset criterion matches everything.
+     *
+     * @param criterion the filter value, may be null or empty
+     * @param value the value to test, may be null
+     * @return true if the criterion is unset or the value contains it
+     */
+    private boolean matches(String criterion, String value) {
+        if (criterion == null || criterion.trim().isEmpty()) {
+            return true;
+        }
+        if (value == null) {
+            return false;
+        }
+        return value.toLowerCase().contains(criterion.trim().toLowerCase());
+    }
+
+    /**
+     * Escapes a value for the semicolon separated export format.
+     *
+     * @param value the value
+     * @return the escaped value, never null
+     */
+    private String csv(String value) {
+        if (value == null) {
+            return "";
+        }
+        String escaped = value.replace("\"", "\"\"");
+        if (escaped.contains(";") || escaped.contains("\n") || escaped.contains("\"")) {
+            return "\"" + escaped + "\"";
+        }
+        return escaped;
+    }
+
+    /**
+     * Formats an amount for the export, with two decimals and a decimal comma.
+     *
+     * @param value the amount
+     * @return the formatted amount
+     */
+    private String amount(BigDecimal value) {
+        if (value == null) {
+            return "0,00";
+        }
+        return value.setScale(2, RoundingMode.HALF_UP).toPlainString().replace('.', ',');
+    }
+
+    /**
+     * Describes the interest rules of a component in words, for the statement.
+     *
+     * @param cmp the component
+     * @return the description, empty if the component bears no interest
+     */
+    private String describeInterestRules(ClaimComponent cmp) {
+        List<String> parts = new ArrayList<>();
+        for (InterestRule rule : cmp.getInterestRules()) {
+            StringBuilder sb = new StringBuilder();
+            if (rule.getInterestType() == com.jdimension.jlawyer.persistence.InterestType.BASIS_RELATED) {
+                sb.append(rule.getBaseMargin() == null ? "?" : rule.getBaseMargin().toPlainString());
+                sb.append(" Prozentpunkte über dem Basiszinssatz");
+            } else {
+                sb.append(rule.getFixedRate() == null ? "?" : rule.getFixedRate().toPlainString());
+                sb.append(" % fest");
+            }
+            if (rule.getValidFrom() != null) {
+                sb.append(" ab ").append(DATE_FORMAT.format(rule.getValidFrom()));
+            } else if (cmp.isInterestStartingOnService()) {
+                sb.append(" ab Zustellung");
+            }
+            parts.add(sb.toString());
+        }
+        return String.join("; ", parts);
+    }
+
+    /**
+     * Loads a ledger and verifies that the calling user may access the case it belongs to.
+     *
+     * The role annotations on the service methods only establish that a user may read or write
+     * cases at all. Whether this particular case is accessible depends on the groups it is
+     * restricted to, so every operation has to check that separately - otherwise a user excluded
+     * from a case could still read its claim ledger or book costs into it.
      *
      * @param ledgerId id of the ledger
      * @return the ledger
-     * @throws Exception if it does not exist
+     * @throws Exception if it does not exist or the user may not access its case
      */
     private ClaimLedger requireLedger(String ledgerId) throws Exception {
         ClaimLedger ledger = this.ledgers.find(ledgerId);
         if (ledger == null) {
             throw new Exception("Forderungskonto mit ID " + ledgerId + " existiert nicht!");
         }
+        if (!mayAccess(ledger.getArchiveFileKey())) {
+            throw new Exception("Forderungskonto darf von diesem Nutzer nicht bearbeitet werden!");
+        }
         return ledger;
+    }
+
+    /**
+     * Whether the calling user may access a case, given the groups it is restricted to.
+     *
+     * @param caseFile the case, may be null
+     * @return true if the user may access it
+     */
+    private boolean mayAccess(ArchiveFileBean caseFile) {
+        String principalId;
+        try {
+            principalId = context.getCallerPrincipal().getName();
+        } catch (Throwable t) {
+            log.error("Unable to determine the calling user", t);
+            return false;
+        }
+        if (principalId == null) {
+            // no caller identity - the container is invoking internally
+            return true;
+        }
+        if (caseFile == null) {
+            return false;
+        }
+
+        List<Group> userGroups = new ArrayList<>();
+        try {
+            userGroups = this.securityFacade.getGroupsForUser(principalId);
+        } catch (Throwable t) {
+            log.error("Unable to determine groups for user " + principalId, t);
+        }
+        return SecurityUtils.checkGroupsForCase(userGroups, caseFile, this.caseGroupsFacade);
     }
 
     /**

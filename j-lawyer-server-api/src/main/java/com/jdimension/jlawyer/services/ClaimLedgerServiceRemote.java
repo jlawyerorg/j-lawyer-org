@@ -667,6 +667,9 @@ import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
 import com.jdimension.jlawyer.persistence.EnforcementTitle;
 import com.jdimension.jlawyer.persistence.InterestRule;
+import com.jdimension.jlawyer.pojo.BalanceListFilter;
+import com.jdimension.jlawyer.pojo.ClaimLedgerSummary;
+import com.jdimension.jlawyer.pojo.ClaimStatement;
 import com.jdimension.jlawyer.pojo.ProceduralCostBooking;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -838,6 +841,60 @@ public interface ClaimLedgerServiceRemote {
      * has already been reversed
      */
     ClaimLedgerEntry reverseProceduralCost(String entryId, String reason) throws Exception;
+
+    /**
+     * Assembles a claim statement (Forderungsaufstellung) for a claim ledger to a key date.
+     *
+     * This operation only reads: it computes the statement and returns it, without storing anything
+     * in the case and without changing the ledger. Filing the statement as a document is a separate
+     * operation and requires write permission.
+     *
+     * The statement carries the parties, the titles, every position with the interest rule applied
+     * to it and the periods that interest was computed over, every booking in chronological order,
+     * and the resulting balance split into main claims, interest and costs, together with the
+     * interest that keeps running afterwards. Only bookings up to the key date are taken into
+     * account, so a statement to a past date reproduces what was owed then.
+     *
+     * Documents for the debtor and the itemisation annexed to an enforcement application are both
+     * rendered from this object, so they cannot state different amounts.
+     *
+     * @param ledgerId id of the claim ledger
+     * @param keyDate the date to compute to; today if null
+     * @param includeSubLedgers whether the ledger's sub-ledgers are stated as well, each separately
+     * and with a combined total
+     * @return the assembled statement
+     * @throws Exception if the ledger does not exist or the user may not access its case
+     */
+    ClaimStatement assembleClaimStatement(String ledgerId, Date keyDate, boolean includeSubLedgers) throws Exception;
+
+    /**
+     * Renders a claim statement as CSV, for creditors who process it further.
+     *
+     * @param statement the statement to render
+     * @return the statement as CSV, one row per position followed by one row per booking
+     * @throws Exception if the statement cannot be rendered
+     */
+    String exportClaimStatementAsCsv(ClaimStatement statement) throws Exception;
+
+    /**
+     * Returns the balance list (Saldenliste) over all claim ledgers of the cases the user may
+     * access, narrowed by the given filter.
+     *
+     * @param filter the criteria to apply; all ledgers of accessible cases if null
+     * @param keyDate the date to compute the open amounts to; today if null
+     * @return one row per matching ledger
+     * @throws Exception if the list cannot be assembled
+     */
+    List<ClaimLedgerSummary> getBalanceList(BalanceListFilter filter, Date keyDate) throws Exception;
+
+    /**
+     * Renders a balance list as CSV.
+     *
+     * @param rows the rows to render
+     * @return the balance list as CSV, including a sum row over the rendered rows
+     * @throws Exception if the list cannot be rendered
+     */
+    String exportBalanceListAsCsv(List<ClaimLedgerSummary> rows) throws Exception;
 
     /**
      * Returns the bookings a dunning case or enforcement measure caused.
