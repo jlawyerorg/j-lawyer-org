@@ -820,7 +820,7 @@ public class CourtsConfigurationDialog extends javax.swing.JDialog {
         jScrollPane1.setViewportView(tblCourts);
 
         cmdDeactivate.setText("Deaktivieren");
-        cmdDeactivate.setToolTipText("Stufe früher versenden");
+        cmdDeactivate.setToolTipText("Gericht nicht mehr zur Auswahl anbieten; bestehende Vorgänge behalten es");
         cmdDeactivate.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdDeactivateActionPerformed(evt);
@@ -828,7 +828,7 @@ public class CourtsConfigurationDialog extends javax.swing.JDialog {
         });
 
         cmdActivate.setText("Aktivieren");
-        cmdActivate.setToolTipText("Stufe später versenden");
+        cmdActivate.setToolTipText("Gericht wieder zur Auswahl anbieten");
         cmdActivate.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdActivateActionPerformed(evt);
@@ -836,7 +836,7 @@ public class CourtsConfigurationDialog extends javax.swing.JDialog {
         });
 
         cmdAdd.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
-        cmdAdd.setText("Stufe anlegen");
+        cmdAdd.setText("Gericht anlegen");
         cmdAdd.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdAddActionPerformed(evt);
