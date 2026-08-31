@@ -1,12 +1,20 @@
 ## 0. Reference data (prepared alongside the phases that consume it)
 
-- [ ] 0.1 Compile the main claim catalogue (Hauptforderungskatalog) of the dunning courts as
+- [x] 0.1 Compile the main claim catalogue (Hauptforderungskatalog) of the dunning courts as
       shipped reference data — number, designation, and per number the additional entries it
-      requires — with a repeatable, non-duplicating seed. Needed by 1.5 and 3.12; the catalogue is
-      published by the dunning courts and is *not* part of the Satzbeschreibungen
-- [ ] 0.2 Compile the seed for the central dunning courts — official name, postal code and place
+      requires. Needed by 1.5 and 3.12; the catalogue is published by the dunning courts and is
+      *not* part of the Satzbeschreibungen. Shipped as `BundledMainClaimCatalogue` behind the
+      `MainClaimCatalogue` interface (56 entries), together with `BundledContractTypeCatalogue`
+      (278 contract types for catalogue no. 28, which no. 28 requires as its additional entry).
+      Carried in code for now rather than seeded — that decision is revisited in 5.7
+- [x] 0.2 Compile the seed for the central dunning courts — official name, postal code and place
       (the EDA application addresses the court by these), XJustiz identifier as the matching key,
-      address, accepted channels — feeding 3.2 and the dunning rule table of 3.3
+      address, accepted channels — feeding 3.2 and the dunning rule table of 3.3. Shipped as
+      `BundledDunningCourtDirectory` behind the `DunningCourtDirectory` interface: all twelve
+      courts with their XJustiz identifiers from `gds.gerichte`, plus the assignment of the federal
+      states, which is a list rather than a map because North Rhine-Westphalia is divided between
+      two courts. Carried in code for now rather than seeded into the court master data — that
+      decision is revisited in 5.7 and acted on in 5.8
 - [ ] 0.3 Decide source and storage format of the fee tables (RVG value table, Nr. 1100 KV GKG,
       GvKostG positions), then ship them as maintainable data; consumed by 3.5 and 4.6
 - [ ] 0.4 Obtain at least one official ZVFV form PDF per annex in scope and record its AcroForm
@@ -152,3 +160,21 @@
       tables, reminder stages and form templates
 - [ ] 5.6 End-to-end test: claim → reminder → Mahnbescheid → Vollstreckungsbescheid → bailiff order
       → PfÜB → payments → statement, verifying bookings, deadlines and documents
+- [ ] 5.7 Revisit the reference data decision. The main claim catalogue, the contract types for
+      catalogue no. 28 and the dunning courts currently ship as `Bundled*` implementations behind
+      interfaces in `com.jdimension.jlawyer.referencedata`, selected in `ReferenceData`. By this
+      point the EDA approval procedure has run and it is known how often the courts actually change
+      this data and whether firms need to correct it themselves. Decide per data set whether it
+      stays in code or moves to maintainable data, and record the reasoning — the seam exists so
+      the answer can be "it stays", not only "it moves"
+- [ ] 5.8 If 5.7 so decides: replace `BundledDunningCourtDirectory` with an implementation reading
+      the court master data of the court-directory capability, so an administrator can correct an
+      address without a release. The bundled data becomes the seed, matching on the XJustiz
+      identifier so re-seeding does not duplicate. Keep the responsibility list, including the
+      division of North Rhine-Westphalia and the assignment of applicants seated abroad — a
+      database schema that assumes one court per state would lose it
+- [ ] 5.9 If 5.7 so decides: replace the bundled catalogues with a maintainable implementation and
+      give it an update path. Since a catalogue number goes into a filed application, record which
+      version of the catalogue an application was built against — `ReferenceDataSource` already
+      carries origin and date for that purpose. Where the providers become injected services,
+      `ReferenceData` and the `Bundled*` classes go away with them
