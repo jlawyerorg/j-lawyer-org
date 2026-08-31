@@ -63,8 +63,8 @@
 
 ## 2. Phase 2 — Pre-court dunning
 
-- [ ] 2.1 Reminder stage configuration (template, period, charge, default-triggering) with admin UI
-- [ ] 2.2 Stage execution: generate document, record stage and deadline, create follow-up, book the
+- [x] 2.1 Reminder stage configuration (template, period, charge, default-triggering) with admin UI
+- [x] 2.2 Stage execution: generate document, record stage and deadline, create follow-up, book the
       charge
 - [x] 2.3 § 288 BGB default interest proposal (5/9 percentage points from `interest_base`) and the
       § 288 Abs. 5 BGB lump sum incl. the consumer exclusion

@@ -660,508 +660,440 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.client.configuration;
 
-import com.jdimension.jlawyer.persistence.ClaimComponent;
-import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
-import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.DunningStage;
-import com.jdimension.jlawyer.persistence.DunningStageEvent;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.ClaimLedger;
-import com.jdimension.jlawyer.persistence.PaymentSplitProposal;
-import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
-import com.jdimension.jlawyer.persistence.EnforcementTitle;
-import com.jdimension.jlawyer.persistence.InterestRule;
-import com.jdimension.jlawyer.pojo.BalanceListFilter;
-import com.jdimension.jlawyer.pojo.ClaimLedgerSummary;
-import com.jdimension.jlawyer.pojo.ClaimStatement;
-import com.jdimension.jlawyer.pojo.DefaultInterestProposal;
-import com.jdimension.jlawyer.pojo.DunningStatus;
-import com.jdimension.jlawyer.pojo.ProceduralCostBooking;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.math.BigDecimal;
-import java.util.Date;
 import java.util.List;
-import javax.ejb.Remote;
+import javax.swing.JOptionPane;
+import org.apache.log4j.Logger;
+import org.jlawyer.data.tree.GenericNode;
+import org.jlawyer.data.tree.TreeNodeUtils;
 
 /**
- * Operations on a claim ledger (Forderungskonto) that go beyond its bookings: the parties it runs
- * for and against, the enforcement titles it rests on, and the procedural costs that the dunning
- * and enforcement workflows book into it.
+ * Edits one stage of the pre-court reminder cycle.
+ *
+ * The template is chosen from the template tree rather than typed, and stored as the folder path
+ * plus the file name - the form the server expects when it produces the reminder document.
  *
  * @author jens
  */
-@Remote
-public interface ClaimLedgerServiceRemote {
+public class DunningStageDialog extends javax.swing.JDialog {
+
+    private static final Logger log = Logger.getLogger(DunningStageDialog.class.getName());
+
+    private DunningStage stage = null;
+    private boolean saved = false;
 
     /**
-     * Returns the creditors and debtors of a claim ledger, ordered by role and sequence number.
-     *
-     * @param ledgerId id of the claim ledger
-     * @return the parties of the ledger, empty if none are recorded yet
-     * @throws Exception if the ledger does not exist or the user may not access its case
+     * Wraps a template folder so the combo box shows its path.
      */
-    List<ClaimLedgerParty> getParties(String ledgerId) throws Exception;
+    private static class FolderItem {
+
+        private final GenericNode node;
+        private final String path;
+
+        FolderItem(GenericNode node) {
+            this.node = node;
+            this.path = node == null ? "" : TreeNodeUtils.buildNodePath(node);
+        }
+
+        GenericNode node() {
+            return this.node;
+        }
+
+        String path() {
+            return this.path;
+        }
+
+        @Override
+        public String toString() {
+            return this.path.isEmpty() ? "/" : this.path;
+        }
+    }
 
     /**
-     * Adds a creditor or debtor to a claim ledger.
+     * Creates the dialog.
      *
-     * The party is identified by the address book contact it references; deleting that contact
-     * later does not delete the party. Where the party is also a party of the case, the case party
-     * record may be referenced as well, but it does not determine who the ledger runs against.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param party the party to add; its id is assigned by the server
-     * @return the stored party
-     * @throws Exception if the ledger does not exist or the user may not access its case
+     * @param parent the parent window
+     * @param modal whether the dialog is modal
      */
-    ClaimLedgerParty addParty(String ledgerId, ClaimLedgerParty party) throws Exception;
+    public DunningStageDialog(java.awt.Frame parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
+
+        this.spnPeriod.setModel(new javax.swing.SpinnerNumberModel(14, 0, 365, 1));
+
+        loadTemplateFolders();
+        updateHint();
+    }
 
     /**
-     * Updates a party of a claim ledger.
-     *
-     * The designation and address snapshot taken for use towards a court is not changed by this
-     * operation: once a party has been named in a dunning application or a title, that wording has
-     * to stay reproducible.
-     *
-     * @param party the party to update
-     * @return the stored party
-     * @throws Exception if the party does not exist or the user may not access its case
+     * Loads the template folders into the selection.
      */
-    ClaimLedgerParty updateParty(ClaimLedgerParty party) throws Exception;
+    private void loadTemplateFolders() {
+        this.cmbTemplateFolder.removeAllItems();
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            GenericNode root = locator.lookupSystemManagementRemote()
+                    .getAllTemplatesTree(SystemManagementRemote.TEMPLATE_TYPE_BODY);
+            addFolder(root);
+        } catch (Exception ex) {
+            log.error("Unable to load the template folders", ex);
+        }
+    }
 
     /**
-     * Removes a party from a claim ledger.
+     * Adds a folder and its children to the selection, depth first.
      *
-     * @param partyId id of the party
-     * @throws Exception if the party does not exist, the user may not access its case, or bookings
-     * are attributed to that party alone
+     * @param node the folder
      */
-    void removeParty(String partyId) throws Exception;
+    private void addFolder(GenericNode node) {
+        if (node == null) {
+            return;
+        }
+        this.cmbTemplateFolder.addItem(new FolderItem(node));
+        if (node.getChildren() != null) {
+            for (GenericNode child : node.getChildren()) {
+                addFolder(child);
+            }
+        }
+    }
 
     /**
-     * Freezes the designation and postal address of a party as they are to be used towards a court.
-     *
-     * Called when a party is first named in a dunning application, a title or an enforcement
-     * document. A snapshot that already exists is kept, so an application filed earlier stays
-     * reproducible; later corrections to the contact reach current work but not the history.
-     *
-     * @param partyId id of the party
-     * @return the party including its snapshot
-     * @throws Exception if the party does not exist or the user may not access its case
+     * Loads the templates of the selected folder.
      */
-    ClaimLedgerParty freezePartyDesignation(String partyId) throws Exception;
+    private void loadTemplates() {
+        this.cmbTemplateName.removeAllItems();
+        FolderItem selected = (FolderItem) this.cmbTemplateFolder.getSelectedItem();
+        if (selected == null) {
+            return;
+        }
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<String> templates = locator.lookupSystemManagementRemote()
+                    .getTemplatesInFolder(SystemManagementRemote.TEMPLATE_TYPE_BODY, selected.node());
+            this.cmbTemplateName.addItem("");
+            if (templates != null) {
+                for (String t : templates) {
+                    this.cmbTemplateName.addItem(t);
+                }
+            }
+        } catch (Exception ex) {
+            log.error("Unable to load the templates of folder " + selected.path(), ex);
+        }
+    }
 
     /**
-     * Returns the enforcement titles recorded for a claim ledger, oldest first.
+     * Fills the dialog from an existing stage, or prepares a new one when null is passed.
      *
-     * @param ledgerId id of the claim ledger
-     * @return the titles of the ledger, empty if none are recorded
-     * @throws Exception if the ledger does not exist or the user may not access its case
+     * The position in the escalation is not edited here: it follows from the order of the list the
+     * stage appears in, and is recalculated when that order changes.
+     *
+     * @param stage the stage to edit, or null for a new one
      */
-    List<EnforcementTitle> getTitles(String ledgerId) throws Exception;
+    public void setStage(DunningStage stage) {
+        this.stage = stage;
+        if (stage == null) {
+            this.stage = new DunningStage();
+            this.stage.setPaymentPeriodDays(14);
+            this.stage.setChargeAmount(BigDecimal.ZERO);
+            this.stage.setActive(true);
+        }
+
+        this.txtName.setText(this.stage.getName() == null ? "" : this.stage.getName());
+        this.spnPeriod.setValue(this.stage.getPaymentPeriodDays());
+        this.txtCharge.setText(this.stage.getChargeAmount() == null
+                ? "0,00" : this.stage.getChargeAmount().toPlainString().replace('.', ','));
+        this.txtDescription.setText(this.stage.getDescription() == null ? "" : this.stage.getDescription());
+        this.chkTriggersDefault.setSelected(this.stage.isTriggersDefault());
+        this.chkActive.setSelected(this.stage.isActive());
+
+        if (this.stage.getTemplateFolder() != null) {
+            for (int i = 0; i < this.cmbTemplateFolder.getItemCount(); i++) {
+                FolderItem item = (FolderItem) this.cmbTemplateFolder.getItemAt(i);
+                if (item.path().equals(this.stage.getTemplateFolder())) {
+                    this.cmbTemplateFolder.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
+        loadTemplates();
+        if (this.stage.getTemplateName() != null) {
+            this.cmbTemplateName.setSelectedItem(this.stage.getTemplateName());
+        }
+
+        updateHint();
+    }
 
     /**
-     * Records an enforcement title for a claim ledger.
-     *
-     * The limitation date under § 197 Abs. 1 Nr. 3 BGB is computed from the date of issue, and a
-     * follow-up is created on the case ahead of it, so that a title does not lapse unnoticed over
-     * the thirty years it stays enforceable.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param title the title to record; its id is assigned by the server
-     * @param followUpLeadTimeDays how many days before the limitation date the follow-up is due; a
-     * value of zero or less suppresses the follow-up
-     * @return the stored title including its computed limitation date
-     * @throws Exception if the ledger does not exist or the user may not access its case
+     * @return the stage as edited
      */
-    EnforcementTitle addTitle(String ledgerId, EnforcementTitle title, int followUpLeadTimeDays) throws Exception;
+    public DunningStage getStage() {
+        return this.stage;
+    }
 
     /**
-     * Updates an enforcement title.
-     *
-     * The limitation date is recomputed from the date of issue and the follow-up guarding it is
-     * moved accordingly. A follow-up already marked as done is left untouched and reported to the
-     * caller rather than silently reopened.
-     *
-     * @param title the title to update
-     * @param followUpLeadTimeDays how many days before the limitation date the follow-up is due
-     * @return the stored title
-     * @throws Exception if the title does not exist or the user may not access its case
+     * @return whether the user confirmed the dialog
      */
-    EnforcementTitle updateTitle(EnforcementTitle title, int followUpLeadTimeDays) throws Exception;
+    public boolean isSaved() {
+        return this.saved;
+    }
 
     /**
-     * Removes an enforcement title and the follow-up created for its limitation date.
-     *
-     * @param titleId id of the title
-     * @throws Exception if the title does not exist or the user may not access its case
+     * Explains what the current settings mean.
      */
-    void removeTitle(String titleId) throws Exception;
+    private void updateHint() {
+        StringBuilder sb = new StringBuilder("<html>");
+        if (this.chkTriggersDefault.isSelected()) {
+            sb.append("Diese Stufe setzt den Schuldner in Verzug; ab ihrem Versanddatum laufen "
+                    + "Verzugszinsen nach § 288 BGB. In aller Regel gilt das nur für die erste "
+                    + "förmliche Mahnung - eine zweite Mahnung beginnt den Verzug nicht neu.");
+        } else {
+            sb.append("Diese Stufe löst für sich genommen keinen Verzug aus. Verzug kann daneben "
+                    + "auch ohne Mahnung eintreten (§ 286 Abs. 2, 3 BGB).");
+        }
+        sb.append("</html>");
+        this.lblHint.setText(sb.toString());
+    }
 
     /**
-     * Converts costs that do not bear interest into assessed costs that do.
-     *
-     * After a cost assessment order the assessed amount bears interest under § 104 Abs. 1 S. 2 ZPO.
-     * The operation reduces or removes the original positions, creates one assessed-cost component
-     * carrying the given interest rule, and records the conversion in the ledger history, so the
-     * amount is not claimed twice.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param componentIds ids of the cost components to convert
-     * @param assessedAmount the amount the court assessed, which may be lower than the sum of the
-     * original positions
-     * @param interestRule the interest rule to apply to the assessed costs, with its effective date
-     * @param description designation of the resulting component
-     * @return the created assessed-cost component
-     * @throws Exception if the ledger or a component does not exist, the user may not access the
-     * case, or the assessed amount exceeds the positions being converted
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
-    ClaimComponent convertToAssessedCosts(String ledgerId, List<String> componentIds,
-            BigDecimal assessedAmount, InterestRule interestRule, String description) throws Exception;
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
 
-    /**
-     * Books a procedural fee or disbursement into a claim ledger.
-     *
-     * This is the single path by which the dunning and enforcement workflows put money into a
-     * ledger. The booking records which cost category it belongs to, whether it bears interest,
-     * whether it is owed by all debtors jointly or by one alone, and which dunning case or
-     * enforcement measure caused it. Where the firm advanced the amount, a matching case account
-     * entry records the outlay.
-     *
-     * @param booking the cost to book
-     * @return the created ledger entry
-     * @throws Exception if the ledger does not exist, the user may not access its case, or the
-     * booking is incomplete
-     */
-    ClaimLedgerEntry bookProceduralCost(ProceduralCostBooking booking) throws Exception;
+        lblName = new javax.swing.JLabel();
+        txtName = new javax.swing.JTextField();
+        lblPeriod = new javax.swing.JLabel();
+        spnPeriod = new javax.swing.JSpinner();
+        lblCharge = new javax.swing.JLabel();
+        txtCharge = new javax.swing.JTextField();
+        lblTemplateFolder = new javax.swing.JLabel();
+        cmbTemplateFolder = new javax.swing.JComboBox();
+        lblTemplateName = new javax.swing.JLabel();
+        cmbTemplateName = new javax.swing.JComboBox();
+        lblDescription = new javax.swing.JLabel();
+        txtDescription = new javax.swing.JTextField();
+        chkTriggersDefault = new javax.swing.JCheckBox();
+        chkActive = new javax.swing.JCheckBox();
+        lblHint = new javax.swing.JLabel();
+        cmdSave = new javax.swing.JButton();
+        cmdCancel = new javax.swing.JButton();
 
-    /**
-     * Reverses a procedural cost booking.
-     *
-     * The original entry is kept and an adjustment of the opposite sign is booked against it, so
-     * that the history of the ledger stays complete and a reversal remains visible as such.
-     *
-     * @param entryId id of the ledger entry to reverse
-     * @param reason why the booking is reversed, recorded on the adjustment
-     * @return the created adjustment entry
-     * @throws Exception if the entry does not exist, the user may not access its case, or the entry
-     * has already been reversed
-     */
-    ClaimLedgerEntry reverseProceduralCost(String entryId, String reason) throws Exception;
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Mahnstufe");
 
-    /**
-     * Assembles a claim statement (Forderungsaufstellung) for a claim ledger to a key date.
-     *
-     * This operation only reads: it computes the statement and returns it, without storing anything
-     * in the case and without changing the ledger. Filing the statement as a document is a separate
-     * operation and requires write permission.
-     *
-     * The statement carries the parties, the titles, every position with the interest rule applied
-     * to it and the periods that interest was computed over, every booking in chronological order,
-     * and the resulting balance split into main claims, interest and costs, together with the
-     * interest that keeps running afterwards. Only bookings up to the key date are taken into
-     * account, so a statement to a past date reproduces what was owed then.
-     *
-     * Documents for the debtor and the itemisation annexed to an enforcement application are both
-     * rendered from this object, so they cannot state different amounts.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param keyDate the date to compute to; today if null
-     * @param includeSubLedgers whether the ledger's sub-ledgers are stated as well, each separately
-     * and with a combined total
-     * @return the assembled statement
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    ClaimStatement assembleClaimStatement(String ledgerId, Date keyDate, boolean includeSubLedgers) throws Exception;
+        lblName.setText("Bezeichnung:");
+        txtName.setText("");
+        lblPeriod.setText("Zahlungsfrist (Tage):");
+        lblCharge.setText("Mahngebühr (EUR):");
+        txtCharge.setText("");
+        lblTemplateFolder.setText("Vorlagenordner:");
 
-    /**
-     * Assembles a claim statement, renders it as a PDF and files it in the case.
-     *
-     * Unlike {@link #assembleClaimStatement(String, java.util.Date, boolean)} this operation
-     * changes the case: it stores a document and records on the ledger that a statement was
-     * produced, with its key date and the user who produced it, so it stays visible which figures
-     * were communicated and when.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param keyDate the date to compute to; today if null
-     * @param includeSubLedgers whether the sub-ledgers are stated as well
-     * @param fileName name of the document to create; a name derived from the key date is used if
-     * null or empty
-     * @return the stored document
-     * @throws Exception if the ledger does not exist, the user may not access its case, or the
-     * document cannot be created
-     */
-    ArchiveFileDocumentsBean storeClaimStatement(String ledgerId, Date keyDate,
-            boolean includeSubLedgers, String fileName) throws Exception;
+        cmbTemplateFolder.setModel(new javax.swing.DefaultComboBoxModel());
+        cmbTemplateFolder.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbTemplateFolderActionPerformed(evt);
+            }
+        });
 
-    /**
-     * Renders a claim statement as CSV, for creditors who process it further.
-     *
-     * @param statement the statement to render
-     * @return the statement as CSV, one row per position followed by one row per booking
-     * @throws Exception if the statement cannot be rendered
-     */
-    String exportClaimStatementAsCsv(ClaimStatement statement) throws Exception;
+        lblTemplateName.setText("Vorlage:");
+        cmbTemplateName.setModel(new javax.swing.DefaultComboBoxModel());
+        lblDescription.setText("Beschreibung:");
+        txtDescription.setText("");
 
-    /**
-     * Returns the balance list (Saldenliste) over all claim ledgers of the cases the user may
-     * access, narrowed by the given filter.
-     *
-     * @param filter the criteria to apply; all ledgers of accessible cases if null
-     * @param keyDate the date to compute the open amounts to; today if null
-     * @return one row per matching ledger
-     * @throws Exception if the list cannot be assembled
-     */
-    List<ClaimLedgerSummary> getBalanceList(BalanceListFilter filter, Date keyDate) throws Exception;
+        chkTriggersDefault.setText("setzt den Schuldner in Verzug (§ 286 Abs. 1 BGB)");
+        chkTriggersDefault.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkTriggersDefaultActionPerformed(evt);
+            }
+        });
 
-    /**
-     * Renders a balance list as CSV.
-     *
-     * @param rows the rows to render
-     * @return the balance list as CSV, including a sum row over the rendered rows
-     * @throws Exception if the list cannot be rendered
-     */
-    String exportBalanceListAsCsv(List<ClaimLedgerSummary> rows) throws Exception;
+        chkActive.setText("aktiv");
+        lblHint.setText("");
 
-    /**
-     * Returns the bookings a dunning case or enforcement measure caused.
-     *
-     * @param originReference the originating dunning case or enforcement measure
-     * @return the ledger entries created for it, empty if none exist
-     * @throws Exception if the user may not access the affected cases
-     */
-    List<ClaimLedgerEntry> getBookingsByOrigin(String originReference) throws Exception;
+        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdSave.setText("Speichern");
+        cmdSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveActionPerformed(evt);
+            }
+        });
 
+        cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdCancel.setText("Abbrechen");
+        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCancelActionPerformed(evt);
+            }
+        });
 
-    /**
-     * Returns the claim ledgers of a case.
-     *
-     * @param caseId id of the case
-     * @return the ledgers of that case, empty if the user may not access it
-     */
-    List<ClaimLedger> getClaimLedgers(String caseId);
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(lblName)
+                            .addComponent(lblPeriod)
+                            .addComponent(lblCharge)
+                            .addComponent(lblTemplateFolder)
+                            .addComponent(lblTemplateName)
+                            .addComponent(lblDescription))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtName, javax.swing.GroupLayout.PREFERRED_SIZE, 400, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(spnPeriod, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(txtCharge, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(cmbTemplateFolder, javax.swing.GroupLayout.PREFERRED_SIZE, 400, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(cmbTemplateName, javax.swing.GroupLayout.PREFERRED_SIZE, 400, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(txtDescription, javax.swing.GroupLayout.PREFERRED_SIZE, 400, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(chkTriggersDefault)
+                            .addComponent(chkActive))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(lblHint, javax.swing.GroupLayout.DEFAULT_SIZE, 620, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdSave)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdCancel)))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblName)
+                    .addComponent(txtName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblPeriod)
+                    .addComponent(spnPeriod, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblCharge)
+                    .addComponent(txtCharge, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblTemplateFolder)
+                    .addComponent(cmbTemplateFolder, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblTemplateName)
+                    .addComponent(cmbTemplateName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblDescription)
+                    .addComponent(txtDescription, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkTriggersDefault)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkActive)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(lblHint, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdSave)
+                    .addComponent(cmdCancel))
+                .addContainerGap())
+        );
 
-    /**
-     * Creates a claim ledger for a case.
-     *
-     * @param caseId id of the case
-     * @param ledger the ledger to create; its id is assigned by the server
-     * @return the stored ledger
-     * @throws Exception if the case does not exist or the user may not access it
-     */
-    ClaimLedger addClaimLedger(String caseId, ClaimLedger ledger) throws Exception;
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
 
-    /**
-     * Updates a claim ledger.
-     *
-     * @param caseId id of the case the ledger belongs to
-     * @param claimLedger the ledger to update
-     * @return the stored ledger
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    ClaimLedger updateClaimLedger(String caseId, ClaimLedger claimLedger) throws Exception;
+    private void cmbTemplateFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTemplateFolderActionPerformed
+        loadTemplates();
+    }//GEN-LAST:event_cmbTemplateFolderActionPerformed
 
-    /**
-     * Removes a claim ledger with everything booked on it.
-     *
-     * @param ledgerId id of the ledger
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    void removeClaimLedger(String ledgerId) throws Exception;
+    private void chkTriggersDefaultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkTriggersDefaultActionPerformed
+        updateHint();
+    }//GEN-LAST:event_chkTriggersDefaultActionPerformed
 
-    /**
-     * Returns the components (claims and cost positions) of a claim ledger.
-     *
-     * @param ledgerId id of the ledger
-     * @return the components of the ledger
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    List<ClaimComponent> getClaimComponents(String ledgerId) throws Exception;
+    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+        if (this.txtName.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Für die Mahnstufe muss eine Bezeichnung angegeben werden.",
+                    "Eingabe", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
-    /**
-     * Returns the bookings of a claim ledger, oldest first.
-     *
-     * @param ledgerId id of the ledger
-     * @return the bookings of the ledger
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    List<ClaimLedgerEntry> getClaimLedgerEntries(String ledgerId) throws Exception;
+        BigDecimal charge;
+        try {
+            String entered = this.txtCharge.getText().trim().replace(',', '.');
+            charge = entered.isEmpty() ? BigDecimal.ZERO : new BigDecimal(entered);
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Die Mahngebühr konnte nicht gelesen werden. Erwartet wird ein Betrag wie 2,50.",
+                    "Eingabe", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (charge.compareTo(BigDecimal.ZERO) < 0) {
+            JOptionPane.showMessageDialog(this,
+                    "Die Mahngebühr darf nicht negativ sein.",
+                    "Eingabe", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
-    /**
-     * Adds a component to a claim ledger together with its interest rules.
-     *
-     * @param component the component to add
-     * @param interestRules the interest rules to apply to it, may be empty
-     * @param ledgerId id of the ledger
-     * @return the stored component
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    ClaimComponent addClaimComponent(ClaimComponent component, List<InterestRule> interestRules, String ledgerId) throws Exception;
+        this.stage.setName(this.txtName.getText().trim());
+        this.stage.setPaymentPeriodDays(((Number) this.spnPeriod.getValue()).intValue());
+        this.stage.setChargeAmount(charge);
+        this.stage.setDescription(this.txtDescription.getText());
+        this.stage.setTriggersDefault(this.chkTriggersDefault.isSelected());
+        this.stage.setActive(this.chkActive.isSelected());
 
-    /**
-     * Updates a component and replaces its interest rules.
-     *
-     * @param component the component to update
-     * @param interestRules the interest rules that from now on apply to it
-     * @return the stored component
-     * @throws Exception if the component does not exist or the user may not access its case
-     */
-    ClaimComponent updateClaimComponent(ClaimComponent component, List<InterestRule> interestRules) throws Exception;
+        FolderItem folder = (FolderItem) this.cmbTemplateFolder.getSelectedItem();
+        Object template = this.cmbTemplateName.getSelectedItem();
+        if (template != null && !template.toString().trim().isEmpty()) {
+            this.stage.setTemplateFolder(folder == null ? "" : folder.path());
+            this.stage.setTemplateName(template.toString());
+        } else {
+            // without a template the stage is still recorded, the letter is then written elsewhere
+            this.stage.setTemplateFolder(null);
+            this.stage.setTemplateName(null);
+        }
 
-    /**
-     * Removes a component and everything booked on it.
-     *
-     * @param componentId id of the component
-     * @throws Exception if the component does not exist or the user may not access its case
-     */
-    void removeClaimComponent(String componentId) throws Exception;
+        this.saved = true;
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdSaveActionPerformed
 
-    /**
-     * Returns the interest rules of a component.
-     *
-     * @param componentId id of the component
-     * @return the interest rules, empty if the component bears no interest
-     * @throws Exception if the component does not exist or the user may not access its case
-     */
-    List<InterestRule> getClaimComponentInterestRules(String componentId) throws Exception;
+    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
+        this.saved = false;
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdCancelActionPerformed
 
-    /**
-     * Adds a booking to a claim ledger.
-     *
-     * An interest booking is not stored as a single entry: the interest is computed over the
-     * periods in which rate and principal stayed constant, and one entry is written per period, so
-     * that every interest amount stays traceable to the rate and the days it ran for.
-     *
-     * @param entry the booking to add
-     * @param ledgerId id of the ledger
-     * @return the entries that were created
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    List<ClaimLedgerEntry> addClaimLedgerEntry(ClaimLedgerEntry entry, String ledgerId) throws Exception;
-
-    /**
-     * Updates a booking of a claim ledger.
-     *
-     * @param entry the booking to update
-     * @return the stored booking
-     * @throws Exception if the booking does not exist or the user may not access its case
-     */
-    ClaimLedgerEntry updateClaimLedgerEntry(ClaimLedgerEntry entry) throws Exception;
-
-    /**
-     * Books a payment and distributes it over the positions of the ledger.
-     *
-     * @param proposal the payment and its distribution
-     * @return the entries that were created
-     * @throws Exception if the ledger does not exist, the user may not access its case, or the
-     * distribution does not add up to the payment
-     */
-    List<ClaimLedgerEntry> createPaymentSplit(PaymentSplitProposal proposal) throws Exception;
-
-    /**
-     * Removes a booking from a claim ledger.
-     *
-     * @param entryId id of the booking
-     * @throws Exception if the booking does not exist or the user may not access its case
-     */
-    void removeClaimLedgerEntry(String entryId) throws Exception;
-
-    /**
-     * Computes the totals of a claim ledger to a key date: main claims, costs, the interest accrued
-     * on each, the payments received, what each debtor owes and the interest that keeps running.
-     *
-     * @param ledgerId id of the ledger
-     * @param forDate the key date; today if null
-     * @return the totals of the ledger at that date
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    ClaimLedgerTotals calculateClaimLedgerTotals(String ledgerId, Date forDate) throws Exception;
-
-
-    /**
-     * Returns the reminder stages configured firm-wide, in their escalation order.
-     *
-     * @param activeOnly whether stages an administrator has deactivated are left out
-     * @return the configured stages
-     * @throws Exception if they cannot be read
-     */
-    List<DunningStage> getDunningStages(boolean activeOnly) throws Exception;
-
-    /**
-     * Creates a reminder stage.
-     *
-     * @param stage the stage to create; its id is assigned by the server
-     * @return the stored stage
-     * @throws Exception if the stage is incomplete
-     */
-    DunningStage addDunningStage(DunningStage stage) throws Exception;
-
-    /**
-     * Updates a reminder stage. Reminders already sent keep the wording and position they were sent
-     * with, so changing a stage does not rewrite the history of a claim.
-     *
-     * @param stage the stage to update
-     * @return the stored stage
-     * @throws Exception if the stage does not exist
-     */
-    DunningStage updateDunningStage(DunningStage stage) throws Exception;
-
-    /**
-     * Removes a reminder stage from the configuration. Reminders already sent are kept.
-     *
-     * @param stageId id of the stage
-     * @throws Exception if the stage does not exist
-     */
-    void removeDunningStage(String stageId) throws Exception;
-
-    /**
-     * Returns where a claim ledger stands in the reminder cycle: which reminders went out, whether
-     * the last one has run out, what would be sent next, and since when the debtor is in default.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param at the date to judge the payment period by; today if null
-     * @return the dunning status
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    DunningStatus getDunningStatus(String ledgerId, Date at) throws Exception;
-
-    /**
-     * Sends a reminder stage for a claim ledger.
-     *
-     * Generates the reminder document from the stage's template into the case, records the stage
-     * with the payment period it granted, creates a follow-up for that deadline and books the
-     * reminder charge into the ledger. Where the stage puts the debtor in default, the date is
-     * recorded, because default interest under § 288 BGB runs from it.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param stageId id of the stage to send
-     * @param sentDate the date the reminder goes out; today if null
-     * @param followUpLeadTimeDays how many days before the payment period ends the follow-up is due;
-     * zero or less makes it due on the deadline itself
-     * @return the recorded stage
-     * @throws Exception if the ledger or stage does not exist, the user may not access the case, or
-     * the document cannot be produced
-     */
-    DunningStageEvent sendDunningStage(String ledgerId, String stageId, Date sentDate,
-            int followUpLeadTimeDays) throws Exception;
-
-    /**
-     * Proposes the default interest of § 288 BGB for a claim, together with the lump sum of § 288
-     * Abs. 5 BGB where the creditor is entitled to it.
-     *
-     * The margin depends on whether the claim is a payment claim (Entgeltforderung) and whether a
-     * consumer is involved; both are taken from the ledger and remain a proposal the user may
-     * change.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param componentId id of the claim the interest is to run on
-     * @param defaultSince the date of default; taken from the reminder cycle if null
-     * @return the proposal
-     * @throws Exception if the ledger or component does not exist or the user may not access the
-     * case
-     */
-    DefaultInterestProposal proposeDefaultInterest(String ledgerId, String componentId,
-            Date defaultSince) throws Exception;
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox chkActive;
+    private javax.swing.JCheckBox chkTriggersDefault;
+    private javax.swing.JComboBox cmbTemplateFolder;
+    private javax.swing.JComboBox cmbTemplateName;
+    private javax.swing.JButton cmdCancel;
+    private javax.swing.JButton cmdSave;
+    private javax.swing.JLabel lblCharge;
+    private javax.swing.JLabel lblDescription;
+    private javax.swing.JLabel lblHint;
+    private javax.swing.JLabel lblName;
+    private javax.swing.JLabel lblPeriod;
+    private javax.swing.JLabel lblTemplateFolder;
+    private javax.swing.JLabel lblTemplateName;
+    private javax.swing.JSpinner spnPeriod;
+    private javax.swing.JTextField txtCharge;
+    private javax.swing.JTextField txtDescription;
+    private javax.swing.JTextField txtName;
+    // End of variables declaration//GEN-END:variables
 
 }

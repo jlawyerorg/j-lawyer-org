@@ -665,6 +665,8 @@ package com.jdimension.jlawyer.services;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
+import com.jdimension.jlawyer.persistence.DunningStage;
+import com.jdimension.jlawyer.persistence.DunningStageEvent;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.persistence.PaymentSplitProposal;
@@ -674,6 +676,8 @@ import com.jdimension.jlawyer.persistence.InterestRule;
 import com.jdimension.jlawyer.pojo.BalanceListFilter;
 import com.jdimension.jlawyer.pojo.ClaimLedgerSummary;
 import com.jdimension.jlawyer.pojo.ClaimStatement;
+import com.jdimension.jlawyer.pojo.DefaultInterestProposal;
+import com.jdimension.jlawyer.pojo.DunningStatus;
 import com.jdimension.jlawyer.pojo.ProceduralCostBooking;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -1073,5 +1077,91 @@ public interface ClaimLedgerServiceLocal {
      * @throws Exception if the ledger does not exist or the user may not access its case
      */
     ClaimLedgerTotals calculateClaimLedgerTotals(String ledgerId, Date forDate) throws Exception;
+
+
+    /**
+     * Returns the reminder stages configured firm-wide, in their escalation order.
+     *
+     * @param activeOnly whether stages an administrator has deactivated are left out
+     * @return the configured stages
+     * @throws Exception if they cannot be read
+     */
+    List<DunningStage> getDunningStages(boolean activeOnly) throws Exception;
+
+    /**
+     * Creates a reminder stage.
+     *
+     * @param stage the stage to create; its id is assigned by the server
+     * @return the stored stage
+     * @throws Exception if the stage is incomplete
+     */
+    DunningStage addDunningStage(DunningStage stage) throws Exception;
+
+    /**
+     * Updates a reminder stage. Reminders already sent keep the wording and position they were sent
+     * with, so changing a stage does not rewrite the history of a claim.
+     *
+     * @param stage the stage to update
+     * @return the stored stage
+     * @throws Exception if the stage does not exist
+     */
+    DunningStage updateDunningStage(DunningStage stage) throws Exception;
+
+    /**
+     * Removes a reminder stage from the configuration. Reminders already sent are kept.
+     *
+     * @param stageId id of the stage
+     * @throws Exception if the stage does not exist
+     */
+    void removeDunningStage(String stageId) throws Exception;
+
+    /**
+     * Returns where a claim ledger stands in the reminder cycle: which reminders went out, whether
+     * the last one has run out, what would be sent next, and since when the debtor is in default.
+     *
+     * @param ledgerId id of the claim ledger
+     * @param at the date to judge the payment period by; today if null
+     * @return the dunning status
+     * @throws Exception if the ledger does not exist or the user may not access its case
+     */
+    DunningStatus getDunningStatus(String ledgerId, Date at) throws Exception;
+
+    /**
+     * Sends a reminder stage for a claim ledger.
+     *
+     * Generates the reminder document from the stage's template into the case, records the stage
+     * with the payment period it granted, creates a follow-up for that deadline and books the
+     * reminder charge into the ledger. Where the stage puts the debtor in default, the date is
+     * recorded, because default interest under § 288 BGB runs from it.
+     *
+     * @param ledgerId id of the claim ledger
+     * @param stageId id of the stage to send
+     * @param sentDate the date the reminder goes out; today if null
+     * @param followUpLeadTimeDays how many days before the payment period ends the follow-up is due;
+     * zero or less makes it due on the deadline itself
+     * @return the recorded stage
+     * @throws Exception if the ledger or stage does not exist, the user may not access the case, or
+     * the document cannot be produced
+     */
+    DunningStageEvent sendDunningStage(String ledgerId, String stageId, Date sentDate,
+            int followUpLeadTimeDays) throws Exception;
+
+    /**
+     * Proposes the default interest of § 288 BGB for a claim, together with the lump sum of § 288
+     * Abs. 5 BGB where the creditor is entitled to it.
+     *
+     * The margin depends on whether the claim is a payment claim (Entgeltforderung) and whether a
+     * consumer is involved; both are taken from the ledger and remain a proposal the user may
+     * change.
+     *
+     * @param ledgerId id of the claim ledger
+     * @param componentId id of the claim the interest is to run on
+     * @param defaultSince the date of default; taken from the reminder cycle if null
+     * @return the proposal
+     * @throws Exception if the ledger or component does not exist or the user may not access the
+     * case
+     */
+    DefaultInterestProposal proposeDefaultInterest(String ledgerId, String componentId,
+            Date defaultSince) throws Exception;
 
 }

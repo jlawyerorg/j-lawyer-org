@@ -660,508 +660,474 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.client.configuration;
 
-import com.jdimension.jlawyer.persistence.ClaimComponent;
-import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
-import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.DunningStage;
-import com.jdimension.jlawyer.persistence.DunningStageEvent;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.ClaimLedger;
-import com.jdimension.jlawyer.persistence.PaymentSplitProposal;
-import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
-import com.jdimension.jlawyer.persistence.EnforcementTitle;
-import com.jdimension.jlawyer.persistence.InterestRule;
-import com.jdimension.jlawyer.pojo.BalanceListFilter;
-import com.jdimension.jlawyer.pojo.ClaimLedgerSummary;
-import com.jdimension.jlawyer.pojo.ClaimStatement;
-import com.jdimension.jlawyer.pojo.DefaultInterestProposal;
-import com.jdimension.jlawyer.pojo.DunningStatus;
-import com.jdimension.jlawyer.pojo.ProceduralCostBooking;
+import com.jdimension.jlawyer.services.ClaimLedgerServiceRemote;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.List;
-import javax.ejb.Remote;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import org.apache.log4j.Logger;
 
 /**
- * Operations on a claim ledger (Forderungskonto) that go beyond its bookings: the parties it runs
- * for and against, the enforcement titles it rests on, and the procedural costs that the dunning
- * and enforcement workflows book into it.
+ * Administers the stages of the pre-court reminder cycle.
+ *
+ * The order of escalation is set by moving stages up and down rather than by typing numbers: what
+ * matters to the user is which reminder follows which, not the values the server sorts by. Those
+ * are recalculated from the displayed order whenever it changes.
  *
  * @author jens
  */
-@Remote
-public interface ClaimLedgerServiceRemote {
+public class DunningStagesConfigurationDialog extends javax.swing.JDialog {
+
+    private static final Logger log = Logger.getLogger(DunningStagesConfigurationDialog.class.getName());
 
     /**
-     * Returns the creditors and debtors of a claim ledger, ordered by role and sequence number.
-     *
-     * @param ledgerId id of the claim ledger
-     * @return the parties of the ledger, empty if none are recorded yet
-     * @throws Exception if the ledger does not exist or the user may not access its case
+     * Gap between the sequence numbers of two neighbouring stages. Leaving room between them means a
+     * stage can later be inserted without renumbering everything.
      */
-    List<ClaimLedgerParty> getParties(String ledgerId) throws Exception;
+    private static final int SEQUENCE_STEP = 10;
+
+    private final DecimalFormat currencyFormat = new DecimalFormat("#,##0.00");
+
+    private final List<DunningStage> stages = new ArrayList<>();
 
     /**
-     * Adds a creditor or debtor to a claim ledger.
+     * Creates the dialog.
      *
-     * The party is identified by the address book contact it references; deleting that contact
-     * later does not delete the party. Where the party is also a party of the case, the case party
-     * record may be referenced as well, but it does not determine who the ledger runs against.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param party the party to add; its id is assigned by the server
-     * @return the stored party
-     * @throws Exception if the ledger does not exist or the user may not access its case
+     * @param parent the parent window
+     * @param modal whether the dialog is modal
      */
-    ClaimLedgerParty addParty(String ledgerId, ClaimLedgerParty party) throws Exception;
+    public DunningStagesConfigurationDialog(java.awt.Frame parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
+
+        this.tblStages.setModel(new DefaultTableModel(
+                new Object[]{"Bezeichnung", "Zahlungsfrist", "Mahngebühr", "Setzt in Verzug",
+                    "Vorlage", "Aktiv"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        });
+        this.tblStages.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        this.tblStages.setAutoCreateRowSorter(false);
+
+        this.txtHint.setText("Die Mahnstufen gelten kanzleiweit und werden in der hier gezeigten "
+                + "Reihenfolge versandt; mit \"nach oben\" und \"nach unten\" wird sie geändert.\n\n"
+                + "\"Setzt in Verzug\" kennzeichnet die Mahnung, die den Schuldner nach § 286 Abs. 1 BGB "
+                + "in Verzug setzt und damit die Verzugszinsen auslöst. Verzug kann daneben auch ohne "
+                + "Mahnung eintreten (§ 286 Abs. 2, 3 BGB).\n\n"
+                + "\"Aktiv\" steuert, ob eine Stufe beim Mahnen noch angeboten wird. Eine inaktive Stufe "
+                + "bleibt erhalten und wird beim Versenden übersprungen - bereits versandte Mahnungen "
+                + "dieser Stufe bleiben unverändert bestehen.\n\n"
+                + "Die Mahngebühr darf nur die tatsächlich entstandenen Kosten abdecken.");
+        this.txtHint.setCaretPosition(0);
+
+        loadStages();
+    }
 
     /**
-     * Updates a party of a claim ledger.
-     *
-     * The designation and address snapshot taken for use towards a court is not changed by this
-     * operation: once a party has been named in a dunning application or a title, that wording has
-     * to stay reproducible.
-     *
-     * @param party the party to update
-     * @return the stored party
-     * @throws Exception if the party does not exist or the user may not access its case
+     * Loads the configured stages into the table, in escalation order.
      */
-    ClaimLedgerParty updateParty(ClaimLedgerParty party) throws Exception;
+    private void loadStages() {
+        int selected = this.tblStages.getSelectedRow();
+
+        DefaultTableModel model = (DefaultTableModel) this.tblStages.getModel();
+        model.setRowCount(0);
+        this.stages.clear();
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<DunningStage> loaded = locator.lookupClaimLedgerServiceRemote().getDunningStages(false);
+            if (loaded != null) {
+                this.stages.addAll(loaded);
+            }
+        } catch (Exception ex) {
+            log.error("Unable to load the dunning stages", ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Mahnstufen konnten nicht geladen werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        this.stages.sort((a, b) -> Integer.compare(a.getSequenceNumber(), b.getSequenceNumber()));
+
+        for (DunningStage s : this.stages) {
+            String template = "";
+            if (s.getTemplateName() != null && !s.getTemplateName().trim().isEmpty()) {
+                template = (s.getTemplateFolder() == null ? "" : s.getTemplateFolder())
+                        + "/" + s.getTemplateName();
+            }
+            model.addRow(new Object[]{
+                s.getName(),
+                s.getPaymentPeriodDays() + " Tage",
+                this.currencyFormat.format(s.getChargeAmount() == null
+                        ? BigDecimal.ZERO : s.getChargeAmount()) + " EUR",
+                s.isTriggersDefault() ? "ja" : "nein",
+                template,
+                s.isActive() ? "ja" : "nein"
+            });
+        }
+
+        if (selected >= 0 && selected < this.tblStages.getRowCount()) {
+            this.tblStages.setRowSelectionInterval(selected, selected);
+        }
+        updateButtons();
+    }
 
     /**
-     * Removes a party from a claim ledger.
-     *
-     * @param partyId id of the party
-     * @throws Exception if the party does not exist, the user may not access its case, or bookings
-     * are attributed to that party alone
+     * Enables the reordering buttons only where a move is actually possible.
      */
-    void removeParty(String partyId) throws Exception;
+    private void updateButtons() {
+        int row = this.tblStages.getSelectedRow();
+        this.cmdUp.setEnabled(row > 0);
+        this.cmdDown.setEnabled(row >= 0 && row < this.stages.size() - 1);
+        this.cmdEdit.setEnabled(row >= 0);
+        this.cmdRemove.setEnabled(row >= 0);
+    }
 
     /**
-     * Freezes the designation and postal address of a party as they are to be used towards a court.
+     * Moves the selected stage by one position and writes the resulting order back.
      *
-     * Called when a party is first named in a dunning application, a title or an enforcement
-     * document. A snapshot that already exists is kept, so an application filed earlier stays
-     * reproducible; later corrections to the contact reach current work but not the history.
-     *
-     * @param partyId id of the party
-     * @return the party including its snapshot
-     * @throws Exception if the party does not exist or the user may not access its case
+     * @param offset -1 to move it earlier, 1 to move it later
      */
-    ClaimLedgerParty freezePartyDesignation(String partyId) throws Exception;
+    private void moveSelected(int offset) {
+        int row = this.tblStages.getSelectedRow();
+        int target = row + offset;
+        if (row < 0 || target < 0 || target >= this.stages.size()) {
+            return;
+        }
+
+        DunningStage moved = this.stages.remove(row);
+        this.stages.add(target, moved);
+
+        if (!renumberAndSave()) {
+            return;
+        }
+
+        loadStages();
+        if (target < this.tblStages.getRowCount()) {
+            this.tblStages.setRowSelectionInterval(target, target);
+        }
+        updateButtons();
+    }
 
     /**
-     * Returns the enforcement titles recorded for a claim ledger, oldest first.
+     * Recalculates the sequence numbers from the displayed order and stores the stages whose number
+     * changed.
      *
-     * @param ledgerId id of the claim ledger
-     * @return the titles of the ledger, empty if none are recorded
-     * @throws Exception if the ledger does not exist or the user may not access its case
+     * The numbers are an implementation detail of the sorting; the user only ever sees the order.
+     *
+     * @return whether every change could be stored
      */
-    List<EnforcementTitle> getTitles(String ledgerId) throws Exception;
+    private boolean renumberAndSave() {
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ClaimLedgerServiceRemote ledgerService = locator.lookupClaimLedgerServiceRemote();
+
+            for (int i = 0; i < this.stages.size(); i++) {
+                DunningStage s = this.stages.get(i);
+                int expected = (i + 1) * SEQUENCE_STEP;
+                if (s.getSequenceNumber() != expected) {
+                    s.setSequenceNumber(expected);
+                    ledgerService.updateDunningStage(s);
+                }
+            }
+            return true;
+
+        } catch (Exception ex) {
+            log.error("Unable to save the order of the dunning stages", ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Reihenfolge konnte nicht gespeichert werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+    }
 
     /**
-     * Records an enforcement title for a claim ledger.
+     * The stage selected in the table.
      *
-     * The limitation date under § 197 Abs. 1 Nr. 3 BGB is computed from the date of issue, and a
-     * follow-up is created on the case ahead of it, so that a title does not lapse unnoticed over
-     * the thirty years it stays enforceable.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param title the title to record; its id is assigned by the server
-     * @param followUpLeadTimeDays how many days before the limitation date the follow-up is due; a
-     * value of zero or less suppresses the follow-up
-     * @return the stored title including its computed limitation date
-     * @throws Exception if the ledger does not exist or the user may not access its case
+     * @return the selected stage, or null if nothing is selected
      */
-    EnforcementTitle addTitle(String ledgerId, EnforcementTitle title, int followUpLeadTimeDays) throws Exception;
+    private DunningStage selectedStage() {
+        int row = this.tblStages.getSelectedRow();
+        if (row < 0 || row >= this.stages.size()) {
+            return null;
+        }
+        return this.stages.get(row);
+    }
 
     /**
-     * Updates an enforcement title.
-     *
-     * The limitation date is recomputed from the date of issue and the follow-up guarding it is
-     * moved accordingly. A follow-up already marked as done is left untouched and reported to the
-     * caller rather than silently reopened.
-     *
-     * @param title the title to update
-     * @param followUpLeadTimeDays how many days before the limitation date the follow-up is due
-     * @return the stored title
-     * @throws Exception if the title does not exist or the user may not access its case
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
-    EnforcementTitle updateTitle(EnforcementTitle title, int followUpLeadTimeDays) throws Exception;
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
 
-    /**
-     * Removes an enforcement title and the follow-up created for its limitation date.
-     *
-     * @param titleId id of the title
-     * @throws Exception if the title does not exist or the user may not access its case
-     */
-    void removeTitle(String titleId) throws Exception;
+        jScrollPaneHint = new javax.swing.JScrollPane();
+        txtHint = new javax.swing.JTextArea();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblStages = new javax.swing.JTable();
+        cmdUp = new javax.swing.JButton();
+        cmdDown = new javax.swing.JButton();
+        cmdAdd = new javax.swing.JButton();
+        cmdEdit = new javax.swing.JButton();
+        cmdRemove = new javax.swing.JButton();
+        cmdClose = new javax.swing.JButton();
 
-    /**
-     * Converts costs that do not bear interest into assessed costs that do.
-     *
-     * After a cost assessment order the assessed amount bears interest under § 104 Abs. 1 S. 2 ZPO.
-     * The operation reduces or removes the original positions, creates one assessed-cost component
-     * carrying the given interest rule, and records the conversion in the ledger history, so the
-     * amount is not claimed twice.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param componentIds ids of the cost components to convert
-     * @param assessedAmount the amount the court assessed, which may be lower than the sum of the
-     * original positions
-     * @param interestRule the interest rule to apply to the assessed costs, with its effective date
-     * @param description designation of the resulting component
-     * @return the created assessed-cost component
-     * @throws Exception if the ledger or a component does not exist, the user may not access the
-     * case, or the assessed amount exceeds the positions being converted
-     */
-    ClaimComponent convertToAssessedCosts(String ledgerId, List<String> componentIds,
-            BigDecimal assessedAmount, InterestRule interestRule, String description) throws Exception;
+        txtHint.setEditable(false);
+        txtHint.setColumns(20);
+        txtHint.setLineWrap(true);
+        txtHint.setRows(4);
+        txtHint.setWrapStyleWord(true);
+        txtHint.setOpaque(false);
+        jScrollPaneHint.setViewportView(txtHint);
 
-    /**
-     * Books a procedural fee or disbursement into a claim ledger.
-     *
-     * This is the single path by which the dunning and enforcement workflows put money into a
-     * ledger. The booking records which cost category it belongs to, whether it bears interest,
-     * whether it is owed by all debtors jointly or by one alone, and which dunning case or
-     * enforcement measure caused it. Where the firm advanced the amount, a matching case account
-     * entry records the outlay.
-     *
-     * @param booking the cost to book
-     * @return the created ledger entry
-     * @throws Exception if the ledger does not exist, the user may not access its case, or the
-     * booking is incomplete
-     */
-    ClaimLedgerEntry bookProceduralCost(ProceduralCostBooking booking) throws Exception;
+        tblStages.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
 
-    /**
-     * Reverses a procedural cost booking.
-     *
-     * The original entry is kept and an adjustment of the opposite sign is booked against it, so
-     * that the history of the ledger stays complete and a reversal remains visible as such.
-     *
-     * @param entryId id of the ledger entry to reverse
-     * @param reason why the booking is reversed, recorded on the adjustment
-     * @return the created adjustment entry
-     * @throws Exception if the entry does not exist, the user may not access its case, or the entry
-     * has already been reversed
-     */
-    ClaimLedgerEntry reverseProceduralCost(String entryId, String reason) throws Exception;
+            },
+            new String [] {
 
-    /**
-     * Assembles a claim statement (Forderungsaufstellung) for a claim ledger to a key date.
-     *
-     * This operation only reads: it computes the statement and returns it, without storing anything
-     * in the case and without changing the ledger. Filing the statement as a document is a separate
-     * operation and requires write permission.
-     *
-     * The statement carries the parties, the titles, every position with the interest rule applied
-     * to it and the periods that interest was computed over, every booking in chronological order,
-     * and the resulting balance split into main claims, interest and costs, together with the
-     * interest that keeps running afterwards. Only bookings up to the key date are taken into
-     * account, so a statement to a past date reproduces what was owed then.
-     *
-     * Documents for the debtor and the itemisation annexed to an enforcement application are both
-     * rendered from this object, so they cannot state different amounts.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param keyDate the date to compute to; today if null
-     * @param includeSubLedgers whether the ledger's sub-ledgers are stated as well, each separately
-     * and with a combined total
-     * @return the assembled statement
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    ClaimStatement assembleClaimStatement(String ledgerId, Date keyDate, boolean includeSubLedgers) throws Exception;
+            }
+        ));
+        tblStages.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblStagesMouseClicked(evt);
+            }
+        });
+        jScrollPane1.setViewportView(tblStages);
 
-    /**
-     * Assembles a claim statement, renders it as a PDF and files it in the case.
-     *
-     * Unlike {@link #assembleClaimStatement(String, java.util.Date, boolean)} this operation
-     * changes the case: it stores a document and records on the ledger that a statement was
-     * produced, with its key date and the user who produced it, so it stays visible which figures
-     * were communicated and when.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param keyDate the date to compute to; today if null
-     * @param includeSubLedgers whether the sub-ledgers are stated as well
-     * @param fileName name of the document to create; a name derived from the key date is used if
-     * null or empty
-     * @return the stored document
-     * @throws Exception if the ledger does not exist, the user may not access its case, or the
-     * document cannot be created
-     */
-    ArchiveFileDocumentsBean storeClaimStatement(String ledgerId, Date keyDate,
-            boolean includeSubLedgers, String fileName) throws Exception;
+        cmdUp.setText("nach oben");
+        cmdUp.setToolTipText("Stufe früher versenden");
+        cmdUp.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdUpActionPerformed(evt);
+            }
+        });
 
-    /**
-     * Renders a claim statement as CSV, for creditors who process it further.
-     *
-     * @param statement the statement to render
-     * @return the statement as CSV, one row per position followed by one row per booking
-     * @throws Exception if the statement cannot be rendered
-     */
-    String exportClaimStatementAsCsv(ClaimStatement statement) throws Exception;
+        cmdDown.setText("nach unten");
+        cmdDown.setToolTipText("Stufe später versenden");
+        cmdDown.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDownActionPerformed(evt);
+            }
+        });
 
-    /**
-     * Returns the balance list (Saldenliste) over all claim ledgers of the cases the user may
-     * access, narrowed by the given filter.
-     *
-     * @param filter the criteria to apply; all ledgers of accessible cases if null
-     * @param keyDate the date to compute the open amounts to; today if null
-     * @return one row per matching ledger
-     * @throws Exception if the list cannot be assembled
-     */
-    List<ClaimLedgerSummary> getBalanceList(BalanceListFilter filter, Date keyDate) throws Exception;
+        cmdAdd.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdAdd.setText("Stufe anlegen");
+        cmdAdd.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddActionPerformed(evt);
+            }
+        });
 
-    /**
-     * Renders a balance list as CSV.
-     *
-     * @param rows the rows to render
-     * @return the balance list as CSV, including a sum row over the rendered rows
-     * @throws Exception if the list cannot be rendered
-     */
-    String exportBalanceListAsCsv(List<ClaimLedgerSummary> rows) throws Exception;
+        cmdEdit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfind.png"))); // NOI18N
+        cmdEdit.setText("Bearbeiten");
+        cmdEdit.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdEditActionPerformed(evt);
+            }
+        });
 
-    /**
-     * Returns the bookings a dunning case or enforcement measure caused.
-     *
-     * @param originReference the originating dunning case or enforcement measure
-     * @return the ledger entries created for it, empty if none exist
-     * @throws Exception if the user may not access the affected cases
-     */
-    List<ClaimLedgerEntry> getBookingsByOrigin(String originReference) throws Exception;
+        cmdRemove.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdRemove.setText("Entfernen");
+        cmdRemove.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRemoveActionPerformed(evt);
+            }
+        });
 
+        cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdClose.setText("Schließen");
+        cmdClose.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCloseActionPerformed(evt);
+            }
+        });
 
-    /**
-     * Returns the claim ledgers of a case.
-     *
-     * @param caseId id of the case
-     * @return the ledgers of that case, empty if the user may not access it
-     */
-    List<ClaimLedger> getClaimLedgers(String caseId);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Mahnstufen");
 
-    /**
-     * Creates a claim ledger for a case.
-     *
-     * @param caseId id of the case
-     * @param ledger the ledger to create; its id is assigned by the server
-     * @return the stored ledger
-     * @throws Exception if the case does not exist or the user may not access it
-     */
-    ClaimLedger addClaimLedger(String caseId, ClaimLedger ledger) throws Exception;
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPaneHint, javax.swing.GroupLayout.DEFAULT_SIZE, 900, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 760, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(cmdUp, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(cmdDown, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(cmdAdd)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdEdit)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdRemove)
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdClose)))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPaneHint, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(cmdUp)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdDown)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdAdd)
+                    .addComponent(cmdEdit)
+                    .addComponent(cmdRemove)
+                    .addComponent(cmdClose))
+                .addContainerGap())
+        );
 
-    /**
-     * Updates a claim ledger.
-     *
-     * @param caseId id of the case the ledger belongs to
-     * @param claimLedger the ledger to update
-     * @return the stored ledger
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    ClaimLedger updateClaimLedger(String caseId, ClaimLedger claimLedger) throws Exception;
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
 
-    /**
-     * Removes a claim ledger with everything booked on it.
-     *
-     * @param ledgerId id of the ledger
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    void removeClaimLedger(String ledgerId) throws Exception;
+    private void cmdUpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUpActionPerformed
+        moveSelected(-1);
+    }//GEN-LAST:event_cmdUpActionPerformed
 
-    /**
-     * Returns the components (claims and cost positions) of a claim ledger.
-     *
-     * @param ledgerId id of the ledger
-     * @return the components of the ledger
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    List<ClaimComponent> getClaimComponents(String ledgerId) throws Exception;
+    private void cmdDownActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDownActionPerformed
+        moveSelected(1);
+    }//GEN-LAST:event_cmdDownActionPerformed
 
-    /**
-     * Returns the bookings of a claim ledger, oldest first.
-     *
-     * @param ledgerId id of the ledger
-     * @return the bookings of the ledger
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    List<ClaimLedgerEntry> getClaimLedgerEntries(String ledgerId) throws Exception;
+    private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdCloseActionPerformed
 
-    /**
-     * Adds a component to a claim ledger together with its interest rules.
-     *
-     * @param component the component to add
-     * @param interestRules the interest rules to apply to it, may be empty
-     * @param ledgerId id of the ledger
-     * @return the stored component
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    ClaimComponent addClaimComponent(ClaimComponent component, List<InterestRule> interestRules, String ledgerId) throws Exception;
+    private void cmdAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddActionPerformed
+        DunningStageDialog dlg = new DunningStageDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+        dlg.setStage(null);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
 
-    /**
-     * Updates a component and replaces its interest rules.
-     *
-     * @param component the component to update
-     * @param interestRules the interest rules that from now on apply to it
-     * @return the stored component
-     * @throws Exception if the component does not exist or the user may not access its case
-     */
-    ClaimComponent updateClaimComponent(ClaimComponent component, List<InterestRule> interestRules) throws Exception;
+        if (!dlg.isSaved()) {
+            return;
+        }
 
-    /**
-     * Removes a component and everything booked on it.
-     *
-     * @param componentId id of the component
-     * @throws Exception if the component does not exist or the user may not access its case
-     */
-    void removeClaimComponent(String componentId) throws Exception;
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            // a new stage goes to the end of the escalation; from there it can be moved
+            dlg.getStage().setSequenceNumber((this.stages.size() + 1) * SEQUENCE_STEP);
+            locator.lookupClaimLedgerServiceRemote().addDunningStage(dlg.getStage());
+        } catch (Exception ex) {
+            log.error("Unable to add a dunning stage", ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Mahnstufe konnte nicht gespeichert werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
 
-    /**
-     * Returns the interest rules of a component.
-     *
-     * @param componentId id of the component
-     * @return the interest rules, empty if the component bears no interest
-     * @throws Exception if the component does not exist or the user may not access its case
-     */
-    List<InterestRule> getClaimComponentInterestRules(String componentId) throws Exception;
+        loadStages();
+    }//GEN-LAST:event_cmdAddActionPerformed
 
-    /**
-     * Adds a booking to a claim ledger.
-     *
-     * An interest booking is not stored as a single entry: the interest is computed over the
-     * periods in which rate and principal stayed constant, and one entry is written per period, so
-     * that every interest amount stays traceable to the rate and the days it ran for.
-     *
-     * @param entry the booking to add
-     * @param ledgerId id of the ledger
-     * @return the entries that were created
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    List<ClaimLedgerEntry> addClaimLedgerEntry(ClaimLedgerEntry entry, String ledgerId) throws Exception;
+    private void cmdEditActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditActionPerformed
+        DunningStage selected = selectedStage();
+        if (selected == null) {
+            return;
+        }
 
-    /**
-     * Updates a booking of a claim ledger.
-     *
-     * @param entry the booking to update
-     * @return the stored booking
-     * @throws Exception if the booking does not exist or the user may not access its case
-     */
-    ClaimLedgerEntry updateClaimLedgerEntry(ClaimLedgerEntry entry) throws Exception;
+        DunningStageDialog dlg = new DunningStageDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+        dlg.setStage(selected);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
 
-    /**
-     * Books a payment and distributes it over the positions of the ledger.
-     *
-     * @param proposal the payment and its distribution
-     * @return the entries that were created
-     * @throws Exception if the ledger does not exist, the user may not access its case, or the
-     * distribution does not add up to the payment
-     */
-    List<ClaimLedgerEntry> createPaymentSplit(PaymentSplitProposal proposal) throws Exception;
+        if (!dlg.isSaved()) {
+            return;
+        }
 
-    /**
-     * Removes a booking from a claim ledger.
-     *
-     * @param entryId id of the booking
-     * @throws Exception if the booking does not exist or the user may not access its case
-     */
-    void removeClaimLedgerEntry(String entryId) throws Exception;
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupClaimLedgerServiceRemote().updateDunningStage(dlg.getStage());
+        } catch (Exception ex) {
+            log.error("Unable to update dunning stage " + selected.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Mahnstufe konnte nicht gespeichert werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
 
-    /**
-     * Computes the totals of a claim ledger to a key date: main claims, costs, the interest accrued
-     * on each, the payments received, what each debtor owes and the interest that keeps running.
-     *
-     * @param ledgerId id of the ledger
-     * @param forDate the key date; today if null
-     * @return the totals of the ledger at that date
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    ClaimLedgerTotals calculateClaimLedgerTotals(String ledgerId, Date forDate) throws Exception;
+        loadStages();
+    }//GEN-LAST:event_cmdEditActionPerformed
 
+    private void cmdRemoveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveActionPerformed
+        DunningStage selected = selectedStage();
+        if (selected == null) {
+            return;
+        }
 
-    /**
-     * Returns the reminder stages configured firm-wide, in their escalation order.
-     *
-     * @param activeOnly whether stages an administrator has deactivated are left out
-     * @return the configured stages
-     * @throws Exception if they cannot be read
-     */
-    List<DunningStage> getDunningStages(boolean activeOnly) throws Exception;
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Soll die Mahnstufe \"" + selected.getName() + "\" wirklich entfernt werden?\n\n"
+                + "Bereits versandte Mahnungen bleiben erhalten. Soll die Stufe nur nicht mehr "
+                + "angeboten werden, genügt es, sie auf inaktiv zu setzen.",
+                "Mahnstufe entfernen", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
 
-    /**
-     * Creates a reminder stage.
-     *
-     * @param stage the stage to create; its id is assigned by the server
-     * @return the stored stage
-     * @throws Exception if the stage is incomplete
-     */
-    DunningStage addDunningStage(DunningStage stage) throws Exception;
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupClaimLedgerServiceRemote().removeDunningStage(selected.getId());
+        } catch (Exception ex) {
+            log.error("Unable to remove dunning stage " + selected.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Mahnstufe konnte nicht entfernt werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
 
-    /**
-     * Updates a reminder stage. Reminders already sent keep the wording and position they were sent
-     * with, so changing a stage does not rewrite the history of a claim.
-     *
-     * @param stage the stage to update
-     * @return the stored stage
-     * @throws Exception if the stage does not exist
-     */
-    DunningStage updateDunningStage(DunningStage stage) throws Exception;
+        loadStages();
+        // the gap the removed stage leaves in the numbering is closed right away
+        renumberAndSave();
+    }//GEN-LAST:event_cmdRemoveActionPerformed
 
-    /**
-     * Removes a reminder stage from the configuration. Reminders already sent are kept.
-     *
-     * @param stageId id of the stage
-     * @throws Exception if the stage does not exist
-     */
-    void removeDunningStage(String stageId) throws Exception;
+    private void tblStagesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblStagesMouseClicked
+        if (evt.getClickCount() == 2) {
+            cmdEditActionPerformed(null);
+        } else {
+            updateButtons();
+        }
+    }//GEN-LAST:event_tblStagesMouseClicked
 
-    /**
-     * Returns where a claim ledger stands in the reminder cycle: which reminders went out, whether
-     * the last one has run out, what would be sent next, and since when the debtor is in default.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param at the date to judge the payment period by; today if null
-     * @return the dunning status
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    DunningStatus getDunningStatus(String ledgerId, Date at) throws Exception;
-
-    /**
-     * Sends a reminder stage for a claim ledger.
-     *
-     * Generates the reminder document from the stage's template into the case, records the stage
-     * with the payment period it granted, creates a follow-up for that deadline and books the
-     * reminder charge into the ledger. Where the stage puts the debtor in default, the date is
-     * recorded, because default interest under § 288 BGB runs from it.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param stageId id of the stage to send
-     * @param sentDate the date the reminder goes out; today if null
-     * @param followUpLeadTimeDays how many days before the payment period ends the follow-up is due;
-     * zero or less makes it due on the deadline itself
-     * @return the recorded stage
-     * @throws Exception if the ledger or stage does not exist, the user may not access the case, or
-     * the document cannot be produced
-     */
-    DunningStageEvent sendDunningStage(String ledgerId, String stageId, Date sentDate,
-            int followUpLeadTimeDays) throws Exception;
-
-    /**
-     * Proposes the default interest of § 288 BGB for a claim, together with the lump sum of § 288
-     * Abs. 5 BGB where the creditor is entitled to it.
-     *
-     * The margin depends on whether the claim is a payment claim (Entgeltforderung) and whether a
-     * consumer is involved; both are taken from the ledger and remain a proposal the user may
-     * change.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param componentId id of the claim the interest is to run on
-     * @param defaultSince the date of default; taken from the reminder cycle if null
-     * @return the proposal
-     * @throws Exception if the ledger or component does not exist or the user may not access the
-     * case
-     */
-    DefaultInterestProposal proposeDefaultInterest(String ledgerId, String componentId,
-            Date defaultSince) throws Exception;
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdAdd;
+    private javax.swing.JButton cmdDown;
+    private javax.swing.JButton cmdEdit;
+    private javax.swing.JButton cmdClose;
+    private javax.swing.JButton cmdRemove;
+    private javax.swing.JButton cmdUp;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPaneHint;
+    private javax.swing.JTable tblStages;
+    private javax.swing.JTextArea txtHint;
+    // End of variables declaration//GEN-END:variables
 
 }

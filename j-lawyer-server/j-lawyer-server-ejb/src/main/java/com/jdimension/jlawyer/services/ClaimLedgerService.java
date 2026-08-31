@@ -687,11 +687,17 @@ import com.jdimension.jlawyer.persistence.PaymentAllocation;
 import com.jdimension.jlawyer.persistence.PaymentSplitProposal;
 import com.jdimension.jlawyer.services.SecurityServiceLocal;
 import com.jdimension.jlawyer.documents.ClaimStatementPdfWriter;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.BaseInterestFacadeLocal;
 import com.jdimension.jlawyer.persistence.ClaimPartyRole;
+import com.jdimension.jlawyer.persistence.DunningStage;
+import com.jdimension.jlawyer.persistence.DunningStageEvent;
+import com.jdimension.jlawyer.persistence.DunningStageEventFacadeLocal;
+import com.jdimension.jlawyer.persistence.DunningStageFacadeLocal;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.server.utils.SecurityUtils;
 import com.jdimension.jlawyer.pojo.BalanceListFilter;
@@ -703,6 +709,9 @@ import com.jdimension.jlawyer.pojo.ClaimStatementBooking;
 import com.jdimension.jlawyer.pojo.ClaimStatementInterestPeriod;
 import com.jdimension.jlawyer.pojo.ClaimStatementPosition;
 import com.jdimension.jlawyer.pojo.ContinuingInterest;
+import com.jdimension.jlawyer.pojo.DefaultInterestProposal;
+import com.jdimension.jlawyer.pojo.DunningStatus;
+import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.pojo.DebtorBalance;
 import com.jdimension.jlawyer.pojo.ProceduralCostBooking;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
@@ -775,6 +784,12 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
     private ArchiveFileServiceLocal archiveFileService;
     @EJB
     private ArchiveFileBeanFacadeLocal archiveFileFacade;
+    @EJB
+    private DunningStageFacadeLocal dunningStagesFacade;
+    @EJB
+    private DunningStageEventFacadeLocal dunningStageEventsFacade;
+    @EJB
+    private SystemManagementLocal systemManagement;
     @EJB
     private BaseInterestFacadeLocal baseInterestFacade;
     @EJB
@@ -1621,6 +1636,301 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
             parts.add(sb.toString());
         }
         return String.join("; ", parts);
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<DunningStage> getDunningStages(boolean activeOnly) throws Exception {
+        return activeOnly ? this.dunningStagesFacade.findActive() : this.dunningStagesFacade.findAll();
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public DunningStage addDunningStage(DunningStage stage) throws Exception {
+        if (stage == null || stage.getName() == null || stage.getName().trim().isEmpty()) {
+            throw new Exception("Für die Mahnstufe muss ein Name angegeben werden!");
+        }
+        stage.setId(new StringGenerator().getID().toString());
+        this.dunningStagesFacade.create(stage);
+        return this.dunningStagesFacade.find(stage.getId());
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public DunningStage updateDunningStage(DunningStage stage) throws Exception {
+        if (stage == null || stage.getId() == null) {
+            throw new Exception("Es wurde keine Mahnstufe übergeben!");
+        }
+        if (this.dunningStagesFacade.find(stage.getId()) == null) {
+            throw new Exception("Die Mahnstufe existiert nicht!");
+        }
+        this.dunningStagesFacade.edit(stage);
+        return this.dunningStagesFacade.find(stage.getId());
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public void removeDunningStage(String stageId) throws Exception {
+        DunningStage stage = this.dunningStagesFacade.find(stageId);
+        if (stage == null) {
+            throw new Exception("Die Mahnstufe existiert nicht!");
+        }
+        // reminders already sent keep their copied name and position, so removing a stage does not
+        // rewrite the dunning history of any claim
+        this.dunningStagesFacade.remove(stage);
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public DunningStatus getDunningStatus(String ledgerId, Date at) throws Exception {
+
+        ClaimLedger ledger = requireLedger(ledgerId);
+        Date effectiveDate = at == null ? new Date() : at;
+
+        DunningStatus status = new DunningStatus();
+        status.setLedgerId(ledgerId);
+
+        List<DunningStageEvent> sent = this.dunningStageEventsFacade.findByLedger(ledger);
+        if (sent != null) {
+            status.getSentStages().addAll(sent);
+        }
+
+        DunningStageEvent last = null;
+        int highestSequence = -1;
+        for (DunningStageEvent e : status.getSentStages()) {
+            if (last == null || !e.getSentDate().before(last.getSentDate())) {
+                last = e;
+            }
+            if (e.getSequenceNumber() > highestSequence) {
+                highestSequence = e.getSequenceNumber();
+            }
+            // default starts with the first reminder that triggers it and does not move afterwards
+            if (e.isTriggeredDefault()
+                    && (status.getDefaultSince() == null || e.getSentDate().before(status.getDefaultSince()))) {
+                status.setDefaultSince(e.getSentDate());
+            }
+        }
+        status.setLastStage(last);
+        status.setLastStageOverdue(last != null && last.isOverdue(effectiveDate));
+
+        for (DunningStage candidate : this.dunningStagesFacade.findActive()) {
+            if (candidate.getSequenceNumber() > highestSequence) {
+                status.setNextStage(candidate);
+                break;
+            }
+        }
+
+        return status;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public DunningStageEvent sendDunningStage(String ledgerId, String stageId, Date sentDate,
+            int followUpLeadTimeDays) throws Exception {
+
+        ClaimLedger ledger = requireLedger(ledgerId);
+        ArchiveFileBean caseFile = ledger.getArchiveFileKey();
+        if (caseFile == null) {
+            throw new Exception("Das Forderungskonto ist keiner Akte zugeordnet!");
+        }
+
+        DunningStage stage = this.dunningStagesFacade.find(stageId);
+        if (stage == null) {
+            throw new Exception("Die Mahnstufe existiert nicht!");
+        }
+
+        Date effectiveSentDate = sentDate == null ? new Date() : sentDate;
+        LocalDate sent = effectiveSentDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        Date dueDate = Date.from(sent.plusDays(Math.max(0, stage.getPaymentPeriodDays()))
+                .atStartOfDay(ZoneId.systemDefault()).toInstant());
+
+        StringGenerator idGen = new StringGenerator();
+
+        DunningStageEvent event = new DunningStageEvent();
+        event.setId(idGen.getID().toString());
+        event.setLedger(ledger);
+        event.setStage(stage);
+        // copied, not only referenced: the reminder that went out has to stay readable even if the
+        // stage is later renamed or removed
+        event.setStageName(stage.getName());
+        event.setSequenceNumber(stage.getSequenceNumber());
+        event.setSentDate(effectiveSentDate);
+        event.setDueDate(dueDate);
+        event.setTriggeredDefault(stage.isTriggersDefault());
+        event.setChargeAmount(stage.getChargeAmount() == null ? BigDecimal.ZERO : stage.getChargeAmount());
+
+        ArchiveFileDocumentsBean document = createDunningDocument(caseFile, stage, ledger, effectiveSentDate);
+        if (document != null) {
+            event.setDocumentId(document.getId());
+        }
+
+        if (event.getChargeAmount().compareTo(BigDecimal.ZERO) > 0) {
+            ProceduralCostBooking charge = new ProceduralCostBooking(ledgerId, event.getChargeAmount(),
+                    "Mahnkosten " + stage.getName());
+            charge.setCostType(ClaimComponentType.PRECOURT_REMINDER_COSTS);
+            charge.setBookingDate(effectiveSentDate);
+            charge.setOriginReference(event.getId());
+            charge.setComment("Mahngebühr der Stufe " + stage.getName()
+                    + " vom " + DATE_FORMAT.format(effectiveSentDate));
+            ClaimLedgerEntry chargeEntry = bookProceduralCost(charge);
+            event.setChargeEntryId(chargeEntry.getId());
+        }
+
+        ArchiveFileReviewsBean followUp = createDunningFollowUp(caseFile, stage, dueDate, followUpLeadTimeDays);
+        if (followUp != null) {
+            event.setReviewId(followUp.getId());
+        }
+
+        this.dunningStageEventsFacade.create(event);
+
+        return this.dunningStageEventsFacade.find(event.getId());
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public DefaultInterestProposal proposeDefaultInterest(String ledgerId, String componentId,
+            Date defaultSince) throws Exception {
+
+        ClaimLedger ledger = requireLedger(ledgerId);
+
+        ClaimComponent component = null;
+        if (componentId != null) {
+            component = this.claimComponentsFacade.find(componentId);
+            if (component == null || !component.getLedger().getId().equals(ledgerId)) {
+                throw new Exception("Die Forderungsposition gehört nicht zu diesem Forderungskonto!");
+            }
+        }
+
+        Date effectiveDefaultSince = defaultSince;
+        if (effectiveDefaultSince == null) {
+            // the date of default is where the reminder cycle put it
+            effectiveDefaultSince = getDunningStatus(ledgerId, new Date()).getDefaultSince();
+        }
+
+        // the ledger reaches the calculator with its parties loaded, so the consumer check works
+        ClaimLedger loaded = this.claimLedgersFacade.find(ledgerId);
+        loaded.setParties(this.claimLedgerPartiesFacade.findByLedger(ledger));
+
+        return new DefaultInterestCalculator().propose(loaded, component, effectiveDefaultSince);
+    }
+
+    /**
+     * Produces the reminder document of a stage in the case.
+     *
+     * A stage without a template produces no document - the reminder is then recorded, but written
+     * elsewhere. A template that cannot be found is reported by name rather than as a technical
+     * error, because it usually means the template folder was renamed.
+     *
+     * @param caseFile the case
+     * @param stage the stage being sent
+     * @param sentDate the date of the reminder
+     * @return the created document, or null if the stage carries no template
+     * @throws Exception if the template exists but the document cannot be produced
+     */
+    private ArchiveFileDocumentsBean createDunningDocument(ArchiveFileBean caseFile, DunningStage stage,
+            ClaimLedger ledger, Date sentDate) throws Exception {
+
+        if (stage.getTemplateName() == null || stage.getTemplateName().trim().isEmpty()) {
+            return null;
+        }
+
+        String folder = stage.getTemplateFolder() == null ? "" : stage.getTemplateFolder();
+        String fileName = stage.getName() + " " + FILE_DATE_FORMAT.format(sentDate);
+
+        try {
+            HashMap<String, Object> placeHolderValues = new HashMap<>();
+            List<String> placeHolders = this.systemManagement.getPlaceHoldersForTemplate(
+                    SystemManagementLocal.TEMPLATE_TYPE_BODY, folder, stage.getTemplateName(), caseFile.getId());
+            if (placeHolders != null) {
+                for (String ph : placeHolders) {
+                    placeHolderValues.put(ph, "");
+                }
+            }
+            placeHolderValues = this.systemManagement.getPlaceHolderValues(placeHolderValues, caseFile,
+                    ledgerParties(ledger), "", null, new HashMap<>(), null, null, null, null, null, null,
+                    null, null, null, null);
+
+            return this.archiveFileService.addDocumentFromTemplate(caseFile.getId(), fileName, null,
+                    folder, stage.getTemplateName(), placeHolderValues, "", null);
+
+        } catch (Exception ex) {
+            log.error("Unable to create the reminder document of stage " + stage.getName(), ex);
+            throw new Exception("Das Mahnschreiben konnte nicht aus der Vorlage \""
+                    + folder + "/" + stage.getTemplateName() + "\" erzeugt werden: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * The parties of the ledger as the document template expects them.
+     *
+     * A reminder without the debtor's name and address is useless, so the parties of the claim are
+     * handed to the placeholder resolution rather than an empty list. Where a ledger party was
+     * derived from a party of the case, that case role is passed along, so role-specific
+     * placeholders resolve as they do in a document written by hand.
+     *
+     * @param ledger the claim ledger
+     * @return the parties, never null
+     */
+    private List<PartiesTriplet> ledgerParties(ClaimLedger ledger) {
+        List<PartiesTriplet> triplets = new ArrayList<>();
+        if (ledger == null) {
+            return triplets;
+        }
+        for (ClaimLedgerParty p : this.claimLedgerPartiesFacade.findByLedger(ledger)) {
+            if (p.getContact() == null) {
+                continue;
+            }
+            ArchiveFileAddressesBean involvement = p.getCaseContact();
+            PartyTypeBean partyType = involvement == null ? null : involvement.getReferenceType();
+            triplets.add(new PartiesTriplet(p.getContact(), partyType, involvement));
+        }
+        return triplets;
+    }
+
+    /**
+     * Creates the follow-up watching the payment period of a reminder.
+     *
+     * @param caseFile the case
+     * @param stage the stage being sent
+     * @param dueDate end of the payment period
+     * @param leadTimeDays how many days before the deadline to be reminded
+     * @return the created follow-up, or null if none could be created
+     */
+    private ArchiveFileReviewsBean createDunningFollowUp(ArchiveFileBean caseFile, DunningStage stage,
+            Date dueDate, int leadTimeDays) {
+
+        if (caseFile == null || dueDate == null) {
+            return null;
+        }
+
+        LocalDate due = dueDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        if (leadTimeDays > 0) {
+            due = due.minusDays(leadTimeDays);
+        }
+        Date reviewDate = Date.from(due.atStartOfDay(ZoneId.systemDefault()).toInstant());
+
+        ArchiveFileReviewsBean followUp = new ArchiveFileReviewsBean();
+        followUp.setId(new StringGenerator().getID().toString());
+        followUp.setArchiveFileKey(caseFile);
+        followUp.setEventType(ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP);
+        followUp.setBeginDate(reviewDate);
+        followUp.setEndDate(reviewDate);
+        followUp.setSummary("Zahlungsfrist " + stage.getName() + " läuft ab am "
+                + DATE_FORMAT.format(dueDate));
+        followUp.setDescription("Mahnstufe: " + stage.getName()
+                + "\nZahlungsfrist: " + DATE_FORMAT.format(dueDate)
+                + "\n\nGeht bis dahin keine Zahlung ein, ist die nächste Mahnstufe zu veranlassen "
+                + "oder das gerichtliche Mahnverfahren einzuleiten.");
+        followUp.setDone(false);
+        try {
+            followUp.setCreatedBy(context.getCallerPrincipal().getName());
+            followUp.setAssignee(context.getCallerPrincipal().getName());
+        } catch (Throwable t) {
+            log.warn("Unable to determine caller when creating a dunning follow-up", t);
+        }
+
+        this.archiveFileReviewsFacade.create(followUp);
+        return followUp;
     }
 
     /**
