@@ -1754,9 +1754,12 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
             effectiveDefaultSince = getDunningStatus(ledgerId, new Date()).getDefaultSince();
         }
 
-        // the ledger reaches the calculator with its parties loaded, so the consumer check works
+        // The calculator reads the parties to decide whether a consumer is involved. The ledger is
+        // managed here and the collection is loaded by touching it, not by replacing it: parties
+        // carry orphan removal, and Hibernate refuses to let such a collection be swapped out - it
+        // fails on the next flush, not at the assignment.
         ClaimLedger loaded = this.claimLedgersFacade.find(ledgerId);
-        loaded.setParties(this.claimLedgerPartiesFacade.findByLedger(ledger));
+        loaded.getParties().size();
 
         return new DefaultInterestCalculator().propose(loaded, component, effectiveDefaultSince);
     }
