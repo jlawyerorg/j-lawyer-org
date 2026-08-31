@@ -660,369 +660,615 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.client.editors.files;
 
-import java.io.Serializable;
-import java.time.LocalDate;
-import java.time.ZoneId;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ClaimLedger;
+import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
+import com.jdimension.jlawyer.persistence.ClaimPartyRole;
+import com.jdimension.jlawyer.persistence.PaymentAllocationMode;
+import com.jdimension.jlawyer.persistence.SurplusHandling;
+import com.jdimension.jlawyer.services.ClaimLedgerServiceRemote;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import org.apache.log4j.Logger;
 
 /**
- * An enforcement title (Titel) a claim ledger rests on.
+ * The "Stammdaten" tab of the claim ledger: who the claim runs for and against, and the rules by
+ * which payments are distributed over it.
  *
- * Enforcement requires three formal prerequisites - the title itself, the enforceable copy with
- * its clause (Klausel) and service on the debtor (Zustellung). A title established by judgment or
- * order is subject to the 30-year limitation period of § 197 Abs. 1 Nr. 3 BGB, which is computed
- * from the date of issue.
+ * The parties are the foundation everything else refers to - the dunning application, the title,
+ * the enforcement measures - so they are edited here rather than derived implicitly from the case.
  *
  * @author jens
  */
-@Entity
-@Table(name = "enforcement_titles")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "EnforcementTitle.findAll", query = "SELECT t FROM EnforcementTitle t"),
-    @NamedQuery(name = "EnforcementTitle.findById", query = "SELECT t FROM EnforcementTitle t WHERE t.id = :id"),
-    @NamedQuery(name = "EnforcementTitle.findByLedger", query = "SELECT t FROM EnforcementTitle t WHERE t.ledger = :ledger ORDER BY t.issueDate ASC")
-})
-public class EnforcementTitle implements Serializable {
+public class ClaimLedgerPartiesPanel extends javax.swing.JPanel {
 
-    private static final long serialVersionUID = 1L;
+    private static final Logger log = Logger.getLogger(ClaimLedgerPartiesPanel.class.getName());
+
+    private ClaimLedger ledger = null;
+    private ArchiveFileBean caseDto = null;
+    private final List<ClaimLedgerParty> parties = new ArrayList<>();
 
     /**
-     * Limitation period of a titled claim under § 197 Abs. 1 Nr. 3 BGB, in years.
+     * The parties of the case, loaded once per shown ledger.
      */
-    public static final int LIMITATION_YEARS = 30;
-
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
-
-    @JoinColumn(name = "ledger_id", referencedColumnName = "id")
-    @ManyToOne(optional = false)
-    private ClaimLedger ledger;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "title_type", nullable = false, length = 50)
-    private EnforcementTitleType titleType;
-
-    @Column(name = "issuing_body")
-    private String issuingBody;
-
-    @Column(name = "file_number")
-    private String fileNumber;
-
-    @Column(name = "issue_date")
-    @Temporal(TemporalType.DATE)
-    private Date issueDate;
-
-    @Column(name = "clause_date")
-    @Temporal(TemporalType.DATE)
-    private Date clauseDate;
-
-    @Column(name = "service_date")
-    @Temporal(TemporalType.DATE)
-    private Date serviceDate;
-
-    @Column(name = "limitation_date")
-    @Temporal(TemporalType.DATE)
-    private Date limitationDate;
-
-    @Column(name = "subject_matter")
-    private String subjectMatter;
-
-    @Column(name = "comment")
-    private String comment;
+    private List<ArchiveFileAddressesBean> cachedCaseParties = null;
 
     /**
-     * The case event that reminds of this title's limitation date. Kept as an explicit reference so
-     * the follow-up can be found, moved and removed again without writing a technical marker into
-     * text the user reads.
+     * Guards the change listeners while the panel is being filled, so that loading data does not
+     * look like a user edit.
      */
-    @Column(name = "limitation_review_id")
-    private String limitationReviewId;
-
-    @ManyToMany
-    @JoinTable(name = "enforcement_title_debtors",
-            joinColumns = @JoinColumn(name = "title_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "party_id", referencedColumnName = "id"))
-    private List<ClaimLedgerParty> debtors = new ArrayList<>();
+    private boolean loading = false;
 
     /**
-     * Whether all three formal prerequisites of enforcement are present: the title, the enforceable
-     * copy with its clause and service on the debtor.
-     *
-     * @return true if enforcement may proceed without an override
+     * Creates the panel.
      */
-    public boolean isEnforceable() {
-        return this.issueDate != null && this.clauseDate != null && this.serviceDate != null;
+    public ClaimLedgerPartiesPanel() {
+        initComponents();
+
+        this.tblParties.setModel(new DefaultTableModel(
+                new Object[]{"Rolle", "Nr.", "Beteiligter", "Verbraucher", "Bezeichnung festgeschrieben"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        });
+
+        for (PaymentAllocationMode m : PaymentAllocationMode.values()) {
+            this.cmbAllocationMode.addItem(m);
+        }
+        for (SurplusHandling h : SurplusHandling.values()) {
+            this.cmbSurplus.addItem(h);
+        }
+        this.spnCreditorCount.setModel(new javax.swing.SpinnerNumberModel(1, 1, 99, 1));
     }
 
     /**
-     * Names the formal prerequisites of enforcement that are still missing.
+     * Sets the ledger whose master data is shown, together with the case it belongs to.
      *
-     * @return the missing prerequisites, empty if the title is complete
+     * @param caseDto the case, used to offer its parties as contacts
+     * @param ledger the claim ledger
      */
-    public List<String> getMissingPrerequisites() {
-        List<String> missing = new ArrayList<>();
-        if (this.issueDate == null) {
-            missing.add("Titel");
+    public void setLedger(ArchiveFileBean caseDto, ClaimLedger ledger) {
+        this.caseDto = caseDto;
+        this.ledger = ledger;
+        this.cachedCaseParties = null;
+
+        this.loading = true;
+        try {
+            boolean enabled = ledger != null && ledger.getId() != null;
+            this.cmdAddParty.setEnabled(enabled);
+            this.cmdEditParty.setEnabled(enabled);
+            this.cmdRemoveParty.setEnabled(enabled);
+            this.cmdProposeFromCase.setEnabled(enabled);
+            this.cmbAllocationMode.setEnabled(enabled);
+            this.cmbSurplus.setEnabled(enabled);
+            this.spnCreditorCount.setEnabled(enabled);
+            this.chkConsumerLoan.setEnabled(enabled);
+
+            if (ledger != null) {
+                this.cmbAllocationMode.setSelectedItem(ledger.getAllocationMode() == null
+                        ? PaymentAllocationMode.LEGAL : ledger.getAllocationMode());
+                this.cmbSurplus.setSelectedItem(ledger.getSurplusHandling() == null
+                        ? SurplusHandling.REALLOCATE : ledger.getSurplusHandling());
+                this.chkConsumerLoan.setSelected(ledger.isConsumerLoan());
+                Integer count = ledger.getEffectiveCreditorCount();
+                this.spnCreditorCount.setValue(count == null || count < 1 ? 1 : count);
+            }
+        } finally {
+            this.loading = false;
         }
-        if (this.clauseDate == null) {
-            missing.add("Klausel");
-        }
-        if (this.serviceDate == null) {
-            missing.add("Zustellung");
-        }
-        return missing;
+
+        loadParties();
     }
 
     /**
-     * Computes the date on which the titled claim becomes time-barred under § 197 Abs. 1 Nr. 3 BGB,
-     * 30 years after the title was issued.
-     *
-     * @return the limitation date, or null if the title carries no date of issue
+     * Loads the parties of the ledger into the table.
      */
-    public Date computeLimitationDate() {
-        if (this.issueDate == null) {
+    private void loadParties() {
+        DefaultTableModel model = (DefaultTableModel) this.tblParties.getModel();
+        model.setRowCount(0);
+        this.parties.clear();
+        this.lblHint.setText("");
+
+        if (this.ledger == null || this.ledger.getId() == null) {
+            return;
+        }
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<ClaimLedgerParty> loaded = locator.lookupClaimLedgerServiceRemote().getParties(this.ledger.getId());
+            if (loaded != null) {
+                this.parties.addAll(loaded);
+            }
+        } catch (Exception ex) {
+            log.error("Unable to load the parties of ledger " + this.ledger.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Beteiligten konnten nicht geladen werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int creditors = 0;
+        int debtors = 0;
+        for (ClaimLedgerParty p : this.parties) {
+            if (p.getRole() == ClaimPartyRole.CREDITOR) {
+                creditors++;
+            } else if (p.getRole() == ClaimPartyRole.DEBTOR) {
+                debtors++;
+            }
+            model.addRow(new Object[]{
+                p.getRole() == null ? "" : p.getRole().getLabel(),
+                p.getSequenceNumber(),
+                p.getEffectiveDesignation() == null ? "" : p.getEffectiveDesignation(),
+                p.isConsumer() ? "ja" : "nein",
+                p.hasSnapshot() ? "ja" : "nein"
+            });
+        }
+
+        updateHint(creditors, debtors);
+    }
+
+    /**
+     * Explains what the current composition means for fees and liability.
+     *
+     * @param creditors number of creditor entries
+     * @param debtors number of debtor entries
+     */
+    private void updateHint(int creditors, int debtors) {
+        StringBuilder sb = new StringBuilder("<html>");
+        if (this.parties.isEmpty()) {
+            sb.append("Für dieses Forderungskonto sind keine Beteiligten erfasst. "
+                    + "Ohne Gläubiger und Schuldner kann kein Mahnantrag erzeugt werden.");
+        } else {
+            sb.append(creditors).append(" Gläubiger, ").append(debtors).append(" Schuldner. ");
+            if (debtors > 1) {
+                sb.append("Die Schuldner haften gesamtschuldnerisch, sofern eine Buchung nicht "
+                        + "ausdrücklich einem einzelnen Schuldner zugewiesen wird. ");
+            }
+            // deliberately not ledger.resolveCreditorCount(): its fallback iterates the ledger's
+            // lazy party collection, which is not initialised on the detached client-side entity
+            Integer stated = this.ledger == null ? null : this.ledger.getEffectiveCreditorCount();
+            int effective = (stated != null && stated > 0) ? stated : creditors;
+            if (effective > 1) {
+                sb.append("Die Gebühr erhöht sich nach Nr. 1008 VV RVG für ")
+                        .append(effective - 1).append(" weitere(n) Auftraggeber.");
+            }
+        }
+        sb.append("</html>");
+        this.lblHint.setText(sb.toString());
+    }
+
+    /**
+     * The party selected in the table.
+     *
+     * @return the selected party, or null if nothing is selected
+     */
+    private ClaimLedgerParty selectedParty() {
+        int row = this.tblParties.getSelectedRow();
+        if (row < 0) {
             return null;
         }
-        LocalDate issued = this.issueDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate limitation = issued.plusYears(LIMITATION_YEARS);
-        return Date.from(limitation.atStartOfDay(ZoneId.systemDefault()).toInstant());
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (getId() != null ? getId().hashCode() : 0);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof EnforcementTitle)) {
-            return false;
+        int modelRow = this.tblParties.convertRowIndexToModel(row);
+        if (modelRow < 0 || modelRow >= this.parties.size()) {
+            return null;
         }
-        EnforcementTitle other = (EnforcementTitle) object;
-        if ((this.getId() == null && other.getId() != null) || (this.getId() != null && !this.id.equals(other.id))) {
-            return false;
+        return this.parties.get(modelRow);
+    }
+
+    /**
+     * The parties of the case, offered as contacts when a ledger party is added.
+     *
+     * They are loaded from the server rather than read off the case object: the collection on
+     * ArchiveFileBean is a lazy JPA association, and the case reaches the client detached, so
+     * iterating it here would fail with a LazyInitializationException.
+     *
+     * @return the case parties, never null
+     */
+    private List<ArchiveFileAddressesBean> caseParties() {
+        if (this.caseDto == null || this.caseDto.getId() == null) {
+            return new ArrayList<>();
         }
-        return true;
-    }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (this.titleType != null) {
-            sb.append(this.titleType.toString());
+        if (this.cachedCaseParties != null) {
+            return this.cachedCaseParties;
         }
-        if (this.fileNumber != null && !this.fileNumber.isEmpty()) {
-            sb.append(" ").append(this.fileNumber);
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<ArchiveFileAddressesBean> loaded = locator.lookupArchiveFileServiceRemote()
+                    .getInvolvementDetailsForCase(this.caseDto.getId(), false);
+            this.cachedCaseParties = loaded == null ? new ArrayList<>() : loaded;
+        } catch (Exception ex) {
+            log.error("Unable to load the parties of case " + this.caseDto.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Beteiligten der Akte konnten nicht geladen werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            this.cachedCaseParties = new ArrayList<>();
         }
-        return sb.toString();
+
+        return this.cachedCaseParties;
     }
 
     /**
-     * @return the id
+     * Writes the ledger master data edited here back to the server.
      */
-    public String getId() {
-        return id;
+    private void saveLedgerSettings() {
+        if (this.loading || this.ledger == null || this.ledger.getId() == null || this.caseDto == null) {
+            return;
+        }
+
+        this.ledger.setAllocationMode((PaymentAllocationMode) this.cmbAllocationMode.getSelectedItem());
+        this.ledger.setSurplusHandling((SurplusHandling) this.cmbSurplus.getSelectedItem());
+        this.ledger.setConsumerLoan(this.chkConsumerLoan.isSelected());
+        this.ledger.setEffectiveCreditorCount(((Number) this.spnCreditorCount.getValue()).intValue());
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupClaimLedgerServiceRemote().updateClaimLedger(this.caseDto.getId(), this.ledger);
+        } catch (Exception ex) {
+            log.error("Unable to save the master data of ledger " + this.ledger.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Stammdaten konnten nicht gespeichert werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     /**
-     * @param id the id to set
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
-    public void setId(String id) {
-        this.id = id;
-    }
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
 
-    /**
-     * @return the ledger
-     */
-    public ClaimLedger getLedger() {
-        return ledger;
-    }
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblParties = new javax.swing.JTable();
+        cmdAddParty = new javax.swing.JButton();
+        cmdEditParty = new javax.swing.JButton();
+        cmdRemoveParty = new javax.swing.JButton();
+        cmdProposeFromCase = new javax.swing.JButton();
+        lblAllocationMode = new javax.swing.JLabel();
+        cmbAllocationMode = new javax.swing.JComboBox();
+        lblSurplus = new javax.swing.JLabel();
+        cmbSurplus = new javax.swing.JComboBox();
+        lblCreditorCount = new javax.swing.JLabel();
+        spnCreditorCount = new javax.swing.JSpinner();
+        chkConsumerLoan = new javax.swing.JCheckBox();
+        lblHint = new javax.swing.JLabel();
 
-    /**
-     * @param ledger the ledger to set
-     */
-    public void setLedger(ClaimLedger ledger) {
-        this.ledger = ledger;
-    }
+        tblParties.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
 
-    /**
-     * @return the titleType
-     */
-    public EnforcementTitleType getTitleType() {
-        return titleType;
-    }
+            },
+            new String [] {
 
-    /**
-     * @param titleType the titleType to set
-     */
-    public void setTitleType(EnforcementTitleType titleType) {
-        this.titleType = titleType;
-    }
+            }
+        ));
+        tblParties.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblPartiesMouseClicked(evt);
+            }
+        });
+        jScrollPane1.setViewportView(tblParties);
 
-    /**
-     * @return the issuingBody
-     */
-    public String getIssuingBody() {
-        return issuingBody;
-    }
+        cmdAddParty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdAddParty.setText("Beteiligten hinzufügen");
+        cmdAddParty.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddPartyActionPerformed(evt);
+            }
+        });
 
-    /**
-     * @param issuingBody the issuingBody to set
-     */
-    public void setIssuingBody(String issuingBody) {
-        this.issuingBody = issuingBody;
-    }
+        cmdEditParty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfind.png"))); // NOI18N
+        cmdEditParty.setText("Bearbeiten");
+        cmdEditParty.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdEditPartyActionPerformed(evt);
+            }
+        });
 
-    /**
-     * @return the fileNumber
-     */
-    public String getFileNumber() {
-        return fileNumber;
-    }
+        cmdRemoveParty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdRemoveParty.setText("Entfernen");
+        cmdRemoveParty.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRemovePartyActionPerformed(evt);
+            }
+        });
 
-    /**
-     * @param fileNumber the fileNumber to set
-     */
-    public void setFileNumber(String fileNumber) {
-        this.fileNumber = fileNumber;
-    }
+        cmdProposeFromCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/reload.png"))); // NOI18N
+        cmdProposeFromCase.setText("Aus Akte vorbelegen");
+        cmdProposeFromCase.setToolTipText("Mandant als Gläubiger, Gegner als Schuldner vorschlagen");
+        cmdProposeFromCase.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdProposeFromCaseActionPerformed(evt);
+            }
+        });
 
-    /**
-     * @return the issueDate
-     */
-    public Date getIssueDate() {
-        return issueDate;
-    }
+        lblAllocationMode.setText("Tilgungsreihenfolge:");
 
-    /**
-     * @param issueDate the issueDate to set
-     */
-    public void setIssueDate(Date issueDate) {
-        this.issueDate = issueDate;
-    }
+        cmbAllocationMode.setModel(new javax.swing.DefaultComboBoxModel());
+        cmbAllocationMode.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbAllocationModeActionPerformed(evt);
+            }
+        });
 
-    /**
-     * @return the clauseDate
-     */
-    public Date getClauseDate() {
-        return clauseDate;
-    }
+        lblSurplus.setText("Überschuss:");
 
-    /**
-     * @param clauseDate the clauseDate to set
-     */
-    public void setClauseDate(Date clauseDate) {
-        this.clauseDate = clauseDate;
-    }
+        cmbSurplus.setModel(new javax.swing.DefaultComboBoxModel());
 
-    /**
-     * @return the serviceDate
-     */
-    public Date getServiceDate() {
-        return serviceDate;
-    }
+        lblCreditorCount.setText("Anzahl Gläubiger (Nr. 1008 VV RVG):");
 
-    /**
-     * @param serviceDate the serviceDate to set
-     */
-    public void setServiceDate(Date serviceDate) {
-        this.serviceDate = serviceDate;
-    }
+        chkConsumerLoan.setText("Verbraucherdarlehen (§ 497 Abs. 3 BGB)");
+        chkConsumerLoan.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkConsumerLoanActionPerformed(evt);
+            }
+        });
 
-    /**
-     * @return the limitationDate
-     */
-    public Date getLimitationDate() {
-        return limitationDate;
-    }
+        lblHint.setText("");
 
-    /**
-     * @param limitationDate the limitationDate to set
-     */
-    public void setLimitationDate(Date limitationDate) {
-        this.limitationDate = limitationDate;
-    }
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 820, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(cmdAddParty)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdEditParty)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdRemoveParty)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(cmdProposeFromCase)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(lblAllocationMode)
+                            .addComponent(lblSurplus)
+                            .addComponent(lblCreditorCount))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cmbAllocationMode, javax.swing.GroupLayout.PREFERRED_SIZE, 320, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(cmbSurplus, javax.swing.GroupLayout.PREFERRED_SIZE, 320, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(spnCreditorCount, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(chkConsumerLoan))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(lblHint, javax.swing.GroupLayout.DEFAULT_SIZE, 820, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdAddParty)
+                    .addComponent(cmdEditParty)
+                    .addComponent(cmdRemoveParty)
+                    .addComponent(cmdProposeFromCase))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblAllocationMode)
+                    .addComponent(cmbAllocationMode, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblSurplus)
+                    .addComponent(cmbSurplus, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblCreditorCount)
+                    .addComponent(spnCreditorCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkConsumerLoan)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(lblHint, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+    }// </editor-fold>//GEN-END:initComponents
 
-    /**
-     * @return the subjectMatter
-     */
-    public String getSubjectMatter() {
-        return subjectMatter;
-    }
+    private void cmdAddPartyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddPartyActionPerformed
+        if (this.ledger == null || this.ledger.getId() == null) {
+            return;
+        }
 
-    /**
-     * @param subjectMatter the subjectMatter to set
-     */
-    public void setSubjectMatter(String subjectMatter) {
-        this.subjectMatter = subjectMatter;
-    }
+        ClaimLedgerPartyDialog dlg = new ClaimLedgerPartyDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+        dlg.setCaseParties(caseParties());
+        dlg.setParty(null);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
 
-    /**
-     * @return the comment
-     */
-    public String getComment() {
-        return comment;
-    }
+        if (!dlg.isSaved()) {
+            return;
+        }
 
-    /**
-     * @param comment the comment to set
-     */
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupClaimLedgerServiceRemote().addParty(this.ledger.getId(), dlg.getParty());
+        } catch (Exception ex) {
+            log.error("Unable to add a party to ledger " + this.ledger.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Der Beteiligte konnte nicht gespeichert werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
 
-    /**
-     * @return the debtors
-     */
-    public List<ClaimLedgerParty> getDebtors() {
-        return debtors;
-    }
+        loadParties();
+    }//GEN-LAST:event_cmdAddPartyActionPerformed
 
-    /**
-     * @param debtors the debtors to set
-     */
-    public void setDebtors(List<ClaimLedgerParty> debtors) {
-        this.debtors = debtors;
-    }
+    private void cmdEditPartyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditPartyActionPerformed
+        ClaimLedgerParty selected = selectedParty();
+        if (selected == null) {
+            return;
+        }
 
+        ClaimLedgerPartyDialog dlg = new ClaimLedgerPartyDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+        dlg.setCaseParties(caseParties());
+        dlg.setParty(selected);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
 
-    /**
-     * @return the id of the case event guarding the limitation date, or null if none exists
-     */
-    public String getLimitationReviewId() {
-        return limitationReviewId;
-    }
+        if (!dlg.isSaved()) {
+            return;
+        }
 
-    /**
-     * @param limitationReviewId the limitationReviewId to set
-     */
-    public void setLimitationReviewId(String limitationReviewId) {
-        this.limitationReviewId = limitationReviewId;
-    }
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupClaimLedgerServiceRemote().updateParty(dlg.getParty());
+        } catch (Exception ex) {
+            log.error("Unable to update party " + selected.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Der Beteiligte konnte nicht gespeichert werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+
+        loadParties();
+    }//GEN-LAST:event_cmdEditPartyActionPerformed
+
+    private void cmdRemovePartyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemovePartyActionPerformed
+        ClaimLedgerParty selected = selectedParty();
+        if (selected == null) {
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Soll \"" + selected.getEffectiveDesignation() + "\" wirklich aus dem "
+                + "Forderungskonto entfernt werden?",
+                "Beteiligten entfernen", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupClaimLedgerServiceRemote().removeParty(selected.getId());
+        } catch (Exception ex) {
+            log.error("Unable to remove party " + selected.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Der Beteiligte konnte nicht entfernt werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+
+        loadParties();
+    }//GEN-LAST:event_cmdRemovePartyActionPerformed
+
+    private void cmdProposeFromCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdProposeFromCaseActionPerformed
+        if (this.ledger == null || this.ledger.getId() == null) {
+            return;
+        }
+        if (!this.parties.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Es sind bereits Beteiligte erfasst. Die Vorbelegung aus der Akte ist nur für "
+                    + "ein leeres Forderungskonto möglich.",
+                    "Vorbelegung", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        List<ClaimLedgerParty> proposed = new ArrayList<>();
+        int creditorSeq = 1;
+        int debtorSeq = 1;
+        for (ArchiveFileAddressesBean caseParty : caseParties()) {
+            if (caseParty.getAddressKey() == null) {
+                continue;
+            }
+            String role = caseParty.getReferenceTypeAsString();
+            if (role == null) {
+                continue;
+            }
+            ClaimPartyRole ledgerRole = null;
+            if (role.toLowerCase().contains("mandant")) {
+                ledgerRole = ClaimPartyRole.CREDITOR;
+            } else if (role.toLowerCase().contains("gegner")) {
+                ledgerRole = ClaimPartyRole.DEBTOR;
+            }
+            if (ledgerRole == null) {
+                continue;
+            }
+
+            ClaimLedgerParty p = new ClaimLedgerParty();
+            p.setRole(ledgerRole);
+            p.setContact(caseParty.getAddressKey());
+            p.setCaseContact(caseParty);
+            p.setSequenceNumber(ledgerRole == ClaimPartyRole.CREDITOR ? creditorSeq++ : debtorSeq++);
+            proposed.add(p);
+        }
+
+        if (proposed.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "In der Akte wurden keine Beteiligten in der Rolle Mandant oder Gegner gefunden.",
+                    "Vorbelegung", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ClaimLedgerServiceRemote ledgerService = locator.lookupClaimLedgerServiceRemote();
+            for (ClaimLedgerParty p : proposed) {
+                ledgerService.addParty(this.ledger.getId(), p);
+            }
+        } catch (Exception ex) {
+            log.error("Unable to propose parties for ledger " + this.ledger.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Beteiligten konnten nicht übernommen werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+
+        loadParties();
+    }//GEN-LAST:event_cmdProposeFromCaseActionPerformed
+
+    private void cmbAllocationModeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbAllocationModeActionPerformed
+        saveLedgerSettings();
+    }//GEN-LAST:event_cmbAllocationModeActionPerformed
+
+    private void chkConsumerLoanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkConsumerLoanActionPerformed
+        if (this.chkConsumerLoan.isSelected()) {
+            // § 497 Abs. 3 BGB reverses the statutory order, which the user should choose knowingly
+            this.cmbAllocationMode.setSelectedItem(PaymentAllocationMode.CONSUMER_LOAN);
+        }
+        saveLedgerSettings();
+    }//GEN-LAST:event_chkConsumerLoanActionPerformed
+
+    private void tblPartiesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblPartiesMouseClicked
+        if (evt.getClickCount() == 2) {
+            cmdEditPartyActionPerformed(null);
+        }
+    }//GEN-LAST:event_tblPartiesMouseClicked
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox chkConsumerLoan;
+    private javax.swing.JComboBox cmbAllocationMode;
+    private javax.swing.JComboBox cmbSurplus;
+    private javax.swing.JButton cmdAddParty;
+    private javax.swing.JButton cmdEditParty;
+    private javax.swing.JButton cmdProposeFromCase;
+    private javax.swing.JButton cmdRemoveParty;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblAllocationMode;
+    private javax.swing.JLabel lblCreditorCount;
+    private javax.swing.JLabel lblHint;
+    private javax.swing.JLabel lblSurplus;
+    private javax.swing.JSpinner spnCreditorCount;
+    private javax.swing.JTable tblParties;
+    // End of variables declaration//GEN-END:variables
 
 }

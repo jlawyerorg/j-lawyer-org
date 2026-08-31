@@ -925,10 +925,11 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         ClaimLedger ledger = requireLedger(current.getLedger().getId());
 
         title.setLedger(current.getLedger());
+        title.setLimitationReviewId(current.getLimitationReviewId());
         title.setLimitationDate(title.computeLimitationDate());
         this.enforcementTitlesFacade.edit(title);
 
-        ArchiveFileReviewsBean existing = findLimitationFollowUp(ledger.getArchiveFileKey(), title.getId());
+        ArchiveFileReviewsBean existing = findLimitationFollowUp(current);
         if (existing == null) {
             createLimitationFollowUp(ledger.getArchiveFileKey(), title, followUpLeadTimeDays);
         } else if (existing.isDone()) {
@@ -938,10 +939,13 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
             Date due = limitationFollowUpDate(title, followUpLeadTimeDays);
             if (due == null) {
                 this.archiveFileReviewsFacade.remove(existing);
+                title.setLimitationReviewId(null);
+                this.enforcementTitlesFacade.edit(title);
             } else {
                 existing.setBeginDate(due);
                 existing.setEndDate(due);
                 existing.setSummary(limitationFollowUpSummary(title));
+                existing.setDescription(limitationFollowUpDescription(title));
                 this.archiveFileReviewsFacade.edit(existing);
             }
         }
@@ -956,9 +960,9 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         if (title == null) {
             throw new Exception("Der Titel existiert nicht!");
         }
-        ClaimLedger ledger = requireLedger(title.getLedger().getId());
+        requireLedger(title.getLedger().getId());
 
-        ArchiveFileReviewsBean followUp = findLimitationFollowUp(ledger.getArchiveFileKey(), titleId);
+        ArchiveFileReviewsBean followUp = findLimitationFollowUp(title);
         if (followUp != null && !followUp.isDone()) {
             this.archiveFileReviewsFacade.remove(followUp);
         }
@@ -1749,7 +1753,7 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         followUp.setBeginDate(due);
         followUp.setEndDate(due);
         followUp.setSummary(limitationFollowUpSummary(title));
-        followUp.setDescription(titleOriginMarker(title.getId()));
+        followUp.setDescription(limitationFollowUpDescription(title));
         followUp.setDone(false);
         try {
             followUp.setCreatedBy(context.getCallerPrincipal().getName());
@@ -1759,6 +1763,43 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         }
 
         this.archiveFileReviewsFacade.create(followUp);
+
+        // the title remembers its follow-up, so it can be moved or removed later without having to
+        // recognise it by its text
+        title.setLimitationReviewId(followUp.getId());
+        this.enforcementTitlesFacade.edit(title);
+    }
+
+    /**
+     * The description of the follow-up guarding a title's limitation: what the title is and what
+     * has to happen before it lapses.
+     *
+     * @param title the title
+     * @return the description
+     */
+    private String limitationFollowUpDescription(EnforcementTitle title) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Titel: ");
+        sb.append(title.getTitleType() == null ? "" : title.getTitleType().getLabel());
+        if (title.getFileNumber() != null && !title.getFileNumber().trim().isEmpty()) {
+            sb.append(", Az. ").append(title.getFileNumber().trim());
+        }
+        if (title.getIssuingBody() != null && !title.getIssuingBody().trim().isEmpty()) {
+            sb.append(", ").append(title.getIssuingBody().trim());
+        }
+        if (title.getIssueDate() != null) {
+            sb.append(", erlassen am ").append(DATE_FORMAT.format(title.getIssueDate()));
+        }
+        if (title.getSubjectMatter() != null && !title.getSubjectMatter().trim().isEmpty()) {
+            sb.append("\nGegenstand: ").append(title.getSubjectMatter().trim());
+        }
+        if (title.getLimitationDate() != null) {
+            sb.append("\n\nDer Titel verjährt am ").append(DATE_FORMAT.format(title.getLimitationDate()));
+            sb.append(" (§ 197 Abs. 1 Nr. 3 BGB). Soll weiter vollstreckt werden, ist die Verjährung "
+                    + "vorher zu hemmen oder neu zu beginnen, etwa durch eine "
+                    + "Vollstreckungshandlung (§ 212 Abs. 1 Nr. 2 BGB).");
+        }
+        return sb.toString();
     }
 
     /**
@@ -1771,31 +1812,11 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
      * @param titleId id of the title
      * @return the follow-up, or null if none exists
      */
-    private ArchiveFileReviewsBean findLimitationFollowUp(ArchiveFileBean caseFile, String titleId) {
-        if (caseFile == null) {
+    private ArchiveFileReviewsBean findLimitationFollowUp(EnforcementTitle title) {
+        if (title == null || title.getLimitationReviewId() == null) {
             return null;
         }
-        String marker = titleOriginMarker(titleId);
-        List<ArchiveFileReviewsBean> caseReviews = caseFile.getArchiveFileReviewsBeanList();
-        if (caseReviews == null) {
-            return null;
-        }
-        for (ArchiveFileReviewsBean r : caseReviews) {
-            if (r.getDescription() != null && r.getDescription().contains(marker)) {
-                return r;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * The marker identifying a case event as generated by a given title.
-     *
-     * @param titleId id of the title
-     * @return the marker
-     */
-    private String titleOriginMarker(String titleId) {
-        return "[Titel:" + titleId + "]";
+        return this.archiveFileReviewsFacade.find(title.getLimitationReviewId());
     }
 
     /**
@@ -1917,6 +1938,16 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
             ClaimLedger updatedLedger = this.claimLedgersFacade.find(claimLedger.getId());
             updatedLedger.setName(claimLedger.getName());
             updatedLedger.setDescription(claimLedger.getDescription());
+
+            // the master data of the ledger, edited on the Stammdaten tab. Copied field by field
+            // onto the managed entity rather than merging the detached one: the ledger arrives from
+            // the client with uninitialised party, title and component collections, and merging it
+            // would put orphanRemoval in charge of data it does not actually carry.
+            updatedLedger.setAllocationMode(claimLedger.getAllocationMode());
+            updatedLedger.setSurplusHandling(claimLedger.getSurplusHandling());
+            updatedLedger.setConsumerLoan(claimLedger.isConsumerLoan());
+            updatedLedger.setEffectiveCreditorCount(claimLedger.getEffectiveCreditorCount());
+            updatedLedger.setParentLedger(claimLedger.getParentLedger());
 
             this.claimLedgersFacade.edit(updatedLedger);
 

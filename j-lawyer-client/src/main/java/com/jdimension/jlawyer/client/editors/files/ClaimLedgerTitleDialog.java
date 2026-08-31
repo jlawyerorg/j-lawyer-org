@@ -660,369 +660,437 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.client.editors.files;
 
-import java.io.Serializable;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.ArrayList;
+import com.jdimension.jlawyer.client.components.MultiCalDialog;
+import com.jdimension.jlawyer.persistence.EnforcementTitle;
+import com.jdimension.jlawyer.persistence.EnforcementTitleType;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.swing.JOptionPane;
+import org.apache.log4j.Logger;
 
 /**
- * An enforcement title (Titel) a claim ledger rests on.
+ * Records an enforcement title (Titel) of a claim ledger.
  *
- * Enforcement requires three formal prerequisites - the title itself, the enforceable copy with
- * its clause (Klausel) and service on the debtor (Zustellung). A title established by judgment or
- * order is subject to the 30-year limitation period of § 197 Abs. 1 Nr. 3 BGB, which is computed
- * from the date of issue.
+ * Enforcement requires three formal prerequisites - the title, the enforceable copy with its
+ * clause and service on the debtor - so the dialog states which of them are still missing rather
+ * than leaving the user to notice it when an enforcement application is refused. The limitation
+ * date under § 197 Abs. 1 Nr. 3 BGB and the follow-up guarding it are computed by the server from
+ * the date of issue.
  *
  * @author jens
  */
-@Entity
-@Table(name = "enforcement_titles")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "EnforcementTitle.findAll", query = "SELECT t FROM EnforcementTitle t"),
-    @NamedQuery(name = "EnforcementTitle.findById", query = "SELECT t FROM EnforcementTitle t WHERE t.id = :id"),
-    @NamedQuery(name = "EnforcementTitle.findByLedger", query = "SELECT t FROM EnforcementTitle t WHERE t.ledger = :ledger ORDER BY t.issueDate ASC")
-})
-public class EnforcementTitle implements Serializable {
+public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
 
-    private static final long serialVersionUID = 1L;
+    private static final Logger log = Logger.getLogger(ClaimLedgerTitleDialog.class.getName());
 
     /**
-     * Limitation period of a titled claim under § 197 Abs. 1 Nr. 3 BGB, in years.
+     * Default lead time of the follow-up guarding the limitation date, in days. Three months give a
+     * firm time to interrupt the limitation of a title that is about to lapse.
      */
-    public static final int LIMITATION_YEARS = 30;
+    private static final int DEFAULT_LEAD_TIME_DAYS = 90;
 
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
+    private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
 
-    @JoinColumn(name = "ledger_id", referencedColumnName = "id")
-    @ManyToOne(optional = false)
-    private ClaimLedger ledger;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "title_type", nullable = false, length = 50)
-    private EnforcementTitleType titleType;
-
-    @Column(name = "issuing_body")
-    private String issuingBody;
-
-    @Column(name = "file_number")
-    private String fileNumber;
-
-    @Column(name = "issue_date")
-    @Temporal(TemporalType.DATE)
-    private Date issueDate;
-
-    @Column(name = "clause_date")
-    @Temporal(TemporalType.DATE)
-    private Date clauseDate;
-
-    @Column(name = "service_date")
-    @Temporal(TemporalType.DATE)
-    private Date serviceDate;
-
-    @Column(name = "limitation_date")
-    @Temporal(TemporalType.DATE)
-    private Date limitationDate;
-
-    @Column(name = "subject_matter")
-    private String subjectMatter;
-
-    @Column(name = "comment")
-    private String comment;
+    private EnforcementTitle title = null;
+    private boolean saved = false;
 
     /**
-     * The case event that reminds of this title's limitation date. Kept as an explicit reference so
-     * the follow-up can be found, moved and removed again without writing a technical marker into
-     * text the user reads.
-     */
-    @Column(name = "limitation_review_id")
-    private String limitationReviewId;
-
-    @ManyToMany
-    @JoinTable(name = "enforcement_title_debtors",
-            joinColumns = @JoinColumn(name = "title_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "party_id", referencedColumnName = "id"))
-    private List<ClaimLedgerParty> debtors = new ArrayList<>();
-
-    /**
-     * Whether all three formal prerequisites of enforcement are present: the title, the enforceable
-     * copy with its clause and service on the debtor.
+     * Creates the dialog.
      *
-     * @return true if enforcement may proceed without an override
+     * @param parent the parent window
+     * @param modal whether the dialog is modal
      */
-    public boolean isEnforceable() {
-        return this.issueDate != null && this.clauseDate != null && this.serviceDate != null;
+    public ClaimLedgerTitleDialog(java.awt.Frame parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
+
+        for (EnforcementTitleType t : EnforcementTitleType.values()) {
+            this.cmbType.addItem(t);
+        }
+        this.spnLeadTime.setModel(new javax.swing.SpinnerNumberModel(DEFAULT_LEAD_TIME_DAYS, 0, 3650, 1));
     }
 
     /**
-     * Names the formal prerequisites of enforcement that are still missing.
+     * Fills the dialog from an existing title, or prepares a new one when null is passed.
      *
-     * @return the missing prerequisites, empty if the title is complete
+     * Deliberately not named setTitle: that would overload JDialog.setTitle(String) and invite a
+     * silent mix-up between the window caption and the enforcement title.
+     *
+     * @param title the title to edit, or null for a new one
      */
-    public List<String> getMissingPrerequisites() {
-        List<String> missing = new ArrayList<>();
-        if (this.issueDate == null) {
-            missing.add("Titel");
+    public void setEnforcementTitle(EnforcementTitle title) {
+        this.title = title;
+        if (title == null) {
+            this.title = new EnforcementTitle();
+            this.title.setTitleType(EnforcementTitleType.VOLLSTRECKUNGSBESCHEID);
         }
-        if (this.clauseDate == null) {
-            missing.add("Klausel");
-        }
-        if (this.serviceDate == null) {
-            missing.add("Zustellung");
-        }
-        return missing;
+
+        this.cmbType.setSelectedItem(this.title.getTitleType() == null
+                ? EnforcementTitleType.VOLLSTRECKUNGSBESCHEID : this.title.getTitleType());
+        this.txtIssuingBody.setText(nullSafe(this.title.getIssuingBody()));
+        this.txtFileNumber.setText(nullSafe(this.title.getFileNumber()));
+        this.txtIssueDate.setText(formatDate(this.title.getIssueDate()));
+        this.txtClauseDate.setText(formatDate(this.title.getClauseDate()));
+        this.txtServiceDate.setText(formatDate(this.title.getServiceDate()));
+        this.txtSubject.setText(nullSafe(this.title.getSubjectMatter()));
+
+        updatePrerequisites();
     }
 
     /**
-     * Computes the date on which the titled claim becomes time-barred under § 197 Abs. 1 Nr. 3 BGB,
-     * 30 years after the title was issued.
-     *
-     * @return the limitation date, or null if the title carries no date of issue
+     * @return the title as edited, whether or not it was saved
      */
-    public Date computeLimitationDate() {
-        if (this.issueDate == null) {
+    public EnforcementTitle getEnforcementTitle() {
+        return this.title;
+    }
+
+    /**
+     * @return whether the user confirmed the dialog
+     */
+    public boolean isSaved() {
+        return this.saved;
+    }
+
+    /**
+     * @return the lead time entered for the limitation follow-up, in days
+     */
+    public int getFollowUpLeadTimeDays() {
+        return ((Number) this.spnLeadTime.getValue()).intValue();
+    }
+
+    private String nullSafe(String value) {
+        return value == null ? "" : value;
+    }
+
+    private String formatDate(Date value) {
+        return value == null ? "" : this.df.format(value);
+    }
+
+    /**
+     * Reads a date entry, returning null for an empty or unreadable one.
+     *
+     * @param text the entry
+     * @return the date, or null
+     */
+    private Date parseDate(String text) {
+        if (text == null || text.trim().isEmpty()) {
             return null;
         }
-        LocalDate issued = this.issueDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate limitation = issued.plusYears(LIMITATION_YEARS);
-        return Date.from(limitation.atStartOfDay(ZoneId.systemDefault()).toInstant());
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (getId() != null ? getId().hashCode() : 0);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof EnforcementTitle)) {
-            return false;
+        try {
+            return this.df.parse(text.trim());
+        } catch (Exception ex) {
+            return null;
         }
-        EnforcementTitle other = (EnforcementTitle) object;
-        if ((this.getId() == null && other.getId() != null) || (this.getId() != null && !this.id.equals(other.id))) {
-            return false;
+    }
+
+    /**
+     * Shows which of the three formal prerequisites of enforcement are still missing, and the
+     * limitation date that follows from the date of issue.
+     */
+    private void updatePrerequisites() {
+        EnforcementTitle preview = new EnforcementTitle();
+        preview.setIssueDate(parseDate(this.txtIssueDate.getText()));
+        preview.setClauseDate(parseDate(this.txtClauseDate.getText()));
+        preview.setServiceDate(parseDate(this.txtServiceDate.getText()));
+
+        StringBuilder sb = new StringBuilder("<html>");
+        List<String> missing = preview.getMissingPrerequisites();
+        if (missing.isEmpty()) {
+            sb.append("Vollstreckungsvoraussetzungen vollständig (Titel, Klausel, Zustellung).");
+        } else {
+            sb.append("<b>Es fehlt noch:</b> ").append(String.join(", ", missing));
+            sb.append(" - ohne diese Angaben ist eine Zwangsvollstreckung nicht zulässig.");
         }
-        return true;
-    }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (this.titleType != null) {
-            sb.append(this.titleType.toString());
+        Date limitation = preview.computeLimitationDate();
+        if (limitation != null) {
+            sb.append("<br/>Verjährung des Titels: ").append(this.df.format(limitation));
+            sb.append(" (§ 197 Abs. 1 Nr. 3 BGB)");
         }
-        if (this.fileNumber != null && !this.fileNumber.isEmpty()) {
-            sb.append(" ").append(this.fileNumber);
+        sb.append("</html>");
+        this.lblPrerequisites.setText(sb.toString());
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        lblType = new javax.swing.JLabel();
+        cmbType = new javax.swing.JComboBox();
+        lblIssuingBody = new javax.swing.JLabel();
+        txtIssuingBody = new javax.swing.JTextField();
+        lblFileNumber = new javax.swing.JLabel();
+        txtFileNumber = new javax.swing.JTextField();
+        lblIssueDate = new javax.swing.JLabel();
+        txtIssueDate = new javax.swing.JTextField();
+        cmdIssueDate = new javax.swing.JButton();
+        lblClauseDate = new javax.swing.JLabel();
+        txtClauseDate = new javax.swing.JTextField();
+        cmdClauseDate = new javax.swing.JButton();
+        lblServiceDate = new javax.swing.JLabel();
+        txtServiceDate = new javax.swing.JTextField();
+        cmdServiceDate = new javax.swing.JButton();
+        lblSubject = new javax.swing.JLabel();
+        txtSubject = new javax.swing.JTextField();
+        lblLeadTime = new javax.swing.JLabel();
+        spnLeadTime = new javax.swing.JSpinner();
+        lblPrerequisites = new javax.swing.JLabel();
+        cmdSave = new javax.swing.JButton();
+        cmdCancel = new javax.swing.JButton();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Titel");
+
+        lblType.setText("Titelart:");
+
+        cmbType.setModel(new javax.swing.DefaultComboBoxModel());
+
+        lblIssuingBody.setText("Erlassende Stelle:");
+
+        txtIssuingBody.setText("");
+
+        lblFileNumber.setText("Aktenzeichen:");
+
+        txtFileNumber.setText("");
+
+        lblIssueDate.setText("Erlassdatum:");
+
+        txtIssueDate.setText("");
+        txtIssueDate.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                txtIssueDateFocusLost(evt);
+            }
+        });
+
+        cmdIssueDate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
+        cmdIssueDate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdIssueDateActionPerformed(evt);
+            }
+        });
+
+        lblClauseDate.setText("Vollstreckbare Ausfertigung:");
+
+        txtClauseDate.setText("");
+
+        cmdClauseDate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
+        cmdClauseDate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdClauseDateActionPerformed(evt);
+            }
+        });
+
+        lblServiceDate.setText("Zustellung an Schuldner:");
+
+        txtServiceDate.setText("");
+
+        cmdServiceDate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
+        cmdServiceDate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdServiceDateActionPerformed(evt);
+            }
+        });
+
+        lblSubject.setText("Gegenstand:");
+
+        txtSubject.setText("");
+
+        lblLeadTime.setText("Wiedervorlage (Tage vorher):");
+
+        lblPrerequisites.setText("");
+
+        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdSave.setText("Speichern");
+        cmdSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveActionPerformed(evt);
+            }
+        });
+
+        cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdCancel.setText("Abbrechen");
+        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCancelActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(lblType)
+                            .addComponent(lblIssuingBody)
+                            .addComponent(lblFileNumber)
+                            .addComponent(lblIssueDate)
+                            .addComponent(lblClauseDate)
+                            .addComponent(lblServiceDate)
+                            .addComponent(lblSubject)
+                            .addComponent(lblLeadTime))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cmbType, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(txtIssuingBody, javax.swing.GroupLayout.PREFERRED_SIZE, 400, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(txtFileNumber, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(txtSubject, javax.swing.GroupLayout.PREFERRED_SIZE, 400, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(spnLeadTime, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(txtIssueDate, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdIssueDate))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(txtClauseDate, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdClauseDate))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(txtServiceDate, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdServiceDate)))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(lblPrerequisites, javax.swing.GroupLayout.DEFAULT_SIZE, 600, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdSave)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdCancel)))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblType)
+                    .addComponent(cmbType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblIssuingBody)
+                    .addComponent(txtIssuingBody, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblFileNumber)
+                    .addComponent(txtFileNumber, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblIssueDate)
+                    .addComponent(txtIssueDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdIssueDate))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblClauseDate)
+                    .addComponent(txtClauseDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdClauseDate))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblServiceDate)
+                    .addComponent(txtServiceDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdServiceDate))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblSubject)
+                    .addComponent(txtSubject, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblLeadTime)
+                    .addComponent(spnLeadTime, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(lblPrerequisites, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdSave)
+                    .addComponent(cmdCancel))
+                .addContainerGap())
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void cmdIssueDateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdIssueDateActionPerformed
+        MultiCalDialog dlg = new MultiCalDialog(this.txtIssueDate, this, true);
+        dlg.setVisible(true);
+        updatePrerequisites();
+    }//GEN-LAST:event_cmdIssueDateActionPerformed
+
+    private void cmdClauseDateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdClauseDateActionPerformed
+        MultiCalDialog dlg = new MultiCalDialog(this.txtClauseDate, this, true);
+        dlg.setVisible(true);
+        updatePrerequisites();
+    }//GEN-LAST:event_cmdClauseDateActionPerformed
+
+    private void cmdServiceDateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdServiceDateActionPerformed
+        MultiCalDialog dlg = new MultiCalDialog(this.txtServiceDate, this, true);
+        dlg.setVisible(true);
+        updatePrerequisites();
+    }//GEN-LAST:event_cmdServiceDateActionPerformed
+
+    private void txtIssueDateFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtIssueDateFocusLost
+        updatePrerequisites();
+    }//GEN-LAST:event_txtIssueDateFocusLost
+
+    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+        Date issueDate = parseDate(this.txtIssueDate.getText());
+        if (!this.txtIssueDate.getText().trim().isEmpty() && issueDate == null) {
+            JOptionPane.showMessageDialog(this,
+                    "Das Erlassdatum konnte nicht gelesen werden. Erwartet wird TT.MM.JJJJ.",
+                    "Eingabe", JOptionPane.WARNING_MESSAGE);
+            return;
         }
-        return sb.toString();
-    }
 
-    /**
-     * @return the id
-     */
-    public String getId() {
-        return id;
-    }
+        this.title.setTitleType((EnforcementTitleType) this.cmbType.getSelectedItem());
+        this.title.setIssuingBody(this.txtIssuingBody.getText());
+        this.title.setFileNumber(this.txtFileNumber.getText());
+        this.title.setIssueDate(issueDate);
+        this.title.setClauseDate(parseDate(this.txtClauseDate.getText()));
+        this.title.setServiceDate(parseDate(this.txtServiceDate.getText()));
+        this.title.setSubjectMatter(this.txtSubject.getText());
 
-    /**
-     * @param id the id to set
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
+        this.saved = true;
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdSaveActionPerformed
 
-    /**
-     * @return the ledger
-     */
-    public ClaimLedger getLedger() {
-        return ledger;
-    }
+    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
+        this.saved = false;
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdCancelActionPerformed
 
-    /**
-     * @param ledger the ledger to set
-     */
-    public void setLedger(ClaimLedger ledger) {
-        this.ledger = ledger;
-    }
-
-    /**
-     * @return the titleType
-     */
-    public EnforcementTitleType getTitleType() {
-        return titleType;
-    }
-
-    /**
-     * @param titleType the titleType to set
-     */
-    public void setTitleType(EnforcementTitleType titleType) {
-        this.titleType = titleType;
-    }
-
-    /**
-     * @return the issuingBody
-     */
-    public String getIssuingBody() {
-        return issuingBody;
-    }
-
-    /**
-     * @param issuingBody the issuingBody to set
-     */
-    public void setIssuingBody(String issuingBody) {
-        this.issuingBody = issuingBody;
-    }
-
-    /**
-     * @return the fileNumber
-     */
-    public String getFileNumber() {
-        return fileNumber;
-    }
-
-    /**
-     * @param fileNumber the fileNumber to set
-     */
-    public void setFileNumber(String fileNumber) {
-        this.fileNumber = fileNumber;
-    }
-
-    /**
-     * @return the issueDate
-     */
-    public Date getIssueDate() {
-        return issueDate;
-    }
-
-    /**
-     * @param issueDate the issueDate to set
-     */
-    public void setIssueDate(Date issueDate) {
-        this.issueDate = issueDate;
-    }
-
-    /**
-     * @return the clauseDate
-     */
-    public Date getClauseDate() {
-        return clauseDate;
-    }
-
-    /**
-     * @param clauseDate the clauseDate to set
-     */
-    public void setClauseDate(Date clauseDate) {
-        this.clauseDate = clauseDate;
-    }
-
-    /**
-     * @return the serviceDate
-     */
-    public Date getServiceDate() {
-        return serviceDate;
-    }
-
-    /**
-     * @param serviceDate the serviceDate to set
-     */
-    public void setServiceDate(Date serviceDate) {
-        this.serviceDate = serviceDate;
-    }
-
-    /**
-     * @return the limitationDate
-     */
-    public Date getLimitationDate() {
-        return limitationDate;
-    }
-
-    /**
-     * @param limitationDate the limitationDate to set
-     */
-    public void setLimitationDate(Date limitationDate) {
-        this.limitationDate = limitationDate;
-    }
-
-    /**
-     * @return the subjectMatter
-     */
-    public String getSubjectMatter() {
-        return subjectMatter;
-    }
-
-    /**
-     * @param subjectMatter the subjectMatter to set
-     */
-    public void setSubjectMatter(String subjectMatter) {
-        this.subjectMatter = subjectMatter;
-    }
-
-    /**
-     * @return the comment
-     */
-    public String getComment() {
-        return comment;
-    }
-
-    /**
-     * @param comment the comment to set
-     */
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
-    /**
-     * @return the debtors
-     */
-    public List<ClaimLedgerParty> getDebtors() {
-        return debtors;
-    }
-
-    /**
-     * @param debtors the debtors to set
-     */
-    public void setDebtors(List<ClaimLedgerParty> debtors) {
-        this.debtors = debtors;
-    }
-
-
-    /**
-     * @return the id of the case event guarding the limitation date, or null if none exists
-     */
-    public String getLimitationReviewId() {
-        return limitationReviewId;
-    }
-
-    /**
-     * @param limitationReviewId the limitationReviewId to set
-     */
-    public void setLimitationReviewId(String limitationReviewId) {
-        this.limitationReviewId = limitationReviewId;
-    }
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox cmbType;
+    private javax.swing.JButton cmdCancel;
+    private javax.swing.JButton cmdClauseDate;
+    private javax.swing.JButton cmdIssueDate;
+    private javax.swing.JButton cmdSave;
+    private javax.swing.JButton cmdServiceDate;
+    private javax.swing.JLabel lblClauseDate;
+    private javax.swing.JLabel lblFileNumber;
+    private javax.swing.JLabel lblIssueDate;
+    private javax.swing.JLabel lblIssuingBody;
+    private javax.swing.JLabel lblLeadTime;
+    private javax.swing.JLabel lblPrerequisites;
+    private javax.swing.JLabel lblServiceDate;
+    private javax.swing.JLabel lblSubject;
+    private javax.swing.JLabel lblType;
+    private javax.swing.JSpinner spnLeadTime;
+    private javax.swing.JTextField txtClauseDate;
+    private javax.swing.JTextField txtFileNumber;
+    private javax.swing.JTextField txtIssueDate;
+    private javax.swing.JTextField txtIssuingBody;
+    private javax.swing.JTextField txtServiceDate;
+    private javax.swing.JTextField txtSubject;
+    // End of variables declaration//GEN-END:variables
 
 }

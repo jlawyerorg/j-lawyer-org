@@ -660,369 +660,404 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.client.editors.files;
 
-import java.io.Serializable;
-import java.time.LocalDate;
-import java.time.ZoneId;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.events.CasesChangedEvent;
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
+import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.ClaimLedger;
+import com.jdimension.jlawyer.persistence.EnforcementTitle;
+import com.jdimension.jlawyer.services.ClaimLedgerServiceRemote;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import org.apache.log4j.Logger;
 
 /**
- * An enforcement title (Titel) a claim ledger rests on.
+ * The "Titel" tab of the claim ledger: the enforcement titles the ledger rests on.
  *
- * Enforcement requires three formal prerequisites - the title itself, the enforceable copy with
- * its clause (Klausel) and service on the debtor (Zustellung). A title established by judgment or
- * order is subject to the 30-year limitation period of § 197 Abs. 1 Nr. 3 BGB, which is computed
- * from the date of issue.
+ * Enforcement requires the title, the enforceable copy with its clause and service on the debtor.
+ * The table therefore shows those three states per title rather than only the dates, so an
+ * incomplete title is visible before an application is prepared from it. The limitation date under
+ * § 197 Abs. 1 Nr. 3 BGB and the follow-up guarding it are maintained by the server.
  *
  * @author jens
  */
-@Entity
-@Table(name = "enforcement_titles")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "EnforcementTitle.findAll", query = "SELECT t FROM EnforcementTitle t"),
-    @NamedQuery(name = "EnforcementTitle.findById", query = "SELECT t FROM EnforcementTitle t WHERE t.id = :id"),
-    @NamedQuery(name = "EnforcementTitle.findByLedger", query = "SELECT t FROM EnforcementTitle t WHERE t.ledger = :ledger ORDER BY t.issueDate ASC")
-})
-public class EnforcementTitle implements Serializable {
+public class ClaimLedgerTitlesPanel extends javax.swing.JPanel {
 
-    private static final long serialVersionUID = 1L;
+    private static final Logger log = Logger.getLogger(ClaimLedgerTitlesPanel.class.getName());
+
+    private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+
+    private ClaimLedger ledger = null;
+    private final List<EnforcementTitle> titles = new ArrayList<>();
 
     /**
-     * Limitation period of a titled claim under § 197 Abs. 1 Nr. 3 BGB, in years.
+     * Creates the panel.
      */
-    public static final int LIMITATION_YEARS = 30;
-
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
-
-    @JoinColumn(name = "ledger_id", referencedColumnName = "id")
-    @ManyToOne(optional = false)
-    private ClaimLedger ledger;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "title_type", nullable = false, length = 50)
-    private EnforcementTitleType titleType;
-
-    @Column(name = "issuing_body")
-    private String issuingBody;
-
-    @Column(name = "file_number")
-    private String fileNumber;
-
-    @Column(name = "issue_date")
-    @Temporal(TemporalType.DATE)
-    private Date issueDate;
-
-    @Column(name = "clause_date")
-    @Temporal(TemporalType.DATE)
-    private Date clauseDate;
-
-    @Column(name = "service_date")
-    @Temporal(TemporalType.DATE)
-    private Date serviceDate;
-
-    @Column(name = "limitation_date")
-    @Temporal(TemporalType.DATE)
-    private Date limitationDate;
-
-    @Column(name = "subject_matter")
-    private String subjectMatter;
-
-    @Column(name = "comment")
-    private String comment;
+    public ClaimLedgerTitlesPanel() {
+        initComponents();
+        this.tblTitles.setModel(new DefaultTableModel(
+                new Object[]{"Titelart", "Erlassende Stelle", "Aktenzeichen", "Erlass", "Klausel", "Zustellung", "Verjährung", "Status"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        });
+    }
 
     /**
-     * The case event that reminds of this title's limitation date. Kept as an explicit reference so
-     * the follow-up can be found, moved and removed again without writing a technical marker into
-     * text the user reads.
-     */
-    @Column(name = "limitation_review_id")
-    private String limitationReviewId;
-
-    @ManyToMany
-    @JoinTable(name = "enforcement_title_debtors",
-            joinColumns = @JoinColumn(name = "title_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "party_id", referencedColumnName = "id"))
-    private List<ClaimLedgerParty> debtors = new ArrayList<>();
-
-    /**
-     * Whether all three formal prerequisites of enforcement are present: the title, the enforceable
-     * copy with its clause and service on the debtor.
+     * Sets the ledger whose titles are shown and loads them.
      *
-     * @return true if enforcement may proceed without an override
-     */
-    public boolean isEnforceable() {
-        return this.issueDate != null && this.clauseDate != null && this.serviceDate != null;
-    }
-
-    /**
-     * Names the formal prerequisites of enforcement that are still missing.
-     *
-     * @return the missing prerequisites, empty if the title is complete
-     */
-    public List<String> getMissingPrerequisites() {
-        List<String> missing = new ArrayList<>();
-        if (this.issueDate == null) {
-            missing.add("Titel");
-        }
-        if (this.clauseDate == null) {
-            missing.add("Klausel");
-        }
-        if (this.serviceDate == null) {
-            missing.add("Zustellung");
-        }
-        return missing;
-    }
-
-    /**
-     * Computes the date on which the titled claim becomes time-barred under § 197 Abs. 1 Nr. 3 BGB,
-     * 30 years after the title was issued.
-     *
-     * @return the limitation date, or null if the title carries no date of issue
-     */
-    public Date computeLimitationDate() {
-        if (this.issueDate == null) {
-            return null;
-        }
-        LocalDate issued = this.issueDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate limitation = issued.plusYears(LIMITATION_YEARS);
-        return Date.from(limitation.atStartOfDay(ZoneId.systemDefault()).toInstant());
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (getId() != null ? getId().hashCode() : 0);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof EnforcementTitle)) {
-            return false;
-        }
-        EnforcementTitle other = (EnforcementTitle) object;
-        if ((this.getId() == null && other.getId() != null) || (this.getId() != null && !this.id.equals(other.id))) {
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (this.titleType != null) {
-            sb.append(this.titleType.toString());
-        }
-        if (this.fileNumber != null && !this.fileNumber.isEmpty()) {
-            sb.append(" ").append(this.fileNumber);
-        }
-        return sb.toString();
-    }
-
-    /**
-     * @return the id
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * @param id the id to set
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the ledger
-     */
-    public ClaimLedger getLedger() {
-        return ledger;
-    }
-
-    /**
-     * @param ledger the ledger to set
+     * @param ledger the claim ledger
      */
     public void setLedger(ClaimLedger ledger) {
         this.ledger = ledger;
+        loadTitles();
     }
 
     /**
-     * @return the titleType
+     * Loads the titles of the ledger into the table.
      */
-    public EnforcementTitleType getTitleType() {
-        return titleType;
+    private void loadTitles() {
+        DefaultTableModel model = (DefaultTableModel) this.tblTitles.getModel();
+        model.setRowCount(0);
+        this.titles.clear();
+        this.lblHint.setText("");
+
+        if (this.ledger == null || this.ledger.getId() == null) {
+            return;
+        }
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<EnforcementTitle> loaded = locator.lookupClaimLedgerServiceRemote().getTitles(this.ledger.getId());
+            if (loaded != null) {
+                this.titles.addAll(loaded);
+            }
+        } catch (Exception ex) {
+            log.error("Unable to load the titles of ledger " + this.ledger.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Titel konnten nicht geladen werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int incomplete = 0;
+        for (EnforcementTitle t : this.titles) {
+            List<String> missing = t.getMissingPrerequisites();
+            if (!missing.isEmpty()) {
+                incomplete++;
+            }
+            model.addRow(new Object[]{
+                t.getTitleType() == null ? "" : t.getTitleType().getLabel(),
+                nullSafe(t.getIssuingBody()),
+                nullSafe(t.getFileNumber()),
+                formatDate(t.getIssueDate()),
+                formatDate(t.getClauseDate()),
+                formatDate(t.getServiceDate()),
+                formatDate(t.getLimitationDate()),
+                missing.isEmpty() ? "vollstreckbar" : "es fehlt: " + String.join(", ", missing)
+            });
+        }
+
+        if (this.titles.isEmpty()) {
+            this.lblHint.setText("<html>Für dieses Forderungskonto ist kein Titel erfasst. "
+                    + "Ohne Titel, Klausel und Zustellung ist keine Zwangsvollstreckung möglich.</html>");
+        } else if (incomplete > 0) {
+            this.lblHint.setText("<html><b>" + incomplete + " von " + this.titles.size()
+                    + " Titel(n) unvollständig</b> - aus diesen kann nicht vollstreckt werden.</html>");
+        } else {
+            this.lblHint.setText("<html>" + this.titles.size()
+                    + " Titel, Vollstreckungsvoraussetzungen jeweils vollständig.</html>");
+        }
+    }
+
+    private String nullSafe(String value) {
+        return value == null ? "" : value;
+    }
+
+    private String formatDate(Date value) {
+        return value == null ? "" : this.df.format(value);
     }
 
     /**
-     * @param titleType the titleType to set
+     * The title selected in the table.
+     *
+     * @return the selected title, or null if nothing is selected
      */
-    public void setTitleType(EnforcementTitleType titleType) {
-        this.titleType = titleType;
+    private EnforcementTitle selectedTitle() {
+        int row = this.tblTitles.getSelectedRow();
+        if (row < 0) {
+            return null;
+        }
+        int modelRow = this.tblTitles.convertRowIndexToModel(row);
+        if (modelRow < 0 || modelRow >= this.titles.size()) {
+            return null;
+        }
+        return this.titles.get(modelRow);
     }
 
     /**
-     * @return the issuingBody
+     * Loads the follow-up a title created for its limitation date.
+     *
+     * @param title the title, may be null
+     * @return the follow-up, or null if the title has none or it cannot be loaded
      */
-    public String getIssuingBody() {
-        return issuingBody;
+    private ArchiveFileReviewsBean loadLimitationFollowUp(EnforcementTitle title) {
+        if (title == null || title.getLimitationReviewId() == null) {
+            return null;
+        }
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            return locator.lookupCalendarServiceRemote().getReview(title.getLimitationReviewId());
+        } catch (Exception ex) {
+            // the title itself is stored; a stale calendar tab is not worth an error dialog, which
+            // would suggest the save had failed
+            log.error("Unable to load the limitation follow-up of title " + title.getId(), ex);
+            return null;
+        }
     }
 
     /**
-     * @param issuingBody the issuingBody to set
+     * Tells the rest of the client that the follow-up landscape of the case changed, so the
+     * calendar tab and the desktop widgets pick the entry up without reloading the case.
+     *
+     * @param followUp the follow-up concerned, may be null
+     * @param added whether it was newly created rather than moved or removed
      */
-    public void setIssuingBody(String issuingBody) {
-        this.issuingBody = issuingBody;
+    private void publishFollowUpChange(ArchiveFileReviewsBean followUp, boolean added) {
+        if (followUp == null) {
+            return;
+        }
+        EventBroker eb = EventBroker.getInstance();
+        if (added) {
+            eb.publishEvent(new ReviewAddedEvent(followUp));
+        } else {
+            eb.publishEvent(new ReviewUpdatedEvent(null, null, followUp));
+        }
+        eb.publishEvent(new CasesChangedEvent());
     }
 
     /**
-     * @return the fileNumber
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
-    public String getFileNumber() {
-        return fileNumber;
-    }
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
 
-    /**
-     * @param fileNumber the fileNumber to set
-     */
-    public void setFileNumber(String fileNumber) {
-        this.fileNumber = fileNumber;
-    }
+        lblHint = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblTitles = new javax.swing.JTable();
+        cmdAddTitle = new javax.swing.JButton();
+        cmdEditTitle = new javax.swing.JButton();
+        cmdRemoveTitle = new javax.swing.JButton();
 
-    /**
-     * @return the issueDate
-     */
-    public Date getIssueDate() {
-        return issueDate;
-    }
+        lblHint.setText("");
 
-    /**
-     * @param issueDate the issueDate to set
-     */
-    public void setIssueDate(Date issueDate) {
-        this.issueDate = issueDate;
-    }
+        tblTitles.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
 
-    /**
-     * @return the clauseDate
-     */
-    public Date getClauseDate() {
-        return clauseDate;
-    }
+            },
+            new String [] {
 
-    /**
-     * @param clauseDate the clauseDate to set
-     */
-    public void setClauseDate(Date clauseDate) {
-        this.clauseDate = clauseDate;
-    }
+            }
+        ));
+        tblTitles.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblTitlesMouseClicked(evt);
+            }
+        });
+        jScrollPane1.setViewportView(tblTitles);
 
-    /**
-     * @return the serviceDate
-     */
-    public Date getServiceDate() {
-        return serviceDate;
-    }
+        cmdAddTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdAddTitle.setText("Titel erfassen");
+        cmdAddTitle.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddTitleActionPerformed(evt);
+            }
+        });
 
-    /**
-     * @param serviceDate the serviceDate to set
-     */
-    public void setServiceDate(Date serviceDate) {
-        this.serviceDate = serviceDate;
-    }
+        cmdEditTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfind.png"))); // NOI18N
+        cmdEditTitle.setText("Bearbeiten");
+        cmdEditTitle.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdEditTitleActionPerformed(evt);
+            }
+        });
 
-    /**
-     * @return the limitationDate
-     */
-    public Date getLimitationDate() {
-        return limitationDate;
-    }
+        cmdRemoveTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdRemoveTitle.setText("Entfernen");
+        cmdRemoveTitle.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRemoveTitleActionPerformed(evt);
+            }
+        });
 
-    /**
-     * @param limitationDate the limitationDate to set
-     */
-    public void setLimitationDate(Date limitationDate) {
-        this.limitationDate = limitationDate;
-    }
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 820, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(cmdAddTitle)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdEditTitle)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdRemoveTitle)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(lblHint, javax.swing.GroupLayout.DEFAULT_SIZE, 820, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(lblHint, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdAddTitle)
+                    .addComponent(cmdEditTitle)
+                    .addComponent(cmdRemoveTitle))
+                .addContainerGap())
+        );
+    }// </editor-fold>//GEN-END:initComponents
 
-    /**
-     * @return the subjectMatter
-     */
-    public String getSubjectMatter() {
-        return subjectMatter;
-    }
+    private void cmdAddTitleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddTitleActionPerformed
+        if (this.ledger == null || this.ledger.getId() == null) {
+            return;
+        }
 
-    /**
-     * @param subjectMatter the subjectMatter to set
-     */
-    public void setSubjectMatter(String subjectMatter) {
-        this.subjectMatter = subjectMatter;
-    }
+        ClaimLedgerTitleDialog dlg = new ClaimLedgerTitleDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+        dlg.setEnforcementTitle(null);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
 
-    /**
-     * @return the comment
-     */
-    public String getComment() {
-        return comment;
-    }
+        if (!dlg.isSaved()) {
+            return;
+        }
 
-    /**
-     * @param comment the comment to set
-     */
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            EnforcementTitle stored = locator.lookupClaimLedgerServiceRemote().addTitle(this.ledger.getId(),
+                    dlg.getEnforcementTitle(), dlg.getFollowUpLeadTimeDays());
+            publishFollowUpChange(loadLimitationFollowUp(stored), true);
+        } catch (Exception ex) {
+            log.error("Unable to add a title to ledger " + this.ledger.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Der Titel konnte nicht gespeichert werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
 
-    /**
-     * @return the debtors
-     */
-    public List<ClaimLedgerParty> getDebtors() {
-        return debtors;
-    }
+        loadTitles();
+    }//GEN-LAST:event_cmdAddTitleActionPerformed
 
-    /**
-     * @param debtors the debtors to set
-     */
-    public void setDebtors(List<ClaimLedgerParty> debtors) {
-        this.debtors = debtors;
-    }
+    private void cmdEditTitleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditTitleActionPerformed
+        EnforcementTitle selected = selectedTitle();
+        if (selected == null) {
+            return;
+        }
 
+        ClaimLedgerTitleDialog dlg = new ClaimLedgerTitleDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+        dlg.setEnforcementTitle(selected);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
 
-    /**
-     * @return the id of the case event guarding the limitation date, or null if none exists
-     */
-    public String getLimitationReviewId() {
-        return limitationReviewId;
-    }
+        if (!dlg.isSaved()) {
+            return;
+        }
 
-    /**
-     * @param limitationReviewId the limitationReviewId to set
-     */
-    public void setLimitationReviewId(String limitationReviewId) {
-        this.limitationReviewId = limitationReviewId;
-    }
+        // read the follow-up as it stands now: the change may move it, replace it or remove it
+        ArchiveFileReviewsBean previous = loadLimitationFollowUp(selected);
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            EnforcementTitle stored = locator.lookupClaimLedgerServiceRemote().updateTitle(dlg.getEnforcementTitle(),
+                    dlg.getFollowUpLeadTimeDays());
+
+            ArchiveFileReviewsBean current = loadLimitationFollowUp(stored);
+            if (current != null) {
+                publishFollowUpChange(current, previous == null);
+            } else if (previous != null) {
+                // the follow-up was dropped, e.g. because the lead time was set to zero - the
+                // calendar tab has to be told, otherwise it keeps showing a deleted entry
+                publishFollowUpChange(previous, false);
+            }
+        } catch (Exception ex) {
+            log.error("Unable to update title " + selected.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Der Titel konnte nicht gespeichert werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+
+        loadTitles();
+    }//GEN-LAST:event_cmdEditTitleActionPerformed
+
+    private void cmdRemoveTitleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveTitleActionPerformed
+        EnforcementTitle selected = selectedTitle();
+        if (selected == null) {
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Soll der Titel \"" + selected.toString() + "\" wirklich entfernt werden?\n"
+                + "Die Wiedervorlage zur Verjährung wird mit entfernt.",
+                "Titel entfernen", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        // read the follow-up before the title is removed - afterwards it is gone
+        ArchiveFileReviewsBean followUp = loadLimitationFollowUp(selected);
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupClaimLedgerServiceRemote().removeTitle(selected.getId());
+            publishFollowUpChange(followUp, false);
+        } catch (Exception ex) {
+            log.error("Unable to remove title " + selected.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Der Titel konnte nicht entfernt werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+
+        loadTitles();
+    }//GEN-LAST:event_cmdRemoveTitleActionPerformed
+
+    private void tblTitlesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblTitlesMouseClicked
+        if (evt.getClickCount() == 2) {
+            cmdEditTitleActionPerformed(null);
+        }
+    }//GEN-LAST:event_tblTitlesMouseClicked
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdAddTitle;
+    private javax.swing.JButton cmdEditTitle;
+    private javax.swing.JButton cmdRemoveTitle;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblHint;
+    private javax.swing.JTable tblTitles;
+    // End of variables declaration//GEN-END:variables
 
 }

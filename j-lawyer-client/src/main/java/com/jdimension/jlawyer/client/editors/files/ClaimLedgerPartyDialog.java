@@ -660,369 +660,337 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.client.editors.files;
 
-import java.io.Serializable;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
+import com.jdimension.jlawyer.persistence.ClaimPartyRole;
 import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.swing.JOptionPane;
+import org.apache.log4j.Logger;
 
 /**
- * An enforcement title (Titel) a claim ledger rests on.
+ * Records a creditor or debtor of a claim ledger.
  *
- * Enforcement requires three formal prerequisites - the title itself, the enforceable copy with
- * its clause (Klausel) and service on the debtor (Zustellung). A title established by judgment or
- * order is subject to the 30-year limitation period of § 197 Abs. 1 Nr. 3 BGB, which is computed
- * from the date of issue.
+ * The contact is chosen from the parties of the case, which is where a ledger party normally comes
+ * from. The party keeps a reference to that contact rather than a copy of its data; the case role
+ * it was derived from is kept only as a back-reference.
  *
  * @author jens
  */
-@Entity
-@Table(name = "enforcement_titles")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "EnforcementTitle.findAll", query = "SELECT t FROM EnforcementTitle t"),
-    @NamedQuery(name = "EnforcementTitle.findById", query = "SELECT t FROM EnforcementTitle t WHERE t.id = :id"),
-    @NamedQuery(name = "EnforcementTitle.findByLedger", query = "SELECT t FROM EnforcementTitle t WHERE t.ledger = :ledger ORDER BY t.issueDate ASC")
-})
-public class EnforcementTitle implements Serializable {
+public class ClaimLedgerPartyDialog extends javax.swing.JDialog {
 
-    private static final long serialVersionUID = 1L;
+    private static final Logger log = Logger.getLogger(ClaimLedgerPartyDialog.class.getName());
+
+    private ClaimLedgerParty party = null;
+    private boolean saved = false;
 
     /**
-     * Limitation period of a titled claim under § 197 Abs. 1 Nr. 3 BGB, in years.
+     * Wraps a case party so the combo box shows a readable designation.
      */
-    public static final int LIMITATION_YEARS = 30;
+    private static class ContactItem {
 
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
+        private final ArchiveFileAddressesBean caseParty;
 
-    @JoinColumn(name = "ledger_id", referencedColumnName = "id")
-    @ManyToOne(optional = false)
-    private ClaimLedger ledger;
+        ContactItem(ArchiveFileAddressesBean caseParty) {
+            this.caseParty = caseParty;
+        }
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "title_type", nullable = false, length = 50)
-    private EnforcementTitleType titleType;
+        AddressBean contact() {
+            return this.caseParty == null ? null : this.caseParty.getAddressKey();
+        }
 
-    @Column(name = "issuing_body")
-    private String issuingBody;
+        ArchiveFileAddressesBean caseParty() {
+            return this.caseParty;
+        }
 
-    @Column(name = "file_number")
-    private String fileNumber;
-
-    @Column(name = "issue_date")
-    @Temporal(TemporalType.DATE)
-    private Date issueDate;
-
-    @Column(name = "clause_date")
-    @Temporal(TemporalType.DATE)
-    private Date clauseDate;
-
-    @Column(name = "service_date")
-    @Temporal(TemporalType.DATE)
-    private Date serviceDate;
-
-    @Column(name = "limitation_date")
-    @Temporal(TemporalType.DATE)
-    private Date limitationDate;
-
-    @Column(name = "subject_matter")
-    private String subjectMatter;
-
-    @Column(name = "comment")
-    private String comment;
+        @Override
+        public String toString() {
+            if (this.caseParty == null || this.caseParty.getAddressKey() == null) {
+                return "";
+            }
+            String role = this.caseParty.getReferenceTypeAsString();
+            return this.caseParty.getAddressKey().toDisplayName()
+                    + (role == null || role.isEmpty() ? "" : " (" + role + ")");
+        }
+    }
 
     /**
-     * The case event that reminds of this title's limitation date. Kept as an explicit reference so
-     * the follow-up can be found, moved and removed again without writing a technical marker into
-     * text the user reads.
-     */
-    @Column(name = "limitation_review_id")
-    private String limitationReviewId;
-
-    @ManyToMany
-    @JoinTable(name = "enforcement_title_debtors",
-            joinColumns = @JoinColumn(name = "title_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "party_id", referencedColumnName = "id"))
-    private List<ClaimLedgerParty> debtors = new ArrayList<>();
-
-    /**
-     * Whether all three formal prerequisites of enforcement are present: the title, the enforceable
-     * copy with its clause and service on the debtor.
+     * Creates the dialog.
      *
-     * @return true if enforcement may proceed without an override
+     * @param parent the parent window
+     * @param modal whether the dialog is modal
      */
-    public boolean isEnforceable() {
-        return this.issueDate != null && this.clauseDate != null && this.serviceDate != null;
+    public ClaimLedgerPartyDialog(java.awt.Frame parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
+
+        for (ClaimPartyRole r : ClaimPartyRole.values()) {
+            this.cmbRole.addItem(r);
+        }
+        this.spnSequence.setModel(new javax.swing.SpinnerNumberModel(1, 1, 99, 1));
     }
 
     /**
-     * Names the formal prerequisites of enforcement that are still missing.
+     * Offers the parties of the case as contacts to choose from.
      *
-     * @return the missing prerequisites, empty if the title is complete
+     * @param caseParties the parties of the case, may be null
      */
-    public List<String> getMissingPrerequisites() {
-        List<String> missing = new ArrayList<>();
-        if (this.issueDate == null) {
-            missing.add("Titel");
+    public void setCaseParties(List<ArchiveFileAddressesBean> caseParties) {
+        this.cmbContact.removeAllItems();
+        if (caseParties == null) {
+            return;
         }
-        if (this.clauseDate == null) {
-            missing.add("Klausel");
+        for (ArchiveFileAddressesBean p : caseParties) {
+            if (p.getAddressKey() != null) {
+                this.cmbContact.addItem(new ContactItem(p));
+            }
         }
-        if (this.serviceDate == null) {
-            missing.add("Zustellung");
-        }
-        return missing;
     }
 
     /**
-     * Computes the date on which the titled claim becomes time-barred under § 197 Abs. 1 Nr. 3 BGB,
-     * 30 years after the title was issued.
+     * Fills the dialog from an existing party, or prepares a new one when null is passed.
      *
-     * @return the limitation date, or null if the title carries no date of issue
+     * @param party the party to edit, or null for a new one
      */
-    public Date computeLimitationDate() {
-        if (this.issueDate == null) {
-            return null;
+    public void setParty(ClaimLedgerParty party) {
+        this.party = party;
+        if (party == null) {
+            this.party = new ClaimLedgerParty();
+            this.party.setRole(ClaimPartyRole.DEBTOR);
         }
-        LocalDate issued = this.issueDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate limitation = issued.plusYears(LIMITATION_YEARS);
-        return Date.from(limitation.atStartOfDay(ZoneId.systemDefault()).toInstant());
-    }
 
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (getId() != null ? getId().hashCode() : 0);
-        return hash;
-    }
+        this.cmbRole.setSelectedItem(this.party.getRole() == null
+                ? ClaimPartyRole.DEBTOR : this.party.getRole());
+        this.spnSequence.setValue(this.party.getSequenceNumber() <= 0 ? 1 : this.party.getSequenceNumber());
+        this.chkConsumer.setSelected(this.party.isConsumer());
 
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof EnforcementTitle)) {
-            return false;
+        if (this.party.getContact() != null) {
+            for (int i = 0; i < this.cmbContact.getItemCount(); i++) {
+                ContactItem item = (ContactItem) this.cmbContact.getItemAt(i);
+                if (item.contact() != null && item.contact().getId() != null
+                        && item.contact().getId().equals(this.party.getContact().getId())) {
+                    this.cmbContact.setSelectedIndex(i);
+                    break;
+                }
+            }
         }
-        EnforcementTitle other = (EnforcementTitle) object;
-        if ((this.getId() == null && other.getId() != null) || (this.getId() != null && !this.id.equals(other.id))) {
-            return false;
+
+        // an existing party whose designation was already used towards a court must not silently
+        // change identity, so the contact is fixed once a snapshot exists
+        boolean frozen = this.party.hasSnapshot();
+        this.cmbContact.setEnabled(!frozen);
+
+        updateHint();
+    }
+
+    /**
+     * @return the party as edited
+     */
+    public ClaimLedgerParty getParty() {
+        return this.party;
+    }
+
+    /**
+     * @return whether the user confirmed the dialog
+     */
+    public boolean isSaved() {
+        return this.saved;
+    }
+
+    /**
+     * Explains what the current choices mean for the ledger.
+     */
+    private void updateHint() {
+        StringBuilder sb = new StringBuilder("<html>");
+
+        if (this.party != null && this.party.hasSnapshot()) {
+            sb.append("Die Bezeichnung dieser Partei wurde bereits gegenüber einem Gericht verwendet "
+                    + "und bleibt unverändert erhalten; der Kontakt kann nicht mehr getauscht werden.<br/>");
         }
-        return true;
-    }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (this.titleType != null) {
-            sb.append(this.titleType.toString());
+        if (this.cmbRole.getSelectedItem() == ClaimPartyRole.DEBTOR) {
+            if (this.chkConsumer.isSelected()) {
+                sb.append("Als Verbraucher: keine Pauschale nach § 288 Abs. 5 BGB, "
+                        + "Verzugszinsen nach § 288 Abs. 1 BGB (5 Prozentpunkte).");
+            } else {
+                sb.append("Schuldner haften gesamtschuldnerisch, sofern eine Buchung nicht "
+                        + "ausdrücklich einem einzelnen Schuldner zugewiesen wird.");
+            }
+        } else {
+            sb.append("Mehrere Gläubiger erhöhen die Gebühr nach Nr. 1008 VV RVG.");
         }
-        if (this.fileNumber != null && !this.fileNumber.isEmpty()) {
-            sb.append(" ").append(this.fileNumber);
+        sb.append("</html>");
+        this.lblHint.setText(sb.toString());
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        lblRole = new javax.swing.JLabel();
+        cmbRole = new javax.swing.JComboBox();
+        lblContact = new javax.swing.JLabel();
+        cmbContact = new javax.swing.JComboBox();
+        lblSequence = new javax.swing.JLabel();
+        spnSequence = new javax.swing.JSpinner();
+        chkConsumer = new javax.swing.JCheckBox();
+        lblHint = new javax.swing.JLabel();
+        cmdSave = new javax.swing.JButton();
+        cmdCancel = new javax.swing.JButton();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Beteiligter des Forderungskontos");
+
+        lblRole.setText("Rolle:");
+
+        cmbRole.setModel(new javax.swing.DefaultComboBoxModel());
+        cmbRole.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbRoleActionPerformed(evt);
+            }
+        });
+
+        lblContact.setText("Kontakt:");
+
+        cmbContact.setModel(new javax.swing.DefaultComboBoxModel());
+
+        lblSequence.setText("Reihenfolge:");
+
+        chkConsumer.setText("Verbraucher");
+        chkConsumer.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkConsumerActionPerformed(evt);
+            }
+        });
+
+        lblHint.setText("");
+
+        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdSave.setText("Speichern");
+        cmdSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveActionPerformed(evt);
+            }
+        });
+
+        cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdCancel.setText("Abbrechen");
+        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCancelActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(lblRole)
+                            .addComponent(lblContact)
+                            .addComponent(lblSequence))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cmbRole, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(cmbContact, javax.swing.GroupLayout.PREFERRED_SIZE, 420, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(spnSequence, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(chkConsumer))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(lblHint, javax.swing.GroupLayout.DEFAULT_SIZE, 580, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdSave)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdCancel)))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblRole)
+                    .addComponent(cmbRole, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblContact)
+                    .addComponent(cmbContact, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblSequence)
+                    .addComponent(spnSequence, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkConsumer)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(lblHint, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdSave)
+                    .addComponent(cmdCancel))
+                .addContainerGap())
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void cmbRoleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRoleActionPerformed
+        updateHint();
+    }//GEN-LAST:event_cmbRoleActionPerformed
+
+    private void chkConsumerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkConsumerActionPerformed
+        updateHint();
+    }//GEN-LAST:event_chkConsumerActionPerformed
+
+    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+        ContactItem selected = (ContactItem) this.cmbContact.getSelectedItem();
+        if (this.cmbContact.isEnabled() && (selected == null || selected.contact() == null)) {
+            JOptionPane.showMessageDialog(this,
+                    "Für die Partei muss ein Kontakt ausgewählt werden.",
+                    "Eingabe", JOptionPane.WARNING_MESSAGE);
+            return;
         }
-        return sb.toString();
-    }
 
-    /**
-     * @return the id
-     */
-    public String getId() {
-        return id;
-    }
+        this.party.setRole((ClaimPartyRole) this.cmbRole.getSelectedItem());
+        this.party.setSequenceNumber(((Number) this.spnSequence.getValue()).intValue());
+        this.party.setConsumer(this.chkConsumer.isSelected());
+        if (this.cmbContact.isEnabled() && selected != null) {
+            this.party.setContact(selected.contact());
+            this.party.setCaseContact(selected.caseParty());
+        }
 
-    /**
-     * @param id the id to set
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
+        this.saved = true;
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdSaveActionPerformed
 
-    /**
-     * @return the ledger
-     */
-    public ClaimLedger getLedger() {
-        return ledger;
-    }
+    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
+        this.saved = false;
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdCancelActionPerformed
 
-    /**
-     * @param ledger the ledger to set
-     */
-    public void setLedger(ClaimLedger ledger) {
-        this.ledger = ledger;
-    }
-
-    /**
-     * @return the titleType
-     */
-    public EnforcementTitleType getTitleType() {
-        return titleType;
-    }
-
-    /**
-     * @param titleType the titleType to set
-     */
-    public void setTitleType(EnforcementTitleType titleType) {
-        this.titleType = titleType;
-    }
-
-    /**
-     * @return the issuingBody
-     */
-    public String getIssuingBody() {
-        return issuingBody;
-    }
-
-    /**
-     * @param issuingBody the issuingBody to set
-     */
-    public void setIssuingBody(String issuingBody) {
-        this.issuingBody = issuingBody;
-    }
-
-    /**
-     * @return the fileNumber
-     */
-    public String getFileNumber() {
-        return fileNumber;
-    }
-
-    /**
-     * @param fileNumber the fileNumber to set
-     */
-    public void setFileNumber(String fileNumber) {
-        this.fileNumber = fileNumber;
-    }
-
-    /**
-     * @return the issueDate
-     */
-    public Date getIssueDate() {
-        return issueDate;
-    }
-
-    /**
-     * @param issueDate the issueDate to set
-     */
-    public void setIssueDate(Date issueDate) {
-        this.issueDate = issueDate;
-    }
-
-    /**
-     * @return the clauseDate
-     */
-    public Date getClauseDate() {
-        return clauseDate;
-    }
-
-    /**
-     * @param clauseDate the clauseDate to set
-     */
-    public void setClauseDate(Date clauseDate) {
-        this.clauseDate = clauseDate;
-    }
-
-    /**
-     * @return the serviceDate
-     */
-    public Date getServiceDate() {
-        return serviceDate;
-    }
-
-    /**
-     * @param serviceDate the serviceDate to set
-     */
-    public void setServiceDate(Date serviceDate) {
-        this.serviceDate = serviceDate;
-    }
-
-    /**
-     * @return the limitationDate
-     */
-    public Date getLimitationDate() {
-        return limitationDate;
-    }
-
-    /**
-     * @param limitationDate the limitationDate to set
-     */
-    public void setLimitationDate(Date limitationDate) {
-        this.limitationDate = limitationDate;
-    }
-
-    /**
-     * @return the subjectMatter
-     */
-    public String getSubjectMatter() {
-        return subjectMatter;
-    }
-
-    /**
-     * @param subjectMatter the subjectMatter to set
-     */
-    public void setSubjectMatter(String subjectMatter) {
-        this.subjectMatter = subjectMatter;
-    }
-
-    /**
-     * @return the comment
-     */
-    public String getComment() {
-        return comment;
-    }
-
-    /**
-     * @param comment the comment to set
-     */
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
-    /**
-     * @return the debtors
-     */
-    public List<ClaimLedgerParty> getDebtors() {
-        return debtors;
-    }
-
-    /**
-     * @param debtors the debtors to set
-     */
-    public void setDebtors(List<ClaimLedgerParty> debtors) {
-        this.debtors = debtors;
-    }
-
-
-    /**
-     * @return the id of the case event guarding the limitation date, or null if none exists
-     */
-    public String getLimitationReviewId() {
-        return limitationReviewId;
-    }
-
-    /**
-     * @param limitationReviewId the limitationReviewId to set
-     */
-    public void setLimitationReviewId(String limitationReviewId) {
-        this.limitationReviewId = limitationReviewId;
-    }
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox chkConsumer;
+    private javax.swing.JComboBox cmbContact;
+    private javax.swing.JComboBox cmbRole;
+    private javax.swing.JButton cmdCancel;
+    private javax.swing.JButton cmdSave;
+    private javax.swing.JLabel lblContact;
+    private javax.swing.JLabel lblHint;
+    private javax.swing.JLabel lblRole;
+    private javax.swing.JLabel lblSequence;
+    private javax.swing.JSpinner spnSequence;
+    // End of variables declaration//GEN-END:variables
 
 }

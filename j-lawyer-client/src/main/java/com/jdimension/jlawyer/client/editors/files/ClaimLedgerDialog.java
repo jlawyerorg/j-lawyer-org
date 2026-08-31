@@ -934,6 +934,12 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
         this.currentEntry = ledger;
 
+        // the master data and titles tabs load their own data; a ledger that has not been saved
+        // yet has neither parties nor titles
+        ClaimLedger savedLedger = (ledger != null && ledger.getId() != null) ? ledger : null;
+        this.pnlParties.setLedger(this.caseDto, savedLedger);
+        this.pnlTitles.setLedger(savedLedger);
+
         if (ledger == null) {
             this.setTitle("neues Forderungskonto erstellen");
             this.tblComponents.setModel(new ComponentTableModel(new ArrayList<>()));
@@ -1074,6 +1080,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         txtDateTo = new javax.swing.JTextField();
         cmdSelectDateTo = new javax.swing.JButton();
         jTabbedPane1 = new javax.swing.JTabbedPane();
+        pnlParties = new com.jdimension.jlawyer.client.editors.files.ClaimLedgerPartiesPanel();
+        pnlTitles = new com.jdimension.jlawyer.client.editors.files.ClaimLedgerTitlesPanel();
         jPanel1 = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
@@ -1318,6 +1326,10 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jPanel3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
+
+        jTabbedPane1.addTab("Stammdaten", pnlParties);
+
+        jTabbedPane1.addTab("Titel", pnlTitles);
 
         jTabbedPane1.addTab("Positionen", jPanel1);
 
@@ -2311,6 +2323,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JTabbedPane jTabbedPane1;
+    private com.jdimension.jlawyer.client.editors.files.ClaimLedgerPartiesPanel pnlParties;
+    private com.jdimension.jlawyer.client.editors.files.ClaimLedgerTitlesPanel pnlTitles;
     private javax.swing.JPanel lblHeader;
     private javax.swing.JLabel lblOpenValue;
     private javax.swing.JLabel lblSumCost;
