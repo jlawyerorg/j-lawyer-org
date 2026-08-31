@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -663,142 +662,104 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.FrameUtils;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
-import com.jdimension.jlawyer.persistence.EnforcementTitle;
-import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
+import com.jdimension.jlawyer.pojo.ClaimStatement;
 import com.jdimension.jlawyer.services.ClaimLedgerServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Container;
-import java.text.DecimalFormat;
+import java.awt.Cursor;
+import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
 /**
+ * Shows the claim statement (Forderungsaufstellung) of a claim ledger to a chosen key date, and
+ * lets the user file it in the case as a PDF or export it as CSV.
+ *
+ * The preview is assembled on the server, so what the user reads here is what a stored document
+ * would contain - the dialog does not compute anything of its own.
  *
  * @author jens
  */
-public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
+public class ClaimStatementDialog extends javax.swing.JDialog {
 
-    private final DecimalFormat currencyFormat = new DecimalFormat("#,##0.00");
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+    private static final Logger log = Logger.getLogger(ClaimStatementDialog.class.getName());
 
-    private static final Logger log = Logger.getLogger(ClaimLedgerEntryPanel.class.getName());
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-    private final DecimalFormat totalFormat = new DecimalFormat("#0.00");
 
-    private ArchiveFileBean caseDto = null;
-    private ArchiveFilePanel caseView = null;
     private ClaimLedger ledger = null;
+    private ClaimStatement statement = null;
 
     /**
-     * Creates new form ClaimLedgerEntryPanel
+     * Creates the dialog.
      *
-     * @param caseView
+     * @param parent the parent window
+     * @param modal whether the dialog is modal
      */
-    public ClaimLedgerEntryPanel(ArchiveFilePanel caseView) {
+    public ClaimStatementDialog(java.awt.Frame parent, boolean modal) {
+        super(parent, modal);
         initComponents();
-        this.caseView = caseView;
-    }
-
-    public void setEntry(ArchiveFileBean caseDto, ClaimLedger ledger) {
-        this.caseDto = caseDto;
-        this.ledger = ledger;
-        this.lblName.setText(ledger.getName());
-        StringBuilder tooltip = new StringBuilder();
-        tooltip.append("<html>");
-        tooltip.append(ledger.getDescription());
-        tooltip.append("</html>");
-        this.lblName.setToolTipText(tooltip.toString());
-
-        updateStatus();
+        this.txtKeyDate.setText(this.df.format(new Date()));
     }
 
     /**
-     * Fills the open total and the status shown on the card, so that the state of a claim can be
-     * read without opening it.
+     * Sets the ledger to state and loads the statement for today.
      *
-     * A card must never break the case view: if the figures cannot be loaded, the badges stay empty
-     * and the reason is logged rather than shown as an error dialog.
+     * @param ledger the claim ledger
      */
-    private void updateStatus() {
-        this.lblOpenAmount.setText("");
-        this.lblOpenAmount.setToolTipText(null);
-        this.lblStatus.setText("");
-        this.lblStatus.setToolTipText(null);
+    public void setLedger(ClaimLedger ledger) {
+        this.ledger = ledger;
+        if (ledger != null) {
+            this.setTitle("Forderungsaufstellung - " + ledger.getName());
+        }
+        loadStatement();
+    }
 
+    /**
+     * The key date currently entered, or today if the entry cannot be read as a date.
+     *
+     * @return the key date
+     */
+    private Date keyDate() {
+        try {
+            return this.df.parse(this.txtKeyDate.getText());
+        } catch (Exception ex) {
+            return new Date();
+        }
+    }
+
+    /**
+     * Loads the statement from the server and renders the preview.
+     */
+    private void loadStatement() {
         if (this.ledger == null || this.ledger.getId() == null) {
             return;
         }
 
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ClaimLedgerServiceRemote ledgerService = locator.lookupClaimLedgerServiceRemote();
 
-            ClaimLedgerTotals totals = ledgerService.calculateClaimLedgerTotals(this.ledger.getId(), new Date());
-            if (totals != null) {
-                this.lblOpenAmount.setText(this.currencyFormat.format(totals.getOpenClaim()) + " EUR");
-                StringBuilder amountTip = new StringBuilder("<html>");
-                amountTip.append("Hauptforderung: ").append(this.currencyFormat.format(totals.getTotalMain())).append(" EUR<br/>");
-                amountTip.append("Kosten: ").append(this.currencyFormat.format(totals.getTotalCosts())).append(" EUR<br/>");
-                amountTip.append("Zinsen: ").append(this.currencyFormat.format(
-                        totals.getTotalInterestMain().add(totals.getTotalInterestCosts()))).append(" EUR<br/>");
-                amountTip.append("Zahlungen: ").append(this.currencyFormat.format(totals.getTotalPayments())).append(" EUR");
-                amountTip.append("</html>");
-                this.lblOpenAmount.setToolTipText(amountTip.toString());
-            }
-
-            List<EnforcementTitle> titles = ledgerService.getTitles(this.ledger.getId());
-            if (titles == null || titles.isEmpty()) {
-                this.lblStatus.setText("kein Titel");
-                this.lblStatus.setToolTipText("Für dieses Forderungskonto ist kein Vollstreckungstitel erfasst.");
-            } else {
-                EnforcementTitle earliest = null;
-                boolean allEnforceable = true;
-                for (EnforcementTitle t : titles) {
-                    if (!t.isEnforceable()) {
-                        allEnforceable = false;
-                    }
-                    if (t.getLimitationDate() != null
-                            && (earliest == null || earliest.getLimitationDate() == null
-                                || t.getLimitationDate().before(earliest.getLimitationDate()))) {
-                        earliest = t;
-                    }
-                }
-
-                StringBuilder status = new StringBuilder();
-                status.append(titles.size() == 1 ? "tituliert" : titles.size() + " Titel");
-                if (!allEnforceable) {
-                    // an incomplete title blocks enforcement, which the user should see on the card
-                    status.append(" (unvollständig)");
-                }
-                if (earliest != null && earliest.getLimitationDate() != null) {
-                    status.append(", Verjährung ").append(this.dateFormat.format(earliest.getLimitationDate()));
-                }
-                this.lblStatus.setText(status.toString());
-
-                StringBuilder statusTip = new StringBuilder("<html>");
-                for (EnforcementTitle t : titles) {
-                    statusTip.append(t.toString());
-                    List<String> missing = t.getMissingPrerequisites();
-                    if (!missing.isEmpty()) {
-                        statusTip.append(" - fehlt: ").append(String.join(", ", missing));
-                    }
-                    statusTip.append("<br/>");
-                }
-                statusTip.append("</html>");
-                this.lblStatus.setToolTipText(statusTip.toString());
-            }
+            this.statement = ledgerService.assembleClaimStatement(this.ledger.getId(), keyDate(),
+                    this.chkIncludeSubLedgers.isSelected());
+            this.txtStatement.setText(ledgerService.exportClaimStatementAsCsv(this.statement));
+            this.txtStatement.setCaretPosition(0);
 
         } catch (Exception ex) {
-            log.error("Unable to determine the status of claim ledger " + this.ledger.getId(), ex);
+            log.error("Unable to load the claim statement of ledger " + this.ledger.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Forderungsaufstellung konnte nicht geladen werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            this.setCursor(Cursor.getDefaultCursor());
         }
     }
 
@@ -811,138 +772,211 @@ public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        cmdOpen = new javax.swing.JButton();
-        lblName = new javax.swing.JLabel();
-        lblStatus = new javax.swing.JLabel();
-        lblOpenAmount = new javax.swing.JLabel();
-        cmdDelete = new javax.swing.JButton();
-        cmdStatement = new javax.swing.JButton();
+        lblKeyDate = new javax.swing.JLabel();
+        txtKeyDate = new javax.swing.JTextField();
+        cmdSelectKeyDate = new javax.swing.JButton();
+        chkIncludeSubLedgers = new javax.swing.JCheckBox();
+        cmdRefresh = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        txtStatement = new javax.swing.JTextArea();
+        cmdExportCsv = new javax.swing.JButton();
+        cmdStorePdf = new javax.swing.JButton();
+        cmdClose = new javax.swing.JButton();
 
-        cmdOpen.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfind.png"))); // NOI18N
-        cmdOpen.setToolTipText("einsehen / bearbeiten");
-        cmdOpen.addActionListener(new java.awt.event.ActionListener() {
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Forderungsaufstellung");
+
+        lblKeyDate.setText("Stichtag:");
+
+        txtKeyDate.setText("");
+
+        cmdSelectKeyDate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
+        cmdSelectKeyDate.setToolTipText("Stichtag wählen");
+        cmdSelectKeyDate.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdOpenActionPerformed(evt);
+                cmdSelectKeyDateActionPerformed(evt);
             }
         });
 
-        lblName.setFont(lblName.getFont());
-        lblName.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/man.png"))); // NOI18N
-        lblName.setText("<Name>");
-        lblName.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
-
-        lblStatus.setFont(lblStatus.getFont().deriveFont(lblStatus.getFont().getSize()-1f));
-        lblStatus.setText("");
-        lblStatus.setToolTipText("");
-
-        lblOpenAmount.setFont(lblOpenAmount.getFont().deriveFont(lblOpenAmount.getFont().getStyle() | java.awt.Font.BOLD));
-        lblOpenAmount.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        lblOpenAmount.setText("");
-        lblOpenAmount.setToolTipText("");
-
-        cmdDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
-        cmdDelete.setToolTipText("Beleg löschen");
-        cmdDelete.addActionListener(new java.awt.event.ActionListener() {
+        chkIncludeSubLedgers.setText("Unterkonten einbeziehen");
+        chkIncludeSubLedgers.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdDeleteActionPerformed(evt);
+                chkIncludeSubLedgersActionPerformed(evt);
             }
         });
 
-        cmdStatement.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
-        cmdStatement.setToolTipText("Forderungsaufstellung");
-        cmdStatement.addActionListener(new java.awt.event.ActionListener() {
+        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/reload.png"))); // NOI18N
+        cmdRefresh.setText("Aktualisieren");
+        cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdStatementActionPerformed(evt);
+                cmdRefreshActionPerformed(evt);
             }
         });
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
+        txtStatement.setEditable(false);
+        txtStatement.setColumns(20);
+        txtStatement.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtStatement.setRows(5);
+        jScrollPane1.setViewportView(txtStatement);
+
+        cmdExportCsv.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
+        cmdExportCsv.setText("CSV exportieren");
+        cmdExportCsv.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdExportCsvActionPerformed(evt);
+            }
+        });
+
+        cmdStorePdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/printer.png"))); // NOI18N
+        cmdStorePdf.setText("Als PDF in Akte ablegen");
+        cmdStorePdf.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdStorePdfActionPerformed(evt);
+            }
+        });
+
+        cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdClose.setText("Schließen");
+        cmdClose.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCloseActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(cmdOpen)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdDelete)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdStatement)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, 613, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(lblStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(lblOpenAmount, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 800, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblKeyDate)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtKeyDate, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdSelectKeyDate)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(chkIncludeSubLedgers)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(cmdRefresh)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdExportCsv)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdStorePdf)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdClose)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(8, 8, 8)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(cmdOpen, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cmdDelete, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cmdStatement, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblOpenAmount, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblKeyDate)
+                    .addComponent(txtKeyDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdSelectKeyDate)
+                    .addComponent(chkIncludeSubLedgers)
+                    .addComponent(cmdRefresh))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 460, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdClose)
+                    .addComponent(cmdStorePdf)
+                    .addComponent(cmdExportCsv))
                 .addContainerGap())
         );
+
+        pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void cmdOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOpenActionPerformed
-
-        ClaimLedgerDialog dlg = new ClaimLedgerDialog(this.caseView, this.caseDto, EditorsRegistry.getInstance().getMainWindow(), true);
-        dlg.setEntry(this.getClaimLedger());
-        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+    private void cmdSelectKeyDateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectKeyDateActionPerformed
+        MultiCalDialog dlg = new MultiCalDialog(this.txtKeyDate, this, true);
         dlg.setVisible(true);
-        if (!dlg.isCancelled()) {
-            this.setEntry(caseDto, dlg.getEntry());
+        loadStatement();
+    }//GEN-LAST:event_cmdSelectKeyDateActionPerformed
+
+    private void chkIncludeSubLedgersActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkIncludeSubLedgersActionPerformed
+        loadStatement();
+    }//GEN-LAST:event_chkIncludeSubLedgersActionPerformed
+
+    private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
+        loadStatement();
+    }//GEN-LAST:event_cmdRefreshActionPerformed
+
+    private void cmdExportCsvActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportCsvActionPerformed
+        if (this.statement == null) {
+            return;
         }
 
-    }//GEN-LAST:event_cmdOpenActionPerformed
-
-    private void cmdStatementActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdStatementActionPerformed
-        ClaimStatementDialog dlg = new ClaimStatementDialog(EditorsRegistry.getInstance().getMainWindow(), true);
-        dlg.setLedger(this.ledger);
-        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-        dlg.setVisible(true);
-        // a statement may have been filed in the case, and the ledger records that it was
-        updateStatus();
-    }//GEN-LAST:event_cmdStatementActionPerformed
-
-    private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed
-        int response = JOptionPane.showConfirmDialog(this, "Forderungskonto '" + this.getClaimLedger().getName() + "' unwiderruflich löschen?", "Forderungskonto löschen", JOptionPane.YES_NO_OPTION);
-        if (response == JOptionPane.YES_OPTION) {
-            try {
-                ClientSettings settings = ClientSettings.getInstance();
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                locator.lookupArchiveFileServiceRemote().removeClaimLedger(this.getClaimLedger().getId());
-                Container parent = this.getParent();
-                parent.remove(this);
-                parent.invalidate();
-                parent.repaint();
-            } catch (Exception ex) {
-                log.error("Error deleting claim ledger", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Löschen des Forderungskontos: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            }
+        JFileChooser chooser = new JFileChooser();
+        chooser.setSelectedFile(new java.io.File("Forderungsaufstellung_"
+                + new SimpleDateFormat("yyyy-MM-dd").format(keyDate()) + ".csv"));
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
         }
-    }//GEN-LAST:event_cmdDeleteActionPerformed
 
+        try (FileOutputStream out = new FileOutputStream(chooser.getSelectedFile())) {
+            out.write(this.txtStatement.getText().getBytes(StandardCharsets.UTF_8));
+            JOptionPane.showMessageDialog(this,
+                    "Die Forderungsaufstellung wurde gespeichert.",
+                    "Export", JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ex) {
+            log.error("Unable to export the claim statement", ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Datei konnte nicht geschrieben werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdExportCsvActionPerformed
+
+    private void cmdStorePdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdStorePdfActionPerformed
+        if (this.ledger == null || this.ledger.getId() == null) {
+            return;
+        }
+
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            ArchiveFileDocumentsBean document = locator.lookupClaimLedgerServiceRemote()
+                    .storeClaimStatement(this.ledger.getId(), keyDate(),
+                            this.chkIncludeSubLedgers.isSelected(), null);
+
+            JOptionPane.showMessageDialog(this,
+                    "Die Forderungsaufstellung wurde in der Akte abgelegt:\n" + document.getName(),
+                    "Forderungsaufstellung", JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception ex) {
+            log.error("Unable to store the claim statement of ledger " + this.ledger.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Forderungsaufstellung konnte nicht abgelegt werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            this.setCursor(Cursor.getDefaultCursor());
+        }
+    }//GEN-LAST:event_cmdStorePdfActionPerformed
+
+    private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdCloseActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton cmdDelete;
-    private javax.swing.JButton cmdOpen;
-    private javax.swing.JButton cmdStatement;
-    private javax.swing.JLabel lblName;
-    private javax.swing.JLabel lblOpenAmount;
-    private javax.swing.JLabel lblStatus;
+    private javax.swing.JCheckBox chkIncludeSubLedgers;
+    private javax.swing.JButton cmdClose;
+    private javax.swing.JButton cmdExportCsv;
+    private javax.swing.JButton cmdRefresh;
+    private javax.swing.JButton cmdSelectKeyDate;
+    private javax.swing.JButton cmdStorePdf;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblKeyDate;
+    private javax.swing.JTextField txtKeyDate;
+    private javax.swing.JTextArea txtStatement;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * @return the invoice
-     */
-    public ClaimLedger getClaimLedger() {
-        return ledger;
-    }
 }

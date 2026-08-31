@@ -54,7 +54,7 @@
       and implement the tabs `Stammdaten`, `Titel` and `Buchungen` (parties, title, new component
       types, allocation modes, catalogue classification of main claims incl. the additional entries
       it demands)
-- [ ] 1.15 Desktop UI: status badges on the `ClaimLedgerEntryPanel` cards in
+- [x] 1.15 Desktop UI: status badges on the `ClaimLedgerEntryPanel` cards in
       `Finanzen → Forderungskonto` (open total, next deadline) and the claim statement dialog
       (+ `.form`)
 - [ ] 1.16 Unit tests for interest (incl. base-rate changes inside a period), allocation modes,
