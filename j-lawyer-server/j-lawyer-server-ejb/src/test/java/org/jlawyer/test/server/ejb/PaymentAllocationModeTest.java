@@ -660,258 +660,472 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.pojo;
+package org.jlawyer.test.server.ejb;
 
-import java.io.Serializable;
+import com.jdimension.jlawyer.persistence.BaseInterest;
+import com.jdimension.jlawyer.persistence.BaseInterestFacadeLocal;
+import com.jdimension.jlawyer.persistence.ClaimComponent;
+import com.jdimension.jlawyer.persistence.ClaimComponentFacadeLocal;
+import com.jdimension.jlawyer.persistence.ClaimComponentType;
+import com.jdimension.jlawyer.persistence.ClaimLedger;
+import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
+import com.jdimension.jlawyer.persistence.ClaimLedgerEntryFacadeLocal;
+import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
+import com.jdimension.jlawyer.persistence.InterestRule;
+import com.jdimension.jlawyer.persistence.InterestRuleFacadeLocal;
+import com.jdimension.jlawyer.persistence.InterestType;
+import com.jdimension.jlawyer.persistence.LedgerEntryType;
+import com.jdimension.jlawyer.persistence.PaymentAllocation;
+import com.jdimension.jlawyer.persistence.PaymentAllocationMode;
+import com.jdimension.jlawyer.persistence.PaymentSplitProposal;
+import com.jdimension.jlawyer.services.ClaimInterestCalculator;
+import com.jdimension.jlawyer.services.PaymentSplitCalculator;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 /**
+ * The statutory allocation of §§ 366 Abs. 2, 367 BGB settles costs, then interest, then the
+ * principal. § 497 Abs. 3 BGB reverses the last two for consumer loans, so that a consumer's
+ * payments reduce the debt that keeps producing interest. Getting this the wrong way round
+ * systematically overcharges a consumer, which is why the order is asserted on the produced
+ * allocations rather than on the enum.
  *
  * @author jens
  */
-public class ClaimLedgerTotals implements Serializable {
+public class PaymentAllocationModeTest {
 
-    private static final long serialVersionUID = 1L;
-
-    private BigDecimal totalMain=BigDecimal.ZERO;
-    private BigDecimal totalCosts=BigDecimal.ZERO;
-    private BigDecimal totalInterestMain=BigDecimal.ZERO;
-    private BigDecimal totalInterestCosts=BigDecimal.ZERO;
-    private BigDecimal totalPayments=BigDecimal.ZERO;
-    private BigDecimal openClaim=BigDecimal.ZERO;
-
-    /**
-     * Balance information for each component
-     */
-    private List<ClaimComponentBalance> componentBalances = new ArrayList<>();
-
-    /**
-     * What each debtor owes. Debtors are liable jointly and severally, so these figures overlap:
-     * summing them would count the joint part once per debtor.
-     */
-    private List<DebtorBalance> debtorBalances = new ArrayList<>();
-
-    /**
-     * The interest that keeps running after the key date, per interest-bearing position.
-     */
-    private List<ContinuingInterest> continuingInterest = new ArrayList<>();
-
-    /**
-     * Map of component ID to balance for quick lookup
-     */
-    private Map<String, ClaimComponentBalance> componentBalanceMap = new HashMap<>();
-
-    /**
-     * @return the totalMain
-     */
-    public BigDecimal getTotalMain() {
-        return totalMain;
+    private static Date date(int year, int month, int day) {
+        return Date.from(LocalDate.of(year, month, day).atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 
-    /**
-     * @param totalMain the totalMain to set
-     */
-    public void setTotalMain(BigDecimal totalMain) {
-        this.totalMain = totalMain;
+    private final List<ClaimComponent> components = new ArrayList<>();
+    private final List<ClaimLedgerEntry> entries = new ArrayList<>();
+
+    private ClaimComponent addComponent(String id, ClaimComponentType type, String name, String amount, String fixedRate) {
+        ClaimComponent c = new ClaimComponent();
+        c.setId(id);
+        c.setType(type);
+        c.setName(name);
+
+        if (fixedRate != null) {
+            InterestRule rule = new InterestRule();
+            rule.setInterestType(InterestType.FIXED);
+            rule.setFixedRate(new BigDecimal(fixedRate));
+            rule.setValidFrom(date(2025, 1, 1));
+            List<InterestRule> rules = new ArrayList<>();
+            rules.add(rule);
+            c.setInterestRules(rules);
+        }
+
+        components.add(c);
+
+        ClaimLedgerEntry e = new ClaimLedgerEntry();
+        e.setComponent(c);
+        e.setType(type.isMainClaim() ? LedgerEntryType.MAIN_CLAIM : LedgerEntryType.COST);
+        e.setEntryDate(date(2025, 1, 1));
+        e.setAmount(new BigDecimal(amount));
+        entries.add(e);
+        entries.sort(Comparator.comparing(ClaimLedgerEntry::getEntryDate));
+
+        return c;
     }
 
-    /**
-     * @return the totalCosts
-     */
-    public BigDecimal getTotalCosts() {
-        return totalCosts;
+    private PaymentSplitCalculator calculator() {
+        ClaimLedgerEntryFacadeLocal entryFacade = new EntryFacade();
+        return new PaymentSplitCalculator(new ComponentFacade(), new RuleFacade(), entryFacade,
+                new ClaimInterestCalculator(new NoBaseRates(), entryFacade));
     }
 
-    /**
-     * @param totalCosts the totalCosts to set
-     */
-    public void setTotalCosts(BigDecimal totalCosts) {
-        this.totalCosts = totalCosts;
+    @Test
+    public void statutoryModeSettlesInterestBeforeThePrincipal() {
+        addComponent("c1", ClaimComponentType.MAIN_CLAIM, "Darlehen", "1000.00", "10.00");
+
+        ClaimLedger ledger = new ClaimLedger("l1");
+        ledger.setAllocationMode(PaymentAllocationMode.LEGAL);
+
+        PaymentSplitProposal p = calculator().calculateSplit(ledger, new BigDecimal("50.00"), null,
+                date(2026, 1, 1), PaymentAllocationMode.LEGAL, null);
+
+        List<PaymentAllocation> allocations = p.getAllocations();
+        assertFalse("the payment has to be allocated somewhere", allocations.isEmpty());
+        assertTrue("§ 367 BGB settles interest first", allocations.get(0).isInterestAllocation());
+        assertEquals(PaymentAllocationMode.LEGAL, p.getAllocationMode());
+        assertTrue(p.isFollowsLegalOrder());
     }
 
-    /**
-     * @return the totalInterestMain
-     */
-    public BigDecimal getTotalInterestMain() {
-        return totalInterestMain;
+    @Test
+    public void consumerLoanModeSettlesThePrincipalBeforeTheInterest() {
+        addComponent("c1", ClaimComponentType.MAIN_CLAIM, "Verbraucherdarlehen", "1000.00", "10.00");
+
+        ClaimLedger ledger = new ClaimLedger("l1");
+        ledger.setConsumerLoan(true);
+        ledger.setAllocationMode(PaymentAllocationMode.CONSUMER_LOAN);
+
+        PaymentSplitProposal p = calculator().calculateSplit(ledger, new BigDecimal("50.00"), null,
+                date(2026, 1, 1), PaymentAllocationMode.CONSUMER_LOAN, null);
+
+        List<PaymentAllocation> allocations = p.getAllocations();
+        assertFalse(allocations.isEmpty());
+        assertFalse("§ 497 Abs. 3 BGB settles the principal before the default interest",
+                allocations.get(0).isInterestAllocation());
+        assertEquals("§ 497 Abs. 3 BGB", allocations.get(0).getLegalReference());
     }
 
-    /**
-     * @param totalInterestMain the totalInterestMain to set
-     */
-    public void setTotalInterestMain(BigDecimal totalInterestMain) {
-        this.totalInterestMain = totalInterestMain;
+    @Test
+    public void aDeviatingModeIsMarkedAndExplained() {
+        addComponent("c1", ClaimComponentType.MAIN_CLAIM, "Verbraucherdarlehen", "1000.00", "10.00");
+
+        ClaimLedger ledger = new ClaimLedger("l1");
+
+        PaymentSplitProposal p = calculator().calculateSplit(ledger, new BigDecimal("50.00"), null,
+                date(2026, 1, 1), PaymentAllocationMode.CONSUMER_LOAN, null);
+
+        assertFalse("the proposal must not claim to follow the statutory order", p.isFollowsLegalOrder());
+        assertNotNull("a deviation has to be explained to the user", p.getLegalOrderWarning());
+        assertTrue(p.getLegalOrderWarning().contains("497"));
     }
 
-    /**
-     * @return the totalInterestCosts
-     */
-    public BigDecimal getTotalInterestCosts() {
-        return totalInterestCosts;
+    @Test
+    public void costsAreSettledBeforeMainClaims() {
+        addComponent("c1", ClaimComponentType.MAIN_CLAIM, "Hauptforderung", "1000.00", null);
+        addComponent("c2", ClaimComponentType.COST_NON_INTEREST_BEARING, "Kosten", "100.00", null);
+
+        ClaimLedger ledger = new ClaimLedger("l1");
+
+        PaymentSplitProposal p = calculator().calculateSplit(ledger, new BigDecimal("60.00"), null,
+                date(2026, 1, 1), PaymentAllocationMode.LEGAL, null);
+
+        assertFalse(p.getAllocations().isEmpty());
+        assertEquals("§ 366 Abs. 2 BGB settles costs first",
+                "Kosten", p.getAllocations().get(0).getComponent().getName());
     }
 
-    /**
-     * @param totalInterestCosts the totalInterestCosts to set
-     */
-    public void setTotalInterestCosts(BigDecimal totalInterestCosts) {
-        this.totalInterestCosts = totalInterestCosts;
+    @Test
+    public void singleDebtorModeOnlySettlesThatDebtorsOwnPositions() {
+        ClaimComponent joint = addComponent("c1", ClaimComponentType.MAIN_CLAIM, "Hauptforderung", "1000.00", null);
+        ClaimComponent individual = addComponent("c2", ClaimComponentType.COST_NON_INTEREST_BEARING, "Vollstreckungskosten", "25.00", null);
+
+        ClaimLedgerParty debtorTwo = new ClaimLedgerParty();
+        debtorTwo.setId("p2");
+
+        // the enforcement cost was caused by debtor 2 alone (§ 788 Abs. 1 S. 2 ZPO)
+        for (ClaimLedgerEntry e : entries) {
+            if (e.getComponent() == individual) {
+                e.setDebtorParty(debtorTwo);
+            }
+        }
+
+        ClaimLedger ledger = new ClaimLedger("l1");
+
+        PaymentSplitProposal p = calculator().calculateSplit(ledger, new BigDecimal("25.00"), null,
+                date(2026, 1, 1), PaymentAllocationMode.SINGLE_DEBTOR, debtorTwo);
+
+        assertEquals(1, p.getAllocations().size());
+        assertEquals("Vollstreckungskosten", p.getAllocations().get(0).getComponent().getName());
+        assertEquals("the joint main claim is not settled by a single-debtor payment",
+                "Hauptforderung", joint.getName());
     }
 
-    /**
-     * @return the totalPayments
-     */
-    public BigDecimal getTotalPayments() {
-        return totalPayments;
+    @Test
+    public void surplusIsReportedWhenThePaymentExceedsTheDebt() {
+        addComponent("c1", ClaimComponentType.COST_NON_INTEREST_BEARING, "Kosten", "100.00", null);
+
+        ClaimLedger ledger = new ClaimLedger("l1");
+
+        PaymentSplitProposal p = calculator().calculateSplit(ledger, new BigDecimal("150.00"), null,
+                date(2026, 1, 1), PaymentAllocationMode.LEGAL, null);
+
+        assertEquals(new BigDecimal("50.00"), p.getSurplus());
     }
 
-    /**
-     * @param totalPayments the totalPayments to set
-     */
-    public void setTotalPayments(BigDecimal totalPayments) {
-        this.totalPayments = totalPayments;
+    @Test
+    public void targetedModeSettlesTheChosenPositionFirst() {
+        addComponent("c1", ClaimComponentType.COST_NON_INTEREST_BEARING, "Kosten", "100.00", null);
+        ClaimComponent main = addComponent("c2", ClaimComponentType.MAIN_CLAIM, "Hauptforderung", "1000.00", null);
+
+        ClaimLedger ledger = new ClaimLedger("l1");
+
+        PaymentSplitProposal p = calculator().calculateSplit(ledger, new BigDecimal("60.00"), null,
+                date(2026, 1, 1), PaymentAllocationMode.TARGETED, null, main);
+
+        assertEquals("the directed position is settled before the statutory sequence",
+                "Hauptforderung", p.getAllocations().get(0).getComponent().getName());
+        assertFalse(p.isFollowsLegalOrder());
     }
 
-    /**
-     * @return the openClaim
-     */
-    public BigDecimal getOpenClaim() {
-        return openClaim;
+    @Test
+    public void manualDistributionIsAcceptedButMarkedAsDeviating() {
+        ClaimComponent main = addComponent("c1", ClaimComponentType.MAIN_CLAIM, "Hauptforderung", "1000.00", null);
+
+        PaymentAllocation a = new PaymentAllocation();
+        a.setComponent(main);
+        a.setAmount(new BigDecimal("100.00"));
+        List<PaymentAllocation> allocations = new ArrayList<>();
+        allocations.add(a);
+
+        PaymentSplitProposal p = calculator().createManualSplit(new ClaimLedger("l1"),
+                new BigDecimal("100.00"), date(2026, 1, 1), allocations);
+
+        assertTrue(p.isManuallyAdjusted());
+        assertFalse(p.isFollowsLegalOrder());
+        assertEquals(PaymentAllocationMode.MANUAL, p.getAllocationMode());
+        assertNotNull(p.getLegalOrderWarning());
     }
 
-    /**
-     * @param openClaim the openClaim to set
-     */
-    public void setOpenClaim(BigDecimal openClaim) {
-        this.openClaim = openClaim;
+    @Test(expected = IllegalArgumentException.class)
+    public void manualDistributionMustAddUpToThePayment() {
+        ClaimComponent main = addComponent("c1", ClaimComponentType.MAIN_CLAIM, "Hauptforderung", "1000.00", null);
+
+        PaymentAllocation a = new PaymentAllocation();
+        a.setComponent(main);
+        a.setAmount(new BigDecimal("40.00"));
+        List<PaymentAllocation> allocations = new ArrayList<>();
+        allocations.add(a);
+
+        // 40.00 allocated out of a 100.00 payment - the rest is unaccounted for
+        calculator().createManualSplit(new ClaimLedger("l1"), new BigDecimal("100.00"),
+                date(2026, 1, 1), allocations);
     }
 
-    /**
-     * @return the componentBalances
-     */
-    public List<ClaimComponentBalance> getComponentBalances() {
-        return componentBalances;
+    // ---------------------------------------------------------------- stubs
+
+    private class ComponentFacade implements ClaimComponentFacadeLocal {
+
+        @Override
+        public List<ClaimComponent> findByLedger(ClaimLedger ledger) {
+            return new ArrayList<>(components);
+        }
+
+        @Override
+        public void create(ClaimComponent claimComponent) {
+        }
+
+        @Override
+        public void edit(ClaimComponent claimComponent) {
+        }
+
+        @Override
+        public void remove(ClaimComponent claimComponent) {
+        }
+
+        @Override
+        public ClaimComponent find(Object id) {
+            return null;
+        }
+
+        @Override
+        public List<ClaimComponent> findAll() {
+            return components;
+        }
+
+        @Override
+        public List<ClaimComponent> findRange(int[] range) {
+            return components;
+        }
+
+        @Override
+        public int count() {
+            return components.size();
+        }
     }
 
-    /**
-     * @param componentBalances the componentBalances to set
-     */
-    public void setComponentBalances(List<ClaimComponentBalance> componentBalances) {
-        this.componentBalances = componentBalances;
-        // Rebuild map when list is set
-        this.componentBalanceMap.clear();
-        if (componentBalances != null) {
-            for (ClaimComponentBalance balance : componentBalances) {
-                if (balance.getComponent() != null) {
-                    this.componentBalanceMap.put(balance.getComponent().getId(), balance);
+    private class RuleFacade implements InterestRuleFacadeLocal {
+
+        @Override
+        public List<InterestRule> findByComponent(ClaimComponent cmp) {
+            return cmp.getInterestRules();
+        }
+
+        @Override
+        public void create(InterestRule interestRule) {
+        }
+
+        @Override
+        public void edit(InterestRule interestRule) {
+        }
+
+        @Override
+        public void remove(InterestRule interestRule) {
+        }
+
+        @Override
+        public InterestRule find(Object id) {
+            return null;
+        }
+
+        @Override
+        public List<InterestRule> findAll() {
+            return new ArrayList<>();
+        }
+
+        @Override
+        public List<InterestRule> findRange(int[] range) {
+            return new ArrayList<>();
+        }
+
+        @Override
+        public int count() {
+            return 0;
+        }
+    }
+
+    private class EntryFacade implements ClaimLedgerEntryFacadeLocal {
+
+        private List<ClaimLedgerEntry> of(ClaimComponent component) {
+            List<ClaimLedgerEntry> result = new ArrayList<>();
+            for (ClaimLedgerEntry e : entries) {
+                if (e.getComponent() == component) {
+                    result.add(e);
                 }
             }
+            return result;
         }
-    }
 
-    /**
-     * Adds a component balance to the list and map
-     * @param balance the balance to add
-     */
-    public void addComponentBalance(ClaimComponentBalance balance) {
-        if (balance != null) {
-            this.componentBalances.add(balance);
-            if (balance.getComponent() != null) {
-                this.componentBalanceMap.put(balance.getComponent().getId(), balance);
+        @Override
+        public List<ClaimLedgerEntry> findByComponent(ClaimComponent component) {
+            return of(component);
+        }
+
+        @Override
+        public ClaimLedgerEntry findLatestInterestEntry(ClaimComponent component) {
+            ClaimLedgerEntry latest = null;
+            for (ClaimLedgerEntry e : of(component)) {
+                if (e.getType() == LedgerEntryType.INTEREST) {
+                    latest = e;
+                }
             }
+            return latest;
         }
-    }
 
-    /**
-     * Gets the balance for a specific component by ID
-     * @param componentId the component ID
-     * @return the balance, or null if not found
-     */
-    public ClaimComponentBalance getComponentBalance(String componentId) {
-        return this.componentBalanceMap.get(componentId);
-    }
-
-    /**
-     * Checks if a payment amount would exceed the open balance of a component
-     * @param componentId the component ID
-     * @param paymentAmount the payment amount
-     * @return true if payment exceeds balance
-     */
-    public boolean wouldExceedBalance(String componentId, BigDecimal paymentAmount) {
-        ClaimComponentBalance balance = getComponentBalance(componentId);
-        if (balance == null) {
-            return false;
+        @Override
+        public ClaimLedgerEntry findEarliestEntry(ClaimComponent component) {
+            List<ClaimLedgerEntry> of = of(component);
+            return of.isEmpty() ? null : of.get(0);
         }
-        return paymentAmount.compareTo(balance.getTotalOpenBalance()) > 0;
-    }
 
+        @Override
+        public ClaimLedgerEntry findLatestEntry(ClaimComponent component) {
+            List<ClaimLedgerEntry> of = of(component);
+            return of.isEmpty() ? null : of.get(of.size() - 1);
+        }
 
-    /**
-     * @return the balances per debtor; the amounts overlap, as debtors are liable jointly
-     */
-    public List<DebtorBalance> getDebtorBalances() {
-        return debtorBalances;
-    }
-
-    /**
-     * @param debtorBalances the debtorBalances to set
-     */
-    public void setDebtorBalances(List<DebtorBalance> debtorBalances) {
-        this.debtorBalances = debtorBalances;
-    }
-
-    /**
-     * @param balance the debtor balance to add
-     */
-    public void addDebtorBalance(DebtorBalance balance) {
-        this.debtorBalances.add(balance);
-    }
-
-    /**
-     * @param partyId the party to look up
-     * @return the balance of that debtor, or null if the ledger holds none
-     */
-    public DebtorBalance getDebtorBalance(String partyId) {
-        for (DebtorBalance b : this.debtorBalances) {
-            if (b.getPartyId() != null && b.getPartyId().equals(partyId)) {
-                return b;
+        @Override
+        public List<ClaimLedgerEntry> findByComponentAndType(ClaimComponent component, LedgerEntryType type) {
+            List<ClaimLedgerEntry> result = new ArrayList<>();
+            for (ClaimLedgerEntry e : of(component)) {
+                if (e.getType() == type) {
+                    result.add(e);
+                }
             }
+            return result;
         }
-        return null;
+
+        @Override
+        public List<ClaimLedgerEntry> findByComponentAndTypeUpToDate(ClaimComponent component, LedgerEntryType type, Date upToDate) {
+            List<ClaimLedgerEntry> result = new ArrayList<>();
+            for (ClaimLedgerEntry e : findByComponentAndType(component, type)) {
+                if (!e.getEntryDate().after(upToDate)) {
+                    result.add(e);
+                }
+            }
+            return result;
+        }
+
+        @Override
+        public List<ClaimLedgerEntry> findByLedger(ClaimLedger ledger) {
+            return entries;
+        }
+
+        @Override
+        public void create(ClaimLedgerEntry claimLedgerEntry) {
+        }
+
+        @Override
+        public void edit(ClaimLedgerEntry claimLedgerEntry) {
+        }
+
+        @Override
+        public void remove(ClaimLedgerEntry claimLedgerEntry) {
+        }
+
+        @Override
+        public ClaimLedgerEntry find(Object id) {
+            return null;
+        }
+
+        @Override
+        public List<ClaimLedgerEntry> findAll() {
+            return entries;
+        }
+
+        @Override
+        public List<ClaimLedgerEntry> findRange(int[] range) {
+            return entries;
+        }
+
+        @Override
+        public int count() {
+            return entries.size();
+        }
     }
 
-    /**
-     * @return the interest continuing to run after the key date
-     */
-    public List<ContinuingInterest> getContinuingInterest() {
-        return continuingInterest;
-    }
+    private static class NoBaseRates implements BaseInterestFacadeLocal {
 
-    /**
-     * @param continuingInterest the continuingInterest to set
-     */
-    public void setContinuingInterest(List<ContinuingInterest> continuingInterest) {
-        this.continuingInterest = continuingInterest;
-    }
+        @Override
+        public BigDecimal findRateByDate(Date date) {
+            return BigDecimal.ZERO;
+        }
 
-    /**
-     * @param entry the continuing interest line to add
-     */
-    public void addContinuingInterest(ContinuingInterest entry) {
-        this.continuingInterest.add(entry);
-    }
+        @Override
+        public List<BaseInterest> findByDateRange(Date fromDate, Date toDate) {
+            return new ArrayList<>();
+        }
 
-    /**
-     * Whether any position still bears interest after the key date, which decides whether a
-     * statement or an enforcement application has to carry the "weitere Zinsen" note at all.
-     *
-     * @return true if interest continues to run
-     */
-    public boolean hasContinuingInterest() {
-        return !this.continuingInterest.isEmpty();
+        @Override
+        public void create(BaseInterest baseInterest) {
+        }
+
+        @Override
+        public void edit(BaseInterest baseInterest) {
+        }
+
+        @Override
+        public void remove(BaseInterest baseInterest) {
+        }
+
+        @Override
+        public BaseInterest find(Object id) {
+            return null;
+        }
+
+        @Override
+        public List<BaseInterest> findAll() {
+            return new ArrayList<>();
+        }
+
+        @Override
+        public List<BaseInterest> findRange(int[] range) {
+            return new ArrayList<>();
+        }
+
+        @Override
+        public int count() {
+            return 0;
+        }
+
+        @Override
+        public void removeAll() {
+        }
     }
 
 }

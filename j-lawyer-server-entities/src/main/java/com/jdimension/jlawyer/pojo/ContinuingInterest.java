@@ -664,254 +664,137 @@ package com.jdimension.jlawyer.pojo;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Date;
 
 /**
+ * One line of the continuing interest note ("weitere Zinsen aus … seit …").
+ *
+ * A claim statement and every enforcement application have to state not only the interest accrued
+ * up to the key date but also the interest that keeps running afterwards, per interest-bearing
+ * position: the amount it runs on, the rate, and the date from which it continues.
  *
  * @author jens
  */
-public class ClaimLedgerTotals implements Serializable {
+public class ContinuingInterest implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private BigDecimal totalMain=BigDecimal.ZERO;
-    private BigDecimal totalCosts=BigDecimal.ZERO;
-    private BigDecimal totalInterestMain=BigDecimal.ZERO;
-    private BigDecimal totalInterestCosts=BigDecimal.ZERO;
-    private BigDecimal totalPayments=BigDecimal.ZERO;
-    private BigDecimal openClaim=BigDecimal.ZERO;
+    private String componentId;
+    private String designation;
+    private BigDecimal baseAmount = BigDecimal.ZERO;
+    private BigDecimal ratePercent = BigDecimal.ZERO;
+    private boolean baseRateRelated;
+    private BigDecimal marginPercent;
+    private Date runningFrom;
 
-    /**
-     * Balance information for each component
-     */
-    private List<ClaimComponentBalance> componentBalances = new ArrayList<>();
-
-    /**
-     * What each debtor owes. Debtors are liable jointly and severally, so these figures overlap:
-     * summing them would count the joint part once per debtor.
-     */
-    private List<DebtorBalance> debtorBalances = new ArrayList<>();
-
-    /**
-     * The interest that keeps running after the key date, per interest-bearing position.
-     */
-    private List<ContinuingInterest> continuingInterest = new ArrayList<>();
-
-    /**
-     * Map of component ID to balance for quick lookup
-     */
-    private Map<String, ClaimComponentBalance> componentBalanceMap = new HashMap<>();
-
-    /**
-     * @return the totalMain
-     */
-    public BigDecimal getTotalMain() {
-        return totalMain;
+    public ContinuingInterest() {
     }
 
     /**
-     * @param totalMain the totalMain to set
+     * @return the componentId
      */
-    public void setTotalMain(BigDecimal totalMain) {
-        this.totalMain = totalMain;
+    public String getComponentId() {
+        return componentId;
     }
 
     /**
-     * @return the totalCosts
+     * @param componentId the componentId to set
      */
-    public BigDecimal getTotalCosts() {
-        return totalCosts;
+    public void setComponentId(String componentId) {
+        this.componentId = componentId;
     }
 
     /**
-     * @param totalCosts the totalCosts to set
+     * @return the designation
      */
-    public void setTotalCosts(BigDecimal totalCosts) {
-        this.totalCosts = totalCosts;
+    public String getDesignation() {
+        return designation;
     }
 
     /**
-     * @return the totalInterestMain
+     * @param designation the designation to set
      */
-    public BigDecimal getTotalInterestMain() {
-        return totalInterestMain;
+    public void setDesignation(String designation) {
+        this.designation = designation;
     }
 
     /**
-     * @param totalInterestMain the totalInterestMain to set
+     * @return the amount the interest continues to run on
      */
-    public void setTotalInterestMain(BigDecimal totalInterestMain) {
-        this.totalInterestMain = totalInterestMain;
+    public BigDecimal getBaseAmount() {
+        return baseAmount;
     }
 
     /**
-     * @return the totalInterestCosts
+     * @param baseAmount the baseAmount to set
      */
-    public BigDecimal getTotalInterestCosts() {
-        return totalInterestCosts;
+    public void setBaseAmount(BigDecimal baseAmount) {
+        this.baseAmount = baseAmount;
     }
 
     /**
-     * @param totalInterestCosts the totalInterestCosts to set
-     */
-    public void setTotalInterestCosts(BigDecimal totalInterestCosts) {
-        this.totalInterestCosts = totalInterestCosts;
-    }
-
-    /**
-     * @return the totalPayments
-     */
-    public BigDecimal getTotalPayments() {
-        return totalPayments;
-    }
-
-    /**
-     * @param totalPayments the totalPayments to set
-     */
-    public void setTotalPayments(BigDecimal totalPayments) {
-        this.totalPayments = totalPayments;
-    }
-
-    /**
-     * @return the openClaim
-     */
-    public BigDecimal getOpenClaim() {
-        return openClaim;
-    }
-
-    /**
-     * @param openClaim the openClaim to set
-     */
-    public void setOpenClaim(BigDecimal openClaim) {
-        this.openClaim = openClaim;
-    }
-
-    /**
-     * @return the componentBalances
-     */
-    public List<ClaimComponentBalance> getComponentBalances() {
-        return componentBalances;
-    }
-
-    /**
-     * @param componentBalances the componentBalances to set
-     */
-    public void setComponentBalances(List<ClaimComponentBalance> componentBalances) {
-        this.componentBalances = componentBalances;
-        // Rebuild map when list is set
-        this.componentBalanceMap.clear();
-        if (componentBalances != null) {
-            for (ClaimComponentBalance balance : componentBalances) {
-                if (balance.getComponent() != null) {
-                    this.componentBalanceMap.put(balance.getComponent().getId(), balance);
-                }
-            }
-        }
-    }
-
-    /**
-     * Adds a component balance to the list and map
-     * @param balance the balance to add
-     */
-    public void addComponentBalance(ClaimComponentBalance balance) {
-        if (balance != null) {
-            this.componentBalances.add(balance);
-            if (balance.getComponent() != null) {
-                this.componentBalanceMap.put(balance.getComponent().getId(), balance);
-            }
-        }
-    }
-
-    /**
-     * Gets the balance for a specific component by ID
-     * @param componentId the component ID
-     * @return the balance, or null if not found
-     */
-    public ClaimComponentBalance getComponentBalance(String componentId) {
-        return this.componentBalanceMap.get(componentId);
-    }
-
-    /**
-     * Checks if a payment amount would exceed the open balance of a component
-     * @param componentId the component ID
-     * @param paymentAmount the payment amount
-     * @return true if payment exceeds balance
-     */
-    public boolean wouldExceedBalance(String componentId, BigDecimal paymentAmount) {
-        ClaimComponentBalance balance = getComponentBalance(componentId);
-        if (balance == null) {
-            return false;
-        }
-        return paymentAmount.compareTo(balance.getTotalOpenBalance()) > 0;
-    }
-
-
-    /**
-     * @return the balances per debtor; the amounts overlap, as debtors are liable jointly
-     */
-    public List<DebtorBalance> getDebtorBalances() {
-        return debtorBalances;
-    }
-
-    /**
-     * @param debtorBalances the debtorBalances to set
-     */
-    public void setDebtorBalances(List<DebtorBalance> debtorBalances) {
-        this.debtorBalances = debtorBalances;
-    }
-
-    /**
-     * @param balance the debtor balance to add
-     */
-    public void addDebtorBalance(DebtorBalance balance) {
-        this.debtorBalances.add(balance);
-    }
-
-    /**
-     * @param partyId the party to look up
-     * @return the balance of that debtor, or null if the ledger holds none
-     */
-    public DebtorBalance getDebtorBalance(String partyId) {
-        for (DebtorBalance b : this.debtorBalances) {
-            if (b.getPartyId() != null && b.getPartyId().equals(partyId)) {
-                return b;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * @return the interest continuing to run after the key date
-     */
-    public List<ContinuingInterest> getContinuingInterest() {
-        return continuingInterest;
-    }
-
-    /**
-     * @param continuingInterest the continuingInterest to set
-     */
-    public void setContinuingInterest(List<ContinuingInterest> continuingInterest) {
-        this.continuingInterest = continuingInterest;
-    }
-
-    /**
-     * @param entry the continuing interest line to add
-     */
-    public void addContinuingInterest(ContinuingInterest entry) {
-        this.continuingInterest.add(entry);
-    }
-
-    /**
-     * Whether any position still bears interest after the key date, which decides whether a
-     * statement or an enforcement application has to carry the "weitere Zinsen" note at all.
+     * The effective rate at the key date, in percent. For a base-rate related position this is the
+     * base rate plus the margin as it stands at that date; it changes whenever the base rate does,
+     * which is why {@link #isBaseRateRelated()} and {@link #getMarginPercent()} are carried as well.
      *
-     * @return true if interest continues to run
+     * @return the effective annual rate in percent
      */
-    public boolean hasContinuingInterest() {
-        return !this.continuingInterest.isEmpty();
+    public BigDecimal getRatePercent() {
+        return ratePercent;
+    }
+
+    /**
+     * @param ratePercent the ratePercent to set
+     */
+    public void setRatePercent(BigDecimal ratePercent) {
+        this.ratePercent = ratePercent;
+    }
+
+    /**
+     * @return whether the rate follows the base rate rather than being fixed
+     */
+    public boolean isBaseRateRelated() {
+        return baseRateRelated;
+    }
+
+    /**
+     * @param baseRateRelated the baseRateRelated to set
+     */
+    public void setBaseRateRelated(boolean baseRateRelated) {
+        this.baseRateRelated = baseRateRelated;
+    }
+
+    /**
+     * @return the margin above the base rate in percentage points, null for a fixed rate
+     */
+    public BigDecimal getMarginPercent() {
+        return marginPercent;
+    }
+
+    /**
+     * @param marginPercent the marginPercent to set
+     */
+    public void setMarginPercent(BigDecimal marginPercent) {
+        this.marginPercent = marginPercent;
+    }
+
+    /**
+     * @return the date from which the interest continues to run
+     */
+    public Date getRunningFrom() {
+        return runningFrom;
+    }
+
+    /**
+     * @param runningFrom the runningFrom to set
+     */
+    public void setRunningFrom(Date runningFrom) {
+        this.runningFrom = runningFrom;
+    }
+
+    @Override
+    public String toString() {
+        return this.designation + ": " + this.baseAmount + " @ " + this.ratePercent + "%";
     }
 
 }

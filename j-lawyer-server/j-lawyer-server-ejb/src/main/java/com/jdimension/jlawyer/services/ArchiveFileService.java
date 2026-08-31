@@ -683,6 +683,8 @@ import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.pojo.ClaimComponentBalance;
 import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
+import com.jdimension.jlawyer.pojo.ContinuingInterest;
+import com.jdimension.jlawyer.pojo.DebtorBalance;
 import com.jdimension.jlawyer.pojo.DataBucket;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.server.utils.CaseNumberGenerator;
@@ -9179,7 +9181,131 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             totals.addComponentBalance(balance);
         }
 
+        addDebtorBalances(totals, ledger, forDate);
+        addContinuingInterest(totals, ledger, forDate);
+
         return totals;
+    }
+
+    /**
+     * Adds what each debtor of the ledger owes.
+     *
+     * Debtors are liable jointly and severally, so a booking counts against all of them unless it
+     * was attributed to one debtor alone - which is what happens to enforcement costs caused by a
+     * measure against that debtor only (§ 788 Abs. 1 S. 2 ZPO). The resulting figures deliberately
+     * overlap: adding them up would count the joint part once per debtor.
+     *
+     * @param totals the totals to add to
+     * @param ledger the ledger
+     * @param forDate the key date
+     */
+    private void addDebtorBalances(ClaimLedgerTotals totals, ClaimLedger ledger, Date forDate) {
+
+        List<ClaimLedgerParty> debtors = ledger.getParties(ClaimPartyRole.DEBTOR);
+        if (debtors.isEmpty()) {
+            return;
+        }
+
+        BigDecimal jointClaims = BigDecimal.ZERO;
+        BigDecimal jointPayments = BigDecimal.ZERO;
+        Map<String, BigDecimal> individualClaims = new HashMap<>();
+        Map<String, BigDecimal> individualPayments = new HashMap<>();
+
+        for (ClaimLedgerEntry entry : this.claimLedgerEntriesFacade.findByLedger(ledger)) {
+            if (entry.getEntryDate().getTime() > forDate.getTime()) {
+                break;
+            }
+
+            BigDecimal amount = entry.getAmount();
+            boolean payment = entry.getType() == LedgerEntryType.PAYMENT;
+
+            ClaimLedgerParty attributed = entry.getDebtorParty();
+            if (attributed == null) {
+                if (payment) {
+                    jointPayments = jointPayments.add(amount);
+                } else {
+                    jointClaims = jointClaims.add(amount);
+                }
+            } else {
+                Map<String, BigDecimal> target = payment ? individualPayments : individualClaims;
+                BigDecimal current = target.get(attributed.getId());
+                target.put(attributed.getId(), (current == null ? BigDecimal.ZERO : current).add(amount));
+            }
+        }
+
+        // the joint part carries the accrued interest as well - it is owed by all debtors
+        BigDecimal jointInterest = totals.getTotalInterestMain().add(totals.getTotalInterestCosts());
+        BigDecimal joint = jointClaims.add(jointInterest).subtract(jointPayments).max(BigDecimal.ZERO);
+
+        for (ClaimLedgerParty debtor : debtors) {
+            DebtorBalance balance = new DebtorBalance(debtor.getId(), debtor.getEffectiveDesignation());
+            balance.setJointAmount(joint.setScale(2, RoundingMode.HALF_UP));
+
+            BigDecimal individual = individualClaims.get(debtor.getId());
+            balance.setIndividualAmount((individual == null ? BigDecimal.ZERO : individual).setScale(2, RoundingMode.HALF_UP));
+
+            BigDecimal paid = individualPayments.get(debtor.getId());
+            balance.setPaymentsAmount((paid == null ? BigDecimal.ZERO : paid).setScale(2, RoundingMode.HALF_UP));
+
+            totals.addDebtorBalance(balance);
+        }
+    }
+
+    /**
+     * Adds the interest that keeps running after the key date, per interest-bearing position.
+     *
+     * A claim statement and every enforcement application have to state this ("weitere Zinsen aus
+     * … seit …"), so it is computed here rather than in each document.
+     *
+     * @param totals the totals to add to
+     * @param ledger the ledger
+     * @param forDate the key date
+     */
+    private void addContinuingInterest(ClaimLedgerTotals totals, ClaimLedger ledger, Date forDate) {
+
+        ClaimInterestCalculator calculator = claimInterestCalculator();
+
+        for (ClaimComponent cmp : this.claimComponentsFacade.findByLedger(ledger)) {
+            if (!cmp.isInterestBearing()) {
+                continue;
+            }
+
+            BigDecimal base = calculator.calculateDynamicPrincipal(cmp, forDate);
+            if (base.compareTo(BigDecimal.ZERO) <= 0) {
+                continue;
+            }
+
+            InterestRule rule = null;
+            for (InterestRule candidate : cmp.getInterestRules()) {
+                if (candidate.getValidFrom() == null) {
+                    continue;
+                }
+                if (!candidate.getValidFrom().after(forDate)) {
+                    rule = candidate;
+                }
+            }
+            if (rule == null) {
+                // interest has not started yet - e.g. a component bearing interest from service
+                // of a dunning order that has not been served
+                continue;
+            }
+
+            ContinuingInterest ci = new ContinuingInterest();
+            ci.setComponentId(cmp.getId());
+            ci.setDesignation(cmp.getName());
+            ci.setBaseAmount(base.setScale(2, RoundingMode.HALF_UP));
+            ci.setRunningFrom(forDate);
+            ci.setBaseRateRelated(rule.getInterestType() == InterestType.BASIS_RELATED);
+            ci.setMarginPercent(rule.getBaseMargin());
+
+            LocalDate keyDate = forDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            BigDecimal baseRate = this.baseInterestFacade.findRateByDate(
+                    Date.from(keyDate.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+            BigDecimal effective = rule.getEffectiveRate(baseRate == null ? BigDecimal.ZERO : baseRate);
+            ci.setRatePercent(effective.multiply(BigDecimal.valueOf(100d)).setScale(2, RoundingMode.HALF_UP));
+
+            totals.addContinuingInterest(ci);
+        }
     }
 
 

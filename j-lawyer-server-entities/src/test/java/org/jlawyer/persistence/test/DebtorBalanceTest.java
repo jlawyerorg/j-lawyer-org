@@ -660,258 +660,103 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.pojo;
+package org.jlawyer.persistence.test;
 
-import java.io.Serializable;
+import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
+import com.jdimension.jlawyer.pojo.ContinuingInterest;
+import com.jdimension.jlawyer.pojo.DebtorBalance;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 /**
+ * Debtors of a claim ledger are liable jointly and severally, so their balances overlap. Only
+ * bookings attributed to one debtor - typically enforcement costs under § 788 Abs. 1 S. 2 ZPO -
+ * are owed individually.
  *
  * @author jens
  */
-public class ClaimLedgerTotals implements Serializable {
+public class DebtorBalanceTest {
 
-    private static final long serialVersionUID = 1L;
+    @Test
+    public void debtorOwesTheJointPartPlusItsOwn() {
+        DebtorBalance b = new DebtorBalance("p1", "Muster GmbH");
+        b.setJointAmount(new BigDecimal("1000.00"));
+        b.setIndividualAmount(new BigDecimal("25.00"));
 
-    private BigDecimal totalMain=BigDecimal.ZERO;
-    private BigDecimal totalCosts=BigDecimal.ZERO;
-    private BigDecimal totalInterestMain=BigDecimal.ZERO;
-    private BigDecimal totalInterestCosts=BigDecimal.ZERO;
-    private BigDecimal totalPayments=BigDecimal.ZERO;
-    private BigDecimal openClaim=BigDecimal.ZERO;
-
-    /**
-     * Balance information for each component
-     */
-    private List<ClaimComponentBalance> componentBalances = new ArrayList<>();
-
-    /**
-     * What each debtor owes. Debtors are liable jointly and severally, so these figures overlap:
-     * summing them would count the joint part once per debtor.
-     */
-    private List<DebtorBalance> debtorBalances = new ArrayList<>();
-
-    /**
-     * The interest that keeps running after the key date, per interest-bearing position.
-     */
-    private List<ContinuingInterest> continuingInterest = new ArrayList<>();
-
-    /**
-     * Map of component ID to balance for quick lookup
-     */
-    private Map<String, ClaimComponentBalance> componentBalanceMap = new HashMap<>();
-
-    /**
-     * @return the totalMain
-     */
-    public BigDecimal getTotalMain() {
-        return totalMain;
+        assertEquals(new BigDecimal("1025.00"), b.getTotalOwed());
     }
 
-    /**
-     * @param totalMain the totalMain to set
-     */
-    public void setTotalMain(BigDecimal totalMain) {
-        this.totalMain = totalMain;
+    @Test
+    public void paymentsOfThatDebtorReduceWhatItOwes() {
+        DebtorBalance b = new DebtorBalance("p1", "Muster GmbH");
+        b.setJointAmount(new BigDecimal("1000.00"));
+        b.setIndividualAmount(new BigDecimal("25.00"));
+        b.setPaymentsAmount(new BigDecimal("200.00"));
+
+        assertEquals(new BigDecimal("825.00"), b.getTotalOwed());
     }
 
-    /**
-     * @return the totalCosts
-     */
-    public BigDecimal getTotalCosts() {
-        return totalCosts;
+    @Test
+    public void anOverpaidDebtorOwesNothingRatherThanANegativeAmount() {
+        DebtorBalance b = new DebtorBalance("p1", "Muster GmbH");
+        b.setJointAmount(new BigDecimal("100.00"));
+        b.setPaymentsAmount(new BigDecimal("250.00"));
+
+        assertEquals(BigDecimal.ZERO, b.getTotalOwed());
     }
 
-    /**
-     * @param totalCosts the totalCosts to set
-     */
-    public void setTotalCosts(BigDecimal totalCosts) {
-        this.totalCosts = totalCosts;
+    @Test
+    public void jointLiabilityMeansTheBalancesOverlap() {
+        // two debtors, 1000.00 owed jointly, 25.00 caused by debtor 2 alone
+        DebtorBalance one = new DebtorBalance("p1", "Schuldner 1");
+        one.setJointAmount(new BigDecimal("1000.00"));
+
+        DebtorBalance two = new DebtorBalance("p2", "Schuldner 2");
+        two.setJointAmount(new BigDecimal("1000.00"));
+        two.setIndividualAmount(new BigDecimal("25.00"));
+
+        ClaimLedgerTotals totals = new ClaimLedgerTotals();
+        totals.addDebtorBalance(one);
+        totals.addDebtorBalance(two);
+
+        assertEquals(new BigDecimal("1000.00"), totals.getDebtorBalance("p1").getTotalOwed());
+        assertEquals(new BigDecimal("1025.00"), totals.getDebtorBalance("p2").getTotalOwed());
+
+        // the creditor may claim 1025.00 once, not 2025.00 - the per-debtor figures must not be summed
+        BigDecimal naiveSum = one.getTotalOwed().add(two.getTotalOwed());
+        assertEquals(new BigDecimal("2025.00"), naiveSum);
+        assertTrue("the joint part is counted once per debtor when summed naively",
+                naiveSum.compareTo(new BigDecimal("1025.00")) > 0);
     }
 
-    /**
-     * @return the totalInterestMain
-     */
-    public BigDecimal getTotalInterestMain() {
-        return totalInterestMain;
+    @Test
+    public void unknownDebtorHasNoBalance() {
+        ClaimLedgerTotals totals = new ClaimLedgerTotals();
+        assertNull(totals.getDebtorBalance("nope"));
     }
 
-    /**
-     * @param totalInterestMain the totalInterestMain to set
-     */
-    public void setTotalInterestMain(BigDecimal totalInterestMain) {
-        this.totalInterestMain = totalInterestMain;
-    }
+    @Test
+    public void continuingInterestIsReportedOnlyWhenSomethingStillRuns() {
+        ClaimLedgerTotals totals = new ClaimLedgerTotals();
+        assertFalse(totals.hasContinuingInterest());
 
-    /**
-     * @return the totalInterestCosts
-     */
-    public BigDecimal getTotalInterestCosts() {
-        return totalInterestCosts;
-    }
+        ContinuingInterest ci = new ContinuingInterest();
+        ci.setDesignation("Kaufpreis Warenlieferung");
+        ci.setBaseAmount(new BigDecimal("5000.00"));
+        ci.setRatePercent(new BigDecimal("7.00"));
+        ci.setBaseRateRelated(true);
+        ci.setMarginPercent(new BigDecimal("5.00"));
+        totals.addContinuingInterest(ci);
 
-    /**
-     * @param totalInterestCosts the totalInterestCosts to set
-     */
-    public void setTotalInterestCosts(BigDecimal totalInterestCosts) {
-        this.totalInterestCosts = totalInterestCosts;
-    }
-
-    /**
-     * @return the totalPayments
-     */
-    public BigDecimal getTotalPayments() {
-        return totalPayments;
-    }
-
-    /**
-     * @param totalPayments the totalPayments to set
-     */
-    public void setTotalPayments(BigDecimal totalPayments) {
-        this.totalPayments = totalPayments;
-    }
-
-    /**
-     * @return the openClaim
-     */
-    public BigDecimal getOpenClaim() {
-        return openClaim;
-    }
-
-    /**
-     * @param openClaim the openClaim to set
-     */
-    public void setOpenClaim(BigDecimal openClaim) {
-        this.openClaim = openClaim;
-    }
-
-    /**
-     * @return the componentBalances
-     */
-    public List<ClaimComponentBalance> getComponentBalances() {
-        return componentBalances;
-    }
-
-    /**
-     * @param componentBalances the componentBalances to set
-     */
-    public void setComponentBalances(List<ClaimComponentBalance> componentBalances) {
-        this.componentBalances = componentBalances;
-        // Rebuild map when list is set
-        this.componentBalanceMap.clear();
-        if (componentBalances != null) {
-            for (ClaimComponentBalance balance : componentBalances) {
-                if (balance.getComponent() != null) {
-                    this.componentBalanceMap.put(balance.getComponent().getId(), balance);
-                }
-            }
-        }
-    }
-
-    /**
-     * Adds a component balance to the list and map
-     * @param balance the balance to add
-     */
-    public void addComponentBalance(ClaimComponentBalance balance) {
-        if (balance != null) {
-            this.componentBalances.add(balance);
-            if (balance.getComponent() != null) {
-                this.componentBalanceMap.put(balance.getComponent().getId(), balance);
-            }
-        }
-    }
-
-    /**
-     * Gets the balance for a specific component by ID
-     * @param componentId the component ID
-     * @return the balance, or null if not found
-     */
-    public ClaimComponentBalance getComponentBalance(String componentId) {
-        return this.componentBalanceMap.get(componentId);
-    }
-
-    /**
-     * Checks if a payment amount would exceed the open balance of a component
-     * @param componentId the component ID
-     * @param paymentAmount the payment amount
-     * @return true if payment exceeds balance
-     */
-    public boolean wouldExceedBalance(String componentId, BigDecimal paymentAmount) {
-        ClaimComponentBalance balance = getComponentBalance(componentId);
-        if (balance == null) {
-            return false;
-        }
-        return paymentAmount.compareTo(balance.getTotalOpenBalance()) > 0;
-    }
-
-
-    /**
-     * @return the balances per debtor; the amounts overlap, as debtors are liable jointly
-     */
-    public List<DebtorBalance> getDebtorBalances() {
-        return debtorBalances;
-    }
-
-    /**
-     * @param debtorBalances the debtorBalances to set
-     */
-    public void setDebtorBalances(List<DebtorBalance> debtorBalances) {
-        this.debtorBalances = debtorBalances;
-    }
-
-    /**
-     * @param balance the debtor balance to add
-     */
-    public void addDebtorBalance(DebtorBalance balance) {
-        this.debtorBalances.add(balance);
-    }
-
-    /**
-     * @param partyId the party to look up
-     * @return the balance of that debtor, or null if the ledger holds none
-     */
-    public DebtorBalance getDebtorBalance(String partyId) {
-        for (DebtorBalance b : this.debtorBalances) {
-            if (b.getPartyId() != null && b.getPartyId().equals(partyId)) {
-                return b;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * @return the interest continuing to run after the key date
-     */
-    public List<ContinuingInterest> getContinuingInterest() {
-        return continuingInterest;
-    }
-
-    /**
-     * @param continuingInterest the continuingInterest to set
-     */
-    public void setContinuingInterest(List<ContinuingInterest> continuingInterest) {
-        this.continuingInterest = continuingInterest;
-    }
-
-    /**
-     * @param entry the continuing interest line to add
-     */
-    public void addContinuingInterest(ContinuingInterest entry) {
-        this.continuingInterest.add(entry);
-    }
-
-    /**
-     * Whether any position still bears interest after the key date, which decides whether a
-     * statement or an enforcement application has to carry the "weitere Zinsen" note at all.
-     *
-     * @return true if interest continues to run
-     */
-    public boolean hasContinuingInterest() {
-        return !this.continuingInterest.isEmpty();
+        assertTrue(totals.hasContinuingInterest());
+        assertEquals(1, totals.getContinuingInterest().size());
+        assertTrue("a base-rate related position has to stay recognisable as such, "
+                + "because its rate changes with the base rate",
+                totals.getContinuingInterest().get(0).isBaseRateRelated());
     }
 
 }

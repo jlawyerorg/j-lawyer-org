@@ -40,9 +40,9 @@
       period-splitting engine of `ArchiveFileService` (removing its hard-coded `3.62` base rate),
       and fix `ClaimLedgerEntryFacade.findByComponentAndType`, which runs the wrong named query
       with an undeclared parameter
-- [ ] 1.7 Extend `PaymentSplitCalculator` with § 497 Abs. 3 BGB, target-directed, per-debtor and
+- [x] 1.7 Extend `PaymentSplitCalculator` with § 497 Abs. 3 BGB, target-directed, per-debtor and
       manual allocation; persist the mode and the deviation warning
-- [ ] 1.8 Extend `ClaimLedgerTotals` with per-debtor totals and continuing-interest data
+- [x] 1.8 Extend `ClaimLedgerTotals` with per-debtor totals and continuing-interest data
 - [ ] 1.9 Implement the conversion of non-interest-bearing costs into assessed costs
 - [ ] 1.10 Implement `bookProceduralCost` (ledger booking + optional `CaseAccountEntry` + origin
       reference + reversal)
