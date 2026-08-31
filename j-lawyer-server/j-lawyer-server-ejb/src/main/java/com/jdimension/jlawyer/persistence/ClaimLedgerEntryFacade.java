@@ -704,6 +704,17 @@ public class ClaimLedgerEntryFacade extends AbstractFacade<ClaimLedgerEntry> imp
     }
     
     @Override
+    public List<ClaimLedgerEntry> findByOrigin(String originReference) {
+        return (List<ClaimLedgerEntry>) em.createNamedQuery("ClaimLedgerEntry.findByOrigin").setParameter("originReference", originReference).getResultList();
+    }
+
+    @Override
+    public ClaimLedgerEntry findReversalOf(ClaimLedgerEntry entry) {
+        List<ClaimLedgerEntry> found = em.createNamedQuery("ClaimLedgerEntry.findReversalOf").setParameter("reversalOf", entry).getResultList();
+        return found.isEmpty() ? null : found.get(0);
+    }
+
+    @Override
     public List<ClaimLedgerEntry> findByComponentAndType(ClaimComponent component, LedgerEntryType type) {
         
         return (List<ClaimLedgerEntry>) em.createNamedQuery("ClaimLedgerEntry.findByComponentAndType").setParameter("component", component).setParameter("type", type).getResultList();

@@ -682,7 +682,9 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "ClaimLedgerEntry.findByComponent", query = "SELECT a FROM ClaimLedgerEntry a WHERE a.component = :component order by a.entryDate ASC"),
     @NamedQuery(name = "ClaimLedgerEntry.findByComponentAndType", query = "SELECT a FROM ClaimLedgerEntry a WHERE a.component = :component AND a.type = :type order by a.entryDate ASC"),
     @NamedQuery(name = "ClaimLedgerEntry.findByComponentAndTypeUpToDate", query = "SELECT a FROM ClaimLedgerEntry a WHERE a.component = :component AND a.type = :type AND a.entryDate <= :upToDate"),
-    @NamedQuery(name = "ClaimLedgerEntry.findByLedger", query = "SELECT a FROM ClaimLedgerEntry a WHERE a.ledger = :ledger order by a.entryDate ASC")})
+    @NamedQuery(name = "ClaimLedgerEntry.findByLedger", query = "SELECT a FROM ClaimLedgerEntry a WHERE a.ledger = :ledger order by a.entryDate ASC"),
+    @NamedQuery(name = "ClaimLedgerEntry.findByOrigin", query = "SELECT a FROM ClaimLedgerEntry a WHERE a.originReference = :originReference order by a.entryDate ASC"),
+    @NamedQuery(name = "ClaimLedgerEntry.findReversalOf", query = "SELECT a FROM ClaimLedgerEntry a WHERE a.reversalOf = :reversalOf")})
 public class ClaimLedgerEntry implements Serializable {
 
     private static long serialVersionUID = 1L;
@@ -712,6 +714,21 @@ public class ClaimLedgerEntry implements Serializable {
     @Enumerated(EnumType.STRING)
     @Column(name = "entry_type", nullable = false, length = 50)
     private LedgerEntryType type;
+
+    /**
+     * The dunning case or enforcement measure that caused this booking, so it can be traced back
+     * and reversed when that record is cancelled.
+     */
+    @Column(name = "origin_reference")
+    private String originReference;
+
+    /**
+     * The entry this one reverses. A reversal keeps the original and books an adjustment against
+     * it, so the ledger history stays complete.
+     */
+    @JoinColumn(name = "reversal_of_entry_id", referencedColumnName = "id")
+    @ManyToOne
+    private ClaimLedgerEntry reversalOf;
 
     /**
      * Debtor this booking is attributable to, where it is owed by a single debtor rather than by
@@ -899,6 +916,35 @@ public class ClaimLedgerEntry implements Serializable {
      */
     public void setDebtorParty(ClaimLedgerParty debtorParty) {
         this.debtorParty = debtorParty;
+    }
+
+
+    /**
+     * @return the originReference
+     */
+    public String getOriginReference() {
+        return originReference;
+    }
+
+    /**
+     * @param originReference the originReference to set
+     */
+    public void setOriginReference(String originReference) {
+        this.originReference = originReference;
+    }
+
+    /**
+     * @return the entry this one reverses, or null
+     */
+    public ClaimLedgerEntry getReversalOf() {
+        return reversalOf;
+    }
+
+    /**
+     * @param reversalOf the reversalOf to set
+     */
+    public void setReversalOf(ClaimLedgerEntry reversalOf) {
+        this.reversalOf = reversalOf;
     }
 
 }

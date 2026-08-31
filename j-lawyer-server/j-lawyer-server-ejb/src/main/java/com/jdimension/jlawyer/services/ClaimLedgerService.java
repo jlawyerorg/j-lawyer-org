@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -663,28 +662,624 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.CaseAccountEntry;
+import com.jdimension.jlawyer.persistence.CaseAccountEntryFacadeLocal;
+import com.jdimension.jlawyer.persistence.ClaimComponent;
+import com.jdimension.jlawyer.persistence.ClaimComponentFacadeLocal;
+import com.jdimension.jlawyer.persistence.ClaimComponentType;
+import com.jdimension.jlawyer.persistence.ClaimLedger;
+import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
 import com.jdimension.jlawyer.persistence.ClaimLedgerEntryFacadeLocal;
 import com.jdimension.jlawyer.persistence.ClaimLedgerFacadeLocal;
+import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
+import com.jdimension.jlawyer.persistence.ClaimLedgerPartyFacadeLocal;
+import com.jdimension.jlawyer.persistence.EnforcementTitle;
+import com.jdimension.jlawyer.persistence.EnforcementTitleFacadeLocal;
+import com.jdimension.jlawyer.persistence.InterestRule;
+import com.jdimension.jlawyer.persistence.InterestRuleFacadeLocal;
+import com.jdimension.jlawyer.persistence.LedgerEntryType;
+import com.jdimension.jlawyer.pojo.ProceduralCostBooking;
+import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import javax.annotation.Resource;
+import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
+import org.apache.log4j.Logger;
 
 /**
+ * Operations on a claim ledger beyond its bookings: parties, enforcement titles and the procedural
+ * costs the dunning and enforcement workflows book into it.
  *
  * @author jens
  */
 @Stateless
 public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedgerServiceLocal {
-    
+
+    private static final Logger log = Logger.getLogger(ClaimLedgerService.class.getName());
+
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy");
+
     @Resource
     private SessionContext context;
-    
+
     @EJB
     private ClaimLedgerFacadeLocal ledgers;
     @EJB
     private ClaimLedgerEntryFacadeLocal ledgerEntries;
+    @EJB
+    private ClaimLedgerPartyFacadeLocal ledgerParties;
+    @EJB
+    private EnforcementTitleFacadeLocal titles;
+    @EJB
+    private ClaimComponentFacadeLocal claimComponents;
+    @EJB
+    private InterestRuleFacadeLocal interestRules;
+    @EJB
+    private ArchiveFileReviewsBeanFacadeLocal reviews;
+    @EJB
+    private CaseAccountEntryFacadeLocal accountEntries;
 
-    // Add business logic below. (Right-click in editor and choose
-    // "Insert Code > Add Business Method")
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<ClaimLedgerParty> getParties(String ledgerId) throws Exception {
+        ClaimLedger ledger = requireLedger(ledgerId);
+        return this.ledgerParties.findByLedger(ledger);
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public ClaimLedgerParty addParty(String ledgerId, ClaimLedgerParty party) throws Exception {
+        ClaimLedger ledger = requireLedger(ledgerId);
+
+        if (party == null) {
+            throw new Exception("Es wurde keine Partei übergeben!");
+        }
+        if (party.getRole() == null) {
+            throw new Exception("Für die Partei ist keine Rolle (Gläubiger/Schuldner) angegeben!");
+        }
+
+        party.setId(new StringGenerator().getID().toString());
+        party.setLedger(ledger);
+        if (party.getSequenceNumber() <= 0) {
+            party.setSequenceNumber(this.ledgerParties.findByLedgerAndRole(ledger, party.getRole()).size() + 1);
+        }
+
+        this.ledgerParties.create(party);
+        return this.ledgerParties.find(party.getId());
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public ClaimLedgerParty updateParty(ClaimLedgerParty party) throws Exception {
+        if (party == null || party.getId() == null) {
+            throw new Exception("Es wurde keine Partei übergeben!");
+        }
+
+        ClaimLedgerParty current = this.ledgerParties.find(party.getId());
+        if (current == null) {
+            throw new Exception("Die Partei existiert nicht!");
+        }
+        requireLedger(current.getLedger().getId());
+
+        // a designation already used towards a court stays as it was
+        party.setSnapshotTaken(current.getSnapshotTaken());
+        party.setSnapshotDesignation(current.getSnapshotDesignation());
+        party.setSnapshotAddress(current.getSnapshotAddress());
+        party.setLedger(current.getLedger());
+
+        this.ledgerParties.edit(party);
+        return this.ledgerParties.find(party.getId());
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void removeParty(String partyId) throws Exception {
+        ClaimLedgerParty party = this.ledgerParties.find(partyId);
+        if (party == null) {
+            throw new Exception("Die Partei existiert nicht!");
+        }
+        requireLedger(party.getLedger().getId());
+
+        for (ClaimLedgerEntry entry : this.ledgerEntries.findByLedger(party.getLedger())) {
+            if (entry.getDebtorParty() != null && partyId.equals(entry.getDebtorParty().getId())) {
+                throw new Exception("Die Partei kann nicht entfernt werden: es bestehen Buchungen, "
+                        + "die ausschließlich dieser Partei zugewiesen sind.");
+            }
+        }
+
+        this.ledgerParties.remove(party);
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public ClaimLedgerParty freezePartyDesignation(String partyId) throws Exception {
+        ClaimLedgerParty party = this.ledgerParties.find(partyId);
+        if (party == null) {
+            throw new Exception("Die Partei existiert nicht!");
+        }
+        requireLedger(party.getLedger().getId());
+
+        if (party.hasSnapshot()) {
+            // an application already filed under this designation stays reproducible
+            return party;
+        }
+
+        AddressBean contact = party.getContact();
+        if (contact == null) {
+            throw new Exception("Die Partei verweist auf keinen Kontakt, die Bezeichnung kann nicht "
+                    + "festgeschrieben werden!");
+        }
+
+        party.setSnapshotTaken(new Date());
+        party.setSnapshotDesignation(contact.toDisplayName());
+        party.setSnapshotAddress(formatAddress(contact));
+
+        this.ledgerParties.edit(party);
+        return this.ledgerParties.find(partyId);
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<EnforcementTitle> getTitles(String ledgerId) throws Exception {
+        ClaimLedger ledger = requireLedger(ledgerId);
+        return this.titles.findByLedger(ledger);
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public EnforcementTitle addTitle(String ledgerId, EnforcementTitle title, int followUpLeadTimeDays) throws Exception {
+        ClaimLedger ledger = requireLedger(ledgerId);
+
+        if (title == null) {
+            throw new Exception("Es wurde kein Titel übergeben!");
+        }
+        if (title.getTitleType() == null) {
+            throw new Exception("Für den Titel ist keine Titelart angegeben!");
+        }
+
+        title.setId(new StringGenerator().getID().toString());
+        title.setLedger(ledger);
+        title.setLimitationDate(title.computeLimitationDate());
+
+        this.titles.create(title);
+
+        createLimitationFollowUp(ledger.getArchiveFileKey(), title, followUpLeadTimeDays);
+
+        return this.titles.find(title.getId());
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public EnforcementTitle updateTitle(EnforcementTitle title, int followUpLeadTimeDays) throws Exception {
+        if (title == null || title.getId() == null) {
+            throw new Exception("Es wurde kein Titel übergeben!");
+        }
+
+        EnforcementTitle current = this.titles.find(title.getId());
+        if (current == null) {
+            throw new Exception("Der Titel existiert nicht!");
+        }
+        ClaimLedger ledger = requireLedger(current.getLedger().getId());
+
+        title.setLedger(current.getLedger());
+        title.setLimitationDate(title.computeLimitationDate());
+        this.titles.edit(title);
+
+        ArchiveFileReviewsBean existing = findLimitationFollowUp(ledger.getArchiveFileKey(), title.getId());
+        if (existing == null) {
+            createLimitationFollowUp(ledger.getArchiveFileKey(), title, followUpLeadTimeDays);
+        } else if (existing.isDone()) {
+            // a follow-up the user has already dealt with is not silently reopened
+            log.info("Limitation follow-up for title " + title.getId() + " is done and was not moved");
+        } else {
+            Date due = limitationFollowUpDate(title, followUpLeadTimeDays);
+            if (due == null) {
+                this.reviews.remove(existing);
+            } else {
+                existing.setBeginDate(due);
+                existing.setEndDate(due);
+                existing.setSummary(limitationFollowUpSummary(title));
+                this.reviews.edit(existing);
+            }
+        }
+
+        return this.titles.find(title.getId());
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void removeTitle(String titleId) throws Exception {
+        EnforcementTitle title = this.titles.find(titleId);
+        if (title == null) {
+            throw new Exception("Der Titel existiert nicht!");
+        }
+        ClaimLedger ledger = requireLedger(title.getLedger().getId());
+
+        ArchiveFileReviewsBean followUp = findLimitationFollowUp(ledger.getArchiveFileKey(), titleId);
+        if (followUp != null && !followUp.isDone()) {
+            this.reviews.remove(followUp);
+        }
+
+        this.titles.remove(title);
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public ClaimComponent convertToAssessedCosts(String ledgerId, List<String> componentIds,
+            BigDecimal assessedAmount, InterestRule interestRule, String description) throws Exception {
+
+        ClaimLedger ledger = requireLedger(ledgerId);
+
+        if (componentIds == null || componentIds.isEmpty()) {
+            throw new Exception("Es wurden keine Kostenpositionen zur Umwandlung ausgewählt!");
+        }
+        if (assessedAmount == null || assessedAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new Exception("Der festgesetzte Betrag muss größer als null sein!");
+        }
+
+        List<ClaimComponent> sources = new ArrayList<>();
+        BigDecimal sourceTotal = BigDecimal.ZERO;
+        for (String componentId : componentIds) {
+            ClaimComponent cmp = this.claimComponents.find(componentId);
+            if (cmp == null) {
+                throw new Exception("Eine der ausgewählten Kostenpositionen existiert nicht!");
+            }
+            if (!cmp.getLedger().getId().equals(ledgerId)) {
+                throw new Exception("Eine der ausgewählten Kostenpositionen gehört zu einem anderen "
+                        + "Forderungskonto!");
+            }
+            if (cmp.getType() != null && cmp.getType().isMainClaim()) {
+                throw new Exception("Hauptforderungen können nicht in festgesetzte Kosten "
+                        + "umgewandelt werden!");
+            }
+            sources.add(cmp);
+            sourceTotal = sourceTotal.add(componentBookedTotal(cmp));
+        }
+
+        if (assessedAmount.compareTo(sourceTotal) > 0) {
+            throw new Exception("Der festgesetzte Betrag (" + assessedAmount + ") übersteigt die Summe "
+                    + "der umzuwandelnden Positionen (" + sourceTotal + ")!");
+        }
+
+        StringGenerator idGen = new StringGenerator();
+        Date now = new Date();
+
+        // the original positions are cleared by a counter-booking rather than deleted, so the
+        // history shows what was converted
+        for (ClaimComponent cmp : sources) {
+            BigDecimal booked = componentBookedTotal(cmp);
+            if (booked.compareTo(BigDecimal.ZERO) == 0) {
+                continue;
+            }
+            ClaimLedgerEntry reversal = new ClaimLedgerEntry();
+            reversal.setId(idGen.getID().toString());
+            reversal.setLedger(ledger);
+            reversal.setComponent(cmp);
+            reversal.setType(LedgerEntryType.ADJUSTMENT);
+            reversal.setEntryDate(now);
+            reversal.setAmount(booked.negate());
+            reversal.setDescription("Umwandlung in festgesetzte Kosten");
+            reversal.setComment("Position aufgelöst zugunsten der Kostenfestsetzung vom "
+                    + DATE_FORMAT.format(now));
+            this.ledgerEntries.create(reversal);
+        }
+
+        ClaimComponent assessed = new ClaimComponent();
+        assessed.setId(idGen.getID().toString());
+        assessed.setLedger(ledger);
+        assessed.setType(ClaimComponentType.COST_ASSESSED);
+        assessed.setName(description == null || description.trim().isEmpty()
+                ? "Festgesetzte Kosten" : description);
+        assessed.setComment("Entstanden durch Umwandlung von " + sources.size()
+                + " Kostenposition(en) am " + DATE_FORMAT.format(now));
+        assessed.setPrincipalAmount(assessedAmount);
+        this.claimComponents.create(assessed);
+
+        if (interestRule != null) {
+            interestRule.setId(idGen.getID().toString());
+            interestRule.setComponent(assessed);
+            if (interestRule.getValidFrom() == null) {
+                interestRule.setValidFrom(now);
+            }
+            this.interestRules.create(interestRule);
+        }
+
+        ClaimLedgerEntry booking = new ClaimLedgerEntry();
+        booking.setId(idGen.getID().toString());
+        booking.setLedger(ledger);
+        booking.setComponent(assessed);
+        booking.setType(LedgerEntryType.COST);
+        booking.setEntryDate(now);
+        booking.setAmount(assessedAmount);
+        booking.setDescription("Festgesetzte Kosten (§ 104 Abs. 1 S. 2 ZPO)");
+        this.ledgerEntries.create(booking);
+
+        return this.claimComponents.find(assessed.getId());
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public ClaimLedgerEntry bookProceduralCost(ProceduralCostBooking booking) throws Exception {
+
+        if (booking == null) {
+            throw new Exception("Es wurde keine Buchung übergeben!");
+        }
+        if (booking.getAmount() == null || booking.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new Exception("Der Buchungsbetrag muss größer als null sein!");
+        }
+
+        ClaimLedger ledger = requireLedger(booking.getLedgerId());
+
+        ClaimLedgerParty debtor = null;
+        if (booking.getDebtorPartyId() != null) {
+            debtor = this.ledgerParties.find(booking.getDebtorPartyId());
+            if (debtor == null || !debtor.getLedger().getId().equals(ledger.getId())) {
+                throw new Exception("Der angegebene Schuldner gehört nicht zu diesem Forderungskonto!");
+            }
+        }
+
+        StringGenerator idGen = new StringGenerator();
+        Date bookingDate = booking.getBookingDate() == null ? new Date() : booking.getBookingDate();
+
+        ClaimComponentType type = booking.getCostType() == null
+                ? ClaimComponentType.OTHER_ANCILLARY_CLAIM : booking.getCostType();
+
+        ClaimComponent component = new ClaimComponent();
+        component.setId(idGen.getID().toString());
+        component.setLedger(ledger);
+        component.setType(type);
+        component.setName(booking.getDescription() == null ? type.getLabel() : booking.getDescription());
+        component.setComment(booking.getComment());
+        component.setPrincipalAmount(booking.getAmount());
+        component.setOriginReference(booking.getOriginReference());
+        this.claimComponents.create(component);
+
+        ClaimLedgerEntry entry = new ClaimLedgerEntry();
+        entry.setId(idGen.getID().toString());
+        entry.setLedger(ledger);
+        entry.setComponent(component);
+        entry.setType(LedgerEntryType.COST);
+        entry.setEntryDate(bookingDate);
+        entry.setAmount(booking.getAmount());
+        entry.setDescription(booking.getDescription());
+        entry.setComment(booking.getComment());
+        entry.setDebtorParty(debtor);
+        entry.setOriginReference(booking.getOriginReference());
+        this.ledgerEntries.create(entry);
+
+        if (booking.isAdvancedByFirm()) {
+            CaseAccountEntry outlay = new CaseAccountEntry();
+            outlay.setId(idGen.getID().toString());
+            outlay.setArchiveFileKey(ledger.getArchiveFileKey());
+            outlay.setEntryDate(bookingDate);
+            outlay.setDescription(booking.getDescription());
+            outlay.setSpendings(booking.getAmount());
+            this.accountEntries.create(outlay);
+        }
+
+        return this.ledgerEntries.find(entry.getId());
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public ClaimLedgerEntry reverseProceduralCost(String entryId, String reason) throws Exception {
+
+        ClaimLedgerEntry original = this.ledgerEntries.find(entryId);
+        if (original == null) {
+            throw new Exception("Die Buchung existiert nicht!");
+        }
+        ClaimLedger ledger = requireLedger(original.getLedger().getId());
+
+        if (this.ledgerEntries.findReversalOf(original) != null) {
+            throw new Exception("Die Buchung wurde bereits storniert!");
+        }
+
+        Date now = new Date();
+        ClaimLedgerEntry reversal = new ClaimLedgerEntry();
+        reversal.setId(new StringGenerator().getID().toString());
+        reversal.setLedger(ledger);
+        reversal.setComponent(original.getComponent());
+        reversal.setType(LedgerEntryType.ADJUSTMENT);
+        reversal.setEntryDate(now);
+        reversal.setAmount(original.getAmount().negate());
+        reversal.setDescription("Storno: " + (original.getDescription() == null ? "" : original.getDescription()));
+        reversal.setComment(reason);
+        reversal.setDebtorParty(original.getDebtorParty());
+        reversal.setOriginReference(original.getOriginReference());
+        reversal.setReversalOf(original);
+
+        this.ledgerEntries.create(reversal);
+        return this.ledgerEntries.find(reversal.getId());
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<ClaimLedgerEntry> getBookingsByOrigin(String originReference) throws Exception {
+        if (originReference == null) {
+            return new ArrayList<>();
+        }
+        return this.ledgerEntries.findByOrigin(originReference);
+    }
+
+    /**
+     * Loads a ledger and fails if it does not exist.
+     *
+     * @param ledgerId id of the ledger
+     * @return the ledger
+     * @throws Exception if it does not exist
+     */
+    private ClaimLedger requireLedger(String ledgerId) throws Exception {
+        ClaimLedger ledger = this.ledgers.find(ledgerId);
+        if (ledger == null) {
+            throw new Exception("Forderungskonto mit ID " + ledgerId + " existiert nicht!");
+        }
+        return ledger;
+    }
+
+    /**
+     * The amount currently booked on a component, claims and adjustments netted.
+     *
+     * @param cmp the component
+     * @return the booked total
+     */
+    private BigDecimal componentBookedTotal(ClaimComponent cmp) {
+        BigDecimal total = BigDecimal.ZERO;
+        for (ClaimLedgerEntry entry : this.ledgerEntries.findByComponent(cmp)) {
+            switch (entry.getType()) {
+                case COST:
+                case MAIN_CLAIM:
+                case ADJUSTMENT:
+                    total = total.add(entry.getAmount());
+                    break;
+                default:
+                    break;
+            }
+        }
+        return total.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * The date the follow-up guarding a title's limitation is due.
+     *
+     * @param title the title
+     * @param leadTimeDays how many days before the limitation date to be reminded
+     * @return the due date, or null if the title carries no limitation date or the follow-up is
+     * suppressed
+     */
+    private Date limitationFollowUpDate(EnforcementTitle title, int leadTimeDays) {
+        if (leadTimeDays <= 0 || title.getLimitationDate() == null) {
+            return null;
+        }
+        LocalDate limitation = title.getLimitationDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        return Date.from(limitation.minusDays(leadTimeDays).atStartOfDay(ZoneId.systemDefault()).toInstant());
+    }
+
+    /**
+     * The wording of the follow-up guarding a title's limitation.
+     *
+     * @param title the title
+     * @return the summary line
+     */
+    private String limitationFollowUpSummary(EnforcementTitle title) {
+        StringBuilder sb = new StringBuilder("Verjährung des Titels");
+        if (title.getFileNumber() != null && !title.getFileNumber().trim().isEmpty()) {
+            sb.append(" ").append(title.getFileNumber());
+        }
+        if (title.getLimitationDate() != null) {
+            sb.append(" am ").append(DATE_FORMAT.format(title.getLimitationDate()));
+        }
+        sb.append(" (§ 197 Abs. 1 Nr. 3 BGB)");
+        return sb.toString();
+    }
+
+    /**
+     * Creates the follow-up that guards a title against lapsing unnoticed.
+     *
+     * @param caseFile the case the title belongs to
+     * @param title the title
+     * @param leadTimeDays how many days before the limitation date to be reminded
+     */
+    private void createLimitationFollowUp(ArchiveFileBean caseFile, EnforcementTitle title, int leadTimeDays) {
+        Date due = limitationFollowUpDate(title, leadTimeDays);
+        if (due == null || caseFile == null) {
+            return;
+        }
+
+        ArchiveFileReviewsBean followUp = new ArchiveFileReviewsBean();
+        followUp.setId(new StringGenerator().getID().toString());
+        followUp.setArchiveFileKey(caseFile);
+        followUp.setEventType(ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP);
+        followUp.setBeginDate(due);
+        followUp.setEndDate(due);
+        followUp.setSummary(limitationFollowUpSummary(title));
+        followUp.setDescription(titleOriginMarker(title.getId()));
+        followUp.setDone(false);
+        try {
+            followUp.setCreatedBy(context.getCallerPrincipal().getName());
+            followUp.setAssignee(context.getCallerPrincipal().getName());
+        } catch (Throwable t) {
+            log.warn("Unable to determine caller when creating a limitation follow-up", t);
+        }
+
+        this.reviews.create(followUp);
+    }
+
+    /**
+     * Finds the follow-up created for a title's limitation date.
+     *
+     * The follow-up is an ordinary case event so that it appears in the calendar and the firm's
+     * normal follow-up views; it is recognised again by the marker written into its description.
+     *
+     * @param caseFile the case
+     * @param titleId id of the title
+     * @return the follow-up, or null if none exists
+     */
+    private ArchiveFileReviewsBean findLimitationFollowUp(ArchiveFileBean caseFile, String titleId) {
+        if (caseFile == null) {
+            return null;
+        }
+        String marker = titleOriginMarker(titleId);
+        List<ArchiveFileReviewsBean> caseReviews = caseFile.getArchiveFileReviewsBeanList();
+        if (caseReviews == null) {
+            return null;
+        }
+        for (ArchiveFileReviewsBean r : caseReviews) {
+            if (r.getDescription() != null && r.getDescription().contains(marker)) {
+                return r;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The marker identifying a case event as generated by a given title.
+     *
+     * @param titleId id of the title
+     * @return the marker
+     */
+    private String titleOriginMarker(String titleId) {
+        return "[Titel:" + titleId + "]";
+    }
+
+    /**
+     * Formats a contact's postal address into the single line stored as a party snapshot.
+     *
+     * @param contact the contact
+     * @return the address as one line
+     */
+    private String formatAddress(AddressBean contact) {
+        StringBuilder sb = new StringBuilder();
+        if (contact.getStreet() != null && !contact.getStreet().trim().isEmpty()) {
+            sb.append(contact.getStreet().trim());
+        }
+        if (contact.getZipCode() != null && !contact.getZipCode().trim().isEmpty()) {
+            if (sb.length() > 0) {
+                sb.append(", ");
+            }
+            sb.append(contact.getZipCode().trim());
+        }
+        if (contact.getCity() != null && !contact.getCity().trim().isEmpty()) {
+            if (sb.length() > 0 && (contact.getZipCode() == null || contact.getZipCode().trim().isEmpty())) {
+                sb.append(", ");
+            } else if (sb.length() > 0) {
+                sb.append(" ");
+            }
+            sb.append(contact.getCity().trim());
+        }
+        return sb.toString();
+    }
+
 }

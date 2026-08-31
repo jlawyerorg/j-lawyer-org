@@ -26,7 +26,7 @@
       designation/address snapshot written on first use towards a court
 - [x] 1.2 Add sub-ledger reference, allocation mode, surplus handling and consumer-loan flag to
       `ClaimLedger`
-- [ ] 1.3 Add `EnforcementTitle` entity with prerequisites (Titel/Klausel/Zustellung) and 30-year
+- [x] 1.3 Add `EnforcementTitle` entity with prerequisites (Titel/Klausel/Zustellung) and 30-year
       limitation computation plus follow-up creation
 - [x] 1.4 Extend `ClaimComponentType` (the EDA pre-court cost categories Auslagen, Mahnkosten,
       Auskunftskosten, Bankrücklastkosten, Inkassokosten, Nr. 2300 VV RVG, andere Nebenforderungen;
@@ -43,8 +43,8 @@
 - [x] 1.7 Extend `PaymentSplitCalculator` with § 497 Abs. 3 BGB, target-directed, per-debtor and
       manual allocation; persist the mode and the deviation warning
 - [x] 1.8 Extend `ClaimLedgerTotals` with per-debtor totals and continuing-interest data
-- [ ] 1.9 Implement the conversion of non-interest-bearing costs into assessed costs
-- [ ] 1.10 Implement `bookProceduralCost` (ledger booking + optional `CaseAccountEntry` + origin
+- [x] 1.9 Implement the conversion of non-interest-bearing costs into assessed costs
+- [x] 1.10 Implement `bookProceduralCost` (ledger booking + optional `CaseAccountEntry` + origin
       reference + reversal)
 - [ ] 1.11 Move ledger operations from `ArchiveFileServiceRemote` to `ClaimLedgerServiceRemote`
       (English JavaDoc) keeping the old methods delegating for compatibility
