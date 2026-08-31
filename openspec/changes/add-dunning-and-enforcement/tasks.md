@@ -57,7 +57,7 @@
 - [x] 1.15 Desktop UI: status badges on the `ClaimLedgerEntryPanel` cards in
       `Finanzen → Forderungskonto` (open total, next deadline) and the claim statement dialog
       (+ `.form`)
-- [ ] 1.16 Unit tests for interest (incl. base-rate changes inside a period), allocation modes,
+- [x] 1.16 Unit tests for interest (incl. base-rate changes inside a period), allocation modes,
       per-debtor totals and statement/itemisation consistency, asserting that the payment split and
       the ledger totals report the same interest
 
