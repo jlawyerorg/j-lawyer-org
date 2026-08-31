@@ -666,6 +666,9 @@ import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.ClaimLedger;
+import com.jdimension.jlawyer.persistence.PaymentSplitProposal;
+import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
 import com.jdimension.jlawyer.persistence.EnforcementTitle;
 import com.jdimension.jlawyer.persistence.InterestRule;
 import com.jdimension.jlawyer.pojo.BalanceListFilter;
@@ -925,5 +928,150 @@ public interface ClaimLedgerServiceRemote {
      * @throws Exception if the user may not access the affected cases
      */
     List<ClaimLedgerEntry> getBookingsByOrigin(String originReference) throws Exception;
+
+
+    /**
+     * Returns the claim ledgers of a case.
+     *
+     * @param caseId id of the case
+     * @return the ledgers of that case, empty if the user may not access it
+     */
+    List<ClaimLedger> getClaimLedgers(String caseId);
+
+    /**
+     * Creates a claim ledger for a case.
+     *
+     * @param caseId id of the case
+     * @param ledger the ledger to create; its id is assigned by the server
+     * @return the stored ledger
+     * @throws Exception if the case does not exist or the user may not access it
+     */
+    ClaimLedger addClaimLedger(String caseId, ClaimLedger ledger) throws Exception;
+
+    /**
+     * Updates a claim ledger.
+     *
+     * @param caseId id of the case the ledger belongs to
+     * @param claimLedger the ledger to update
+     * @return the stored ledger
+     * @throws Exception if the ledger does not exist or the user may not access its case
+     */
+    ClaimLedger updateClaimLedger(String caseId, ClaimLedger claimLedger) throws Exception;
+
+    /**
+     * Removes a claim ledger with everything booked on it.
+     *
+     * @param ledgerId id of the ledger
+     * @throws Exception if the ledger does not exist or the user may not access its case
+     */
+    void removeClaimLedger(String ledgerId) throws Exception;
+
+    /**
+     * Returns the components (claims and cost positions) of a claim ledger.
+     *
+     * @param ledgerId id of the ledger
+     * @return the components of the ledger
+     * @throws Exception if the ledger does not exist or the user may not access its case
+     */
+    List<ClaimComponent> getClaimComponents(String ledgerId) throws Exception;
+
+    /**
+     * Returns the bookings of a claim ledger, oldest first.
+     *
+     * @param ledgerId id of the ledger
+     * @return the bookings of the ledger
+     * @throws Exception if the ledger does not exist or the user may not access its case
+     */
+    List<ClaimLedgerEntry> getClaimLedgerEntries(String ledgerId) throws Exception;
+
+    /**
+     * Adds a component to a claim ledger together with its interest rules.
+     *
+     * @param component the component to add
+     * @param interestRules the interest rules to apply to it, may be empty
+     * @param ledgerId id of the ledger
+     * @return the stored component
+     * @throws Exception if the ledger does not exist or the user may not access its case
+     */
+    ClaimComponent addClaimComponent(ClaimComponent component, List<InterestRule> interestRules, String ledgerId) throws Exception;
+
+    /**
+     * Updates a component and replaces its interest rules.
+     *
+     * @param component the component to update
+     * @param interestRules the interest rules that from now on apply to it
+     * @return the stored component
+     * @throws Exception if the component does not exist or the user may not access its case
+     */
+    ClaimComponent updateClaimComponent(ClaimComponent component, List<InterestRule> interestRules) throws Exception;
+
+    /**
+     * Removes a component and everything booked on it.
+     *
+     * @param componentId id of the component
+     * @throws Exception if the component does not exist or the user may not access its case
+     */
+    void removeClaimComponent(String componentId) throws Exception;
+
+    /**
+     * Returns the interest rules of a component.
+     *
+     * @param componentId id of the component
+     * @return the interest rules, empty if the component bears no interest
+     * @throws Exception if the component does not exist or the user may not access its case
+     */
+    List<InterestRule> getClaimComponentInterestRules(String componentId) throws Exception;
+
+    /**
+     * Adds a booking to a claim ledger.
+     *
+     * An interest booking is not stored as a single entry: the interest is computed over the
+     * periods in which rate and principal stayed constant, and one entry is written per period, so
+     * that every interest amount stays traceable to the rate and the days it ran for.
+     *
+     * @param entry the booking to add
+     * @param ledgerId id of the ledger
+     * @return the entries that were created
+     * @throws Exception if the ledger does not exist or the user may not access its case
+     */
+    List<ClaimLedgerEntry> addClaimLedgerEntry(ClaimLedgerEntry entry, String ledgerId) throws Exception;
+
+    /**
+     * Updates a booking of a claim ledger.
+     *
+     * @param entry the booking to update
+     * @return the stored booking
+     * @throws Exception if the booking does not exist or the user may not access its case
+     */
+    ClaimLedgerEntry updateClaimLedgerEntry(ClaimLedgerEntry entry) throws Exception;
+
+    /**
+     * Books a payment and distributes it over the positions of the ledger.
+     *
+     * @param proposal the payment and its distribution
+     * @return the entries that were created
+     * @throws Exception if the ledger does not exist, the user may not access its case, or the
+     * distribution does not add up to the payment
+     */
+    List<ClaimLedgerEntry> createPaymentSplit(PaymentSplitProposal proposal) throws Exception;
+
+    /**
+     * Removes a booking from a claim ledger.
+     *
+     * @param entryId id of the booking
+     * @throws Exception if the booking does not exist or the user may not access its case
+     */
+    void removeClaimLedgerEntry(String entryId) throws Exception;
+
+    /**
+     * Computes the totals of a claim ledger to a key date: main claims, costs, the interest accrued
+     * on each, the payments received, what each debtor owes and the interest that keeps running.
+     *
+     * @param ledgerId id of the ledger
+     * @param forDate the key date; today if null
+     * @return the totals of the ledger at that date
+     * @throws Exception if the ledger does not exist or the user may not access its case
+     */
+    ClaimLedgerTotals calculateClaimLedgerTotals(String ledgerId, Date forDate) throws Exception;
 
 }
