@@ -156,8 +156,12 @@
       into the current version — creating a version for it would fragment the API for nothing. It
       exposes the readiness check; exporting through REST follows once the confirmation step of 3.17
       has settled what a caller must supply
-- [ ] 3.16 EDA mapper and export for the Vollstreckungsbescheid application (record type `08`,
-      format 4.1.00), reusing the record core
+- [x] 3.16 EDA mapper and export for the Vollstreckungsbescheid application (record type `08`,
+      format 4.1.00), reusing the record core. All eleven record areas are transcribed and the
+      application is assembled. Note what the reuse does *not* extend to: the defendant records of
+      this application are genuinely different — no salutation key at all, the designation across
+      four name fields, the legal form in the address record — so they have their own mapping rather
+      than the Mahnbescheid's. The record core, the value formatting and the framing are shared
 - [ ] 3.17 Export confirmation step in the ledger workspace, pre-filled from the dunning case, with
       write-back of changed values (+ `.form`)
 - [ ] 3.18 EDA viewer: formatted view resolving record types, section markers and fields, raw
