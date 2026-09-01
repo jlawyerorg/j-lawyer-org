@@ -783,7 +783,9 @@ import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.KeyboardFocusManager;
+import java.awt.MouseInfo;
 import java.awt.Point;
+import java.awt.PointerInfo;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
@@ -2592,17 +2594,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuDocumentHighlights.setText("farblich hervorheben");
 
         mnuDocumentHighlight1.setText("erste Farbe");
-        mnuDocumentHighlight1.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                mnuDocumentHighlight1MousePressed(evt);
+        mnuDocumentHighlight1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDocumentHighlight1ActionPerformed(evt);
             }
         });
         mnuDocumentHighlights.add(mnuDocumentHighlight1);
 
         mnuDocumentHighlight2.setText("zweite Farbe");
-        mnuDocumentHighlight2.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                mnuDocumentHighlight2MousePressed(evt);
+        mnuDocumentHighlight2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDocumentHighlight2ActionPerformed(evt);
             }
         });
         mnuDocumentHighlights.add(mnuDocumentHighlight2);
@@ -7968,14 +7970,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_togCaseSyncActionPerformed
 
-    private void mnuDocumentHighlight1MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mnuDocumentHighlight1MousePressed
-        updateDocumentHighlights(1);
-    }//GEN-LAST:event_mnuDocumentHighlight1MousePressed
-
-    private void mnuDocumentHighlight2MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mnuDocumentHighlight2MousePressed
-        updateDocumentHighlights(2);
-    }//GEN-LAST:event_mnuDocumentHighlight2MousePressed
-
     private void cmdNewInvoiceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewInvoiceActionPerformed
         InvoiceDialog dlg = new InvoiceDialog(this, this.dto, EditorsRegistry.getInstance().getMainWindow(), true, this.pnlInvolvedParties.getInvolvedPartiesAddress());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
@@ -9570,6 +9564,38 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }//GEN-LAST:event_mnuMoveReviewToOtherCaseActionPerformed
 
+    private void mnuDocumentHighlight1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentHighlight1ActionPerformed
+        triggerDocumentHighlights(1);
+    }//GEN-LAST:event_mnuDocumentHighlight1ActionPerformed
+
+    private void mnuDocumentHighlight2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentHighlight2ActionPerformed
+        triggerDocumentHighlights(2);
+    }//GEN-LAST:event_mnuDocumentHighlight2ActionPerformed
+
+    /**
+     * Opens the highlight picker for the current document selection. The picker is a
+     * modal dialog and must not be shown while the popup menu it was launched from is
+     * still on screen: the popup holds a native mouse grab, and activating another
+     * window against that grab is delayed by the window manager - on Windows until the
+     * foreground lock timeout expires, which makes the picker appear only seconds after
+     * the click. Showing it from a later EDT cycle lets the popup close first.
+     * The menu item itself cannot serve as the anchor for positioning the picker: the
+     * menu path is already cleared when a JMenuItem fires its action, so the item is no
+     * longer on screen. The mouse pointer still marks the spot that was clicked.
+     */
+    private void triggerDocumentHighlights(int highlightIndex) {
+        Point anchor = null;
+        PointerInfo pointer = MouseInfo.getPointerInfo();
+        JFrame mainWindow = EditorsRegistry.getInstance().getMainWindow();
+        if (pointer != null && mainWindow != null && mainWindow.getBounds().contains(pointer.getLocation())) {
+            // ignore a pointer that has wandered off the application, e.g. on keyboard activation
+            anchor = pointer.getLocation();
+        }
+
+        final Point pickerAnchor = anchor;
+        SwingUtilities.invokeLater(() -> updateDocumentHighlights(highlightIndex, pickerAnchor));
+    }
+
     public void exportSelectedDocumentsAsPdf() {
 
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
@@ -9613,10 +9639,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }
 
-    private void updateDocumentHighlights(int highlightIndex) {
+    private void updateDocumentHighlights(int highlightIndex, Point pickerAnchor) {
         if (!this.readOnly) {
             HighlightPicker hp = new HighlightPicker(EditorsRegistry.getInstance().getMainWindow(), true);
-            hp.setLocationRelativeTo(this.mnuDocumentHighlights);
+            if (pickerAnchor != null) {
+                FrameUtils.centerDialogAt(hp, pickerAnchor);
+            } else {
+                FrameUtils.centerDialog(hp, EditorsRegistry.getInstance().getMainWindow());
+            }
             hp.setVisible(true);
             int highlightColor = Integer.MIN_VALUE;
             if (hp.getSelectedColor() != null) {
