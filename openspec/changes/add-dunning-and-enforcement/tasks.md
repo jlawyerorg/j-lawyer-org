@@ -109,7 +109,7 @@
       court, so a schema assuming one court per state would lose both
 - [x] 3.4 Deadline engine: rules for Widerspruch (2 weeks), VB application, § 701 ZPO six-month
       lapse, Einspruch (2 weeks); creation, recalculation and closing of case events
-- [ ] 3.5 Fee/cost proposal and booking for MB/VB (Nr. 3305, 3308, 1008 VV RVG, Vorbem. 3 Abs. 4
+- [x] 3.5 Fee/cost proposal and booking for MB/VB (Nr. 3305, 3308, 1008 VV RVG, Vorbem. 3 Abs. 4
       credit, Nr. 1100 KV GKG) driven by the fee tables of 0.3
 - [ ] 3.6 Assembly and validation of the application data set (all problems reported in one list),
       callable as a readiness check from client and REST
