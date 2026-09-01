@@ -696,6 +696,14 @@ public class AppUserBean implements Serializable {
     private String password;
     @Column(name = "lawyer")
     private boolean lawyer;
+
+    /**
+     * The identification number the dunning court keeps this lawyer under as an EDA participant. It
+     * belongs to the person rather than to the firm: it identifies who is filing, and in a firm with
+     * several lawyers each has one of their own. It is applied for at the court and cannot be chosen.
+     */
+    @Column(name = "dunning_kennziffer")
+    private String dunningKennziffer;
     @Column(name = "countryCode")
     private String countryCode;
     @Column(name = "areaCode")
@@ -925,6 +933,18 @@ public class AppUserBean implements Serializable {
     /**
      * @return the lawyer
      */
+    /**
+     * @return the Kennziffer this lawyer files dunning applications under, or null if none was
+     * applied for
+     */
+    public String getDunningKennziffer() {
+        return dunningKennziffer;
+    }
+
+    public void setDunningKennziffer(String dunningKennziffer) {
+        this.dunningKennziffer = dunningKennziffer;
+    }
+
     public boolean isLawyer() {
         return lawyer;
     }

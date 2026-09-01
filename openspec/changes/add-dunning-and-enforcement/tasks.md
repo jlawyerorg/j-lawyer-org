@@ -145,7 +145,7 @@
       and verified, so each remaining piece is a mapping rather than a transcription
 - [x] 3.13 Structural verifier (record length, framing, record order, per-area frequency, trailer
       counts, character set) with violations reported per record and field
-- [ ] 3.14 `AppUserBean` lawyer identification number (Kennziffer) with migration and the user
+- [x] 3.14 `AppUserBean` lawyer identification number (Kennziffer) with migration and the user
       administration field shown only for lawyer users (+ `.form`)
 - [ ] 3.15 Export operation in the EJB layer and the REST endpoint (export + validate), storing the
       file as a tagged case document linked to the dunning case
