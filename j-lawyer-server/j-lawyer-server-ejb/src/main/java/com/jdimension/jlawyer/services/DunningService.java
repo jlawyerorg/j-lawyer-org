@@ -690,7 +690,6 @@ import com.jdimension.jlawyer.persistence.DunningCaseEventFacadeLocal;
 import com.jdimension.jlawyer.persistence.DunningCaseStatus;
 import com.jdimension.jlawyer.persistence.DunningStatusSource;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
-import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.persistence.InterestRule;
 import com.jdimension.jlawyer.persistence.InterestRuleFacadeLocal;
 import com.jdimension.jlawyer.pojo.DunningClaimInput;
@@ -778,6 +777,8 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
 
     private final DunningWorklistSelector worklistSelector = new DunningWorklistSelector();
 
+    private final DunningExportPolicy exportPolicy = new DunningExportPolicy();
+
 
     @EJB
     private SecurityServiceLocal securityFacade;
@@ -821,6 +822,14 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         }
         requireAccess(ledger.getArchiveFileKey());
 
+        // a corrected application after a monition is a repeat; once the court has decided, another
+        // application is a new procedure
+        String refusal = this.exportPolicy.refusalReason(dunningCase);
+        if (refusal != null) {
+            throw new Exception(refusal);
+        }
+        boolean repeat = this.exportPolicy.isRepeat(dunningCase);
+
         List<ClaimLedgerParty> parties = new ArrayList<>(this.claimLedgerPartiesFacade.findByLedger(ledger));
         List<ClaimComponent> components = new ArrayList<>(this.claimComponentsFacade.findByLedger(ledger));
 
@@ -863,7 +872,7 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
 
         ArchiveFileDocumentsBean document = this.archiveFileService.addDocument(
                 ledger.getArchiveFileKey().getId(),
-                documentName(dunningCase, fileName),
+                this.exportPolicy.documentName(dunningCase, fileName),
                 content.getBytes(Charset.forName(com.jdimension.jlawyer.eda.EdaCharset.CHARSET_NAME)),
                 null, null);
 
@@ -873,14 +882,21 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         Date now = new Date();
         dunningCase.setStatus(DunningCaseStatus.MB_APPLIED);
         dunningCase.setStatusDate(now);
-        dunningCase.setMbAppliedDate(now);
-        dunningCase.setApplicationDate(now);
+        // the day the application first went to the court is kept: a corrected application after a
+        // monition does not start the procedure again, and § 167 ZPO ties the effect of service back
+        // to the day it was applied for
+        if (dunningCase.getMbAppliedDate() == null) {
+            dunningCase.setMbAppliedDate(now);
+        }
+        if (dunningCase.getApplicationDate() == null) {
+            dunningCase.setApplicationDate(now);
+        }
         dunningCase.setAppliedTotal(claimValue);
         dunningCase.setFileName(fileName);
         this.dunningCasesFacade.edit(dunningCase);
 
         journal(dunningCase, previous, DunningCaseStatus.MB_APPLIED, now, DunningStatusSource.MANUAL,
-                "EDA-Datei erzeugt und in der Akte abgelegt: " + document.getName());
+                this.exportPolicy.journalComment(repeat, document.getName()));
 
         try {
             this.dunningDeadlineService.synchronizeDeadlines(dunningCase, 14);
@@ -1547,22 +1563,6 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         return claims;
     }
 
-    /**
-     * The name the exchange file is filed under in the case.
-     *
-     * The own reference is normally the case file number, and a German one carries a slash - 123/26.
-     * A slash in a document name is a path separator to every program that later saves the file
-     * locally, so it is taken out here rather than causing trouble at the other end.
-     *
-     * @param dunningCase the procedure
-     * @param fileName the six-character EDA name, used where the procedure has no own reference
-     * @return the document name
-     */
-    private String documentName(DunningCase dunningCase, String fileName) {
-        String reference = dunningCase.getOwnReference() == null
-                ? fileName : dunningCase.getOwnReference();
-        return ServerFileUtils.sanitizeFileName("Mahnbescheidsantrag_" + reference) + ".eda";
-    }
 
     private String describe(DunningValidationResult validation) {
         StringBuilder sb = new StringBuilder();

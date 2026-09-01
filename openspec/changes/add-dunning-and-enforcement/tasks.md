@@ -359,7 +359,7 @@
       last day of the objection period nothing has expired yet, because the period ends with the
       expiry of that day (§ 188 Abs. 2 BGB); and a semicolon in a party name is quoted, since
       otherwise it shifts every following column of that row into the wrong one
-- [ ] 3.20 Tests: record layouts against the worked examples of the Satzbeschreibungen, mapping per
+- [x] 3.20 Tests: record layouts against the worked examples of the Satzbeschreibungen, mapping per
       claim and ancillary-claim type incl. catalogued claims with their required additional record,
       interest from service written with an empty start date, CP-850 round-trip incl. umlauts,
       validation and verification failure paths, export document storage and re-export history.
@@ -369,8 +369,24 @@
       records against the official "Eintragungsbeispiele" — which
       caught a real error: a GmbH & Co. KG takes salutation key 4 with an empty legal-form field,
       while an AG & Co. KG, which looks like its near relative, takes no key and carries its legal
-      form; the mapper had treated both as ordinary legal persons. *Open:* the export document
-      storage and re-export history, which live in the EJB layer
+      form; the mapper had treated both as ordinary legal persons.
+      The last open item — export document storage and re-export history — turned up two defects
+      rather than only missing tests, so `DunningExportPolicy` now carries the decisions and is
+      tested against them.
+      A repeat export is a normal thing: a monition has to be answered with a corrected application.
+      But it was allowed at any point, and on a procedure the court had already decided it silently
+      reset the status to "beantragt" and overwrote the application date with today. The policy now
+      refuses an export once the court has issued, served or otherwise decided — after that, another
+      application is a new procedure, not a repeat of this one — and the day the application first
+      went out is kept, since a corrected application does not start the procedure again and § 167
+      ZPO ties the effect of service back to the day it was applied for.
+      Second, every export produced a document of the same name, so two of them could not be told
+      apart. The name now carries the EDA file name of that export, and the export step generates a
+      fresh one for a repeat rather than reusing the last. That is not cosmetic: the receipt the
+      court sends back (Satzart 90) names the file and carries no procedure reference at all, so the
+      file name is the only thread from a receipt to what was sent. The journal says which export was
+      a repeat, because two identical entries would leave the reader to work out which one the court
+      answered
 
 ## 4. Phase 4 — Enforcement
 

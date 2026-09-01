@@ -660,659 +660,116 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.editors.files;
+package com.jdimension.jlawyer.services;
 
-import com.jdimension.jlawyer.client.components.MultiCalDialog;
-import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
-import com.jdimension.jlawyer.client.events.EventBroker;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.ClaimComponent;
-import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.persistence.DunningCase;
-import com.jdimension.jlawyer.pojo.DunningClaimInput;
-import com.jdimension.jlawyer.pojo.DunningValidationIssue;
-import com.jdimension.jlawyer.pojo.DunningValidationResult;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Cursor;
-import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
-import javax.swing.JOptionPane;
-import javax.swing.table.DefaultTableModel;
-import org.apache.log4j.Logger;
+import com.jdimension.jlawyer.persistence.DunningCaseStatus;
+import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 
 /**
- * The step between a prepared procedure and an EDA file: what exactly is applied for, and the
- * declarations the format wants per application.
+ * What may be exported, under which name, and what a repeated export means.
  *
- * There is a confirmation step and not a single button because the export is not undoable in any
- * useful sense. It writes a file into the case, moves the procedure to "Mahnbescheid beantragt" and
- * starts the deadlines; from that moment the procedure can no longer be deleted, only ended by a
- * status. What goes into the application is therefore shown once more and can be corrected here.
+ * A second export is not a mistake. A court that moniers an application expects a corrected one, and
+ * a transmission can fail; both lead to the same file being built again. But there is a point past
+ * which it stops being the same application: once the court has issued the Mahnbescheid, the
+ * application has been acted on, and sending another one is a new procedure rather than a repeat of
+ * this one.
  *
- * Three things are asked for that the ledger does not know by itself:
- *
- * Which positions go in. A claim ledger is not the same as an application - a position may be
- * disputed, or already paid, or deliberately left out - so every position is listed and ticked
- * individually rather than taken wholesale.
- *
- * The day of instruction. Under the transitional rule of § 60 Abs. 1 S. 1 RVG it decides which
- * version of the RVG the court applies to the fees it sets, and it is a fact about the mandate that
- * no other part of the ledger records.
- *
- * The offsetting under Vorbem. 3 Abs. 4 VV RVG, where a pre-court fee under Nr. 2300/2302 VV RVG has
- * arisen. Only the part to be set off against the procedural fee of Nr. 3305 VV RVG is entered, not
- * the whole pre-court remuneration.
- *
- * Everything entered here is written back to the procedure before the file is built, so a repeated
- * export starts from what was applied for rather than from a blank form.
+ * Each export names its own file, and the document is named after it. That is not decoration: the
+ * receipt the court sends back (Satzart 90) carries the EDA file name and no procedure reference at
+ * all, so the file name is the only thing tying a receipt to what was sent. Two exports of one
+ * procedure therefore produce two documents that can be told apart, instead of two documents with
+ * the same name.
  *
  * @author jens
  */
-public class DunningExportDialog extends javax.swing.JDialog {
-
-    private static final Logger log = Logger.getLogger(DunningExportDialog.class.getName());
-
-    /** How long the file name may be - field EDAID of the Dateivorsatz. */
-    private static final int FILE_NAME_LENGTH = 6;
-
-    private static final int COL_INCLUDED = 0;
-    private static final int COL_AMOUNT = 3;
-    private static final int COL_INVOICE = 4;
-    private static final int COL_INTEREST_TO = 5;
-
-    private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-    private final DecimalFormat currencyFormat = new DecimalFormat("#,##0.00");
-
-    private final DunningCase dunningCase;
-    private final ClaimLedger ledger;
-
-    private final List<ClaimComponent> components = new ArrayList<>();
-
-    private ArchiveFileDocumentsBean exported = null;
+public class DunningExportPolicy {
 
     /**
-     * Creates the dialog.
+     * Says why an application may not be exported for this procedure.
      *
-     * @param parent the owning window
-     * @param modal whether the dialog is modal
-     * @param dunningCase the procedure the application belongs to
-     * @param ledger the claim ledger the positions come from
+     * @param dunningCase the procedure
+     * @return the reason in words, or null if it may be exported
      */
-    public DunningExportDialog(java.awt.Frame parent, boolean modal, DunningCase dunningCase,
-            ClaimLedger ledger) {
-        super(parent, modal);
-        this.dunningCase = dunningCase;
-        this.ledger = ledger;
-        initComponents();
+    public String refusalReason(DunningCase dunningCase) {
 
-        this.tblClaims.setModel(new DefaultTableModel(
-                new Object[]{"", "Position", "Art", "Betrag", "Rechnungsnr.", "Zinsen bis"}, 0) {
-            @Override
-            public Class<?> getColumnClass(int column) {
-                return column == COL_INCLUDED ? Boolean.class : String.class;
-            }
-
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return column != 1 && column != 2;
-            }
-        });
-        this.tblClaims.getColumnModel().getColumn(COL_INCLUDED).setMaxWidth(30);
-
-        loadHeader();
-        loadComponents();
-        prefill();
-    }
-
-    /**
-     * @return the document written, or null if nothing was exported
-     */
-    public ArchiveFileDocumentsBean getExported() {
-        return this.exported;
-    }
-
-    private void loadHeader() {
-        StringBuilder sb = new StringBuilder("<html>");
-        sb.append("<b>").append(nullSafe(this.dunningCase.getOwnReference())).append("</b>");
-        if (this.dunningCase.getCourtName() != null) {
-            sb.append(" an ").append(this.dunningCase.getCourtName());
-            if (this.dunningCase.getCourtCity() != null) {
-                sb.append(", ").append(this.dunningCase.getCourtCity());
-            }
+        if (dunningCase == null) {
+            return "Die Mahnsache existiert nicht.";
         }
-        sb.append("<br>");
-        // both are refused by the format rather than merely inconvenient, so they are said here and
-        // not only when the server rejects the file
-        if (this.dunningCase.getCourtName() == null) {
-            sb.append("<font color=\"red\">Es ist kein Mahngericht zugeordnet.</font> ");
-        }
-        if (this.dunningCase.getKennziffer() == null
-                || this.dunningCase.getKennziffer().trim().isEmpty()) {
-            sb.append("<font color=\"red\">Es ist keine Kennziffer hinterlegt - ohne sie kann die "
-                    + "Datei nicht erzeugt werden.</font>");
-        } else {
-            sb.append("Kennziffer ").append(this.dunningCase.getKennziffer());
-        }
-        if (this.dunningCase.getFileName() != null
-                && !this.dunningCase.getFileName().trim().isEmpty()) {
-            sb.append("<br>Zuletzt übermittelt als Datei ").append(this.dunningCase.getFileName())
-                    .append(" - ein erneuter Antrag erhält einen eigenen Dateinamen.");
-        }
-        sb.append("</html>");
-        this.lblHeader.setText(sb.toString());
-    }
-
-    /**
-     * Lists the positions of the ledger, ticked by default: leaving one out is the exception and
-     * should be a deliberate act, not something that has to be done for every line.
-     */
-    private void loadComponents() {
-        DefaultTableModel model = (DefaultTableModel) this.tblClaims.getModel();
-        model.setRowCount(0);
-        this.components.clear();
-
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            List<ClaimComponent> loaded = locator.lookupClaimLedgerServiceRemote()
-                    .getClaimComponents(this.ledger.getId());
-            if (loaded != null) {
-                this.components.addAll(loaded);
-            }
-        } catch (Exception ex) {
-            log.error("Unable to load the components of ledger " + this.ledger.getId(), ex);
-            JOptionPane.showMessageDialog(this,
-                    "Die Positionen konnten nicht geladen werden: " + ex.getMessage(),
-                    "Fehler", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        for (ClaimComponent c : this.components) {
-            model.addRow(new Object[]{
-                Boolean.TRUE,
-                nullSafe(c.getName()),
-                c.getType() == null ? "" : c.getType().getLabel(),
-                c.getPrincipalAmount() == null ? "" : currencyFormat.format(c.getPrincipalAmount()),
-                "",
-                ""});
-        }
-    }
-
-    /**
-     * Fills the declarations from the procedure, so a repeated export starts from what was applied
-     * for last time.
-     */
-    private void prefill() {
-        this.txtClaimValue.setText(currencyFormat.format(sumOfSelected()));
-        this.txtOrderDate.setText(this.dunningCase.getOrderDate() == null
-                ? "" : df.format(this.dunningCase.getOrderDate()));
-        this.txtOffsetAmount.setText(this.dunningCase.getOffsetAmount() == null
-                ? "" : currencyFormat.format(this.dunningCase.getOffsetAmount()));
-        this.chkSpecialEffort.setSelected(this.dunningCase.isSpecialEffort());
-        // deliberately a new name even for a repeat: the file name identifies the transmission, and
-        // the receipt the court sends back names the file and nothing else. Two transmissions under
-        // one name would leave a receipt pointing at both
-        this.txtFileName.setText(generatedFileName());
-    }
-
-    /**
-     * A name for the file that is six characters long and not the same as the last one, so two
-     * exports of one procedure do not collide - neither in the court's inbox nor among the documents
-     * of the case, which are named after it.
-     */
-    private String generatedFileName() {
-        String previous = this.dunningCase.getFileName();
-        for (int attempt = 0; attempt < 10; attempt++) {
-            String candidate = "MB" + String.format("%04d", new Random().nextInt(10000));
-            if (!candidate.equals(previous)) {
-                return candidate;
-            }
-        }
-        return "MB" + String.format("%04d", new Random().nextInt(10000));
-    }
-
-    private BigDecimal sumOfSelected() {
-        BigDecimal total = BigDecimal.ZERO;
-        DefaultTableModel model = (DefaultTableModel) this.tblClaims.getModel();
-        for (int i = 0; i < model.getRowCount(); i++) {
-            if (!Boolean.TRUE.equals(model.getValueAt(i, COL_INCLUDED))) {
-                continue;
-            }
-            BigDecimal amount = amountAt(i);
-            if (amount != null) {
-                total = total.add(amount);
-            }
-        }
-        return total;
-    }
-
-    private BigDecimal amountAt(int row) {
-        Object value = ((DefaultTableModel) this.tblClaims.getModel()).getValueAt(row, COL_AMOUNT);
-        return parseAmount(value == null ? null : value.toString());
-    }
-
-    private BigDecimal parseAmount(String text) {
-        if (text == null || text.trim().isEmpty()) {
+        DunningCaseStatus status = dunningCase.getStatus();
+        if (status == null || status == DunningCaseStatus.PREPARED
+                || status == DunningCaseStatus.MB_APPLIED) {
             return null;
         }
-        try {
-            return new BigDecimal(currencyFormat.parse(text.trim()).toString());
-        } catch (ParseException ex) {
-            return null;
-        }
-    }
-
-    private Date parseDate(String text) {
-        if (text == null || text.trim().isEmpty()) {
-            return null;
-        }
-        try {
-            return df.parse(text.trim());
-        } catch (ParseException ex) {
-            return null;
-        }
+        return "Der Vorgang steht bereits im Stand \"" + status.getLabel() + "\". Ein Antrag kann "
+                + "nur erneut erzeugt werden, solange das Gericht ihn noch nicht beschieden hat - "
+                + "etwa nach einer Monierung. Danach ist ein neuer Antrag eine neue Mahnsache.";
     }
 
     /**
-     * The sentence to show for a failure.
-     *
-     * A remote call wraps what the server threw, and the wrapper often carries no message of its
-     * own. Showing that empty message would leave the user with a dialog that says nothing, so the
-     * chain of causes is walked until something readable turns up.
-     *
-     * @param ex what was caught
-     * @return the most specific message available, never empty
+     * @param dunningCase the procedure
+     * @return whether an application may be exported for it
      */
-    private String messageOf(Throwable ex) {
-        Throwable current = ex;
-        while (current != null) {
-            if (current.getMessage() != null && !current.getMessage().trim().isEmpty()) {
-                return current.getMessage();
-            }
-            current = current.getCause() == current ? null : current.getCause();
-        }
-        return ex.getClass().getName();
-    }
-
-    private String nullSafe(String s) {
-        return s == null ? "" : s;
+    public boolean mayExport(DunningCase dunningCase) {
+        return refusalReason(dunningCase) == null;
     }
 
     /**
-     * The positions as they are to be applied for.
+     * Whether this export repeats one that has already gone out.
      *
-     * @return one input per ticked row
+     * @param dunningCase the procedure as it stands before the export
+     * @return whether an application was exported for it before
      */
-    private List<DunningClaimInput> selectedClaims() {
-        List<DunningClaimInput> claims = new ArrayList<>();
-        DefaultTableModel model = (DefaultTableModel) this.tblClaims.getModel();
-        for (int i = 0; i < model.getRowCount() && i < this.components.size(); i++) {
-            if (!Boolean.TRUE.equals(model.getValueAt(i, COL_INCLUDED))) {
-                continue;
-            }
-            DunningClaimInput input = new DunningClaimInput();
-            input.setComponentId(this.components.get(i).getId());
-            input.setAmount(amountAt(i));
-            Object invoice = model.getValueAt(i, COL_INVOICE);
-            if (invoice != null && !invoice.toString().trim().isEmpty()) {
-                input.setInvoiceNumber(invoice.toString().trim());
-            }
-            Object interestTo = model.getValueAt(i, COL_INTEREST_TO);
-            input.setInterestTo(parseDate(interestTo == null ? null : interestTo.toString()));
-            claims.add(input);
-        }
-        return claims;
+    public boolean isRepeat(DunningCase dunningCase) {
+        return dunningCase != null
+                && (dunningCase.getStatus() == DunningCaseStatus.MB_APPLIED
+                || dunningCase.getMbAppliedDate() != null
+                || notEmpty(dunningCase.getFileName()));
     }
 
     /**
-     * Writes what was entered here back to the procedure.
+     * The name the exchange file is filed under in the case.
      *
-     * @return whether it could be written
+     * It carries the EDA file name, so a second export does not land under the name of the first and
+     * a receipt of the court - which names the file and nothing else - can be traced to the document
+     * it belongs to.
+     *
+     * The own reference is normally the case file number, and a German one carries a slash. A slash
+     * in a document name is a path separator to every program that saves the file locally
+     * afterwards, so it is taken out here rather than causing trouble at the other end.
+     *
+     * @param dunningCase the procedure
+     * @param edaId the six-character EDA file name of this export
+     * @return the document name
      */
-    private boolean writeBack() {
-        this.dunningCase.setOrderDate(parseDate(this.txtOrderDate.getText()));
-        this.dunningCase.setOffsetAmount(parseAmount(this.txtOffsetAmount.getText()));
-        this.dunningCase.setSpecialEffort(this.chkSpecialEffort.isSelected());
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            locator.lookupDunningServiceRemote().updateDunningCase(this.dunningCase);
-            return true;
-        } catch (Exception ex) {
-            log.error("Unable to write back the declarations of dunning case "
-                    + this.dunningCase.getId(), ex);
-            JOptionPane.showMessageDialog(this,
-                    "Die Angaben konnten nicht gespeichert werden: " + ex.getMessage(),
-                    "Fehler", JOptionPane.ERROR_MESSAGE);
-            return false;
+    public String documentName(DunningCase dunningCase, String edaId) {
+        StringBuilder sb = new StringBuilder("Mahnbescheidsantrag");
+        if (dunningCase != null && notEmpty(dunningCase.getOwnReference())) {
+            sb.append("_").append(dunningCase.getOwnReference().trim());
         }
+        if (notEmpty(edaId)) {
+            sb.append("_").append(edaId.trim());
+        }
+        return ServerFileUtils.sanitizeFileName(sb.toString()) + ".eda";
     }
 
     /**
-     * This method is called from within the constructor to initialize the form. WARNING: Do NOT
-     * modify this code. The content of this method is always regenerated by the Form Editor.
+     * What the journal records about an export.
+     *
+     * A repeat says so, because a journal that shows two identical entries leaves the reader to work
+     * out for themselves which one the court answered.
+     *
+     * @param repeat whether this export repeats an earlier one
+     * @param documentName the document the file was filed under
+     * @return the comment for the journal entry
      */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
+    public String journalComment(boolean repeat, String documentName) {
+        return (repeat
+                ? "Antrag erneut erzeugt und in der Akte abgelegt: "
+                : "EDA-Datei erzeugt und in der Akte abgelegt: ") + documentName;
+    }
 
-        lblHeader = new javax.swing.JLabel();
-        jScrollPaneClaims = new javax.swing.JScrollPane();
-        tblClaims = new javax.swing.JTable();
-        lblClaimValue = new javax.swing.JLabel();
-        txtClaimValue = new javax.swing.JTextField();
-        lblOffsetAmount = new javax.swing.JLabel();
-        txtOffsetAmount = new javax.swing.JTextField();
-        lblOrderDate = new javax.swing.JLabel();
-        txtOrderDate = new javax.swing.JTextField();
-        cmdSelectOrderDate = new javax.swing.JButton();
-        chkSpecialEffort = new javax.swing.JCheckBox();
-        lblFileName = new javax.swing.JLabel();
-        txtFileName = new javax.swing.JTextField();
-        jScrollPaneResult = new javax.swing.JScrollPane();
-        txtResult = new javax.swing.JTextArea();
-        cmdValidate = new javax.swing.JButton();
-        cmdExport = new javax.swing.JButton();
-        cmdCancel = new javax.swing.JButton();
-
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Mahnbescheidsantrag erzeugen");
-
-        lblHeader.setText("");
-        lblHeader.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-
-        tblClaims.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-
-            }
-        ));
-        jScrollPaneClaims.setViewportView(tblClaims);
-
-        lblClaimValue.setText("Streitwert:");
-
-        txtClaimValue.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        txtClaimValue.setText("");
-
-        lblOffsetAmount.setText("Anrechnung Nr. 2300/2302 VV RVG:");
-        lblOffsetAmount.setToolTipText("Nur der auf die Verfahrensgebühr Nr. 3305 VV RVG anzurechnende Teil (Vorbem. 3 Abs. 4 VV RVG).");
-
-        txtOffsetAmount.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        txtOffsetAmount.setText("");
-
-        lblOrderDate.setText("Beauftragung:");
-        lblOrderDate.setToolTipText("Tag der Erteilung eines unbedingten Mandats - maßgeblich für die anzuwendende RVG-Fassung (§ 60 Abs. 1 S. 1 RVG).");
-
-        txtOrderDate.setText("");
-
-        cmdSelectOrderDate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
-        cmdSelectOrderDate.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSelectOrderDateActionPerformed(evt);
-            }
-        });
-
-        chkSpecialEffort.setText("besonderer Umfang / besondere Schwierigkeit wird versichert");
-
-        lblFileName.setText("Dateiname:");
-        lblFileName.setToolTipText("Sechs Zeichen, Feld EDAID im Dateivorsatz.");
-
-        txtFileName.setText("");
-
-        txtResult.setEditable(false);
-        txtResult.setColumns(20);
-        txtResult.setRows(5);
-        jScrollPaneResult.setViewportView(txtResult);
-
-        cmdValidate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfind.png"))); // NOI18N
-        cmdValidate.setText("Antrag prüfen");
-        cmdValidate.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdValidateActionPerformed(evt);
-            }
-        });
-
-        cmdExport.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
-        cmdExport.setText("EDA-Datei erzeugen");
-        cmdExport.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdExportActionPerformed(evt);
-            }
-        });
-
-        cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
-        cmdCancel.setText("Abbrechen");
-        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdCancelActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblHeader, javax.swing.GroupLayout.DEFAULT_SIZE, 860, Short.MAX_VALUE)
-                    .addComponent(jScrollPaneClaims, javax.swing.GroupLayout.DEFAULT_SIZE, 860, Short.MAX_VALUE)
-                    .addComponent(jScrollPaneResult, javax.swing.GroupLayout.DEFAULT_SIZE, 860, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lblClaimValue)
-                            .addComponent(lblOrderDate)
-                            .addComponent(lblFileName))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(txtClaimValue, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(lblOffsetAmount)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtOffsetAmount, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(txtOrderDate, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdSelectOrderDate)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(chkSpecialEffort)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(txtFileName, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE))))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(cmdValidate)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdExport)
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(cmdCancel)))
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(lblHeader, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPaneClaims, javax.swing.GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblClaimValue)
-                    .addComponent(txtClaimValue, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblOffsetAmount)
-                    .addComponent(txtOffsetAmount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblOrderDate)
-                    .addComponent(txtOrderDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cmdSelectOrderDate)
-                    .addComponent(chkSpecialEffort))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblFileName)
-                    .addComponent(txtFileName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPaneResult, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmdValidate)
-                    .addComponent(cmdExport)
-                    .addComponent(cmdCancel))
-                .addContainerGap())
-        );
-
-        pack();
-    }// </editor-fold>//GEN-END:initComponents
-
-    private void cmdSelectOrderDateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectOrderDateActionPerformed
-        MultiCalDialog dlg = new MultiCalDialog(this.txtOrderDate, this, true);
-        dlg.setVisible(true);
-    }//GEN-LAST:event_cmdSelectOrderDateActionPerformed
-
-    private void cmdValidateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdValidateActionPerformed
-        this.txtClaimValue.setText(currencyFormat.format(sumOfSelected()));
-
-        BigDecimal claimValue = parseAmount(this.txtClaimValue.getText());
-        if (claimValue == null) {
-            this.txtResult.setText("Der Streitwert ist keine gültige Zahl.");
-            return;
-        }
-        if (!writeBack()) {
-            return;
-        }
-
-        DunningValidationResult result;
-        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            result = locator.lookupDunningServiceRemote()
-                    .validateApplication(this.dunningCase.getId(), claimValue);
-        } catch (Exception ex) {
-            log.error("Unable to validate dunning case " + this.dunningCase.getId(), ex);
-            this.txtResult.setText("Der Antrag konnte nicht geprüft werden: " + ex.getMessage());
-            return;
-        } finally {
-            this.setCursor(Cursor.getDefaultCursor());
-        }
-
-        if (result.isEmpty()) {
-            this.txtResult.setText("Der Antrag ist vollständig - es sind keine Beanstandungen offen.");
-            return;
-        }
-        StringBuilder sb = new StringBuilder(result.isReady()
-                ? "Der Antrag kann eingereicht werden. Es bestehen jedoch Hinweise:\n\n"
-                : "Der Antrag ist noch nicht vollständig:\n\n");
-        for (DunningValidationIssue issue : result.getIssues()) {
-            sb.append(issue.toString()).append("\n");
-        }
-        this.txtResult.setText(sb.toString());
-        this.txtResult.setCaretPosition(0);
-    }//GEN-LAST:event_cmdValidateActionPerformed
-
-    private void cmdExportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportActionPerformed
-        if (this.tblClaims.isEditing()) {
-            this.tblClaims.getCellEditor().stopCellEditing();
-        }
-        this.txtClaimValue.setText(currencyFormat.format(sumOfSelected()));
-
-        List<DunningClaimInput> claims = selectedClaims();
-        if (claims.isEmpty()) {
-            JOptionPane.showMessageDialog(this,
-                    "Es ist keine Position ausgewählt - ein Antrag ohne Forderung ist nicht möglich.",
-                    "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-        BigDecimal claimValue = parseAmount(this.txtClaimValue.getText());
-        if (claimValue == null) {
-            JOptionPane.showMessageDialog(this, "Der Streitwert ist keine gültige Zahl.",
-                    "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-        String fileName = this.txtFileName.getText() == null ? "" : this.txtFileName.getText().trim();
-        if (fileName.length() != FILE_NAME_LENGTH) {
-            JOptionPane.showMessageDialog(this,
-                    "Der Dateiname muss genau " + FILE_NAME_LENGTH + " Zeichen lang sein.",
-                    "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-
-        // said before rather than discovered afterwards: the export is not a draft
-        int answer = JOptionPane.showConfirmDialog(this,
-                "Es werden " + claims.size() + " Position(en) über " + currencyFormat.format(claimValue)
-                + " EUR beantragt.\n\nDie Datei wird in der Akte abgelegt, der Vorgang wechselt in den "
-                + "Stand \"Mahnbescheid beantragt\", die Fristen werden angelegt und die Mahnsache "
-                + "kann danach nicht mehr gelöscht werden.\n\nFortfahren?",
-                "Mahnbescheidsantrag erzeugen", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-        if (answer != JOptionPane.YES_OPTION) {
-            return;
-        }
-        if (!writeBack()) {
-            return;
-        }
-
-        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            this.exported = locator.lookupDunningServiceRemote().exportApplication(
-                    this.dunningCase.getId(), claimValue, claims, fileName.toUpperCase());
-        } catch (Exception ex) {
-            log.error("Unable to export dunning case " + this.dunningCase.getId(), ex);
-            // the server refuses an incomplete or structurally faulty application and says why; that
-            // belongs in front of the user unabridged
-            this.txtResult.setText(messageOf(ex));
-            this.txtResult.setCaretPosition(0);
-            return;
-        } finally {
-            this.setCursor(Cursor.getDefaultCursor());
-        }
-
-        // the document tab of the case is already open behind this dialog and does not poll - without
-        // the event the file would only appear after the case is reopened
-        EventBroker.getInstance().publishEvent(new DocumentAddedEvent(this.exported));
-
-        JOptionPane.showMessageDialog(this,
-                "Die EDA-Datei wurde erzeugt und in der Akte abgelegt:\n\n"
-                + this.exported.getName()
-                + "\n\nSie kann nun über das beA an das Mahngericht übermittelt werden.",
-                "Mahnbescheidsantrag erzeugt", JOptionPane.INFORMATION_MESSAGE);
-        setVisible(false);
-    }//GEN-LAST:event_cmdExportActionPerformed
-
-    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
-        setVisible(false);
-    }//GEN-LAST:event_cmdCancelActionPerformed
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox chkSpecialEffort;
-    private javax.swing.JButton cmdCancel;
-    private javax.swing.JButton cmdExport;
-    private javax.swing.JButton cmdSelectOrderDate;
-    private javax.swing.JButton cmdValidate;
-    private javax.swing.JScrollPane jScrollPaneClaims;
-    private javax.swing.JScrollPane jScrollPaneResult;
-    private javax.swing.JLabel lblClaimValue;
-    private javax.swing.JLabel lblFileName;
-    private javax.swing.JLabel lblHeader;
-    private javax.swing.JLabel lblOffsetAmount;
-    private javax.swing.JLabel lblOrderDate;
-    private javax.swing.JTable tblClaims;
-    private javax.swing.JTextField txtClaimValue;
-    private javax.swing.JTextField txtFileName;
-    private javax.swing.JTextField txtOffsetAmount;
-    private javax.swing.JTextField txtOrderDate;
-    private javax.swing.JTextArea txtResult;
-    // End of variables declaration//GEN-END:variables
+    private boolean notEmpty(String s) {
+        return s != null && !s.trim().isEmpty();
+    }
 }
