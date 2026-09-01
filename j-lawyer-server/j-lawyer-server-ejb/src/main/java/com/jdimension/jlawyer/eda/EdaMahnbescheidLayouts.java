@@ -677,7 +677,13 @@ import java.util.Map;
  * revised individually rather than as one version.
  *
  * Each layout is checked against the record length when it is built, so a mistranscribed field
- * length is caught here rather than at the court.
+ * length is caught here rather than at the court. All 35 record areas of the application are
+ * present; that every one of them sums to exactly 128 bytes is what gives confidence that the
+ * transcription is faithful, since an error in any single field length would break that sum.
+ *
+ * Record C12 (Abbuchungsermächtigung für Gerichtskosten) is deliberately absent: the courts removed
+ * it, because a SEPA direct debit mandate always has to exist in writing. It cannot be transmitted
+ * electronically at all.
  *
  * @author jens
  */
@@ -726,8 +732,8 @@ public final class EdaMahnbescheidLayouts {
             .filler(61)
             .build();
 
-    /** C01 – Kennsatz – Stand: 26.02.2016. */
-    public static final EdaRecordLayout KENNSATZ = EdaRecordLayout
+    /** C01 – Mahnbescheidsantrag – Kennsatz – Stand: 26.02.2016. */
+    public static final EdaRecordLayout C01_KENNSATZ = EdaRecordLayout
             .builder("C01", "Mahnbescheidsantrag – Kennsatz")
             .key(SATZART_MAHNBESCHEID, "KS", "00")
             .field("TGZ", 35, EdaFieldFormat.ALPHANUMERIC)
@@ -739,13 +745,431 @@ public final class EdaMahnbescheidLayouts {
             .field("SWUM", 1, EdaFieldFormat.ALPHANUMERIC)
             .field("AGGMM", 1, EdaFieldFormat.ALPHANUMERIC_UPPERCASE)
             .field("VGLM1", 1, EdaFieldFormat.ALPHANUMERIC_UPPERCASE)
-            .filler(19)
+            .field("VGLM2", 1, EdaFieldFormat.ALPHANUMERIC_UPPERCASE)
+            .field("ALRFMAS", 1, EdaFieldFormat.ALPHANUMERIC_UPPERCASE)
+            .field("ALRFMAG", 1, EdaFieldFormat.ALPHANUMERIC_UPPERCASE)
+            .field("ASKSTAT", 1, EdaFieldFormat.ALPHANUMERIC)
+            .field("PKHM", 1, EdaFieldFormat.ALPHANUMERIC_UPPERCASE)
+            .field("ASTRVM", 1, EdaFieldFormat.ALPHANUMERIC_UPPERCASE)
+            .filler(13)
             .build();
+
+    /** C02 – Mahnbescheidsantrag – Antragsteller_Teil-01 – Stand: 01.04.2023. */
+    public static final EdaRecordLayout C02_AS_01 = EdaRecordLayout
+            .builder("C02", "Mahnbescheidsantrag – Antragsteller_Teil-01")
+            .key(SATZART_MAHNBESCHEID, "AS", "01")
+            .field("ASANR", 1, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASRF", 35, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASN1", 35, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASN2", 35, EdaFieldFormat.ALPHANUMERIC)
+            .filler(13)
+            .build();
+
+    /** C03 – Mahnbescheidsantrag – Antragsteller_Teil-02 – Stand: 01.04.2023. */
+    public static final EdaRecordLayout C03_AS_02 = EdaRecordLayout
+            .builder("C03", "Mahnbescheidsantrag – Antragsteller_Teil-02")
+            .key(SATZART_MAHNBESCHEID, "AS", "02")
+            .field("ASN3", 35, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASN4", 35, EdaFieldFormat.ALPHANUMERIC)
+            .filler(49)
+            .build();
+
+    /** C04 – Mahnbescheidsantrag – Antragsteller_Teil-03 – Stand: 01.12.2008. */
+    public static final EdaRecordLayout C04_AS_03 = EdaRecordLayout
+            .builder("C04", "Mahnbescheidsantrag – Antragsteller_Teil-03")
+            .key(SATZART_MAHNBESCHEID, "AS", "03")
+            .field("ASSH", 35, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASPLZ", 5, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASO", 27, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASAL", 3, EdaFieldFormat.ALPHANUMERIC)
+            .filler(49)
+            .build();
+
+    /** C05 – Mahnbescheidsantrag – Antragsteller – gesetzlicher Vertreter_Teil-01 – Stand: 01.09.2009. */
+    public static final EdaRecordLayout C05_AS_GES_VERTRETER_01 = EdaRecordLayout
+            .builder("C05", "Mahnbescheidsantrag – Antragsteller – gesetzlicher Vertreter_Teil-01")
+            .key(SATZART_MAHNBESCHEID, "ASGV", "01")
+            .field("ASGVFU", 35, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASGVN", 35, EdaFieldFormat.ALPHANUMERIC)
+            .filler(49)
+            .build();
+
+    /** C06 – Mahnbescheidsantrag – Antragsteller – gesetzlicher Vertreter_Teil-02 – Stand: 01.12.2008. */
+    public static final EdaRecordLayout C06_AS_GES_VERTRETER_02 = EdaRecordLayout
+            .builder("C06", "Mahnbescheidsantrag – Antragsteller – gesetzlicher Vertreter_Teil-02")
+            .key(SATZART_MAHNBESCHEID, "ASGV", "02")
+            .field("ASGVSH", 35, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASGVPLZ", 5, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASGVO", 27, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASGVAL", 3, EdaFieldFormat.ALPHANUMERIC)
+            .filler(49)
+            .build();
+
+    /** C07 – Mahnbescheidsantrag – Antragsteller – Prozessbevollmächtigter_Teil-01 – Stand: 15.03.2024. */
+    public static final EdaRecordLayout C07_AS_PV_01 = EdaRecordLayout
+            .builder("C07", "Mahnbescheidsantrag – Antragsteller – Prozessbevollmächtigter_Teil-01")
+            .key(SATZART_MAHNBESCHEID, "ASPV", "01")
+            .field("ASPVANR", 1, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASPVN", 105, EdaFieldFormat.ALPHANUMERIC)
+            .filler(13)
+            .build();
+
+    /** C08 – Mahnbescheidsantrag – Antragsteller – Prozessbevollmächtigter_Teil-02 – Stand: 01.12.2008. */
+    public static final EdaRecordLayout C08_AS_PV_02 = EdaRecordLayout
+            .builder("C08", "Mahnbescheidsantrag – Antragsteller – Prozessbevollmächtigter_Teil-02")
+            .key(SATZART_MAHNBESCHEID, "ASPV", "02")
+            .field("ASPVRF", 35, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASPHSH", 35, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASPVPLZ", 5, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASPVO", 27, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASPVAL", 3, EdaFieldFormat.ALPHANUMERIC)
+            .filler(14)
+            .build();
+
+    /** C09 – Mahnbescheidsantrag – Antragsteller – Prozessbevollmächtigter_Teil-03 – Stand: 01.12.2008. */
+    public static final EdaRecordLayout C09_AS_PV_03 = EdaRecordLayout
+            .builder("C09", "Mahnbescheidsantrag – Antragsteller – Prozessbevollmächtigter_Teil-03")
+            .key(SATZART_MAHNBESCHEID, "ASPV", "03")
+            .field("ASPVGVFU", 35, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASPVGVN", 35, EdaFieldFormat.ALPHANUMERIC)
+            .filler(49)
+            .build();
+
+    /** C10 – Mahnbescheidsantrag – Antragsteller – Prozessbevollmächtigter – Antragsspezifische Angaben – Stand: 15.03.2024. */
+    public static final EdaRecordLayout C10_AS_PV_ANTRAGSSPEZIFISCHE_ANGABEN = EdaRecordLayout
+            .builder("C10", "Mahnbescheidsantrag – Antragsteller – Prozessbevollmächtigter – Antragsspezifische Angaben")
+            .key(SATZART_MAHNBESCHEID, "ASPVA", "00")
+            .field("ASPVGZ", 35, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASPVAUFD", 6, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASPVMBAUSL", 8, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .field("VV2300MBET", 10, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .field("VV2300M", 1, EdaFieldFormat.ALPHANUMERIC_UPPERCASE)
+            .field("IKUBET", 7, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .field("ASPVMWSTS", 4, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .field("VORSTM", 1, EdaFieldFormat.ALPHANUMERIC_UPPERCASE)
+            .field("USTM", 1, EdaFieldFormat.ALPHANUMERIC_UPPERCASE)
+            .filler(46)
+            .build();
+
+    /** C11 – Mahnbescheidsantrag – Bankverbindung Antragsteller / Prozessbevollmächtigter – Stand: 10.04.2013. */
+    public static final EdaRecordLayout C11_BANKVERBINDUNG_AS_PV = EdaRecordLayout
+            .builder("C11", "Mahnbescheidsantrag – Bankverbindung Antragsteller / Prozessbevollmächtigter")
+            .key(SATZART_MAHNBESCHEID, "BANK", "00")
+            .field("BKTOZO", 1, EdaFieldFormat.ALPHANUMERIC)
+            .field("BIBAN", 34, EdaFieldFormat.ALPHANUMERIC)
+            .field("BBIC", 11, EdaFieldFormat.ALPHANUMERIC_UPPERCASE)
+            .filler(73)
+            .build();
+
+    /** C13 – Mahnbescheidsantrag – Antragsgegner_Teil-01 – Stand: 01.04.2023. */
+    public static final EdaRecordLayout C13_AG_01 = EdaRecordLayout
+            .builder("C13", "Mahnbescheidsantrag – Antragsgegner_Teil-01")
+            .key(SATZART_MAHNBESCHEID, "AG", "01")
+            .field("AGANR", 1, EdaFieldFormat.ALPHANUMERIC)
+            .field("AGRF", 35, EdaFieldFormat.ALPHANUMERIC)
+            .field("AGN1", 35, EdaFieldFormat.ALPHANUMERIC)
+            .field("AGN2", 35, EdaFieldFormat.ALPHANUMERIC)
+            .filler(13)
+            .build();
+
+    /** C14 – Mahnbescheidsantrag – Antragsgegner_Teil-02 – Stand: 01.04.2023. */
+    public static final EdaRecordLayout C14_AG_02 = EdaRecordLayout
+            .builder("C14", "Mahnbescheidsantrag – Antragsgegner_Teil-02")
+            .key(SATZART_MAHNBESCHEID, "AG", "02")
+            .field("AGN3", 35, EdaFieldFormat.ALPHANUMERIC)
+            .field("AGN4", 35, EdaFieldFormat.ALPHANUMERIC)
+            .filler(49)
+            .build();
+
+    /** C15 – Mahnbescheidsantrag – Antragsgegner_Teil-03 – Stand: 17.06.2025. */
+    public static final EdaRecordLayout C15_AG_03 = EdaRecordLayout
+            .builder("C15", "Mahnbescheidsantrag – Antragsgegner_Teil-03")
+            .key(SATZART_MAHNBESCHEID, "AG", "03")
+            .field("AGSH", 35, EdaFieldFormat.ALPHANUMERIC)
+            .field("AGPLZ", 5, EdaFieldFormat.ALPHANUMERIC)
+            .field("AGO", 27, EdaFieldFormat.ALPHANUMERIC)
+            .field("AGAL", 3, EdaFieldFormat.ALPHANUMERIC)
+            .filler(49)
+            .build();
+
+    /** C16 – Mahnbescheidsantrag – Antragsgegner_Teil-04 – Stand: 01.12.2008. */
+    public static final EdaRecordLayout C16_AG_04 = EdaRecordLayout
+            .builder("C16", "Mahnbescheidsantrag – Antragsgegner_Teil-04")
+            .key(SATZART_MAHNBESCHEID, "AG", "04")
+            .field("PGM", 1, EdaFieldFormat.ALPHANUMERIC)
+            .field("PGPLZ", 5, EdaFieldFormat.ALPHANUMERIC)
+            .field("PGO", 30, EdaFieldFormat.ALPHANUMERIC)
+            .filler(83)
+            .build();
+
+    /** C16A – Mahnbescheidsantrag – Antragsgegner_Teil-05 – Stand: 01.09.2009. */
+    public static final EdaRecordLayout C16A_AG_05 = EdaRecordLayout
+            .builder("C16A", "Mahnbescheidsantrag – Antragsgegner_Teil-05")
+            .key(SATZART_MAHNBESCHEID, "AG", "05")
+            .field("NATOM", 1, EdaFieldFormat.ALPHANUMERIC)
+            .field("VSN1", 35, EdaFieldFormat.ALPHANUMERIC)
+            .field("VSN2", 35, EdaFieldFormat.ALPHANUMERIC)
+            .field("VSN3", 35, EdaFieldFormat.ALPHANUMERIC)
+            .filler(13)
+            .build();
+
+    /** C16B – Mahnbescheidsantrag – Antragsgegner_Teil-06 – Stand: 01.09.2009. */
+    public static final EdaRecordLayout C16B_AG_06 = EdaRecordLayout
+            .builder("C16B", "Mahnbescheidsantrag – Antragsgegner_Teil-06")
+            .key(SATZART_MAHNBESCHEID, "AG", "06")
+            .field("VSSH", 35, EdaFieldFormat.ALPHANUMERIC)
+            .field("VSPLZ", 5, EdaFieldFormat.ALPHANUMERIC)
+            .field("VSORT", 30, EdaFieldFormat.ALPHANUMERIC)
+            .field("PNSSN", 20, EdaFieldFormat.ALPHANUMERIC)
+            .filler(29)
+            .build();
+
+    /** C17 – Mahnbescheidsantrag – Antragsgegner – gesetzlicher Vertreter_Teil-01 – Stand: 01.09.2009. */
+    public static final EdaRecordLayout C17_AG_GES_VERTRETER_01 = EdaRecordLayout
+            .builder("C17", "Mahnbescheidsantrag – Antragsgegner – gesetzlicher Vertreter_Teil-01")
+            .key(SATZART_MAHNBESCHEID, "AGGV", "01")
+            .field("AGGVFU", 35, EdaFieldFormat.ALPHANUMERIC)
+            .field("AGGVN", 35, EdaFieldFormat.ALPHANUMERIC)
+            .filler(49)
+            .build();
+
+    /** C18 – Mahnbescheidsantrag – Antragsgegner – gesetzlicher Vertreter_Teil-02 – Stand: 01.12.2008. */
+    public static final EdaRecordLayout C18_AG_GES_VERTRETER_02 = EdaRecordLayout
+            .builder("C18", "Mahnbescheidsantrag – Antragsgegner – gesetzlicher Vertreter_Teil-02")
+            .key(SATZART_MAHNBESCHEID, "AGGV", "02")
+            .field("AGGVSH", 35, EdaFieldFormat.ALPHANUMERIC)
+            .field("AGGVPLZ", 5, EdaFieldFormat.ALPHANUMERIC)
+            .field("AGGVO", 27, EdaFieldFormat.ALPHANUMERIC)
+            .field("AGGVAL", 3, EdaFieldFormat.ALPHANUMERIC)
+            .filler(49)
+            .build();
+
+    /** C19 – Mahnbescheidsantrag – Anspruch – Ausgerechnete Zinsen – Stand: 01.12.2008. */
+    public static final EdaRecordLayout C19_ANSPRUCH_AUSGERECHNETE_ZINSEN = EdaRecordLayout
+            .builder("C19", "Mahnbescheidsantrag – Anspruch – Ausgerechnete Zinsen")
+            .key(SATZART_MAHNBESCHEID, "ZIAUS", "00")
+            .field("AZIVD", 6, EdaFieldFormat.ALPHANUMERIC)
+            .field("AZIBD", 6, EdaFieldFormat.ALPHANUMERIC)
+            .field("AZIAUBET", 10, EdaFieldFormat.NUMERIC)
+            .field("AZISATZ", 5, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .filler(92)
+            .build();
+
+    /** C20 – Mahnbescheidsantrag – Anspruch – nach Katalog – Stand: 01.12.2008. */
+    public static final EdaRecordLayout C20_ANSPRUCH_NACH_KATALOG = EdaRecordLayout
+            .builder("C20", "Mahnbescheidsantrag – Anspruch – nach Katalog")
+            .key(SATZART_MAHNBESCHEID, "ASPK", "00")
+            .field("ASPKAT1", 2, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .field("ASPKAT2", 2, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .filler(8)
+            .field("ASPGR", 35, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASPRNR", 35, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASPVD", 6, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASPBD", 6, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASPBET", 10, EdaFieldFormat.NUMERIC)
+            .filler(15)
+            .build();
+
+    /** C21 – Mahnbescheidsantrag – Anspruch – Zusätze Miete / WEG – Stand: 01.12.2008. */
+    public static final EdaRecordLayout C21_ANSPRUCH_ZUSAETZE_MIETE_WEG = EdaRecordLayout
+            .builder("C21", "Mahnbescheidsantrag – Anspruch – Zusätze Miete / WEG")
+            .key(SATZART_MAHNBESCHEID, "ASPZM", "00")
+            .field("ASPZMPLZ", 5, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASPZMO", 27, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASPZMAL", 3, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASPZMSH", 35, EdaFieldFormat.ALPHANUMERIC)
+            .filler(49)
+            .build();
+
+    /** C22 – Mahnbescheidsantrag – Anspruch – Zusätze Vertrag – Stand: 01.12.2008. */
+    public static final EdaRecordLayout C22_ANSPRUCH_ZUSAETZE_VERTRAG = EdaRecordLayout
+            .builder("C22", "Mahnbescheidsantrag – Anspruch – Zusätze Vertrag")
+            .key(SATZART_MAHNBESCHEID, "ASPZV", "00")
+            .field("ASPZV", 35, EdaFieldFormat.ALPHANUMERIC)
+            .filler(84)
+            .build();
+
+    /** C23 – Mahnbescheidsantrag – Anspruch – »Sonstiger Anspruch«_Teil-01 – Stand: 01.12.2008. */
+    public static final EdaRecordLayout C23_ANSPRUCH_SONSTIGER_ANSPRUCH_01 = EdaRecordLayout
+            .builder("C23", "Mahnbescheidsantrag – Anspruch – »Sonstiger Anspruch«_Teil-01")
+            .key(SATZART_MAHNBESCHEID, "ASPS", "01")
+            .field("ASPSOBET", 10, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .field("ASPSOVD", 6, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASPSOBD", 6, EdaFieldFormat.ALPHANUMERIC)
+            .field("ASPSOBG1", 93, EdaFieldFormat.ALPHANUMERIC)
+            .filler(4)
+            .build();
+
+    /** C24 – Mahnbescheidsantrag – Anspruch – »Sonstiger Anspruch«_Teil-02 – Stand: 01.12.2008. */
+    public static final EdaRecordLayout C24_ANSPRUCH_SONSTIGER_ANSPRUCH_02 = EdaRecordLayout
+            .builder("C24", "Mahnbescheidsantrag – Anspruch – »Sonstiger Anspruch«_Teil-02")
+            .key(SATZART_MAHNBESCHEID, "ASPS", "02")
+            .field("ASPSOBG2", 70, EdaFieldFormat.ALPHANUMERIC)
+            .filler(49)
+            .build();
+
+    /** C25 – Mahnbescheidsantrag – Anspruch – Abtretung/Forderungsübergang – Stand: 01.12.2008. */
+    public static final EdaRecordLayout C25_ANSPRUCH_ABTRETUNG_FORDERUNGSUEBERGANG = EdaRecordLayout
+            .builder("C25", "Mahnbescheidsantrag – Anspruch – Abtretung/Forderungsübergang")
+            .key(SATZART_MAHNBESCHEID, "ABT", "00")
+            .field("ABTD", 6, EdaFieldFormat.ALPHANUMERIC)
+            .field("ABTN", 35, EdaFieldFormat.ALPHANUMERIC)
+            .field("ABTPLZ", 5, EdaFieldFormat.ALPHANUMERIC)
+            .field("ABTO", 27, EdaFieldFormat.ALPHANUMERIC)
+            .field("ABTAL", 3, EdaFieldFormat.ALPHANUMERIC)
+            .filler(43)
+            .build();
+
+    /** C26 – Mahnbescheidsantrag – Anspruch – laufende Zinsen – Stand: 01.09.2009. */
+    public static final EdaRecordLayout C26_ANSPRUCH_LAUFENDE_ZINSEN = EdaRecordLayout
+            .builder("C26", "Mahnbescheidsantrag – Anspruch – laufende Zinsen")
+            .key(SATZART_MAHNBESCHEID, "ZINS", "00")
+            .field("ZISATZ", 5, EdaFieldFormat.NUMERIC)
+            .field("ZISAM", 1, EdaFieldFormat.ALPHANUMERIC)
+            .field("ZIARTM", 1, EdaFieldFormat.ALPHANUMERIC)
+            .field("ZIVD", 6, EdaFieldFormat.ALPHANUMERIC)
+            .field("ZIBD", 6, EdaFieldFormat.ALPHANUMERIC)
+            .field("ZIRGBET", 10, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .filler(90)
+            .build();
+
+    /** C27 – Mahnbescheidsantrag – Anspruch – Verbraucherkredit-Angaben – Stand: 01.12.2008. */
+    public static final EdaRecordLayout C27_ANSPRUCH_VERBRAUCHERKREDIT_ANGABEN = EdaRecordLayout
+            .builder("C27", "Mahnbescheidsantrag – Anspruch – Verbraucherkredit-Angaben")
+            .key(SATZART_MAHNBESCHEID, "VKG", "00")
+            .field("VKGD", 6, EdaFieldFormat.ALPHANUMERIC)
+            .field("VKGZISA", 5, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .filler(108)
+            .build();
+
+    /** C28 – Mahnbescheidsantrag – Auslagen des Antragstellers – Stand: 01.12.2008. */
+    public static final EdaRecordLayout C28_AUSLAGEN_DES_ASS = EdaRecordLayout
+            .builder("C28", "Mahnbescheidsantrag – Auslagen des Antragstellers")
+            .key(SATZART_MAHNBESCHEID, "AUSL", "00")
+            .field("VPBET", 8, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .field("MBSKOBET", 8, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .field("MBSKOBG", 35, EdaFieldFormat.ALPHANUMERIC)
+            .filler(68)
+            .build();
+
+    /** C29 – Mahnbescheidsantrag – Mahnkosten inkl. Zinsen – Stand: 01.12.2008. */
+    public static final EdaRecordLayout C29_MAHNKOSTEN_INKL_ZINSEN = EdaRecordLayout
+            .builder("C29", "Mahnbescheidsantrag – Mahnkosten inkl. Zinsen")
+            .key(SATZART_MAHNBESCHEID, "MAHNK", "00")
+            .field("MAHNK", 7, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .field("ZISATZ", 5, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .field("ZIM", 1, EdaFieldFormat.ALPHANUMERIC)
+            .field("ZIVD", 6, EdaFieldFormat.ALPHANUMERIC)
+            .field("ZIBD", 6, EdaFieldFormat.ALPHANUMERIC)
+            .filler(94)
+            .build();
+
+    /** C30 – Mahnbescheidsantrag – Auskunftskosten inkl. Zinsen – Stand: 01.12.2008. */
+    public static final EdaRecordLayout C30_AUSKUNFTSKOSTEN_INKL_ZINSEN = EdaRecordLayout
+            .builder("C30", "Mahnbescheidsantrag – Auskunftskosten inkl. Zinsen")
+            .key(SATZART_MAHNBESCHEID, "AUSK", "00")
+            .field("AUSK", 7, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .field("ZISATZ", 5, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .field("ZIM", 1, EdaFieldFormat.ALPHANUMERIC)
+            .field("ZIVD", 6, EdaFieldFormat.ALPHANUMERIC)
+            .field("ZIBD", 6, EdaFieldFormat.ALPHANUMERIC)
+            .filler(94)
+            .build();
+
+    /** C31 – Mahnbescheidsantrag – Bankrücklastkosten inkl. Zinsen – Stand: 01.12.2008. */
+    public static final EdaRecordLayout C31_BANKRUECKLASTKOSTEN_INKL_ZINSEN = EdaRecordLayout
+            .builder("C31", "Mahnbescheidsantrag – Bankrücklastkosten inkl. Zinsen")
+            .key(SATZART_MAHNBESCHEID, "BKRL", "00")
+            .field("BANKRL", 7, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .field("ZISATZ", 5, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .field("ZIM", 1, EdaFieldFormat.ALPHANUMERIC)
+            .field("ZIVD", 6, EdaFieldFormat.ALPHANUMERIC)
+            .field("ZIBD", 6, EdaFieldFormat.ALPHANUMERIC)
+            .filler(94)
+            .build();
+
+    /** C32 – Mahnbescheidsantrag – Inkassokosten inkl. Zinsen – Stand: 01.12.2008. */
+    public static final EdaRecordLayout C32_INKASSOKOSTEN_INKL_ZINSEN = EdaRecordLayout
+            .builder("C32", "Mahnbescheidsantrag – Inkassokosten inkl. Zinsen")
+            .key(SATZART_MAHNBESCHEID, "INKB", "00")
+            .field("INKBET", 10, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .field("ZISATZ", 5, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .field("ZIM", 1, EdaFieldFormat.ALPHANUMERIC)
+            .field("ZIVD", 6, EdaFieldFormat.ALPHANUMERIC)
+            .field("ZIBD", 6, EdaFieldFormat.ALPHANUMERIC)
+            .filler(91)
+            .build();
+
+    /** C33 – Mahnbescheidsantrag – vorgerichtliche Anwaltsvergütung Nr. 2300 VV RVG inkl. Zinsen – Stand: 24.06.2026. */
+    public static final EdaRecordLayout C33_VORGERICHTLICHE_ANWALTSVERGUETUNG_NR_230 = EdaRecordLayout
+            .builder("C33", "Mahnbescheidsantrag – vorgerichtliche Anwaltsvergütung Nr. 2300 VV RVG inkl. Zinsen")
+            .key(SATZART_MAHNBESCHEID, "VV23", "00")
+            .field("VV2300BET", 10, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .field("VV2300STW", 10, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .field("ZISATZ", 5, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .field("ZIM", 1, EdaFieldFormat.ALPHANUMERIC)
+            .field("ZIVD", 6, EdaFieldFormat.ALPHANUMERIC)
+            .field("ZIBD", 6, EdaFieldFormat.ALPHANUMERIC)
+            .filler(81)
+            .build();
+
+    /** C34 – Mahnbescheidsantrag – Andere Nebenforderungen mit Zinsen – Stand: 01.12.2008. */
+    public static final EdaRecordLayout C34_ANDERE_NEBENFORDERUNGEN_MIT_ZINSEN = EdaRecordLayout
+            .builder("C34", "Mahnbescheidsantrag – Andere Nebenforderungen mit Zinsen")
+            .key(SATZART_MAHNBESCHEID, "ANF", "00")
+            .field("ANFBET", 8, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .field("ANFBG", 35, EdaFieldFormat.ALPHANUMERIC)
+            .field("ZISATZ", 5, EdaFieldFormat.NUMERIC_OR_BLANK)
+            .field("ZIM", 1, EdaFieldFormat.ALPHANUMERIC)
+            .field("ZIVD", 6, EdaFieldFormat.ALPHANUMERIC)
+            .field("ZIBD", 6, EdaFieldFormat.ALPHANUMERIC)
+            .filler(58)
+            .build();
+
+    /**
+     * The key record every application begins with. Named separately because the whole format is
+     * organised around it: it is what says that a new application starts here.
+     */
+    public static final EdaRecordLayout KENNSATZ = C01_KENNSATZ;
 
     static {
         register(FILE_HEADER);
         register(FILE_TRAILER);
-        register(KENNSATZ);
+        register(C01_KENNSATZ);
+        register(C02_AS_01);
+        register(C03_AS_02);
+        register(C04_AS_03);
+        register(C05_AS_GES_VERTRETER_01);
+        register(C06_AS_GES_VERTRETER_02);
+        register(C07_AS_PV_01);
+        register(C08_AS_PV_02);
+        register(C09_AS_PV_03);
+        register(C10_AS_PV_ANTRAGSSPEZIFISCHE_ANGABEN);
+        register(C11_BANKVERBINDUNG_AS_PV);
+        register(C13_AG_01);
+        register(C14_AG_02);
+        register(C15_AG_03);
+        register(C16_AG_04);
+        register(C16A_AG_05);
+        register(C16B_AG_06);
+        register(C17_AG_GES_VERTRETER_01);
+        register(C18_AG_GES_VERTRETER_02);
+        register(C19_ANSPRUCH_AUSGERECHNETE_ZINSEN);
+        register(C20_ANSPRUCH_NACH_KATALOG);
+        register(C21_ANSPRUCH_ZUSAETZE_MIETE_WEG);
+        register(C22_ANSPRUCH_ZUSAETZE_VERTRAG);
+        register(C23_ANSPRUCH_SONSTIGER_ANSPRUCH_01);
+        register(C24_ANSPRUCH_SONSTIGER_ANSPRUCH_02);
+        register(C25_ANSPRUCH_ABTRETUNG_FORDERUNGSUEBERGANG);
+        register(C26_ANSPRUCH_LAUFENDE_ZINSEN);
+        register(C27_ANSPRUCH_VERBRAUCHERKREDIT_ANGABEN);
+        register(C28_AUSLAGEN_DES_ASS);
+        register(C29_MAHNKOSTEN_INKL_ZINSEN);
+        register(C30_AUSKUNFTSKOSTEN_INKL_ZINSEN);
+        register(C31_BANKRUECKLASTKOSTEN_INKL_ZINSEN);
+        register(C32_INKASSOKOSTEN_INKL_ZINSEN);
+        register(C33_VORGERICHTLICHE_ANWALTSVERGUETUNG_NR_230);
+        register(C34_ANDERE_NEBENFORDERUNGEN_MIT_ZINSEN);
     }
 
     private static void register(EdaRecordLayout layout) {

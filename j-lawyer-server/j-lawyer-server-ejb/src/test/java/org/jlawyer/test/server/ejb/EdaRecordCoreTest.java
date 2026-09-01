@@ -711,6 +711,44 @@ public class EdaRecordCoreTest {
     }
 
     @Test
+    public void everyRecordAreaOfTheApplicationIsPresent() {
+        // 35 record areas plus the file header and trailer; C12 is not among them, see below
+        assertEquals(37, EdaMahnbescheidLayouts.getLayouts().size());
+
+        for (String id : new String[]{"C01", "C02", "C13", "C20", "C23", "C26", "C29", "C33", "C34"}) {
+            assertNotNull("the application needs record " + id, EdaMahnbescheidLayouts.getLayout(id));
+        }
+    }
+
+    @Test
+    public void theRecordTheCourtsWithdrewIsNotOffered() {
+        // C12 carried a direct debit mandate for court fees. The courts removed it because a SEPA
+        // mandate always has to exist in writing, so there is nothing to transmit electronically -
+        // offering the record would invite an application the court cannot act on
+        assertNull(EdaMahnbescheidLayouts.getLayout("C12"));
+    }
+
+    @Test
+    public void noTwoRecordsShareTheSameKey() {
+        java.util.Set<String> keys = new java.util.HashSet<>();
+        for (EdaRecordLayout layout : EdaMahnbescheidLayouts.getLayouts().values()) {
+            String key = layout.getRecordKey();
+            if (key != null) {
+                assertTrue("two records claim the key " + key + "; a reader could not tell them apart",
+                        keys.add(key));
+            }
+        }
+    }
+
+    @Test
+    public void knownRecordsCarryTheKeysTheSatzbeschreibungGives() {
+        assertEquals("01ASPK 00", EdaMahnbescheidLayouts.getLayout("C20").getRecordKey());
+        assertEquals("01ANF  00", EdaMahnbescheidLayouts.getLayout("C34").getRecordKey());
+        assertEquals("01AG   01", EdaMahnbescheidLayouts.getLayout("C13").getRecordKey());
+        assertEquals("01AS   01", EdaMahnbescheidLayouts.getLayout("C02").getRecordKey());
+    }
+
+    @Test
     public void aLayoutThatDoesNotAddUpIsRefusedWhenItIsBuilt() {
         try {
             EdaRecordLayout.builder("XX", "zu kurz")
