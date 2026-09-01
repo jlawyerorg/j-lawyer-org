@@ -716,7 +716,10 @@ public class EdaPartyMapper {
         } else {
             // a legal person: the legal form travels in its own field and the designation runs
             // across the four name fields of the two records
-            r1.set(prefix + "RF", contact == null ? null : contact.getLegalForm());
+            // where the key already says what the company is, the legal form field stays empty: the
+            // worked examples of the Satzbeschreibung show the two as alternatives, not as a pair
+            r1.set(prefix + "RF", key == EdaSalutationKey.GMBH_CO_KG || contact == null
+                    ? null : contact.getLegalForm());
             String designation = designationOf(party, contact);
             if (!EdaValues.fits(designation, NAME_PART_LENGTH, NAME_PARTS)) {
                 throw new EdaFieldLengthException(part1.getId(), part1.getField(prefix + "N1"),
@@ -768,7 +771,7 @@ public class EdaPartyMapper {
             return EdaSalutationKey.PERSON_UNSPECIFIED;
         }
         if (notEmpty(contact.getCompany())) {
-            return EdaSalutationKey.NONE;
+            return isGmbHCoKg(contact.getLegalForm()) ? EdaSalutationKey.GMBH_CO_KG : EdaSalutationKey.NONE;
         }
         String salutation = contact.getSalutation() == null ? "" : contact.getSalutation().trim();
         if ("Herr".equalsIgnoreCase(salutation)) {
@@ -814,6 +817,26 @@ public class EdaPartyMapper {
             return null;
         }
         return country;
+    }
+
+    /**
+     * Whether a legal form is one of the two the format gives a salutation key of its own.
+     *
+     * Only the GmbH &amp; Co. KG and the UG &amp; Co. KG have one. An AG &amp; Co. KG looks like a
+     * near relative and does not: it is written without a key and with its legal form in the field,
+     * exactly as an ordinary GmbH is. The worked examples of the Satzbeschreibung set the two side by
+     * side, which is the only way to notice the difference.
+     *
+     * @param legalForm the legal form as recorded
+     * @return whether the key applies
+     */
+    private boolean isGmbHCoKg(String legalForm) {
+        if (legalForm == null) {
+            return false;
+        }
+        String normalised = legalForm.toLowerCase().replace(".", "").replace(" ", "");
+        return normalised.startsWith("gmbh&co") || normalised.startsWith("ug&co")
+                || normalised.startsWith("ug(haftungsbeschränkt)&co");
     }
 
     private static boolean notEmpty(String s) {

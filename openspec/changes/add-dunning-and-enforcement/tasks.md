@@ -196,7 +196,15 @@
 - [ ] 3.20 Tests: record layouts against the worked examples of the Satzbeschreibungen, mapping per
       claim and ancillary-claim type incl. catalogued claims with their required additional record,
       interest from service written with an empty start date, CP-850 round-trip incl. umlauts,
-      validation and verification failure paths, export document storage and re-export history
+      validation and verification failure paths, export document storage and re-export history.
+      *Covered so far:* interest from service with an empty start date, the CP-850 round trip with
+      umlauts, the validation and verification failure paths, catalogued claims with their required
+      additional record, and the party records against the official "Eintragungsbeispiele" — which
+      caught a real error: a GmbH & Co. KG takes salutation key 4 with an empty legal-form field,
+      while an AG & Co. KG, which looks like its near relative, takes no key and carries its legal
+      form; the mapper had treated both as ordinary legal persons. *Open:* the ancillary-claim types
+      (their mapping does not exist yet, see 3.12) and the export document storage and re-export
+      history, which live in the EJB layer
 
 ## 4. Phase 4 — Enforcement
 

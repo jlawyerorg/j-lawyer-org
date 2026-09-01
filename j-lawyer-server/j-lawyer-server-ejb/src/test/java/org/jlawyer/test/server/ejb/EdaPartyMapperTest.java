@@ -814,6 +814,72 @@ public class EdaPartyMapperTest {
         assertEquals("70173", records.get(2).get("ASPLZ"));
     }
 
+    // ----- against the worked examples of the Satzbeschreibung -----
+    //
+    // The specification prints "Eintragungsbeispiele" (Stand: 15.03.2024) that set near-identical
+    // company shapes side by side and enter them differently. They are the only way to notice the
+    // distinctions below, and they are reproduced here as the official expectation.
+
+    @Test
+    public void anOrdinaryGmbhIsEnteredWithoutAKeyAndWithItsLegalForm() throws Exception {
+        // example 01: AGANR stays empty, AGRF carries "GmbH"
+        ClaimLedgerParty gmbh = company("Beispiel Handels GmbH", "GmbH");
+
+        List<EdaRecord> records = mapDebtor(gmbh);
+
+        assertNull(records.get(0).get("AGANR"));
+        assertEquals("GmbH", records.get(0).get("AGRF"));
+    }
+
+    @Test
+    public void aGmbhCoKgIsEnteredWithKeyFourAndAnEmptyLegalForm() throws Exception {
+        // example 02: AGANR is 4 and AGRF is explicitly noted as "Feld bleibt leer"
+        ClaimLedgerParty kg = company("Beispiel Handels GmbH & Co KG", "GmbH & Co. KG");
+
+        List<EdaRecord> records = mapDebtor(kg);
+
+        assertEquals("4", records.get(0).get("AGANR"));
+        assertNull("the key already says what the company is; the legal form field stays empty",
+                records.get(0).get("AGRF"));
+    }
+
+    @Test
+    public void anAgCoKgLooksSimilarAndIsEnteredDifferently() throws Exception {
+        // example 03: no key at all, and the legal form in the field - the format gives a key only to
+        // the GmbH & Co. KG and the UG & Co. KG, not to every "& Co. KG"
+        ClaimLedgerParty kg = company("Beispiel Handels AG & Co KG", "AG & Co. KG");
+
+        List<EdaRecord> records = mapDebtor(kg);
+
+        assertNull(records.get(0).get("AGANR"));
+        assertEquals("AG & Co. KG", records.get(0).get("AGRF"));
+    }
+
+    @Test
+    public void aPartyActingByOfficeCarriesThatInTheLegalFormField() throws Exception {
+        // example 04: an insolvency administrator is entered without a key, with the office in AGRF
+        ClaimLedgerParty administrator = company("Dr. Test als Insolvenzverwalter", "Insolvenzverwalter");
+
+        List<EdaRecord> records = mapDebtor(administrator);
+
+        assertNull(records.get(0).get("AGANR"));
+        assertEquals("Insolvenzverwalter", records.get(0).get("AGRF"));
+    }
+
+    @Test
+    public void theDesignationIsCutAtExactlyThirtyFiveCharactersAsTheExampleShows() throws Exception {
+        // the example splits mid-word: "...Finanzdienstl" / "eistungen aller Art..." - so the cut is
+        // by length and not by word, and a word-aware split would produce a different record
+        String name = "Test-Gesellschaft für Finanzdienstleistungen aller Art im Bereich der "
+                + "europäischen Länder mit der Währung Euro GmbH & Co KG";
+
+        List<EdaRecord> records = mapDebtor(company(name, "GmbH & Co. KG"));
+
+        assertEquals("Test-Gesellschaft für Finanzdienstl", records.get(0).get("AGN1"));
+        assertEquals("eistungen aller Art im Bereich der ", records.get(0).get("AGN2"));
+        assertEquals("europäischen Länder mit der Währung", records.get(1).get("AGN3"));
+    }
+
     @Test
     public void theKeyForACompanyIsTheExplicitAbsenceOfOne() {
         AddressBean gmbh = new AddressBean();
