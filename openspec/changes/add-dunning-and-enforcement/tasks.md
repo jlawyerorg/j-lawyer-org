@@ -341,7 +341,24 @@
       produces now go through `ServerFileUtils.sanitizeFileName`: the exchange file, the claim
       statement (where the name can be supplied by the caller) and the reminder letter (whose name
       comes from the freely configured stage name, "1./2. Mahnung" being a plausible one)
-- [ ] 3.19 Tests: status transitions, deadline generation/recalculation, fee credit, message import
+- [x] 3.19 Tests: status transitions, deadline generation/recalculation, fee credit, message import.
+      Three of the four were already covered by the classes that carry the decisions:
+      `DunningDeadlineCalculatorTest` (18) for generation and recalculation including the shift to
+      the next working day under § 222 Abs. 2 ZPO, `DunningFeeCalculatorTest` (16) for the fee
+      credit, and `EdaMessageReaderTest` (11) plus `EdaMessageInterpreterTest` (12) for the import —
+      which message moves a procedure and which only reports.
+      What was missing sat inside `DunningService` where no test could reach it, and two pieces of it
+      are decisions rather than plumbing, so they moved out. `DunningStatusPolicy` holds the
+      regression guard and the procedural dates: the guard is what makes re-reading a court file safe
+      at all, and since the import works from a document of the case rather than an inbox, re-reading
+      one is the normal case and not an accident. `DunningWorklistSelector` holds the filtering, the
+      "objection period run" question — computed from the service date rather than read from the
+      deadline records, so it answers even where the calendar entries were never created — the
+      earliest open deadline, and the CSV.
+      Two things the new tests pinned down that the code got right but nothing was holding: on the
+      last day of the objection period nothing has expired yet, because the period ends with the
+      expiry of that day (§ 188 Abs. 2 BGB); and a semicolon in a party name is quoted, since
+      otherwise it shifts every following column of that row into the wrong one
 - [ ] 3.20 Tests: record layouts against the worked examples of the Satzbeschreibungen, mapping per
       claim and ancillary-claim type incl. catalogued claims with their required additional record,
       interest from service written with an empty start date, CP-850 round-trip incl. umlauts,

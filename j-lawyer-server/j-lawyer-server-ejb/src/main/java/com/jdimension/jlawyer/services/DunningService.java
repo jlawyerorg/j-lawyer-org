@@ -774,6 +774,10 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
     @EJB
     private AppUserBeanFacadeLocal appUsersFacade;
 
+    private final DunningStatusPolicy statusPolicy = new DunningStatusPolicy();
+
+    private final DunningWorklistSelector worklistSelector = new DunningWorklistSelector();
+
 
     @EJB
     private SecurityServiceLocal securityFacade;
@@ -917,7 +921,7 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
                 if (match != null && hasAccess(match)) {
                     proposal.setSuggestedDunningCaseId(match.getId());
                     proposal.setSuggestedCaseLabel(label(match));
-                    proposal.setWarning(regressionWarning(match, outcome));
+                    proposal.setWarning(this.statusPolicy.regressionWarning(match, outcome));
                 } else if (match != null) {
                     proposal.setWarning("Das zugehörige Verfahren liegt in einer Akte, auf die Sie "
                             + "keinen Zugriff haben.");
@@ -969,7 +973,7 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
                 continue;
             }
 
-            String regression = regressionWarning(dunningCase, outcome);
+            String regression = this.statusPolicy.regressionWarning(dunningCase, outcome);
             if (regression != null) {
                 // re-running an import is normal now, so an older message must not undo a newer one
                 report.add(position + ". " + label(dunningCase) + ": " + regression);
@@ -1044,29 +1048,6 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
                 Charset.forName(com.jdimension.jlawyer.eda.EdaCharset.CHARSET_NAME)));
     }
 
-    /**
-     * Whether applying a message would move a procedure backwards.
-     *
-     * Re-running an import is a normal thing to do - it is how an unresolved message is picked up
-     * later - so an older message must not undo what a newer one already recorded. A Mahnbescheid
-     * service notice replayed after the Vollstreckungsbescheid was served would otherwise reset the
-     * procedure by months.
-     *
-     * @param dunningCase the procedure
-     * @param outcome what the message would do
-     * @return the warning, or null where the message may be applied
-     */
-    private String regressionWarning(DunningCase dunningCase, EdaMessageInterpreter.Outcome outcome) {
-        if (!outcome.movesProcedure() || dunningCase.getStatus() == null) {
-            return null;
-        }
-        if (outcome.getStatus().isBefore(dunningCase.getStatus())) {
-            return "Das Verfahren steht bereits weiter (" + dunningCase.getStatus().getLabel()
-                    + "); die Nachricht (" + outcome.getStatus().getLabel()
-                    + ") wird nicht angewendet, um den Stand nicht zurückzusetzen.";
-        }
-        return null;
-    }
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
@@ -1185,7 +1166,7 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
 
         stored.setStatus(status);
         stored.setStatusDate(eventDate);
-        applyProceduralDate(stored, status, eventDate);
+        this.statusPolicy.applyProceduralDate(stored, status, eventDate);
         this.dunningCasesFacade.edit(stored);
 
         journal(stored, previous, status, eventDate, DunningStatusSource.MANUAL,
@@ -1283,42 +1264,6 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         }
     }
 
-    private void applyProceduralDate(DunningCase dunningCase, DunningCaseStatus status, Date date) {
-        switch (status) {
-            case MB_APPLIED:
-                dunningCase.setMbAppliedDate(date);
-                break;
-            case MB_ISSUED:
-                dunningCase.setMbIssuedDate(date);
-                break;
-            case MB_SERVED:
-                dunningCase.setMbServedDate(date);
-                break;
-            case OBJECTION:
-                dunningCase.setObjectionDate(date);
-                break;
-            case VB_APPLIED:
-                dunningCase.setVbAppliedDate(date);
-                break;
-            case VB_ISSUED:
-                dunningCase.setVbIssuedDate(date);
-                break;
-            case VB_SERVED:
-                dunningCase.setVbServedDate(date);
-                break;
-            case EINSPRUCH:
-                dunningCase.setEinspruchDate(date);
-                break;
-            case REFERRED:
-                dunningCase.setReferralDate(date);
-                break;
-            case COMPLETED:
-                dunningCase.setCompletedDate(date);
-                break;
-            default:
-                break;
-        }
-    }
 
     /**
      * An own reference the court can echo: recognisable to the firm and unique enough to match on.
@@ -1407,7 +1352,7 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         Date today = new Date();
 
         for (DunningCase dunningCase : this.dunningCasesFacade.findAll()) {
-            if (!matches(dunningCase, f)) {
+            if (!this.worklistSelector.matches(dunningCase, f, today)) {
                 continue;
             }
             // the list shows the user's own work: a procedure in a case they may not open has no
@@ -1438,52 +1383,7 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         return rows;
     }
 
-    /**
-     * Whether a procedure belongs in the list under the given filter.
-     */
-    private boolean matches(DunningCase dunningCase, DunningWorklistFilter f) {
 
-        if (dunningCase.getStatus() == null) {
-            return false;
-        }
-        if (!f.isIncludeClosed() && dunningCase.getStatus().isClosed()) {
-            return false;
-        }
-        if (!f.getStatuses().isEmpty() && !f.getStatuses().contains(dunningCase.getStatus())) {
-            return false;
-        }
-        if (f.getCourtXJustizId() != null && !f.getCourtXJustizId().trim().isEmpty()
-                && !f.getCourtXJustizId().trim().equals(dunningCase.getCourtXJustizId())) {
-            return false;
-        }
-        if (f.isObjectionPeriodExpiredOnly() && !objectionPeriodExpired(dunningCase)) {
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * The question the firm asks most often: is this a Mahnbescheid whose objection period has run
-     * without an enforcement order having been applied for.
-     *
-     * The period is computed rather than read from the deadline records, so the answer does not
-     * depend on whether the calendar entries were ever created.
-     */
-    private boolean objectionPeriodExpired(DunningCase dunningCase) {
-
-        if (dunningCase.getStatus() != DunningCaseStatus.MB_SERVED
-                || dunningCase.getMbServedDate() == null) {
-            return false;
-        }
-        List<com.jdimension.jlawyer.pojo.DunningDeadline> deadlines =
-                new DunningDeadlineCalculator().computeDeadlines(dunningCase, 0);
-        for (com.jdimension.jlawyer.pojo.DunningDeadline d : deadlines) {
-            if (d.getType() == com.jdimension.jlawyer.persistence.DunningDeadlineType.OBJECTION_PERIOD) {
-                return d.getDeadline() != null && new Date().after(d.getDeadline());
-            }
-        }
-        return false;
-    }
 
     /**
      * Builds one row, including the earliest deadline still open.
@@ -1516,59 +1416,17 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
             }
         }
 
-        for (DunningCaseDeadline deadline : this.dunningDeadlinesFacade.findByDunningCase(dunningCase)) {
-            if (deadline.isClosed() || deadline.getDeadlineDate() == null) {
-                continue;
-            }
-            if (row.getNextDeadline() == null || deadline.getDeadlineDate().before(row.getNextDeadline())) {
-                row.setNextDeadline(deadline.getDeadlineDate());
-                row.setNextDeadlineLabel(deadline.getDeadlineType() == null
-                        ? null : deadline.getDeadlineType().getLabel());
-            }
-        }
-        row.setNextDeadlineOverdue(row.getNextDeadline() != null && today.after(row.getNextDeadline()));
+        this.worklistSelector.applyNextDeadline(row,
+                new ArrayList<>(this.dunningDeadlinesFacade.findByDunningCase(dunningCase)), today);
         return row;
     }
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public String exportWorklistAsCsv(List<DunningWorklistRow> rows) throws Exception {
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("Akte;Bezeichnung;Gläubiger;Schuldner;Mahngericht;Geschäftsnummer;")
-                .append("Geschäftszeichen;Status;Seit;Beantragt;Nächste Frist;Fristart;überfällig\n");
-
-        if (rows != null) {
-            for (DunningWorklistRow r : rows) {
-                sb.append(csv(r.getCaseFileNumber())).append(";")
-                        .append(csv(r.getCaseName())).append(";")
-                        .append(csv(r.getCreditor())).append(";")
-                        .append(csv(r.getDebtor())).append(";")
-                        .append(csv(r.getCourtName())).append(";")
-                        .append(csv(r.getCourtFileNumber())).append(";")
-                        .append(csv(r.getOwnReference())).append(";")
-                        .append(csv(r.getStatus() == null ? null : r.getStatus().getLabel())).append(";")
-                        .append(csv(r.getStatusDate() == null ? null : DATE_FORMAT.format(r.getStatusDate()))).append(";")
-                        .append(r.getAppliedTotal() == null ? "" : r.getAppliedTotal().toPlainString()).append(";")
-                        .append(csv(r.getNextDeadline() == null ? null : DATE_FORMAT.format(r.getNextDeadline()))).append(";")
-                        .append(csv(r.getNextDeadlineLabel())).append(";")
-                        .append(r.isNextDeadlineOverdue() ? "ja" : "nein").append("\n");
-            }
-        }
-        return sb.toString();
+        return this.worklistSelector.toCsv(rows);
     }
 
-    /**
-     * Escapes a value for the CSV: a semicolon or a line break in a party name would otherwise shift
-     * every following column of that row.
-     */
-    private String csv(String value) {
-        if (value == null) {
-            return "";
-        }
-        String v = value.replace("\"", "\"\"").replace("\n", " ").replace("\r", " ");
-        return v.contains(";") || v.contains("\"") ? "\"" + v + "\"" : v;
-    }
 
     /**
      * Finds the procedure a message belongs to.
