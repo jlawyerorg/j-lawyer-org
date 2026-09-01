@@ -719,6 +719,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -1853,7 +1854,10 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
             return null;
         }
 
-        LocalDate due = dueDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        // not toInstant(): a date read back from the database through a @Temporal(DATE)
+        // mapping is a java.sql.Date, and java.sql.Date.toInstant() throws by contract
+        LocalDate due = Instant.ofEpochMilli(dueDate.getTime())
+                .atZone(ZoneId.systemDefault()).toLocalDate();
         if (leadTimeDays > 0) {
             due = due.minusDays(leadTimeDays);
         }
@@ -1971,7 +1975,10 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         if (leadTimeDays <= 0 || title.getLimitationDate() == null) {
             return null;
         }
-        LocalDate limitation = title.getLimitationDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        // not toInstant(): a date read back from the database through a @Temporal(DATE)
+        // mapping is a java.sql.Date, and java.sql.Date.toInstant() throws by contract
+        LocalDate limitation = Instant.ofEpochMilli(title.getLimitationDate().getTime())
+                .atZone(ZoneId.systemDefault()).toLocalDate();
         return Date.from(limitation.minusDays(leadTimeDays).atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 
@@ -3098,7 +3105,9 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
             ci.setBaseRateRelated(rule.getInterestType() == InterestType.BASIS_RELATED);
             ci.setMarginPercent(rule.getBaseMargin());
 
-            LocalDate keyDate = forDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            // see above: a stored date can arrive here as a java.sql.Date
+            LocalDate keyDate = Instant.ofEpochMilli(forDate.getTime())
+                    .atZone(ZoneId.systemDefault()).toLocalDate();
             BigDecimal baseRate = this.baseInterestFacade.findRateByDate(
                     Date.from(keyDate.atStartOfDay(ZoneId.systemDefault()).toInstant()));
             BigDecimal effective = rule.getEffectiveRate(baseRate == null ? BigDecimal.ZERO : baseRate);

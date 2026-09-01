@@ -798,6 +798,30 @@ public interface DunningServiceRemote {
     DunningCase updateDunningCase(DunningCase dunningCase) throws Exception;
 
     /**
+     * Deletes a dunning procedure that has not left the firm.
+     *
+     * Only a procedure still in preparation can be deleted - one without a court file number, and
+     * without any procedural date recorded. Up to that point it is an entry somebody made, and
+     * deleting it removes a mistake rather than a record.
+     *
+     * Once an application has gone to the court the answer is a status instead: withdrawn or
+     * completed. Deleting then would not undo the procedure at the court, it would only destroy what
+     * the firm knows about it - the journal with its dates, users and sources, the deadlines
+     * computed from the procedural dates, and the service date from which the interest of components
+     * awarded interest on service runs. The condition is enforced here and not only in the user
+     * interface.
+     *
+     * The journal entries and the deadline records of the procedure go with it. So do the follow-ups
+     * those deadlines created, which would otherwise remain in the calendar pointing at a procedure
+     * that no longer exists.
+     *
+     * @param dunningCaseId the procedure to delete
+     * @throws Exception if it does not exist, its case is not accessible, or it has left the firm -
+     * the message then says which of those it is
+     */
+    void removeDunningCase(String dunningCaseId) throws Exception;
+
+    /**
      * Records that a procedure has reached a new status.
      *
      * The change is journalled with the procedural date, the user and the fact that a person entered

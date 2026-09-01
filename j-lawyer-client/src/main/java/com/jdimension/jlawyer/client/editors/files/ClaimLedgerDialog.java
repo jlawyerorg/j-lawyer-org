@@ -940,6 +940,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         this.pnlParties.setLedger(this.caseDto, savedLedger);
         this.pnlTitles.setLedger(savedLedger);
         this.pnlDunning.setLedger(savedLedger);
+        this.pnlCourtDunning.setLedger(this.caseDto, savedLedger);
 
         if (ledger == null) {
             this.setTitle("neues Forderungskonto erstellen");
@@ -1084,6 +1085,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         pnlParties = new com.jdimension.jlawyer.client.editors.files.ClaimLedgerPartiesPanel();
         pnlTitles = new com.jdimension.jlawyer.client.editors.files.ClaimLedgerTitlesPanel();
         pnlDunning = new com.jdimension.jlawyer.client.editors.files.ClaimLedgerDunningPanel();
+        pnlCourtDunning = new com.jdimension.jlawyer.client.editors.files.ClaimLedgerCourtDunningPanel();
         jPanel1 = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
@@ -1333,7 +1335,9 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
         jTabbedPane1.addTab("Titel", pnlTitles);
 
-        jTabbedPane1.addTab("Mahnverfahren", pnlDunning);
+        jTabbedPane1.addTab("Mahnungen", pnlDunning);
+
+        jTabbedPane1.addTab("Mahnverfahren", pnlCourtDunning);
 
         jTabbedPane1.addTab("Positionen", jPanel1);
 
@@ -2328,6 +2332,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JTabbedPane jTabbedPane1;
     private com.jdimension.jlawyer.client.editors.files.ClaimLedgerPartiesPanel pnlParties;
+    private com.jdimension.jlawyer.client.editors.files.ClaimLedgerCourtDunningPanel pnlCourtDunning;
     private com.jdimension.jlawyer.client.editors.files.ClaimLedgerDunningPanel pnlDunning;
     private com.jdimension.jlawyer.client.editors.files.ClaimLedgerTitlesPanel pnlTitles;
     private javax.swing.JPanel lblHeader;

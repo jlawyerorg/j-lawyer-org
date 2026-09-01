@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.persistence.DunningCaseStatus;
 import com.jdimension.jlawyer.persistence.DunningDeadlineType;
 import com.jdimension.jlawyer.pojo.DunningDeadline;
 import java.time.DayOfWeek;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -845,7 +846,10 @@ public class DunningDeadlineCalculator {
     }
 
     private static LocalDate toLocalDate(Date date) {
-        return date == null ? null : date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        // not toInstant(): a date read back from the database through a @Temporal(DATE)
+        // mapping is a java.sql.Date, and java.sql.Date.toInstant() throws by contract
+        return date == null ? null
+                : Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
     private static Date toDate(LocalDate day) {

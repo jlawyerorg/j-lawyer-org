@@ -814,6 +814,31 @@ public class DunningCase implements Serializable {
     private Date completedDate;
 
     /**
+     * The day the unconditional mandate was given. Under the transitional rule of § 60 Abs. 1 S. 1
+     * RVG it decides which version of the RVG the court applies to the fees it sets, so it is asked
+     * for rather than derived from when the procedure happened to be created here.
+     */
+    @Column(name = "order_date")
+    @Temporal(TemporalType.DATE)
+    private Date orderDate;
+
+    /**
+     * The part of a pre-court fee under Nr. 2300/2302 VV RVG that is to be set off against the
+     * procedural fee of Nr. 3305 VV RVG - the offsetting of Vorbem. 3 Abs. 4 VV RVG. Only the amount
+     * to be set off, not the whole pre-court remuneration.
+     */
+    @Column(name = "offset_amount")
+    private BigDecimal offsetAmount;
+
+    /** Whether the matter is declared to have been unusually extensive or difficult. */
+    @Column(name = "special_effort")
+    private boolean specialEffort = false;
+
+    /** The six-character EDA file name of the last export, so a repeat export keeps it. */
+    @Column(name = "file_name")
+    private String fileName;
+
+    /**
      * @return the technical identifier
      */
     public String getId() {
@@ -1167,6 +1192,113 @@ public class DunningCase implements Serializable {
         return this.contestedAmount != null && this.appliedTotal != null
                 && this.contestedAmount.compareTo(BigDecimal.ZERO) > 0
                 && this.contestedAmount.compareTo(this.appliedTotal) < 0;
+    }
+
+    /**
+     * @return the day the unconditional mandate was given, or null
+     */
+    public Date getOrderDate() {
+        return orderDate;
+    }
+
+    /**
+     * @param orderDate the day the unconditional mandate was given
+     */
+    public void setOrderDate(Date orderDate) {
+        this.orderDate = orderDate;
+    }
+
+    /**
+     * @return the amount to be set off under Vorbem. 3 Abs. 4 VV RVG, or null
+     */
+    public BigDecimal getOffsetAmount() {
+        return offsetAmount;
+    }
+
+    /**
+     * @param offsetAmount the amount to be set off
+     */
+    public void setOffsetAmount(BigDecimal offsetAmount) {
+        this.offsetAmount = offsetAmount;
+    }
+
+    /**
+     * @return whether unusual extent or difficulty is declared
+     */
+    public boolean isSpecialEffort() {
+        return specialEffort;
+    }
+
+    /**
+     * @param specialEffort whether unusual extent or difficulty is declared
+     */
+    public void setSpecialEffort(boolean specialEffort) {
+        this.specialEffort = specialEffort;
+    }
+
+    /**
+     * @return the EDA file name of the last export, or null
+     */
+    public String getFileName() {
+        return fileName;
+    }
+
+    /**
+     * @param fileName the EDA file name of the last export
+     */
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    /**
+     * Whether this procedure may still be deleted rather than only ended by a status.
+     *
+     * @return true if it has not left the firm
+     */
+    public boolean isRemovable() {
+        return getRemovalRefusal() == null;
+    }
+
+    /**
+     * Says why this procedure may not be deleted.
+     *
+     * The line is whether it has left the firm. Up to that point it is an entry somebody made - a
+     * mis-click, a wrong court, a procedure begun twice - and deleting it removes a mistake, not a
+     * record.
+     *
+     * Once the application has gone to the court that changes. From then on the procedure is the
+     * firm's record of a court matter: the journal with its dates, users and sources, the deadlines
+     * computed from the procedural dates, and the service date from which the interest of components
+     * awarded interest "ab Zustellung" runs. Deleting it would not undo the procedure at the court,
+     * only destroy what the firm knows about it. A procedure that is over is ended with a status -
+     * zurückgenommen or abgeschlossen - which keeps the course visible.
+     *
+     * @return the reason in words, or null if the procedure may be deleted
+     */
+    public String getRemovalRefusal() {
+
+        if (this.status != null && this.status != DunningCaseStatus.PREPARED) {
+            return "Die Mahnsache ist nicht mehr in Vorbereitung, sondern im Stand \""
+                    + this.status.getLabel() + "\". Ein Vorgang, der bei Gericht anhängig war, wird "
+                    + "nicht gelöscht, sondern über den Status \"zurückgenommen\" oder "
+                    + "\"abgeschlossen\" beendet - sonst geht der Verlauf mit seinen Fristen und "
+                    + "Daten verloren.";
+        }
+        if (this.courtFileNumber != null && !this.courtFileNumber.trim().isEmpty()) {
+            return "Zu der Mahnsache ist das gerichtliche Aktenzeichen "
+                    + this.courtFileNumber.trim() + " erfasst. Der Vorgang ist damit bei Gericht "
+                    + "bekannt und wird nicht gelöscht, sondern über den Status beendet.";
+        }
+        // a procedural date is set when a step actually happened; any one of them means the
+        // procedure has a history, whatever the status field currently says
+        if (this.mbAppliedDate != null || this.mbIssuedDate != null || this.mbServedDate != null
+                || this.vbAppliedDate != null || this.vbIssuedDate != null
+                || this.vbServedDate != null || this.objectionDate != null
+                || this.einspruchDate != null || this.referralDate != null) {
+            return "Zu der Mahnsache sind bereits Verfahrensdaten erfasst. Der Vorgang wird nicht "
+                    + "gelöscht, sondern über den Status beendet.";
+        }
+        return null;
     }
 
     @Override

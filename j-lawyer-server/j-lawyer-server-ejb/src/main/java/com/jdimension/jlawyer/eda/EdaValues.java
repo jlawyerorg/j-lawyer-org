@@ -664,6 +664,7 @@ package com.jdimension.jlawyer.eda;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
@@ -724,7 +725,9 @@ public final class EdaValues {
         if (date == null) {
             return null;
         }
-        LocalDate d = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        // not toInstant(): a date read back from the database through a @Temporal(DATE)
+        // mapping is a java.sql.Date, and java.sql.Date.toInstant() throws by contract
+        LocalDate d = Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
         return String.format("%02d%02d%02d", d.getYear() % 100, d.getMonthValue(), d.getDayOfMonth());
     }
 

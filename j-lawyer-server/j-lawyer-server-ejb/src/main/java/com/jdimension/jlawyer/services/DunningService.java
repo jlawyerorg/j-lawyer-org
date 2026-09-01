@@ -663,15 +663,22 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.eda.EdaClaimMapper;
+import com.jdimension.jlawyer.eda.EdaEncodingException;
+import com.jdimension.jlawyer.eda.EdaFieldLengthException;
 import com.jdimension.jlawyer.eda.EdaFile;
 import com.jdimension.jlawyer.eda.EdaMahnbescheidBuilder;
+import com.jdimension.jlawyer.eda.EdaProcessRepresentative;
 import com.jdimension.jlawyer.eda.EdaMahnbescheidLayouts;
 import com.jdimension.jlawyer.eda.EdaMessage;
 import com.jdimension.jlawyer.eda.EdaMessageInterpreter;
 import com.jdimension.jlawyer.eda.EdaMessageReader;
 import com.jdimension.jlawyer.eda.EdaStructureVerifier;
 import com.jdimension.jlawyer.eda.EdaViolation;
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.AppUserBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimComponentFacadeLocal;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
@@ -681,6 +688,7 @@ import com.jdimension.jlawyer.persistence.DunningCaseEventFacadeLocal;
 import com.jdimension.jlawyer.persistence.DunningCaseStatus;
 import com.jdimension.jlawyer.persistence.DunningStatusSource;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.persistence.InterestRule;
 import com.jdimension.jlawyer.persistence.InterestRuleFacadeLocal;
 import com.jdimension.jlawyer.pojo.DunningClaimInput;
 import com.jdimension.jlawyer.persistence.DunningCaseDeadline;
@@ -756,6 +764,12 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
     @EJB
     private DunningCaseDeadlineFacadeLocal dunningDeadlinesFacade;
 
+    @EJB
+    private ArchiveFileReviewsBeanFacadeLocal archiveFileReviewsFacade;
+
+    @EJB
+    private AppUserBeanFacadeLocal appUsersFacade;
+
 
     @EJB
     private SecurityServiceLocal securityFacade;
@@ -809,13 +823,23 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
             throw new Exception("Der Antrag ist noch nicht vollständig:\n" + describe(validation));
         }
 
-        EdaFile file = new EdaMahnbescheidBuilder().buildFile(dunningCase,
-                partiesOf(parties, ClaimPartyRole.CREDITOR),
-                partiesOf(parties, ClaimPartyRole.DEBTOR),
-                toClaims(claims, components),
-                dunningCase.getKennziffer(), fileName, new Date());
-
-        String content = file.write(dunningCase.getKennziffer());
+        // the exceptions of the eda package live in this module and would not deserialise on the
+        // desktop client - the client would see "Failed to read response" instead of the sentence
+        // that says which value does not fit. So they are translated here into what the caller can
+        // actually read
+        String content;
+        try {
+            EdaFile file = new EdaMahnbescheidBuilder().buildFile(dunningCase,
+                    partiesOf(parties, ClaimPartyRole.CREDITOR),
+                    partiesOf(parties, ClaimPartyRole.DEBTOR),
+                    toClaims(claims, components),
+                    representativeOf(dunningCase),
+                    dunningCase.getKennziffer(), fileName, new Date());
+            content = file.write(dunningCase.getKennziffer());
+        } catch (EdaFieldLengthException | EdaEncodingException ex) {
+            log.error("Unable to build the EDA file for dunning case " + dunningCaseId, ex);
+            throw new Exception(ex.getMessage());
+        }
 
         // and nothing leaves the firm that has not been verified afterwards
         List<EdaViolation> violations = new EdaStructureVerifier()
@@ -844,6 +868,7 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         dunningCase.setMbAppliedDate(now);
         dunningCase.setApplicationDate(now);
         dunningCase.setAppliedTotal(claimValue);
+        dunningCase.setFileName(fileName);
         this.dunningCasesFacade.edit(dunningCase);
 
         journal(dunningCase, previous, DunningCaseStatus.MB_APPLIED, now, DunningStatusSource.MANUAL,
@@ -948,6 +973,7 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
             }
 
             DunningCaseStatus previous = dunningCase.getStatus();
+            Date previousServiceDate = dunningCase.getMbServedDate();
             interpreter.apply(dunningCase, outcome);
             if (message.getCourtFileNumber() != null && !message.getCourtFileNumber().trim().isEmpty()) {
                 dunningCase.setCourtFileNumber(message.getCourtFileNumber().trim());
@@ -957,7 +983,9 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
             // recorded as coming from the court, not from a person: that difference is what a later
             // question about the procedure turns on
             journal(dunningCase, previous, outcome.getStatus(), outcome.getDate(),
-                    DunningStatusSource.COURT_MESSAGE, outcome.getDescription());
+                    DunningStatusSource.COURT_MESSAGE, new ServiceDateInterestPlanner().withServiceNote(
+                            outcome.getDescription(),
+                            startInterestOnService(dunningCase, previousServiceDate)));
 
             try {
                 this.dunningDeadlineService.synchronizeDeadlines(dunningCase, 14);
@@ -1078,11 +1106,46 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         stored.setKennziffer(dunningCase.getKennziffer());
         stored.setCourtFileNumber(dunningCase.getCourtFileNumber());
         stored.setDescription(dunningCase.getDescription());
+        // the declarations of the export step: they belong to the application, not to the Kennziffer,
+        // and the Satzbeschreibung requires them per application
+        stored.setOrderDate(dunningCase.getOrderDate());
+        stored.setOffsetAmount(dunningCase.getOffsetAmount());
+        stored.setSpecialEffort(dunningCase.isSpecialEffort());
         if (dunningCase.getOwnReference() != null && !dunningCase.getOwnReference().trim().isEmpty()) {
             stored.setOwnReference(dunningCase.getOwnReference());
         }
         this.dunningCasesFacade.edit(stored);
         return this.dunningCasesFacade.find(stored.getId());
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void removeDunningCase(String dunningCaseId) throws Exception {
+
+        DunningCase stored = requireCase(dunningCaseId);
+
+        // the condition lives in the policy and is checked here, not only where the button sits: a
+        // procedure that has been to court must survive a call from anywhere
+        String refusal = stored.getRemovalRefusal();
+        if (refusal != null) {
+            throw new Exception(refusal);
+        }
+
+        for (DunningCaseDeadline deadline : this.dunningDeadlinesFacade.findByDunningCase(stored)) {
+            // the follow-up outlives its deadline row, which the database removes with the
+            // procedure - it would stay in the calendar pointing at nothing
+            if (deadline.getReviewId() != null) {
+                ArchiveFileReviewsBean review = this.archiveFileReviewsFacade.find(deadline.getReviewId());
+                if (review != null) {
+                    this.archiveFileReviewsFacade.remove(review);
+                }
+            }
+            this.dunningDeadlinesFacade.remove(deadline);
+        }
+        for (DunningCaseEvent event : this.dunningCaseEventsFacade.findByDunningCase(stored)) {
+            this.dunningCaseEventsFacade.remove(event);
+        }
+        this.dunningCasesFacade.remove(stored);
     }
 
     @Override
@@ -1095,13 +1158,16 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         }
         DunningCase stored = requireCase(dunningCaseId);
         DunningCaseStatus previous = stored.getStatus();
+        Date previousServiceDate = stored.getMbServedDate();
 
         stored.setStatus(status);
         stored.setStatusDate(eventDate);
         applyProceduralDate(stored, status, eventDate);
         this.dunningCasesFacade.edit(stored);
 
-        journal(stored, previous, status, eventDate, DunningStatusSource.MANUAL, comment);
+        journal(stored, previous, status, eventDate, DunningStatusSource.MANUAL,
+                new ServiceDateInterestPlanner().withServiceNote(comment,
+                        startInterestOnService(stored, previousServiceDate)));
 
         try {
             this.dunningDeadlineService.synchronizeDeadlines(stored, 14);
@@ -1156,6 +1222,44 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
      * Writes a procedural date onto the field belonging to the event, which is what the deadline
      * engine computes from.
      */
+    /**
+     * Carries the date the Mahnbescheid was served into the interest rules that wait for it.
+     *
+     * Which rules those are is decided by {@link ServiceDateInterestPlanner}; what happens here is
+     * only the loading and the writing.
+     *
+     * @param dunningCase the procedure whose service date has just been recorded
+     * @param previousServiceDate the service date recorded before this change, or null
+     * @return how many interest rules were given a start
+     */
+    private int startInterestOnService(DunningCase dunningCase, Date previousServiceDate) {
+
+        if (dunningCase.getStatus() != DunningCaseStatus.MB_SERVED
+                || dunningCase.getMbServedDate() == null || dunningCase.getLedger() == null) {
+            return 0;
+        }
+        try {
+            List<ClaimComponent> components
+                    = new ArrayList<>(this.claimComponentsFacade.findByLedger(dunningCase.getLedger()));
+            List<InterestRule> rules = new ArrayList<>();
+            for (ClaimComponent component : components) {
+                rules.addAll(this.interestRulesFacade.findByComponent(component));
+            }
+            List<InterestRule> started = new ServiceDateInterestPlanner().rulesStartedBy(
+                    components, rules, previousServiceDate, dunningCase.getMbServedDate());
+            for (InterestRule rule : started) {
+                rule.setValidFrom(dunningCase.getMbServedDate());
+                this.interestRulesFacade.edit(rule);
+            }
+            return started.size();
+        } catch (Exception ex) {
+            // the status itself is recorded either way; an interest start that could not be written
+            // is a defect to fix, not a reason to lose the service date
+            log.error("Unable to start interest on service for dunning case " + dunningCase.getId(), ex);
+            return 0;
+        }
+    }
+
     private void applyProceduralDate(DunningCase dunningCase, DunningCaseStatus status, Date date) {
         switch (status) {
             case MB_APPLIED:
@@ -1202,6 +1306,58 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         String suffix = new StringGenerator().getID().toString().replace("-", "");
         return (caseNumber == null || caseNumber.trim().isEmpty()
                 ? "MB" : caseNumber.trim()) + "-" + suffix.substring(0, Math.min(8, suffix.length()));
+    }
+
+    /**
+     * Assembles what the format wants to know about the lawyer filing this application.
+     *
+     * The identity records C07 to C09 are not written: the firm files under its own Kennziffer, and
+     * the Satzbeschreibung says a Kennziffer for the Prozessbevollmächtigter closes that area. What
+     * remains is C10, which the format requires per application and which therefore cannot live in
+     * the Kennziffer, and the account of C11.
+     *
+     * The lawyer is found by the Kennziffer of the procedure, which is chosen from the users who
+     * have one. Their bank details come along, so the account the defendant is told to pay into is
+     * the one of the lawyer actually filing rather than something entered a second time.
+     *
+     * @param dunningCase the procedure
+     * @return the representative, or null if there is nothing to declare and no account to name
+     */
+    private EdaProcessRepresentative representativeOf(DunningCase dunningCase) {
+
+        EdaProcessRepresentative representative = new EdaProcessRepresentative();
+        representative.setOwnReference(dunningCase.getOwnReference());
+        representative.setOrderDate(dunningCase.getOrderDate());
+        representative.setOffsetAmount(dunningCase.getOffsetAmount());
+        representative.setSpecialEffortDeclared(dunningCase.isSpecialEffort());
+
+        AppUserBean lawyer = lawyerByKennziffer(dunningCase.getKennziffer());
+        if (lawyer != null) {
+            representative.setSalutation(EdaProcessRepresentative.Salutation.RECHTSANWALT);
+            representative.setDesignation(lawyer.getDisplayName());
+            representative.setAccountHolder(EdaProcessRepresentative.AccountHolder.REPRESENTATIVE);
+            representative.setIban(lawyer.getBankIban());
+            representative.setBic(lawyer.getBankBic());
+        }
+        return representative;
+    }
+
+    /**
+     * @param kennziffer the Kennziffer recorded on the procedure
+     * @return the user filing under it, or null
+     */
+    private AppUserBean lawyerByKennziffer(String kennziffer) {
+        if (kennziffer == null || kennziffer.trim().isEmpty()) {
+            return null;
+        }
+        String wanted = kennziffer.trim();
+        for (AppUserBean user : this.appUsersFacade.findAll()) {
+            if (wanted.equals(user.getDunningKennziffer() == null
+                    ? null : user.getDunningKennziffer().trim())) {
+                return user;
+            }
+        }
+        return null;
     }
 
     private DunningCase requireCase(String dunningCaseId) throws Exception {
@@ -1495,7 +1651,10 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
                 throw new Exception("Die Forderungsposition " + input.getComponentId()
                         + " gehört nicht zu diesem Forderungskonto!");
             }
-            EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(component, input.getAmount());
+            // an input without an amount applies for the position as it stands; writing an empty
+            // amount into the record would apply for nothing at all
+            EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(component,
+                    input.getAmount() == null ? component.getPrincipalAmount() : input.getAmount());
             claim.setFrom(input.getFrom());
             claim.setTo(input.getTo());
             claim.setInvoiceNumber(input.getInvoiceNumber());

@@ -660,417 +660,464 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.client.editors.files;
 
-import com.jdimension.jlawyer.persistence.BaseInterest;
-import com.jdimension.jlawyer.persistence.BaseInterestFacadeLocal;
-import com.jdimension.jlawyer.persistence.ClaimComponent;
-import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
-import com.jdimension.jlawyer.persistence.ClaimLedgerEntryFacadeLocal;
-import com.jdimension.jlawyer.persistence.InterestRule;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.DunningCase;
+import com.jdimension.jlawyer.pojo.DunningMessageProposal;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Cursor;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JComboBox;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import org.apache.log4j.Logger;
 
 /**
- * The single interest engine of the claim ledger.
+ * Reads a court message that has already been filed to the case and offers what it reports for
+ * assignment.
  *
- * Every consumer of accrued interest - the ledger totals, the payment split, the claim statement
- * and the enforcement itemisation - computes through this class, so that a statement and the form
- * annexed to an enforcement application can never disagree. The base rate is always resolved from
- * the stored base interest rates for the period being computed; there is deliberately no fallback
- * constant, because a wrong rate produces a wrong claim.
+ * The message reaches the firm through the beA, and the beA inbox can already save the message and
+ * its attachments to the case. From then on the court's answer is a document of the case like any
+ * other, and that is where this dialog starts: pick the file, see what it says, decide what to book.
+ * There is no separate inbox to keep in step with the case.
  *
- * The computation splits the interest period at every date on which either the base rate or the
- * component's principal changes, and applies the interest rule effective for each part.
+ * Two properties of the format decide how the dialog behaves. A message file is collective - its
+ * trailer counts the messages it carries - so one file can report on several procedures, and each
+ * position is assigned on its own. And the court identifies a procedure by echoing the reference
+ * that was sent to it, not by naming the case, so the suggested assignment is a match on that
+ * reference and is offered rather than applied.
  *
  * @author jens
  */
-public class ClaimInterestCalculator {
+public class DunningMessageImportDialog extends javax.swing.JDialog {
 
-    private final BaseInterestFacadeLocal baseInterestFacade;
-    private final ClaimLedgerEntryFacadeLocal claimLedgerEntriesFacade;
+    private static final Logger log = Logger.getLogger(DunningMessageImportDialog.class.getName());
 
-    public ClaimInterestCalculator(BaseInterestFacadeLocal baseInterestFacade, ClaimLedgerEntryFacadeLocal claimLedgerEntriesFacade) {
-        this.baseInterestFacade = baseInterestFacade;
-        this.claimLedgerEntriesFacade = claimLedgerEntriesFacade;
+    /** The entry that leaves a position unbooked. */
+    private static final String NOT_ASSIGNED = "- nicht übernehmen -";
+
+    private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+
+    private final ArchiveFileBean caseDto;
+    private final String ledgerId;
+
+    private final List<ArchiveFileDocumentsBean> documents = new ArrayList<>();
+    private final List<DunningMessageProposal> proposals = new ArrayList<>();
+
+    /** Label shown in the assignment column to the id it stands for. */
+    private final Map<String, String> assignable = new LinkedHashMap<>();
+
+    private boolean applied = false;
+
+    /**
+     * Creates the dialog.
+     *
+     * @param parent the owning window
+     * @param modal whether the dialog is modal
+     * @param caseDto the case whose documents are offered
+     * @param ledgerId the ledger whose procedures are offered for assignment, or null
+     */
+    public DunningMessageImportDialog(java.awt.Frame parent, boolean modal, ArchiveFileBean caseDto,
+            String ledgerId) {
+        super(parent, modal);
+        this.caseDto = caseDto;
+        this.ledgerId = ledgerId;
+        initComponents();
+
+        this.lblIntro.setText("<html>Wählen Sie die vom Gericht erhaltene EDA-Datei aus den Dokumenten "
+                + "der Akte. Eine Nachrichtendatei kann mehrere Vorgänge betreffen; jede Position wird "
+                + "einzeln zugeordnet. Das Gericht nennt nicht die Akte, sondern wiederholt das "
+                + "mitgesandte Aktenzeichen - der Vorschlag beruht darauf und wird deshalb "
+                + "vorgeschlagen, nicht gesetzt.</html>");
+
+        this.tblDocuments.setModel(new DefaultTableModel(
+                new Object[]{"Dokument", "Datum"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        });
+        this.tblProposals.setModel(new DefaultTableModel(
+                new Object[]{"Pos.", "Nachricht", "Az (eigen)", "Az (Gericht)", "Datum", "Zuordnung", "Hinweis"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 5;
+            }
+        });
+
+        loadDocuments();
+        loadAssignable();
+
+        setSize(940, 700);
     }
 
     /**
-     * Computes the interest accrued on a component up to the given date but not yet booked as an
-     * interest entry.
-     *
-     * @param cmp the component
-     * @param upTo the key date
-     * @return the accrued interest, zero if the component bears no interest
+     * @return whether anything was booked, so the caller knows it has to reload
      */
-    public BigDecimal calculateAccruedInterest(ClaimComponent cmp, Date upTo) {
-        BigDecimal totalInterest = BigDecimal.ZERO;
-        for (ClaimInterestPeriod p : calculateInterestPeriods(cmp, upTo)) {
-            totalInterest = totalInterest.add(p.getAmount());
-        }
-        return totalInterest;
+    public boolean isApplied() {
+        return this.applied;
     }
 
     /**
-     * Splits the interest period of a component into the parts over which rate and principal stay
-     * constant, and computes each part.
-     *
-     * Callers that only need the sum use {@link #calculateAccruedInterest(ClaimComponent, Date)};
-     * callers that book one ledger entry per period, or that have to state the periods in a claim
-     * statement or an enforcement itemisation, use the periods themselves. Both go through this
-     * one computation, so the amounts can never differ.
-     *
-     * @param cmp the component
-     * @param upTo the key date
-     * @return the computed periods, empty if the component bears no interest yet
+     * Loads the documents of the case, the most recent first - a court message is normally the
+     * newest thing in the case.
      */
-    public List<ClaimInterestPeriod> calculateInterestPeriods(ClaimComponent cmp, Date upTo) {
-        List<ClaimInterestPeriod> result = new ArrayList<>();
+    private void loadDocuments() {
+        DefaultTableModel model = (DefaultTableModel) this.tblDocuments.getModel();
+        model.setRowCount(0);
+        this.documents.clear();
 
-        if (!cmp.isInterestBearing()) {
-            return result;
+        if (this.caseDto == null || this.caseDto.getId() == null) {
+            return;
+        }
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            Collection<ArchiveFileDocumentsBean> loaded = locator.lookupArchiveFileServiceRemote()
+                    .getDocuments(this.caseDto.getId());
+            if (loaded != null) {
+                this.documents.addAll(loaded);
+            }
+        } catch (Exception ex) {
+            log.error("Unable to load the documents of case " + this.caseDto.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Dokumente der Akte konnten nicht geladen werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
         }
 
-        LocalDate startDate = determineInterestStart(cmp);
-        if (startDate == null) {
-            return result;
+        this.documents.sort(Comparator.comparing(ArchiveFileDocumentsBean::getCreationDate,
+                Comparator.nullsLast(Comparator.reverseOrder())));
+        for (ArchiveFileDocumentsBean doc : this.documents) {
+            model.addRow(new Object[]{doc.getName(),
+                doc.getCreationDate() == null ? "" : df.format(doc.getCreationDate())});
         }
+    }
 
-        // the key date is supplied by the caller and can be a stored one - a @Temporal(DATE)
-        // field returns a java.sql.Date, whose toInstant() throws by contract. The dates read
-        // from entries and rules below are mapped TIMESTAMP and come back as java.sql.Timestamp,
-        // which converts properly
-        LocalDate endDate = Instant.ofEpochMilli(upTo.getTime())
-                .atZone(ZoneId.systemDefault()).toLocalDate();
-        if (!startDate.isBefore(endDate)) {
-            return result;
+    /**
+     * Collects what a position may be assigned to: the procedures of this ledger, by their court
+     * file number where they have one.
+     */
+    private void loadAssignable() {
+        this.assignable.clear();
+        if (this.ledgerId == null) {
+            return;
         }
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<DunningCase> cases = locator.lookupDunningServiceRemote().getDunningCases(this.ledgerId);
+            if (cases != null) {
+                for (DunningCase c : cases) {
+                    this.assignable.put(label(c), c.getId());
+                }
+            }
+        } catch (Exception ex) {
+            log.error("Unable to load the dunning cases of ledger " + this.ledgerId, ex);
+        }
+    }
 
-        // Basiszinsänderungen und Principal-Änderungen im Zeitraum ermitteln
-        List<LocalDate> changeDates = getBaseRateChangeDatesBetween(startDate, endDate);
-        List<LocalDate> principalChangeDates = getPrincipalChangeDatesBetween(cmp, startDate, endDate);
-        for (LocalDate principalChangeDate : principalChangeDates) {
-            if (!changeDates.contains(principalChangeDate)) {
-                changeDates.add(principalChangeDate);
+    private String label(DunningCase c) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(c.getOwnReference() == null ? "ohne Zeichen" : c.getOwnReference());
+        if (c.getCourtFileNumber() != null && !c.getCourtFileNumber().trim().isEmpty()) {
+            sb.append(" / ").append(c.getCourtFileNumber());
+        }
+        if (c.getCourtName() != null) {
+            sb.append(" (").append(c.getCourtName()).append(")");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Puts the analysed positions into the table and offers an assignment per position.
+     */
+    private void showProposals() {
+        DefaultTableModel model = (DefaultTableModel) this.tblProposals.getModel();
+        model.setRowCount(0);
+
+        List<String> options = new ArrayList<>();
+        options.add(NOT_ASSIGNED);
+        options.addAll(this.assignable.keySet());
+        // a message can name a procedure of another case; that suggestion is offered as it stands
+        for (DunningMessageProposal p : this.proposals) {
+            if (p.getSuggestedDunningCaseId() != null && p.getSuggestedCaseLabel() != null
+                    && !this.assignable.containsKey(p.getSuggestedCaseLabel())) {
+                this.assignable.put(p.getSuggestedCaseLabel(), p.getSuggestedDunningCaseId());
+                options.add(p.getSuggestedCaseLabel());
             }
         }
-        Collections.sort(changeDates);
 
-        // Teilzeiträume erstellen
-        List<LocalDate[]> bounds = new ArrayList<>();
-        LocalDate periodStart = startDate;
-        for (LocalDate changeDate : changeDates) {
-            if (!changeDate.isAfter(periodStart)) {
+        for (DunningMessageProposal p : this.proposals) {
+            String suggestion = NOT_ASSIGNED;
+            if (p.getSuggestedCaseLabel() != null && this.assignable.containsKey(p.getSuggestedCaseLabel())) {
+                suggestion = p.getSuggestedCaseLabel();
+            }
+            StringBuilder hint = new StringBuilder();
+            if (p.getWarning() != null) {
+                hint.append(p.getWarning());
+            }
+            if (p.isAboutTheTransmission()) {
+                // a receipt or a rejection says something about the file, not about a procedure
+                if (hint.length() > 0) {
+                    hint.append(" ");
+                }
+                hint.append("betrifft die Übermittlung, nicht den Vorgang");
+            }
+            model.addRow(new Object[]{
+                p.getPosition(),
+                p.getDescription() == null ? p.getMessageKind() : p.getDescription(),
+                p.getOwnReference() == null ? "" : p.getOwnReference(),
+                p.getCourtFileNumber() == null ? "" : p.getCourtFileNumber(),
+                p.getReportedDate() == null ? "" : df.format(p.getReportedDate()),
+                suggestion,
+                hint.toString()});
+        }
+
+        JComboBox<String> editor = new JComboBox<>(options.toArray(new String[0]));
+        this.tblProposals.getColumnModel().getColumn(5).setCellEditor(new DefaultCellEditor(editor));
+        this.cmdApply.setEnabled(!this.proposals.isEmpty());
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form. WARNING: Do NOT
+     * modify this code. The content of this method is always regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        lblIntro = new javax.swing.JLabel();
+        jScrollPaneDocuments = new javax.swing.JScrollPane();
+        tblDocuments = new javax.swing.JTable();
+        jScrollPaneProposals = new javax.swing.JScrollPane();
+        tblProposals = new javax.swing.JTable();
+        jScrollPaneResult = new javax.swing.JScrollPane();
+        txtResult = new javax.swing.JTextArea();
+        cmdAnalyse = new javax.swing.JButton();
+        cmdApply = new javax.swing.JButton();
+        cmdClose = new javax.swing.JButton();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Gerichtsnachricht einlesen");
+
+        lblIntro.setText("");
+        lblIntro.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+
+        tblDocuments.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+
+            }
+        ));
+        jScrollPaneDocuments.setViewportView(tblDocuments);
+
+        tblProposals.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+
+            }
+        ));
+        jScrollPaneProposals.setViewportView(tblProposals);
+
+        txtResult.setEditable(false);
+        txtResult.setColumns(20);
+        txtResult.setRows(4);
+        jScrollPaneResult.setViewportView(txtResult);
+
+        cmdAnalyse.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfind.png"))); // NOI18N
+        cmdAnalyse.setText("Datei analysieren");
+        cmdAnalyse.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAnalyseActionPerformed(evt);
+            }
+        });
+
+        cmdApply.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdApply.setText("Zuordnungen übernehmen");
+        cmdApply.setEnabled(false);
+        cmdApply.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdApplyActionPerformed(evt);
+            }
+        });
+
+        cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdClose.setText("Schließen");
+        cmdClose.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCloseActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblIntro, javax.swing.GroupLayout.DEFAULT_SIZE, 900, Short.MAX_VALUE)
+                    .addComponent(jScrollPaneDocuments, javax.swing.GroupLayout.DEFAULT_SIZE, 900, Short.MAX_VALUE)
+                    .addComponent(jScrollPaneProposals, javax.swing.GroupLayout.DEFAULT_SIZE, 900, Short.MAX_VALUE)
+                    .addComponent(jScrollPaneResult, javax.swing.GroupLayout.DEFAULT_SIZE, 900, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(cmdAnalyse)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdApply)
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdClose)))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(lblIntro, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPaneDocuments, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPaneProposals, javax.swing.GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPaneResult, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdAnalyse)
+                    .addComponent(cmdApply)
+                    .addComponent(cmdClose))
+                .addContainerGap())
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void cmdAnalyseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAnalyseActionPerformed
+        int row = this.tblDocuments.getSelectedRow();
+        if (row < 0) {
+            JOptionPane.showMessageDialog(this, "Bitte ein Dokument auswählen.",
+                    "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        ArchiveFileDocumentsBean doc = this.documents.get(this.tblDocuments.convertRowIndexToModel(row));
+
+        this.proposals.clear();
+        ((DefaultTableModel) this.tblProposals.getModel()).setRowCount(0);
+        this.cmdApply.setEnabled(false);
+        this.txtResult.setText("");
+
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<DunningMessageProposal> analysed = locator.lookupDunningServiceRemote()
+                    .analyseCourtMessages(doc.getId());
+            if (analysed != null) {
+                this.proposals.addAll(analysed);
+            }
+        } catch (Exception ex) {
+            log.error("Unable to analyse document " + doc.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Datei konnte nicht gelesen werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        } finally {
+            this.setCursor(Cursor.getDefaultCursor());
+        }
+
+        if (this.proposals.isEmpty()) {
+            this.txtResult.setText("Die Datei enthält keine auswertbaren Nachrichten. "
+                    + "Handelt es sich wirklich um eine EDA-Nachrichtendatei des Mahngerichts?");
+            return;
+        }
+        showProposals();
+    }//GEN-LAST:event_cmdAnalyseActionPerformed
+
+    private void cmdApplyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdApplyActionPerformed
+        int row = this.tblDocuments.getSelectedRow();
+        if (row < 0 || this.proposals.isEmpty()) {
+            return;
+        }
+        ArchiveFileDocumentsBean doc = this.documents.get(this.tblDocuments.convertRowIndexToModel(row));
+
+        if (this.tblProposals.isEditing()) {
+            this.tblProposals.getCellEditor().stopCellEditing();
+        }
+
+        Map<Integer, String> assignments = new HashMap<>();
+        DefaultTableModel model = (DefaultTableModel) this.tblProposals.getModel();
+        for (int i = 0; i < model.getRowCount(); i++) {
+            Object chosen = model.getValueAt(i, 5);
+            if (chosen == null || NOT_ASSIGNED.equals(chosen)) {
                 continue;
             }
-            bounds.add(new LocalDate[]{periodStart, changeDate});
-            periodStart = changeDate;
-        }
-        bounds.add(new LocalDate[]{periodStart, endDate});
-
-        // Für jeden Teilzeitraum Zinsen berechnen
-        for (LocalDate[] b : bounds) {
-            long days = ChronoUnit.DAYS.between(b[0], b[1]);
-            if (days <= 0) {
-                continue;
-            }
-
-            InterestRule effectiveRule = findEffectiveRule(cmp, b[0]);
-            if (effectiveRule == null) {
-                continue;
-            }
-
-            BigDecimal principal = calculateDynamicPrincipal(cmp, Date.from(b[0].atStartOfDay(ZoneId.systemDefault()).toInstant()));
-
-            BigDecimal rate = effectiveRule.getEffectiveRate(getBaseRateForDate(b[0]));
-
-            BigDecimal interest = principal
-                    .multiply(rate)
-                    .multiply(BigDecimal.valueOf(days))
-                    .divide(BigDecimal.valueOf(365), 2, RoundingMode.HALF_UP)
-                    .setScale(2, RoundingMode.HALF_UP);
-
-            result.add(new ClaimInterestPeriod(b[0], b[1], days, rate, principal, interest));
-        }
-
-        return result;
-    }
-
-    /**
-     * Returns the interest rule effective at the given date, that is the last rule whose effective
-     * date is not after it.
-     *
-     * @param cmp the component
-     * @param date the date
-     * @return the effective rule, or null if none applies yet
-     */
-    private InterestRule findEffectiveRule(ClaimComponent cmp, LocalDate date) {
-        InterestRule effectiveRule = null;
-        for (InterestRule rule : cmp.getInterestRules()) {
-            if (rule.getValidFrom() == null) {
-                continue;
-            }
-            LocalDate ruleStart = rule.getValidFrom().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            if (date.isBefore(ruleStart)) {
-                continue;
-            }
-            effectiveRule = rule;
-        }
-        return effectiveRule;
-    }
-
-    /**
-     * Determines the date interest starts to run for a component: the date of the last booked
-     * interest entry where one exists, the date of the component's earliest booking otherwise.
-     *
-     * A component whose interest only starts on service of the dunning order bears no interest at
-     * all until that date is known. The service date reaches the component as the effective date of
-     * its interest rule, set when the service is recorded manually or imported from a court
-     * message; until then the component has no rule carrying a date and no interest accrues.
-     *
-     * @param cmp the component
-     * @return the start date, or null if interest cannot run yet
-     */
-    private LocalDate determineInterestStart(ClaimComponent cmp) {
-        if (cmp.isInterestStartingOnService()) {
-            LocalDate ruleStart = earliestRuleStart(cmp);
-            if (ruleStart == null) {
-                // service has not been recorded yet - § 291 BGB interest cannot run before it
-                return null;
-            }
-            ClaimLedgerEntry lastOnService = this.claimLedgerEntriesFacade.findLatestInterestEntry(cmp);
-            if (lastOnService != null) {
-                LocalDate booked = lastOnService.getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                return booked.isAfter(ruleStart) ? booked : ruleStart;
-            }
-            return ruleStart;
-        }
-
-        ClaimLedgerEntry lastInterestEntry = this.claimLedgerEntriesFacade.findLatestInterestEntry(cmp);
-        if (lastInterestEntry != null) {
-            return lastInterestEntry.getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        }
-
-        ClaimLedgerEntry earliest = this.claimLedgerEntriesFacade.findEarliestEntry(cmp);
-        if (earliest == null) {
-            return null;
-        }
-        return earliest.getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-    }
-
-    /**
-     * Returns the earliest effective date among the component's interest rules.
-     *
-     * @param cmp the component
-     * @return the earliest rule start, or null if no rule carries a date
-     */
-    private LocalDate earliestRuleStart(ClaimComponent cmp) {
-        LocalDate earliest = null;
-        for (InterestRule rule : cmp.getInterestRules()) {
-            if (rule.getValidFrom() == null) {
-                continue;
-            }
-            LocalDate ruleStart = rule.getValidFrom().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            if (earliest == null || ruleStart.isBefore(earliest)) {
-                earliest = ruleStart;
+            String dunningCaseId = this.assignable.get(chosen.toString());
+            if (dunningCaseId != null) {
+                assignments.put((Integer) model.getValueAt(i, 0), dunningCaseId);
             }
         }
-        return earliest;
-    }
+        if (assignments.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Es ist keine Position zugeordnet - es gibt nichts zu übernehmen.",
+                    "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
 
-    /**
-     * Computes the principal of a component at a given date from its bookings. Claims and
-     * adjustments raise it, payments reduce it, interest bookings do not affect it. The
-     * component's principalAmount is deliberately not used, as it duplicates the first booking.
-     *
-     * @param cmp the component
-     * @param upTo the key date
-     * @return the principal at that date, never negative
-     */
-    public BigDecimal calculateDynamicPrincipal(ClaimComponent cmp, Date upTo) {
-        BigDecimal principal = BigDecimal.ZERO;
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        List<String> report;
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            report = locator.lookupDunningServiceRemote().applyCourtMessages(doc.getId(), assignments);
+        } catch (Exception ex) {
+            log.error("Unable to apply the messages of document " + doc.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Zuordnungen konnten nicht übernommen werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        } finally {
+            this.setCursor(Cursor.getDefaultCursor());
+        }
 
-        List<ClaimLedgerEntry> entries = this.claimLedgerEntriesFacade.findByComponent(cmp);
-
-        for (ClaimLedgerEntry entry : entries) {
-            // Nur Buchungen bis zum Stichtag berücksichtigen
-            if (entry.getEntryDate().after(upTo)) {
-                break; // Einträge sind nach Datum sortiert
-            }
-
-            switch (entry.getType()) {
-                case PAYMENT:
-                    principal = principal.subtract(entry.getAmount());
-                    break;
-                case ADJUSTMENT:
-                    principal = principal.add(entry.getAmount());
-                    break;
-                case MAIN_CLAIM:
-                case COST:
-                    principal = principal.add(entry.getAmount());
-                    break;
-                case INTEREST:
-                    // Zinsen erhöhen NICHT den Principal für zukünftige Zinsberechnungen
-                    break;
+        this.applied = true;
+        StringBuilder sb = new StringBuilder();
+        if (report != null) {
+            for (String line : report) {
+                sb.append(line).append("\n");
             }
         }
+        this.txtResult.setText(sb.toString());
+        this.txtResult.setCaretPosition(0);
+    }//GEN-LAST:event_cmdApplyActionPerformed
 
-        return principal.max(BigDecimal.ZERO);
-    }
+    private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
+        setVisible(false);
+    }//GEN-LAST:event_cmdCloseActionPerformed
 
-    /**
-     * Returns the dates within the period on which the stored base interest rate changes.
-     *
-     * @param start start of the period
-     * @param end end of the period
-     * @return the change dates
-     */
-    private List<LocalDate> getBaseRateChangeDatesBetween(LocalDate start, LocalDate end) {
-        java.util.Date startDate = java.util.Date.from(start.atStartOfDay(ZoneId.systemDefault()).toInstant());
-        java.util.Date endDate = java.util.Date.from(end.atStartOfDay(ZoneId.systemDefault()).toInstant());
-
-        List<BaseInterest> rates = this.baseInterestFacade.findByDateRange(startDate, endDate);
-
-        List<LocalDate> changeDates = new ArrayList<>();
-        for (BaseInterest rate : rates) {
-            java.util.Date validFrom = rate.getValidFrom();
-            LocalDate changeDate;
-
-            // JPA kann java.sql.Date zurückgeben, das direkt toLocalDate() unterstützt
-            if (validFrom instanceof java.sql.Date) {
-                changeDate = ((java.sql.Date) validFrom).toLocalDate();
-            } else {
-                changeDate = validFrom.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            }
-
-            changeDates.add(changeDate);
-        }
-
-        return changeDates;
-    }
-
-    /**
-     * Returns the base interest rate valid at the given date.
-     *
-     * @param start the date
-     * @return the stored rate, or zero if none is stored for that date
-     */
-    private BigDecimal getBaseRateForDate(LocalDate start) {
-        java.util.Date date = java.util.Date.from(start.atStartOfDay(ZoneId.systemDefault()).toInstant());
-
-        BigDecimal rate = this.baseInterestFacade.findRateByDate(date);
-
-        return (rate != null) ? rate : BigDecimal.ZERO;
-    }
-
-    /**
-     * Returns the dates within the period on which the principal of a component changes. Interest
-     * bookings are ignored, as they do not change the principal.
-     *
-     * @param cmp the component
-     * @param startDate start of the period
-     * @param endDate end of the period
-     * @return the change dates, sorted
-     */
-    private List<LocalDate> getPrincipalChangeDatesBetween(ClaimComponent cmp, LocalDate startDate, LocalDate endDate) {
-        List<LocalDate> changeDates = new ArrayList<>();
-
-        List<ClaimLedgerEntry> entries = this.claimLedgerEntriesFacade.findByComponent(cmp);
-
-        for (ClaimLedgerEntry entry : entries) {
-            LocalDate entryDate = entry.getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-
-            // Nur Buchungen im relevanten Zeitraum
-            if (entryDate.isBefore(startDate) || !entryDate.isBefore(endDate)) {
-                continue;
-            }
-
-            // Nur Buchungstypen, die den Principal ändern
-            switch (entry.getType()) {
-                case PAYMENT:
-                case ADJUSTMENT:
-                case MAIN_CLAIM:
-                case COST:
-                    if (!changeDates.contains(entryDate)) {
-                        changeDates.add(entryDate);
-                    }
-                    break;
-                case INTEREST:
-                    // Zinsbuchungen ändern den Principal NICHT
-                    break;
-            }
-        }
-
-        Collections.sort(changeDates);
-
-        return changeDates;
-    }
-
-    /**
-     * A part of an interest period over which rate and principal stay constant, together with the
-     * interest computed for it.
-     */
-    public static class ClaimInterestPeriod {
-
-        private final LocalDate start;
-        private final LocalDate end;
-        private final long days;
-        private final BigDecimal rate;
-        private final BigDecimal principal;
-        private final BigDecimal amount;
-
-        public ClaimInterestPeriod(LocalDate start, LocalDate end, long days, BigDecimal rate, BigDecimal principal, BigDecimal amount) {
-            this.start = start;
-            this.end = end;
-            this.days = days;
-            this.rate = rate;
-            this.principal = principal;
-            this.amount = amount;
-        }
-
-        public LocalDate getStart() {
-            return start;
-        }
-
-        public LocalDate getEnd() {
-            return end;
-        }
-
-        /**
-         * @return the number of interest days in this period
-         */
-        public long getDays() {
-            return days;
-        }
-
-        /**
-         * @return the effective rate as a decimal fraction, e.g. 0.0727 for 7.27 percent
-         */
-        public BigDecimal getRate() {
-            return rate;
-        }
-
-        /**
-         * @return the principal the interest was computed on
-         */
-        public BigDecimal getPrincipal() {
-            return principal;
-        }
-
-        /**
-         * @return the interest accrued in this period
-         */
-        public BigDecimal getAmount() {
-            return amount;
-        }
-    }
-
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdAnalyse;
+    private javax.swing.JButton cmdApply;
+    private javax.swing.JButton cmdClose;
+    private javax.swing.JScrollPane jScrollPaneDocuments;
+    private javax.swing.JScrollPane jScrollPaneProposals;
+    private javax.swing.JScrollPane jScrollPaneResult;
+    private javax.swing.JLabel lblIntro;
+    private javax.swing.JTable tblDocuments;
+    private javax.swing.JTable tblProposals;
+    private javax.swing.JTextArea txtResult;
+    // End of variables declaration//GEN-END:variables
 }

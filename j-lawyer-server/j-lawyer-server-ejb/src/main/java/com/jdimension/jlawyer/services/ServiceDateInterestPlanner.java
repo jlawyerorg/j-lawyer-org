@@ -662,415 +662,81 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
-import com.jdimension.jlawyer.persistence.BaseInterest;
-import com.jdimension.jlawyer.persistence.BaseInterestFacadeLocal;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
-import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
-import com.jdimension.jlawyer.persistence.ClaimLedgerEntryFacadeLocal;
 import com.jdimension.jlawyer.persistence.InterestRule;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
 /**
- * The single interest engine of the claim ledger.
+ * Decides which interest rules a recorded service date starts.
  *
- * Every consumer of accrued interest - the ledger totals, the payment split, the claim statement
- * and the enforcement itemisation - computes through this class, so that a statement and the form
- * annexed to an enforcement application can never disagree. The base rate is always resolved from
- * the stored base interest rates for the period being computed; there is deliberately no fallback
- * constant, because a wrong rate produces a wrong claim.
+ * A court awarding interest "ab Zustellung" fixes no date, because on the day of the application
+ * there is none: it comes into existence when the Mahnbescheid actually reaches the defendant. Until
+ * then the rule carries no start and the ledger rightly lets no interest accrue on it - but nothing
+ * would ever start it either, and interest the court awarded would quietly never be claimed.
  *
- * The computation splits the interest period at every date on which either the base rate or the
- * component's principal changes, and applies the interest rule effective for each part.
+ * Kept apart from the service that stores the result, so which rules move and which do not can be
+ * examined without a database behind it.
  *
  * @author jens
  */
-public class ClaimInterestCalculator {
-
-    private final BaseInterestFacadeLocal baseInterestFacade;
-    private final ClaimLedgerEntryFacadeLocal claimLedgerEntriesFacade;
-
-    public ClaimInterestCalculator(BaseInterestFacadeLocal baseInterestFacade, ClaimLedgerEntryFacadeLocal claimLedgerEntriesFacade) {
-        this.baseInterestFacade = baseInterestFacade;
-        this.claimLedgerEntriesFacade = claimLedgerEntriesFacade;
-    }
+public class ServiceDateInterestPlanner {
 
     /**
-     * Computes the interest accrued on a component up to the given date but not yet booked as an
-     * interest entry.
+     * Selects the interest rules that the service date starts.
      *
-     * @param cmp the component
-     * @param upTo the key date
-     * @return the accrued interest, zero if the component bears no interest
+     * A rule without a start is started. A rule that already carries one is left alone, with a
+     * single exception: if it carries exactly the service date recorded before, it moves along with
+     * it. That way correcting a wrongly recorded service date follows through to the interest, while
+     * a start somebody entered by hand is never overwritten behind their back.
+     *
+     * @param components the components of the ledger; only those whose interest starts on service
+     * are considered
+     * @param rules the interest rules of those components, in any order
+     * @param previousServiceDate the service date recorded before this change, or null if none was
+     * @param serviceDate the service date now recorded
+     * @return the rules to be given that start, never null; empty if nothing waits for it
      */
-    public BigDecimal calculateAccruedInterest(ClaimComponent cmp, Date upTo) {
-        BigDecimal totalInterest = BigDecimal.ZERO;
-        for (ClaimInterestPeriod p : calculateInterestPeriods(cmp, upTo)) {
-            totalInterest = totalInterest.add(p.getAmount());
+    public List<InterestRule> rulesStartedBy(List<ClaimComponent> components, List<InterestRule> rules,
+            Date previousServiceDate, Date serviceDate) {
+
+        List<InterestRule> started = new ArrayList<>();
+        if (serviceDate == null || components == null || rules == null) {
+            return started;
         }
-        return totalInterest;
-    }
-
-    /**
-     * Splits the interest period of a component into the parts over which rate and principal stay
-     * constant, and computes each part.
-     *
-     * Callers that only need the sum use {@link #calculateAccruedInterest(ClaimComponent, Date)};
-     * callers that book one ledger entry per period, or that have to state the periods in a claim
-     * statement or an enforcement itemisation, use the periods themselves. Both go through this
-     * one computation, so the amounts can never differ.
-     *
-     * @param cmp the component
-     * @param upTo the key date
-     * @return the computed periods, empty if the component bears no interest yet
-     */
-    public List<ClaimInterestPeriod> calculateInterestPeriods(ClaimComponent cmp, Date upTo) {
-        List<ClaimInterestPeriod> result = new ArrayList<>();
-
-        if (!cmp.isInterestBearing()) {
-            return result;
-        }
-
-        LocalDate startDate = determineInterestStart(cmp);
-        if (startDate == null) {
-            return result;
-        }
-
-        // the key date is supplied by the caller and can be a stored one - a @Temporal(DATE)
-        // field returns a java.sql.Date, whose toInstant() throws by contract. The dates read
-        // from entries and rules below are mapped TIMESTAMP and come back as java.sql.Timestamp,
-        // which converts properly
-        LocalDate endDate = Instant.ofEpochMilli(upTo.getTime())
-                .atZone(ZoneId.systemDefault()).toLocalDate();
-        if (!startDate.isBefore(endDate)) {
-            return result;
-        }
-
-        // Basiszinsänderungen und Principal-Änderungen im Zeitraum ermitteln
-        List<LocalDate> changeDates = getBaseRateChangeDatesBetween(startDate, endDate);
-        List<LocalDate> principalChangeDates = getPrincipalChangeDatesBetween(cmp, startDate, endDate);
-        for (LocalDate principalChangeDate : principalChangeDates) {
-            if (!changeDates.contains(principalChangeDate)) {
-                changeDates.add(principalChangeDate);
+        List<String> waiting = new ArrayList<>();
+        for (ClaimComponent component : components) {
+            if (component != null && component.isInterestStartingOnService() && component.getId() != null) {
+                waiting.add(component.getId());
             }
         }
-        Collections.sort(changeDates);
-
-        // Teilzeiträume erstellen
-        List<LocalDate[]> bounds = new ArrayList<>();
-        LocalDate periodStart = startDate;
-        for (LocalDate changeDate : changeDates) {
-            if (!changeDate.isAfter(periodStart)) {
+        for (InterestRule rule : rules) {
+            if (rule == null || rule.getComponent() == null
+                    || !waiting.contains(rule.getComponent().getId())) {
                 continue;
             }
-            bounds.add(new LocalDate[]{periodStart, changeDate});
-            periodStart = changeDate;
-        }
-        bounds.add(new LocalDate[]{periodStart, endDate});
-
-        // Für jeden Teilzeitraum Zinsen berechnen
-        for (LocalDate[] b : bounds) {
-            long days = ChronoUnit.DAYS.between(b[0], b[1]);
-            if (days <= 0) {
-                continue;
+            if (rule.getValidFrom() == null
+                    || (previousServiceDate != null && previousServiceDate.equals(rule.getValidFrom()))) {
+                started.add(rule);
             }
-
-            InterestRule effectiveRule = findEffectiveRule(cmp, b[0]);
-            if (effectiveRule == null) {
-                continue;
-            }
-
-            BigDecimal principal = calculateDynamicPrincipal(cmp, Date.from(b[0].atStartOfDay(ZoneId.systemDefault()).toInstant()));
-
-            BigDecimal rate = effectiveRule.getEffectiveRate(getBaseRateForDate(b[0]));
-
-            BigDecimal interest = principal
-                    .multiply(rate)
-                    .multiply(BigDecimal.valueOf(days))
-                    .divide(BigDecimal.valueOf(365), 2, RoundingMode.HALF_UP)
-                    .setScale(2, RoundingMode.HALF_UP);
-
-            result.add(new ClaimInterestPeriod(b[0], b[1], days, rate, principal, interest));
         }
-
-        return result;
+        return started;
     }
 
     /**
-     * Returns the interest rule effective at the given date, that is the last rule whose effective
-     * date is not after it.
+     * Adds to a journal entry what the service date did to the interest, so the change is visible
+     * where the course of the procedure is read and not only in the components.
      *
-     * @param cmp the component
-     * @param date the date
-     * @return the effective rule, or null if none applies yet
+     * @param comment the comment as it stands, possibly null
+     * @param started how many interest rules were given a start
+     * @return the comment, extended where anything was started
      */
-    private InterestRule findEffectiveRule(ClaimComponent cmp, LocalDate date) {
-        InterestRule effectiveRule = null;
-        for (InterestRule rule : cmp.getInterestRules()) {
-            if (rule.getValidFrom() == null) {
-                continue;
-            }
-            LocalDate ruleStart = rule.getValidFrom().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            if (date.isBefore(ruleStart)) {
-                continue;
-            }
-            effectiveRule = rule;
+    public String withServiceNote(String comment, int started) {
+        if (started < 1) {
+            return comment;
         }
-        return effectiveRule;
+        String note = "Zinsbeginn ab Zustellung für " + started + " Zinsregel(n) gesetzt.";
+        return comment == null || comment.trim().isEmpty() ? note : comment.trim() + " " + note;
     }
-
-    /**
-     * Determines the date interest starts to run for a component: the date of the last booked
-     * interest entry where one exists, the date of the component's earliest booking otherwise.
-     *
-     * A component whose interest only starts on service of the dunning order bears no interest at
-     * all until that date is known. The service date reaches the component as the effective date of
-     * its interest rule, set when the service is recorded manually or imported from a court
-     * message; until then the component has no rule carrying a date and no interest accrues.
-     *
-     * @param cmp the component
-     * @return the start date, or null if interest cannot run yet
-     */
-    private LocalDate determineInterestStart(ClaimComponent cmp) {
-        if (cmp.isInterestStartingOnService()) {
-            LocalDate ruleStart = earliestRuleStart(cmp);
-            if (ruleStart == null) {
-                // service has not been recorded yet - § 291 BGB interest cannot run before it
-                return null;
-            }
-            ClaimLedgerEntry lastOnService = this.claimLedgerEntriesFacade.findLatestInterestEntry(cmp);
-            if (lastOnService != null) {
-                LocalDate booked = lastOnService.getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                return booked.isAfter(ruleStart) ? booked : ruleStart;
-            }
-            return ruleStart;
-        }
-
-        ClaimLedgerEntry lastInterestEntry = this.claimLedgerEntriesFacade.findLatestInterestEntry(cmp);
-        if (lastInterestEntry != null) {
-            return lastInterestEntry.getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        }
-
-        ClaimLedgerEntry earliest = this.claimLedgerEntriesFacade.findEarliestEntry(cmp);
-        if (earliest == null) {
-            return null;
-        }
-        return earliest.getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-    }
-
-    /**
-     * Returns the earliest effective date among the component's interest rules.
-     *
-     * @param cmp the component
-     * @return the earliest rule start, or null if no rule carries a date
-     */
-    private LocalDate earliestRuleStart(ClaimComponent cmp) {
-        LocalDate earliest = null;
-        for (InterestRule rule : cmp.getInterestRules()) {
-            if (rule.getValidFrom() == null) {
-                continue;
-            }
-            LocalDate ruleStart = rule.getValidFrom().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            if (earliest == null || ruleStart.isBefore(earliest)) {
-                earliest = ruleStart;
-            }
-        }
-        return earliest;
-    }
-
-    /**
-     * Computes the principal of a component at a given date from its bookings. Claims and
-     * adjustments raise it, payments reduce it, interest bookings do not affect it. The
-     * component's principalAmount is deliberately not used, as it duplicates the first booking.
-     *
-     * @param cmp the component
-     * @param upTo the key date
-     * @return the principal at that date, never negative
-     */
-    public BigDecimal calculateDynamicPrincipal(ClaimComponent cmp, Date upTo) {
-        BigDecimal principal = BigDecimal.ZERO;
-
-        List<ClaimLedgerEntry> entries = this.claimLedgerEntriesFacade.findByComponent(cmp);
-
-        for (ClaimLedgerEntry entry : entries) {
-            // Nur Buchungen bis zum Stichtag berücksichtigen
-            if (entry.getEntryDate().after(upTo)) {
-                break; // Einträge sind nach Datum sortiert
-            }
-
-            switch (entry.getType()) {
-                case PAYMENT:
-                    principal = principal.subtract(entry.getAmount());
-                    break;
-                case ADJUSTMENT:
-                    principal = principal.add(entry.getAmount());
-                    break;
-                case MAIN_CLAIM:
-                case COST:
-                    principal = principal.add(entry.getAmount());
-                    break;
-                case INTEREST:
-                    // Zinsen erhöhen NICHT den Principal für zukünftige Zinsberechnungen
-                    break;
-            }
-        }
-
-        return principal.max(BigDecimal.ZERO);
-    }
-
-    /**
-     * Returns the dates within the period on which the stored base interest rate changes.
-     *
-     * @param start start of the period
-     * @param end end of the period
-     * @return the change dates
-     */
-    private List<LocalDate> getBaseRateChangeDatesBetween(LocalDate start, LocalDate end) {
-        java.util.Date startDate = java.util.Date.from(start.atStartOfDay(ZoneId.systemDefault()).toInstant());
-        java.util.Date endDate = java.util.Date.from(end.atStartOfDay(ZoneId.systemDefault()).toInstant());
-
-        List<BaseInterest> rates = this.baseInterestFacade.findByDateRange(startDate, endDate);
-
-        List<LocalDate> changeDates = new ArrayList<>();
-        for (BaseInterest rate : rates) {
-            java.util.Date validFrom = rate.getValidFrom();
-            LocalDate changeDate;
-
-            // JPA kann java.sql.Date zurückgeben, das direkt toLocalDate() unterstützt
-            if (validFrom instanceof java.sql.Date) {
-                changeDate = ((java.sql.Date) validFrom).toLocalDate();
-            } else {
-                changeDate = validFrom.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            }
-
-            changeDates.add(changeDate);
-        }
-
-        return changeDates;
-    }
-
-    /**
-     * Returns the base interest rate valid at the given date.
-     *
-     * @param start the date
-     * @return the stored rate, or zero if none is stored for that date
-     */
-    private BigDecimal getBaseRateForDate(LocalDate start) {
-        java.util.Date date = java.util.Date.from(start.atStartOfDay(ZoneId.systemDefault()).toInstant());
-
-        BigDecimal rate = this.baseInterestFacade.findRateByDate(date);
-
-        return (rate != null) ? rate : BigDecimal.ZERO;
-    }
-
-    /**
-     * Returns the dates within the period on which the principal of a component changes. Interest
-     * bookings are ignored, as they do not change the principal.
-     *
-     * @param cmp the component
-     * @param startDate start of the period
-     * @param endDate end of the period
-     * @return the change dates, sorted
-     */
-    private List<LocalDate> getPrincipalChangeDatesBetween(ClaimComponent cmp, LocalDate startDate, LocalDate endDate) {
-        List<LocalDate> changeDates = new ArrayList<>();
-
-        List<ClaimLedgerEntry> entries = this.claimLedgerEntriesFacade.findByComponent(cmp);
-
-        for (ClaimLedgerEntry entry : entries) {
-            LocalDate entryDate = entry.getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-
-            // Nur Buchungen im relevanten Zeitraum
-            if (entryDate.isBefore(startDate) || !entryDate.isBefore(endDate)) {
-                continue;
-            }
-
-            // Nur Buchungstypen, die den Principal ändern
-            switch (entry.getType()) {
-                case PAYMENT:
-                case ADJUSTMENT:
-                case MAIN_CLAIM:
-                case COST:
-                    if (!changeDates.contains(entryDate)) {
-                        changeDates.add(entryDate);
-                    }
-                    break;
-                case INTEREST:
-                    // Zinsbuchungen ändern den Principal NICHT
-                    break;
-            }
-        }
-
-        Collections.sort(changeDates);
-
-        return changeDates;
-    }
-
-    /**
-     * A part of an interest period over which rate and principal stay constant, together with the
-     * interest computed for it.
-     */
-    public static class ClaimInterestPeriod {
-
-        private final LocalDate start;
-        private final LocalDate end;
-        private final long days;
-        private final BigDecimal rate;
-        private final BigDecimal principal;
-        private final BigDecimal amount;
-
-        public ClaimInterestPeriod(LocalDate start, LocalDate end, long days, BigDecimal rate, BigDecimal principal, BigDecimal amount) {
-            this.start = start;
-            this.end = end;
-            this.days = days;
-            this.rate = rate;
-            this.principal = principal;
-            this.amount = amount;
-        }
-
-        public LocalDate getStart() {
-            return start;
-        }
-
-        public LocalDate getEnd() {
-            return end;
-        }
-
-        /**
-         * @return the number of interest days in this period
-         */
-        public long getDays() {
-            return days;
-        }
-
-        /**
-         * @return the effective rate as a decimal fraction, e.g. 0.0727 for 7.27 percent
-         */
-        public BigDecimal getRate() {
-            return rate;
-        }
-
-        /**
-         * @return the principal the interest was computed on
-         */
-        public BigDecimal getPrincipal() {
-            return principal;
-        }
-
-        /**
-         * @return the interest accrued in this period
-         */
-        public BigDecimal getAmount() {
-            return amount;
-        }
-    }
-
 }

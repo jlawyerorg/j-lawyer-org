@@ -327,6 +327,15 @@
         <Component class="com.jdimension.jlawyer.client.editors.files.ClaimLedgerDunningPanel" name="pnlDunning">
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
+              <JTabbedPaneConstraints tabName="Mahnungen">
+                <Property name="tabTitle" type="java.lang.String" value="Mahnungen"/>
+              </JTabbedPaneConstraints>
+            </Constraint>
+          </Constraints>
+        </Component>
+        <Component class="com.jdimension.jlawyer.client.editors.files.ClaimLedgerCourtDunningPanel" name="pnlCourtDunning">
+          <Constraints>
+            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
               <JTabbedPaneConstraints tabName="Mahnverfahren">
                 <Property name="tabTitle" type="java.lang.String" value="Mahnverfahren"/>
               </JTabbedPaneConstraints>

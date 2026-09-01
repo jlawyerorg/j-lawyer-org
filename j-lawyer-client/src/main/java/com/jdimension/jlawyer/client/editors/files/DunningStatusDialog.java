@@ -660,417 +660,315 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.client.editors.files;
 
-import com.jdimension.jlawyer.persistence.BaseInterest;
-import com.jdimension.jlawyer.persistence.BaseInterestFacadeLocal;
-import com.jdimension.jlawyer.persistence.ClaimComponent;
-import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
-import com.jdimension.jlawyer.persistence.ClaimLedgerEntryFacadeLocal;
-import com.jdimension.jlawyer.persistence.InterestRule;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
+import com.jdimension.jlawyer.client.components.MultiCalDialog;
+import com.jdimension.jlawyer.persistence.DunningCaseStatus;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import javax.swing.JOptionPane;
 
 /**
- * The single interest engine of the claim ledger.
+ * Records that a dunning procedure has reached a new status.
  *
- * Every consumer of accrued interest - the ledger totals, the payment split, the claim statement
- * and the enforcement itemisation - computes through this class, so that a statement and the form
- * annexed to an enforcement application can never disagree. The base rate is always resolved from
- * the stored base interest rates for the period being computed; there is deliberately no fallback
- * constant, because a wrong rate produces a wrong claim.
+ * The dialog asks for two things and insists on both. The status is the obvious one. The date is
+ * the one that matters: it is the procedural date - the day the court issued, the day the document
+ * was served - and not the day somebody got round to entering it. Every deadline of the procedure is
+ * computed from it, so an entry date in its place would move the objection period and the lapse of
+ * § 701 ZPO along with it.
  *
- * The computation splits the interest period at every date on which either the base rate or the
- * component's principal changes, and applies the interest rule effective for each part.
+ * What the date means differs from status to status, which is why the dialog says so rather than
+ * leaving the user to guess.
  *
  * @author jens
  */
-public class ClaimInterestCalculator {
+public class DunningStatusDialog extends javax.swing.JDialog {
 
-    private final BaseInterestFacadeLocal baseInterestFacade;
-    private final ClaimLedgerEntryFacadeLocal claimLedgerEntriesFacade;
+    private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
 
-    public ClaimInterestCalculator(BaseInterestFacadeLocal baseInterestFacade, ClaimLedgerEntryFacadeLocal claimLedgerEntriesFacade) {
-        this.baseInterestFacade = baseInterestFacade;
-        this.claimLedgerEntriesFacade = claimLedgerEntriesFacade;
+    private final List<DunningCaseStatus> selectable = new ArrayList<>();
+
+    private boolean confirmed = false;
+
+    /**
+     * Creates the dialog.
+     *
+     * @param parent the owning window
+     * @param modal whether the dialog is modal
+     * @param current the status the procedure is in, which is preselected as the starting point
+     */
+    public DunningStatusDialog(java.awt.Frame parent, boolean modal, DunningCaseStatus current) {
+        super(parent, modal);
+        initComponents();
+
+        for (DunningCaseStatus status : DunningCaseStatus.values()) {
+            this.selectable.add(status);
+            this.cmbStatus.addItem(status.getLabel());
+        }
+        if (current != null) {
+            this.cmbStatus.setSelectedIndex(this.selectable.indexOf(current));
+        }
+        this.txtEventDate.setText(df.format(new Date()));
+        describeDate();
     }
 
     /**
-     * Computes the interest accrued on a component up to the given date but not yet booked as an
-     * interest entry.
-     *
-     * @param cmp the component
-     * @param upTo the key date
-     * @return the accrued interest, zero if the component bears no interest
+     * @return whether the user confirmed the entry
      */
-    public BigDecimal calculateAccruedInterest(ClaimComponent cmp, Date upTo) {
-        BigDecimal totalInterest = BigDecimal.ZERO;
-        for (ClaimInterestPeriod p : calculateInterestPeriods(cmp, upTo)) {
-            totalInterest = totalInterest.add(p.getAmount());
-        }
-        return totalInterest;
+    public boolean isConfirmed() {
+        return this.confirmed;
     }
 
     /**
-     * Splits the interest period of a component into the parts over which rate and principal stay
-     * constant, and computes each part.
-     *
-     * Callers that only need the sum use {@link #calculateAccruedInterest(ClaimComponent, Date)};
-     * callers that book one ledger entry per period, or that have to state the periods in a claim
-     * statement or an enforcement itemisation, use the periods themselves. Both go through this
-     * one computation, so the amounts can never differ.
-     *
-     * @param cmp the component
-     * @param upTo the key date
-     * @return the computed periods, empty if the component bears no interest yet
+     * @return the status the user chose, or null if the dialog was cancelled
      */
-    public List<ClaimInterestPeriod> calculateInterestPeriods(ClaimComponent cmp, Date upTo) {
-        List<ClaimInterestPeriod> result = new ArrayList<>();
-
-        if (!cmp.isInterestBearing()) {
-            return result;
-        }
-
-        LocalDate startDate = determineInterestStart(cmp);
-        if (startDate == null) {
-            return result;
-        }
-
-        // the key date is supplied by the caller and can be a stored one - a @Temporal(DATE)
-        // field returns a java.sql.Date, whose toInstant() throws by contract. The dates read
-        // from entries and rules below are mapped TIMESTAMP and come back as java.sql.Timestamp,
-        // which converts properly
-        LocalDate endDate = Instant.ofEpochMilli(upTo.getTime())
-                .atZone(ZoneId.systemDefault()).toLocalDate();
-        if (!startDate.isBefore(endDate)) {
-            return result;
-        }
-
-        // Basiszinsänderungen und Principal-Änderungen im Zeitraum ermitteln
-        List<LocalDate> changeDates = getBaseRateChangeDatesBetween(startDate, endDate);
-        List<LocalDate> principalChangeDates = getPrincipalChangeDatesBetween(cmp, startDate, endDate);
-        for (LocalDate principalChangeDate : principalChangeDates) {
-            if (!changeDates.contains(principalChangeDate)) {
-                changeDates.add(principalChangeDate);
-            }
-        }
-        Collections.sort(changeDates);
-
-        // Teilzeiträume erstellen
-        List<LocalDate[]> bounds = new ArrayList<>();
-        LocalDate periodStart = startDate;
-        for (LocalDate changeDate : changeDates) {
-            if (!changeDate.isAfter(periodStart)) {
-                continue;
-            }
-            bounds.add(new LocalDate[]{periodStart, changeDate});
-            periodStart = changeDate;
-        }
-        bounds.add(new LocalDate[]{periodStart, endDate});
-
-        // Für jeden Teilzeitraum Zinsen berechnen
-        for (LocalDate[] b : bounds) {
-            long days = ChronoUnit.DAYS.between(b[0], b[1]);
-            if (days <= 0) {
-                continue;
-            }
-
-            InterestRule effectiveRule = findEffectiveRule(cmp, b[0]);
-            if (effectiveRule == null) {
-                continue;
-            }
-
-            BigDecimal principal = calculateDynamicPrincipal(cmp, Date.from(b[0].atStartOfDay(ZoneId.systemDefault()).toInstant()));
-
-            BigDecimal rate = effectiveRule.getEffectiveRate(getBaseRateForDate(b[0]));
-
-            BigDecimal interest = principal
-                    .multiply(rate)
-                    .multiply(BigDecimal.valueOf(days))
-                    .divide(BigDecimal.valueOf(365), 2, RoundingMode.HALF_UP)
-                    .setScale(2, RoundingMode.HALF_UP);
-
-            result.add(new ClaimInterestPeriod(b[0], b[1], days, rate, principal, interest));
-        }
-
-        return result;
-    }
-
-    /**
-     * Returns the interest rule effective at the given date, that is the last rule whose effective
-     * date is not after it.
-     *
-     * @param cmp the component
-     * @param date the date
-     * @return the effective rule, or null if none applies yet
-     */
-    private InterestRule findEffectiveRule(ClaimComponent cmp, LocalDate date) {
-        InterestRule effectiveRule = null;
-        for (InterestRule rule : cmp.getInterestRules()) {
-            if (rule.getValidFrom() == null) {
-                continue;
-            }
-            LocalDate ruleStart = rule.getValidFrom().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            if (date.isBefore(ruleStart)) {
-                continue;
-            }
-            effectiveRule = rule;
-        }
-        return effectiveRule;
-    }
-
-    /**
-     * Determines the date interest starts to run for a component: the date of the last booked
-     * interest entry where one exists, the date of the component's earliest booking otherwise.
-     *
-     * A component whose interest only starts on service of the dunning order bears no interest at
-     * all until that date is known. The service date reaches the component as the effective date of
-     * its interest rule, set when the service is recorded manually or imported from a court
-     * message; until then the component has no rule carrying a date and no interest accrues.
-     *
-     * @param cmp the component
-     * @return the start date, or null if interest cannot run yet
-     */
-    private LocalDate determineInterestStart(ClaimComponent cmp) {
-        if (cmp.isInterestStartingOnService()) {
-            LocalDate ruleStart = earliestRuleStart(cmp);
-            if (ruleStart == null) {
-                // service has not been recorded yet - § 291 BGB interest cannot run before it
-                return null;
-            }
-            ClaimLedgerEntry lastOnService = this.claimLedgerEntriesFacade.findLatestInterestEntry(cmp);
-            if (lastOnService != null) {
-                LocalDate booked = lastOnService.getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                return booked.isAfter(ruleStart) ? booked : ruleStart;
-            }
-            return ruleStart;
-        }
-
-        ClaimLedgerEntry lastInterestEntry = this.claimLedgerEntriesFacade.findLatestInterestEntry(cmp);
-        if (lastInterestEntry != null) {
-            return lastInterestEntry.getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        }
-
-        ClaimLedgerEntry earliest = this.claimLedgerEntriesFacade.findEarliestEntry(cmp);
-        if (earliest == null) {
+    public DunningCaseStatus getStatus() {
+        int index = this.cmbStatus.getSelectedIndex();
+        if (index < 0 || index >= this.selectable.size()) {
             return null;
         }
-        return earliest.getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        return this.selectable.get(index);
     }
 
     /**
-     * Returns the earliest effective date among the component's interest rules.
-     *
-     * @param cmp the component
-     * @return the earliest rule start, or null if no rule carries a date
+     * @return the procedural date the user entered, or null if it is not a date
      */
-    private LocalDate earliestRuleStart(ClaimComponent cmp) {
-        LocalDate earliest = null;
-        for (InterestRule rule : cmp.getInterestRules()) {
-            if (rule.getValidFrom() == null) {
-                continue;
-            }
-            LocalDate ruleStart = rule.getValidFrom().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            if (earliest == null || ruleStart.isBefore(earliest)) {
-                earliest = ruleStart;
-            }
+    public Date getEventDate() {
+        try {
+            return df.parse(this.txtEventDate.getText());
+        } catch (ParseException ex) {
+            return null;
         }
-        return earliest;
     }
 
     /**
-     * Computes the principal of a component at a given date from its bookings. Claims and
-     * adjustments raise it, payments reduce it, interest bookings do not affect it. The
-     * component's principalAmount is deliberately not used, as it duplicates the first booking.
-     *
-     * @param cmp the component
-     * @param upTo the key date
-     * @return the principal at that date, never negative
+     * @return the comment, or null if none was entered
      */
-    public BigDecimal calculateDynamicPrincipal(ClaimComponent cmp, Date upTo) {
-        BigDecimal principal = BigDecimal.ZERO;
-
-        List<ClaimLedgerEntry> entries = this.claimLedgerEntriesFacade.findByComponent(cmp);
-
-        for (ClaimLedgerEntry entry : entries) {
-            // Nur Buchungen bis zum Stichtag berücksichtigen
-            if (entry.getEntryDate().after(upTo)) {
-                break; // Einträge sind nach Datum sortiert
-            }
-
-            switch (entry.getType()) {
-                case PAYMENT:
-                    principal = principal.subtract(entry.getAmount());
-                    break;
-                case ADJUSTMENT:
-                    principal = principal.add(entry.getAmount());
-                    break;
-                case MAIN_CLAIM:
-                case COST:
-                    principal = principal.add(entry.getAmount());
-                    break;
-                case INTEREST:
-                    // Zinsen erhöhen NICHT den Principal für zukünftige Zinsberechnungen
-                    break;
-            }
-        }
-
-        return principal.max(BigDecimal.ZERO);
+    public String getComment() {
+        String comment = this.txtComment.getText();
+        return comment == null || comment.trim().isEmpty() ? null : comment.trim();
     }
 
     /**
-     * Returns the dates within the period on which the stored base interest rate changes.
-     *
-     * @param start start of the period
-     * @param end end of the period
-     * @return the change dates
+     * Says what the date is taken to mean for the chosen status, and what runs from it.
      */
-    private List<LocalDate> getBaseRateChangeDatesBetween(LocalDate start, LocalDate end) {
-        java.util.Date startDate = java.util.Date.from(start.atStartOfDay(ZoneId.systemDefault()).toInstant());
-        java.util.Date endDate = java.util.Date.from(end.atStartOfDay(ZoneId.systemDefault()).toInstant());
-
-        List<BaseInterest> rates = this.baseInterestFacade.findByDateRange(startDate, endDate);
-
-        List<LocalDate> changeDates = new ArrayList<>();
-        for (BaseInterest rate : rates) {
-            java.util.Date validFrom = rate.getValidFrom();
-            LocalDate changeDate;
-
-            // JPA kann java.sql.Date zurückgeben, das direkt toLocalDate() unterstützt
-            if (validFrom instanceof java.sql.Date) {
-                changeDate = ((java.sql.Date) validFrom).toLocalDate();
-            } else {
-                changeDate = validFrom.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            }
-
-            changeDates.add(changeDate);
+    private void describeDate() {
+        DunningCaseStatus status = getStatus();
+        if (status == null) {
+            this.lblHint.setText("");
+            return;
         }
-
-        return changeDates;
+        String text;
+        switch (status) {
+            case MB_APPLIED:
+                text = "Tag, an dem der Antrag bei Gericht eingereicht wurde.";
+                break;
+            case MB_ISSUED:
+                text = "Tag des Erlasses laut Mahnbescheid.";
+                break;
+            case MB_SERVED:
+                text = "Tag der Zustellung an den Antragsgegner. Von ihm laufen die Widerspruchsfrist "
+                        + "(§ 692 Abs. 1 Nr. 3 ZPO) und die Sechsmonatsfrist des § 701 ZPO.";
+                break;
+            case OBJECTION:
+                text = "Tag, an dem der Widerspruch bei Gericht eingegangen ist.";
+                break;
+            case VB_APPLIED:
+                text = "Tag, an dem der Antrag auf Vollstreckungsbescheid eingereicht wurde.";
+                break;
+            case VB_ISSUED:
+                text = "Tag des Erlasses laut Vollstreckungsbescheid.";
+                break;
+            case VB_SERVED:
+                text = "Tag der Zustellung. Von ihm läuft die Einspruchsfrist "
+                        + "(§§ 700 Abs. 1, 339 Abs. 1 ZPO).";
+                break;
+            case EINSPRUCH:
+                text = "Tag, an dem der Einspruch bei Gericht eingegangen ist.";
+                break;
+            case REFERRED:
+                text = "Tag der Abgabe an das Streitgericht.";
+                break;
+            default:
+                text = "Tag, an dem der Vorgang diesen Stand erreicht hat.";
+                break;
+        }
+        this.lblHint.setText("<html>" + text + "</html>");
     }
 
     /**
-     * Returns the base interest rate valid at the given date.
-     *
-     * @param start the date
-     * @return the stored rate, or zero if none is stored for that date
+     * This method is called from within the constructor to initialize the form. WARNING: Do NOT
+     * modify this code. The content of this method is always regenerated by the Form Editor.
      */
-    private BigDecimal getBaseRateForDate(LocalDate start) {
-        java.util.Date date = java.util.Date.from(start.atStartOfDay(ZoneId.systemDefault()).toInstant());
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
 
-        BigDecimal rate = this.baseInterestFacade.findRateByDate(date);
+        lblStatus = new javax.swing.JLabel();
+        cmbStatus = new javax.swing.JComboBox();
+        lblEventDate = new javax.swing.JLabel();
+        txtEventDate = new javax.swing.JTextField();
+        cmdSelectEventDate = new javax.swing.JButton();
+        lblHint = new javax.swing.JLabel();
+        lblComment = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        txtComment = new javax.swing.JTextArea();
+        cmdOk = new javax.swing.JButton();
+        cmdCancel = new javax.swing.JButton();
 
-        return (rate != null) ? rate : BigDecimal.ZERO;
-    }
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Status erfassen");
 
-    /**
-     * Returns the dates within the period on which the principal of a component changes. Interest
-     * bookings are ignored, as they do not change the principal.
-     *
-     * @param cmp the component
-     * @param startDate start of the period
-     * @param endDate end of the period
-     * @return the change dates, sorted
-     */
-    private List<LocalDate> getPrincipalChangeDatesBetween(ClaimComponent cmp, LocalDate startDate, LocalDate endDate) {
-        List<LocalDate> changeDates = new ArrayList<>();
+        lblStatus.setText("Status:");
 
-        List<ClaimLedgerEntry> entries = this.claimLedgerEntriesFacade.findByComponent(cmp);
-
-        for (ClaimLedgerEntry entry : entries) {
-            LocalDate entryDate = entry.getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-
-            // Nur Buchungen im relevanten Zeitraum
-            if (entryDate.isBefore(startDate) || !entryDate.isBefore(endDate)) {
-                continue;
+        cmbStatus.setModel(new javax.swing.DefaultComboBoxModel());
+        cmbStatus.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbStatusActionPerformed(evt);
             }
+        });
 
-            // Nur Buchungstypen, die den Principal ändern
-            switch (entry.getType()) {
-                case PAYMENT:
-                case ADJUSTMENT:
-                case MAIN_CLAIM:
-                case COST:
-                    if (!changeDates.contains(entryDate)) {
-                        changeDates.add(entryDate);
-                    }
-                    break;
-                case INTEREST:
-                    // Zinsbuchungen ändern den Principal NICHT
-                    break;
+        lblEventDate.setText("Datum:");
+
+        txtEventDate.setText("");
+
+        cmdSelectEventDate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
+        cmdSelectEventDate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSelectEventDateActionPerformed(evt);
             }
+        });
+
+        lblHint.setText("");
+
+        lblComment.setText("Bemerkung:");
+
+        txtComment.setColumns(20);
+        txtComment.setLineWrap(true);
+        txtComment.setRows(4);
+        txtComment.setWrapStyleWord(true);
+        jScrollPane1.setViewportView(txtComment);
+
+        cmdOk.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdOk.setText("Status erfassen");
+        cmdOk.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdOkActionPerformed(evt);
+            }
+        });
+
+        cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdCancel.setText("Abbrechen");
+        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCancelActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblHint, javax.swing.GroupLayout.DEFAULT_SIZE, 520, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 520, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lblStatus)
+                            .addComponent(lblEventDate)
+                            .addComponent(lblComment))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cmbStatus, javax.swing.GroupLayout.DEFAULT_SIZE, 380, Short.MAX_VALUE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(txtEventDate, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdSelectEventDate)
+                                .addGap(0, 0, Short.MAX_VALUE))))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdOk)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdCancel)))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblStatus)
+                    .addComponent(cmbStatus, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblEventDate)
+                    .addComponent(txtEventDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdSelectEventDate))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblHint, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblComment))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 90, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdOk)
+                    .addComponent(cmdCancel))
+                .addContainerGap())
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void cmbStatusActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbStatusActionPerformed
+        describeDate();
+    }//GEN-LAST:event_cmbStatusActionPerformed
+
+    private void cmdSelectEventDateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectEventDateActionPerformed
+        MultiCalDialog dlg = new MultiCalDialog(this.txtEventDate, this, true);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_cmdSelectEventDateActionPerformed
+
+    private void cmdOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOkActionPerformed
+        if (getStatus() == null) {
+            JOptionPane.showMessageDialog(this, "Bitte einen Status wählen.",
+                    "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+            return;
         }
-
-        Collections.sort(changeDates);
-
-        return changeDates;
-    }
-
-    /**
-     * A part of an interest period over which rate and principal stay constant, together with the
-     * interest computed for it.
-     */
-    public static class ClaimInterestPeriod {
-
-        private final LocalDate start;
-        private final LocalDate end;
-        private final long days;
-        private final BigDecimal rate;
-        private final BigDecimal principal;
-        private final BigDecimal amount;
-
-        public ClaimInterestPeriod(LocalDate start, LocalDate end, long days, BigDecimal rate, BigDecimal principal, BigDecimal amount) {
-            this.start = start;
-            this.end = end;
-            this.days = days;
-            this.rate = rate;
-            this.principal = principal;
-            this.amount = amount;
+        // the date is not optional: without it the procedure has a status but no deadlines, and the
+        // status alone does not tell anybody what has to be done by when
+        if (getEventDate() == null) {
+            JOptionPane.showMessageDialog(this,
+                    "Bitte ein gültiges Datum im Format TT.MM.JJJJ eingeben.",
+                    "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+            return;
         }
+        this.confirmed = true;
+        setVisible(false);
+    }//GEN-LAST:event_cmdOkActionPerformed
 
-        public LocalDate getStart() {
-            return start;
-        }
+    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
+        this.confirmed = false;
+        setVisible(false);
+    }//GEN-LAST:event_cmdCancelActionPerformed
 
-        public LocalDate getEnd() {
-            return end;
-        }
-
-        /**
-         * @return the number of interest days in this period
-         */
-        public long getDays() {
-            return days;
-        }
-
-        /**
-         * @return the effective rate as a decimal fraction, e.g. 0.0727 for 7.27 percent
-         */
-        public BigDecimal getRate() {
-            return rate;
-        }
-
-        /**
-         * @return the principal the interest was computed on
-         */
-        public BigDecimal getPrincipal() {
-            return principal;
-        }
-
-        /**
-         * @return the interest accrued in this period
-         */
-        public BigDecimal getAmount() {
-            return amount;
-        }
-    }
-
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox cmbStatus;
+    private javax.swing.JButton cmdCancel;
+    private javax.swing.JButton cmdOk;
+    private javax.swing.JButton cmdSelectEventDate;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblComment;
+    private javax.swing.JLabel lblEventDate;
+    private javax.swing.JLabel lblHint;
+    private javax.swing.JLabel lblStatus;
+    private javax.swing.JTextArea txtComment;
+    private javax.swing.JTextField txtEventDate;
+    // End of variables declaration//GEN-END:variables
 }

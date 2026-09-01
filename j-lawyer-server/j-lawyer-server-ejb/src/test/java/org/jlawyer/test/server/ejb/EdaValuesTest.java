@@ -789,4 +789,20 @@ public class EdaValuesTest {
             }
         }
     }
+
+    @Test
+    public void aDateReadBackFromTheDatabaseIsWrittenLikeAnyOther() {
+        // a @Temporal(DATE) field comes back from JPA as a java.sql.Date, whose toInstant() throws
+        // by contract - the mapper must not care where the date came from
+        java.sql.Date stored = java.sql.Date.valueOf(java.time.LocalDate.of(2026, 2, 17));
+
+        assertEquals("260217", EdaValues.date(stored));
+    }
+
+    @Test
+    public void aTimestampIsWrittenAsItsDay() {
+        java.sql.Timestamp stored = java.sql.Timestamp.valueOf("2026-02-17 23:45:00");
+
+        assertEquals("260217", EdaValues.date(stored));
+    }
 }

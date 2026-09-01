@@ -947,4 +947,17 @@ public class DunningStagePlannerTest {
                 chargeOne.getOriginReference().equals(chargeTwo.getOriginReference()));
         assertEquals(date(2026, 4, 1), chargeTwo.getBookingDate());
     }
+
+    @Test
+    public void aSentDateReadBackFromTheDatabaseIsAccepted() {
+        // DunningStageEvent.sentDate is mapped @Temporal(DATE), so it returns as a java.sql.Date -
+        // and java.sql.Date.toInstant() throws by contract
+        java.sql.Date sent = java.sql.Date.valueOf(java.time.LocalDate.of(2026, 3, 2));
+
+        Date due = new DunningStagePlanner().dueDate(sent, 14);
+
+        assertEquals(java.time.LocalDate.of(2026, 3, 16),
+                java.time.Instant.ofEpochMilli(due.getTime())
+                        .atZone(java.time.ZoneId.systemDefault()).toLocalDate());
+    }
 }

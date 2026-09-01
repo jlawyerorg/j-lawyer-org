@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.pojo.DunningStatus;
 import com.jdimension.jlawyer.pojo.ProceduralCostBooking;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -800,7 +801,10 @@ public class DunningStagePlanner {
      * @return the last day of the period
      */
     public Date dueDate(Date sentDate, int paymentPeriodDays) {
-        LocalDate sent = sentDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        // not toInstant(): a date read back from the database through a @Temporal(DATE)
+        // mapping is a java.sql.Date, and java.sql.Date.toInstant() throws by contract
+        LocalDate sent = Instant.ofEpochMilli(sentDate.getTime())
+                .atZone(ZoneId.systemDefault()).toLocalDate();
         return Date.from(sent.plusDays(Math.max(0, paymentPeriodDays))
                 .atStartOfDay(ZoneId.systemDefault()).toInstant());
     }

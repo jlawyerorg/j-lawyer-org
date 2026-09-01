@@ -662,148 +662,438 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
-import com.jdimension.jlawyer.client.components.MultiCalDialog;
-import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
-import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
-import com.jdimension.jlawyer.pojo.ClaimStatement;
-import com.jdimension.jlawyer.services.ClaimLedgerServiceRemote;
+import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
+import com.jdimension.jlawyer.persistence.ClaimPartyRole;
+import com.jdimension.jlawyer.persistence.DunningCase;
+import com.jdimension.jlawyer.persistence.DunningCaseEvent;
+import com.jdimension.jlawyer.persistence.DunningCourtRule;
+import com.jdimension.jlawyer.pojo.DunningCourtProposal;
+import com.jdimension.jlawyer.pojo.DunningValidationIssue;
+import com.jdimension.jlawyer.pojo.DunningValidationResult;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Cursor;
-import java.io.FileOutputStream;
-import java.nio.charset.StandardCharsets;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import javax.swing.JFileChooser;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
 
 /**
- * Shows the claim statement (Forderungsaufstellung) of a claim ledger to a chosen key date, and
- * lets the user file it in the case as a PDF or export it as CSV.
+ * The court part of the "Mahnverfahren" tab: the procedure at the dunning court, its course, and the
+ * messages the court sends back.
  *
- * The preview is assembled on the server, so what the user reads here is what a stored document
- * would contain - the dialog does not compute anything of its own.
+ * The pre-court reminders and the gerichtliches Mahnverfahren are two different things and the panel
+ * keeps them apart. A reminder is a letter the firm writes; a Mahnbescheid is applied for, issued and
+ * served, and every one of those steps carries a date from which a deadline runs. What is recorded
+ * here is therefore not a state of mind but a course of events, which is why the journal is a table
+ * and not a status field.
+ *
+ * The court answers by EDA message. Those messages arrive through the beA and are filed to the case
+ * like any other document, so reading one starts from the document rather than from an inbox of its
+ * own - see {@link DunningMessageImportDialog}.
  *
  * @author jens
  */
-public class ClaimStatementDialog extends javax.swing.JDialog {
+public class ClaimLedgerCourtDunningPanel extends javax.swing.JPanel {
 
-    private static final Logger log = Logger.getLogger(ClaimStatementDialog.class.getName());
+    private static final Logger log = Logger.getLogger(ClaimLedgerCourtDunningPanel.class.getName());
 
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
 
+    private ArchiveFileBean caseDto = null;
     private ClaimLedger ledger = null;
-    private ClaimStatement statement = null;
+
+    private final List<DunningCase> dunningCases = new ArrayList<>();
+
+    /** Guards the combo listener while the combo is being filled. */
+    private boolean loading = false;
+
+    /** The entry that files under no Kennziffer at all. */
+    private static final String NO_KENNZIFFER = "- keine -";
+
+    /** The Kennziffer per entry of the selector, null for the first. */
+    private final List<String> kennziffern = new ArrayList<>();
 
     /**
-     * Creates the dialog.
-     *
-     * @param parent the parent window
-     * @param modal whether the dialog is modal
+     * Creates the panel.
      */
-    public ClaimStatementDialog(java.awt.Frame parent, boolean modal) {
-        super(parent, modal);
+    public ClaimLedgerCourtDunningPanel() {
         initComponents();
-        this.txtKeyDate.setText(this.df.format(new Date()));
+        this.tblHistory.setModel(new DefaultTableModel(
+                new Object[]{"Datum", "von", "nach", "Quelle", "erfasst", "erfasst von", "Bemerkung"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        });
+        loadKennziffern();
+        setFieldsEnabled(false);
     }
 
     /**
-     * Sets the ledger to state and loads the statement for today.
+     * Sets the case and the ledger whose procedures are shown.
      *
+     * @param caseDto the case, needed to offer its documents when a court message is read
      * @param ledger the claim ledger
      */
-    public void setLedger(ClaimLedger ledger) {
+    public void setLedger(ArchiveFileBean caseDto, ClaimLedger ledger) {
+        this.caseDto = caseDto;
         this.ledger = ledger;
-        if (ledger != null) {
-            this.setTitle("Forderungsaufstellung - " + ledger.getName());
-        }
-        loadStatement();
+        loadCases();
     }
 
     /**
-     * The key date currently entered, or today if the entry cannot be read as a date.
+     * Fills the Kennziffer selector with the lawyers who have one.
      *
-     * @return the key date
+     * The Kennziffer belongs to a person, not to a case: it is applied for at the dunning court and
+     * granted to one lawyer, and in a firm with several lawyers each has their own. Choosing the
+     * lawyer and taking the number from them is therefore the way round that cannot go wrong -
+     * typing eight digits by hand is a way of filing under somebody else's number without noticing.
+     *
+     * Only lawyers who actually have a number are offered. The numbers are maintained per user in
+     * the user administration; the list here only reads them.
      */
-    private Date keyDate() {
-        try {
-            return this.df.parse(this.txtKeyDate.getText());
-        } catch (Exception ex) {
-            return new Date();
+    private void loadKennziffern() {
+        this.kennziffern.clear();
+        this.cmbKennziffer.removeAllItems();
+        this.cmbKennziffer.addItem(NO_KENNZIFFER);
+        this.kennziffern.add(null);
+
+        AppUserBean[] lawyers = UserSettings.getInstance().getLawyerUsers();
+        if (lawyers == null) {
+            return;
+        }
+        for (AppUserBean lawyer : lawyers) {
+            String kennziffer = lawyer.getDunningKennziffer();
+            if (kennziffer == null || kennziffer.trim().isEmpty()
+                    || this.kennziffern.contains(kennziffer.trim())) {
+                continue;
+            }
+            this.kennziffern.add(kennziffer.trim());
+            this.cmbKennziffer.addItem(describe(lawyer) + " (" + kennziffer.trim() + ")");
         }
     }
 
+    private String describe(AppUserBean user) {
+        String name = user.getDisplayName();
+        return name == null || name.trim().isEmpty() ? user.getPrincipalId() : name.trim();
+    }
+
     /**
-     * Loads the statement from the server and renders the preview.
+     * Selects the entry carrying this Kennziffer.
+     *
+     * A number that belongs to nobody in the list is shown as it stands rather than dropped: it may
+     * come from a lawyer who has since left, and losing it silently would file the next application
+     * under a different number.
+     *
+     * @param kennziffer the number recorded on the procedure, possibly null
      */
-    private void loadStatement() {
-        if (this.ledger == null || this.ledger.getId() == null) {
+    private void showKennziffer(String kennziffer) {
+        if (kennziffer == null || kennziffer.trim().isEmpty()) {
+            this.cmbKennziffer.setSelectedIndex(0);
+            return;
+        }
+        String value = kennziffer.trim();
+        int index = this.kennziffern.indexOf(value);
+        if (index < 0) {
+            this.kennziffern.add(value);
+            this.cmbKennziffer.addItem(value + " (kein Benutzer mit dieser Kennziffer)");
+            index = this.kennziffern.size() - 1;
+        }
+        this.cmbKennziffer.setSelectedIndex(index);
+    }
+
+    /**
+     * @return the Kennziffer chosen, or null if none is
+     */
+    private String selectedKennziffer() {
+        int index = this.cmbKennziffer.getSelectedIndex();
+        if (index < 0 || index >= this.kennziffern.size()) {
+            return null;
+        }
+        return this.kennziffern.get(index);
+    }
+
+    private void setFieldsEnabled(boolean enabled) {
+        this.cmdRemoveCase.setEnabled(enabled);
+        this.txtOwnReference.setEnabled(enabled);
+        this.txtCourtFileNumber.setEnabled(enabled);
+        this.cmbKennziffer.setEnabled(enabled);
+        this.cmdSave.setEnabled(enabled);
+        this.cmdDetermineCourt.setEnabled(enabled);
+        this.cmdRecordStatus.setEnabled(enabled);
+        this.cmdExportApplication.setEnabled(enabled);
+    }
+
+    /**
+     * Loads the procedures of the ledger into the selector.
+     */
+    private void loadCases() {
+        this.loading = true;
+        try {
+            this.cmbCase.removeAllItems();
+            this.dunningCases.clear();
+
+            if (this.ledger == null || this.ledger.getId() == null) {
+                return;
+            }
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                List<DunningCase> loaded = locator.lookupDunningServiceRemote()
+                        .getDunningCases(this.ledger.getId());
+                if (loaded != null) {
+                    this.dunningCases.addAll(loaded);
+                }
+            } catch (Exception ex) {
+                log.error("Unable to load the dunning cases of ledger " + this.ledger.getId(), ex);
+                JOptionPane.showMessageDialog(this,
+                        "Die Mahnsachen konnten nicht geladen werden: " + ex.getMessage(),
+                        "Fehler", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            for (DunningCase c : this.dunningCases) {
+                this.cmbCase.addItem(label(c));
+            }
+        } finally {
+            this.loading = false;
+        }
+
+        if (this.dunningCases.isEmpty()) {
+            showCase(null);
+        } else {
+            this.cmbCase.setSelectedIndex(0);
+            showCase(this.dunningCases.get(0));
+        }
+    }
+
+    private String label(DunningCase c) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(c.getOwnReference() == null ? "ohne Zeichen" : c.getOwnReference());
+        if (c.getCourtFileNumber() != null && !c.getCourtFileNumber().trim().isEmpty()) {
+            sb.append(" / ").append(c.getCourtFileNumber());
+        }
+        if (c.getStatus() != null) {
+            sb.append(" - ").append(c.getStatus().getLabel());
+        }
+        return sb.toString();
+    }
+
+    /**
+     * @return the procedure currently selected, or null
+     */
+    private DunningCase selectedCase() {
+        int index = this.cmbCase.getSelectedIndex();
+        if (index < 0 || index >= this.dunningCases.size()) {
+            return null;
+        }
+        return this.dunningCases.get(index);
+    }
+
+    /**
+     * Shows one procedure with its journal.
+     */
+    private void showCase(DunningCase dunningCase) {
+        DefaultTableModel model = (DefaultTableModel) this.tblHistory.getModel();
+        model.setRowCount(0);
+
+        if (dunningCase == null) {
+            this.txtCourt.setText("");
+            this.txtOwnReference.setText("");
+            this.txtCourtFileNumber.setText("");
+            this.cmbKennziffer.setSelectedIndex(0);
+            this.lblHint.setText("<html>Für dieses Forderungskonto ist keine Mahnsache angelegt. "
+                    + "Eine Mahnsache bildet ein gerichtliches Mahnverfahren ab - vom Antrag über den "
+                    + "Mahnbescheid bis zum Vollstreckungsbescheid.</html>");
+            setFieldsEnabled(false);
+            this.cmdNewCase.setEnabled(this.ledger != null && this.ledger.getId() != null);
             return;
         }
 
-        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        setFieldsEnabled(true);
+        this.txtCourt.setText(dunningCase.getCourtName() == null ? ""
+                : dunningCase.getCourtName()
+                + (dunningCase.getCourtCity() == null ? "" : ", " + dunningCase.getCourtCity()));
+        this.txtOwnReference.setText(nullSafe(dunningCase.getOwnReference()));
+        this.txtCourtFileNumber.setText(nullSafe(dunningCase.getCourtFileNumber()));
+        showKennziffer(dunningCase.getKennziffer());
+
+        List<DunningCaseEvent> history = new ArrayList<>();
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ClaimLedgerServiceRemote ledgerService = locator.lookupClaimLedgerServiceRemote();
-
-            this.statement = ledgerService.assembleClaimStatement(this.ledger.getId(), keyDate(),
-                    this.chkIncludeSubLedgers.isSelected());
-            this.txtStatement.setText(ledgerService.exportClaimStatementAsCsv(this.statement));
-            this.txtStatement.setCaretPosition(0);
-
+            List<DunningCaseEvent> loaded = locator.lookupDunningServiceRemote()
+                    .getHistory(dunningCase.getId());
+            if (loaded != null) {
+                history.addAll(loaded);
+            }
         } catch (Exception ex) {
-            log.error("Unable to load the claim statement of ledger " + this.ledger.getId(), ex);
-            JOptionPane.showMessageDialog(this,
-                    "Die Forderungsaufstellung konnte nicht geladen werden: " + ex.getMessage(),
-                    "Fehler", JOptionPane.ERROR_MESSAGE);
-        } finally {
-            this.setCursor(Cursor.getDefaultCursor());
+            log.error("Unable to load the history of dunning case " + dunningCase.getId(), ex);
         }
+
+        for (DunningCaseEvent e : history) {
+            model.addRow(new Object[]{
+                e.getEventDate() == null ? "" : df.format(e.getEventDate()),
+                // the first entry has no previous status - the procedure did not come from one
+                e.getPreviousStatus() == null ? "(neu)" : e.getPreviousStatus().getLabel(),
+                e.getNewStatus() == null ? "" : e.getNewStatus().getLabel(),
+                // whether a person entered this or a court message reported it is the first thing to
+                // look at when a procedure turns out to have been recorded wrongly
+                e.getSource() == null ? "" : e.getSource().getLabel(),
+                e.getRecorded() == null ? "" : df.format(e.getRecorded()),
+                nullSafe(e.getRecordedBy()),
+                nullSafe(e.getComment())});
+        }
+
+        StringBuilder hint = new StringBuilder("<html>Stand: <b>");
+        hint.append(dunningCase.getStatus() == null ? "unbekannt" : dunningCase.getStatus().getLabel());
+        hint.append("</b>");
+        if (dunningCase.getStatusDate() != null) {
+            hint.append(" seit ").append(df.format(dunningCase.getStatusDate()));
+        }
+        if (history.isEmpty()) {
+            hint.append(" - es ist noch kein Ereignis erfasst.");
+        }
+        hint.append("</html>");
+        this.lblHint.setText(hint.toString());
+    }
+
+    private String nullSafe(String s) {
+        return s == null ? "" : s;
     }
 
     /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
+     * This method is called from within the constructor to initialize the form. WARNING: Do NOT
+     * modify this code. The content of this method is always regenerated by the Form Editor.
      */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        lblKeyDate = new javax.swing.JLabel();
-        txtKeyDate = new javax.swing.JTextField();
-        cmdSelectKeyDate = new javax.swing.JButton();
-        chkIncludeSubLedgers = new javax.swing.JCheckBox();
+        lblCase = new javax.swing.JLabel();
+        cmbCase = new javax.swing.JComboBox();
+        cmdNewCase = new javax.swing.JButton();
+        cmdRemoveCase = new javax.swing.JButton();
+        lblCourt = new javax.swing.JLabel();
+        txtCourt = new javax.swing.JTextField();
+        cmdDetermineCourt = new javax.swing.JButton();
+        lblOwnReference = new javax.swing.JLabel();
+        txtOwnReference = new javax.swing.JTextField();
+        lblKennziffer = new javax.swing.JLabel();
+        cmbKennziffer = new javax.swing.JComboBox();
+        lblCourtFileNumber = new javax.swing.JLabel();
+        txtCourtFileNumber = new javax.swing.JTextField();
+        cmdSave = new javax.swing.JButton();
+        lblHint = new javax.swing.JLabel();
+        jScrollPaneHistory = new javax.swing.JScrollPane();
+        tblHistory = new javax.swing.JTable();
+        cmdRecordStatus = new javax.swing.JButton();
+        cmdExportApplication = new javax.swing.JButton();
+        cmdImportMessage = new javax.swing.JButton();
         cmdRefresh = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        txtStatement = new javax.swing.JTextArea();
-        cmdExportCsv = new javax.swing.JButton();
-        cmdStorePdf = new javax.swing.JButton();
-        cmdClose = new javax.swing.JButton();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Forderungsaufstellung");
+        lblCase.setText("Mahnsache:");
 
-        lblKeyDate.setText("Stichtag:");
-
-        txtKeyDate.setText("");
-
-        cmdSelectKeyDate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
-        cmdSelectKeyDate.setToolTipText("Stichtag wählen");
-        cmdSelectKeyDate.addActionListener(new java.awt.event.ActionListener() {
+        cmbCase.setModel(new javax.swing.DefaultComboBoxModel());
+        cmbCase.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSelectKeyDateActionPerformed(evt);
+                cmbCaseActionPerformed(evt);
             }
         });
 
-        chkIncludeSubLedgers.setText("Unterkonten einbeziehen");
-        chkIncludeSubLedgers.addActionListener(new java.awt.event.ActionListener() {
+        cmdNewCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdNewCase.setText("Neue Mahnsache");
+        cmdNewCase.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkIncludeSubLedgersActionPerformed(evt);
+                cmdNewCaseActionPerformed(evt);
+            }
+        });
+
+        cmdRemoveCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdRemoveCase.setText("Entfernen");
+        cmdRemoveCase.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRemoveCaseActionPerformed(evt);
+            }
+        });
+
+        lblCourt.setText("Mahngericht:");
+
+        txtCourt.setEditable(false);
+        txtCourt.setText("");
+
+        cmdDetermineCourt.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfind.png"))); // NOI18N
+        cmdDetermineCourt.setText("Gericht ermitteln");
+        cmdDetermineCourt.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDetermineCourtActionPerformed(evt);
+            }
+        });
+
+        lblOwnReference.setText("Eigenes Zeichen:");
+
+        txtOwnReference.setText("");
+
+        lblKennziffer.setText("Kennziffer:");
+
+        cmbKennziffer.setModel(new javax.swing.DefaultComboBoxModel());
+        cmbKennziffer.setToolTipText("Die Kennziffer wird je Rechtsanwalt in der Benutzerverwaltung hinterlegt.");
+
+        lblCourtFileNumber.setText("Gerichtl. Az:");
+
+        txtCourtFileNumber.setText("");
+
+        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
+        cmdSave.setText("Speichern");
+        cmdSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveActionPerformed(evt);
+            }
+        });
+
+        lblHint.setText("");
+        lblHint.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+
+        tblHistory.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+
+            }
+        ));
+        jScrollPaneHistory.setViewportView(tblHistory);
+
+        cmdRecordStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
+        cmdRecordStatus.setText("Status erfassen");
+        cmdRecordStatus.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRecordStatusActionPerformed(evt);
+            }
+        });
+
+        cmdExportApplication.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave-separate.png"))); // NOI18N
+        cmdExportApplication.setText("Antrag erzeugen");
+        cmdExportApplication.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdExportApplicationActionPerformed(evt);
+            }
+        });
+
+        cmdImportMessage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fileimport.png"))); // NOI18N
+        cmdImportMessage.setText("Gerichtsnachricht einlesen");
+        cmdImportMessage.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdImportMessageActionPerformed(evt);
             }
         });
 
@@ -815,62 +1105,54 @@ public class ClaimStatementDialog extends javax.swing.JDialog {
             }
         });
 
-        txtStatement.setEditable(false);
-        txtStatement.setColumns(20);
-        txtStatement.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
-        txtStatement.setRows(5);
-        jScrollPane1.setViewportView(txtStatement);
-
-        cmdExportCsv.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
-        cmdExportCsv.setText("CSV exportieren");
-        cmdExportCsv.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdExportCsvActionPerformed(evt);
-            }
-        });
-
-        cmdStorePdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/printer.png"))); // NOI18N
-        cmdStorePdf.setText("Als PDF in Akte ablegen");
-        cmdStorePdf.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdStorePdfActionPerformed(evt);
-            }
-        });
-
-        cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
-        cmdClose.setText("Schließen");
-        cmdClose.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdCloseActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 800, Short.MAX_VALUE)
+                    .addComponent(lblHint, javax.swing.GroupLayout.DEFAULT_SIZE, 820, Short.MAX_VALUE)
+                    .addComponent(jScrollPaneHistory, javax.swing.GroupLayout.DEFAULT_SIZE, 820, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(lblKeyDate)
+                        .addComponent(lblCase)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtKeyDate, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(cmbCase, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdSelectKeyDate)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(chkIncludeSubLedgers)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(cmdRefresh)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(cmdNewCase)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdRemoveCase))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lblCourt)
+                            .addComponent(lblOwnReference)
+                            .addComponent(lblCourtFileNumber))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(txtCourt, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdDetermineCourt))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(txtOwnReference, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblKennziffer)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmbKennziffer, javax.swing.GroupLayout.PREFERRED_SIZE, 280, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(txtCourtFileNumber, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdSave)
+                                .addGap(0, 0, Short.MAX_VALUE))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(cmdRecordStatus)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdExportApplication)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdImportMessage)
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(cmdExportCsv)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdStorePdf)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdClose)))
+                        .addComponent(cmdRefresh)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -878,110 +1160,387 @@ public class ClaimStatementDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblKeyDate)
-                    .addComponent(txtKeyDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cmdSelectKeyDate)
-                    .addComponent(chkIncludeSubLedgers)
-                    .addComponent(cmdRefresh))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 460, Short.MAX_VALUE)
+                    .addComponent(lblCase)
+                    .addComponent(cmbCase, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdNewCase)
+                    .addComponent(cmdRemoveCase))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmdClose)
-                    .addComponent(cmdStorePdf)
-                    .addComponent(cmdExportCsv))
+                    .addComponent(lblCourt)
+                    .addComponent(txtCourt, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdDetermineCourt))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblOwnReference)
+                    .addComponent(txtOwnReference, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblKennziffer)
+                    .addComponent(cmbKennziffer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblCourtFileNumber)
+                    .addComponent(txtCourtFileNumber, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdSave))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblHint, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPaneHistory, javax.swing.GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdRecordStatus)
+                    .addComponent(cmdExportApplication)
+                    .addComponent(cmdImportMessage)
+                    .addComponent(cmdRefresh))
                 .addContainerGap())
         );
-
-        pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void cmdSelectKeyDateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectKeyDateActionPerformed
-        MultiCalDialog dlg = new MultiCalDialog(this.txtKeyDate, this, true);
-        dlg.setVisible(true);
-        loadStatement();
-    }//GEN-LAST:event_cmdSelectKeyDateActionPerformed
-
-    private void chkIncludeSubLedgersActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkIncludeSubLedgersActionPerformed
-        loadStatement();
-    }//GEN-LAST:event_chkIncludeSubLedgersActionPerformed
-
-    private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
-        loadStatement();
-    }//GEN-LAST:event_cmdRefreshActionPerformed
-
-    private void cmdExportCsvActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportCsvActionPerformed
-        if (this.statement == null) {
+    private void cmbCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbCaseActionPerformed
+        if (this.loading) {
             return;
         }
+        showCase(selectedCase());
+    }//GEN-LAST:event_cmbCaseActionPerformed
 
-        JFileChooser chooser = new JFileChooser();
-        chooser.setSelectedFile(new java.io.File("Forderungsaufstellung_"
-                + new SimpleDateFormat("yyyy-MM-dd").format(keyDate()) + ".csv"));
-        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
-            return;
-        }
-
-        try (FileOutputStream out = new FileOutputStream(chooser.getSelectedFile())) {
-            out.write(this.txtStatement.getText().getBytes(StandardCharsets.UTF_8));
-            JOptionPane.showMessageDialog(this,
-                    "Die Forderungsaufstellung wurde gespeichert.",
-                    "Export", JOptionPane.INFORMATION_MESSAGE);
-        } catch (Exception ex) {
-            log.error("Unable to export the claim statement", ex);
-            JOptionPane.showMessageDialog(this,
-                    "Die Datei konnte nicht geschrieben werden: " + ex.getMessage(),
-                    "Fehler", JOptionPane.ERROR_MESSAGE);
-        }
-    }//GEN-LAST:event_cmdExportCsvActionPerformed
-
-    private void cmdStorePdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdStorePdfActionPerformed
+    private void cmdNewCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewCaseActionPerformed
         if (this.ledger == null || this.ledger.getId() == null) {
             return;
         }
-
-        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        DunningCase created = new DunningCase();
+        created.setOwnReference(this.caseDto == null ? null : this.caseDto.getFileNumber());
+        // whoever creates the procedure is usually the one filing it, so their own Kennziffer is the
+        // sensible starting point - it stays changeable in the selector
+        AppUserBean me = UserSettings.getInstance().getCurrentUser();
+        if (me != null && me.isLawyer() && me.getDunningKennziffer() != null
+                && !me.getDunningKennziffer().trim().isEmpty()) {
+            created.setKennziffer(me.getDunningKennziffer().trim());
+        }
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-            ArchiveFileDocumentsBean document = locator.lookupClaimLedgerServiceRemote()
-                    .storeClaimStatement(this.ledger.getId(), keyDate(),
-                            this.chkIncludeSubLedgers.isSelected(), null);
-
-            // same as everywhere a document is created from a dialog: the document tab does not poll
-            EventBroker.getInstance().publishEvent(new DocumentAddedEvent(document));
-
-            JOptionPane.showMessageDialog(this,
-                    "Die Forderungsaufstellung wurde in der Akte abgelegt:\n" + document.getName(),
-                    "Forderungsaufstellung", JOptionPane.INFORMATION_MESSAGE);
-
+            locator.lookupDunningServiceRemote().addDunningCase(this.ledger.getId(), created);
         } catch (Exception ex) {
-            log.error("Unable to store the claim statement of ledger " + this.ledger.getId(), ex);
+            log.error("Unable to create a dunning case for ledger " + this.ledger.getId(), ex);
             JOptionPane.showMessageDialog(this,
-                    "Die Forderungsaufstellung konnte nicht abgelegt werden: " + ex.getMessage(),
+                    "Die Mahnsache konnte nicht angelegt werden: " + ex.getMessage(),
                     "Fehler", JOptionPane.ERROR_MESSAGE);
-        } finally {
-            this.setCursor(Cursor.getDefaultCursor());
+            return;
         }
-    }//GEN-LAST:event_cmdStorePdfActionPerformed
+        loadCases();
+    }//GEN-LAST:event_cmdNewCaseActionPerformed
 
-    private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
-        this.setVisible(false);
-        this.dispose();
-    }//GEN-LAST:event_cmdCloseActionPerformed
+    private void cmdRemoveCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveCaseActionPerformed
+        DunningCase dunningCase = selectedCase();
+        if (dunningCase == null) {
+            return;
+        }
+        // the same condition the server enforces, so the user is told before the attempt rather than
+        // by an error afterwards
+        String refusal = dunningCase.getRemovalRefusal();
+        if (refusal != null) {
+            JOptionPane.showMessageDialog(this, refusal, "Mahnsache entfernen",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        int answer = JOptionPane.showConfirmDialog(this,
+                "Die Mahnsache \"" + label(dunningCase) + "\" wird mit ihrem Verlauf, ihren Fristen "
+                + "und den daraus entstandenen Wiedervorlagen gelöscht.\n\nFortfahren?",
+                "Mahnsache entfernen", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (answer != JOptionPane.YES_OPTION) {
+            return;
+        }
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupDunningServiceRemote().removeDunningCase(dunningCase.getId());
+        } catch (Exception ex) {
+            log.error("Unable to remove dunning case " + dunningCase.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Mahnsache konnte nicht entfernt werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        loadCases();
+    }//GEN-LAST:event_cmdRemoveCaseActionPerformed
+
+    private void cmdDetermineCourtActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDetermineCourtActionPerformed
+        DunningCase dunningCase = selectedCase();
+        if (dunningCase == null) {
+            return;
+        }
+
+        // the court follows the general venue of the *applicant*, not of the debtor - § 689 Abs. 2
+        // ZPO - so the creditor's address is what is asked
+        ClaimLedgerParty creditor = firstCreditor();
+        DunningCourtProposal proposal = creditor == null || creditor.getContact() == null
+                ? null : determine(creditor);
+        if (creditor != null && creditor.getContact() != null && proposal == null) {
+            return;
+        }
+
+        List<DunningCourtRule> candidates = proposal == null
+                ? new ArrayList<>() : new ArrayList<>(proposal.getCandidatesUnmodifiable());
+        boolean determined = !candidates.isEmpty();
+
+        StringBuilder reason = new StringBuilder();
+        if (creditor == null || creditor.getContact() == null) {
+            reason.append("Für das Forderungskonto ist kein Gläubiger mit Anschrift erfasst. "
+                    + "Das zuständige Mahngericht richtet sich nach dem allgemeinen Gerichtsstand "
+                    + "des Antragstellers (§ 689 Abs. 2 ZPO).");
+        } else if (proposal.getReason() != null) {
+            reason.append(proposal.getReason());
+        }
+
+        if (!determined) {
+            // the determination rests on the applicant's federal state, and that is often simply not
+            // recorded in the address. Rather than leaving the user at a dead end, every configured
+            // dunning court is offered - the choice is theirs to make in any case
+            candidates = allRules();
+            if (candidates.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        reason.length() > 0 ? reason.toString()
+                        : "Es ist keine Zuordnung von Mahngerichten hinterlegt.",
+                        "Mahngericht", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+            if (reason.length() > 0) {
+                reason.append("\n\n");
+            }
+            reason.append("Bitte wählen Sie das zuständige Mahngericht aus.");
+        }
+
+        DunningCourtRule chosen;
+        if (determined && proposal.isUnambiguous()) {
+            chosen = proposal.getDeterminedRule();
+        } else {
+            // where a state is divided between two courts the division follows the OLG district,
+            // which neither the state nor the postcode reveals - so the user decides
+            String[] options = new String[candidates.size()];
+            for (int i = 0; i < candidates.size(); i++) {
+                options[i] = describe(candidates.get(i), !determined);
+            }
+            Object selection = JOptionPane.showInputDialog(this,
+                    reason.toString(), "Mahngericht wählen",
+                    JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+            if (selection == null) {
+                return;
+            }
+            chosen = candidates.get(java.util.Arrays.asList(options).indexOf(selection.toString()));
+        }
+
+        if (chosen == null || chosen.getCourt() == null) {
+            return;
+        }
+        dunningCase.setCourtXJustizId(chosen.getCourt().getXjustizId());
+        dunningCase.setCourtName(chosen.getCourt().getName());
+        dunningCase.setCourtPostalCode(chosen.getCourt().getPostalCode());
+        dunningCase.setCourtCity(chosen.getCourt().getCity());
+        this.txtCourt.setText(chosen.getCourt().getName()
+                + (chosen.getCourt().getCity() == null ? "" : ", " + chosen.getCourt().getCity()));
+        JOptionPane.showMessageDialog(this,
+                (determined ? proposal.getReason() + "\n\n" : "")
+                + "Die Zuordnung wird mit \"Speichern\" übernommen.",
+                "Mahngericht", JOptionPane.INFORMATION_MESSAGE);
+    }//GEN-LAST:event_cmdDetermineCourtActionPerformed
+
+    /**
+     * @return the first creditor of the ledger, or null if none is recorded
+     */
+    private ClaimLedgerParty firstCreditor() {
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            for (ClaimLedgerParty p : locator.lookupClaimLedgerServiceRemote().getParties(this.ledger.getId())) {
+                if (p.getRole() == ClaimPartyRole.CREDITOR) {
+                    return p;
+                }
+            }
+        } catch (Exception ex) {
+            log.error("Unable to load the parties of ledger " + this.ledger.getId(), ex);
+        }
+        return null;
+    }
+
+    /**
+     * Asks the server which courts come into question for this creditor.
+     *
+     * @return the proposal, or null if it could not be obtained at all
+     */
+    private DunningCourtProposal determine(ClaimLedgerParty creditor) {
+        String country = creditor.getContact().getCountry();
+        boolean abroad = country != null && !country.trim().isEmpty()
+                && !"D".equalsIgnoreCase(country.trim()) && !"DE".equalsIgnoreCase(country.trim())
+                && !"Deutschland".equalsIgnoreCase(country.trim());
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            return locator.lookupDunningCourtRuleServiceRemote().determineDunningCourt(
+                    creditor.getContact().getState(), creditor.getContact().getZipCode(), abroad);
+        } catch (Exception ex) {
+            log.error("Unable to determine the dunning court", ex);
+            JOptionPane.showMessageDialog(this,
+                    "Das Mahngericht konnte nicht ermittelt werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
+    }
+
+    /**
+     * All configured responsibilities, so a court can be chosen by hand where none was determined.
+     *
+     * @return the active rules, ordered by federal state and court; empty if none are configured
+     */
+    private List<DunningCourtRule> allRules() {
+        List<DunningCourtRule> rules = new ArrayList<>();
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<DunningCourtRule> loaded = locator.lookupDunningCourtRuleServiceRemote().getRules(true);
+            if (loaded != null) {
+                rules.addAll(loaded);
+            }
+        } catch (Exception ex) {
+            log.error("Unable to load the dunning court rules", ex);
+        }
+        rules.sort(Comparator
+                .comparing((DunningCourtRule r) -> r.getFederalState() == null ? "" : r.getFederalState())
+                .thenComparing(r -> r.getCourt() == null || r.getCourt().getName() == null
+                        ? "" : r.getCourt().getName()));
+        return rules;
+    }
+
+    /**
+     * How one responsibility reads in the chooser.
+     *
+     * @param rule the responsibility
+     * @param withState whether to lead with the federal state, which is what distinguishes the
+     * entries when the whole list is offered
+     * @return the label
+     */
+    private String describe(DunningCourtRule rule, boolean withState) {
+        StringBuilder sb = new StringBuilder();
+        if (withState) {
+            sb.append(rule.isForeignApplicant() ? "Antragsteller im Ausland"
+                    : nullSafe(rule.getFederalState())).append(": ");
+        }
+        sb.append(rule.getCourt() == null ? "?" : rule.getCourt().getName());
+        if (rule.getRestriction() != null && !rule.getRestriction().trim().isEmpty()) {
+            sb.append(" - ").append(rule.getRestriction());
+        }
+        return sb.toString();
+    }
+
+    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+        DunningCase dunningCase = selectedCase();
+        if (dunningCase == null) {
+            return;
+        }
+        dunningCase.setOwnReference(emptyToNull(this.txtOwnReference.getText()));
+        dunningCase.setCourtFileNumber(emptyToNull(this.txtCourtFileNumber.getText()));
+        dunningCase.setKennziffer(selectedKennziffer());
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupDunningServiceRemote().updateDunningCase(dunningCase);
+        } catch (Exception ex) {
+            log.error("Unable to update dunning case " + dunningCase.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Mahnsache konnte nicht gespeichert werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        loadCases();
+    }//GEN-LAST:event_cmdSaveActionPerformed
+
+    private String emptyToNull(String s) {
+        return s == null || s.trim().isEmpty() ? null : s.trim();
+    }
+
+    private void cmdRecordStatusActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRecordStatusActionPerformed
+        DunningCase dunningCase = selectedCase();
+        if (dunningCase == null) {
+            return;
+        }
+        java.awt.Window parent = SwingUtilities.getWindowAncestor(this);
+        DunningStatusDialog dlg = new DunningStatusDialog(
+                parent instanceof java.awt.Frame ? (java.awt.Frame) parent : null, true,
+                dunningCase.getStatus());
+        dlg.setLocationRelativeTo(this);
+        dlg.setVisible(true);
+        if (!dlg.isConfirmed()) {
+            return;
+        }
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupDunningServiceRemote().recordStatus(dunningCase.getId(), dlg.getStatus(),
+                    dlg.getEventDate(), dlg.getComment());
+        } catch (Exception ex) {
+            log.error("Unable to record a status for dunning case " + dunningCase.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Der Status konnte nicht erfasst werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        loadCases();
+    }//GEN-LAST:event_cmdRecordStatusActionPerformed
+
+    private void cmdExportApplicationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportApplicationActionPerformed
+        DunningCase dunningCase = selectedCase();
+        if (dunningCase == null || this.ledger == null) {
+            return;
+        }
+        java.awt.Window parent = SwingUtilities.getWindowAncestor(this);
+        DunningExportDialog dlg = new DunningExportDialog(
+                parent instanceof java.awt.Frame ? (java.awt.Frame) parent : null, true,
+                dunningCase, this.ledger);
+        dlg.setLocationRelativeTo(this);
+        dlg.setVisible(true);
+        if (dlg.getExported() != null) {
+            // the export moves the procedure and creates its deadlines, so the journal here is stale
+            loadCases();
+        }
+    }//GEN-LAST:event_cmdExportApplicationActionPerformed
+
+    private void cmdImportMessageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdImportMessageActionPerformed
+        if (this.caseDto == null) {
+            return;
+        }
+        java.awt.Window parent = SwingUtilities.getWindowAncestor(this);
+        DunningMessageImportDialog dlg = new DunningMessageImportDialog(
+                parent instanceof java.awt.Frame ? (java.awt.Frame) parent : null, true,
+                this.caseDto, this.ledger == null ? null : this.ledger.getId());
+        dlg.setLocationRelativeTo(this);
+        dlg.setVisible(true);
+        if (dlg.isApplied()) {
+            loadCases();
+        }
+    }//GEN-LAST:event_cmdImportMessageActionPerformed
+
+    private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
+        loadCases();
+    }//GEN-LAST:event_cmdRefreshActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox chkIncludeSubLedgers;
-    private javax.swing.JButton cmdClose;
-    private javax.swing.JButton cmdExportCsv;
+    private javax.swing.JComboBox cmbCase;
+    private javax.swing.JComboBox cmbKennziffer;
+    private javax.swing.JButton cmdDetermineCourt;
+    private javax.swing.JButton cmdImportMessage;
+    private javax.swing.JButton cmdNewCase;
+    private javax.swing.JButton cmdRecordStatus;
     private javax.swing.JButton cmdRefresh;
-    private javax.swing.JButton cmdSelectKeyDate;
-    private javax.swing.JButton cmdStorePdf;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JLabel lblKeyDate;
-    private javax.swing.JTextField txtKeyDate;
-    private javax.swing.JTextArea txtStatement;
+    private javax.swing.JButton cmdRemoveCase;
+    private javax.swing.JButton cmdSave;
+    private javax.swing.JButton cmdExportApplication;
+    private javax.swing.JScrollPane jScrollPaneHistory;
+    private javax.swing.JLabel lblCase;
+    private javax.swing.JLabel lblCourt;
+    private javax.swing.JLabel lblCourtFileNumber;
+    private javax.swing.JLabel lblHint;
+    private javax.swing.JLabel lblKennziffer;
+    private javax.swing.JLabel lblOwnReference;
+    private javax.swing.JTable tblHistory;
+    private javax.swing.JTextField txtCourt;
+    private javax.swing.JTextField txtCourtFileNumber;
+    private javax.swing.JTextField txtOwnReference;
     // End of variables declaration//GEN-END:variables
-
 }

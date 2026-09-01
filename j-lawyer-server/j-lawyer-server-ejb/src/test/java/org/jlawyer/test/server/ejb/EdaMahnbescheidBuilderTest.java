@@ -833,6 +833,57 @@ public class EdaMahnbescheidBuilderTest {
     }
 
     @Test
+    public void theDeclarationsOfTheExportStepTravelInTheApplicationSpecificRecord() throws Exception {
+        // what the export step asks for: the day of instruction, which § 60 Abs. 1 S. 1 RVG makes
+        // decisive for the applicable RVG version, and the offsetting of Vorbem. 3 Abs. 4 VV RVG
+        EdaProcessRepresentative rep = lawyers();
+        rep.setOrderDate(date(2026, 2, 17));
+        rep.setOffsetAmount(new java.math.BigDecimal("162.50"));
+        rep.setSpecialEffortDeclared(true);
+        rep.setOwnReference("00123/26");
+
+        List<EdaRecord> records = builder.buildApplication(dunningCase(),
+                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
+                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
+                Arrays.asList(claim("11", "5000.00")), rep);
+
+        EdaRecord c10 = null;
+        for (EdaRecord r : records) {
+            if ("C10".equals(r.getLayout().getId())) {
+                c10 = r;
+            }
+        }
+        assertEquals("260217", c10.get("ASPVAUFD"));
+        assertEquals("16250", c10.get("VV2300MBET"));
+        assertEquals("X", c10.get("VV2300M"));
+        assertEquals("00123/26", c10.get("ASPVGZ"));
+    }
+
+    @Test
+    public void anApplicationWithDeclarationsAndAnAccountStillPassesTheVerifier() throws Exception {
+        // the records C10 and C11 are written beside a Kennziffer, where C07 to C09 are not - the
+        // structure has to hold with that combination, since it is the one every export produces
+        EdaProcessRepresentative rep = lawyers();
+        rep.setOrderDate(date(2026, 2, 17));
+        rep.setOffsetAmount(new java.math.BigDecimal("162.50"));
+        rep.setIban("DE82620901000123456789");
+
+        EdaFile file = builder.buildFile(dunningCase(),
+                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
+                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
+                Arrays.asList(claim("11", "5000.00")), rep,
+                "12345678", "MB0001", date(2026, 3, 2));
+
+        assertEquals(Arrays.asList("C01", "C02", "C03", "C04", "C10", "C11",
+                "C13", "C14", "C15", "C20"), layoutSequence(file.getRecords()));
+
+        List<EdaViolation> violations = new EdaStructureVerifier()
+                .verify(file.write("12345678"), EdaMahnbescheidLayouts.FORMAT_MAHNBESCHEID);
+
+        assertTrue(violations.toString(), violations.isEmpty());
+    }
+
+    @Test
     public void anApplicationOpensWithItsKeyRecordAndFollowsTheExpectedOrder() throws Exception {
         List<EdaRecord> records = builder.buildApplication(dunningCase(),
                 Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),

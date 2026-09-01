@@ -138,7 +138,9 @@
       the CSV. Only procedures in cases the user may open appear; the list is a view of their own
       work. The expiry of the objection period is computed rather than read from the deadline
       records, so the answer does not depend on whether the calendar entries were ever created. The
-      list view itself and starting the VB application from it belong with the desktop UI of 3.10
+      list view itself belongs with the other cross-case lists in the frame of 5.3 rather than in the
+      ledger tab of 3.10, since the question it answers is not about one case; starting the VB
+      application from it additionally needs the export step of 3.17
 - [x] 3.9 `DunningServiceRemote` (English JavaDoc) and the REST endpoint — note the endpoint is
       `DunningEndpointV7`, see 3.15. The interface covers the procedures themselves (list, create,
       update, record a status, read the journal) alongside validation, export and message import.
@@ -147,8 +149,44 @@
       recorded. Every move now writes an entry, and the source distinguishes what a person entered
       from what a court message reported — which is the first thing to look at when a procedure turns
       out to have been recorded wrongly
-- [ ] 3.10 Desktop UI: `Mahnverfahren` tab of the ledger workspace (reminder stages, dunning case,
-      status timeline, message import) (+ `.form` files)
+- [x] 3.10 Desktop UI: `Mahnverfahren` tab of the ledger workspace (reminder stages, dunning case,
+      status timeline, message import) (+ `.form` files). Split into two tabs rather than one,
+      because the pre-court reminders and the gerichtliches Mahnverfahren are two different
+      procedures and only the second has procedural dates that deadlines run from: the reminder
+      stages keep their panel under the name `Mahnungen` — which is what they are — and
+      `Mahnverfahren` now holds the new `ClaimLedgerCourtDunningPanel` with the procedure, the
+      court, the references and the journal of its course. The journal is a table and not a status
+      field on purpose: what matters is the sequence of dated events, and each row says whether a
+      person entered it or a court message reported it.
+      `DunningStatusDialog` records a status and says, per status, what the date is taken to mean —
+      the day of service, for instance, is where the objection period of § 692 Abs. 1 Nr. 3 ZPO and
+      the six months of § 701 ZPO start — and refuses an entry without a valid date, since a status
+      without its date carries no deadline. Determining the court asks the *creditor's* address
+      (§ 689 Abs. 2 ZPO) and leaves an ambiguous OLG division to the user rather than guessing. Where
+      nothing can be determined — which in practice usually means the applicant's federal state is
+      simply not recorded in the address — every configured responsibility is offered instead, led by
+      its federal state, with the reason for the failure above the list: the choice is the user's in
+      any case, and a dead end helps nobody.
+      The Kennziffer is chosen by *person*, not typed: it is granted to one lawyer by the court, and
+      in a firm with several lawyers each has their own, so the selector offers the lawyers who have
+      one (`AppUserBean.lawyer` with a `dunning_kennziffer` from 3.14) and takes the number from
+      them. Typing eight digits by hand is a way of filing under a colleague's number without
+      noticing. A new procedure starts with the Kennziffer of whoever creates it, and a number that
+      belongs to no current user — a lawyer who has left — is shown as it stands rather than dropped,
+      since losing it silently would file the next application under a different one.
+      `DunningMessageImportDialog` is the document-driven flow: pick the EDA file the beA inbox
+      already filed to the case, analyse it, assign each position on its own — a message file is
+      collective — and book. There is no inbox to keep in step with the case.
+      Also closed here, because it is what makes a recorded service date worth anything: a
+      Mahnbescheid served now starts the interest of the components awarded interest *ab
+      Zustellung*. Until then such a rule carried no start and nothing would ever have given it one,
+      so interest the court awarded would quietly never have been claimed. The decision which rules
+      move sits in `ServiceDateInterestPlanner`, apart from the storing: a rule with a start of its
+      own is left alone, but one carrying exactly the service date recorded before moves along with
+      a correction. Both paths do it — the manual entry and the court message.
+      The cross-case worklist *view* announced in 3.8 is not here: it belongs with the other
+      cross-case lists in the frame of 5.3, and starting a VB application from it needs the export
+      step of 3.17
 - [x] 3.11 `com.jdimension.jlawyer.eda` core: data-driven record layouts (field, offset, length,
       type), the 128-byte fixed-length writer and parser, `AA`/`BB` framing and the CP-850 codec
       that refuses unencodable characters. The Satzbeschreibungen are published as PDFs at
@@ -197,11 +235,76 @@
       this application are genuinely different — no salutation key at all, the designation across
       four name fields, the legal form in the address record — so they have their own mapping rather
       than the Mahnbescheid's. The record core, the value formatting and the framing are shared
-- [ ] 3.17 Export confirmation step in the ledger workspace, pre-filled from the dunning case, with
-      write-back of changed values (+ `.form`). This is also where the C10 declarations of 3.12
-      belong — the day of instruction above all, since the ledger has no such date and § 60 Abs. 1
-      S. 1 RVG makes it decide which version of the RVG the court applies — together with the
-      account the defendant is to pay into (C11)
+- [x] 3.10a Delete a dunning procedure that has not left the firm, from the `Mahnverfahren` tab
+      (`removeDunningCase` on the service and the interface, "Entfernen" in the panel + `.form`).
+      The need is real because "Neue Mahnsache" creates at once, without a dialog: a mis-click
+      otherwise leaves a procedure that can only be dragged along through the status field.
+      Where the line runs, and why it runs there: a procedure still in preparation - no court file
+      number, no procedural date recorded - is an entry somebody made, and deleting it removes a
+      mistake. Once the application has gone to the court it is the firm's record of a court matter,
+      and deleting would not undo the procedure at the court; it would only destroy what the firm
+      knows about it - the journal with its dates, users and sources, the deadlines computed from the
+      procedural dates, and the service date from which the interest of the components awarded
+      interest *ab Zustellung* runs. Those procedures are ended with a status instead, which the
+      model already has: `WITHDRAWN` and `COMPLETED`. `WITHDRAWN` is explicitly no route back to
+      deletion - it is the answer to "this should not have been started", not a way to unsay it.
+      The rule sits on `DunningCase` itself as `getRemovalRefusal()` / `isRemovable()`, next to the
+      data it judges and following `EnforcementTitle.getMissingPrerequisites()`. That way the server
+      enforces it and the panel can say *why* beforehand rather than greying a button out for reasons
+      the user cannot see - and neither side can drift from the other.
+      One cleanup the database does not do: `dunning_case_events` and `dunning_case_deadlines` hang
+      off the procedure with `ON DELETE CASCADE`, but the follow-ups those deadlines created do not -
+      `DunningCaseDeadline.reviewId` points at an `ArchiveFileReviewsBean` with no cascade behind it.
+      They would have stayed in the calendar pointing at a procedure that no longer exists, so the
+      deletion takes them with it. Note the difference from a *lapsed* deadline, which marks its
+      follow-up done rather than deleting it: there something happened in the case, here nothing did
+- [x] 3.17 Export confirmation step in the ledger workspace, pre-filled from the dunning case, with
+      write-back of changed values (+ `.form`). `DunningExportDialog`, opened from "Antrag erzeugen"
+      in the `Mahnverfahren` tab. A confirmation step and not one button, because the export is not
+      undoable in any useful sense: it writes the file into the case, moves the procedure to
+      "Mahnbescheid beantragt", starts the deadlines, and from then on the procedure can only be
+      ended by a status (3.10a), not deleted.
+      Three things are asked for that the ledger does not know. *Which positions go in* — a claim
+      ledger is not an application, a position may be disputed, paid or deliberately left out, so
+      every one is listed and ticked individually, with its amount, invoice number and interest-to
+      date editable; the value in dispute follows the ticks. *The day of instruction*, which under
+      § 60 Abs. 1 S. 1 RVG decides which version of the RVG the court applies to the fees it sets.
+      *The offsetting* of Vorbem. 3 Abs. 4 VV RVG — only the part to be set off against Nr. 3305 VV
+      RVG, not the whole pre-court fee — together with the declaration of unusual extent or
+      difficulty (VV2300M).
+      Those three are stored on the procedure by `V3_6_0_24` (`order_date`, `offset_amount`,
+      `special_effort`, plus `file_name` for the six-character EDAID of the last export) and written
+      back before the file is built, so a repeated export starts from what was applied for rather
+      than from a blank form. They belong to the application and not to the Kennziffer — the
+      Satzbeschreibung says so in as many words.
+      The rest of the C07–C11 area needs no second entry: the lawyer is found by the Kennziffer of
+      the procedure, and their bank details from the user profile become the account the defendant is
+      told to pay into (C11). C07–C09 stay out, since the Kennziffer closes that area.
+      Two defects fixed on the way. `toClaims` passed a null amount straight through, which would
+      have applied for a position with an empty amount field; an input without an amount now applies
+      for the position as it stands.
+      And a bug class the first real export exposed: `java.util.Date.toInstant()` was called on
+      values read back from JPA. A field mapped `@Temporal(DATE)` returns a `java.sql.Date`, whose
+      `toInstant()` throws `UnsupportedOperationException` by contract — only `java.sql.Timestamp`
+      converts. It surfaced in `EdaValues.date` on the new `order_date`, but the same idiom sat in
+      four more places reading DATE-mapped fields: `DunningDeadlineCalculator.toLocalDate` (every
+      procedural date), `DunningStagePlanner.dueDate` (`DunningStageEvent.sentDate`), and two follow-
+      up computations in `ClaimLedgerService` (the reminder deadline and `EnforcementTitle`'s
+      limitation date). Two of those sit inside `try`/`catch` blocks that log and continue, so the
+      failure would have been silent — no deadlines, no follow-up, no error. All now convert through
+      `Instant.ofEpochMilli(date.getTime())`, which is right for all three date classes. The
+      remaining conversions in `ClaimInterestCalculator` read TIMESTAMP-mapped fields and are sound;
+      its caller-supplied key date is hardened all the same, since a stored date can be handed in.
+      A third one the first export exposed: `EdaFieldLengthException` and `EdaEncodingException` live
+      in the EJB module and are not on the desktop client's classpath, so letting one escape a remote
+      method turned a precise sentence — which value, which field, how much too long — into
+      "Failed to read response" with a `ClassNotFoundException` underneath. `exportApplication` now
+      translates both into a plain `Exception` carrying their message, and the dialog walks the chain
+      of causes rather than showing a wrapper's empty message. No EDA type appears in any remote
+      signature; these two escaped as thrown exceptions only.
+      And the document tab does not poll: a file created from a dialog only appears once the case is
+      reopened unless a `DocumentAddedEvent` is published. The export does that now — and so does
+      `ClaimStatementDialog`, which stored the claim statement without one since it was written
 - [ ] 3.18 EDA viewer: formatted view resolving record types, section markers and fields, raw
       record view, tabbed panel and integration into the document viewer of `ArchiveFilePanel`
       (+ `.form` files)
@@ -245,7 +348,9 @@
 - [ ] 5.2 Payment agreement (§ 802b ZPO) with stay of measures and breach handling
 - [ ] 5.3 Cross-case frame next to `editors/finance/ManagePaymentsFrame` (+ `.form`) holding the
       balance list, the dunning worklist and the enforcement/title portfolio (limitation, last
-      measure, open amount), plus a desktop widget for overdue recovery deadlines
+      measure, open amount), plus a desktop widget for overdue recovery deadlines. The dunning
+      worklist view moved here from 3.10 together with starting a VB application from a row, for
+      which the server side of 3.8 is already in place
 - [ ] 5.4 Ledger REST endpoints (totals, payment booking, statement)
 - [ ] 5.5 Documentation: user-facing description of the workflow, admin guide for court table, fee
       tables, reminder stages and form templates
