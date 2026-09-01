@@ -120,7 +120,8 @@
       with matching on the echoed own reference, status/date update, ledger service booking and an
       inbox for unmatched messages
 - [ ] 3.8 Dunning worklist (filters, CSV, navigation, start VB application from the list)
-- [ ] 3.9 `DunningServiceRemote` (English JavaDoc) and `DunningEndpointV8`
+- [ ] 3.9 `DunningServiceRemote` (English JavaDoc) and the REST endpoint — note the endpoint is
+      `DunningEndpointV7`, see 3.15
 - [ ] 3.10 Desktop UI: `Mahnverfahren` tab of the ledger workspace (reminder stages, dunning case,
       status timeline, message import) (+ `.form` files)
 - [x] 3.11 `com.jdimension.jlawyer.eda` core: data-driven record layouts (field, offset, length,
@@ -147,8 +148,14 @@
       counts, character set) with violations reported per record and field
 - [x] 3.14 `AppUserBean` lawyer identification number (Kennziffer) with migration and the user
       administration field shown only for lawyer users (+ `.form`)
-- [ ] 3.15 Export operation in the EJB layer and the REST endpoint (export + validate), storing the
-      file as a tagged case document linked to the dunning case
+- [x] 3.15 Export operation in the EJB layer and the REST endpoint (export + validate), storing the
+      file as a tagged case document linked to the dunning case. The export validates first, builds,
+      verifies the finished file structurally, and only then stores the document and moves the
+      status. *Deviation from the plan, deliberately:* the endpoint is `DunningEndpointV7`, not V8.
+      A new resource is additive and breaks no existing client, and CLAUDE.md has new endpoints go
+      into the current version — creating a version for it would fragment the API for nothing. It
+      exposes the readiness check; exporting through REST follows once the confirmation step of 3.17
+      has settled what a caller must supply
 - [ ] 3.16 EDA mapper and export for the Vollstreckungsbescheid application (record type `08`,
       format 4.1.00), reusing the record core
 - [ ] 3.17 Export confirmation step in the ledger workspace, pre-filled from the dunning case, with

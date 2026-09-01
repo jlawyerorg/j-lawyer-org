@@ -662,7 +662,21 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.eda.EdaClaimMapper;
+import com.jdimension.jlawyer.eda.EdaFile;
+import com.jdimension.jlawyer.eda.EdaMahnbescheidBuilder;
+import com.jdimension.jlawyer.eda.EdaMahnbescheidLayouts;
+import com.jdimension.jlawyer.eda.EdaStructureVerifier;
+import com.jdimension.jlawyer.eda.EdaViolation;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimComponentFacadeLocal;
+import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
+import com.jdimension.jlawyer.persistence.ClaimPartyRole;
+import com.jdimension.jlawyer.persistence.DunningCaseStatus;
+import com.jdimension.jlawyer.persistence.InterestRuleFacadeLocal;
+import com.jdimension.jlawyer.pojo.DunningClaimInput;
+import com.jdimension.jlawyer.pojo.DunningValidationIssue;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.persistence.ClaimLedgerPartyFacadeLocal;
 import com.jdimension.jlawyer.persistence.DunningCase;
@@ -674,7 +688,9 @@ import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.server.utils.SecurityUtils;
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
@@ -708,6 +724,15 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
     private ClaimComponentFacadeLocal claimComponentsFacade;
 
     @EJB
+    private InterestRuleFacadeLocal interestRulesFacade;
+
+    @EJB
+    private ArchiveFileServiceLocal archiveFileService;
+
+    @EJB
+    private DunningDeadlineServiceLocal dunningDeadlineService;
+
+    @EJB
     private SecurityServiceLocal securityFacade;
 
     @EJB
@@ -732,6 +757,141 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
                 new ArrayList<>(this.claimLedgerPartiesFacade.findByLedger(ledger)),
                 new ArrayList<>(this.claimComponentsFacade.findByLedger(ledger)),
                 claimValue, ReferenceData.getMainClaimCatalogue());
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public ArchiveFileDocumentsBean exportApplication(String dunningCaseId, BigDecimal claimValue,
+            List<DunningClaimInput> claims, String fileName) throws Exception {
+
+        DunningCase dunningCase = this.dunningCasesFacade.find(dunningCaseId);
+        if (dunningCase == null) {
+            throw new Exception("Die Mahnsache existiert nicht!");
+        }
+        ClaimLedger ledger = dunningCase.getLedger();
+        if (ledger == null || ledger.getArchiveFileKey() == null) {
+            throw new Exception("Die Mahnsache ist keiner Akte zugeordnet!");
+        }
+        requireAccess(ledger.getArchiveFileKey());
+
+        List<ClaimLedgerParty> parties = new ArrayList<>(this.claimLedgerPartiesFacade.findByLedger(ledger));
+        List<ClaimComponent> components = new ArrayList<>(this.claimComponentsFacade.findByLedger(ledger));
+
+        // nothing is produced that has not been checked first
+        DunningValidationResult validation = new DunningApplicationValidator().validate(dunningCase,
+                parties, components, claimValue, ReferenceData.getMainClaimCatalogue());
+        if (!validation.isReady()) {
+            throw new Exception("Der Antrag ist noch nicht vollständig:\n" + describe(validation));
+        }
+
+        EdaFile file = new EdaMahnbescheidBuilder().buildFile(dunningCase,
+                partiesOf(parties, ClaimPartyRole.CREDITOR),
+                partiesOf(parties, ClaimPartyRole.DEBTOR),
+                toClaims(claims, components),
+                dunningCase.getKennziffer(), fileName, new Date());
+
+        String content = file.write(dunningCase.getKennziffer());
+
+        // and nothing leaves the firm that has not been verified afterwards
+        List<EdaViolation> violations = new EdaStructureVerifier()
+                .verify(content, EdaMahnbescheidLayouts.FORMAT_MAHNBESCHEID);
+        if (!violations.isEmpty()) {
+            StringBuilder sb = new StringBuilder("Die erzeugte Datei ist strukturell fehlerhaft "
+                    + "und wurde nicht gespeichert:\n");
+            for (EdaViolation v : violations) {
+                sb.append("\n").append(v.toString());
+            }
+            throw new Exception(sb.toString());
+        }
+
+        ArchiveFileDocumentsBean document = this.archiveFileService.addDocument(
+                ledger.getArchiveFileKey().getId(),
+                documentName(dunningCase, fileName),
+                content.getBytes(Charset.forName(com.jdimension.jlawyer.eda.EdaCharset.CHARSET_NAME)),
+                null, null);
+
+        // the status moves only after the file exists: a procedure must not claim to have applied
+        // for something that was never stored
+        dunningCase.setStatus(DunningCaseStatus.MB_APPLIED);
+        dunningCase.setStatusDate(new Date());
+        dunningCase.setMbAppliedDate(new Date());
+        dunningCase.setApplicationDate(new Date());
+        dunningCase.setAppliedTotal(claimValue);
+        this.dunningCasesFacade.edit(dunningCase);
+
+        try {
+            this.dunningDeadlineService.synchronizeDeadlines(dunningCase, 14);
+        } catch (Exception ex) {
+            // the application is out and stored; a failure to place reminders is worth logging but
+            // must not undo that
+            log.error("Unable to synchronise deadlines after exporting dunning case " + dunningCaseId, ex);
+        }
+
+        return document;
+    }
+
+    /**
+     * The parties of one role, in a stable order.
+     */
+    private List<ClaimLedgerParty> partiesOf(List<ClaimLedgerParty> parties, ClaimPartyRole role) {
+        List<ClaimLedgerParty> found = new ArrayList<>();
+        for (ClaimLedgerParty p : parties) {
+            if (p.getRole() == role) {
+                found.add(p);
+            }
+        }
+        return found;
+    }
+
+    /**
+     * Resolves the requested claims against the ledger's own positions.
+     *
+     * A component that does not belong to this ledger is refused rather than silently skipped: a
+     * request naming a foreign position is a mistake worth surfacing, not one to work around.
+     */
+    private List<EdaClaimMapper.Claim> toClaims(List<DunningClaimInput> inputs,
+            List<ClaimComponent> components) throws Exception {
+
+        List<EdaClaimMapper.Claim> claims = new ArrayList<>();
+        if (inputs == null) {
+            return claims;
+        }
+        for (DunningClaimInput input : inputs) {
+            ClaimComponent component = null;
+            for (ClaimComponent c : components) {
+                if (c.getId().equals(input.getComponentId())) {
+                    component = c;
+                    break;
+                }
+            }
+            if (component == null) {
+                throw new Exception("Die Forderungsposition " + input.getComponentId()
+                        + " gehört nicht zu diesem Forderungskonto!");
+            }
+            EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(component, input.getAmount());
+            claim.setFrom(input.getFrom());
+            claim.setTo(input.getTo());
+            claim.setInvoiceNumber(input.getInvoiceNumber());
+            claim.setInterestTo(input.getInterestTo());
+            claim.setInterestStartMode(component.getInterestStartMode());
+            claim.getInterestRules().addAll(this.interestRulesFacade.findByComponent(component));
+            claims.add(claim);
+        }
+        return claims;
+    }
+
+    private String documentName(DunningCase dunningCase, String fileName) {
+        return "Mahnbescheidsantrag_"
+                + (dunningCase.getOwnReference() == null ? fileName : dunningCase.getOwnReference())
+                + ".eda";
+    }
+
+    private String describe(DunningValidationResult validation) {
+        StringBuilder sb = new StringBuilder();
+        for (DunningValidationIssue issue : validation.getBlockingIssues()) {
+            sb.append("\n").append(issue.getField()).append(": ").append(issue.getMessage());
+        }
+        return sb.toString();
     }
 
     /**

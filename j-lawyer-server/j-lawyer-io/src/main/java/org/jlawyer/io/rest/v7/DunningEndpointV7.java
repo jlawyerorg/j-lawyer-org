@@ -1,4 +1,5 @@
-/*                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*
+                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -660,61 +661,81 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package org.jlawyer.io.rest.v7;
 
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.pojo.DunningClaimInput;
+import com.jdimension.jlawyer.pojo.DunningValidationIssue;
 import com.jdimension.jlawyer.pojo.DunningValidationResult;
+import com.jdimension.jlawyer.services.DunningServiceLocal;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
-import javax.ejb.Remote;
+import javax.annotation.security.RolesAllowed;
+import javax.ejb.Stateless;
+import javax.naming.InitialContext;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import org.apache.log4j.Logger;
 
 /**
  * The court dunning procedure.
  *
- * At present this exposes the readiness check for an application; the operations that carry a
- * procedure through its stages join it as they are built.
+ * At present this exposes the readiness check for an application, which answers whether a Mahnbescheid
+ * could be applied for as the data stands. It reads and stores nothing, so a client may call it as
+ * often as it likes.
  *
  * @author jens
  */
-@Remote
-public interface DunningServiceRemote {
+@Stateless
+@Path("/v7/dunning")
+@Consumes({"application/json"})
+@Produces({"application/json"})
+@io.swagger.annotations.Api(tags = {"Dunning"})
+public class DunningEndpointV7 implements DunningEndpointLocalV7 {
+
+    private static final Logger log = Logger.getLogger(DunningEndpointV7.class.getName());
+    private static final String LOOKUP_DUNNING = "java:global/j-lawyer-server/j-lawyer-server-ejb/DunningService!com.jdimension.jlawyer.services.DunningServiceLocal";
 
     /**
-     * Checks whether a dunning application can be filed, without producing or changing anything.
+     * Checks whether a dunning application can be filed, reporting every open issue at once.
      *
-     * Every problem is reported together rather than the first one raised, so a user learns in one
-     * pass what needs fixing. The check reads; it stores nothing.
-     *
-     * Note what it does not yet cover: whether the data also fits the field lengths and value
-     * domains of the record format is a separate question that needs the Satzbeschreibung, and that
-     * check joins this one with the EDA core.
-     *
-     * @param dunningCaseId the procedure to check
-     * @param claimValue the value that would be applied for; the caller determines it, because
-     * whether a position counts as an ancillary claim (§ 43 GKG) is a judgement
-     * @return every finding, blocking and otherwise; never null
-     * @throws Exception if the procedure does not exist or the user may not see its case
+     * @param dunningCaseId id of the dunning case
+     * @param claimValue the value that would be applied for
+     * @return the open issues, an empty list where the application is ready
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Dunning case not found
      */
-    DunningValidationResult validateApplication(String dunningCaseId, BigDecimal claimValue) throws Exception;
+    @Override
+    @Path("/{dunningCaseId}/validate")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Checks whether a dunning application can be filed, reporting every open issue at once.")
+    public Response validateApplication(@PathParam("dunningCaseId") String dunningCaseId,
+            @QueryParam("claimValue") String claimValue) {
+        try {
+            InitialContext ic = new InitialContext();
+            DunningServiceLocal dunning = (DunningServiceLocal) ic.lookup(LOOKUP_DUNNING);
 
-    /**
-     * Produces the EDA file for a dunning application, stores it in the case and records that the
-     * application has gone out.
-     *
-     * Nothing is produced that has not been checked. The data is validated first and the finished
-     * file is verified structurally afterwards; if either fails, no document is stored and no status
-     * is changed - an unverified file must never leave the firm, and a procedure must not claim to
-     * have applied for something it did not send.
-     *
-     * @param dunningCaseId the procedure to file
-     * @param claimValue the value applied for
-     * @param claims what is applied for, in the order it should appear
-     * @param fileName the six-character name the file announces itself under
-     * @return the stored document
-     * @throws Exception if the data is incomplete, the file fails verification, or it cannot be
-     * stored; the message names what went wrong
-     */
-    ArchiveFileDocumentsBean exportApplication(String dunningCaseId, BigDecimal claimValue,
-            List<DunningClaimInput> claims, String fileName) throws Exception;
+            BigDecimal value = claimValue == null || claimValue.trim().isEmpty()
+                    ? null : new BigDecimal(claimValue.trim());
+            DunningValidationResult result = dunning.validateApplication(dunningCaseId, value);
+
+            List<String> issues = new ArrayList<>();
+            for (DunningValidationIssue issue : result.getIssues()) {
+                issues.add(issue.getSeverity().getLabel() + " - " + issue.getField() + ": "
+                        + issue.getMessage());
+            }
+            return Response.ok(issues).build();
+        } catch (Exception ex) {
+            log.error("can not validate dunning case " + dunningCaseId, ex);
+            return Response.serverError().build();
+        }
+    }
 }

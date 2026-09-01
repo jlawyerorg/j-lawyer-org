@@ -660,61 +660,103 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.pojo;
 
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.pojo.DunningClaimInput;
-import com.jdimension.jlawyer.pojo.DunningValidationResult;
+import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.List;
-import javax.ejb.Remote;
+import java.util.Date;
 
 /**
- * The court dunning procedure.
+ * One claim as it is to be applied for, as a caller hands it over.
  *
- * At present this exposes the readiness check for an application; the operations that carry a
- * procedure through its stages join it as they are built.
+ * The component is referenced by its id rather than passed as an entity: what crosses the wire is a
+ * request, and resolving the id on the server is what makes sure the claim really belongs to the
+ * ledger being filed for.
  *
  * @author jens
  */
-@Remote
-public interface DunningServiceRemote {
+public class DunningClaimInput implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private String componentId;
+    private BigDecimal amount;
+    private Date from;
+    private Date to;
+    private String invoiceNumber;
+    private Date interestTo;
+
+    public DunningClaimInput() {
+    }
+
+    public DunningClaimInput(String componentId, BigDecimal amount) {
+        this.componentId = componentId;
+        this.amount = amount;
+    }
 
     /**
-     * Checks whether a dunning application can be filed, without producing or changing anything.
-     *
-     * Every problem is reported together rather than the first one raised, so a user learns in one
-     * pass what needs fixing. The check reads; it stores nothing.
-     *
-     * Note what it does not yet cover: whether the data also fits the field lengths and value
-     * domains of the record format is a separate question that needs the Satzbeschreibung, and that
-     * check joins this one with the EDA core.
-     *
-     * @param dunningCaseId the procedure to check
-     * @param claimValue the value that would be applied for; the caller determines it, because
-     * whether a position counts as an ancillary claim (§ 43 GKG) is a judgement
-     * @return every finding, blocking and otherwise; never null
-     * @throws Exception if the procedure does not exist or the user may not see its case
+     * @return the claim position this refers to
      */
-    DunningValidationResult validateApplication(String dunningCaseId, BigDecimal claimValue) throws Exception;
+    public String getComponentId() {
+        return componentId;
+    }
+
+    public void setComponentId(String componentId) {
+        this.componentId = componentId;
+    }
 
     /**
-     * Produces the EDA file for a dunning application, stores it in the case and records that the
-     * application has gone out.
-     *
-     * Nothing is produced that has not been checked. The data is validated first and the finished
-     * file is verified structurally afterwards; if either fails, no document is stored and no status
-     * is changed - an unverified file must never leave the firm, and a procedure must not claim to
-     * have applied for something it did not send.
-     *
-     * @param dunningCaseId the procedure to file
-     * @param claimValue the value applied for
-     * @param claims what is applied for, in the order it should appear
-     * @param fileName the six-character name the file announces itself under
-     * @return the stored document
-     * @throws Exception if the data is incomplete, the file fails verification, or it cannot be
-     * stored; the message names what went wrong
+     * @return what is applied for on it
      */
-    ArchiveFileDocumentsBean exportApplication(String dunningCaseId, BigDecimal claimValue,
-            List<DunningClaimInput> claims, String fileName) throws Exception;
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
+    /**
+     * @return the first day the claim covers, or null
+     */
+    public Date getFrom() {
+        return from;
+    }
+
+    public void setFrom(Date from) {
+        this.from = from;
+    }
+
+    /**
+     * @return the last day the claim covers, or null
+     */
+    public Date getTo() {
+        return to;
+    }
+
+    public void setTo(Date to) {
+        this.to = to;
+    }
+
+    /**
+     * @return the invoice the claim rests on, which individualises it for the court
+     */
+    public String getInvoiceNumber() {
+        return invoiceNumber;
+    }
+
+    public void setInvoiceNumber(String invoiceNumber) {
+        this.invoiceNumber = invoiceNumber;
+    }
+
+    /**
+     * @return the day interest is claimed up to, or null where it runs on
+     */
+    public Date getInterestTo() {
+        return interestTo;
+    }
+
+    public void setInterestTo(Date interestTo) {
+        this.interestTo = interestTo;
+    }
 }
