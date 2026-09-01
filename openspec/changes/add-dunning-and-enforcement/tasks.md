@@ -23,10 +23,11 @@
       rule — `fee_scales` plus `fee_scale_brackets`, with validity ranges, because fee law changes on
       a fixed date and § 60 RVG has earlier matters billed under the previous law. Seeded with the
       state after the KostBRÄG 2025 (in force 1 June 2025), verified against all 42 published rows of
-      each table. *Still open:* the fee items that sit on top of the scales — Nr. 1100 KV GKG (0,5,
-      minimum 38 EUR since 1 June 2025) and Nr. 3305, 3308, 1008 VV RVG for 3.5, and the GvKostG
-      positions for 4.6. Also open: the pre-2025 scale, which an installation needs for matters
-      commissioned before 1 June 2025
+      each table. The fee items that sit on those scales follow the same shape and are shipped with
+      them in `fee_items`: Nr. 3305, 3308, 1008, 7002 VV RVG, the credit of Vorbem. 3 Abs. 4 VV RVG
+      and Nr. 1100 KV GKG, all taken from the official Vergütungs- and Kostenverzeichnis. *Still
+      open:* the GvKostG positions for 4.6, and the pre-2025 scale and items, which an installation
+      needs for matters commissioned before 1 June 2025 (§ 60 RVG)
 - [ ] 0.4 Obtain at least one official ZVFV form PDF per annex in scope and record its AcroForm
       field names, so the mapping profiles of 4.2/4.3 and the tests of 4.10 can be written against
       the real forms rather than assumptions
