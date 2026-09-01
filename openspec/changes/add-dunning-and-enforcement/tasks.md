@@ -133,11 +133,16 @@
       computed from the file, and the CP-850 codec. Transcribed so far are the Dateivorsatz, the
       Dateinachsatz and the Kennsatz C01; the remaining record areas are transcribed with the mapper
       of 3.12, against the same builder that already refuses a layout not adding up to 128 bytes
-- [ ] 3.12 EDA mapper for the Mahnbescheid application (record type `01`, format 4.0.00): key
+- [x] 3.12 EDA mapper for the Mahnbescheid application (record type `01`, format 4.0.00): key
       record, parties and their representatives, catalogued claims (number from 1.5, with the
       additional record each special number demands) and free-text claims, running and already
       computed interest, consumer-credit data, and the seven ancillary-claim areas — with the
-      mapping documented in the code
+      mapping documented in the code. Mapped and assembled so far: key record, applicant, defendant,
+      catalogued and free-text claims with the additions their catalogue number demands, running
+      interest, and the trailer sums. *Still to map:* legal and authorised representatives
+      (C05–C11, C17/C18), already computed interest (C19), assignment (C25), consumer-credit data
+      (C27) and the seven ancillary-claim areas (C28–C34). The layouts for all of them are present
+      and verified, so each remaining piece is a mapping rather than a transcription
 - [x] 3.13 Structural verifier (record length, framing, record order, per-area frequency, trailer
       counts, character set) with violations reported per record and field
 - [ ] 3.14 `AppUserBean` lawyer identification number (Kennziffer) with migration and the user

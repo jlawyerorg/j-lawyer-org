@@ -662,186 +662,123 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.eda;
 
-import java.math.BigDecimal;
+import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
+import com.jdimension.jlawyer.persistence.DunningCase;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
- * An exchange file: a header, the application records, a trailer.
+ * Assembles a complete application for a Mahnbescheid from the parts of a dunning procedure.
  *
- * The trailer carries counts and sums the court checks the file against. They are computed here from
- * the records actually written rather than supplied by the caller - a count that is maintained by
- * hand is a count that eventually disagrees with the file it describes, and the court rejects the
- * whole delivery when it does.
+ * The order of the records is not decoration. The court reads the file as a sequence: the key record
+ * opens an application, everything after it belongs to that application until the next key record,
+ * and within it the applicant precedes the defendant and a claim precedes its own additions and
+ * interest. A file whose records are sound individually but out of order is rejected as a whole.
+ *
+ * The Kennziffer replaces the acting lawyer's address records, as the format intends: where it is
+ * given, those records are omitted rather than sent alongside.
  *
  * @author jens
  */
-public class EdaFile {
+public class EdaMahnbescheidBuilder {
 
-    /** Records are separated by CR LF in the exchange format. */
-    public static final String RECORD_SEPARATOR = "\r\n";
-
-    private final EdaRecordCodec codec = new EdaRecordCodec();
-    private final List<EdaRecord> records = new ArrayList<>();
-    private EdaRecord header;
+    private final EdaPartyMapper partyMapper = new EdaPartyMapper();
+    private final EdaClaimMapper claimMapper = new EdaClaimMapper();
 
     /**
-     * @param header the AA record
-     */
-    public void setHeader(EdaRecord header) {
-        this.header = header;
-    }
-
-    /**
-     * @return the AA record, or null if none was set
-     */
-    public EdaRecord getHeader() {
-        return header;
-    }
-
-    /**
-     * Adds an application record.
+     * Builds the records of one application.
      *
-     * @param record the record
-     * @return this file, so calls can be chained
+     * @param dunningCase the procedure, carrying court, own reference and Kennziffer
+     * @param creditors the applicants
+     * @param debtors the defendants
+     * @param claims what is applied for
+     * @return the records of the application, in the order the format expects
+     * @throws EdaFieldLengthException if a value does not fit the field the format provides
      */
-    public EdaFile add(EdaRecord record) {
-        this.records.add(record);
-        return this;
-    }
+    public List<EdaRecord> buildApplication(DunningCase dunningCase, List<ClaimLedgerParty> creditors,
+            List<ClaimLedgerParty> debtors, List<EdaClaimMapper.Claim> claims)
+            throws EdaFieldLengthException {
 
-    /**
-     * @return the application records, header and trailer excluded
-     */
-    public List<EdaRecord> getRecords() {
+        List<EdaRecord> records = new ArrayList<>();
+        records.add(kennsatz(dunningCase, debtors));
+
+        for (ClaimLedgerParty creditor : creditors) {
+            records.addAll(partyMapper.map(creditor,
+                    EdaMahnbescheidLayouts.getLayout("C02"),
+                    EdaMahnbescheidLayouts.getLayout("C03"),
+                    EdaMahnbescheidLayouts.getLayout("C04"), "AS"));
+        }
+        for (ClaimLedgerParty debtor : debtors) {
+            records.addAll(partyMapper.map(debtor,
+                    EdaMahnbescheidLayouts.getLayout("C13"),
+                    EdaMahnbescheidLayouts.getLayout("C14"),
+                    EdaMahnbescheidLayouts.getLayout("C15"), "AG"));
+        }
+        for (EdaClaimMapper.Claim claim : claims) {
+            records.addAll(claimMapper.map(claim));
+        }
         return records;
     }
 
     /**
-     * How many applications the file contains, counted by their key records.
+     * Builds a complete file around one application.
      *
-     * @return the number of applications
-     */
-    public int countApplications() {
-        int count = 0;
-        for (EdaRecord r : this.records) {
-            if ("KS".equals(r.getLayout().getKennzeichen())) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    /**
-     * Writes the file.
-     *
-     * @param participantNumber the Kennziffer of the EDA participant, for the trailer
-     * @return the complete file as text, records separated by CR LF
+     * @param dunningCase the procedure
+     * @param creditors the applicants
+     * @param debtors the defendants
+     * @param claims what is applied for
+     * @param participantNumber the Kennziffer of the EDA participant sending the file
+     * @param fileName the six-character name the file announces itself under
+     * @param created the day the file is created
+     * @return the file, ready to be verified
      * @throws EdaFieldLengthException if a value does not fit its field
-     * @throws EdaEncodingException if a value cannot be carried by the code page
-     * @throws IllegalStateException if no header was set
      */
-    public String write(String participantNumber) throws EdaFieldLengthException, EdaEncodingException {
+    public EdaFile buildFile(DunningCase dunningCase, List<ClaimLedgerParty> creditors,
+            List<ClaimLedgerParty> debtors, List<EdaClaimMapper.Claim> claims,
+            String participantNumber, String fileName, Date created) throws EdaFieldLengthException {
 
-        if (this.header == null) {
-            throw new IllegalStateException("Der Datei fehlt der Dateivorsatz (Satzart AA).");
+        EdaFile file = new EdaFile();
+        file.setHeader(header(participantNumber, fileName, created));
+        for (EdaRecord record : buildApplication(dunningCase, creditors, debtors, claims)) {
+            file.add(record);
         }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(this.codec.write(this.header)).append(RECORD_SEPARATOR);
-        for (EdaRecord record : this.records) {
-            sb.append(this.codec.write(record)).append(RECORD_SEPARATOR);
-        }
-        sb.append(this.codec.write(buildTrailer(participantNumber))).append(RECORD_SEPARATOR);
-        return sb.toString();
+        return file;
     }
 
     /**
-     * Builds the trailer from what the file actually contains.
-     *
-     * @param participantNumber the Kennziffer of the EDA participant
-     * @return the BB record
+     * The file header, which announces who is sending what in which format.
      */
-    public EdaRecord buildTrailer(String participantNumber) {
-        EdaRecord trailer = new EdaRecord(EdaMahnbescheidLayouts.FILE_TRAILER);
-        trailer.set("TKEZI", participantNumber);
-        trailer.set("ANTANZ", String.valueOf(countApplications()));
-        trailer.set("SANZ", String.valueOf(this.records.size()));
-
-        // The court checks the file against these sums. They are computed from the records the file
-        // actually holds, for the same reason as the counts: a sum maintained beside the data
-        // eventually disagrees with it, and the court then rejects the whole delivery.
-        int claims = 0;
-        long catalogueSum = 0;
-        BigDecimal amountSum = BigDecimal.ZERO;
-        for (EdaRecord record : this.records) {
-            String kennzeichen = record.getLayout().getKennzeichen();
-            if ("ASPK".equals(kennzeichen)) {
-                claims++;
-                catalogueSum += number(record.get("ASPKAT1")) + number(record.get("ASPKAT2"));
-                amountSum = amountSum.add(amount(record.get("ASPBET")));
-            } else if ("ASPS".equals(kennzeichen) && "01".equals(record.getLayout().getFolgenummer())) {
-                // a free-text claim spans two records; only the first one carries the amount, and
-                // counting the second would count the claim twice
-                claims++;
-                amountSum = amountSum.add(amount(record.get("ASPSOBET")));
-            }
-        }
-        trailer.set("SKATNR", String.valueOf(catalogueSum));
-        trailer.set("SUASP", EdaValues.amount(amountSum));
-        // the court's file number does not exist yet when an application goes out
-        trailer.set("SUGNR", "0");
-        trailer.set("ASPANZ", String.valueOf(claims));
-        return trailer;
-    }
-
-    private static long number(String value) {
-        if (value == null || value.trim().isEmpty()) {
-            return 0;
-        }
-        try {
-            return Long.parseLong(value.trim());
-        } catch (NumberFormatException nfe) {
-            return 0;
-        }
-    }
-
-    private static BigDecimal amount(String value) {
-        BigDecimal parsed = EdaValues.parseAmount(value);
-        return parsed == null ? BigDecimal.ZERO : parsed;
+    public EdaRecord header(String participantNumber, String fileName, Date created) {
+        EdaRecord header = new EdaRecord(EdaMahnbescheidLayouts.FILE_HEADER);
+        header.set("TKEZI", participantNumber);
+        header.set("DATUM", EdaValues.date(created == null ? new Date() : created));
+        header.set("BELART", EdaMahnbescheidLayouts.SATZART_MAHNBESCHEID);
+        header.set("FORMAT", EdaMahnbescheidLayouts.FORMAT_MAHNBESCHEID);
+        header.set("EDAID", fileName);
+        return header;
     }
 
     /**
-     * Reads a file back into its records.
+     * The key record, which opens the application and addresses it to a court.
      *
-     * Lines that match no known layout are reported rather than skipped: a record the reader does not
-     * recognise is exactly the one worth looking at.
-     *
-     * @param content the file
-     * @return the records, header and trailer included
-     * @throws IllegalArgumentException if a line is not of record length or matches no layout
+     * The court is addressed by postcode and place - not by its name and not by an identifier - so
+     * those two fields are what decide where the application lands.
      */
-    public static List<EdaRecord> parse(String content) {
+    private EdaRecord kennsatz(DunningCase dunningCase, List<ClaimLedgerParty> debtors) {
 
-        List<EdaRecord> parsed = new ArrayList<>();
-        if (content == null || content.trim().isEmpty()) {
-            return parsed;
+        EdaRecord record = new EdaRecord(EdaMahnbescheidLayouts.KENNSATZ);
+        record.set("TGZ", dunningCase.getOwnReference());
+        record.set("PVKEZI", dunningCase.getKennziffer());
+        record.set("MGPLZ", dunningCase.getCourtPostalCode());
+        record.set("MGO", dunningCase.getCourtCity());
+        // a file number exists only when an application is repeated
+        record.set("MGGNR", dunningCase.getCourtFileNumber());
+        // several defendants are joint debtors unless the firm says otherwise; the flag is what tells
+        // the court to issue against them jointly rather than as separate matters
+        if (debtors != null && debtors.size() > 1) {
+            record.set("AGGMM", "X");
         }
-        EdaRecordCodec codec = new EdaRecordCodec();
-        int lineNumber = 0;
-        for (String line : content.split("\r\n|\n|\r")) {
-            lineNumber++;
-            if (line.isEmpty()) {
-                continue;
-            }
-            EdaRecordLayout layout = EdaMahnbescheidLayouts.findByRecordKey(line);
-            if (layout == null) {
-                throw new IllegalArgumentException("Zeile " + lineNumber
-                        + ": zu diesem Satz (\"" + line.substring(0, Math.min(9, line.length()))
-                        + "\") ist keine Satzbeschreibung bekannt.");
-            }
-            parsed.add(codec.parse(layout, line));
-        }
-        return parsed;
+        return record;
     }
 }
