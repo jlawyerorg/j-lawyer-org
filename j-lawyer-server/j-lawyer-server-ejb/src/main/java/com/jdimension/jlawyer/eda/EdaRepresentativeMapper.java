@@ -660,301 +660,173 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.test.server.ejb;
+package com.jdimension.jlawyer.eda;
 
-import com.jdimension.jlawyer.eda.EdaClaimMapper;
-import com.jdimension.jlawyer.eda.EdaFile;
-import com.jdimension.jlawyer.eda.EdaMahnbescheidBuilder;
-import com.jdimension.jlawyer.eda.EdaMahnbescheidLayouts;
-import com.jdimension.jlawyer.eda.EdaProcessRepresentative;
-import com.jdimension.jlawyer.eda.EdaRecord;
-import com.jdimension.jlawyer.eda.EdaRecordLayout;
-import com.jdimension.jlawyer.eda.EdaStructureVerifier;
-import com.jdimension.jlawyer.eda.EdaViolation;
-import com.jdimension.jlawyer.persistence.AddressBean;
-import com.jdimension.jlawyer.persistence.ClaimComponent;
-import com.jdimension.jlawyer.persistence.ClaimComponentType;
-import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
-import com.jdimension.jlawyer.persistence.DunningCase;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import org.junit.Test;
 
 /**
- * Assembling a complete Mahnbescheid application.
+ * Maps the lawyer filing the application into the records C07 to C11 of the Mahnbescheid
+ * application.
  *
- * The order of the records is what makes a file readable to the court: the key record opens an
- * application and everything after it belongs to it. A file whose records are individually sound but
- * out of order is rejected as a whole, so the assembly is tested as a sequence and the finished file
- * is put through the same verifier that guards a real export.
+ * One rule of the format shapes this mapper more than anything else. The Satzbeschreibung says of
+ * C07: "Die Eintragung einer Kennziffer für den Prozessbevollmächtigten im Dateivorsatz (Feld 2)
+ * und/oder im Kennsatz (Feld 6) verhindert die Öffnung des Bereichs ASPV_01 bis ASPV_03!!" A firm
+ * that files under its own Kennziffer has already told the court who it is, once, when the
+ * Kennziffer was granted - repeating name and address in the application is not merely redundant,
+ * it is rejected. The area C07 to C09 is therefore for the other case: the applicant is the
+ * participant and a lawyer files for them.
+ *
+ * C10 is exempt from that rule and always allowed - "Die definierten Daten sind im Bedarfsfall zu
+ * jedem einzelnen Mahnbescheidsantrag zu machen und können daher nicht in einer Kennziffer
+ * hinterlegt werden." It carries what changes from application to application: the day of
+ * instruction, which decides the applicable RVG version under § 60 Abs. 1 S. 1 RVG, and the fee
+ * declarations.
+ *
+ * Source: EDA-Satzbeschreibung Satzart 01 (Mahnbescheidsantrag), Format 4.0.00, Oberlandesgericht
+ * Stuttgart - IuK-Fachzentrum Justiz -, records C07 (Stand 15.03.2024), C08/C09 (Stand 01.12.2008),
+ * C10 (Stand 15.03.2024) and C11 (Stand 10.04.2013), pages 9 to 13.
  *
  * @author jens
  */
-public class EdaMahnbescheidBuilderTest {
+public class EdaRepresentativeMapper {
 
-    private final EdaMahnbescheidBuilder builder = new EdaMahnbescheidBuilder();
+    /** How long the designation of the representative may be - one field, not four. */
+    public static final int DESIGNATION_LIMIT = 105;
 
-    private static Date date(int y, int m, int d) {
-        return Date.from(LocalDate.of(y, m, d).atStartOfDay(ZoneId.systemDefault()).toInstant());
-    }
+    /**
+     * Maps the representative into their records.
+     *
+     * @param representative the representative, or null if the applicant files without one
+     * @param identifiedByKennziffer whether the representative is the EDA participant sending the
+     * file, or is named by a Kennziffer in the Kennsatz; in that case the format refuses the
+     * records C07 to C09 and only the application-specific data of C10 are written
+     * @return the records, in the order the format expects
+     * @throws EdaFieldLengthException if the designation does not fit the field the format provides
+     */
+    public List<EdaRecord> map(EdaProcessRepresentative representative,
+            boolean identifiedByKennziffer) throws EdaFieldLengthException {
 
-    private DunningCase dunningCase() {
-        DunningCase c = new DunningCase();
-        c.setOwnReference("AZ-2026-0815");
-        c.setKennziffer("12345678");
-        c.setCourtXJustizId("B2609");
-        c.setCourtName("Amtsgericht Stuttgart");
-        c.setCourtPostalCode("70154");
-        c.setCourtCity("Stuttgart");
-        return c;
-    }
-
-    private ClaimLedgerParty party(String id, String salutation, String first, String last) {
-        AddressBean a = new AddressBean();
-        a.setSalutation(salutation);
-        a.setFirstName(first);
-        a.setName(last);
-        a.setStreet("Hauptstr.");
-        a.setStreetNumber("1");
-        a.setZipCode("70173");
-        a.setCity("Stuttgart");
-        ClaimLedgerParty p = new ClaimLedgerParty();
-        p.setId(id);
-        p.setContact(a);
-        return p;
-    }
-
-    private EdaClaimMapper.Claim claim(String catalogueNumber, String amount) {
-        ClaimComponent c = new ClaimComponent();
-        c.setId("c-" + catalogueNumber);
-        c.setName("Kaufpreis");
-        c.setType(ClaimComponentType.MAIN_CLAIM);
-        c.setCatalogueNumber(catalogueNumber);
-        return new EdaClaimMapper.Claim(c, new BigDecimal(amount));
-    }
-
-    private List<String> layoutSequence(List<EdaRecord> records) {
-        List<String> ids = new ArrayList<>();
-        for (EdaRecord r : records) {
-            ids.add(r.getLayout().getId());
+        List<EdaRecord> records = new ArrayList<>();
+        if (representative == null) {
+            return records;
         }
-        return ids;
-    }
-
-    private ClaimLedgerParty representedParty(String id) {
-        ClaimLedgerParty p = party(id, null, null, null);
-        p.getContact().setCompany("Beispiel Handels GmbH");
-        p.getContact().setLegalForm("GmbH");
-        p.setSnapshotDesignation("Beispiel Handels GmbH");
-        AddressBean rep = new AddressBean();
-        rep.setRole("Geschäftsführer");
-        rep.setFirstName("Max");
-        rep.setName("Muster");
-        rep.setStreet("Königstr.");
-        rep.setStreetNumber("1");
-        rep.setZipCode("70173");
-        rep.setCity("Stuttgart");
-        p.setLegalRepresentative(rep);
-        return p;
-    }
-
-    private EdaProcessRepresentative lawyers() {
-        EdaProcessRepresentative rep = new EdaProcessRepresentative();
-        rep.setSalutation(EdaProcessRepresentative.Salutation.RECHTSANWAELTE);
-        rep.setDesignation("Muster & Partner Rechtsanwälte");
-        rep.setStreet("Königstr. 1");
-        rep.setPostalCode("70173");
-        rep.setCity("Stuttgart");
-        rep.setOrderDate(date(2026, 3, 2));
-        return rep;
-    }
-
-    @Test
-    public void aRepresentativeFollowsThePartyItActsFor() throws Exception {
-        // the format has no field pointing back at the party; position is the only link, so a
-        // representative record in the wrong place attaches itself to the wrong person
-        List<EdaRecord> records = builder.buildApplication(dunningCase(),
-                Arrays.asList(representedParty("p1")),
-                Arrays.asList(representedParty("p2")),
-                Arrays.asList(claim("11", "5000.00")));
-
-        assertEquals(Arrays.asList("C01", "C02", "C03", "C04", "C05", "C06",
-                "C13", "C14", "C15", "C17", "C18", "C20"), layoutSequence(records));
-    }
-
-    @Test
-    public void theFilingLawyerSitsBetweenTheApplicantsAndTheDefendants() throws Exception {
-        DunningCase withoutKennziffer = dunningCase();
-        withoutKennziffer.setKennziffer(null);
-
-        List<EdaRecord> records = builder.buildApplication(withoutKennziffer,
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00")), lawyers());
-
-        assertEquals(Arrays.asList("C01", "C02", "C03", "C04", "C07", "C08", "C10",
-                "C13", "C14", "C15", "C20"), layoutSequence(records));
-    }
-
-    @Test
-    public void theOwnKennzifferSuppressesTheIdentityButNotTheApplicationSpecificData() throws Exception {
-        List<EdaRecord> records = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00")), lawyers());
-
-        assertEquals(Arrays.asList("C01", "C02", "C03", "C04", "C10",
-                "C13", "C14", "C15", "C20"), layoutSequence(records));
-    }
-
-    @Test
-    public void aFileNamingTheLawyerStillPassesTheVerifier() throws Exception {
-        DunningCase withoutKennziffer = dunningCase();
-        withoutKennziffer.setKennziffer(null);
-
-        EdaFile file = builder.buildFile(withoutKennziffer,
-                Arrays.asList(representedParty("p1")),
-                Arrays.asList(representedParty("p2")),
-                Arrays.asList(claim("11", "5000.00")), lawyers(),
-                "12345678", "MB0001", date(2026, 3, 2));
-
-        List<EdaViolation> violations = new EdaStructureVerifier()
-                .verify(file.write("12345678"), EdaMahnbescheidLayouts.FORMAT_MAHNBESCHEID);
-
-        assertTrue(violations.toString(), violations.isEmpty());
-    }
-
-    @Test
-    public void anApplicationOpensWithItsKeyRecordAndFollowsTheExpectedOrder() throws Exception {
-        List<EdaRecord> records = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00")));
-
-        assertEquals(Arrays.asList("C01", "C02", "C03", "C04", "C13", "C14", "C15", "C20"),
-                layoutSequence(records));
-    }
-
-    @Test
-    public void theCourtIsAddressedByPostcodeAndPlace() throws Exception {
-        EdaRecord kennsatz = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00"))).get(0);
-
-        assertEquals("70154", kennsatz.get("MGPLZ"));
-        assertEquals("Stuttgart", kennsatz.get("MGO"));
-        assertEquals("AZ-2026-0815", kennsatz.get("TGZ"));
-        assertEquals("12345678", kennsatz.get("PVKEZI"));
-    }
-
-    @Test
-    public void severalDefendantsAreMarkedAsJointDebtors() throws Exception {
-        EdaRecord single = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "100.00"))).get(0);
-        assertNull("one defendant cannot be a joint debtor", single.get("AGGMM"));
-
-        EdaRecord several = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner"),
-                        party("p3", "Frau", "Maria", "Schuldner")),
-                Arrays.asList(claim("11", "100.00"))).get(0);
-        assertEquals("X", several.get("AGGMM"));
-    }
-
-    @Test
-    public void everyDefendantGetsItsOwnRecords() throws Exception {
-        List<String> ids = layoutSequence(builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner"),
-                        party("p3", "Frau", "Maria", "Schuldner")),
-                Arrays.asList(claim("11", "100.00"))));
-
-        assertEquals("two defendants, two opening records", 2,
-                java.util.Collections.frequency(ids, "C13"));
-        assertEquals("and two address records", 2, java.util.Collections.frequency(ids, "C15"));
-        assertEquals("the applicant is written once", 1, java.util.Collections.frequency(ids, "C02"));
-    }
-
-    // ----- the trailer -----
-
-    @Test
-    public void theTrailerSumsWhatTheFileContains() throws Exception {
-        EdaFile file = builder.buildFile(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00"), claim("43", "250.50")),
-                "12345678", "MBDAT", date(2026, 9, 1));
-
-        EdaRecord trailer = file.buildTrailer("12345678");
-
-        assertEquals("one application", "1", trailer.get("ANTANZ"));
-        assertEquals("two claims", "2", trailer.get("ASPANZ"));
-        assertEquals("the catalogue numbers 11 and 43 add up to 54", "54", trailer.get("SKATNR"));
-        assertEquals("5250.50 euro in cents", "525050", trailer.get("SUASP"));
-        assertEquals("no file number exists before the court assigns one", "0", trailer.get("SUGNR"));
-    }
-
-    @Test
-    public void aFreeTextClaimIsCountedOnceDespiteSpanningTwoRecords() throws Exception {
-        ClaimComponent free = new ClaimComponent();
-        free.setId("cf");
-        free.setName("Sonstiger Anspruch");
-        free.setType(ClaimComponentType.MAIN_CLAIM);
-
-        EdaFile file = builder.buildFile(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(new EdaClaimMapper.Claim(free, new BigDecimal("300.00"))),
-                "12345678", "MBDAT", date(2026, 9, 1));
-
-        EdaRecord trailer = file.buildTrailer("12345678");
-
-        assertEquals("counting the continuation record would count the claim twice",
-                "1", trailer.get("ASPANZ"));
-        assertEquals("30000", trailer.get("SUASP"));
-        assertEquals("a free-text claim contributes no catalogue number", "0", trailer.get("SKATNR"));
-    }
-
-    // ----- the finished file -----
-
-    @Test
-    public void theAssembledFilePassesTheVerifierThatGuardsARealExport() throws Exception {
-        EdaFile file = builder.buildFile(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00")),
-                "12345678", "MBDAT", date(2026, 9, 1));
-
-        String content = file.write("12345678");
-        List<EdaViolation> violations = new EdaStructureVerifier()
-                .verify(content, EdaMahnbescheidLayouts.FORMAT_MAHNBESCHEID);
-
-        assertTrue("an assembled application must survive its own verification: " + violations,
-                violations.isEmpty());
-
-        for (String line : content.split("\r\n")) {
-            assertEquals(EdaRecordLayout.RECORD_LENGTH, line.length());
+        if (!identifiedByKennziffer) {
+            records.addAll(identity(representative));
         }
+        EdaRecord specific = applicationSpecific(representative);
+        if (specific != null) {
+            records.add(specific);
+        }
+        EdaRecord bank = bankAccount(representative);
+        if (bank != null) {
+            records.add(bank);
+        }
+        return records;
     }
 
-    @Test
-    public void theHeaderAnnouncesTheApplicationAndItsFormat() {
-        EdaRecord header = builder.header("12345678", "MBDAT", date(2026, 9, 1));
+    /**
+     * The records C07 to C09: who the representative is, where they sit, and - for a firm acting as
+     * an organisation - who acts for them.
+     */
+    private List<EdaRecord> identity(EdaProcessRepresentative rep) throws EdaFieldLengthException {
+        List<EdaRecord> records = new ArrayList<>();
 
-        assertEquals("12345678", header.get("TKEZI"));
-        assertEquals("260901", header.get("DATUM"));
-        assertEquals("01", header.get("BELART"));
-        assertEquals("4000", header.get("FORMAT"));
+        EdaRecord r1 = new EdaRecord(EdaMahnbescheidLayouts.getLayout("C07"));
+        r1.set("ASPVANR", rep.getSalutation() == null ? null : rep.getSalutation().getCode());
+        String designation = rep.getDesignation();
+        if (designation != null && designation.length() > DESIGNATION_LIMIT) {
+            throw new EdaFieldLengthException("C07",
+                    EdaMahnbescheidLayouts.getLayout("C07").getField("ASPVN"), designation);
+        }
+        r1.set("ASPVN", designation);
+        records.add(r1);
+
+        EdaRecord r2 = new EdaRecord(EdaMahnbescheidLayouts.getLayout("C08"));
+        // the legal form belongs to keys 7 to 9 only; for a lawyer the key already says everything
+        // the field could say
+        r2.set("ASPVRF", rep.getSalutation() != null && rep.getSalutation().mayHaveStatutoryRepresentative()
+                ? rep.getLegalForm() : null);
+        r2.set("ASPHSH", rep.getStreet());
+        r2.set("ASPVPLZ", rep.getPostalCode());
+        r2.set("ASPVO", rep.getCity());
+        r2.set("ASPVAL", rep.getForeignCountry());
+        records.add(r2);
+
+        if (rep.getSalutation() != null && rep.getSalutation().mayHaveStatutoryRepresentative()
+                && (notEmpty(rep.getStatutoryRepresentativeFunction())
+                || notEmpty(rep.getStatutoryRepresentativeName()))) {
+            EdaRecord r3 = new EdaRecord(EdaMahnbescheidLayouts.getLayout("C09"));
+            r3.set("ASPVGVFU", rep.getStatutoryRepresentativeFunction());
+            r3.set("ASPVGVN", rep.getStatutoryRepresentativeName());
+            records.add(r3);
+        }
+        return records;
+    }
+
+    /**
+     * The record C10, written only when there is something to say. An empty ASPVA00 would be a
+     * declaration of nothing, and the fee fields are not harmless when empty: for several of them
+     * an explicit zero means a waiver, so writing them unasked would give something away.
+     */
+    private EdaRecord applicationSpecific(EdaProcessRepresentative rep) {
+        boolean paidUnderRvg = rep.getSalutation() != null && rep.getSalutation().isPaidUnderRvg();
+        boolean anything = notEmpty(rep.getOwnReference())
+                || rep.getOrderDate() != null
+                || rep.getDisbursements() != null
+                || rep.getOffsetAmount() != null
+                || rep.isSpecialEffortDeclared()
+                || rep.getAgreedFee() != null
+                || rep.getVatRate() != null
+                || rep.isApplicantWithoutInputTaxDeduction()
+                || rep.isRepresentativeVatExempt();
+        if (!anything) {
+            return null;
+        }
+
+        EdaRecord record = new EdaRecord(EdaMahnbescheidLayouts.getLayout("C10"));
+        record.set("ASPVGZ", rep.getOwnReference());
+        record.set("ASPVAUFD", EdaValues.date(rep.getOrderDate()));
+        // disbursements and the offsetting only exist where the RVG applies; a collection service
+        // is not paid by it and the court ignores or refuses the fields
+        record.set("ASPVMBAUSL", paidUnderRvg ? EdaValues.amount(rep.getDisbursements()) : null);
+        record.set("VV2300MBET", paidUnderRvg ? EdaValues.amount(rep.getOffsetAmount()) : null);
+        record.set("VV2300M", rep.isSpecialEffortDeclared() ? "X" : null);
+        record.set("IKUBET", EdaValues.amount(rep.getAgreedFee()));
+        // the VAT rate field stays empty at the current rate - it is for a departing one, which in
+        // practice means proceedings abroad
+        record.set("ASPVMWSTS", EdaValues.amount(rep.getVatRate()));
+        record.set("VORSTM", rep.isApplicantWithoutInputTaxDeduction() ? "X" : null);
+        record.set("USTM", rep.isRepresentativeVatExempt() ? "X" : null);
+        return record;
+    }
+
+    /**
+     * The record C11. The court takes a bank connection over only if it is complete, so an
+     * incomplete one is not written at all: half an account number in a Mahnbescheid would tell the
+     * defendant to pay somewhere they cannot.
+     *
+     * A German IBAN needs no BIC - the IBAN-Only rule that applies to German payment service
+     * providers since February 2014 - but any other one does.
+     */
+    private EdaRecord bankAccount(EdaProcessRepresentative rep) {
+        String iban = rep.getIban() == null ? null : rep.getIban().replace(" ", "").trim();
+        if (iban == null || iban.isEmpty()) {
+            return null;
+        }
+        if (!iban.toUpperCase().startsWith("DE") && !notEmpty(rep.getBic())) {
+            return null;
+        }
+        EdaRecord record = new EdaRecord(EdaMahnbescheidLayouts.getLayout("C11"));
+        record.set("BKTOZO", rep.getAccountHolder() == null
+                ? EdaProcessRepresentative.AccountHolder.REPRESENTATIVE.getCode()
+                : rep.getAccountHolder().getCode());
+        record.set("BIBAN", iban);
+        record.set("BBIC", rep.getBic());
+        return record;
+    }
+
+    private boolean notEmpty(String s) {
+        return s != null && !s.trim().isEmpty();
     }
 }

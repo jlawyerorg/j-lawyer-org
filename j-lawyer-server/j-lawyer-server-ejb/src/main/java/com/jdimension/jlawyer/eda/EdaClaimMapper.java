@@ -708,6 +708,16 @@ public class EdaClaimMapper {
         private InterestStartMode interestStartMode = InterestStartMode.FIXED_DATE;
         private Date interestFrom;
         private Date interestTo;
+        private BigDecimal computedInterestAmount;
+        private BigDecimal computedInterestRate;
+        private Date computedInterestFrom;
+        private Date computedInterestTo;
+        private Date assignmentDate;
+        private String assignorName;
+        private String assignorPostalCode;
+        private String assignorCity;
+        private Date consumerCreditContractDate;
+        private BigDecimal consumerCreditInitialRate;
 
         /**
          * @param component the claim position
@@ -786,6 +796,98 @@ public class EdaClaimMapper {
         public void setInterestTo(Date interestTo) {
             this.interestTo = interestTo;
         }
+
+        public BigDecimal getComputedInterestAmount() {
+            return computedInterestAmount;
+        }
+
+        /**
+         * @param computedInterestAmount interest already worked out up to a date, claimed as an
+         * amount rather than left to the court to compute
+         */
+        public void setComputedInterestAmount(BigDecimal computedInterestAmount) {
+            this.computedInterestAmount = computedInterestAmount;
+        }
+
+        public BigDecimal getComputedInterestRate() {
+            return computedInterestRate;
+        }
+
+        public void setComputedInterestRate(BigDecimal computedInterestRate) {
+            this.computedInterestRate = computedInterestRate;
+        }
+
+        public Date getComputedInterestFrom() {
+            return computedInterestFrom;
+        }
+
+        public void setComputedInterestFrom(Date computedInterestFrom) {
+            this.computedInterestFrom = computedInterestFrom;
+        }
+
+        public Date getComputedInterestTo() {
+            return computedInterestTo;
+        }
+
+        public void setComputedInterestTo(Date computedInterestTo) {
+            this.computedInterestTo = computedInterestTo;
+        }
+
+        public Date getAssignmentDate() {
+            return assignmentDate;
+        }
+
+        /**
+         * @param assignmentDate the day the claim was assigned, where the applicant is not the
+         * original creditor
+         */
+        public void setAssignmentDate(Date assignmentDate) {
+            this.assignmentDate = assignmentDate;
+        }
+
+        public String getAssignorName() {
+            return assignorName;
+        }
+
+        public void setAssignorName(String assignorName) {
+            this.assignorName = assignorName;
+        }
+
+        public String getAssignorPostalCode() {
+            return assignorPostalCode;
+        }
+
+        public void setAssignorPostalCode(String assignorPostalCode) {
+            this.assignorPostalCode = assignorPostalCode;
+        }
+
+        public String getAssignorCity() {
+            return assignorCity;
+        }
+
+        public void setAssignorCity(String assignorCity) {
+            this.assignorCity = assignorCity;
+        }
+
+        public Date getConsumerCreditContractDate() {
+            return consumerCreditContractDate;
+        }
+
+        /**
+         * @param consumerCreditContractDate the date of a consumer credit agreement under
+         * §§ 491 to 504 BGB, which the court needs in order to apply the special rules for them
+         */
+        public void setConsumerCreditContractDate(Date consumerCreditContractDate) {
+            this.consumerCreditContractDate = consumerCreditContractDate;
+        }
+
+        public BigDecimal getConsumerCreditInitialRate() {
+            return consumerCreditInitialRate;
+        }
+
+        public void setConsumerCreditInitialRate(BigDecimal consumerCreditInitialRate) {
+            this.consumerCreditInitialRate = consumerCreditInitialRate;
+        }
     }
 
     /**
@@ -815,6 +917,19 @@ public class EdaClaimMapper {
         }
 
         records.addAll(interest(claim));
+
+        EdaRecord computed = computedInterest(claim);
+        if (computed != null) {
+            records.add(computed);
+        }
+        EdaRecord assignment = assignment(claim);
+        if (assignment != null) {
+            records.add(assignment);
+        }
+        EdaRecord consumerCredit = consumerCredit(claim);
+        if (consumerCredit != null) {
+            records.add(consumerCredit);
+        }
         return records;
     }
 
@@ -923,6 +1038,57 @@ public class EdaClaimMapper {
             records.add(record);
         }
         return records;
+    }
+
+    /**
+     * Interest already worked out and claimed as an amount, rather than left to the court to compute.
+     *
+     * This is a different thing from the running interest of C26: there the court calculates, here the
+     * applicant states a figure and the period it covers. Both can appear on one claim - typically
+     * arrears up to a date, and the running rate from then on.
+     */
+    private EdaRecord computedInterest(Claim claim) {
+        if (claim.getComputedInterestAmount() == null) {
+            return null;
+        }
+        EdaRecord record = new EdaRecord(EdaMahnbescheidLayouts.getLayout("C19"));
+        record.set("AZIVD", EdaValues.date(claim.getComputedInterestFrom()));
+        record.set("AZIBD", EdaValues.date(claim.getComputedInterestTo()));
+        record.set("AZIAUBET", EdaValues.amount(claim.getComputedInterestAmount()));
+        record.set("AZISATZ", EdaValues.rate(claim.getComputedInterestRate()));
+        return record;
+    }
+
+    /**
+     * Where the applicant is not the original creditor, the court is told from whom and since when.
+     *
+     * Without it the debtor is asked to pay somebody who, on the face of the claim, is a stranger to
+     * the contract.
+     */
+    private EdaRecord assignment(Claim claim) {
+        if (claim.getAssignmentDate() == null && isBlank(claim.getAssignorName())) {
+            return null;
+        }
+        EdaRecord record = new EdaRecord(EdaMahnbescheidLayouts.getLayout("C25"));
+        record.set("ABTD", EdaValues.date(claim.getAssignmentDate()));
+        record.set("ABTN", claim.getAssignorName());
+        record.set("ABTPLZ", claim.getAssignorPostalCode());
+        record.set("ABTO", claim.getAssignorCity());
+        return record;
+    }
+
+    /**
+     * A claim from a consumer credit agreement carries the contract date and the initial effective
+     * rate, because §§ 491 to 504 BGB attach consequences to both.
+     */
+    private EdaRecord consumerCredit(Claim claim) {
+        if (claim.getConsumerCreditContractDate() == null) {
+            return null;
+        }
+        EdaRecord record = new EdaRecord(EdaMahnbescheidLayouts.getLayout("C27"));
+        record.set("VKGD", EdaValues.date(claim.getConsumerCreditContractDate()));
+        record.set("VKGZISA", EdaValues.rate(claim.getConsumerCreditInitialRate()));
+        return record;
     }
 
     private static boolean isBlank(String s) {

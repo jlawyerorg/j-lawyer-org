@@ -163,15 +163,22 @@
       record, parties and their representatives, catalogued claims (number from 1.5, with the
       additional record each special number demands) and free-text claims, running and already
       computed interest, consumer-credit data, and the seven ancillary-claim areas — with the
-      mapping documented in the code. Mapped and assembled so far: key record, applicant, defendant,
-      catalogued and free-text claims with the additions their catalogue number demands, running
-      interest, and the trailer sums. *Still to map:* legal and authorised representatives
-      (C05–C11, C17/C18), already computed interest (C19), assignment (C25), consumer-credit data
-      (C27). The seven ancillary-claim areas C28–C34 are mapped: the ledger's own cost types
+      mapping documented in the code. Complete: key record, applicant and defendant with their
+      statutory representatives (C05/C06 and C17/C18, which the format attaches to the party
+      immediately preceding them — position is the only link, so the builder emits them there),
+      the filing lawyer (C07–C11 via `EdaRepresentativeMapper`), catalogued and free-text claims
+      with the additions their catalogue number demands, running interest (C26), already computed
+      interest (C19), assignment (C25), consumer-credit data (C27), and the trailer sums.
+      One rule of the format shaped the lawyer's area: a Kennziffer for the Prozessbevollmächtigter
+      closes C07–C09 — a firm filing under its own Kennziffer has told the court who it is once, and
+      repeating it is rejected — while C10 stays open because its fee declarations are made per
+      application and cannot be stored in a Kennziffer. C10 is therefore where the day of
+      instruction belongs, which decides the applicable RVG version under § 60 Abs. 1 S. 1 RVG;
+      the ledger holds no such date, so it is asked for in the export step of 3.17 rather than
+      guessed here. The seven ancillary-claim areas C28–C34 are mapped: the ledger's own cost types
       correspond to them one for one, which makes the mapping a lookup rather than a judgement — and
       a necessary one, since a court decides differently on a reminder charge than on collection
-      costs. The layouts for the remaining pieces are present and verified, so each is a mapping
-      rather than a transcription
+      costs. No record area of Satzart 01 is left unmapped
 - [x] 3.13 Structural verifier (record length, framing, record order, per-area frequency, trailer
       counts, character set) with violations reported per record and field
 - [x] 3.14 `AppUserBean` lawyer identification number (Kennziffer) with migration and the user
@@ -191,7 +198,10 @@
       four name fields, the legal form in the address record — so they have their own mapping rather
       than the Mahnbescheid's. The record core, the value formatting and the framing are shared
 - [ ] 3.17 Export confirmation step in the ledger workspace, pre-filled from the dunning case, with
-      write-back of changed values (+ `.form`)
+      write-back of changed values (+ `.form`). This is also where the C10 declarations of 3.12
+      belong — the day of instruction above all, since the ledger has no such date and § 60 Abs. 1
+      S. 1 RVG makes it decide which version of the RVG the court applies — together with the
+      account the defendant is to pay into (C11)
 - [ ] 3.18 EDA viewer: formatted view resolving record types, section markers and fields, raw
       record view, tabbed panel and integration into the document viewer of `ArchiveFilePanel`
       (+ `.form` files)

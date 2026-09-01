@@ -757,6 +757,57 @@ public class EdaPartyMapper {
     }
 
     /**
+     * Writes the legal representative of a party into the two records provided for it.
+     *
+     * A legal person acts through somebody, and the court has to know who: the Mahnbescheid is served
+     * on the company, but it is the representative who is addressed. The format keeps the function
+     * apart from the name - "Geschäftsführer" and the person - because they answer different
+     * questions.
+     *
+     * @param party the party being represented
+     * @param part1 the layout carrying function and name (C05 for the applicant, C17 for the
+     * defendant)
+     * @param part2 the layout carrying the representative's address
+     * @param prefix the field name prefix, "ASGV" or "AGGV"
+     * @return the records, or an empty list where no representative is recorded
+     * @throws EdaFieldLengthException if a value does not fit its field
+     */
+    public List<EdaRecord> mapLegalRepresentative(ClaimLedgerParty party, EdaRecordLayout part1,
+            EdaRecordLayout part2, String prefix) throws EdaFieldLengthException {
+
+        List<EdaRecord> records = new ArrayList<>();
+        AddressBean representative = party.getLegalRepresentative();
+        if (representative == null) {
+            return records;
+        }
+
+        EdaRecord r1 = new EdaRecord(part1);
+        // the function is what the format asks for first: Geschäftsführer, Vorstand, Verwalterin
+        r1.set(prefix + "FU", representative.getRole());
+        r1.set(prefix + "N", fullName(representative));
+        records.add(r1);
+
+        EdaRecord r2 = new EdaRecord(part2);
+        r2.set(prefix + "SH", street(representative));
+        r2.set(prefix + "PLZ", representative.getZipCode());
+        r2.set(prefix + "O", representative.getCity());
+        r2.set(prefix + "AL", foreignCountry(representative));
+        records.add(r2);
+
+        return records;
+    }
+
+    private String fullName(AddressBean contact) {
+        if (notEmpty(contact.getCompany())) {
+            return contact.getCompany();
+        }
+        String first = contact.getFirstName() == null ? "" : contact.getFirstName().trim();
+        String name = contact.getName() == null ? "" : contact.getName().trim();
+        String full = (first + " " + name).trim();
+        return full.isEmpty() ? null : full;
+    }
+
+    /**
      * Decides which salutation key a party carries.
      *
      * A party with a company name is a legal person, and the format has no key for the ordinary case

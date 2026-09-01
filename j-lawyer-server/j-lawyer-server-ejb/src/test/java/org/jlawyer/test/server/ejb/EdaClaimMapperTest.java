@@ -888,6 +888,69 @@ public class EdaClaimMapperTest {
         assertNull(recordOf(records, "C26"));
     }
 
+    // ----- the further records a claim can carry -----
+
+    @Test
+    public void interestAlreadyWorkedOutIsClaimedAsAnAmountOfItsOwn() throws Exception {
+        // different from the running interest of C26: there the court calculates, here the applicant
+        // states a figure and the period it covers. Both can appear on one claim
+        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(
+                component("Kaufpreis", "11"), new BigDecimal("5000.00"));
+        claim.setComputedInterestAmount(new BigDecimal("123.45"));
+        claim.setComputedInterestRate(new BigDecimal("5"));
+        claim.setComputedInterestFrom(date(2026, 1, 1));
+        claim.setComputedInterestTo(date(2026, 6, 30));
+
+        EdaRecord record = recordOf(mapper.map(claim), "C19");
+
+        assertEquals("12345", record.get("AZIAUBET"));
+        assertEquals("5000", record.get("AZISATZ"));
+        assertEquals("260101", record.get("AZIVD"));
+        assertEquals("260630", record.get("AZIBD"));
+    }
+
+    @Test
+    public void anAssignedClaimNamesWhoAssignedItAndWhen() throws Exception {
+        // without this the debtor is asked to pay somebody who, on the face of the claim, is a
+        // stranger to the contract
+        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(
+                component("Kaufpreis", "11"), new BigDecimal("5000.00"));
+        claim.setAssignmentDate(date(2026, 2, 15));
+        claim.setAssignorName("Ursprungsgläubiger GmbH");
+        claim.setAssignorPostalCode("70173");
+        claim.setAssignorCity("Stuttgart");
+
+        EdaRecord record = recordOf(mapper.map(claim), "C25");
+
+        assertEquals("260215", record.get("ABTD"));
+        assertEquals("Ursprungsgläubiger GmbH", record.get("ABTN"));
+        assertEquals("70173", record.get("ABTPLZ"));
+    }
+
+    @Test
+    public void aConsumerCreditClaimCarriesTheContractDateAndInitialRate() throws Exception {
+        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(
+                component("Darlehensrückzahlung", "4"), new BigDecimal("5000.00"));
+        claim.setConsumerCreditContractDate(date(2024, 5, 20));
+        claim.setConsumerCreditInitialRate(new BigDecimal("7.9"));
+
+        EdaRecord record = recordOf(mapper.map(claim), "C27");
+
+        assertEquals("240520", record.get("VKGD"));
+        assertEquals("7900", record.get("VKGZISA"));
+    }
+
+    @Test
+    public void aClaimWithoutTheseCircumstancesGetsNoneOfTheirRecords() throws Exception {
+        List<EdaRecord> records = mapper.map(new EdaClaimMapper.Claim(
+                component("Kaufpreis", "11"), new BigDecimal("5000.00")));
+
+        assertNull(recordOf(records, "C19"));
+        assertNull("an empty assignment record would suggest the claim changed hands",
+                recordOf(records, "C25"));
+        assertNull(recordOf(records, "C27"));
+    }
+
     @Test
     public void aRuleWithoutARateIsSkippedRatherThanWrittenAsZero() throws Exception {
         EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(

@@ -685,6 +685,7 @@ public class EdaMahnbescheidBuilder {
 
     private final EdaPartyMapper partyMapper = new EdaPartyMapper();
     private final EdaClaimMapper claimMapper = new EdaClaimMapper();
+    private final EdaRepresentativeMapper representativeMapper = new EdaRepresentativeMapper();
 
     /**
      * Builds the records of one application.
@@ -700,6 +701,25 @@ public class EdaMahnbescheidBuilder {
             List<ClaimLedgerParty> debtors, List<EdaClaimMapper.Claim> claims)
             throws EdaFieldLengthException {
 
+        return buildApplication(dunningCase, creditors, debtors, claims, null);
+    }
+
+    /**
+     * Builds the records of one application, naming the lawyer who files it.
+     *
+     * @param dunningCase the procedure, carrying court, own reference and Kennziffer
+     * @param creditors the applicants
+     * @param debtors the defendants
+     * @param claims what is applied for
+     * @param representative the Prozessbevollmächtigter of the applicants, or null if they act for
+     * themselves; whether its identity is written out depends on the Kennziffer of the procedure
+     * @return the records of the application, in the order the format expects
+     * @throws EdaFieldLengthException if a value does not fit the field the format provides
+     */
+    public List<EdaRecord> buildApplication(DunningCase dunningCase, List<ClaimLedgerParty> creditors,
+            List<ClaimLedgerParty> debtors, List<EdaClaimMapper.Claim> claims,
+            EdaProcessRepresentative representative) throws EdaFieldLengthException {
+
         List<EdaRecord> records = new ArrayList<>();
         records.add(kennsatz(dunningCase, debtors));
 
@@ -708,17 +728,33 @@ public class EdaMahnbescheidBuilder {
                     EdaMahnbescheidLayouts.getLayout("C02"),
                     EdaMahnbescheidLayouts.getLayout("C03"),
                     EdaMahnbescheidLayouts.getLayout("C04"), "AS"));
+            // "Gesetzliche Vertreter werden immer dem unmittelbar vorausgegangenen Antragsteller
+            // zugeordnet" - the format has no field pointing at the party, the position is the link
+            records.addAll(partyMapper.mapLegalRepresentative(creditor,
+                    EdaMahnbescheidLayouts.getLayout("C05"),
+                    EdaMahnbescheidLayouts.getLayout("C06"), "ASGV"));
         }
+        // the identity of the representative is only written where the Kennziffer does not already
+        // say who it is; see EdaRepresentativeMapper
+        records.addAll(representativeMapper.map(representative,
+                notEmpty(dunningCase.getKennziffer())));
         for (ClaimLedgerParty debtor : debtors) {
             records.addAll(partyMapper.map(debtor,
                     EdaMahnbescheidLayouts.getLayout("C13"),
                     EdaMahnbescheidLayouts.getLayout("C14"),
                     EdaMahnbescheidLayouts.getLayout("C15"), "AG"));
+            records.addAll(partyMapper.mapLegalRepresentative(debtor,
+                    EdaMahnbescheidLayouts.getLayout("C17"),
+                    EdaMahnbescheidLayouts.getLayout("C18"), "AGGV"));
         }
         for (EdaClaimMapper.Claim claim : claims) {
             records.addAll(claimMapper.map(claim));
         }
         return records;
+    }
+
+    private boolean notEmpty(String s) {
+        return s != null && !s.trim().isEmpty();
     }
 
     /**
@@ -738,9 +774,33 @@ public class EdaMahnbescheidBuilder {
             List<ClaimLedgerParty> debtors, List<EdaClaimMapper.Claim> claims,
             String participantNumber, String fileName, Date created) throws EdaFieldLengthException {
 
+        return buildFile(dunningCase, creditors, debtors, claims, null, participantNumber, fileName,
+                created);
+    }
+
+    /**
+     * Builds a complete file around one application, naming the lawyer who files it.
+     *
+     * @param dunningCase the procedure
+     * @param creditors the applicants
+     * @param debtors the defendants
+     * @param claims what is applied for
+     * @param representative the Prozessbevollmächtigter of the applicants, or null
+     * @param participantNumber the Kennziffer of the EDA participant sending the file
+     * @param fileName the six-character name the file announces itself under
+     * @param created the day the file is created
+     * @return the file, ready to be verified
+     * @throws EdaFieldLengthException if a value does not fit its field
+     */
+    public EdaFile buildFile(DunningCase dunningCase, List<ClaimLedgerParty> creditors,
+            List<ClaimLedgerParty> debtors, List<EdaClaimMapper.Claim> claims,
+            EdaProcessRepresentative representative, String participantNumber, String fileName,
+            Date created) throws EdaFieldLengthException {
+
         EdaFile file = new EdaFile();
         file.setHeader(header(participantNumber, fileName, created));
-        for (EdaRecord record : buildApplication(dunningCase, creditors, debtors, claims)) {
+        for (EdaRecord record : buildApplication(dunningCase, creditors, debtors, claims,
+                representative)) {
             file.add(record);
         }
         return file;

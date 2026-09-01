@@ -660,301 +660,450 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.test.server.ejb;
+package com.jdimension.jlawyer.eda;
 
-import com.jdimension.jlawyer.eda.EdaClaimMapper;
-import com.jdimension.jlawyer.eda.EdaFile;
-import com.jdimension.jlawyer.eda.EdaMahnbescheidBuilder;
-import com.jdimension.jlawyer.eda.EdaMahnbescheidLayouts;
-import com.jdimension.jlawyer.eda.EdaProcessRepresentative;
-import com.jdimension.jlawyer.eda.EdaRecord;
-import com.jdimension.jlawyer.eda.EdaRecordLayout;
-import com.jdimension.jlawyer.eda.EdaStructureVerifier;
-import com.jdimension.jlawyer.eda.EdaViolation;
-import com.jdimension.jlawyer.persistence.AddressBean;
-import com.jdimension.jlawyer.persistence.ClaimComponent;
-import com.jdimension.jlawyer.persistence.ClaimComponentType;
-import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
-import com.jdimension.jlawyer.persistence.DunningCase;
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import org.junit.Test;
 
 /**
- * Assembling a complete Mahnbescheid application.
+ * What the format wants to know about the lawyer who files the application - the
+ * Prozessbevollmächtigter of the applicant - and about the account the defendant is to pay into.
  *
- * The order of the records is what makes a file readable to the court: the key record opens an
- * application and everything after it belongs to it. A file whose records are individually sound but
- * out of order is rejected as a whole, so the assembly is tested as a sequence and the finished file
- * is put through the same verifier that guards a real export.
+ * This is deliberately not an {@link com.jdimension.jlawyer.persistence.AddressBean}. Two of the
+ * three things the format asks for here are not properties of an address at all: the fee
+ * declarations of C10 are made per application and change from case to case, and the salutation key
+ * of C07 is a different catalogue from the one used for the parties - it says what kind of
+ * representative this is, from "Rechtsanwalt" through "Rechtsanwaltsgemeinschaft" to
+ * "Inkasso-/Kreditdienstleister", and the court draws consequences from it: which fee fields it
+ * accepts at all depends on that key.
+ *
+ * Source: EDA-Satzbeschreibung Satzart 01 (Mahnbescheidsantrag), Format 4.0.00, Oberlandesgericht
+ * Stuttgart - IuK-Fachzentrum Justiz -, records C07 to C11, pages 9 to 13.
  *
  * @author jens
  */
-public class EdaMahnbescheidBuilderTest {
+public class EdaProcessRepresentative {
 
-    private final EdaMahnbescheidBuilder builder = new EdaMahnbescheidBuilder();
+    /**
+     * The salutation keys of field ASPVANR. Not the catalogue used for the parties: it classifies
+     * the representative, and the court reads a fee regime out of it.
+     *
+     * Source: EDA-Satzbeschreibung Satzart 01, record C07 field 4, Stand 15.03.2024.
+     */
+    public enum Salutation {
+        /** 1 = Rechtsanwalt. */
+        RECHTSANWALT("1"),
+        /** 2 = Rechtsanwälte. */
+        RECHTSANWAELTE("2"),
+        /** 3 = Rechtsbeistand. */
+        RECHTSBEISTAND("3"),
+        /** 4 = Herr/Frau - a representative who is neither of the above. */
+        PERSON("4"),
+        /** 5 = Rechtsanwältin. */
+        RECHTSANWAELTIN("5"),
+        /** 6 = Rechtsanwältinnen. */
+        RECHTSANWAELTINNEN("6"),
+        /** 7 = Rechtsanwaltsgemeinschaft (Vergütung nach RVG). */
+        RECHTSANWALTSGEMEINSCHAFT("7"),
+        /** 8 = Inkasso-/Kreditdienstleister. */
+        INKASSODIENSTLEISTER("8"),
+        /** 9 = Verbraucherzentrale / Verbraucherverband. */
+        VERBRAUCHERZENTRALE("9");
 
-    private static Date date(int y, int m, int d) {
-        return Date.from(LocalDate.of(y, m, d).atStartOfDay(ZoneId.systemDefault()).toInstant());
-    }
+        private final String code;
 
-    private DunningCase dunningCase() {
-        DunningCase c = new DunningCase();
-        c.setOwnReference("AZ-2026-0815");
-        c.setKennziffer("12345678");
-        c.setCourtXJustizId("B2609");
-        c.setCourtName("Amtsgericht Stuttgart");
-        c.setCourtPostalCode("70154");
-        c.setCourtCity("Stuttgart");
-        return c;
-    }
-
-    private ClaimLedgerParty party(String id, String salutation, String first, String last) {
-        AddressBean a = new AddressBean();
-        a.setSalutation(salutation);
-        a.setFirstName(first);
-        a.setName(last);
-        a.setStreet("Hauptstr.");
-        a.setStreetNumber("1");
-        a.setZipCode("70173");
-        a.setCity("Stuttgart");
-        ClaimLedgerParty p = new ClaimLedgerParty();
-        p.setId(id);
-        p.setContact(a);
-        return p;
-    }
-
-    private EdaClaimMapper.Claim claim(String catalogueNumber, String amount) {
-        ClaimComponent c = new ClaimComponent();
-        c.setId("c-" + catalogueNumber);
-        c.setName("Kaufpreis");
-        c.setType(ClaimComponentType.MAIN_CLAIM);
-        c.setCatalogueNumber(catalogueNumber);
-        return new EdaClaimMapper.Claim(c, new BigDecimal(amount));
-    }
-
-    private List<String> layoutSequence(List<EdaRecord> records) {
-        List<String> ids = new ArrayList<>();
-        for (EdaRecord r : records) {
-            ids.add(r.getLayout().getId());
+        Salutation(String code) {
+            this.code = code;
         }
-        return ids;
-    }
 
-    private ClaimLedgerParty representedParty(String id) {
-        ClaimLedgerParty p = party(id, null, null, null);
-        p.getContact().setCompany("Beispiel Handels GmbH");
-        p.getContact().setLegalForm("GmbH");
-        p.setSnapshotDesignation("Beispiel Handels GmbH");
-        AddressBean rep = new AddressBean();
-        rep.setRole("Geschäftsführer");
-        rep.setFirstName("Max");
-        rep.setName("Muster");
-        rep.setStreet("Königstr.");
-        rep.setStreetNumber("1");
-        rep.setZipCode("70173");
-        rep.setCity("Stuttgart");
-        p.setLegalRepresentative(rep);
-        return p;
-    }
+        /**
+         * @return the digit the format expects in ASPVANR
+         */
+        public String getCode() {
+            return code;
+        }
 
-    private EdaProcessRepresentative lawyers() {
-        EdaProcessRepresentative rep = new EdaProcessRepresentative();
-        rep.setSalutation(EdaProcessRepresentative.Salutation.RECHTSANWAELTE);
-        rep.setDesignation("Muster & Partner Rechtsanwälte");
-        rep.setStreet("Königstr. 1");
-        rep.setPostalCode("70173");
-        rep.setCity("Stuttgart");
-        rep.setOrderDate(date(2026, 3, 2));
-        return rep;
-    }
+        /**
+         * Whether the record C09 - the representative of the representative - may be present at
+         * all. The format allows it for keys 7 to 9 only, because only those can be an organisation
+         * that acts through somebody.
+         *
+         * @return whether a statutory representative may be named
+         */
+        public boolean mayHaveStatutoryRepresentative() {
+            return this == RECHTSANWALTSGEMEINSCHAFT || this == INKASSODIENSTLEISTER
+                    || this == VERBRAUCHERZENTRALE;
+        }
 
-    @Test
-    public void aRepresentativeFollowsThePartyItActsFor() throws Exception {
-        // the format has no field pointing back at the party; position is the only link, so a
-        // representative record in the wrong place attaches itself to the wrong person
-        List<EdaRecord> records = builder.buildApplication(dunningCase(),
-                Arrays.asList(representedParty("p1")),
-                Arrays.asList(representedParty("p2")),
-                Arrays.asList(claim("11", "5000.00")));
-
-        assertEquals(Arrays.asList("C01", "C02", "C03", "C04", "C05", "C06",
-                "C13", "C14", "C15", "C17", "C18", "C20"), layoutSequence(records));
-    }
-
-    @Test
-    public void theFilingLawyerSitsBetweenTheApplicantsAndTheDefendants() throws Exception {
-        DunningCase withoutKennziffer = dunningCase();
-        withoutKennziffer.setKennziffer(null);
-
-        List<EdaRecord> records = builder.buildApplication(withoutKennziffer,
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00")), lawyers());
-
-        assertEquals(Arrays.asList("C01", "C02", "C03", "C04", "C07", "C08", "C10",
-                "C13", "C14", "C15", "C20"), layoutSequence(records));
-    }
-
-    @Test
-    public void theOwnKennzifferSuppressesTheIdentityButNotTheApplicationSpecificData() throws Exception {
-        List<EdaRecord> records = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00")), lawyers());
-
-        assertEquals(Arrays.asList("C01", "C02", "C03", "C04", "C10",
-                "C13", "C14", "C15", "C20"), layoutSequence(records));
-    }
-
-    @Test
-    public void aFileNamingTheLawyerStillPassesTheVerifier() throws Exception {
-        DunningCase withoutKennziffer = dunningCase();
-        withoutKennziffer.setKennziffer(null);
-
-        EdaFile file = builder.buildFile(withoutKennziffer,
-                Arrays.asList(representedParty("p1")),
-                Arrays.asList(representedParty("p2")),
-                Arrays.asList(claim("11", "5000.00")), lawyers(),
-                "12345678", "MB0001", date(2026, 3, 2));
-
-        List<EdaViolation> violations = new EdaStructureVerifier()
-                .verify(file.write("12345678"), EdaMahnbescheidLayouts.FORMAT_MAHNBESCHEID);
-
-        assertTrue(violations.toString(), violations.isEmpty());
-    }
-
-    @Test
-    public void anApplicationOpensWithItsKeyRecordAndFollowsTheExpectedOrder() throws Exception {
-        List<EdaRecord> records = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00")));
-
-        assertEquals(Arrays.asList("C01", "C02", "C03", "C04", "C13", "C14", "C15", "C20"),
-                layoutSequence(records));
-    }
-
-    @Test
-    public void theCourtIsAddressedByPostcodeAndPlace() throws Exception {
-        EdaRecord kennsatz = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00"))).get(0);
-
-        assertEquals("70154", kennsatz.get("MGPLZ"));
-        assertEquals("Stuttgart", kennsatz.get("MGO"));
-        assertEquals("AZ-2026-0815", kennsatz.get("TGZ"));
-        assertEquals("12345678", kennsatz.get("PVKEZI"));
-    }
-
-    @Test
-    public void severalDefendantsAreMarkedAsJointDebtors() throws Exception {
-        EdaRecord single = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "100.00"))).get(0);
-        assertNull("one defendant cannot be a joint debtor", single.get("AGGMM"));
-
-        EdaRecord several = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner"),
-                        party("p3", "Frau", "Maria", "Schuldner")),
-                Arrays.asList(claim("11", "100.00"))).get(0);
-        assertEquals("X", several.get("AGGMM"));
-    }
-
-    @Test
-    public void everyDefendantGetsItsOwnRecords() throws Exception {
-        List<String> ids = layoutSequence(builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner"),
-                        party("p3", "Frau", "Maria", "Schuldner")),
-                Arrays.asList(claim("11", "100.00"))));
-
-        assertEquals("two defendants, two opening records", 2,
-                java.util.Collections.frequency(ids, "C13"));
-        assertEquals("and two address records", 2, java.util.Collections.frequency(ids, "C15"));
-        assertEquals("the applicant is written once", 1, java.util.Collections.frequency(ids, "C02"));
-    }
-
-    // ----- the trailer -----
-
-    @Test
-    public void theTrailerSumsWhatTheFileContains() throws Exception {
-        EdaFile file = builder.buildFile(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00"), claim("43", "250.50")),
-                "12345678", "MBDAT", date(2026, 9, 1));
-
-        EdaRecord trailer = file.buildTrailer("12345678");
-
-        assertEquals("one application", "1", trailer.get("ANTANZ"));
-        assertEquals("two claims", "2", trailer.get("ASPANZ"));
-        assertEquals("the catalogue numbers 11 and 43 add up to 54", "54", trailer.get("SKATNR"));
-        assertEquals("5250.50 euro in cents", "525050", trailer.get("SUASP"));
-        assertEquals("no file number exists before the court assigns one", "0", trailer.get("SUGNR"));
-    }
-
-    @Test
-    public void aFreeTextClaimIsCountedOnceDespiteSpanningTwoRecords() throws Exception {
-        ClaimComponent free = new ClaimComponent();
-        free.setId("cf");
-        free.setName("Sonstiger Anspruch");
-        free.setType(ClaimComponentType.MAIN_CLAIM);
-
-        EdaFile file = builder.buildFile(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(new EdaClaimMapper.Claim(free, new BigDecimal("300.00"))),
-                "12345678", "MBDAT", date(2026, 9, 1));
-
-        EdaRecord trailer = file.buildTrailer("12345678");
-
-        assertEquals("counting the continuation record would count the claim twice",
-                "1", trailer.get("ASPANZ"));
-        assertEquals("30000", trailer.get("SUASP"));
-        assertEquals("a free-text claim contributes no catalogue number", "0", trailer.get("SKATNR"));
-    }
-
-    // ----- the finished file -----
-
-    @Test
-    public void theAssembledFilePassesTheVerifierThatGuardsARealExport() throws Exception {
-        EdaFile file = builder.buildFile(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00")),
-                "12345678", "MBDAT", date(2026, 9, 1));
-
-        String content = file.write("12345678");
-        List<EdaViolation> violations = new EdaStructureVerifier()
-                .verify(content, EdaMahnbescheidLayouts.FORMAT_MAHNBESCHEID);
-
-        assertTrue("an assembled application must survive its own verification: " + violations,
-                violations.isEmpty());
-
-        for (String line : content.split("\r\n")) {
-            assertEquals(EdaRecordLayout.RECORD_LENGTH, line.length());
+        /**
+         * Whether this representative is paid under the RVG, which decides whether the disbursement
+         * and offsetting fields of C10 may carry an amount.
+         *
+         * @return whether the RVG fee fields are open for this key
+         */
+        public boolean isPaidUnderRvg() {
+            return this != INKASSODIENSTLEISTER && this != VERBRAUCHERZENTRALE
+                    && this != PERSON;
         }
     }
 
-    @Test
-    public void theHeaderAnnouncesTheApplicationAndItsFormat() {
-        EdaRecord header = builder.header("12345678", "MBDAT", date(2026, 9, 1));
+    /** Who holds the account the defendant is to pay into. Field BKTOZO of C11. */
+    public enum AccountHolder {
+        /** 1 = the first or only applicant. */
+        APPLICANT("1"),
+        /** 2 = the Prozessbevollmächtigter. */
+        REPRESENTATIVE("2");
 
-        assertEquals("12345678", header.get("TKEZI"));
-        assertEquals("260901", header.get("DATUM"));
-        assertEquals("01", header.get("BELART"));
-        assertEquals("4000", header.get("FORMAT"));
+        private final String code;
+
+        AccountHolder(String code) {
+            this.code = code;
+        }
+
+        /**
+         * @return the digit the format expects in BKTOZO
+         */
+        public String getCode() {
+            return code;
+        }
+    }
+
+    private Salutation salutation;
+    private String designation;
+    private String legalForm;
+    private String street;
+    private String postalCode;
+    private String city;
+    private String foreignCountry;
+
+    private String statutoryRepresentativeFunction;
+    private String statutoryRepresentativeName;
+
+    private String ownReference;
+    private Date orderDate;
+    private BigDecimal disbursements;
+    private BigDecimal offsetAmount;
+    private boolean specialEffortDeclared;
+    private BigDecimal agreedFee;
+    private BigDecimal vatRate;
+    private boolean applicantWithoutInputTaxDeduction;
+    private boolean representativeVatExempt;
+
+    private AccountHolder accountHolder;
+    private String iban;
+    private String bic;
+
+    /**
+     * @return which kind of representative this is
+     */
+    public Salutation getSalutation() {
+        return salutation;
+    }
+
+    /**
+     * @param salutation which kind of representative this is
+     */
+    public void setSalutation(Salutation salutation) {
+        this.salutation = salutation;
+    }
+
+    /**
+     * @return the full designation of the representative, at most 105 characters
+     */
+    public String getDesignation() {
+        return designation;
+    }
+
+    /**
+     * @param designation the full designation of the representative
+     */
+    public void setDesignation(String designation) {
+        this.designation = designation;
+    }
+
+    /**
+     * @return the legal form, which the format wants for keys 7 to 9 only
+     */
+    public String getLegalForm() {
+        return legalForm;
+    }
+
+    /**
+     * @param legalForm the legal form
+     */
+    public void setLegalForm(String legalForm) {
+        this.legalForm = legalForm;
+    }
+
+    /**
+     * @return street and house number in one field, as the format writes them
+     */
+    public String getStreet() {
+        return street;
+    }
+
+    /**
+     * @param street street and house number
+     */
+    public void setStreet(String street) {
+        this.street = street;
+    }
+
+    /**
+     * @return the postal code
+     */
+    public String getPostalCode() {
+        return postalCode;
+    }
+
+    /**
+     * @param postalCode the postal code
+     */
+    public void setPostalCode(String postalCode) {
+        this.postalCode = postalCode;
+    }
+
+    /**
+     * @return the place
+     */
+    public String getCity() {
+        return city;
+    }
+
+    /**
+     * @param city the place
+     */
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    /**
+     * @return the country indicator, set for a seat abroad only
+     */
+    public String getForeignCountry() {
+        return foreignCountry;
+    }
+
+    /**
+     * @param foreignCountry the country indicator for a seat abroad
+     */
+    public void setForeignCountry(String foreignCountry) {
+        this.foreignCountry = foreignCountry;
+    }
+
+    /**
+     * @return in what function somebody acts for the representative, e.g. "Geschäftsführer"
+     */
+    public String getStatutoryRepresentativeFunction() {
+        return statutoryRepresentativeFunction;
+    }
+
+    /**
+     * @param statutoryRepresentativeFunction the function that person acts in
+     */
+    public void setStatutoryRepresentativeFunction(String statutoryRepresentativeFunction) {
+        this.statutoryRepresentativeFunction = statutoryRepresentativeFunction;
+    }
+
+    /**
+     * @return the name of the person acting for the representative
+     */
+    public String getStatutoryRepresentativeName() {
+        return statutoryRepresentativeName;
+    }
+
+    /**
+     * @param statutoryRepresentativeName the name of that person
+     */
+    public void setStatutoryRepresentativeName(String statutoryRepresentativeName) {
+        this.statutoryRepresentativeName = statutoryRepresentativeName;
+    }
+
+    /**
+     * @return the reference the court is to print on every document it sends out
+     */
+    public String getOwnReference() {
+        return ownReference;
+    }
+
+    /**
+     * @param ownReference the reference to print on the court's documents
+     */
+    public void setOwnReference(String ownReference) {
+        this.ownReference = ownReference;
+    }
+
+    /**
+     * The day the unconditional mandate was given. It decides which version of the RVG applies to
+     * the fees the court sets, see the transitional rule of § 60 Abs. 1 S. 1 RVG.
+     *
+     * @return the day of instruction
+     */
+    public Date getOrderDate() {
+        return orderDate;
+    }
+
+    /**
+     * @param orderDate the day of instruction
+     */
+    public void setOrderDate(Date orderDate) {
+        this.orderDate = orderDate;
+    }
+
+    /**
+     * Disbursements, stated only where they differ from the flat rate of Nr. 7002 VV RVG. An
+     * explicit 0,00 is not "nothing to declare" but a waiver of disbursements.
+     *
+     * @return the disbursements, or null to leave the flat rate to the court
+     */
+    public BigDecimal getDisbursements() {
+        return disbursements;
+    }
+
+    /**
+     * @param disbursements the disbursements differing from the flat rate
+     */
+    public void setDisbursements(BigDecimal disbursements) {
+        this.disbursements = disbursements;
+    }
+
+    /**
+     * The part of a pre-court fee under Nr. 2300/2302 VV RVG that has to be set off against the
+     * fee of Nr. 3305 VV RVG - the offsetting of Vorbem. 3 Abs. 4 VV RVG, stated as an amount
+     * rather than left for the court to work out.
+     *
+     * @return the amount to be set off
+     */
+    public BigDecimal getOffsetAmount() {
+        return offsetAmount;
+    }
+
+    /**
+     * @param offsetAmount the amount to be set off
+     */
+    public void setOffsetAmount(BigDecimal offsetAmount) {
+        this.offsetAmount = offsetAmount;
+    }
+
+    /**
+     * @return whether the matter is declared to have been unusually extensive or difficult
+     */
+    public boolean isSpecialEffortDeclared() {
+        return specialEffortDeclared;
+    }
+
+    /**
+     * @param specialEffortDeclared whether that is declared
+     */
+    public void setSpecialEffortDeclared(boolean specialEffortDeclared) {
+        this.specialEffortDeclared = specialEffortDeclared;
+    }
+
+    /**
+     * A fee that departs from the statutory one: for a collection service the recoverable amount
+     * under § 13b Abs. 1 RDG, for a lawyer a lower agreed fee under § 4 Abs. 2 RVG. Zero means the
+     * fee is waived, which is why it is not the same as leaving the field empty.
+     *
+     * @return the departing fee, or null for the statutory one
+     */
+    public BigDecimal getAgreedFee() {
+        return agreedFee;
+    }
+
+    /**
+     * @param agreedFee the departing fee
+     */
+    public void setAgreedFee(BigDecimal agreedFee) {
+        this.agreedFee = agreedFee;
+    }
+
+    /**
+     * A VAT rate departing from the current one, which is normally only a matter for proceedings
+     * abroad. Left null the court applies the current rate.
+     *
+     * @return the departing VAT rate
+     */
+    public BigDecimal getVatRate() {
+        return vatRate;
+    }
+
+    /**
+     * @param vatRate the departing VAT rate
+     */
+    public void setVatRate(BigDecimal vatRate) {
+        this.vatRate = vatRate;
+    }
+
+    /**
+     * Note the direction: the field is set when the applicant is *not* entitled to deduct input
+     * tax. Leaving it empty declares that it is.
+     *
+     * @return whether the applicant cannot deduct input tax
+     */
+    public boolean isApplicantWithoutInputTaxDeduction() {
+        return applicantWithoutInputTaxDeduction;
+    }
+
+    /**
+     * @param applicantWithoutInputTaxDeduction whether the applicant cannot deduct input tax
+     */
+    public void setApplicantWithoutInputTaxDeduction(boolean applicantWithoutInputTaxDeduction) {
+        this.applicantWithoutInputTaxDeduction = applicantWithoutInputTaxDeduction;
+    }
+
+    /**
+     * @return whether the representative is exempt from VAT or waives it
+     */
+    public boolean isRepresentativeVatExempt() {
+        return representativeVatExempt;
+    }
+
+    /**
+     * @param representativeVatExempt whether the representative is exempt from VAT
+     */
+    public void setRepresentativeVatExempt(boolean representativeVatExempt) {
+        this.representativeVatExempt = representativeVatExempt;
+    }
+
+    /**
+     * @return whose account the defendant is to pay into
+     */
+    public AccountHolder getAccountHolder() {
+        return accountHolder;
+    }
+
+    /**
+     * @param accountHolder whose account the defendant is to pay into
+     */
+    public void setAccountHolder(AccountHolder accountHolder) {
+        this.accountHolder = accountHolder;
+    }
+
+    /**
+     * @return the IBAN, written without spaces
+     */
+    public String getIban() {
+        return iban;
+    }
+
+    /**
+     * @param iban the IBAN, without spaces
+     */
+    public void setIban(String iban) {
+        this.iban = iban;
+    }
+
+    /**
+     * @return the BIC, which a German IBAN no longer needs
+     */
+    public String getBic() {
+        return bic;
+    }
+
+    /**
+     * @param bic the BIC
+     */
+    public void setBic(String bic) {
+        this.bic = bic;
     }
 }

@@ -880,6 +880,65 @@ public class EdaPartyMapperTest {
         assertEquals("europäischen Länder mit der Währung", records.get(1).get("AGN3"));
     }
 
+    // ----- the person who acts for a legal person -----
+
+    private ClaimLedgerParty withRepresentative(String role, String first, String last) {
+        ClaimLedgerParty p = company("Beispiel Handels GmbH", "GmbH");
+        AddressBean rep = new AddressBean();
+        rep.setRole(role);
+        rep.setFirstName(first);
+        rep.setName(last);
+        rep.setStreet("Königstr.");
+        rep.setStreetNumber("1");
+        rep.setZipCode("70173");
+        rep.setCity("Stuttgart");
+        p.setLegalRepresentative(rep);
+        return p;
+    }
+
+    @Test
+    public void theRepresentativeIsNamedTogetherWithTheFunctionHeActsIn() throws Exception {
+        // the court needs both: 'Geschäftsführer' says why this person can be served for the
+        // company, the name says who is to be served
+        List<EdaRecord> records = mapper.mapLegalRepresentative(
+                withRepresentative("Geschäftsführer", "Max", "Muster"),
+                EdaMahnbescheidLayouts.getLayout("C17"),
+                EdaMahnbescheidLayouts.getLayout("C18"), "AGGV");
+
+        assertEquals(2, records.size());
+        assertEquals("Geschäftsführer", records.get(0).get("AGGVFU"));
+        assertEquals("Max Muster", records.get(0).get("AGGVN"));
+        assertEquals("Königstr. 1", records.get(1).get("AGGVSH"));
+        assertEquals("70173", records.get(1).get("AGGVPLZ"));
+        assertEquals("Stuttgart", records.get(1).get("AGGVO"));
+        assertNull("a domestic address carries no country indicator", records.get(1).get("AGGVAL"));
+    }
+
+    @Test
+    public void theSameMappingServesTheApplicantSideUnderItsOwnFieldNames() throws Exception {
+        List<EdaRecord> records = mapper.mapLegalRepresentative(
+                withRepresentative("Vorstand", "Erika", "Muster"),
+                EdaMahnbescheidLayouts.getLayout("C05"),
+                EdaMahnbescheidLayouts.getLayout("C06"), "ASGV");
+
+        assertEquals("C05", records.get(0).getLayout().getId());
+        assertEquals("Vorstand", records.get(0).get("ASGVFU"));
+        assertEquals("Erika Muster", records.get(0).get("ASGVN"));
+        assertEquals("C06", records.get(1).getLayout().getId());
+        assertEquals("Stuttgart", records.get(1).get("ASGVO"));
+    }
+
+    @Test
+    public void apartyThatActsForItselfGetsNoRepresentativeRecords() throws Exception {
+        List<EdaRecord> records = mapper.mapLegalRepresentative(
+                company("Beispiel Handels GmbH", "GmbH"),
+                EdaMahnbescheidLayouts.getLayout("C17"),
+                EdaMahnbescheidLayouts.getLayout("C18"), "AGGV");
+
+        assertTrue("empty representative records would claim a representative that is not recorded",
+                records.isEmpty());
+    }
+
     @Test
     public void theKeyForACompanyIsTheExplicitAbsenceOfOne() {
         AddressBean gmbh = new AddressBean();
