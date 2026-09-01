@@ -31,10 +31,53 @@
 - [ ] 0.4 Obtain at least one official ZVFV form PDF per annex in scope and record its AcroForm
       field names, so the mapping profiles of 4.2/4.3 and the tests of 4.10 can be written against
       the real forms rather than assumptions
-- [ ] 0.5 Apply for the Kennziffer at the dunning court and start the EDA test and approval
-      procedure with the OLG Stuttgart – IuK-Fachzentrum Justiz. Organisational, but on the
-      critical path: phase 3 cannot be verified end to end without it, and acceptance of a
-      structurally valid file is not guaranteed until the test exchange has run
+- [ ] 0.5 Register for the EDA (Kennziffer) and agree a test exchange with the dunning court.
+      Organisational and not doable from here, but on the critical path: phase 3 cannot be verified
+      end to end without a Kennziffer of the firm's own.
+      *Correction to the earlier wording of this task:* there is no formal approval procedure for the
+      software. What is binding is the registration; the test is recommended, not required.
+      Section 7.4 of the EDA-Konditionen: "Zur Vermeidung von Massenfehlern wird empfohlen,
+      Mahnbescheidsanträge vor der erstmaligen Einreichung mit dem Mahngericht zu testen. Zum Test
+      müssen bereits alle Voraussetzungen für den Echtbetrieb erfüllt sein (Kennziffer, Signatur,
+      Datenbezeichnung, etc.) ... Ein Test wird insbesondere dann empfohlen, wenn eine eigene
+      Schnittstellensoftware eingesetzt wird. Die im Handel verfügbaren Schnittstellen sind in der
+      Regel bereits geprüft. Die Vorgehensweise für das Testverfahren bei DFÜ ist mit dem jeweiligen
+      Mahngericht abzustimmen." A test can return messages from the test processing on request
+      (Kosten-/Erlassnachricht MB, Monierung) — which is exactly what the import path of 3.10 needs
+      to be exercised against something real. It presupposes the firm's own Kennziffer; one borrowed
+      from another firm is of no use here, since it names that firm as the Prozessbevollmächtigter
+      and the test result attaches to their registration.
+
+      **Where this is written down.** *EDA-Konditionen Format 4.X*, the binding document
+      (https://www.mahngerichte.de/wp-content/uploads/EDA-Konditionen.pdf, valid since 01.02.2014,
+      last changed 22.09.2017, OLG Stuttgart – IuK-Fachzentrum Justiz), linked from
+      https://www.mahngerichte.de/publikationen/eda-konditionen/ . Chapter 6 covers participation and
+      the Kennziffer, 7.2 the Ausbaugrad, 7.4 the test. Section 2.3: "Die in der Schnittstelle
+      beschriebenen Standards (einschließlich der Datenformate) sind für das Verfahren verbindlich!"
+
+      **Contacts** (cover page of the Konditionen): technical questions, development and *test* —
+      Oberlandesgericht Stuttgart, IuK-Fachzentrum Justiz, Referat Mahnverfahren,
+      mahn@iuk-fz.justiz.bwl.de . Productive exchange — Amtsgericht Stuttgart, Mahnabteilung,
+      70154 Stuttgart, 0711/921-3308.
+
+      **What the registration asks for** (6.1.1, applied for at the Mahnabteilung of the competent
+      Amtsgericht; forms at https://www.mahngerichte.de/verfahrenshilfen/kennziffernantraege-der-mahngerichte/
+      and .../verfahrenshilfen/allgemeiner-kennziffernantrag/): the EDA-Art (currently DFÜ only), the
+      Ausbaugrad, which Kennziffer participates — "soweit ein Prozessbevollmächtigter beteiligt ist,
+      ist dieser immer auch EDA-Teilnehmer" — and acceptance of the Konditionen. A Kennziffer is an
+      eight-digit numeric key into the court's own database holding designation, address,
+      representation, bank details, EDA parameters and the SEPA mandate (6.2); those for a
+      Prozessbevollmächtigter are exchanged between the federal states and work at almost all dunning
+      courts (6.3).
+
+      **Two points that bear on what is built here.** The transmission route (2.4) is exclusively
+      DFÜ over defined internet paths, for lawyers Web-DFÜ-beA — which is the route the export of
+      3.17 assumes. And the Ausbaugrad (7.2) is a parameter of the *Kennziffer*, not of the software:
+      it decides which court messages come back as EDA records at all, so with an Ausbaugrad of zero
+      the import of 3.10 would have nothing to work on. The same section notes that a monition always
+      comes on paper in parallel, and that for Widerspruchs- and Abgabenachrichten "die entscheidende
+      Nachricht ist hier immer die Papiernachricht (insbesondere wegen Beifügungen)" — one more
+      reason the import proposes rather than books
 
 ## 1. Phase 1 — Claim ledger foundation
 
