@@ -138,7 +138,7 @@
       additional record each special number demands) and free-text claims, running and already
       computed interest, consumer-credit data, and the seven ancillary-claim areas — with the
       mapping documented in the code
-- [ ] 3.13 Structural verifier (record length, framing, record order, per-area frequency, trailer
+- [x] 3.13 Structural verifier (record length, framing, record order, per-area frequency, trailer
       counts, character set) with violations reported per record and field
 - [ ] 3.14 `AppUserBean` lawyer identification number (Kennziffer) with migration and the user
       administration field shown only for lawyer users (+ `.form`)
