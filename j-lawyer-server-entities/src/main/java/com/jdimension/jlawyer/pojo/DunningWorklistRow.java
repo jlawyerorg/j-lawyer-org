@@ -660,30 +660,187 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.pojo;
 
-import com.jdimension.jlawyer.pojo.DunningMessageProposal;
-import com.jdimension.jlawyer.pojo.DunningWorklistFilter;
-import com.jdimension.jlawyer.pojo.DunningWorklistRow;
-import com.jdimension.jlawyer.pojo.DunningValidationResult;
+import com.jdimension.jlawyer.persistence.DunningCaseStatus;
+import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import javax.ejb.Local;
+import java.util.Date;
 
 /**
- * Server-side access to the dunning procedure.
+ * One line of the dunning worklist.
+ *
+ * It carries what a user needs to decide whether to act, without opening the case: which matter,
+ * against whom, at which court, where the procedure stands, and what is due next.
  *
  * @author jens
  */
-@Local
-public interface DunningServiceLocal {
+public class DunningWorklistRow implements Serializable {
 
-    DunningValidationResult validateApplication(String dunningCaseId, BigDecimal claimValue) throws Exception;
+    private static final long serialVersionUID = 1L;
 
-    List<DunningMessageProposal> analyseCourtMessages(String documentId) throws Exception;
+    private String dunningCaseId;
+    private String ledgerId;
+    private String caseId;
+    private String caseFileNumber;
+    private String caseName;
+    private String creditor;
+    private String debtor;
+    private String courtName;
+    private String courtFileNumber;
+    private String ownReference;
+    private DunningCaseStatus status;
+    private Date statusDate;
+    private BigDecimal appliedTotal;
+    private Date nextDeadline;
+    private String nextDeadlineLabel;
+    private boolean nextDeadlineOverdue;
 
-    List<String> applyCourtMessages(String documentId, Map<Integer, String> assignments) throws Exception;
+    public String getDunningCaseId() {
+        return dunningCaseId;
+    }
 
-    List<DunningWorklistRow> getWorklist(DunningWorklistFilter filter) throws Exception;
+    public void setDunningCaseId(String dunningCaseId) {
+        this.dunningCaseId = dunningCaseId;
+    }
+
+    public String getLedgerId() {
+        return ledgerId;
+    }
+
+    public void setLedgerId(String ledgerId) {
+        this.ledgerId = ledgerId;
+    }
+
+    public String getCaseId() {
+        return caseId;
+    }
+
+    public void setCaseId(String caseId) {
+        this.caseId = caseId;
+    }
+
+    public String getCaseFileNumber() {
+        return caseFileNumber;
+    }
+
+    public void setCaseFileNumber(String caseFileNumber) {
+        this.caseFileNumber = caseFileNumber;
+    }
+
+    public String getCaseName() {
+        return caseName;
+    }
+
+    public void setCaseName(String caseName) {
+        this.caseName = caseName;
+    }
+
+    public String getCreditor() {
+        return creditor;
+    }
+
+    public void setCreditor(String creditor) {
+        this.creditor = creditor;
+    }
+
+    public String getDebtor() {
+        return debtor;
+    }
+
+    public void setDebtor(String debtor) {
+        this.debtor = debtor;
+    }
+
+    public String getCourtName() {
+        return courtName;
+    }
+
+    public void setCourtName(String courtName) {
+        this.courtName = courtName;
+    }
+
+    public String getCourtFileNumber() {
+        return courtFileNumber;
+    }
+
+    public void setCourtFileNumber(String courtFileNumber) {
+        this.courtFileNumber = courtFileNumber;
+    }
+
+    public String getOwnReference() {
+        return ownReference;
+    }
+
+    public void setOwnReference(String ownReference) {
+        this.ownReference = ownReference;
+    }
+
+    public DunningCaseStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(DunningCaseStatus status) {
+        this.status = status;
+    }
+
+    /**
+     * @return the date of the last status change
+     */
+    public Date getStatusDate() {
+        return statusDate;
+    }
+
+    public void setStatusDate(Date statusDate) {
+        this.statusDate = statusDate;
+    }
+
+    /**
+     * @return what was applied for, as a snapshot from the application
+     */
+    public BigDecimal getAppliedTotal() {
+        return appliedTotal;
+    }
+
+    public void setAppliedTotal(BigDecimal appliedTotal) {
+        this.appliedTotal = appliedTotal;
+    }
+
+    /**
+     * @return the earliest deadline still open, or null where none is
+     */
+    public Date getNextDeadline() {
+        return nextDeadline;
+    }
+
+    public void setNextDeadline(Date nextDeadline) {
+        this.nextDeadline = nextDeadline;
+    }
+
+    /**
+     * @return what that deadline is, so the date means something without opening the case
+     */
+    public String getNextDeadlineLabel() {
+        return nextDeadlineLabel;
+    }
+
+    public void setNextDeadlineLabel(String nextDeadlineLabel) {
+        this.nextDeadlineLabel = nextDeadlineLabel;
+    }
+
+    /**
+     * @return whether that deadline has already passed
+     */
+    public boolean isNextDeadlineOverdue() {
+        return nextDeadlineOverdue;
+    }
+
+    public void setNextDeadlineOverdue(boolean nextDeadlineOverdue) {
+        this.nextDeadlineOverdue = nextDeadlineOverdue;
+    }
+
+    @Override
+    public String toString() {
+        return this.caseFileNumber + " – " + this.status;
+    }
 }

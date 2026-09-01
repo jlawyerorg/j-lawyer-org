@@ -683,7 +683,11 @@ import com.jdimension.jlawyer.persistence.DunningStatusSource;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.persistence.InterestRuleFacadeLocal;
 import com.jdimension.jlawyer.pojo.DunningClaimInput;
+import com.jdimension.jlawyer.persistence.DunningCaseDeadline;
+import com.jdimension.jlawyer.persistence.DunningCaseDeadlineFacadeLocal;
 import com.jdimension.jlawyer.pojo.DunningMessageProposal;
+import com.jdimension.jlawyer.pojo.DunningWorklistFilter;
+import com.jdimension.jlawyer.pojo.DunningWorklistRow;
 import com.jdimension.jlawyer.pojo.DunningValidationIssue;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.persistence.ClaimLedgerFacadeLocal;
@@ -720,6 +724,7 @@ import org.jboss.ejb3.annotation.SecurityDomain;
 public class DunningService implements DunningServiceRemote, DunningServiceLocal {
 
     private static final Logger log = Logger.getLogger(DunningService.class.getName());
+    private static final java.text.SimpleDateFormat DATE_FORMAT = new java.text.SimpleDateFormat("dd.MM.yyyy");
 
     @Resource
     private SessionContext context;
@@ -747,6 +752,9 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
 
     @EJB
     private ClaimLedgerFacadeLocal claimLedgersFacade;
+
+    @EJB
+    private DunningCaseDeadlineFacadeLocal dunningDeadlinesFacade;
 
 
     @EJB
@@ -1209,6 +1217,178 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         }
         requireAccess(stored.getLedger().getArchiveFileKey());
         return stored;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<DunningWorklistRow> getWorklist(DunningWorklistFilter filter) throws Exception {
+
+        DunningWorklistFilter f = filter == null ? new DunningWorklistFilter() : filter;
+        List<DunningWorklistRow> rows = new ArrayList<>();
+        Date today = new Date();
+
+        for (DunningCase dunningCase : this.dunningCasesFacade.findAll()) {
+            if (!matches(dunningCase, f)) {
+                continue;
+            }
+            // the list shows the user's own work: a procedure in a case they may not open has no
+            // business appearing in it, not even as a row they cannot follow
+            if (!hasAccess(dunningCase)) {
+                continue;
+            }
+            DunningWorklistRow row = toRow(dunningCase, today);
+            if (f.isOverdueDeadlinesOnly() && !row.isNextDeadlineOverdue()) {
+                continue;
+            }
+            rows.add(row);
+        }
+
+        // the most urgent first, and procedures without a deadline after those that have one
+        rows.sort((a, b) -> {
+            if (a.getNextDeadline() == null && b.getNextDeadline() == null) {
+                return 0;
+            }
+            if (a.getNextDeadline() == null) {
+                return 1;
+            }
+            if (b.getNextDeadline() == null) {
+                return -1;
+            }
+            return a.getNextDeadline().compareTo(b.getNextDeadline());
+        });
+        return rows;
+    }
+
+    /**
+     * Whether a procedure belongs in the list under the given filter.
+     */
+    private boolean matches(DunningCase dunningCase, DunningWorklistFilter f) {
+
+        if (dunningCase.getStatus() == null) {
+            return false;
+        }
+        if (!f.isIncludeClosed() && dunningCase.getStatus().isClosed()) {
+            return false;
+        }
+        if (!f.getStatuses().isEmpty() && !f.getStatuses().contains(dunningCase.getStatus())) {
+            return false;
+        }
+        if (f.getCourtXJustizId() != null && !f.getCourtXJustizId().trim().isEmpty()
+                && !f.getCourtXJustizId().trim().equals(dunningCase.getCourtXJustizId())) {
+            return false;
+        }
+        if (f.isObjectionPeriodExpiredOnly() && !objectionPeriodExpired(dunningCase)) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * The question the firm asks most often: is this a Mahnbescheid whose objection period has run
+     * without an enforcement order having been applied for.
+     *
+     * The period is computed rather than read from the deadline records, so the answer does not
+     * depend on whether the calendar entries were ever created.
+     */
+    private boolean objectionPeriodExpired(DunningCase dunningCase) {
+
+        if (dunningCase.getStatus() != DunningCaseStatus.MB_SERVED
+                || dunningCase.getMbServedDate() == null) {
+            return false;
+        }
+        List<com.jdimension.jlawyer.pojo.DunningDeadline> deadlines =
+                new DunningDeadlineCalculator().computeDeadlines(dunningCase, 0);
+        for (com.jdimension.jlawyer.pojo.DunningDeadline d : deadlines) {
+            if (d.getType() == com.jdimension.jlawyer.persistence.DunningDeadlineType.OBJECTION_PERIOD) {
+                return d.getDeadline() != null && new Date().after(d.getDeadline());
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Builds one row, including the earliest deadline still open.
+     */
+    private DunningWorklistRow toRow(DunningCase dunningCase, Date today) {
+
+        DunningWorklistRow row = new DunningWorklistRow();
+        row.setDunningCaseId(dunningCase.getId());
+        row.setOwnReference(dunningCase.getOwnReference());
+        row.setCourtName(dunningCase.getCourtName());
+        row.setCourtFileNumber(dunningCase.getCourtFileNumber());
+        row.setStatus(dunningCase.getStatus());
+        row.setStatusDate(dunningCase.getStatusDate());
+        row.setAppliedTotal(dunningCase.getAppliedTotal());
+
+        ClaimLedger ledger = dunningCase.getLedger();
+        if (ledger != null) {
+            row.setLedgerId(ledger.getId());
+            if (ledger.getArchiveFileKey() != null) {
+                row.setCaseId(ledger.getArchiveFileKey().getId());
+                row.setCaseFileNumber(ledger.getArchiveFileKey().getFileNumber());
+                row.setCaseName(ledger.getArchiveFileKey().getName());
+            }
+            for (ClaimLedgerParty party : this.claimLedgerPartiesFacade.findByLedger(ledger)) {
+                if (party.getRole() == ClaimPartyRole.CREDITOR && row.getCreditor() == null) {
+                    row.setCreditor(party.getEffectiveDesignation());
+                } else if (party.getRole() == ClaimPartyRole.DEBTOR && row.getDebtor() == null) {
+                    row.setDebtor(party.getEffectiveDesignation());
+                }
+            }
+        }
+
+        for (DunningCaseDeadline deadline : this.dunningDeadlinesFacade.findByDunningCase(dunningCase)) {
+            if (deadline.isClosed() || deadline.getDeadlineDate() == null) {
+                continue;
+            }
+            if (row.getNextDeadline() == null || deadline.getDeadlineDate().before(row.getNextDeadline())) {
+                row.setNextDeadline(deadline.getDeadlineDate());
+                row.setNextDeadlineLabel(deadline.getDeadlineType() == null
+                        ? null : deadline.getDeadlineType().getLabel());
+            }
+        }
+        row.setNextDeadlineOverdue(row.getNextDeadline() != null && today.after(row.getNextDeadline()));
+        return row;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public String exportWorklistAsCsv(List<DunningWorklistRow> rows) throws Exception {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Akte;Bezeichnung;Gläubiger;Schuldner;Mahngericht;Geschäftsnummer;")
+                .append("Geschäftszeichen;Status;Seit;Beantragt;Nächste Frist;Fristart;überfällig\n");
+
+        if (rows != null) {
+            for (DunningWorklistRow r : rows) {
+                sb.append(csv(r.getCaseFileNumber())).append(";")
+                        .append(csv(r.getCaseName())).append(";")
+                        .append(csv(r.getCreditor())).append(";")
+                        .append(csv(r.getDebtor())).append(";")
+                        .append(csv(r.getCourtName())).append(";")
+                        .append(csv(r.getCourtFileNumber())).append(";")
+                        .append(csv(r.getOwnReference())).append(";")
+                        .append(csv(r.getStatus() == null ? null : r.getStatus().getLabel())).append(";")
+                        .append(csv(r.getStatusDate() == null ? null : DATE_FORMAT.format(r.getStatusDate()))).append(";")
+                        .append(r.getAppliedTotal() == null ? "" : r.getAppliedTotal().toPlainString()).append(";")
+                        .append(csv(r.getNextDeadline() == null ? null : DATE_FORMAT.format(r.getNextDeadline()))).append(";")
+                        .append(csv(r.getNextDeadlineLabel())).append(";")
+                        .append(r.isNextDeadlineOverdue() ? "ja" : "nein").append("\n");
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Escapes a value for the CSV: a semicolon or a line break in a party name would otherwise shift
+     * every following column of that row.
+     */
+    private String csv(String value) {
+        if (value == null) {
+            return "";
+        }
+        String v = value.replace("\"", "\"\"").replace("\n", " ").replace("\r", " ");
+        return v.contains(";") || v.contains("\"") ? "\"" + v + "\"" : v;
     }
 
     /**

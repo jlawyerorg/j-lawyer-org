@@ -132,7 +132,13 @@
       because re-running an import is now the normal way to pick up what was left open.
       *Still open:* the ledger booking of the service date for components whose interest starts on
       service, and the dialog itself — both belong with the Mahnverfahren tab of 3.10
-- [ ] 3.8 Dunning worklist (filters, CSV, navigation, start VB application from the list)
+- [x] 3.8 Dunning worklist (filters, CSV, navigation, start VB application from the list) — the
+      server side: filtering by status, court, overdue deadlines and above all by "objection period
+      run without an enforcement order applied for", each row carrying the next open deadline, plus
+      the CSV. Only procedures in cases the user may open appear; the list is a view of their own
+      work. The expiry of the objection period is computed rather than read from the deadline
+      records, so the answer does not depend on whether the calendar entries were ever created. The
+      list view itself and starting the VB application from it belong with the desktop UI of 3.10
 - [x] 3.9 `DunningServiceRemote` (English JavaDoc) and the REST endpoint — note the endpoint is
       `DunningEndpointV7`, see 3.15. The interface covers the procedures themselves (list, create,
       update, record a status, read the journal) alongside validation, export and message import.

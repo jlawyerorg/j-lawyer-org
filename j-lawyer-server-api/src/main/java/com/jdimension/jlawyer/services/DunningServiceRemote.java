@@ -668,6 +668,8 @@ import com.jdimension.jlawyer.persistence.DunningCaseEvent;
 import com.jdimension.jlawyer.persistence.DunningCaseStatus;
 import com.jdimension.jlawyer.pojo.DunningClaimInput;
 import com.jdimension.jlawyer.pojo.DunningMessageProposal;
+import com.jdimension.jlawyer.pojo.DunningWorklistFilter;
+import com.jdimension.jlawyer.pojo.DunningWorklistRow;
 import com.jdimension.jlawyer.pojo.DunningValidationResult;
 import java.math.BigDecimal;
 import java.util.List;
@@ -821,4 +823,26 @@ public interface DunningServiceRemote {
      * @throws Exception if the procedure does not exist or its case is not accessible
      */
     List<DunningCaseEvent> getHistory(String dunningCaseId) throws Exception;
+
+    /**
+     * Returns the dunning procedures the calling user may see, filtered.
+     *
+     * Only cases the user has access to appear; the list is a view of their own work, not of the
+     * firm's. Each row carries the next open deadline, because the question the list answers is what
+     * needs doing, and a status without a date does not answer it.
+     *
+     * @param filter what to show; null means everything the user may see
+     * @return the rows, the most urgent deadline first; never null
+     * @throws Exception if the list cannot be assembled
+     */
+    List<DunningWorklistRow> getWorklist(DunningWorklistFilter filter) throws Exception;
+
+    /**
+     * Renders a worklist as CSV, so it can be worked through outside the program.
+     *
+     * @param rows the rows to render, as returned by {@link #getWorklist(DunningWorklistFilter)}
+     * @return the CSV text
+     * @throws Exception if it cannot be rendered
+     */
+    String exportWorklistAsCsv(List<DunningWorklistRow> rows) throws Exception;
 }

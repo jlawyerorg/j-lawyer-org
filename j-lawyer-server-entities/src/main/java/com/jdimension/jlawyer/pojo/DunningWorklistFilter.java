@@ -660,30 +660,97 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.pojo;
 
-import com.jdimension.jlawyer.pojo.DunningMessageProposal;
-import com.jdimension.jlawyer.pojo.DunningWorklistFilter;
-import com.jdimension.jlawyer.pojo.DunningWorklistRow;
-import com.jdimension.jlawyer.pojo.DunningValidationResult;
-import java.math.BigDecimal;
+import com.jdimension.jlawyer.persistence.DunningCaseStatus;
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import javax.ejb.Local;
 
 /**
- * Server-side access to the dunning procedure.
+ * What a user wants to see in the dunning worklist.
+ *
+ * The filters are meant to answer the questions a firm actually asks of its dunning procedures -
+ * above all "where can I now apply for the enforcement order", which is what
+ * {@link #isObjectionPeriodExpiredOnly()} narrows to and which is otherwise easy to miss until the
+ * six months of § 701 ZPO have run.
  *
  * @author jens
  */
-@Local
-public interface DunningServiceLocal {
+public class DunningWorklistFilter implements Serializable {
 
-    DunningValidationResult validateApplication(String dunningCaseId, BigDecimal claimValue) throws Exception;
+    private static final long serialVersionUID = 1L;
 
-    List<DunningMessageProposal> analyseCourtMessages(String documentId) throws Exception;
+    private final List<DunningCaseStatus> statuses = new ArrayList<>();
+    private String courtXJustizId;
+    private String responsibleUser;
+    private boolean overdueDeadlinesOnly;
+    private boolean objectionPeriodExpiredOnly;
+    private boolean includeClosed;
 
-    List<String> applyCourtMessages(String documentId, Map<Integer, String> assignments) throws Exception;
+    /**
+     * @return the statuses to show; empty means every status
+     */
+    public List<DunningCaseStatus> getStatuses() {
+        return statuses;
+    }
 
-    List<DunningWorklistRow> getWorklist(DunningWorklistFilter filter) throws Exception;
+    /**
+     * @return the dunning court to restrict to, or null for all
+     */
+    public String getCourtXJustizId() {
+        return courtXJustizId;
+    }
+
+    public void setCourtXJustizId(String courtXJustizId) {
+        this.courtXJustizId = courtXJustizId;
+    }
+
+    /**
+     * @return the user the case is assigned to, or null for all
+     */
+    public String getResponsibleUser() {
+        return responsibleUser;
+    }
+
+    public void setResponsibleUser(String responsibleUser) {
+        this.responsibleUser = responsibleUser;
+    }
+
+    /**
+     * @return whether to show only procedures with a deadline that has passed
+     */
+    public boolean isOverdueDeadlinesOnly() {
+        return overdueDeadlinesOnly;
+    }
+
+    public void setOverdueDeadlinesOnly(boolean overdueDeadlinesOnly) {
+        this.overdueDeadlinesOnly = overdueDeadlinesOnly;
+    }
+
+    /**
+     * The question a firm asks most often: which Mahnbescheide have run their objection period
+     * without an enforcement order having been applied for. Those are the ones where money is left
+     * on the table, and where § 701 ZPO eventually takes the application away altogether.
+     *
+     * @return whether to show only those
+     */
+    public boolean isObjectionPeriodExpiredOnly() {
+        return objectionPeriodExpiredOnly;
+    }
+
+    public void setObjectionPeriodExpiredOnly(boolean objectionPeriodExpiredOnly) {
+        this.objectionPeriodExpiredOnly = objectionPeriodExpiredOnly;
+    }
+
+    /**
+     * @return whether procedures that are finished, withdrawn or referred are included
+     */
+    public boolean isIncludeClosed() {
+        return includeClosed;
+    }
+
+    public void setIncludeClosed(boolean includeClosed) {
+        this.includeClosed = includeClosed;
+    }
 }
