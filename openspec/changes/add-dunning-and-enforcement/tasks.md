@@ -111,8 +111,11 @@
       lapse, Einspruch (2 weeks); creation, recalculation and closing of case events
 - [x] 3.5 Fee/cost proposal and booking for MB/VB (Nr. 3305, 3308, 1008 VV RVG, Vorbem. 3 Abs. 4
       credit, Nr. 1100 KV GKG) driven by the fee tables of 0.3
-- [ ] 3.6 Assembly and validation of the application data set (all problems reported in one list),
-      callable as a readiness check from client and REST
+- [x] 3.6 Assembly and validation of the application data set (all problems reported in one list),
+      callable as a readiness check from client and REST. The completeness and consistency checks
+      are in place and reachable through `DunningServiceRemote.validateApplication`; the REST
+      endpoint that wraps it lands with 3.9, and the field lengths and value domains of the
+      Satzbeschreibung join the same list with the EDA core of 3.11
 - [ ] 3.7 Import of the court EDA messages (record types `03`, `05`, `16`, `18`, `20`, `22`, `90`)
       with matching on the echoed own reference, status/date update, ledger service booking and an
       inbox for unmatched messages
