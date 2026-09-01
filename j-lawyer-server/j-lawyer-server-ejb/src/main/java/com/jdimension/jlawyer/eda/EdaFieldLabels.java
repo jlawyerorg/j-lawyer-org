@@ -660,232 +660,340 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.eda;
 
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.DunningCase;
-import com.jdimension.jlawyer.persistence.DunningCaseEvent;
-import com.jdimension.jlawyer.persistence.DunningCaseStatus;
-import com.jdimension.jlawyer.pojo.DunningClaimInput;
-import com.jdimension.jlawyer.pojo.DunningMessageProposal;
-import com.jdimension.jlawyer.pojo.EdaDocumentView;
-import com.jdimension.jlawyer.pojo.DunningWorklistFilter;
-import com.jdimension.jlawyer.pojo.DunningWorklistRow;
-import com.jdimension.jlawyer.pojo.DunningValidationResult;
-import java.math.BigDecimal;
-import java.util.List;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import javax.ejb.Remote;
 
 /**
- * The court dunning procedure.
+ * What the short field names of the EDA format mean, in the words of the Satzbeschreibungen.
  *
- * At present this exposes the readiness check for an application; the operations that carry a
- * procedure through its stages join it as they are built.
+ * A record is written with names like {@code ASPSOBG2} or {@code SKATNR}. That is what the format
+ * carries and what the courts talk in, so the writing side has no use for anything else - but a
+ * person reading a file back does. The Satzbeschreibungen print a long name beside every short one
+ * ("Feldname kurz" and "Feldname lang"); this is that column, so a reader is not left decoding
+ * abbreviations that the description already spells out.
+ *
+ * The names are kept apart from the layouts on purpose. A layout says where a field sits and how
+ * long it is - that is what writing and parsing need, and it must not depend on a label. This is
+ * only for showing, and a field with no entry here is shown under its short name rather than
+ * suppressed: an unnamed field is still a field.
+ *
+ * Where the same short name appears in several descriptions with different wording, the wording of
+ * the Mahnbescheid description wins, since that is the format most records belong to.
+ *
+ * Sources, all retrieved on 31 August 2026 from
+ * https://www.mahngerichte.de/publikationen/eda-konditionen/ :
+ * EDA-SB_KEZI_01_4000_MBA (Mahnbescheidsantrag), EDA-SB_KEZI_07_4100_VBA
+ * (Vollstreckungsbescheidsantrag) and the message descriptions
+ * EDA-SB_KEZI_03/05/16/18/20/22/90 - each the "Feldname lang" column of their record tables.
  *
  * @author jens
  */
-@Remote
-public interface DunningServiceRemote {
+public class EdaFieldLabels {
+
+    private static final Map<String, String> LABELS = new LinkedHashMap<>();
+
+    private EdaFieldLabels() {
+    }
 
     /**
-     * Checks whether a dunning application can be filed, without producing or changing anything.
+     * The long name of a field.
      *
-     * Every problem is reported together rather than the first one raised, so a user learns in one
-     * pass what needs fixing. The check reads; it stores nothing.
-     *
-     * Note what it does not yet cover: whether the data also fits the field lengths and value
-     * domains of the record format is a separate question that needs the Satzbeschreibung, and that
-     * check joins this one with the EDA core.
-     *
-     * @param dunningCaseId the procedure to check
-     * @param claimValue the value that would be applied for; the caller determines it, because
-     * whether a position counts as an ancillary claim (§ 43 GKG) is a judgement
-     * @return every finding, blocking and otherwise; never null
-     * @throws Exception if the procedure does not exist or the user may not see its case
+     * @param fieldName the short name as the format carries it
+     * @return the long name, or the short name itself where the descriptions give none
      */
-    DunningValidationResult validateApplication(String dunningCaseId, BigDecimal claimValue) throws Exception;
+    public static String labelOf(String fieldName) {
+        if (fieldName == null) {
+            return null;
+        }
+        String label = LABELS.get(fieldName);
+        return label == null ? fieldName : label;
+    }
 
     /**
-     * Produces the EDA file for a dunning application, stores it in the case and records that the
-     * application has gone out.
-     *
-     * Nothing is produced that has not been checked. The data is validated first and the finished
-     * file is verified structurally afterwards; if either fails, no document is stored and no status
-     * is changed - an unverified file must never leave the firm, and a procedure must not claim to
-     * have applied for something it did not send.
-     *
-     * @param dunningCaseId the procedure to file
-     * @param claimValue the value applied for
-     * @param claims what is applied for, in the order it should appear
-     * @param fileName the six-character name the file announces itself under
-     * @return the stored document
-     * @throws Exception if the data is incomplete, the file fails verification, or it cannot be
-     * stored; the message names what went wrong
+     * @param fieldName the short name
+     * @return whether a long name is known for it
      */
-    ArchiveFileDocumentsBean exportApplication(String dunningCaseId, BigDecimal claimValue,
-            List<DunningClaimInput> claims, String fileName) throws Exception;
+    public static boolean isKnown(String fieldName) {
+        return fieldName != null && LABELS.containsKey(fieldName);
+    }
 
     /**
-     * Reads the court messages in a document and proposes what each of them belongs to.
-     *
-     * Nothing is applied and nothing is stored. This is what a user is shown before confirming: one
-     * entry per message, with the procedure the system found for it or the statement that it found
-     * none and the user has to choose.
-     *
-     * The search runs across all procedures rather than within the document's case. Courts send
-     * collective files - the trailer counts the messages in one - so a single document can carry news
-     * for many procedures in many cases; where it was filed is provenance, not context.
-     *
-     * @param documentId the document holding the exchange file
-     * @return one proposal per message, in the order they appear
-     * @throws Exception if the document does not exist, is empty, or the user may not see its case
+     * @return every short name with its long name, in alphabetical order
      */
-    List<DunningMessageProposal> analyseCourtMessages(String documentId) throws Exception;
+    public static Map<String, String> getLabels() {
+        return Collections.unmodifiableMap(LABELS);
+    }
 
-    /**
-     * Resolves an EDA exchange file of a case against the Satzbeschreibungen, so it can be read.
-     *
-     * The files are fixed-length records of 128 bytes with nothing separating the fields inside
-     * them; reading one by eye means counting columns. This returns the same file with its records
-     * and fields named, together with what the file says about itself - the record type, the format
-     * version, the Kennziffer, and whether it is an application the firm sent or a message the court
-     * sent back. That direction is derived from the record type, not from where the file sits.
-     *
-     * Records no Satzbeschreibung covers are still returned, with their raw line and without fields,
-     * so a file from a newer format version stays partly readable rather than appearing empty.
-     *
-     * @param documentId the document holding the exchange file
-     * @return the file as it can be shown, never null
-     * @throws Exception if the document does not exist, is empty, or its case is not accessible
-     */
-    EdaDocumentView describeEdaDocument(String documentId) throws Exception;
-
-    /**
-     * Applies the court messages of a document, as the user assigned them.
-     *
-     * A message left unassigned is not applied and not stored anywhere - it stays in the document,
-     * and running this again later picks it up. That is why nothing is lost by confirming only part
-     * of a file.
-     *
-     * A message that would move a procedure backwards is reported and skipped. Re-running an import
-     * is a normal thing to do, so an older message must not undo what a newer one already recorded.
-     *
-     * @param documentId the document holding the exchange file
-     * @param assignments the procedure chosen per message, keyed by the message's position in the
-     * file as {@code analyseCourtMessages} reported it; a position left out stays unapplied
-     * @return what happened to each message, in words for the user
-     * @throws Exception if the document cannot be read
-     */
-    List<String> applyCourtMessages(String documentId, Map<Integer, String> assignments) throws Exception;
-
-    /**
-     * Returns the dunning procedures conducted over a claim ledger.
-     *
-     * @param ledgerId the claim ledger
-     * @return the procedures, most recently created first; never null
-     * @throws Exception if the ledger does not exist or its case is not accessible
-     */
-    List<DunningCase> getDunningCases(String ledgerId) throws Exception;
-
-    /**
-     * Creates a dunning procedure over a claim ledger.
-     *
-     * The procedure starts in preparation and carries the court and Kennziffer it is given. Its own
-     * reference is what every later message from the court will echo back, so it is generated where
-     * the caller supplies none - a procedure without one cannot be matched to its replies.
-     *
-     * @param ledgerId the claim ledger
-     * @param dunningCase the procedure to create
-     * @return the created procedure as it was stored
-     * @throws Exception if the ledger does not exist, its case is not accessible, or it cannot be
-     * stored
-     */
-    DunningCase addDunningCase(String ledgerId, DunningCase dunningCase) throws Exception;
-
-    /**
-     * Updates the master data of a dunning procedure - court, Kennziffer, reference, description.
-     *
-     * The status is not changed here. Moving a procedure is recorded through
-     * {@link #recordStatus(String, DunningCaseStatus, java.util.Date, String)}, which journals who
-     * did it and on what basis.
-     *
-     * @param dunningCase the procedure with its changed values
-     * @return the updated procedure
-     * @throws Exception if it does not exist or its case is not accessible
-     */
-    DunningCase updateDunningCase(DunningCase dunningCase) throws Exception;
-
-    /**
-     * Deletes a dunning procedure that has not left the firm.
-     *
-     * Only a procedure still in preparation can be deleted - one without a court file number, and
-     * without any procedural date recorded. Up to that point it is an entry somebody made, and
-     * deleting it removes a mistake rather than a record.
-     *
-     * Once an application has gone to the court the answer is a status instead: withdrawn or
-     * completed. Deleting then would not undo the procedure at the court, it would only destroy what
-     * the firm knows about it - the journal with its dates, users and sources, the deadlines
-     * computed from the procedural dates, and the service date from which the interest of components
-     * awarded interest on service runs. The condition is enforced here and not only in the user
-     * interface.
-     *
-     * The journal entries and the deadline records of the procedure go with it. So do the follow-ups
-     * those deadlines created, which would otherwise remain in the calendar pointing at a procedure
-     * that no longer exists.
-     *
-     * @param dunningCaseId the procedure to delete
-     * @throws Exception if it does not exist, its case is not accessible, or it has left the firm -
-     * the message then says which of those it is
-     */
-    void removeDunningCase(String dunningCaseId) throws Exception;
-
-    /**
-     * Records that a procedure has reached a new status.
-     *
-     * The change is journalled with the procedural date, the user and the fact that a person entered
-     * it rather than a court message reporting it. That distinction is the first thing to look at
-     * when a procedure turns out to have been recorded wrongly.
-     *
-     * @param dunningCaseId the procedure
-     * @param status the status it reaches
-     * @param eventDate the procedural date - the day of service, of issue - which is what deadlines
-     * are computed from, not the day of entry
-     * @param comment a note on the change, or null
-     * @return the updated procedure
-     * @throws Exception if the procedure does not exist or its case is not accessible
-     */
-    DunningCase recordStatus(String dunningCaseId, DunningCaseStatus status, java.util.Date eventDate,
-            String comment) throws Exception;
-
-    /**
-     * Returns the journal of a procedure.
-     *
-     * @param dunningCaseId the procedure
-     * @return its status changes, oldest first, so the list reads as the course of the procedure
-     * @throws Exception if the procedure does not exist or its case is not accessible
-     */
-    List<DunningCaseEvent> getHistory(String dunningCaseId) throws Exception;
-
-    /**
-     * Returns the dunning procedures the calling user may see, filtered.
-     *
-     * Only cases the user has access to appear; the list is a view of their own work, not of the
-     * firm's. Each row carries the next open deadline, because the question the list answers is what
-     * needs doing, and a status without a date does not answer it.
-     *
-     * @param filter what to show; null means everything the user may see
-     * @return the rows, the most urgent deadline first; never null
-     * @throws Exception if the list cannot be assembled
-     */
-    List<DunningWorklistRow> getWorklist(DunningWorklistFilter filter) throws Exception;
-
-    /**
-     * Renders a worklist as CSV, so it can be worked through outside the program.
-     *
-     * @param rows the rows to render, as returned by {@link #getWorklist(DunningWorklistFilter)}
-     * @return the CSV text
-     * @throws Exception if it cannot be rendered
-     */
-    String exportWorklistAsCsv(List<DunningWorklistRow> rows) throws Exception;
+    static {
+        LABELS.put("AA", "= Dateivorsatz");
+        LABELS.put("ABD", "Datum der Abgabe");
+        LABELS.put("ABTAL", "Auslandskennzeichen");
+        LABELS.put("ABTD", "Datum der Abtretung");
+        LABELS.put("ABTN", "Name des Abtretenden");
+        LABELS.put("ABTO", "Ort des Abtretenden");
+        LABELS.put("ABTPLZ", "Postleitzahl des Abtretenden");
+        LABELS.put("AGAL", "Auslandskennzeichen");
+        LABELS.put("AGANR", "Anredeschlüssel");
+        LABELS.put("AGGMM", "Gesamtschuldner-Merkmal");
+        LABELS.put("AGGVAL", "Auslandskennzeichen");
+        LABELS.put("AGGVFU", "Stellung des ges. Vertreters");
+        LABELS.put("AGGVN", "Name des ges. Vertreters");
+        LABELS.put("AGGVNAL", "Auslandskennzeichen");
+        LABELS.put("AGGVNFU", "Stellung des ges. Vertreters 1)");
+        LABELS.put("AGGVNN", "Name des ges. Vertreters 1)");
+        LABELS.put("AGGVNO", "Wohnsitz-Ort");
+        LABELS.put("AGGVNPLZ", "Postleitzahl");
+        LABELS.put("AGGVNSH", "Straße, Hausnummer");
+        LABELS.put("AGGVO", "Wohnsitz-Ort");
+        LABELS.put("AGGVPLZ", "Postleitzahl");
+        LABELS.put("AGGVSH", "Straße, Hausnummer");
+        LABELS.put("AGGVZAL", "Auslandskennzeichen 2)");
+        LABELS.put("AGGVZFU", "Stellung des ges. Vertreters 1)");
+        LABELS.put("AGGVZN", "Name des ges. Vertreters 1)");
+        LABELS.put("AGGVZO", "Wohnsitz-Ort 2)");
+        LABELS.put("AGGVZPLZ", "Postleitzahl 2)");
+        LABELS.put("AGGVZSH", "Straße, Hausnummer 2)");
+        LABELS.put("AGGZ", "Geschäftszeichen AG / AGPV");
+        LABELS.put("AGN1", "Antragsgegner-Name-1");
+        LABELS.put("AGN2", "Antragsgegner-Name-2");
+        LABELS.put("AGN3", "Antragsgegner-Name-3");
+        LABELS.put("AGN4", "Antragsgegner-Name-4");
+        LABELS.put("AGO", "Ort des Sitzes / Wohnsitzes");
+        LABELS.put("AGPLZ", "Postleitzahl");
+        LABELS.put("AGPVAL", "Auslandskennzeichen");
+        LABELS.put("AGPVANR", "Anrede-Schlüssel");
+        LABELS.put("AGPVN", "Name des Prozessbevollm.");
+        LABELS.put("AGPVO", "Wohnsitz-Ort");
+        LABELS.put("AGPVPLZ", "Postleitzahl");
+        LABELS.put("AGPVSH", "Straße, Hausnummer");
+        LABELS.put("AGRF", "Rechtsform");
+        LABELS.put("AGSH", "Straße, Hausnummer");
+        LABELS.put("ALRFMAG", "Erklärung bei ausländischer");
+        LABELS.put("ALRFMAS", "Erklärung bei ausländischer");
+        LABELS.put("AND", "Datum des monierten Antrags");
+        LABELS.put("ANFBET", "Betrag andere Nebenforderung");
+        LABELS.put("ANFBG", "Begründung");
+        LABELS.put("ANTANZ", "Anzahl Anträge");
+        LABELS.put("ASAL", "Auslandskennzeichen");
+        LABELS.put("ASANR", "Anrede-Schlüssel");
+        LABELS.put("ASAUSL", "Auslagen des Antragstellers");
+        LABELS.put("ASGVAL", "Auslandskennzeichen");
+        LABELS.put("ASGVFU", "Stellung des ges. Vertreters");
+        LABELS.put("ASGVN", "Name des ges. Vertreters");
+        LABELS.put("ASGVO", "Wohnsitz-Ort");
+        LABELS.put("ASGVPLZ", "Postleitzahl");
+        LABELS.put("ASGVSH", "Straße, Hausnummer");
+        LABELS.put("ASGZ", "Geschäftszeichen Teilnehmer");
+        LABELS.put("ASKEZI", "Kennziffer des Antragstellers");
+        LABELS.put("ASKSTAT", "Kostenstatus des Antragstellers");
+        LABELS.put("ASN1", "Antragsteller-Name-1");
+        LABELS.put("ASN2", "Antragsteller-Name-2");
+        LABELS.put("ASN3", "Antragsteller-Name-3");
+        LABELS.put("ASN4", "Antragsteller-Name-4");
+        LABELS.put("ASO", "Ort des Sitzes / Wohnsitzes");
+        LABELS.put("ASPANZ", "Anzahl Ansprüche");
+        LABELS.put("ASPBD", "Anspruchs-Bis-Datum");
+        LABELS.put("ASPBET", "Anspruchsbetrag");
+        LABELS.put("ASPGR", "Anspruchsbegründung");
+        LABELS.put("ASPHSH", "Straße, Hausnummer");
+        LABELS.put("ASPKAT1", "1. Katalog-Nummer");
+        LABELS.put("ASPKAT2", "2. Katalog-Nummer");
+        LABELS.put("ASPLZ", "Postleitzahl");
+        LABELS.put("ASPRNR", "Nummer der Rechnung");
+        LABELS.put("ASPSOBD", "Bis-Datum");
+        LABELS.put("ASPSOBET", "Anspruchsbetrag");
+        LABELS.put("ASPSOBG1", "Begründung -Teil-1");
+        LABELS.put("ASPSOBG2", "Begründung -Teil-2");
+        LABELS.put("ASPSOVD", "Vom-Datum");
+        LABELS.put("ASPVAL", "Auslandskennzeichen");
+        LABELS.put("ASPVANR", "Anredeschlüssel");
+        LABELS.put("ASPVAUFD", "Datum der Beauftragung");
+        LABELS.put("ASPVAUSL", "Auslagenbetrag ASPV");
+        LABELS.put("ASPVD", "Anspruchs-Vom-Datum");
+        LABELS.put("ASPVGVFU", "Stellung des ges. Vertreters");
+        LABELS.put("ASPVGVN", "Name des ges. Vertreters");
+        LABELS.put("ASPVGZ", "Geschäftszeichen des Prozessbevollmächtigten");
+        LABELS.put("ASPVMBAUSL", "Auslagenbetrag");
+        LABELS.put("ASPVMWSTS", "Mehrwertsteuersatz");
+        LABELS.put("ASPVN", "Bezeichnung des PV");
+        LABELS.put("ASPVO", "Ort");
+        LABELS.put("ASPVPLZ", "Postleitzahl");
+        LABELS.put("ASPVRF", "Rechtsform");
+        LABELS.put("ASPZMAL", "Auslandskennzeichen");
+        LABELS.put("ASPZMO", "Ort");
+        LABELS.put("ASPZMPLZ", "Postleitzahl");
+        LABELS.put("ASPZMSH", "Straße und Hausnummer");
+        LABELS.put("ASPZV", "Vertragsart");
+        LABELS.put("ASRF", "Rechtsform");
+        LABELS.put("ASSH", "Straße, Hausnummer");
+        LABELS.put("ASTRVM", "Antrag auf Durchführung");
+        LABELS.put("AUSGZI", "Betrag vom Gericht");
+        LABELS.put("AUSK", "Betrag Auskünfte");
+        LABELS.put("AZIAUBET", "ausgerechneter Betrag");
+        LABELS.put("AZIBD", "Zins-Bis-Datum");
+        LABELS.put("AZISATZ", "fester Zinssatz");
+        LABELS.put("AZIVD", "Zins-Vom-Datum");
+        LABELS.put("BANKRL", "Betrag Bankrücklastkosten");
+        LABELS.put("BBIC", "Internationale Bankkennung (BIC)");
+        LABELS.put("BELART", "Art der Anträge / Datensätze");
+        LABELS.put("BIBAN", "International Bank Account Number");
+        LABELS.put("BKTOZO", "Kontozuordnung");
+        LABELS.put("DATUM", "Erstellungsdatum");
+        LABELS.put("EDAID", "Bezeichnung der Datei");
+        LABELS.put("EDAIDZ", "Namenszusatz");
+        LABELS.put("EKEZI", "Einreicher-Kennziffer");
+        LABELS.put("ELD", "Erlass-Datum");
+        LABELS.put("FELDN", "Feld-Kurz-Bezeichnung");
+        LABELS.put("FMM", "Fehlerhinweis Postleitzahl");
+        LABELS.put("FN", "Folgenummer");
+        LABELS.put("FORM", "Feldformat");
+        LABELS.put("FORMAT", "Format der EDA-Daten");
+        LABELS.put("FSCHL", "Fehlerschlüssel");
+        LABELS.put("GERGEB", "Gerichtsgebühr nach GKG");
+        LABELS.put("GNR", "Gerichtsnummer");
+        LABELS.put("GNR1", "Gerichtsnummer AG");
+        LABELS.put("GNR2", "Gerichtsnummer 2. AG");
+        LABELS.put("GNR3", "Gerichtsnummer 3. AG");
+        LABELS.put("GNR4", "Gerichtsnummer 4. AG");
+        LABELS.put("GNR5", "Gerichtsnummer 5. AG");
+        LABELS.put("GVFU", "Vertretungsverhältnis");
+        LABELS.put("IKUBET", "Erstattungsbetrag IKU");
+        LABELS.put("INDEX1", "Index für Tabellenfelder");
+        LABELS.put("INDEX2", "Index für Tabellenfelder");
+        LABELS.put("INHALT", "Feldinhalt / Antwort-Daten");
+        LABELS.put("INKBET", "Betrag Inkassokosten");
+        LABELS.put("KENNZ", "Kennzeichen");
+        LABELS.put("KEZI", "Kennziffer des Teilnehmers");
+        LABELS.put("KOZIM", "MM Zinsen auf Kosten");
+        LABELS.put("KS", "= Kennsatz");
+        LABELS.put("MAHNK", "Betrag Mahnkosten");
+        LABELS.put("MAS", "Seite der Monierungsantwort");
+        LABELS.put("MAZ", "Monierungsantwort-Zeile");
+        LABELS.put("MAZPOS", "Position in der Antwortzeile");
+        LABELS.put("MBSKOBET", "Betrag sonstige Auslagen");
+        LABELS.put("MBSKOBG", "Begründung sonstige Auslagen");
+        LABELS.put("MGGNR", "Geschäftsnummer des Mahngerichts");
+        LABELS.put("MGO", "Ort des Mahngerichts");
+        LABELS.put("MGPLZ", "PLZ des Mahngerichts");
+        LABELS.put("MOBELART", "monierte Antragsart");
+        LABELS.put("MOD", "Monierungs-/Antwort-Datum");
+        LABELS.put("NAM", "Merkmal für Nachrichtenart");
+        LABELS.put("NATOM", "Merkmal NATO-Truppenstatut");
+        LABELS.put("NEBF", "Betrag Nebenforderungen");
+        LABELS.put("NZUG1", "Textfeld");
+        LABELS.put("NZUG2", "Textfeld");
+        LABELS.put("NZUMM", "Schlüssel Nichtzustellung");
+        LABELS.put("PGM", "Prozessgerichtsschlüssel");
+        LABELS.put("PGO", "Ort des Prozessgerichts");
+        LABELS.put("PGPLZ", "Postleitzahl");
+        LABELS.put("PKH2", "Betrag der weiteren Kosten für das streitige Verfahren");
+        LABELS.put("PKHM", "Antrag Prozesskostenhilfe");
+        LABELS.put("PKM", "Merkmal");
+        LABELS.put("PNSSN", "Personalnummer/SSN");
+        LABELS.put("PVKEZI", "Kennziffer des Prozessbevollmächtigten");
+        LABELS.put("RAAUSL", "Auslagen nach RVG");
+        LABELS.put("RAGEB", "Gebühr nach RVG");
+        LABELS.put("RAMWST", "MWST für RARB nach RVG");
+        LABELS.put("RBM", "Merkmal Art des Rechtsbehelfs");
+        LABELS.put("RMART", "Art des Rechtsmittels");
+        LABELS.put("RMFRIST", "Rechtsmittelfrist");
+        LABELS.put("RMG1ART", "1. Rechtsmittelgericht – Art");
+        LABELS.put("RMG1PLZO", "1. Rechtsmittelgericht – PLZO");
+        LABELS.put("RMG2ART", "2. Rechtsmittelgericht – Art");
+        LABELS.put("RMG2PLZO", "2. Rechtsmittelgericht – PLZO");
+        LABELS.put("RMNORM", "Bezogene Vorschrift");
+        LABELS.put("SA", "Satzart");
+        LABELS.put("SANZ", "Anzahl Sätze");
+        LABELS.put("SKATNR", "Summe Katalog-Nummern");
+        LABELS.put("SUASP", "Summe Anspruchsbeträge");
+        LABELS.put("SUGNR", "Summe Gerichtsnummern");
+        LABELS.put("SWN", "Software-Name");
+        LABELS.put("SWUM", "Auswahl Verfahrensart:");
+        LABELS.put("SWV", "Software-Version");
+        LABELS.put("TEXT", "Text");
+        LABELS.put("TGZ", "Geschäftszeichen des Teilnehmers");
+        LABELS.put("TKEZI", "Kennziffer des EDA-Teilnehmers");
+        LABELS.put("USTM", "Umsatzsteuermerkmal");
+        LABELS.put("VBAND", "Datum der Antragstellung");
+        LABELS.put("VBIKUBET1", "Erstattungsbetrag IKU");
+        LABELS.put("VBPTBET", "Betrag Porto/Telefon");
+        LABELS.put("VBSKOBET", "Betrag sonstige Kosten");
+        LABELS.put("VBSKOBG", "Begründung sonst. Kosten");
+        LABELS.put("VBZAM", "Erklärung zu Zahlungen");
+        LABELS.put("VBZUM", "Auswahl Zustellungsart");
+        LABELS.put("VGLM1", "Erklärungen zum Anspruch");
+        LABELS.put("VGLM2", "Erklärungen zum Anspruch (Gegenleistung)");
+        LABELS.put("VKGD", "Vertragsdatum");
+        LABELS.put("VKGZISA", "anfänglicher effektiver Zinssatz");
+        LABELS.put("VORSTM", "Erklärung");
+        LABELS.put("VPBET", "Betrag Vordruck/Porto");
+        LABELS.put("VSN1", "Verbindungsstelle Bezeichnung 1");
+        LABELS.put("VSN2", "Verbindungsstelle Bezeichnung 2");
+        LABELS.put("VSN3", "Verbindungsstelle Bezeichnung 3");
+        LABELS.put("VSORT", "Verbindungsstelle Ort");
+        LABELS.put("VSPLZ", "Verbindungsstelle PLZ");
+        LABELS.put("VSSH", "Verbindungsstelle");
+        LABELS.put("VV2300BET", "Betrag einer");
+        LABELS.put("VV2300M", "Versicherung besondere");
+        LABELS.put("VV2300MBET", "Minderungsbetrag aus 2300/2302");
+        LABELS.put("VV2300STW", "Anderer Streitwert für eine vorgerichtliche Vergütung");
+        LABELS.put("WAUSLBET1", "Betrag weitere Auslagen 1");
+        LABELS.put("WAUSLBET2", "Betrag weitere Auslagen 2");
+        LABELS.put("WAUSLBG1", "Begründung weitere Auslagen 1");
+        LABELS.put("WAUSLBG2", "Begründung weitere Auslagen 2");
+        LABELS.put("WIANZ", "Widerspruchs Anzahl");
+        LABELS.put("WIARTM", "Widerspruchs-Merkmal");
+        LABELS.put("WIBEGR", "Merkmal für Widerspruchbe- gründung");
+        LABELS.put("WIEFD", "Datum Widerspruchseingang");
+        LABELS.put("WIEIEFD", "Datum Eingang Rechtsbehelf");
+        LABELS.put("WIHFBET", "Widerspruchsbetrag-1");
+        LABELS.put("WINEBBET", "Widerspruchsbetrag-2");
+        LABELS.put("WISTW", "Streitwert aus Widerspruch");
+        LABELS.put("WIVKOM", "Merkmal Verfahrenskosten");
+        LABELS.put("WIZIARTM", "Merkmal fester oder abhän- giger Zinssatz");
+        LABELS.put("WIZIM", "Widerspruch gegen Zinsen");
+        LABELS.put("WIZISA", "Zinssatz");
+        LABELS.put("ZABET1", "Betrag 1. Zahlung");
+        LABELS.put("ZABET10", "Betrag 10. Zahlung");
+        LABELS.put("ZABET11", "Betrag 11. Zahlung");
+        LABELS.put("ZABET12", "Betrag 12. Zahlung");
+        LABELS.put("ZABET2", "Betrag 2. Zahlung");
+        LABELS.put("ZABET3", "Betrag 3. Zahlung");
+        LABELS.put("ZABET4", "Betrag 4. Zahlung");
+        LABELS.put("ZABET5", "Betrag 5. Zahlung");
+        LABELS.put("ZABET6", "Betrag 6. Zahlung");
+        LABELS.put("ZABET7", "Betrag 7. Zahlung");
+        LABELS.put("ZABET8", "Betrag 8. Zahlung");
+        LABELS.put("ZABET9", "Betrag 9. Zahlung");
+        LABELS.put("ZAD1", "Datum 1. Zahlung");
+        LABELS.put("ZAD10", "Datum 10. Zahlung");
+        LABELS.put("ZAD11", "Datum 11. Zahlung");
+        LABELS.put("ZAD12", "Datum 12. Zahlung");
+        LABELS.put("ZAD2", "Datum 2. Zahlung");
+        LABELS.put("ZAD3", "Datum 3. Zahlung");
+        LABELS.put("ZAD4", "Datum 4. Zahlung");
+        LABELS.put("ZAD5", "Datum 5. Zahlung");
+        LABELS.put("ZAD6", "Datum 6. Zahlung");
+        LABELS.put("ZAD7", "Datum 7. Zahlung");
+        LABELS.put("ZAD8", "Datum 8. Zahlung");
+        LABELS.put("ZAD9", "Datum 9. Zahlung");
+        LABELS.put("ZBET", "Zahlbetrag");
+        LABELS.put("ZBIC", "Internationale Bankkennung");
+        LABELS.put("ZEMPF1", "Zahlungsempfänger");
+        LABELS.put("ZEMPF2", "Zahlungsempfänger –Forts.");
+        LABELS.put("ZIARTM", "Zinsart-Merkmal");
+        LABELS.put("ZIBAN", "= International-Bank-Account-Number");
+        LABELS.put("ZIBD", "Zins-Bis-Datum");
+        LABELS.put("ZIM", "Zins-Merkmal (nur wenn");
+        LABELS.put("ZIRGBET", "zu verzinsender Betrag");
+        LABELS.put("ZISAM", "Merkmal für Zinssatz");
+        LABELS.put("ZISATZ", "Zinssatz");
+        LABELS.put("ZIVD", "Zins-Vom-Datum");
+        LABELS.put("ZUAUSL", "Zustellungsauslagen");
+        LABELS.put("ZUD", "Zustellungsdatum");
+        LABELS.put("ZVWZ", "Verwendungszweck");
+    }
 }

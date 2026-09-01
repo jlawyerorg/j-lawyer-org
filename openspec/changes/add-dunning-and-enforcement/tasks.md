@@ -305,9 +305,42 @@
       And the document tab does not poll: a file created from a dialog only appears once the case is
       reopened unless a `DocumentAddedEvent` is published. The export does that now — and so does
       `ClaimStatementDialog`, which stored the claim statement without one since it was written
-- [ ] 3.18 EDA viewer: formatted view resolving record types, section markers and fields, raw
+- [x] 3.18 EDA viewer: formatted view resolving record types, section markers and fields, raw
       record view, tabbed panel and integration into the document viewer of `ArchiveFilePanel`
-      (+ `.form` files)
+      (+ `.form` files). `EdaPanel` implements `PreviewPanel` and is registered in
+      `DocumentViewerFactory` for `.eda`, so an exchange file opens in the case's document preview
+      like any other document, without a route of its own.
+      Both views earn their place. The formatted one resolves every record against its
+      Satzbeschreibung and names the fields, because 128 bytes with nothing between the fields means
+      reading by counting columns. The raw one keeps the file exactly as it stands, because when a
+      court complains about a file the question is what is actually in it, byte for byte.
+      The heading answers the direction first — an application the firm sent or a message the court
+      sent back — and derives it from the record type in the file header rather than from where the
+      document sits in the case, which is what 3.10's message import needed too.
+      The resolving happens server-side, where the Satzbeschreibungen live: `EdaDocumentDescriber`
+      turns a file into the serialisable `EdaDocumentView`, reached through
+      `describeEdaDocument(documentId)` with the case's access check. The client draws it and does
+      the raw view from the bytes it already holds. A record no description covers is still shown
+      with its raw line and no fields, so a file from a newer format version stays partly readable
+      instead of appearing empty; filler is left out, since reserved space would bury the fields that
+      do say something. Tests write a file with the builder and read it back with the describer, so
+      what is verified is that writer and reader agree — a description that had drifted from the
+      writer would be worse than none, because it would be believed.
+      The fields are named too, not only the records: `EdaFieldLabels` carries the "Feldname lang"
+      column of the Satzbeschreibungen for all 267 field names, so the tree reads
+      "Anspruchsbetrag [ASPBET]" rather than "ASPBET". The short name stays beside the long one on
+      purpose — it is what a monition of the court will name. The table is deliberately apart from
+      the layouts: a layout says where a field sits and how long it is, which is what writing and
+      parsing need and must not depend on a label; a field with no entry is shown under its short
+      name rather than suppressed. A test walks all three layout registries and fails on any field
+      the table does not name, since drift would leave raw short names exactly where the file is
+      least self-explanatory.
+      One thing the first stored file showed: the document was named after the own reference, which
+      is normally the case file number — and a German one carries a slash. That is a path separator
+      to every program that saves the file locally afterwards. All three document names the feature
+      produces now go through `ServerFileUtils.sanitizeFileName`: the exchange file, the claim
+      statement (where the name can be supplied by the caller) and the reminder letter (whose name
+      comes from the freely configured stage name, "1./2. Mahnung" being a plausible one)
 - [ ] 3.19 Tests: status transitions, deadline generation/recalculation, fee credit, message import
 - [ ] 3.20 Tests: record layouts against the worked examples of the Satzbeschreibungen, mapping per
       claim and ancillary-claim type incl. catalogued claims with their required additional record,

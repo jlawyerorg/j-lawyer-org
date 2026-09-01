@@ -663,404 +663,236 @@
  */
 package com.jdimension.jlawyer.client.editors.documents.viewer;
 
-import com.jdimension.jlawyer.client.launcher.LauncherFactory;
-import com.jdimension.jlawyer.client.mail.EmailUtils;
-import com.jdimension.jlawyer.client.mail.MessageContainer;
-import com.jdimension.jlawyer.client.utils.ComponentUtils;
-import com.jdimension.jlawyer.client.utils.einvoice.EInvoiceUtils;
-import com.jdimension.jlawyer.documents.DocumentPreview;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.MailboxSetup;
-import java.awt.Dimension;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import javax.mail.Flags.Flag;
-import java.nio.charset.StandardCharsets;
-import javax.mail.internet.MimeMessage;
-import javax.swing.JComponent;
-import javax.swing.JSplitPane;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.pojo.EdaDocumentView;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.nio.charset.Charset;
 import javax.swing.SwingUtilities;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import org.apache.log4j.Logger;
-import org.simplejavamail.outlookmessageparser.OutlookMessageParser;
-import org.simplejavamail.outlookmessageparser.model.OutlookMessage;
 
 /**
+ * Shows an EDA exchange file of the dunning courts.
+ *
+ * The file is 128-byte records with nothing separating the fields inside them, so the raw view alone
+ * would leave the reader counting columns. The first tab therefore resolves every record against its
+ * Satzbeschreibung and names the fields; the second keeps the file as it stands, because when a
+ * court complains about a file the question is what is actually in it, byte for byte.
+ *
+ * The heading says which way the file went. That is the first thing a reader wants to know from a
+ * file they did not just create, and it is derived from the record type in the header rather than
+ * from where the document happens to sit in the case.
+ *
+ * The resolving is done on the server, where the Satzbeschreibungen live; this panel asks for it by
+ * document id and draws the answer.
  *
  * @author jens
  */
-public class DocumentViewerFactory {
+public class EdaPanel extends javax.swing.JPanel implements PreviewPanel {
 
-    private static final Logger log = Logger.getLogger(DocumentViewerFactory.class.getName());
+    private static final Logger log = Logger.getLogger(EdaPanel.class.getName());
 
-    private static final String STR_PREVIEWFAIL = "Vorschau kann nicht geladen werden.";
+    private String docId = null;
+    private final String docName;
 
-    public static JComponent getDocumentViewer(String id, String fileName, boolean readOnly, DocumentPreviewProvider previewProvider, byte[] content, int width, int height, DocumentPreviewSaveCallback saveCallback) {
-        return getDocumentViewer(null, id, fileName, readOnly, previewProvider, content, width, height, saveCallback);
+    /**
+     * Creates the panel.
+     *
+     * @param docId the document to show
+     * @param docName its name
+     */
+    public EdaPanel(String docId, String docName) {
+        initComponents();
+        this.docId = docId;
+        this.docName = docName;
     }
 
-    public static JComponent getDocumentViewer(ArchiveFileBean caseDto, String id, String fileName, boolean readOnly, DocumentPreviewProvider previewProvider, byte[] content, int width, int height, DocumentPreviewSaveCallback saveCallback) {
+    @Override
+    public void showStatus(String text) {
+        this.lblHeader.setText(text);
+    }
 
-        String lFileName = fileName.toLowerCase();
+    @Override
+    public void showContent(String documentId, byte[] content) {
+        this.docId = documentId;
 
-        if (lFileName.endsWith(".pdf")) {
-            PdfImageScrollingPanel pdfP = new PdfImageScrollingPanel(false, fileName, content, saveCallback);
-            pdfP.setSize(new Dimension(width, height));
-            pdfP.setMaximumSize(new Dimension(width, height));
-            pdfP.setPreferredSize(new Dimension(width, height));
-            pdfP.showContent(id, content);
-            if (previewProvider instanceof CaseDocumentPreviewProvider) {
-                try {
-                    DocumentPreview previewText = ((CaseDocumentPreviewProvider) previewProvider).getPreviewAsText();
-                    if (previewText != null) {
-                        pdfP.showContentAsText(previewText.getText());
-                    }
-                } catch (Exception prevEx) {
-                    log.error("Could not load preview as text", prevEx);
+        // the raw view needs no server: the bytes are already here, and CP-850 is what the format
+        // prescribes
+        StringBuilder raw = new StringBuilder();
+        if (content != null) {
+            String text = new String(content, Charset.forName("CP850"));
+            int line = 1;
+            for (String record : text.split("\r\n|\n|\r")) {
+                if (record.isEmpty()) {
+                    continue;
                 }
+                raw.append(String.format("%4d  ", line)).append(record).append("\n");
+                line++;
             }
-            return pdfP;
-
-        } else if (lFileName.endsWith(".jpg") || lFileName.endsWith(".jpeg") || lFileName.endsWith(".gif") || lFileName.endsWith(".png")) {
-            try {
-                // EXIF-Orientierung verarbeiten
-                byte[] processedContent = ImageOrientationHandler.processImage(content);
-
-                GifJpegPngImagePanel ip = new GifJpegPngImagePanel(processedContent);
-                ip.setSize(width, height);
-                ip.setMaximumSize(new Dimension(width, height));
-                ip.setPreferredSize(new Dimension(width, height));
-                ip.showContent(id, processedContent);
-                return ip;
-            } catch (Exception ex) {
-                log.error("Error processing image", ex);
-                // Fallback auf ursprüngliche Implementierung
-                GifJpegPngImagePanel ip = new GifJpegPngImagePanel(content);
-                ip.setSize(width, height);
-                ip.setMaximumSize(new Dimension(width, height));
-                ip.setPreferredSize(new Dimension(width, height));
-                ip.showContent(id, content);
-                return ip;
-            }
-
-        } else if (lFileName.endsWith(".bmp") || lFileName.endsWith(".tif") || lFileName.endsWith(".tiff")) {
-            BmpTiffImagePanel ip = new BmpTiffImagePanel(content);
-            ip.setSize(width, height);
-            ip.setMaximumSize(new Dimension(width, height));
-            ip.setPreferredSize(new Dimension(width, height));
-            ip.showContent(id, content);
-            return ip;
-        } else if (lFileName.endsWith(".txt")) {
-            PlaintextPanel ptp = new PlaintextPanel();
-            ptp.setSize(new Dimension(width, height));
-            ptp.setMaximumSize(new Dimension(width, height));
-            ptp.setPreferredSize(new Dimension(width, height));
-            try {
-                DocumentPreview txtPreview = previewProvider.getPreview();
-                ptp.showContent(id, txtPreview.getText().getBytes());
-            } catch (Exception ex) {
-                ptp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes());
-            }
-            return ptp;
-        } else if (lFileName.endsWith(".md")) {
-            MarkdownPanel mdp = new MarkdownPanel(id, readOnly);
-            mdp.setSize(new Dimension(width, height));
-            mdp.setMaximumSize(new Dimension(width, height));
-            mdp.setPreferredSize(new Dimension(width, height));
-            try {
-                if (content == null) {
-                    mdp.showContent(id, ("FEHLER: kein Inhalt verfügbar").getBytes(StandardCharsets.UTF_8));
-                } else {
-                    mdp.showContent(id, content);
-                }
-            } catch (Exception ex) {
-                mdp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes(StandardCharsets.UTF_8));
-            }
-            return mdp;
-        } else if (lFileName.endsWith(".wav") || lFileName.endsWith(".ogg") || lFileName.endsWith(".mp3")) {
-            SoundplayerPanel spp = new SoundplayerPanel(id, fileName, readOnly, saveCallback);
-            spp.setSize(new Dimension(width, height));
-            spp.setMaximumSize(new Dimension(width, height));
-            spp.setPreferredSize(new Dimension(width, height));
-            try {
-                spp.showContent(id, content);
-            } catch (Exception ex) {
-                spp.showStatus("FEHLER: " + ex.getMessage());
-            }
-            return spp;
-        } else if (lFileName.endsWith(".html")) {
-            HtmlPanel hp = new HtmlPanel(id, readOnly);
-            hp.setSize(new Dimension(width, height));
-            hp.setFileName(fileName);
-            hp.setMaximumSize(new Dimension(width, height));
-            hp.setPreferredSize(new Dimension(width, height));
-            hp.showContent(id, content);
-
-            return hp;
-        } else if (lFileName.endsWith(".htm")) {
-            JavaFxBrowserPanel hp = new JavaFxBrowserPanel();
-            hp.setSize(new Dimension(width, height));
-            hp.setMaximumSize(new Dimension(width, height));
-            hp.setPreferredSize(new Dimension(width, height));
-            hp.showContent(id, content);
-            return hp;
-        } else if (lFileName.endsWith(".eda")) {
-            // the exchange files of the dunning courts: fixed 128-byte records with nothing between
-            // the fields, so a plain text view leaves the reader counting columns
-            EdaPanel edap = new EdaPanel(id, fileName);
-            edap.setSize(new Dimension(width, height));
-            edap.setMaximumSize(new Dimension(width, height));
-            edap.setPreferredSize(new Dimension(width, height));
-            edap.showContent(id, content);
-            return edap;
-        } else if (lFileName.endsWith(".xml") && (lFileName.contains("xjustiz"))) {
-            XjustizPanel xjp = new XjustizPanel(id, fileName);
-            xjp.setSize(new Dimension(width, height));
-            xjp.setMaximumSize(new Dimension(width, height));
-            xjp.setPreferredSize(new Dimension(width, height));
-            xjp.showContent(id, content);
-            return xjp;
-        } else if (lFileName.endsWith(".xml") && EInvoiceUtils.isEInvoice(new String(content))) {
-            XRechnungPanel xmlp = new XRechnungPanel();
-            xmlp.setSize(new Dimension(width, height));
-            xmlp.setMaximumSize(new Dimension(width, height));
-            xmlp.setPreferredSize(new Dimension(width, height));
-            xmlp.showContent(id, content);
-            return xmlp;
-        } else if (lFileName.endsWith(".xml")) {
-            XmlPanel xmlp = new XmlPanel();
-            xmlp.setSize(new Dimension(width, height));
-            xmlp.setMaximumSize(new Dimension(width, height));
-            xmlp.setPreferredSize(new Dimension(width, height));
-            xmlp.showContent(id, content);
-            return xmlp;
-        } else if (lFileName.endsWith(".eml")) {
-            try {
-                InputStream source = new ByteArrayInputStream(content);
-                MimeMessage message = new MimeMessage(null, source);
-                // need to set this to avoid sending read receipts
-                message.setFlag(Flag.SEEN, true);
-                EmailPanel ep = new EmailPanel();
-                ep.setSize(new Dimension(width, height));
-                ep.setMaximumSize(new Dimension(width, height));
-                ep.setPreferredSize(new Dimension(width, height));
-                MailboxSetup ms = EmailUtils.getMailboxSetup(message);
-                ep.setMessage(id, new MessageContainer(message, message.getSubject(), true), ms);
-                ep.setCaseContext(caseDto);
-                return ep;
-            } catch (Throwable t) {
-                EmailPanel ep = new EmailPanel();
-                ep.setSize(new Dimension(width, height));
-                ep.setMaximumSize(new Dimension(width, height));
-                ep.setPreferredSize(new Dimension(width, height));
-                ep.showStatus(STR_PREVIEWFAIL);
-                return ep;
-            }
-        } else if (lFileName.endsWith(".msg")) {
-            try {
-
-                InputStream source = new ByteArrayInputStream(content);
-                OutlookMessage om = new OutlookMessageParser().parseMsg(source);
-
-                OutlookMessagePanel op = new OutlookMessagePanel();
-                op.setSize(new Dimension(width, height));
-                op.setMaximumSize(new Dimension(width, height));
-                op.setPreferredSize(new Dimension(width, height));
-
-                //MailboxSetup ms = EmailUtils.getMailboxSetup(message);
-                op.setMessage(id, om);
-                op.setCaseContext(caseDto);
-                return op;
-            } catch (Throwable t) {
-                EmailPanel ep = new EmailPanel();
-                ep.setSize(new Dimension(width, height));
-                ep.setMaximumSize(new Dimension(width, height));
-                ep.setPreferredSize(new Dimension(width, height));
-                ep.showStatus(STR_PREVIEWFAIL);
-                return ep;
-            }
-//        } else if (lFileName.endsWith(".odt") || lFileName.endsWith(".ods")) {
-//            try {
-//                String tempPath=FileUtils.createTempFile(fileName, content);
-//                InputStream in = new FileInputStream(tempPath);
-//                OdfDocument document = OdfDocument.loadDocument(in);
-//
-//                PdfOptions options = PdfOptions.create();
-//
-//                File tempPdf=File.createTempFile("" + System.currentTimeMillis(), ".pdf");
-//                OutputStream out = new FileOutputStream(tempPdf);
-//                PdfConverter.getInstance().convert(document, out, options);
-//                
-//                byte[] pdfContent=FileUtils.readFile(tempPdf);
-//                FileUtils.cleanupTempFile(tempPath);
-//                FileUtils.cleanupTempFile(tempPdf.getPath());
-//                PdfImagePanel pdfP = new PdfImagePanel(pdfContent);
-//                pdfP.setSize(new Dimension(width, height));
-//                pdfP.showContent(pdfContent);
-//                return pdfP;
-//            } catch (Throwable t) {
-//                log.error("could not convert file to PDF: " + fileName, t);
-//            }
-        } else if (lFileName.endsWith(".odt") || lFileName.endsWith(".ods")) {
-
-            DocumentPreview docPreview = null;
-            try {
-                docPreview = previewProvider.getPreview();
-            } catch (Exception ex) {
-                log.error(ex);
-                docPreview = new DocumentPreview("FEHLER: " + ex.getMessage());
-            }
-            if (DocumentPreview.TYPE_PDF.equals(docPreview.getPreviewType()) && docPreview.getBytes() != null && docPreview.getBytes().length > 0) {
-                PdfImageScrollingPanel pdfP = new PdfImageScrollingPanel(true, fileName, content, null);
-                pdfP.setSize(new Dimension(width, height));
-                pdfP.setMaximumSize(new Dimension(width, height));
-                pdfP.setPreferredSize(new Dimension(width, height));
-                pdfP.showContent(id, docPreview.getBytes());
-                if (previewProvider instanceof CaseDocumentPreviewProvider) {
-                    try {
-                        DocumentPreview previewText = ((CaseDocumentPreviewProvider) previewProvider).getPreviewAsText();
-                        if (previewText != null) {
-                            pdfP.showContentAsText(previewText.getText());
-                        }
-                    } catch (Exception prevEx) {
-                        log.error("Could not load preview as text", prevEx);
-                    }
-                }
-                return pdfP;
-            } else {
-
-                try {
-                    byte[] thumbBytes = null;
-                    ZipInputStream zis
-                            = new ZipInputStream(new ByteArrayInputStream(content));
-                    //get the zipped file list entry
-                    ZipEntry ze = zis.getNextEntry();
-
-                    while (ze != null) {
-
-                        String thumbName = ze.getName();
-                        if (thumbName.toLowerCase().endsWith("thumbnail.png")) {
-                            byte[] buffer = new byte[1024];
-                            //create all non exists folders
-                            //else you will hit FileNotFoundException for compressed folder
-
-                            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-
-                            int len;
-                            while ((len = zis.read(buffer)) > 0) {
-                                bos.write(buffer, 0, len);
-                            }
-
-                            bos.close();
-                            thumbBytes = bos.toByteArray();
-                            break;
-                        }
-
-                        ze = zis.getNextEntry();
-                    }
-
-                    zis.closeEntry();
-                    zis.close();
-
-                    if (thumbBytes != null) {
-                        GifJpegPngImageWithTextPanel ip = new GifJpegPngImageWithTextPanel(thumbBytes, docPreview.getText().getBytes());
-                        ip.setSize(width, height);
-                        ip.setMaximumSize(new Dimension(width, height));
-                        ip.setPreferredSize(new Dimension(width, height));
-                        ip.showContent(id, thumbBytes);
-                        return ip;
-                    }
-                } catch (Throwable t) {
-                    log.error("Error extracting thumbnail from " + fileName, t);
-                }
-            }
-        } else if (lFileName.endsWith(".bea")) {
-            try {
-                BeaPanel bp = new BeaPanel(id);
-                bp.setSize(new Dimension(width, height));
-                bp.setMaximumSize(new Dimension(width, height));
-                bp.setPreferredSize(new Dimension(width, height));
-                bp.showContent(id, content);
-                bp.setCaseContext(caseDto);
-                return bp;
-            } catch (Throwable t) {
-                log.error(t);
-                BeaPanel bp = new BeaPanel(null);
-                bp.setSize(new Dimension(width, height));
-                bp.setMaximumSize(new Dimension(width, height));
-                bp.setPreferredSize(new Dimension(width, height));
-                bp.showStatus(STR_PREVIEWFAIL);
-                return bp;
-            }
-        } else if (LauncherFactory.supportedByLibreOffice(fileName)) {
-
-            // double clicking the documents table will fire the mouse event twice - one with clickount=1, then with clickcount=2
-            // this cases LO to launch twice, which seems to fail...
-//            try {
-//                FileConverter conv=FileConverter.getInstance();
-//                String tempPath=FileUtils.createTempFile(fileName, content);
-//                
-//                try {
-//                    Thread.sleep(1500);
-//                } catch (Throwable t) {
-//
-//                }
-//                
-//                String tempPdfPath=conv.convertToPDF(tempPath);
-//                byte[] pdfContent=FileUtils.readFile(new File(tempPdfPath));
-//                FileUtils.cleanupTempFile(tempPath);
-//                FileUtils.cleanupTempFile(tempPdfPath);
-//                PdfImagePanel pdfP = new PdfImagePanel(pdfContent);
-//                pdfP.setSize(new Dimension(width, height));
-//                pdfP.showContent(pdfContent);
-//                return pdfP;
-//            } catch (Throwable t) {
-//                log.error(t);
-//                // fall back to text preview 
-//            }
         }
+        this.txtRaw.setText(raw.toString());
+        this.txtRaw.setCaretPosition(0);
 
-        // default / fallback
-        DocumentPreview docPreview = null;
+        this.lblHeader.setText("Die Datei wird aufbereitet...");
+        // the resolving is a server call and this can be reached from the event dispatch thread
+        new Thread(this::loadDescription, "eda-describe").start();
+    }
+
+    /**
+     * Asks the server to resolve the file and builds the tree from the answer.
+     */
+    private void loadDescription() {
+        EdaDocumentView view;
         try {
-            docPreview = previewProvider.getPreview();
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            view = locator.lookupDunningServiceRemote().describeEdaDocument(this.docId);
         } catch (Exception ex) {
-            log.error(ex);
-            docPreview = new DocumentPreview("FEHLER: " + ex.getMessage());
+            log.error("Unable to describe EDA document " + this.docId, ex);
+            SwingUtilities.invokeLater(() -> {
+                this.lblHeader.setText("<html>Die Datei konnte nicht aufbereitet werden: "
+                        + ex.getMessage() + "</html>");
+                this.treeRecords.setModel(new DefaultTreeModel(
+                        new DefaultMutableTreeNode(this.docName)));
+            });
+            return;
         }
-        if (docPreview.getBytes() != null && docPreview.getBytes().length > 0) {
-            PdfImageScrollingPanel pdfP = new PdfImageScrollingPanel(true, fileName, content, null);
-            pdfP.setSize(new Dimension(width, height));
-            pdfP.setMaximumSize(new Dimension(width, height));
-            pdfP.setPreferredSize(new Dimension(width, height));
-            pdfP.showContent(id, docPreview.getBytes());
-            if (previewProvider instanceof CaseDocumentPreviewProvider) {
-                try {
-                    DocumentPreview previewText = ((CaseDocumentPreviewProvider) previewProvider).getPreviewAsText();
-                    if (previewText != null) {
-                        pdfP.showContentAsText(previewText.getText());
-                    }
-                } catch (Exception prevEx) {
-                    log.error("Could not load preview as text", prevEx);
-                }
+
+        StringBuilder header = new StringBuilder("<html>");
+        header.append("<b>").append(view.isIncoming()
+                ? "Eingehende Nachricht des Mahngerichts" : "Ausgehender Antrag an das Mahngericht")
+                .append("</b>");
+        if (view.getBelartLabel() != null) {
+            header.append(" - ").append(view.getBelartLabel());
+        } else if (view.getBelart() != null) {
+            header.append(" - Satzart ").append(view.getBelart());
+        }
+        header.append("<br>");
+        if (view.getEdaId() != null) {
+            header.append("Datei ").append(view.getEdaId()).append(", ");
+        }
+        if (view.getFormat() != null) {
+            header.append("Format ").append(view.getFormat()).append(", ");
+        }
+        header.append(view.getRecords().size()).append(" Sätze");
+        if (view.getParticipantNumber() != null && !view.getParticipantNumber().trim().isEmpty()) {
+            header.append(", Kennziffer ").append(view.getParticipantNumber());
+        }
+        header.append("</html>");
+
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode(
+                this.docName == null ? "EDA-Datei" : this.docName);
+        for (EdaDocumentView.EdaRecordView record : view.getRecords()) {
+            DefaultMutableTreeNode node = new DefaultMutableTreeNode(labelOf(record));
+            for (EdaDocumentView.EdaFieldView field : record.getFields()) {
+                // the long name first, because that is what the reader can do something with; the
+                // short one stays beside it, because that is what the court's monition will name
+                String label = field.getLabel() == null || field.getLabel().equals(field.getName())
+                        ? field.getName() : field.getLabel() + " [" + field.getName() + "]";
+                node.add(new DefaultMutableTreeNode(label + ": "
+                        + (field.getValue() == null || field.getValue().isEmpty()
+                        ? "-" : field.getValue())));
             }
-            return pdfP;
-        } else {
-            // plain text preview is default
-            PlaintextPanel ptp = new PlaintextPanel();
-            ptp.setSize(new Dimension(width, height));
-            ptp.setMaximumSize(new Dimension(width, height));
-            ptp.setPreferredSize(new Dimension(width, height));
-
-            //ptp.showStatus("Vorschau wird geladen...");
-            // we just reuse the showStatus method because it is doing the same thing
-            //ptp.showStatus(previewContent);
-            ptp.showContent(id, docPreview.getText().getBytes());
-            return ptp;
+            root.add(node);
         }
 
+        SwingUtilities.invokeLater(() -> {
+            this.lblHeader.setText(header.toString());
+            this.treeRecords.setModel(new DefaultTreeModel(root));
+            // the records are what the reader came for; their fields open when wanted, because a
+            // file of a hundred records with every field expanded is unreadable again
+            this.treeRecords.expandRow(0);
+        });
     }
 
+    private String labelOf(EdaDocumentView.EdaRecordView record) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(record.getPosition()).append(". ");
+        if (record.getRecordId() != null) {
+            sb.append(record.getRecordId()).append(" - ");
+        }
+        if (record.getDescription() != null) {
+            sb.append(record.getDescription());
+        } else {
+            // an unknown record is named by what it does carry rather than left blank
+            sb.append("Satzart ").append(record.getSatzart())
+                    .append(" - keine Satzbeschreibung bekannt");
+        }
+        return sb.toString();
+    }
+
+    @Override
+    public String getDocumentId() {
+        return this.docId;
+    }
+
+    @Override
+    public void dispose() {
+        SwingUtilities.invokeLater(() -> {
+            this.treeRecords.setModel(new DefaultTreeModel(new DefaultMutableTreeNode()));
+            this.txtRaw.setText("");
+        });
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form. WARNING: Do NOT
+     * modify this code. The content of this method is always regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        lblHeader = new javax.swing.JLabel();
+        tabs = new javax.swing.JTabbedPane();
+        jScrollPaneTree = new javax.swing.JScrollPane();
+        treeRecords = new javax.swing.JTree();
+        jScrollPaneRaw = new javax.swing.JScrollPane();
+        txtRaw = new javax.swing.JTextArea();
+
+        lblHeader.setText("");
+        lblHeader.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+
+        jScrollPaneTree.setViewportView(treeRecords);
+
+        tabs.addTab("Aufbereitet", jScrollPaneTree);
+
+        txtRaw.setEditable(false);
+        txtRaw.setColumns(20);
+        txtRaw.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtRaw.setRows(5);
+        jScrollPaneRaw.setViewportView(txtRaw);
+
+        tabs.addTab("Sätze", jScrollPaneRaw);
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblHeader, javax.swing.GroupLayout.DEFAULT_SIZE, 600, Short.MAX_VALUE)
+                    .addComponent(tabs, javax.swing.GroupLayout.DEFAULT_SIZE, 600, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(lblHeader, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tabs, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+    }// </editor-fold>//GEN-END:initComponents
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JScrollPane jScrollPaneRaw;
+    private javax.swing.JScrollPane jScrollPaneTree;
+    private javax.swing.JLabel lblHeader;
+    private javax.swing.JTabbedPane tabs;
+    private javax.swing.JTree treeRecords;
+    private javax.swing.JTextArea txtRaw;
+    // End of variables declaration//GEN-END:variables
 }

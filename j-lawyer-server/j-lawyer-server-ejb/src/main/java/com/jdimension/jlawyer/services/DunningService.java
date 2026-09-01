@@ -662,7 +662,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.eda.EdaCharset;
 import com.jdimension.jlawyer.eda.EdaClaimMapper;
+import com.jdimension.jlawyer.eda.EdaDocumentDescriber;
 import com.jdimension.jlawyer.eda.EdaEncodingException;
 import com.jdimension.jlawyer.eda.EdaFieldLengthException;
 import com.jdimension.jlawyer.eda.EdaFile;
@@ -688,12 +690,14 @@ import com.jdimension.jlawyer.persistence.DunningCaseEventFacadeLocal;
 import com.jdimension.jlawyer.persistence.DunningCaseStatus;
 import com.jdimension.jlawyer.persistence.DunningStatusSource;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.persistence.InterestRule;
 import com.jdimension.jlawyer.persistence.InterestRuleFacadeLocal;
 import com.jdimension.jlawyer.pojo.DunningClaimInput;
 import com.jdimension.jlawyer.persistence.DunningCaseDeadline;
 import com.jdimension.jlawyer.persistence.DunningCaseDeadlineFacadeLocal;
 import com.jdimension.jlawyer.pojo.DunningMessageProposal;
+import com.jdimension.jlawyer.pojo.EdaDocumentView;
 import com.jdimension.jlawyer.pojo.DunningWorklistFilter;
 import com.jdimension.jlawyer.pojo.DunningWorklistRow;
 import com.jdimension.jlawyer.pojo.DunningValidationIssue;
@@ -995,6 +999,25 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
             report.add(position + ". " + label(dunningCase) + ": " + outcome.getDescription());
         }
         return report;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public EdaDocumentView describeEdaDocument(String documentId) throws Exception {
+
+        ArchiveFileDocumentsBean document = this.archiveFileService.getDocument(documentId);
+        if (document == null) {
+            throw new Exception("Das Dokument existiert nicht!");
+        }
+        if (document.getArchiveFileKey() != null) {
+            requireAccess(document.getArchiveFileKey());
+        }
+        byte[] content = this.archiveFileService.getDocumentContent(documentId);
+        if (content == null || content.length == 0) {
+            throw new Exception("Das Dokument \"" + document.getName() + "\" ist leer.");
+        }
+        return new EdaDocumentDescriber().describe(
+                new String(content, Charset.forName(EdaCharset.CHARSET_NAME)), document.getName());
     }
 
     /**
@@ -1666,10 +1689,21 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         return claims;
     }
 
+    /**
+     * The name the exchange file is filed under in the case.
+     *
+     * The own reference is normally the case file number, and a German one carries a slash - 123/26.
+     * A slash in a document name is a path separator to every program that later saves the file
+     * locally, so it is taken out here rather than causing trouble at the other end.
+     *
+     * @param dunningCase the procedure
+     * @param fileName the six-character EDA name, used where the procedure has no own reference
+     * @return the document name
+     */
     private String documentName(DunningCase dunningCase, String fileName) {
-        return "Mahnbescheidsantrag_"
-                + (dunningCase.getOwnReference() == null ? fileName : dunningCase.getOwnReference())
-                + ".eda";
+        String reference = dunningCase.getOwnReference() == null
+                ? fileName : dunningCase.getOwnReference();
+        return ServerFileUtils.sanitizeFileName("Mahnbescheidsantrag_" + reference) + ".eda";
     }
 
     private String describe(DunningValidationResult validation) {

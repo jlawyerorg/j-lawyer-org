@@ -660,232 +660,346 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.pojo;
 
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.DunningCase;
-import com.jdimension.jlawyer.persistence.DunningCaseEvent;
-import com.jdimension.jlawyer.persistence.DunningCaseStatus;
-import com.jdimension.jlawyer.pojo.DunningClaimInput;
-import com.jdimension.jlawyer.pojo.DunningMessageProposal;
-import com.jdimension.jlawyer.pojo.EdaDocumentView;
-import com.jdimension.jlawyer.pojo.DunningWorklistFilter;
-import com.jdimension.jlawyer.pojo.DunningWorklistRow;
-import com.jdimension.jlawyer.pojo.DunningValidationResult;
-import java.math.BigDecimal;
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import javax.ejb.Remote;
 
 /**
- * The court dunning procedure.
+ * An EDA exchange file as it can be shown to a reader.
  *
- * At present this exposes the readiness check for an application; the operations that carry a
- * procedure through its stages join it as they are built.
+ * The files are fixed-length records of 128 bytes with no separators inside them - readable to a
+ * machine and to nobody else. This carries the same file with its records resolved against the
+ * Satzbeschreibung, so a person can see what was sent or received without counting columns.
+ *
+ * The direction matters and is derived rather than guessed: the record type in the file header says
+ * whether this is an application the firm sent (Satzart 01 or 07) or a message the court sent back.
+ * A reader looking at an unfamiliar file wants that answer first.
  *
  * @author jens
  */
-@Remote
-public interface DunningServiceRemote {
+public class EdaDocumentView implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private String documentName;
+    private String belart;
+    private String belartLabel;
+    private String format;
+    private String edaId;
+    private String participantNumber;
+    private boolean incoming = false;
+    private final List<EdaRecordView> records = new ArrayList<>();
 
     /**
-     * Checks whether a dunning application can be filed, without producing or changing anything.
-     *
-     * Every problem is reported together rather than the first one raised, so a user learns in one
-     * pass what needs fixing. The check reads; it stores nothing.
-     *
-     * Note what it does not yet cover: whether the data also fits the field lengths and value
-     * domains of the record format is a separate question that needs the Satzbeschreibung, and that
-     * check joins this one with the EDA core.
-     *
-     * @param dunningCaseId the procedure to check
-     * @param claimValue the value that would be applied for; the caller determines it, because
-     * whether a position counts as an ancillary claim (§ 43 GKG) is a judgement
-     * @return every finding, blocking and otherwise; never null
-     * @throws Exception if the procedure does not exist or the user may not see its case
+     * @return the name of the document the file was read from
      */
-    DunningValidationResult validateApplication(String dunningCaseId, BigDecimal claimValue) throws Exception;
+    public String getDocumentName() {
+        return documentName;
+    }
 
     /**
-     * Produces the EDA file for a dunning application, stores it in the case and records that the
-     * application has gone out.
-     *
-     * Nothing is produced that has not been checked. The data is validated first and the finished
-     * file is verified structurally afterwards; if either fails, no document is stored and no status
-     * is changed - an unverified file must never leave the firm, and a procedure must not claim to
-     * have applied for something it did not send.
-     *
-     * @param dunningCaseId the procedure to file
-     * @param claimValue the value applied for
-     * @param claims what is applied for, in the order it should appear
-     * @param fileName the six-character name the file announces itself under
-     * @return the stored document
-     * @throws Exception if the data is incomplete, the file fails verification, or it cannot be
-     * stored; the message names what went wrong
+     * @param documentName the name of the document
      */
-    ArchiveFileDocumentsBean exportApplication(String dunningCaseId, BigDecimal claimValue,
-            List<DunningClaimInput> claims, String fileName) throws Exception;
+    public void setDocumentName(String documentName) {
+        this.documentName = documentName;
+    }
 
     /**
-     * Reads the court messages in a document and proposes what each of them belongs to.
-     *
-     * Nothing is applied and nothing is stored. This is what a user is shown before confirming: one
-     * entry per message, with the procedure the system found for it or the statement that it found
-     * none and the user has to choose.
-     *
-     * The search runs across all procedures rather than within the document's case. Courts send
-     * collective files - the trailer counts the messages in one - so a single document can carry news
-     * for many procedures in many cases; where it was filed is provenance, not context.
-     *
-     * @param documentId the document holding the exchange file
-     * @return one proposal per message, in the order they appear
-     * @throws Exception if the document does not exist, is empty, or the user may not see its case
+     * @return the record type of the file, field BELART of the Dateivorsatz
      */
-    List<DunningMessageProposal> analyseCourtMessages(String documentId) throws Exception;
+    public String getBelart() {
+        return belart;
+    }
 
     /**
-     * Resolves an EDA exchange file of a case against the Satzbeschreibungen, so it can be read.
-     *
-     * The files are fixed-length records of 128 bytes with nothing separating the fields inside
-     * them; reading one by eye means counting columns. This returns the same file with its records
-     * and fields named, together with what the file says about itself - the record type, the format
-     * version, the Kennziffer, and whether it is an application the firm sent or a message the court
-     * sent back. That direction is derived from the record type, not from where the file sits.
-     *
-     * Records no Satzbeschreibung covers are still returned, with their raw line and without fields,
-     * so a file from a newer format version stays partly readable rather than appearing empty.
-     *
-     * @param documentId the document holding the exchange file
-     * @return the file as it can be shown, never null
-     * @throws Exception if the document does not exist, is empty, or its case is not accessible
+     * @param belart the record type of the file
      */
-    EdaDocumentView describeEdaDocument(String documentId) throws Exception;
+    public void setBelart(String belart) {
+        this.belart = belart;
+    }
 
     /**
-     * Applies the court messages of a document, as the user assigned them.
-     *
-     * A message left unassigned is not applied and not stored anywhere - it stays in the document,
-     * and running this again later picks it up. That is why nothing is lost by confirming only part
-     * of a file.
-     *
-     * A message that would move a procedure backwards is reported and skipped. Re-running an import
-     * is a normal thing to do, so an older message must not undo what a newer one already recorded.
-     *
-     * @param documentId the document holding the exchange file
-     * @param assignments the procedure chosen per message, keyed by the message's position in the
-     * file as {@code analyseCourtMessages} reported it; a position left out stays unapplied
-     * @return what happened to each message, in words for the user
-     * @throws Exception if the document cannot be read
+     * @return what that record type means, in words
      */
-    List<String> applyCourtMessages(String documentId, Map<Integer, String> assignments) throws Exception;
+    public String getBelartLabel() {
+        return belartLabel;
+    }
 
     /**
-     * Returns the dunning procedures conducted over a claim ledger.
-     *
-     * @param ledgerId the claim ledger
-     * @return the procedures, most recently created first; never null
-     * @throws Exception if the ledger does not exist or its case is not accessible
+     * @param belartLabel what the record type means
      */
-    List<DunningCase> getDunningCases(String ledgerId) throws Exception;
+    public void setBelartLabel(String belartLabel) {
+        this.belartLabel = belartLabel;
+    }
 
     /**
-     * Creates a dunning procedure over a claim ledger.
-     *
-     * The procedure starts in preparation and carries the court and Kennziffer it is given. Its own
-     * reference is what every later message from the court will echo back, so it is generated where
-     * the caller supplies none - a procedure without one cannot be matched to its replies.
-     *
-     * @param ledgerId the claim ledger
-     * @param dunningCase the procedure to create
-     * @return the created procedure as it was stored
-     * @throws Exception if the ledger does not exist, its case is not accessible, or it cannot be
-     * stored
+     * @return the format version the file declares
      */
-    DunningCase addDunningCase(String ledgerId, DunningCase dunningCase) throws Exception;
+    public String getFormat() {
+        return format;
+    }
 
     /**
-     * Updates the master data of a dunning procedure - court, Kennziffer, reference, description.
-     *
-     * The status is not changed here. Moving a procedure is recorded through
-     * {@link #recordStatus(String, DunningCaseStatus, java.util.Date, String)}, which journals who
-     * did it and on what basis.
-     *
-     * @param dunningCase the procedure with its changed values
-     * @return the updated procedure
-     * @throws Exception if it does not exist or its case is not accessible
+     * @param format the format version
      */
-    DunningCase updateDunningCase(DunningCase dunningCase) throws Exception;
+    public void setFormat(String format) {
+        this.format = format;
+    }
 
     /**
-     * Deletes a dunning procedure that has not left the firm.
-     *
-     * Only a procedure still in preparation can be deleted - one without a court file number, and
-     * without any procedural date recorded. Up to that point it is an entry somebody made, and
-     * deleting it removes a mistake rather than a record.
-     *
-     * Once an application has gone to the court the answer is a status instead: withdrawn or
-     * completed. Deleting then would not undo the procedure at the court, it would only destroy what
-     * the firm knows about it - the journal with its dates, users and sources, the deadlines
-     * computed from the procedural dates, and the service date from which the interest of components
-     * awarded interest on service runs. The condition is enforced here and not only in the user
-     * interface.
-     *
-     * The journal entries and the deadline records of the procedure go with it. So do the follow-ups
-     * those deadlines created, which would otherwise remain in the calendar pointing at a procedure
-     * that no longer exists.
-     *
-     * @param dunningCaseId the procedure to delete
-     * @throws Exception if it does not exist, its case is not accessible, or it has left the firm -
-     * the message then says which of those it is
+     * @return the six-character name the file announces itself under
      */
-    void removeDunningCase(String dunningCaseId) throws Exception;
+    public String getEdaId() {
+        return edaId;
+    }
 
     /**
-     * Records that a procedure has reached a new status.
-     *
-     * The change is journalled with the procedural date, the user and the fact that a person entered
-     * it rather than a court message reporting it. That distinction is the first thing to look at
-     * when a procedure turns out to have been recorded wrongly.
-     *
-     * @param dunningCaseId the procedure
-     * @param status the status it reaches
-     * @param eventDate the procedural date - the day of service, of issue - which is what deadlines
-     * are computed from, not the day of entry
-     * @param comment a note on the change, or null
-     * @return the updated procedure
-     * @throws Exception if the procedure does not exist or its case is not accessible
+     * @param edaId the name the file announces itself under
      */
-    DunningCase recordStatus(String dunningCaseId, DunningCaseStatus status, java.util.Date eventDate,
-            String comment) throws Exception;
+    public void setEdaId(String edaId) {
+        this.edaId = edaId;
+    }
 
     /**
-     * Returns the journal of a procedure.
-     *
-     * @param dunningCaseId the procedure
-     * @return its status changes, oldest first, so the list reads as the course of the procedure
-     * @throws Exception if the procedure does not exist or its case is not accessible
+     * @return the Kennziffer in the file header
      */
-    List<DunningCaseEvent> getHistory(String dunningCaseId) throws Exception;
+    public String getParticipantNumber() {
+        return participantNumber;
+    }
 
     /**
-     * Returns the dunning procedures the calling user may see, filtered.
-     *
-     * Only cases the user has access to appear; the list is a view of their own work, not of the
-     * firm's. Each row carries the next open deadline, because the question the list answers is what
-     * needs doing, and a status without a date does not answer it.
-     *
-     * @param filter what to show; null means everything the user may see
-     * @return the rows, the most urgent deadline first; never null
-     * @throws Exception if the list cannot be assembled
+     * @param participantNumber the Kennziffer in the file header
      */
-    List<DunningWorklistRow> getWorklist(DunningWorklistFilter filter) throws Exception;
+    public void setParticipantNumber(String participantNumber) {
+        this.participantNumber = participantNumber;
+    }
 
     /**
-     * Renders a worklist as CSV, so it can be worked through outside the program.
-     *
-     * @param rows the rows to render, as returned by {@link #getWorklist(DunningWorklistFilter)}
-     * @return the CSV text
-     * @throws Exception if it cannot be rendered
+     * @return whether this file came from the court rather than going to it
      */
-    String exportWorklistAsCsv(List<DunningWorklistRow> rows) throws Exception;
+    public boolean isIncoming() {
+        return incoming;
+    }
+
+    /**
+     * @param incoming whether the file came from the court
+     */
+    public void setIncoming(boolean incoming) {
+        this.incoming = incoming;
+    }
+
+    /**
+     * @return the records of the file in the order they stand, never null
+     */
+    public List<EdaRecordView> getRecords() {
+        return records;
+    }
+
+    /**
+     * One record of the file, resolved against its Satzbeschreibung.
+     */
+    public static class EdaRecordView implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+
+        private int position;
+        private String recordId;
+        private String description;
+        private String satzart;
+        private String kennzeichen;
+        private String folgenummer;
+        private String raw;
+        private final List<EdaFieldView> fields = new ArrayList<>();
+
+        /**
+         * @return the line the record stands on, counted from one
+         */
+        public int getPosition() {
+            return position;
+        }
+
+        /**
+         * @param position the line the record stands on
+         */
+        public void setPosition(int position) {
+            this.position = position;
+        }
+
+        /**
+         * @return the area of the Satzbeschreibung, e.g. C01, or null if it is not known
+         */
+        public String getRecordId() {
+            return recordId;
+        }
+
+        /**
+         * @param recordId the area of the Satzbeschreibung
+         */
+        public void setRecordId(String recordId) {
+            this.recordId = recordId;
+        }
+
+        /**
+         * @return what the record is, in words
+         */
+        public String getDescription() {
+            return description;
+        }
+
+        /**
+         * @param description what the record is
+         */
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        /**
+         * @return the record type, the first two bytes
+         */
+        public String getSatzart() {
+            return satzart;
+        }
+
+        /**
+         * @param satzart the record type
+         */
+        public void setSatzart(String satzart) {
+            this.satzart = satzart;
+        }
+
+        /**
+         * @return the section marker that says which part of the application this belongs to
+         */
+        public String getKennzeichen() {
+            return kennzeichen;
+        }
+
+        /**
+         * @param kennzeichen the section marker
+         */
+        public void setKennzeichen(String kennzeichen) {
+            this.kennzeichen = kennzeichen;
+        }
+
+        /**
+         * @return the sequence number within the section
+         */
+        public String getFolgenummer() {
+            return folgenummer;
+        }
+
+        /**
+         * @param folgenummer the sequence number within the section
+         */
+        public void setFolgenummer(String folgenummer) {
+            this.folgenummer = folgenummer;
+        }
+
+        /**
+         * @return the record as it stands in the file, 128 characters
+         */
+        public String getRaw() {
+            return raw;
+        }
+
+        /**
+         * @param raw the record as it stands in the file
+         */
+        public void setRaw(String raw) {
+            this.raw = raw;
+        }
+
+        /**
+         * @return the fields of the record, never null; empty where no Satzbeschreibung matched
+         */
+        public List<EdaFieldView> getFields() {
+            return fields;
+        }
+    }
+
+    /**
+     * One field of a record.
+     */
+    public static class EdaFieldView implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+
+        private String name;
+        private String label;
+        private String value;
+        private int length;
+
+        /**
+         * Creates a field.
+         *
+         * @param name the short field name of the Satzbeschreibung
+         * @param label its long name, or the short one where the description gives none
+         * @param value what stands in it, trimmed
+         * @param length how many bytes the field occupies
+         */
+        public EdaFieldView(String name, String label, String value, int length) {
+            this.name = name;
+            this.label = label;
+            this.value = value;
+            this.length = length;
+        }
+
+        /**
+         * @return the long name of the field, which is what a reader can do something with
+         */
+        public String getLabel() {
+            return label;
+        }
+
+        /**
+         * @param label the long name of the field
+         */
+        public void setLabel(String label) {
+            this.label = label;
+        }
+
+        /**
+         * @return the short field name of the Satzbeschreibung
+         */
+        public String getName() {
+            return name;
+        }
+
+        /**
+         * @param name the short field name
+         */
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        /**
+         * @return what stands in the field
+         */
+        public String getValue() {
+            return value;
+        }
+
+        /**
+         * @param value what stands in the field
+         */
+        public void setValue(String value) {
+            this.value = value;
+        }
+
+        /**
+         * @return how many bytes the field occupies
+         */
+        public int getLength() {
+            return length;
+        }
+
+        /**
+         * @param length how many bytes the field occupies
+         */
+        public void setLength(int length) {
+            this.length = length;
+        }
+    }
 }

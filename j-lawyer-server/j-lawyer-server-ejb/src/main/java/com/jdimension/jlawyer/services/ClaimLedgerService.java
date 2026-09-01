@@ -662,6 +662,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
@@ -1335,6 +1336,8 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         } else if (!documentName.toLowerCase().endsWith(".pdf")) {
             documentName = documentName + ".pdf";
         }
+        // a slash in a document name is a path separator wherever the file is saved afterwards
+        documentName = ServerFileUtils.sanitizeFileName(documentName);
 
         ArchiveFileDocumentsBean document = this.archiveFileService.addDocument(
                 ledger.getArchiveFileKey().getId(), documentName, pdf, "", null);
@@ -1786,7 +1789,10 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         }
 
         String folder = stage.getTemplateFolder() == null ? "" : stage.getTemplateFolder();
-        String fileName = stage.getName() + " " + FILE_DATE_FORMAT.format(sentDate);
+        // the stage name is free text a firm configures - "1./2. Mahnung" is a plausible one, and
+        // its slash would become a path separator in the document name
+        String fileName = ServerFileUtils.sanitizeFileName(
+                stage.getName() + " " + FILE_DATE_FORMAT.format(sentDate));
 
         try {
             HashMap<String, Object> placeHolderValues = new HashMap<>();

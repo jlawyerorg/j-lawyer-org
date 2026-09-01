@@ -660,232 +660,259 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package org.jlawyer.test.server.ejb;
 
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.eda.EdaClaimMapper;
+import com.jdimension.jlawyer.eda.EdaDocumentDescriber;
+import com.jdimension.jlawyer.eda.EdaFile;
+import com.jdimension.jlawyer.eda.EdaMahnbescheidBuilder;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ClaimComponent;
+import com.jdimension.jlawyer.persistence.ClaimComponentType;
+import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
 import com.jdimension.jlawyer.persistence.DunningCase;
-import com.jdimension.jlawyer.persistence.DunningCaseEvent;
-import com.jdimension.jlawyer.persistence.DunningCaseStatus;
-import com.jdimension.jlawyer.pojo.DunningClaimInput;
-import com.jdimension.jlawyer.pojo.DunningMessageProposal;
 import com.jdimension.jlawyer.pojo.EdaDocumentView;
-import com.jdimension.jlawyer.pojo.DunningWorklistFilter;
-import com.jdimension.jlawyer.pojo.DunningWorklistRow;
-import com.jdimension.jlawyer.pojo.DunningValidationResult;
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import javax.ejb.Remote;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Arrays;
+import java.util.Date;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 /**
- * The court dunning procedure.
+ * Reading an EDA file back into something a person can follow.
  *
- * At present this exposes the readiness check for an application; the operations that carry a
- * procedure through its stages join it as they are built.
+ * The test writes a file with the builder and reads it with the describer, so what is asserted is
+ * that the two agree: a value written into a field comes back out of the same field. A description
+ * that drifted from the writer would be worse than none, because it would be believed.
  *
  * @author jens
  */
-@Remote
-public interface DunningServiceRemote {
+public class EdaDocumentDescriberTest {
 
-    /**
-     * Checks whether a dunning application can be filed, without producing or changing anything.
-     *
-     * Every problem is reported together rather than the first one raised, so a user learns in one
-     * pass what needs fixing. The check reads; it stores nothing.
-     *
-     * Note what it does not yet cover: whether the data also fits the field lengths and value
-     * domains of the record format is a separate question that needs the Satzbeschreibung, and that
-     * check joins this one with the EDA core.
-     *
-     * @param dunningCaseId the procedure to check
-     * @param claimValue the value that would be applied for; the caller determines it, because
-     * whether a position counts as an ancillary claim (§ 43 GKG) is a judgement
-     * @return every finding, blocking and otherwise; never null
-     * @throws Exception if the procedure does not exist or the user may not see its case
-     */
-    DunningValidationResult validateApplication(String dunningCaseId, BigDecimal claimValue) throws Exception;
+    private final EdaDocumentDescriber describer = new EdaDocumentDescriber();
 
-    /**
-     * Produces the EDA file for a dunning application, stores it in the case and records that the
-     * application has gone out.
-     *
-     * Nothing is produced that has not been checked. The data is validated first and the finished
-     * file is verified structurally afterwards; if either fails, no document is stored and no status
-     * is changed - an unverified file must never leave the firm, and a procedure must not claim to
-     * have applied for something it did not send.
-     *
-     * @param dunningCaseId the procedure to file
-     * @param claimValue the value applied for
-     * @param claims what is applied for, in the order it should appear
-     * @param fileName the six-character name the file announces itself under
-     * @return the stored document
-     * @throws Exception if the data is incomplete, the file fails verification, or it cannot be
-     * stored; the message names what went wrong
-     */
-    ArchiveFileDocumentsBean exportApplication(String dunningCaseId, BigDecimal claimValue,
-            List<DunningClaimInput> claims, String fileName) throws Exception;
+    private static Date date(int y, int m, int d) {
+        return Date.from(LocalDate.of(y, m, d).atStartOfDay(ZoneId.systemDefault()).toInstant());
+    }
 
-    /**
-     * Reads the court messages in a document and proposes what each of them belongs to.
-     *
-     * Nothing is applied and nothing is stored. This is what a user is shown before confirming: one
-     * entry per message, with the procedure the system found for it or the statement that it found
-     * none and the user has to choose.
-     *
-     * The search runs across all procedures rather than within the document's case. Courts send
-     * collective files - the trailer counts the messages in one - so a single document can carry news
-     * for many procedures in many cases; where it was filed is provenance, not context.
-     *
-     * @param documentId the document holding the exchange file
-     * @return one proposal per message, in the order they appear
-     * @throws Exception if the document does not exist, is empty, or the user may not see its case
-     */
-    List<DunningMessageProposal> analyseCourtMessages(String documentId) throws Exception;
+    private DunningCase dunningCase() {
+        DunningCase c = new DunningCase();
+        c.setOwnReference("AZ-2026-0815");
+        c.setKennziffer("12345678");
+        c.setCourtPostalCode("70154");
+        c.setCourtCity("Stuttgart");
+        return c;
+    }
 
-    /**
-     * Resolves an EDA exchange file of a case against the Satzbeschreibungen, so it can be read.
-     *
-     * The files are fixed-length records of 128 bytes with nothing separating the fields inside
-     * them; reading one by eye means counting columns. This returns the same file with its records
-     * and fields named, together with what the file says about itself - the record type, the format
-     * version, the Kennziffer, and whether it is an application the firm sent or a message the court
-     * sent back. That direction is derived from the record type, not from where the file sits.
-     *
-     * Records no Satzbeschreibung covers are still returned, with their raw line and without fields,
-     * so a file from a newer format version stays partly readable rather than appearing empty.
-     *
-     * @param documentId the document holding the exchange file
-     * @return the file as it can be shown, never null
-     * @throws Exception if the document does not exist, is empty, or its case is not accessible
-     */
-    EdaDocumentView describeEdaDocument(String documentId) throws Exception;
+    private ClaimLedgerParty party(String id, String salutation, String first, String last) {
+        AddressBean a = new AddressBean();
+        a.setSalutation(salutation);
+        a.setFirstName(first);
+        a.setName(last);
+        a.setStreet("Hauptstr.");
+        a.setStreetNumber("1");
+        a.setZipCode("70173");
+        a.setCity("Stuttgart");
+        ClaimLedgerParty p = new ClaimLedgerParty();
+        p.setId(id);
+        p.setContact(a);
+        return p;
+    }
 
-    /**
-     * Applies the court messages of a document, as the user assigned them.
-     *
-     * A message left unassigned is not applied and not stored anywhere - it stays in the document,
-     * and running this again later picks it up. That is why nothing is lost by confirming only part
-     * of a file.
-     *
-     * A message that would move a procedure backwards is reported and skipped. Re-running an import
-     * is a normal thing to do, so an older message must not undo what a newer one already recorded.
-     *
-     * @param documentId the document holding the exchange file
-     * @param assignments the procedure chosen per message, keyed by the message's position in the
-     * file as {@code analyseCourtMessages} reported it; a position left out stays unapplied
-     * @return what happened to each message, in words for the user
-     * @throws Exception if the document cannot be read
-     */
-    List<String> applyCourtMessages(String documentId, Map<Integer, String> assignments) throws Exception;
+    private EdaClaimMapper.Claim claim() {
+        ClaimComponent c = new ClaimComponent();
+        c.setId("c1");
+        c.setName("Kaufpreis");
+        c.setType(ClaimComponentType.MAIN_CLAIM);
+        c.setCatalogueNumber("11");
+        return new EdaClaimMapper.Claim(c, new BigDecimal("5000.00"));
+    }
 
-    /**
-     * Returns the dunning procedures conducted over a claim ledger.
-     *
-     * @param ledgerId the claim ledger
-     * @return the procedures, most recently created first; never null
-     * @throws Exception if the ledger does not exist or its case is not accessible
-     */
-    List<DunningCase> getDunningCases(String ledgerId) throws Exception;
+    private String applicationFile() throws Exception {
+        EdaFile file = new EdaMahnbescheidBuilder().buildFile(dunningCase(),
+                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
+                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
+                Arrays.asList(claim()), "12345678", "MB0001", date(2026, 3, 2));
+        return file.write("12345678");
+    }
 
-    /**
-     * Creates a dunning procedure over a claim ledger.
-     *
-     * The procedure starts in preparation and carries the court and Kennziffer it is given. Its own
-     * reference is what every later message from the court will echo back, so it is generated where
-     * the caller supplies none - a procedure without one cannot be matched to its replies.
-     *
-     * @param ledgerId the claim ledger
-     * @param dunningCase the procedure to create
-     * @return the created procedure as it was stored
-     * @throws Exception if the ledger does not exist, its case is not accessible, or it cannot be
-     * stored
-     */
-    DunningCase addDunningCase(String ledgerId, DunningCase dunningCase) throws Exception;
+    private EdaDocumentView.EdaRecordView recordOf(EdaDocumentView view, String area) {
+        for (EdaDocumentView.EdaRecordView r : view.getRecords()) {
+            if (area.equals(r.getRecordId())) {
+                return r;
+            }
+        }
+        return null;
+    }
 
-    /**
-     * Updates the master data of a dunning procedure - court, Kennziffer, reference, description.
-     *
-     * The status is not changed here. Moving a procedure is recorded through
-     * {@link #recordStatus(String, DunningCaseStatus, java.util.Date, String)}, which journals who
-     * did it and on what basis.
-     *
-     * @param dunningCase the procedure with its changed values
-     * @return the updated procedure
-     * @throws Exception if it does not exist or its case is not accessible
-     */
-    DunningCase updateDunningCase(DunningCase dunningCase) throws Exception;
+    private String fieldOf(EdaDocumentView.EdaRecordView record, String name) {
+        for (EdaDocumentView.EdaFieldView f : record.getFields()) {
+            if (name.equals(f.getName())) {
+                return f.getValue();
+            }
+        }
+        return null;
+    }
 
-    /**
-     * Deletes a dunning procedure that has not left the firm.
-     *
-     * Only a procedure still in preparation can be deleted - one without a court file number, and
-     * without any procedural date recorded. Up to that point it is an entry somebody made, and
-     * deleting it removes a mistake rather than a record.
-     *
-     * Once an application has gone to the court the answer is a status instead: withdrawn or
-     * completed. Deleting then would not undo the procedure at the court, it would only destroy what
-     * the firm knows about it - the journal with its dates, users and sources, the deadlines
-     * computed from the procedural dates, and the service date from which the interest of components
-     * awarded interest on service runs. The condition is enforced here and not only in the user
-     * interface.
-     *
-     * The journal entries and the deadline records of the procedure go with it. So do the follow-ups
-     * those deadlines created, which would otherwise remain in the calendar pointing at a procedure
-     * that no longer exists.
-     *
-     * @param dunningCaseId the procedure to delete
-     * @throws Exception if it does not exist, its case is not accessible, or it has left the firm -
-     * the message then says which of those it is
-     */
-    void removeDunningCase(String dunningCaseId) throws Exception;
+    private String labelOf(EdaDocumentView.EdaRecordView record, String name) {
+        for (EdaDocumentView.EdaFieldView f : record.getFields()) {
+            if (name.equals(f.getName())) {
+                return f.getLabel();
+            }
+        }
+        return null;
+    }
 
-    /**
-     * Records that a procedure has reached a new status.
-     *
-     * The change is journalled with the procedural date, the user and the fact that a person entered
-     * it rather than a court message reporting it. That distinction is the first thing to look at
-     * when a procedure turns out to have been recorded wrongly.
-     *
-     * @param dunningCaseId the procedure
-     * @param status the status it reaches
-     * @param eventDate the procedural date - the day of service, of issue - which is what deadlines
-     * are computed from, not the day of entry
-     * @param comment a note on the change, or null
-     * @return the updated procedure
-     * @throws Exception if the procedure does not exist or its case is not accessible
-     */
-    DunningCase recordStatus(String dunningCaseId, DunningCaseStatus status, java.util.Date eventDate,
-            String comment) throws Exception;
+    @Test
+    public void theFileSaysWhatItIsAndWhichWayItWent() throws Exception {
+        EdaDocumentView view = describer.describe(applicationFile(), "Mahnbescheidsantrag.eda");
 
-    /**
-     * Returns the journal of a procedure.
-     *
-     * @param dunningCaseId the procedure
-     * @return its status changes, oldest first, so the list reads as the course of the procedure
-     * @throws Exception if the procedure does not exist or its case is not accessible
-     */
-    List<DunningCaseEvent> getHistory(String dunningCaseId) throws Exception;
+        assertEquals("Mahnbescheidsantrag.eda", view.getDocumentName());
+        assertEquals("01", view.getBelart());
+        assertEquals("Antrag auf Erlass eines Mahnbescheids", view.getBelartLabel());
+        assertEquals("4000", view.getFormat());
+        assertEquals("MB0001", view.getEdaId());
+        assertEquals("12345678", view.getParticipantNumber());
+        assertFalse("an application is what the firm sends, not what it receives", view.isIncoming());
+    }
 
-    /**
-     * Returns the dunning procedures the calling user may see, filtered.
-     *
-     * Only cases the user has access to appear; the list is a view of their own work, not of the
-     * firm's. Each row carries the next open deadline, because the question the list answers is what
-     * needs doing, and a status without a date does not answer it.
-     *
-     * @param filter what to show; null means everything the user may see
-     * @return the rows, the most urgent deadline first; never null
-     * @throws Exception if the list cannot be assembled
-     */
-    List<DunningWorklistRow> getWorklist(DunningWorklistFilter filter) throws Exception;
+    @Test
+    public void everyRecordOfTheFileIsAccountedForIncludingItsFraming() throws Exception {
+        EdaDocumentView view = describer.describe(applicationFile(), null);
 
-    /**
-     * Renders a worklist as CSV, so it can be worked through outside the program.
-     *
-     * @param rows the rows to render, as returned by {@link #getWorklist(DunningWorklistFilter)}
-     * @return the CSV text
-     * @throws Exception if it cannot be rendered
-     */
-    String exportWorklistAsCsv(List<DunningWorklistRow> rows) throws Exception;
+        assertEquals("AA", view.getRecords().get(0).getSatzart());
+        assertEquals("BB", view.getRecords().get(view.getRecords().size() - 1).getSatzart());
+        assertNotNull("the key record opens the application", recordOf(view, "C01"));
+        assertNotNull(recordOf(view, "C02"));
+        assertNotNull(recordOf(view, "C13"));
+        assertNotNull(recordOf(view, "C20"));
+    }
+
+    @Test
+    public void aFieldComesBackOutOfTheFieldItWasWrittenInto() throws Exception {
+        EdaDocumentView view = describer.describe(applicationFile(), null);
+
+        assertEquals("AZ-2026-0815", fieldOf(recordOf(view, "C01"), "TGZ"));
+        assertEquals("12345678", fieldOf(recordOf(view, "C01"), "PVKEZI"));
+        assertEquals("Erika", fieldOf(recordOf(view, "C02"), "ASN1"));
+        assertEquals("Schuldner", fieldOf(recordOf(view, "C13"), "AGN2"));
+        assertEquals("the padding a numeric field is written with is not part of the value",
+                "500000", fieldOf(recordOf(view, "C20"), "ASPBET"));
+    }
+
+    @Test
+    public void theRecordsAreNamedAndNumberedAsTheyStand() throws Exception {
+        EdaDocumentView view = describer.describe(applicationFile(), null);
+
+        EdaDocumentView.EdaRecordView kennsatz = recordOf(view, "C01");
+        assertEquals("KS", kennsatz.getKennzeichen());
+        assertEquals("00", kennsatz.getFolgenummer());
+        assertTrue(kennsatz.getDescription().contains("Kennsatz"));
+        assertEquals("the key record follows the file header", 2, kennsatz.getPosition());
+        assertEquals(128, kennsatz.getRaw().length());
+    }
+
+    @Test
+    public void everyFieldCarriesTheLongNameTheDescriptionGivesIt() throws Exception {
+        // the format writes ASPSOBG2 and SKATNR; a reader needs the column the Satzbeschreibung
+        // prints beside them
+        EdaDocumentView view = describer.describe(applicationFile(), null);
+
+        assertEquals("Geschäftszeichen des Teilnehmers",
+                labelOf(recordOf(view, "C01"), "TGZ"));
+        assertEquals("Ort des Mahngerichts", labelOf(recordOf(view, "C01"), "MGO"));
+        assertEquals("Anspruchsbetrag", labelOf(recordOf(view, "C20"), "ASPBET"));
+        assertEquals("1. Katalog-Nummer", labelOf(recordOf(view, "C20"), "ASPKAT1"));
+    }
+
+    @Test
+    public void aFieldWithoutALongNameKeepsItsShortOne() {
+        // an unnamed field is still a field; suppressing it would hide what is in the file
+        assertEquals("ZZZUNBEKANNT", com.jdimension.jlawyer.eda.EdaFieldLabels.labelOf("ZZZUNBEKANNT"));
+        assertFalse(com.jdimension.jlawyer.eda.EdaFieldLabels.isKnown("ZZZUNBEKANNT"));
+        assertNull(com.jdimension.jlawyer.eda.EdaFieldLabels.labelOf(null));
+    }
+
+    @Test
+    public void theLongNamesCoverTheFieldsTheLayoutsActuallyWrite() {
+        // a label table that has drifted from the layouts would leave a reader with raw short names
+        // exactly where the file is least self-explanatory
+        java.util.List<String> unnamed = new java.util.ArrayList<>();
+        java.util.List<java.util.Map<String, com.jdimension.jlawyer.eda.EdaRecordLayout>> all
+                = java.util.Arrays.asList(
+                        com.jdimension.jlawyer.eda.EdaMahnbescheidLayouts.getLayouts(),
+                        com.jdimension.jlawyer.eda.EdaVollstreckungsbescheidLayouts.getLayouts(),
+                        com.jdimension.jlawyer.eda.EdaMessageLayouts.getLayouts());
+        for (java.util.Map<String, com.jdimension.jlawyer.eda.EdaRecordLayout> registry : all) {
+            for (com.jdimension.jlawyer.eda.EdaRecordLayout layout : registry.values()) {
+                for (com.jdimension.jlawyer.eda.EdaField field : layout.getFields()) {
+                    if (!field.isFiller()
+                            && !com.jdimension.jlawyer.eda.EdaFieldLabels.isKnown(field.getName())) {
+                        unnamed.add(layout.getId() + "." + field.getName());
+                    }
+                }
+            }
+        }
+        assertTrue("fields the reader would still see as raw short names: " + unnamed,
+                unnamed.isEmpty());
+    }
+
+    @Test
+    public void fillerIsLeftOutBecauseItSaysNothing() throws Exception {
+        EdaDocumentView view = describer.describe(applicationFile(), null);
+
+        for (EdaDocumentView.EdaFieldView field : recordOf(view, "C01").getFields()) {
+            assertFalse("reserved space would bury the fields that do say something",
+                    "FILLER".equals(field.getName()));
+        }
+    }
+
+    @Test
+    public void aRecordTheDescriptionsDoNotCoverIsStillShown() {
+        // a file from a newer format version stays partly readable rather than appearing empty
+        String unknown = "ZZ" + new String(new char[126]).replace('\0', ' ');
+
+        EdaDocumentView view = describer.describe(unknown, null);
+
+        assertEquals(1, view.getRecords().size());
+        assertEquals("ZZ", view.getRecords().get(0).getSatzart());
+        assertNull(view.getRecords().get(0).getRecordId());
+        assertTrue(view.getRecords().get(0).getFields().isEmpty());
+        assertEquals(unknown, view.getRecords().get(0).getRaw());
+    }
+
+    @Test
+    public void aMessageOfTheCourtIsRecognisedAsIncoming() {
+        assertTrue(describer.isIncoming("90"));
+        assertTrue(describer.isIncoming("20"));
+        assertEquals("Nachricht: Monierung", describer.labelOf("20"));
+        assertEquals("Quittung über die Datenübermittlung", describer.labelOf("90"));
+    }
+
+    @Test
+    public void anApplicationIsNotIncomingWhicheverKindItIs() {
+        assertFalse("the Mahnbescheid application", describer.isIncoming("01"));
+        assertFalse("the Vollstreckungsbescheid application", describer.isIncoming("08"));
+        assertFalse("and nothing at all is not a message either", describer.isIncoming(null));
+        assertFalse(describer.isIncoming("  "));
+    }
+
+    @Test
+    public void aRecordTypeTheProgramDoesNotKnowGetsNoInventedMeaning() {
+        assertNull(describer.labelOf("99"));
+        assertNull(describer.labelOf(null));
+    }
+
+    @Test
+    public void anEmptyFileYieldsAnEmptyDescriptionRatherThanAFailure() {
+        assertTrue(describer.describe(null, null).getRecords().isEmpty());
+        assertTrue(describer.describe("", null).getRecords().isEmpty());
+        assertTrue(describer.describe("\n\n", null).getRecords().isEmpty());
+    }
 }
