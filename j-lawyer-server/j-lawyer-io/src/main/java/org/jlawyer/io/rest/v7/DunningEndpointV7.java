@@ -669,11 +669,13 @@ import com.jdimension.jlawyer.services.DunningServiceLocal;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -735,6 +737,66 @@ public class DunningEndpointV7 implements DunningEndpointLocalV7 {
             return Response.ok(issues).build();
         } catch (Exception ex) {
             log.error("can not validate dunning case " + dunningCaseId, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Reads the court messages in a document and reports what each of them belongs to.
+     *
+     * Nothing is applied and nothing is stored - this is the proposal a caller confirms. One document
+     * can carry news for several procedures, so there is one entry per message.
+     *
+     * @param documentId id of the document holding the exchange file
+     * @return one proposal per message
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Document not found
+     */
+    @Override
+    @Path("/messages/{documentId}")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Reads the court messages in a document and reports what each belongs to.")
+    public Response analyseCourtMessages(@PathParam("documentId") String documentId) {
+        try {
+            InitialContext ic = new InitialContext();
+            DunningServiceLocal dunning = (DunningServiceLocal) ic.lookup(LOOKUP_DUNNING);
+            return Response.ok(dunning.analyseCourtMessages(documentId)).build();
+        } catch (Exception ex) {
+            log.error("can not analyse court messages in document " + documentId, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Applies the court messages of a document as assigned.
+     *
+     * A message whose position is not in the assignment stays unapplied; it remains in the document
+     * and can be picked up by calling this again.
+     *
+     * @param documentId id of the document holding the exchange file
+     * @param assignments the dunning case chosen per message, keyed by the message's position
+     * @return what happened to each message
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Document not found
+     */
+    @Override
+    @Path("/messages/{documentId}")
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Applies the court messages of a document as assigned.")
+    public Response applyCourtMessages(@PathParam("documentId") String documentId,
+            Map<Integer, String> assignments) {
+        try {
+            InitialContext ic = new InitialContext();
+            DunningServiceLocal dunning = (DunningServiceLocal) ic.lookup(LOOKUP_DUNNING);
+            return Response.ok(dunning.applyCourtMessages(documentId, assignments)).build();
+        } catch (Exception ex) {
+            log.error("can not apply court messages of document " + documentId, ex);
             return Response.serverError().build();
         }
     }

@@ -673,4 +673,8 @@ import javax.ws.rs.core.Response;
 public interface DunningEndpointLocalV7 {
 
     Response validateApplication(String dunningCaseId, String claimValue);
+
+    Response analyseCourtMessages(String documentId);
+
+    Response applyCourtMessages(String documentId, java.util.Map<Integer, String> assignments);
 }

@@ -660,26 +660,180 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.pojo;
 
-import com.jdimension.jlawyer.pojo.DunningMessageProposal;
-import com.jdimension.jlawyer.pojo.DunningValidationResult;
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import javax.ejb.Local;
+import java.io.Serializable;
+import java.util.Date;
 
 /**
- * Server-side access to the dunning procedure.
+ * One message from a court file, with what the system makes of it, before anything is applied.
+ *
+ * This is what a user is shown so they can confirm or correct the assignment. Nothing here has
+ * happened yet; the message is still only in the document it came from, and it stays there whether
+ * the user resolves it now or not.
  *
  * @author jens
  */
-@Local
-public interface DunningServiceLocal {
+public class DunningMessageProposal implements Serializable {
 
-    DunningValidationResult validateApplication(String dunningCaseId, BigDecimal claimValue) throws Exception;
+    private static final long serialVersionUID = 1L;
 
-    List<DunningMessageProposal> analyseCourtMessages(String documentId) throws Exception;
+    private int position;
+    private String satzart;
+    private String messageKind;
+    private String description;
+    private String ownReference;
+    private String courtFileNumber;
+    private Date reportedDate;
+    private String suggestedDunningCaseId;
+    private String suggestedCaseLabel;
+    private boolean aboutTheTransmission;
+    private boolean movesProcedure;
+    private String warning;
 
-    List<String> applyCourtMessages(String documentId, Map<Integer, String> assignments) throws Exception;
+    /**
+     * @return where the message sits in the file, counted from one, so the user can find it again
+     */
+    public int getPosition() {
+        return position;
+    }
+
+    public void setPosition(int position) {
+        this.position = position;
+    }
+
+    /**
+     * @return the message type, e.g. 05 for a service notice
+     */
+    public String getSatzart() {
+        return satzart;
+    }
+
+    public void setSatzart(String satzart) {
+        this.satzart = satzart;
+    }
+
+    /**
+     * @return the kind within the type, or null
+     */
+    public String getMessageKind() {
+        return messageKind;
+    }
+
+    public void setMessageKind(String messageKind) {
+        this.messageKind = messageKind;
+    }
+
+    /**
+     * @return what the message says, in words
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    /**
+     * @return the reference the court echoed, or null where it carried none
+     */
+    public String getOwnReference() {
+        return ownReference;
+    }
+
+    public void setOwnReference(String ownReference) {
+        this.ownReference = ownReference;
+    }
+
+    /**
+     * @return the court's file number, or null
+     */
+    public String getCourtFileNumber() {
+        return courtFileNumber;
+    }
+
+    public void setCourtFileNumber(String courtFileNumber) {
+        this.courtFileNumber = courtFileNumber;
+    }
+
+    /**
+     * @return the date the message reports, or null
+     */
+    public Date getReportedDate() {
+        return reportedDate;
+    }
+
+    public void setReportedDate(Date reportedDate) {
+        this.reportedDate = reportedDate;
+    }
+
+    /**
+     * @return the procedure the system proposes, or null where it found none and the user has to
+     * choose
+     */
+    public String getSuggestedDunningCaseId() {
+        return suggestedDunningCaseId;
+    }
+
+    public void setSuggestedDunningCaseId(String suggestedDunningCaseId) {
+        this.suggestedDunningCaseId = suggestedDunningCaseId;
+    }
+
+    /**
+     * @return the case and procedure in words, so the user recognises what is being proposed
+     */
+    public String getSuggestedCaseLabel() {
+        return suggestedCaseLabel;
+    }
+
+    public void setSuggestedCaseLabel(String suggestedCaseLabel) {
+        this.suggestedCaseLabel = suggestedCaseLabel;
+    }
+
+    /**
+     * @return whether the message concerns the delivery rather than a procedure, in which case there
+     * is nothing to assign
+     */
+    public boolean isAboutTheTransmission() {
+        return aboutTheTransmission;
+    }
+
+    public void setAboutTheTransmission(boolean aboutTheTransmission) {
+        this.aboutTheTransmission = aboutTheTransmission;
+    }
+
+    /**
+     * @return whether applying the message would move the procedure at all
+     */
+    public boolean isMovesProcedure() {
+        return movesProcedure;
+    }
+
+    public void setMovesProcedure(boolean movesProcedure) {
+        this.movesProcedure = movesProcedure;
+    }
+
+    /**
+     * @return something the user should know before confirming, or null
+     */
+    public String getWarning() {
+        return warning;
+    }
+
+    public void setWarning(String warning) {
+        this.warning = warning;
+    }
+
+    /**
+     * @return whether the message still needs the user to say where it belongs
+     */
+    public boolean needsAssignment() {
+        return !this.aboutTheTransmission && this.suggestedDunningCaseId == null;
+    }
+
+    @Override
+    public String toString() {
+        return this.position + ". " + this.description;
+    }
 }

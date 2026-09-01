@@ -116,9 +116,22 @@
       are in place and reachable through `DunningServiceRemote.validateApplication`; the REST
       endpoint that wraps it lands with 3.9, and the field lengths and value domains of the
       Satzbeschreibung join the same list with the EDA core of 3.11
-- [ ] 3.7 Import of the court EDA messages (record types `03`, `05`, `16`, `18`, `20`, `22`, `90`)
-      with matching on the echoed own reference, status/date update, ledger service booking and an
-      inbox for unmatched messages
+- [x] 3.7 Import of the court EDA messages (record types `03`, `05`, `16`, `18`, `20`, `22`, `90`)
+      with matching on the echoed own reference, status/date update and confirmation before applying.
+      Messages are read from a document of a case, which is how they arrive: through beA, filed with
+      their attachments, and processed from there. `analyseCourtMessages` proposes an assignment per
+      message and changes nothing; `applyCourtMessages` applies what the user confirmed.
+      *Three things the Satzbeschreibungen established, each of which changed the design:* the courts
+      send collective files — the trailer counts the messages in one — so a document can carry news
+      for many procedures in many cases, and matching is global by the echoed reference rather than
+      scoped to the document's case. The receipt confirmation (Satzart 90) carries no reference at
+      all, so it is reported and never treated as an assignment that failed. And *no inbox is needed*:
+      the source file stays in the case as a document, so a message left unassigned is not lost and
+      the import can simply be run again — an inbox would have stored a second copy of data that
+      already persists. A message that would move a procedure backwards is reported and skipped,
+      because re-running an import is now the normal way to pick up what was left open.
+      *Still open:* the ledger booking of the service date for components whose interest starts on
+      service, and the dialog itself — both belong with the Mahnverfahren tab of 3.10
 - [ ] 3.8 Dunning worklist (filters, CSV, navigation, start VB application from the list)
 - [ ] 3.9 `DunningServiceRemote` (English JavaDoc) and the REST endpoint — note the endpoint is
       `DunningEndpointV7`, see 3.15

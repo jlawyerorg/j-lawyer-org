@@ -666,6 +666,9 @@ import com.jdimension.jlawyer.eda.EdaClaimMapper;
 import com.jdimension.jlawyer.eda.EdaFile;
 import com.jdimension.jlawyer.eda.EdaMahnbescheidBuilder;
 import com.jdimension.jlawyer.eda.EdaMahnbescheidLayouts;
+import com.jdimension.jlawyer.eda.EdaMessage;
+import com.jdimension.jlawyer.eda.EdaMessageInterpreter;
+import com.jdimension.jlawyer.eda.EdaMessageReader;
 import com.jdimension.jlawyer.eda.EdaStructureVerifier;
 import com.jdimension.jlawyer.eda.EdaViolation;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
@@ -674,8 +677,10 @@ import com.jdimension.jlawyer.persistence.ClaimComponentFacadeLocal;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
 import com.jdimension.jlawyer.persistence.ClaimPartyRole;
 import com.jdimension.jlawyer.persistence.DunningCaseStatus;
+import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.persistence.InterestRuleFacadeLocal;
 import com.jdimension.jlawyer.pojo.DunningClaimInput;
+import com.jdimension.jlawyer.pojo.DunningMessageProposal;
 import com.jdimension.jlawyer.pojo.DunningValidationIssue;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.persistence.ClaimLedgerPartyFacadeLocal;
@@ -691,6 +696,7 @@ import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Map;
 import java.util.List;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
@@ -731,6 +737,7 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
 
     @EJB
     private DunningDeadlineServiceLocal dunningDeadlineService;
+
 
     @EJB
     private SecurityServiceLocal securityFacade;
@@ -828,6 +835,223 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         }
 
         return document;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public List<DunningMessageProposal> analyseCourtMessages(String documentId) throws Exception {
+
+        List<DunningMessageProposal> proposals = new ArrayList<>();
+        EdaMessageInterpreter interpreter = new EdaMessageInterpreter();
+        int position = 0;
+
+        for (EdaMessage message : readMessages(documentId)) {
+            position++;
+            EdaMessageInterpreter.Outcome outcome = interpreter.interpret(message);
+
+            DunningMessageProposal proposal = new DunningMessageProposal();
+            proposal.setPosition(position);
+            proposal.setSatzart(message.getSatzart());
+            proposal.setMessageKind(message.getMessageKind());
+            proposal.setDescription(outcome.getDescription());
+            proposal.setOwnReference(message.getOwnReference());
+            proposal.setCourtFileNumber(message.getCourtFileNumber());
+            proposal.setReportedDate(message.getReportedDate());
+            proposal.setAboutTheTransmission(outcome.isAboutTheTransmission());
+            proposal.setMovesProcedure(outcome.movesProcedure());
+
+            if (!outcome.isAboutTheTransmission()) {
+                DunningCase match = match(message);
+                if (match != null && hasAccess(match)) {
+                    proposal.setSuggestedDunningCaseId(match.getId());
+                    proposal.setSuggestedCaseLabel(label(match));
+                    proposal.setWarning(regressionWarning(match, outcome));
+                } else if (match != null) {
+                    proposal.setWarning("Das zugehörige Verfahren liegt in einer Akte, auf die Sie "
+                            + "keinen Zugriff haben.");
+                }
+            }
+            proposals.add(proposal);
+        }
+        return proposals;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public List<String> applyCourtMessages(String documentId, Map<Integer, String> assignments)
+            throws Exception {
+
+        List<String> report = new ArrayList<>();
+        EdaMessageInterpreter interpreter = new EdaMessageInterpreter();
+        int position = 0;
+
+        for (EdaMessage message : readMessages(documentId)) {
+            position++;
+            EdaMessageInterpreter.Outcome outcome = interpreter.interpret(message);
+
+            if (outcome.isAboutTheTransmission()) {
+                report.add(position + ". " + outcome.getDescription());
+                continue;
+            }
+
+            String dunningCaseId = assignments == null ? null : assignments.get(position);
+            if (dunningCaseId == null) {
+                // left unresolved on purpose. The message is not lost: it stays in the document and
+                // this import can simply be run again once the assignment is known
+                report.add(position + ". Nicht zugeordnet und daher nicht angewendet - die Nachricht "
+                        + "bleibt im Dokument und kann später erneut verarbeitet werden.");
+                continue;
+            }
+
+            DunningCase dunningCase = this.dunningCasesFacade.find(dunningCaseId);
+            if (dunningCase == null) {
+                report.add(position + ". Das gewählte Verfahren existiert nicht.");
+                continue;
+            }
+            if (!hasAccess(dunningCase)) {
+                report.add(position + ". Keine Berechtigung für die Akte dieses Verfahrens.");
+                continue;
+            }
+            if (!outcome.movesProcedure()) {
+                report.add(position + ". " + label(dunningCase) + ": " + outcome.getDescription());
+                continue;
+            }
+
+            String regression = regressionWarning(dunningCase, outcome);
+            if (regression != null) {
+                // re-running an import is normal now, so an older message must not undo a newer one
+                report.add(position + ". " + label(dunningCase) + ": " + regression);
+                continue;
+            }
+
+            interpreter.apply(dunningCase, outcome);
+            if (message.getCourtFileNumber() != null && !message.getCourtFileNumber().trim().isEmpty()) {
+                dunningCase.setCourtFileNumber(message.getCourtFileNumber().trim());
+            }
+            this.dunningCasesFacade.edit(dunningCase);
+
+            try {
+                this.dunningDeadlineService.synchronizeDeadlines(dunningCase, 14);
+            } catch (Exception ex) {
+                log.error("Unable to synchronise deadlines for dunning case " + dunningCase.getId(), ex);
+            }
+            report.add(position + ". " + label(dunningCase) + ": " + outcome.getDescription());
+        }
+        return report;
+    }
+
+    /**
+     * Reads the messages out of a document of a case.
+     *
+     * @param documentId the document holding the exchange file
+     * @return the messages it contains
+     * @throws Exception if the document does not exist, is empty, or its case is not accessible
+     */
+    private List<EdaMessage> readMessages(String documentId) throws Exception {
+
+        ArchiveFileDocumentsBean document = this.archiveFileService.getDocument(documentId);
+        if (document == null) {
+            throw new Exception("Das Dokument existiert nicht!");
+        }
+        if (document.getArchiveFileKey() != null) {
+            requireAccess(document.getArchiveFileKey());
+        }
+        byte[] content = this.archiveFileService.getDocumentContent(documentId);
+        if (content == null || content.length == 0) {
+            throw new Exception("Das Dokument \"" + document.getName() + "\" ist leer.");
+        }
+        return new EdaMessageReader().read(new String(content,
+                Charset.forName(com.jdimension.jlawyer.eda.EdaCharset.CHARSET_NAME)));
+    }
+
+    /**
+     * Whether applying a message would move a procedure backwards.
+     *
+     * Re-running an import is a normal thing to do - it is how an unresolved message is picked up
+     * later - so an older message must not undo what a newer one already recorded. A Mahnbescheid
+     * service notice replayed after the Vollstreckungsbescheid was served would otherwise reset the
+     * procedure by months.
+     *
+     * @param dunningCase the procedure
+     * @param outcome what the message would do
+     * @return the warning, or null where the message may be applied
+     */
+    private String regressionWarning(DunningCase dunningCase, EdaMessageInterpreter.Outcome outcome) {
+        if (!outcome.movesProcedure() || dunningCase.getStatus() == null) {
+            return null;
+        }
+        if (outcome.getStatus().isBefore(dunningCase.getStatus())) {
+            return "Das Verfahren steht bereits weiter (" + dunningCase.getStatus().getLabel()
+                    + "); die Nachricht (" + outcome.getStatus().getLabel()
+                    + ") wird nicht angewendet, um den Stand nicht zurückzusetzen.";
+        }
+        return null;
+    }
+
+    /**
+     * Finds the procedure a message belongs to.
+     *
+     * The search is deliberately across all procedures rather than within the case the file was
+     * filed in. A court sends collective files - the trailer counts the messages in them - so one
+     * document can carry news for many procedures in many cases. Where that document sits is
+     * provenance, not context.
+     *
+     * The reference the court echoes is what the application sent, so it is tried first; the court's
+     * file number is the fallback, since it exists only once the court has processed the application.
+     *
+     * @param message the message
+     * @return the procedure, or null where none matches unambiguously
+     */
+    private DunningCase match(EdaMessage message) {
+
+        if (message.getOwnReference() != null && !message.getOwnReference().trim().isEmpty()) {
+            List<DunningCase> found = this.dunningCasesFacade.findByOwnReference(
+                    message.getOwnReference().trim());
+            if (found.size() == 1) {
+                return found.get(0);
+            }
+            if (found.size() > 1) {
+                // an ambiguous reference is not something to resolve by guessing
+                return null;
+            }
+        }
+        if (message.getCourtFileNumber() != null && !message.getCourtFileNumber().trim().isEmpty()) {
+            List<DunningCase> found = this.dunningCasesFacade.findByCourtFileNumber(
+                    message.getCourtFileNumber().trim());
+            if (found.size() == 1) {
+                return found.get(0);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @param dunningCase the procedure
+     * @return whether the calling user may see the case it belongs to
+     */
+    private boolean hasAccess(DunningCase dunningCase) {
+        try {
+            if (dunningCase.getLedger() == null || dunningCase.getLedger().getArchiveFileKey() == null) {
+                return false;
+            }
+            requireAccess(dunningCase.getLedger().getArchiveFileKey());
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    /**
+     * How a procedure is named to the user: by its case and its own reference.
+     */
+    private String label(DunningCase dunningCase) {
+        StringBuilder sb = new StringBuilder();
+        if (dunningCase.getLedger() != null && dunningCase.getLedger().getArchiveFileKey() != null) {
+            sb.append(dunningCase.getLedger().getArchiveFileKey().getFileNumber()).append(" ");
+        }
+        sb.append(dunningCase.getOwnReference() == null
+                ? dunningCase.getId() : dunningCase.getOwnReference());
+        return sb.toString().trim();
     }
 
     /**

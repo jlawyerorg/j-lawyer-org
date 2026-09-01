@@ -664,9 +664,11 @@ package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.pojo.DunningClaimInput;
+import com.jdimension.jlawyer.pojo.DunningMessageProposal;
 import com.jdimension.jlawyer.pojo.DunningValidationResult;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import javax.ejb.Remote;
 
 /**
@@ -717,4 +719,39 @@ public interface DunningServiceRemote {
      */
     ArchiveFileDocumentsBean exportApplication(String dunningCaseId, BigDecimal claimValue,
             List<DunningClaimInput> claims, String fileName) throws Exception;
+
+    /**
+     * Reads the court messages in a document and proposes what each of them belongs to.
+     *
+     * Nothing is applied and nothing is stored. This is what a user is shown before confirming: one
+     * entry per message, with the procedure the system found for it or the statement that it found
+     * none and the user has to choose.
+     *
+     * The search runs across all procedures rather than within the document's case. Courts send
+     * collective files - the trailer counts the messages in one - so a single document can carry news
+     * for many procedures in many cases; where it was filed is provenance, not context.
+     *
+     * @param documentId the document holding the exchange file
+     * @return one proposal per message, in the order they appear
+     * @throws Exception if the document does not exist, is empty, or the user may not see its case
+     */
+    List<DunningMessageProposal> analyseCourtMessages(String documentId) throws Exception;
+
+    /**
+     * Applies the court messages of a document, as the user assigned them.
+     *
+     * A message left unassigned is not applied and not stored anywhere - it stays in the document,
+     * and running this again later picks it up. That is why nothing is lost by confirming only part
+     * of a file.
+     *
+     * A message that would move a procedure backwards is reported and skipped. Re-running an import
+     * is a normal thing to do, so an older message must not undo what a newer one already recorded.
+     *
+     * @param documentId the document holding the exchange file
+     * @param assignments the procedure chosen per message, keyed by the message's position in the
+     * file as {@code analyseCourtMessages} reported it; a position left out stays unapplied
+     * @return what happened to each message, in words for the user
+     * @throws Exception if the document cannot be read
+     */
+    List<String> applyCourtMessages(String documentId, Map<Integer, String> assignments) throws Exception;
 }

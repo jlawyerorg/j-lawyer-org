@@ -813,6 +813,25 @@ public class EdaMessageInterpreterTest {
     }
 
     @Test
+    public void aReceiptIsAboutTheDeliveryAndNotAboutAnyProcedure() {
+        // the receipt record carries only a text - no own reference, no file number - because it
+        // acknowledges that a delivery arrived. Filing it as an assignment that failed would fill the
+        // inbox with messages that can never be assigned to anything
+        EdaMessageInterpreter.Outcome receipt = interpreter.interpret(message(
+                EdaMessageLayouts.SATZART_EINGANGSBESTAETIGUNG, null, date(2026, 3, 1)));
+
+        assertTrue(receipt.isAboutTheTransmission());
+
+        for (String satzart : new String[]{EdaMessageLayouts.SATZART_ZUSTELLUNG,
+            EdaMessageLayouts.SATZART_WIDERSPRUCH, EdaMessageLayouts.SATZART_MONIERUNG,
+            EdaMessageLayouts.SATZART_KOSTEN_ERLASS_MB, EdaMessageLayouts.SATZART_ABGABE}) {
+            assertFalse(satzart + " concerns a procedure, not the delivery",
+                    interpreter.interpret(message(satzart, null, date(2026, 3, 1)))
+                            .isAboutTheTransmission());
+        }
+    }
+
+    @Test
     public void aMessageTypeNotYetInterpretedIsFlaggedRatherThanIgnored() {
         EdaMessageInterpreter.Outcome outcome = interpreter.interpret(message("77", null, null));
 

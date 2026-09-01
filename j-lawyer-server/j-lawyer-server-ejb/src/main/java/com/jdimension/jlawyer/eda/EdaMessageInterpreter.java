@@ -690,12 +690,19 @@ public class EdaMessageInterpreter {
         private final Date date;
         private final String description;
         private final boolean needsAttention;
+        private final boolean aboutTheTransmission;
 
         Outcome(DunningCaseStatus status, Date date, String description, boolean needsAttention) {
+            this(status, date, description, needsAttention, false);
+        }
+
+        Outcome(DunningCaseStatus status, Date date, String description, boolean needsAttention,
+                boolean aboutTheTransmission) {
             this.status = status;
             this.date = date;
             this.description = description;
             this.needsAttention = needsAttention;
+            this.aboutTheTransmission = aboutTheTransmission;
         }
 
         /**
@@ -731,6 +738,20 @@ public class EdaMessageInterpreter {
          */
         public boolean movesProcedure() {
             return this.status != null;
+        }
+
+        /**
+         * Whether the message concerns the transmission rather than a procedure.
+         *
+         * The receipt confirmation is the case: it carries neither an own reference nor a file
+         * number, because it acknowledges that a delivery arrived, not that something happened in a
+         * matter. Such a message can never be assigned to a procedure and must not be filed as
+         * though the assignment merely failed.
+         *
+         * @return whether it is about the delivery itself
+         */
+        public boolean isAboutTheTransmission() {
+            return aboutTheTransmission;
         }
     }
 
@@ -777,8 +798,9 @@ public class EdaMessageInterpreter {
                         + "nicht weiter bearbeitet.", true);
 
             case EdaMessageLayouts.SATZART_EINGANGSBESTAETIGUNG:
+                // about the delivery, not about any one procedure - it carries no reference at all
                 return new Outcome(null, date,
-                        "Das Gericht bestätigt den Eingang der Übermittlung.", false);
+                        "Das Gericht bestätigt den Eingang der Übermittlung.", false, true);
 
             default:
                 return new Outcome(null, date,
