@@ -123,12 +123,16 @@
 - [ ] 3.9 `DunningServiceRemote` (English JavaDoc) and `DunningEndpointV8`
 - [ ] 3.10 Desktop UI: `Mahnverfahren` tab of the ledger workspace (reminder stages, dunning case,
       status timeline, message import) (+ `.form` files)
-- [ ] 3.11 `com.jdimension.jlawyer.eda` core: data-driven record layouts (field, offset, length,
+- [x] 3.11 `com.jdimension.jlawyer.eda` core: data-driven record layouts (field, offset, length,
       type), the 128-byte fixed-length writer and parser, `AA`/`BB` framing and the CP-850 codec
       that refuses unencodable characters. The Satzbeschreibungen are published as PDFs at
       https://www.mahngerichte.de/publikationen/eda-konditionen/ — freely downloadable, individually
       and as one archive, without registration; only the barcode application is tied to the test and
-      approval procedure of 0.5
+      approval procedure of 0.5. The mechanics are in place - layout model with per-field offsets
+      derived from the lengths, the 128-byte writer and parser, AA/BB framing with trailer counts
+      computed from the file, and the CP-850 codec. Transcribed so far are the Dateivorsatz, the
+      Dateinachsatz and the Kennsatz C01; the remaining record areas are transcribed with the mapper
+      of 3.12, against the same builder that already refuses a layout not adding up to 128 bytes
 - [ ] 3.12 EDA mapper for the Mahnbescheid application (record type `01`, format 4.0.00): key
       record, parties and their representatives, catalogued claims (number from 1.5, with the
       additional record each special number demands) and free-text claims, running and already
