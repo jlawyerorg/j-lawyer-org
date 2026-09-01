@@ -167,8 +167,11 @@
       catalogued and free-text claims with the additions their catalogue number demands, running
       interest, and the trailer sums. *Still to map:* legal and authorised representatives
       (C05–C11, C17/C18), already computed interest (C19), assignment (C25), consumer-credit data
-      (C27) and the seven ancillary-claim areas (C28–C34). The layouts for all of them are present
-      and verified, so each remaining piece is a mapping rather than a transcription
+      (C27). The seven ancillary-claim areas C28–C34 are mapped: the ledger's own cost types
+      correspond to them one for one, which makes the mapping a lookup rather than a judgement — and
+      a necessary one, since a court decides differently on a reminder charge than on collection
+      costs. The layouts for the remaining pieces are present and verified, so each is a mapping
+      rather than a transcription
 - [x] 3.13 Structural verifier (record length, framing, record order, per-area frequency, trailer
       counts, character set) with violations reported per record and field
 - [x] 3.14 `AppUserBean` lawyer identification number (Kennziffer) with migration and the user
@@ -199,12 +202,12 @@
       validation and verification failure paths, export document storage and re-export history.
       *Covered so far:* interest from service with an empty start date, the CP-850 round trip with
       umlauts, the validation and verification failure paths, catalogued claims with their required
-      additional record, and the party records against the official "Eintragungsbeispiele" — which
+      additional record, the seven ancillary-claim types each into its own area, and the party
+      records against the official "Eintragungsbeispiele" — which
       caught a real error: a GmbH & Co. KG takes salutation key 4 with an empty legal-form field,
       while an AG & Co. KG, which looks like its near relative, takes no key and carries its legal
-      form; the mapper had treated both as ordinary legal persons. *Open:* the ancillary-claim types
-      (their mapping does not exist yet, see 3.12) and the export document storage and re-export
-      history, which live in the EJB layer
+      form; the mapper had treated both as ordinary legal persons. *Open:* the export document
+      storage and re-export history, which live in the EJB layer
 
 ## 4. Phase 4 — Enforcement
 
