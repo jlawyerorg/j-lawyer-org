@@ -676,13 +676,17 @@ import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimComponentFacadeLocal;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
 import com.jdimension.jlawyer.persistence.ClaimPartyRole;
+import com.jdimension.jlawyer.persistence.DunningCaseEvent;
+import com.jdimension.jlawyer.persistence.DunningCaseEventFacadeLocal;
 import com.jdimension.jlawyer.persistence.DunningCaseStatus;
+import com.jdimension.jlawyer.persistence.DunningStatusSource;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.persistence.InterestRuleFacadeLocal;
 import com.jdimension.jlawyer.pojo.DunningClaimInput;
 import com.jdimension.jlawyer.pojo.DunningMessageProposal;
 import com.jdimension.jlawyer.pojo.DunningValidationIssue;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
+import com.jdimension.jlawyer.persistence.ClaimLedgerFacadeLocal;
 import com.jdimension.jlawyer.persistence.ClaimLedgerPartyFacadeLocal;
 import com.jdimension.jlawyer.persistence.DunningCase;
 import com.jdimension.jlawyer.persistence.DunningCaseFacadeLocal;
@@ -737,6 +741,12 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
 
     @EJB
     private DunningDeadlineServiceLocal dunningDeadlineService;
+
+    @EJB
+    private DunningCaseEventFacadeLocal dunningCaseEventsFacade;
+
+    @EJB
+    private ClaimLedgerFacadeLocal claimLedgersFacade;
 
 
     @EJB
@@ -819,12 +829,17 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
 
         // the status moves only after the file exists: a procedure must not claim to have applied
         // for something that was never stored
+        DunningCaseStatus previous = dunningCase.getStatus();
+        Date now = new Date();
         dunningCase.setStatus(DunningCaseStatus.MB_APPLIED);
-        dunningCase.setStatusDate(new Date());
-        dunningCase.setMbAppliedDate(new Date());
-        dunningCase.setApplicationDate(new Date());
+        dunningCase.setStatusDate(now);
+        dunningCase.setMbAppliedDate(now);
+        dunningCase.setApplicationDate(now);
         dunningCase.setAppliedTotal(claimValue);
         this.dunningCasesFacade.edit(dunningCase);
+
+        journal(dunningCase, previous, DunningCaseStatus.MB_APPLIED, now, DunningStatusSource.MANUAL,
+                "EDA-Datei erzeugt und in der Akte abgelegt: " + document.getName());
 
         try {
             this.dunningDeadlineService.synchronizeDeadlines(dunningCase, 14);
@@ -924,11 +939,17 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
                 continue;
             }
 
+            DunningCaseStatus previous = dunningCase.getStatus();
             interpreter.apply(dunningCase, outcome);
             if (message.getCourtFileNumber() != null && !message.getCourtFileNumber().trim().isEmpty()) {
                 dunningCase.setCourtFileNumber(message.getCourtFileNumber().trim());
             }
             this.dunningCasesFacade.edit(dunningCase);
+
+            // recorded as coming from the court, not from a person: that difference is what a later
+            // question about the procedure turns on
+            journal(dunningCase, previous, outcome.getStatus(), outcome.getDate(),
+                    DunningStatusSource.COURT_MESSAGE, outcome.getDescription());
 
             try {
                 this.dunningDeadlineService.synchronizeDeadlines(dunningCase, 14);
@@ -986,6 +1007,208 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
                     + ") wird nicht angewendet, um den Stand nicht zurückzusetzen.";
         }
         return null;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<DunningCase> getDunningCases(String ledgerId) throws Exception {
+
+        ClaimLedger ledger = this.claimLedgersFacade.find(ledgerId);
+        if (ledger == null) {
+            throw new Exception("Das Forderungskonto existiert nicht!");
+        }
+        requireAccess(ledger.getArchiveFileKey());
+        return new ArrayList<>(this.dunningCasesFacade.findByLedger(ledger));
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public DunningCase addDunningCase(String ledgerId, DunningCase dunningCase) throws Exception {
+
+        ClaimLedger ledger = this.claimLedgersFacade.find(ledgerId);
+        if (ledger == null) {
+            throw new Exception("Das Forderungskonto existiert nicht!");
+        }
+        requireAccess(ledger.getArchiveFileKey());
+
+        dunningCase.setId(new StringGenerator().getID().toString());
+        dunningCase.setLedger(ledger);
+        dunningCase.setCreated(new Date());
+        try {
+            dunningCase.setCreatedBy(this.context.getCallerPrincipal().getName());
+        } catch (Throwable t) {
+            log.warn("Unable to determine caller when creating a dunning case", t);
+        }
+        if (dunningCase.getStatus() == null) {
+            dunningCase.setStatus(DunningCaseStatus.PREPARED);
+        }
+        if (dunningCase.getOwnReference() == null || dunningCase.getOwnReference().trim().isEmpty()) {
+            // every later message from the court echoes this; without one the replies cannot be
+            // matched to the procedure at all
+            dunningCase.setOwnReference(generateOwnReference(ledger));
+        }
+        this.dunningCasesFacade.create(dunningCase);
+
+        DunningCase stored = this.dunningCasesFacade.find(dunningCase.getId());
+        journal(stored, null, stored.getStatus(), stored.getCreated(), DunningStatusSource.MANUAL,
+                "Mahnsache angelegt.");
+        return stored;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public DunningCase updateDunningCase(DunningCase dunningCase) throws Exception {
+
+        DunningCase stored = requireCase(dunningCase == null ? null : dunningCase.getId());
+
+        // the status is deliberately not copied: moving a procedure goes through recordStatus, which
+        // journals who did it and why
+        stored.setCourtXJustizId(dunningCase.getCourtXJustizId());
+        stored.setCourtName(dunningCase.getCourtName());
+        stored.setCourtPostalCode(dunningCase.getCourtPostalCode());
+        stored.setCourtCity(dunningCase.getCourtCity());
+        stored.setKennziffer(dunningCase.getKennziffer());
+        stored.setCourtFileNumber(dunningCase.getCourtFileNumber());
+        stored.setDescription(dunningCase.getDescription());
+        if (dunningCase.getOwnReference() != null && !dunningCase.getOwnReference().trim().isEmpty()) {
+            stored.setOwnReference(dunningCase.getOwnReference());
+        }
+        this.dunningCasesFacade.edit(stored);
+        return this.dunningCasesFacade.find(stored.getId());
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public DunningCase recordStatus(String dunningCaseId, DunningCaseStatus status, Date eventDate,
+            String comment) throws Exception {
+
+        if (status == null) {
+            throw new Exception("Es wurde kein Status angegeben!");
+        }
+        DunningCase stored = requireCase(dunningCaseId);
+        DunningCaseStatus previous = stored.getStatus();
+
+        stored.setStatus(status);
+        stored.setStatusDate(eventDate);
+        applyProceduralDate(stored, status, eventDate);
+        this.dunningCasesFacade.edit(stored);
+
+        journal(stored, previous, status, eventDate, DunningStatusSource.MANUAL, comment);
+
+        try {
+            this.dunningDeadlineService.synchronizeDeadlines(stored, 14);
+        } catch (Exception ex) {
+            log.error("Unable to synchronise deadlines for dunning case " + dunningCaseId, ex);
+        }
+        return this.dunningCasesFacade.find(stored.getId());
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<DunningCaseEvent> getHistory(String dunningCaseId) throws Exception {
+        DunningCase stored = requireCase(dunningCaseId);
+        return new ArrayList<>(this.dunningCaseEventsFacade.findByDunningCase(stored));
+    }
+
+    /**
+     * Writes one entry of the journal.
+     *
+     * Every move of a procedure is recorded with the procedural date, the user and whether a person
+     * entered it or a court message reported it. That last distinction is what a later question about
+     * the procedure turns on.
+     *
+     * @param dunningCase the procedure
+     * @param previous the status held before, or null for the first entry
+     * @param status the status reached
+     * @param eventDate the procedural date
+     * @param source whether a person or a court message is behind it
+     * @param comment a note, or null
+     */
+    private void journal(DunningCase dunningCase, DunningCaseStatus previous, DunningCaseStatus status,
+            Date eventDate, DunningStatusSource source, String comment) {
+
+        DunningCaseEvent event = new DunningCaseEvent();
+        event.setId(new StringGenerator().getID().toString());
+        event.setDunningCase(dunningCase);
+        event.setPreviousStatus(previous);
+        event.setNewStatus(status);
+        event.setEventDate(eventDate);
+        event.setRecorded(new Date());
+        event.setSource(source);
+        event.setComment(comment);
+        try {
+            event.setRecordedBy(this.context.getCallerPrincipal().getName());
+        } catch (Throwable t) {
+            log.warn("Unable to determine caller when journalling a dunning status change", t);
+        }
+        this.dunningCaseEventsFacade.create(event);
+    }
+
+    /**
+     * Writes a procedural date onto the field belonging to the event, which is what the deadline
+     * engine computes from.
+     */
+    private void applyProceduralDate(DunningCase dunningCase, DunningCaseStatus status, Date date) {
+        switch (status) {
+            case MB_APPLIED:
+                dunningCase.setMbAppliedDate(date);
+                break;
+            case MB_ISSUED:
+                dunningCase.setMbIssuedDate(date);
+                break;
+            case MB_SERVED:
+                dunningCase.setMbServedDate(date);
+                break;
+            case OBJECTION:
+                dunningCase.setObjectionDate(date);
+                break;
+            case VB_APPLIED:
+                dunningCase.setVbAppliedDate(date);
+                break;
+            case VB_ISSUED:
+                dunningCase.setVbIssuedDate(date);
+                break;
+            case VB_SERVED:
+                dunningCase.setVbServedDate(date);
+                break;
+            case EINSPRUCH:
+                dunningCase.setEinspruchDate(date);
+                break;
+            case REFERRED:
+                dunningCase.setReferralDate(date);
+                break;
+            case COMPLETED:
+                dunningCase.setCompletedDate(date);
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * An own reference the court can echo: recognisable to the firm and unique enough to match on.
+     */
+    private String generateOwnReference(ClaimLedger ledger) {
+        String caseNumber = ledger.getArchiveFileKey() == null
+                ? "" : ledger.getArchiveFileKey().getFileNumber();
+        String suffix = new StringGenerator().getID().toString().replace("-", "");
+        return (caseNumber == null || caseNumber.trim().isEmpty()
+                ? "MB" : caseNumber.trim()) + "-" + suffix.substring(0, Math.min(8, suffix.length()));
+    }
+
+    private DunningCase requireCase(String dunningCaseId) throws Exception {
+        if (dunningCaseId == null) {
+            throw new Exception("Die Mahnsache ist nicht gespeichert!");
+        }
+        DunningCase stored = this.dunningCasesFacade.find(dunningCaseId);
+        if (stored == null) {
+            throw new Exception("Die Mahnsache existiert nicht!");
+        }
+        if (stored.getLedger() == null || stored.getLedger().getArchiveFileKey() == null) {
+            throw new Exception("Die Mahnsache ist keiner Akte zugeordnet!");
+        }
+        requireAccess(stored.getLedger().getArchiveFileKey());
+        return stored;
     }
 
     /**

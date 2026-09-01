@@ -133,8 +133,14 @@
       *Still open:* the ledger booking of the service date for components whose interest starts on
       service, and the dialog itself — both belong with the Mahnverfahren tab of 3.10
 - [ ] 3.8 Dunning worklist (filters, CSV, navigation, start VB application from the list)
-- [ ] 3.9 `DunningServiceRemote` (English JavaDoc) and the REST endpoint — note the endpoint is
-      `DunningEndpointV7`, see 3.15
+- [x] 3.9 `DunningServiceRemote` (English JavaDoc) and the REST endpoint — note the endpoint is
+      `DunningEndpointV7`, see 3.15. The interface covers the procedures themselves (list, create,
+      update, record a status, read the journal) alongside validation, export and message import.
+      *Gap found and closed while doing this:* status changes were not being journalled at all,
+      although `dunning_case_events` existed for it and the spec requires date, user and source to be
+      recorded. Every move now writes an entry, and the source distinguishes what a person entered
+      from what a court message reported — which is the first thing to look at when a procedure turns
+      out to have been recorded wrongly
 - [ ] 3.10 Desktop UI: `Mahnverfahren` tab of the ledger workspace (reminder stages, dunning case,
       status timeline, message import) (+ `.form` files)
 - [x] 3.11 `com.jdimension.jlawyer.eda` core: data-driven record layouts (field, offset, length,

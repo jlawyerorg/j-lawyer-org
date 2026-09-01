@@ -663,6 +663,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.DunningCase;
+import com.jdimension.jlawyer.persistence.DunningCaseEvent;
+import com.jdimension.jlawyer.persistence.DunningCaseStatus;
 import com.jdimension.jlawyer.pojo.DunningClaimInput;
 import com.jdimension.jlawyer.pojo.DunningMessageProposal;
 import com.jdimension.jlawyer.pojo.DunningValidationResult;
@@ -754,4 +757,68 @@ public interface DunningServiceRemote {
      * @throws Exception if the document cannot be read
      */
     List<String> applyCourtMessages(String documentId, Map<Integer, String> assignments) throws Exception;
+
+    /**
+     * Returns the dunning procedures conducted over a claim ledger.
+     *
+     * @param ledgerId the claim ledger
+     * @return the procedures, most recently created first; never null
+     * @throws Exception if the ledger does not exist or its case is not accessible
+     */
+    List<DunningCase> getDunningCases(String ledgerId) throws Exception;
+
+    /**
+     * Creates a dunning procedure over a claim ledger.
+     *
+     * The procedure starts in preparation and carries the court and Kennziffer it is given. Its own
+     * reference is what every later message from the court will echo back, so it is generated where
+     * the caller supplies none - a procedure without one cannot be matched to its replies.
+     *
+     * @param ledgerId the claim ledger
+     * @param dunningCase the procedure to create
+     * @return the created procedure as it was stored
+     * @throws Exception if the ledger does not exist, its case is not accessible, or it cannot be
+     * stored
+     */
+    DunningCase addDunningCase(String ledgerId, DunningCase dunningCase) throws Exception;
+
+    /**
+     * Updates the master data of a dunning procedure - court, Kennziffer, reference, description.
+     *
+     * The status is not changed here. Moving a procedure is recorded through
+     * {@link #recordStatus(String, DunningCaseStatus, java.util.Date, String)}, which journals who
+     * did it and on what basis.
+     *
+     * @param dunningCase the procedure with its changed values
+     * @return the updated procedure
+     * @throws Exception if it does not exist or its case is not accessible
+     */
+    DunningCase updateDunningCase(DunningCase dunningCase) throws Exception;
+
+    /**
+     * Records that a procedure has reached a new status.
+     *
+     * The change is journalled with the procedural date, the user and the fact that a person entered
+     * it rather than a court message reporting it. That distinction is the first thing to look at
+     * when a procedure turns out to have been recorded wrongly.
+     *
+     * @param dunningCaseId the procedure
+     * @param status the status it reaches
+     * @param eventDate the procedural date - the day of service, of issue - which is what deadlines
+     * are computed from, not the day of entry
+     * @param comment a note on the change, or null
+     * @return the updated procedure
+     * @throws Exception if the procedure does not exist or its case is not accessible
+     */
+    DunningCase recordStatus(String dunningCaseId, DunningCaseStatus status, java.util.Date eventDate,
+            String comment) throws Exception;
+
+    /**
+     * Returns the journal of a procedure.
+     *
+     * @param dunningCaseId the procedure
+     * @return its status changes, oldest first, so the list reads as the course of the procedure
+     * @throws Exception if the procedure does not exist or its case is not accessible
+     */
+    List<DunningCaseEvent> getHistory(String dunningCaseId) throws Exception;
 }
