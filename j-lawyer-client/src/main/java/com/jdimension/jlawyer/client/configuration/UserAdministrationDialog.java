@@ -866,6 +866,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         txtEmail = new javax.swing.JTextField();
         txtDisplayName = new javax.swing.JTextField();
         chkLawyer = new javax.swing.JCheckBox();
+        lblDunningKennziffer = new javax.swing.JLabel();
+        txtDunningKennziffer = new javax.swing.JTextField();
         txtFirstName = new javax.swing.JTextField();
         jLabel14 = new javax.swing.JLabel();
         txtName = new javax.swing.JTextField();
@@ -1074,6 +1076,16 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         jLabel13.setText("E-Mail:");
 
         chkLawyer.setText("Nutzer ist Anwalt");
+        chkLawyer.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkLawyerActionPerformed(evt);
+            }
+        });
+
+        lblDunningKennziffer.setText("Kennziffer:");
+        lblDunningKennziffer.setToolTipText("wird beim Mahngericht beantragt und identifiziert die einreichende Anwältin bzw. den einreichenden Anwalt");
+
+        txtDunningKennziffer.setToolTipText("wird beim Mahngericht beantragt und identifiziert die einreichende Anwältin bzw. den einreichenden Anwalt");
 
         jLabel14.setText("Vorname:");
 
@@ -1147,16 +1159,19 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, txtCompany)
                     .add(txtName)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, txtFirstName)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, txtDisplayName)
                     .add(txtStreet)
                     .add(txtAdjunct)
                     .add(txtZipCode)
                     .add(txtCity)
                     .add(cmbCountryCodeInvoicing, 0, 300, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jScrollPane7, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jScrollPane7, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel14Layout.createSequentialGroup()
+                        .add(txtDisplayName)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdPopulateFromCompanyProfile)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jSeparator3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jLabel13)
                     .add(jLabel33)
@@ -1167,25 +1182,24 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jLabel38)
                     .add(jLabel39)
                     .add(jLabel40)
-                    .add(jLabel41))
+                    .add(jLabel41)
+                    .add(lblDunningKennziffer))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel14Layout.createSequentialGroup()
-                        .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                            .add(txtTaxNr)
-                            .add(txtUstId)
-                            .add(txtIban)
-                            .add(txtBic)
-                            .add(txtBank)
-                            .add(txtWebsite)
-                            .add(txtMobile)
-                            .add(txtFax)
-                            .add(txtPhone)
-                            .add(txtEmail, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 300, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                        .add(18, 18, 18)
-                        .add(cmdPopulateFromCompanyProfile))
-                    .add(chkLawyer))
-                .addContainerGap(174, Short.MAX_VALUE))
+                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(txtTaxNr)
+                    .add(txtUstId)
+                    .add(txtIban)
+                    .add(txtBic)
+                    .add(txtBank)
+                    .add(txtWebsite)
+                    .add(txtMobile)
+                    .add(txtFax)
+                    .add(txtPhone)
+                    .add(txtEmail)
+                    .add(txtDunningKennziffer, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 300, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 46, Short.MAX_VALUE)
+                .add(chkLawyer)
+                .addContainerGap())
         );
         jPanel14Layout.setVerticalGroup(
             jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1196,12 +1210,13 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jPanel14Layout.createSequentialGroup()
                         .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jPanel14Layout.createSequentialGroup()
-                                .add(chkLawyer)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(lblDunningKennziffer)
+                                    .add(txtDunningKennziffer, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                                     .add(txtEmail, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .add(jLabel13)
-                                    .add(cmdPopulateFromCompanyProfile))
+                                    .add(jLabel13))
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                                     .add(txtPhone, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -1238,10 +1253,13 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                                 .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                                     .add(txtUstId, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                     .add(jLabel41)))
+                            .add(chkLawyer)
                             .add(jPanel14Layout.createSequentialGroup()
-                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                    .add(jLabel27)
-                                    .add(txtDisplayName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                    .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                        .add(jLabel27)
+                                        .add(txtDisplayName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                                    .add(cmdPopulateFromCompanyProfile))
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                                     .add(txtFirstName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -1519,7 +1537,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                         .add(jPanel13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel15, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(106, Short.MAX_VALUE))
+                .addContainerGap(60, Short.MAX_VALUE))
         );
 
         jPanel1.getAccessibleContext().setAccessibleName("");
@@ -1718,7 +1736,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(pwdBeaCertificatePassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel16))
-                .addContainerGap(305, Short.MAX_VALUE))
+                .addContainerGap(259, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("beA", jPanel8);
@@ -2122,7 +2140,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                         .add(chkShowExternalUsers))
                     .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 137, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 552, Short.MAX_VALUE)
+                .add(jTabbedPane1)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdClose)
@@ -2304,6 +2322,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 List<AppRoleBean> roles = mgmt.getRoles(u.getPrincipalId());
                 this.setRoles(roles);
                 this.chkLawyer.setSelected(u.isLawyer());
+                this.txtDunningKennziffer.setText(u.getDunningKennziffer() == null ? "" : u.getDunningKennziffer());
+                updateDunningKennzifferEnabled();
                 this.chkAutoLockDocuments.setSelected(u.isAutoLockDocuments());
 
                 CalendarUtils cu = CalendarUtils.getInstance();
@@ -2489,6 +2509,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             }
         } else {
             this.chkLawyer.setSelected(false);
+            this.txtDunningKennziffer.setText("");
+            updateDunningKennzifferEnabled();
             this.chkAutoLockDocuments.setSelected(true);
             this.cmbCountry.setSelectedIndex(0);
             this.cmbArea.setSelectedIndex(0);
@@ -2570,6 +2592,12 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             AppUserBean u = (AppUserBean) this.lstUsers.getSelectedValue();
             if (u != null) {
                 u.setLawyer(this.chkLawyer.isSelected());
+                // only a lawyer files under a Kennziffer; clearing it for a non-lawyer keeps a
+                // number from surviving invisibly after the flag was taken away
+                u.setDunningKennziffer(this.chkLawyer.isSelected()
+                        ? (this.txtDunningKennziffer.getText().trim().isEmpty()
+                                ? null : this.txtDunningKennziffer.getText().trim())
+                        : null);
                 u.setAutoLockDocuments(this.chkAutoLockDocuments.isSelected());
                 u.setAbbreviation(this.txtAbbreviation.getText());
                 u.setPrimaryGroup(null);
@@ -3432,6 +3460,24 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         });
     }
 
+    private void chkLawyerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkLawyerActionPerformed
+        updateDunningKennzifferEnabled();
+    }//GEN-LAST:event_chkLawyerActionPerformed
+
+    /**
+     * The Kennziffer identifies a lawyer to the dunning court, so it is offered only where the user
+     * is one. Shown rather than hidden: a field that disappears leaves the user wondering where it
+     * went, while a disabled one says what would make it available.
+     */
+    private void updateDunningKennzifferEnabled() {
+        boolean lawyer = this.chkLawyer.isSelected();
+        this.lblDunningKennziffer.setEnabled(lawyer);
+        this.txtDunningKennziffer.setEnabled(lawyer);
+        if (!lawyer) {
+            this.txtDunningKennziffer.setText("");
+        }
+    }
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkAdmin;
     private javax.swing.JCheckBox chkAutoLockDocuments;
@@ -3539,6 +3585,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
     private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JLabel lblDunningKennziffer;
     private javax.swing.JLabel lblEpostRegistered;
     private javax.swing.JList lstUsers;
     private javax.swing.JMenuItem mnuDelete;
@@ -3563,6 +3610,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JTextField txtCompany;
     private javax.swing.JTextField txtDisplayName;
     private javax.swing.JTextField txtDropscanScanboxes;
+    private javax.swing.JTextField txtDunningKennziffer;
     private javax.swing.JTextField txtEmail;
     private javax.swing.JTextField txtEpostCustomer;
     private javax.swing.JTextField txtEpostSecret;

@@ -790,6 +790,31 @@ public class FrameUtils {
         centerWindowOnParent(dlg, parent);
     }
 
+    /**
+     * Centers a dialog on a point in screen coordinates, clamped to the bounds of the
+     * screen that hosts that point. This is what setLocationRelativeTo(Component) does,
+     * for cases where the reference component is no longer on screen when the dialog
+     * opens - for example a popup menu entry that is already dismissed by then, so that
+     * its position had to be captured earlier.
+     */
+    public static void centerDialogAt(JDialog dlg, Point screenPoint) {
+        Dimension size = dlg.getSize();
+        int x = screenPoint.x - size.width / 2;
+        int y = screenPoint.y - size.height / 2;
+
+        Rectangle screen = screenBoundsFor(new Rectangle(x, y, size.width, size.height));
+
+        // keep the dialog fully within its screen when it fits; otherwise align to screen origin
+        x = (size.width <= screen.width)
+                ? Math.max(screen.x, Math.min(x, screen.x + screen.width - size.width))
+                : screen.x;
+        y = (size.height <= screen.height)
+                ? Math.max(screen.y, Math.min(y, screen.y + screen.height - size.height))
+                : screen.y;
+
+        dlg.setLocation(x, y);
+    }
+
     public static Container getDialogOfComponent(Container c) {
 
         while (!(c instanceof JDialog) && c.getParent() != null) {

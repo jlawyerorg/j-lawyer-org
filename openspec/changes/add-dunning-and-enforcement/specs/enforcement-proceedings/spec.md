@@ -4,9 +4,10 @@
 
 The system SHALL record enforcement measures (Zwangsvollstreckungsmaßnahmen) attached to a claim
 ledger and to one of its titles. A measure SHALL hold its type, the debtors it is directed
-against, the addressee (bailiff, enforcement court, third-party debtor, land registry, other) — courts and
-registries taken from the court directory by their scope — the date it was ordered, the date it was dispatched, the outcome with its date, free-text notes, the
-documents generated for it, the deadlines it created and the ledger bookings it caused. Outcomes
+against, the addressee (bailiff, enforcement court, third-party debtor, land registry, other) —
+courts and registries taken from the court directory by their scope — the date it was ordered, the
+date it was dispatched, the outcome with its date, free-text notes, the documents generated for
+it, the deadlines it created and the ledger bookings it caused. Outcomes
 SHALL at least distinguish pending, successful, partially successful, unsuccessful (fruchtlos),
 withdrawn and stayed.
 
@@ -46,10 +47,16 @@ creates.
 
 The system SHALL generate the officially prescribed enforcement forms (ZVFV, Anlagen 1 to 8) by
 filling the published fillable PDF with data from the ledger, the parties, the title and the
-measure, using the existing server-side AcroForm filling. Mandatory fields SHALL be validated
-before the form is produced and every missing entry SHALL be reported in one list. The generated
-form SHALL be stored in the case, linked to the measure, and made available to the existing
-dispatch channels (beA, E-Post, print). The system SHALL record which form version was used.
+measure. Filling SHALL address each form field by its name in the PDF's AcroForm, because the
+official forms carry ordinary field names and empty default values; the placeholder substitution
+used for the firm's own document templates, which matches on the content of a field's value, is
+not applicable to them. The filling SHALL handle the widget types the forms actually use,
+including checkboxes and radio groups, by setting the on-state value the field defines rather
+than an arbitrary string, since the enforcement forms are largely tick-box forms. Mandatory fields
+SHALL be validated before the form is produced and every missing entry SHALL be reported in one
+list. The generated form SHALL be stored in the case, linked to the measure, and made available to
+the existing dispatch channels (beA, E-Post, print). The system SHALL record which form version
+was used.
 
 #### Scenario: Bailiff order produced
 
@@ -57,6 +64,13 @@ dispatch channels (beA, E-Post, print). The system SHALL record which form versi
 - **THEN** the filled form contains creditor, debtor, title data and the itemised claims
 - **AND** the file is stored in the case and linked to the measure
 - **AND** the form version used is recorded on the measure
+
+#### Scenario: Tick boxes set from the measure options
+
+- **WHEN** a bailiff order is generated with the options "gütliche Erledigung" and "Vermögens-
+  auskunft" selected
+- **THEN** exactly the corresponding check boxes carry their on-state value in the produced PDF
+- **AND** the boxes for options that were not selected stay unset
 
 #### Scenario: Missing mandatory entry
 
@@ -67,10 +81,19 @@ dispatch channels (beA, E-Post, print). The system SHALL record which form versi
 ### Requirement: Form Template Versioning
 
 Official forms SHALL be managed as administrable form templates with a name, the form's issue or
-validity date, the PDF itself and a field mapping profile that maps form fields to data of the
-ledger, parties, title and measure. An administrator SHALL be able to upload a new form version
-and its mapping without a software update, and the system SHALL use the version valid at the date
-the measure is created, warning the user when a form is used outside its validity period.
+validity date, the PDF itself and a field mapping profile that maps the PDF's AcroForm field names
+to data of the ledger, parties, title and measure, including the on-state values of check boxes
+and radio groups. The system SHALL be able to list the field names an uploaded PDF contains, so a
+mapping can be built against the actual form rather than against assumptions. An administrator
+SHALL be able to upload a new form version and its mapping without a software update, and the
+system SHALL use the version valid at the date the measure is created, warning the user when a
+form is used outside its validity period.
+
+#### Scenario: Field names read from the uploaded form
+
+- **WHEN** an administrator uploads a form PDF
+- **THEN** the system lists the AcroForm field names it contains with their type
+- **AND** the mapping profile is built by assigning data to those names
 
 #### Scenario: New form version activated
 

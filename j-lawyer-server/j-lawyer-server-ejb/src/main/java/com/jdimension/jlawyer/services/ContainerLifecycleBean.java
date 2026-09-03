@@ -682,8 +682,10 @@ package com.jdimension.jlawyer.services;
 
 
 
+import com.jdimension.jlawyer.referencedata.ReferenceData;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import org.apache.log4j.Logger;
@@ -698,13 +700,30 @@ public class ContainerLifecycleBean implements ContainerLifecycleBeanRemote, Con
     
     private static Logger log = Logger.getLogger(ContainerLifecycleBean.class.getName());
 
+    @EJB
+    private com.jdimension.jlawyer.persistence.CourtFacadeLocal courtsFacade;
+
+    @EJB
+    private com.jdimension.jlawyer.persistence.DunningCourtRuleFacadeLocal dunningCourtRulesFacade;
+
     @PostConstruct
     public void initialize() {
+        // From here on the dunning courts come from this installation's master data instead of the
+        // list compiled into the software, so a firm's own correction to an address or to the
+        // assignment of a federal state takes effect without a release.
+        ReferenceData.setDunningCourtDirectory(
+                new MasterDataDunningCourtDirectory(this.courtsFacade, this.dunningCourtRulesFacade));
+
         log.info("j-lawyer.org Server initialized");
     }
 
     @PreDestroy
     public void terminate() {
+        // Hand the registry back its bundled implementation. What it holds now points at beans of
+        // this deployment, and those are gone in a moment; leaving them in a static would outlive
+        // the deployment that owns them.
+        ReferenceData.setDunningCourtDirectory(null);
+
         // Close the Lucene search index here (while the deployment classloader is still
         // available) rather than via a JVM shutdown hook, which would run after undeploy
         // and fail to lazily load Lucene classes during the final commit.

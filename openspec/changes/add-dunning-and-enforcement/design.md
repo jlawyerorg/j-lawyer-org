@@ -1,11 +1,22 @@
 ## Context
 
 The claim ledger already exists and is used: `claimledgers`, `claimcomponents`, `interest_rules`,
-`claimledger_entries`, `interest_base` (migrations `V3_4_0_7`, `V3_4_0_9`, `V3_4_0_19`), served by
-`ClaimLedgerService`/`PaymentSplitCalculator` and exposed through `ArchiveFileServiceRemote`
+`claimledger_entries` (migrations `V3_4_0_7`, `V3_4_0_9`, `V3_4_0_19`) and `interest_base`
+(migration `V3_4_0_12`), served by `ClaimLedgerService`/`PaymentSplitCalculator` and exposed
+through `ArchiveFileServiceRemote`
 (`getClaimLedgers`, `addClaimComponent`, `createPaymentSplit`, `calculateClaimLedgerTotals`, …),
 with `ClaimLedgerDialog` as the desktop UI. `ClaimLedgerServiceRemote` is an empty marker
 interface today.
+
+Two facts about that existing code shape this change. First, interest is computed twice: the real
+engine in `ArchiveFileService.calculateAccruedInterest` splits the period at base-rate and
+principal changes and resolves the rate from `interest_base`, while `PaymentSplitCalculator` keeps
+a second, simplified copy whose `getBaseInterestRate()` returns a hard-coded `3.62`. Second,
+`ClaimLedgerEntryFacade.findByComponentAndType` runs the named query
+`ClaimLedgerEntry.findByComponent` while setting a `type` parameter that query does not declare,
+which fails at runtime; the correct
+query exists and is simply unused. Both are cleaned up in phase 1, before statements and
+itemisations are built on top.
 
 Everything this change adds hangs off that ledger. The procedural objects (dunning case,
 enforcement measures) are *not* new financial containers — they are workflow objects that read the
@@ -13,8 +24,9 @@ ledger and write bookings back into it through one service operation.
 
 Related infrastructure that is reused rather than rebuilt:
 
-- `com.jdimension.jlawyer.documents.PdfFormsAccess` (server, PDFBox) already fills AcroForm PDFs —
-  this is what the ZVFV forms need.
+- PDFBox is already on the server and `com.jdimension.jlawyer.documents.PdfFormsAccess` already
+  opens AcroForm PDFs — but it substitutes placeholders *inside field values* and has no
+  name-based fill, so the ZVFV forms need a new filler beside it (see Decisions).
 - `ArchiveFileReviewsBean` with `EVENTTYPE_FOLLOWUP` / `EVENTTYPE_RESPITE` is the existing deadline
   and follow-up mechanism, including the calendar/notification stack.
 - `CaseAccountEntry` (Aktenkonto) already models outlays and receipts of the firm.
@@ -40,6 +52,18 @@ Related infrastructure that is reused rather than rebuilt:
   types become part of the ledger model, so totals, allocation and statements keep one
   implementation. Alternative considered: a separate "enforcement account" — rejected, it would
   duplicate interest and allocation logic that is already correct.
+- **Decision: parties are a contact reference plus a snapshot.** A ledger party points at the
+  address book contact (`AddressBean`), the same reference `Invoice`, `payments` and
+  `case_account_entries` already use, with the `ON DELETE SET NULL` behaviour established by
+  `V3_6_0_6`; the case party record (`ArchiveFileAddressesBean`) is only an optional back-reference
+  to the role the party holds in the case, because a ledger party need not be a case party and a
+  role removed from the case must not change who the ledger runs against. On top of the reference,
+  the designation and address used towards the court are frozen on first use, because a title stays
+  enforceable for 30 years and its debtor designation has to remain reconstructable — the same
+  reasoning that makes the court directory keep the designation a document was produced with.
+  Alternatives considered: a pure reference like the invoice model — rejected, deleting or
+  renaming a contact would silently invalidate an enforcement file; and a pure copy of the party
+  data — rejected, ordinary corrections would then never reach the ledger.
 - **Decision: two new workflow entities, one shared cost path.** `DunningCase` and
   `EnforcementMeasure` both book money exclusively through one ledger service operation
   (`bookProceduralCost`), which also owns the optional `CaseAccountEntry` and the reversal
@@ -55,32 +79,61 @@ Related infrastructure that is reused rather than rebuilt:
   it derives from the debtor's residence (§ 828 Abs. 2 ZPO), which needs a postal-code to district
   mapping — that mapping is not part of this change, the user picks the enforcement court and the
   directory supplies its address and identifiers. The directory is seeded with the central dunning
-  courts only; a later import from the XJustiz code list or a court register stays possible because
-  the XJustiz identifier is the matching key.
+  courts only; a later import from a court register stays possible because the XJustiz identifier
+  is the matching key. That identifier is a stable key, not the identifier every interface expects
+  — the EDA dunning application addresses the court by postal code and place — and its code list
+  (`gds.gerichte`) is of type 3, so its values live in the XRepository and not in the schema files
+  shipped with the server; the seed is therefore maintained as project data.
 - **Decision: legal parameters as data.**
   - Fee tables (RVG value table, Nr. 1100 KV GKG, GvKostG positions) live in configuration/lookup
     tables so a statutory change is an update, not a release. Where a firm already uses a Groovy
     calculation plugin for RVG, the same table is the source.
   - The dunning court assignment (§ 689 Abs. 2, 3 ZPO) is an administrable rule table over the
     court directory, because the central courts and their assignments change.
+  - The main claim catalogue (Hauptforderungskatalog) of the dunning courts is shipped as
+    reference data, not as an enum: the courts amend it, and each catalogued claim is stored on the
+    component with the additional entries its number demands. It is published separately by the
+    dunning courts and is not part of the Satzbeschreibungen.
   - Official forms are administrable templates (PDF + field mapping + validity range), because the
     ZVFV forms changed in 2022, 2024 and again with mandatory use from 1 October 2025. The
     published PDFs are not committed to the repository; a default set can be delivered as an
     importable package.
+- **Decision: a new, name-based AcroForm filler for the official forms.** `PdfFormsAccess` fills
+  the firm's own templates by finding a placeholder *inside a field's value*; its fallback branch
+  writes a value into any field that merely carries a `TU` entry, once per key, so the field keeps
+  whatever key came last. The ZVFV PDFs have ordinary field names, empty values and are largely
+  tick-box forms, so they need a filler that addresses fields by name and sets the declared
+  on-state of check boxes and radio groups. That filler is new code beside `PdfFormsAccess`, which
+  keeps serving the template path unchanged. Alternative considered: extending `PdfFormsAccess` in
+  place — rejected, its placeholder semantics are relied on by existing templates.
 - **Decision: deadlines are ordinary case events.** Generated deadlines and follow-ups are
   `ArchiveFileReviewsBean` rows tagged with their origin (dunning case / measure and rule id) so
   they appear in the existing calendar, reminders and follow-up views, and can be recalculated when
   the underlying date changes. Alternative considered: a private deadline table — rejected, it
   would be invisible to the firm's normal work organisation.
-- **Decision: the EDA export is part of this change.** `implement-xjustiz-dunning-export` is
-  withdrawn; keeping the exporter separate would have split one workflow across two changes, since
-  the exporter needs the dunning case (court, Kennziffer, parties, amounts at application time) and
-  the inbound court messages need the same mapping. The exporter lives in `j-lawyer-server-common`
-  (`com.jdimension.jlawyer.xjustiz`: mapper, writer, validator) so EJB, REST and future tools share
-  it; JAXB classes are generated from the XSDs already committed under `j-lawyer-server-common/
-  xjustiz` **during the Maven build** (the withdrawn proposal still assumed the removed Ant build).
-  Validation is two-staged — application data first, then the produced document against the XSD —
-  and no unvalidated file is ever stored or returned.
+- **Decision: the dunning application is written in the EDA record format, not in XJustiz.** The
+  schema set committed under `j-lawyer-server-common/xjustiz` cannot carry an application:
+  `xjustiz_0600_mahn_3_3.xsd` declares exactly two messages, `aktenzeichenmitteilung.0600001`
+  ("vom Prozessgericht an das Mahngericht") and `uebergabe.0600002` ("von einem Mahngericht an ein
+  Prozessgericht"), both court-to-court, and its claim structure is a retrospective record of an
+  already issued Mahnbescheid — no interest elements, `kosten` holding only a `kostenbefreiung`
+  code rather than amounts, an `anspruchsnummer` the court assigns, and a required
+  `antragseingangsdatum` only the court knows. A law firm neither sends nor receives either
+  message. The applications and the court's replies travel in the EDA record format of the dunning
+  courts instead, so this change targets that format and the XJustiz schema set plays no part in
+  it. Alternative considered: emitting XJustiz anyway and hoping the courts accept it — rejected,
+  the schema has nowhere to put the data.
+- **Decision: the EDA exchange is part of this change.** The separate proposal
+  `implement-xjustiz-dunning-export` was withdrawn and removed from `openspec/changes/` without
+  being implemented; keeping the exporter separate would have split one workflow across two
+  changes, since the exporter needs the dunning case (court, Kennziffer, parties, amounts at
+  application time) and the inbound court messages need the same mapping. The codec lives in
+  `j-lawyer-server-common` (`com.jdimension.jlawyer.eda`: record model, writer, parser, mapper,
+  validator) so EJB, REST and future tools share it. It is hand-written: the format is a
+  fixed-length record layout, so there is no schema to generate from and the JAXB build step the
+  withdrawn proposal assumed falls away entirely. Validation is two-staged — application data
+  first, then a structural verification of the produced file — and no unverified file is ever
+  stored or returned.
 - **Decision: exports are ordinary case documents.** Each export is stored through the normal
   document path (naming rules, tag, case document list) and linked to the dunning case; re-exports
   add a document instead of overwriting, so the procedural history stays reconstructable. The EDA
@@ -98,18 +151,21 @@ Related infrastructure that is reused rather than rebuilt:
 
 ## Data Model Sketch
 
-New tables (Flyway, next free numbers after `V3_6_0_6`):
+New tables (Flyway, next free numbers after the highest existing migration, currently `V3_6_0_8`):
 
-- `claimledger_parties` — ledger id, role (CREDITOR/DEBTOR), sequence, contact reference,
-  representative, authorised representative, consumer flag.
+- `claimledger_parties` — ledger id, role (CREDITOR/DEBTOR), sequence, contact reference
+  (`contacts`, `ON DELETE SET NULL`), optional case-party reference (`case_contacts`) for the role
+  it was derived from, designation and address snapshot, representative, authorised representative,
+  consumer flag.
 - `claimledgers` additions — parent ledger id (sub-ledger), effective creditor count, allocation
   mode, surplus handling, consumer-loan flag, VAT handling, dunning stage state.
 - `enforcement_titles` — ledger id, type, issuing body, file number, dates (issue, clause,
   service), debtors covered, subject designation, limitation date.
 - `claimcomponents` additions — extended type enum, interest start mode ("fixed date" /
   "on service"), recurrence (monthly claims: start month, end month), origin reference.
-- `dunning_cases` — ledger id, court, court file number, Kennziffer, status, status date, amounts
-  snapshot, contested amount, export reference.
+- `dunning_cases` — ledger id, court, own reference (Teilnehmergeschäftszeichen, the key the court
+  echoes in every message), court file number (Gerichtsnummer), Kennziffer used, EDA format version
+  used, status, status date, amounts snapshot, contested amount, export reference.
 - `dunning_case_history` — status transitions with user, date and source.
 - `courts` — central court master data: official name, additional designation, XJustiz identifier
   from the code list `urn:xoev-de:xjustiz:codeliste:gds.gerichte`, postal and Postfach address,
@@ -135,14 +191,14 @@ New tables (Flyway, next free numbers after `V3_6_0_6`):
 - Ledger entries gain an origin reference (dunning case or measure) so bookings can be traced and
   reversed.
 
-Export code: `com.jdimension.jlawyer.xjustiz` in `j-lawyer-server-common` (mapper, writer,
-validator, parser used by the viewer) with generated JAXB classes; the client viewer panel sits
-next to the other document viewers.
+Exchange code: `com.jdimension.jlawyer.eda` in `j-lawyer-server-common` (record model, fixed-length
+writer, parser used by the import and the viewer, mapper, validator, CP-850 codec), hand-written;
+the client viewer panel sits next to the other document viewers.
 
 Services: `ClaimLedgerServiceRemote` (currently empty) takes the ledger operations that
 `ArchiveFileServiceRemote` accumulated plus the new ones; `DunningServiceRemote` and
-`EnforcementServiceRemote` are new. REST: `DunningEndpointV7`, `EnforcementEndpointV7`, and ledger
-endpoints; swagger is generated by the build.
+`EnforcementServiceRemote` are new. REST: `DunningEndpointV8`, `EnforcementEndpointV8`, and ledger
+endpoints in `org.jlawyer.io.rest.v8`, the current API version; swagger is generated by the build.
 
 ## Risks / Trade-offs
 
@@ -154,17 +210,29 @@ endpoints; swagger is generated by the build.
   range; using a form outside its validity warns the user; the version used is recorded.
 - **Scope.** This is large. Mitigation: five phases, each shippable on its own; phase 1 alone
   already improves the existing ledger.
+- **External data and approval are on the critical path.** Four data sets are not in the repository
+  and none of them can be derived from it — the main claim catalogue, the dunning court seed, the
+  fee tables and the official ZVFV form PDFs — and EDA participation additionally requires a
+  Kennziffer from the dunning court plus a test and approval exchange with the OLG Stuttgart
+  – IuK-Fachzentrum Justiz. A structurally valid file is not an accepted one until that test has
+  run. Mitigation: these are pulled out as their own work items (section 0 of the tasks) and
+  started alongside phase 1, not when the phase that consumes them begins.
 - **Multiple debtors.** Joint-and-several vs. single-debtor bookings complicate every total.
   Mitigation: model it in phase 1 (not retrofitted later), and keep per-debtor totals part of
   `ClaimLedgerTotals` from the start.
-- **XJustiz schema drift.** The shipped schema set is XJustiz 3.5.1; courts move to newer versions
-  and the accepted record can change. Mitigation: mapper and writer are isolated behind one
-  interface, the schema files stay data in `j-lawyer-server-common/xjustiz`, and tests validate
-  against the shipped XSD so a schema update surfaces as failing tests rather than as a rejected
-  application.
-- **Court acceptance.** A schema-valid file is not automatically an accepted application.
-  Mitigation: start from the minimum mandatory data set, keep the mapping documented next to the
-  code, and treat rejections as mapping bugs with a test each.
+- **EDA format drift.** The courts publish a validity table per record type and retire old
+  versions (only format 4 has been accepted since 1 November 2017); the Satzbeschreibungen are
+  amended regularly — the Mahnbescheid application's most recent change is dated 24 June 2026.
+  Mitigation: the record layouts are declared as data (field name, offset, length, type) rather
+  than hard-coded offsets, the version written is recorded on the dunning case, and tests assert
+  each layout against worked examples from the Satzbeschreibungen so an amendment surfaces as a
+  failing test rather than as a rejected application.
+- **Court acceptance.** A structurally valid file is not automatically an accepted application:
+  the courts reject records that break field order, exceed the maximum data volumes or carry
+  characters outside CP-850, and they answer with a monition (record type `20`) rather than a
+  parser error. Mitigation: start from the minimum mandatory data set, keep the mapping documented
+  next to the code, import and display monitions so a rejection is visible, and treat each
+  rejection as a mapping bug with a test.
 
 ## Migration Plan
 

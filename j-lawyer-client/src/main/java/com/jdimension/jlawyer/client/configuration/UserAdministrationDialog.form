@@ -102,7 +102,7 @@
                   <Component id="jScrollPane1" min="-2" pref="137" max="-2" attributes="0"/>
               </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Component id="jTabbedPane1" pref="552" max="32767" attributes="0"/>
+              <Component id="jTabbedPane1" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="cmdClose" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -225,17 +225,21 @@
                           <Component id="txtCompany" alignment="1" max="32767" attributes="0"/>
                           <Component id="txtName" alignment="0" max="32767" attributes="0"/>
                           <Component id="txtFirstName" alignment="1" max="32767" attributes="0"/>
-                          <Component id="txtDisplayName" alignment="1" max="32767" attributes="0"/>
                           <Component id="txtStreet" alignment="0" max="32767" attributes="0"/>
                           <Component id="txtAdjunct" alignment="0" max="32767" attributes="0"/>
                           <Component id="txtZipCode" alignment="0" max="32767" attributes="0"/>
                           <Component id="txtCity" alignment="0" max="32767" attributes="0"/>
                           <Component id="cmbCountryCodeInvoicing" alignment="0" pref="300" max="32767" attributes="0"/>
                           <Component id="jScrollPane7" alignment="1" pref="0" max="32767" attributes="0"/>
+                          <Group type="102" alignment="1" attributes="0">
+                              <Component id="txtDisplayName" max="32767" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="cmdPopulateFromCompanyProfile" min="-2" max="-2" attributes="0"/>
+                          </Group>
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="jSeparator3" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="jLabel13" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel33" min="-2" max="-2" attributes="0"/>
@@ -247,28 +251,25 @@
                           <Component id="jLabel39" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel40" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel41" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblDunningKennziffer" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" attributes="0">
-                              <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                  <Component id="txtTaxNr" max="32767" attributes="0"/>
-                                  <Component id="txtUstId" alignment="0" max="32767" attributes="0"/>
-                                  <Component id="txtIban" alignment="0" max="32767" attributes="0"/>
-                                  <Component id="txtBic" alignment="0" max="32767" attributes="0"/>
-                                  <Component id="txtBank" alignment="0" max="32767" attributes="0"/>
-                                  <Component id="txtWebsite" alignment="0" max="32767" attributes="0"/>
-                                  <Component id="txtMobile" alignment="0" max="32767" attributes="0"/>
-                                  <Component id="txtFax" alignment="0" max="32767" attributes="0"/>
-                                  <Component id="txtPhone" alignment="0" max="32767" attributes="0"/>
-                                  <Component id="txtEmail" alignment="0" min="-2" pref="300" max="-2" attributes="0"/>
-                              </Group>
-                              <EmptySpace type="separate" max="-2" attributes="0"/>
-                              <Component id="cmdPopulateFromCompanyProfile" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Component id="chkLawyer" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                          <Component id="txtTaxNr" max="32767" attributes="0"/>
+                          <Component id="txtUstId" alignment="0" max="32767" attributes="0"/>
+                          <Component id="txtIban" alignment="0" max="32767" attributes="0"/>
+                          <Component id="txtBic" alignment="0" max="32767" attributes="0"/>
+                          <Component id="txtBank" alignment="0" max="32767" attributes="0"/>
+                          <Component id="txtWebsite" alignment="0" max="32767" attributes="0"/>
+                          <Component id="txtMobile" alignment="0" max="32767" attributes="0"/>
+                          <Component id="txtFax" alignment="0" max="32767" attributes="0"/>
+                          <Component id="txtPhone" alignment="0" max="32767" attributes="0"/>
+                          <Component id="txtEmail" alignment="0" max="32767" attributes="0"/>
+                          <Component id="txtDunningKennziffer" min="-2" pref="300" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="174" max="32767" attributes="0"/>
+                      <EmptySpace pref="46" max="32767" attributes="0"/>
+                      <Component id="chkLawyer" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -281,12 +282,14 @@
                           <Group type="102" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="102" attributes="0">
-                                      <Component id="chkLawyer" min="-2" max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="3" attributes="0">
+                                          <Component id="lblDunningKennziffer" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="txtDunningKennziffer" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      </Group>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Group type="103" groupAlignment="3" attributes="0">
                                           <Component id="txtEmail" alignment="3" min="-2" max="-2" attributes="0"/>
                                           <Component id="jLabel13" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="cmdPopulateFromCompanyProfile" alignment="3" min="-2" max="-2" attributes="0"/>
                                       </Group>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Group type="103" groupAlignment="3" attributes="0">
@@ -334,10 +337,14 @@
                                           <Component id="jLabel41" alignment="3" min="-2" max="-2" attributes="0"/>
                                       </Group>
                                   </Group>
+                                  <Component id="chkLawyer" min="-2" max="-2" attributes="0"/>
                                   <Group type="102" alignment="0" attributes="0">
-                                      <Group type="103" groupAlignment="3" attributes="0">
-                                          <Component id="jLabel27" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="txtDisplayName" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Group type="103" groupAlignment="3" attributes="0">
+                                              <Component id="jLabel27" alignment="3" min="-2" max="-2" attributes="0"/>
+                                              <Component id="txtDisplayName" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          </Group>
+                                          <Component id="cmdPopulateFromCompanyProfile" alignment="0" min="-2" max="-2" attributes="0"/>
                                       </Group>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Group type="103" groupAlignment="3" attributes="0">
@@ -412,6 +419,20 @@
             <Component class="javax.swing.JCheckBox" name="chkLawyer">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Nutzer ist Anwalt"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkLawyerActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JLabel" name="lblDunningKennziffer">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Kennziffer:"/>
+                <Property name="toolTipText" type="java.lang.String" value="wird beim Mahngericht beantragt und identifiziert die einreichende Anw&#xe4;ltin bzw. den einreichenden Anwalt"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JTextField" name="txtDunningKennziffer">
+              <Properties>
+                <Property name="toolTipText" type="java.lang.String" value="wird beim Mahngericht beantragt und identifiziert die einreichende Anw&#xe4;ltin bzw. den einreichenden Anwalt"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JTextField" name="txtFirstName">
@@ -634,7 +655,7 @@
                               <Component id="jPanel15" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
-                      <EmptySpace pref="106" max="32767" attributes="0"/>
+                      <EmptySpace pref="60" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1223,7 +1244,7 @@
                           <Component id="pwdBeaCertificatePassword" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel16" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="305" max="32767" attributes="0"/>
+                      <EmptySpace pref="259" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>

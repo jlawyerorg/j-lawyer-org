@@ -668,10 +668,15 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
+import com.jdimension.jlawyer.persistence.EnforcementTitle;
+import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
+import com.jdimension.jlawyer.services.ClaimLedgerServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Container;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
@@ -680,6 +685,9 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
+
+    private final DecimalFormat currencyFormat = new DecimalFormat("#,##0.00");
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
 
     private static final Logger log = Logger.getLogger(ClaimLedgerEntryPanel.class.getName());
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
@@ -709,6 +717,89 @@ public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
         tooltip.append("</html>");
         this.lblName.setToolTipText(tooltip.toString());
 
+        updateStatus();
+    }
+
+    /**
+     * Fills the open total and the status shown on the card, so that the state of a claim can be
+     * read without opening it.
+     *
+     * A card must never break the case view: if the figures cannot be loaded, the badges stay empty
+     * and the reason is logged rather than shown as an error dialog.
+     */
+    private void updateStatus() {
+        this.lblOpenAmount.setText("");
+        this.lblOpenAmount.setToolTipText(null);
+        this.lblStatus.setText("");
+        this.lblStatus.setToolTipText(null);
+
+        if (this.ledger == null || this.ledger.getId() == null) {
+            return;
+        }
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ClaimLedgerServiceRemote ledgerService = locator.lookupClaimLedgerServiceRemote();
+
+            ClaimLedgerTotals totals = ledgerService.calculateClaimLedgerTotals(this.ledger.getId(), new Date());
+            if (totals != null) {
+                this.lblOpenAmount.setText(this.currencyFormat.format(totals.getOpenClaim()) + " EUR");
+                StringBuilder amountTip = new StringBuilder("<html>");
+                amountTip.append("Hauptforderung: ").append(this.currencyFormat.format(totals.getTotalMain())).append(" EUR<br/>");
+                amountTip.append("Kosten: ").append(this.currencyFormat.format(totals.getTotalCosts())).append(" EUR<br/>");
+                amountTip.append("Zinsen: ").append(this.currencyFormat.format(
+                        totals.getTotalInterestMain().add(totals.getTotalInterestCosts()))).append(" EUR<br/>");
+                amountTip.append("Zahlungen: ").append(this.currencyFormat.format(totals.getTotalPayments())).append(" EUR");
+                amountTip.append("</html>");
+                this.lblOpenAmount.setToolTipText(amountTip.toString());
+            }
+
+            List<EnforcementTitle> titles = ledgerService.getTitles(this.ledger.getId());
+            if (titles == null || titles.isEmpty()) {
+                this.lblStatus.setText("kein Titel");
+                this.lblStatus.setToolTipText("Für dieses Forderungskonto ist kein Vollstreckungstitel erfasst.");
+            } else {
+                EnforcementTitle earliest = null;
+                boolean allEnforceable = true;
+                for (EnforcementTitle t : titles) {
+                    if (!t.isEnforceable()) {
+                        allEnforceable = false;
+                    }
+                    if (t.getLimitationDate() != null
+                            && (earliest == null || earliest.getLimitationDate() == null
+                                || t.getLimitationDate().before(earliest.getLimitationDate()))) {
+                        earliest = t;
+                    }
+                }
+
+                StringBuilder status = new StringBuilder();
+                status.append(titles.size() == 1 ? "tituliert" : titles.size() + " Titel");
+                if (!allEnforceable) {
+                    // an incomplete title blocks enforcement, which the user should see on the card
+                    status.append(" (unvollständig)");
+                }
+                if (earliest != null && earliest.getLimitationDate() != null) {
+                    status.append(", Verjährung ").append(this.dateFormat.format(earliest.getLimitationDate()));
+                }
+                this.lblStatus.setText(status.toString());
+
+                StringBuilder statusTip = new StringBuilder("<html>");
+                for (EnforcementTitle t : titles) {
+                    statusTip.append(t.toString());
+                    List<String> missing = t.getMissingPrerequisites();
+                    if (!missing.isEmpty()) {
+                        statusTip.append(" - fehlt: ").append(String.join(", ", missing));
+                    }
+                    statusTip.append("<br/>");
+                }
+                statusTip.append("</html>");
+                this.lblStatus.setToolTipText(statusTip.toString());
+            }
+
+        } catch (Exception ex) {
+            log.error("Unable to determine the status of claim ledger " + this.ledger.getId(), ex);
+        }
     }
 
     /**
@@ -722,6 +813,9 @@ public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
 
         cmdOpen = new javax.swing.JButton();
         lblName = new javax.swing.JLabel();
+        cmdStatement = new javax.swing.JButton();
+        lblStatus = new javax.swing.JLabel();
+        lblOpenAmount = new javax.swing.JLabel();
         cmdDelete = new javax.swing.JButton();
 
         cmdOpen.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfind.png"))); // NOI18N
@@ -736,6 +830,21 @@ public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
         lblName.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/man.png"))); // NOI18N
         lblName.setText("<Name>");
         lblName.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+
+        cmdStatement.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/webexport.png"))); // NOI18N
+        cmdStatement.setToolTipText("Forderungsaufstellung");
+        cmdStatement.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdStatementActionPerformed(evt);
+            }
+        });
+
+        lblStatus.setFont(lblStatus.getFont().deriveFont(lblStatus.getFont().getSize()-1f));
+        lblStatus.setToolTipText("");
+
+        lblOpenAmount.setFont(lblOpenAmount.getFont().deriveFont(lblOpenAmount.getFont().getStyle() | java.awt.Font.BOLD));
+        lblOpenAmount.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblOpenAmount.setToolTipText("");
 
         cmdDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
         cmdDelete.setToolTipText("Beleg löschen");
@@ -754,8 +863,14 @@ public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
                 .addComponent(cmdOpen)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdDelete)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdStatement)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, 913, Short.MAX_VALUE)
+                .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, 613, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(lblStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(lblOpenAmount, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -765,7 +880,10 @@ public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(cmdOpen, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(cmdDelete, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(cmdStatement, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblOpenAmount, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -781,6 +899,15 @@ public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
         }
 
     }//GEN-LAST:event_cmdOpenActionPerformed
+
+    private void cmdStatementActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdStatementActionPerformed
+        ClaimStatementDialog dlg = new ClaimStatementDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+        dlg.setLedger(this.ledger);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+        // a statement may have been filed in the case, and the ledger records that it was
+        updateStatus();
+    }//GEN-LAST:event_cmdStatementActionPerformed
 
     private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed
         int response = JOptionPane.showConfirmDialog(this, "Forderungskonto '" + this.getClaimLedger().getName() + "' unwiderruflich löschen?", "Forderungskonto löschen", JOptionPane.YES_NO_OPTION);
@@ -804,7 +931,10 @@ public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdDelete;
     private javax.swing.JButton cmdOpen;
+    private javax.swing.JButton cmdStatement;
     private javax.swing.JLabel lblName;
+    private javax.swing.JLabel lblOpenAmount;
+    private javax.swing.JLabel lblStatus;
     // End of variables declaration//GEN-END:variables
 
     /**

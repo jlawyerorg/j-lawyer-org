@@ -295,6 +295,16 @@
             // When pasting, keep a broad tag whitelist rather than collapsing to text.
             pasteTagsWhitelist: 'p|div|span|font|br|a|ul|ol|li|table|tr|td|th|thead|tbody|tfoot|h[1-6]|blockquote|pre|strong|em|b|i|u|s|mark|img|hr',
 
+            // Do not re-order the DOM when content is loaded. SunEditor's consistency
+            // check hoists format elements (P, DIV, H1-6, LI) out of parents that are
+            // not range format elements (BLOCKQUOTE, UL, OL, TABLE, ...). In a quoted
+            // reply that pulls every <p> out of the mail's wrapper <div>s while the
+            // <ul>/<ol> lists stay behind, so all lists end up at the bottom of the
+            // quote. Everything else the sanitizer does (removing disallowed and empty
+            // nodes, wrapping stray list children in <li>, repairing table cells)
+            // stays active. See issue #3584.
+            strictHTMLValidation: false,
+
             // Default style for editor content
             defaultStyle: "DEFAULT_FONT_STYLE"
         });

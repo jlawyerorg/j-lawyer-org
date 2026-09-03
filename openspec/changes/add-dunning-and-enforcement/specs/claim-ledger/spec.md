@@ -2,9 +2,22 @@
 
 ### Requirement: Claim Ledger Parties
 
-A claim ledger SHALL store its own creditor (Gläubiger) and debtor (Schuldner) lists, each entry
-referencing a contact of the case (`ArchiveFileAddressesBean`) or, if not present there, a
-contact from the address book. Each party entry SHALL carry a sequence number, an optional legal
+A claim ledger SHALL store its own creditor (Gläubiger) and debtor (Schuldner) lists. Each entry
+SHALL reference the address book contact (`AddressBean`) that identifies the party, following the
+reference the invoicing model already uses, and deleting that contact SHALL NOT delete the party or
+the ledger. A party entry MAY additionally reference the case party record
+(`ArchiveFileAddressesBean`) it was derived from, so the party can be proposed from the case and
+the role it holds there stays visible; that reference SHALL be optional, because a ledger party
+need not be a party of the case, and losing it SHALL NOT change who the ledger runs against.
+
+Because an enforcement title stays enforceable for 30 years, a party entry SHALL additionally hold
+a snapshot of the designation and postal address as they were used towards the court. The snapshot
+SHALL be written when the party is first used in a dunning application, a title or an enforcement
+document, SHALL NOT be overwritten by later changes to the contact, and SHALL be what documents
+reproducing an earlier state resolve to. Current work SHALL use the referenced contact, so an
+address correction takes effect without touching the history.
+
+Each party entry SHALL carry a sequence number, an optional legal
 representative and an optional authorised representative (Bevollmächtigter). The ledger SHALL
 store the effective number of creditors separately from the number of creditor entries, because
 one contact may represent several creditors (e.g. spouses under one address), and fee increases
@@ -17,6 +30,19 @@ a single-debtor position.
 - **WHEN** a claim ledger is created for a case that has a client and an opponent
 - **THEN** the client is proposed as creditor and the opponent as debtor
 - **AND** the proposed number of creditors equals the number of creditor entries
+
+#### Scenario: Party outlives its contact
+
+- **WHEN** the address book contact referenced by a debtor is deleted
+- **THEN** the ledger, its bookings and the debtor entry remain
+- **AND** the debtor stays identifiable by the snapshot taken when the title was obtained
+
+#### Scenario: Address correction does not rewrite the title
+
+- **GIVEN** a debtor against whom a Vollstreckungsbescheid was obtained under a former address
+- **WHEN** the contact's address is corrected after the debtor has moved
+- **THEN** new enforcement documents use the corrected address
+- **AND** the designation and address recorded with the title stay as they were
 
 #### Scenario: Single-debtor cost booking
 
@@ -76,20 +102,31 @@ sub-ledgers SHALL be available as an explicit option in statements and lists.
 ### Requirement: Extended Claim Component Types
 
 The claim component types SHALL be extended beyond `MAIN_CLAIM`, `COST_INTEREST_BEARING` and
-`COST_NON_INTEREST_BEARING` by: pre-court costs of the creditor (vorgerichtliche Kosten, to be
-carried into the dunning application as "andere Nebenforderungen"), assessed costs (festgesetzte
-Kosten) which are interest-bearing under § 104 Abs. 1 S. 2 ZPO, interest arrears booked as a
-fixed amount (Zinsforderung/Zinsrückstand), and recurring monthly main claims (laufende monatliche
+`COST_NON_INTEREST_BEARING` by: the pre-court cost categories that the EDA dunning application
+distinguishes as separate record areas — the creditor's outlays (Auslagen), reminder costs
+(Mahnkosten), information costs (Auskunftskosten), bank return costs (Bankrücklastkosten),
+collection costs (Inkassokosten), the pre-court lawyer's fee under Nr. 2300 VV RVG, and other
+ancillary claims (andere Nebenforderungen) — assessed costs (festgesetzte Kosten) which are
+interest-bearing under § 104 Abs. 1 S. 2 ZPO, interest arrears booked as a fixed amount
+(Zinsforderung/Zinsrückstand), and recurring monthly main claims (laufende monatliche
 Hauptforderung, e.g. maintenance) with a start month, an optional end month and an amount that is
-posted as a due item per month. Converting non-interest-bearing costs into assessed
-interest-bearing costs after a cost assessment order SHALL be supported as a single operation
-that removes or reduces the original positions and records the conversion.
+posted as a due item per month. Keeping these categories apart is a requirement of the dunning
+application, which will not accept them merged into one position. Converting non-interest-bearing
+costs into assessed interest-bearing costs after a cost assessment order SHALL be supported as a
+single operation that removes or reduces the original positions and records the conversion.
 
 #### Scenario: Monthly maintenance claim
 
 - **WHEN** a recurring monthly main claim of 350.00 EUR starting 2026-01 without end month exists
 - **THEN** the ledger shows a due item of 350.00 EUR for every month up to the key date
 - **AND** the totals designate the claim as continuing monthly
+
+#### Scenario: Pre-court costs kept in their categories
+
+- **WHEN** reminder charges of 10.00 EUR and a pre-court Nr. 2300 VV RVG fee of 480.20 EUR are
+  booked on one ledger
+- **THEN** each is stored under its own component type
+- **AND** the dunning application can place them in the record areas the EDA format requires
 
 #### Scenario: Conversion after a cost assessment order
 
@@ -98,6 +135,41 @@ that removes or reduces the original positions and records the conversion.
 - **THEN** the original cost positions are removed or reduced accordingly
 - **AND** a single assessed-cost component of 402.50 EUR with the given interest rule exists
 - **AND** the conversion is recorded in the ledger history
+
+### Requirement: Main Claim Classification
+
+A main claim SHALL be classifiable by a number of the main claim catalogue the dunning courts
+publish (Hauptforderungskatalog), or SHALL be marked as a free-text claim where the catalogue holds
+no fitting entry. The catalogue SHALL be shipped as maintainable reference data — number,
+designation and the additional entries the number requires — so it can be updated without a
+software release, and the classification SHALL be offered wherever a main claim is created or
+edited, with the free-text designation remaining available.
+
+Where a catalogue number requires further data, the ledger SHALL hold it with the claim: the postal
+code and place of the property for residential and condominium claims (catalogue numbers 17, 19,
+20 and 90), the contract designation for damages from contract (28), and the account, meter or
+service details the catalogue demands for the numbers that require them. The classification and
+these additions SHALL be validated when a dunning application is prepared, because the EDA format
+rejects a catalogued claim whose required additional record is missing.
+
+#### Scenario: Claim classified by catalogue number
+
+- **WHEN** a main claim "Kaufpreis Warenlieferung" is created and the matching catalogue number is
+  selected
+- **THEN** the number is stored with the claim alongside its designation
+- **AND** the dunning application can write it as a catalogued claim
+
+#### Scenario: Claim without a fitting catalogue entry
+
+- **WHEN** no catalogue number fits the claim
+- **THEN** the claim is marked as a free-text claim with its designation
+- **AND** the dunning application writes it as a "sonstiger Anspruch"
+
+#### Scenario: Catalogue number demanding additional data
+
+- **WHEN** a main claim is classified with a catalogue number for a residential property claim
+- **THEN** the postal code and place of the property are requested and stored with the claim
+- **AND** preparing a dunning application without them reports the missing entry
 
 ### Requirement: Interest Starting on Service
 
@@ -138,6 +210,30 @@ deviates from the statutory order.
   claim carries a higher interest rate
 - **THEN** the proposal is accepted and stored
 - **AND** it is marked as deviating from § 366 Abs. 2 BGB with an explanatory warning text
+
+### Requirement: Single Interest and Balance Calculation Path
+
+Interest accrual, component balances and ledger totals SHALL be computed by exactly one
+implementation, shared by the ledger totals, the payment split, the claim statement, the
+enforcement itemisation and every export. The system SHALL NOT keep a second, simplified
+calculation beside it, and SHALL NOT use a hard-coded base rate anywhere: the base rate SHALL
+always be resolved from `interest_base` for the period being computed, splitting the period at
+every base-rate and principal change. Where two implementations exist today, they SHALL be
+consolidated before the statement and the itemisation are built on them.
+
+#### Scenario: Payment split and totals agree
+
+- **WHEN** a payment is allocated and the ledger totals are computed for the same key date
+- **THEN** the interest amounts both use are identical
+- **AND** both were derived from the base rate stored for that period, not from a constant
+
+#### Scenario: Base rate change inside the interest period
+
+- **GIVEN** a component bearing interest of 5 percentage points above the base rate across a date
+  on which the base rate changes
+- **WHEN** interest is computed to a key date after that change
+- **THEN** the period is split at the change date and each part uses the rate valid for it
+- **AND** the statement, the itemisation and the totals report the same amount
 
 ### Requirement: Claim Statement Document
 
