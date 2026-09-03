@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,103 +660,117 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package org.jlawyer.test.server.ejb;
 
-import java.util.Comparator;
-import java.util.Date;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
-import javax.ejb.Stateless;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import static org.junit.Assert.assertTrue;
+import org.junit.Assume;
+import org.junit.Test;
 
 /**
+ * Checks that every facade calls a named query with the parameters that query actually declares.
+ *
+ * The mismatch this guards against does not show up when the code is written, nor when it is
+ * compiled, nor when the server starts: JPA only complains at the moment the query runs, with
+ * "Could not locate named parameter". A facade method that is called rarely - assembling a claim
+ * statement, say - can therefore sit broken for a long time.
+ *
+ * It also catches the more dangerous half of the same slip. Where a method calls the wrong named
+ * query, the surplus parameter makes it fail loudly; but a *missing* parameter means a condition of
+ * the query silently never applies, and the caller gets more rows than it asked for.
+ *
+ * Declared parameters are read from the annotations, which are on the classpath. Set parameters are
+ * read from the facade sources, because no other place records them.
  *
  * @author jens
  */
-@Stateless
-public class ClaimLedgerEntryFacade extends AbstractFacade<ClaimLedgerEntry> implements ClaimLedgerEntryFacadeLocal {
+public class NamedQueryParameterTest {
 
-    @PersistenceContext(unitName = "j-lawyer-server-ejbPU")
-    private EntityManager em;
+    private static final Pattern QUERY_CALL = Pattern.compile(
+            "createNamedQuery\\(\"([^\"]+)\"\\)((?:\\s*\\.setParameter\\(\\s*\"\\w+\"[^;]*?\\))*)",
+            Pattern.DOTALL);
+    private static final Pattern SET_PARAM = Pattern.compile("setParameter\\(\\s*\"(\\w+)\"");
+    private static final Pattern QUERY_PARAM = Pattern.compile(":(\\w+)");
 
-    @Override
-    protected EntityManager getEntityManager() {
-        return em;
-    }
+    /**
+     * The named queries of the entities, by name, with the parameters they declare.
+     */
+    private Map<String, Set<String>> declaredQueries() throws IOException {
+        Map<String, Set<String>> queries = new LinkedHashMap<>();
+        File entities = new File(basedir(), "../../j-lawyer-server-entities/src/main/java/"
+                + "com/jdimension/jlawyer/persistence");
+        Assume.assumeTrue("entity sources not found at " + entities, entities.isDirectory());
 
-    public ClaimLedgerEntryFacade() {
-        super(ClaimLedgerEntry.class);
-    }
-    
-    @Override
-    public List<ClaimLedgerEntry> findByLedger(ClaimLedger ledger) {
-        
-        return (List<ClaimLedgerEntry>) em.createNamedQuery("ClaimLedgerEntry.findByLedger").setParameter("ledger", ledger).getResultList();
-        
-    }
-    
-    @Override
-    public List<ClaimLedgerEntry> findByComponent(ClaimComponent component) {
-        
-        return (List<ClaimLedgerEntry>) em.createNamedQuery("ClaimLedgerEntry.findByComponent").setParameter("component", component).getResultList();
-        
-    }
-    
-    @Override
-    public List<ClaimLedgerEntry> findByOrigin(String originReference) {
-        return (List<ClaimLedgerEntry>) em.createNamedQuery("ClaimLedgerEntry.findByOrigin").setParameter("originReference", originReference).getResultList();
-    }
-
-    @Override
-    public ClaimLedgerEntry findReversalOf(ClaimLedgerEntry entry) {
-        List<ClaimLedgerEntry> found = em.createNamedQuery("ClaimLedgerEntry.findReversalOf").setParameter("reversalOf", entry).getResultList();
-        return found.isEmpty() ? null : found.get(0);
+        Pattern named = Pattern.compile(
+                "@NamedQuery\\(\\s*name\\s*=\\s*\"([^\"]+)\"\\s*,\\s*query\\s*=\\s*\"([^\"]+)\"",
+                Pattern.DOTALL);
+        for (File file : entities.listFiles((d, n) -> n.endsWith(".java"))) {
+            Matcher m = named.matcher(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8));
+            while (m.find()) {
+                Set<String> params = new LinkedHashSet<>();
+                Matcher p = QUERY_PARAM.matcher(m.group(2));
+                while (p.find()) {
+                    params.add(p.group(1));
+                }
+                queries.put(m.group(1), params);
+            }
+        }
+        return queries;
     }
 
-    @Override
-    public List<ClaimLedgerEntry> findByComponentAndType(ClaimComponent component, LedgerEntryType type) {
-        
-        return (List<ClaimLedgerEntry>) em.createNamedQuery("ClaimLedgerEntry.findByComponentAndType").setParameter("component", component).setParameter("type", type).getResultList();
-        
+    private File basedir() {
+        String dir = System.getProperty("basedir");
+        return dir == null ? new File(".").getAbsoluteFile().getParentFile() : new File(dir);
     }
-    
-    @Override
-    public List<ClaimLedgerEntry> findByComponentAndTypeUpToDate(ClaimComponent component, LedgerEntryType type, Date upToDate) {
 
-        return (List<ClaimLedgerEntry>) em.createNamedQuery("ClaimLedgerEntry.findByComponentAndTypeUpToDate")
-                .setParameter("component", component)
-                .setParameter("type", type)
-                .setParameter("upToDate", upToDate)
-                .getResultList();
+    @Test
+    public void everyFacadeSetsExactlyTheParametersItsQueryDeclares() throws Exception {
 
+        Map<String, Set<String>> queries = declaredQueries();
+        Assume.assumeFalse("no named queries found", queries.isEmpty());
+
+        File facades = new File(basedir(), "src/main/java/com/jdimension/jlawyer/persistence");
+        Assume.assumeTrue("facade sources not found at " + facades, facades.isDirectory());
+
+        List<String> mismatches = new ArrayList<>();
+        for (File file : facades.listFiles((d, n) -> n.endsWith("Facade.java"))) {
+            String src = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+            Matcher call = QUERY_CALL.matcher(src);
+            while (call.find()) {
+                String name = call.group(1);
+                Set<String> declared = queries.get(name);
+                if (declared == null) {
+                    // the query is built elsewhere or the name is composed; nothing to compare
+                    continue;
+                }
+                Set<String> set = new LinkedHashSet<>();
+                Matcher p = SET_PARAM.matcher(call.group(2));
+                while (p.find()) {
+                    set.add(p.group(1));
+                }
+                if (set.isEmpty()) {
+                    // parameters passed through constants rather than literals - not readable here
+                    continue;
+                }
+                if (!set.equals(declared)) {
+                    mismatches.add(file.getName() + " → " + name
+                            + ": Query erklärt " + declared + ", gesetzt wird " + set);
+                }
+            }
+        }
+
+        assertTrue("Named queries whose parameters do not match the call:\n  "
+                + String.join("\n  ", mismatches), mismatches.isEmpty());
     }
-    
-    @Override
-    public ClaimLedgerEntry findLatestInterestEntry(ClaimComponent component) {
-        List<ClaimLedgerEntry> entries=this.findByComponent(component);
-        return entries.stream()
-                  .filter(e -> e.getType() == LedgerEntryType.INTEREST)
-                  .max(Comparator.comparing(ClaimLedgerEntry::getEntryDate))
-                  .orElse(null);
-        
-    }
-    
-    @Override
-    public ClaimLedgerEntry findLatestEntry(ClaimComponent component) {
-        List<ClaimLedgerEntry> entries=this.findByComponent(component);
-        return entries.stream()
-                  .max(Comparator.comparing(ClaimLedgerEntry::getEntryDate))
-                  .orElse(null);
-        
-    }
-    
-    @Override
-    public ClaimLedgerEntry findEarliestEntry(ClaimComponent component) {
-        List<ClaimLedgerEntry> entries=this.findByComponent(component);
-        return entries.stream()
-                  .min(Comparator.comparing(ClaimLedgerEntry::getEntryDate))
-                  .orElse(null);
-        
-    }
-    
 }
