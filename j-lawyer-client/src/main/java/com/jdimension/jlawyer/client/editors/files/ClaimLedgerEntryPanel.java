@@ -813,10 +813,10 @@ public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
 
         cmdOpen = new javax.swing.JButton();
         lblName = new javax.swing.JLabel();
+        cmdStatement = new javax.swing.JButton();
         lblStatus = new javax.swing.JLabel();
         lblOpenAmount = new javax.swing.JLabel();
         cmdDelete = new javax.swing.JButton();
-        cmdStatement = new javax.swing.JButton();
 
         cmdOpen.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfind.png"))); // NOI18N
         cmdOpen.setToolTipText("einsehen / bearbeiten");
@@ -831,13 +831,19 @@ public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
         lblName.setText("<Name>");
         lblName.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
 
+        cmdStatement.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/webexport.png"))); // NOI18N
+        cmdStatement.setToolTipText("Forderungsaufstellung");
+        cmdStatement.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdStatementActionPerformed(evt);
+            }
+        });
+
         lblStatus.setFont(lblStatus.getFont().deriveFont(lblStatus.getFont().getSize()-1f));
-        lblStatus.setText("");
         lblStatus.setToolTipText("");
 
         lblOpenAmount.setFont(lblOpenAmount.getFont().deriveFont(lblOpenAmount.getFont().getStyle() | java.awt.Font.BOLD));
         lblOpenAmount.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        lblOpenAmount.setText("");
         lblOpenAmount.setToolTipText("");
 
         cmdDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
@@ -845,14 +851,6 @@ public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
         cmdDelete.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdDeleteActionPerformed(evt);
-            }
-        });
-
-        cmdStatement.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
-        cmdStatement.setToolTipText("Forderungsaufstellung");
-        cmdStatement.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdStatementActionPerformed(evt);
             }
         });
 

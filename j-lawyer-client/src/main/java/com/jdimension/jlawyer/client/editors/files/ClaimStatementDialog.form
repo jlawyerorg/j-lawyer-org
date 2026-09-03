@@ -84,9 +84,6 @@
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="txtKeyDate">
-      <Properties>
-        <Property name="text" type="java.lang.String" value=""/>
-      </Properties>
     </Component>
     <Component class="javax.swing.JButton" name="cmdSelectKeyDate">
       <Properties>
@@ -140,7 +137,7 @@
     <Component class="javax.swing.JButton" name="cmdExportCsv">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/icons16/kate.png"/>
+          <Image iconType="3" name="/icons16/calc.png"/>
         </Property>
         <Property name="text" type="java.lang.String" value="CSV exportieren"/>
       </Properties>
@@ -151,7 +148,7 @@
     <Component class="javax.swing.JButton" name="cmdStorePdf">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/icons/printer.png"/>
+          <Image iconType="3" name="/icons16/fileicons/file_type_pdf.png"/>
         </Property>
         <Property name="text" type="java.lang.String" value="Als PDF in Akte ablegen"/>
       </Properties>
