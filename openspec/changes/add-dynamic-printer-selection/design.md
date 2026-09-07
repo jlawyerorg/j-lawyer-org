@@ -1,0 +1,158 @@
+## Context
+
+The desktop client's archive-file context menu contains the existing action `drucken
+(Standarddrucker)`. `ArchiveFilePanel` prepares the selected supported documents and
+delegates to `LauncherFactory.directPrint(...)`. The current PDF path resolves the
+default `PrintService`; the LibreOffice path invokes printing to the default printer.
+
+The target machines are ordinary Windows and other desktop installations. Their set of
+installed printers may change when a laptop moves between locations, and it may also
+contain many stale entries. A solution must therefore avoid treating a saved printer as
+proof that the printer is currently available, while still keeping the frequent choices
+short enough for one-click use.
+
+## Goals / Non-Goals
+
+**Goals**
+- Keep default-printer direct printing as the fastest and unchanged path.
+- Offer one-click entries for a small user-controlled set of currently available
+  printers.
+- Offer access to every currently available printer without putting the full list in the
+  context menu.
+- Keep all configuration and implementation client-side.
+- Fail visibly instead of redirecting a named print job to an unintended printer.
+- Keep the change small, reviewable, and independently testable.
+
+**Non-Goals**
+- Defining or persisting a j-lawyer-specific default printer.
+- Persisting printer driver details, capabilities, print services, or printer
+  availability.
+- Configuring duplex, trays, paper size, resolution, or other printer properties.
+- Changing the separate `als Fax senden` action or the VoIP/fax integration.
+- Adding a server setting, database field, REST endpoint, background service, network
+  listener, or external dependency.
+- Redesigning the document context menu outside the print entries.
+
+## Decisions
+
+### Decision: Live printer discovery is authoritative
+
+Printer services are queried from the operating system every time the relevant document
+context menu is opened, every time the all-printers chooser is opened, and every time the
+quick-access settings dialog is opened. The resulting current list is the only authority
+for whether a printer can be offered or resolved.
+
+No cached `PrintService`, driver data, capability data, or availability flag is written
+to client settings.
+
+### Decision: Store only device-local quick-access names
+
+The optional quick-access preference is an allow-list of printer service names stored by
+`ClientSettings` on the individual client, using its existing string-array mechanism.
+This is a display preference, not a printer configuration. It is not sent to the server
+and is not shared between client installations.
+
+The quick entries shown in the document context menu are the intersection of:
+
+1. printer names currently returned by the operating system; and
+2. names selected for local quick access.
+
+The current default printer is not duplicated as a quick-access entry even if its name
+is selected. Duplicate printer names are collapsed, and entries are sorted
+case-insensitively for predictable display.
+
+**Alternatives considered**
+- *Show every installed printer directly in the context menu.* Rejected because stale
+  and rarely used Windows printer entries can make the context menu too long.
+- *Show only a fixed maximum number of printers.* Rejected because the required printer
+  could be omitted arbitrarily.
+- *Persist one or more configured printers and use them without live resolution.*
+  Rejected because a laptop may see different printers at different locations.
+- *Do not persist any preference and always open a chooser.* Viable and simpler, but it
+  does not provide the requested one-click path for a fax or secondary office printer.
+
+### Decision: Unavailable favourites remain manageable but never actionable
+
+The settings dialog shows the union of currently discovered printers and previously
+selected quick-access names. A previously selected name that is not in the current live
+list is marked `derzeit nicht verfügbar`; the user can remove it, but it remains selected
+by default so that it reappears automatically when the laptop returns to that location.
+
+The settings dialog does not permit arbitrary free-text printer names. A new quick entry
+can only be selected from printers returned by the operating system at that time.
+
+### Decision: Flat quick actions plus an on-demand full chooser
+
+The existing context-menu action remains unchanged. Directly adjacent to it, the client
+adds:
+
+- zero or more `drucken (<printer name>)` actions for currently available quick-access
+  printers; and
+- one `drucken (anderen Drucker auswählen …)` action.
+
+The last action opens a modal single-selection list of all currently available printers.
+Cancelling it has no effect. If no printer is available, the chooser action is disabled
+or reports that no printer is currently available without starting document retrieval or
+printing.
+
+### Decision: Resolve the target before dispatch and never silently fall back
+
+The chosen printer name is resolved against a fresh live printer list before a print
+batch starts. The resolved target applies to all selected supported documents. If it
+cannot be resolved, the batch is not intentionally sent to another printer and the user
+receives a clear error.
+
+For PDFs, the existing PDFBox/Java printing path uses the selected `PrintService`. For
+documents printed through LibreOffice, the invocation uses LibreOffice's named-printer
+argument instead of its default-printer argument. Printer names are passed as structured
+process arguments, never interpolated into a shell command.
+
+The default-printer action continues to call the existing default path. The explicit
+target overload is additive so unrelated callers retain their current semantics.
+
+### Decision: Keep Swing/NetBeans form compatibility
+
+Any changed Swing component with a matching `.form` file is updated in lockstep. Dynamic
+menu entries are rebuilt in code without replacing or serializing the static existing
+default-printer menu item.
+
+## Risks / Trade-offs
+
+- **Risk:** Java and LibreOffice may expose or interpret a printer name differently on a
+  particular operating system. **Mitigation:** use the exact live service name, keep PDF
+  and LibreOffice tests separate, and treat a rejected target as an error without
+  fallback.
+- **Risk:** A printer can disappear after live resolution or a multi-document batch can
+  fail partway through. **Mitigation:** resolve before dispatch, report the failing target
+  and document, and never retry on the default printer. The UI must not claim atomicity
+  for physical printing.
+- **Risk:** A long printer name can make the context menu wide. **Mitigation:** only
+  user-selected names are direct entries; the implementation may apply the project's
+  existing UI truncation convention while preserving the full name in a tooltip.
+- **Risk:** A stale favourite remains in settings. **Mitigation:** mark it unavailable
+  and allow removal; never show it as an active document-menu action.
+- **Risk:** Editing generated Swing code without its form metadata breaks the NetBeans
+  GUI Builder. **Mitigation:** change each `.java`/`.form` pair together and inspect both
+  in review.
+
+## Migration Plan
+
+1. Add the new client-local setting with an empty default.
+2. Add live printer discovery and named-target resolution behind a small client utility.
+3. Extend the print launcher with an additive explicit-target path.
+4. Add quick-access settings and dynamic document-menu entries.
+5. Verify default printing, named PDF printing, named LibreOffice printing, stale
+   favourites, location changes, cancellation, and error handling in an isolated client
+   test environment.
+
+Rollback consists of removing the new client UI and explicit-target path. A leftover
+client setting is inert and can be ignored; no server or data migration is required.
+
+## Open Questions
+
+- **Maintainer approval required:** Is persisting only the device-local quick-access
+  printer names acceptable, provided every visible entry and every print dispatch is
+  resolved against the current operating-system printer list?
+- Should unavailable quick-access names be displayed in the first implementation as
+  disabled settings rows, or is a separate compact `nicht verfügbar` section preferred?
+
