@@ -7,13 +7,13 @@ Persisted preference data MUST NOT be treated as evidence that a printer is curr
 available.
 
 #### Scenario: Printer becomes available after a location change
-- **WHEN** the operating system reports a quick-access printer that was unavailable when
+- **WHEN** the operating system reports a favourite printer that was unavailable when
   the document context menu was previously opened
 - **THEN** reopening the context menu shows that printer without requiring a client
   restart or a settings change
 
 #### Scenario: Printer becomes unavailable
-- **WHEN** the operating system no longer reports a saved quick-access printer
+- **WHEN** the operating system no longer reports a saved favourite printer
 - **THEN** reopening the document context menu no longer shows an actionable entry for
   that printer
 
@@ -21,76 +21,76 @@ available.
 The desktop client SHALL retain the existing `drucken (Standarddrucker)` action and SHALL
 continue to resolve the operating-system default printer when that action is invoked.
 
-#### Scenario: Direct print with no quick-access configuration
-- **WHEN** no quick-access printer names are stored and the user invokes `drucken
+#### Scenario: Direct print with no favourite configuration
+- **WHEN** no favourite printer names are stored and the user invokes `drucken
   (Standarddrucker)` for supported selected documents
 - **THEN** the documents follow the existing default-printer print path
 
 #### Scenario: Default printer is also a favourite
-- **WHEN** the current default printer's name is stored in the quick-access list
+- **WHEN** the current default printer's name is stored in the favourite list
 - **THEN** the context menu keeps the standard-printer action and does not add a duplicate
-  named quick action for that printer
+  named favourite action for that printer
 
-### Requirement: Device-local quick-access printer names
-The desktop client SHALL allow the user to select printer names for quick access from the
-printers currently reported by the operating system. It SHALL store only those names in
-local client settings and MUST NOT store printer services, driver configuration,
-capabilities, or availability on the server or in local settings.
+### Requirement: Device-local favourite printer names
+The desktop client SHALL allow the user to select printer names as favourites from the
+printers currently reported by the operating system and MAY allow an optional local
+display label for each selected printer. It SHALL store only those names and display
+labels in local client settings and MUST NOT store printer services, driver
+configuration, capabilities, or availability on the server or in local settings.
 
-#### Scenario: Configure an available quick-access printer
-- **WHEN** the user selects a currently available printer in the quick-access settings
+#### Scenario: Configure an available favourite printer
+- **WHEN** the user selects a currently available printer in the favourites settings
   and saves the dialog
 - **THEN** the printer name is stored on that client and appears as a direct print action
   while the same name is currently available
 
+#### Scenario: Configure a display label
+- **WHEN** the user gives a selected favourite printer the display label `Faxdrucker`
+- **THEN** the document context menu uses `Faxdrucker` as the visible text while print
+  dispatch still resolves the target by the stored operating-system printer name
+
 #### Scenario: Different client installations
 - **WHEN** the same j-lawyer user uses two client installations with different local
-  quick-access selections
-- **THEN** each installation shows its own quick-access entries and neither selection is
+  favourite selections
+- **THEN** each installation shows its own favourite entries and neither selection is
   synchronized through the server
 
 #### Scenario: Previously selected printer is currently unavailable
-- **WHEN** a saved quick-access name is absent from the current operating-system printer
-  list and the user opens the quick-access settings
+- **WHEN** a saved favourite name is absent from the current operating-system printer
+  list and the user opens the favourites settings
 - **THEN** the name is marked as currently unavailable, remains saved unless the user
   removes it, and cannot be selected for printing
 
-### Requirement: Bounded dynamic document context menu
-The desktop client SHALL add a direct print action only for each currently available
-quick-access printer and SHALL provide a separate on-demand action for all other current
-printers. It MUST NOT place the complete operating-system printer list directly in the
+### Requirement: Bounded opt-in document context menu
+The desktop client SHALL keep the current single default-printer menu entry while no
+currently available non-default favourite printer exists. It SHALL show a `Drucken`
+submenu only when at least one currently available non-default favourite printer
+exists. It MUST NOT place the complete operating-system printer list directly in the
 document context menu.
+
+#### Scenario: No favourites configured
+- **WHEN** the operating system reports multiple printers and no favourite printer
+  names are stored
+- **THEN** the document context menu keeps the existing `drucken (Standarddrucker)` action
+  and does not add a printer submenu or any named printer actions
+
+#### Scenario: No available non-default favourite
+- **WHEN** the only stored favourite printer is currently unavailable or is the current
+  default printer
+- **THEN** the document context menu keeps the existing `drucken (Standarddrucker)` action
+  and does not add a printer submenu or any named printer actions
 
 #### Scenario: Many installed printers
 - **WHEN** the operating system reports many printers but only two non-default printers
-  are selected and currently available for quick access
-- **THEN** the document context menu contains direct named actions for those two printers
-  and the separate all-printers chooser action, but no direct actions for the remaining
-  printers
+  are selected and currently available as favourites
+- **THEN** the document context menu contains a `Drucken` submenu with the standard
+  printer action first and direct named actions for those two printers, but no direct
+  actions for the remaining printers
 
 #### Scenario: Context menu is reopened repeatedly
 - **WHEN** the user opens and closes the same document context menu multiple times
 - **THEN** the dynamic print actions reflect the latest printer list and do not accumulate
   duplicate menu entries or action handlers
-
-### Requirement: On-demand selection from current printers
-The desktop client SHALL provide `drucken (anderen Drucker auswählen …)` to display a
-single-selection chooser containing all printers currently reported by the operating
-system in deterministic, case-insensitive name order.
-
-#### Scenario: Select another printer
-- **WHEN** the user opens the chooser, selects a current printer, and confirms
-- **THEN** the selected supported documents are sent through the explicit named-printer
-  path for that printer
-
-#### Scenario: Cancel printer selection
-- **WHEN** the user cancels the chooser
-- **THEN** no document is retrieved for printing and no print job is started
-
-#### Scenario: No current printer
-- **WHEN** the operating system reports no available printer
-- **THEN** the client disables the chooser action or displays a clear no-printer message
-  and does not start a print job
 
 ### Requirement: Explicit named-printer dispatch without fallback
 The desktop client SHALL resolve an explicitly selected printer by its exact live service
@@ -131,4 +131,3 @@ handling except where target-specific errors require clearer wording.
 - **WHEN** a named print attempt finishes successfully or with an error
 - **THEN** temporary files are cleaned up according to the existing direct-print lifecycle
   and no document content is persisted in the printer preference
-

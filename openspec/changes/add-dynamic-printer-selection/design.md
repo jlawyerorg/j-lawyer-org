@@ -17,8 +17,9 @@ short enough for one-click use.
 - Keep default-printer direct printing as the fastest and unchanged path.
 - Offer one-click entries for a small user-controlled set of currently available
   printers.
-- Offer access to every currently available printer without putting the full list in the
-  context menu.
+- Keep the document context menu unchanged unless the user has configured at least one
+  currently available non-default favourite printer.
+- Allow user-friendly local display labels for favourite printers.
 - Keep all configuration and implementation client-side.
 - Fail visibly instead of redirecting a named print job to an unintended printer.
 - Keep the change small, reviewable, and independently testable.
@@ -32,34 +33,43 @@ short enough for one-click use.
 - Adding a server setting, database field, REST endpoint, background service, network
   listener, or external dependency.
 - Redesigning the document context menu outside the print entries.
+- Adding a general `print to any installed printer` chooser to the archive-file context
+  menu.
 
 ## Decisions
 
 ### Decision: Live printer discovery is authoritative
 
 Printer services are queried from the operating system every time the relevant document
-context menu is opened, every time the all-printers chooser is opened, and every time the
-quick-access settings dialog is opened. The resulting current list is the only authority
-for whether a printer can be offered or resolved.
+context menu is opened, every time the printer favourites settings dialog is opened, and
+every time an explicit named target is resolved. The resulting current list is the only
+authority for whether a printer can be offered or resolved.
 
 No cached `PrintService`, driver data, capability data, or availability flag is written
 to client settings.
 
-### Decision: Store only device-local quick-access names
+### Decision: Store only device-local favourites
 
-The optional quick-access preference is an allow-list of printer service names stored by
-`ClientSettings` on the individual client, using its existing string-array mechanism.
-This is a display preference, not a printer configuration. It is not sent to the server
-and is not shared between client installations.
+The optional favourite preference is an allow-list of printer service names with optional
+display labels, stored by `ClientSettings` on the individual client. This is a local UI
+preference, not a printer configuration. It is not sent to the server and is not shared
+between client installations.
 
-The quick entries shown in the document context menu are the intersection of:
+The favourite entries shown in the document context menu are the intersection of:
 
 1. printer names currently returned by the operating system; and
-2. names selected for local quick access.
+2. names selected as local favourites.
 
-The current default printer is not duplicated as a quick-access entry even if its name
-is selected. Duplicate printer names are collapsed, and entries are sorted
-case-insensitively for predictable display.
+The current default printer is not duplicated as a favourite entry even if its name is
+selected. If this leaves no currently available non-default favourite, the archive-file
+context menu remains in its current shape with only `drucken (Standarddrucker)`.
+Duplicate printer names are collapsed, and entries are sorted case-insensitively for
+predictable display.
+
+Optional display labels are used only for the menu text and settings UI. The actual print
+target is always resolved by the stored operating-system printer service name. Duplicate
+or blank labels are handled by falling back to the real printer name or otherwise
+disambiguating according to the existing UI conventions.
 
 **Alternatives considered**
 - *Show every installed printer directly in the context menu.* Rejected because stale
@@ -68,32 +78,40 @@ case-insensitively for predictable display.
   could be omitted arbitrarily.
 - *Persist one or more configured printers and use them without live resolution.*
   Rejected because a laptop may see different printers at different locations.
-- *Do not persist any preference and always open a chooser.* Viable and simpler, but it
-  does not provide the requested one-click path for a fax or secondary office printer.
+- *Always offer an on-demand chooser for every current printer.* Rejected for the first
+  implementation because it changes the context menu even for users who have not opted
+  into favourite printers and can turn a one-click workflow into a search task on systems
+  with many stale printer entries.
 
 ### Decision: Unavailable favourites remain manageable but never actionable
 
 The settings dialog shows the union of currently discovered printers and previously
-selected quick-access names. A previously selected name that is not in the current live
-list is marked `derzeit nicht verfügbar`; the user can remove it, but it remains selected
-by default so that it reappears automatically when the laptop returns to that location.
+selected favourite names. A previously selected name that is not in the current live list
+is marked `derzeit nicht verfügbar`; the user can remove it, but it remains selected by
+default so that it reappears automatically when the laptop returns to that location.
 
-The settings dialog does not permit arbitrary free-text printer names. A new quick entry
-can only be selected from printers returned by the operating system at that time.
+The settings dialog does not permit arbitrary free-text printer target names. A new
+favourite can only be selected from printers returned by the operating system at that
+time. The optional display label is free text, but it never participates in printer
+resolution.
 
-### Decision: Flat quick actions plus an on-demand full chooser
+### Decision: Default item first, submenu only after opt-in
 
-The existing context-menu action remains unchanged. Directly adjacent to it, the client
-adds:
+When no currently available non-default favourite exists, the existing context-menu action
+remains unchanged:
 
-- zero or more `drucken (<printer name>)` actions for currently available quick-access
-  printers; and
-- one `drucken (anderen Drucker auswählen …)` action.
+- `drucken (Standarddrucker)`
 
-The last action opens a modal single-selection list of all currently available printers.
-Cancelling it has no effect. If no printer is available, the chooser action is disabled
-or reports that no printer is currently available without starting document retrieval or
-printing.
+When at least one currently available non-default favourite exists, this entry becomes a
+`Drucken` submenu containing:
+
+1. `Standarddrucker`; and
+2. one entry for each currently available non-default favourite, using its display label
+   when present and its real printer name otherwise.
+
+Printers that are merely installed in the operating system are not shown in the document
+context menu unless they were selected as favourites. There is no all-printer chooser in
+this first change.
 
 ### Decision: Resolve the target before dispatch and never silently fall back
 
@@ -126,9 +144,10 @@ default-printer menu item.
   fail partway through. **Mitigation:** resolve before dispatch, report the failing target
   and document, and never retry on the default printer. The UI must not claim atomicity
   for physical printing.
-- **Risk:** A long printer name can make the context menu wide. **Mitigation:** only
-  user-selected names are direct entries; the implementation may apply the project's
-  existing UI truncation convention while preserving the full name in a tooltip.
+- **Risk:** A long printer name or label can make the context menu wide. **Mitigation:**
+  only user-selected favourites are direct entries; the implementation may apply the
+  project's existing UI truncation convention while preserving the full target name in a
+  tooltip.
 - **Risk:** A stale favourite remains in settings. **Mitigation:** mark it unavailable
   and allow removal; never show it as an active document-menu action.
 - **Risk:** Editing generated Swing code without its form metadata breaks the NetBeans
@@ -140,19 +159,18 @@ default-printer menu item.
 1. Add the new client-local setting with an empty default.
 2. Add live printer discovery and named-target resolution behind a small client utility.
 3. Extend the print launcher with an additive explicit-target path.
-4. Add quick-access settings and dynamic document-menu entries.
-5. Verify default printing, named PDF printing, named LibreOffice printing, stale
-   favourites, location changes, cancellation, and error handling in an isolated client
-   test environment.
+4. Add favourite settings and dynamic document-menu entries.
+5. Verify unchanged default printing without favourites, named PDF printing, named
+   LibreOffice printing, stale favourites, location changes, and error handling in an
+   isolated client test environment.
 
 Rollback consists of removing the new client UI and explicit-target path. A leftover
 client setting is inert and can be ignored; no server or data migration is required.
 
 ## Open Questions
 
-- **Maintainer approval required:** Is persisting only the device-local quick-access
-  printer names acceptable, provided every visible entry and every print dispatch is
-  resolved against the current operating-system printer list?
-- Should unavailable quick-access names be displayed in the first implementation as
+- **Maintainer approval required:** Is persisting only the device-local favourite
+  printer names plus optional display labels acceptable, provided every visible entry and
+  every print dispatch is resolved against the current operating-system printer list?
+- Should unavailable favourite names be displayed in the first implementation as
   disabled settings rows, or is a separate compact `nicht verfügbar` section preferred?
-

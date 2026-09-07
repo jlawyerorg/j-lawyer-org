@@ -1,23 +1,23 @@
 ## 0. Approval and implementation baseline
 
 - [ ] 0.1 Obtain maintainer approval for the proposal, especially the distinction between
-  live printer discovery and device-local persistence of quick-access names.
-- [ ] 0.2 Confirm the final labels and placement of the printer quick-access settings in
+  live printer discovery and device-local persistence of favourite printer names plus
+  optional display labels.
+- [ ] 0.2 Confirm the final labels and placement of the printer favourites settings in
   the existing `Einstellungen` menu before changing Swing forms.
 - [ ] 0.3 Create a clean feature branch from the then-current upstream `master`; do not
   implement from an outdated fork branch.
 
-## 1. Live printer discovery and quick-access model
+## 1. Live printer discovery and favourite model
 
 - [ ] 1.1 Add a small client-side printer utility/model that obtains the current printer
   services and default printer from `PrintServiceLookup` on demand.
 - [ ] 1.2 Normalize the live view without changing printer names: discard null/blank
   names, collapse exact duplicates, and sort display entries case-insensitively.
-- [ ] 1.3 Add a `ClientSettings` key for device-local quick-access printer names and use
-  the existing `getConfigurationArray` / `setConfigurationArray` mechanism with an empty
-  default.
-- [ ] 1.4 Implement the intersection of live printers and quick-access names, excluding
-  the current default printer from duplicate quick actions.
+- [ ] 1.3 Add a `ClientSettings` key for device-local favourite printer names and optional
+  display labels, using an existing local settings mechanism with an empty default.
+- [ ] 1.4 Implement the intersection of live printers and favourite names, excluding the
+  current default printer from duplicate favourite actions.
 - [ ] 1.5 Keep unavailable saved names in the settings model, mark them unavailable, and
   never return them as actionable document-menu targets.
 
@@ -38,33 +38,34 @@
   reporting; include the target printer name in named-print failures without exposing
   document contents or private paths in public test artefacts.
 
-## 3. Printer quick-access settings UI
+## 3. Printer favourites settings UI
 
-- [ ] 3.1 Add a compact modal printer quick-access settings dialog and matching NetBeans
+- [ ] 3.1 Add a compact modal printer favourites settings dialog and matching NetBeans
   `.form` file.
 - [ ] 3.2 Populate the dialog on every open with the union of live printers and saved
-  quick-access names; visually mark saved names that are currently unavailable.
+  favourite names; visually mark saved names that are currently unavailable.
 - [ ] 3.3 Permit selecting current printers and removing unavailable saved names, but do
-  not permit arbitrary free-text printer entries.
-- [ ] 3.4 Save only the selected names to local `ClientSettings`; do not call a server
-  service or persist driver/capability/availability data.
-- [ ] 3.5 Add the dialog entry to the agreed location under `Einstellungen`, updating
+  not permit arbitrary free-text printer target entries.
+- [ ] 3.4 Permit an optional display label for each selected favourite and use it only for
+  UI display, never for printer resolution.
+- [ ] 3.5 Save only the selected names and optional display labels to local
+  `ClientSettings`; do not call a server service or persist driver/capability/
+  availability data.
+- [ ] 3.6 Add the dialog entry to the agreed location under `Einstellungen`, updating
   `JKanzleiGUI.java` and `JKanzleiGUI.form` together if those are the confirmed files.
 
 ## 4. Dynamic archive-file context menu
 
 - [ ] 4.1 Preserve the existing static `drucken (Standarddrucker)` item and handler.
-- [ ] 4.2 Rebuild only the additional print actions whenever the document context menu is
-  opened: one action for each currently available quick-access printer plus one
-  `drucken (anderen Drucker auswählen …)` action.
-- [ ] 4.3 Ensure repeated menu openings do not accumulate duplicate components or action
+- [ ] 4.2 Keep the existing static `drucken (Standarddrucker)` item unchanged when there is
+  no currently available non-default favourite printer.
+- [ ] 4.3 When at least one currently available non-default favourite exists, present a
+  `Drucken` submenu with `Standarddrucker` first and one entry per available favourite.
+- [ ] 4.4 Rebuild the favourite actions whenever the document context menu is opened.
+- [ ] 4.5 Ensure repeated menu openings do not accumulate duplicate components or action
   listeners and do not disturb unrelated context-menu entries.
-- [ ] 4.4 Add the modal all-printers chooser using a fresh live printer list; cancelling
-  must perform no document retrieval or print action.
-- [ ] 4.5 Route a quick action or chooser result through the explicit named-printer path
-  for all selected supported documents.
-- [ ] 4.6 Disable or safely handle the all-printers action when no current printer is
-  available.
+- [ ] 4.6 Route a favourite action through the explicit named-printer path for all selected
+  supported documents.
 - [ ] 4.7 Keep `ArchiveFilePanel.java` and `ArchiveFilePanel.form` compatible with the
   NetBeans GUI Builder.
 
@@ -79,27 +80,28 @@
   is constructed.
 - [ ] 5.4 Add UI/model-level tests where feasible for rebuilding the dynamic menu twice
   without duplicate entries or listeners.
+- [ ] 5.5 Add tests that optional display labels affect menu text only and never printer
+  resolution.
 
 ## 6. Manual verification in an isolated client environment
 
 - [ ] 6.1 Confirm the existing default-printer action behaves as before with an empty
-  quick-access list.
-- [ ] 6.2 Add two generic test printers to quick access and verify that only currently
+  favourite list and with no currently available non-default favourite.
+- [ ] 6.2 Add two generic test printers to favourites and verify that only currently
   available, non-default selections appear as direct actions.
 - [ ] 6.3 Verify named printing of a PDF and a LibreOffice-supported document to each test
-  target, including printer and file names containing spaces.
+  target, including printer names, display labels, and file names containing spaces.
 - [ ] 6.4 Select multiple supported documents and verify that all are intentionally sent
   to the same selected target.
-- [ ] 6.5 Cancel the all-printers chooser and verify that no print job starts.
-- [ ] 6.6 Make a saved quick-access printer unavailable, reopen the menu without restarting
+- [ ] 6.5 Make a saved favourite printer unavailable, reopen the menu without restarting
   the client, and verify that it disappears from the context menu, remains marked in
   settings, and is never replaced by the default printer.
-- [ ] 6.7 Make the printer available again and verify that it reappears after reopening the
+- [ ] 6.6 Make the printer available again and verify that it reappears after reopening the
   menu without changing settings.
-- [ ] 6.8 Verify the no-printer and printer-disappears-before-dispatch error paths and
+- [ ] 6.7 Verify the no-printer and printer-disappears-before-dispatch error paths and
   confirm that no silent fallback occurs.
-- [ ] 6.9 Inspect the context menu on a system with many installed printers and verify that
-  the full list appears only in the on-demand chooser.
+- [ ] 6.8 Inspect the context menu on a system with many installed printers and verify that
+  only selected, currently available favourites appear there.
 
 ## 7. Review gates
 
@@ -113,4 +115,3 @@
   findings before requesting implementation review.
 - [ ] 7.5 Submit any implementation as a small draft pull request with transparent AI-use
   disclosure and explicit manual-test results.
-

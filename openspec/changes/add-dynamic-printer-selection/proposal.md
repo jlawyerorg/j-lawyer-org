@@ -11,24 +11,28 @@ Showing every printer installed on the client directly in the document context m
 would solve the selection problem but would make the menu unwieldy on systems that have
 accumulated many unused or location-specific printers. The proposed change therefore
 combines live discovery of the printers currently reported by the operating system with
-an optional, device-local quick-access list and an on-demand chooser for all other
-currently available printers.
+an optional, device-local favourite list that is the only source for additional
+one-click menu entries.
 
 ## What Changes
 
 - Preserve the existing one-click action `drucken (Standarddrucker)` and its current
-  behaviour.
+  behaviour whenever no currently available non-default favourite printer is configured.
 - Discover available printers from the client operating system whenever the document
   context menu or printer settings are opened; no printer object, driver configuration,
   or assumed availability is persisted.
-- Add direct context-menu entries for user-selected quick-access printers that are
-  currently available. Quick-access printers that are not currently available are not
-  shown in the document context menu.
-- Add `drucken (anderen Drucker auswählen …)` to open a compact chooser containing all
-  printers currently reported by the operating system.
-- Add a client setting for managing the quick-access list. The setting stores only the
-  selected printer names on the local client so that office and home installations can
-  have different lists; it is not stored on or synchronized by the server.
+- Add a `Drucken` submenu only when at least one currently available non-default
+  favourite exists. The submenu contains the standard-printer action first and then the
+  available favourites.
+- Do not add direct menu entries, submenus, or all-printer choosers merely because the
+  operating system reports multiple printers.
+- Add a client setting for managing favourite printers. The setting stores only the
+  selected printer names and optional display labels on the local client so that office
+  and home installations can have different lists; it is not stored on or synchronized by
+  the server.
+- Show favourite printers in the document context menu by their optional display label
+  (for example `Faxdrucker` or `Drucker Empfang`) while resolving the print target by the
+  exact live operating-system printer name.
 - Print every selected supported document to the explicitly chosen printer. If that
   printer cannot be resolved at print time, show an error and do not silently fall back
   to the default printer.
@@ -52,12 +56,11 @@ currently available printers.
   - `j-lawyer-client/src/main/java/com/jdimension/jlawyer/client/settings/ClientSettings.java`
   - `j-lawyer-client/src/main/java/com/jdimension/jlawyer/client/JKanzleiGUI.java` and
     `JKanzleiGUI.form`
-  - a small printer quick-access settings dialog (`.java` and matching `.form`)
+  - a small printer favourites settings dialog (`.java` and matching `.form`)
 - **No server, database, EJB, or REST API changes.**
 - **Backward compatibility:** existing direct printing to the operating-system default
-  remains available and unchanged. With no quick-access configuration, no printer-
-  specific direct entries are shown.
+  remains available and unchanged. With no currently available non-default favourites,
+  the archive-file context menu keeps the current single default-printer entry.
 - **Approval point:** the maintainer should explicitly confirm whether persisting only
-  device-local quick-access printer names is acceptable. Actual printer availability is
-  always determined live, as requested.
-
+  device-local favourite printer names and optional labels is acceptable. Actual printer
+  availability is always determined live, as requested.
