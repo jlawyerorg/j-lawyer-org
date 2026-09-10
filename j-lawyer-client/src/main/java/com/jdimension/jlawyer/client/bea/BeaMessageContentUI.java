@@ -706,6 +706,7 @@ import com.jdimension.jlawyer.services.bea.rest.BeaAttachment;
 import com.jdimension.jlawyer.services.bea.rest.BeaMessage;
 import com.jdimension.jlawyer.services.bea.rest.BeaMessageExport;
 import com.jdimension.jlawyer.services.bea.rest.BeaMessageJournalEntry;
+import com.jdimension.jlawyer.services.bea.rest.BeaRecipient;
 import com.jdimension.jlawyer.services.bea.rest.BeaProcessCard;
 import com.jdimension.jlawyer.services.bea.rest.BeaProcessCardEntry;
 import com.jdimension.jlawyer.services.bea.rest.BeaMessageValidationResult;
@@ -809,8 +810,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         this.lblSubject.setToolTipText(null);
         this.lblFrom.setText(" ");
 
-        this.lblTo.setText(" ");
-        this.lblTo.setToolTipText(null);
+        ComponentUtils.setListLabel(this.lblTo, null);
 
         this.editBody.setContentType(ContentTypes.TEXT_PLAIN);
 
@@ -968,15 +968,15 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             lblEeb.setToolTipText("Es wurde kein eEB angefordert.");
         }
 
-        String to = "";
-        if (!msg.getRecipients().isEmpty()) {
-            to = msg.getRecipients().get(0).getName();
-            for (int i = 1; i < msg.getRecipients().size(); i++) {
-                to = to + ", " + msg.getRecipients().get(i).getName();
+        List<String> toEntries = new ArrayList<>();
+        if (msg.getRecipients() != null) {
+            for (BeaRecipient recipient : msg.getRecipients()) {
+                if (recipient != null) {
+                    toEntries.add(recipient.getName());
+                }
             }
         }
-        lblTo.setText(to);
-        lblTo.setToolTipText(to);
+        ComponentUtils.setListLabel(lblTo, toEntries);
 
         ((DefaultListModel) lstAttachments.getModel()).removeAllElements();
         List<BeaAttachment> attachments = msg.getAttachments();
@@ -1172,15 +1172,15 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(lblSubject, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(lblSubject, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblSentDate))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(lblFrom, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(lblFrom, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblCaseNumber))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(lblTo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(lblTo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblReferenceJustice)))
                 .addContainerGap())

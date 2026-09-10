@@ -135,20 +135,15 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" attributes="0">
-                                  <Component id="lblSubject" min="-2" pref="450" max="-2" attributes="0"/>
+                                  <Component id="lblSubject" min="0" pref="450" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="lblSentDate" pref="70" max="32767" attributes="0"/>
                               </Group>
+                              <Component id="lblFrom" alignment="0" min="0" pref="514" max="32767" attributes="0"/>
+                              <Component id="lblTo" alignment="0" min="0" pref="514" max="32767" attributes="0"/>
+                              <Component id="lblCC" alignment="0" min="0" pref="514" max="32767" attributes="0"/>
                               <Group type="102" alignment="0" attributes="0">
-                                  <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                                      <Component id="lblFrom" alignment="0" pref="514" max="32767" attributes="0"/>
-                                      <Component id="lblTo" alignment="0" max="32767" attributes="0"/>
-                                      <Component id="lblCC" alignment="0" max="32767" attributes="0"/>
-                                  </Group>
-                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                              </Group>
-                              <Group type="102" alignment="0" attributes="0">
-                                  <Component id="lblBCC" max="32767" attributes="0"/>
+                                  <Component id="lblBCC" min="0" pref="0" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="cmdAssistant" min="-2" max="-2" attributes="0"/>
                               </Group>
