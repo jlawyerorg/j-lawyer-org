@@ -4,6 +4,7 @@ import static com.jdimension.jlawyer.client.utils.convert.Helper.EMAIL_HEADER_ID
 import com.lowagie.text.DocumentException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 
 import javax.mail.MessagingException;
 import java.io.IOException;
@@ -133,18 +134,16 @@ public class ParserUtil {
         }
         
         if(attachments!=null && !attachments.isEmpty()) {
-            document.body().append("<p>&nbsp;</p><b>Anlagen:</b><br/><table id=\"header_fields\"\n"
-                    + "       style=\"background: white; margin: auto; border: 1px solid #DDD; border-radius: 3px; padding: 8px; width: 90%; box-sizing: border-box;\">\n"
-                    + "</table>\n"
-                    + "");
+            document.body().append("<p>&nbsp;</p><b>Anlagen:</b><br/>");
+            // build rows via the DOM: body().append() parses each fragment on its own, so rows appended
+            // separately would end up outside the table; text() also escapes the attachment names
+            Element attachmentTable = document.body().appendElement("table")
+                    .attr("style", "background: white; margin: auto; border: 1px solid #DDD; border-radius: 3px; padding: 8px; width: 90%; box-sizing: border-box;");
             for(String att: attachments) {
-                document.body().append("<tr><td>");
-                document.body().append(att);
-                document.body().append("</td</tr>\n");
+                attachmentTable.appendElement("tr").appendElement("td").text(att);
             }
         }
-        document.body().append("</table>\n");
-        
+
         
         //renderer.setDocumentFromString(document.html());
         return document.html();
