@@ -1,8 +1,6 @@
 ## 0. Approval and implementation baseline
 
-- [ ] 0.1 Obtain maintainer approval for the proposal, especially the distinction between
-  live printer discovery and device-local persistence of favourite printer names plus
-  optional display labels.
+- [ ] 0.1 Address maintainer review feedback in the OpenSpec proposal before implementation.
 - [ ] 0.2 Confirm the final labels and placement of the printer favourites settings in
   the existing `Einstellungen` menu before changing Swing forms.
 - [ ] 0.3 Create a clean feature branch from the then-current upstream `master`; do not
@@ -12,21 +10,27 @@
 
 - [ ] 1.1 Add a small client-side printer utility/model that obtains the current printer
   services and default printer from `PrintServiceLookup` on demand.
-- [ ] 1.2 Normalize the live view without changing printer names: discard null/blank
+- [ ] 1.2 Refresh printer discovery asynchronously and keep the archive-file context menu
+  from blocking on operating-system printer lookup.
+- [ ] 1.3 Maintain an in-memory snapshot of the last completed printer discovery; if no
+  snapshot is available when the context menu opens, keep the existing default-only menu
+  and let a background refresh affect subsequent menu openings.
+- [ ] 1.4 Normalize the live view without changing printer names: discard null/blank
   names, collapse exact duplicates, and sort display entries case-insensitively.
-- [ ] 1.3 Add a `ClientSettings` key for device-local favourite printer names and optional
+- [ ] 1.5 Add a `ClientSettings` key for device-local favourite printer names and optional
   display labels, using an existing local settings mechanism with an empty default.
-- [ ] 1.4 Implement the intersection of live printers and favourite names, excluding the
+- [ ] 1.6 Implement the intersection of live printers and favourite names, excluding the
   current default printer from duplicate favourite actions.
-- [ ] 1.5 Keep unavailable saved names in the settings model, mark them unavailable, and
-  never return them as actionable document-menu targets.
+- [ ] 1.7 Keep unavailable saved names in the settings model, display them as disabled,
+  and never return them as actionable document-menu targets.
 
 ## 2. Explicit printer support in the print launcher
 
 - [ ] 2.1 Refactor `LauncherFactory.directPrint(...)` only as far as needed to preserve
   the current default-printer entry point and add an explicit named-printer entry point.
 - [ ] 2.2 Resolve a named printer against a fresh live printer list before dispatch; if it
-  is absent, return/report a clear error and do not invoke the default-printer path.
+  is absent or cannot be used, return/report a clear error and do not invoke the
+  default-printer path.
 - [ ] 2.3 For PDF documents, set the resolved `PrintService` on the existing Java/PDFBox
   print job.
 - [ ] 2.4 For LibreOffice-supported documents, use LibreOffice's named-printer invocation
@@ -43,7 +47,7 @@
 - [ ] 3.1 Add a compact modal printer favourites settings dialog and matching NetBeans
   `.form` file.
 - [ ] 3.2 Populate the dialog on every open with the union of live printers and saved
-  favourite names; visually mark saved names that are currently unavailable.
+  favourite names; display saved names that are currently unavailable as disabled rows.
 - [ ] 3.3 Permit selecting current printers and removing unavailable saved names, but do
   not permit arbitrary free-text printer target entries.
 - [ ] 3.4 Permit an optional display label for each selected favourite and use it only for
@@ -53,6 +57,8 @@
   availability data.
 - [ ] 3.6 Add the dialog entry to the agreed location under `Einstellungen`, updating
   `JKanzleiGUI.java` and `JKanzleiGUI.form` together if those are the confirmed files.
+- [ ] 3.7 Do not restrict the printer favourites dialog to users with `adminRole` or
+  `sysAdminRole`; ordinary users may configure these device-local preferences.
 
 ## 4. Dynamic archive-file context menu
 
@@ -62,11 +68,13 @@
 - [ ] 4.3 When at least one currently available non-default favourite exists, present a
   `Drucken` submenu with `Standarddrucker` first and one entry per available favourite.
 - [ ] 4.4 Rebuild the favourite actions whenever the document context menu is opened.
-- [ ] 4.5 Ensure repeated menu openings do not accumulate duplicate components or action
+- [ ] 4.5 Ensure menu rebuilding uses the latest completed printer snapshot and does not
+  perform a slow printer lookup on the Swing Event Dispatch Thread.
+- [ ] 4.6 Ensure repeated menu openings do not accumulate duplicate components or action
   listeners and do not disturb unrelated context-menu entries.
-- [ ] 4.6 Route a favourite action through the explicit named-printer path for all selected
+- [ ] 4.7 Route a favourite action through the explicit named-printer path for all selected
   supported documents.
-- [ ] 4.7 Keep `ArchiveFilePanel.java` and `ArchiveFilePanel.form` compatible with the
+- [ ] 4.8 Keep `ArchiveFilePanel.java` and `ArchiveFilePanel.form` compatible with the
   NetBeans GUI Builder.
 
 ## 5. Automated verification
@@ -82,6 +90,10 @@
   without duplicate entries or listeners.
 - [ ] 5.5 Add tests that optional display labels affect menu text only and never printer
   resolution.
+- [ ] 5.6 Add tests that context-menu model construction does not depend on a blocking
+  printer discovery call and can safely use the last completed snapshot.
+- [ ] 5.7 Add tests or role-level checks confirming ordinary users can open and save the
+  local printer favourites dialog without `adminRole` or `sysAdminRole`.
 
 ## 6. Manual verification in an isolated client environment
 
@@ -102,6 +114,8 @@
   confirm that no silent fallback occurs.
 - [ ] 6.8 Inspect the context menu on a system with many installed printers and verify that
   only selected, currently available favourites appear there.
+- [ ] 6.9 Observe context-menu opening with slow, offline, or network printer entries and
+  verify that opening the menu remains responsive.
 
 ## 7. Review gates
 

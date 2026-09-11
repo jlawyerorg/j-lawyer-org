@@ -6,6 +6,10 @@ system whenever printer choices are presented or an explicit printer target is r
 Persisted preference data MUST NOT be treated as evidence that a printer is currently
 available.
 
+For context-menu presentation, "available" means reported by the operating system in the
+latest completed printer discovery result. It does not guarantee that the printer is
+physically connected, online, reachable, or able to accept a job.
+
 #### Scenario: Printer becomes available after a location change
 - **WHEN** the operating system reports a favourite printer that was unavailable when
   the document context menu was previously opened
@@ -16,6 +20,30 @@ available.
 - **WHEN** the operating system no longer reports a saved favourite printer
 - **THEN** reopening the document context menu no longer shows an actionable entry for
   that printer
+
+### Requirement: Responsive printer discovery
+The desktop client SHALL NOT block opening the archive-file context menu on a synchronous
+operating-system printer discovery call. Printer discovery for menu presentation SHALL
+use the latest completed printer snapshot or another non-blocking implementation, and
+slow discovery MUST NOT run on the Swing Event Dispatch Thread.
+
+#### Scenario: Printer lookup is slow while opening the context menu
+- **WHEN** operating-system printer discovery is slow, blocked, or waiting on a network
+  printer
+- **THEN** the archive-file context menu opens without waiting for that discovery call
+  to finish
+
+#### Scenario: No completed printer snapshot exists yet
+- **WHEN** the archive-file context menu is opened before any printer discovery result is
+  available
+- **THEN** the client keeps the existing default-printer menu behaviour for that opening
+  and may show favourite entries on a subsequent opening after discovery completes
+
+#### Scenario: Snapshot is refreshed asynchronously
+- **WHEN** a background printer discovery completes after the context menu was previously
+  opened
+- **THEN** the next context-menu opening uses the refreshed printer list without requiring
+  a client restart
 
 ### Requirement: Unchanged default-printer direct action
 The desktop client SHALL retain the existing `drucken (Standarddrucker)` action and SHALL
@@ -58,8 +86,19 @@ configuration, capabilities, or availability on the server or in local settings.
 #### Scenario: Previously selected printer is currently unavailable
 - **WHEN** a saved favourite name is absent from the current operating-system printer
   list and the user opens the favourites settings
-- **THEN** the name is marked as currently unavailable, remains saved unless the user
-  removes it, and cannot be selected for printing
+- **THEN** the name is shown as a disabled currently-unavailable entry, remains saved
+  unless the user removes it, and cannot be selected for printing
+
+### Requirement: Ordinary users may configure local printer favourites
+The desktop client SHALL allow ordinary users to configure printer favourites for their
+local client installation. Access to the printer favourites dialog MUST NOT require
+`adminRole` or `sysAdminRole`, because the setting is not shared server configuration.
+
+#### Scenario: Ordinary user configures favourites
+- **WHEN** a user without `adminRole` or `sysAdminRole` opens the printer favourites
+  settings dialog
+- **THEN** the dialog is available and the user can save local favourite printer names
+  and optional display labels
 
 ### Requirement: Bounded opt-in document context menu
 The desktop client SHALL keep the current single default-printer menu entry while no

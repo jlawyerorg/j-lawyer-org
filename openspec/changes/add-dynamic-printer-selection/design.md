@@ -19,6 +19,8 @@ short enough for one-click use.
   printers.
 - Keep the document context menu unchanged unless the user has configured at least one
   currently available non-default favourite printer.
+- Keep opening the archive-file context menu responsive even when printer discovery is
+  slow or blocked by the operating system, printer drivers, or network printers.
 - Allow user-friendly local display labels for favourite printers.
 - Keep all configuration and implementation client-side.
 - Fail visibly instead of redirecting a named print job to an unintended printer.
@@ -40,13 +42,30 @@ short enough for one-click use.
 
 ### Decision: Live printer discovery is authoritative
 
-Printer services are queried from the operating system every time the relevant document
-context menu is opened, every time the printer favourites settings dialog is opened, and
-every time an explicit named target is resolved. The resulting current list is the only
-authority for whether a printer can be offered or resolved.
+Printer services are obtained from the operating system and treated as the only authority
+for whether a printer can be offered or resolved. However, printer discovery can be
+delayed by operating-system printer stacks, drivers, or network printers, so the
+archive-file context menu must not synchronously wait for a printer lookup on the Swing
+Event Dispatch Thread.
+
+The implementation should maintain an in-memory snapshot of the last completed printer
+discovery and refresh it asynchronously when printer choices may be needed, including
+client start, opening the printer favourites settings dialog, and opening the archive-file
+context menu. The context menu is built from the last completed snapshot. If no snapshot
+is available yet, the menu remains in the safe default-only state and a refresh may update
+subsequent openings.
+
+An explicit named print target is still resolved against a fresh live printer lookup
+before dispatch. That resolution may happen as part of the existing print workflow, but
+it must not freeze the context menu while it is opening.
 
 No cached `PrintService`, driver data, capability data, or availability flag is written
 to client settings.
+
+This proposal uses "available" to mean "reported by the operating system in the latest
+completed discovery result". It does not promise that a printer is physically connected,
+online, reachable, or able to accept a job. Print-time failures are handled explicitly
+without falling back to the default printer.
 
 ### Decision: Store only device-local favourites
 
@@ -87,13 +106,20 @@ disambiguating according to the existing UI conventions.
 
 The settings dialog shows the union of currently discovered printers and previously
 selected favourite names. A previously selected name that is not in the current live list
-is marked `derzeit nicht verfügbar`; the user can remove it, but it remains selected by
-default so that it reappears automatically when the laptop returns to that location.
+is displayed as a disabled `derzeit nicht verfügbar` entry; the user can remove it, but
+it remains selected by default so that it reappears automatically when the laptop returns
+to that location.
 
 The settings dialog does not permit arbitrary free-text printer target names. A new
 favourite can only be selected from printers returned by the operating system at that
 time. The optional display label is free text, but it never participates in printer
 resolution.
+
+### Decision: Printer favourites are user-level client preferences
+
+The printer favourites settings dialog is available to ordinary users. It must not be
+restricted to users with `adminRole` or `sysAdminRole`, because it only modifies
+device-local client preferences and does not change shared server configuration.
 
 ### Decision: Default item first, submenu only after opt-in
 
@@ -140,6 +166,10 @@ default-printer menu item.
   particular operating system. **Mitigation:** use the exact live service name, keep PDF
   and LibreOffice tests separate, and treat a rejected target as an error without
   fallback.
+- **Risk:** Querying printers can be slow or block due to operating-system, driver, or
+  network-printer behaviour. **Mitigation:** do not query printers synchronously while
+  opening the archive-file context menu; build the menu from the latest completed
+  snapshot and refresh discovery asynchronously.
 - **Risk:** A printer can disappear after live resolution or a multi-document batch can
   fail partway through. **Mitigation:** resolve before dispatch, report the failing target
   and document, and never retry on the default printer. The UI must not claim atomicity
@@ -158,19 +188,20 @@ default-printer menu item.
 
 1. Add the new client-local setting with an empty default.
 2. Add live printer discovery and named-target resolution behind a small client utility.
-3. Extend the print launcher with an additive explicit-target path.
-4. Add favourite settings and dynamic document-menu entries.
-5. Verify unchanged default printing without favourites, named PDF printing, named
+3. Add asynchronous printer discovery and snapshot handling so context-menu opening does
+   not wait for printer lookup.
+4. Extend the print launcher with an additive explicit-target path.
+5. Add favourite settings and dynamic document-menu entries.
+6. Verify unchanged default printing without favourites, named PDF printing, named
    LibreOffice printing, stale favourites, location changes, and error handling in an
    isolated client test environment.
 
 Rollback consists of removing the new client UI and explicit-target path. A leftover
 client setting is inert and can be ignored; no server or data migration is required.
 
-## Open Questions
+## Resolved Review Choices
 
-- **Maintainer approval required:** Is persisting only the device-local favourite
-  printer names plus optional display labels acceptable, provided every visible entry and
-  every print dispatch is resolved against the current operating-system printer list?
-- Should unavailable favourite names be displayed in the first implementation as
-  disabled settings rows, or is a separate compact `nicht verfügbar` section preferred?
+- Device-local favourite printer names plus optional display labels are acceptable,
+  provided every visible entry and every print dispatch is resolved against the current
+  operating-system printer list.
+- Unavailable favourite names are displayed in the settings dialog as disabled rows.

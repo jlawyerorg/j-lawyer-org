@@ -18,9 +18,9 @@ one-click menu entries.
 
 - Preserve the existing one-click action `drucken (Standarddrucker)` and its current
   behaviour whenever no currently available non-default favourite printer is configured.
-- Discover available printers from the client operating system whenever the document
-  context menu or printer settings are opened; no printer object, driver configuration,
-  or assumed availability is persisted.
+- Maintain a live view of printers reported by the client operating system without
+  blocking the archive-file context menu while printer discovery is running; no printer
+  object, driver configuration, or assumed availability is persisted.
 - Add a `Drucken` submenu only when at least one currently available non-default
   favourite exists. The submenu contains the standard-printer action first and then the
   available favourites.
@@ -30,6 +30,9 @@ one-click menu entries.
   selected printer names and optional display labels on the local client so that office
   and home installations can have different lists; it is not stored on or synchronized by
   the server.
+- Allow ordinary users to manage their local printer favourites. The settings dialog is
+  not restricted to `adminRole` or `sysAdminRole` because it only changes a local client
+  preference.
 - Show favourite printers in the document context menu by their optional display label
   (for example `Faxdrucker` or `Drucker Empfang`) while resolving the print target by the
   exact live operating-system printer name.
@@ -61,6 +64,5 @@ one-click menu entries.
 - **Backward compatibility:** existing direct printing to the operating-system default
   remains available and unchanged. With no currently available non-default favourites,
   the archive-file context menu keeps the current single default-printer entry.
-- **Approval point:** the maintainer should explicitly confirm whether persisting only
-  device-local favourite printer names and optional labels is acceptable. Actual printer
-  availability is always determined live, as requested.
+- **Runtime constraint:** opening the archive-file context menu must remain responsive
+  even if operating-system printer discovery is slow.
