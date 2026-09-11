@@ -803,6 +803,7 @@ public class ClientSettings {
     public static final String CONF_DOCUMENTS_MAXPREVIEWBYTES="client.documents.maxpreviewbytes";
     public static final String CONF_DOCUMENTS_AUTOGENERATEPDF="client.documents.autogeneratepdf.";
     public static final String CONF_DOCUMENTS_LETTERHEAD="client.documents.letterhead.";
+    public static final String CONF_DOCUMENTS_PRINTER_FAVORITES="client.documents.printerfavorites";
     
     public static final String CONF_SOUND_LASTRECORDINGDEVICE="client.sound.lastrecordingdevice";
     

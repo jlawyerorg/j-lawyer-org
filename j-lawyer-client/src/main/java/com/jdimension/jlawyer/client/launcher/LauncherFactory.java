@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.launcher;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.print.PrinterServiceRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.SystemUtils;
@@ -909,6 +910,15 @@ public class LauncherFactory implements FileTypes {
 
     public static void directPrint(List<String> urls) throws Exception {
 
+        directPrint(urls, null);
+    }
+
+    public static void directPrint(List<String> urls, String printerName) throws Exception {
+
+        if (urls == null || urls.isEmpty()) {
+            return;
+        }
+
         ArrayList<String> libreOfficeUrls = new ArrayList<>();
         ArrayList<String> pdfUrls = new ArrayList<>();
 
@@ -920,15 +930,32 @@ public class LauncherFactory implements FileTypes {
             }
         }
 
-        new Thread(() -> {
+        Thread printThread = new Thread(() -> {
+
+            PrintService namedService = null;
+            if (printerName != null) {
+                try {
+                    namedService = PrinterServiceRegistry.resolveCurrentPrinter(printerName);
+                } catch (Throwable t) {
+                    showPrintError("Der Drucker '" + printerName + "' konnte nicht ermittelt werden: "
+                            + t.getMessage());
+                    return;
+                }
+                if (namedService == null) {
+                    showPrintError("Der Drucker '" + printerName
+                            + "' ist derzeit nicht verfügbar. Es wurde nichts gedruckt.");
+                    return;
+                }
+            }
 
             if (!pdfUrls.isEmpty()) {
                 try {
 
-                    PrintService service = PrintServiceLookup.lookupDefaultPrintService();
+                    PrintService service = namedService != null
+                            ? namedService : PrintServiceLookup.lookupDefaultPrintService();
 
                     if (service == null) {
-                        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Kein Standarddrucker für PDF-Dateien gefunden", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                        showPrintError("Kein Standarddrucker für PDF-Dateien gefunden");
                     } else {
 
                         Thread.sleep(100);
@@ -947,92 +974,86 @@ public class LauncherFactory implements FileTypes {
                     }
 
                 } catch (final Throwable t) {
-                    SwingUtilities.invokeLater(() -> {
-                        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Drucken des PDF-Dokuments: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                    });
+                    showPrintError(printErrorMessage("Fehler beim Drucken des PDF-Dokuments",
+                            printerName, t));
                 }
             }
 
             if (!libreOfficeUrls.isEmpty()) {
-                final ArrayList<String> cmdLine = new ArrayList<>();
-                if (SystemUtils.isMacOs()) {
-                    cmdLine.add("/Applications/LibreOffice.app/Contents/MacOS/soffice");
-                } else {
-                    cmdLine.add("soffice");
-                }
-                cmdLine.add("-p");
-                if (SystemUtils.isMacOs()) {
-                    cmdLine.add("--nologo");
-                } else {
-                    cmdLine.add("-nologo");
-                }
-
-                for (String u : libreOfficeUrls) {
-                    cmdLine.add(u);
-                }
-
                 try {
-
                     Thread.sleep(100);
-
-                    Process p = null;
-                    boolean libreOffice = false;
-                    try {
-                        if (SystemUtils.isMacOs()) {
-                            cmdLine.set(0, "/Applications/LibreOffice.app/Contents/MacOS/libreoffice");
-                        } else {
-                            cmdLine.set(0, "libreoffice");
-                        }
-                        log.info("direct printing (libreoffice) through command line: " + cmdLine.toString());
-                        p = Runtime.getRuntime().exec(cmdLine.toArray(new String[0]));
-                        log.info("  direct printing launch via libreoffice succeeded");
-                        libreOffice = true;
-                    } catch (Throwable ex) {
-                        log.error("error starting libreoffice" + ex.getMessage() + "; command line was: " + cmdLine.toString(), ex);
-                        libreOffice = false;
-                    }
-
-                    if (libreOffice) {
-                        int exit = p.waitFor();
-                        log.info("  direct printing exit code via libreoffice: " + exit);
-                        if (exit == 0) {
-                            libreOffice = true;
-                        } else {
-                            libreOffice = false;
-                        }
-                    }
-
-                    if (!libreOffice) {
-                        try {
-
-                            if (SystemUtils.isMacOs()) {
-                                cmdLine.set(0, "/Applications/LibreOffice.app/Contents/MacOS/soffice");
-                            } else {
-                                cmdLine.set(0, "soffice");
-                            }
-                            log.info("direct printing (soffice) through command line: " + cmdLine.toString());
-                            p = Runtime.getRuntime().exec(cmdLine.toArray(new String[0]));
-
-                            int exit = p.waitFor();
-                            if (exit != 0) {
-                                throw new Exception("LibreOffice / OpenOffice nicht installiert!");
-                            }
-                        } catch (Throwable ex) {
-                            log.error("error starting soffice" + "; command line was: " + cmdLine.toString(), ex);
-                            throw new Exception("LibreOffice / OpenOffice nicht installiert oder PATH nicht gesetzt: " + ex.getMessage() + "; command line was: " + cmdLine.toString());
-                        }
-
-                    }
-
+                    executeLibreOfficePrint(libreOfficeUrls, printerName);
                 } catch (final Throwable t) {
-                    SwingUtilities.invokeLater(() -> {
-                        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Drucken des Dokuments: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                    });
+                    showPrintError(printErrorMessage("Fehler beim Drucken des Dokuments",
+                            printerName, t));
                 }
             }
 
-        }).start();
+        }, "Direct-Print");
+        printThread.start();
 
+    }
+
+    private static void executeLibreOfficePrint(List<String> urls, String printerName) throws Exception {
+        boolean macOs = SystemUtils.isMacOs();
+        String[] executables = macOs
+                ? new String[]{"/Applications/LibreOffice.app/Contents/MacOS/libreoffice",
+                    "/Applications/LibreOffice.app/Contents/MacOS/soffice"}
+                : new String[]{"libreoffice", "soffice"};
+        Throwable lastFailure = null;
+
+        for (String executable : executables) {
+            List<String> command = buildLibreOfficePrintCommand(executable, urls, printerName, macOs);
+            try {
+                log.info("direct printing through " + executable + " (target="
+                        + (printerName == null ? "default" : "named") + ", documents="
+                        + urls.size() + ")");
+                ProcessBuilder builder = new ProcessBuilder(command);
+                builder.redirectErrorStream(true);
+                builder.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+                Process process = builder.start();
+                int exit = process.waitFor();
+                log.info("  direct printing exit code via " + executable + ": " + exit);
+                if (exit == 0) {
+                    return;
+                }
+                lastFailure = new Exception(executable + " returned exit code " + exit);
+            } catch (Throwable ex) {
+                lastFailure = ex;
+                log.error("error starting " + executable + ": " + ex.getMessage(), ex);
+            }
+        }
+
+        String detail = lastFailure == null ? "unbekannter Fehler" : lastFailure.getMessage();
+        throw new Exception("LibreOffice / OpenOffice nicht installiert oder PATH nicht gesetzt: "
+                + detail, lastFailure);
+    }
+
+    static List<String> buildLibreOfficePrintCommand(String executable, List<String> urls,
+            String printerName, boolean macOs) {
+        List<String> command = new ArrayList<>();
+        command.add(executable);
+        if (printerName == null) {
+            command.add("-p");
+        } else {
+            command.add("--pt");
+            command.add(printerName);
+        }
+        command.add(macOs ? "--nologo" : "-nologo");
+        command.addAll(urls);
+        return command;
+    }
+
+    private static String printErrorMessage(String prefix, String printerName, Throwable failure) {
+        String target = printerName == null ? "" : " an Drucker '" + printerName + "'";
+        return prefix + target + ": " + failure.getMessage();
+    }
+
+    private static void showPrintError(String message) {
+        SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(
+                EditorsRegistry.getInstance().getMainWindow(), message,
+                com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
+                JOptionPane.ERROR_MESSAGE));
     }
 
 }

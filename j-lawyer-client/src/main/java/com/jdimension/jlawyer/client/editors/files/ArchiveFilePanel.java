@@ -729,6 +729,10 @@ import com.jdimension.jlawyer.client.plugins.form.FormInstancePanel;
 import com.jdimension.jlawyer.client.plugins.form.FormPlugin;
 import com.jdimension.jlawyer.client.plugins.form.FormsManagementDialog;
 import com.jdimension.jlawyer.client.print.ArchiveFileStub;
+import com.jdimension.jlawyer.client.print.PrinterFavorite;
+import com.jdimension.jlawyer.client.print.PrinterFavorites;
+import com.jdimension.jlawyer.client.print.PrinterServiceRegistry;
+import com.jdimension.jlawyer.client.print.PrinterSnapshot;
 import com.jdimension.jlawyer.client.print.PrintStubGenerator;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableActionCallback;
@@ -845,6 +849,7 @@ import themes.colors.HighlightPicker;
 public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEditor, PopulateOptionsEditor, SaveableEditor, SelfValidatingEditor, com.jdimension.jlawyer.client.events.EventConsumer, NewEventPanelListener, NewMessageConsumer, DocumentPreviewSaveCallback, AssistantFlowAdapter {
 
     private static final Logger log = Logger.getLogger(ArchiveFilePanel.class.getName());
+    private static final long PRINTER_REFRESH_INTERVAL_MILLIS = 60_000L;
 
     private SimpleDateFormat dfTime = new SimpleDateFormat("HH:mm");
     private SimpleDateFormat dfDay = new SimpleDateFormat("dd.MM.yyyy");
@@ -2216,6 +2221,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuSendBeaDocumentPDF = new javax.swing.JMenuItem();
         jSeparator3 = new javax.swing.JPopupMenu.Separator();
         mnuSendDocumentFax = new javax.swing.JMenuItem();
+        mnuPrint = new javax.swing.JMenu();
         mnuDirectPrint = new javax.swing.JMenuItem();
         jSeparator4 = new javax.swing.JPopupMenu.Separator();
         mnuAssistant = new javax.swing.JMenu();
@@ -2794,14 +2800,18 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         });
         documentsPopup.add(mnuSendDocumentFax);
 
-        mnuDirectPrint.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/printer.png"))); // NOI18N
-        mnuDirectPrint.setText("drucken (Standarddrucker)");
+        mnuPrint.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/printer.png"))); // NOI18N
+        mnuPrint.setText("Drucken");
+
+        mnuDirectPrint.setText("Standarddrucker");
         mnuDirectPrint.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuDirectPrintActionPerformed(evt);
             }
         });
-        documentsPopup.add(mnuDirectPrint);
+        mnuPrint.add(mnuDirectPrint);
+
+        documentsPopup.add(mnuPrint);
         documentsPopup.add(jSeparator4);
 
         mnuAssistant.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
@@ -5456,6 +5466,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         this.rebuildAddressCopyMoveItems();
+        this.rebuildPrintMenu();
 
         this.documentsPopup.show(evt.getComponent(), evt.getX(), evt.getY());
 
@@ -6740,6 +6751,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_cmdAddHistoryActionPerformed
 
     private void mnuDirectPrintActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDirectPrintActionPerformed
+        directPrintSelectedDocuments(null);
+    }//GEN-LAST:event_mnuDirectPrintActionPerformed
+
+    private void directPrintSelectedDocuments(String printerName) {
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -6777,13 +6792,70 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
             }
 
-            LauncherFactory.directPrint(supported);
+            if (printerName == null) {
+                LauncherFactory.directPrint(supported);
+            } else {
+                LauncherFactory.directPrint(supported, printerName);
+            }
 
         } catch (Exception ioe) {
             log.error("Error printing document", ioe);
             JOptionPane.showMessageDialog(this, "Fehler beim Drucken der Dokumente: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-    }//GEN-LAST:event_mnuDirectPrintActionPerformed
+    }
+
+    private void rebuildPrintMenu() {
+        PrinterServiceRegistry registry = PrinterServiceRegistry.getInstance();
+        registry.refreshIfOlderThan(PRINTER_REFRESH_INTERVAL_MILLIS);
+        Icon printerIcon = this.mnuPrint.getIcon();
+
+        PrinterSnapshot snapshot = registry.getSnapshot();
+        List<PrinterFavorite> favorites = PrinterFavorites.availableNonDefaultFavorites(
+                snapshot, PrinterFavorites.load(ClientSettings.getInstance()));
+
+        this.documentsPopup.remove(this.mnuDirectPrint);
+        this.documentsPopup.remove(this.mnuPrint);
+        this.mnuPrint.removeAll();
+
+        int insertionIndex = this.documentsPopup.getComponentIndex(this.jSeparator4);
+        if (insertionIndex < 0) {
+            insertionIndex = this.documentsPopup.getComponentCount();
+        }
+
+        if (favorites.isEmpty()) {
+            this.mnuDirectPrint.setText("drucken (Standarddrucker)");
+            this.mnuDirectPrint.setIcon(printerIcon);
+            this.documentsPopup.insert(this.mnuDirectPrint, insertionIndex);
+            return;
+        }
+
+        this.mnuPrint.setText("Drucken");
+        this.mnuDirectPrint.setText("Standarddrucker");
+        this.mnuDirectPrint.setIcon(null);
+        this.mnuPrint.add(this.mnuDirectPrint);
+
+        Map<String, Integer> labelCounts = new HashMap<>();
+        for (PrinterFavorite favorite : favorites) {
+            String normalizedLabel = favorite.getMenuLabel().toLowerCase(Locale.ROOT);
+            labelCounts.put(normalizedLabel, labelCounts.getOrDefault(normalizedLabel, 0) + 1);
+        }
+
+        for (PrinterFavorite favorite : favorites) {
+            String label = favorite.getMenuLabel();
+            if (labelCounts.get(label.toLowerCase(Locale.ROOT)) > 1) {
+                label += " (" + favorite.getPrinterName() + ")";
+            }
+            JMenuItem printerItem = new JMenuItem(label);
+            printerItem.setIcon(printerIcon);
+            if (!label.equals(favorite.getPrinterName())) {
+                printerItem.setToolTipText(favorite.getPrinterName());
+            }
+            printerItem.addActionListener(event -> directPrintSelectedDocuments(
+                    favorite.getPrinterName()));
+            this.mnuPrint.add(printerItem);
+        }
+        this.documentsPopup.insert(this.mnuPrint, insertionIndex);
+    }
 
     private void mnuCopyDocumentToOtherCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCopyDocumentToOtherCaseActionPerformed
         try {
@@ -10433,6 +10505,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JMenuItem mnuCopyIdToClipboard;
     private javax.swing.JMenu mnuCopyMove;
     private javax.swing.JMenuItem mnuDirectPrint;
+    private javax.swing.JMenu mnuPrint;
     private javax.swing.JMenuItem mnuDocumentHighlight1;
     private javax.swing.JMenuItem mnuDocumentHighlight2;
     private javax.swing.JMenu mnuDocumentHighlights;
