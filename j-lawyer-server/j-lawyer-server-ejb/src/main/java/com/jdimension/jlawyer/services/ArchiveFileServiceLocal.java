@@ -923,6 +923,7 @@ public interface ArchiveFileServiceLocal {
     TimesheetPosition timesheetPositionStop(String timesheetId, TimesheetPosition position) throws Exception;
     TimesheetPosition timesheetPositionSave(String timesheetId, TimesheetPosition position) throws Exception;
     TimesheetPosition timesheetPositionAdd(String timesheetId, TimesheetPosition position) throws Exception;
+    TimesheetPosition updateTimesheetPositionBilling(String timesheetId, TimesheetPosition position, String invoiceId) throws Exception;
     int hasOpenTimesheetPositions(String principal) throws Exception;
     void removeTimesheetPosition(String timesheetId, TimesheetPosition position) throws Exception;
     Timesheet addTimesheet(String caseId, Timesheet timesheet) throws Exception;
