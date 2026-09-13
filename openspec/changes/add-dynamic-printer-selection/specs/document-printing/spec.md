@@ -65,6 +65,9 @@ printers currently reported by the operating system and MAY allow an optional lo
 display label for each selected printer. It SHALL store only those names and display
 labels in local client settings and MUST NOT store printer services, driver
 configuration, capabilities, or availability on the server or in local settings.
+The favourites settings dialog SHALL provide concise visible guidance for selecting
+printers and editing optional display labels, and SHALL support both exclusive row
+selection and direct-checkbox multi-selection.
 
 #### Scenario: Configure an available favourite printer
 - **WHEN** the user selects a currently available printer in the favourites settings
@@ -76,6 +79,21 @@ configuration, capabilities, or availability on the server or in local settings.
 - **WHEN** the user gives a selected favourite printer the display label `Faxdrucker`
 - **THEN** the document context menu uses `Faxdrucker` as the visible text while print
   dispatch still resolves the target by the stored operating-system printer name
+
+#### Scenario: Select one favourite by clicking its row
+- **WHEN** the user clicks a printer row outside its favourite checkbox
+- **THEN** that printer becomes the sole selected favourite and all other favourite
+  selections are cleared
+
+#### Scenario: Select multiple favourites through their checkboxes
+- **WHEN** the user clicks a printer row's favourite checkbox directly
+- **THEN** only that row's favourite state is toggled and the other selections remain
+  unchanged
+
+#### Scenario: Edit a display label from the table
+- **WHEN** the user double-clicks the display-label cell of a currently available printer
+- **THEN** that printer becomes the sole selected favourite and its display label becomes
+  editable
 
 #### Scenario: Different client installations
 - **WHEN** the same j-lawyer user uses two client installations with different local
@@ -112,6 +130,11 @@ document context menu.
   names are stored
 - **THEN** the document context menu keeps the existing `drucken (Standarddrucker)` action
   and does not add a printer submenu or any named printer actions
+
+#### Scenario: Default-only item explains how to configure favourites
+- **WHEN** the document context menu contains only the existing default-printer action
+- **THEN** that action provides a tooltip pointing the user to the printer favourites
+  settings
 
 #### Scenario: No available non-default favourite
 - **WHEN** the only stored favourite printer is currently unavailable or is the current

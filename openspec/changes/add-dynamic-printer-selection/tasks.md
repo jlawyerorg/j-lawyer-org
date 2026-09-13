@@ -59,6 +59,10 @@
   `JKanzleiGUI.java` and `JKanzleiGUI.form` together if those are the confirmed files.
 - [ ] 3.7 Do not restrict the printer favourites dialog to users with `adminRole` or
   `sysAdminRole`; ordinary users may configure these device-local preferences.
+- [ ] 3.8 Make a non-checkbox row click select only that printer, while a direct checkbox
+  click toggles only that row and therefore permits multiple favourites.
+- [ ] 3.9 Add concise visible guidance for marking a printer and editing its optional
+  display label, keeping `PrinterFavoritesDialog.java` and its `.form` file in sync.
 
 ## 4. Dynamic archive-file context menu
 
@@ -76,6 +80,8 @@
   supported documents.
 - [ ] 4.8 Keep `ArchiveFilePanel.java` and `ArchiveFilePanel.form` compatible with the
   NetBeans GUI Builder.
+- [ ] 4.9 Add a configuration hint tooltip to the default-only print action and clear that
+  hint when the favourites submenu is shown.
 
 ## 5. Automated verification
 
@@ -94,6 +100,8 @@
   printer discovery call and can safely use the last completed snapshot.
 - [ ] 5.7 Add tests or role-level checks confirming ordinary users can open and save the
   local printer favourites dialog without `adminRole` or `sysAdminRole`.
+- [ ] 5.8 Add a model-level test confirming that exclusive row selection clears all other
+  favourites, including when the clicked row was already selected.
 
 ## 6. Manual verification in an isolated client environment
 
@@ -116,6 +124,9 @@
   only selected, currently available favourites appear there.
 - [ ] 6.9 Observe context-menu opening with slow, offline, or network printer entries and
   verify that opening the menu remains responsive.
+- [ ] 6.10 Verify the visible dialog guidance, direct-checkbox multi-selection,
+  non-checkbox exclusive row selection, display-label editing, and the default-only
+  configuration tooltip.
 
 ## 7. Review gates
 

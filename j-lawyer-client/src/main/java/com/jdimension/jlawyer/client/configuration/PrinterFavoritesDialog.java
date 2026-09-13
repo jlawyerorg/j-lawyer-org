@@ -6,6 +6,8 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
@@ -35,6 +37,36 @@ public class PrinterFavoritesDialog extends javax.swing.JDialog {
         tblPrinters.getColumnModel().getColumn(3).setPreferredWidth(170);
         DefaultTableCellRenderer availabilityRenderer = new AvailabilityRenderer();
         tblPrinters.setDefaultRenderer(String.class, availabilityRenderer);
+        tblPrinters.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent event) {
+                int viewRow = tblPrinters.rowAtPoint(event.getPoint());
+                int viewColumn = tblPrinters.columnAtPoint(event.getPoint());
+                if (viewRow < 0 || viewColumn < 0
+                        || tblPrinters.convertColumnIndexToModel(viewColumn) == 0) {
+                    return;
+                }
+                stopCellEditing();
+                tableModel.selectOnly(tblPrinters.convertRowIndexToModel(viewRow));
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent event) {
+                int viewRow = tblPrinters.rowAtPoint(event.getPoint());
+                int viewColumn = tblPrinters.columnAtPoint(event.getPoint());
+                if (event.getClickCount() == 2 && viewRow >= 0 && viewColumn >= 0
+                        && tblPrinters.convertColumnIndexToModel(viewColumn) == 2) {
+                    int modelRow = tblPrinters.convertRowIndexToModel(viewRow);
+                    if (tableModel.isCellEditable(modelRow, 2)
+                            && tblPrinters.editCellAt(viewRow, viewColumn)) {
+                        Component editor = tblPrinters.getEditorComponent();
+                        if (editor != null) {
+                            editor.requestFocusInWindow();
+                        }
+                    }
+                }
+            }
+        });
         refreshPrinters();
     }
 
@@ -72,7 +104,8 @@ public class PrinterFavoritesDialog extends javax.swing.JDialog {
         setTitle("Druckerfavoriten");
         setMinimumSize(new java.awt.Dimension(720, 360));
 
-        lblDescription.setText("Nur ausgewählte und aktuell verfügbare Drucker erscheinen zusätzlich im Dokumentmenü.");
+        lblDescription.setText("<html>Nur ausgewählte und aktuell verfügbare Drucker erscheinen zusätzlich im Dokumentmenü.<br>"
+            + "Anzeigename ändern: Drucker markieren, dann unter „Anzeigename“ doppelt anklicken.</html>");
 
         tblPrinters.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {

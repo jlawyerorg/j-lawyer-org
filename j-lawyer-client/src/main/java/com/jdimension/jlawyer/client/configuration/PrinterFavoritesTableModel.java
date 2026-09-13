@@ -69,6 +69,24 @@ public final class PrinterFavoritesTableModel extends AbstractTableModel {
         return rows.get(modelRow).available;
     }
 
+    void selectOnly(int modelRow) {
+        if (modelRow < 0 || modelRow >= rows.size() || !rows.get(modelRow).canToggle) {
+            return;
+        }
+        boolean changed = false;
+        for (int rowIndex = 0; rowIndex < rows.size(); rowIndex++) {
+            Row row = rows.get(rowIndex);
+            boolean selected = rowIndex == modelRow;
+            if (row.selected != selected) {
+                row.selected = selected;
+                changed = true;
+            }
+        }
+        if (changed && !rows.isEmpty()) {
+            fireTableRowsUpdated(0, rows.size() - 1);
+        }
+    }
+
     @Override
     public int getRowCount() {
         return rows.size();

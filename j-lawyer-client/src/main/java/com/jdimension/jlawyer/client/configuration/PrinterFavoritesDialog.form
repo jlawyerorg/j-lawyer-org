@@ -68,7 +68,7 @@
   <SubComponents>
     <Component class="javax.swing.JLabel" name="lblDescription">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Nur ausgew&#xe4;hlte und aktuell verf&#xfc;gbare Drucker erscheinen zus&#xe4;tzlich im Dokumentmen&#xfc;."/>
+        <Property name="text" type="java.lang.String" value="&lt;html&gt;Nur ausgew&#xe4;hlte und aktuell verf&#xfc;gbare Drucker erscheinen zus&#xe4;tzlich im Dokumentmen&#xfc;.&lt;br&gt;Anzeigename &#xe4;ndern: Drucker markieren, dann unter &#x201e;Anzeigename&#x201c; doppelt anklicken.&lt;/html&gt;"/>
       </Properties>
     </Component>
     <Container class="javax.swing.JScrollPane" name="jScrollPane1">

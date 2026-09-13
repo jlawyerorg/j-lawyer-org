@@ -6825,6 +6825,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if (favorites.isEmpty()) {
             this.mnuDirectPrint.setText("drucken (Standarddrucker)");
             this.mnuDirectPrint.setIcon(printerIcon);
+            this.mnuDirectPrint.setToolTipText("Weitere Drucker können über Eigenschaften → Dokumente → "
+                    + "Druckerfavoriten konfiguriert werden.");
             this.documentsPopup.insert(this.mnuDirectPrint, insertionIndex);
             return;
         }
@@ -6832,6 +6834,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.mnuPrint.setText("Drucken");
         this.mnuDirectPrint.setText("Standarddrucker");
         this.mnuDirectPrint.setIcon(null);
+        this.mnuDirectPrint.setToolTipText(null);
         this.mnuPrint.add(this.mnuDirectPrint);
 
         Map<String, Integer> labelCounts = new HashMap<>();

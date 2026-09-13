@@ -41,6 +41,26 @@ public class PrinterFavoritesTableModelTest {
         assertEquals("Büro", model.getSelectedFavorites().get(0).getDisplayLabel());
     }
 
+    @Test
+    public void testSelectOnlyKeepsClickedFavoriteAndClearsAllOthers() {
+        PrinterFavoritesTableModel model = new PrinterFavoritesTableModel(
+                snapshot("Office", "Fax", "Archive"), Collections.emptyList());
+        int officeRow = findRow(model, "Office");
+        int faxRow = findRow(model, "Fax");
+        int archiveRow = findRow(model, "Archive");
+        model.setValueAt(true, officeRow, 0);
+        model.setValueAt(true, faxRow, 0);
+        model.setValueAt(true, archiveRow, 0);
+
+        model.selectOnly(faxRow);
+
+        assertFalse((Boolean) model.getValueAt(officeRow, 0));
+        assertTrue((Boolean) model.getValueAt(faxRow, 0));
+        assertFalse((Boolean) model.getValueAt(archiveRow, 0));
+        assertEquals(1, model.getSelectedFavorites().size());
+        assertEquals("Fax", model.getSelectedFavorites().get(0).getPrinterName());
+    }
+
     private static int findRow(PrinterFavoritesTableModel model, String printerName) {
         for (int row = 0; row < model.getRowCount(); row++) {
             if (printerName.equals(model.getValueAt(row, 1))) {
