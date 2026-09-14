@@ -694,6 +694,7 @@ import com.jdimension.jlawyer.client.launcher.DocumentObserver;
 import com.jdimension.jlawyer.client.plugins.calculation.CalculationPlugin;
 import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginDialog;
 import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginUtil;
+import com.jdimension.jlawyer.client.print.PrinterServiceRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
@@ -764,6 +765,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         this.initialized = System.currentTimeMillis();
         // for some reason, initComponents resets the bounds
         initComponents();
+        PrinterServiceRegistry.getInstance().refreshAsync(null);
 
         this.initializing = false;
 
@@ -1295,6 +1297,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuStirlingPdf = new javax.swing.JMenuItem();
         mnuDocumentNameTemplates = new javax.swing.JMenuItem();
         mnuDocumentPreview = new javax.swing.JMenuItem();
+        mnuPrinterFavorites = new javax.swing.JMenuItem();
         mnuCustomLauncherOptions = new javax.swing.JMenuItem();
         mnuMappingTables = new javax.swing.JMenuItem();
         mnuMappingEntries = new javax.swing.JMenuItem();
@@ -1901,6 +1904,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuDocumentOptions.add(mnuDocumentPreview);
+
+        mnuPrinterFavorites.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/printer.png"))); // NOI18N
+        mnuPrinterFavorites.setText("Druckerfavoriten");
+        mnuPrinterFavorites.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuPrinterFavoritesActionPerformed(evt);
+            }
+        });
+        mnuDocumentOptions.add(mnuPrinterFavorites);
 
         mnuCustomLauncherOptions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
         mnuCustomLauncherOptions.setText(bundle.getString("menu.settings.documents.3rdpartyapps")); // NOI18N
@@ -2978,6 +2990,12 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         dlg.setVisible(true);
     }//GEN-LAST:event_mnuDocumentPreviewActionPerformed
 
+    private void mnuPrinterFavoritesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuPrinterFavoritesActionPerformed
+        PrinterFavoritesDialog dlg = new PrinterFavoritesDialog(this, true);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_mnuPrinterFavoritesActionPerformed
+
     private void mnuInvoicePoolsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuInvoicePoolsActionPerformed
         if (checkAdmin()) {
             InvoicePoolsSetupDialog dlg = new InvoicePoolsSetupDialog(this, true);
@@ -3328,6 +3346,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuPayments;
     private javax.swing.JMenuItem mnuPdfStamps;
     private javax.swing.JMenuItem mnuProfileInfo;
+    private javax.swing.JMenuItem mnuPrinterFavorites;
     private javax.swing.JMenuItem mnuScanOptions;
     private javax.swing.JMenuItem mnuSearchIndex;
     private javax.swing.JMenuItem mnuSecurity;
