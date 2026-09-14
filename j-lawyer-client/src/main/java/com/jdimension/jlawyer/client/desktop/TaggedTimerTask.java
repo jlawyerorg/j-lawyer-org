@@ -1139,6 +1139,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                                 te.setAssistant(aFile.getAssistant());
                                 te.setName(aFile.getName());
                                 te.setReason(aFile.getReason());
+                                te.setArchived(aFile.isArchived());
                                 if (tags.get(aFile.getId()) != null) {
                                     ArrayList<String> xTags = new ArrayList<>();
                                     HashMap<String,Date> tagDates=new HashMap<>();
@@ -1186,6 +1187,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                                 te.setAssistant(aDoc.getArchiveFileKey().getAssistant());
                                 te.setName(aDoc.getArchiveFileKey().getName());
                                 te.setReason(aDoc.getArchiveFileKey().getReason());
+                                te.setArchived(aDoc.getArchiveFileKey().isArchived());
                                 if (documentTags.get(aDoc.getId()) != null) {
                                     ArrayList<String> xTags = new ArrayList<>();
                                     HashMap<String,Date> tagDates=new HashMap<>();

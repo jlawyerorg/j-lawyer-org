@@ -709,7 +709,7 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
+public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel implements CaseDropTarget {
 
     private static final Logger log = Logger.getLogger(ReviewDueEntryPanelTransparent.class.getName());
 
@@ -753,6 +753,30 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
 
         ((javax.swing.GroupLayout) this.getLayout()).linkSize(javax.swing.SwingConstants.VERTICAL, this.jPanel1, this.jPanel2);
 
+        this.lblDropIndicator.setIcon(new DropPlusIcon(20));
+        this.lblDropIndicator.setVisible(false);
+        CaseEntryDropHandler.install(this);
+
+    }
+
+    @Override
+    public String getDropCaseId() {
+        if (this.e == null) {
+            return null;
+        }
+        return this.e.getArchiveFileId();
+    }
+
+    @Override
+    public boolean isDropAllowed() {
+        return this.e != null && !this.e.isArchived();
+    }
+
+    @Override
+    public void setDropIndicatorVisible(boolean visible) {
+        this.lblDropIndicator.setVisible(visible);
+        this.highlight(visible);
+        this.revalidate();
     }
 
     @Override
@@ -947,6 +971,7 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
         chkDescription = new javax.swing.JCheckBox();
         cmdPostpone = new javax.swing.JButton();
         lblIcon = new javax.swing.JLabel();
+        lblDropIndicator = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         lblResponsible = new javax.swing.JLabel();
         lblDescription = new javax.swing.JLabel();
@@ -996,12 +1021,14 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
                 .addComponent(cmdPostpone)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblIcon)
+                .addComponent(lblDropIndicator)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(chkDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(lblIcon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(lblDropIndicator, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(3, 3, 3)
                 .addComponent(cmdPostpone)
@@ -1297,6 +1324,7 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JLabel lblDescription;
+    private javax.swing.JLabel lblDropIndicator;
     private javax.swing.JLabel lblIcon;
     private javax.swing.JLabel lblResponsible;
     // End of variables declaration//GEN-END:variables

@@ -2614,6 +2614,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                                    displayReason,
                                    entry.getDue(),
                                    displayTags);
+                header.setArchived(entry.isArchived());
                 pnlRevDue.add(header);
 
                 // Also add header to event type tab
@@ -2776,6 +2777,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             CaseGroupHeaderPanel header = new CaseGroupHeaderPanel();
             header.setGroupInfo(entry.getArchiveFileId(), entry.getArchiveFileNumber(),
                                entry.getArchiveFileName(), displayReason, entry.getDue(), displayTags);
+            header.setArchived(entry.isArchived());
             ((javax.swing.JPanel) p.getComponent(0)).add(header);
         }
     }
@@ -3074,6 +3076,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     private void addMessageToDesktopContainer(InstantMessage msg, JPanel targetPanel) {
         MessagePanel mp = new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), UserSettings.getInstance().getCurrentUser().getPrincipalId(), UserSettings.getInstance().getCurrentUser().getPrincipalId().equalsIgnoreCase(msg.getSender()), msg);
+        mp.enableCaseDrop();
         mp.setAlignmentX(JPanel.LEFT_ALIGNMENT);
         // Insert at correct position: newer messages on top
         int insertIndex = 0;
