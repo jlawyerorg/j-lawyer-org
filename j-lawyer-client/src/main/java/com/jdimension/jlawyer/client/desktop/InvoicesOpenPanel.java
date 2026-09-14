@@ -64,13 +64,8 @@ public class InvoicesOpenPanel extends JPanel {
         currencyFormat = NumberFormat.getCurrencyInstance(Locale.GERMANY);
 
         // Header
-        JPanel pnlHeader = new JPanel(new BorderLayout());
+        JPanel pnlHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         pnlHeader.setOpaque(false);
-
-        JLabel lblTitle = new JLabel("Offene Rechnungen");
-        lblTitle.setFont(lblTitle.getFont().deriveFont(lblTitle.getFont().getStyle() | Font.BOLD, lblTitle.getFont().getSize() + 2));
-        lblTitle.setForeground(Color.WHITE);
-        pnlHeader.add(lblTitle, BorderLayout.WEST);
 
         cmdRefresh = new JButton();
         cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_refresh_white_36dp.png")));
@@ -78,10 +73,13 @@ public class InvoicesOpenPanel extends JPanel {
         cmdRefresh.setBorder(null);
         cmdRefresh.setContentAreaFilled(false);
         cmdRefresh.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        JPanel pnlRefresh = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        pnlRefresh.setOpaque(false);
-        pnlRefresh.add(cmdRefresh);
-        pnlHeader.add(pnlRefresh, BorderLayout.EAST);
+        pnlHeader.add(cmdRefresh);
+        pnlHeader.add(Box.createHorizontalStrut(6));
+
+        JLabel lblTitle = new JLabel("Offene Rechnungen");
+        lblTitle.setFont(lblTitle.getFont().deriveFont(lblTitle.getFont().getStyle() | Font.BOLD, lblTitle.getFont().getSize() + 2));
+        lblTitle.setForeground(Color.WHITE);
+        pnlHeader.add(lblTitle);
 
         add(pnlHeader, BorderLayout.NORTH);
 
