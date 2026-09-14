@@ -1,6 +1,7 @@
 package org.jlawyer.io.rest.v8;
 import org.jlawyer.io.rest.tools.RestErrorResponses;
 
+import com.jdimension.jlawyer.persistence.InvoiceFacadeLocal;
 import com.jdimension.jlawyer.persistence.Timesheet;
 import com.jdimension.jlawyer.persistence.TimesheetPosition;
 import com.jdimension.jlawyer.persistence.TimesheetPositionTemplate;
@@ -38,6 +39,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     private static final Logger log = Logger.getLogger(TimesheetsEndpointV8.class.getName());
     private static final String LOOKUP_CASES = "java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
     private static final String LOOKUP_TIMESHEETS = "java:global/j-lawyer-server/j-lawyer-server-ejb/TimesheetService!com.jdimension.jlawyer.services.TimesheetServiceLocal";
+    private static final String LOOKUP_INVOICE_FACADE = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoiceFacade!com.jdimension.jlawyer.persistence.InvoiceFacadeLocal";
 
     @Context
     private SecurityContext securityContext;
@@ -552,11 +554,16 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     /**
      * Updates an existing timesheet position
      *
+     * A non-empty invoiceId links the position to that invoice; omitting it leaves an
+     * existing link untouched, so clients not sending the field cannot unbill a position.
+     * An invoiceId that cannot be resolved is rejected and nothing is saved.
+     *
      * @param timesheetId timesheet ID
      * @param positionId position ID
      * @param position updated position data
      * @response 401 User not authorized
      * @response 403 User not authenticated
+     * @response 404 Timesheet or invoice not found
      */
     @Override
     @PUT
@@ -564,7 +571,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{timesheetId}/positions/{positionId}")
     @RolesAllowed({"writeArchiveFileRole"})
-    @io.swagger.annotations.ApiOperation(value="Updates an existing timesheet position", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class)
+    @io.swagger.annotations.ApiOperation(value="Updates an existing timesheet position, optionally linking it to an invoice", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class)
     @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response updatePosition(@PathParam("timesheetId") String timesheetId, @PathParam("positionId") String positionId, @io.swagger.annotations.ApiParam RestfulTimesheetPositionV8 position) {
         try {
@@ -575,9 +582,23 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
 
+            // Validate invoice if provided
+            String invoiceId = position.getInvoiceId();
+            if (invoiceId != null && !invoiceId.trim().isEmpty()) {
+                InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
+                if (invoiceFacade.find(invoiceId) == null) {
+                    log.error("invoice with id " + invoiceId + " does not exist");
+                    return Response.status(Response.Status.NOT_FOUND).entity("Invoice not found").build();
+                }
+            }
+
             TimesheetPosition pos = position.toTimesheetPosition(ts);
             pos.setId(positionId);
             TimesheetPosition result = cases.timesheetPositionSave(timesheetId, pos);
+
+            if (invoiceId != null && !invoiceId.trim().isEmpty()) {
+                result = cases.updateTimesheetPositionBilling(timesheetId, pos, invoiceId);
+            }
 
             return Response.ok(RestfulTimesheetPositionV8.fromTimesheetPosition(result)).build();
         } catch (Exception ex) {
