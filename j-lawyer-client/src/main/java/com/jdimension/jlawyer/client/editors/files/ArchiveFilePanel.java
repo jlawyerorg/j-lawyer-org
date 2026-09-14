@@ -2160,6 +2160,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.tabPaneArchiveFile.setSelectedIndex(4);
     }
 
+    public void selectFinance() {
+        this.tabPaneArchiveFile.setSelectedIndex(3);
+        this.subTabsFinance.setSelectedIndex(0);
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
