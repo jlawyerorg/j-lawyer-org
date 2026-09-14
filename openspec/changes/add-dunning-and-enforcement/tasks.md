@@ -460,6 +460,24 @@
       measure, open amount), plus a desktop widget for overdue recovery deadlines. The dunning
       worklist view moved here from 3.10 together with starting a VB application from a row, for
       which the server side of 3.8 is already in place
+- [ ] 5.3a Decide how a sub-ledger is assigned, and act on it. `ClaimLedger.parentLedger`
+      (`parent_ledger_id`) exists from 1.2 and carries a real purpose: a claim that is titled,
+      calculated or enforced separately while belonging to the same matter — the titled principal
+      running on while subsequently assessed costs form their own ledger with their own interest, or
+      several debtors kept apart but reported together. The claim statement uses it: "Unterkonten
+      einbeziehen" assembles a full statement per sub-ledger, recursively, keeping each ledger's
+      positions, interest and payments apart rather than merging them. `updateClaimLedger` carries
+      the field through.
+      *What is missing:* no dialog in the client ever sets it. The relation can only be established
+      directly in the database, so in practice a ledger has no sub-ledgers and the checkbox in the
+      statement dialog changes nothing. It promises something the user interface cannot deliver.
+      *Proposed:* add a field "übergeordnetes Konto" to the ledger master data offering the other
+      ledgers of the same case, guarded against selecting itself and against cycles. The server side
+      is complete; only the field is missing, and hiding the checkbox instead would leave working
+      logic unreachable. Decide and then either build the field or take the checkbox out — an option
+      without effect is worse than an absent one. The documentation in `doc/` says today that a
+      ledger *can* be assigned to another without noting that this is not possible through the user
+      interface; it is to be corrected either way.
 - [ ] 5.4 Ledger REST endpoints (totals, payment booking, statement)
 - [ ] 5.5 Documentation: user-facing description of the workflow, admin guide for court table, fee
       tables, reminder stages and form templates
