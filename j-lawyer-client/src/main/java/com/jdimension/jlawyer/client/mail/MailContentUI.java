@@ -818,6 +818,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     private Date icsStartDate = null;
     private Date icsEndDate = null;
 
+    private static final String COPY_HINT = "Klicken, um in Zwischenablage zu kopieren:";
+
     /**
      * Creates new form MailContentUI
      */
@@ -952,14 +954,32 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
     }
 
+    /**
+     * Returns the string representation of each element, for labels that are
+     * filled via ComponentUtils.setListLabel.
+     */
+    private static List<String> toStringEntries(List<?> values) {
+        List<String> entries = new ArrayList<>();
+        if (values != null) {
+            for (Object value : values) {
+                if (value != null) {
+                    entries.add(value.toString());
+                }
+            }
+        }
+        return entries;
+    }
+
     // Method to add copy functionality to JLabels
     private void addCopyFunctionality(JLabel label) {
         label.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                StringSelection stringSelection = new StringSelection(label.getText());
+                // the label itself may only show a truncated preview - copy the full value
+                String fullText = ComponentUtils.getFullLabelText(label);
+                StringSelection stringSelection = new StringSelection(fullText);
                 Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
-                JOptionPane.showMessageDialog(null, "In Zwischenablage kopiert: " + label.getText());
+                JOptionPane.showMessageDialog(MailContentUI.this, "In Zwischenablage kopiert: " + ComponentUtils.toPreview(fullText));
             }
         });
     }
@@ -971,17 +991,11 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         this.lblSentDate.setText(" ");
         this.lblSubject.setText(" ");
         this.lblSubject.setToolTipText(null);
-        this.lblFrom.setText(" ");
-        this.lblFrom.setToolTipText(null);
+        ComponentUtils.setListLabel(this.lblFrom, null, null);
 
-        this.lblTo.setText(" ");
-        this.lblTo.setToolTipText(null);
-
-        this.lblCC.setText(" ");
-        this.lblCC.setToolTipText(null);
-
-        this.lblBCC.setText(" ");
-        this.lblBCC.setToolTipText(null);
+        ComponentUtils.setListLabel(this.lblTo, null, null);
+        ComponentUtils.setListLabel(this.lblCC, null, null);
+        ComponentUtils.setListLabel(this.lblBCC, null, null);
 
         this.setBody("", ContentTypes.TEXT_PLAIN);
 
@@ -1213,17 +1227,13 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         } catch (Exception ex) {
             log.error("Error getting contents of Outlook message", ex);
             this.setErrorMessage("Fehler beim Laden der Outlook-Nachricht: " + ex.getMessage());
-            this.lblBCC.setText("");
-            this.lblBCC.setToolTipText(null);
-            this.lblCC.setText("");
-            this.lblCC.setToolTipText(null);
-            this.lblFrom.setText("");
-            this.lblFrom.setToolTipText(null);
+            ComponentUtils.setListLabel(this.lblBCC, null, null);
+            ComponentUtils.setListLabel(this.lblCC, null, null);
+            ComponentUtils.setListLabel(this.lblFrom, null, null);
             this.lblSentDate.setText("");
             this.lblSubject.setText("");
             this.lblSubject.setToolTipText(null);
-            this.lblTo.setText("");
-            this.lblTo.setToolTipText(null);
+            ComponentUtils.setListLabel(this.lblTo, null, null);
         }
     }
 
@@ -1283,17 +1293,13 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         } catch (Exception ex) {
             log.error("Error getting contents of IMAP message", ex);
             this.setErrorMessage("Fehler beim Laden der Nachricht: " + ex.getMessage());
-            this.lblBCC.setText("");
-            this.lblBCC.setToolTipText(null);
-            this.lblCC.setText("");
-            this.lblCC.setToolTipText(null);
-            this.lblFrom.setText("");
-            this.lblFrom.setToolTipText(null);
+            ComponentUtils.setListLabel(this.lblBCC, null, null);
+            ComponentUtils.setListLabel(this.lblCC, null, null);
+            ComponentUtils.setListLabel(this.lblFrom, null, null);
             this.lblSentDate.setText("");
             this.lblSubject.setText("");
             this.lblSubject.setToolTipText(null);
-            this.lblTo.setText("");
-            this.lblTo.setToolTipText(null);
+            ComponentUtils.setListLabel(this.lblTo, null, null);
             return false;
         }
         return true;
@@ -1385,34 +1391,16 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         }
         lblSentDate.setText(sentString);
         lblSubject.setText(StringUtils.nonNull(copiedMsg.getSubject()));
-        lblSubject.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + lblSubject.getText());
+        lblSubject.setToolTipText(ComponentUtils.toWrappedTooltip(COPY_HINT + System.lineSeparator() + lblSubject.getText()));
         if (copiedMsg.getFrom() != null && copiedMsg.getFrom().length > 0) {
-            lblFrom.setText(EmailUtils.getAddressesAsList(new Address[]{copiedMsg.getFrom()[0]}));
+            ComponentUtils.setListLabel(lblFrom, EmailUtils.getAddressEntries(new Address[]{copiedMsg.getFrom()[0]}), COPY_HINT);
         } else {
-            lblFrom.setText("");
+            ComponentUtils.setListLabel(lblFrom, null, COPY_HINT);
         }
-        lblFrom.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + lblFrom.getText());
 
-        String to = "";
-        if (copiedMsg.getRecipients(RecipientType.TO) != null && copiedMsg.getRecipients(RecipientType.TO).length > 0) {
-            to = EmailUtils.getAddressesAsList(copiedMsg.getRecipients(RecipientType.TO));
-        }
-        lblTo.setText(to);
-        lblTo.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + to);
-
-        String cc = "";
-        if (copiedMsg.getRecipients(RecipientType.CC) != null && copiedMsg.getRecipients(RecipientType.CC).length > 0) {
-            cc = EmailUtils.getAddressesAsList(copiedMsg.getRecipients(RecipientType.CC));
-        }
-        lblCC.setText(cc);
-        lblCC.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + cc);
-
-        String bcc = "";
-        if (copiedMsg.getRecipients(RecipientType.BCC) != null && copiedMsg.getRecipients(RecipientType.BCC).length > 0) {
-            bcc = EmailUtils.getAddressesAsList(copiedMsg.getRecipients(RecipientType.BCC));
-        }
-        lblBCC.setText(bcc);
-        lblBCC.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + bcc);
+        ComponentUtils.setListLabel(lblTo, EmailUtils.getAddressEntries(copiedMsg.getRecipients(RecipientType.TO)), COPY_HINT);
+        ComponentUtils.setListLabel(lblCC, EmailUtils.getAddressEntries(copiedMsg.getRecipients(RecipientType.CC)), COPY_HINT);
+        ComponentUtils.setListLabel(lblBCC, EmailUtils.getAddressEntries(copiedMsg.getRecipients(RecipientType.BCC)), COPY_HINT);
 
         ((DefaultListModel) lstAttachments.getModel()).removeAllElements();
         if (copiedMsg.isMimeType("multipart/*")) {
@@ -1602,7 +1590,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         }
         lblSentDate.setText(sentString);
         lblSubject.setText(StringUtils.nonNull(msg.getSubject()));
-        lblSubject.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + lblSubject.getText());
+        lblSubject.setToolTipText(ComponentUtils.toWrappedTooltip(COPY_HINT + System.lineSeparator() + lblSubject.getText()));
         String fromName = StringUtils.nonNull(msg.getFromName());
         String fromEmail = StringUtils.nonNull(msg.getFromEmail());
         String fromText;
@@ -1611,38 +1599,11 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         } else {
             fromText = fromName;
         }
-        lblFrom.setText(fromText);
-        lblFrom.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + lblFrom.getText());
+        ComponentUtils.setListLabel(lblFrom, java.util.Collections.singletonList(fromText), COPY_HINT);
 
-        String to = "";
-        if (msg.getRecipients() != null && msg.getRecipients().size() > 0) {
-            to = msg.getRecipients().get(0).toString();
-            for (int i = 1; i < msg.getRecipients().size(); i++) {
-                to = to + ", " + msg.getRecipients().get(i).toString();
-            }
-        }
-        lblTo.setText(to);
-        lblTo.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + to);
-
-        String cc = "";
-        if (msg.getCcRecipients() != null && msg.getCcRecipients().size() > 0) {
-            cc = msg.getCcRecipients().get(0).toString();
-            for (int i = 1; i < msg.getCcRecipients().size(); i++) {
-                cc = cc + ", " + msg.getCcRecipients().get(i).toString();
-            }
-        }
-        lblCC.setText(cc);
-        lblCC.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + cc);
-
-        String bcc = "";
-        if (msg.getBccRecipients() != null && msg.getBccRecipients().size() > 0) {
-            bcc = msg.getBccRecipients().get(0).toString();
-            for (int i = 1; i < msg.getBccRecipients().size(); i++) {
-                bcc = bcc + ", " + msg.getBccRecipients().get(i).toString();
-            }
-        }
-        lblBCC.setText(bcc);
-        lblBCC.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + bcc);
+        ComponentUtils.setListLabel(lblTo, toStringEntries(msg.getRecipients()), COPY_HINT);
+        ComponentUtils.setListLabel(lblCC, toStringEntries(msg.getCcRecipients()), COPY_HINT);
+        ComponentUtils.setListLabel(lblBCC, toStringEntries(msg.getBccRecipients()), COPY_HINT);
 
         ((DefaultListModel) lstAttachments.getModel()).removeAllElements();
 
@@ -1979,17 +1940,14 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(lblSubject, javax.swing.GroupLayout.PREFERRED_SIZE, 450, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(lblSubject, 0, 450, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(lblSentDate, javax.swing.GroupLayout.DEFAULT_SIZE, 70, Short.MAX_VALUE))
+                            .addComponent(lblFrom, 0, 514, Short.MAX_VALUE)
+                            .addComponent(lblTo, 0, 514, Short.MAX_VALUE)
+                            .addComponent(lblCC, 0, 514, Short.MAX_VALUE)
                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                    .addComponent(lblFrom, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 514, Short.MAX_VALUE)
-                                    .addComponent(lblTo, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(lblCC, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(lblBCC, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(lblBCC, 0, 0, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(cmdAssistant)))))
                 .addContainerGap())
@@ -2901,28 +2859,18 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             javax.swing.SwingUtilities.invokeLater(() -> {
                 // Set header labels
                 this.lblSubject.setText(finalDto.getSubject() != null ? finalDto.getSubject() : "");
-                this.lblSubject.setToolTipText(finalDto.getSubject());
-                this.lblFrom.setText(finalDto.getFrom() != null ? finalDto.getFrom() : "");
-                this.lblFrom.setToolTipText(finalDto.getFrom());
+                this.lblSubject.setToolTipText(ComponentUtils.toWrappedTooltip(finalDto.getSubject()));
+                ComponentUtils.setListLabel(this.lblFrom, finalDto.getFrom() != null ? java.util.Collections.singletonList(finalDto.getFrom()) : null, COPY_HINT);
                 if (finalDto.getDate() != null) {
                     this.lblSentDate.setText(new java.text.SimpleDateFormat("dd.MM.yyyy, HH:mm").format(finalDto.getDate()));
                 } else {
                     this.lblSentDate.setText("");
                 }
-                if (finalDto.getTo() != null) {
-                    String toStr = String.join(", ", finalDto.getTo());
-                    this.lblTo.setText(toStr);
-                    this.lblTo.setToolTipText(toStr);
-                } else {
-                    this.lblTo.setText("");
-                }
-                if (finalDto.getCc() != null && finalDto.getCc().length > 0) {
-                    String ccStr = String.join(", ", finalDto.getCc());
-                    this.lblCC.setText(ccStr);
-                    this.lblCC.setToolTipText(ccStr);
-                } else {
-                    this.lblCC.setText("");
-                }
+                ComponentUtils.setListLabel(this.lblTo, finalDto.getTo() != null ? Arrays.asList(finalDto.getTo()) : null, COPY_HINT);
+                ComponentUtils.setListLabel(this.lblCC, finalDto.getCc() != null ? Arrays.asList(finalDto.getCc()) : null, COPY_HINT);
+                // MailMessageDTO carries no BCC - clear it so no stale value from the
+                // previously displayed message remains visible
+                ComponentUtils.setListLabel(this.lblBCC, null, COPY_HINT);
 
                 // Update attachment list
                 this.lstAttachments.setModel(finalAttModel);

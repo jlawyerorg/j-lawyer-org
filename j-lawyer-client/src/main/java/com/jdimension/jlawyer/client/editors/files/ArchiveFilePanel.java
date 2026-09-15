@@ -783,10 +783,11 @@ import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.KeyboardFocusManager;
+import java.awt.MouseInfo;
 import java.awt.Point;
+import java.awt.PointerInfo;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
@@ -802,7 +803,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -2158,6 +2158,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.tabPaneArchiveFile.setSelectedIndex(4);
     }
 
+    public void selectFinance() {
+        this.tabPaneArchiveFile.setSelectedIndex(3);
+        this.subTabsFinance.setSelectedIndex(0);
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -2592,17 +2597,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuDocumentHighlights.setText("farblich hervorheben");
 
         mnuDocumentHighlight1.setText("erste Farbe");
-        mnuDocumentHighlight1.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                mnuDocumentHighlight1MousePressed(evt);
+        mnuDocumentHighlight1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDocumentHighlight1ActionPerformed(evt);
             }
         });
         mnuDocumentHighlights.add(mnuDocumentHighlight1);
 
         mnuDocumentHighlight2.setText("zweite Farbe");
-        mnuDocumentHighlight2.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                mnuDocumentHighlight2MousePressed(evt);
+        mnuDocumentHighlight2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDocumentHighlight2ActionPerformed(evt);
             }
         });
         mnuDocumentHighlights.add(mnuDocumentHighlight2);
@@ -7968,14 +7973,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_togCaseSyncActionPerformed
 
-    private void mnuDocumentHighlight1MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mnuDocumentHighlight1MousePressed
-        updateDocumentHighlights(1);
-    }//GEN-LAST:event_mnuDocumentHighlight1MousePressed
-
-    private void mnuDocumentHighlight2MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mnuDocumentHighlight2MousePressed
-        updateDocumentHighlights(2);
-    }//GEN-LAST:event_mnuDocumentHighlight2MousePressed
-
     private void cmdNewInvoiceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewInvoiceActionPerformed
         InvoiceDialog dlg = new InvoiceDialog(this, this.dto, EditorsRegistry.getInstance().getMainWindow(), true, this.pnlInvolvedParties.getInvolvedPartiesAddress());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
@@ -9570,6 +9567,38 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }//GEN-LAST:event_mnuMoveReviewToOtherCaseActionPerformed
 
+    private void mnuDocumentHighlight1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentHighlight1ActionPerformed
+        triggerDocumentHighlights(1);
+    }//GEN-LAST:event_mnuDocumentHighlight1ActionPerformed
+
+    private void mnuDocumentHighlight2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentHighlight2ActionPerformed
+        triggerDocumentHighlights(2);
+    }//GEN-LAST:event_mnuDocumentHighlight2ActionPerformed
+
+    /**
+     * Opens the highlight picker for the current document selection. The picker is a
+     * modal dialog and must not be shown while the popup menu it was launched from is
+     * still on screen: the popup holds a native mouse grab, and activating another
+     * window against that grab is delayed by the window manager - on Windows until the
+     * foreground lock timeout expires, which makes the picker appear only seconds after
+     * the click. Showing it from a later EDT cycle lets the popup close first.
+     * The menu item itself cannot serve as the anchor for positioning the picker: the
+     * menu path is already cleared when a JMenuItem fires its action, so the item is no
+     * longer on screen. The mouse pointer still marks the spot that was clicked.
+     */
+    private void triggerDocumentHighlights(int highlightIndex) {
+        Point anchor = null;
+        PointerInfo pointer = MouseInfo.getPointerInfo();
+        JFrame mainWindow = EditorsRegistry.getInstance().getMainWindow();
+        if (pointer != null && mainWindow != null && mainWindow.getBounds().contains(pointer.getLocation())) {
+            // ignore a pointer that has wandered off the application, e.g. on keyboard activation
+            anchor = pointer.getLocation();
+        }
+
+        final Point pickerAnchor = anchor;
+        SwingUtilities.invokeLater(() -> updateDocumentHighlights(highlightIndex, pickerAnchor));
+    }
+
     public void exportSelectedDocumentsAsPdf() {
 
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
@@ -9613,10 +9642,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }
 
-    private void updateDocumentHighlights(int highlightIndex) {
+    private void updateDocumentHighlights(int highlightIndex, Point pickerAnchor) {
         if (!this.readOnly) {
             HighlightPicker hp = new HighlightPicker(EditorsRegistry.getInstance().getMainWindow(), true);
-            hp.setLocationRelativeTo(this.mnuDocumentHighlights);
+            if (pickerAnchor != null) {
+                FrameUtils.centerDialogAt(hp, pickerAnchor);
+            } else {
+                FrameUtils.centerDialog(hp, EditorsRegistry.getInstance().getMainWindow());
+            }
             hp.setVisible(true);
             int highlightColor = Integer.MIN_VALUE;
             if (hp.getSelectedColor() != null) {
@@ -10107,12 +10140,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         protected void processDrag(DropTargetDragEvent dtde) {
 
-            if (dtde.isDataFlavorSupported(DocumentsTransferable.DOCS_FLAVOR)) {
-                // internal document drag - only folder cells (FolderListCell) handle these
-                dtde.rejectDrag();
-            } else if (OutlookDropHelper.isOutlookDrop(dtde.getCurrentDataFlavors())) {
-                dtde.acceptDrag(DnDConstants.ACTION_COPY);
-            } else if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+            // internal document drags are rejected - only folder cells (FolderListCell) handle these
+            if (FileDropSupport.isFileTransfer(dtde.getCurrentDataFlavors())) {
                 dtde.acceptDrag(DnDConstants.ACTION_COPY);
             } else {
                 dtde.rejectDrag();
@@ -10153,132 +10182,25 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 return;
             }
 
-            if (OutlookDropHelper.isOutlookDrop(transferable.getTransferDataFlavors())) {
-                dtde.acceptDrop(dtde.getDropAction());
-                try {
-                    List<File> tempFiles = OutlookDropHelper.extractOutlookFiles(transferable);
-                    if (!tempFiles.isEmpty()) {
-                        ThreadUtils.setWaitCursor(p);
-
-                        ArrayList<File> files = new ArrayList<>(tempFiles);
-                        ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-                        pi.setShowCancelButton(true);
-                        UploadDocumentsAction a = new UploadDocumentsAction(pi, p, dto, caseFolderPanel1, files, caseFolderPanel1.getFoldersListPanel().getRootFolder(), null);
-
-                        a.start();
-                        dtde.dropComplete(true);
-                    } else {
-                        log.error("Outlook drop: no files could be extracted");
-                        dtde.dropComplete(false);
-                    }
-                } catch (Exception ex) {
-                    log.error("Outlook drop error", ex);
-                    dtde.dropComplete(false);
-                }
-            } else if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-                dtde.acceptDrop(dtde.getDropAction());
-                try {
-
-                    List transferData = (List) transferable.getTransferData(DataFlavor.javaFileListFlavor);
-                    if (transferData != null && !transferData.isEmpty()) {
-
-                        ThreadUtils.setWaitCursor(p);
-
-                        ArrayList<File> files = new ArrayList<>();
-                        for (Object fo : transferData) {
-                            if (fo instanceof File) {
-                                files.add((File) fo);
-                            } else {
-                                log.error("transfer data: " + fo.getClass().getName());
-                            }
-                        }
-
-                        ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-                        pi.setShowCancelButton(true);
-                        UploadDocumentsAction a = new UploadDocumentsAction(pi, p, dto, caseFolderPanel1, files, caseFolderPanel1.getFoldersListPanel().getRootFolder(), null);
-
-                        a.start();
-
-                        dtde.dropComplete(true);
-                    } else {
-                        log.error("transfer data is empty");
-                    }
-
-                } catch (Exception ex) {
-                    if (isVirtualFileDropFailure(ex, transferable)) {
-                        log.warn("Drop aborted: source advertised javaFileListFlavor but did not deliver any native data (typical for New Outlook for Windows, Outlook Web App, RDP/Citrix sessions, or drags from email reading pane)");
-                        javax.swing.JOptionPane.showMessageDialog(p,
-                                "Die Quellanwendung hat einen Drag & Drop signalisiert, aber keine verwertbaren Datei-Inhalte mitgesendet.\n\n"
-                                + "Mögliche Ursachen:\n"
-                                + "    • \"Neues Outlook für Windows\" (statt klassischem Outlook)\n"
-                                + "    • Outlook im Webbrowser (Outlook Web App)\n"
-                                + "    • Outlook über RDP / Citrix / Terminalserver\n"
-                                + "    • Drag aus dem Lesebereich statt aus der Nachrichtenliste\n\n"
-                                + "Workaround: Bitte ziehen Sie die E-Mail oder Datei zunächst auf den Desktop oder in einen Ordner\n"
-                                + "und von dort nach j-lawyer.",
-                                com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT,
-                                javax.swing.JOptionPane.WARNING_MESSAGE);
-                    } else {
-                        log.error("file drop error", ex);
-                        logTransferFlavors("file drop error - offered flavors:", transferable);
-                    }
-                }
-            } else {
-
-                try {
-                    log.error("drop not supported: " + dtde.getTransferable().getTransferDataFlavors());
-                    if (dtde.getTransferable().getTransferDataFlavors() != null) {
-                        for (int i = 0; i < dtde.getTransferable().getTransferDataFlavors().length; i++) {
-                            DataFlavor df = dtde.getTransferable().getTransferDataFlavors()[i];
-                            log.error("  " + df.getHumanPresentableName() + " - " + df.getDefaultRepresentationClassAsString() + " - " + df.getMimeType());
-                        }
-                    }
-                } catch (Throwable th) {
-                    log.error("Error determining transferable flavor", th);
-                }
+            if (!FileDropSupport.isFileTransfer(dtde.getCurrentDataFlavors())) {
+                FileDropSupport.logTransferFlavors("drop not supported - offered flavors:", transferable);
                 dtde.rejectDrop();
+                return;
             }
-        }
 
-        private boolean isVirtualFileDropFailure(Exception ex, Transferable transferable) {
-            if (!(ex instanceof IOException)) {
-                return false;
+            dtde.acceptDrop(dtde.getDropAction());
+            List<File> files = FileDropSupport.getDroppedFiles(transferable, p);
+            if (files.isEmpty()) {
+                dtde.dropComplete(false);
+                return;
             }
-            String msg = ex.getMessage();
-            if (msg == null || !msg.toLowerCase().contains("no native data")) {
-                return false;
-            }
-            DataFlavor[] flavors = transferable.getTransferDataFlavors();
-            if (flavors == null) {
-                return false;
-            }
-            if (OutlookDropHelper.isOutlookDrop(flavors)) {
-                return false;
-            }
-            for (DataFlavor f : flavors) {
-                String name = f.getHumanPresentableName();
-                if (name != null && name.toLowerCase().contains("file-list")) {
-                    return true;
-                }
-            }
-            return false;
-        }
 
-        private void logTransferFlavors(String message, Transferable transferable) {
-            try {
-                DataFlavor[] flavors = transferable.getTransferDataFlavors();
-                log.error(message + " count=" + (flavors == null ? 0 : flavors.length));
-                if (flavors != null) {
-                    for (int i = 0; i < flavors.length; i++) {
-                        DataFlavor df = flavors[i];
-                        log.error("  [" + i + "] name='" + df.getHumanPresentableName()
-                                + "' repr=" + df.getDefaultRepresentationClassAsString()
-                                + " mime=" + df.getMimeType());
-                    }
-                }
-            } catch (Throwable th) {
-                log.error("Error logging transferable flavors", th);
-            }
+            ThreadUtils.setWaitCursor(p);
+            ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+            pi.setShowCancelButton(true);
+            UploadDocumentsAction a = new UploadDocumentsAction(pi, p, dto, caseFolderPanel1, files, caseFolderPanel1.getFoldersListPanel().getRootFolder(), null);
+            a.start();
+            dtde.dropComplete(true);
         }
     }
 

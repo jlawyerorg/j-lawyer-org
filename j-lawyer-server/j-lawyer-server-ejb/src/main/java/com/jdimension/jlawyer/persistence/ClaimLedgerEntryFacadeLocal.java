@@ -696,6 +696,10 @@ public interface ClaimLedgerEntryFacadeLocal {
     ClaimLedgerEntry findLatestEntry(ClaimComponent component);
     ClaimLedgerEntry findEarliestEntry(ClaimComponent component);
 
+    List<ClaimLedgerEntry> findByOrigin(String originReference);
+
+    ClaimLedgerEntry findReversalOf(ClaimLedgerEntry entry);
+
     int count();
     
 }

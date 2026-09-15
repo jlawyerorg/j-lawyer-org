@@ -75,6 +75,11 @@ public class PaymentSplitProposal implements Serializable {
      * Indicates if the proposal follows the legal order (§ 366/367 BGB)
      */
     private boolean followsLegalOrder;
+    /**
+     * The allocation mode this proposal was produced with. Stored with the proposal so a booking
+     * stays explainable later - which rule was applied, not just what the amounts were.
+     */
+    private PaymentAllocationMode allocationMode = PaymentAllocationMode.LEGAL;
 
     /**
      * Warning message if the proposal deviates from legal order
@@ -271,4 +276,19 @@ public class PaymentSplitProposal implements Serializable {
                 ", followsLegalOrder=" + followsLegalOrder +
                 '}';
     }
+
+    /**
+     * @return the allocation mode used to produce this proposal
+     */
+    public PaymentAllocationMode getAllocationMode() {
+        return allocationMode;
+    }
+
+    /**
+     * @param allocationMode the allocationMode to set
+     */
+    public void setAllocationMode(PaymentAllocationMode allocationMode) {
+        this.allocationMode = allocationMode;
+    }
+
 }

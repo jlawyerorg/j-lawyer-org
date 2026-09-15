@@ -683,6 +683,8 @@ import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.pojo.ClaimComponentBalance;
 import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
+import com.jdimension.jlawyer.pojo.ContinuingInterest;
+import com.jdimension.jlawyer.pojo.DebtorBalance;
 import com.jdimension.jlawyer.pojo.DataBucket;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.server.utils.CaseNumberGenerator;
@@ -812,6 +814,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     private InterestRuleFacadeLocal claimComponentInterestRuleFacade;
     @EJB
     private BaseInterestFacadeLocal baseInterestFacade;
+    @EJB
+    private ClaimLedgerServiceLocal claimLedgerService;
+
     @EJB
     private PaymentFacadeLocal paymentsFacade;
     @EJB
@@ -8176,64 +8181,26 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         return this.paymentsFacade.find(newPayment.getId());
     }
 
+    /**
+     * @deprecated The ledger operations now live in {@link ClaimLedgerServiceRemote}. This
+     * method delegates and is kept so existing clients keep working.
+     */
     @Override
+    @Deprecated
     @RolesAllowed({"readArchiveFileRole"})
     public List<ClaimLedger> getClaimLedgers(String caseId) {
-        String principalId = context.getCallerPrincipal().getName();
-
-        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
-        boolean allowed = false;
-        if (principalId != null) {
-            List<Group> userGroups = new ArrayList<>();
-            try {
-                userGroups = this.securityFacade.getGroupsForUser(principalId);
-            } catch (Throwable t) {
-                log.error("Unable to determine groups for user " + principalId, t);
-            }
-            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
-                allowed = true;
-            }
-        } else {
-            allowed = true;
-        }
-
-        if (allowed) {
-            return this.claimLedgersFacade.findByArchiveFileKey(aFile);
-        } else {
-            return new ArrayList<>();
-        }
+        return this.claimLedgerService.getClaimLedgers(caseId);
     }
 
+    /**
+     * @deprecated The ledger operations now live in {@link ClaimLedgerServiceRemote}. This
+     * method delegates and is kept so existing clients keep working.
+     */
     @Override
+    @Deprecated
     @RolesAllowed({"writeArchiveFileRole"})
     public ClaimLedger addClaimLedger(String caseId, ClaimLedger ledger) throws Exception {
-        String principalId = context.getCallerPrincipal().getName();
-
-        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
-        boolean allowed = false;
-        if (principalId != null) {
-            List<Group> userGroups = new ArrayList<>();
-            try {
-                userGroups = this.securityFacade.getGroupsForUser(principalId);
-            } catch (Throwable t) {
-                log.error("Unable to determine groups for user " + principalId, t);
-            }
-            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
-                allowed = true;
-            }
-        } else {
-            allowed = true;
-        }
-
-        if (allowed) {
-            StringGenerator idGen = new StringGenerator();
-            ledger.setId(idGen.getID().toString());
-            this.claimLedgersFacade.create(ledger);
-            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Forderungskonto erstellt (" + ledger.getName() + ")");
-            return this.claimLedgersFacade.find(ledger.getId());
-        } else {
-            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
-        }
+        return this.claimLedgerService.addClaimLedger(caseId, ledger);
     }
 
     @Override
@@ -8259,143 +8226,48 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         return l2;
     }
 
+    /**
+     * @deprecated The ledger operations now live in {@link ClaimLedgerServiceRemote}. This
+     * method delegates and is kept so existing clients keep working.
+     */
     @Override
+    @Deprecated
     @RolesAllowed({"writeArchiveFileRole"})
     public ClaimLedger updateClaimLedger(String caseId, ClaimLedger claimLedger) throws Exception {
-        String principalId = context.getCallerPrincipal().getName();
-
-        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
-        boolean allowed = false;
-        if (principalId != null) {
-            List<Group> userGroups = new ArrayList<>();
-            try {
-                userGroups = this.securityFacade.getGroupsForUser(principalId);
-            } catch (Throwable t) {
-                log.error("Unable to determine groups for user " + principalId, t);
-            }
-            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
-                allowed = true;
-            }
-        } else {
-            allowed = true;
-        }
-
-        if (allowed) {
-
-            ClaimLedger updatedLedger = this.claimLedgersFacade.find(claimLedger.getId());
-            updatedLedger.setName(claimLedger.getName());
-            updatedLedger.setDescription(claimLedger.getDescription());
-
-            this.claimLedgersFacade.edit(updatedLedger);
-
-            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Forderungskonto geändert (" + updatedLedger.getName() + ")");
-
-            return this.claimLedgersFacade.find(claimLedger.getId());
-        } else {
-            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
-        }
+        return this.claimLedgerService.updateClaimLedger(caseId, claimLedger);
     }
 
+    /**
+     * @deprecated The ledger operations now live in {@link ClaimLedgerServiceRemote}. This
+     * method delegates and is kept so existing clients keep working.
+     */
     @Override
+    @Deprecated
     @RolesAllowed({"writeArchiveFileRole"})
     public void removeClaimLedger(String ledgerId) throws Exception {
-        String principalId = context.getCallerPrincipal().getName();
-
-        ClaimLedger ledger = this.claimLedgersFacade.find(ledgerId);
-        if (ledger == null) {
-            throw new Exception(MSG_MISSING_LEDGER);
-        }
-
-        ArchiveFileBean aFile = this.archiveFileFacade.find(ledger.getArchiveFileKey().getId());
-        boolean allowed = false;
-        if (principalId != null) {
-            List<Group> userGroups = new ArrayList<>();
-            try {
-                userGroups = this.securityFacade.getGroupsForUser(principalId);
-            } catch (Throwable t) {
-                log.error("Unable to determine groups for user " + principalId, t);
-            }
-            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
-                allowed = true;
-            }
-        } else {
-            allowed = true;
-        }
-
-        if (allowed) {
-            this.claimLedgersFacade.remove(ledger);
-            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Forderungskonto gelöscht (" + ledger.getName() + ")");
-        } else {
-            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
-        }
+        this.claimLedgerService.removeClaimLedger(ledgerId);
     }
 
+    /**
+     * @deprecated The ledger operations now live in {@link ClaimLedgerServiceRemote}. This
+     * method delegates and is kept so existing clients keep working.
+     */
     @Override
+    @Deprecated
     @RolesAllowed({"readArchiveFileRole"})
     public List<ClaimComponent> getClaimComponents(String ledgerId) throws Exception {
-        String principalId = context.getCallerPrincipal().getName();
-
-        ClaimLedger ledger = this.claimLedgersFacade.find(ledgerId);
-        if (ledger == null) {
-            log.error("Claim ledger with id " + ledgerId + " not found");
-            return new ArrayList<>();
-        }
-
-        ArchiveFileBean aFile = ledger.getArchiveFileKey();
-        boolean allowed = false;
-        if (principalId != null) {
-            List<Group> userGroups = new ArrayList<>();
-            try {
-                userGroups = this.securityFacade.getGroupsForUser(principalId);
-            } catch (Throwable t) {
-                log.error("Unable to determine groups for user " + principalId, t);
-            }
-            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
-                allowed = true;
-            }
-        } else {
-            allowed = true;
-        }
-
-        if (allowed) {
-            return this.claimComponentsFacade.findByLedger(ledger);
-        } else {
-            return new ArrayList<>();
-        }
+        return this.claimLedgerService.getClaimComponents(ledgerId);
     }
 
+    /**
+     * @deprecated The ledger operations now live in {@link ClaimLedgerServiceRemote}. This
+     * method delegates and is kept so existing clients keep working.
+     */
     @Override
+    @Deprecated
     @RolesAllowed({"readArchiveFileRole"})
     public List<ClaimLedgerEntry> getClaimLedgerEntries(String ledgerId) throws Exception {
-        String principalId = context.getCallerPrincipal().getName();
-
-        ClaimLedger ledger = this.claimLedgersFacade.find(ledgerId);
-        if (ledger == null) {
-            log.error("Claim ledger with id " + ledgerId + " not found");
-            return new ArrayList<>();
-        }
-
-        ArchiveFileBean aFile = ledger.getArchiveFileKey();
-        boolean allowed = false;
-        if (principalId != null) {
-            List<Group> userGroups = new ArrayList<>();
-            try {
-                userGroups = this.securityFacade.getGroupsForUser(principalId);
-            } catch (Throwable t) {
-                log.error("Unable to determine groups for user " + principalId, t);
-            }
-            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
-                allowed = true;
-            }
-        } else {
-            allowed = true;
-        }
-
-        if (allowed) {
-            return this.claimLedgerEntriesFacade.findByLedger(ledger);
-        } else {
-            return new ArrayList<>();
-        }
+        return this.claimLedgerService.getClaimLedgerEntries(ledgerId);
     }
 
     @Override
@@ -8506,1038 +8378,115 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
     }
 
+    /**
+     * @deprecated The ledger operations now live in {@link ClaimLedgerServiceRemote}. This
+     * method delegates and is kept so existing clients keep working.
+     */
     @Override
+    @Deprecated
     @RolesAllowed({"writeArchiveFileRole"})
     public ClaimComponent addClaimComponent(ClaimComponent component, List<InterestRule> interestRules, String ledgerId) throws Exception {
-        String principalId = context.getCallerPrincipal().getName();
-
-        if(interestRules==null)
-            interestRules=new ArrayList<>();
-        
-        ClaimLedger ledger = this.claimLedgersFacade.find(ledgerId);
-        if (ledger == null) {
-            log.error("Claim ledger with id " + ledgerId + " not found");
-            throw new Exception("Forderungskonto mit ID " + ledgerId + " existiert nicht!");
-        }
-
-        ArchiveFileBean aFile = ledger.getArchiveFileKey();
-        boolean allowed = false;
-        if (principalId != null) {
-            List<Group> userGroups = new ArrayList<>();
-            try {
-                userGroups = this.securityFacade.getGroupsForUser(principalId);
-            } catch (Throwable t) {
-                log.error("Unable to determine groups for user " + principalId, t);
-            }
-            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
-                allowed = true;
-            }
-        } else {
-            allowed = true;
-        }
-
-        if (!allowed) {
-            throw new Exception("Forderungskonto darf von diesem Nutzer nicht bearbeitet werden!");
-        }
-
-        component.setLedger(ledger);
-
-        StringGenerator idGen = new StringGenerator();
-        component.setId(idGen.getID().toString());
-        this.claimComponentsFacade.create(component);
-
-        for (InterestRule ir : interestRules) {
-            ir.setId(idGen.getID().toString());
-            ir.setComponent(component);
-            this.claimComponentInterestRuleFacade.create(ir);
-        }
-
-        return this.claimComponentsFacade.find(component.getId());
-
+        return this.claimLedgerService.addClaimComponent(component, interestRules, ledgerId);
     }
 
+    /**
+     * @deprecated The ledger operations now live in {@link ClaimLedgerServiceRemote}. This
+     * method delegates and is kept so existing clients keep working.
+     */
     @Override
+    @Deprecated
     @RolesAllowed({"writeArchiveFileRole"})
     public ClaimComponent updateClaimComponent(ClaimComponent component, List<InterestRule> interestRules) throws Exception {
-        String principalId = context.getCallerPrincipal().getName();
-        
-        if(interestRules==null)
-            interestRules=new ArrayList<>();
-
-        ClaimComponent before = this.claimComponentsFacade.find(component.getId());
-        ClaimLedger ledger = before.getLedger();
-        if (ledger == null) {
-            log.error("Claim ledger with id " + ledger.getId() + " not found");
-            throw new Exception("Forderungskonto mit ID " + ledger.getId() + " existiert nicht!");
-        }
-
-        ArchiveFileBean aFile = ledger.getArchiveFileKey();
-        boolean allowed = false;
-        if (principalId != null) {
-            List<Group> userGroups = new ArrayList<>();
-            try {
-                userGroups = this.securityFacade.getGroupsForUser(principalId);
-            } catch (Throwable t) {
-                log.error("Unable to determine groups for user " + principalId, t);
-            }
-            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
-                allowed = true;
-            }
-        } else {
-            allowed = true;
-        }
-
-        if (!allowed) {
-            throw new Exception("Forderungskonto darf von diesem Nutzer nicht bearbeitet werden!");
-        }
-
-        before.setComment(component.getComment());
-        before.setName(component.getName());
-        before.setPrincipalAmount(component.getPrincipalAmount());
-        before.setType(component.getType());
-
-        this.claimComponentsFacade.edit(before);
-
-        List<InterestRule> existingRules = this.claimComponentInterestRuleFacade.findByComponent(before);
-        for (InterestRule ir : existingRules) {
-            this.claimComponentInterestRuleFacade.remove(ir);
-        }
-        StringGenerator idGen = new StringGenerator();
-        for (InterestRule ir : interestRules) {
-            ir.setId(idGen.getID().toString());
-            ir.setComponent(before);
-            this.claimComponentInterestRuleFacade.create(ir);
-        }
-
-        return this.claimComponentsFacade.find(component.getId());
+        return this.claimLedgerService.updateClaimComponent(component, interestRules);
     }
 
+    /**
+     * @deprecated The ledger operations now live in {@link ClaimLedgerServiceRemote}. This
+     * method delegates and is kept so existing clients keep working.
+     */
     @Override
+    @Deprecated
     @RolesAllowed({"writeArchiveFileRole"})
     public void removeClaimComponent(String componentId) throws Exception {
-        String principalId = context.getCallerPrincipal().getName();
-
-        ClaimComponent currentComponent = this.claimComponentsFacade.find(componentId);
-        ClaimLedger ledger = currentComponent.getLedger();
-        if (ledger == null) {
-            log.error("Claim ledger with id " + ledger.getId() + " not found");
-            throw new Exception("Forderungskonto mit ID " + ledger.getId() + " existiert nicht!");
-        }
-
-        ArchiveFileBean aFile = ledger.getArchiveFileKey();
-        boolean allowed = false;
-        if (principalId != null) {
-            List<Group> userGroups = new ArrayList<>();
-            try {
-                userGroups = this.securityFacade.getGroupsForUser(principalId);
-            } catch (Throwable t) {
-                log.error("Unable to determine groups for user " + principalId, t);
-            }
-            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
-                allowed = true;
-            }
-        } else {
-            allowed = true;
-        }
-
-        if (!allowed) {
-            throw new Exception("Forderungskonto darf von diesem Nutzer nicht bearbeitet werden!");
-        }
-
-        List<InterestRule> iRules = this.claimComponentInterestRuleFacade.findByComponent(currentComponent);
-        for (InterestRule ir : iRules) {
-            this.claimComponentInterestRuleFacade.remove(ir);
-        }
-
-        this.claimComponentsFacade.remove(currentComponent);
+        this.claimLedgerService.removeClaimComponent(componentId);
     }
 
+    /**
+     * @deprecated The ledger operations now live in {@link ClaimLedgerServiceRemote}. This
+     * method delegates and is kept so existing clients keep working.
+     */
     @Override
+    @Deprecated
     @RolesAllowed({"readArchiveFileRole"})
     public List<InterestRule> getClaimComponentInterestRules(String componentId) throws Exception {
-        ClaimComponent cmp = this.claimComponentsFacade.find(componentId);
-        if (cmp != null) {
-            return this.claimComponentInterestRuleFacade.findByComponent(cmp);
-        } else {
-            return new ArrayList<>();
-        }
+        return this.claimLedgerService.getClaimComponentInterestRules(componentId);
     }
 
+    /**
+     * @deprecated The ledger operations now live in {@link ClaimLedgerServiceRemote}. This
+     * method delegates and is kept so existing clients keep working.
+     */
     @Override
+    @Deprecated
     @RolesAllowed({"writeArchiveFileRole"})
     public List<ClaimLedgerEntry> addClaimLedgerEntry(ClaimLedgerEntry entry, String ledgerId) throws Exception {
-        String principalId = context.getCallerPrincipal().getName();
-
-        ClaimLedger ledger = this.claimLedgersFacade.find(ledgerId);
-        if (ledger == null) {
-            log.error("Claim ledger with id " + ledgerId + " not found");
-            throw new Exception("Forderungskonto mit ID " + ledgerId + " existiert nicht!");
-        }
-
-        ArchiveFileBean aFile = ledger.getArchiveFileKey();
-        boolean allowed = false;
-        if (principalId != null) {
-            List<Group> userGroups = new ArrayList<>();
-            try {
-                userGroups = this.securityFacade.getGroupsForUser(principalId);
-            } catch (Throwable t) {
-                log.error("Unable to determine groups for user " + principalId, t);
-            }
-            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
-                allowed = true;
-            }
-        } else {
-            allowed = true;
-        }
-
-        if (!allowed) {
-            throw new Exception("Forderungskonto darf von diesem Nutzer nicht bearbeitet werden!");
-        }
-        
-        List<ClaimLedgerEntry> result=new ArrayList<>();
-
-        if (entry.getAmount().compareTo(BigDecimal.ZERO) < 0) {
-            entry.setAmount(entry.getAmount().negate());
-        }
-
-        StringGenerator idGen = new StringGenerator();
-        DecimalFormat decf=new DecimalFormat("0.00");
-        SimpleDateFormat datef=new SimpleDateFormat("dd.MM.yyyy");
-//        entry.setId(idGen.getID().toString());
-//        this.claimLedgerEntriesFacade.create(entry);
-//
-//        return this.claimLedgerEntriesFacade.find(entry.getId());
-
-        // Prüfen, ob es sich um eine Zinsbuchung handelt
-        if (entry.getType() == LedgerEntryType.INTEREST) {
-            ClaimComponent cmp = entry.getComponent();
-            // need to load claim component from database, becuase it came in as a parameter and will not automatically load its interest rules
-            cmp=this.claimComponentsFacade.find(cmp.getId());
-            
-            LocalDate startDate = this.claimLedgerEntriesFacade.findLatestInterestEntry(cmp) != null
-                    ? this.claimLedgerEntriesFacade.findLatestInterestEntry(cmp).getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
-                    : this.claimLedgerEntriesFacade.findEarliestEntry(cmp).getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-
-            LocalDate endDate = entry.getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-
-            if (!startDate.isBefore(endDate)) {
-                return new ArrayList<>(); // nichts zu tun
-            }
-
-            // 1️⃣ Liste der Basiszinsänderungen im Zeitraum ermitteln
-            List<LocalDate> changeDates = getBaseRateChangeDatesBetween(startDate, endDate);
-
-            // 1.5️⃣ Zusätzlich alle Daten hinzufügen, an denen sich der Principal ändert
-            List<LocalDate> principalChangeDates = getPrincipalChangeDatesBetween(cmp, startDate, endDate);
-            for (LocalDate principalChangeDate : principalChangeDates) {
-                if (!changeDates.contains(principalChangeDate)) {
-                    changeDates.add(principalChangeDate);
-                }
-            }
-            Collections.sort(changeDates); // Kombinierte Liste sortieren
-
-            // 2️⃣ Erstelle Teilzeiträume
-            List<ClaimInterestPeriod> periods = new ArrayList<>();
-            LocalDate periodStart = startDate;
-            for (LocalDate changeDate : changeDates) {
-                if (!changeDate.isAfter(periodStart)) {
-                    continue;
-                }
-                periods.add(new ClaimInterestPeriod(periodStart, changeDate));
-                periodStart = changeDate;
-            }
-            periods.add(new ClaimInterestPeriod(periodStart, endDate)); // letzter Zeitraum bis entryDate
-
-            // 3️⃣ Für jeden Zeitraum eine Buchung erstellen
-            for (ClaimInterestPeriod p : periods) {
-
-                // finde für das datum gültige rule
-                // Iteriere über alle InterestRules, die für das Startdatum gültig sind
-                InterestRule effectiveRule = null;
-                for (InterestRule rule : cmp.getInterestRules()) {
-                    LocalDate ruleStart = rule.getValidFrom().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                    if (p.start.isBefore(ruleStart)) {
-                        continue;
-                    } else {
-                        effectiveRule = rule;
-                    }
-
-                }
-                if (effectiveRule == null) {
-                    System.out.println("TODO: handle this case");
-                }
-
-                BigDecimal rate = effectiveRule.getEffectiveRate(getBaseRateForDate(p.getStart()));
-                // Dynamischer Principal: berücksichtigt Zahlungen und Anpassungen bis zum Start des Zinszeitraums
-                BigDecimal principal = calculateDynamicPrincipal(cmp, Date.from(p.getStart().atStartOfDay(ZoneId.systemDefault()).toInstant()));
-
-                long days = ChronoUnit.DAYS.between(p.getStart(), p.getEnd());
-                // Zinsberechnung: Kapital × Zinssatz (dezimal) × Tage / 360 (deutsche Zinsmethode)
-                BigDecimal interestAmount = principal.multiply(rate)
-                        .multiply(BigDecimal.valueOf(days))
-                        .divide(BigDecimal.valueOf(365), 2, RoundingMode.HALF_UP)
-                        .setScale(2, RoundingMode.HALF_UP);
-
-                ClaimLedgerEntry periodEntry = new ClaimLedgerEntry();
-                periodEntry.setLedger(entry.getLedger());
-                periodEntry.setComponent(cmp);
-                periodEntry.setType(LedgerEntryType.INTEREST);
-                periodEntry.setEntryDate(Date.from(p.getEnd().atStartOfDay(ZoneId.systemDefault()).toInstant()));
-                periodEntry.setAmount(interestAmount);
-                periodEntry.setDescription(entry.getDescription());
-                periodEntry.setComment(entry.getComment());
-                if(periodEntry.getComment()!=null) {
-                    if(!periodEntry.getComment().trim().isEmpty())
-                        periodEntry.setComment(periodEntry.getComment() + ", " );
-                }
-                // davon 7,27% Zinsen aus 100,00 EUR ab dem 01.01.2025 bis zum 30.06.2025 (181 Zinstage) aus "kosten verz"
-                periodEntry.setComment(periodEntry.getComment() + decf.format(rate.multiply(BigDecimal.valueOf(100d)).setScale(2, RoundingMode.HALF_UP)) + "% Zinsen aus " +decf.format(principal) + " EUR ab dem " + datef.format(Date.from(p.getStart().atStartOfDay(ZoneId.systemDefault()).toInstant())) + " bis zum " + datef.format(Date.from(p.getEnd().atStartOfDay(ZoneId.systemDefault()).toInstant())) + " (" + days + " Zinstage) aus " + cmp.getName());
-
-                periodEntry.setId(idGen.getID().toString());
-                this.claimLedgerEntriesFacade.create(periodEntry);
-                result.add(this.claimLedgerEntriesFacade.find(periodEntry.getId()));
-            }
-
-        } else {
-            // für alle anderen Buchungen normal speichern
-            entry.setId(idGen.getID().toString());
-            this.claimLedgerEntriesFacade.create(entry);
-            result.add(this.claimLedgerEntriesFacade.find(entry.getId()));
-        }
-        return result;
-
+        return this.claimLedgerService.addClaimLedgerEntry(entry, ledgerId);
     }
 
+    /**
+     * @deprecated The ledger operations now live in {@link ClaimLedgerServiceRemote}. This
+     * method delegates and is kept so existing clients keep working.
+     */
     @Override
+    @Deprecated
     @RolesAllowed({"writeArchiveFileRole"})
     public ClaimLedgerEntry updateClaimLedgerEntry(ClaimLedgerEntry entry) throws Exception {
-        String principalId = context.getCallerPrincipal().getName();
-
-        ClaimLedgerEntry existingEntry = this.claimLedgerEntriesFacade.find(entry.getId());
-        if (existingEntry == null) {
-            log.error("Claim ledger entry with id " + entry.getId() + " not found");
-            throw new Exception("Buchung mit ID " + entry.getId() + " existiert nicht!");
-        }
-
-        if (existingEntry.getType() == LedgerEntryType.INTEREST) {
-            throw new Exception("Zinsbuchungen können nicht bearbeitet werden!");
-        }
-
-        ClaimLedger ledger = existingEntry.getLedger();
-        ArchiveFileBean aFile = ledger.getArchiveFileKey();
-        boolean allowed = false;
-        if (principalId != null) {
-            List<Group> userGroups = new ArrayList<>();
-            try {
-                userGroups = this.securityFacade.getGroupsForUser(principalId);
-            } catch (Throwable t) {
-                log.error("Unable to determine groups for user " + principalId, t);
-            }
-            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
-                allowed = true;
-            }
-        } else {
-            allowed = true;
-        }
-
-        if (!allowed) {
-            throw new Exception("Forderungskonto darf von diesem Nutzer nicht bearbeitet werden!");
-        }
-
-        if (entry.getAmount().compareTo(BigDecimal.ZERO) < 0) {
-            entry.setAmount(entry.getAmount().negate());
-        }
-
-        existingEntry.setAmount(entry.getAmount());
-        existingEntry.setDescription(entry.getDescription());
-        existingEntry.setComment(entry.getComment());
-        existingEntry.setEntryDate(entry.getEntryDate());
-        existingEntry.setType(entry.getType());
-        existingEntry.setComponent(entry.getComponent());
-
-        this.claimLedgerEntriesFacade.edit(existingEntry);
-
-        return this.claimLedgerEntriesFacade.find(existingEntry.getId());
+        return this.claimLedgerService.updateClaimLedgerEntry(entry);
     }
 
     /**
-     * Creates multiple payment entries from a payment split proposal.
-     * This method implements payment allocation according to § 366/367 BGB.
-     *
-     * @param proposal The payment split proposal containing all allocations
-     * @return List of created ledger entries
-     * @throws Exception if validation fails or user is not authorized
+     * @deprecated The ledger operations now live in {@link ClaimLedgerServiceRemote}. This
+     * method delegates and is kept so existing clients keep working.
      */
+    @Override
+    @Deprecated
     @RolesAllowed({"writeArchiveFileRole"})
     public List<ClaimLedgerEntry> createPaymentSplit(PaymentSplitProposal proposal) throws Exception {
-        String principalId = context.getCallerPrincipal().getName();
-
-        if (proposal == null || proposal.getLedger() == null) {
-            throw new Exception("Ungültiger Zahlungsaufteilungs-Vorschlag!");
-        }
-
-        ClaimLedger ledger = this.claimLedgersFacade.find(proposal.getLedger().getId());
-        if (ledger == null) {
-            log.error("Claim ledger with id " + proposal.getLedger().getId() + " not found");
-            throw new Exception("Forderungskonto mit ID " + proposal.getLedger().getId() + " existiert nicht!");
-        }
-
-        // Check permissions
-        ArchiveFileBean aFile = ledger.getArchiveFileKey();
-        boolean allowed = false;
-        if (principalId != null) {
-            List<Group> userGroups = new ArrayList<>();
-            try {
-                userGroups = this.securityFacade.getGroupsForUser(principalId);
-            } catch (Throwable t) {
-                log.error("Unable to determine groups for user " + principalId, t);
-            }
-            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
-                allowed = true;
-            }
-        } else {
-            allowed = true;
-        }
-
-        if (!allowed) {
-            throw new Exception("Forderungskonto darf von diesem Nutzer nicht bearbeitet werden!");
-        }
-
-        // Validate proposal
-        PaymentSplitCalculator calculator = new PaymentSplitCalculator(claimComponentsFacade, claimComponentInterestRuleFacade, claimLedgerEntriesFacade);
-        if (!calculator.validateProposal(proposal)) {
-            throw new Exception("Ungültiger Zahlungsaufteilungs-Vorschlag: Summe der Teilzahlungen stimmt nicht mit Gesamtbetrag überein!");
-        }
-
-        // Check for surplus (overpayment)
-        if (proposal.getSurplus().compareTo(BigDecimal.ZERO) > 0) {
-            throw new Exception("Zahlungsbetrag übersteigt die Gesamtforderung! Überschuss: "
-                    + proposal.getSurplus().setScale(2, RoundingMode.HALF_UP) + " €");
-        }
-
-        List<ClaimLedgerEntry> createdEntries = new ArrayList<>();
-        StringGenerator idGen = new StringGenerator();
-        int totalAllocations = proposal.getAllocations().size();
-        int currentIndex = 1;
-
-        // Create entry for each allocation
-        for (PaymentAllocation allocation : proposal.getAllocations()) {
-            ClaimLedgerEntry entry = new ClaimLedgerEntry();
-            entry.setId(idGen.getID().toString());
-            entry.setLedger(ledger);
-            entry.setComponent(allocation.getComponent());
-            entry.setAmount(allocation.getAmount());
-            entry.setType(LedgerEntryType.PAYMENT);
-            entry.setEntryDate(proposal.getPaymentDate());
-
-            // Build description
-            String description = proposal.getDescription();
-            if (description == null || description.trim().isEmpty()) {
-                description = "";
-            }
-
-            // Add split information to description
-            if (totalAllocations > 1) {
-                description += " Teilzahlung " + currentIndex + "/" + totalAllocations;
-            }
-
-            // Add allocation type (interest vs. principal)
-//            if (allocation.isInterestAllocation()) {
-//                description += " - Zinsen";
-//            } else {
-//                description += " - " + allocation.getAllocationDescription();
-//            }
-
-            entry.setDescription("");
-
-            // Build detailed comment with interest/principal breakdown
-            StringBuilder commentBuilder = new StringBuilder();
-
-            // User's original comment
-            if (proposal.getComment() != null && !proposal.getComment().trim().isEmpty()) {
-                commentBuilder.append(proposal.getComment()).append("; ");
-            }
-
-            // Component information
-            commentBuilder.append("Position: ").append(allocation.getComponent().getName()).append("; ");
-
-            // Detailed breakdown from allocation description
-            // Contains: "Zinsen: 150,00 € (von 500,00 € offen)" or "Kapital: 1.200,00 € (von 5.000,00 € offen)"
-            commentBuilder.append("Aufschlüsselung: ").append(allocation.getAllocationDescription()).append("; ");
-
-            // Legal reference
-            commentBuilder.append("Rechtsgrundlage: ").append(allocation.getLegalReference());
-
-            // Warning if deviates from legal order
-            if (!proposal.isFollowsLegalOrder()) {
-                commentBuilder.append("; Hinweis: Abweichung von gesetzlicher Tilgungsreihenfolge");
-            }
-
-            commentBuilder.append("; ").append(description);
-            entry.setComment(commentBuilder.toString().trim());
-
-            // Persist entry
-            this.claimLedgerEntriesFacade.create(entry);
-            createdEntries.add(entry);
-
-            currentIndex++;
-        }
-
-        return createdEntries;
+        return this.claimLedgerService.createPaymentSplit(proposal);
     }
 
+    /**
+     * @deprecated The ledger operations now live in {@link ClaimLedgerServiceRemote}. This
+     * method delegates and is kept so existing clients keep working.
+     */
     @Override
+    @Deprecated
     @RolesAllowed({"writeArchiveFileRole"})
     public void removeClaimLedgerEntry(String entryId) throws Exception {
-        String principalId = context.getCallerPrincipal().getName();
-
-        ClaimLedgerEntry currentEntry = this.claimLedgerEntriesFacade.find(entryId);
-        if (currentEntry == null) {
-            log.error("Claim ledger entry with id " + entryId + " not found");
-            throw new Exception("Buchung mit ID " + entryId + " existiert nicht!");
-        }
-
-        ClaimLedger ledger = currentEntry.getLedger();
-        if (ledger == null) {
-            log.error("Claim ledger for entry " + entryId + " not found");
-            throw new Exception("Forderungskonto für Buchung existiert nicht!");
-        }
-
-        ArchiveFileBean aFile = ledger.getArchiveFileKey();
-        boolean allowed = false;
-        if (principalId != null) {
-            List<Group> userGroups = new ArrayList<>();
-            try {
-                userGroups = this.securityFacade.getGroupsForUser(principalId);
-            } catch (Throwable t) {
-                log.error("Unable to determine groups for user " + principalId, t);
-            }
-            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
-                allowed = true;
-            }
-        } else {
-            allowed = true;
-        }
-
-        if (!allowed) {
-            throw new Exception("Forderungskonto darf von diesem Nutzer nicht bearbeitet werden!");
-        }
-
-        this.claimLedgerEntriesFacade.remove(currentEntry);
+        this.claimLedgerService.removeClaimLedgerEntry(entryId);
     }
+
+
 
     /**
-     * Gibt alle Tage zurück, an denen sich der Basiszins im Zeitraum geändert hat
+     * @deprecated The ledger operations now live in {@link ClaimLedgerServiceRemote}. This
+     * method delegates and is kept so existing clients keep working.
      */
-    private List<LocalDate> getBaseRateChangeDatesBetween(LocalDate start, LocalDate end) {
-        // Konvertiere LocalDate zu Date
-        java.util.Date startDate = java.util.Date.from(start.atStartOfDay(ZoneId.systemDefault()).toInstant());
-        java.util.Date endDate = java.util.Date.from(end.atStartOfDay(ZoneId.systemDefault()).toInstant());
-
-        // Hole alle BaseInterest-Einträge im Zeitraum
-        List<BaseInterest> rates = this.baseInterestFacade.findByDateRange(startDate, endDate);
-
-        // Konvertiere validFrom Dates zu LocalDates
-        List<LocalDate> changeDates = new ArrayList<>();
-        for (BaseInterest rate : rates) {
-            java.util.Date validFrom = rate.getValidFrom();
-            LocalDate changeDate;
-
-            // JPA kann java.sql.Date zurückgeben, das direkt toLocalDate() unterstützt
-            if (validFrom instanceof java.sql.Date) {
-                changeDate = ((java.sql.Date) validFrom).toLocalDate();
-            } else {
-                // Fallback für java.util.Date
-                changeDate = validFrom.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            }
-
-            changeDates.add(changeDate);
-        }
-
-        return changeDates;
-    }
-
-    private BigDecimal getBaseRateForDate(LocalDate start) {
-        // Konvertiere LocalDate zu Date
-        java.util.Date date = java.util.Date.from(start.atStartOfDay(ZoneId.systemDefault()).toInstant());
-
-        // Hole Basiszinssatz für das Datum
-        BigDecimal rate = this.baseInterestFacade.findRateByDate(date);
-
-        // Wenn kein Zinssatz gefunden wurde, gib 0.0 zurück
-        return (rate != null) ? rate : BigDecimal.ZERO;
-    }
-
     @Override
+    @Deprecated
     @RolesAllowed({"readArchiveFileRole"})
     public ClaimLedgerTotals calculateClaimLedgerTotals(String ledgerId, Date forDate) throws Exception {
-
-        String principalId = context.getCallerPrincipal().getName();
-        
-        if(forDate==null) {
-            forDate=new Date();
-        }
-        forDate.setHours(23);
-        forDate.setMinutes(59);
-        forDate.setSeconds(59);
-
-        ClaimLedger ledger = this.claimLedgersFacade.find(ledgerId);
-        if (ledger == null) {
-            log.error("Claim ledger with id " + ledgerId + " not found");
-            throw new Exception("Forderungskonto mit ID " + ledgerId + " existiert nicht!");
-        }
-
-        ArchiveFileBean aFile = ledger.getArchiveFileKey();
-        boolean allowed = false;
-        if (principalId != null) {
-            List<Group> userGroups = new ArrayList<>();
-            try {
-                userGroups = this.securityFacade.getGroupsForUser(principalId);
-            } catch (Throwable t) {
-                log.error("Unable to determine groups for user " + principalId, t);
-            }
-            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
-                allowed = true;
-            }
-        } else {
-            allowed = true;
-        }
-
-        if (!allowed) {
-            throw new Exception("Forderungskonto darf von diesem Nutzer nicht bearbeitet werden!");
-        }
-
-//        BigDecimal totalMain = BigDecimal.ZERO;
-//        BigDecimal totalCosts = BigDecimal.ZERO;
-//        BigDecimal totalInterestMain = BigDecimal.ZERO;
-//        BigDecimal totalInterestCosts = BigDecimal.ZERO;
-//        BigDecimal totalPayments = BigDecimal.ZERO;
-//
-//        // 1️⃣ Summierung existierender Buchungen
-//        for (ClaimLedgerEntry entry : this.claimLedgerEntriesFacade.findByLedger(ledger)) {
-//            BigDecimal amount = entry.getAmount();
-//            ClaimComponent cmp = entry.getComponent();
-//            ClaimComponentType cmpType = cmp.getType();
-//
-//            switch (entry.getType()) {
-//                case PAYMENT:
-//                    totalPayments = totalPayments.add(amount);
-//                    break;
-//                case MAIN_CLAIM:
-//                    totalMain = totalMain.add(amount);
-//                    break;
-//                case COST:
-//                    totalCosts = totalCosts.add(amount);
-//                    break;
-//                case INTEREST:
-//                    if (cmpType == ClaimComponentType.MAIN_CLAIM) {
-//                        totalInterestMain = totalInterestMain.add(amount);
-//                    } else {
-//                        totalInterestCosts = totalInterestCosts.add(amount);
-//                    }
-//                    break;
-//                case ADJUSTMENT:
-//                    if (cmpType == ClaimComponentType.MAIN_CLAIM) {
-//                        totalMain = totalMain.add(amount);
-//                    } else {
-//                        totalCosts = totalCosts.add(amount);
-//                    }
-//                    break;
-//            }
-//        }
-//
-//        // 2️⃣ Dynamische Zinsen on-the-fly
-//        for (ClaimComponent cmp : this.claimComponentsFacade.findByLedger(ledger)) {
-//            if (!cmp.isInterestBearing()) {
-//                continue;
-//            }
-//
-//            // Letzte Zinsbuchung für die Komponente
-//            ClaimLedgerEntry lastInterestEntry = this.claimLedgerEntriesFacade.findLatestInterestEntry(cmp);
-//            if (lastInterestEntry == null) {
-//                // Falls keine Zinsbuchung existiert → Start ab Initialbuchung
-//                lastInterestEntry = this.claimLedgerEntriesFacade.findLatestEntry(cmp);
-//            }
-//
-//            if (lastInterestEntry != null) {
-//                BigDecimal accruedInterest = calculateAccruedInterest(cmp, lastInterestEntry, forDate);
-//                if (cmp.getType() == ClaimComponentType.MAIN_CLAIM) {
-//                    totalInterestMain = totalInterestMain.add(accruedInterest);
-//                } else {
-//                    totalInterestCosts = totalInterestCosts.add(accruedInterest);
-//                }
-//            }
-//        }
-//
-//        // 3️⃣ Offene Forderung = Haupt + Neben + Zinsen - Zahlungen
-//        BigDecimal openClaim = totalMain
-//                .add(totalCosts)
-//                .add(totalInterestMain)
-//                .add(totalInterestCosts)
-//                .subtract(totalPayments);
-//
-//        // 4️⃣ Rundung
-//        totalMain = totalMain.setScale(2, RoundingMode.HALF_UP);
-//        totalCosts = totalCosts.setScale(2, RoundingMode.HALF_UP);
-//        totalInterestMain = totalInterestMain.setScale(2, RoundingMode.HALF_UP);
-//        totalInterestCosts = totalInterestCosts.setScale(2, RoundingMode.HALF_UP);
-//        totalPayments = totalPayments.setScale(2, RoundingMode.HALF_UP);
-//        openClaim = openClaim.setScale(2, RoundingMode.HALF_UP);
-        BigDecimal totalMain = BigDecimal.ZERO;
-        BigDecimal totalCosts = BigDecimal.ZERO;
-        BigDecimal totalInterestMain = BigDecimal.ZERO;
-        BigDecimal totalInterestCosts = BigDecimal.ZERO;
-        BigDecimal totalPayments = BigDecimal.ZERO;
-
-        // 1️⃣ Summierung existierender Buchungen
-        for (ClaimLedgerEntry entry : this.claimLedgerEntriesFacade.findByLedger(ledger)) {
-            // only calculate for entries up to forDate
-            if(entry.getEntryDate().getTime()>forDate.getTime())
-                break;
-            
-            BigDecimal amount = entry.getAmount();
-            ClaimComponent cmp = entry.getComponent();
-            ClaimComponentType cmpType = cmp.getType();
-
-            switch (entry.getType()) {
-                case PAYMENT:
-                    totalPayments = totalPayments.add(amount);
-                    break;
-                case MAIN_CLAIM:
-                    totalMain = totalMain.add(amount);
-                    break;
-                case COST:
-                    totalCosts = totalCosts.add(amount);
-                    break;
-                case INTEREST:
-                    if (cmpType == ClaimComponentType.MAIN_CLAIM) {
-                        totalInterestMain = totalInterestMain.add(amount);
-                    } else {
-                        totalInterestCosts = totalInterestCosts.add(amount);
-                    }
-                    break;
-                case ADJUSTMENT:
-                    if (cmpType == ClaimComponentType.MAIN_CLAIM) {
-                        totalMain = totalMain.add(amount);
-                    } else {
-                        totalCosts = totalCosts.add(amount);
-                    }
-                    break;
-            }
-        }
-
-        // 2️⃣ Dynamische Zinsen on-the-fly für alle Components
-        for (ClaimComponent cmp : this.claimComponentsFacade.findByLedger(ledger)) {
-            if (!cmp.isInterestBearing()) {
-                continue;
-            }
-
-            BigDecimal accruedInterest = calculateAccruedInterest(cmp, forDate);
-
-            if (cmp.getType() == ClaimComponentType.MAIN_CLAIM) {
-                totalInterestMain = totalInterestMain.add(accruedInterest);
-            } else {
-                totalInterestCosts = totalInterestCosts.add(accruedInterest);
-            }
-        }
-
-        // 3️⃣ Offene Forderung = Haupt + Neben + Zinsen - Zahlungen
-        BigDecimal openClaim = totalMain
-                .add(totalCosts)
-                .add(totalInterestMain)
-                .add(totalInterestCosts)
-                .subtract(totalPayments);
-
-        // 4️⃣ Rundung
-        totalMain = totalMain.setScale(2, RoundingMode.HALF_UP);
-        totalCosts = totalCosts.setScale(2, RoundingMode.HALF_UP);
-        totalInterestMain = totalInterestMain.setScale(2, RoundingMode.HALF_UP);
-        totalInterestCosts = totalInterestCosts.setScale(2, RoundingMode.HALF_UP);
-        totalPayments = totalPayments.setScale(2, RoundingMode.HALF_UP);
-        openClaim = openClaim.setScale(2, RoundingMode.HALF_UP);
-
-        ClaimLedgerTotals totals = new ClaimLedgerTotals();
-        totals.setOpenClaim(openClaim);
-        totals.setTotalCosts(totalCosts);
-        totals.setTotalInterestCosts(totalInterestCosts);
-        totals.setTotalInterestMain(totalInterestMain);
-        totals.setTotalMain(totalMain);
-        totals.setTotalPayments(totalPayments);
-
-        // Calculate component balances
-        for (ClaimComponent cmp : this.claimComponentsFacade.findByLedger(ledger)) {
-            ClaimComponentBalance balance = calculateComponentBalance(cmp, forDate);
-            totals.addComponentBalance(balance);
-        }
-
-        return totals;
+        return this.claimLedgerService.calculateClaimLedgerTotals(ledgerId, forDate);
     }
 
-    /**
-     * Berechnet die dynamischen Zinsen für eine Komponente ab der letzten
-     * Zinsbuchung bis zum heutigen Datum.
-     */
-    private BigDecimal calculateAccruedInterest(ClaimComponent cmp, Date upTo) {
-        if (!cmp.isInterestBearing()) {
-            return BigDecimal.ZERO;
-        }
 
-        // Letzte Zinsbuchung
-        ClaimLedgerEntry lastInterestEntry = this.claimLedgerEntriesFacade.findLatestInterestEntry(cmp);
-        LocalDate startDate = (lastInterestEntry != null)
-                ? lastInterestEntry.getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
-                : this.claimLedgerEntriesFacade.findEarliestEntry(cmp).getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
-        LocalDate endDate = upTo.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        if (!startDate.isBefore(endDate)) {
-            return BigDecimal.ZERO;
-        }
 
-        // Basiszinsänderungen und Principal-Änderungen im Zeitraum ermitteln
-        List<LocalDate> changeDates = getBaseRateChangeDatesBetween(startDate, endDate);
-        List<LocalDate> principalChangeDates = getPrincipalChangeDatesBetween(cmp, startDate, endDate);
-        for (LocalDate principalChangeDate : principalChangeDates) {
-            if (!changeDates.contains(principalChangeDate)) {
-                changeDates.add(principalChangeDate);
-            }
-        }
-        Collections.sort(changeDates);
 
-        // Teilzeiträume erstellen
-        List<ClaimInterestPeriod> periods = new ArrayList<>();
-        LocalDate periodStart = startDate;
-        for (LocalDate changeDate : changeDates) {
-            if (!changeDate.isAfter(periodStart)) {
-                continue;
-            }
-            periods.add(new ClaimInterestPeriod(periodStart, changeDate));
-            periodStart = changeDate;
-        }
-        periods.add(new ClaimInterestPeriod(periodStart, endDate));
 
-        BigDecimal totalInterest = BigDecimal.ZERO;
-
-        // Für jeden Teilzeitraum Zinsen berechnen
-        for (ClaimInterestPeriod p : periods) {
-            long days = ChronoUnit.DAYS.between(p.getStart(), p.getEnd());
-            if (days <= 0) {
-                continue;
-            }
-
-            // Finde die für diesen Zeitraum gültige InterestRule
-            InterestRule effectiveRule = null;
-            for (InterestRule rule : cmp.getInterestRules()) {
-                LocalDate ruleStart = rule.getValidFrom().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                if (p.getStart().isBefore(ruleStart)) {
-                    continue;
-                } else {
-                    effectiveRule = rule;
-                }
-            }
-            if (effectiveRule == null) {
-                continue;
-            }
-
-            BigDecimal principal = calculateDynamicPrincipal(cmp, Date.from(p.getStart().atStartOfDay(ZoneId.systemDefault()).toInstant()));
-
-            BigDecimal rate = effectiveRule.getEffectiveRate(getBaseRateForDate(p.getStart()));
-
-            BigDecimal interest = principal
-                    .multiply(rate)
-                    .multiply(BigDecimal.valueOf(days))
-                    .divide(BigDecimal.valueOf(365), 2, RoundingMode.HALF_UP)
-                    .setScale(2, RoundingMode.HALF_UP);
-
-            totalInterest = totalInterest.add(interest);
-        }
-
-        return totalInterest;
-    }
-
-    /**
-     * Berechnet den dynamischen Principal einer Komponente zu einem bestimmten Datum.
-     * Der Principal ergibt sich aus der Summe aller relevanten Buchungen:
-     * - Forderungen (MAIN_CLAIM, COST) erhöhen den Principal
-     * - Zahlungen (PAYMENT) reduzieren den Principal
-     * - Anpassungen (ADJUSTMENT) können den Principal erhöhen oder verringern
-     * - Zinsbuchungen (INTEREST) haben keinen Einfluss auf den Principal
-     *
-     * WICHTIG: Der principalAmount der Component wird NICHT verwendet, da dieser Wert
-     * redundant zur ersten MAIN_CLAIM/COST Buchung ist und sonst doppelt gezählt würde.
-     *
-     * @param cmp Die Komponente
-     * @param upTo Das Datum, bis zu dem berechnet werden soll
-     * @return Der dynamische Principal zu diesem Datum
-     */
-    private BigDecimal calculateDynamicPrincipal(ClaimComponent cmp, Date upTo) {
-        BigDecimal principal = BigDecimal.ZERO; // Start bei 0, nicht bei cmp.getPrincipalAmount()!
-
-        // Alle Buchungen dieser Component bis zum Stichtag
-        List<ClaimLedgerEntry> entries = this.claimLedgerEntriesFacade.findByComponent(cmp);
-
-        for (ClaimLedgerEntry entry : entries) {
-            // Nur Buchungen bis zum Stichtag berücksichtigen
-            if (entry.getEntryDate().after(upTo)) {
-                break; // Einträge sind nach Datum sortiert
-            }
-
-            switch (entry.getType()) {
-                case PAYMENT:
-                    // Zahlungen reduzieren den Principal
-                    principal = principal.subtract(entry.getAmount());
-                    break;
-                case ADJUSTMENT:
-                    // Anpassungen können den Principal erhöhen oder verringern
-                    principal = principal.add(entry.getAmount());
-                    break;
-                case MAIN_CLAIM:
-                case COST:
-                    // Forderungen erhöhen den Principal (inkl. initialer Buchung)
-                    principal = principal.add(entry.getAmount());
-                    break;
-                case INTEREST:
-                    // Zinsen erhöhen NICHT den Principal für zukünftige Zinsberechnungen
-                    break;
-            }
-        }
-
-        return principal.max(BigDecimal.ZERO); // Principal kann nicht negativ werden
-    }
-
-    /**
-     * Ermittelt alle Daten zwischen startDate und endDate, an denen sich der Principal
-     * einer Component ändert (durch Zahlungen, Anpassungen oder zusätzliche Forderungen).
-     * Zinsbuchungen (INTEREST) werden NICHT berücksichtigt, da sie den Principal nicht ändern.
-     *
-     * @param cmp Die Component
-     * @param startDate Startdatum des Zeitraums
-     * @param endDate Enddatum des Zeitraums
-     * @return Liste der Daten, an denen sich der Principal ändert (sortiert)
-     */
-    private List<LocalDate> getPrincipalChangeDatesBetween(ClaimComponent cmp, LocalDate startDate, LocalDate endDate) {
-        List<LocalDate> changeDates = new ArrayList<>();
-
-        // Alle Buchungen dieser Component durchsuchen
-        List<ClaimLedgerEntry> entries = this.claimLedgerEntriesFacade.findByComponent(cmp);
-
-        for (ClaimLedgerEntry entry : entries) {
-            LocalDate entryDate = entry.getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-
-            // Nur Buchungen im relevanten Zeitraum
-            if (entryDate.isBefore(startDate) || !entryDate.isBefore(endDate)) {
-                continue;
-            }
-
-            // Nur Buchungstypen, die den Principal ändern
-            switch (entry.getType()) {
-                case PAYMENT:
-                case ADJUSTMENT:
-                case MAIN_CLAIM:
-                case COST:
-                    if (!changeDates.contains(entryDate)) {
-                        changeDates.add(entryDate);
-                    }
-                    break;
-                case INTEREST:
-                    // Zinsbuchungen ändern den Principal NICHT
-                    break;
-            }
-        }
-
-        // Sortieren
-        Collections.sort(changeDates);
-
-        return changeDates;
-    }
-
-    /**
-     * Calculates the balance information for a single claim component.
-     *
-     * @param cmp The claim component
-     * @param upTo Calculate balance up to this date
-     * @return ClaimComponentBalance with detailed balance information
-     */
-    private ClaimComponentBalance calculateComponentBalance(ClaimComponent cmp, Date upTo) {
-        ClaimComponentBalance balance = new ClaimComponentBalance(cmp);
-
-        BigDecimal principalFromEntries = BigDecimal.ZERO;
-        BigDecimal interestFromEntries = BigDecimal.ZERO;
-        BigDecimal paymentsToComponent = BigDecimal.ZERO;
-
-        // Iterate through all entries for this component up to the date
-        List<ClaimLedgerEntry> entries = this.claimLedgerEntriesFacade.findByComponent(cmp);
-
-        for (ClaimLedgerEntry entry : entries) {
-            if (entry.getEntryDate().after(upTo)) {
-                break; // Entries are sorted by date
-            }
-
-            switch (entry.getType()) {
-                case MAIN_CLAIM:
-                case COST:
-                    // Principal bookings increase the principal
-                    principalFromEntries = principalFromEntries.add(entry.getAmount());
-                    break;
-                case INTEREST:
-                    // Interest bookings
-                    interestFromEntries = interestFromEntries.add(entry.getAmount());
-                    break;
-                case PAYMENT:
-                    // Payments reduce the balance
-                    paymentsToComponent = paymentsToComponent.add(entry.getAmount());
-                    break;
-                case ADJUSTMENT:
-                    // Adjustments affect principal
-                    principalFromEntries = principalFromEntries.add(entry.getAmount());
-                    break;
-            }
-        }
-
-        // Add accrued (not yet booked) interest
-        BigDecimal accruedInterest = calculateAccruedInterest(cmp, upTo);
-        BigDecimal totalInterest = interestFromEntries.add(accruedInterest);
-
-        // According to § 367 BGB: payments first go to interest, then to principal
-        // For simplicity in balance display, we show total payments
-        // The split logic will handle the § 367 BGB allocation when creating payment entries
-
-        BigDecimal openPrincipal = principalFromEntries.subtract(paymentsToComponent).max(BigDecimal.ZERO);
-        BigDecimal openInterest = totalInterest.max(BigDecimal.ZERO);
-
-        // If payments exceed principal, the excess would reduce interest
-        // But we simplify: we assume payments are allocated optimally
-        // The detailed allocation happens in PaymentSplitCalculator
-
-        balance.setPrincipalAmount(principalFromEntries.setScale(2, RoundingMode.HALF_UP));
-        balance.setInterestAmount(totalInterest.setScale(2, RoundingMode.HALF_UP));
-        balance.setPaymentsAmount(paymentsToComponent.setScale(2, RoundingMode.HALF_UP));
-        balance.setOpenPrincipal(openPrincipal.setScale(2, RoundingMode.HALF_UP));
-        balance.setOpenInterest(openInterest.setScale(2, RoundingMode.HALF_UP));
-        balance.calculateTotalOpenBalance();
-
-        return balance;
-    }
 
     /**
      * Hilfsklasse für Zeiträume
      */
-    private static class ClaimInterestPeriod {
-
-        private final LocalDate start;
-        private final LocalDate end;
-
-        public ClaimInterestPeriod(LocalDate start, LocalDate end) {
-            this.start = start;
-            this.end = end;
-        }
-
-        public LocalDate getStart() {
-            return start;
-        }
-
-        public LocalDate getEnd() {
-            return end;
-        }
-    }
 
 }

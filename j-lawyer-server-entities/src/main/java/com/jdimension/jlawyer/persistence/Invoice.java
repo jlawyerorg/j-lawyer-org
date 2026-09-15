@@ -685,7 +685,8 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "Invoice.findByStatus", query = "SELECT a FROM Invoice a WHERE a.status = :status order by a.dueDate desc"),
     @NamedQuery(name = "Invoice.findByInvoiceDocument", query = "SELECT a FROM Invoice a WHERE a.invoiceDocument = :invoiceDocument"),
     @NamedQuery(name = "Invoice.findByInvoiceNumber", query = "SELECT a FROM Invoice a WHERE a.invoiceNumber = :invoiceNumber"),
-    @NamedQuery(name = "Invoice.findByAddress", query = "SELECT a FROM Invoice a WHERE a.contact = :contact")})
+    @NamedQuery(name = "Invoice.findByAddress", query = "SELECT a FROM Invoice a WHERE a.contact = :contact"),
+    @NamedQuery(name = "Invoice.searchByNumberOrName", query = "SELECT a FROM Invoice a WHERE upper(a.invoiceNumber) LIKE :term OR upper(a.name) LIKE :term order by a.creationDate desc")})
 public class Invoice implements Serializable {
     
     // draft

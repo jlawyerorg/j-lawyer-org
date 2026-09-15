@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<Form version="1.3" maxVersion="1.3" type="org.netbeans.modules.form.forminfo.JDialogFormInfo">
+  <Properties>
+    <Property name="defaultCloseOperation" type="int" value="2"/>
+    <Property name="title" type="java.lang.String" value="Mahngerichts-Zuordnung"/>
+  </Properties>
+  <SyntheticProperties>
+    <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
+    <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
+  </SyntheticProperties>
+  <AuxValues>
+    <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
+    <AuxValue name="FormSettings_autoSetComponentName" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_generateFQN" type="java.lang.Boolean" value="true"/>
+    <AuxValue name="FormSettings_generateMnemonicsCode" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_i18nAutoMode" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_layoutCodeTarget" type="java.lang.Integer" value="2"/>
+    <AuxValue name="FormSettings_listenerGenerationStyle" type="java.lang.Integer" value="0"/>
+    <AuxValue name="FormSettings_variablesLocal" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_variablesModifier" type="java.lang.Integer" value="2"/>
+  </AuxValues>
+
+  <Layout>
+    <DimensionLayout dim="0">
+      <Group type="103" groupAlignment="0" attributes="0">
+          <Group type="102" attributes="0">
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
+                      <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                          <Component id="lbl_cmbCourt" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lbl_txtFederalState" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lbl_chkForeignApplicant" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lbl_txtRestriction" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lbl_txtPostalCodeFrom" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lbl_txtPostalCodeTo" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lbl_txtAcceptedChannels" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lbl_chkRequiresOwnKennziffer" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lbl_chkDirectDebitNationwide" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lbl_txtSequenceNumber" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lbl_chkActive" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lbl_txtNotes" alignment="0" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="cmbCourt" alignment="0" pref="420" max="32767" attributes="0"/>
+                          <Component id="txtFederalState" alignment="0" pref="420" max="32767" attributes="0"/>
+                          <Component id="chkForeignApplicant" alignment="0" pref="420" max="32767" attributes="0"/>
+                          <Component id="txtRestriction" alignment="0" pref="420" max="32767" attributes="0"/>
+                          <Component id="txtPostalCodeFrom" alignment="0" pref="420" max="32767" attributes="0"/>
+                          <Component id="txtPostalCodeTo" alignment="0" pref="420" max="32767" attributes="0"/>
+                          <Component id="txtAcceptedChannels" alignment="0" pref="420" max="32767" attributes="0"/>
+                          <Component id="chkRequiresOwnKennziffer" alignment="0" pref="420" max="32767" attributes="0"/>
+                          <Component id="chkDirectDebitNationwide" alignment="0" pref="420" max="32767" attributes="0"/>
+                          <Component id="txtSequenceNumber" alignment="0" pref="420" max="32767" attributes="0"/>
+                          <Component id="chkActive" alignment="0" pref="420" max="32767" attributes="0"/>
+                          <Component id="scr_txtNotes" alignment="0" pref="420" max="32767" attributes="0"/>
+                      </Group>
+                  </Group>
+                  <Group type="102" alignment="1" attributes="0">
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <Component id="cmdSave" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdCancel" min="-2" max="-2" attributes="0"/>
+                  </Group>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+          </Group>
+      </Group>
+    </DimensionLayout>
+    <DimensionLayout dim="1">
+      <Group type="103" groupAlignment="0" attributes="0">
+          <Group type="102" alignment="0" attributes="0">
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lbl_cmbCourt" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmbCourt" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lbl_txtFederalState" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="txtFederalState" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lbl_chkForeignApplicant" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="chkForeignApplicant" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lbl_txtRestriction" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="txtRestriction" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lbl_txtPostalCodeFrom" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="txtPostalCodeFrom" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lbl_txtPostalCodeTo" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="txtPostalCodeTo" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lbl_txtAcceptedChannels" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="txtAcceptedChannels" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lbl_chkRequiresOwnKennziffer" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="chkRequiresOwnKennziffer" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lbl_chkDirectDebitNationwide" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="chkDirectDebitNationwide" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lbl_txtSequenceNumber" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="txtSequenceNumber" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lbl_chkActive" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="chkActive" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="lbl_txtNotes" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="scr_txtNotes" alignment="0" pref="80" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="cmdSave" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdCancel" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+          </Group>
+      </Group>
+    </DimensionLayout>
+  </Layout>
+
+  <SubComponents>
+    <Component class="javax.swing.JLabel" name="lbl_cmbCourt">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Mahngericht:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="cmbCourt">
+    </Component>
+    <Component class="javax.swing.JLabel" name="lbl_txtFederalState">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Bundesland:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="txtFederalState">
+    </Component>
+    <Component class="javax.swing.JLabel" name="lbl_chkForeignApplicant">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Antragsteller ohne inländischen Gerichtsstand:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="chkForeignApplicant">
+      <Properties>
+        <Property name="text" type="java.lang.String" value=""/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lbl_txtRestriction">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Einschränkung (z. B. OLG-Bezirk):"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="txtRestriction">
+    </Component>
+    <Component class="javax.swing.JLabel" name="lbl_txtPostalCodeFrom">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="PLZ von:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="txtPostalCodeFrom">
+    </Component>
+    <Component class="javax.swing.JLabel" name="lbl_txtPostalCodeTo">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="PLZ bis:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="txtPostalCodeTo">
+    </Component>
+    <Component class="javax.swing.JLabel" name="lbl_txtAcceptedChannels">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Einreichungswege (mit ; getrennt):"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="txtAcceptedChannels">
+    </Component>
+    <Component class="javax.swing.JLabel" name="lbl_chkRequiresOwnKennziffer">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="eigene Kennziffer erforderlich:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="chkRequiresOwnKennziffer">
+      <Properties>
+        <Property name="text" type="java.lang.String" value=""/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lbl_chkDirectDebitNationwide">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Lastschrift bundesweit anzumelden:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="chkDirectDebitNationwide">
+      <Properties>
+        <Property name="text" type="java.lang.String" value=""/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lbl_txtSequenceNumber">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Reihenfolge:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="txtSequenceNumber">
+    </Component>
+    <Component class="javax.swing.JLabel" name="lbl_chkActive">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Regel anwenden:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="chkActive">
+      <Properties>
+        <Property name="text" type="java.lang.String" value=""/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lbl_txtNotes">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Notiz:"/>
+      </Properties>
+    </Component>
+    <Container class="javax.swing.JScrollPane" name="scr_txtNotes">
+      <AuxValues>
+        <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
+      </AuxValues>
+      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+      <SubComponents>
+        <Component class="javax.swing.JTextArea" name="txtNotes">
+          <Properties>
+            <Property name="columns" type="int" value="20"/>
+            <Property name="rows" type="int" value="4"/>
+            <Property name="lineWrap" type="boolean" value="true"/>
+            <Property name="wrapStyleWord" type="boolean" value="true"/>
+          </Properties>
+        </Component>
+      </SubComponents>
+    </Container>
+    <Component class="javax.swing.JButton" name="cmdSave">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Speichern"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSaveActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdCancel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Abbrechen"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdCancelActionPerformed"/>
+      </Events>
+    </Component>
+  </SubComponents>
+</Form>

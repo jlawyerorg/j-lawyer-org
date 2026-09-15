@@ -42,6 +42,7 @@
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="lblIcon" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
+                  <Component id="lblDropIndicator" min="-2" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Component id="lblCaseInfo" pref="338" max="32767" attributes="0"/>
                       <Component id="lblTags" max="32767" attributes="0"/>
@@ -56,6 +57,7 @@
                   <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Component id="lblIcon" min="-2" max="-2" attributes="0"/>
+                      <Component id="lblDropIndicator" min="-2" max="-2" attributes="0"/>
                       <Group type="102" attributes="0">
                           <Component id="lblCaseInfo" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
@@ -102,6 +104,15 @@
               </FontInfo>
             </Property>
             <Property name="text" type="java.lang.String" value=" "/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="lblDropIndicator">
+          <Properties>
+            <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+              <Border info="org.netbeans.modules.form.compat2.border.EmptyBorderInfo">
+                <EmptyBorder bottom="0" left="0" right="6" top="0"/>
+              </Border>
+            </Property>
           </Properties>
         </Component>
       </SubComponents>

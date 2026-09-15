@@ -664,6 +664,8 @@
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
+import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -694,9 +696,17 @@ public class UploadDocumentsAction extends ProgressableAction {
     private CaseFolderPanel docTarget;
     private CaseFolder targetFolder = null;
     private Invoice invoice = null;
+    private volatile int uploadedCount = 0;
 
     private List<File> files;
 
+    /**
+     * @param docTarget the case panel to update, or null when the case is not
+     * displayed (e.g. drop on a desktop entry) - folders are then assigned on
+     * the server directly and a DocumentAddedEvent is published per document
+     * @param targetFolder target folder; when docTarget is null, null means the
+     * root folder of the case
+     */
     public UploadDocumentsAction(ProgressIndicator i, Component owner, ArchiveFileBean archiveFile, CaseFolderPanel docTarget, List<File> files, CaseFolder targetFolder, Invoice invoice) {
         super(i, false);
 
@@ -705,8 +715,18 @@ public class UploadDocumentsAction extends ProgressableAction {
         this.docTarget = docTarget;
         this.files = files;
         this.targetFolder = targetFolder;
+        if (this.docTarget == null && this.targetFolder == null) {
+            this.targetFolder = archiveFile.getRootFolder();
+        }
         this.invoice = invoice;
 
+    }
+
+    /**
+     * @return number of documents that have been added to the case so far
+     */
+    public int getUploadedCount() {
+        return uploadedCount;
     }
 
     @Override
@@ -775,9 +795,23 @@ public class UploadDocumentsAction extends ProgressableAction {
         }
 
         final ArchiveFileDocumentsBean doc = afs.addDocument(this.archiveFile.getId(), newName, data, null, null);
+        this.uploadedCount++;
 
         if (this.invoice != null) {
             afs.linkInvoiceDocument(doc.getId(), invoice.getId());
+        }
+
+        if (this.docTarget == null) {
+            // no case panel to update - the server puts new documents into the root folder
+            CaseFolder rootFolder = this.archiveFile.getRootFolder();
+            if (folder != null && (rootFolder == null || !folder.getId().equals(rootFolder.getId()))) {
+                ArrayList<String> docIds = new ArrayList<>();
+                docIds.add(doc.getId());
+                afs.moveDocumentsToFolder(docIds, folder.getId());
+                doc.setFolder(folder);
+            }
+            EventBroker.getInstance().publishEvent(new DocumentAddedEvent(doc, invoice));
+            return true;
         }
 
         // persisting the folder for this document is automatically done by this call (not just UI update)
@@ -803,7 +837,11 @@ public class UploadDocumentsAction extends ProgressableAction {
         if(children.length>0) {
             if(!parentFolder.hasChild(f.getName())) {
                 newFolder=afs.createCaseFolder(parentFolder.getId(), f.getName());
-                this.docTarget.getFoldersListPanel().folderAdded(parentFolder, newFolder);
+                if(this.docTarget!=null) {
+                    this.docTarget.getFoldersListPanel().folderAdded(parentFolder, newFolder);
+                } else {
+                    parentFolder.getChildren().add(newFolder);
+                }
             } else {
                 newFolder=parentFolder.getChild(f.getName());
             }

@@ -696,7 +696,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.text.AbstractDocument;
 import org.apache.log4j.Logger;
-import org.java.sepaxml.validator.SEPAValidatorIBAN;
+import org.iban4j.IbanUtil;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -796,7 +796,7 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
                 if (iban == null || iban.trim().isEmpty()) {
                     lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
                     lblRecipient.setToolTipText("Keine IBAN hinterlegt");
-                } else if (!SEPAValidatorIBAN.isValid(iban.replaceAll("\\s", ""))) {
+                } else if (!IbanUtil.isValid(iban.replaceAll("\\s", "").toUpperCase())) {
                     lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
                     lblRecipient.setToolTipText("Ungültige IBAN: " + iban);
                 } else {
@@ -888,7 +888,7 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
                 if (iban == null || iban.trim().isEmpty()) {
                     this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
                     this.lblRecipient.setToolTipText("Keine IBAN hinterlegt");
-                } else if (!SEPAValidatorIBAN.isValid(iban.replaceAll("\\s", ""))) {
+                } else if (!IbanUtil.isValid(iban.replaceAll("\\s", "").toUpperCase())) {
                     this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
                     this.lblRecipient.setToolTipText("Ungültige IBAN: " + iban);
                 } else {

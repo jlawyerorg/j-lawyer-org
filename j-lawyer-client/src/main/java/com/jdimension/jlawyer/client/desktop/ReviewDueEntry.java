@@ -684,6 +684,7 @@ public class ReviewDueEntry {
     protected String archiveFileReason=null;
     private int type=ArchiveFileConstants.REVIEWTYPE_FOLLOWUP;
     private ArrayList<String> tags=null;
+    private boolean archived=false;
     
     private ArchiveFileReviewsBean review=null;
     
@@ -859,6 +860,20 @@ public class ReviewDueEntry {
      */
     public void setCalendarSetupColor(int calendarSetupColor) {
         this.calendarSetupColor = calendarSetupColor;
+    }
+
+    /**
+     * @return true if the case is archived
+     */
+    public boolean isArchived() {
+        return archived;
+    }
+
+    /**
+     * @param archived the archived flag to set
+     */
+    public void setArchived(boolean archived) {
+        this.archived = archived;
     }
     
     

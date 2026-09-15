@@ -9,8 +9,10 @@ the official name in the spelling the judiciary uses, an optional additional des
 `urn:xoev-de:xjustiz:codeliste:gds.gerichte`, the postal address and, where used, the Postfach
 address, phone, fax and web address, the electronic recipient identifier used for transmission
 (EGVP/beA SAFE-ID), optional bank details for court fees, a validity range, an active flag and a
-free-text note. The XJustiz identifier SHALL be unique among active courts and SHALL be the key
-used whenever a court has to be identified towards the judiciary.
+free-text note. The XJustiz identifier SHALL be unique among active courts and SHALL serve as the
+stable key for seeding, matching and later imports. It SHALL NOT be assumed to be the identifier a
+given procedural interface expects: the EDA dunning application, for instance, addresses the
+dunning court by its postal code and place, so a court usable as a dunning court SHALL carry both.
 
 #### Scenario: Court used instead of free text
 
@@ -52,7 +54,10 @@ without a software update. The system SHALL ship a seed data set containing the 
 courts with their scope, XJustiz identifier and address, and SHALL not require a complete
 directory of all German courts; administrators SHALL be able to add the courts their firm works
 with. Seeding SHALL be repeatable without duplicating existing records, matching on the XJustiz
-identifier.
+identifier. The seed SHALL be maintained as project data: the XJustiz court code list
+(`urn:xoev-de:xjustiz:codeliste:gds.gerichte`) is a code list of type 3 whose values are published
+in the XRepository and are not contained in the schema files shipped with the server, so the seed
+SHALL NOT be generated from those files.
 
 #### Scenario: Administrator adds a court
 

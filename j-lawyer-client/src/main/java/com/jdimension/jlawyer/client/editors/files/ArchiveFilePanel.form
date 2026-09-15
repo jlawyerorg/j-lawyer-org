@@ -254,7 +254,7 @@
                 <Property name="text" type="java.lang.String" value="erste Farbe"/>
               </Properties>
               <Events>
-                <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="mnuDocumentHighlight1MousePressed"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuDocumentHighlight1ActionPerformed"/>
               </Events>
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="mnuDocumentHighlight2">
@@ -262,7 +262,7 @@
                 <Property name="text" type="java.lang.String" value="zweite Farbe"/>
               </Properties>
               <Events>
-                <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="mnuDocumentHighlight2MousePressed"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuDocumentHighlight2ActionPerformed"/>
               </Events>
             </MenuItem>
           </SubComponents>
