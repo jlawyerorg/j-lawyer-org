@@ -837,6 +837,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.jScrollPane1.getViewport().setOpaque(false);
         this.jScrollPane4.getViewport().setOpaque(false);
 
+        // decouple the grid's preferred size from its content: long lists (tagged, messages) would otherwise report
+        // preferred heights beyond Short.MAX_VALUE, which swing-layout's GroupLayout clamps - its children then get
+        // laid out beyond the container bounds (tabs, system information and the main window's status bar disappear)
+        this.pnlGridContainer.setPreferredSize(new java.awt.Dimension(400, 300));
+
         // Set compact view icon based on saved setting (default: compact view enabled)
         boolean compactView = UserSettings.getInstance().getSettingAsBoolean(
             UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, true);
@@ -1952,7 +1957,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(org.jdesktop.layout.GroupLayout.LEADING, cmdUserFilterTagged, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, lblUserFilterCountTagged, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(tabPaneTagged)
+                .add(tabPaneTagged, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
