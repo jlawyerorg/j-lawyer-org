@@ -673,9 +673,10 @@ import com.jdimension.jlawyer.persistence.Payment;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.math.RoundingMode;
@@ -688,11 +689,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
-import org.java.sepaxml.SEPA;
-import org.java.sepaxml.SEPABankAccount;
-import org.java.sepaxml.SEPACreditTransfer;
-import org.java.sepaxml.SEPATransaction;
-import org.java.sepaxml.validator.SEPAValidatorIBAN;
+import org.iban4j.IbanUtil;
 
 /**
  *
@@ -883,10 +880,7 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
                 AppUserBean sender = UserSettings.getInstance().getUser(p.getSender());
                 String senderIban = null;
                 if (sender != null) {
-                    senderIban = sender.getBankIban();
-                    if (senderIban != null) {
-                        senderIban = senderIban.replace(" ", "");
-                    }
+                    senderIban = normalizeIban(sender.getBankIban());
                 }
 
                 if (!paymentsBySender.containsKey(senderIban)) {
@@ -897,53 +891,47 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
 
             for (String iban : paymentsBySender.keySet()) {
                 List<Payment> paymentsForIban = paymentsBySender.get(iban);
-                List<SEPATransaction> transactions = new ArrayList<>();
+                List<SepaCreditTransferWriter.SepaTransfer> transfers = new ArrayList<>();
                 for (Payment p : paymentsForIban) {
                     try {
 
                         String recipientIban = null;
                         if (p.getContact() != null) {
-                            recipientIban = p.getContact().getBankAccount();
-                            if (recipientIban != null) {
-                                recipientIban = recipientIban.replace(" ", "");
-                            }
+                            recipientIban = normalizeIban(p.getContact().getBankAccount());
                         }
 
-                        transactions.add(new SEPATransaction(
-                                new SEPABankAccount(
+                        transfers.add(new SepaCreditTransferWriter.SepaTransfer(
+                                new SepaCreditTransferWriter.SepaAccount(
+                                        StringUtils.truncateForSepa(getRecipientName(p), SepaSchemaValidator.MAXLENGTH_NAME),
                                         recipientIban,
-                                        p.getContact().getBankCode(),
-                                        StringUtils.truncateForSepa(getRecipientName(p), SepaSchemaValidator.MAXLENGTH_NAME)
+                                        p.getContact().getBankCode()
                                 ),
                                 p.getTotal().setScale(2, RoundingMode.HALF_UP),
                                 StringUtils.truncateForSepa(getRemittance(p), SepaSchemaValidator.MAXLENGTH_REMITTANCE),
-                                SEPATransaction.Currency.EUR
+                                p.getPaymentNumber()
                         ));
                     } catch (Exception ex) {
                         log.error("Could not add transaction to SEPA XML: " + p.getPaymentNumber());
                         JOptionPane.showMessageDialog(this, "Zahlung " + p.getPaymentNumber() + " kann nicht exportiert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                     }
                 }
+                if (transfers.isEmpty()) {
+                    continue;
+                }
                 AppUserBean senderUser = UserSettings.getInstance().getUser(paymentsForIban.get(0).getSender());
-                final SEPABankAccount sender = new SEPABankAccount(
+                SepaCreditTransferWriter.SepaAccount sender = new SepaCreditTransferWriter.SepaAccount(
+                        StringUtils.truncateForSepa(getSenderName(senderUser), SepaSchemaValidator.MAXLENGTH_NAME),
                         iban,
-                        senderUser.getBankBic(),
-                        StringUtils.truncateForSepa(getSenderName(senderUser), SepaSchemaValidator.MAXLENGTH_NAME)
+                        senderUser.getBankBic()
                 );
-                SEPA sepa = new SEPACreditTransfer(SEPA.PaymentMethods.TransferAdvice, sender, transactions);
-                ByteArrayOutputStream bout = new ByteArrayOutputStream();
-                sepa.write(bout);
-
-                String sepaString = bout.toString();
-                sepaString = sepaString.replace("CstmrCdtTrfInitn xmlns=\"\"", "CstmrCdtTrfInitn");
-                sepaString = sepaString.replace("<BtchBookg>true</BtchBookg>", "<BtchBookg>false</BtchBookg>");
+                String sepaString = SepaCreditTransferWriter.write(sender, transfers);
 
                 // the SEPA library does not check its output - banks reject the whole file if a single value violates the schema
                 List<String> schemaViolations = SepaSchemaValidator.validateCreditTransfer(sepaString);
                 if (!schemaViolations.isEmpty()) {
-                    log.warn("Generated SEPA XML for account " + iban + " violates schema pain.001.001.03_GBIC_3: " + schemaViolations);
+                    log.warn("Generated SEPA XML for account " + iban + " violates schema " + SepaSchemaValidator.SCHEMA_NAME_CREDIT_TRANSFER + ": " + schemaViolations);
                     List<String> shownViolations = schemaViolations.size() > 5 ? schemaViolations.subList(0, 5) : schemaViolations;
-                    String message = "Die SEPA-Datei für das Konto " + iban + " entspricht nicht dem Schema der Deutschen Kreditwirtschaft (pain.001.001.03_GBIC_3) und wird von der Bank voraussichtlich abgelehnt:\n\n"
+                    String message = "Die SEPA-Datei für das Konto " + iban + " entspricht nicht dem Schema der Deutschen Kreditwirtschaft (" + SepaSchemaValidator.SCHEMA_NAME_CREDIT_TRANSFER + ") und wird von der Bank voraussichtlich abgelehnt:\n\n"
                             + String.join("\n", shownViolations)
                             + (schemaViolations.size() > shownViolations.size() ? "\n... und " + (schemaViolations.size() - shownViolations.size()) + " weitere" : "")
                             + "\n\nDatei trotzdem speichern?";
@@ -963,9 +951,8 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
                     File dir = chooser.getSelectedFile();
 
                     String fileName = dir.getPath() + File.separator + new SimpleDateFormat("yyyyMMdd_HHmm_").format(new Date()) + "_SEPA-Export_" + iban + ".xml";
-                    FileWriter fw = new FileWriter(fileName);
-                    fw.write(sepaString);
-                    fw.close();
+                    // the document declares UTF-8, independent of the platform encoding
+                    Files.writeString(Path.of(fileName), sepaString, StandardCharsets.UTF_8);
 
                     // update status
                     for (Payment p : paymentsForIban) {
@@ -1021,24 +1008,18 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
                 AppUserBean sender = UserSettings.getInstance().getUser(p.getSender());
                 String senderIban = null;
                 if (sender != null) {
-                    senderIban = sender.getBankIban();
-                    if (senderIban != null) {
-                        senderIban = senderIban.replace(" ", "");
-                    }
+                    senderIban = normalizeIban(sender.getBankIban());
                 }
                 List<String> errors = new ArrayList<>();
-                if (senderIban == null || !SEPAValidatorIBAN.isValid(senderIban)) {
+                if (senderIban == null || !IbanUtil.isValid(senderIban)) {
                     errors.add("Ungültige Sender-IBAN: " + senderIban);
                 }
 
                 String recipientIban = null;
                 if (p.getContact() != null) {
-                    recipientIban = p.getContact().getBankAccount();
-                    if (recipientIban != null) {
-                        recipientIban = recipientIban.replace(" ", "");
-                    }
+                    recipientIban = normalizeIban(p.getContact().getBankAccount());
                 }
-                if (recipientIban == null || !SEPAValidatorIBAN.isValid(recipientIban)) {
+                if (recipientIban == null || !IbanUtil.isValid(recipientIban)) {
                     errors.add("Ungültige Empfänger-IBAN: " + recipientIban);
                 }
 
@@ -1079,6 +1060,16 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
             truncated.add(label);
             truncatedDetails.add("    " + label + " (" + value.length() + " statt max. " + maxLength + " Zeichen): " + StringUtils.truncateForSepa(value, maxLength));
         }
+    }
+
+    /**
+     * @return the IBAN without spaces and in upper case, or null
+     */
+    private static String normalizeIban(String iban) {
+        if (iban == null) {
+            return null;
+        }
+        return iban.replaceAll("\\s", "").toUpperCase();
     }
 
     /**

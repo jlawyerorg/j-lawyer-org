@@ -663,115 +663,151 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.finance;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
+import com.jdimension.jlawyer.client.utils.StringUtils;
+import java.io.ByteArrayOutputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
-import java.util.Set;
-import javax.xml.XMLConstants;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
-import javax.xml.validation.Validator;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
+import java.util.Properties;
+import java.util.UUID;
+import org.kapott.hbci.GV.generators.GenUebSEPA00100109;
 
 /**
- * Validates generated SEPA credit transfer files against the schema provided
- * by the Deutsche Kreditwirtschaft (DK), which German banks use to check
- * imported files. The DK schema is stricter than the plain ISO 20022 schema,
- * e.g. names are limited to 70 characters.
+ * Creates SEPA credit transfer files in format pain.001.001.09, which German
+ * banks require (DK schema pain.001.001.09_GBIC_5). This is the only class
+ * using the underlying SEPA library (hbci4java), so replacing the library only
+ * affects this class.
+ *
+ * Values are written as given - callers are responsible for sanitizing and
+ * shortening names and remittance information, see
+ * {@link StringUtils#sanitizeForSepa(String)} and
+ * {@link StringUtils#truncateForSepa(String, int)}. Use
+ * {@link SepaSchemaValidator} to check the result.
  *
  * @author jens
  */
-public class SepaSchemaValidator {
+public class SepaCreditTransferWriter {
 
     /**
-     * Name of the DK schema used to validate SEPA credit transfer files.
+     * Maximum length of identifiers such as the message id and the end to end
+     * id.
      */
-    public static final String SCHEMA_NAME_CREDIT_TRANSFER = "pain.001.001.09_GBIC_5";
+    public static final int MAXLENGTH_ID = 35;
 
     /**
-     * Maximum length of name fields (e.g. Cdtr/Nm, Dbtr/Nm) in SEPA credit
-     * transfer files according to the DK schema pain.001.001.09_GBIC_5.
+     * End to end id to be used if there is no reference for a transfer.
      */
-    public static final int MAXLENGTH_NAME = 70;
+    public static final String ENDTOENDID_NOTPROVIDED = "NOTPROVIDED";
+
+    private static final String CURRENCY_EUR = "EUR";
 
     /**
-     * Maximum length of the unstructured remittance information (RmtInf/Ustrd)
-     * in SEPA credit transfer files according to the DK schema
-     * pain.001.001.09_GBIC_5.
-     */
-    public static final int MAXLENGTH_REMITTANCE = 140;
-
-    private static final String SCHEMA_CREDIT_TRANSFER = "/sepa/" + SCHEMA_NAME_CREDIT_TRANSFER + ".xsd";
-    private static final String NAMESPACE_CREDIT_TRANSFER = "urn:iso:std:iso:20022:tech:xsd:pain.001.001.09";
-
-    private static Schema creditTransferSchema = null;
-
-    private SepaSchemaValidator() {
-    }
-
-    private static synchronized Schema getCreditTransferSchema() throws SAXException {
-        if (creditTransferSchema == null) {
-            URL schemaUrl = SepaSchemaValidator.class.getResource(SCHEMA_CREDIT_TRANSFER);
-            if (schemaUrl == null) {
-                throw new SAXException("SEPA schema not found: " + SCHEMA_CREDIT_TRANSFER);
-            }
-            SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-            creditTransferSchema = factory.newSchema(schemaUrl);
-        }
-        return creditTransferSchema;
-    }
-
-    /**
-     * Validates a SEPA credit transfer file (pain.001.001.09) against the DK
-     * schema pain.001.001.09_GBIC_5.
+     * A bank account and the name of its owner.
      *
-     * @param xml the complete XML document
-     * @return schema violations, empty if the document is valid
-     * @throws SAXException if the schema cannot be loaded
-     * @throws IOException if the document cannot be read
+     * @param name name of the account owner
+     * @param iban IBAN without spaces
+     * @param bic BIC, may be null or empty
      */
-    public static List<String> validateCreditTransfer(String xml) throws SAXException, IOException {
-        Set<String> violations = new LinkedHashSet<>();
-        Validator validator = getCreditTransferSchema().newValidator();
-        validator.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-        validator.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-        validator.setErrorHandler(new ErrorHandler() {
-            @Override
-            public void warning(SAXParseException exception) {
-                // warnings do not make a file invalid
-            }
+    public record SepaAccount(String name, String iban, String bic) {
 
-            @Override
-            public void error(SAXParseException exception) {
-                violations.add(simplify(exception.getMessage()));
-            }
-
-            @Override
-            public void fatalError(SAXParseException exception) throws SAXException {
-                throw exception;
-            }
-        });
-        try {
-            validator.validate(new StreamSource(new StringReader(xml)));
-        } catch (SAXParseException ex) {
-            // document is not well-formed
-            violations.add(simplify(ex.getMessage()));
-        }
-        return new ArrayList<>(violations);
     }
 
-    private static String simplify(String message) {
-        if (message == null) {
-            return "";
+    /**
+     * A single credit transfer in EUR.
+     *
+     * @param creditor the recipient
+     * @param amount amount in EUR
+     * @param remittance unstructured remittance information, may be null or
+     * empty
+     * @param endToEndId reference shown to the debtor and the creditor, e.g.
+     * the payment number - sanitized and shortened on export, may be null or
+     * empty
+     */
+    public record SepaTransfer(SepaAccount creditor, BigDecimal amount, String remittance, String endToEndId) {
+
+    }
+
+    private SepaCreditTransferWriter() {
+    }
+
+    /**
+     * Creates a credit transfer file with one payment information block for
+     * the given debtor account, to be executed as soon as possible.
+     *
+     * @param debtor the account to be debited
+     * @param transfers the transfers, at least one
+     * @return the XML document
+     * @throws Exception if the document cannot be created
+     */
+    public static String write(SepaAccount debtor, List<SepaTransfer> transfers) throws Exception {
+        if (transfers == null || transfers.isEmpty()) {
+            throw new IllegalArgumentException("no transfers given");
         }
-        // element names are reported including their namespace, which does not help the user
-        return message.replace("\"" + NAMESPACE_CREDIT_TRANSFER + "\":", "");
+
+        Properties params = new Properties();
+        String messageId = createMessageId();
+        put(params, "sepaid", messageId);
+        put(params, "pmtinfid", messageId);
+        put(params, "date", new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
+        // one booking per transfer on the debtor's statement
+        put(params, "batchbook", "0");
+        put(params, "src.name", debtor.name());
+        put(params, "src.iban", normalizeIdentifier(debtor.iban()));
+        put(params, "src.bic", normalizeIdentifier(debtor.bic()));
+
+        for (int i = 0; i < transfers.size(); i++) {
+            SepaTransfer t = transfers.get(i);
+            put(params, "dst[" + i + "].name", t.creditor().name());
+            put(params, "dst[" + i + "].iban", normalizeIdentifier(t.creditor().iban()));
+            put(params, "dst[" + i + "].bic", normalizeIdentifier(t.creditor().bic()));
+            put(params, "btg[" + i + "].value", t.amount().setScale(2, RoundingMode.HALF_UP).toPlainString());
+            put(params, "btg[" + i + "].curr", CURRENCY_EUR);
+            put(params, "usage[" + i + "]", t.remittance());
+            put(params, "endtoendid[" + i + "]", toEndToEndId(t.endToEndId()));
+        }
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        new GenUebSEPA00100109().generate(params, out, false);
+        return out.toString(StandardCharsets.UTF_8);
+    }
+
+    /**
+     * @param reference e.g. a payment number
+     * @return the reference as a valid end to end id, or
+     * {@link #ENDTOENDID_NOTPROVIDED} if it is empty
+     */
+    static String toEndToEndId(String reference) {
+        String id = StringUtils.sanitizeForSepaReference(reference);
+        if (id.length() > MAXLENGTH_ID) {
+            id = id.substring(0, MAXLENGTH_ID).trim();
+        }
+        return id.isEmpty() ? ENDTOENDID_NOTPROVIDED : id;
+    }
+
+    /**
+     * @return an IBAN or BIC without spaces and in upper case, as required by
+     * the schema, or null
+     */
+    private static String normalizeIdentifier(String value) {
+        if (value == null) {
+            return null;
+        }
+        return value.replaceAll("\\s", "").toUpperCase();
+    }
+
+    private static String createMessageId() {
+        // unique per file, banks reject files with a message id they have already processed
+        return "JL" + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()) + "-" + UUID.randomUUID().toString().substring(0, 8);
+    }
+
+    private static void put(Properties params, String key, String value) {
+        // missing optional values are left out, the library handles them (e.g. BIC)
+        if (value != null && !value.isEmpty()) {
+            params.setProperty(key, value);
+        }
     }
 
 }

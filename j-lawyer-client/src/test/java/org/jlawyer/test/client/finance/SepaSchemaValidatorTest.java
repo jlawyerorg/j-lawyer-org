@@ -663,16 +663,13 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.test.client.finance;
 
+import com.jdimension.jlawyer.client.editors.finance.SepaCreditTransferWriter;
+import com.jdimension.jlawyer.client.editors.finance.SepaCreditTransferWriter.SepaAccount;
+import com.jdimension.jlawyer.client.editors.finance.SepaCreditTransferWriter.SepaTransfer;
 import com.jdimension.jlawyer.client.editors.finance.SepaSchemaValidator;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
-import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
-import org.java.sepaxml.SEPA;
-import org.java.sepaxml.SEPABankAccount;
-import org.java.sepaxml.SEPACreditTransfer;
-import org.java.sepaxml.SEPATransaction;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -684,21 +681,17 @@ public class SepaSchemaValidatorTest {
 
     private static final String LONG_NAME = "Amtsgericht Mayen - Mahngericht der Laender Rheinland-Pfalz und Saarland";
 
+    private static final SepaAccount SENDER = new SepaAccount("Kanzlei Mustermann", "DE89370400440532013000", "COBADEFFXXX");
+
     public SepaSchemaValidatorTest() {
     }
 
+    private static SepaTransfer createTransfer(String recipientName, String remittance) {
+        return new SepaTransfer(new SepaAccount(recipientName, "DE02120300000000202051", null), new BigDecimal("123.40"), remittance, "Z-2026-0001");
+    }
+
     private static String createCreditTransfer(String recipientName, String remittance) throws Exception {
-        SEPABankAccount sender = new SEPABankAccount("DE89370400440532013000", "COBADEFFXXX", "Kanzlei Mustermann");
-        List<SEPATransaction> transactions = new ArrayList<>();
-        transactions.add(new SEPATransaction(new SEPABankAccount("DE02120300000000202051", null, recipientName), new BigDecimal("123.40"), remittance, SEPATransaction.Currency.EUR));
-        SEPA sepa = new SEPACreditTransfer(SEPA.PaymentMethods.TransferAdvice, sender, transactions);
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        sepa.write(bout);
-        // same post-processing as in ManagePaymentsFrame
-        String xml = bout.toString();
-        xml = xml.replace("CstmrCdtTrfInitn xmlns=\"\"", "CstmrCdtTrfInitn");
-        xml = xml.replace("<BtchBookg>true</BtchBookg>", "<BtchBookg>false</BtchBookg>");
-        return xml;
+        return SepaCreditTransferWriter.write(SENDER, List.of(createTransfer(recipientName, remittance)));
     }
 
     @Test
@@ -733,5 +726,50 @@ public class SepaSchemaValidatorTest {
     public void testNotWellFormed() throws Exception {
         List<String> violations = SepaSchemaValidator.validateCreditTransfer("<Document>");
         assertFalse(violations.isEmpty());
+    }
+
+    @Test
+    public void testFormat() throws Exception {
+        String xml = createCreditTransfer("Max Mustermann", "R-2026-0001 Rechnung");
+        assertTrue(xml, xml.contains("urn:iso:std:iso:20022:tech:xsd:pain.001.001.09"));
+        assertTrue(xml, xml.contains("BICFI>COBADEFFXXX<"));
+        assertTrue(xml, xml.contains("BtchBookg>false<"));
+        assertTrue(xml, xml.contains("EndToEndId>Z-2026-0001<"));
+        assertTrue(xml, xml.contains("Ustrd>R-2026-0001 Rechnung<"));
+    }
+
+    @Test
+    public void testValidWithoutSenderBic() throws Exception {
+        SepaAccount sender = new SepaAccount("Kanzlei Mustermann", "DE89370400440532013000", null);
+        String xml = SepaCreditTransferWriter.write(sender, List.of(createTransfer("Max Mustermann", "R-2026-0001")));
+        List<String> violations = SepaSchemaValidator.validateCreditTransfer(xml);
+        assertTrue(violations.toString(), violations.isEmpty());
+        assertTrue(xml, xml.contains("NOTPROVIDED"));
+    }
+
+    @Test
+    public void testMultipleTransfers() throws Exception {
+        // IBAN and BIC as entered by users
+        SepaTransfer second = new SepaTransfer(new SepaAccount("Erika Musterfrau", "de75 5121 0800 1245 1261 99", "soge deff xxx"), new BigDecimal("100"), "R-2026-0002", "Z-2026-0002");
+        String xml = SepaCreditTransferWriter.write(SENDER, List.of(createTransfer("Max Mustermann", "R-2026-0001"), second));
+        List<String> violations = SepaSchemaValidator.validateCreditTransfer(xml);
+        assertTrue(violations.toString(), violations.isEmpty());
+        assertTrue(xml, xml.contains("NbOfTxs>2<"));
+        assertTrue(xml, xml.contains("CtrlSum>223.40<"));
+        assertTrue(xml, xml.contains(">100.00<"));
+    }
+
+    @Test
+    public void testEndToEndId() throws Exception {
+        SepaTransfer noReference = new SepaTransfer(new SepaAccount("Max Mustermann", "DE02120300000000202051", null), new BigDecimal("1.00"), null, null);
+        String xml = SepaCreditTransferWriter.write(SENDER, List.of(noReference));
+        assertTrue(SepaSchemaValidator.validateCreditTransfer(xml).isEmpty());
+        assertTrue(xml, xml.contains("EndToEndId>" + SepaCreditTransferWriter.ENDTOENDID_NOTPROVIDED + "<"));
+
+        SepaTransfer longReference = new SepaTransfer(new SepaAccount("Max Mustermann", "DE02120300000000202051", null), new BigDecimal("1.00"), null, "Z-2026-0001 Überweisung an das Mahngericht_#1");
+        xml = SepaCreditTransferWriter.write(SENDER, List.of(longReference));
+        List<String> violations = SepaSchemaValidator.validateCreditTransfer(xml);
+        assertTrue(violations.toString(), violations.isEmpty());
+        assertTrue(xml, xml.contains("EndToEndId>Z-2026-0001 Ueberweisung an das Mah<"));
     }
 }
