@@ -1072,6 +1072,28 @@
       "add": "Etikett",
       "remove": "Etikett entfernen"
     },
+    "links": {
+      "title": "Verknüpfte Akten",
+      "none": "Keine verknüpften Akten.",
+      "add": "Akte verknüpfen",
+      "addTitle": "Akte verknüpfen",
+      "editTitle": "Verknüpfung bearbeiten",
+      "case": "Akte",
+      "searchPlaceholder": "Akte suchen …",
+      "typeToSearch": "Zum Suchen tippen (min. 2 Zeichen)",
+      "noResults": "Keine Treffer.",
+      "description": "Beschreibung",
+      "descriptionHint": "z. B. Gegenakte, Folgesache zu 12/24",
+      "archived": "(abgelegt)",
+      "open": "Akte öffnen",
+      "edit": "Beschreibung bearbeiten",
+      "remove": "Verknüpfung entfernen",
+      "removeConfirm": "Verknüpfung zu „{{name}}“ wirklich entfernen?",
+      "addBtn": "Verknüpfen",
+      "saveBtn": "Speichern",
+      "selfError": "Eine Akte kann nicht mit sich selbst verknüpft werden.",
+      "writeError": "Die Verknüpfung konnte nicht gespeichert werden."
+    },
     "perm": {
       "add": "Gruppe",
       "remove": "Berechtigung entfernen"

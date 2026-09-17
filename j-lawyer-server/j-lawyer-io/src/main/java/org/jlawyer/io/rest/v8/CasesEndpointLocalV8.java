@@ -20,6 +20,7 @@ package org.jlawyer.io.rest.v8;
 
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
+import org.jlawyer.io.rest.v8.pojo.RestfulCaseLinkRequestV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulDocumentContentUpdateV8;
 
 /**
@@ -37,6 +38,14 @@ public interface CasesEndpointLocalV8 {
     Response listPage(int offset, int limit, String filter, String q);
 
     Response getHistory(String id);
+
+    Response getCaseLinks(String id);
+
+    Response createCaseLink(String id, RestfulCaseLinkRequestV8 body);
+
+    Response updateCaseLink(String id, String linkId, RestfulCaseLinkRequestV8 body);
+
+    Response deleteCaseLink(String id, String linkId);
 
     Response getCasesByTag(String tag, String value);
 

@@ -1072,6 +1072,28 @@
       "add": "Label",
       "remove": "Remove label"
     },
+    "links": {
+      "title": "Linked cases",
+      "none": "No linked cases.",
+      "add": "Link case",
+      "addTitle": "Link a case",
+      "editTitle": "Edit link",
+      "case": "Case",
+      "searchPlaceholder": "Search case …",
+      "typeToSearch": "Type to search (min. 2 characters)",
+      "noResults": "No matches.",
+      "description": "Description",
+      "descriptionHint": "e.g. counter case, follow-up to 12/24",
+      "archived": "(archived)",
+      "open": "Open case",
+      "edit": "Edit description",
+      "remove": "Remove link",
+      "removeConfirm": "Remove the link to \"{{name}}\"?",
+      "addBtn": "Link",
+      "saveBtn": "Save",
+      "selfError": "A case cannot be linked to itself.",
+      "writeError": "The link could not be saved."
+    },
     "perm": {
       "add": "Group",
       "remove": "Remove permission"

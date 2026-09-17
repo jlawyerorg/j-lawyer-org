@@ -675,14 +675,25 @@ import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ObservedDocument;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.pojo.DataBucket;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.DataBucketLoaderRemote;
+import com.jdimension.jlawyer.services.FormsServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
@@ -723,6 +734,102 @@ public class CaseUtils {
             
         }
         return false;
+    }
+
+    /**
+     * Creates a new case from an existing one, copying what a duplicate is expected to carry
+     * over: the master data, the parties (without their reference), the tags, the allowed groups
+     * and - if requested - the case data (Falldaten/forms) with their values.
+     *
+     * Not copied: documents, deadlines and calendar entries, history, invoices, payments,
+     * timesheets, the claim number, the claim value, the external id and the archived flag. The
+     * file number is assigned by the server.
+     *
+     * Used by the "duplizieren" actions of the case search and by "neue verknüpfte Akte
+     * erstellen" in the case editor, so both stay in step.
+     *
+     * @param sourceId id of the case to copy
+     * @param newName short name (Kurzrubrum) of the new case
+     * @param includeForms whether the case data (Falldaten) are copied as well
+     * @return the created case
+     * @throws Exception on any error; nothing is cleaned up, so a partially created case may
+     * remain
+     */
+    public static ArchiveFileBean duplicateCase(String sourceId, String newName, boolean includeForms) throws Exception {
+        ClientSettings settings = ClientSettings.getInstance();
+        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+
+        ArchiveFileBean source = fileService.getArchiveFile(sourceId);
+        source.setArchiveFileDocumentsBeanList(null);
+        source.setArchiveFileReviewsBeanList(null);
+        source.setArchiveFileHistoryBeanList(null);
+        source.setArchiveFileAddressesBeanList(null);
+        source.setName(newName);
+        source.setArchived(false);
+        source.setClaimNumber("");
+        source.setClaimValue(0f);
+        // reset external IDs
+        source.setExternalId(null);
+
+        ArchiveFileBean target = fileService.createArchiveFile(source);
+
+        Collection<ArchiveFileAddressesBean> parties = fileService.getInvolvementDetailsForCase(sourceId);
+        for (ArchiveFileAddressesBean aab : parties) {
+            ArchiveFileAddressesBean newAab = new ArchiveFileAddressesBean();
+            newAab.setAddressKey(aab.getAddressKey());
+            newAab.setArchiveFileKey(target);
+            newAab.setContact(aab.getContact());
+            newAab.setCustom1(aab.getCustom1());
+            newAab.setCustom2(aab.getCustom2());
+            newAab.setCustom3(aab.getCustom3());
+            newAab.setReferenceType(aab.getReferenceType());
+            fileService.addAddressToCase(newAab);
+
+        }
+
+        fileService.updateArchiveFile(target);
+
+        Collection<ArchiveFileTagsBean> sourceTags = fileService.getTags(sourceId);
+        for (ArchiveFileTagsBean atb : sourceTags) {
+            fileService.setTag(target.getId(), atb, true);
+        }
+
+        List<ArchiveFileGroupsBean> allowedGroups = fileService.getAllowedGroups(sourceId);
+        ArrayList<Group> targetGroups = new ArrayList<>();
+        for (ArchiveFileGroupsBean afgb : allowedGroups) {
+            targetGroups.add(afgb.getAllowedGroup());
+        }
+        fileService.updateAllowedGroups(target.getId(), targetGroups);
+
+        if (includeForms) {
+            FormsServiceRemote formsSvc = locator.lookupFormsServiceRemote();
+            List<ArchiveFileFormsBean> forms = formsSvc.getFormsForCase(sourceId);
+            for (ArchiveFileFormsBean form : forms) {
+                ArchiveFileFormsBean newForm = new ArchiveFileFormsBean();
+                newForm.setArchiveFileFormEntriesBeanList(new ArrayList<>());
+                newForm.setArchiveFileKey(target);
+                newForm.setCreationDate(new Date());
+                newForm.setDescription(form.getDescription());
+                newForm.setFormType(form.getFormType());
+                newForm.setPlaceHolder(form.getPlaceHolder());
+                newForm = formsSvc.addForm(target.getId(), newForm);
+                List<ArchiveFileFormEntriesBean> formEntries = formsSvc.getFormEntries(form.getId());
+                List<ArchiveFileFormEntriesBean> newFormEntries = new ArrayList<>();
+                for (ArchiveFileFormEntriesBean formEntry : formEntries) {
+                    ArchiveFileFormEntriesBean newEntry = new ArchiveFileFormEntriesBean();
+                    newEntry.setArchiveFileKey(target);
+                    newEntry.setEntryKey(formEntry.getEntryKey());
+                    newEntry.setForm(newForm);
+                    newEntry.setPlaceHolder(formEntry.getPlaceHolder());
+                    newEntry.setStringValue(formEntry.getStringValue());
+                    newFormEntries.add(newEntry);
+                }
+                formsSvc.setFormEntries(newForm.getId(), newFormEntries);
+            }
+        }
+
+        return target;
     }
 
     public static void openDocument(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, Component parent, OpenDocumentAction action) throws Exception {

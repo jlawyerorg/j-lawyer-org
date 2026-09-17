@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
@@ -8,7 +9,7 @@ import { IconComponent } from '../shared/icon.component';
 import { DocumentPreviewComponent } from '../shared/document-preview.component';
 import { DocumentContentService } from '../shared/document-content.service';
 import { fileKind, kindGlyph, PreviewDoc, previewKindOf } from '../shared/document-preview.models';
-import { firstValueFrom, forkJoin, interval, map } from 'rxjs';
+import { debounceTime, distinctUntilChanged, firstValueFrom, forkJoin, interval, map, of, Subject, switchMap } from 'rxjs';
 import { CaseFilter, CasesService } from './cases.service';
 import { PinsService } from '../shell/pins.service';
 import { CaseEditorComponent } from './case-editor.component';
@@ -37,8 +38,8 @@ import { CalendarService } from '../calendar/calendar.service';
 import { CalendarEvent, CalendarEventType, CaseRef, EventDraft } from '../calendar/calendar.models';
 import { AuthService } from '../core/auth/auth.service';
 import {
-  AccountEntry, AccountEntryWrite, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseMessage, CasePayment,
-  CaseTag, CaseTimesheet, CaseWrite, DocFolder, DocSortKey, DueDate, InvoicePool, InvoiceType, InvoiceWrite,
+  AccountEntry, AccountEntryWrite, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseLink, CaseMessage,
+  CaseOverview, CasePayment, CaseTag, CaseTimesheet, CaseWrite, DocFolder, DocSortKey, DueDate, InvoicePool, InvoiceType, InvoiceWrite,
   MultiValueTagDef, Party, PartyUpdate, PaymentWrite, PositionWrite, TimesheetPosition, TimesheetWrite,
 } from './case.models';
 
@@ -261,6 +262,47 @@ interface TimesheetView extends CaseTimesheet {
                       </div>
                     } @empty {
                       <p class="muted">{{ 'akten.noParties' | transloco }}</p>
+                    }
+                  </div>
+                </div>
+
+                <!-- Verknüpfte Akten -->
+                <div class="card">
+                  <div class="card-h">
+                    <h3>{{ 'akten.links.title' | transloco }}</h3>
+                    @if (caseLinks()?.length) { <span class="card-count">{{ caseLinks()?.length }}</span> }
+                  </div>
+                  <div class="card-b">
+                    @if (caseLinks() === null) {
+                      <p class="muted">{{ 'akten.loading' | transloco }}</p>
+                    } @else {
+                      @for (l of caseLinks(); track l.id) {
+                        <div class="lnk">
+                          <button type="button" class="lnk-main" (click)="openLinkedCase(l)"
+                                  [title]="'akten.links.open' | transloco">
+                            <span class="lnk-az">{{ l.linkedCaseFileNumber }}</span>
+                            <span class="lnk-nm">
+                              {{ l.linkedCaseName || '—' }}
+                              @if (l.linkedCaseArchived) {
+                                <span class="lnk-arch">{{ 'akten.links.archived' | transloco }}</span>
+                              }
+                            </span>
+                            @if (l.description) { <span class="lnk-desc">{{ l.description }}</span> }
+                          </button>
+                          <span class="row-actions">
+                            <button type="button" class="row-edit" (click)="openEditLink(l)" [title]="'akten.links.edit' | transloco">
+                              <jl-icon name="edit" [size]="15" />
+                            </button>
+                            <button type="button" class="row-edit row-del" [disabled]="linkRemoving() === l.id"
+                                    (click)="confirmRemoveLink(l)" [title]="'akten.links.remove' | transloco">
+                              <jl-icon name="trash" [size]="15" />
+                            </button>
+                          </span>
+                        </div>
+                      } @empty {
+                        <p class="muted">{{ 'akten.links.none' | transloco }}</p>
+                      }
+                      <button type="button" class="add-select" (click)="openAddLink()">+ {{ 'akten.links.add' | transloco }}</button>
                     }
                   </div>
                 </div>
@@ -1099,6 +1141,54 @@ interface TimesheetView extends CaseTimesheet {
         </footer>
       </div>
     }
+    @if (linkDialog(); as ld) {
+      <div class="ov-backdrop" (click)="closeLinkDialog()"></div>
+      <div class="ov-dialog" role="dialog" aria-modal="true">
+        <header class="ov-dh">
+          <h2>{{ (ld.link ? 'akten.links.editTitle' : 'akten.links.addTitle') | transloco }}</h2>
+          <button type="button" class="ov-x" (click)="closeLinkDialog()" [attr.aria-label]="'akten.editor.cancel' | transloco">
+            <jl-icon name="close" [size]="18" />
+          </button>
+        </header>
+        <div class="ov-db">
+          @if (ld.link; as l) {
+            <p class="ov-hint"><b>{{ l.linkedCaseFileNumber }}</b> {{ l.linkedCaseName }}</p>
+          } @else {
+            <label class="ov-fld">
+              <span class="ov-lbl">{{ 'akten.links.case' | transloco }}</span>
+              <input type="search" [value]="linkTerm()" (input)="onLinkSearch($any($event.target).value)"
+                     [placeholder]="'akten.links.searchPlaceholder' | transloco" />
+            </label>
+            @if (linkResults().length) {
+              <div class="lnk-hits">
+                @for (c of linkResults(); track c.id) {
+                  <button type="button" class="lnk-hit" [class.on]="linkTarget()?.id === c.id" (click)="pickLinkTarget(c)">
+                    <b>{{ c.fileNumber }}</b> {{ c.name }}
+                  </button>
+                }
+              </div>
+            } @else if (linkTerm().trim().length >= 2) {
+              <p class="ov-hint">{{ 'akten.links.noResults' | transloco }}</p>
+            } @else {
+              <p class="ov-hint">{{ 'akten.links.typeToSearch' | transloco }}</p>
+            }
+          }
+          <label class="ov-fld">
+            <span class="ov-lbl">{{ 'akten.links.description' | transloco }}</span>
+            <input type="text" [ngModel]="linkDescription()" (ngModelChange)="linkDescription.set($event)"
+                   [placeholder]="'akten.links.descriptionHint' | transloco" (keydown.enter)="saveLink()" />
+          </label>
+          @if (linkError()) { <p class="ov-error">{{ linkError() }}</p> }
+        </div>
+        <footer class="ov-df">
+          <span class="ov-spacer"></span>
+          <button type="button" class="ov-btn" (click)="closeLinkDialog()">{{ 'akten.editor.cancel' | transloco }}</button>
+          <button type="button" class="ov-btn primary" [disabled]="linkSaving() || (!ld.link && !linkTarget())" (click)="saveLink()">
+            {{ (ld.link ? 'akten.links.saveBtn' : 'akten.links.addBtn') | transloco }}
+          </button>
+        </footer>
+      </div>
+    }
 
     @if (officeDoc(); as od) {
       <div class="office-ov-backdrop"></div>
@@ -1202,6 +1292,21 @@ export class AktenComponent {
   protected readonly caseTags = signal<CaseTag[] | null>(null);
   protected readonly caseGroups = signal<CaseGroup[] | null>(null);
   protected readonly caseMessages = signal<CaseMessage[] | null>(null);
+  protected readonly caseLinks = signal<CaseLink[] | null>(null);
+
+  // Verknüpfte Akten: the add/edit dialog (`link` = the link whose description is edited, null =
+  // add a new link; the whole signal is null when the dialog is closed) plus its picker state.
+  protected readonly linkDialog = signal<{ link: CaseLink | null } | null>(null);
+  protected readonly linkTerm = signal('');
+  protected readonly linkResults = signal<CaseOverview[]>([]);
+  protected readonly linkTarget = signal<CaseOverview | null>(null);
+  protected readonly linkDescription = signal('');
+  /** The server's message for a rejected link write (e.g. already linked), or null. */
+  protected readonly linkError = signal<string | null>(null);
+  protected readonly linkSaving = signal(false);
+  /** Id of the link currently being removed, or null. */
+  protected readonly linkRemoving = signal<string | null>(null);
+  private readonly linkSearch$ = new Subject<string>();
 
   // History tab state (lazy-loaded per case)
   protected readonly history = signal<CaseHistoryEntry[] | null>(null);
@@ -1349,6 +1454,12 @@ export class AktenComponent {
         this.router.navigate(['/cases', rows[0].id], { replaceUrl: true });
       }
     });
+    // Debounced case search for the "verknüpfte Akten" picker (the case itself is never offered).
+    this.linkSearch$.pipe(
+      debounceTime(250), distinctUntilChanged(),
+      switchMap((q) => q.trim().length < 2 ? of([] as CaseOverview[]) : this.cases.searchCases(q.trim(), 15)),
+      takeUntilDestroyed(),
+    ).subscribe((rows) => this.linkResults.set((rows ?? []).filter((c) => c.id !== this.selectedId())));
     // Drive the running-timer display: re-stamp "now" every second while a timer is live.
     interval(1000).pipe(takeUntilDestroyed()).subscribe(() => {
       if (this.activeTab() === 'zeiten' && this.hasRunningPosition()) {
@@ -1625,6 +1736,8 @@ export class AktenComponent {
     this.caseTags.set(null);
     this.caseGroups.set(null);
     this.caseMessages.set(null);
+    this.caseLinks.set(null);
+    this.closeLinkDialog();
     this.docFolderSel.set(new Set());
     this.docSel.set(new Set());
     this.docMobilePane.set('folders');
@@ -1639,10 +1752,11 @@ export class AktenComponent {
         this.tryOpenPendingDoc();
       }
     });
-    // Overview extras (labels, permissions, messages) load eagerly alongside the detail.
+    // Overview extras (labels, permissions, messages, linked cases) load eagerly alongside the detail.
     this.cases.tags(id).subscribe((t) => { if (this.selectedId() === id) { this.caseTags.set(t); } });
     this.cases.allowedGroups(id).subscribe((g) => { if (this.selectedId() === id) { this.caseGroups.set(g); } });
     this.cases.messages(id).subscribe((m) => { if (this.selectedId() === id) { this.caseMessages.set(m); } });
+    this.reloadLinks(id);
   }
 
   /**
@@ -2135,6 +2249,119 @@ export class AktenComponent {
 
   private reloadTags(id: string): void {
     this.cases.tags(id).subscribe((t) => { if (this.selectedId() === id) { this.caseTags.set(t); } });
+  }
+
+  // ----- Verknüpfte Akten (case links) -----
+
+  /**
+   * Opens a linked case via the /cases/:id deep link — the same navigation the list rows use, so
+   * the link can be followed in both directions (the other case shows the link back).
+   */
+  protected openLinkedCase(l: CaseLink): void {
+    this.open(l.linkedCaseId);
+  }
+
+  /** Opens the dialog for a new link (case picker + optional description). */
+  protected openAddLink(): void {
+    this.linkTerm.set('');
+    this.linkResults.set([]);
+    this.linkTarget.set(null);
+    this.linkDescription.set('');
+    this.linkError.set(null);
+    this.linkDialog.set({ link: null });
+  }
+
+  /** Opens the dialog to edit an existing link's description. */
+  protected openEditLink(l: CaseLink): void {
+    this.linkTerm.set('');
+    this.linkResults.set([]);
+    this.linkTarget.set(null);
+    this.linkDescription.set(l.description);
+    this.linkError.set(null);
+    this.linkDialog.set({ link: l });
+  }
+
+  protected closeLinkDialog(): void {
+    this.linkDialog.set(null);
+  }
+
+  protected onLinkSearch(term: string): void {
+    this.linkTerm.set(term);
+    this.linkSearch$.next(term);
+  }
+
+  protected pickLinkTarget(c: CaseOverview): void {
+    this.linkTarget.set(c);
+    this.linkError.set(null);
+  }
+
+  /**
+   * Creates the link (add mode) or writes the changed description (edit mode). A self-link is
+   * refused locally; every other rejection (e.g. an already linked pair) is shown with the
+   * server's own message.
+   */
+  protected saveLink(): void {
+    const id = this.selectedId();
+    const dlg = this.linkDialog();
+    if (!id || !dlg || this.linkSaving()) {
+      return;
+    }
+    const description = this.linkDescription().trim();
+    const done = () => { this.linkSaving.set(false); this.closeLinkDialog(); this.reloadLinks(id); };
+    const failed = (e: HttpErrorResponse) => { this.linkSaving.set(false); this.linkError.set(this.linkErrorMsg(e)); };
+    if (dlg.link) {
+      this.linkSaving.set(true);
+      this.cases.updateCaseLink(id, dlg.link.id, description).subscribe({ next: done, error: failed });
+      return;
+    }
+    const target = this.linkTarget();
+    if (!target) {
+      return;
+    }
+    if (target.id === id) {
+      this.linkError.set(this.transloco.translate('akten.links.selfError'));
+      return;
+    }
+    this.linkSaving.set(true);
+    this.cases.createCaseLink(id, target.id, description).subscribe({ next: done, error: failed });
+  }
+
+  /** Removes a link after a confirmation, then refreshes the card. */
+  protected confirmRemoveLink(l: CaseLink): void {
+    const id = this.selectedId();
+    if (!id || this.linkRemoving()) {
+      return;
+    }
+    const name = [l.linkedCaseFileNumber, l.linkedCaseName].filter(Boolean).join(' ');
+    if (!confirm(this.transloco.translate('akten.links.removeConfirm', { name }))) {
+      return;
+    }
+    this.linkRemoving.set(l.id);
+    this.cases.deleteCaseLink(id, l.id).subscribe({
+      next: () => { this.linkRemoving.set(null); this.reloadLinks(id); },
+      error: () => this.linkRemoving.set(null),
+    });
+  }
+
+  private reloadLinks(id: string): void {
+    this.cases.caseLinks(id).subscribe((l) => { if (this.selectedId() === id) { this.caseLinks.set(l); } });
+  }
+
+  /**
+   * The server's message for a rejected link write, shown to the user instead of being swallowed.
+   * The v8 error envelope is {status, error, message} with the message prefixed by the exception
+   * type, which is dropped for display; falls back to a generic text.
+   */
+  private linkErrorMsg(e: HttpErrorResponse): string {
+    const body = e?.error;
+    let raw = '';
+    if (body && typeof body === 'object' && typeof body.message === 'string') {
+      raw = body.message;
+    } else if (typeof body === 'string') {
+      raw = body;
+    }
+    const msg = raw.replace(/^\w*(?:Exception|Error):\s*/, '').trim();
+    return msg || this.transloco.translate('akten.links.writeError');
   }
 
   // ----- Instant-Nachrichten (compose) -----

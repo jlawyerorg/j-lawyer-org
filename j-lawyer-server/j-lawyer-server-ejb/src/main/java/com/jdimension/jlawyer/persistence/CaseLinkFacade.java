@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,260 +660,75 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.server.utils;
+package com.jdimension.jlawyer.persistence;
 
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
-import com.jdimension.jlawyer.persistence.Group;
-import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
-import com.jdimension.jlawyer.services.SecurityServiceLocal;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import com.jdimension.jlawyer.services.CaseLinkDTO;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
-import org.apache.log4j.Logger;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
 /**
- *
  * @author jens
  */
-public class SecurityUtils {
-
-    private static Logger log = Logger.getLogger(SecurityUtils.class.getName());
-
-    public static void checkGroupsForCase(String principalId, ArchiveFileBean aFile, SecurityServiceLocal securityFacade, List<ArchiveFileGroupsBean> caseGroups) throws Exception {
-        if (aFile == null) {
-            return;
-        }
-        
-        if(caseGroups==null || caseGroups.isEmpty())
-            return;
-
-        Group owner = aFile.getGroup();
-        if (owner == null) {
-            return;
-        }
-
-        if (principalId == null) {
-            return;
-        }
-
-        List<Group> userGroups = new ArrayList<>();
-        try {
-            userGroups = securityFacade.getGroupsForUser(principalId);
-        } catch (Throwable t) {
-            log.error("Unable to determine groups for user " + principalId, t);
-        }
-
-        for (Group g : userGroups) {
-            if (g.equals(owner)) {
-                return;
-            }
-        }
-
-        for (Group g : userGroups) {
-            for (ArchiveFileGroupsBean cg : caseGroups) {
-                if (g.equals(cg.getAllowedGroup())) {
-                    return;
-                }
-            }
-        }
-
-        throw new Exception("Nutzer " + principalId + " ist für die Akte " + aFile.getFileNumber() + " nicht zugriffsberechtigt!");
-
-    }
-
-    public static boolean checkGroupsForCase(List<Group> userGroups, ArchiveFileBean aFile, ArchiveFileGroupsBeanFacadeLocal caseGroupsFacade) {
-        if(aFile==null)
-            return true;
-        Group owner = aFile.getGroup();
-        if (owner == null) {
-            return true;
-        }
-
-        for (Group g : userGroups) {
-            if (g.equals(owner)) {
-                return true;
-            }
-        }
-
-        List<ArchiveFileGroupsBean> caseGroups=caseGroupsFacade.findByCase(aFile);
-        
-        for (Group g : userGroups) {
-            for (ArchiveFileGroupsBean cg : caseGroups) {
-                if (g.equals(cg.getAllowedGroup())) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-
-    }
-    
-    public static ArrayList<String> getAllowedCasesForUser(String principalId, SecurityServiceLocal securityFacade) throws Exception {
-        JDBCUtils utils = new JDBCUtils();
-        ArrayList<String> list = new ArrayList<>();
-
-        List<Group> userGroups = new ArrayList<>();
-        try {
-            userGroups = securityFacade.getGroupsForUser(principalId);
-        } catch (Throwable t) {
-            log.error("Unable to determine groups for user " + principalId, t);
-        }
-        StringBuilder sb=new StringBuilder();
-        sb.append("'dummy'");
-        for(Group g: userGroups) {
-            sb.append(", '").append(g.getId()).append("'");
-        }
-        String inClause=sb.toString();
-        
-        //select distinct (t1.id) from (
-        // -- cases where the user is owner
-        //select id from cases where owner_group in ('6a7776fc7f00010136d79a4449cbc199','6a778e437f000101216f38d814330959', '9d3ac0e07f00010160456b7ffc12fbf8', '9d3aa8a17f00010129a7683d54ee39de', 'b869f3e87f00010110962348ac1e4cb9', 'b86a19417f00010125870b81e0fdf216')
-        //union 
-        // -- cases that are unprotected
-        //select id from cases where owner_group is null 
-        //union 
-        // -- cases where the user is in an allowed group
-        //select distinct case_id id from case_groups where group_id in ('6a7776fc7f00010136d79a4449cbc199','6a778e437f000101216f38d814330959', '9d3ac0e07f00010160456b7ffc12fbf8', '9d3aa8a17f00010129a7683d54ee39de', 'b869f3e87f00010110962348ac1e4cb9', 'b86a19417f00010125870b81e0fdf216')
-        //union 
-        // -- cases where there is restriction (althoug there is an owner)
-        //select id from cases where id not in (select case_id from case_groups)
-        //) t1
-        
-        
-        String sql = "select distinct (t1.id) from (\n"
-                + "select id from cases where owner_group in (" + inClause +")\n"
-                + "union \n"
-                + "select id from cases where owner_group is null \n"
-                + "union \n"
-                + "select distinct case_id id from case_groups where group_id in (" + inClause +")\n"
-                + "union \n"
-                + "select id from cases where id not in (select case_id from case_groups)\n"
-                + ") t1";
-
-        try (Connection con = utils.getConnection();
-                PreparedStatement st = con.prepareStatement(sql);
-                ResultSet rs = st.executeQuery()) {
-            
-            while (rs.next()) {
-                String id = rs.getString(1);
-                list.add(id);
-
-            }
-        } catch (SQLException sqle) {
-            log.error("Error finding cases accessible by the user", sqle);
-            throw new Exception("Could not determine cases accessible to the user", sqle);
-        }
-
-        return list;
-    }
+@Stateless
+public class CaseLinkFacade extends AbstractFacade<CaseLink> implements CaseLinkFacadeLocal {
 
     /**
-     * Returns those of the given cases the user is allowed to see.
-     *
-     * Same visibility rule as {@link #getAllowedCasesForUser(java.lang.String, com.jdimension.jlawyer.services.SecurityServiceLocal)},
-     * but restricted to the given ids instead of enumerating every case of the installation - for
-     * filtering a handful of candidates, e.g. the cases a case is linked to.
-     *
-     * Note that this rule is slightly wider than
-     * {@link #checkGroupsForCase(java.util.List, com.jdimension.jlawyer.persistence.ArchiveFileBean, com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal)}:
-     * a case that has an owner group but no allowed groups at all counts as visible here, because
-     * that is what decides which cases show up in the user's search results. A link must not show
-     * a case the search hides, nor hide one the search shows.
-     *
-     * @param principalId the user
-     * @param caseIds the cases to check
-     * @param securityFacade used to determine the user's groups
-     * @return the subset of caseIds the user may see, empty if caseIds is empty
-     * @throws Exception on database errors
+     * Projects a link and the identifying columns of the case at its other end. Only scalars are
+     * selected, so no ArchiveFileBean - and therefore no owner group and no folder tree - is
+     * instantiated. One variant per side of the symmetric link.
      */
-    public static List<String> filterAllowedCases(String principalId, Collection<String> caseIds, SecurityServiceLocal securityFacade) throws Exception {
-        List<String> list = new ArrayList<>();
-        if (caseIds == null || caseIds.isEmpty()) {
-            return list;
-        }
+    private static final String DTO_QUERY_FROM_A = "SELECT NEW com.jdimension.jlawyer.services.CaseLinkDTO("
+            + "l.id, l.description, l.dateCreated, l.createdBy, "
+            + "other.id, other.fileNumberMain, other.fileNumberExtension, other.name, other.reason, other.archived) "
+            + "FROM CaseLink l JOIN l.caseB other WHERE l.caseA.id = :caseKey";
 
-        List<Group> userGroups = new ArrayList<>();
-        try {
-            userGroups = securityFacade.getGroupsForUser(principalId);
-        } catch (Throwable t) {
-            log.error("Unable to determine groups for user " + principalId, t);
-        }
+    private static final String DTO_QUERY_FROM_B = "SELECT NEW com.jdimension.jlawyer.services.CaseLinkDTO("
+            + "l.id, l.description, l.dateCreated, l.createdBy, "
+            + "other.id, other.fileNumberMain, other.fileNumberExtension, other.name, other.reason, other.archived) "
+            + "FROM CaseLink l JOIN l.caseA other WHERE l.caseB.id = :caseKey";
 
-        StringBuilder groupPlaceholders = new StringBuilder();
-        groupPlaceholders.append("'dummy'");
-        for (int i = 0; i < userGroups.size(); i++) {
-            groupPlaceholders.append(", ?");
-        }
+    @PersistenceContext(unitName = "j-lawyer-server-ejbPU")
+    private EntityManager em;
 
-        StringBuilder casePlaceholders = new StringBuilder();
-        for (int i = 0; i < caseIds.size(); i++) {
-            if (i > 0) {
-                casePlaceholders.append(", ");
-            }
-            casePlaceholders.append("?");
-        }
-
-        String groupIn = groupPlaceholders.toString();
-        String caseIn = casePlaceholders.toString();
-
-        String sql = "select distinct (t1.id) from (\n"
-                + "select id from cases where id in (" + caseIn + ") and owner_group in (" + groupIn + ")\n"
-                + "union \n"
-                + "select id from cases where id in (" + caseIn + ") and owner_group is null \n"
-                + "union \n"
-                + "select distinct case_id id from case_groups where case_id in (" + caseIn + ") and group_id in (" + groupIn + ")\n"
-                + "union \n"
-                + "select id from cases where id in (" + caseIn + ") and id not in (select case_id from case_groups)\n"
-                + ") t1";
-
-        JDBCUtils utils = new JDBCUtils();
-        try (Connection con = utils.getConnection();
-                PreparedStatement st = con.prepareStatement(sql)) {
-
-            int index = 1;
-            index = setStringParameters(st, index, caseIds);
-            index = setGroupParameters(st, index, userGroups);
-            index = setStringParameters(st, index, caseIds);
-            index = setStringParameters(st, index, caseIds);
-            index = setGroupParameters(st, index, userGroups);
-            setStringParameters(st, index, caseIds);
-
-            try (ResultSet rs = st.executeQuery()) {
-                while (rs.next()) {
-                    list.add(rs.getString(1));
-                }
-            }
-        } catch (SQLException sqle) {
-            log.error("Error filtering cases accessible by the user", sqle);
-            throw new Exception("Could not determine cases accessible to the user", sqle);
-        }
-
-        return list;
+    @Override
+    protected EntityManager getEntityManager() {
+        return em;
     }
 
-    private static int setStringParameters(PreparedStatement st, int index, Collection<String> values) throws SQLException {
-        int i = index;
-        for (String value : values) {
-            st.setString(i, value);
-            i = i + 1;
-        }
-        return i;
+    public CaseLinkFacade() {
+        super(CaseLink.class);
     }
 
-    private static int setGroupParameters(PreparedStatement st, int index, List<Group> groups) throws SQLException {
-        int i = index;
-        for (Group g : groups) {
-            st.setString(i, g.getId());
-            i = i + 1;
-        }
-        return i;
+    @Override
+    public List<CaseLink> findByCase(String caseId) {
+        return (List<CaseLink>) em.createNamedQuery("CaseLink.findByCase")
+                .setParameter("caseKey", caseId).getResultList();
     }
 
+    @Override
+    public CaseLink findByPair(String caseIdA, String caseIdB) {
+        List<CaseLink> links = (List<CaseLink>) em.createNamedQuery("CaseLink.findByPair")
+                .setParameter("caseKeyA", caseIdA)
+                .setParameter("caseKeyB", caseIdB).getResultList();
+        if (links.isEmpty()) {
+            return null;
+        }
+        return links.get(0);
+    }
+
+    @Override
+    public List<CaseLinkDTO> findDTOsByCase(String caseId) {
+        List<CaseLinkDTO> result = new ArrayList<>();
+        result.addAll(em.createQuery(DTO_QUERY_FROM_A, CaseLinkDTO.class)
+                .setParameter("caseKey", caseId).getResultList());
+        result.addAll(em.createQuery(DTO_QUERY_FROM_B, CaseLinkDTO.class)
+                .setParameter("caseKey", caseId).getResultList());
+        result.sort(Comparator.comparing(CaseLinkDTO::getOtherCaseFileNumber,
+                Comparator.nullsLast(Comparator.naturalOrder())));
+        return result;
+    }
 }

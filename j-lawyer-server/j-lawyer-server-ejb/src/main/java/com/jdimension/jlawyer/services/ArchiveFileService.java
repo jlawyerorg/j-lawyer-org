@@ -771,6 +771,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @EJB
     private ArchiveFileTagsBeanFacadeLocal archiveFileTagsFacade;
     @EJB
+    private CaseLinkFacadeLocal caseLinkFacade;
+    @EJB
     private AppUserBeanFacadeLocal userFacade;
     @EJB
     private DocumentTagsBeanFacadeLocal documentTagsFacade;
@@ -2788,6 +2790,143 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public Collection<ArchiveFileTagsBean> getTagsUnrestricted(String archiveFileId) throws Exception {
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         return this.archiveFileTagsFacade.findByArchiveFileKey(aFile);
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<CaseLinkDTO> getCaseLinks(String archiveFileId) throws Exception {
+        ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
+        if (aFile == null) {
+            throw new Exception("Akte mit ID " + archiveFileId + " existiert nicht!");
+        }
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
+
+        List<CaseLinkDTO> links = this.caseLinkFacade.findDTOsByCase(archiveFileId);
+        if (links.isEmpty()) {
+            return links;
+        }
+
+        // a link must not widen access: cases the user may not see are dropped silently, so
+        // neither their existence nor their file number is disclosed
+        List<String> candidateIds = new ArrayList<>();
+        for (CaseLinkDTO link : links) {
+            candidateIds.add(link.getOtherCaseId());
+        }
+        List<String> allowedIds = SecurityUtils.filterAllowedCases(context.getCallerPrincipal().getName(), candidateIds, this.securityFacade);
+
+        List<CaseLinkDTO> allowedLinks = new ArrayList<>();
+        for (CaseLinkDTO link : links) {
+            if (allowedIds.contains(link.getOtherCaseId())) {
+                allowedLinks.add(link);
+            }
+        }
+        return allowedLinks;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public CaseLinkDTO linkCases(String archiveFileId, String otherArchiveFileId, String description) throws Exception {
+        if (archiveFileId == null || otherArchiveFileId == null) {
+            throw new Exception("Es wurden nicht zwei Akten angegeben!");
+        }
+        if (archiveFileId.equals(otherArchiveFileId)) {
+            throw new Exception("Eine Akte kann nicht mit sich selbst verknüpft werden!");
+        }
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
+        if (aFile == null) {
+            throw new Exception("Akte mit ID " + archiveFileId + " existiert nicht!");
+        }
+        ArchiveFileBean otherFile = this.archiveFileFacade.find(otherArchiveFileId);
+        if (otherFile == null) {
+            throw new Exception("Akte mit ID " + otherArchiveFileId + " existiert nicht!");
+        }
+
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
+        List<String> allowedIds = SecurityUtils.filterAllowedCases(context.getCallerPrincipal().getName(),
+                Collections.singletonList(otherArchiveFileId), this.securityFacade);
+        if (!allowedIds.contains(otherArchiveFileId)) {
+            throw new Exception("Nutzer " + context.getCallerPrincipal().getName() + " ist für die zu verknüpfende Akte nicht zugriffsberechtigt!");
+        }
+
+        // the link is symmetric and stored once - normalising the order lets the unique index
+        // reject a duplicate no matter which side the user linked from
+        String[] pair = CaseLink.normalisePair(archiveFileId, otherArchiveFileId);
+        ArchiveFileBean caseA = pair[0].equals(archiveFileId) ? aFile : otherFile;
+        ArchiveFileBean caseB = pair[0].equals(archiveFileId) ? otherFile : aFile;
+
+        if (this.caseLinkFacade.findByPair(caseA.getId(), caseB.getId()) != null) {
+            throw new CaseLinkExistsException("Die Akten " + aFile.getFileNumber() + " und " + otherFile.getFileNumber() + " sind bereits verknüpft!");
+        }
+
+        StringGenerator idGen = new StringGenerator();
+        CaseLink link = new CaseLink();
+        link.setId(idGen.getID().toString());
+        link.setCaseA(caseA);
+        link.setCaseB(caseB);
+        link.setDescription(description);
+        link.setDateCreated(new Date());
+        link.setCreatedBy(context.getCallerPrincipal().getName());
+        this.caseLinkFacade.create(link);
+
+        this.addCaseHistory(idGen.getID().toString(), aFile, "Akte verknüpft mit " + caseDescription(otherFile));
+        this.addCaseHistory(idGen.getID().toString(), otherFile, "Akte verknüpft mit " + caseDescription(aFile));
+
+        return new CaseLinkDTO(link.getId(), link.getDescription(), link.getDateCreated(), link.getCreatedBy(),
+                otherFile.getId(), otherFile.getFileNumberMain(), otherFile.getFileNumberExtension(),
+                otherFile.getName(), otherFile.getReason(), otherFile.isArchived());
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void updateCaseLinkDescription(String linkId, String description) throws Exception {
+        CaseLink link = this.caseLinkFacade.find(linkId);
+        if (link == null) {
+            throw new Exception("Verknüpfung mit ID " + linkId + " existiert nicht!");
+        }
+        this.checkLinkAccess(link);
+
+        link.setDescription(description);
+        this.caseLinkFacade.edit(link);
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void unlinkCases(String linkId) throws Exception {
+        CaseLink link = this.caseLinkFacade.find(linkId);
+        if (link == null) {
+            throw new Exception("Verknüpfung mit ID " + linkId + " existiert nicht!");
+        }
+        this.checkLinkAccess(link);
+
+        ArchiveFileBean caseA = link.getCaseA();
+        ArchiveFileBean caseB = link.getCaseB();
+        this.caseLinkFacade.remove(link);
+
+        StringGenerator idGen = new StringGenerator();
+        this.addCaseHistory(idGen.getID().toString(), caseA, "Verknüpfung mit " + caseDescription(caseB) + " entfernt");
+        this.addCaseHistory(idGen.getID().toString(), caseB, "Verknüpfung mit " + caseDescription(caseA) + " entfernt");
+    }
+
+    /**
+     * Requires the caller to be allowed on at least one of the two linked cases - either side of a
+     * symmetric link may maintain it.
+     */
+    private void checkLinkAccess(CaseLink link) throws Exception {
+        List<String> caseIds = new ArrayList<>();
+        caseIds.add(link.getCaseA().getId());
+        caseIds.add(link.getCaseB().getId());
+        List<String> allowedIds = SecurityUtils.filterAllowedCases(context.getCallerPrincipal().getName(), caseIds, this.securityFacade);
+        if (allowedIds.isEmpty()) {
+            throw new Exception("Nutzer " + context.getCallerPrincipal().getName() + " ist für die verknüpften Akten nicht zugriffsberechtigt!");
+        }
+    }
+
+    private String caseDescription(ArchiveFileBean aFile) {
+        if (aFile.getName() == null || "".equals(aFile.getName().trim())) {
+            return aFile.getFileNumber();
+        }
+        return aFile.getFileNumber() + " (" + aFile.getName() + ")";
     }
 
     @Override

@@ -752,6 +752,14 @@ public interface ArchiveFileServiceLocal {
     public Collection<ArchiveFileTagsBean> getTagsUnrestricted(String archiveFileId) throws Exception;
     HashMap<String, ArrayList<ArchiveFileTagsBean>> getTags(List<String> archiveFileId) throws Exception;
 
+    List<CaseLinkDTO> getCaseLinks(String archiveFileId) throws Exception;
+
+    CaseLinkDTO linkCases(String archiveFileId, String otherArchiveFileId, String description) throws Exception;
+
+    void updateCaseLinkDescription(String linkId, String description) throws Exception;
+
+    void unlinkCases(String linkId) throws Exception;
+
     Collection getDocumentsUnrestricted(String archiveFileKey);
 
     byte[] getDocumentContentUnrestricted(String id) throws Exception;
