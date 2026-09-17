@@ -232,9 +232,9 @@
 
 - [x] 11.1 Server unit test for `ContactRelation.normalisePair` and the display-name helper
       (`*Test.java` in the ejb module's `src/test/java`)
-- [ ] 11.2 Verify with SQL logging that reading a contact's relationships is a constant
+- [x] 11.2 Verify with SQL logging that reading a contact's relationships is a constant
       number of queries and loads no `contacts` or `contact_relation_types` entities
-- [ ] 11.3 Verify with SQL logging that opening a contact and opening a case with ten parties
+- [x] 11.3 Verify with SQL logging that opening a contact and opening a case with ten parties
       read **no** relationships at all, and that the party submenu reads them only when it is
       opened
 - [ ] 11.4 Manual REST check against Docker (admin:a): catalogue, read/create/update/delete,
@@ -254,8 +254,21 @@
 
 ## Notes
 
-Implemented; not built and not committed (the project builds manually). Open items are the ones
-that need a build and a running server: 11.2 - 11.8.
+Implemented and deployed to the local WildFly for testing; not committed (the project builds
+manually).
+
+11.2 and 11.3 were measured on 2026-09-17 with `org.hibernate.SQL` at DEBUG in WildFly
+(logger added and removed again at runtime, nothing persisted to standalone.xml):
+- opening a contact and opening a case with several parties produced 934 selects and **zero**
+  statements touching `contact_relations` - relationships really are not loaded with either.
+- opening the "Beziehungen" tab produced **exactly two** selects, one per direction
+  (`label_from` / `label_to`), each with `inner join contact_relation_types` and
+  `inner join contacts`, and zero follow-up selects on types or contacts. The count stayed at two
+  for a contact with many relationships, so the projection holds and there is no N+1.
+
+The remaining manual checks (11.4 REST, 11.5 desktop, 11.6 graph, 11.7 web) are tracked as a test
+checklist on GitHub issue #120:
+https://github.com/jlawyerorg/j-lawyer-org/issues/120#issuecomment-5721091109
 
 Deviations and additions made while implementing:
 - `ContactRelationExistsException` (new, `j-lawyer-server-api`) so "already recorded" is
