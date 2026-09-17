@@ -667,14 +667,10 @@ import java.io.File;
 import java.io.IOException;
 import java.text.BreakIterator;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.de.GermanAnalyzer;
@@ -684,14 +680,10 @@ import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.*;
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SearcherManager;
-import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.search.uhighlight.DefaultPassageFormatter;
 import org.apache.lucene.search.uhighlight.LengthGoalBreakIterator;
 import org.apache.lucene.search.uhighlight.UnifiedHighlighter;
@@ -705,12 +697,12 @@ import org.apache.lucene.store.FSDirectory;
 public class SearchAPI {
 
     private static final String FIELD_ID = "id";
-    private static final String FIELD_FILENAME = "dateiname";
-    private static final String FIELD_TEXT = "text";
+    static final String FIELD_FILENAME = "dateiname";
+    static final String FIELD_TEXT = "text";
     private static final String FIELD_ARCHIVEFILEID = "archivefileid";
-    private static final String FIELD_ARCHIVEFILENAME = "akte";
-    private static final String FIELD_ARCHIVEFILENUMBER = "az";
-    private static final String FIELD_DEFAULT = FIELD_TEXT;
+    static final String FIELD_ARCHIVEFILENAME = "akte";
+    static final String FIELD_ARCHIVEFILENUMBER = "az";
+    static final String FIELD_DEFAULT = FIELD_TEXT;
 
     // Field type for the stored, tokenized document content. Postings carry offsets so the
     // UnifiedHighlighter can highlight directly from them — no separate term-vector field
@@ -727,21 +719,9 @@ public class SearchAPI {
     // Non-analyzed, lowercased keyword companions of the stored metadata fields, used for
     // exact / wildcard fielded search (e.g. "dateiname:test.pdf"). The plain fields above
     // stay stored (original case) for display; these keyword fields are indexed only.
-    private static final String FIELD_FILENAME_KEYWORD = "dateiname-kw";
-    private static final String FIELD_ARCHIVEFILENAME_KEYWORD = "akte-kw";
-    private static final String FIELD_ARCHIVEFILENUMBER_KEYWORD = "az-kw";
-
-    // Maps a user-facing field name in a "field:value" query to its keyword search field.
-    private static final Map<String, String> FIELD_SEARCH_MAP = new HashMap<>();
-
-    static {
-        FIELD_SEARCH_MAP.put(FIELD_FILENAME, FIELD_FILENAME_KEYWORD);
-        FIELD_SEARCH_MAP.put(FIELD_ARCHIVEFILENAME, FIELD_ARCHIVEFILENAME_KEYWORD);
-        FIELD_SEARCH_MAP.put(FIELD_ARCHIVEFILENUMBER, FIELD_ARCHIVEFILENUMBER_KEYWORD);
-    }
-
-    // Matches a leading "field:value" prefix; DOTALL so multi-word/odd values are captured.
-    private static final Pattern FIELD_QUERY_PATTERN = Pattern.compile("^([A-Za-z]+)\\s*:\\s*(.+)$", Pattern.DOTALL);
+    static final String FIELD_FILENAME_KEYWORD = "dateiname-kw";
+    static final String FIELD_ARCHIVEFILENAME_KEYWORD = "akte-kw";
+    static final String FIELD_ARCHIVEFILENUMBER_KEYWORD = "az-kw";
 
     private static final Logger log = Logger.getLogger(SearchAPI.class.getName());
     private static final int SEARCHER_REFRESH_INTERVAL_SECONDS = 10;
@@ -935,9 +915,9 @@ public class SearchAPI {
         doc.add(new Field(SearchAPI.FIELD_ARCHIVEFILENUMBER, archiveFileNumber, TextField.TYPE_STORED));
 
         // Non-analyzed, lowercased keyword companions for exact / wildcard fielded search.
-        doc.add(new StringField(SearchAPI.FIELD_FILENAME_KEYWORD, toKeyword(fileName), Field.Store.NO));
-        doc.add(new StringField(SearchAPI.FIELD_ARCHIVEFILENAME_KEYWORD, toKeyword(archiveFileName), Field.Store.NO));
-        doc.add(new StringField(SearchAPI.FIELD_ARCHIVEFILENUMBER_KEYWORD, toKeyword(archiveFileNumber), Field.Store.NO));
+        doc.add(new StringField(SearchAPI.FIELD_FILENAME_KEYWORD, SearchQueryBuilder.toKeyword(fileName), Field.Store.NO));
+        doc.add(new StringField(SearchAPI.FIELD_ARCHIVEFILENAME_KEYWORD, SearchQueryBuilder.toKeyword(archiveFileName), Field.Store.NO));
+        doc.add(new StringField(SearchAPI.FIELD_ARCHIVEFILENUMBER_KEYWORD, SearchQueryBuilder.toKeyword(archiveFileNumber), Field.Store.NO));
 
         doc.add(new Field(SearchAPI.FIELD_TEXT, text, TEXT_FIELD_TYPE));
 
@@ -992,9 +972,9 @@ public class SearchAPI {
         doc.add(new Field(SearchAPI.FIELD_ARCHIVEFILENUMBER, archiveFileNumber, TextField.TYPE_STORED));
 
         // Non-analyzed, lowercased keyword companions for exact / wildcard fielded search.
-        doc.add(new StringField(SearchAPI.FIELD_FILENAME_KEYWORD, toKeyword(fileName), Field.Store.NO));
-        doc.add(new StringField(SearchAPI.FIELD_ARCHIVEFILENAME_KEYWORD, toKeyword(archiveFileName), Field.Store.NO));
-        doc.add(new StringField(SearchAPI.FIELD_ARCHIVEFILENUMBER_KEYWORD, toKeyword(archiveFileNumber), Field.Store.NO));
+        doc.add(new StringField(SearchAPI.FIELD_FILENAME_KEYWORD, SearchQueryBuilder.toKeyword(fileName), Field.Store.NO));
+        doc.add(new StringField(SearchAPI.FIELD_ARCHIVEFILENAME_KEYWORD, SearchQueryBuilder.toKeyword(archiveFileName), Field.Store.NO));
+        doc.add(new StringField(SearchAPI.FIELD_ARCHIVEFILENUMBER_KEYWORD, SearchQueryBuilder.toKeyword(archiveFileNumber), Field.Store.NO));
 
         doc.add(new Field(SearchAPI.FIELD_TEXT, text, TEXT_FIELD_TYPE));
 
@@ -1087,62 +1067,6 @@ public class SearchAPI {
 
     }
 
-    /**
-     * Normalizes a metadata value for the non-analyzed keyword fields: never null and
-     * lowercased, so fielded search (e.g. {@code dateiname:test.pdf}) is case-insensitive.
-     */
-    private static String toKeyword(String value) {
-        return (value == null) ? "" : value.toLowerCase();
-    }
-
-    /**
-     * Builds the Lucene query for a user-entered search string.
-     * <p>
-     * If the string starts with a recognised {@code field:value} prefix
-     * ({@code dateiname}, {@code akte}, {@code az}, or {@code text}), a fielded query is
-     * built: the metadata fields map to their non-analyzed keyword companions and match
-     * exactly (or by wildcard when the value contains {@code *}/{@code ?}); {@code text}
-     * is treated as analyzed full-text. Any other input (including an unknown field name)
-     * is treated as literal full-text against the default text field, with all special
-     * characters escaped — preserving the previous robust behavior.
-     *
-     * @param queryString the raw user query
-     * @return the parsed Lucene {@link Query}
-     * @throws ParseException if the default full-text branch fails to parse
-     */
-    private Query buildQuery(String queryString) throws ParseException {
-        String trimmed = (queryString == null) ? "" : queryString.trim();
-        Matcher m = FIELD_QUERY_PATTERN.matcher(trimmed);
-        if (m.matches()) {
-            String fieldName = m.group(1).toLowerCase();
-            String value = m.group(2).trim();
-            if (!value.isEmpty()) {
-                String keywordField = FIELD_SEARCH_MAP.get(fieldName);
-                if (keywordField != null) {
-                    String v = value.toLowerCase();
-                    if (v.indexOf('*') >= 0 || v.indexOf('?') >= 0) {
-                        return new WildcardQuery(new Term(keywordField, v));
-                    }
-                    return new TermQuery(new Term(keywordField, v));
-                }
-                if (FIELD_TEXT.equals(fieldName)) {
-                    return parseDefaultTextQuery(value);
-                }
-            }
-        }
-        return parseDefaultTextQuery(trimmed);
-    }
-
-    /**
-     * Parses literal text against the default text field, escaping all query-syntax
-     * special characters so arbitrary user input cannot trigger a parse error.
-     */
-    private Query parseDefaultTextQuery(String text) throws ParseException {
-        QueryParser parser = new QueryParser(SearchAPI.FIELD_DEFAULT, this.analyzer);
-        parser.setAllowLeadingWildcard(true);
-        return parser.parse(QueryParser.escape(text));
-    }
-
     public ArrayList<SearchHit> search(String queryString, int maxDocs) throws SearchException {
         ensureInitialized();
 
@@ -1154,9 +1078,10 @@ public class SearchAPI {
             searcher = this.searcherManager.acquire();
 
             // Build the query: a recognised "field:value" prefix (dateiname/akte/az/text)
-            // is turned into an exact/wildcard fielded query; anything else is treated as
-            // literal full-text against the default text field (special characters escaped).
-            Query query = buildQuery(queryString);
+            // is turned into a fielded query; anything else is treated as literal full-text
+            // against the default text field (special characters escaped).
+            SearchQueryBuilder.Parsed parsed = SearchQueryBuilder.build(queryString, this.analyzer);
+            Query query = parsed.getQuery();
             TopDocs hits = searcher.search(query, maxDocs);
 
             // Highlight the document content via the UnifiedHighlighter, which works from
@@ -1186,6 +1111,9 @@ public class SearchAPI {
 
                 SearchHit sh = new SearchHit();
                 sh.setScore(hits.scoreDocs[i].score);
+                // A metadata field match is constant-scoring: every hit scores 1.0, so the
+                // score must not be presented as a relevance ranking.
+                sh.setRelevanceRanked(!parsed.isMetadataMatch());
                 sh.setArchiveFileId(doc.get(FIELD_ARCHIVEFILEID));
                 sh.setArchiveFileName(doc.get(FIELD_ARCHIVEFILENAME));
                 sh.setArchiveFileNumber(doc.get(FIELD_ARCHIVEFILENUMBER));

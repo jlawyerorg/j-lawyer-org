@@ -661,223 +661,170 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.editors.search;
+package org.jlawyer.search;
 
-import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.editors.ThemeableEditor;
-import com.jdimension.jlawyer.client.editors.documents.CachingDocumentLoader;
-import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
-import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
-import com.jdimension.jlawyer.client.editors.files.ViewArchiveFileDetailsPanel;
-import com.jdimension.jlawyer.client.launcher.Launcher;
-import com.jdimension.jlawyer.client.launcher.LauncherFactory;
-import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.client.utils.FileUtils;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Image;
-import java.text.DecimalFormat;
-import javax.swing.JOptionPane;
-import org.apache.log4j.Logger;
-import org.jlawyer.search.SearchHit;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.WildcardQuery;
 
 /**
+ * Translates a user-entered search string into a Lucene {@link Query}.
+ * <p>
+ * Two kinds of query are produced:
+ * <ul>
+ * <li><b>Metadata field search</b> when the string starts with a recognised
+ * {@code field:value} prefix ({@code dateiname}, {@code akte}, {@code az}). The value is
+ * matched against the non-analyzed, lowercased keyword companion of the field, so the
+ * match is case-insensitive and covers the whole field value.</li>
+ * <li><b>Full-text search</b> for {@code text:value} and for everything else, analyzed
+ * against the document content.</li>
+ * </ul>
+ * Value syntax of a metadata field search:
+ * <table>
+ * <caption>metadata value syntax</caption>
+ * <tr><td>{@code dateiname:Quittung}</td><td>substring match ({@code *quittung*})</td></tr>
+ * <tr><td>{@code dateiname:"Quittung"}</td><td>quoted: exact match of the whole file name</td></tr>
+ * <tr><td>{@code dateiname:*2026-08*}</td><td>explicit wildcards are used as typed</td></tr>
+ * <tr><td>{@code dateiname:"*2026-08*"}</td><td>quotes are stripped, wildcards still apply</td></tr>
+ * </table>
+ * This class is stateless and side-effect free so the query semantics can be unit tested
+ * without an index; {@link SearchAPI} owns the index and the analyzer.
  *
  * @author jens
  */
-public class HitPanel extends javax.swing.JPanel {
-
-    private static final Logger log = Logger.getLogger(HitPanel.class.getName());
-    DecimalFormat df = new DecimalFormat("0.00%");
-    private SearchHit hit = null;
+public class SearchQueryBuilder {
 
     /**
-     * Creates new form HitPanel
+     * Maps a user-facing field name in a "field:value" query to its keyword search field.
      */
-    public HitPanel() {
-        initComponents();
+    private static final Map<String, String> FIELD_SEARCH_MAP = new HashMap<>();
+
+    static {
+        FIELD_SEARCH_MAP.put(SearchAPI.FIELD_FILENAME, SearchAPI.FIELD_FILENAME_KEYWORD);
+        FIELD_SEARCH_MAP.put(SearchAPI.FIELD_ARCHIVEFILENAME, SearchAPI.FIELD_ARCHIVEFILENAME_KEYWORD);
+        FIELD_SEARCH_MAP.put(SearchAPI.FIELD_ARCHIVEFILENUMBER, SearchAPI.FIELD_ARCHIVEFILENUMBER_KEYWORD);
     }
 
-    public void setSearchHit(SearchHit sh) {
-        this.hit = sh;
-        this.lblFileName.setText("<html><b>" + sh.getFileName() + "</b><br/>" + sh.getArchiveFileNumber() + " " + sh.getArchiveFileName() + "</html>");
-        this.lblFileName.setToolTipText(sh.getText());
-        this.lblFileName.setIcon(FileUtils.getInstance().getFileTypeIcon(sh.getFileName()));
-        // A metadata field search matches on a non-analyzed keyword field and is
-        // constant-scoring - every hit gets the same score. Showing a percentage there would
-        // claim a degree of match that was never computed, so the label stays empty.
-        if (!sh.isRelevanceRanked()) {
-            this.lblScore.setText("");
-            this.lblScore.setToolTipText("Feldsuche - keine Relevanzbewertung");
-            return;
-        }
-        this.lblScore.setToolTipText(null);
-        this.lblScore.setText(df.format((float) sh.getScore()));
-        if (sh.getScore() >= 0.50f) {
-            this.lblScore.setForeground(Color.green.darker().darker());
-        } else if (sh.getScore() > 0.20f && sh.getScore() < 0.50f) {
-            this.lblScore.setForeground(Color.orange.darker());
-        } else {
-            this.lblScore.setForeground(Color.red.darker().darker());
-        }
+    // Matches a leading "field:value" prefix; DOTALL so multi-word/odd values are captured.
+    private static final Pattern FIELD_QUERY_PATTERN = Pattern.compile("^([A-Za-z]+)\\s*:\\s*(.+)$", Pattern.DOTALL);
 
+    private SearchQueryBuilder() {
+        // utility class
     }
 
     /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
+     * The outcome of translating a user query: the Lucene query itself plus whether it is a
+     * metadata field match. Metadata matches are constant-scoring (every hit scores 1.0), so
+     * their score carries no relevance information and must not be presented as one.
      */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
+    public static class Parsed {
 
-        lblFileName = new javax.swing.JLabel();
-        lblScore = new javax.swing.JLabel();
-        cmdEditArchiveFile = new javax.swing.JButton();
+        private final Query query;
+        private final boolean metadataMatch;
 
-        lblFileName.setFont(lblFileName.getFont().deriveFont(lblFileName.getFont().getStyle() & ~java.awt.Font.BOLD));
-        lblFileName.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
-        lblFileName.setText("Dokumentname und Icon");
-        lblFileName.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        lblFileName.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                lblFileNameMouseClicked(evt);
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                lblFileNameMouseExited(evt);
-            }
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                lblFileNameMouseEntered(evt);
-            }
-        });
-
-        lblScore.setFont(lblScore.getFont().deriveFont((lblScore.getFont().getStyle() | java.awt.Font.ITALIC)));
-        lblScore.setForeground(new java.awt.Color(0, 0, 255));
-        lblScore.setText("87%");
-
-        cmdEditArchiveFile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
-        cmdEditArchiveFile.setToolTipText("zur Akte springen (bearbeiten)");
-        cmdEditArchiveFile.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
-        cmdEditArchiveFile.setInheritsPopupMenu(true);
-        cmdEditArchiveFile.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdEditArchiveFileActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(cmdEditArchiveFile)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblFileName)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 321, Short.MAX_VALUE)
-                .addComponent(lblScore)
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(cmdEditArchiveFile)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblScore, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addContainerGap())
-        );
-    }// </editor-fold>//GEN-END:initComponents
-
-    private void lblFileNameMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameMouseEntered
-        this.lblFileName.setForeground(new Color(0, 0, 255));
-    }//GEN-LAST:event_lblFileNameMouseEntered
-
-    private void lblFileNameMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameMouseExited
-        this.lblFileName.setForeground(Color.BLACK);
-    }//GEN-LAST:event_lblFileNameMouseExited
-
-    private void cmdEditArchiveFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditArchiveFileActionPerformed
-        try {
-            Object editor=null;
-            if(UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
-                editor = EditorsRegistry.getInstance().getEditor(EditArchiveFileDetailsPanel.class.getName());
-            } else {
-                editor = EditorsRegistry.getInstance().getEditor(ViewArchiveFileDetailsPanel.class.getName());
-            }
-            Object searcheditor = EditorsRegistry.getInstance().getEditor(DocumentSearchPanel.class.getName());
-            Image bgi=((DocumentSearchPanel)searcheditor).getBackgroundImage();
-            
-            if (editor instanceof ThemeableEditor) {
-                // inherit the background to newly created child editors
-                ((ThemeableEditor) editor).setBackgroundImage(bgi);
-            }
-
-            if (editor instanceof PopulateOptionsEditor) {
-                ((PopulateOptionsEditor) editor).populateOptions();
-            }
-
-            ArchiveFileBean aFile = null;
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-                ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-                
-                aFile = fileService.getArchiveFile(this.hit.getArchiveFileId());
-            } catch (Exception ex) {
-                log.error("Error loading archive file from server", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Akte: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            }
-
-            if (aFile == null) {
-                return;
-            }
-
-            ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile, hit.getFileName());
-            ((ArchiveFilePanel) editor).setOpenedFromEditorClass(DocumentSearchPanel.class.getName());
-            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
-        } catch (Exception ex) {
-            log.error("Error creating editor from class " + this.getClass().getName(), ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
-    }//GEN-LAST:event_cmdEditArchiveFileActionPerformed
-
-    private void lblFileNameMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameMouseClicked
-
-        byte[] content=null;
-        try {
-            //content = locator.lookupArchiveFileServiceRemote().getDocumentContent(this.hit.getId());
-            content=CachingDocumentLoader.getInstance().getDocument(this.hit.getId());
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            return;
+        Parsed(Query query, boolean metadataMatch) {
+            this.query = query;
+            this.metadataMatch = metadataMatch;
         }
 
-        try {
-            ReadOnlyDocumentStore store=new ReadOnlyDocumentStore("hitpanel-" + hit.getFileName(), hit.getFileName());
-                
-            Launcher launcher=LauncherFactory.getLauncher(hit.getFileName(), content, store, EditorsRegistry.getInstance().getMainWindow());
-            launcher.launch(false);
-
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        /**
+         * @return the Lucene query to execute
+         */
+        public Query getQuery() {
+            return this.query;
         }
 
+        /**
+         * @return true if this is a metadata field match without meaningful relevance scoring
+         */
+        public boolean isMetadataMatch() {
+            return this.metadataMatch;
+        }
+    }
 
-    }//GEN-LAST:event_lblFileNameMouseClicked
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton cmdEditArchiveFile;
-    private javax.swing.JLabel lblFileName;
-    private javax.swing.JLabel lblScore;
-    // End of variables declaration//GEN-END:variables
+    /**
+     * Normalizes a metadata value for the non-analyzed keyword fields: never null and
+     * lowercased, so fielded search (e.g. {@code dateiname:test.pdf}) is case-insensitive.
+     *
+     * @param value the raw metadata value, may be null
+     * @return the value as it is indexed in the keyword field
+     */
+    public static String toKeyword(String value) {
+        return (value == null) ? "" : value.toLowerCase();
+    }
+
+    /**
+     * Builds the Lucene query for a user-entered search string.
+     *
+     * @param queryString the raw user query
+     * @param analyzer the analyzer to use for the full-text branch
+     * @return the query and whether it is a metadata field match
+     * @throws ParseException if the full-text branch fails to parse
+     */
+    public static Parsed build(String queryString, Analyzer analyzer) throws ParseException {
+        String trimmed = (queryString == null) ? "" : queryString.trim();
+        Matcher m = FIELD_QUERY_PATTERN.matcher(trimmed);
+        if (m.matches()) {
+            String fieldName = m.group(1).toLowerCase();
+            String rawValue = m.group(2).trim();
+
+            // Surrounding double quotes are syntax, not part of the searched value - without
+            // stripping them they would end up inside the wildcard pattern and silently match
+            // nothing. They additionally mean "match exactly", i.e. suppress the implicit
+            // substring wildcards added below.
+            boolean quoted = rawValue.length() >= 2 && rawValue.startsWith("\"") && rawValue.endsWith("\"");
+            String value = quoted ? rawValue.substring(1, rawValue.length() - 1).trim() : rawValue;
+
+            if (!value.isEmpty()) {
+                String keywordField = FIELD_SEARCH_MAP.get(fieldName);
+                if (keywordField != null) {
+                    String v = value.toLowerCase();
+                    if (v.indexOf('*') >= 0 || v.indexOf('?') >= 0) {
+                        // explicit wildcards win over both quoting and the implicit substring
+                        return new Parsed(new WildcardQuery(new Term(keywordField, v)), true);
+                    }
+                    if (quoted) {
+                        return new Parsed(new TermQuery(new Term(keywordField, v)), true);
+                    }
+                    // A bare value matches as a substring: the keyword fields hold the whole
+                    // file/case name as one term, so an exact TermQuery would only ever match
+                    // a document named exactly like the search value.
+                    return new Parsed(new WildcardQuery(new Term(keywordField, "*" + escapeWildcards(v) + "*")), true);
+                }
+                if (SearchAPI.FIELD_TEXT.equals(fieldName)) {
+                    return new Parsed(parseDefaultTextQuery(value, analyzer), false);
+                }
+            }
+        }
+        return new Parsed(parseDefaultTextQuery(trimmed, analyzer), false);
+    }
+
+    /**
+     * Escapes the characters that {@link WildcardQuery} treats as syntax, for values that the
+     * user did not mean as a pattern. Only the escape character itself needs handling here:
+     * this method is used on the implicit-substring path, which is taken exactly when the
+     * value contains no {@code *} and no {@code ?}.
+     */
+    private static String escapeWildcards(String value) {
+        return value.replace("\\", "\\\\");
+    }
+
+    /**
+     * Parses literal text against the default text field, escaping all query-syntax
+     * special characters so arbitrary user input cannot trigger a parse error. Note that
+     * escaping also neutralizes {@code *} and {@code ?}: wildcards are a feature of the
+     * metadata field search only, not of the content search.
+     */
+    private static Query parseDefaultTextQuery(String text, Analyzer analyzer) throws ParseException {
+        QueryParser parser = new QueryParser(SearchAPI.FIELD_DEFAULT, analyzer);
+        return parser.parse(QueryParser.escape(text));
+    }
 }

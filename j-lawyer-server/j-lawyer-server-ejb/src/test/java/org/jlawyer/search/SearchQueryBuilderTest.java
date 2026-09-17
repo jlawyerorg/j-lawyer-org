@@ -661,223 +661,198 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.editors.search;
+package org.jlawyer.search;
 
-import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.editors.ThemeableEditor;
-import com.jdimension.jlawyer.client.editors.documents.CachingDocumentLoader;
-import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
-import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
-import com.jdimension.jlawyer.client.editors.files.ViewArchiveFileDetailsPanel;
-import com.jdimension.jlawyer.client.launcher.Launcher;
-import com.jdimension.jlawyer.client.launcher.LauncherFactory;
-import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.client.utils.FileUtils;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Image;
-import java.text.DecimalFormat;
-import javax.swing.JOptionPane;
-import org.apache.log4j.Logger;
-import org.jlawyer.search.SearchHit;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.de.GermanAnalyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.FieldType;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.store.ByteBuffersDirectory;
+import org.apache.lucene.store.Directory;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 /**
+ * Covers the query semantics of {@link SearchQueryBuilder} - the part of the search that
+ * users type by hand and that silently returns nothing when it is wrong.
  *
  * @author jens
  */
-public class HitPanel extends javax.swing.JPanel {
+public class SearchQueryBuilderTest {
 
-    private static final Logger log = Logger.getLogger(HitPanel.class.getName());
-    DecimalFormat df = new DecimalFormat("0.00%");
-    private SearchHit hit = null;
+    private static final Analyzer ANALYZER = new GermanAnalyzer();
 
-    /**
-     * Creates new form HitPanel
-     */
-    public HitPanel() {
-        initComponents();
+    private static SearchQueryBuilder.Parsed build(String query) throws Exception {
+        return SearchQueryBuilder.build(query, ANALYZER);
     }
 
-    public void setSearchHit(SearchHit sh) {
-        this.hit = sh;
-        this.lblFileName.setText("<html><b>" + sh.getFileName() + "</b><br/>" + sh.getArchiveFileNumber() + " " + sh.getArchiveFileName() + "</html>");
-        this.lblFileName.setToolTipText(sh.getText());
-        this.lblFileName.setIcon(FileUtils.getInstance().getFileTypeIcon(sh.getFileName()));
-        // A metadata field search matches on a non-analyzed keyword field and is
-        // constant-scoring - every hit gets the same score. Showing a percentage there would
-        // claim a degree of match that was never computed, so the label stays empty.
-        if (!sh.isRelevanceRanked()) {
-            this.lblScore.setText("");
-            this.lblScore.setToolTipText("Feldsuche - keine Relevanzbewertung");
-            return;
-        }
-        this.lblScore.setToolTipText(null);
-        this.lblScore.setText(df.format((float) sh.getScore()));
-        if (sh.getScore() >= 0.50f) {
-            this.lblScore.setForeground(Color.green.darker().darker());
-        } else if (sh.getScore() > 0.20f && sh.getScore() < 0.50f) {
-            this.lblScore.setForeground(Color.orange.darker());
-        } else {
-            this.lblScore.setForeground(Color.red.darker().darker());
-        }
+    private static String queryString(String query) throws Exception {
+        return build(query).getQuery().toString();
+    }
 
+    // --- metadata field search ------------------------------------------------------------
+
+    @Test
+    public void bareValueMatchesAsSubstring() throws Exception {
+        // an exact TermQuery would only match a document literally named "quittung"
+        assertEquals("dateiname-kw:*quittung*", queryString("dateiname:Quittung"));
+        assertTrue(build("dateiname:Quittung").isMetadataMatch());
+    }
+
+    @Test
+    public void quotedValueMatchesExactly() throws Exception {
+        assertEquals("dateiname-kw:quittung.pdf", queryString("dateiname:\"Quittung.pdf\""));
+        assertTrue(build("dateiname:\"Quittung.pdf\"").isMetadataMatch());
+    }
+
+    @Test
+    public void explicitWildcardsAreUsedAsTyped() throws Exception {
+        assertEquals("dateiname-kw:*ms_26-08-??_quittung*",
+                queryString("dateiname:*MS_26-08-??_Quittung*"));
+    }
+
+    @Test
+    public void quotesAroundAWildcardPatternAreStripped() throws Exception {
+        // regression: the quotes used to end up inside the wildcard pattern, which matched
+        // nothing at all without any hint to the user
+        assertEquals(queryString("dateiname:*MS_26-08-??_Quittung*"),
+                queryString("dateiname:\"*MS_26-08-??_Quittung*\""));
+    }
+
+    @Test
+    public void fieldSearchIsCaseInsensitiveInFieldAndValue() throws Exception {
+        assertEquals("dateiname-kw:*quittung*", queryString("DATEINAME:QUITTUNG"));
+    }
+
+    @Test
+    public void caseNameAndCaseNumberAreSearchableToo() throws Exception {
+        assertEquals("akte-kw:*mustermann*", queryString("akte:Mustermann"));
+        assertEquals("az-kw:*26/0815*", queryString("az:26/0815"));
+    }
+
+    @Test
+    public void whitespaceAroundTheColonIsTolerated() throws Exception {
+        assertEquals("dateiname-kw:*quittung*", queryString("dateiname : Quittung"));
+    }
+
+    @Test
+    public void backslashInAValueIsNotTreatedAsWildcardEscape() throws Exception {
+        assertEquals("dateiname-kw:*a\\\\b*", queryString("dateiname:a\\b"));
+    }
+
+    // --- full-text fallback ---------------------------------------------------------------
+
+    @Test
+    public void plainTextSearchesTheDocumentContent() throws Exception {
+        SearchQueryBuilder.Parsed parsed = build("Vertrag");
+        assertEquals("text:vertrag", parsed.getQuery().toString());
+        assertFalse(parsed.isMetadataMatch());
+    }
+
+    @Test
+    public void textPrefixSearchesTheDocumentContent() throws Exception {
+        SearchQueryBuilder.Parsed parsed = build("text:Vertrag");
+        assertEquals("text:vertrag", parsed.getQuery().toString());
+        assertFalse(parsed.isMetadataMatch());
+    }
+
+    @Test
+    public void anEmptyFieldValueFallsBackToFullText() throws Exception {
+        assertFalse(build("dateiname:").isMetadataMatch());
+        assertFalse(build("dateiname:\"\"").isMetadataMatch());
+    }
+
+    @Test
+    public void anUnknownFieldNameIsSearchedAsLiteralText() throws Exception {
+        assertFalse(build("irgendwas:Quittung").isMetadataMatch());
+    }
+
+    @Test
+    public void specialCharactersDoNotCauseAParseError() throws Exception {
+        // must not throw - every special character is escaped before parsing
+        build("Vertrag (2024): Teil 1 [final] +/- 5%");
+        build("Az. 26/0815 ./. Mustermann");
+        build("was kostet das?");
+    }
+
+    // --- against a real index -------------------------------------------------------------
+
+    @Test
+    public void fieldSearchDoesNotPickUpContentMatches() throws Exception {
+        try (Directory dir = new ByteBuffersDirectory();
+                IndexWriter writer = new IndexWriter(dir, new IndexWriterConfig(ANALYZER))) {
+
+            index(writer, "001-01-MS_26-08-01_Quittung.pdf", "Quittung ueber 100 Euro");
+            index(writer, "002-01-MS_26-08-15_Quittung.pdf", "Quittung ueber 200 Euro");
+            index(writer, "003-02-MS_26-09-01_Quittung.pdf", "Quittung September");
+            index(writer, "004-01-MS_26-08-02_Rechnung.pdf", "Rechnung August");
+            index(writer, "Schriftsatz an das Gericht.docx", "Wir uebersenden eine Quittung als Anlage.");
+            writer.commit();
+
+            try (DirectoryReader reader = DirectoryReader.open(writer)) {
+                IndexSearcher searcher = new IndexSearcher(reader);
+
+                // the file name carries the match - the Schriftsatz only mentions "Quittung"
+                // in its content and must not show up
+                assertEquals(3, search(searcher, "dateiname:Quittung").size());
+
+                // the user's original query: one month, one document type
+                List<String> august = search(searcher, "dateiname:*MS_26-08-??_Quittung*");
+                assertEquals(2, august.size());
+                assertTrue(august.contains("001-01-MS_26-08-01_Quittung.pdf"));
+                assertTrue(august.contains("002-01-MS_26-08-15_Quittung.pdf"));
+
+                // quoting it must not change the result
+                assertEquals(august, search(searcher, "dateiname:\"*MS_26-08-??_Quittung*\""));
+
+                // quoted without wildcards: exactly that one file
+                assertEquals(1, search(searcher, "dateiname:\"004-01-MS_26-08-02_Rechnung.pdf\"").size());
+
+                // the content search still finds the Schriftsatz
+                assertEquals(4, search(searcher, "Quittung").size());
+            }
+        }
+    }
+
+    private static List<String> search(IndexSearcher searcher, String query) throws Exception {
+        TopDocs hits = searcher.search(SearchQueryBuilder.build(query, ANALYZER).getQuery(), 100);
+        List<String> fileNames = new ArrayList<>();
+        for (ScoreDoc hit : hits.scoreDocs) {
+            fileNames.add(searcher.storedFields().document(hit.doc).get(SearchAPI.FIELD_FILENAME));
+        }
+        return fileNames;
     }
 
     /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
+     * Indexes a document the way {@code SearchAPI.addToIndex} does - the keyword companions
+     * are what the metadata field search relies on.
      */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
+    private static void index(IndexWriter writer, String fileName, String text) throws Exception {
+        FieldType contentType = new FieldType();
+        contentType.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
+        contentType.setStored(true);
+        contentType.setTokenized(true);
+        contentType.freeze();
 
-        lblFileName = new javax.swing.JLabel();
-        lblScore = new javax.swing.JLabel();
-        cmdEditArchiveFile = new javax.swing.JButton();
-
-        lblFileName.setFont(lblFileName.getFont().deriveFont(lblFileName.getFont().getStyle() & ~java.awt.Font.BOLD));
-        lblFileName.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
-        lblFileName.setText("Dokumentname und Icon");
-        lblFileName.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        lblFileName.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                lblFileNameMouseClicked(evt);
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                lblFileNameMouseExited(evt);
-            }
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                lblFileNameMouseEntered(evt);
-            }
-        });
-
-        lblScore.setFont(lblScore.getFont().deriveFont((lblScore.getFont().getStyle() | java.awt.Font.ITALIC)));
-        lblScore.setForeground(new java.awt.Color(0, 0, 255));
-        lblScore.setText("87%");
-
-        cmdEditArchiveFile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
-        cmdEditArchiveFile.setToolTipText("zur Akte springen (bearbeiten)");
-        cmdEditArchiveFile.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
-        cmdEditArchiveFile.setInheritsPopupMenu(true);
-        cmdEditArchiveFile.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdEditArchiveFileActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(cmdEditArchiveFile)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblFileName)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 321, Short.MAX_VALUE)
-                .addComponent(lblScore)
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(cmdEditArchiveFile)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblScore, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addContainerGap())
-        );
-    }// </editor-fold>//GEN-END:initComponents
-
-    private void lblFileNameMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameMouseEntered
-        this.lblFileName.setForeground(new Color(0, 0, 255));
-    }//GEN-LAST:event_lblFileNameMouseEntered
-
-    private void lblFileNameMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameMouseExited
-        this.lblFileName.setForeground(Color.BLACK);
-    }//GEN-LAST:event_lblFileNameMouseExited
-
-    private void cmdEditArchiveFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditArchiveFileActionPerformed
-        try {
-            Object editor=null;
-            if(UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
-                editor = EditorsRegistry.getInstance().getEditor(EditArchiveFileDetailsPanel.class.getName());
-            } else {
-                editor = EditorsRegistry.getInstance().getEditor(ViewArchiveFileDetailsPanel.class.getName());
-            }
-            Object searcheditor = EditorsRegistry.getInstance().getEditor(DocumentSearchPanel.class.getName());
-            Image bgi=((DocumentSearchPanel)searcheditor).getBackgroundImage();
-            
-            if (editor instanceof ThemeableEditor) {
-                // inherit the background to newly created child editors
-                ((ThemeableEditor) editor).setBackgroundImage(bgi);
-            }
-
-            if (editor instanceof PopulateOptionsEditor) {
-                ((PopulateOptionsEditor) editor).populateOptions();
-            }
-
-            ArchiveFileBean aFile = null;
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-                ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-                
-                aFile = fileService.getArchiveFile(this.hit.getArchiveFileId());
-            } catch (Exception ex) {
-                log.error("Error loading archive file from server", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Akte: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            }
-
-            if (aFile == null) {
-                return;
-            }
-
-            ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile, hit.getFileName());
-            ((ArchiveFilePanel) editor).setOpenedFromEditorClass(DocumentSearchPanel.class.getName());
-            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
-        } catch (Exception ex) {
-            log.error("Error creating editor from class " + this.getClass().getName(), ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
-    }//GEN-LAST:event_cmdEditArchiveFileActionPerformed
-
-    private void lblFileNameMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameMouseClicked
-
-        byte[] content=null;
-        try {
-            //content = locator.lookupArchiveFileServiceRemote().getDocumentContent(this.hit.getId());
-            content=CachingDocumentLoader.getInstance().getDocument(this.hit.getId());
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        try {
-            ReadOnlyDocumentStore store=new ReadOnlyDocumentStore("hitpanel-" + hit.getFileName(), hit.getFileName());
-                
-            Launcher launcher=LauncherFactory.getLauncher(hit.getFileName(), content, store, EditorsRegistry.getInstance().getMainWindow());
-            launcher.launch(false);
-
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
-
-
-    }//GEN-LAST:event_lblFileNameMouseClicked
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton cmdEditArchiveFile;
-    private javax.swing.JLabel lblFileName;
-    private javax.swing.JLabel lblScore;
-    // End of variables declaration//GEN-END:variables
+        Document doc = new Document();
+        doc.add(new Field(SearchAPI.FIELD_FILENAME, fileName, TextField.TYPE_STORED));
+        doc.add(new StringField(SearchAPI.FIELD_FILENAME_KEYWORD,
+                SearchQueryBuilder.toKeyword(fileName), Field.Store.NO));
+        doc.add(new Field(SearchAPI.FIELD_TEXT, text, contentType));
+        writer.addDocument(doc);
+    }
 }
