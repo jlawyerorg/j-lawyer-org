@@ -1432,6 +1432,8 @@
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="cmdSearchClient" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
+                              <Component id="cmdCaseNetwork" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
                               <Component id="txtFilterParties" min="-2" pref="275" max="-2" attributes="0"/>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           </Group>
@@ -1446,6 +1448,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="cmdSearchClient" min="-2" max="-2" attributes="0"/>
+                          <Component id="cmdCaseNetwork" min="-2" max="-2" attributes="0"/>
                           <Component id="txtFilterParties" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
@@ -1463,6 +1466,17 @@
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSearchClientActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JButton" name="cmdCaseNetwork">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/material/link_24dp_0E72B5_FILL0_wght400_GRAD0_opsz24.png"/>
+                </Property>
+                <Property name="toolTipText" type="java.lang.String" value="Beteiligte, deren Beziehungen und weitere Akten als Netz darstellen"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdCaseNetworkActionPerformed"/>
               </Events>
             </Component>
             <Container class="javax.swing.JScrollPane" name="jScrollPane8">

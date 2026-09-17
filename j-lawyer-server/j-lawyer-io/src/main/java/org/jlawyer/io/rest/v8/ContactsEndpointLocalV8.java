@@ -20,10 +20,11 @@ package org.jlawyer.io.rest.v8;
 
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
+import org.jlawyer.io.rest.v8.pojo.RestfulContactRelationRequestV8;
 
 /**
- * Local business interface of the v8 contacts list endpoint (richer, server-paginated
- * overview than v1).
+ * Local business interface of the v8 contacts endpoint (richer, server-paginated overview than
+ * v1, plus the relationships of a contact).
  *
  * @author jens
  */
@@ -31,5 +32,13 @@ import javax.ws.rs.core.Response;
 public interface ContactsEndpointLocalV8 {
 
     Response listPage(int offset, int limit, String filter, String q);
+
+    Response getRelations(String id);
+
+    Response createRelation(String id, RestfulContactRelationRequestV8 body);
+
+    Response updateRelation(String id, String relationId, RestfulContactRelationRequestV8 body);
+
+    Response deleteRelation(String id, String relationId);
 
 }

@@ -86,6 +86,7 @@
       "financeSettings": "Finanz-Einstellungen",
       "bankStatementConfigs": "Kontoauszug-Import",
       "partyTypes": "Beteiligtentypen",
+      "contactRelationTypes": "Beziehungstypen",
       "caseNumbering": "Aktenzeichen-Nummerierung",
       "customFields": "Eigene Felder",
       "nameTemplates": "Benennungsschemata",
@@ -261,6 +262,25 @@
       "name": "Bezeichnung",
       "placeHolder": "Platzhalter",
       "color": "Farbe",
+      "dragHint": "Zum Sortieren ziehen"
+    },
+    "relationType": {
+      "create": "Neuer Beziehungstyp",
+      "edit": "Beziehungstyp bearbeiten",
+      "name": "Bezeichnung",
+      "labelFrom": "Bezeichnung (Richtung 1)",
+      "labelTo": "Gegenbezeichnung (Richtung 2)",
+      "symmetric": "symmetrisch (gleiche Bezeichnung in beiden Richtungen)",
+      "symmetricHint": "Symmetrische Typen lesen sich in beide Richtungen gleich (z. B. „ist Ehepartner von“); die zweite Bezeichnung wird übernommen.",
+      "symmetricWarning": "Bereits erfasste Beziehungen dieses Typs behalten ihre gespeicherte Richtung und können nun gespiegelte Duplikate enthalten.",
+      "category": "Kategorie",
+      "color": "Farbe",
+      "active": "Aktiv",
+      "activeHint": "Inaktive Typen werden bei neuen Beziehungen nicht mehr angeboten; bestehende Beziehungen bleiben unverändert.",
+      "inactive": "inaktiv",
+      "activate": "Aktivieren",
+      "deactivate": "Deaktivieren",
+      "deleteConfirm": "Beziehungstyp „{{name}}“ wirklich löschen?",
       "dragHint": "Zum Sortieren ziehen"
     },
     "folderTpl": {
@@ -1060,7 +1080,11 @@
       "custom1": "Eigenes Feld 1",
       "custom2": "Eigenes Feld 2",
       "custom3": "Eigenes Feld 3",
-      "toContact": "Zum Kontakt"
+      "toContact": "Zum Kontakt",
+      "related": "Verknüpfte Kontakte der Beteiligten",
+      "relatedVia": "über {{name}}",
+      "relatedAlready": "bereits Beteiligter",
+      "relatedNone": "Die Beteiligten dieser Akte haben keine verknüpften Kontakte."
     },
     "due": {
       "add": "Hinzufügen",
@@ -1213,6 +1237,32 @@
       "title": "Akten",
       "empty": "Keiner Akte zugeordnet."
     },
+    "relations": {
+      "title": "Beziehungen",
+      "none": "Keine Beziehungen zu anderen Kontakten.",
+      "add": "Beziehung hinzufügen",
+      "addTitle": "Beziehung hinzufügen",
+      "editTitle": "Notiz zur Beziehung bearbeiten",
+      "label": "Beziehung",
+      "labelPlaceholder": "— Beziehung wählen —",
+      "noCategory": "Sonstige",
+      "noTypes": "Es sind keine Beziehungstypen konfiguriert.",
+      "contact": "Kontakt",
+      "searchPlaceholder": "Kontakt suchen …",
+      "typeToSearch": "Zum Suchen tippen (min. 2 Zeichen)",
+      "noResults": "Keine Treffer.",
+      "clear": "Auswahl entfernen",
+      "note": "Notiz",
+      "noteHint": "z. B. seit 2019, nur telefonisch erreichbar",
+      "open": "Kontakt öffnen",
+      "edit": "Notiz bearbeiten",
+      "remove": "Beziehung entfernen",
+      "removeConfirm": "Beziehung „{{name}}“ wirklich entfernen?",
+      "addBtn": "Hinzufügen",
+      "saveBtn": "Speichern",
+      "writeError": "Die Beziehung konnte nicht gespeichert werden.",
+      "deleteConfirm": "Kontakt „{{name}}“ hat {{count}} Beziehungen, die mit gelöscht werden. Wirklich löschen?"
+    },
     "docs": {
       "searchPlaceholder": "Dokumente durchsuchen …",
       "sortBy": "Sortieren:",
@@ -1245,6 +1295,7 @@
     "tabs": {
       "overview": "Übersicht",
       "cases": "Akten",
+      "relations": "Beziehungen",
       "documents": "Dokumente",
       "history": "Historie"
     },

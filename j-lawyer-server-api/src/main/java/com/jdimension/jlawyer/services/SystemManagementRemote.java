@@ -823,6 +823,61 @@ public interface SystemManagementRemote {
 
     void removePartyType(PartyTypeBean partyType) throws Exception;
 
+    /**
+     * Returns the whole catalogue of contact relationship types (Beziehungstypen), ordered by
+     * category and sequence - what an administration lists, including the inactive ones.
+     *
+     * @return all relationship types
+     */
+    List<ContactRelationType> getContactRelationTypes();
+
+    /**
+     * Returns the relationship types that may be used for a new relationship, ordered by category
+     * and sequence. An inactive type is left out here but keeps working for relationships that
+     * already use it.
+     *
+     * @return the active relationship types
+     */
+    List<ContactRelationType> getActiveContactRelationTypes();
+
+    /**
+     * Adds a relationship type to the catalogue. A symmetric type needs only its forward label;
+     * the reverse one is set equal to it, so the same text is never entered twice.
+     *
+     * Requires administrator rights.
+     *
+     * @param relationType the type to add; its id is assigned by the server
+     * @return the stored type
+     * @throws Exception if the name is empty or already taken, if a label is missing, or if a
+     * directed type has no reverse label
+     */
+    ContactRelationType addContactRelationType(ContactRelationType relationType) throws Exception;
+
+    /**
+     * Changes a relationship type. Changed labels take effect wherever relationships of that type
+     * are shown; existing relationships are not otherwise touched - in particular, turning a
+     * directed type symmetric does not reconcile the direction of what is already recorded.
+     *
+     * Requires administrator rights.
+     *
+     * @param relationType the type to change
+     * @return the stored type
+     * @throws Exception if the name is empty or taken by another type, or a label is missing
+     */
+    ContactRelationType updateContactRelationType(ContactRelationType relationType) throws Exception;
+
+    /**
+     * Removes a relationship type from the catalogue. Refused while relationships still use it -
+     * such a type can be deactivated instead, which hides it from the pickers while existing
+     * relationships keep their wording.
+     *
+     * Requires administrator rights.
+     *
+     * @param relationType the type to remove
+     * @throws Exception if the type is still in use
+     */
+    void removeContactRelationType(ContactRelationType relationType) throws Exception;
+
     void addObservedFile(String fileName, byte[] content, String source) throws Exception;
 
     boolean updatePassword(String newPassword) throws Exception;

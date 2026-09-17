@@ -809,5 +809,79 @@ public interface AddressServiceRemote {
     List<AddressBean> similaritySearch(AddressBean candidate, float minimumSimilarityPercentage) throws Exception;
     
     HashMap<String,String> getAddressesWithIban();
-    
+
+    /**
+     * Returns the relationships of a contact (Kontaktbeziehungen), each one oriented towards the
+     * contact at its other end and carrying the label that applies as seen from the given
+     * contact - so a caller never has to work out which end it is looking at.
+     *
+     * Relationships are not part of a contact and are never loaded with one: they form a graph,
+     * and this call is the only way in. Only the fields a relationship list displays are
+     * transported, not the related contacts themselves.
+     *
+     * Requires read permission on contacts.
+     *
+     * @param contactId the contact ID
+     * @return the contact's relationships, empty if there are none
+     * @throws Exception if the contact does not exist
+     */
+    List<ContactRelationDTO> getRelations(String contactId) throws Exception;
+
+    /**
+     * Records a relationship between two contacts. The relationship is a directed statement: the
+     * contact given first is what the type's forward label says of it, the second one what the
+     * reverse label says. For a symmetric type both directions are the same statement, so the
+     * pair is normalised and the mirrored entry is rejected as already existing.
+     *
+     * Requires write permission on contacts.
+     *
+     * @param fromContactId the contact the forward label describes
+     * @param toContactId the contact the reverse label describes
+     * @param typeId ID of the relationship type
+     * @param note optional free-text remark, may be null
+     * @return the created relationship, oriented towards the other contact as seen from
+     * fromContactId
+     * @throws ContactRelationExistsException if that relationship is already recorded
+     * @throws Exception if a contact or the type does not exist, or both ids are equal
+     */
+    ContactRelationDTO addRelation(String fromContactId, String toContactId, String typeId, String note) throws Exception;
+
+    /**
+     * Changes the free-text remark of an existing relationship. The two contacts and the type of
+     * a relationship cannot be changed - a different type or direction is a different statement.
+     *
+     * Requires write permission on contacts.
+     *
+     * @param relationId ID of the relationship
+     * @param note the new remark, may be null to clear it
+     * @throws Exception if the relationship does not exist
+     */
+    void updateRelationNote(String relationId, String note) throws Exception;
+
+    /**
+     * Removes a relationship between two contacts. Removing it affects neither contact.
+     *
+     * Requires write permission on contacts.
+     *
+     * @param relationId ID of the relationship
+     * @throws Exception if the relationship does not exist
+     */
+    void removeRelation(String relationId) throws Exception;
+
+    /**
+     * Counts how many relationships each of the given contacts has - what a client needs to warn
+     * before deleting a contact, without transporting the relationships themselves.
+     *
+     * Relationships never prevent a deletion; they are removed with the contact. The warning is
+     * what keeps that from being a surprise, which is why this is one call for all selected
+     * contacts rather than one per contact.
+     *
+     * Requires read permission on contacts.
+     *
+     * @param contactIds the contacts to count for
+     * @return contact ID to number of relationships, containing only contacts that have at least
+     * one
+     */
+    Map<String, Integer> getRelationCounts(List<String> contactIds);
+
 }

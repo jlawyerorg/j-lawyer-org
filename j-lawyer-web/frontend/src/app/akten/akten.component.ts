@@ -1036,7 +1036,8 @@ interface TimesheetView extends CaseTimesheet {
       <jl-case-editor [caseData]="ed.data" (save)="onSaveCase($event)" (close)="editingCase.set(null)" />
     }
     @if (partyAdding()) {
-      <jl-party-add (save)="onAddParty($event)" (close)="partyAdding.set(false)" />
+      <jl-party-add [parties]="selected()?.parties ?? []"
+                    (save)="onAddParty($event)" (close)="partyAdding.set(false)" />
     }
     @if (editingParty(); as p) {
       <jl-party-editor [party]="p" [caseId]="selectedId() ?? ''"

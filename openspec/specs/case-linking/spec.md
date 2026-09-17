@@ -1,7 +1,13 @@
 # case-linking Specification
 
 ## Purpose
-TBD - created by archiving change add-case-linking. Update Purpose after archive.
+Cases that belong together but must stay separate files - the criminal matter and the civil
+damages claim out of one accident, a case per family member, the case a title is enforced
+from, a follow-up instruction - can be linked to each other with an optional free-text
+description. A link is symmetric and navigable from either case, is shown in the case header
+of the desktop client and on the case overview in the web client, and is exposed over the
+REST API. Creating a new case from an existing one and linking the two in one step is part of
+this capability.
 ## Requirements
 ### Requirement: Case Link Model
 

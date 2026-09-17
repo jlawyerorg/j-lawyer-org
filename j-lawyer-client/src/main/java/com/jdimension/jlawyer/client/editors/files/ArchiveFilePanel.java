@@ -2136,6 +2136,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if (this.dto != null) {
             this.cmdEditCaseNumber.setEnabled(UserUtils.isCurrentUserAdmin());
             this.cmdIngoChat.setEnabled(true);
+            this.cmdCaseNetwork.setEnabled(true);
         }
 
         this.txtFilterParties.setText("");
@@ -2289,6 +2290,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     public void clearInputs() {
         this.dto = null;
         this.cmdIngoChat.setEnabled(false);
+        this.cmdCaseNetwork.setEnabled(false);
 
         this.newEventPanel.reset();
 
@@ -2682,6 +2684,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         messageSendPanel1 = new com.jdimension.jlawyer.client.messenger.MessageSendPanel();
         tabParties = new javax.swing.JPanel();
         cmdSearchClient = new javax.swing.JButton();
+        cmdCaseNetwork = new javax.swing.JButton();
         jScrollPane8 = new javax.swing.JScrollPane();
         pnlInvolvedParties = new com.jdimension.jlawyer.client.editors.files.InvolvedPartiesPanel();
         txtFilterParties = new javax.swing.JTextField();
@@ -3660,6 +3663,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
+        cmdCaseNetwork.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/link_24dp_0E72B5_FILL0_wght400_GRAD0_opsz24.png"))); // NOI18N
+        cmdCaseNetwork.setToolTipText("Beteiligte, deren Beziehungen und weitere Akten als Netz darstellen");
+        cmdCaseNetwork.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCaseNetworkActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout pnlInvolvedPartiesLayout = new org.jdesktop.layout.GroupLayout(pnlInvolvedParties);
         pnlInvolvedParties.setLayout(pnlInvolvedPartiesLayout);
         pnlInvolvedPartiesLayout.setHorizontalGroup(
@@ -3684,6 +3695,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     .add(tabPartiesLayout.createSequentialGroup()
                         .add(cmdSearchClient)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdCaseNetwork)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(txtFilterParties, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 275, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
@@ -3694,6 +3707,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap()
                 .add(tabPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(cmdSearchClient)
+                    .add(cmdCaseNetwork)
                     .add(txtFilterParties, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane8, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 807, Short.MAX_VALUE))
@@ -6078,7 +6092,26 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             return;
         }
 
-        afab.setArchiveFileKey(dto);
+        this.addPartyToCase(adrb, afab);
+
+    }//GEN-LAST:event_cmdSearchClientActionPerformed
+
+    /**
+     * Adds a contact as a party of the open case and shows it in the party list.
+     *
+     * Shared by the "Beteiligte hinzufügen" search and by the action that adds a contact related
+     * to an existing party, so both store the party and build its row the same way.
+     *
+     * @param contact the contact to add
+     * @param involvement the involvement to store; its case is set here
+     */
+    public void addPartyToCase(AddressBean contact, ArchiveFileAddressesBean involvement) {
+        if (contact == null || involvement == null) {
+            return;
+        }
+
+        involvement.setArchiveFileKey(dto);
+        ArchiveFileAddressesBean afab = involvement;
         List<PartyTypeBean> allPartyTypes = null;
         try {
             ClientSettings settings = ClientSettings.getInstance();
@@ -6093,7 +6126,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         InvolvedPartyEntryPanel ipep = new InvolvedPartyEntryPanel(dto, this, this.pnlInvolvedParties, this.getClass().getName(), BeaAccess.isBeaEnabled(), allPartyTypes);
-        ipep.setEntry(adrb, afab, false);
+        ipep.setEntry(contact, afab, false);
         ipep.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         BoxLayout layout = new javax.swing.BoxLayout(this.pnlInvolvedParties, javax.swing.BoxLayout.Y_AXIS);
@@ -6106,8 +6139,24 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ipep.repaint();
         ipep.doLayout();
         this.pnlInvolvedParties.doLayout();
+    }
 
-    }//GEN-LAST:event_cmdSearchClientActionPerformed
+    /**
+     * @return the contact ids that are already parties of the open case - so an action that adds a
+     * related contact can mark those that are involved already
+     */
+    public java.util.Set<String> getInvolvedContactIds() {
+        java.util.Set<String> ids = new java.util.HashSet<>();
+        for (Component c : this.pnlInvolvedParties.getComponents()) {
+            if (c instanceof InvolvedPartyEntryPanel) {
+                AddressBean party = ((InvolvedPartyEntryPanel) c).getAddress();
+                if (party != null && party.getId() != null) {
+                    ids.add(party.getId());
+                }
+            }
+        }
+        return ids;
+    }
 
     public boolean confirmSave(String question, String tagToActivate) {
         int response = JOptionPane.showConfirmDialog(this, question, "Akte speichern", JOptionPane.YES_NO_OPTION);
@@ -9852,6 +9901,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         UserSettings.getInstance().setSettingAsBoolean(UserSettingsKeys.CONF_CASES_SEARCH_FULLTEXT_INCASE, this.togFulltextSearch.isSelected());
     }//GEN-LAST:event_togFulltextSearchActionPerformed
 
+    private void cmdCaseNetworkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCaseNetworkActionPerformed
+        if (this.dto == null || this.dto.getId() == null) {
+            return;
+        }
+        // a dialog rather than a tenth tab: the lazy loading of the other tabs dispatches on
+        // hardcoded tab indices, so a tab inserted here would break them
+        com.jdimension.jlawyer.ui.graph.RelationshipGraphDialog.showForCase(EditorsRegistry.getInstance().getMainWindow(), this.dto.getId());
+    }//GEN-LAST:event_cmdCaseNetworkActionPerformed
+
     private void cmdIngoChatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdIngoChatActionPerformed
         try {
             AssistantAccess ingo = AssistantAccess.getInstance();
@@ -10646,6 +10704,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdFavoriteDocuments;
     private javax.swing.JButton cmdFormsManager;
     private javax.swing.JButton cmdHeaderAddNote;
+    private javax.swing.JButton cmdCaseNetwork;
     private javax.swing.JButton cmdIngoChat;
     private javax.swing.JButton cmdLoadFullHistory;
     private javax.swing.JButton cmdNewClaimLedger;

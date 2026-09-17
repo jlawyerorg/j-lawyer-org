@@ -15,7 +15,8 @@ export type SectionKind = 'optionGroup' | 'users' | 'groups' | 'firmProfile'
   | 'nameTemplates' | 'calendarSetups' | 'calendarEntryTemplates' | 'bankStatementConfigs'
   | 'timesheetTemplates' | 'timesheetSettings'
   | 'assistantServers' | 'assistantPrompts' | 'assistantReplacements'
-  | 'systemMailbox' | 'security' | 'serverMonitoring' | 'systemReport' | 'webhooks' | 'officeSettings';
+  | 'systemMailbox' | 'security' | 'serverMonitoring' | 'systemReport' | 'webhooks' | 'officeSettings'
+  | 'contactRelationTypes';
 
 export interface SettingsSection {
   /** Stable id (also the list-selection key). */
@@ -92,6 +93,7 @@ export const GENERAL_SECTIONS: SettingsSection[] = [
 export const ADMINISTRATION_SECTIONS: SettingsSection[] = [
   { id: 'firmProfile', titleKey: 'settings.section.firmProfile', groupKey: G_FIRM, kind: 'firmProfile', keywords: 'kanzlei kanzleidaten firma stammdaten bank' },
   { id: 'partyTypes', titleKey: 'settings.section.partyTypes', groupKey: G_PARTIES, kind: 'partyTypes', keywords: 'beteiligte beteiligtentyp partei mandant gegner rolle' },
+  { id: 'contactRelationTypes', titleKey: 'settings.section.contactRelationTypes', groupKey: G_ADDR, kind: 'contactRelationTypes', keywords: 'beziehung beziehungsart kontaktbeziehung verwandtschaft familie vertretung' },
   { id: 'customFields', titleKey: 'settings.section.customFields', groupKey: G_CASECONFIG, kind: 'customFields', keywords: 'eigene felder benutzerdefiniert adresse akte beteiligter custom' },
   { id: 'caseNumbering', titleKey: 'settings.section.caseNumbering', groupKey: G_CASECONFIG, kind: 'caseNumbering', keywords: 'aktenzeichen nummerierung nummernschema akte schema az' },
   { id: 'folderTemplates', titleKey: 'settings.section.folderTemplates', groupKey: G_CASECONFIG, kind: 'folderTemplates', keywords: 'aktenstruktur ordner ordnerstruktur vorlage dokumente ordnervorlage' },

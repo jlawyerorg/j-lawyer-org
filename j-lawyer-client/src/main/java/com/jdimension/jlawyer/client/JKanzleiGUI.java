@@ -1273,6 +1273,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuAddressTagsMV = new javax.swing.JMenuItem();
         mnuAddressCustomFields = new javax.swing.JMenuItem();
         mnuPartyTypes = new javax.swing.JMenuItem();
+        mnuContactRelationTypes = new javax.swing.JMenuItem();
         mnuAddressBookSync = new javax.swing.JMenuItem();
         mnuAddressBookSyncNow = new javax.swing.JMenuItem();
         mnuArchiveFileOptions = new javax.swing.JMenu();
@@ -1706,6 +1707,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuAddressOptions.add(mnuPartyTypes);
+
+        mnuContactRelationTypes.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/link_24dp_0E72B5_FILL0_wght400_GRAD0_opsz24.png"))); // NOI18N
+        mnuContactRelationTypes.setText("Beziehungstypen");
+        mnuContactRelationTypes.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuContactRelationTypesActionPerformed(evt);
+            }
+        });
+        mnuAddressOptions.add(mnuContactRelationTypes);
 
         mnuAddressBookSync.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_share_black_48dp.png"))); // NOI18N
         mnuAddressBookSync.setText("Synchronisation konfigurieren");
@@ -2803,6 +2813,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuPartyTypesActionPerformed
 
+    private void mnuContactRelationTypesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuContactRelationTypesActionPerformed
+
+        if (checkAdmin()) {
+            ContactRelationTypesDialog dlg = new ContactRelationTypesDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
+    }//GEN-LAST:event_mnuContactRelationTypesActionPerformed
+
     private void mnuFormsManagerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuFormsManagerActionPerformed
 
         if (checkAdmin()) {
@@ -3353,6 +3372,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuCalendarSetup;
     private javax.swing.JMenuItem mnuCalendarSyncNow;
     private javax.swing.JCheckBoxMenuItem mnuChkRandomBackground;
+    private javax.swing.JMenuItem mnuContactRelationTypes;
     private javax.swing.JMenuItem mnuCustomLauncherOptions;
     private javax.swing.JMenuItem mnuDocumentFolderTemplates;
     private javax.swing.JMenuItem mnuDocumentMonitor;
