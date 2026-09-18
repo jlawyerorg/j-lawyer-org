@@ -718,7 +718,81 @@ public class ClaimComponent implements Serializable {
     
     @Column(name = "comment")
     private String comment;
-    
+
+    /**
+     * Whether interest on this component runs from a fixed date or only from service of the dunning
+     * order.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "interest_start_mode", nullable = false, length = 20)
+    private InterestStartMode interestStartMode = InterestStartMode.FIXED_DATE;
+
+    /**
+     * First month a recurring monthly main claim is due, as YYYY-MM.
+     */
+    @Column(name = "recurrence_start_month")
+    private String recurrenceStartMonth;
+
+    /**
+     * Last month a recurring monthly main claim is due, as YYYY-MM; null means open-ended.
+     */
+    @Column(name = "recurrence_end_month")
+    private String recurrenceEndMonth;
+
+    /**
+     * Reference to what caused this component, e.g. a reminder stage or an enforcement measure.
+     */
+    @Column(name = "origin_reference")
+    private String originReference;
+
+    /**
+     * Number of the main claim catalogue (Hauptforderungskatalog) published by the dunning courts.
+     * Null for a free-text claim.
+     */
+    /**
+     * Whether this is a payment claim (Entgeltforderung). § 288 Abs. 2 BGB grants the higher
+     * default interest only for those, and § 288 Abs. 5 BGB ties the lump sum to the same
+     * condition.
+     */
+    @Column(name = "payment_claim")
+    private boolean paymentClaim = false;
+
+    @Column(name = "catalogue_number")
+    private String catalogueNumber;
+
+    /**
+     * Whether this main claim is submitted as a free-text claim ("sonstiger Anspruch") because the
+     * catalogue holds no fitting entry.
+     */
+    @Column(name = "free_text_claim")
+    private boolean freeTextClaim = false;
+
+    /**
+     * Postal code of the property, required by the catalogue numbers for residential and
+     * condominium claims.
+     */
+    @Column(name = "catalogue_property_zip")
+    private String cataloguePropertyZip;
+
+    /**
+     * Place of the property, required by the catalogue numbers for residential and condominium
+     * claims.
+     */
+    @Column(name = "catalogue_property_city")
+    private String cataloguePropertyCity;
+
+    /**
+     * Contract designation, required by the catalogue number for damages arising from a contract.
+     */
+    @Column(name = "catalogue_contract_designation")
+    private String catalogueContractDesignation;
+
+    /**
+     * Account, meter or service detail demanded by those catalogue numbers that require one.
+     */
+    @Column(name = "catalogue_reference_detail")
+    private String catalogueReferenceDetail;
+
     @OneToMany(mappedBy = "component", cascade = CascadeType.REMOVE)
     private List<InterestRule> interestRules = new ArrayList<>();
     
@@ -727,6 +801,25 @@ public class ClaimComponent implements Serializable {
      */
     public boolean isInterestBearing() {
         return getInterestRules() != null && !interestRules.isEmpty();
+    }
+
+    /**
+     * Whether interest on this component only starts once the dunning order has been served.
+     *
+     * @return true if the interest start depends on the service date
+     */
+    public boolean isInterestStartingOnService() {
+        return this.interestStartMode == InterestStartMode.ON_SERVICE;
+    }
+
+    /**
+     * Whether this component is classified by a catalogue number rather than submitted as a
+     * free-text claim.
+     *
+     * @return true if a catalogue number is set and the component is not marked as free text
+     */
+    public boolean isCatalogued() {
+        return !this.freeTextClaim && this.catalogueNumber != null && !this.catalogueNumber.isEmpty();
     }
 
     @Override
@@ -866,4 +959,160 @@ public class ClaimComponent implements Serializable {
         this.interestRules = interestRules;
     }
     
+
+    /**
+     * @return the interestStartMode
+     */
+    public InterestStartMode getInterestStartMode() {
+        return interestStartMode;
+    }
+
+    /**
+     * @param interestStartMode the interestStartMode to set
+     */
+    public void setInterestStartMode(InterestStartMode interestStartMode) {
+        this.interestStartMode = interestStartMode;
+    }
+
+    /**
+     * @return the recurrenceStartMonth
+     */
+    public String getRecurrenceStartMonth() {
+        return recurrenceStartMonth;
+    }
+
+    /**
+     * @param recurrenceStartMonth the recurrenceStartMonth to set
+     */
+    public void setRecurrenceStartMonth(String recurrenceStartMonth) {
+        this.recurrenceStartMonth = recurrenceStartMonth;
+    }
+
+    /**
+     * @return the recurrenceEndMonth
+     */
+    public String getRecurrenceEndMonth() {
+        return recurrenceEndMonth;
+    }
+
+    /**
+     * @param recurrenceEndMonth the recurrenceEndMonth to set
+     */
+    public void setRecurrenceEndMonth(String recurrenceEndMonth) {
+        this.recurrenceEndMonth = recurrenceEndMonth;
+    }
+
+    /**
+     * @return the originReference
+     */
+    public String getOriginReference() {
+        return originReference;
+    }
+
+    /**
+     * @param originReference the originReference to set
+     */
+    public void setOriginReference(String originReference) {
+        this.originReference = originReference;
+    }
+
+    /**
+     * @return the catalogueNumber
+     */
+    public String getCatalogueNumber() {
+        return catalogueNumber;
+    }
+
+    /**
+     * @param catalogueNumber the catalogueNumber to set
+     */
+    public void setCatalogueNumber(String catalogueNumber) {
+        this.catalogueNumber = catalogueNumber;
+    }
+
+    /**
+     * @return the freeTextClaim
+     */
+    public boolean isFreeTextClaim() {
+        return freeTextClaim;
+    }
+
+    /**
+     * @param freeTextClaim the freeTextClaim to set
+     */
+    public void setFreeTextClaim(boolean freeTextClaim) {
+        this.freeTextClaim = freeTextClaim;
+    }
+
+    /**
+     * @return the cataloguePropertyZip
+     */
+    public String getCataloguePropertyZip() {
+        return cataloguePropertyZip;
+    }
+
+    /**
+     * @param cataloguePropertyZip the cataloguePropertyZip to set
+     */
+    public void setCataloguePropertyZip(String cataloguePropertyZip) {
+        this.cataloguePropertyZip = cataloguePropertyZip;
+    }
+
+    /**
+     * @return the cataloguePropertyCity
+     */
+    public String getCataloguePropertyCity() {
+        return cataloguePropertyCity;
+    }
+
+    /**
+     * @param cataloguePropertyCity the cataloguePropertyCity to set
+     */
+    public void setCataloguePropertyCity(String cataloguePropertyCity) {
+        this.cataloguePropertyCity = cataloguePropertyCity;
+    }
+
+    /**
+     * @return the catalogueContractDesignation
+     */
+    public String getCatalogueContractDesignation() {
+        return catalogueContractDesignation;
+    }
+
+    /**
+     * @param catalogueContractDesignation the catalogueContractDesignation to set
+     */
+    public void setCatalogueContractDesignation(String catalogueContractDesignation) {
+        this.catalogueContractDesignation = catalogueContractDesignation;
+    }
+
+    /**
+     * @return the catalogueReferenceDetail
+     */
+    public String getCatalogueReferenceDetail() {
+        return catalogueReferenceDetail;
+    }
+
+    /**
+     * @param catalogueReferenceDetail the catalogueReferenceDetail to set
+     */
+    public void setCatalogueReferenceDetail(String catalogueReferenceDetail) {
+        this.catalogueReferenceDetail = catalogueReferenceDetail;
+    }
+
+
+    /**
+     * @return whether this is a payment claim (Entgeltforderung)
+     */
+    public boolean isPaymentClaim() {
+        return paymentClaim;
+    }
+
+    /**
+     * @param paymentClaim the paymentClaim to set
+     */
+    public void setPaymentClaim(boolean paymentClaim) {
+        this.paymentClaim = paymentClaim;
+    }
+
 }

@@ -25,7 +25,29 @@ class SmartTemplate {
     String WENNETIKETT(String etikett, String then) {
         return WENNETIKETT(etikett, then, "");
     }
-    
+
+    String WENNLETIKETT(String etikett, String wert, String then, String otherwise) {
+        if(etikett==null)
+            return otherwise;
+        if("".equals(etikett))
+            return otherwise;
+
+        return SmartFunctions.wennListenEtikett(caseId, etikett, wert, then, otherwise);
+    }
+
+    String WENNLETIKETT(String etikett, String wert, String then) {
+        return WENNLETIKETT(etikett, wert, then, "");
+    }
+
+    String LETIKETTWERT(String etikett) {
+        if(etikett==null)
+            return "";
+        if("".equals(etikett))
+            return "";
+
+        return SmartFunctions.listenEtikettWert(caseId, etikett);
+    }
+
     String WENNGLEICH(String s1, String s2, String then, String otherwise) {
         if(s1==null)
         s1="";

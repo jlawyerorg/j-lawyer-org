@@ -42,23 +42,59 @@ stored in the case archive.
 Full-text search SHALL support a `field:value` query prefix for the document metadata
 fields filename (`dateiname`), case name (`akte`), and case number (`az`), in addition to
 the default full-text search over document content. Metadata fielded matches SHALL be
-case-insensitive and support `*`/`?` wildcards. Any query without a recognized field
-prefix SHALL continue to be treated as literal full-text against the document content,
-with query-syntax special characters escaped so arbitrary input cannot cause a parse
-error. Metadata fielded search relies on non-analyzed keyword index fields, so it takes
-effect only for documents indexed after the change (a full re-index is required).
+case-insensitive and support `*`/`?` wildcards.
+
+A metadata value without wildcards SHALL match as a substring of the field, because the
+keyword index fields hold the whole filename/case name as a single term and an exact match
+would otherwise require the user to type the complete value. Enclosing the value in double
+quotes SHALL request an exact match of the whole field value instead. Double quotes SHALL
+be treated as syntax and never as part of the searched value; wildcards inside quotes SHALL
+still apply.
+
+Any query without a recognized field prefix SHALL continue to be treated as literal
+full-text against the document content, with query-syntax special characters escaped so
+arbitrary input cannot cause a parse error. Metadata fielded search relies on non-analyzed
+keyword index fields, so it takes effect only for documents indexed after the change (a
+full re-index is required).
 
 #### Scenario: Search by filename
-- **WHEN** a user searches for `dateiname:test.pdf`
-- **THEN** documents whose filename equals `test.pdf` (case-insensitive) are returned
+- **WHEN** a user searches for `dateiname:quittung`
+- **THEN** documents whose filename contains `quittung` (case-insensitive) are returned, and documents that merely mention it in their content are not
+
+#### Scenario: Exact filename search
+- **WHEN** a user searches for `dateiname:"test.pdf"`
+- **THEN** only documents whose filename is exactly `test.pdf` (case-insensitive) are returned
 
 #### Scenario: Wildcard filename search
 - **WHEN** a user searches for `dateiname:*.pdf`
 - **THEN** documents whose filename ends with `.pdf` (case-insensitive) are returned
 
+#### Scenario: Quoted wildcard pattern
+- **WHEN** a user searches for `dateiname:"*2026-08-??_Quittung*"`
+- **THEN** the quotes are stripped, the wildcards still apply, and the result is identical to the same pattern without quotes
+
 #### Scenario: Plain text search is unchanged and robust
 - **WHEN** a user searches without a recognized field prefix (e.g. `Vertrag 2024` or text containing special characters like `:` or `(`)
 - **THEN** the input is searched as literal full-text against the document content and does not raise a query parse error
+
+### Requirement: Metadata Matches Are Not Presented as Relevance
+A search hit SHALL carry whether its score is relevance-ranked, and clients SHALL NOT
+present a match percentage for hits that are not. A metadata field match is
+constant-scoring: every hit receives the same Lucene score, so the score carries no
+information about how well a document matches, and normalizing it against the best hit
+makes every single hit appear as a 100% match.
+
+#### Scenario: Field search hides the match percentage
+- **WHEN** a user runs a metadata field search (e.g. `dateiname:*quittung*`) in the desktop client
+- **THEN** the result rows show no match percentage, instead of showing 100% for every hit
+
+#### Scenario: Content search keeps its ranking
+- **WHEN** a user runs a full-text content search
+- **THEN** the hits are returned relevance-ranked and the client shows each hit's score relative to the best hit
+
+#### Scenario: REST clients can tell the difference
+- **WHEN** a REST client calls `GET /v8/search/fulltext`
+- **THEN** each returned hit states whether its score is relevance-ranked
 
 ### Requirement: Administrative Re-Index via REST API
 The REST API SHALL provide an administrator-only endpoint, under the "Search" category, to

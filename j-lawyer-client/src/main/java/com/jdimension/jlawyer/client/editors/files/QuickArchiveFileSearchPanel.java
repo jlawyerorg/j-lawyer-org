@@ -671,22 +671,16 @@ import com.jdimension.jlawyer.client.events.CasesChangedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.CaseUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.utils.UserUtils;
-import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
-import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
-import com.jdimension.jlawyer.services.FormsServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Color;
@@ -1299,74 +1293,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             for (int i = ids.size() - 1; i > -1; i--) {
                 ArchiveFileBean source = fileService.getArchiveFile(ids.get(i));
-                source.setArchiveFileDocumentsBeanList(null);
-                source.setArchiveFileReviewsBeanList(null);
-                source.setArchiveFileHistoryBeanList(null);
-                source.setArchiveFileAddressesBeanList(null);
-                source.setName(source.getName() + " (Kopie)");
-                source.setArchived(false);
-                source.setClaimNumber("");
-                source.setClaimValue(0f);
-                // reset external IDs
-                source.setExternalId(null);
-
-                ArchiveFileBean target = fileService.createArchiveFile(source);
-
-                Collection<ArchiveFileAddressesBean> parties = fileService.getInvolvementDetailsForCase(ids.get(i));
-                for (ArchiveFileAddressesBean aab : parties) {
-                    ArchiveFileAddressesBean newAab = new ArchiveFileAddressesBean();
-                    newAab.setAddressKey(aab.getAddressKey());
-                    newAab.setArchiveFileKey(target);
-                    newAab.setContact(aab.getContact());
-                    newAab.setCustom1(aab.getCustom1());
-                    newAab.setCustom2(aab.getCustom2());
-                    newAab.setCustom3(aab.getCustom3());
-                    newAab.setReferenceType(aab.getReferenceType());
-                    fileService.addAddressToCase(newAab);
-
-                }
-
-                fileService.updateArchiveFile(target);
-
-                Collection<ArchiveFileTagsBean> sourceTags = fileService.getTags(ids.get(i));
-                for (ArchiveFileTagsBean atb : sourceTags) {
-                    fileService.setTag(target.getId(), atb, true);
-                }
-
-                List<ArchiveFileGroupsBean> allowedGroups = fileService.getAllowedGroups(ids.get(i));
-                ArrayList<Group> targetGroups = new ArrayList<>();
-                for (ArchiveFileGroupsBean afgb : allowedGroups) {
-                    targetGroups.add(afgb.getAllowedGroup());
-                }
-                fileService.updateAllowedGroups(target.getId(), targetGroups);
-
-                if (includeForms) {
-                    FormsServiceRemote formsSvc = locator.lookupFormsServiceRemote();
-                    List<ArchiveFileFormsBean> forms = formsSvc.getFormsForCase(source.getId());
-                    for (ArchiveFileFormsBean form : forms) {
-                        ArchiveFileFormsBean newForm = new ArchiveFileFormsBean();
-                        newForm.setArchiveFileFormEntriesBeanList(new ArrayList<>());
-                        newForm.setArchiveFileKey(target);
-                        newForm.setCreationDate(new Date());
-                        newForm.setDescription(form.getDescription());
-                        newForm.setFormType(form.getFormType());
-                        newForm.setPlaceHolder(form.getPlaceHolder());
-                        newForm = formsSvc.addForm(target.getId(), newForm);
-                        List<ArchiveFileFormEntriesBean> formEntries = formsSvc.getFormEntries(form.getId());
-                        List<ArchiveFileFormEntriesBean> newFormEntries = new ArrayList<>();
-                        for (ArchiveFileFormEntriesBean formEntry : formEntries) {
-                            ArchiveFileFormEntriesBean newEntry = new ArchiveFileFormEntriesBean();
-                            newEntry.setArchiveFileKey(target);
-                            newEntry.setEntryKey(formEntry.getEntryKey());
-                            newEntry.setForm(newForm);
-                            newEntry.setPlaceHolder(formEntry.getPlaceHolder());
-                            newEntry.setStringValue(formEntry.getStringValue());
-                            newFormEntries.add(newEntry);
-                        }
-                        formsSvc.setFormEntries(newForm.getId(), newFormEntries);
-                    }
-                }
-
+                CaseUtils.duplicateCase(ids.get(i), source.getName() + " (Kopie)", includeForms);
             }
 
             EventBroker eb = EventBroker.getInstance();

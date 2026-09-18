@@ -150,17 +150,17 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" alignment="0" attributes="0">
-                                  <Component id="lblSubject" max="32767" attributes="0"/>
+                                  <Component id="lblSubject" min="0" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="lblSentDate" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Group type="102" alignment="0" attributes="0">
-                                  <Component id="lblFrom" max="32767" attributes="0"/>
+                                  <Component id="lblFrom" min="0" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="lblCaseNumber" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Group type="102" attributes="0">
-                                  <Component id="lblTo" max="32767" attributes="0"/>
+                                  <Component id="lblTo" min="0" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="lblReferenceJustice" min="-2" max="-2" attributes="0"/>
                               </Group>

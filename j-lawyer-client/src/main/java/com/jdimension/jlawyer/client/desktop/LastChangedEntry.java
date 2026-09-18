@@ -678,6 +678,7 @@ public class LastChangedEntry {
     private String lawyer=null;
     protected String assistant=null;
     private ArrayList<String> tags=null;
+    private boolean archived=false;
     
     
     public LastChangedEntry() {
@@ -780,6 +781,20 @@ public class LastChangedEntry {
      */
     public void setAssistant(String assistant) {
         this.assistant = assistant;
+    }
+
+    /**
+     * @return true if the case is archived
+     */
+    public boolean isArchived() {
+        return archived;
+    }
+
+    /**
+     * @param archived the archived flag to set
+     */
+    public void setArchived(boolean archived) {
+        this.archived = archived;
     }
     
 }

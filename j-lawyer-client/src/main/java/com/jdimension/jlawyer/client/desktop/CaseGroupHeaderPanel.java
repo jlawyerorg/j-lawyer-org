@@ -25,6 +25,7 @@ import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Image;
 import java.text.SimpleDateFormat;
@@ -40,7 +41,7 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class CaseGroupHeaderPanel extends javax.swing.JPanel {
+public class CaseGroupHeaderPanel extends javax.swing.JPanel implements CaseDropTarget {
 
     private static final Logger log = Logger.getLogger(CaseGroupHeaderPanel.class.getName());
 
@@ -52,8 +53,14 @@ public class CaseGroupHeaderPanel extends javax.swing.JPanel {
             DefaultColorTheme.COLOR_DARK_GREY.getGreen(),
             DefaultColorTheme.COLOR_DARK_GREY.getBlue(),
             190).darker().darker();
+    private static final Color HIGHLIGHT_COLOR = new Color(
+            DefaultColorTheme.COLOR_DARK_GREY.getRed(),
+            DefaultColorTheme.COLOR_DARK_GREY.getGreen(),
+            DefaultColorTheme.COLOR_DARK_GREY.getBlue(),
+            220).darker().darker();
 
     private String archiveFileId = null;
+    private boolean archived = false;
 
     /**
      * Creates new form CaseGroupHeaderPanel
@@ -77,6 +84,12 @@ public class CaseGroupHeaderPanel extends javax.swing.JPanel {
         if (compactView) {
             this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_folder_blue_36dp.png")));
         }
+
+        // drop indicator: sized to the folder icon and vertically centered next to it
+        this.lblDropIndicator.setIcon(new DropPlusIcon(compactView ? 16 : 20));
+        this.lblDropIndicator.setPreferredSize(new Dimension(this.lblDropIndicator.getPreferredSize().width, this.lblIcon.getPreferredSize().height));
+        this.lblDropIndicator.setVisible(false);
+        CaseEntryDropHandler.install(this);
 
         ClientSettings settings = ClientSettings.getInstance();
         String fontSizeOffset = settings.getConfiguration(ClientSettings.CONF_UI_FONTSIZEOFFSET, "0");
@@ -151,6 +164,32 @@ public class CaseGroupHeaderPanel extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * @param archived true if the case is archived - no documents can be
+     * dropped onto the header then
+     */
+    public void setArchived(boolean archived) {
+        this.archived = archived;
+    }
+
+    @Override
+    public String getDropCaseId() {
+        return this.archiveFileId;
+    }
+
+    @Override
+    public boolean isDropAllowed() {
+        return !this.archived;
+    }
+
+    @Override
+    public void setDropIndicatorVisible(boolean visible) {
+        this.lblDropIndicator.setVisible(visible);
+        this.jPanel1.setBackground(visible ? HIGHLIGHT_COLOR : HEADER_COLOR);
+        this.jPanel1.revalidate();
+        this.repaint();
+    }
+
     private void navigateToCase() {
         if (this.archiveFileId == null) {
             return;
@@ -216,6 +255,7 @@ public class CaseGroupHeaderPanel extends javax.swing.JPanel {
         lblIcon = new javax.swing.JLabel();
         lblCaseInfo = new javax.swing.JLabel();
         lblTags = new javax.swing.JLabel();
+        lblDropIndicator = new javax.swing.JLabel();
 
         setOpaque(false);
 
@@ -234,6 +274,8 @@ public class CaseGroupHeaderPanel extends javax.swing.JPanel {
         lblTags.setFont(lblTags.getFont().deriveFont(lblTags.getFont().getSize()-2f));
         lblTags.setText(" ");
 
+        lblDropIndicator.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 6));
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -242,6 +284,7 @@ public class CaseGroupHeaderPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addComponent(lblIcon)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblDropIndicator)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblCaseInfo, javax.swing.GroupLayout.DEFAULT_SIZE, 338, Short.MAX_VALUE)
                     .addComponent(lblTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -253,6 +296,7 @@ public class CaseGroupHeaderPanel extends javax.swing.JPanel {
                 .addGap(2, 2, 2)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblIcon)
+                    .addComponent(lblDropIndicator)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(lblCaseInfo)
                         .addGap(2, 2, 2)
@@ -283,6 +327,7 @@ public class CaseGroupHeaderPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel jPanel1;
     private javax.swing.JLabel lblCaseInfo;
+    private javax.swing.JLabel lblDropIndicator;
     private javax.swing.JLabel lblIcon;
     private javax.swing.JLabel lblTags;
     // End of variables declaration//GEN-END:variables

@@ -26,6 +26,8 @@ import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import com.jdimension.jlawyer.services.CaseLinkDTO;
+import com.jdimension.jlawyer.services.CaseLinkExistsException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
@@ -38,6 +40,7 @@ import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -49,6 +52,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 import org.jlawyer.io.rest.v8.pojo.RestfulCaseHistoryV8;
+import org.jlawyer.io.rest.v8.pojo.RestfulCaseLinkRequestV8;
+import org.jlawyer.io.rest.v8.pojo.RestfulCaseLinkV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulCaseOverviewV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulCasePageV8;
 
@@ -180,6 +185,186 @@ public class CasesEndpointV8 implements CasesEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("Can not get history for case " + id, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Returns the links (Aktenverknüpfungen) of a case. Every entry describes the case at the
+     * other end of the link as seen from the requested case, so a client never has to work out
+     * which of the two stored case references is "the other one". The underlying service enforces
+     * the ACL for the caller and silently omits links whose other case the caller may not see.
+     *
+     * @param id case id
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Case not found
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/{id}/links")
+    @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the links of a case (each with the case at the other end)", response = RestfulCaseLinkV8.class, responseContainer = "List")
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code = 404, message = "Not Found")})
+    public Response getCaseLinks(@PathParam("id") String id) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            if (cases.getArchiveFile(id) == null) {
+                log.warn("case with id " + id + " does not exist");
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            List<CaseLinkDTO> links = cases.getCaseLinks(id);
+            ArrayList<RestfulCaseLinkV8> result = new ArrayList<>();
+            for (CaseLinkDTO link : links) {
+                result.add(RestfulCaseLinkV8.fromCaseLinkDTO(link));
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("Can not get links for case " + id, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Links a case to another case. The link is symmetric and stored once, so it is immediately
+     * visible from either case and linking A to B is the same as linking B to A. Requires write
+     * permission on the given case and read permission on the case to link to; both cases get a
+     * history entry naming the other one.
+     *
+     * Two cases that are already linked are reported through the uniform error envelope, whose
+     * {@code error} is {@code CaseLinkExistsException} and whose {@code message} names both cases -
+     * so a client can tell that harmless situation from a real failure.
+     *
+     * @param id   case id
+     * @param body the case to link to ({@code linkedCaseId}) and an optional {@code description}
+     * @response 400 Missing linked case id
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Case not found
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/links")
+    @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Links a case to another case (symmetric, stored once)", response = RestfulCaseLinkV8.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code = 400, message = "Bad Request"), @io.swagger.annotations.ApiResponse(code = 404, message = "Not Found")})
+    public Response createCaseLink(@PathParam("id") String id, @io.swagger.annotations.ApiParam RestfulCaseLinkRequestV8 body) {
+        try {
+            if (body == null || body.getLinkedCaseId() == null || body.getLinkedCaseId().trim().isEmpty()) {
+                log.warn("linked case id is required for case " + id);
+                return Response.status(Response.Status.BAD_REQUEST).entity("Linked case id is required").build();
+            }
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            if (cases.getArchiveFile(id) == null) {
+                log.warn("case with id " + id + " does not exist");
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            CaseLinkDTO link = cases.linkCases(id, body.getLinkedCaseId().trim(), body.getDescription());
+            return Response.ok(RestfulCaseLinkV8.fromCaseLinkDTO(link)).build();
+        } catch (CaseLinkExistsException ex) {
+            // a harmless situation the user only needs to be told about - the error envelope carries
+            // the exception type, so a client can tell "already linked" from a real failure
+            log.warn("cases " + id + " and " + (body == null ? null : body.getLinkedCaseId()) + " are already linked");
+            return RestErrorResponses.serverError(ex);
+        } catch (Exception ex) {
+            log.error("Can not link case " + id, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Changes the free-text description of one of a case's links. The linked case itself can not
+     * be changed - a link is symmetric and stored once, so a different linked case means a
+     * different link. No history entry is written for a description change.
+     *
+     * @param id     case id
+     * @param linkId id of the link, which must be a link of that case
+     * @param body   the new {@code description} (may be empty to clear it)
+     * @response 400 Missing request body
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Case not found, or the link does not belong to that case
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/links/{linkId}")
+    @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Changes the description of a case link", response = RestfulCaseLinkV8.class)
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code = 400, message = "Bad Request"), @io.swagger.annotations.ApiResponse(code = 404, message = "Not Found")})
+    public Response updateCaseLink(@PathParam("id") String id, @PathParam("linkId") String linkId, @io.swagger.annotations.ApiParam RestfulCaseLinkRequestV8 body) {
+        try {
+            if (body == null) {
+                log.warn("link data is required for link " + linkId);
+                return Response.status(Response.Status.BAD_REQUEST).entity("Link data is required").build();
+            }
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            if (cases.getArchiveFile(id) == null) {
+                log.warn("case with id " + id + " does not exist");
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            CaseLinkDTO link = findLinkInCase(cases, id, linkId);
+            if (link == null) {
+                log.warn("link with id " + linkId + " does not exist in case " + id);
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            cases.updateCaseLinkDescription(linkId, body.getDescription());
+            link.setDescription(body.getDescription());
+            return Response.ok(RestfulCaseLinkV8.fromCaseLinkDTO(link)).build();
+        } catch (Exception ex) {
+            log.error("Can not update link " + linkId + " of case " + id, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Removes one of a case's links. Either side of a symmetric link may remove it; both cases get
+     * a history entry recording the removal.
+     *
+     * @param id     case id
+     * @param linkId id of the link, which must be a link of that case
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Case not found, or the link does not belong to that case
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/{id}/links/{linkId}")
+    @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Removes a link between two cases")
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code = 404, message = "Not Found")})
+    public Response deleteCaseLink(@PathParam("id") String id, @PathParam("linkId") String linkId) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            if (cases.getArchiveFile(id) == null) {
+                log.warn("case with id " + id + " does not exist");
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            if (findLinkInCase(cases, id, linkId) == null) {
+                log.warn("link with id " + linkId + " does not exist in case " + id);
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            cases.unlinkCases(linkId);
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("Can not remove link " + linkId + " of case " + id, ex);
             return RestErrorResponses.serverError(ex);
         }
     }
@@ -536,6 +721,22 @@ public class CasesEndpointV8 implements CasesEndpointLocalV8 {
             log.error("Can not build beA preview for document " + id, ex);
             return RestErrorResponses.serverError(ex);
         }
+    }
+
+    /**
+     * Returns the given case's link with that id, or null if the case has no such link - so a link
+     * id of another case (or one the caller may not see) maps to a 404 instead of acting on it.
+     */
+    private static CaseLinkDTO findLinkInCase(ArchiveFileServiceLocal cases, String caseId, String linkId) throws Exception {
+        if (linkId == null) {
+            return null;
+        }
+        for (CaseLinkDTO link : cases.getCaseLinks(caseId)) {
+            if (linkId.equals(link.getLinkId())) {
+                return link;
+            }
+        }
+        return null;
     }
 
     /** Unmarshals a stored .bea document (JAXB-serialised {@link com.jdimension.jlawyer.services.bea.rest.BeaMessage}). */

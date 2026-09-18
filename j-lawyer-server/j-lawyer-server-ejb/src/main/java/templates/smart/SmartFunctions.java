@@ -745,31 +745,86 @@ public class SmartFunctions {
     }
     
     public static String wennEtikett(String caseId, String etikett, String then, String otherwise) {
-        
-        if("".equals(caseId))
-            return otherwise;
-        
-        if("SMARTTEMPLATECASEID".equalsIgnoreCase(caseId))
-            return otherwise;
-        
+
         try {
-            InitialContext ic = new InitialContext();
-            ArchiveFileServiceLocal svc = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
-            Collection<ArchiveFileTagsBean> result=svc.getTags(caseId);
-            if(result==null || result.isEmpty()) {
+            ArchiveFileTagsBean tag=findTag(caseId, etikett);
+            if(tag==null)
                 return otherwise;
-            } else {
-                for(ArchiveFileTagsBean t: result) {
-                    if(t.getTagName().equalsIgnoreCase(etikett)) {
-                        return then;
-                    }
-                }
-                return otherwise;
-            }
+
+            return then;
         } catch (Throwable t) {
             log.error("unable to look up tags for case " + caseId, t);
             return "Fehler: " + t.getMessage();
         }
+    }
+
+    /**
+     * Returns "then" if a tag with the given name AND the given value is set on the case, "otherwise" in any other case.
+     * Name and value are compared case insensitively; null values are treated as empty strings, so a
+     * simple (boolean) tag without a value only matches when an empty value is requested.
+     */
+    public static String wennListenEtikett(String caseId, String etikett, String wert, String then, String otherwise) {
+
+        try {
+            ArchiveFileTagsBean tag=findTag(caseId, etikett);
+            if(tag==null)
+                return otherwise;
+
+            if(nullSafe(tag.getTagValue()).equalsIgnoreCase(nullSafe(wert)))
+                return then;
+
+            return otherwise;
+        } catch (Throwable t) {
+            log.error("unable to look up tags for case " + caseId, t);
+            return "Fehler: " + t.getMessage();
+        }
+    }
+
+    /**
+     * Returns the value of the list tag with the given name, or an empty string if the tag is not
+     * set on the case or does not carry a value.
+     */
+    public static String listenEtikettWert(String caseId, String etikett) {
+
+        try {
+            ArchiveFileTagsBean tag=findTag(caseId, etikett);
+            if(tag==null)
+                return "";
+
+            return nullSafe(tag.getTagValue());
+        } catch (Throwable t) {
+            log.error("unable to look up tags for case " + caseId, t);
+            return "Fehler: " + t.getMessage();
+        }
+    }
+
+    private static String nullSafe(String s) {
+        if(s==null)
+            return "";
+        return s;
+    }
+
+    private static ArchiveFileTagsBean findTag(String caseId, String etikett) throws Exception {
+
+        if(caseId==null || "".equals(caseId))
+            return null;
+
+        // placeholder was never substituted - there is no case context
+        if("SMARTTEMPLATECASEID".equalsIgnoreCase(caseId))
+            return null;
+
+        InitialContext ic = new InitialContext();
+        ArchiveFileServiceLocal svc = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+        Collection<ArchiveFileTagsBean> result=svc.getTags(caseId);
+        if(result==null || result.isEmpty())
+            return null;
+
+        for(ArchiveFileTagsBean t: result) {
+            if(t.getTagName()!=null && t.getTagName().equalsIgnoreCase(etikett)) {
+                return t;
+            }
+        }
+        return null;
     }
 
 }

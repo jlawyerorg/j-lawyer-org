@@ -1732,41 +1732,48 @@ public class EmailUtils extends CommonMailUtils {
                 .toArray(Address[]::new);
     }
     
-    public static String getAddressesAsList(Address[] a) throws UnsupportedEncodingException {
-        StringBuilder listString = new StringBuilder();
+    /**
+     * Returns the addresses as a list of individually formatted entries, e.g.
+     * {@code "Mueller, Anna" <a.mueller@kanzlei.de>}. Use this instead of
+     * splitting the result of getAddressesAsList on commas - personal names may
+     * contain commas themselves.
+     */
+    public static List<String> getAddressEntries(Address[] a) throws UnsupportedEncodingException {
+        List<String> entries = new ArrayList<>();
         if (a != null) {
             for (Address adr : a) {
                 if (adr == null) {
                     continue;
                 }
                 if (adr instanceof InternetAddress) {
-                    // listString.append(((InternetAddress) adr).getAddress()).append(", ");
                     InternetAddress ia = (InternetAddress) adr;
                     String personal = ia.getPersonal();
                     String email = ia.getAddress();
 
                     if (personal != null && !personal.isEmpty()) {
                         personal = decodeText(personal);
-                        listString.append("\"").append(personal).append("\" <").append(email).append(">, ");
+                        entries.add("\"" + personal + "\" <" + email + ">");
                     } else {
-                        listString.append(email).append(", ");
+                        entries.add(email);
                     }
                 } else {
-                    listString.append(decodeText(adr.toString())).append(", ");
+                    entries.add(decodeText(adr.toString()));
                 }
             }
         }
-
-        String s = listString.toString();
-        if (s.endsWith(", ")) {
-            s = s.substring(0, s.length() - 2);
-        }
-
-        return s;
+        return entries;
     }
 
-    public static String getAddressesAsList(List<OutlookRecipient> a) throws UnsupportedEncodingException {
-        StringBuilder listString = new StringBuilder();
+    public static String getAddressesAsList(Address[] a) throws UnsupportedEncodingException {
+        return String.join(", ", getAddressEntries(a));
+    }
+
+    /**
+     * Returns the recipients as a list of individually formatted entries, e.g.
+     * {@code "Mueller, Anna" <a.mueller@kanzlei.de>}.
+     */
+    public static List<String> getAddressEntries(List<OutlookRecipient> a) throws UnsupportedEncodingException {
+        List<String> entries = new ArrayList<>();
         if (a != null) {
             for (OutlookRecipient adr : a) {
                 if (adr == null) {
@@ -1778,20 +1785,17 @@ public class EmailUtils extends CommonMailUtils {
 
                 if (personal != null && !personal.isEmpty()) {
                     personal = decodeText(personal);
-                    listString.append("\"").append(personal).append("\" <").append(email).append(">, ");
+                    entries.add("\"" + personal + "\" <" + email + ">");
                 } else {
-                    listString.append(email).append(", ");
+                    entries.add(email);
                 }
-
             }
         }
+        return entries;
+    }
 
-        String s = listString.toString();
-        if (s.endsWith(", ")) {
-            s = s.substring(0, s.length() - 2);
-        }
-
-        return s;
+    public static String getAddressesAsList(List<OutlookRecipient> a) throws UnsupportedEncodingException {
+        return String.join(", ", getAddressEntries(a));
     }
 
     /**

@@ -671,7 +671,7 @@ import java.awt.event.ActionEvent;
 import java.math.BigDecimal;
 import java.util.List;
 import javax.swing.JMenuItem;
-import org.java.sepaxml.validator.SEPAValidatorIBAN;
+import org.iban4j.IbanUtil;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -721,7 +721,7 @@ public class SplitPaymentEntry extends javax.swing.JPanel {
                 if (iban == null || iban.trim().isEmpty()) {
                     lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
                     lblRecipient.setToolTipText("Keine IBAN hinterlegt");
-                } else if (!SEPAValidatorIBAN.isValid(iban.replaceAll("\\s", ""))) {
+                } else if (!IbanUtil.isValid(iban.replaceAll("\\s", "").toUpperCase())) {
                     lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
                     lblRecipient.setToolTipText("Ungültige IBAN: " + iban);
                 } else {

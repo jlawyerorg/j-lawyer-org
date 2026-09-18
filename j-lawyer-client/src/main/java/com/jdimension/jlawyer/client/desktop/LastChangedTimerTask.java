@@ -786,6 +786,7 @@ public class LastChangedTimerTask extends java.util.TimerTask {
                     lce.setAssistant(aFile.getAssistant());
                     lce.setName(aFile.getName());
                     lce.setReason(aFile.getReason());
+                    lce.setArchived(aFile.isArchived());
                     if (tags.get(aFile.getId()) != null) {
                         ArrayList<String> xTags = new ArrayList<>();
                         for (ArchiveFileTagsBean aftb : tags.get(aFile.getId())) {

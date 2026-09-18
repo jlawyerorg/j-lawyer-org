@@ -37,7 +37,6 @@
 /home/jens/dev/j-lawyer-org/j-lawyer-client/lib/dsn.jar => jlawyer.thirdparty:dsn:0.0.0
 /home/jens/dev/j-lawyer-org/j-lawyer-client/lib/sam.jar => jlawyer.thirdparty:sam:0.0.0
 /home/jens/dev/j-lawyer-org/j-lawyer-client/lib/commons-beanutils-1.8.0.jar => jlawyer.thirdparty:commons-beanutils:1.8.0
-/home/jens/dev/j-lawyer-org/j-lawyer-client/lib/java-sepa-xml/java-sepa-xml-1.0.1.jar => jlawyer.thirdparty:java-sepa-xml:1.0.1
 /home/jens/dev/j-lawyer-org/j-lawyer-client/lib/swingx.jar => jlawyer.thirdparty:swingx:0.0.0
 /home/jens/dev/j-lawyer-org/j-lawyer-client/lib/jcifs-1.3.18.jar => jlawyer.thirdparty:jcifs:1.3.18
 /home/jens/dev/j-lawyer-org/j-lawyer-client/lib/jsch-0.1.54.jar => jlawyer.thirdparty:jsch:0.1.54

@@ -1290,24 +1290,39 @@ public class AddressBean implements Serializable {
     }
     
     public String toDisplayName() {
+        return composeDisplayName(getCompany(), getDepartment(), getName(), getFirstName());
+    }
+
+    /**
+     * Builds the display name of a contact from its parts. Used where the parts are read as
+     * columns instead of as an entity, e.g. by projection queries, so that both ways of getting
+     * at a contact's name produce the same string.
+     *
+     * @param company the organisation, may be null or empty
+     * @param department the department, may be null or empty
+     * @param name the last name or organisation-side contact name
+     * @param firstName the first name, may be null or empty
+     * @return the display name
+     */
+    public static String composeDisplayName(String company, String department, String name, String firstName) {
         String returnValue = "";
-        
-            if (getCompany() != null && !("".equals(getCompany()))) {
-                returnValue = getCompany();
-                if (getDepartment()!= null && !("".equals(getDepartment()))) {
-                    returnValue = returnValue + " (Abt. " + getDepartment()+")";
+
+            if (company != null && !("".equals(company))) {
+                returnValue = company;
+                if (department != null && !("".equals(department))) {
+                    returnValue = returnValue + " (Abt. " + department + ")";
                 }
-                
-                String nametest = getName();
-                if (getFirstName() != null && !("".equals(getFirstName()))) {
-                    nametest = nametest + ", " + getFirstName();
+
+                String nametest = name;
+                if (firstName != null && !("".equals(firstName))) {
+                    nametest = nametest + ", " + firstName;
                 }
                 if(nametest!=null && !("".equals(nametest)))
                     returnValue=returnValue + "; " + nametest;
             } else {
-                returnValue = getName();
-                if (getFirstName() != null && !("".equals(getFirstName()))) {
-                    returnValue = returnValue + ", " + getFirstName();
+                returnValue = name;
+                if (firstName != null && !("".equals(firstName))) {
+                    returnValue = returnValue + ", " + firstName;
                 }
             }
             return returnValue;

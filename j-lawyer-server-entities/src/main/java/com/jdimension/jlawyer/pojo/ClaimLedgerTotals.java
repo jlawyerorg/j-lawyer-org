@@ -690,6 +690,17 @@ public class ClaimLedgerTotals implements Serializable {
     private List<ClaimComponentBalance> componentBalances = new ArrayList<>();
 
     /**
+     * What each debtor owes. Debtors are liable jointly and severally, so these figures overlap:
+     * summing them would count the joint part once per debtor.
+     */
+    private List<DebtorBalance> debtorBalances = new ArrayList<>();
+
+    /**
+     * The interest that keeps running after the key date, per interest-bearing position.
+     */
+    private List<ContinuingInterest> continuingInterest = new ArrayList<>();
+
+    /**
      * Map of component ID to balance for quick lookup
      */
     private Map<String, ClaimComponentBalance> componentBalanceMap = new HashMap<>();
@@ -835,6 +846,72 @@ public class ClaimLedgerTotals implements Serializable {
             return false;
         }
         return paymentAmount.compareTo(balance.getTotalOpenBalance()) > 0;
+    }
+
+
+    /**
+     * @return the balances per debtor; the amounts overlap, as debtors are liable jointly
+     */
+    public List<DebtorBalance> getDebtorBalances() {
+        return debtorBalances;
+    }
+
+    /**
+     * @param debtorBalances the debtorBalances to set
+     */
+    public void setDebtorBalances(List<DebtorBalance> debtorBalances) {
+        this.debtorBalances = debtorBalances;
+    }
+
+    /**
+     * @param balance the debtor balance to add
+     */
+    public void addDebtorBalance(DebtorBalance balance) {
+        this.debtorBalances.add(balance);
+    }
+
+    /**
+     * @param partyId the party to look up
+     * @return the balance of that debtor, or null if the ledger holds none
+     */
+    public DebtorBalance getDebtorBalance(String partyId) {
+        for (DebtorBalance b : this.debtorBalances) {
+            if (b.getPartyId() != null && b.getPartyId().equals(partyId)) {
+                return b;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @return the interest continuing to run after the key date
+     */
+    public List<ContinuingInterest> getContinuingInterest() {
+        return continuingInterest;
+    }
+
+    /**
+     * @param continuingInterest the continuingInterest to set
+     */
+    public void setContinuingInterest(List<ContinuingInterest> continuingInterest) {
+        this.continuingInterest = continuingInterest;
+    }
+
+    /**
+     * @param entry the continuing interest line to add
+     */
+    public void addContinuingInterest(ContinuingInterest entry) {
+        this.continuingInterest.add(entry);
+    }
+
+    /**
+     * Whether any position still bears interest after the key date, which decides whether a
+     * statement or an enforcement application has to carry the "weitere Zinsen" note at all.
+     *
+     * @return true if interest continues to run
+     */
+    public boolean hasContinuingInterest() {
+        return !this.continuingInterest.isEmpty();
     }
 
 }

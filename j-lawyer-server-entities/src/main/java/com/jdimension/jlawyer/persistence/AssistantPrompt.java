@@ -695,6 +695,8 @@ public class AssistantPrompt implements Serializable {
     private String configuration;
     @Column(name = "system_prompt", columnDefinition = "TEXT")
     private String systemPrompt;
+    @Column(name = "sub_menu")
+    private String subMenu;
 
     public AssistantPrompt() {
     }
@@ -820,6 +822,21 @@ public class AssistantPrompt implements Serializable {
      */
     public void setSystemPrompt(String systemPrompt) {
         this.systemPrompt = systemPrompt;
+    }
+
+    /**
+     * @return the submenu label, or null if the prompt sits on the top level of the assistant
+     * menus. Multiple submenus may be listed separated by semicolons.
+     */
+    public String getSubMenu() {
+        return subMenu;
+    }
+
+    /**
+     * @param subMenu the submenu label to set
+     */
+    public void setSubMenu(String subMenu) {
+        this.subMenu = subMenu;
     }
 
 }

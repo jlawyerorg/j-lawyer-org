@@ -724,6 +724,12 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     @EJB
     private ContactSyncServiceLocal contactSync;
 
+    @EJB
+    private ContactRelationFacadeLocal contactRelationFacade;
+
+    @EJB
+    private ContactRelationTypeFacadeLocal contactRelationTypeFacade;
+
     // custom hooks support
     @Inject
     Event<AddressCreatedEvent> newAddressEvent;
@@ -1027,6 +1033,103 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     @RolesAllowed({"readAddressRole"})
     public AddressBean getAddress(String id) {
         return this.addressFacade.find(id);
+    }
+
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public List<ContactRelationDTO> getRelations(String contactId) throws Exception {
+        if (contactId == null) {
+            throw new Exception("Es wurde kein Kontakt angegeben!");
+        }
+        if (this.addressFacade.find(contactId) == null) {
+            throw new Exception("Kontakt mit ID " + contactId + " existiert nicht!");
+        }
+        return this.contactRelationFacade.findDTOsByContact(contactId);
+    }
+
+    @Override
+    @RolesAllowed({"writeAddressRole"})
+    public ContactRelationDTO addRelation(String fromContactId, String toContactId, String typeId, String note) throws Exception {
+        if (fromContactId == null || toContactId == null) {
+            throw new Exception("Es wurden nicht zwei Kontakte angegeben!");
+        }
+        if (fromContactId.equals(toContactId)) {
+            throw new Exception("Ein Kontakt kann nicht mit sich selbst verknüpft werden!");
+        }
+
+        AddressBean fromContact = this.addressFacade.find(fromContactId);
+        if (fromContact == null) {
+            throw new Exception("Kontakt mit ID " + fromContactId + " existiert nicht!");
+        }
+        AddressBean toContact = this.addressFacade.find(toContactId);
+        if (toContact == null) {
+            throw new Exception("Kontakt mit ID " + toContactId + " existiert nicht!");
+        }
+        ContactRelationType type = this.contactRelationTypeFacade.find(typeId);
+        if (type == null) {
+            throw new Exception("Beziehungstyp mit ID " + typeId + " existiert nicht!");
+        }
+
+        AddressBean storedFrom = fromContact;
+        AddressBean storedTo = toContact;
+        if (type.isSymmetric()) {
+            // both directions are the same statement, so the pair is normalised and the unique
+            // index over (from, to, type) also catches the mirrored entry
+            String[] pair = ContactRelation.normalisePair(fromContactId, toContactId);
+            storedFrom = pair[0].equals(fromContactId) ? fromContact : toContact;
+            storedTo = pair[0].equals(fromContactId) ? toContact : fromContact;
+        }
+
+        if (this.contactRelationFacade.findByTriple(storedFrom.getId(), storedTo.getId(), type.getId()) != null) {
+            throw new ContactRelationExistsException("Die Beziehung \"" + type.getName() + "\" zwischen "
+                    + fromContact.toDisplayName() + " und " + toContact.toDisplayName() + " ist bereits erfasst!");
+        }
+
+        StringGenerator idGen = new StringGenerator();
+        ContactRelation relation = new ContactRelation();
+        relation.setId(idGen.getID().toString());
+        relation.setFromContact(storedFrom);
+        relation.setToContact(storedTo);
+        relation.setType(type);
+        relation.setNote(note);
+        relation.setDateCreated(new Date());
+        relation.setCreatedBy(context.getCallerPrincipal().getName());
+        this.contactRelationFacade.create(relation);
+
+        // returned as seen from the contact the caller acted on
+        boolean callerIsFromSide = storedFrom.getId().equals(fromContactId);
+        AddressBean other = callerIsFromSide ? storedTo : storedFrom;
+        return new ContactRelationDTO(relation.getId(), type.getLabel(callerIsFromSide), type.getId(),
+                type.getName(), type.isSymmetric(), type.getColor(), relation.getNote(),
+                relation.getDateCreated(), relation.getCreatedBy(), other.getId(), other.getCompany(),
+                other.getDepartment(), other.getName(), other.getFirstName(), other.getCity());
+    }
+
+    @Override
+    @RolesAllowed({"writeAddressRole"})
+    public void updateRelationNote(String relationId, String note) throws Exception {
+        ContactRelation relation = this.contactRelationFacade.find(relationId);
+        if (relation == null) {
+            throw new Exception("Beziehung mit ID " + relationId + " existiert nicht!");
+        }
+        relation.setNote(note);
+        this.contactRelationFacade.edit(relation);
+    }
+
+    @Override
+    @RolesAllowed({"writeAddressRole"})
+    public void removeRelation(String relationId) throws Exception {
+        ContactRelation relation = this.contactRelationFacade.find(relationId);
+        if (relation == null) {
+            throw new Exception("Beziehung mit ID " + relationId + " existiert nicht!");
+        }
+        this.contactRelationFacade.remove(relation);
+    }
+
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public Map<String, Integer> getRelationCounts(List<String> contactIds) {
+        return this.contactRelationFacade.countByContacts(contactIds);
     }
     
     @Override

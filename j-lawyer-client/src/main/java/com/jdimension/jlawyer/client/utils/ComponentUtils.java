@@ -692,6 +692,7 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
@@ -1437,5 +1438,141 @@ public class ComponentUtils {
             }
         }
         return list;
+    }
+
+    private static final String FULL_TEXT = "jlawyer.fullLabelText";
+
+    /**
+     * Maximum number of characters shown in a truncated preview, e.g. in a
+     * confirmation dialog.
+     */
+    private static final int PREVIEW_LENGTH = 120;
+
+    /**
+     * Displays the first of the given entries in the label and appends a
+     * counter for the remaining ones, e.g. {@code "Mueller, Anna" <a@b.de>
+     * (+212 weitere)}. Long entry lists would otherwise inflate the label's
+     * minimum width - which equals its preferred width for a JLabel - and
+     * thereby the minimum width of every enclosing container.
+     *
+     * The complete list is kept as a client property and as a wrapped tooltip,
+     * so it stays available for copying via {@link #getFullLabelText(JLabel)}.
+     */
+    public static void setListLabel(JLabel label, List<String> entries) {
+        setListLabel(label, entries, null);
+    }
+
+    /**
+     * Same as {@link #setListLabel(JLabel, List)}, but prepends the given hint
+     * to the tooltip, e.g. a note that clicking the label copies its content.
+     */
+    public static void setListLabel(JLabel label, List<String> entries, String hint) {
+        if (entries == null) {
+            entries = new ArrayList<>();
+        }
+        List<String> cleaned = new ArrayList<>();
+        for (String entry : entries) {
+            if (entry != null && !entry.trim().isEmpty()) {
+                cleaned.add(entry.trim());
+            }
+        }
+
+        String full = String.join(", ", cleaned);
+        String display;
+        if (cleaned.isEmpty()) {
+            display = "";
+        } else if (cleaned.size() == 1) {
+            display = cleaned.get(0);
+        } else {
+            display = cleaned.get(0) + "  (+" + (cleaned.size() - 1) + " weitere)";
+        }
+
+        label.setText(display);
+        label.putClientProperty(FULL_TEXT, full);
+
+        if (full.isEmpty()) {
+            // nothing to copy - no tooltip
+            label.setToolTipText(null);
+        } else if (hint == null) {
+            label.setToolTipText(toWrappedTooltip(full));
+        } else {
+            label.setToolTipText(toWrappedTooltip(hint + System.lineSeparator() + full));
+        }
+    }
+
+    /**
+     * Returns the untruncated text behind a label that was filled via
+     * {@link #setListLabel(JLabel, List)}, or the label's plain text if it was
+     * never truncated.
+     */
+    public static String getFullLabelText(JLabel label) {
+        Object full = label.getClientProperty(FULL_TEXT);
+        if (full instanceof String) {
+            return (String) full;
+        }
+        return label.getText();
+    }
+
+    /**
+     * Shortens text to a single line preview suitable for a dialog message.
+     */
+    public static String toPreview(String text) {
+        if (text == null) {
+            return "";
+        }
+        String oneLine = text.replaceAll("\\s+", " ").trim();
+        if (oneLine.length() <= PREVIEW_LENGTH) {
+            return oneLine;
+        }
+        return oneLine.substring(0, PREVIEW_LENGTH) + "\u2026";
+    }
+
+    /**
+     * Wraps long text into a fixed width HTML tooltip so that it does not
+     * become as wide as the screen. The text is HTML escaped first - address
+     * lists contain &lt;mail@domain.tld&gt;, which would otherwise be swallowed
+     * as a tag.
+     */
+    public static String toWrappedTooltip(String text) {
+        if (text == null) {
+            return null;
+        }
+        return "<html><body width=\"500\">"
+                + escapeHtml(text).replace(System.lineSeparator(), "<br>")
+                + "</body></html>";
+    }
+
+    /**
+     * Escapes the characters that are significant in HTML.
+     */
+    public static String escapeHtml(String s) {
+        if (s == null) {
+            return "";
+        }
+        StringBuilder b = new StringBuilder(s.length() + 16);
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            switch (c) {
+                case '&':
+                    b.append("&amp;");
+                    break;
+                case '<':
+                    b.append("&lt;");
+                    break;
+                case '>':
+                    b.append("&gt;");
+                    break;
+                case '"':
+                    b.append("&quot;");
+                    break;
+                case '\'':
+                    b.append("&#39;");
+                    break;
+                default:
+                    b.append(c);
+                    break;
+            }
+        }
+        return b.toString();
     }
 }

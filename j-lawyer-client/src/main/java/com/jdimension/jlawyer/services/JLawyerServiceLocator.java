@@ -759,6 +759,51 @@ public class JLawyerServiceLocator {
         }
     }
     
+    /**
+     * @return the court dunning procedure
+     */
+    public DunningServiceRemote lookupDunningServiceRemote() {
+        try {
+            return (DunningServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//DunningService!com.jdimension.jlawyer.services.DunningServiceRemote");
+        } catch (NamingException ne) {
+            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
+            throw new RuntimeException(ne);
+        }
+    }
+
+    /**
+     * @return the selection rules for the central dunning courts
+     */
+    public DunningCourtRuleServiceRemote lookupDunningCourtRuleServiceRemote() {
+        try {
+            return (DunningCourtRuleServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//DunningCourtRuleService!com.jdimension.jlawyer.services.DunningCourtRuleServiceRemote");
+        } catch (NamingException ne) {
+            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
+            throw new RuntimeException(ne);
+        }
+    }
+
+    /**
+     * @return the central court master data
+     */
+    public CourtServiceRemote lookupCourtServiceRemote() {
+        try {
+            return (CourtServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//CourtService!com.jdimension.jlawyer.services.CourtServiceRemote");
+        } catch (NamingException ne) {
+            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
+            throw new RuntimeException(ne);
+        }
+    }
+
+    public ClaimLedgerServiceRemote lookupClaimLedgerServiceRemote() {
+        try {
+            return (ClaimLedgerServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//ClaimLedgerService!com.jdimension.jlawyer.services.ClaimLedgerServiceRemote");
+        } catch (NamingException ne) {
+            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
+            throw new RuntimeException(ne);
+        }
+    }
+
     public DataBucketLoaderRemote lookupDataBucketLoaderRemote() {
         try {
             return (DataBucketLoaderRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//DataBucketLoader!com.jdimension.jlawyer.services.DataBucketLoaderRemote");

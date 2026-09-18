@@ -674,6 +674,7 @@ public class RestfulSearchHitV8 {
     private String archiveFileNumber;
     private String snippet;
     private float score;
+    private boolean relevanceRanked = true;
 
     public RestfulSearchHitV8() {
     }
@@ -690,6 +691,7 @@ public class RestfulSearchHitV8 {
         result.setArchiveFileNumber(hit.getArchiveFileNumber());
         result.setSnippet(toPlainText(hit.getText()));
         result.setScore(hit.getScore());
+        result.setRelevanceRanked(hit.isRelevanceRanked());
         return result;
     }
 
@@ -780,6 +782,14 @@ public class RestfulSearchHitV8 {
 
     public void setScore(float score) {
         this.score = score;
+    }
+
+    public boolean isRelevanceRanked() {
+        return relevanceRanked;
+    }
+
+    public void setRelevanceRanked(boolean relevanceRanked) {
+        this.relevanceRanked = relevanceRanked;
     }
 
 }

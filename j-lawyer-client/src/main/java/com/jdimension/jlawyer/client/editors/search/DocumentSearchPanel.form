@@ -162,7 +162,7 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons16/baseline_help_white_36dp.png"/>
         </Property>
-        <Property name="toolTipText" type="java.lang.String" value="&lt;html&gt;&lt;b&gt;Volltextsuche&lt;/b&gt; im Dokumentinhalt.&lt;br/&gt;Feld optional &#xfc;ber das Dropdown w&#xe4;hlen&lt;br/&gt;(Dateiname / Aktenname / Aktenzeichen).&lt;br/&gt;Platzhalter &lt;code&gt;*&lt;/code&gt;/&lt;code&gt;?&lt;/code&gt; nur in Feldsuchen.&lt;br/&gt;&lt;i&gt;Klicken f&#xfc;r Details.&lt;/i&gt;&lt;/html&gt;"/>
+        <Property name="toolTipText" type="java.lang.String" value="&lt;html&gt;&lt;b&gt;Volltextsuche&lt;/b&gt; im Dokumentinhalt.&lt;br/&gt;Feld optional &#xfc;ber das Dropdown w&#xe4;hlen&lt;br/&gt;(Dateiname / Aktenname / Aktenzeichen).&lt;br/&gt;Feldwerte treffen als Teilstring,&lt;br/&gt;in Anf&#xfc;hrungszeichen exakt.&lt;br/&gt;Platzhalter &lt;code&gt;*&lt;/code&gt;/&lt;code&gt;?&lt;/code&gt; nur in Feldsuchen.&lt;br/&gt;&lt;i&gt;Klicken f&#xfc;r Details.&lt;/i&gt;&lt;/html&gt;"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JComboBox" name="cmbSearchField">

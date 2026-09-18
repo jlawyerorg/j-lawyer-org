@@ -114,6 +114,29 @@ export interface CaseMessage {
   content: string;
 }
 
+/**
+ * A link to another case ("verknüpfte Akte", GET /v8/cases/{id}/links). Links are symmetric; the
+ * payload is always oriented from the requested case, so `linkedCase*` describes the other case.
+ */
+export interface CaseLink {
+  id: string;
+  /** Free-text description of the relationship ("Gegenakte", "Folgesache zu 12/24", …); '' when none. */
+  description: string;
+  /** ISO timestamp (sanitized); empty when unset. */
+  creationDate: string;
+  /** Login name of the user who created the link. */
+  createdBy: string;
+  linkedCaseId: string;
+  /** Aktenzeichen of the other case. */
+  linkedCaseFileNumber: string;
+  /** Kurzrubrum of the other case. */
+  linkedCaseName: string;
+  /** Betreff/Grund of the other case. */
+  linkedCaseReason: string;
+  /** True when the other case is archived ("abgelegt"). */
+  linkedCaseArchived: boolean;
+}
+
 /** Document shown in the case. */
 export interface CaseDocument {
   id: string;

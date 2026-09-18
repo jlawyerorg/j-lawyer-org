@@ -3,26 +3,31 @@ package com.jdimension.jlawyer.client.desktop;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.Invoice;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 /**
- * Wrapper class for global search results of different types (cases, addresses, calendar entries).
+ * Wrapper class for global search results of different types (cases, addresses, calendar entries, invoices).
  */
 public class GlobalSearchResultItem {
 
     public enum ResultType {
         CASE,
         ADDRESS,
-        CALENDAR
+        CALENDAR,
+        INVOICE
     }
 
     private static final ImageIcon ICON_CASE = new ImageIcon(GlobalSearchResultItem.class.getResource("/icons32/material/sharp_folder_blue_36dp.png"));
     private static final ImageIcon ICON_CASE_ARCHIVED = new ImageIcon(GlobalSearchResultItem.class.getResource("/icons32/material/folder_32dp_666666.png"));
     private static final ImageIcon ICON_ADDRESS = new ImageIcon(GlobalSearchResultItem.class.getResource("/icons32/material/baseline_perm_contact_calendar_blue_36dp.png"));
     private static final ImageIcon ICON_CALENDAR = new ImageIcon(GlobalSearchResultItem.class.getResource("/icons32/material/baseline_event_available_blue_36dp.png"));
+    private static final ImageIcon ICON_INVOICE = new ImageIcon(GlobalSearchResultItem.class.getResource("/icons32/material/list_36dp_0E72B5_FILL0_wght400_GRAD0_opsz40.png"));
     
 
     private final ResultType type;
@@ -43,6 +48,11 @@ public class GlobalSearchResultItem {
         this.bean = review;
     }
 
+    public GlobalSearchResultItem(Invoice invoice) {
+        this.type = ResultType.INVOICE;
+        this.bean = invoice;
+    }
+
     public ResultType getType() {
         return type;
     }
@@ -59,6 +69,8 @@ public class GlobalSearchResultItem {
                 return ((AddressBean) bean).getId();
             case CALENDAR:
                 return ((ArchiveFileReviewsBean) bean).getArchiveFileKey().getId();
+            case INVOICE:
+                return ((Invoice) bean).getArchiveFileKey().getId();
             default:
                 return null;
         }
@@ -75,6 +87,8 @@ public class GlobalSearchResultItem {
                 return ICON_ADDRESS;
             case CALENDAR:
                 return ICON_CALENDAR;
+            case INVOICE:
+                return ICON_INVOICE;
             default:
                 return null;
         }
@@ -91,6 +105,19 @@ public class GlobalSearchResultItem {
             case CALENDAR:
                 ArchiveFileReviewsBean rev = (ArchiveFileReviewsBean) bean;
                 return rev.getSummary();
+            case INVOICE:
+                Invoice inv = (Invoice) bean;
+                StringBuilder invSb = new StringBuilder();
+                if (inv.getInvoiceNumber() != null) {
+                    invSb.append(inv.getInvoiceNumber());
+                }
+                if (inv.getInvoiceType() != null && inv.getInvoiceType().getDisplayName() != null) {
+                    if (invSb.length() > 0) {
+                        invSb.append(" ");
+                    }
+                    invSb.append(inv.getInvoiceType().getDisplayName());
+                }
+                return invSb.toString();
             default:
                 return "";
         }
@@ -127,6 +154,27 @@ public class GlobalSearchResultItem {
                     calSb.append(df.format(rev.getBeginDate()));
                 }
                 return calSb.toString();
+            case INVOICE:
+                Invoice inv = (Invoice) bean;
+                StringBuilder invSb = new StringBuilder();
+                if (inv.getArchiveFileKey() != null) {
+                    invSb.append(inv.getArchiveFileKey().getFileNumber());
+                    if (inv.getArchiveFileKey().getName() != null && !inv.getArchiveFileKey().getName().isEmpty()) {
+                        invSb.append(" ").append(inv.getArchiveFileKey().getName());
+                    }
+                }
+                if (invSb.length() > 0) invSb.append(", ");
+                invSb.append(inv.getStatusString());
+                if (inv.getTotalGross() != null) {
+                    NumberFormat cf = NumberFormat.getNumberInstance(Locale.GERMANY);
+                    cf.setMinimumFractionDigits(2);
+                    cf.setMaximumFractionDigits(2);
+                    invSb.append(", ").append(cf.format(inv.getTotalGross()));
+                    if (inv.getCurrency() != null && !inv.getCurrency().isEmpty()) {
+                        invSb.append(" ").append(inv.getCurrency());
+                    }
+                }
+                return invSb.toString();
             default:
                 return "";
         }
@@ -158,6 +206,16 @@ public class GlobalSearchResultItem {
     public Date getBeginDate() {
         if (type == ResultType.CALENDAR) {
             return ((ArchiveFileReviewsBean) bean).getBeginDate();
+        }
+        return null;
+    }
+
+    /**
+     * Returns the creation date for invoices, or null for other types.
+     */
+    public Date getCreationDate() {
+        if (type == ResultType.INVOICE) {
+            return ((Invoice) bean).getCreationDate();
         }
         return null;
     }

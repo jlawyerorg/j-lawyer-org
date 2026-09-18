@@ -686,6 +686,11 @@ public class ViewArchiveFileDetailsPanel extends ArchiveFilePanel {
     public boolean isDirty() {
         return false;
     }
+
+    @Override
+    protected boolean isReadOnlyEditor() {
+        return true;
+    }
     
     
     

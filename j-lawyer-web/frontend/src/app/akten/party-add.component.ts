@@ -1,14 +1,34 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, OnInit, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { TranslocoModule } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
+import { ContactsService } from '../contacts/contacts.service';
 import { CasesService } from './cases.service';
-import { ContactRef, PartyTypeOption } from './case.models';
+import { ContactRef, Party, PartyTypeOption } from './case.models';
+
+/** A related contact of one of the case's parties, offered as a shortcut. */
+interface RelatedCandidate {
+  contactId: string;
+  /** Direction-correct label of the relationship, as configured (master data, not translated). */
+  label: string;
+  /** Display name of the related contact. */
+  name: string;
+  /** Display name of the party the relationship was read from. */
+  via: string;
+  /** True when that contact is already a party of the case — shown as such, not addable again. */
+  already: boolean;
+}
 
 /**
  * Modal dialog to add a party (Beteiligter) to a case: search an existing contact (address book)
  * and pick an involvement type (from the configured party types). Emits { addressId, involvementType }
  * on confirm — the parent does the REST call and reloads. Rendered only while open (mounted via @if).
+ *
+ * As a shortcut it offers the related contacts of the case's existing parties ("ist Geschäftsführer
+ * von – Max Müller"): picking one pre-fills the contact, so only the role is left to choose. The
+ * candidates are read when the dialog opens, never while the case is loaded; a related contact that
+ * is already a party of the case is marked as such and not addable again.
  */
 @Component({
   selector: 'jl-party-add',
@@ -35,6 +55,32 @@ import { ContactRef, PartyTypeOption } from './case.models';
             }
           </select>
         </label>
+
+        @if (candidatesAsked()) {
+          <div class="fld">
+            <span class="lbl">{{ 'akten.party.related' | transloco }}</span>
+            @if (candidatesLoading()) {
+              <p class="muted">{{ 'akten.loading' | transloco }}</p>
+            } @else if (candidates().length) {
+              <div class="related">
+                @for (r of candidates(); track r.contactId) {
+                  <button type="button" class="hit" [disabled]="r.already" [class.on]="selected()?.id === r.contactId"
+                          (click)="pickRelated(r)">
+                    <jl-icon name="contacts" [size]="15" />
+                    <span class="cl"><b>{{ r.label }}</b> {{ r.name }}</span>
+                    <span class="via">
+                      {{ r.already
+                          ? ('akten.party.relatedAlready' | transloco)
+                          : ('akten.party.relatedVia' | transloco: { name: r.via }) }}
+                    </span>
+                  </button>
+                }
+              </div>
+            } @else {
+              <p class="muted">{{ 'akten.party.relatedNone' | transloco }}</p>
+            }
+          </div>
+        }
 
         <label class="fld">
           <span class="lbl">{{ 'akten.party.contact' | transloco }}</span>
@@ -102,7 +148,12 @@ import { ContactRef, PartyTypeOption } from './case.models';
     .hit, .chosen { display: flex; align-items: center; gap: 10px; padding: 9px 11px; border-radius: 8px; font-size: .86rem; text-align: left; }
     .hit { background: var(--jl-surface-alt); border: 1px solid transparent; cursor: pointer; color: var(--jl-ink); font: inherit; }
     .hit:hover { border-color: var(--jl-blue); }
+    .hit.on { border-color: var(--jl-blue); }
+    .hit:disabled { opacity: .55; cursor: default; }
+    .hit:disabled:hover { border-color: transparent; }
     .chosen { background: color-mix(in srgb, var(--jl-blue) 10%, transparent); border: 1px solid var(--jl-blue); }
+    .related { display: flex; flex-direction: column; gap: 4px; max-height: 180px; overflow-y: auto; }
+    .related .via { flex: none; font-size: .76rem; color: var(--jl-ink-faint); }
     .cl { flex: 1; min-width: 0; }
     .clear { border: 0; background: none; color: var(--jl-ink-soft); cursor: pointer; font-size: .9rem; }
     .muted { color: var(--jl-ink-faint); font-size: .82rem; padding: 8px 2px; }
@@ -115,12 +166,19 @@ import { ContactRef, PartyTypeOption } from './case.models';
   `],
 })
 export class PartyAddComponent implements OnInit {
+  /** The parties the case already has — the source of the related-contact shortcuts. */
+  readonly parties = input<Party[]>([]);
   readonly save = output<{ addressId: string; involvementType: string }>();
   readonly close = output<void>();
 
   private readonly cases = inject(CasesService);
+  private readonly contacts = inject(ContactsService);
 
   protected readonly partyTypes = signal<PartyTypeOption[]>([]);
+  protected readonly candidates = signal<RelatedCandidate[]>([]);
+  protected readonly candidatesLoading = signal(false);
+  /** True once the shortcut was looked up, so an empty result is shown as unavailable, not hidden. */
+  protected readonly candidatesAsked = signal(false);
   protected readonly involvementType = signal('');
   protected readonly query = signal('');
   protected readonly results = signal<ContactRef[]>([]);
@@ -141,6 +199,54 @@ export class PartyAddComponent implements OnInit {
         this.involvementType.set(first.name);
       }
     });
+    this.loadCandidates();
+  }
+
+  /**
+   * Reads the relationships of every party that links a contact — once, when the dialog opens, never
+   * while the case is loaded. Contacts that are already parties of the case are kept in the list but
+   * marked and not addable again.
+   */
+  private loadCandidates(): void {
+    const parties = this.parties().filter((p) => p.addressId);
+    if (!parties.length) {
+      return;
+    }
+    const known = new Set(parties.map((p) => p.addressId));
+    this.candidatesAsked.set(true);
+    this.candidatesLoading.set(true);
+    forkJoin(parties.map((p) => this.contacts.relations(p.addressId))).subscribe({
+      next: (perParty) => {
+        const rows: RelatedCandidate[] = [];
+        const seen = new Set<string>();
+        perParty.forEach((relations, i) => {
+          const via = parties[i].contact || parties[i].contactName || parties[i].involvementType;
+          for (const r of relations) {
+            if (!r.otherContactId || seen.has(r.otherContactId)) {
+              continue;
+            }
+            seen.add(r.otherContactId);
+            rows.push({
+              contactId: r.otherContactId, label: r.label, name: r.otherContactName, via,
+              already: known.has(r.otherContactId),
+            });
+          }
+        });
+        this.candidates.set(rows);
+        this.candidatesLoading.set(false);
+      },
+      error: () => this.candidatesLoading.set(false),
+    });
+  }
+
+  /** Pre-fills the contact from a shortcut, leaving only the role to pick. */
+  protected pickRelated(r: RelatedCandidate): void {
+    if (r.already) {
+      return;
+    }
+    this.query.set('');
+    this.results.set([]);
+    this.selected.set({ id: r.contactId, label: `${r.label} ${r.name}`.trim() });
   }
 
   protected onSearch(value: string): void {

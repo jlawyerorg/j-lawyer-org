@@ -674,6 +674,7 @@ import java.awt.Image;
 import java.awt.event.KeyEvent;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.regex.Pattern;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.SwingConstants;
@@ -695,8 +696,10 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
      * Accurate description of the search syntax actually supported by the server-side
      * {@code SearchAPI}: a plain full-text query over the document content, OR a single
      * field prefix (dateiname/akte/az/text). Fields cannot be combined and boolean
-     * operators / phrases / exclusion are not supported. Shown by
-     * {@link #showSearchSyntaxHelp()}. Keep in sync with {@code SearchAPI.buildQuery()}.
+     * operators / exclusion are not supported. Quotes around a metadata field value mean
+     * "match the whole value exactly" - without them the value matches as a substring.
+     * Shown by {@link #showSearchSyntaxHelp()}. Keep in sync with
+     * {@code SearchQueryBuilder.build()}.
      */
     /**
      * Query prefix per entry of the field-selection combo ({@code cmbSearchField}). The
@@ -705,6 +708,16 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
      * An empty prefix means "search the document content" (value sent unchanged).
      */
     private static final String[] SEARCH_FIELD_PREFIXES = {"", "dateiname:", "akte:", "az:"};
+
+    /**
+     * Matches a field prefix the user typed themselves. When it is present, the prefix from
+     * {@code cmbSearchField} must NOT be prepended a second time: the resulting
+     * {@code dateiname:dateiname:...} is a valid query for the server but can never match
+     * anything, so the search silently returns nothing.
+     */
+    private static final Pattern EXPLICIT_FIELD_PREFIX
+            = Pattern.compile("^(dateiname|akte|az|text)\\s*:.*",
+                    Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
     private static final String SEARCH_SYNTAX_HELP
             = "<html><body style='width:380px'>"
@@ -721,11 +734,20 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
             + "</table>"
             + "Feldsuchen ignorieren Gro&szlig;-/Kleinschreibung; der gesamte Text nach dem "
             + "Doppelpunkt ist der Feldwert.<br/><br/>"
-            + "<b>Platzhalter</b> (nur in dateiname/akte/az):<br/>"
-            + "<code>*</code> = beliebig viele Zeichen, <code>?</code> = ein Zeichen, "
-            + "z.B. <code>dateiname:*.pdf</code><br/><br/>"
+            + "<b>Feldwert &ndash; Teiltreffer, Platzhalter, exakt</b> (dateiname/akte/az):<br/>"
+            + "<table cellpadding='2'>"
+            + "<tr><td valign='top'><code>dateiname:quittung</code></td>"
+            + "<td>findet jeden Namen, der <i>quittung</i> enth&auml;lt</td></tr>"
+            + "<tr><td valign='top'><code>dateiname:*26-08*</code></td>"
+            + "<td><code>*</code> = beliebig viele Zeichen, <code>?</code> = genau ein Zeichen</td></tr>"
+            + "<tr><td valign='top'><code>dateiname:\"quittung.pdf\"</code></td>"
+            + "<td>in Anf&uuml;hrungszeichen: nur der <i>exakte</i> Name</td></tr>"
+            + "</table>"
+            + "Platzhalter wirken auch innerhalb von Anf&uuml;hrungszeichen, z.B. "
+            + "<code>dateiname:\"*26-08-??_Quittung*\"</code>. In der Inhaltssuche haben "
+            + "Platzhalter keine Wirkung.<br/><br/>"
             + "<b>Nicht unterst&uuml;tzt:</b> Kombination mehrerer Felder, AND/OR/NOT, "
-            + "Phrasen in Anf&uuml;hrungszeichen, Ausschluss mit vorangestelltem Minus."
+            + "Ausschluss mit vorangestelltem Minus."
             + "</body></html>";
 
     // Debounced search control
@@ -833,7 +855,7 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
         lblResultCount.setText("0 Ergebnisse");
 
         jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_help_white_36dp.png"))); // NOI18N
-        jLabel3.setToolTipText("<html><b>Volltextsuche</b> im Dokumentinhalt.<br/>Feld optional über das Dropdown wählen<br/>(Dateiname / Aktenname / Aktenzeichen).<br/>Platzhalter <code>*</code>/<code>?</code> nur in Feldsuchen.<br/><i>Klicken für Details.</i></html>");
+        jLabel3.setToolTipText("<html><b>Volltextsuche</b> im Dokumentinhalt.<br/>Feld optional über das Dropdown wählen<br/>(Dateiname / Aktenname / Aktenzeichen).<br/>Feldwerte treffen als Teilstring,<br/>in Anführungszeichen exakt.<br/>Platzhalter <code>*</code>/<code>?</code> nur in Feldsuchen.<br/><i>Klicken für Details.</i></html>");
 
         cmbSearchField.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Inhalt", "Dateiname", "Aktenname", "Aktenzeichen" }));
 
@@ -932,6 +954,10 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
      */
     private String applySelectedSearchField(String rawValue) {
         String value = (rawValue == null) ? "" : rawValue.trim();
+        if (EXPLICIT_FIELD_PREFIX.matcher(value).matches()) {
+            // the user typed their own prefix - it wins over the dropdown selection
+            return rawValue;
+        }
         int idx = this.cmbSearchField.getSelectedIndex();
         if (idx >= 0 && idx < SEARCH_FIELD_PREFIXES.length) {
             String prefix = SEARCH_FIELD_PREFIXES[idx];
@@ -1009,17 +1035,20 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
                     lblResultCount.setText(hits.size() + " Ergebnisse in " + df.format((searchDuration/1000f)) + " Sekunden");
                     pnlResults.setLayout(new GridLayout(hits.size(), 1));
 
-                    float maxScore = 100f;
-                    if (hits.size() > 0) {
-                        maxScore = hits.get(0).getScore();
-                    }
+                    // Scores are shown relative to the best hit. That is only meaningful for a
+                    // relevance-ranked content search - a metadata field search is
+                    // constant-scoring, so its scores are left alone and HitPanel hides them.
+                    float maxScore = hits.isEmpty() ? 0f : hits.get(0).getScore();
+                    boolean normalize = !hits.isEmpty() && hits.get(0).isRelevanceRanked() && maxScore > 0f;
 
                     for (int i = 0; i < hits.size(); i++) {
                         HitPanel hp2 = new HitPanel();
                         if (i % 2 == 0) {
                             hp2.setBackground(hp2.getBackground().brighter());
                         }
-                        hits.get(i).setScore(hits.get(i).getScore() / maxScore);
+                        if (normalize) {
+                            hits.get(i).setScore(hits.get(i).getScore() / maxScore);
+                        }
                         hp2.setSearchHit(hits.get(i));
                         pnlResults.add(hp2);
                     }

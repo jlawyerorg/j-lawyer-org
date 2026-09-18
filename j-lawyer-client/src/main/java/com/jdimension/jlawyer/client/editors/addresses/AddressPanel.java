@@ -714,6 +714,8 @@ import com.jdimension.jlawyer.client.voip.VoipUtils;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.ContactRelationDTO;
+import com.jdimension.jlawyer.services.ContactRelationExistsException;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.ui.tagging.AddressTagActionListener;
@@ -770,6 +772,17 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     private static final Logger log = Logger.getLogger(AddressPanel.class.getName());
     private AddressBean dto = null;
+
+    // index of the "Beziehungen" tab, which is appended last
+    private static final int TAB_INDEX_RELATIONS = 9;
+
+    // the relationships of the open contact, read when the tab is first opened - never with the
+    // contact itself
+    private List<ContactRelationDTO> relations = null;
+
+    // whether this editor shows the contact read-only; the relationships are then listed and
+    // navigable but not editable
+    private boolean relationsReadOnly = false;
     private String openedFromEditorClass = null;
     private Image backgroundImage = null;
     protected String encryptionPwd = null;
@@ -896,6 +909,9 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     public void setReadOnly(boolean readOnly) {
 
+        this.relationsReadOnly = readOnly;
+        this.cmdAddRelation.setEnabled(!readOnly);
+        this.refreshRelationRowsReadOnly();
         this.cmdSave.setEnabled(!readOnly);
         this.cmdChooseBank.setEnabled(!readOnly);
         this.cmdChooseCity.setEnabled(!readOnly);
@@ -1038,6 +1054,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.txtWebsite.setText(dto.getWebsite());
         this.txtZipCode.setText(dto.getZipCode());
         this.pnlCasesForContact.removeAll();
+        this.clearRelations();
 
         this.txtCustom1.setText(dto.getCustom1());
         this.txtCustom2.setText(dto.getCustom2());
@@ -1408,6 +1425,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.txtWebsite.setText("");
         this.txtZipCode.setText("");
         this.pnlCasesForContact.removeAll();
+        this.clearRelations();
 
         this.txtCustom1.setText("");
         this.txtCustom2.setText("");
@@ -1741,6 +1759,11 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         jPanel10 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         pnlCasesForContact = new javax.swing.JPanel();
+        pnlRelationsTab = new javax.swing.JPanel();
+        jScrollPane11 = new javax.swing.JScrollPane();
+        pnlRelationsForContact = new javax.swing.JPanel();
+        cmdAddRelation = new javax.swing.JButton();
+        cmdShowRelationGraph = new javax.swing.JButton();
         lblHeaderInfo = new javax.swing.JLabel();
         jPanel23 = new javax.swing.JPanel();
         jLabel18 = new javax.swing.JLabel();
@@ -3293,6 +3316,65 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jTabbedPane1.addTab("Akten", new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png")), jPanel10); // NOI18N
 
+        org.jdesktop.layout.GroupLayout pnlRelationsForContactLayout = new org.jdesktop.layout.GroupLayout(pnlRelationsForContact);
+        pnlRelationsForContact.setLayout(pnlRelationsForContactLayout);
+        pnlRelationsForContactLayout.setHorizontalGroup(
+            pnlRelationsForContactLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 0, Short.MAX_VALUE)
+        );
+        pnlRelationsForContactLayout.setVerticalGroup(
+            pnlRelationsForContactLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 1567, Short.MAX_VALUE)
+        );
+
+        jScrollPane11.setViewportView(pnlRelationsForContact);
+
+        cmdAddRelation.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdAddRelation.setText("Beziehung hinzufügen");
+        cmdAddRelation.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddRelationActionPerformed(evt);
+            }
+        });
+
+        cmdShowRelationGraph.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/link_24dp_0E72B5_FILL0_wght400_GRAD0_opsz24.png"))); // NOI18N
+        cmdShowRelationGraph.setText("Netz anzeigen");
+        cmdShowRelationGraph.setToolTipText("Beziehungen dieses Kontakts als Netz darstellen");
+        cmdShowRelationGraph.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdShowRelationGraphActionPerformed(evt);
+            }
+        });
+
+        org.jdesktop.layout.GroupLayout pnlRelationsTabLayout = new org.jdesktop.layout.GroupLayout(pnlRelationsTab);
+        pnlRelationsTab.setLayout(pnlRelationsTabLayout);
+        pnlRelationsTabLayout.setHorizontalGroup(
+            pnlRelationsTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlRelationsTabLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlRelationsTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jScrollPane11, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1100, Short.MAX_VALUE)
+                    .add(pnlRelationsTabLayout.createSequentialGroup()
+                        .add(cmdAddRelation)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdShowRelationGraph)
+                        .add(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        pnlRelationsTabLayout.setVerticalGroup(
+            pnlRelationsTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlRelationsTabLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlRelationsTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(cmdAddRelation)
+                    .add(cmdShowRelationGraph))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jScrollPane11, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 740, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        jTabbedPane1.addTab("Beziehungen", new javax.swing.ImageIcon(getClass().getResource("/icons16/material/link_24dp_0E72B5_FILL0_wght400_GRAD0_opsz24.png")), pnlRelationsTab); // NOI18N
+
         lblHeaderInfo.setFont(lblHeaderInfo.getFont().deriveFont(lblHeaderInfo.getFont().getStyle() | java.awt.Font.BOLD, lblHeaderInfo.getFont().getSize()+2));
         lblHeaderInfo.setForeground(new java.awt.Color(255, 255, 255));
         lblHeaderInfo.setText("jLabel26");
@@ -3540,7 +3622,10 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     }
 
     private void jTabbedPane1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jTabbedPane1StateChanged
-        if (this.jTabbedPane1.getSelectedIndex() == 0) {
+        if (this.jTabbedPane1.getSelectedIndex() == TAB_INDEX_RELATIONS) {
+            // relationships are never loaded with the contact - only when this tab is opened
+            this.loadRelations();
+        } else if (this.jTabbedPane1.getSelectedIndex() == 0) {
             this.updateOverview();
         } else if (this.jTabbedPane1.getSelectedIndex() == 8) {
             if (this.dto == null) {
@@ -3562,6 +3647,194 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         }
     }//GEN-LAST:event_jTabbedPane1StateChanged
+
+    /**
+     * Empties the relationship list and forgets what was read, so the next time the tab is opened
+     * it reads for the contact shown then.
+     */
+    private void clearRelations() {
+        this.relations = null;
+        if (this.pnlRelationsForContact != null) {
+            this.pnlRelationsForContact.removeAll();
+            this.pnlRelationsForContact.revalidate();
+            this.pnlRelationsForContact.repaint();
+        }
+    }
+
+    /**
+     * Reads the relationships of the open contact and fills the list. Called when the tab is
+     * opened, and again after a relationship was added, changed or removed.
+     */
+    private void loadRelations() {
+        if (this.dto == null || this.dto.getId() == null) {
+            this.clearRelations();
+            return;
+        }
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            this.relations = locator.lookupAddressServiceRemote().getRelations(this.dto.getId());
+        } catch (Exception ex) {
+            log.error("Error loading relations for contact " + this.dto.getId(), ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Beziehungen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            this.relations = new ArrayList<>();
+        }
+
+        this.fillRelationsPanel();
+    }
+
+    private void fillRelationsPanel() {
+        this.pnlRelationsForContact.removeAll();
+
+        // BorderLayout with the rows in NORTH: the scroll pane's viewport stretches its view to
+        // the viewport height, so a GridLayout would spread two relationships over the whole tab
+        // and make each row enormous. NORTH gives the rows exactly their preferred height and
+        // leaves the rest of the space empty below them.
+        this.pnlRelationsForContact.setLayout(new java.awt.BorderLayout());
+
+        JPanel rows = new JPanel();
+        rows.setOpaque(false);
+        rows.setLayout(new javax.swing.BoxLayout(rows, javax.swing.BoxLayout.Y_AXIS));
+
+        if (this.relations == null || this.relations.isEmpty()) {
+            JLabel empty = new JLabel("keine Beziehungen erfasst");
+            empty.setForeground(java.awt.Color.GRAY);
+            empty.setAlignmentX(Component.LEFT_ALIGNMENT);
+            rows.add(empty);
+        } else {
+            boolean alternate = false;
+            for (ContactRelationDTO relation : this.relations) {
+                ContactRelationEntryPanel ep = new ContactRelationEntryPanel(this.getClass().getName());
+                ep.setEntry(relation);
+                ep.setReadOnly(this.relationsReadOnly);
+                ep.setListener(new ContactRelationEntryPanel.ContactRelationEntryListener() {
+                    @Override
+                    public void editNoteRequested(ContactRelationDTO edited) {
+                        editRelationNote(edited);
+                    }
+
+                    @Override
+                    public void removeRequested(ContactRelationDTO removed) {
+                        removeRelation(removed);
+                    }
+                });
+                if (alternate) {
+                    ep.setBackground(ep.getBackground().brighter());
+                }
+                alternate = !alternate;
+                ep.setAlignmentX(Component.LEFT_ALIGNMENT);
+                // BoxLayout would otherwise hand a row all the height it declares as its maximum
+                ep.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, ep.getPreferredSize().height));
+                rows.add(ep);
+            }
+        }
+
+        this.pnlRelationsForContact.add(rows, java.awt.BorderLayout.NORTH);
+        this.pnlRelationsForContact.revalidate();
+        this.pnlRelationsForContact.repaint();
+    }
+
+    private void refreshRelationRowsReadOnly() {
+        if (this.pnlRelationsForContact == null) {
+            return;
+        }
+        for (Component c : this.pnlRelationsForContact.getComponents()) {
+            if (c instanceof ContactRelationEntryPanel) {
+                ((ContactRelationEntryPanel) c).setReadOnly(this.relationsReadOnly);
+            }
+        }
+    }
+
+    private void cmdAddRelationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddRelationActionPerformed
+        if (this.dto == null || this.dto.getId() == null) {
+            JOptionPane.showMessageDialog(this, "Der Kontakt muss zuerst gespeichert werden.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        ContactRelationDialog dlg = new ContactRelationDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, null);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+        if (!dlg.isConfirmed()) {
+            dlg.dispose();
+            return;
+        }
+        String typeId = dlg.getSelectedTypeId();
+        String otherContactId = dlg.getOtherContactId();
+        boolean reverse = dlg.isReverseDirection();
+        String note = dlg.getNote();
+        dlg.dispose();
+
+        if (typeId == null || otherContactId == null) {
+            return;
+        }
+        if (otherContactId.equals(this.dto.getId())) {
+            JOptionPane.showMessageDialog(this, "Ein Kontakt kann nicht mit sich selbst verknüpft werden.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            // the label the user picked decides the direction: with the reverse label, the other
+            // contact is the one the forward label describes
+            if (reverse) {
+                locator.lookupAddressServiceRemote().addRelation(otherContactId, this.dto.getId(), typeId, note);
+            } else {
+                locator.lookupAddressServiceRemote().addRelation(this.dto.getId(), otherContactId, typeId, note);
+            }
+            this.loadRelations();
+        } catch (ContactRelationExistsException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ex) {
+            log.error("Error adding a relation for contact " + this.dto.getId(), ex);
+            JOptionPane.showMessageDialog(this, "Beziehung konnte nicht angelegt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdAddRelationActionPerformed
+
+    private void editRelationNote(ContactRelationDTO relation) {
+        String note = (String) JOptionPane.showInputDialog(this, "Bemerkung zur Beziehung \"" + relation.getLabel() + " "
+                + relation.getOtherContactDisplayName() + "\":", "Beziehung bearbeiten",
+                JOptionPane.QUESTION_MESSAGE, null, null, relation.getNote());
+        if (note == null) {
+            return;
+        }
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupAddressServiceRemote().updateRelationNote(relation.getRelationId(), note);
+            this.loadRelations();
+        } catch (Exception ex) {
+            log.error("Error updating note of relation " + relation.getRelationId(), ex);
+            JOptionPane.showMessageDialog(this, "Bemerkung konnte nicht gespeichert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void removeRelation(ContactRelationDTO relation) {
+        int response = JOptionPane.showConfirmDialog(this, "Beziehung \"" + relation.getLabel() + " "
+                + relation.getOtherContactDisplayName() + "\" entfernen?", "Beziehung entfernen", JOptionPane.YES_NO_OPTION);
+        if (response != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupAddressServiceRemote().removeRelation(relation.getRelationId());
+            this.loadRelations();
+        } catch (Exception ex) {
+            log.error("Error removing relation " + relation.getRelationId(), ex);
+            JOptionPane.showMessageDialog(this, "Beziehung konnte nicht entfernt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void cmdShowRelationGraphActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowRelationGraphActionPerformed
+        if (this.dto == null || this.dto.getId() == null) {
+            return;
+        }
+        com.jdimension.jlawyer.ui.graph.RelationshipGraphDialog.showForContact(EditorsRegistry.getInstance().getMainWindow(), this.dto.getId());
+    }//GEN-LAST:event_cmdShowRelationGraphActionPerformed
 
     private void cmdSendEmailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendEmailActionPerformed
         this.sendEmailTo(this.txtEmail.getText());
@@ -4690,6 +4963,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JComboBox<String> cmbState;
     protected javax.swing.JComboBox cmbTitle;
     protected javax.swing.JComboBox<String> cmbTitleInAddress;
+    private javax.swing.JButton cmdAddRelation;
+    private javax.swing.JButton cmdShowRelationGraph;
     private javax.swing.JButton cmdAdd;
     private javax.swing.JButton cmdAddFromTemplate;
     private javax.swing.JButton cmdAttributesFromClipboard;
@@ -4806,6 +5081,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JPanel jPanel8;
     private javax.swing.JPanel jPanel9;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane11;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
@@ -4830,6 +5106,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JMenuItem mnuDuplicateDocumentAsPdf;
     private javax.swing.JMenuItem mnuRenameDocument;
     private javax.swing.JPanel pnlCasesForContact;
+    private javax.swing.JPanel pnlRelationsForContact;
+    private javax.swing.JPanel pnlRelationsTab;
     private javax.swing.JPanel pnlDocuments;
     private javax.swing.JPanel pnlInvoicesChart;
     private javax.swing.JPopupMenu popDocuments;

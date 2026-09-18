@@ -674,6 +674,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import org.apache.log4j.Logger;
 
@@ -812,6 +813,108 @@ public class SecurityUtils {
         }
 
         return list;
+    }
+
+    /**
+     * Returns those of the given cases the user is allowed to see.
+     *
+     * Same visibility rule as {@link #getAllowedCasesForUser(java.lang.String, com.jdimension.jlawyer.services.SecurityServiceLocal)},
+     * but restricted to the given ids instead of enumerating every case of the installation - for
+     * filtering a handful of candidates, e.g. the cases a case is linked to.
+     *
+     * Note that this rule is slightly wider than
+     * {@link #checkGroupsForCase(java.util.List, com.jdimension.jlawyer.persistence.ArchiveFileBean, com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal)}:
+     * a case that has an owner group but no allowed groups at all counts as visible here, because
+     * that is what decides which cases show up in the user's search results. A link must not show
+     * a case the search hides, nor hide one the search shows.
+     *
+     * @param principalId the user
+     * @param caseIds the cases to check
+     * @param securityFacade used to determine the user's groups
+     * @return the subset of caseIds the user may see, empty if caseIds is empty
+     * @throws Exception on database errors
+     */
+    public static List<String> filterAllowedCases(String principalId, Collection<String> caseIds, SecurityServiceLocal securityFacade) throws Exception {
+        List<String> list = new ArrayList<>();
+        if (caseIds == null || caseIds.isEmpty()) {
+            return list;
+        }
+
+        List<Group> userGroups = new ArrayList<>();
+        try {
+            userGroups = securityFacade.getGroupsForUser(principalId);
+        } catch (Throwable t) {
+            log.error("Unable to determine groups for user " + principalId, t);
+        }
+
+        StringBuilder groupPlaceholders = new StringBuilder();
+        groupPlaceholders.append("'dummy'");
+        for (int i = 0; i < userGroups.size(); i++) {
+            groupPlaceholders.append(", ?");
+        }
+
+        StringBuilder casePlaceholders = new StringBuilder();
+        for (int i = 0; i < caseIds.size(); i++) {
+            if (i > 0) {
+                casePlaceholders.append(", ");
+            }
+            casePlaceholders.append("?");
+        }
+
+        String groupIn = groupPlaceholders.toString();
+        String caseIn = casePlaceholders.toString();
+
+        String sql = "select distinct (t1.id) from (\n"
+                + "select id from cases where id in (" + caseIn + ") and owner_group in (" + groupIn + ")\n"
+                + "union \n"
+                + "select id from cases where id in (" + caseIn + ") and owner_group is null \n"
+                + "union \n"
+                + "select distinct case_id id from case_groups where case_id in (" + caseIn + ") and group_id in (" + groupIn + ")\n"
+                + "union \n"
+                + "select id from cases where id in (" + caseIn + ") and id not in (select case_id from case_groups)\n"
+                + ") t1";
+
+        JDBCUtils utils = new JDBCUtils();
+        try (Connection con = utils.getConnection();
+                PreparedStatement st = con.prepareStatement(sql)) {
+
+            int index = 1;
+            index = setStringParameters(st, index, caseIds);
+            index = setGroupParameters(st, index, userGroups);
+            index = setStringParameters(st, index, caseIds);
+            index = setStringParameters(st, index, caseIds);
+            index = setGroupParameters(st, index, userGroups);
+            setStringParameters(st, index, caseIds);
+
+            try (ResultSet rs = st.executeQuery()) {
+                while (rs.next()) {
+                    list.add(rs.getString(1));
+                }
+            }
+        } catch (SQLException sqle) {
+            log.error("Error filtering cases accessible by the user", sqle);
+            throw new Exception("Could not determine cases accessible to the user", sqle);
+        }
+
+        return list;
+    }
+
+    private static int setStringParameters(PreparedStatement st, int index, Collection<String> values) throws SQLException {
+        int i = index;
+        for (String value : values) {
+            st.setString(i, value);
+            i = i + 1;
+        }
+        return i;
+    }
+
+    private static int setGroupParameters(PreparedStatement st, int index, List<Group> groups) throws SQLException {
+        int i = index;
+        for (Group g : groups) {
+            st.setString(i, g.getId());
+            i = i + 1;
+        }
+        return i;
     }
 
 }

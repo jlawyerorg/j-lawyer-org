@@ -4,7 +4,8 @@ import { catchError, defer, finalize, forkJoin, map, Observable, of, shareReplay
 import { API_ROOT } from '../core/api';
 import {
   ContactCase, ContactData, ContactDetail, ContactDocument, ContactField, ContactKV, ContactSection,
-  ContactFilter, ContactOverview, ContactType, RecipientSuggestion,
+  ContactFilter, ContactOverview, ContactRelation, ContactRelationType, ContactType, RecipientSuggestion,
+  toContactRelationType,
 } from './contact.models';
 
 const CONTACTS_V1 = `${API_ROOT}/v1/contacts`;
@@ -12,6 +13,7 @@ const CONTACTS_V2 = `${API_ROOT}/v2/contacts`;
 const CONTACTS_V5 = `${API_ROOT}/v5/contacts`;
 const CONTACTS_V7 = `${API_ROOT}/v7/contacts`;
 const CONTACTS_V8 = `${API_ROOT}/v8/contacts`;
+const RELATION_TYPES_V8 = `${API_ROOT}/v8/configuration/contact-relation-types`;
 const CASES_PARTIES = (caseId: string) => `${API_ROOT}/v1/cases/${caseId}/parties`;
 const PAGE_SIZE = 50;
 
@@ -51,6 +53,12 @@ interface AddressDocDto { id: string; name: string; size: number; creationDate: 
 interface ContactCaseDto { id: string; fileNumber: string; name: string; reason: string; dateChanged: string; }
 interface CasePartyDto { addressId?: string; involvementType?: string; }
 interface PartyTypeDto { name?: string; color?: number; }
+// RestfulContactRelationV8 (GET /v8/contacts/{id}/relations); the label is resolved for that side.
+interface ContactRelationDto {
+  id: string; label?: string; typeId?: string; typeName?: string; symmetric?: boolean;
+  color?: number; note?: string; creationDate?: string; createdBy?: string;
+  otherContactId?: string; otherContactName?: string; otherContactCompany?: string; otherContactCity?: string;
+}
 
 /**
  * Contact data access against the real REST API. The list is filtered/searched and paginated
@@ -257,6 +265,102 @@ export class ContactsService {
       catchError(() => of([])),
     );
   }
+
+  /**
+   * Stateless contact search for the relationship picker (GET /v8/contacts/page); [] on error and
+   * for terms shorter than two characters. Does not touch the list state.
+   */
+  searchContacts(query: string, limit = 20): Observable<ContactOverview[]> {
+    const term = query.trim();
+    if (term.length < 2) { return of([]); }
+    const params = new HttpParams()
+      .set('offset', '0').set('limit', String(limit)).set('filter', 'all').set('q', term);
+    return this.http.get<ContactPageDto>(`${CONTACTS_V8}/page`, { params }).pipe(
+      map((page) => (page.items ?? []).map(toOverview)),
+      catchError(() => of([])),
+    );
+  }
+
+  /**
+   * The contact's relationships (GET /v8/contacts/{id}/relations), each already worded from this
+   * contact's side; [] on error. Read only by this call — never together with the contact itself,
+   * since relationships form a graph.
+   */
+  relations(id: string): Observable<ContactRelation[]> {
+    return this.http.get<ContactRelationDto[]>(`${CONTACTS_V8}/${encodeURIComponent(id)}/relations`).pipe(
+      map((rows) => (rows ?? []).map(toContactRelation)),
+      catchError(() => of([])),
+    );
+  }
+
+  /** How many relationships a contact carries (for the delete warning); 0 on error. */
+  relationCount(id: string): Observable<number> {
+    return this.relations(id).pipe(map((rows) => rows.length));
+  }
+
+  /**
+   * Records a relationship (PUT /v8/contacts/{id}/relations): `contactId` takes the type's
+   * `labelFrom` side, `otherContactId` its `labelTo` side — the caller swaps the two when the user
+   * picked the reverse label. Errors are passed through (not swallowed) so the caller can show the
+   * server's message; a duplicate, a self-relation and an unknown type are rejected server-side.
+   */
+  addRelation(contactId: string, otherContactId: string, typeId: string, note: string): Observable<ContactRelation> {
+    const url = `${CONTACTS_V8}/${encodeURIComponent(contactId)}/relations`;
+    return this.write(this.http.put<ContactRelationDto>(url, { otherContactId, typeId, note }))
+      .pipe(map((dto) => toContactRelation(dto)));
+  }
+
+  /** Updates a relationship's note (PUT /v8/contacts/{id}/relations/{relationId}). */
+  updateRelationNote(contactId: string, relationId: string, note: string): Observable<unknown> {
+    const url = `${CONTACTS_V8}/${encodeURIComponent(contactId)}/relations/${encodeURIComponent(relationId)}`;
+    return this.write(this.http.put(url, { note }));
+  }
+
+  /** Removes a relationship (DELETE /v8/contacts/{id}/relations/{relationId}). */
+  removeRelation(contactId: string, relationId: string): Observable<unknown> {
+    const url = `${CONTACTS_V8}/${encodeURIComponent(contactId)}/relations/${encodeURIComponent(relationId)}`;
+    return this.write(this.http.delete(url));
+  }
+
+  /**
+   * The configured relationship types (GET /v8/configuration/contact-relation-types), sorted by
+   * sequence; `activeOnly` restricts them to the ones offered for new relationships. [] on error.
+   */
+  relationTypes(activeOnly = false): Observable<ContactRelationType[]> {
+    let params = new HttpParams();
+    if (activeOnly) { params = params.set('activeOnly', 'true'); }
+    return this.http.get<Partial<ContactRelationType>[]>(RELATION_TYPES_V8, { params }).pipe(
+      map((rows) => (rows ?? []).map(toContactRelationType)
+        .sort((a, b) => (a.sequenceNumber - b.sequenceNumber) || a.name.localeCompare(b.name))),
+      catchError(() => of([])),
+    );
+  }
+
+  /** Wraps a write call with the shared `saving` flag, keeping the server's error for the caller. */
+  private write<T>(call: Observable<T>): Observable<T> {
+    return defer(() => {
+      this.saving.set(true);
+      return call;
+    }).pipe(finalize(() => this.saving.set(false)));
+  }
+}
+
+function toContactRelation(dto: ContactRelationDto): ContactRelation {
+  return {
+    id: dto.id,
+    label: dto.label ?? '',
+    typeId: dto.typeId ?? '',
+    typeName: dto.typeName ?? '',
+    symmetric: !!dto.symmetric,
+    color: rgbHex(dto.color),
+    note: dto.note ?? '',
+    creationDate: isoDate(dto.creationDate),
+    createdBy: dto.createdBy ?? '',
+    otherContactId: dto.otherContactId ?? '',
+    otherContactName: dto.otherContactName ?? '',
+    otherContactCompany: dto.otherContactCompany ?? '',
+    otherContactCity: dto.otherContactCity ?? '',
+  };
 }
 
 function toContactDocument(dto: AddressDocDto): ContactDocument {

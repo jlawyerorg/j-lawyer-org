@@ -664,6 +664,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.messenger;
 
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
+import com.jdimension.jlawyer.client.desktop.CaseDropTarget;
+import com.jdimension.jlawyer.client.desktop.CaseEntryDropHandler;
+import com.jdimension.jlawyer.client.desktop.DropPlusIcon;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
@@ -695,7 +698,7 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class MessagePanel extends javax.swing.JPanel {
+public class MessagePanel extends javax.swing.JPanel implements CaseDropTarget {
 
     private static final Logger log = Logger.getLogger(MessagePanel.class.getName());
 
@@ -773,6 +776,37 @@ public class MessagePanel extends javax.swing.JPanel {
 
     public InstantMessage getMessage() {
         return this.calloutPanelComponent1.getMessage();
+    }
+
+    /**
+     * Allows dropping files onto this message to upload them into the case the
+     * message refers to.
+     */
+    public void enableCaseDrop() {
+        CaseEntryDropHandler.install(this);
+    }
+
+    @Override
+    public String getDropCaseId() {
+        if (!this.showCaseContext || this.im == null || this.im.getCaseContext() == null) {
+            return null;
+        }
+        return this.im.getCaseContext().getId();
+    }
+
+    @Override
+    public boolean isDropAllowed() {
+        return this.getDropCaseId() != null && !this.im.getCaseContext().isArchived();
+    }
+
+    @Override
+    public void setDropIndicatorVisible(boolean visible) {
+        if (this.getDropCaseId() == null) {
+            return;
+        }
+        this.lblCaseContext.setIcon(visible ? DropPlusIcon.appendedTo(this.caseIcon, 16, 4) : this.caseIcon);
+        this.revalidate();
+        this.repaint();
     }
 
     public int getCalloutWidth() {

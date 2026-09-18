@@ -772,8 +772,64 @@ public interface ArchiveFileServiceRemote {
     void setDocumentTags(List<String> documentIds, DocumentTagsBean tag, boolean active) throws Exception;
 
     Collection<ArchiveFileTagsBean> getTags(String archiveFileId) throws Exception;
-    
+
     HashMap<String,ArrayList<ArchiveFileTagsBean>> getTags(List<String> archiveFileId) throws Exception;
+
+    /**
+     * Returns the cases the given case is linked to (Aktenverknüpfung), each entry oriented
+     * towards the other case so the caller does not have to work out which end is which.
+     *
+     * Links whose other case the caller is not allowed to see are omitted silently, so neither
+     * the existence nor the file number of a restricted case is disclosed. Only the fields a
+     * linked-case list displays are transported; the linked cases themselves are not, so this
+     * call stays cheap enough to run on every case load.
+     *
+     * Requires read permission on the given case.
+     *
+     * @param archiveFileId the case ID
+     * @return the case's links, ordered by the other case's file number, empty if there are none
+     * @throws Exception if the case does not exist or the caller may not read it
+     */
+    List<CaseLinkDTO> getCaseLinks(String archiveFileId) throws Exception;
+
+    /**
+     * Links two cases to each other. The link is symmetric and stored once, so it is visible from
+     * either case and linking A to B is the same as linking B to A.
+     *
+     * Requires write permission on the given case and read permission on the case to link to.
+     *
+     * @param archiveFileId the case the user acts on
+     * @param otherArchiveFileId the case to link it to
+     * @param description optional free text describing the link, e.g. "Gegenakte", may be null
+     * @return the created link, oriented towards the other case
+     * @throws CaseLinkExistsException if the two cases are already linked, in either direction
+     * @throws Exception if either case does not exist, both ids are equal, or the caller lacks
+     * permission
+     */
+    CaseLinkDTO linkCases(String archiveFileId, String otherArchiveFileId, String description) throws Exception;
+
+    /**
+     * Changes the free-text description of an existing link. Does not write a case history entry -
+     * the description is an annotation, not a change of the relation.
+     *
+     * Requires write permission and access to at least one of the two linked cases.
+     *
+     * @param linkId ID of the link
+     * @param description the new description, may be null to clear it
+     * @throws Exception if the link does not exist or the caller lacks permission
+     */
+    void updateCaseLinkDescription(String linkId, String description) throws Exception;
+
+    /**
+     * Removes a link between two cases and records the removal in the history of both.
+     *
+     * Requires write permission and access to at least one of the two linked cases - either side
+     * of a symmetric link may remove it.
+     *
+     * @param linkId ID of the link
+     * @throws Exception if the link does not exist or the caller lacks permission
+     */
+    void unlinkCases(String linkId) throws Exception;
     
     Collection<DocumentTagsBean> getDocumentTags(String documentId) throws Exception;
     
