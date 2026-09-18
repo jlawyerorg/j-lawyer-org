@@ -1348,23 +1348,15 @@ public class AssistantChatPanel extends JDialog {
     private void cmdPromptMouseReleased(java.awt.event.MouseEvent evt) {
         try {
             AssistantAccess ingo = AssistantAccess.getInstance();
-            this.popAssistant.removeAll();
-            List<AssistantPrompt> customPrompts = ingo.getCustomPrompts(AiCapability.REQUESTTYPE_CHAT);
-            for (AssistantPrompt p : customPrompts) {
-                JMenuItem mi = new JMenuItem();
-                mi.setText(p.getName());
-                mi.setIcon(ingo.getCompoundIcon(AiCapability.REQUESTTYPE_CHAT, p.getModelRef()));
-                mi.addActionListener((ActionEvent e) -> {
-                    if (!p.getPrompt().contains("{{")) {
-                        this.taPrompt.setText(p.getPrompt());
-                    } else {
-                        HashMap<String, Object> placeHolders = TemplatesUtil.getPlaceHolderValues(p.getPrompt(), selectedCase, this.parties, null, null, this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant);
-                        String promptWithValues = TemplatesUtil.replacePlaceHolders(p.getPrompt(), placeHolders);
-                        this.taPrompt.setText(promptWithValues);
-                    }
-                });
-                popAssistant.add(mi);
-            }
+            ingo.populatePromptMenu(this.popAssistant, AiCapability.REQUESTTYPE_CHAT, (AssistantPrompt p) -> {
+                if (!p.getPrompt().contains("{{")) {
+                    this.taPrompt.setText(p.getPrompt());
+                } else {
+                    HashMap<String, Object> placeHolders = TemplatesUtil.getPlaceHolderValues(p.getPrompt(), selectedCase, this.parties, null, null, this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant);
+                    String promptWithValues = TemplatesUtil.replacePlaceHolders(p.getPrompt(), placeHolders);
+                    this.taPrompt.setText(promptWithValues);
+                }
+            });
 
             this.popAssistant.show(this.cmdPrompt, evt.getX(), evt.getY());
         } catch (Exception ex) {

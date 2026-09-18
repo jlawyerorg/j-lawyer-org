@@ -706,7 +706,6 @@ import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
@@ -1200,26 +1199,17 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
     private void cmdPromptMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdPromptMouseReleased
         try {
             AssistantAccess ingo = AssistantAccess.getInstance();
-            this.popAssistant.removeAll();
-            List<AssistantPrompt> customPrompts = ingo.getCustomPrompts(AiCapability.REQUESTTYPE_GENERATE);
-            for (AssistantPrompt p : customPrompts) {
-                JMenuItem mi = new JMenuItem();
-                mi.setText(p.getName());
-                mi.setIcon(ingo.getCompoundIcon(AiCapability.REQUESTTYPE_GENERATE, p.getModelRef()));
-                mi.addActionListener((ActionEvent e) -> {
-
-                    if (!p.getPrompt().contains("{{")) {
-                        // no placeholders in prompt
-                        this.taPrompt.setText(p.getPrompt());
-                    } else {
-                        // placeholders present in prompt
-                        HashMap<String, Object> placeHolders = TemplatesUtil.getPlaceHolderValues(p.getPrompt(), selectedCase, this.parties, null, null, this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant);
-                        String promptWithValues = TemplatesUtil.replacePlaceHolders(p.getPrompt(), placeHolders);
-                        this.taPrompt.setText(promptWithValues);
-                    }
-                });
-                popAssistant.add(mi);
-            }
+            ingo.populatePromptMenu(this.popAssistant, AiCapability.REQUESTTYPE_GENERATE, (AssistantPrompt p) -> {
+                if (!p.getPrompt().contains("{{")) {
+                    // no placeholders in prompt
+                    this.taPrompt.setText(p.getPrompt());
+                } else {
+                    // placeholders present in prompt
+                    HashMap<String, Object> placeHolders = TemplatesUtil.getPlaceHolderValues(p.getPrompt(), selectedCase, this.parties, null, null, this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant);
+                    String promptWithValues = TemplatesUtil.replacePlaceHolders(p.getPrompt(), placeHolders);
+                    this.taPrompt.setText(promptWithValues);
+                }
+            });
 
             this.popAssistant.show(this.cmdPrompt, evt.getX(), evt.getY());
         } catch (Exception ex) {

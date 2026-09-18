@@ -61,6 +61,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
 
     private JTable tblPrompts;
     private JTextField txtName;
+    private JComboBox<String> cmbSubMenu;
     private JComboBox<String> cmbRequestType;
     private JComboBox<String> cmbModel;
     private JTextArea taPrompt;
@@ -141,6 +142,8 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
             this.tblPrompts.setRowSorter(sorter);
             this.tblPrompts.getRowSorter().toggleSortOrder(0);
 
+            this.refreshSubMenuModel();
+
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -162,9 +165,55 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
         });
     }
 
+    /**
+     * Fills the submenu combo box with the labels currently in use, exactly as they are
+     * stored - including combined values such as "Klage;Vorlagen" - sorted alphabetically and
+     * preceded by an empty entry. Whatever the user has typed into the editor is kept.
+     */
+    private void refreshSubMenuModel() {
+        boolean wasUpdating = updatingUI;
+        updatingUI = true;
+        try {
+            Object current = this.cmbSubMenu.getEditor().getItem();
+
+            List<String> labels = new ArrayList<>();
+            TableModel model = this.tblPrompts.getModel();
+            for (int i = 0; i < model.getRowCount(); i++) {
+                Object value = model.getValueAt(i, 0);
+                if (value instanceof AssistantPrompt) {
+                    String subMenu = ((AssistantPrompt) value).getSubMenu();
+                    if (subMenu != null && !subMenu.trim().isEmpty() && !labels.contains(subMenu.trim())) {
+                        labels.add(subMenu.trim());
+                    }
+                }
+            }
+            labels.sort(String.CASE_INSENSITIVE_ORDER);
+            labels.add(0, "");
+
+            this.cmbSubMenu.setModel(new DefaultComboBoxModel<>(labels.toArray(new String[0])));
+            this.cmbSubMenu.getEditor().setItem(current != null ? current : "");
+        } finally {
+            updatingUI = wasUpdating;
+        }
+    }
+
+    /**
+     * Reads the submenu label from the combo box editor - not from the selected item, because
+     * the user may have typed a new label without confirming it. Returns null when blank.
+     */
+    private String getSubMenuValue() {
+        Object value = this.cmbSubMenu.getEditor().getItem();
+        if (value == null) {
+            return null;
+        }
+        String subMenu = value.toString().trim();
+        return subMenu.isEmpty() ? null : subMenu;
+    }
+
     private void resetDetails() {
         updatingUI = true;
         this.txtName.setText("");
+        this.cmbSubMenu.getEditor().setItem("");
         if (this.cmbRequestType.getItemCount() > 0) {
             this.cmbRequestType.setSelectedIndex(0);
         }
@@ -351,6 +400,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
     private void updatedUI(AssistantPrompt ap) {
         updatingUI = true;
         this.txtName.setText(ap.getName());
+        this.cmbSubMenu.getEditor().setItem(ap.getSubMenu() != null ? ap.getSubMenu() : "");
         this.cmbRequestType.setSelectedItem(ap.getRequestType());
         this.taPrompt.setText(ap.getPrompt());
         this.taSystemPrompt.setText(ap.getSystemPrompt() != null ? ap.getSystemPrompt() : "");
@@ -486,6 +536,11 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
         JLabel jLabel1 = new JLabel("Name:");
         txtName = new JTextField();
 
+        JLabel jLabelSubMenu = new JLabel("Untermenü:");
+        cmbSubMenu = new JComboBox<>();
+        cmbSubMenu.setEditable(true);
+        cmbSubMenu.setToolTipText("Untermenü, in dem der Prompt erscheint; leer = oberste Ebene. Mehrere Untermenüs mit Semikolon trennen.");
+
         cmdSave = new JButton();
         cmdSave.setIcon(new ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
         cmdSave.setText("\u00dcbernehmen");
@@ -579,6 +634,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
                                         .addGroup(layout.createSequentialGroup()
                                                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                                         .addComponent(jLabel1)
+                                                        .addComponent(jLabelSubMenu)
                                                         .addComponent(jLabel3)
                                                         .addComponent(jLabelModel)
                                                         .addComponent(jLabelModelDesc)
@@ -593,6 +649,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
                                                 .addGap(10, 10, 10)
                                                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                                         .addComponent(txtName)
+                                                        .addComponent(cmbSubMenu, GroupLayout.Alignment.TRAILING, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                                         .addComponent(jScrollPane2)
                                                         .addComponent(jScrollPane3)
                                                         .addComponent(cmbRequestType, GroupLayout.Alignment.TRAILING, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -625,6 +682,10 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
                                                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                                                         .addComponent(txtName, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                                                         .addComponent(jLabel1))
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                                        .addComponent(jLabelSubMenu)
+                                                        .addComponent(cmbSubMenu, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                                                         .addComponent(jLabel3)
@@ -698,6 +759,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
 
             AssistantPrompt ap = new AssistantPrompt();
             ap.setName(newNameObject.toString());
+            ap.setSubMenu(getSubMenuValue());
             ap.setRequestType(this.cmbRequestType.getSelectedItem().toString());
             ap.setPrompt(this.taPrompt.getText());
 
@@ -717,6 +779,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
 
             ((DefaultTableModel) this.tblPrompts.getModel()).addRow(new Object[]{savedPrompt, savedPrompt.getRequestType()});
             this.tblPrompts.getSelectionModel().setSelectionInterval(this.tblPrompts.getRowCount() - 1, this.tblPrompts.getRowCount() - 1);
+            this.refreshSubMenuModel();
 
         } catch (Exception ex) {
             log.error("Error creating new prompt", ex);
@@ -730,6 +793,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
         if (row >= 0) {
             AssistantPrompt ap = (AssistantPrompt) this.tblPrompts.getValueAt(row, 0);
             ap.setName(this.txtName.getText());
+            ap.setSubMenu(getSubMenuValue());
             ap.setRequestType(this.cmbRequestType.getSelectedItem().toString());
             ap.setPrompt(this.taPrompt.getText());
 
@@ -758,6 +822,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
                 row = this.tblPrompts.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblPrompts.getModel()).setValueAt(savedPrompt, row, 0);
                 ((DefaultTableModel) this.tblPrompts.getModel()).setValueAt(savedPrompt.getRequestType(), row, 1);
+                this.refreshSubMenuModel();
 
             } catch (Exception ex) {
                 log.error("Error updating prompt", ex);
@@ -803,6 +868,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
 
             AssistantPrompt ap = new AssistantPrompt();
             ap.setName(source.getName() + " (Kopie)");
+            ap.setSubMenu(source.getSubMenu());
             ap.setRequestType(source.getRequestType());
             ap.setPrompt(source.getPrompt());
             ap.setSystemPrompt(source.getSystemPrompt());
@@ -835,6 +901,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
     private String exportPromptToJson(AssistantPrompt ap, boolean[] apiKeyRemoved) {
         JsonObject json = new JsonObject();
         json.put("name", ap.getName());
+        json.put("subMenu", ap.getSubMenu());
         json.put("requestType", ap.getRequestType());
         json.put("prompt", ap.getPrompt());
         json.put("systemPrompt", ap.getSystemPrompt());
@@ -937,6 +1004,11 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
                 ap.setSystemPrompt(systemPrompt);
             }
 
+            String subMenu = json.getStringOrDefault(Jsoner.mintJsonKey("subMenu", null));
+            if (subMenu != null && !subMenu.trim().isEmpty()) {
+                ap.setSubMenu(subMenu.trim());
+            }
+
             String configuration = json.getStringOrDefault(Jsoner.mintJsonKey("configuration", null));
             if (configuration != null && !configuration.isEmpty()) {
                 ap.setConfiguration(configuration);
@@ -952,6 +1024,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
             int viewRow = this.tblPrompts.convertRowIndexToView(modelRow);
             this.tblPrompts.getSelectionModel().setSelectionInterval(viewRow, viewRow);
             this.tblPrompts.scrollRectToVisible(this.tblPrompts.getCellRect(viewRow, 0, true));
+            this.refreshSubMenuModel();
             this.updatedUI(savedPrompt);
 
         } catch (Exception ex) {

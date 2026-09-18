@@ -46,6 +46,7 @@ public class AiCapability implements Serializable {
     
     private String configurationValues;
     private String systemPrompt;
+    private String subMenu;
 
     private Prompt defaultPrompt=null;
 
@@ -93,6 +94,7 @@ public class AiCapability implements Serializable {
         clone.modelRef=modelRef;
         clone.configurationValues=configurationValues;
         clone.systemPrompt=systemPrompt;
+        clone.subMenu=subMenu;
         return clone;
     }
     
@@ -336,6 +338,21 @@ public class AiCapability implements Serializable {
      */
     public void setSystemPrompt(String systemPrompt) {
         this.systemPrompt = systemPrompt;
+    }
+
+    /**
+     * @return the submenu label this entry is shown in, or null for the top level. Only set
+     * for entries derived from a custom prompt; multiple submenus are separated by semicolons.
+     */
+    public String getSubMenu() {
+        return subMenu;
+    }
+
+    /**
+     * @param subMenu the subMenu to set
+     */
+    public void setSubMenu(String subMenu) {
+        this.subMenu = subMenu;
     }
 
 }

@@ -676,6 +676,7 @@ import com.jdimension.jlawyer.ai.Prompt;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.AssistantPrompt;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -683,6 +684,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
@@ -911,6 +914,7 @@ public class AssistantAccess {
                         if (p.getSystemPrompt() != null && !p.getSystemPrompt().isEmpty()) {
                             clone.setSystemPrompt(p.getSystemPrompt());
                         }
+                        clone.setSubMenu(p.getSubMenu());
                         filtered.get(config).add(clone);
                     }
                 }
@@ -929,14 +933,132 @@ public class AssistantAccess {
         this.capabilities = null;
     }
 
-    public void populateMenu(JPopupMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities, AssistantFlowAdapter adapter) {
+    /**
+     * A menu that entries can be appended to and that can be searched for an existing
+     * submenu. Abstracts over JPopupMenu and JMenu, which do not share an interface for
+     * listing their entries.
+     */
+    private interface MenuTarget {
 
+        Component[] entries();
+
+        void add(JMenuItem item);
+    }
+
+    private static MenuTarget targetOf(JPopupMenu menu) {
+        return new MenuTarget() {
+            @Override
+            public Component[] entries() {
+                return menu.getComponents();
+            }
+
+            @Override
+            public void add(JMenuItem item) {
+                menu.add(item);
+            }
+        };
+    }
+
+    private static MenuTarget targetOf(JMenu menu) {
+        return new MenuTarget() {
+            @Override
+            public Component[] entries() {
+                return menu.getMenuComponents();
+            }
+
+            @Override
+            public void add(JMenuItem item) {
+                menu.add(item);
+            }
+        };
+    }
+
+    /**
+     * Splits a submenu label into its individual submenus: separated by semicolons, trimmed,
+     * without empty or repeated entries. An empty result means the entry belongs on the top
+     * level.
+     */
+    private static List<String> parseSubMenus(String subMenu) {
+        List<String> result = new ArrayList<>();
+        if (subMenu == null) {
+            return result;
+        }
+        for (String part : subMenu.split(";")) {
+            String label = part.trim();
+            if (!label.isEmpty() && !result.contains(label)) {
+                result.add(label);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns the submenu with this label, creating it if the menu does not have it yet.
+     * Callers populate the same menu once per request type, so a submenu created by an
+     * earlier call has to be found again instead of being created a second time.
+     */
+    private static JMenu findOrCreateSubMenu(MenuTarget target, String label) {
+        for (Component entry : target.entries()) {
+            if (entry instanceof JMenu && label.equals(((JMenu) entry).getText())) {
+                return (JMenu) entry;
+            }
+        }
+        JMenu subMenu = new JMenu(label);
+        subMenu.setIcon(loadIcon("/icons16/material/baseline_folder_blue_36dp.png"));
+        target.add(subMenu);
+        return subMenu;
+    }
+
+    /**
+     * Adds all capabilities to the menu, entries without a submenu label first, the
+     * alphabetically sorted submenus after them. The item factory is called once per target
+     * menu because a JMenuItem has a single parent - a prompt listed in two submenus needs one
+     * instance in each.
+     */
+    private void addCapabilityItems(MenuTarget target, Map<AssistantConfig, List<AiCapability>> capabilities, BiFunction<AssistantConfig, AiCapability, JMenuItem> itemFactory) {
+
+        List<String> labels = new ArrayList<>();
         for (AssistantConfig config : capabilities.keySet()) {
             for (AiCapability c : capabilities.get(config)) {
-                JMenuItem mi = new JMenuItem();
-                mi.setText(c.getName());
-                mi.setIcon(getCompoundIcon(c.getRequestType(), c.getModelRef()));
-                mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
+                List<String> subMenus = parseSubMenus(c.getSubMenu());
+                if (subMenus.isEmpty()) {
+                    target.add(itemFactory.apply(config, c));
+                } else {
+                    for (String label : subMenus) {
+                        if (!labels.contains(label)) {
+                            labels.add(label);
+                        }
+                    }
+                }
+            }
+        }
+
+        labels.sort(String.CASE_INSENSITIVE_ORDER);
+        for (String label : labels) {
+            JMenu subMenu = findOrCreateSubMenu(target, label);
+            for (AssistantConfig config : capabilities.keySet()) {
+                for (AiCapability c : capabilities.get(config)) {
+                    if (parseSubMenus(c.getSubMenu()).contains(label)) {
+                        subMenu.add(itemFactory.apply(config, c));
+                    }
+                }
+            }
+        }
+
+    }
+
+    private JMenuItem newCapabilityItem(AssistantConfig config, AiCapability c) {
+        JMenuItem mi = new JMenuItem();
+        mi.setText(c.getName());
+        mi.setIcon(getCompoundIcon(c.getRequestType(), c.getModelRef()));
+        mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
+        return mi;
+    }
+
+    public void populateMenu(JPopupMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities, AssistantFlowAdapter adapter) {
+
+        addCapabilityItems(targetOf(menu), capabilities, (config, c) -> {
+                JMenuItem mi = newCapabilityItem(config, c);
                 mi.addActionListener((ActionEvent e) -> {
                     ClientSettings settings = ClientSettings.getInstance();
                     try {
@@ -966,20 +1088,15 @@ public class AssistantAccess {
 
                     }
                 });
-                menu.add(mi);
-            }
-        }
+                return mi;
+        });
 
     }
 
     public void populateMenu(JPopupMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities, AssistantInputAdapter adapter, ArchiveFileBean selectedCase, JDialog parent, boolean modal) {
 
-        for (AssistantConfig config : capabilities.keySet()) {
-            for (AiCapability c : capabilities.get(config)) {
-                JMenuItem mi = new JMenuItem();
-                mi.setText(c.getName());
-                mi.setIcon(getCompoundIcon(c.getRequestType(), c.getModelRef()));
-                mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
+        addCapabilityItems(targetOf(menu), capabilities, (config, c) -> {
+                JMenuItem mi = newCapabilityItem(config, c);
                 mi.addActionListener((ActionEvent e) -> {
                     if(AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType())) {
                         AssistantChatPanel dlg = new AssistantChatPanel(selectedCase, config, c, adapter, parent, modal);
@@ -989,20 +1106,15 @@ public class AssistantAccess {
                         dlg.setVisible(true);
                     }
                 });
-                menu.add(mi);
-            }
-        }
+                return mi;
+        });
 
     }
 
     public void populateMenu(JPopupMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities, AssistantInputAdapter adapter, ArchiveFileBean selectedCase, JFrame parent, boolean modal) {
 
-        for (AssistantConfig config : capabilities.keySet()) {
-            for (AiCapability c : capabilities.get(config)) {
-                JMenuItem mi = new JMenuItem();
-                mi.setText(c.getName());
-                mi.setIcon(getCompoundIcon(c.getRequestType(), c.getModelRef()));
-                mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
+        addCapabilityItems(targetOf(menu), capabilities, (config, c) -> {
+                JMenuItem mi = newCapabilityItem(config, c);
                 mi.addActionListener((ActionEvent e) -> {
                     if(AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType())) {
                         AssistantChatPanel dlg = new AssistantChatPanel(selectedCase, config, c, adapter, parent, modal);
@@ -1012,20 +1124,15 @@ public class AssistantAccess {
                         dlg.setVisible(true);
                     }
                 });
-                menu.add(mi);
-            }
-        }
+                return mi;
+        });
 
     }
 
     public void populateMenu(JMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities, AssistantInputAdapter adapter, ArchiveFileBean selectedCase) {
 
-        for (AssistantConfig config : capabilities.keySet()) {
-            for (AiCapability c : capabilities.get(config)) {
-                JMenuItem mi = new JMenuItem();
-                mi.setText(c.getName());
-                mi.setIcon(getCompoundIcon(c.getRequestType(), c.getModelRef()));
-                mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
+        addCapabilityItems(targetOf(menu), capabilities, (config, c) -> {
+                JMenuItem mi = newCapabilityItem(config, c);
                 mi.addActionListener((ActionEvent e) -> {
                     if(AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType())) {
                         AssistantChatPanel dlg = new AssistantChatPanel(selectedCase, config, c, adapter, EditorsRegistry.getInstance().getMainWindow(), false);
@@ -1038,12 +1145,56 @@ public class AssistantAccess {
                         dlg.setVisible(true);
                     }
                 });
-                menu.add(mi);
+                return mi;
+        });
+
+    }
+
+    /**
+     * Builds the popup that offers the custom prompts of one request type, structured into the
+     * submenus configured on the prompts. The menu is cleared first; the callback receives the
+     * prompt the user picked.
+     */
+    public void populatePromptMenu(JPopupMenu menu, String requestType, Consumer<AssistantPrompt> onSelect) throws Exception {
+
+        menu.removeAll();
+        MenuTarget target = targetOf(menu);
+
+        List<AssistantPrompt> prompts = this.getCustomPrompts(requestType);
+        List<String> labels = new ArrayList<>();
+        for (AssistantPrompt p : prompts) {
+            List<String> subMenus = parseSubMenus(p.getSubMenu());
+            if (subMenus.isEmpty()) {
+                target.add(newPromptItem(requestType, p, onSelect));
+            } else {
+                for (String label : subMenus) {
+                    if (!labels.contains(label)) {
+                        labels.add(label);
+                    }
+                }
+            }
+        }
+
+        labels.sort(String.CASE_INSENSITIVE_ORDER);
+        for (String label : labels) {
+            JMenu subMenu = findOrCreateSubMenu(target, label);
+            for (AssistantPrompt p : prompts) {
+                if (parseSubMenus(p.getSubMenu()).contains(label)) {
+                    subMenu.add(newPromptItem(requestType, p, onSelect));
+                }
             }
         }
 
     }
-    
+
+    private JMenuItem newPromptItem(String requestType, AssistantPrompt p, Consumer<AssistantPrompt> onSelect) {
+        JMenuItem mi = new JMenuItem();
+        mi.setText(p.getName());
+        mi.setIcon(getCompoundIcon(requestType, p.getModelRef()));
+        mi.addActionListener((ActionEvent e) -> onSelect.accept(p));
+        return mi;
+    }
+
     public static Map<String, String> jsonStringToMap(String jsonString) throws Exception {
         Map<String, String> resultMap = new HashMap<>();
 
