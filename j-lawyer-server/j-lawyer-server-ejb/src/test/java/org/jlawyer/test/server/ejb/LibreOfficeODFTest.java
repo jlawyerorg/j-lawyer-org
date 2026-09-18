@@ -1080,6 +1080,44 @@ public class LibreOfficeODFTest {
     }
     
     @Test
+    public void testSmartTemplateWennListenEtikett() {
+        try {
+
+            // no case context in this test setup, so the tag lookup is short circuited
+            String resultString=evaluateSmartTemplate("WENNLETIKETT(\"Sachstand\",\"offen\",\"ja\",\"nein\")");
+            Assert.assertEquals("nein", resultString);
+
+            resultString=evaluateSmartTemplate("WENNLETIKETT(\"Sachstand\",\"offen\",\"ja\")");
+            Assert.assertEquals("", resultString);
+
+            resultString=evaluateSmartTemplate("WENNLETIKETT(\"\",\"offen\",\"ja\",\"nein\")");
+            Assert.assertEquals("nein", resultString);
+
+        } catch (Throwable t) {
+            Assert.fail(t.getMessage());
+        }
+    }
+
+    @Test
+    public void testSmartTemplateListenEtikettWert() {
+        try {
+
+            // no case context in this test setup, so the tag lookup is short circuited
+            String resultString=evaluateSmartTemplate("LETIKETTWERT(\"Sachstand\")");
+            Assert.assertEquals("", resultString);
+
+            resultString=evaluateSmartTemplate("LETIKETTWERT(\"\")");
+            Assert.assertEquals("", resultString);
+
+            resultString=evaluateSmartTemplate("WENNLEER(LETIKETTWERT(\"Sachstand\"),\"leer\",\"gesetzt\")");
+            Assert.assertEquals("leer", resultString);
+
+        } catch (Throwable t) {
+            Assert.fail(t.getMessage());
+        }
+    }
+
+    @Test
     @Ignore
     public void testSmartTemplateGross() {
         try {
