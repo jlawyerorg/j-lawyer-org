@@ -661,374 +661,53 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
-
-import java.io.Serializable;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import javax.persistence.*;
-import javax.xml.bind.annotation.XmlRootElement;
+package com.jdimension.jlawyer.client.editors.files;
 
 /**
+ * What the first column of the chronological calendar list holds for a row: the caption the column
+ * displays and sorts by, plus the ids needed to act on the row.
+ *
+ * Unlike ArchiveFileReviewsRowIdentifier this keeps ids rather than a case and an entry entity.
+ * The list is fed from a projection, so those entities are not at hand - and holding one case per
+ * row is what made the view expensive in the first place. The full case is loaded when the user
+ * opens it, which loads a case anyway.
  *
  * @author jens
  */
-@Entity
-@Table(name = "case_events")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "ArchiveFileReviewsBean.findAll", query = "SELECT a FROM ArchiveFileReviewsBean a"),
-    @NamedQuery(name = "ArchiveFileReviewsBean.findById", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.id = :id"),
-    @NamedQuery(name = "ArchiveFileReviewsBean.findBySummary", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.summary = :summary"),
-    @NamedQuery(name = "ArchiveFileReviewsBean.findByBeginDate", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.beginDate = :beginDate"),
-    @NamedQuery(name = "ArchiveFileReviewsBean.findByArchiveFileKey", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.archiveFileKey = :archiveFileKey"),
-    @NamedQuery(name = "ArchiveFileReviewsBean.findByCalendarSetup", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.calendarSetup = :calendarSetup"),
-    @NamedQuery(name = "ArchiveFileReviewsBean.findByDone", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.done = :done")})
-public class ArchiveFileReviewsBean implements Serializable, EventTypes {
+public class CalendarEntryRowIdentifier {
 
-    private static final long serialVersionUID = 1L;
+    private final String caseId;
+    private final String entryId;
+    private final String caption;
 
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
-    @Basic(optional = false)
-    @Column(name = "eventType")
-    private int eventType;
-    @Column(name = "summary")
-    private String summary;
-    @Column(name = "description")
-    protected String description;
-    @Column(name = "location")
-    protected String location;
-    @Column(name = "beginDate")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date beginDate;
-    @Column(name = "endDate")
-    @Temporal(TemporalType.TIMESTAMP)
-    protected Date endDate;
-    @Basic(optional = false)
-    @Column(name = "done")
-    private boolean done;
-    @JoinColumn(name = "archiveFileKey", referencedColumnName = "id")
-    @ManyToOne
-    private ArchiveFileBean archiveFileKey;
-    @Column(name = "assignee")
-    private String assignee;
-    
-    @JoinColumn(name = "calendar_setup", referencedColumnName = "id")
-    @ManyToOne
-    private CalendarSetup calendarSetup;
-
-    @Column(name = "reminder_minutes")
-    private int reminderMinutes = -1;
-
-    @Column(name = "created_by")
-    private String createdBy;
-
-    public Object getClone() {
-        ArchiveFileReviewsBean a=new ArchiveFileReviewsBean();
-        a.archiveFileKey=this.archiveFileKey;
-        a.assignee=this.assignee;
-        a.beginDate=this.beginDate;
-        a.endDate=this.endDate;
-        a.calendarSetup=this.calendarSetup;
-        a.description=this.description;
-        a.done=this.done;
-        a.eventType=this.eventType;
-        a.id=this.id;
-        a.location=this.location;
-        a.summary=this.summary;
-        a.reminderMinutes=this.reminderMinutes;
-        a.createdBy=this.createdBy;
-        return a;
+    /**
+     * @param caseId id of the case the entry belongs to, may be null
+     * @param entryId id of the calendar entry
+     * @param caption the date caption shown and sorted in this column
+     */
+    public CalendarEntryRowIdentifier(String caseId, String entryId, String caption) {
+        this.caseId = caseId;
+        this.entryId = entryId;
+        this.caption = caption;
     }
 
-    
-    
-    public ArchiveFileReviewsBean() {
+    /**
+     * @return id of the case the entry belongs to, may be null
+     */
+    public String getCaseId() {
+        return caseId;
     }
 
-    public ArchiveFileReviewsBean(String id) {
-        this.id = id;
-    }
-
-    public ArchiveFileReviewsBean(String id, boolean done) {
-        this.id = id;
-        this.done = done;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getSummary() {
-        return summary;
-    }
-
-    public void setSummary(String reviewReason) {
-        this.summary = reviewReason;
-    }
-
-    public Date getBeginDate() {
-        return beginDate;
-    }
-
-    public void setBeginDate(Date beginDate) {
-        this.beginDate = beginDate;
-    }
-
-    public boolean isDone() {
-        return done;
-    }
-
-    public void setDone(boolean done) {
-        this.done = done;
-    }
-
-    public ArchiveFileBean getArchiveFileKey() {
-        return archiveFileKey;
-    }
-
-    public void setArchiveFileKey(ArchiveFileBean archiveFileKey) {
-        this.archiveFileKey = archiveFileKey;
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (id != null ? id.hashCode() : 0);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
-        if (!(object instanceof ArchiveFileReviewsBean)) {
-            return false;
-        }
-        ArchiveFileReviewsBean other = (ArchiveFileReviewsBean) object;
-        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
-            return false;
-        }
-        return true;
+    /**
+     * @return id of the calendar entry
+     */
+    public String getEntryId() {
+        return entryId;
     }
 
     @Override
     public String toString() {
-        SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
-        return toString(dateTimeFormat, dateFormat, timeFormat);
-    }
-    
-    public String toString(SimpleDateFormat dateTimeFormat, SimpleDateFormat dateFormat, SimpleDateFormat timeFormat) {
-        return formatCaption(this.eventType, this.beginDate, this.endDate, dateTimeFormat, dateFormat, timeFormat);
-    }
-
-    /**
-     * Renders the date caption of a calendar entry from its type and its two dates. Callers that
-     * hold the columns instead of the entity - projection queries, for instance - use this to
-     * produce a caption identical to the one toString() produces for the same entry. The
-     * chronological overview sorts that caption as a string, so the two must not drift apart.
-     *
-     * @param eventType one of the EventTypes constants
-     * @param beginDate start of the entry, may be null
-     * @param endDate end of the entry, may be null and only relevant for appointments
-     * @param dateTimeFormat format for a date including the time of day
-     * @param dateFormat format for a date without a time of day
-     * @param timeFormat format for a time of day alone
-     * @return the caption, or "undefiniert" if the entry lacks the dates its type requires
-     */
-    public static String formatCaption(int eventType, Date beginDate, Date endDate, SimpleDateFormat dateTimeFormat, SimpleDateFormat dateFormat, SimpleDateFormat timeFormat) {
-        String undefined="undefiniert";
-        if (hasEndDateAndTime(eventType)) {
-            
-            StringBuilder sb=new StringBuilder();
-            if (beginDate != null) {
-                sb.append(dateTimeFormat.format(beginDate));
-                if(endDate!=null) {
-                    sb.append(" - ");
-                    if(beginDate.getDate()==endDate.getDate() && beginDate.getMonth()==endDate.getMonth() && beginDate.getYear()==endDate.getYear()) {
-                        // same day
-                        sb.append(timeFormat.format(endDate));
-                    } else {
-                        // spans multiple days
-                        sb.append(dateTimeFormat.format(endDate));
-                    }
-                    return sb.toString();
-                } else {
-                    return undefined;
-                }
-            } else {
-                return undefined;
-            }
-        } else {
-            if (beginDate != null) {
-                
-                return dateFormat.format(beginDate);
-            } else {
-                return undefined;
-            }
-        }
-    }
-
-    /**
-     * @return the assignee
-     */
-    public String getAssignee() {
-        return assignee;
-    }
-
-    /**
-     * @param assignee the assignee to set
-     */
-    public void setAssignee(String assignee) {
-        this.assignee = assignee;
-    }
-
-    /**
-     * @return the principal id of the user who created this calendar entry,
-     * or null for entries created before creator tracking existed
-     */
-    public String getCreatedBy() {
-        return createdBy;
-    }
-
-    /**
-     * @param createdBy the principal id of the user who created this calendar entry
-     */
-    public void setCreatedBy(String createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    /**
-     * @return the eventType
-     */
-    public int getEventType() {
-        return eventType;
-    }
-
-    public boolean hasEndDateAndTime() {
-        return hasEndDateAndTime(this.eventType);
-    }
-
-    /**
-     * Tells whether entries of the given type carry an end date and a time of day. Only
-     * appointments do; follow-ups and respites are plain dates.
-     *
-     * @param eventType one of the EventTypes constants
-     * @return true if entries of that type have an end date and a time of day
-     */
-    public static boolean hasEndDateAndTime(int eventType) {
-        return (eventType == EVENTTYPE_EVENT);
-    }
-
-    public String getEventTypeName() {
-        return eventTypeName(this.getEventType());
-    }
-
-    /**
-     * Returns the display name of the given entry type. Callers that hold the type as a column
-     * instead of the entity use this to label an entry exactly as getEventTypeName() would.
-     *
-     * @param eventType one of the EventTypes constants
-     * @return the German display name, defaulting to the follow-up name for unknown types
-     */
-    public static String eventTypeName(int eventType) {
-        switch (eventType) {
-            case EVENTTYPE_FOLLOWUP:
-                return "Wiedervorlage";
-            case EVENTTYPE_RESPITE:
-                return "Frist";
-            case EVENTTYPE_EVENT:
-                return "Termin";
-            default:
-                return "Wiedervorlage";
-        }
-    }
-
-    /**
-     * @param eventType the eventType to set
-     */
-    public void setEventType(int eventType) {
-        this.eventType = eventType;
-    }
-
-    /**
-     * @return the endDate
-     */
-    public Date getEndDate() {
-        return endDate;
-    }
-
-    /**
-     * @param endDate the endDate to set
-     */
-    public void setEndDate(Date endDate) {
-        this.endDate = endDate;
-    }
-
-    /**
-     * @return the description
-     */
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * @param description the description to set
-     */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    /**
-     * @return the location
-     */
-    public String getLocation() {
-        return location;
-    }
-
-    /**
-     * @param location the location to set
-     */
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
-    /**
-     * @return the calendarSetup
-     */
-    public CalendarSetup getCalendarSetup() {
-        return calendarSetup;
-    }
-
-    /**
-     * @param calendarSetup the calendarSetup to set
-     */
-    public void setCalendarSetup(CalendarSetup calendarSetup) {
-        this.calendarSetup = calendarSetup;
-    }
-
-    /**
-     * @return the reminder lead time in minutes. -1 means no reminder,
-     * 0 means at event start, >0 means N minutes before the event.
-     */
-    public int getReminderMinutes() {
-        return reminderMinutes;
-    }
-
-    /**
-     * @param reminderMinutes the reminder lead time in minutes.
-     * -1 means no reminder, 0 means at event start, >0 means N minutes before.
-     */
-    public void setReminderMinutes(int reminderMinutes) {
-        this.reminderMinutes = reminderMinutes;
+        return caption;
     }
 
 }

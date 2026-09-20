@@ -732,6 +732,22 @@ public interface SingletonServiceLocal {
     long getLatestInstantMessageStatusUpdated();
     void setLatestInstantMessageStatusUpdated(long latestInstantMessageStatusUpdated);
 
+    /**
+     * Returns the current calendar version. Opaque; compare for equality only.
+     *
+     * @return the current calendar version
+     */
+    long getCalendarVersion();
+
+    /**
+     * Records that a calendar entry has been written, so that clients holding an older version
+     * reload. Called from ArchiveFileReviewsBeanFacade, which every service writing calendar
+     * entries passes through.
+     *
+     * @return the new calendar version
+     */
+    long bumpCalendarVersion();
+
     JobStatus getJobStatus(String jobId);
 
     void updateJobStatus(JobStatus jobStatus);

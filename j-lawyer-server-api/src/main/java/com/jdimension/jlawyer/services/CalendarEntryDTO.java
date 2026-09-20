@@ -82,25 +82,19 @@ permission, would make you directly or secondarily liable for
 infringement under applicable copyright law, except executing it on a
 computer or modifying a private copy.  Propagation includes copying,
 distribution (with or without modification), making available to the
-public
-
-, and in some countries other activities as well.
+public, and in some countries other activities as well.
 
   To "convey" a work means any kind of propagation that enables other
 parties to make or receive copies.  Mere interaction with a user through
 a computer network, with no transfer of a copy, is not conveying.
 
-  An interactive user interface displays 
-
-"Appropriate Legal Notices"
+  An interactive user interface displays "Appropriate Legal Notices"
 to the extent that it includes a convenient and prominently visible
 feature that (1) displays an appropriate copyright notice, and (2)
 tells the user that there is no warranty for the work (except to the
 extent that warranties are provided), that licensees may convey the
 work under this License, and how to view a copy of this License.  If
-the interface presents 
-
-a list of user commands or options, such as a
+the interface presents a list of user commands or options, such as a
 menu, a prominent item in the list meets this criterion.
 
   1. Source Code.
@@ -109,8 +103,7 @@ menu, a prominent item in the list meets this criterion.
 for making modifications to it.  "Object code" means any non-source
 form of a work.
 
-  A "Standard Interface" means an interface that 
-either is an official
+  A "Standard Interface" means an interface that either is an official
 standard defined by a recognized standards body, or, in the case of
 interfaces specified for a particular programming language, one that
 is widely used among developers working in that language.
@@ -120,9 +113,7 @@ than the work as a whole, that (a) is included in the normal form of
 packaging a Major Component, but which is not part of that Major
 Component, and (b) serves only to enable use of the work with that
 Major Component, or to implement a Standard Interface for which an
-implementation is available to the public in 
-
-source code form.  A
+implementation is available to the public in source code form.  A
 "Major Component", in this context, means a major essential component
 (kernel, window system, and so on) of the specific operating system
 (if any) on which the executable work runs, or a compiler used to
@@ -135,8 +126,7 @@ control those activities.  However, it does not include the work's
 System Libraries, or general-purpose tools or generally available free
 programs which are used unmodified in performing those activities but
 which are not part of the work.  For example, Corresponding Source
-includes interface definition 
-files associated with source files for
+includes interface definition files associated with source files for
 the work, and the source code for shared libraries and dynamically
 linked subprograms that the work is specifically designed to require,
 such as by intimate data communication or control flow between those
@@ -285,9 +275,7 @@ in one of these ways:
 
     e) Convey the object code using peer-to-peer transmission, provided
     you inform other peers where the object code and Corresponding
-    Source of the work are being offered to the general public at 
-
-no
+    Source of the work are being offered to the general public at no
     charge under subsection 6d.
 
   A separable portion of the object code, whose source code is excluded
@@ -300,8 +288,7 @@ or household purposes, or (2) anything designed or sold for incorporation
 into a dwelling.  In determining whether a product is a consumer product,
 doubtful cases shall be resolved in favor of coverage.  For a particular
 product received by a particular user, "normally used" refers to a
-typical or common use of that class of 
-product, regardless of the status
+typical or common use of that class of product, regardless of the status
 of the particular user or of the way in which the particular user
 actually uses, or expects or is expected to use, the product.  A product
 is a consumer product regardless of whether the product has substantial
@@ -651,9 +638,7 @@ the "copyright" line and a pointer to where the full notice is found.
     (at your option) any later version.
 
     This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without 
-
-even the implied warranty of
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Affero General Public License for more details.
 
@@ -665,8 +650,7 @@ Also add information on how to contact you by electronic and paper mail.
   If your software can interact with users remotely through a computer
 network, you should also make sure that it provides a way for users to
 get its source.  For example, if your program is a web application, its
-interface could 
-display a "Source" link that leads users to an archive
+interface could display a "Source" link that leads users to an archive
 of the code.  There are many ways you could offer source, and different
 solutions will be better for different programs; see section 13 for the
 specific requirements.
@@ -675,74 +659,335 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
-
+ */
 package com.jdimension.jlawyer.services;
 
-
-
-import com.jdimension.jlawyer.persistence.AssistantReplacement;
-import com.jdimension.jlawyer.persistence.EpostQueueBean;
-import com.jdimension.jlawyer.persistence.FaxQueueBean;
-import com.jdimension.jlawyer.pojo.FileMetadata;
-import java.util.ArrayList;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.CalendarSetup;
+import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import javax.ejb.Remote;
 
 /**
+ * One calendar entry as the cross-case calendar views display it: the entry's own fields plus the
+ * identifying fields of its case and of the calendar it belongs to.
+ *
+ * This is what clients get, instead of the ArchiveFileReviewsBean entity. That entity eagerly
+ * loads both its case and its calendar setup; an ArchiveFileBean in turn eagerly loads its owner
+ * group and its root folder, and CaseFolder.children is eager and recursive, so returning
+ * entities would ship a whole folder tree per case - and the calendar's cloud credentials - with
+ * every single calendar entry. The fields here are what the list and the calendar sheet render;
+ * the full case is fetched only when the user actually navigates to it.
+ *
+ * Equality is by entry id, matching ArchiveFileReviewsBean, because the calendar panel keeps its
+ * rendered entries in a collection and tests membership by identity of the entry.
  *
  * @author jens
  */
-@Remote
-public interface SingletonServiceRemote {
+public class CalendarEntryDTO implements Serializable {
 
-    int getSystemStatus();
+    private static final long serialVersionUID = 1L;
 
-    void setSystemStatus(int status);
+    private String id;
+    private int eventType;
+    private String summary;
+    private String description;
+    private String location;
+    private Date beginDate;
+    private Date endDate;
+    private boolean done;
+    private String assignee;
+    private String caseId;
+    private String caseFileNumber;
+    private String caseName;
+    private String caseReason;
+    private String caseLawyer;
+    private String calendarId;
+    private String calendarName;
+    private int calendarColor;
 
-    HashMap<FileMetadata,Date> getObservedFiles();
-    
-    HashMap<FileMetadata,Date> getObservedFiles(boolean bypassCache);
-    
-    void updateObservedFiles();
-
-    void setObservedFiles(HashMap<FileMetadata,Date> fileNames);
-
-    FaxQueueBean getFailedFax();
-    EpostQueueBean getFailedLetter();
-
-    ArrayList<FaxQueueBean> getFaxQueue();
-    ArrayList<EpostQueueBean> getEpostQueue();
-
-    void setFailedFax(FaxQueueBean failedFax);
-
-    void setFaxQueue(ArrayList<FaxQueueBean> faxQueue);
-    
-    List<AssistantReplacement> getAssistantReplacements();
+    public CalendarEntryDTO() {
+    }
 
     /**
-     * Returns a value that changes whenever any calendar entry is created, updated or deleted,
-     * by any user and through any service. Clients use it to decide whether reloading calendar
-     * entries is worth the traffic: store the value received with a set of entries, pass it back
-     * on the next poll, and reload only when it differs.
+     * Constructor used by the projection query, which selects the two parts of the case's file
+     * number separately because they are separate columns.
      *
-     * The value is opaque. Compare it for equality only - it is neither a timestamp nor
-     * monotonically increasing across restarts, and no meaning may be derived from its value or
-     * from the size of a difference.
+     * The calendar is joined as an outer join, because an entry need not belong to one. Its
+     * colour is therefore taken as an Integer and not as an int: for an entry without a calendar
+     * the column comes back null, which would fail to bind to a primitive parameter.
      *
-     * The value is held in memory by a singleton bean, which has two consequences. It is reset
-     * when the server restarts, which is safe because the new value differs from the old one and
-     * therefore triggers a reload rather than leaving a client stale. And it is per server
-     * instance, not cluster-wide.
-     *
-     * Some changes cannot be observed this way: changes to a user's case permissions, a database
-     * restore, and writes that bypass the application server. Clients that must not miss those
-     * should reload unconditionally from time to time in addition to comparing this value.
-     *
-     * @return the current calendar version
+     * @param id id of the calendar entry
+     * @param eventType type of the entry, one of the EventTypes constants
+     * @param summary short text of the entry, may be null
+     * @param description long text of the entry, may be null
+     * @param location where the entry takes place, may be null
+     * @param beginDate start of the entry
+     * @param endDate end of the entry, may be null and only meaningful for appointments
+     * @param done whether the entry has been marked as done
+     * @param assignee principal id of the user responsible for the entry, may be null
+     * @param caseId id of the case the entry belongs to
+     * @param caseFileNumberMain main part of the case's file number
+     * @param caseFileNumberExtension extension of the case's file number, may be null
+     * @param caseName short name (Kurzrubrum) of the case
+     * @param caseReason subject (wegen) of the case
+     * @param caseLawyer principal id of the lawyer responsible for the case, may be null
+     * @param calendarId id of the calendar the entry belongs to, null if it has none
+     * @param calendarName display name of that calendar, null if it has none
+     * @param calendarColor colour of that calendar, null if it has none
      */
-    long getCalendarVersion();
+    public CalendarEntryDTO(String id, int eventType, String summary, String description,
+            String location, Date beginDate, Date endDate, boolean done, String assignee,
+            String caseId, String caseFileNumberMain, String caseFileNumberExtension,
+            String caseName, String caseReason, String caseLawyer,
+            String calendarId, String calendarName, Integer calendarColor) {
+        this.id = id;
+        this.eventType = eventType;
+        this.summary = summary;
+        this.description = description;
+        this.location = location;
+        this.beginDate = beginDate;
+        this.endDate = endDate;
+        this.done = done;
+        this.assignee = assignee;
+        this.caseId = caseId;
+        this.caseFileNumber = ArchiveFileBean.composeFileNumber(caseFileNumberMain, caseFileNumberExtension);
+        this.caseName = caseName;
+        this.caseReason = caseReason;
+        this.caseLawyer = caseLawyer;
+        this.calendarId = calendarId;
+        this.calendarName = calendarName;
+        this.calendarColor = calendarColor == null ? 0 : calendarColor;
+    }
+
+    /**
+     * Projects an entity that a caller already holds, for the paths that still work on entities -
+     * conflicting events, for instance, or an entry that was just written and read back. Tolerates
+     * an entry without a case and without a calendar.
+     *
+     * @param rev the entity to project, may be null
+     * @return the projection, or null if the entity was null
+     */
+    public static CalendarEntryDTO fromEntity(ArchiveFileReviewsBean rev) {
+        if (rev == null) {
+            return null;
+        }
+        CalendarEntryDTO dto = new CalendarEntryDTO();
+        dto.id = rev.getId();
+        dto.eventType = rev.getEventType();
+        dto.summary = rev.getSummary();
+        dto.description = rev.getDescription();
+        dto.location = rev.getLocation();
+        dto.beginDate = rev.getBeginDate();
+        dto.endDate = rev.getEndDate();
+        dto.done = rev.isDone();
+        dto.assignee = rev.getAssignee();
+
+        ArchiveFileBean aCase = rev.getArchiveFileKey();
+        if (aCase != null) {
+            dto.caseId = aCase.getId();
+            dto.caseFileNumber = aCase.getFileNumber();
+            dto.caseName = aCase.getName();
+            dto.caseReason = aCase.getReason();
+            dto.caseLawyer = aCase.getLawyer();
+        }
+
+        CalendarSetup calendar = rev.getCalendarSetup();
+        if (calendar != null) {
+            dto.calendarId = calendar.getId();
+            dto.calendarName = calendar.getDisplayName();
+            dto.calendarColor = calendar.getBackground();
+        }
+        return dto;
+    }
+
+    /**
+     * Renders the date caption of this entry exactly as ArchiveFileReviewsBean.toString() renders
+     * it for the same entry. The chronological overview sorts that caption as a string, so the two
+     * must not drift apart.
+     *
+     * @return the caption
+     */
+    public String getCaption() {
+        SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+        return ArchiveFileReviewsBean.formatCaption(this.eventType, this.beginDate, this.endDate, dateTimeFormat, dateFormat, timeFormat);
+    }
+
+    /**
+     * @return the display name of this entry's type
+     */
+    public String getEventTypeName() {
+        return ArchiveFileReviewsBean.eventTypeName(this.eventType);
+    }
+
+    /**
+     * @return true if this entry carries an end date and a time of day, i.e. if it is an appointment
+     */
+    public boolean hasEndDateAndTime() {
+        return ArchiveFileReviewsBean.hasEndDateAndTime(this.eventType);
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public int getEventType() {
+        return eventType;
+    }
+
+    public void setEventType(int eventType) {
+        this.eventType = eventType;
+    }
+
+    public String getSummary() {
+        return summary;
+    }
+
+    public void setSummary(String summary) {
+        this.summary = summary;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public Date getBeginDate() {
+        return beginDate;
+    }
+
+    public void setBeginDate(Date beginDate) {
+        this.beginDate = beginDate;
+    }
+
+    public Date getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(Date endDate) {
+        this.endDate = endDate;
+    }
+
+    public boolean isDone() {
+        return done;
+    }
+
+    public void setDone(boolean done) {
+        this.done = done;
+    }
+
+    public String getAssignee() {
+        return assignee;
+    }
+
+    public void setAssignee(String assignee) {
+        this.assignee = assignee;
+    }
+
+    public String getCaseId() {
+        return caseId;
+    }
+
+    public void setCaseId(String caseId) {
+        this.caseId = caseId;
+    }
+
+    public String getCaseFileNumber() {
+        return caseFileNumber;
+    }
+
+    public void setCaseFileNumber(String caseFileNumber) {
+        this.caseFileNumber = caseFileNumber;
+    }
+
+    public String getCaseName() {
+        return caseName;
+    }
+
+    public void setCaseName(String caseName) {
+        this.caseName = caseName;
+    }
+
+    public String getCaseReason() {
+        return caseReason;
+    }
+
+    public void setCaseReason(String caseReason) {
+        this.caseReason = caseReason;
+    }
+
+    public String getCaseLawyer() {
+        return caseLawyer;
+    }
+
+    public void setCaseLawyer(String caseLawyer) {
+        this.caseLawyer = caseLawyer;
+    }
+
+    public String getCalendarId() {
+        return calendarId;
+    }
+
+    public void setCalendarId(String calendarId) {
+        this.calendarId = calendarId;
+    }
+
+    public String getCalendarName() {
+        return calendarName;
+    }
+
+    public void setCalendarName(String calendarName) {
+        this.calendarName = calendarName;
+    }
+
+    public int getCalendarColor() {
+        return calendarColor;
+    }
+
+    public void setCalendarColor(int calendarColor) {
+        this.calendarColor = calendarColor;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 0;
+        hash += (id != null ? id.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (!(object instanceof CalendarEntryDTO)) {
+            return false;
+        }
+        CalendarEntryDTO other = (CalendarEntryDTO) object;
+        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return getCaption();
+    }
 
 }

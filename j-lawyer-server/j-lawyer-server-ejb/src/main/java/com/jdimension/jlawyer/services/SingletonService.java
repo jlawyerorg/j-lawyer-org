@@ -694,6 +694,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Resource;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -734,6 +735,15 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
 
     private long latestInstantMessageReceived = -1;
     private long latestInstantMessageStatusUpdated = -1;
+
+    /**
+     * Changes whenever any calendar entry is written. Seeded from the wall clock so that a value
+     * handed out before a restart can never be handed out again afterwards - clients compare for
+     * equality and would otherwise keep showing stale entries across a restart. An AtomicLong
+     * rather than a plain field because both accessors hold only a read lock: a write lock here
+     * would serialize every calendar write in the installation through this singleton.
+     */
+    private final AtomicLong calendarVersion = new AtomicLong(System.currentTimeMillis());
 
     @Inject
     @JMSConnectionFactory("java:/JmsXA")
@@ -933,6 +943,20 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
     @PermitAll
     public void setLatestInstantMessageStatusUpdated(long latestInstantMessageStatusUpdated) {
         this.latestInstantMessageStatusUpdated = latestInstantMessageStatusUpdated;
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    @Lock(LockType.READ)
+    public long getCalendarVersion() {
+        return this.calendarVersion.get();
+    }
+
+    @Override
+    @PermitAll
+    @Lock(LockType.READ)
+    public long bumpCalendarVersion() {
+        return this.calendarVersion.incrementAndGet();
     }
 
     @Override

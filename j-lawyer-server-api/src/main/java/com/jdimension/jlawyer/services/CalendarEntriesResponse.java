@@ -82,25 +82,19 @@ permission, would make you directly or secondarily liable for
 infringement under applicable copyright law, except executing it on a
 computer or modifying a private copy.  Propagation includes copying,
 distribution (with or without modification), making available to the
-public
-
-, and in some countries other activities as well.
+public, and in some countries other activities as well.
 
   To "convey" a work means any kind of propagation that enables other
 parties to make or receive copies.  Mere interaction with a user through
 a computer network, with no transfer of a copy, is not conveying.
 
-  An interactive user interface displays 
-
-"Appropriate Legal Notices"
+  An interactive user interface displays "Appropriate Legal Notices"
 to the extent that it includes a convenient and prominently visible
 feature that (1) displays an appropriate copyright notice, and (2)
 tells the user that there is no warranty for the work (except to the
 extent that warranties are provided), that licensees may convey the
 work under this License, and how to view a copy of this License.  If
-the interface presents 
-
-a list of user commands or options, such as a
+the interface presents a list of user commands or options, such as a
 menu, a prominent item in the list meets this criterion.
 
   1. Source Code.
@@ -109,8 +103,7 @@ menu, a prominent item in the list meets this criterion.
 for making modifications to it.  "Object code" means any non-source
 form of a work.
 
-  A "Standard Interface" means an interface that 
-either is an official
+  A "Standard Interface" means an interface that either is an official
 standard defined by a recognized standards body, or, in the case of
 interfaces specified for a particular programming language, one that
 is widely used among developers working in that language.
@@ -120,9 +113,7 @@ than the work as a whole, that (a) is included in the normal form of
 packaging a Major Component, but which is not part of that Major
 Component, and (b) serves only to enable use of the work with that
 Major Component, or to implement a Standard Interface for which an
-implementation is available to the public in 
-
-source code form.  A
+implementation is available to the public in source code form.  A
 "Major Component", in this context, means a major essential component
 (kernel, window system, and so on) of the specific operating system
 (if any) on which the executable work runs, or a compiler used to
@@ -135,8 +126,7 @@ control those activities.  However, it does not include the work's
 System Libraries, or general-purpose tools or generally available free
 programs which are used unmodified in performing those activities but
 which are not part of the work.  For example, Corresponding Source
-includes interface definition 
-files associated with source files for
+includes interface definition files associated with source files for
 the work, and the source code for shared libraries and dynamically
 linked subprograms that the work is specifically designed to require,
 such as by intimate data communication or control flow between those
@@ -285,9 +275,7 @@ in one of these ways:
 
     e) Convey the object code using peer-to-peer transmission, provided
     you inform other peers where the object code and Corresponding
-    Source of the work are being offered to the general public at 
-
-no
+    Source of the work are being offered to the general public at no
     charge under subsection 6d.
 
   A separable portion of the object code, whose source code is excluded
@@ -300,8 +288,7 @@ or household purposes, or (2) anything designed or sold for incorporation
 into a dwelling.  In determining whether a product is a consumer product,
 doubtful cases shall be resolved in favor of coverage.  For a particular
 product received by a particular user, "normally used" refers to a
-typical or common use of that class of 
-product, regardless of the status
+typical or common use of that class of product, regardless of the status
 of the particular user or of the way in which the particular user
 actually uses, or expects or is expected to use, the product.  A product
 is a consumer product regardless of whether the product has substantial
@@ -651,9 +638,7 @@ the "copyright" line and a pointer to where the full notice is found.
     (at your option) any later version.
 
     This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without 
-
-even the implied warranty of
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Affero General Public License for more details.
 
@@ -665,8 +650,7 @@ Also add information on how to contact you by electronic and paper mail.
   If your software can interact with users remotely through a computer
 network, you should also make sure that it provides a way for users to
 get its source.  For example, if your program is a web application, its
-interface could 
-display a "Source" link that leads users to an archive
+interface could display a "Source" link that leads users to an archive
 of the code.  There are many ways you could offer source, and different
 solutions will be better for different programs; see section 13 for the
 specific requirements.
@@ -675,74 +659,110 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
-
+ */
 package com.jdimension.jlawyer.services;
 
-
-
-import com.jdimension.jlawyer.persistence.AssistantReplacement;
-import com.jdimension.jlawyer.persistence.EpostQueueBean;
-import com.jdimension.jlawyer.persistence.FaxQueueBean;
-import com.jdimension.jlawyer.pojo.FileMetadata;
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import javax.ejb.Remote;
 
 /**
+ * The answer to a cross-case calendar query: the entries, plus the calendar version they reflect.
+ *
+ * The version is what makes an automatic refresh affordable. A caller passes back the version it
+ * last received; if nothing has changed since, the server answers with unchanged set and no
+ * entries at all, and the caller keeps displaying what it already has. Only when the version
+ * differs does a query run and a payload get sent.
+ *
+ * The version is opaque. Compare it for equality only - it is not a timestamp, it does not
+ * increase monotonically across server restarts, and no meaning may be derived from its value.
  *
  * @author jens
  */
-@Remote
-public interface SingletonServiceRemote {
+public class CalendarEntriesResponse implements Serializable {
 
-    int getSystemStatus();
+    private static final long serialVersionUID = 1L;
 
-    void setSystemStatus(int status);
+    private long version;
+    private boolean unchanged;
+    private List<CalendarEntryDTO> entries = new ArrayList<>();
+    private boolean truncated;
 
-    HashMap<FileMetadata,Date> getObservedFiles();
-    
-    HashMap<FileMetadata,Date> getObservedFiles(boolean bypassCache);
-    
-    void updateObservedFiles();
-
-    void setObservedFiles(HashMap<FileMetadata,Date> fileNames);
-
-    FaxQueueBean getFailedFax();
-    EpostQueueBean getFailedLetter();
-
-    ArrayList<FaxQueueBean> getFaxQueue();
-    ArrayList<EpostQueueBean> getEpostQueue();
-
-    void setFailedFax(FaxQueueBean failedFax);
-
-    void setFaxQueue(ArrayList<FaxQueueBean> faxQueue);
-    
-    List<AssistantReplacement> getAssistantReplacements();
+    public CalendarEntriesResponse() {
+    }
 
     /**
-     * Returns a value that changes whenever any calendar entry is created, updated or deleted,
-     * by any user and through any service. Clients use it to decide whether reloading calendar
-     * entries is worth the traffic: store the value received with a set of entries, pass it back
-     * on the next poll, and reload only when it differs.
+     * Creates a response carrying entries.
      *
-     * The value is opaque. Compare it for equality only - it is neither a timestamp nor
-     * monotonically increasing across restarts, and no meaning may be derived from its value or
-     * from the size of a difference.
-     *
-     * The value is held in memory by a singleton bean, which has two consequences. It is reset
-     * when the server restarts, which is safe because the new value differs from the old one and
-     * therefore triggers a reload rather than leaving a client stale. And it is per server
-     * instance, not cluster-wide.
-     *
-     * Some changes cannot be observed this way: changes to a user's case permissions, a database
-     * restore, and writes that bypass the application server. Clients that must not miss those
-     * should reload unconditionally from time to time in addition to comparing this value.
-     *
-     * @return the current calendar version
+     * @param version the calendar version these entries reflect
+     * @param entries the entries, never null
+     * @param truncated whether the result hit the caller's limit and entries were left out
      */
-    long getCalendarVersion();
+    public CalendarEntriesResponse(long version, List<CalendarEntryDTO> entries, boolean truncated) {
+        this.version = version;
+        this.entries = entries == null ? new ArrayList<>() : entries;
+        this.truncated = truncated;
+        this.unchanged = false;
+    }
+
+    /**
+     * Creates the answer for a caller that is already up to date: no entries, nothing queried.
+     *
+     * @param version the current calendar version, equal to the one the caller passed in
+     * @return a response with unchanged set and no entries
+     */
+    public static CalendarEntriesResponse unchanged(long version) {
+        CalendarEntriesResponse r = new CalendarEntriesResponse();
+        r.version = version;
+        r.unchanged = true;
+        r.truncated = false;
+        return r;
+    }
+
+    /**
+     * @return the calendar version the entries reflect; store it and pass it back on the next call
+     */
+    public long getVersion() {
+        return version;
+    }
+
+    public void setVersion(long version) {
+        this.version = version;
+    }
+
+    /**
+     * @return true if nothing changed since the caller's known version, in which case no entries
+     * are carried and the caller keeps its current ones
+     */
+    public boolean isUnchanged() {
+        return unchanged;
+    }
+
+    public void setUnchanged(boolean unchanged) {
+        this.unchanged = unchanged;
+    }
+
+    /**
+     * @return the entries, never null and empty when unchanged is set
+     */
+    public List<CalendarEntryDTO> getEntries() {
+        return entries;
+    }
+
+    public void setEntries(List<CalendarEntryDTO> entries) {
+        this.entries = entries == null ? new ArrayList<>() : entries;
+    }
+
+    /**
+     * @return true if the result hit the requested limit, meaning entries further in the future
+     * were left out; entries are ordered by begin date ascending, so nothing overdue is dropped
+     */
+    public boolean isTruncated() {
+        return truncated;
+    }
+
+    public void setTruncated(boolean truncated) {
+        this.truncated = truncated;
+    }
 
 }

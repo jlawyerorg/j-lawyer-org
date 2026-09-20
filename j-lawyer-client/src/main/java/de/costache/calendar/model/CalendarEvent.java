@@ -38,6 +38,17 @@ public class CalendarEvent extends Observable implements Comparable<CalendarEven
     private boolean holiday;
     
     protected ArchiveFileBean caseDto=null;
+
+    // The identifying fields of the case, as the calendar views display them. They are set when
+    // the event comes from a projection, which carries these columns instead of the case itself -
+    // a case eagerly drags its owner group and its whole folder tree along. caseDto stays null in
+    // that situation and is fetched on demand, when the user actually opens the case.
+    private String caseId=null;
+    private String caseNumber=null;
+    private String caseName=null;
+    private String caseReason=null;
+    private String caseLawyer=null;
+
     // ID of the ArchiveFileReviewsBean on the server / in the database
     private String eventId=null;
 
@@ -295,7 +306,14 @@ public class CalendarEvent extends Observable implements Comparable<CalendarEven
     public String getCaseLawyer() {
         if(this.getCaseDto()!=null)
             return this.getCaseDto().getLawyer();
-        return "";
+        return this.caseLawyer==null ? "" : this.caseLawyer;
+    }
+
+    /**
+     * @param caseLawyer the principal id of the lawyer responsible for the case
+     */
+    public void setCaseLawyer(String caseLawyer) {
+        this.caseLawyer = caseLawyer;
     }
 
     public String getAssignee() {
@@ -312,8 +330,15 @@ public class CalendarEvent extends Observable implements Comparable<CalendarEven
     public String getCaseId() {
         if(this.getCaseDto()!=null)
             return this.getCaseDto().getId();
-        return "";
+        return this.caseId==null ? "" : this.caseId;
         
+    }
+
+    /**
+     * @param caseId the id of the case this event belongs to
+     */
+    public void setCaseId(String caseId) {
+        this.caseId = caseId;
     }
 
     /**
@@ -322,8 +347,15 @@ public class CalendarEvent extends Observable implements Comparable<CalendarEven
     public String getCaseNumber() {
         if(this.getCaseDto()!=null)
             return this.getCaseDto().getFileNumber();
-        return "";
+        return this.caseNumber==null ? "" : this.caseNumber;
         
+    }
+
+    /**
+     * @param caseNumber the file number of the case this event belongs to
+     */
+    public void setCaseNumber(String caseNumber) {
+        this.caseNumber = caseNumber;
     }
 
     /**
@@ -332,7 +364,14 @@ public class CalendarEvent extends Observable implements Comparable<CalendarEven
     public String getCaseName() {
         if(this.getCaseDto()!=null)
             return this.getCaseDto().getName();
-        return "";
+        return this.caseName==null ? "" : this.caseName;
+    }
+
+    /**
+     * @param caseName the short name (Kurzrubrum) of the case this event belongs to
+     */
+    public void setCaseName(String caseName) {
+        this.caseName = caseName;
     }
 
     /**
@@ -341,7 +380,14 @@ public class CalendarEvent extends Observable implements Comparable<CalendarEven
     public String getCaseReason() {
         if(this.getCaseDto()!=null)
             return this.getCaseDto().getReason();
-        return "";
+        return this.caseReason==null ? "" : this.caseReason;
+    }
+
+    /**
+     * @param caseReason the subject (wegen) of the case this event belongs to
+     */
+    public void setCaseReason(String caseReason) {
+        this.caseReason = caseReason;
     }
 
     /**
