@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.editors.documents.viewer;
 
+import com.jdimension.jlawyer.client.mail.EmailActionHandler;
 import com.jdimension.jlawyer.client.mail.MessageContainer;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
@@ -676,25 +677,29 @@ import javax.mail.internet.MimeMessage;
  * @author jens
  */
 public class EmailPanel extends javax.swing.JPanel implements PreviewPanel {
-    
+
     protected MailboxSetup mailboxSetup=null;
     private String documentId=null;
+    private MessageContainer msgContainer=null;
+    private ArchiveFileBean caseContext=null;
 
     /**
      * Creates new form EmailPanel
      */
     public EmailPanel() {
         initComponents();
-        
+
 
     }
 
     public void setCaseContext(ArchiveFileBean a) {
+        this.caseContext = a;
         this.content.setCase(a);
     }
-    
+
     public void setMessage(String documentId, MessageContainer msgC, MailboxSetup ms) {
         this.documentId=documentId;
+        this.msgContainer=msgC;
         this.content.setMessage(msgC, ms);
 
     }
@@ -708,27 +713,115 @@ public class EmailPanel extends javax.swing.JPanel implements PreviewPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jToolBar1 = new javax.swing.JToolBar();
+        cmdReply = new javax.swing.JButton();
+        cmdReplyAll = new javax.swing.JButton();
+        cmdForward = new javax.swing.JButton();
+        cmdEditDraft = new javax.swing.JButton();
         content = new com.jdimension.jlawyer.client.mail.MailContentUI();
+
+        jToolBar1.setRollover(true);
+
+        cmdReply.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/mail_reply.png"))); // NOI18N
+        cmdReply.setToolTipText("Antworten");
+        cmdReply.setFocusable(false);
+        cmdReply.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        cmdReply.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        cmdReply.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdReplyActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(cmdReply);
+
+        cmdReplyAll.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/mail_replyall.png"))); // NOI18N
+        cmdReplyAll.setToolTipText("Allen Antworten");
+        cmdReplyAll.setFocusable(false);
+        cmdReplyAll.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        cmdReplyAll.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        cmdReplyAll.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdReplyAllActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(cmdReplyAll);
+
+        cmdForward.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/mail_forward.png"))); // NOI18N
+        cmdForward.setToolTipText("Weiterleiten");
+        cmdForward.setFocusable(false);
+        cmdForward.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        cmdForward.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        cmdForward.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdForwardActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(cmdForward);
+
+        cmdEditDraft.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/baseline_edit_square_black_48dp.png"))); // NOI18N
+        cmdEditDraft.setToolTipText("Bearbeiten");
+        cmdEditDraft.setFocusable(false);
+        cmdEditDraft.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        cmdEditDraft.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        cmdEditDraft.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdEditDraftActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(cmdEditDraft);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 546, Short.MAX_VALUE)
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(content, javax.swing.GroupLayout.DEFAULT_SIZE, 546, Short.MAX_VALUE))
+            .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, 546, Short.MAX_VALUE)
+            .addComponent(content, javax.swing.GroupLayout.DEFAULT_SIZE, 546, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(content, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE))
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(content, javax.swing.GroupLayout.DEFAULT_SIZE, 269, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void cmdReplyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyActionPerformed
+        if (this.msgContainer == null) {
+            return;
+        }
+        EmailActionHandler.reply(this.msgContainer, null, this.content, this.caseContext, null);
+    }//GEN-LAST:event_cmdReplyActionPerformed
+
+    private void cmdReplyAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyAllActionPerformed
+        if (this.msgContainer == null) {
+            return;
+        }
+        EmailActionHandler.replyAll(this.msgContainer, null, this.content, this.caseContext, null);
+    }//GEN-LAST:event_cmdReplyAllActionPerformed
+
+    private void cmdForwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdForwardActionPerformed
+        if (this.msgContainer == null) {
+            return;
+        }
+        EmailActionHandler.forward(this.msgContainer, null, this.content, this.caseContext, null);
+    }//GEN-LAST:event_cmdForwardActionPerformed
+
+    private void cmdEditDraftActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditDraftActionPerformed
+        if (this.msgContainer == null) {
+            return;
+        }
+        EmailActionHandler.editDraft(this.msgContainer, null, this.content, this.caseContext, null);
+    }//GEN-LAST:event_cmdEditDraftActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdEditDraft;
+    private javax.swing.JButton cmdForward;
+    private javax.swing.JButton cmdReply;
+    private javax.swing.JButton cmdReplyAll;
     private com.jdimension.jlawyer.client.mail.MailContentUI content;
+    private javax.swing.JToolBar jToolBar1;
     // End of variables declaration//GEN-END:variables
 
     @Override
