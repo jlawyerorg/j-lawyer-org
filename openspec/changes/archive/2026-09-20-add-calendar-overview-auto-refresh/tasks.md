@@ -30,6 +30,8 @@
 ## 4. Database
 
 - [x] 4.1 Add `V3_6_0_31__CaseEventsDateIndexes.sql` with indexes on `case_events(done, beginDate)` and `case_events(beginDate)`, bumping `jlawyer.server.database.version` to `3.6.0.31`
+- [x] 4.2 Drop the redundant `case_events(beginDate)` index again in `V3_6_0_32__DropRedundantCaseEventsIndex.sql`: the pre-Flyway setup scripts already created `IDX_REVDATE` on that column, which the Flyway-only survey behind 4.1 missed. The compound index stays - `EXPLAIN` confirms the optimizer picks it for the calendar queries.
+- [ ] 4.3 Apply `V3_6_0_32` and confirm `idx_case_events_begin` is gone while `idx_case_events_done_begin` remains
 
 ## 5. Client render path
 
@@ -64,21 +66,24 @@
 
 - [ ] 7.1 Capture one refresh with `tcpdump` before the change and record the byte count
 - [ ] 7.2 Repeat the capture after phase A and after phase B, and correct the estimates in `proposal.md` with the measured values
-- [ ] 7.3 Leave the panel open for ten idle minutes and confirm only version checks plus exactly one heartbeat appear
-- [ ] 7.4 Assert the projected query returns the same event ids as `getAllOpenReviews()` for a user with restricted groups and for a user with none
-- [ ] 7.5 Assert a case with an owner group the user is not in and no case-group rows stays visible
-- [ ] 7.6 Assert `CalendarEntryDTO.getCaption()` equals `ArchiveFileReviewsBean.toString()` for all three event types, null end date, same-day and multi-day
-- [ ] 7.7 Call `renderEvents()` twice and assert `cachedEvents.size()` is unchanged
-- [ ] 7.8 Confirm an appointment spanning a month boundary renders in both months
-- [ ] 7.9 Confirm no NPE for a null calendar setup and for a null case reference
-- [ ] 7.10 Create an entry through each of the five writing services and confirm the version changes each time
-- [ ] 7.11 Restart WildFly and confirm clients reload rather than going stale
-- [ ] 7.12 With two clients, confirm a change in one appears in the other within one interval
-- [ ] 7.13 Navigate away and confirm polling stops; navigate back and confirm the view is current
+- [x] 7.3 Leave the panel open for ten idle minutes and confirm only version checks plus exactly one heartbeat appear
+- [x] 7.4 Assert the projected query returns the same event ids as `getAllOpenReviews()` for a user with restricted groups and for a user with none
+- [x] 7.5 Assert a case with an owner group the user is not in and no case-group rows stays visible
+- [x] 7.6 Assert `CalendarEntryDTO.getCaption()` equals `ArchiveFileReviewsBean.toString()` for all three event types, null end date, same-day and multi-day
+- [x] 7.7 Call `renderEvents()` twice and assert `cachedEvents.size()` is unchanged
+- [x] 7.8 Confirm an appointment spanning a month boundary renders in both months
+- [x] 7.9 Confirm no NPE for a null calendar setup and for a null case reference
+- [x] 7.10 Create an entry through each of the five writing services and confirm the version changes each time
+- [x] 7.11a Restart WildFly and confirm a manual refresh serves entries again
+- [x] 7.11b Restart WildFly and confirm an **automatic** refresh notices the new version and reloads - a manual refresh passes -1 and never compares versions, so it cannot cover this
+- [x] 7.12 With two clients, confirm a change in one appears in the other within one interval
+- [x] 7.13 Navigate away and confirm polling stops; navigate back and confirm the view is current
 - [ ] 7.14 Switch editors about fifty times and confirm the timer thread count does not grow
-- [ ] 7.15 Confirm selection by entry id and scroll position survive a refresh, and the calendar sheet does not jump to today
-- [ ] 7.16 Open the panel in the NetBeans GUI builder after the `.form` change and confirm it loads without warnings and the header row renders as intended
-- [ ] 7.17 Confirm `lblStatus` shows the load time after an automatic refresh, a truncation notice past the limit, and a failure notice with the last good time when the server is unreachable
-- [ ] 7.18 `EXPLAIN` the generated SQL before and after the migration and confirm the new index is used
-- [ ] 7.19 Apply `V3_6_0_31` to a production-sized copy and record the runtime
-- [ ] 7.20 Build server, client and EAR, then deploy
+- [x] 7.15a Confirm the selected row survives a refresh
+- [x] 7.15b Confirm the scroll position survives a refresh
+- [x] 7.15c Confirm the calendar sheet does not jump back to today when it shows another month
+- [x] 7.16 Open the panel in the NetBeans GUI builder after the `.form` change and confirm it loads without warnings and the header row renders as intended
+- [x] 7.17 Confirm `lblStatus` shows the load time after an automatic refresh, a truncation notice past the limit, and a failure notice with the last good time when the server is unreachable
+- [x] 7.18 `EXPLAIN` the generated SQL before and after the migration and confirm the new index is used
+- [x] 7.19 Apply `V3_6_0_31` to a production-sized copy and record the runtime
+- [x] 7.20 Build server, client and EAR, then deploy
