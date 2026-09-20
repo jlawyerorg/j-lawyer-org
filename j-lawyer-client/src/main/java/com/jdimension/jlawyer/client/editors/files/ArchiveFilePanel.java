@@ -10065,18 +10065,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
             
-            String newName = "Assistent Ingo - Ergebnis (" + c.getName() + ")" + ".md";
-            boolean documentExists = remote.doesDocumentExist(dto.getId(), newName);
-            while (documentExists) {
-                newName = FileUtils.getNewFileName(dto, newName, new Date(), false, EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für Assistent Ingo-Ergebnisse");
-                if (newName == null || "".equals(newName)) {
-                    this.lastPopupClosed = System.currentTimeMillis();
-                    return;
-                }
-                documentExists = remote.doesDocumentExist(dto.getId(), newName);
+            String baseName = FileUtils.sanitizeFileName("Assistent Ingo - Ergebnis (" + c.getName() + ")");
+            String newName = baseName + ".md";
+            int suffix = 2;
+            while (remote.doesDocumentExist(dto.getId(), newName)) {
+                newName = baseName + " (" + suffix + ").md";
+                suffix++;
             }
-            newName = FileUtils.sanitizeFileName(newName);
-            
+
             ArchiveFileDocumentsBean newDoc = remote.addDocument(this.dto.getId(), newName, md.getBytes(StandardCharsets.UTF_8), "", null);
             this.caseFolderPanel1.addDocument(remote.getDocument(newDoc.getId()), null);
             javax.swing.JOptionPane.showMessageDialog(this, "Ergebnis wurde als Dokument zur Akte gespeichert.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, javax.swing.JOptionPane.INFORMATION_MESSAGE);
