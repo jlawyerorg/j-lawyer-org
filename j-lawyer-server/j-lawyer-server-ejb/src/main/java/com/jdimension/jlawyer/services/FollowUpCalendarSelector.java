@@ -660,132 +660,73 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.eda;
+package com.jdimension.jlawyer.services;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
+import com.jdimension.jlawyer.persistence.CalendarSetup;
 import java.util.List;
 
 /**
- * Reads the messages a dunning court sends back out of an exchange file.
+ * Chooses the calendar a follow-up created by the program is put into.
  *
- * A file can carry several messages, each opened by its own key record. What is extracted is what a
- * procedure acts on - type, kind, the reference the court echoes, its file number and the date
- * reported. Everything else is kept as raw records: a message this reader does not interpret must
- * still be storable and readable, because discarding it would lose news from a court.
+ * A calendar entry without a calendar is not in any calendar. It exists in the database, it is
+ * counted, and nobody ever sees it - which for a deadline is worse than not having created it at
+ * all, because the record suggests the date is being watched.
+ *
+ * Where a person enters a follow-up, the desktop asks them which calendar. Where the program
+ * enters one - a payment deadline from a reminder, a statutory deadline of a dunning procedure -
+ * nobody is there to ask, so the choice follows the same order the desktop uses, minus the step
+ * that reads a client-side setting:
+ *
+ * <ol>
+ * <li>the calendar last used for this kind of entry in this case,</li>
+ * <li>otherwise the first calendar of the right kind the user may write to.</li>
+ * </ol>
+ *
+ * A calendar only takes the kind of entry it is meant for, so one of the wrong type is never
+ * chosen, not even as a fallback.
  *
  * @author jens
  */
-public class EdaMessageReader {
-
-    private static final String DATE_PATTERN = "yyMMdd";
+public class FollowUpCalendarSelector {
 
     /**
-     * Reads every message in a file.
+     * Selects the calendar for an entry.
      *
-     * @param content the file as received
-     * @return the messages, in the order they appear; empty for an empty file
-     * @throws IllegalArgumentException if a record is not of record length
+     * @param available the calendars the user may write to, in any order
+     * @param eventType the kind of entry, as {@code ArchiveFileReviewsBean.EVENTTYPE_*}
+     * @param lastUsedInCase the id of the calendar last used for this kind in this case, or null
+     * @return the calendar, or null if the user has none of the right kind
      */
-    public List<EdaMessage> read(String content) {
+    public CalendarSetup select(List<CalendarSetup> available, int eventType, String lastUsedInCase) {
 
-        List<EdaMessage> messages = new ArrayList<>();
-        if (content == null || content.trim().isEmpty()) {
-            return messages;
+        if (available == null || available.isEmpty()) {
+            return null;
         }
-
-        EdaMessage current = null;
-        int lineNumber = 0;
-        for (String line : EdaRecords.split(content)) {
-            lineNumber++;
-            if (line.isEmpty()) {
-                continue;
-            }
-            if (line.length() != EdaRecordLayout.RECORD_LENGTH) {
-                throw new IllegalArgumentException("Zeile " + lineNumber + ": ein Satz muss genau "
-                        + EdaRecordLayout.RECORD_LENGTH + " Zeichen lang sein, dieser hat "
-                        + line.length() + ".");
-            }
-            String satzart = line.substring(0, 2);
-            if ("AA".equals(satzart) || "BB".equals(satzart)) {
-                // the frame carries no message content
-                continue;
-            }
-
-            EdaRecordLayout layout = EdaMessageLayouts.findByRecordKey(line);
-            if (layout != null && "KS".equals(layout.getKennzeichen())) {
-                current = new EdaMessage();
-                current.setSatzart(satzart);
-                messages.add(current);
-                readKeyRecord(current, layout, line);
-            }
-            if (current == null) {
-                // records before the first key record belong to no message; they are kept with a
-                // message of their own rather than dropped
-                current = new EdaMessage();
-                current.setSatzart(satzart);
-                messages.add(current);
-            }
-            current.getRawRecords().add(line);
-        }
-        return messages;
-    }
-
-    /**
-     * Takes from the key record what the procedure needs.
-     *
-     * The field names differ between message types, so each is asked for by name and simply absent
-     * where the type does not carry it.
-     */
-    private void readKeyRecord(EdaMessage message, EdaRecordLayout layout, String line) {
-
-        EdaRecord record = new EdaRecordCodec().parse(layout, line);
-
-        message.setOwnReference(record.get("ASGZ"));
-        message.setParticipantNumber(record.get("KEZI"));
-        message.setMessageKind(record.get("NAM"));
-
-        String fileNumber = record.get("GNR");
-        if (fileNumber == null) {
-            // the cost and issue notice carries up to five file numbers, one per application in the
-            // delivery; the first is the one this message is about
-            fileNumber = record.get("GNR1");
-        }
-        message.setCourtFileNumber(fileNumber);
-
-        message.setReportedDate(parseDate(firstOf(record, "ZUD", "ELD", "WIEFD")));
-    }
-
-    private String firstOf(EdaRecord record, String... fieldNames) {
-        for (String name : fieldNames) {
-            if (record.getLayout().getField(name) != null) {
-                String value = record.get(name);
-                if (value != null && !value.trim().isEmpty()) {
-                    return value;
+        if (lastUsedInCase != null && !lastUsedInCase.trim().isEmpty()) {
+            for (CalendarSetup setup : available) {
+                if (setup != null && setup.getEventType() == eventType
+                        && lastUsedInCase.trim().equals(setup.getId())) {
+                    return setup;
                 }
+            }
+        }
+        for (CalendarSetup setup : available) {
+            if (setup != null && setup.getEventType() == eventType) {
+                return setup;
             }
         }
         return null;
     }
 
     /**
-     * Reads a JJMMTT date. The format carries no century, so a two-digit year is read as this one.
+     * Says why no calendar could be chosen, for a report the user actually reads.
      *
-     * @param value the six digits, or null
-     * @return the date, or null where none was given or it could not be read
+     * @param eventTypeName what kind of entry it was, in words
+     * @return the sentence
      */
-    private Date parseDate(String value) {
-        if (value == null || value.trim().length() != 6) {
-            return null;
-        }
-        try {
-            return new SimpleDateFormat(DATE_PATTERN).parse(value.trim());
-        } catch (ParseException ex) {
-            // a malformed date is not worth failing the whole import for; the message is kept and
-            // the missing date shows up when it is applied
-            return null;
-        }
+    public String noCalendarReason(String eventTypeName) {
+        return "Es wurde keine " + eventTypeName + " angelegt: für Sie ist kein Kalender "
+                + "eingerichtet, der diesen Eintragstyp aufnimmt. Bitte in der Kalenderverwaltung "
+                + "einen entsprechenden Kalender zuweisen.";
     }
 }

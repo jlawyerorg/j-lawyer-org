@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.eda.EdaMahnbescheidBuilder;
 import com.jdimension.jlawyer.eda.EdaMahnbescheidLayouts;
 import com.jdimension.jlawyer.eda.EdaProcessRepresentative;
 import com.jdimension.jlawyer.eda.EdaRecord;
+import com.jdimension.jlawyer.eda.EdaRecords;
 import com.jdimension.jlawyer.eda.EdaRecordLayout;
 import com.jdimension.jlawyer.eda.EdaStructureVerifier;
 import com.jdimension.jlawyer.eda.EdaViolation;
@@ -778,6 +779,72 @@ public class EdaMahnbescheidBuilderTest {
     }
 
     @Test
+    public void theDeclarationOnTheCounterPerformanceTravelsInTheKeyRecord() throws Exception {
+        // § 688 Abs. 2 Nr. 2 ZPO: a Mahnbescheid is inadmissible where the claim depends on a
+        // counter-performance not yet rendered, so the court has to be told which case applies
+        DunningCase rendered = dunningCase();
+        rendered.setCounterPerformanceRendered(true);
+
+        EdaRecord kennsatz = builder.buildApplication(rendered,
+                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
+                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
+                Arrays.asList(claim("11", "5000.00"))).get(0);
+
+        assertEquals("X", kennsatz.get("VGLM1"));
+        assertNull(kennsatz.get("VGLM2"));
+    }
+
+    @Test
+    public void aClaimIndependentOfACounterPerformanceUsesTheOtherField() throws Exception {
+        DunningCase independent = dunningCase();
+        independent.setCounterPerformanceIndependent(true);
+
+        EdaRecord kennsatz = builder.buildApplication(independent,
+                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
+                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
+                Arrays.asList(claim("11", "5000.00"))).get(0);
+
+        assertNull(kennsatz.get("VGLM1"));
+        assertEquals("X", kennsatz.get("VGLM2"));
+    }
+
+    @Test
+    public void bothDeclarationsMayStandTogether() throws Exception {
+        // "Bei mehreren Ansprüchen können auch beide Felder belegt sein!" - they are not
+        // alternatives, and an application over several claims can carry claims of either kind
+        DunningCase both = dunningCase();
+        both.setCounterPerformanceRendered(true);
+        both.setCounterPerformanceIndependent(true);
+
+        EdaRecord kennsatz = builder.buildApplication(both,
+                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
+                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
+                Arrays.asList(claim("11", "5000.00"))).get(0);
+
+        assertEquals("X", kennsatz.get("VGLM1"));
+        assertEquals("X", kennsatz.get("VGLM2"));
+    }
+
+    @Test
+    public void theReferralIsOnlyAppliedForWhenItIsAskedFor() throws Exception {
+        // § 696 Abs. 1 ZPO; an empty field means it is not applied for, which is a statement of its
+        // own and must not be made by accident
+        EdaRecord notAsked = builder.buildApplication(dunningCase(),
+                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
+                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
+                Arrays.asList(claim("11", "5000.00"))).get(0);
+        assertNull(notAsked.get("ASTRVM"));
+
+        DunningCase asked = dunningCase();
+        asked.setLitigationRequested(true);
+        EdaRecord requested = builder.buildApplication(asked,
+                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
+                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
+                Arrays.asList(claim("11", "5000.00"))).get(0);
+        assertEquals("X", requested.get("ASTRVM"));
+    }
+
+    @Test
     public void aRepresentativeFollowsThePartyItActsFor() throws Exception {
         // the format has no field pointing back at the party; position is the only link, so a
         // representative record in the wrong place attaches itself to the wrong person
@@ -786,8 +853,7 @@ public class EdaMahnbescheidBuilderTest {
                 Arrays.asList(representedParty("p2")),
                 Arrays.asList(claim("11", "5000.00")));
 
-        assertEquals(Arrays.asList("C01", "C02", "C03", "C04", "C05", "C06",
-                "C13", "C14", "C15", "C17", "C18", "C20"), layoutSequence(records));
+        assertEquals(Arrays.asList("C01", "C02", "C04", "C05", "C06", "C13", "C15", "C17", "C18", "C20"), layoutSequence(records));
     }
 
     @Test
@@ -800,8 +866,7 @@ public class EdaMahnbescheidBuilderTest {
                 Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
                 Arrays.asList(claim("11", "5000.00")), lawyers());
 
-        assertEquals(Arrays.asList("C01", "C02", "C03", "C04", "C07", "C08", "C10",
-                "C13", "C14", "C15", "C20"), layoutSequence(records));
+        assertEquals(Arrays.asList("C01", "C02", "C04", "C07", "C08", "C10", "C13", "C15", "C20"), layoutSequence(records));
     }
 
     @Test
@@ -811,8 +876,7 @@ public class EdaMahnbescheidBuilderTest {
                 Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
                 Arrays.asList(claim("11", "5000.00")), lawyers());
 
-        assertEquals(Arrays.asList("C01", "C02", "C03", "C04", "C10",
-                "C13", "C14", "C15", "C20"), layoutSequence(records));
+        assertEquals(Arrays.asList("C01", "C02", "C04", "C10", "C13", "C15", "C20"), layoutSequence(records));
     }
 
     @Test
@@ -874,8 +938,7 @@ public class EdaMahnbescheidBuilderTest {
                 Arrays.asList(claim("11", "5000.00")), rep,
                 "12345678", "MB0001", date(2026, 3, 2));
 
-        assertEquals(Arrays.asList("C01", "C02", "C03", "C04", "C10", "C11",
-                "C13", "C14", "C15", "C20"), layoutSequence(file.getRecords()));
+        assertEquals(Arrays.asList("C01", "C02", "C04", "C10", "C11", "C13", "C15", "C20"), layoutSequence(file.getRecords()));
 
         List<EdaViolation> violations = new EdaStructureVerifier()
                 .verify(file.write("12345678"), EdaMahnbescheidLayouts.FORMAT_MAHNBESCHEID);
@@ -890,7 +953,7 @@ public class EdaMahnbescheidBuilderTest {
                 Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
                 Arrays.asList(claim("11", "5000.00")));
 
-        assertEquals(Arrays.asList("C01", "C02", "C03", "C04", "C13", "C14", "C15", "C20"),
+        assertEquals(Arrays.asList("C01", "C02", "C04", "C13", "C15", "C20"),
                 layoutSequence(records));
     }
 
@@ -994,7 +1057,7 @@ public class EdaMahnbescheidBuilderTest {
         assertTrue("an assembled application must survive its own verification: " + violations,
                 violations.isEmpty());
 
-        for (String line : content.split("\r\n")) {
+        for (String line : EdaRecords.split(content)) {
             assertEquals(EdaRecordLayout.RECORD_LENGTH, line.length());
         }
     }

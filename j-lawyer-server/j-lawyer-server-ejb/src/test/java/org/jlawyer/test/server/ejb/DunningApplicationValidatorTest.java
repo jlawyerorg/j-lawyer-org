@@ -668,6 +668,8 @@ import com.jdimension.jlawyer.persistence.ClaimComponentType;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
 import com.jdimension.jlawyer.persistence.ClaimPartyRole;
 import com.jdimension.jlawyer.persistence.DunningCase;
+import com.jdimension.jlawyer.persistence.LitigationCourtType;
+import com.jdimension.jlawyer.persistence.DunningRepresentativeFeeMode;
 import com.jdimension.jlawyer.pojo.DunningValidationIssue;
 import com.jdimension.jlawyer.pojo.DunningValidationResult;
 import com.jdimension.jlawyer.referencedata.ReferenceData;
@@ -703,6 +705,9 @@ public class DunningApplicationValidatorTest {
         c.setCourtPostalCode("70154");
         c.setCourtCity("Stuttgart");
         c.setKennziffer("123456");
+        // without this the application is monited; § 688 Abs. 2 Nr. 2 ZPO wants to know whether the
+        // claim depends on a counter-performance still owed
+        c.setCounterPerformanceRendered(true);
         return c;
     }
 
@@ -724,7 +729,19 @@ public class DunningApplicationValidatorTest {
     private List<ClaimLedgerParty> completeParties() {
         return new ArrayList<>(Arrays.asList(
                 party("p1", ClaimPartyRole.CREDITOR, "Gläubiger GmbH", "Hauptstr. 1", "70173", "Stuttgart"),
-                party("p2", ClaimPartyRole.DEBTOR, "Max Schuldner", "Nebenstr. 2", "70174", "Stuttgart")));
+                withLitigationCourt(
+                        party("p2", ClaimPartyRole.DEBTOR, "Max Schuldner", "Nebenstr. 2", "70174", "Stuttgart"))));
+    }
+
+    /**
+     * Every defendant has to name the court for the contested proceedings (§ 690 Abs. 1 Nr. 5 ZPO),
+     * so a party that is meant to be complete carries one.
+     */
+    private ClaimLedgerParty withLitigationCourt(ClaimLedgerParty party) {
+        party.setLitigationCourtType(LitigationCourtType.AMTSGERICHT);
+        party.setLitigationCourtPostalCode("70190");
+        party.setLitigationCourtCity("Stuttgart");
+        return party;
     }
 
     private ClaimComponent mainClaim(String id, String name, String catalogueNumber) {
@@ -774,7 +791,7 @@ public class DunningApplicationValidatorTest {
 
         assertFalse(r.isReady());
         // court, Kennziffer, creditor postcode, debtor street, debtor city, no main claim, no value
-        assertEquals("a user should learn all of it at once", 7, r.getBlockingIssues().size());
+        assertEquals("a user should learn all of it at once", 8, r.getBlockingIssues().size());
         assertTrue(hasIssueAbout(r, "Mahngericht"));
         assertTrue(hasIssueAbout(r, "Kennziffer"));
         assertTrue(hasIssueAbout(r, "Antragsteller"));
@@ -918,5 +935,95 @@ public class DunningApplicationValidatorTest {
                 Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
 
         assertEquals("p2", r.getBlockingIssues().get(0).getReference());
+    }
+
+    // ----- die Erklärung, die das Gericht verlangt -----
+
+    @Test
+    public void anApplicationWithoutTheCounterPerformanceDeclarationIsNotReady() {
+        DunningCase c = completeCase();
+        c.setCounterPerformanceRendered(false);
+        c.setCounterPerformanceIndependent(false);
+
+        DunningValidationResult r = validate(c, completeParties(), Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
+
+        assertFalse("the court monits an application that does not say which case applies",
+                r.isReady());
+        boolean named = false;
+        for (DunningValidationIssue issue : r.getBlockingIssues()) {
+            if ("Gegenleistung".equals(issue.getField())) {
+                named = true;
+                assertEquals("§ 688 Abs. 2 Nr. 2 ZPO", issue.getReference());
+            }
+        }
+        assertTrue("the beanstandung names the field it is about", named);
+    }
+
+    @Test
+    public void eitherDeclarationOnItsOwnIsEnough() {
+        DunningCase rendered = completeCase();
+        assertTrue(validate(rendered, completeParties(), Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00").isReady());
+
+        DunningCase independent = completeCase();
+        independent.setCounterPerformanceRendered(false);
+        independent.setCounterPerformanceIndependent(true);
+        assertTrue(validate(independent, completeParties(), Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00").isReady());
+    }
+
+    @Test
+    public void bothTogetherAreNotTreatedAsAContradiction() {
+        // the Satzbeschreibung allows both fields at once for an application over several claims
+        DunningCase both = completeCase();
+        both.setCounterPerformanceIndependent(true);
+
+        assertTrue(validate(both, completeParties(), Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00").isReady());
+    }
+
+    // ----- die Vergütung des Prozessbevollmächtigten -----
+
+    @Test
+    public void anAgreedFeeWithoutAnAmountIsRefused() {
+        // without a figure the court would read the entry as a waiver of the fee
+        DunningCase c = completeCase();
+        c.setRepresentativeFeeMode(DunningRepresentativeFeeMode.AGREED);
+
+        DunningValidationResult r = validate(c, completeParties(),
+                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
+
+        assertFalse(r.isReady());
+        assertTrue(hasIssueAbout(r, "Vergütung"));
+    }
+
+    @Test
+    public void aZeroIsNotAnAgreedFeeEither() {
+        DunningCase c = completeCase();
+        c.setRepresentativeFeeMode(DunningRepresentativeFeeMode.AGREED);
+        c.setRepresentativeFeeAmount(BigDecimal.ZERO);
+
+        assertFalse(validate(c, completeParties(),
+                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00").isReady());
+    }
+
+    @Test
+    public void theOtherTwoChoicesNeedNoAmount() {
+        for (DunningRepresentativeFeeMode mode : new DunningRepresentativeFeeMode[]{
+            DunningRepresentativeFeeMode.LEGAL, DunningRepresentativeFeeMode.WAIVED}) {
+
+            DunningCase c = completeCase();
+            c.setRepresentativeFeeMode(mode);
+
+            assertTrue(mode.getLabel(), validate(c, completeParties(),
+                    Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00").isReady());
+        }
+    }
+
+    @Test
+    public void anAgreedFeeWithAnAmountPassesFor() {
+        DunningCase c = completeCase();
+        c.setRepresentativeFeeMode(DunningRepresentativeFeeMode.AGREED);
+        c.setRepresentativeFeeAmount(new BigDecimal("280.00"));
+
+        assertTrue(validate(c, completeParties(),
+                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00").isReady());
     }
 }

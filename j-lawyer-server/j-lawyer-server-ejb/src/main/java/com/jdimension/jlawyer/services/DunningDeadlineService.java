@@ -664,6 +664,7 @@ package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.DunningCase;
 import com.jdimension.jlawyer.persistence.DunningCaseDeadline;
@@ -712,6 +713,12 @@ public class DunningDeadlineService implements DunningDeadlineServiceLocal {
     @EJB
     private ArchiveFileReviewsBeanFacadeLocal archiveFileReviewsFacade;
 
+    @EJB
+    private CalendarServiceLocal calendarService;
+
+    @EJB
+    private SecurityServiceLocal securityFacade;
+
     @Override
     public List<String> synchronizeDeadlines(DunningCase dunningCase, int leadTimeDays) throws Exception {
 
@@ -756,8 +763,6 @@ public class DunningDeadlineService implements DunningDeadlineServiceLocal {
             List<String> report) {
 
         ArchiveFileReviewsBean review = new ArchiveFileReviewsBean();
-        review.setId(new StringGenerator().getID().toString());
-        review.setArchiveFileKey(caseFile);
         review.setEventType(ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP);
         review.setBeginDate(computed.getReminderDate());
         review.setEndDate(computed.getReminderDate());
@@ -765,24 +770,56 @@ public class DunningDeadlineService implements DunningDeadlineServiceLocal {
         review.setDescription(descriptionOf(computed));
         review.setDone(false);
         try {
-            review.setCreatedBy(this.context.getCallerPrincipal().getName());
             review.setAssignee(this.context.getCallerPrincipal().getName());
         } catch (Throwable t) {
             log.warn("Unable to determine caller when creating a dunning deadline", t);
         }
-        this.archiveFileReviewsFacade.create(review);
+
+        // these are statutory deadlines; an entry without a calendar would be in no calendar at
+        // all, and the deadline record would suggest the date is being watched when it is not
+        CalendarSetup setup = null;
+        try {
+            setup = new FollowUpCalendarSelector().select(
+                    this.securityFacade.getCalendarsForUser(this.context.getCallerPrincipal().getName()),
+                    ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP,
+                    caseFile.getLastCalendarSetupFollowups());
+        } catch (Exception ex) {
+            log.error("Unable to determine a calendar for a dunning deadline", ex);
+        }
+        if (setup == null) {
+            report.add(computed.getType().getLabel() + ": "
+                    + new FollowUpCalendarSelector().noCalendarReason("Wiedervorlage")
+                    + " Die Frist selbst ist erfasst.");
+            setup = null;
+        }
+        review.setCalendarSetup(setup);
+        ArchiveFileReviewsBean stored = null;
+        if (setup != null) {
+            try {
+                stored = this.calendarService.addReview(caseFile.getId(), review);
+            } catch (Exception ex) {
+                log.error("Unable to create the follow-up for a dunning deadline", ex);
+                report.add(computed.getType().getLabel()
+                        + ": Die Wiedervorlage konnte nicht angelegt werden - " + ex.getMessage()
+                        + " Die Frist selbst ist erfasst.");
+            }
+        }
 
         DunningCaseDeadline link = new DunningCaseDeadline();
         link.setId(new StringGenerator().getID().toString());
         link.setDunningCase(dunningCase);
         link.setDeadlineType(computed.getType());
         link.setDeadlineDate(computed.getDeadline());
-        link.setReviewId(review.getId());
+        // the deadline is recorded either way; it just carries no follow-up when none could be
+        // placed, which is what the report above says
+        link.setReviewId(stored == null ? null : stored.getId());
         this.deadlinesFacade.create(link);
 
-        report.add(computed.getType().getLabel() + ": Wiedervorlage zum "
-                + DATE_FORMAT.format(computed.getReminderDate()) + " angelegt (Frist "
-                + DATE_FORMAT.format(computed.getDeadline()) + ").");
+        if (stored != null) {
+            report.add(computed.getType().getLabel() + ": Wiedervorlage zum "
+                    + DATE_FORMAT.format(computed.getReminderDate()) + " angelegt (Frist "
+                    + DATE_FORMAT.format(computed.getDeadline()) + ").");
+        }
     }
 
     private void update(DunningCaseDeadline stored, DunningDeadline computed, List<String> report) {

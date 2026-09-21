@@ -716,6 +716,8 @@ public class DunningApplicationValidator {
         }
         validateCourt(dunningCase, result);
         validateKennziffer(dunningCase, result);
+        validateDeclarations(dunningCase, result);
+        validateRepresentativeFee(dunningCase, result);
         validateParties(parties, result);
         validateClaims(components, claimValue, catalogue, result);
 
@@ -745,6 +747,46 @@ public class DunningApplicationValidator {
         }
     }
 
+    /**
+     * The declaration on the counter-performance, which the court insists on.
+     *
+     * Under § 688 Abs. 2 Nr. 2 ZPO a Mahnbescheid is inadmissible where the claim depends on a
+     * counter-performance that has not been rendered. The application therefore has to state which
+     * of the two cases applies; one without any such statement is monited. Both may be declared at
+     * once - an application over several claims can carry claims of either kind, and the
+     * Satzbeschreibung allows both fields to be set.
+     */
+    private void validateDeclarations(DunningCase dunningCase, DunningValidationResult result) {
+        if (!dunningCase.hasCounterPerformanceDeclaration()) {
+            result.error("Gegenleistung",
+                    "Es ist nicht erklärt, ob der Anspruch von einer Gegenleistung abhängt. Ohne "
+                    + "diese Erklärung wird der Antrag moniert: der Mahnbescheid ist unzulässig, "
+                    + "wenn der Anspruch von einer noch nicht erbrachten Gegenleistung abhängt.",
+                    "§ 688 Abs. 2 Nr. 2 ZPO");
+        }
+    }
+
+    /**
+     * The remuneration of the lawyer, which the courts want stated since it was re-regulated with
+     * effect from 1 June 2025.
+     *
+     * Only the agreed fee needs a figure. The statutory fee leaves the field empty and a waiver
+     * writes a zero, so neither can be checked against an amount - but an agreed fee without one
+     * would silently become a waiver, which is the mistake worth catching.
+     */
+    private void validateRepresentativeFee(DunningCase dunningCase, DunningValidationResult result) {
+        if (!dunningCase.getRepresentativeFeeMode().needsAmount()) {
+            return;
+        }
+        BigDecimal agreed = dunningCase.getRepresentativeFeeAmount();
+        if (agreed == null || agreed.signum() <= 0) {
+            result.error("Vergütung",
+                    "Es ist eine vereinbarte Vergütung gewählt, aber kein Betrag angegeben. Ohne "
+                    + "Betrag würde das Gericht den Eintrag als Verzicht auf die Vergütung lesen.",
+                    "Nr. 9 des Satzes ASPVA00");
+        }
+    }
+
     private void validateParties(List<ClaimLedgerParty> parties, DunningValidationResult result) {
 
         if (parties == null || parties.isEmpty()) {
@@ -761,6 +803,12 @@ public class DunningApplicationValidator {
             } else if (party.getRole() == ClaimPartyRole.DEBTOR) {
                 debtors++;
                 validateAddress(party, "Antragsgegner", result);
+                if (!party.hasLitigationCourt()) {
+                    result.error("Prozessgericht",
+                            "Für " + party.getEffectiveDesignation() + " ist nicht angegeben, "
+                            + "welches Gericht bei Widerspruch das streitige Verfahren führt.",
+                            "§ 690 Abs. 1 Nr. 5 ZPO");
+                }
             }
         }
         if (creditors == 0) {

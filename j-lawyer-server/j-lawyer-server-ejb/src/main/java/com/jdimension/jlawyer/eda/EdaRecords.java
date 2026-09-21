@@ -662,130 +662,56 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.eda;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
- * Reads the messages a dunning court sends back out of an exchange file.
+ * Splits an exchange file into its records.
  *
- * A file can carry several messages, each opened by its own key record. What is extracted is what a
- * procedure acts on - type, kind, the reference the court echoes, its file number and the date
- * reported. Everything else is kept as raw records: a message this reader does not interpret must
- * still be storable and readable, because discarding it would lose news from a court.
+ * An EDA file is a continuous stream of fixed-length records with nothing between them. That is not
+ * a detail of one court's software: the character repertoire the EDA-Konditionen admit (section
+ * 4.3.2) begins at X'20' and lists only printable characters, so a carriage return or line feed
+ * between records is not merely unusual but a character the format does not allow. Every reference
+ * file obtained from the Online-Mahnantrag is one unbroken stream.
+ *
+ * Files written by hand or by other tools are read all the same: where line breaks are present they
+ * are taken as the separation, which keeps the diagnostics of a malformed file readable. Where they
+ * are absent the stream is cut every {@value #RECORD_LENGTH} characters, and a remainder that does
+ * not fill a record is returned as it stands so the verifier can report it rather than hide it.
  *
  * @author jens
  */
-public class EdaMessageReader {
+public final class EdaRecords {
 
-    private static final String DATE_PATTERN = "yyMMdd";
+    /** How long a record is, in characters. */
+    public static final int RECORD_LENGTH = 128;
 
-    /**
-     * Reads every message in a file.
-     *
-     * @param content the file as received
-     * @return the messages, in the order they appear; empty for an empty file
-     * @throws IllegalArgumentException if a record is not of record length
-     */
-    public List<EdaMessage> read(String content) {
-
-        List<EdaMessage> messages = new ArrayList<>();
-        if (content == null || content.trim().isEmpty()) {
-            return messages;
-        }
-
-        EdaMessage current = null;
-        int lineNumber = 0;
-        for (String line : EdaRecords.split(content)) {
-            lineNumber++;
-            if (line.isEmpty()) {
-                continue;
-            }
-            if (line.length() != EdaRecordLayout.RECORD_LENGTH) {
-                throw new IllegalArgumentException("Zeile " + lineNumber + ": ein Satz muss genau "
-                        + EdaRecordLayout.RECORD_LENGTH + " Zeichen lang sein, dieser hat "
-                        + line.length() + ".");
-            }
-            String satzart = line.substring(0, 2);
-            if ("AA".equals(satzart) || "BB".equals(satzart)) {
-                // the frame carries no message content
-                continue;
-            }
-
-            EdaRecordLayout layout = EdaMessageLayouts.findByRecordKey(line);
-            if (layout != null && "KS".equals(layout.getKennzeichen())) {
-                current = new EdaMessage();
-                current.setSatzart(satzart);
-                messages.add(current);
-                readKeyRecord(current, layout, line);
-            }
-            if (current == null) {
-                // records before the first key record belong to no message; they are kept with a
-                // message of their own rather than dropped
-                current = new EdaMessage();
-                current.setSatzart(satzart);
-                messages.add(current);
-            }
-            current.getRawRecords().add(line);
-        }
-        return messages;
+    private EdaRecords() {
     }
 
     /**
-     * Takes from the key record what the procedure needs.
+     * Splits a file into records.
      *
-     * The field names differ between message types, so each is asked for by name and simply absent
-     * where the type does not carry it.
+     * @param content the file as it stands, already decoded from CP-850
+     * @return the records in the order they appear, never null
      */
-    private void readKeyRecord(EdaMessage message, EdaRecordLayout layout, String line) {
+    public static List<String> split(String content) {
 
-        EdaRecord record = new EdaRecordCodec().parse(layout, line);
-
-        message.setOwnReference(record.get("ASGZ"));
-        message.setParticipantNumber(record.get("KEZI"));
-        message.setMessageKind(record.get("NAM"));
-
-        String fileNumber = record.get("GNR");
-        if (fileNumber == null) {
-            // the cost and issue notice carries up to five file numbers, one per application in the
-            // delivery; the first is the one this message is about
-            fileNumber = record.get("GNR1");
+        List<String> records = new ArrayList<>();
+        if (content == null || content.isEmpty()) {
+            return records;
         }
-        message.setCourtFileNumber(fileNumber);
-
-        message.setReportedDate(parseDate(firstOf(record, "ZUD", "ELD", "WIEFD")));
-    }
-
-    private String firstOf(EdaRecord record, String... fieldNames) {
-        for (String name : fieldNames) {
-            if (record.getLayout().getField(name) != null) {
-                String value = record.get(name);
-                if (value != null && !value.trim().isEmpty()) {
-                    return value;
+        if (content.indexOf('\n') >= 0 || content.indexOf('\r') >= 0) {
+            for (String line : content.split("\r\n|\n|\r")) {
+                if (!line.isEmpty()) {
+                    records.add(line);
                 }
             }
+            return records;
         }
-        return null;
-    }
-
-    /**
-     * Reads a JJMMTT date. The format carries no century, so a two-digit year is read as this one.
-     *
-     * @param value the six digits, or null
-     * @return the date, or null where none was given or it could not be read
-     */
-    private Date parseDate(String value) {
-        if (value == null || value.trim().length() != 6) {
-            return null;
+        for (int at = 0; at < content.length(); at += RECORD_LENGTH) {
+            records.add(content.substring(at, Math.min(at + RECORD_LENGTH, content.length())));
         }
-        try {
-            return new SimpleDateFormat(DATE_PATTERN).parse(value.trim());
-        } catch (ParseException ex) {
-            // a malformed date is not worth failing the whole import for; the message is kept and
-            // the missing date shows up when it is applied
-            return null;
-        }
+        return records;
     }
 }

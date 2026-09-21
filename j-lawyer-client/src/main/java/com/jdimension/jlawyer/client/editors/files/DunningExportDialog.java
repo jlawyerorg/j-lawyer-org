@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.persistence.DunningCase;
+import com.jdimension.jlawyer.persistence.DunningRepresentativeFeeMode;
 import com.jdimension.jlawyer.pojo.DunningClaimInput;
 import com.jdimension.jlawyer.pojo.DunningValidationIssue;
 import com.jdimension.jlawyer.pojo.DunningValidationResult;
@@ -856,6 +857,23 @@ public class DunningExportDialog extends javax.swing.JDialog {
         this.txtOffsetAmount.setText(this.dunningCase.getOffsetAmount() == null
                 ? "" : currencyFormat.format(this.dunningCase.getOffsetAmount()));
         this.chkSpecialEffort.setSelected(this.dunningCase.isSpecialEffort());
+        this.chkCounterPerformanceRendered.setSelected(this.dunningCase.isCounterPerformanceRendered());
+        this.chkCounterPerformanceIndependent.setSelected(this.dunningCase.isCounterPerformanceIndependent());
+        this.chkLitigationRequested.setSelected(this.dunningCase.isLitigationRequested());
+        switch (this.dunningCase.getRepresentativeFeeMode()) {
+            case AGREED:
+                this.optFeeAgreed.setSelected(true);
+                break;
+            case WAIVED:
+                this.optFeeWaived.setSelected(true);
+                break;
+            default:
+                this.optFeeLegal.setSelected(true);
+                break;
+        }
+        this.txtFeeAmount.setText(this.dunningCase.getRepresentativeFeeAmount() == null
+                ? "" : currencyFormat.format(this.dunningCase.getRepresentativeFeeAmount()));
+        feeModeChanged(null);
         // deliberately a new name even for a repeat: the file name identifies the transmission, and
         // the receipt the court sends back names the file and nothing else. Two transmissions under
         // one name would leave a receipt pointing at both
@@ -980,6 +998,19 @@ public class DunningExportDialog extends javax.swing.JDialog {
         this.dunningCase.setOrderDate(parseDate(this.txtOrderDate.getText()));
         this.dunningCase.setOffsetAmount(parseAmount(this.txtOffsetAmount.getText()));
         this.dunningCase.setSpecialEffort(this.chkSpecialEffort.isSelected());
+        this.dunningCase.setCounterPerformanceRendered(this.chkCounterPerformanceRendered.isSelected());
+        this.dunningCase.setCounterPerformanceIndependent(this.chkCounterPerformanceIndependent.isSelected());
+        this.dunningCase.setLitigationRequested(this.chkLitigationRequested.isSelected());
+        if (this.optFeeAgreed.isSelected()) {
+            this.dunningCase.setRepresentativeFeeMode(DunningRepresentativeFeeMode.AGREED);
+            this.dunningCase.setRepresentativeFeeAmount(parseAmount(this.txtFeeAmount.getText()));
+        } else if (this.optFeeWaived.isSelected()) {
+            this.dunningCase.setRepresentativeFeeMode(DunningRepresentativeFeeMode.WAIVED);
+            this.dunningCase.setRepresentativeFeeAmount(null);
+        } else {
+            this.dunningCase.setRepresentativeFeeMode(DunningRepresentativeFeeMode.LEGAL);
+            this.dunningCase.setRepresentativeFeeAmount(null);
+        }
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -1014,6 +1045,15 @@ public class DunningExportDialog extends javax.swing.JDialog {
         txtOrderDate = new javax.swing.JTextField();
         cmdSelectOrderDate = new javax.swing.JButton();
         chkSpecialEffort = new javax.swing.JCheckBox();
+        chkCounterPerformanceRendered = new javax.swing.JCheckBox();
+        chkCounterPerformanceIndependent = new javax.swing.JCheckBox();
+        chkLitigationRequested = new javax.swing.JCheckBox();
+        grpFee = new javax.swing.ButtonGroup();
+        lblFee = new javax.swing.JLabel();
+        optFeeLegal = new javax.swing.JRadioButton();
+        optFeeAgreed = new javax.swing.JRadioButton();
+        txtFeeAmount = new javax.swing.JTextField();
+        optFeeWaived = new javax.swing.JRadioButton();
         lblFileName = new javax.swing.JLabel();
         txtFileName = new javax.swing.JTextField();
         jScrollPaneResult = new javax.swing.JScrollPane();
@@ -1062,6 +1102,46 @@ public class DunningExportDialog extends javax.swing.JDialog {
         });
 
         chkSpecialEffort.setText("besonderer Umfang / besondere Schwierigkeit wird versichert");
+
+        chkCounterPerformanceRendered.setText("Der Anspruch hängt von einer Gegenleistung ab, diese ist aber bereits erbracht");
+        chkCounterPerformanceRendered.setToolTipText("§ 688 Abs. 2 Nr. 2 ZPO: ohne eine der beiden Erklärungen wird der Antrag moniert.");
+
+        chkCounterPerformanceIndependent.setText("Der Anspruch hängt nicht von einer Gegenleistung ab");
+        chkCounterPerformanceIndependent.setToolTipText("Bei mehreren Ansprüchen dürfen beide Erklärungen zugleich gesetzt sein.");
+
+        chkLitigationRequested.setText("Im Falle eines Widerspruchs wird die Durchführung des streitigen Verfahrens beantragt");
+        chkLitigationRequested.setToolTipText("§ 696 Abs. 1 ZPO. Freiwillig.");
+
+        lblFee.setText("In den Mahnbescheid aufzunehmende Vergütung des Prozessbevollmächtigten:");
+
+        grpFee.add(optFeeLegal);
+        optFeeLegal.setSelected(true);
+        optFeeLegal.setText("die gesetzliche Vergütung nach dem RVG in voller Höhe zzgl. Auslagen und Umsatzsteuer");
+        optFeeLegal.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                feeModeChanged(evt);
+            }
+        });
+
+        grpFee.add(optFeeAgreed);
+        optFeeAgreed.setText("die mit der Partei vereinbarte Vergütung, insgesamt (einschl. Auslagen und ggf. USt.):");
+        optFeeAgreed.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                feeModeChanged(evt);
+            }
+        });
+
+        txtFeeAmount.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtFeeAmount.setText("");
+        txtFeeAmount.setEnabled(false);
+
+        grpFee.add(optFeeWaived);
+        optFeeWaived.setText("keine Vergütung - es wird vollständig darauf verzichtet");
+        optFeeWaived.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                feeModeChanged(evt);
+            }
+        });
 
         lblFileName.setText("Dateiname:");
         lblFileName.setToolTipText("Sechs Zeichen, Feld EDAID im Dateivorsatz.");
@@ -1130,7 +1210,18 @@ public class DunningExportDialog extends javax.swing.JDialog {
                                 .addGap(0, 0, Short.MAX_VALUE))
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(txtFileName, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE))))
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(chkCounterPerformanceRendered, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(chkCounterPerformanceIndependent, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(chkLitigationRequested, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(lblFee, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(optFeeLegal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(optFeeAgreed)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtFeeAmount, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(optFeeWaived, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(cmdValidate)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1162,6 +1253,17 @@ public class DunningExportDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblFileName)
                     .addComponent(txtFileName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkCounterPerformanceRendered)
+                .addComponent(chkCounterPerformanceIndependent)
+                .addComponent(chkLitigationRequested)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblFee)
+                .addComponent(optFeeLegal)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(optFeeAgreed)
+                    .addComponent(txtFeeAmount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(optFeeWaived)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPaneResult, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1291,12 +1393,31 @@ public class DunningExportDialog extends javax.swing.JDialog {
         setVisible(false);
     }//GEN-LAST:event_cmdExportActionPerformed
 
+    private void feeModeChanged(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_feeModeChanged
+        // the amount belongs to the agreed fee alone: left editable elsewhere it would invite a
+        // figure that the format cannot carry, since an empty field and a zero already mean
+        // something else there
+        this.txtFeeAmount.setEnabled(this.optFeeAgreed.isSelected());
+        if (!this.optFeeAgreed.isSelected()) {
+            this.txtFeeAmount.setText("");
+        }
+    }//GEN-LAST:event_feeModeChanged
+
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
         setVisible(false);
     }//GEN-LAST:event_cmdCancelActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox chkCounterPerformanceIndependent;
+    private javax.swing.JCheckBox chkCounterPerformanceRendered;
+    private javax.swing.JCheckBox chkLitigationRequested;
     private javax.swing.JCheckBox chkSpecialEffort;
+    private javax.swing.ButtonGroup grpFee;
+    private javax.swing.JLabel lblFee;
+    private javax.swing.JRadioButton optFeeAgreed;
+    private javax.swing.JRadioButton optFeeLegal;
+    private javax.swing.JRadioButton optFeeWaived;
+    private javax.swing.JTextField txtFeeAmount;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdExport;
     private javax.swing.JButton cmdSelectOrderDate;

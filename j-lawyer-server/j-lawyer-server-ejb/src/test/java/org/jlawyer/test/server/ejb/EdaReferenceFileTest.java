@@ -660,132 +660,118 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.eda;
+package org.jlawyer.test.server.ejb;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import com.jdimension.jlawyer.eda.EdaCharset;
+import com.jdimension.jlawyer.eda.EdaDocumentDescriber;
+import com.jdimension.jlawyer.eda.EdaMahnbescheidLayouts;
+import com.jdimension.jlawyer.eda.EdaRecords;
+import com.jdimension.jlawyer.eda.EdaStructureVerifier;
+import com.jdimension.jlawyer.eda.EdaViolation;
+import com.jdimension.jlawyer.pojo.EdaDocumentView;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Arrays;
 import java.util.List;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import org.junit.Assume;
+import org.junit.Test;
 
 /**
- * Reads the messages a dunning court sends back out of an exchange file.
+ * Our reader and verifier against real files of the dunning courts.
  *
- * A file can carry several messages, each opened by its own key record. What is extracted is what a
- * procedure acts on - type, kind, the reference the court echoes, its file number and the date
- * reported. Everything else is kept as raw records: a message this reader does not interpret must
- * still be storable and readable, because discarding it would lose news from a court.
+ * The files in {@code src/test/resources/eda/reference} were produced by the Online-Mahnantrag of
+ * the German dunning courts and are therefore correct by construction. That makes them the sharpest
+ * test available short of the court's own test procedure: whatever our verifier objects to here is
+ * our fault, not the file's.
+ *
+ * They already earned their keep before a single assertion ran. A real file is an unbroken stream of
+ * 128-byte records - the character repertoire of the EDA-Konditionen (4.3.2) starts at X'20', so a
+ * line break between records is a character the format does not admit. We were writing CR LF after
+ * every record and could only read files that had them.
  *
  * @author jens
  */
-public class EdaMessageReader {
+public class EdaReferenceFileTest {
 
-    private static final String DATE_PATTERN = "yyMMdd";
-
-    /**
-     * Reads every message in a file.
-     *
-     * @param content the file as received
-     * @return the messages, in the order they appear; empty for an empty file
-     * @throws IllegalArgumentException if a record is not of record length
-     */
-    public List<EdaMessage> read(String content) {
-
-        List<EdaMessage> messages = new ArrayList<>();
-        if (content == null || content.trim().isEmpty()) {
-            return messages;
-        }
-
-        EdaMessage current = null;
-        int lineNumber = 0;
-        for (String line : EdaRecords.split(content)) {
-            lineNumber++;
-            if (line.isEmpty()) {
-                continue;
-            }
-            if (line.length() != EdaRecordLayout.RECORD_LENGTH) {
-                throw new IllegalArgumentException("Zeile " + lineNumber + ": ein Satz muss genau "
-                        + EdaRecordLayout.RECORD_LENGTH + " Zeichen lang sein, dieser hat "
-                        + line.length() + ".");
-            }
-            String satzart = line.substring(0, 2);
-            if ("AA".equals(satzart) || "BB".equals(satzart)) {
-                // the frame carries no message content
-                continue;
-            }
-
-            EdaRecordLayout layout = EdaMessageLayouts.findByRecordKey(line);
-            if (layout != null && "KS".equals(layout.getKennzeichen())) {
-                current = new EdaMessage();
-                current.setSatzart(satzart);
-                messages.add(current);
-                readKeyRecord(current, layout, line);
-            }
-            if (current == null) {
-                // records before the first key record belong to no message; they are kept with a
-                // message of their own rather than dropped
-                current = new EdaMessage();
-                current.setSatzart(satzart);
-                messages.add(current);
-            }
-            current.getRawRecords().add(line);
-        }
-        return messages;
+    private File directory() {
+        String base = System.getProperty("basedir");
+        File dir = new File(base == null ? "." : base, "src/test/resources/eda/reference");
+        Assume.assumeTrue("no reference files at " + dir, dir.isDirectory());
+        return dir;
     }
 
-    /**
-     * Takes from the key record what the procedure needs.
-     *
-     * The field names differ between message types, so each is asked for by name and simply absent
-     * where the type does not carry it.
-     */
-    private void readKeyRecord(EdaMessage message, EdaRecordLayout layout, String line) {
-
-        EdaRecord record = new EdaRecordCodec().parse(layout, line);
-
-        message.setOwnReference(record.get("ASGZ"));
-        message.setParticipantNumber(record.get("KEZI"));
-        message.setMessageKind(record.get("NAM"));
-
-        String fileNumber = record.get("GNR");
-        if (fileNumber == null) {
-            // the cost and issue notice carries up to five file numbers, one per application in the
-            // delivery; the first is the one this message is about
-            fileNumber = record.get("GNR1");
-        }
-        message.setCourtFileNumber(fileNumber);
-
-        message.setReportedDate(parseDate(firstOf(record, "ZUD", "ELD", "WIEFD")));
+    private List<File> files() {
+        File[] found = directory().listFiles((d, n) -> n.endsWith(".eda"));
+        Assume.assumeTrue("no reference files present", found != null && found.length > 0);
+        List<File> files = new ArrayList<>(Arrays.asList(found));
+        files.sort((a, b) -> a.getName().compareTo(b.getName()));
+        return files;
     }
 
-    private String firstOf(EdaRecord record, String... fieldNames) {
-        for (String name : fieldNames) {
-            if (record.getLayout().getField(name) != null) {
-                String value = record.get(name);
-                if (value != null && !value.trim().isEmpty()) {
-                    return value;
+    private String read(File file) throws IOException {
+        return new String(Files.readAllBytes(file.toPath()),
+                Charset.forName(EdaCharset.CHARSET_NAME));
+    }
+
+    @Test
+    public void aRealFileIsAnUnbrokenStreamOfRecords() throws Exception {
+        for (File file : files()) {
+            byte[] raw = Files.readAllBytes(file.toPath());
+
+            assertEquals(file.getName() + ": kein Vielfaches der Satzlänge",
+                    0, raw.length % EdaRecords.RECORD_LENGTH);
+            for (byte b : raw) {
+                assertFalse(file.getName() + ": enthält ein Zeilenende, das der Zeichenvorrat "
+                        + "nach 4.3.2 der EDA-Konditionen nicht führt", b == '\n' || b == '\r');
+            }
+        }
+    }
+
+    @Test
+    public void everyRecordIsExactlyOneHundredAndTwentyEightCharacters() throws Exception {
+        for (File file : files()) {
+            List<String> records = EdaRecords.split(read(file));
+            assertFalse(file.getName() + ": keine Sätze erkannt", records.isEmpty());
+            for (int i = 0; i < records.size(); i++) {
+                assertEquals(file.getName() + ", Satz " + (i + 1),
+                        EdaRecords.RECORD_LENGTH, records.get(i).length());
+            }
+        }
+    }
+
+    @Test
+    public void ourVerifierAcceptsEveryFileTheCourtsProduced() throws Exception {
+        List<String> complaints = new ArrayList<>();
+        for (File file : files()) {
+            List<EdaViolation> violations = new EdaStructureVerifier()
+                    .verify(read(file), EdaMahnbescheidLayouts.FORMAT_MAHNBESCHEID);
+            for (EdaViolation v : violations) {
+                complaints.add(file.getName() + ": " + v);
+            }
+        }
+        assertTrue("Beanstandungen an nachweislich korrekten Dateien - der Verifier ist zu streng:\n  "
+                + String.join("\n  ", complaints), complaints.isEmpty());
+    }
+
+    @Test
+    public void everyRecordIsOneOurDescriptionsKnow() throws Exception {
+        List<String> unknown = new ArrayList<>();
+        for (File file : files()) {
+            EdaDocumentView view = new EdaDocumentDescriber().describe(read(file), file.getName());
+            for (EdaDocumentView.EdaRecordView record : view.getRecords()) {
+                if (record.getRecordId() == null) {
+                    unknown.add(file.getName() + ", Satz " + record.getPosition()
+                            + ", Satzart " + record.getSatzart());
                 }
             }
         }
-        return null;
-    }
-
-    /**
-     * Reads a JJMMTT date. The format carries no century, so a two-digit year is read as this one.
-     *
-     * @param value the six digits, or null
-     * @return the date, or null where none was given or it could not be read
-     */
-    private Date parseDate(String value) {
-        if (value == null || value.trim().length() != 6) {
-            return null;
-        }
-        try {
-            return new SimpleDateFormat(DATE_PATTERN).parse(value.trim());
-        } catch (ParseException ex) {
-            // a malformed date is not worth failing the whole import for; the message is kept and
-            // the missing date shows up when it is applied
-            return null;
-        }
+        assertTrue("Sätze, zu denen wir keine Satzbeschreibung haben:\n  "
+                + String.join("\n  ", unknown), unknown.isEmpty());
     }
 }

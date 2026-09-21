@@ -696,13 +696,7 @@ public class EdaStructureVerifier {
             return violations;
         }
 
-        String[] lines = content.split("\r\n|\n|\r");
-        List<String> records = new ArrayList<>();
-        for (String line : lines) {
-            if (!line.isEmpty()) {
-                records.add(line);
-            }
-        }
+        List<String> records = EdaRecords.split(content);
         if (records.isEmpty()) {
             violations.add(new EdaViolation(0, null, null, "Die Datei enthält keine Sätze."));
             return violations;

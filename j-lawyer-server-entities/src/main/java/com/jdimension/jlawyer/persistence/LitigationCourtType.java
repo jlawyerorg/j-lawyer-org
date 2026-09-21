@@ -660,132 +660,75 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.eda;
-
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+package com.jdimension.jlawyer.persistence;
 
 /**
- * Reads the messages a dunning court sends back out of an exchange file.
+ * Which kind of court would hear the matter if the defendant objects.
  *
- * A file can carry several messages, each opened by its own key record. What is extracted is what a
- * procedure acts on - type, kind, the reference the court echoes, its file number and the date
- * reported. Everything else is kept as raw records: a message this reader does not interpret must
- * still be storable and readable, because discarding it would lose news from a court.
+ * § 690 Abs. 1 Nr. 5 ZPO requires the application to name the court competent for the contested
+ * proceedings. Which one that is follows from the defendant's general venue (§§ 12, 13 ZPO) and
+ * from the value in dispute — up to 5.000 € the Amtsgericht, above it the Landgericht (§ 23 Nr. 1,
+ * § 71 Abs. 1 GVG) — with the special courts for the matters that belong to them.
+ *
+ * Source of the keys: EDA-Satzbeschreibung Satzart 01, record C16 field 4 (PGM).
  *
  * @author jens
  */
-public class EdaMessageReader {
+public enum LitigationCourtType {
 
-    private static final String DATE_PATTERN = "yyMMdd";
+    /** 1 = Amtsgericht (Zivilabteilung). */
+    AMTSGERICHT("1", "Amtsgericht (Zivilabteilung)"),
 
-    /**
-     * Reads every message in a file.
-     *
-     * @param content the file as received
-     * @return the messages, in the order they appear; empty for an empty file
-     * @throws IllegalArgumentException if a record is not of record length
-     */
-    public List<EdaMessage> read(String content) {
+    /** 2 = Landgericht (Zivilkammer). */
+    LANDGERICHT("2", "Landgericht (Zivilkammer)"),
 
-        List<EdaMessage> messages = new ArrayList<>();
-        if (content == null || content.trim().isEmpty()) {
-            return messages;
-        }
+    /** 3 = Landgericht, Kammer für Handelssachen. */
+    LANDGERICHT_HANDELSSACHEN("3", "Landgericht - Kammer für Handelssachen"),
 
-        EdaMessage current = null;
-        int lineNumber = 0;
-        for (String line : EdaRecords.split(content)) {
-            lineNumber++;
-            if (line.isEmpty()) {
-                continue;
-            }
-            if (line.length() != EdaRecordLayout.RECORD_LENGTH) {
-                throw new IllegalArgumentException("Zeile " + lineNumber + ": ein Satz muss genau "
-                        + EdaRecordLayout.RECORD_LENGTH + " Zeichen lang sein, dieser hat "
-                        + line.length() + ".");
-            }
-            String satzart = line.substring(0, 2);
-            if ("AA".equals(satzart) || "BB".equals(satzart)) {
-                // the frame carries no message content
-                continue;
-            }
+    /** 6 = Amtsgericht, Familiengericht. */
+    FAMILIENGERICHT("6", "Amtsgericht - Familiengericht"),
 
-            EdaRecordLayout layout = EdaMessageLayouts.findByRecordKey(line);
-            if (layout != null && "KS".equals(layout.getKennzeichen())) {
-                current = new EdaMessage();
-                current.setSatzart(satzart);
-                messages.add(current);
-                readKeyRecord(current, layout, line);
-            }
-            if (current == null) {
-                // records before the first key record belong to no message; they are kept with a
-                // message of their own rather than dropped
-                current = new EdaMessage();
-                current.setSatzart(satzart);
-                messages.add(current);
-            }
-            current.getRawRecords().add(line);
-        }
-        return messages;
+    /** 8 = Sozialgericht. */
+    SOZIALGERICHT("8", "Sozialgericht");
+
+    private final String code;
+    private final String label;
+
+    LitigationCourtType(String code, String label) {
+        this.code = code;
+        this.label = label;
     }
 
     /**
-     * Takes from the key record what the procedure needs.
-     *
-     * The field names differ between message types, so each is asked for by name and simply absent
-     * where the type does not carry it.
+     * @return the digit the format expects in PGM
      */
-    private void readKeyRecord(EdaMessage message, EdaRecordLayout layout, String line) {
-
-        EdaRecord record = new EdaRecordCodec().parse(layout, line);
-
-        message.setOwnReference(record.get("ASGZ"));
-        message.setParticipantNumber(record.get("KEZI"));
-        message.setMessageKind(record.get("NAM"));
-
-        String fileNumber = record.get("GNR");
-        if (fileNumber == null) {
-            // the cost and issue notice carries up to five file numbers, one per application in the
-            // delivery; the first is the one this message is about
-            fileNumber = record.get("GNR1");
-        }
-        message.setCourtFileNumber(fileNumber);
-
-        message.setReportedDate(parseDate(firstOf(record, "ZUD", "ELD", "WIEFD")));
-    }
-
-    private String firstOf(EdaRecord record, String... fieldNames) {
-        for (String name : fieldNames) {
-            if (record.getLayout().getField(name) != null) {
-                String value = record.get(name);
-                if (value != null && !value.trim().isEmpty()) {
-                    return value;
-                }
-            }
-        }
-        return null;
+    public String getCode() {
+        return code;
     }
 
     /**
-     * Reads a JJMMTT date. The format carries no century, so a two-digit year is read as this one.
-     *
-     * @param value the six digits, or null
-     * @return the date, or null where none was given or it could not be read
+     * @return what it is, in words
      */
-    private Date parseDate(String value) {
-        if (value == null || value.trim().length() != 6) {
+    public String getLabel() {
+        return label;
+    }
+
+    /**
+     * The kind of court the value in dispute points to, leaving the special jurisdictions aside.
+     *
+     * @param claimValue the value in dispute, or null if it is not known yet
+     * @return Amtsgericht up to 5.000 €, Landgericht above it, or null without a value
+     */
+    public static LitigationCourtType byClaimValue(java.math.BigDecimal claimValue) {
+        if (claimValue == null) {
             return null;
         }
-        try {
-            return new SimpleDateFormat(DATE_PATTERN).parse(value.trim());
-        } catch (ParseException ex) {
-            // a malformed date is not worth failing the whole import for; the message is kept and
-            // the missing date shows up when it is applied
-            return null;
-        }
+        return claimValue.compareTo(new java.math.BigDecimal("5000.00")) > 0
+                ? LANDGERICHT : AMTSGERICHT;
+    }
+
+    @Override
+    public String toString() {
+        return label;
     }
 }

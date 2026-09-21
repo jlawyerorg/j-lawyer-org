@@ -839,6 +839,47 @@ public class DunningCase implements Serializable {
     private String fileName;
 
     /**
+     * Whether the claim depends on a counter-performance that has already been rendered.
+     *
+     * One of this and {@link #counterPerformanceIndependent} has to be declared: under § 688 Abs. 2
+     * Nr. 2 ZPO a Mahnbescheid is inadmissible where the claim depends on a counter-performance not
+     * yet rendered, so the court has to be told which of the two cases applies. The two do not
+     * exclude each other - an application carrying several claims may declare both, which the
+     * Satzbeschreibung allows in as many words.
+     */
+    @Column(name = "counter_performance_rendered")
+    private boolean counterPerformanceRendered = false;
+
+    /** Whether the claim does not depend on a counter-performance at all. */
+    @Column(name = "counter_performance_independent")
+    private boolean counterPerformanceIndependent = false;
+
+    /**
+     * Whether the referral to the litigation court is applied for in advance, for the case that the
+     * defendant objects (§ 696 Abs. 1 ZPO). Optional; left unset it is simply not applied for.
+     */
+    @Column(name = "litigation_requested")
+    private boolean litigationRequested = false;
+
+    /**
+     * Which remuneration of the lawyer is to be included in the Mahnbescheid.
+     *
+     * Kept as a named choice rather than as an amount whose absence would have to mean two
+     * different things: an empty field claims the statutory fee, an explicit zero waives it. The
+     * mapper turns the choice into the one field the format provides.
+     */
+    @Column(name = "representative_fee_mode")
+    @Enumerated(EnumType.STRING)
+    private DunningRepresentativeFeeMode representativeFeeMode = DunningRepresentativeFeeMode.LEGAL;
+
+    /**
+     * The agreed fee, as a total including disbursements and any VAT. Only meaningful together with
+     * {@link DunningRepresentativeFeeMode#AGREED}.
+     */
+    @Column(name = "representative_fee_amount")
+    private BigDecimal representativeFeeAmount;
+
+    /**
      * @return the technical identifier
      */
     public String getId() {
@@ -1248,6 +1289,104 @@ public class DunningCase implements Serializable {
      */
     public void setFileName(String fileName) {
         this.fileName = fileName;
+    }
+
+    /**
+     * @return whether the claim depends on a counter-performance that has been rendered
+     */
+    public boolean isCounterPerformanceRendered() {
+        return counterPerformanceRendered;
+    }
+
+    /**
+     * @param counterPerformanceRendered whether it depends on a rendered counter-performance
+     */
+    public void setCounterPerformanceRendered(boolean counterPerformanceRendered) {
+        this.counterPerformanceRendered = counterPerformanceRendered;
+    }
+
+    /**
+     * @return whether the claim does not depend on a counter-performance
+     */
+    public boolean isCounterPerformanceIndependent() {
+        return counterPerformanceIndependent;
+    }
+
+    /**
+     * @param counterPerformanceIndependent whether it does not depend on one
+     */
+    public void setCounterPerformanceIndependent(boolean counterPerformanceIndependent) {
+        this.counterPerformanceIndependent = counterPerformanceIndependent;
+    }
+
+    /**
+     * @return whether the referral to the litigation court is applied for in advance
+     */
+    public boolean isLitigationRequested() {
+        return litigationRequested;
+    }
+
+    /**
+     * @param litigationRequested whether the referral is applied for in advance
+     */
+    public void setLitigationRequested(boolean litigationRequested) {
+        this.litigationRequested = litigationRequested;
+    }
+
+    /**
+     * @return which remuneration is to be included, never null
+     */
+    public DunningRepresentativeFeeMode getRepresentativeFeeMode() {
+        return representativeFeeMode == null
+                ? DunningRepresentativeFeeMode.LEGAL : representativeFeeMode;
+    }
+
+    /**
+     * @param representativeFeeMode which remuneration is to be included
+     */
+    public void setRepresentativeFeeMode(DunningRepresentativeFeeMode representativeFeeMode) {
+        this.representativeFeeMode = representativeFeeMode;
+    }
+
+    /**
+     * @return the agreed fee including disbursements and VAT, or null
+     */
+    public BigDecimal getRepresentativeFeeAmount() {
+        return representativeFeeAmount;
+    }
+
+    /**
+     * @param representativeFeeAmount the agreed fee
+     */
+    public void setRepresentativeFeeAmount(BigDecimal representativeFeeAmount) {
+        this.representativeFeeAmount = representativeFeeAmount;
+    }
+
+    /**
+     * The value the format's single remuneration field takes for this choice.
+     *
+     * @return null for the statutory fee (the field stays empty), zero for a waiver, otherwise the
+     * agreed amount
+     */
+    public BigDecimal getRepresentativeFeeForFormat() {
+        switch (getRepresentativeFeeMode()) {
+            case WAIVED:
+                // an explicit zero, which the format reads as a waiver - not the same as empty
+                return BigDecimal.ZERO;
+            case AGREED:
+                return this.representativeFeeAmount;
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Whether the declaration § 688 Abs. 2 Nr. 2 ZPO requires has been made at all.
+     *
+     * @return true if at least one of the two counter-performance declarations is set
+     */
+    public boolean hasCounterPerformanceDeclaration() {
+        return this.counterPerformanceRendered || this.counterPerformanceIndependent;
     }
 
     /**

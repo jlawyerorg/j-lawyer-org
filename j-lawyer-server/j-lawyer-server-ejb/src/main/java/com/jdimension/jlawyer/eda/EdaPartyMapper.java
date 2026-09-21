@@ -712,7 +712,9 @@ public class EdaPartyMapper {
             r1.set(prefix + "N1", contact == null ? null : contact.getFirstName());
             r1.set(prefix + "N2", contact == null ? null : contact.getName());
             records.add(r1);
-            records.add(new EdaRecord(part2));
+            // no second name record: a natural person has no further name fields to fill, and the
+            // courts leave the record out rather than send an empty one. An empty record is not
+            // free - the trailer counts it
         } else {
             // a legal person: the legal form travels in its own field and the designation runs
             // across the four name fields of the two records
@@ -741,7 +743,11 @@ public class EdaPartyMapper {
             if (parts.length > 3) {
                 r2.set(prefix + "N4", parts[3]);
             }
-            records.add(r2);
+            // only where the designation actually runs into the further name fields; otherwise the
+            // record carries nothing and is left out, as the courts' own files do
+            if (parts.length > 2) {
+                records.add(r2);
+            }
         }
 
         EdaRecord r3 = new EdaRecord(part3);
@@ -754,6 +760,29 @@ public class EdaPartyMapper {
         records.add(r3);
 
         return records;
+    }
+
+    /**
+     * The record naming the court that would hear the matter if this defendant objects.
+     *
+     * § 690 Abs. 1 Nr. 5 ZPO requires the application to say which court is competent for the
+     * contested proceedings, and the format asks for it per defendant rather than per application:
+     * two defendants whose general venue lies in different places have different courts.
+     *
+     * @param party the defendant
+     * @param layout the layout of the record, C16
+     * @return the record, or null where no court is recorded for this party
+     */
+    public EdaRecord mapLitigationCourt(ClaimLedgerParty party, EdaRecordLayout layout) {
+
+        if (party == null || !party.hasLitigationCourt()) {
+            return null;
+        }
+        EdaRecord record = new EdaRecord(layout);
+        record.set("PGM", party.getLitigationCourtType().getCode());
+        record.set("PGPLZ", party.getLitigationCourtPostalCode());
+        record.set("PGO", party.getLitigationCourtCity());
+        return record;
     }
 
     /**

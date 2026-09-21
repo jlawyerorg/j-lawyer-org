@@ -323,7 +323,20 @@
       The rest of the C07–C11 area needs no second entry: the lawyer is found by the Kennziffer of
       the procedure, and their bank details from the user profile become the account the defendant is
       told to pay into (C11). C07–C09 stay out, since the Kennziffer closes that area.
-      Two defects fixed on the way. `toClaims` passed a null amount straight through, which would
+      *Found while writing the instructions for the reference files (see
+      `src/test/resources/eda/reference/README.md`) and fixed here:* the key record never carried the
+      general declarations at all. `VGLM1`/`VGLM2` say whether the claim depends on a
+      counter-performance and, where it does, that it has been rendered — § 688 Abs. 2 Nr. 2 ZPO
+      makes a Mahnbescheid inadmissible where it depends on one still owed, so an application
+      without either declaration is monited. The Online-Mahnantrag refuses to reach its download
+      without it; our files went out without it and would have come back. `ASTRVM` is the request
+      under § 696 Abs. 1 ZPO to refer the matter on an objection.
+      Added by `V3_6_0_33` as three flags on the procedure, written into the key record, asked for in
+      the export step, and demanded by the validator: at least one counter-performance declaration,
+      or the application is not ready. Deliberately two flags rather than one choice — the
+      Satzbeschreibung says "Bei mehreren Ansprüchen können auch beide Felder belegt sein!", so they
+      do not exclude each other and the validator must not read both as a contradiction.
+      Two further defects fixed on the way. `toClaims` passed a null amount straight through, which would
       have applied for a position with an empty amount field; an input without an amount now applies
       for the position as it stands.
       And a bug class the first real export exposed: `java.util.Date.toInstant()` was called on
@@ -478,6 +491,69 @@
       without effect is worse than an absent one. The documentation in `doc/` says today that a
       ledger *can* be assigned to another without noting that this is not possible through the user
       interface; it is to be corrected either way.
+- [ ] 5.3b Legal representatives: a chain, not a single person, and their function from the court's
+      own directory. `ClaimLedgerParty.legalRepresentative` holds **one** `AddressBean`, and
+      `EdaPartyMapper.mapLegalRepresentative` writes at most one pair of records from it. The format
+      allows six: *"Zu jedem Antragsteller können maximal 6 gesetzliche Vertreter (ASGV_01/ASGV_02)
+      eingetragen werden! Gesetzliche Vertreter werden immer dem unmittelbar vorausgegangenen
+      Antragsteller zugeordnet!"*
+      That is not an exotic case. A GmbH & Co. KG — one of the commonest German legal forms — is
+      represented by its personally liable partner (§ 161 Abs. 2 i. V. m. § 125 HGB), which is the
+      Komplementär-GmbH, and that GmbH acts through its Geschäftsführer. Two levels, and the
+      Online-Mahnantrag asks for both. With one slot we can enter the GmbH or the Geschäftsführer,
+      not the chain, and whichever is entered is wrong on its own. The good half: `fullName()`
+      already prefers the company name, so a company as representative writes correctly once the
+      model can hold it.
+      Second half of the same task: the *function* is written as free text from `AddressBean.getRole()`,
+      while the courts maintain a closed list. Their *Liste der Rechtsformen* (Stand 26.02.2024) maps
+      each legal form to a key, and the *Liste der Funktionen der gesetzlichen Vertreter*
+      (Stand 06.10.2015) gives the admissible functions per key — `GMBH & CO KG` is key 31 with
+      `Geschäftsführende Gesellschafterin`, `Geschäftsführer`, `Direktor`. Both are published at
+      https://www.mahngerichte.de/verzeichnisse/rechtsformen-und-gesetzliche-vertreter/ as PDFs.
+      *Proposed:* an ordered list of representatives per party, and the two directories as reference
+      data behind interfaces like the main claim catalogue of 0.1, so the function can be offered
+      per legal form rather than typed — and checked by the validator before the court checks it.
+      Found while writing the instructions for the reference files; the court's own wizard demands
+      both levels, so a file we generate for such a party would be monited.
+- [x] 3.21 Conformance against real files of the dunning courts. Twelve applications were produced
+      through the Online-Mahnantrag under a real Kennziffer and are kept in
+      `src/test/resources/eda/reference` with the instructions that made them
+      (`reference/README.md`). They are correct by construction, so whatever our code objects to in
+      them is our fault — the sharpest check available short of the court's own test run.
+      `EdaReferenceFileTest` reads every one of them, has the verifier pass judgement, and asserts
+      that we hold a Satzbeschreibung for every record in them. What that turned up:
+      *A real file has no record separators at all.* It is an unbroken stream of 128-byte records.
+      That is not one court's habit: the character repertoire of the EDA-Konditionen (4.3.2) begins
+      at X'20' and lists only printable characters, so a CR or LF between records is a character the
+      format does not admit. We were writing `\r\n` after every record — our files carried
+      inadmissible characters, and our own verifier could not see it because it split on exactly
+      those characters before checking the repertoire. Worse in the other direction: verifier,
+      describer, message reader and `EdaFile.parse` all split on line ends only, so a genuine court
+      file would have been read as one 1408-byte record and rejected, and the message import would
+      have found nothing in anything the courts sent. `EdaRecords.split` now serves all four: line
+      ends where they exist (which keeps the diagnostics of a hand-made file readable), otherwise
+      every 128 characters.
+      *The record C16 was missing entirely.* Every reference file carries it once per defendant, and
+      § 690 Abs. 1 Nr. 5 ZPO requires the application to name the court competent for the contested
+      proceedings. Added by `V3_6_0_35` per party, not per procedure, because that is how the format
+      holds it — two defendants whose general venue lies apart have different courts, and the
+      courts' own file for two joint debtors carries two such records. `LitigationCourtType` names
+      the five kinds rather than carrying the raw digit and derives the Amtsgericht/Landgericht
+      split from the value in dispute (§ 23 Nr. 1, § 71 Abs. 1 GVG). The validator refuses an
+      application whose defendant does not name one.
+      *We wrote empty records.* A natural person got an empty second name record, a company likewise
+      where its designation fitted the first two fields. No reference file contains a single one.
+      An empty record is not free: the trailer counts it.
+      *Confirmed correct*, which is the larger half: the offsetting lands exactly in `VV2300MBET` of
+      C10 as we write it, likewise `VORSTM`; the ancillary claims hit their own areas (C28 `VPBET`,
+      C29 `MAHNK`, C33 `VV2300BET`); catalogued claim, running interest, party records and
+      salutation keys agree field for field — including the pair that had caught us out before, a
+      GmbH & Co. KG against an AG & Co. KG.
+      *Left open:* `ZIRGBET` of C26 carries the amount interest is charged on where it differs from
+      the claim ("nur wenn nicht identisch mit vorausgehendem Anspruch"), which we cannot express at
+      all — interest on part of a claim. And `TKEZI` of the file header can be alphanumeric, as the
+      Online-Mahnantrag's own `SAH00003` shows, while our layout declares it numeric; that matters
+      only for reading other people's files
 - [ ] 5.4 Ledger REST endpoints (totals, payment booking, statement)
 - [ ] 5.5 Documentation: user-facing description of the workflow, admin guide for court table, fee
       tables, reminder stages and form templates

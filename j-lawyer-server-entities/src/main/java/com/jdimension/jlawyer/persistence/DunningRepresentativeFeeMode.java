@@ -660,132 +660,58 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.eda;
-
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+package com.jdimension.jlawyer.persistence;
 
 /**
- * Reads the messages a dunning court sends back out of an exchange file.
+ * What the applicant asks the court to include as the lawyer's remuneration in the Mahnbescheid.
  *
- * A file can carry several messages, each opened by its own key record. What is extracted is what a
- * procedure acts on - type, kind, the reference the court echoes, its file number and the date
- * reported. Everything else is kept as raw records: a message this reader does not interpret must
- * still be storable and readable, because discarding it would lose news from a court.
+ * The three cases are not shades of one another; the format keeps them apart in a single field by
+ * the difference between an empty field, a zero and an amount - a distinction easy to lose and
+ * expensive to lose, because an accidental zero waives the fee. Naming the three cases makes the
+ * choice explicit and leaves the encoding to the mapper.
+ *
+ * Source: EDA-Satzbeschreibung Satzart 01, record C10 field 9 (IKUBET): "BLANK = gesetzliche
+ * Vergütung; BETRAG größer Null = vereinbarte niedrigere Vergütung (Gesamtbetrag aus Gebühr,
+ * Auslagen und ggf. MwSt.); ZERO = Verzicht auf Vergütung".
+ *
+ * The remuneration in the dunning procedure was re-regulated with effect from 1 June 2025, which is
+ * why the courts now want the choice stated rather than assumed.
  *
  * @author jens
  */
-public class EdaMessageReader {
+public enum DunningRepresentativeFeeMode {
 
-    private static final String DATE_PATTERN = "yyMMdd";
+    /** The statutory fee under the RVG in full, plus disbursements and VAT. The field stays empty. */
+    LEGAL("gesetzliche Vergütung nach dem RVG"),
 
-    /**
-     * Reads every message in a file.
-     *
-     * @param content the file as received
-     * @return the messages, in the order they appear; empty for an empty file
-     * @throws IllegalArgumentException if a record is not of record length
-     */
-    public List<EdaMessage> read(String content) {
+    /** A lower fee agreed with the client, as a total including disbursements and any VAT. */
+    AGREED("vereinbarte Vergütung"),
 
-        List<EdaMessage> messages = new ArrayList<>();
-        if (content == null || content.trim().isEmpty()) {
-            return messages;
-        }
+    /** No remuneration is to be included at all. The field carries an explicit zero. */
+    WAIVED("Verzicht auf die Vergütung");
 
-        EdaMessage current = null;
-        int lineNumber = 0;
-        for (String line : EdaRecords.split(content)) {
-            lineNumber++;
-            if (line.isEmpty()) {
-                continue;
-            }
-            if (line.length() != EdaRecordLayout.RECORD_LENGTH) {
-                throw new IllegalArgumentException("Zeile " + lineNumber + ": ein Satz muss genau "
-                        + EdaRecordLayout.RECORD_LENGTH + " Zeichen lang sein, dieser hat "
-                        + line.length() + ".");
-            }
-            String satzart = line.substring(0, 2);
-            if ("AA".equals(satzart) || "BB".equals(satzart)) {
-                // the frame carries no message content
-                continue;
-            }
+    private final String label;
 
-            EdaRecordLayout layout = EdaMessageLayouts.findByRecordKey(line);
-            if (layout != null && "KS".equals(layout.getKennzeichen())) {
-                current = new EdaMessage();
-                current.setSatzart(satzart);
-                messages.add(current);
-                readKeyRecord(current, layout, line);
-            }
-            if (current == null) {
-                // records before the first key record belong to no message; they are kept with a
-                // message of their own rather than dropped
-                current = new EdaMessage();
-                current.setSatzart(satzart);
-                messages.add(current);
-            }
-            current.getRawRecords().add(line);
-        }
-        return messages;
+    DunningRepresentativeFeeMode(String label) {
+        this.label = label;
     }
 
     /**
-     * Takes from the key record what the procedure needs.
-     *
-     * The field names differ between message types, so each is asked for by name and simply absent
-     * where the type does not carry it.
+     * @return what this means, in words
      */
-    private void readKeyRecord(EdaMessage message, EdaRecordLayout layout, String line) {
-
-        EdaRecord record = new EdaRecordCodec().parse(layout, line);
-
-        message.setOwnReference(record.get("ASGZ"));
-        message.setParticipantNumber(record.get("KEZI"));
-        message.setMessageKind(record.get("NAM"));
-
-        String fileNumber = record.get("GNR");
-        if (fileNumber == null) {
-            // the cost and issue notice carries up to five file numbers, one per application in the
-            // delivery; the first is the one this message is about
-            fileNumber = record.get("GNR1");
-        }
-        message.setCourtFileNumber(fileNumber);
-
-        message.setReportedDate(parseDate(firstOf(record, "ZUD", "ELD", "WIEFD")));
-    }
-
-    private String firstOf(EdaRecord record, String... fieldNames) {
-        for (String name : fieldNames) {
-            if (record.getLayout().getField(name) != null) {
-                String value = record.get(name);
-                if (value != null && !value.trim().isEmpty()) {
-                    return value;
-                }
-            }
-        }
-        return null;
+    public String getLabel() {
+        return label;
     }
 
     /**
-     * Reads a JJMMTT date. The format carries no century, so a two-digit year is read as this one.
-     *
-     * @param value the six digits, or null
-     * @return the date, or null where none was given or it could not be read
+     * @return whether this choice needs an amount to go with it
      */
-    private Date parseDate(String value) {
-        if (value == null || value.trim().length() != 6) {
-            return null;
-        }
-        try {
-            return new SimpleDateFormat(DATE_PATTERN).parse(value.trim());
-        } catch (ParseException ex) {
-            // a malformed date is not worth failing the whole import for; the message is kept and
-            // the missing date shows up when it is applied
-            return null;
-        }
+    public boolean needsAmount() {
+        return this == AGREED;
+    }
+
+    @Override
+    public String toString() {
+        return label;
     }
 }

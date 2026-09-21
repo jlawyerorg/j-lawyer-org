@@ -666,6 +666,7 @@ import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.CaseAccountEntry;
 import com.jdimension.jlawyer.persistence.CaseAccountEntryFacadeLocal;
@@ -796,6 +797,9 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
     private BaseInterestFacadeLocal baseInterestFacade;
     @EJB
     private SecurityServiceLocal securityFacade;
+
+    @EJB
+    private CalendarServiceLocal calendarService;
     @EJB
     private ArchiveFileGroupsBeanFacadeLocal caseGroupsFacade;
 
@@ -1870,8 +1874,6 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         Date reviewDate = Date.from(due.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
         ArchiveFileReviewsBean followUp = new ArchiveFileReviewsBean();
-        followUp.setId(new StringGenerator().getID().toString());
-        followUp.setArchiveFileKey(caseFile);
         followUp.setEventType(ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP);
         followUp.setBeginDate(reviewDate);
         followUp.setEndDate(reviewDate);
@@ -1883,14 +1885,53 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
                 + "oder das gerichtliche Mahnverfahren einzuleiten.");
         followUp.setDone(false);
         try {
-            followUp.setCreatedBy(context.getCallerPrincipal().getName());
             followUp.setAssignee(context.getCallerPrincipal().getName());
         } catch (Throwable t) {
             log.warn("Unable to determine caller when creating a dunning follow-up", t);
         }
 
-        this.archiveFileReviewsFacade.create(followUp);
-        return followUp;
+        // a follow-up without a calendar is in no calendar at all: it sits in the database,
+        // nobody sees it, and the record suggests the date is being watched. It therefore goes
+        // through the same path a person's entry takes, which picks the calendar, writes the case
+        // history and syncs the entry outwards
+        return placeFollowUp(caseFile, followUp, "Wiedervorlage zur Mahnfrist");
+    }
+
+    /**
+     * Puts a follow-up the program creates into a calendar and stores it the same way a person's
+     * entry is stored.
+     *
+     * @param caseFile the case
+     * @param followUp the entry, without id, case or calendar
+     * @param what the entry in words, for the log
+     * @return the stored entry, or null if it could not be placed
+     */
+    private ArchiveFileReviewsBean placeFollowUp(ArchiveFileBean caseFile,
+            ArchiveFileReviewsBean followUp, String what) {
+
+        CalendarSetup setup;
+        try {
+            String principal = context.getCallerPrincipal().getName();
+            setup = new FollowUpCalendarSelector().select(
+                    this.securityFacade.getCalendarsForUser(principal),
+                    followUp.getEventType(), caseFile.getLastCalendarSetupFollowups());
+        } catch (Exception ex) {
+            log.error("Unable to determine a calendar for " + what, ex);
+            return null;
+        }
+        if (setup == null) {
+            log.warn("No calendar takes follow-ups for this user; " + what + " not created");
+            return null;
+        }
+        followUp.setCalendarSetup(setup);
+        try {
+            return this.calendarService.addReview(caseFile.getId(), followUp);
+        } catch (Exception ex) {
+            // what the follow-up guards is already recorded; a calendar entry that could not be
+            // placed is worth reporting, not worth undoing that for
+            log.error("Unable to create " + what, ex);
+            return null;
+        }
     }
 
     /**
@@ -2020,8 +2061,6 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         }
 
         ArchiveFileReviewsBean followUp = new ArchiveFileReviewsBean();
-        followUp.setId(new StringGenerator().getID().toString());
-        followUp.setArchiveFileKey(caseFile);
         followUp.setEventType(ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP);
         followUp.setBeginDate(due);
         followUp.setEndDate(due);
@@ -2029,17 +2068,20 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         followUp.setDescription(limitationFollowUpDescription(title));
         followUp.setDone(false);
         try {
-            followUp.setCreatedBy(context.getCallerPrincipal().getName());
             followUp.setAssignee(context.getCallerPrincipal().getName());
         } catch (Throwable t) {
             log.warn("Unable to determine caller when creating a limitation follow-up", t);
         }
 
-        this.archiveFileReviewsFacade.create(followUp);
+        ArchiveFileReviewsBean stored = placeFollowUp(caseFile, followUp,
+                "Wiedervorlage zur Verjährung des Titels");
+        if (stored == null) {
+            return;
+        }
 
         // the title remembers its follow-up, so it can be moved or removed later without having to
         // recognise it by its text
-        title.setLimitationReviewId(followUp.getId());
+        title.setLimitationReviewId(stored.getId());
         this.enforcementTitlesFacade.edit(title);
     }
 

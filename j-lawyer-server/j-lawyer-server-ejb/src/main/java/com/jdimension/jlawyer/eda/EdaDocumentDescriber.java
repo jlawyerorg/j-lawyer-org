@@ -701,12 +701,7 @@ public class EdaDocumentDescriber {
             return view;
         }
 
-        List<String> lines = new ArrayList<>();
-        for (String line : content.split("\r\n|\n|\r")) {
-            if (!line.isEmpty()) {
-                lines.add(line);
-            }
-        }
+        List<String> lines = EdaRecords.split(content);
         if (lines.isEmpty()) {
             return view;
         }

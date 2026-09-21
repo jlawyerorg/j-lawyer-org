@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.eda.EdaFieldLengthException;
 import com.jdimension.jlawyer.eda.EdaFile;
 import com.jdimension.jlawyer.eda.EdaMahnbescheidLayouts;
 import com.jdimension.jlawyer.eda.EdaRecord;
+import com.jdimension.jlawyer.eda.EdaRecords;
 import com.jdimension.jlawyer.eda.EdaRecordCodec;
 import com.jdimension.jlawyer.eda.EdaRecordLayout;
 import java.util.List;
@@ -949,7 +950,7 @@ public class EdaRecordCoreTest {
         file.add(ks);
 
         String content = file.write("12345678");
-        String[] lines = content.split("\r\n");
+        String[] lines = EdaRecords.split(content).toArray(new String[0]);
 
         assertEquals("header, one application record, trailer", 3, lines.length);
         assertTrue(lines[0].startsWith("AA"));

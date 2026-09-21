@@ -743,6 +743,13 @@ public class EdaMahnbescheidBuilder {
                     EdaMahnbescheidLayouts.getLayout("C13"),
                     EdaMahnbescheidLayouts.getLayout("C14"),
                     EdaMahnbescheidLayouts.getLayout("C15"), "AG"));
+            // the court for the contested proceedings follows its defendant and precedes that
+            // defendant's representative, as the courts' own files have it
+            EdaRecord litigationCourt = partyMapper.mapLitigationCourt(debtor,
+                    EdaMahnbescheidLayouts.getLayout("C16"));
+            if (litigationCourt != null) {
+                records.add(litigationCourt);
+            }
             records.addAll(partyMapper.mapLegalRepresentative(debtor,
                     EdaMahnbescheidLayouts.getLayout("C17"),
                     EdaMahnbescheidLayouts.getLayout("C18"), "AGGV"));
@@ -838,6 +845,22 @@ public class EdaMahnbescheidBuilder {
         // the court to issue against them jointly rather than as separate matters
         if (debtors != null && debtors.size() > 1) {
             record.set("AGGMM", "X");
+        }
+
+        // the declaration § 688 Abs. 2 Nr. 2 ZPO requires: a Mahnbescheid is inadmissible where the
+        // claim depends on a counter-performance not yet rendered, so the court has to be told which
+        // case applies. The two are not alternatives - an application over several claims may carry
+        // both, which the Satzbeschreibung allows expressly
+        if (dunningCase.isCounterPerformanceRendered()) {
+            record.set("VGLM1", "X");
+        }
+        if (dunningCase.isCounterPerformanceIndependent()) {
+            record.set("VGLM2", "X");
+        }
+        // the referral to the litigation court, applied for in advance for the case of an objection
+        // (§ 696 Abs. 1 ZPO); left empty it is simply not applied for
+        if (dunningCase.isLitigationRequested()) {
+            record.set("ASTRVM", "X");
         }
         return record;
     }

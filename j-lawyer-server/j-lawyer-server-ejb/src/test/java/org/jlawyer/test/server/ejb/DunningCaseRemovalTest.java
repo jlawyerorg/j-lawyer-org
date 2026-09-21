@@ -664,9 +664,11 @@ package org.jlawyer.test.server.ejb;
 
 import com.jdimension.jlawyer.persistence.DunningCase;
 import com.jdimension.jlawyer.persistence.DunningCaseStatus;
+import com.jdimension.jlawyer.persistence.DunningRepresentativeFeeMode;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -779,5 +781,51 @@ public class DunningCaseRemovalTest {
         c.setCourtFileNumber("   ");
 
         assertTrue("blanks left in the field are not knowledge of the court", c.isRemovable());
+    }
+
+    // ----- welche Vergütung in den Mahnbescheid kommt -----
+
+    @Test
+    public void theStatutoryFeeLeavesTheFieldEmpty() {
+        // the format reads an empty field as "gesetzliche Vergütung"; that is also the default
+        DunningCase c = prepared();
+
+        assertEquals(DunningRepresentativeFeeMode.LEGAL, c.getRepresentativeFeeMode());
+        assertNull(c.getRepresentativeFeeForFormat());
+    }
+
+    @Test
+    public void aWaiverIsAnExplicitZeroAndNotAnEmptyField() {
+        // this is the distinction that costs money if it is lost
+        DunningCase c = prepared();
+        c.setRepresentativeFeeMode(DunningRepresentativeFeeMode.WAIVED);
+
+        assertEquals(java.math.BigDecimal.ZERO, c.getRepresentativeFeeForFormat());
+    }
+
+    @Test
+    public void anAgreedFeeIsWrittenAsItStands() {
+        DunningCase c = prepared();
+        c.setRepresentativeFeeMode(DunningRepresentativeFeeMode.AGREED);
+        c.setRepresentativeFeeAmount(new java.math.BigDecimal("280.00"));
+
+        assertEquals(new java.math.BigDecimal("280.00"), c.getRepresentativeFeeForFormat());
+    }
+
+    @Test
+    public void anAmountLeftOverFromAnotherChoiceIsNotWritten() {
+        // switching back to the statutory fee must not leave the old figure in the file
+        DunningCase c = prepared();
+        c.setRepresentativeFeeAmount(new java.math.BigDecimal("280.00"));
+        c.setRepresentativeFeeMode(DunningRepresentativeFeeMode.LEGAL);
+
+        assertNull(c.getRepresentativeFeeForFormat());
+    }
+
+    @Test
+    public void onlyTheAgreedFeeNeedsAnAmount() {
+        assertTrue(DunningRepresentativeFeeMode.AGREED.needsAmount());
+        assertFalse(DunningRepresentativeFeeMode.LEGAL.needsAmount());
+        assertFalse(DunningRepresentativeFeeMode.WAIVED.needsAmount());
     }
 }

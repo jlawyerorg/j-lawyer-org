@@ -731,7 +731,10 @@ public class EdaPartyMapperTest {
     public void aNaturalPersonKeepsGivenNameAndSurnameApart() throws Exception {
         List<EdaRecord> records = mapDebtor(person("Herr", "Max", "Schuldner"));
 
-        assertEquals(3, records.size());
+        // two records, not three: the middle one carries the further name fields, which a natural
+        // person does not have. An empty record would be one the trailer counts and the courts
+        // never send - their own files have no such record at all
+        assertEquals(2, records.size());
         assertEquals("1", records.get(0).get("AGANR"));
         assertEquals("Max", records.get(0).get("AGN1"));
         assertEquals("Schuldner", records.get(0).get("AGN2"));
@@ -785,9 +788,9 @@ public class EdaPartyMapperTest {
     public void theAddressIsWrittenWithStreetAndNumberTogether() throws Exception {
         List<EdaRecord> records = mapDebtor(person("Herr", "Max", "Schuldner"));
 
-        assertEquals("Hauptstr. 1", records.get(2).get("AGSH"));
-        assertEquals("70173", records.get(2).get("AGPLZ"));
-        assertEquals("Stuttgart", records.get(2).get("AGO"));
+        assertEquals("Hauptstr. 1", records.get(1).get("AGSH"));
+        assertEquals("70173", records.get(1).get("AGPLZ"));
+        assertEquals("Stuttgart", records.get(1).get("AGO"));
     }
 
     @Test
@@ -795,11 +798,11 @@ public class EdaPartyMapperTest {
         ClaimLedgerParty domestic = person("Herr", "Max", "Schuldner");
         domestic.getContact().setCountry("Deutschland");
         assertNull("writing DE would tell the court the party is abroad",
-                mapDebtor(domestic).get(2).get("AGAL"));
+                mapDebtor(domestic).get(1).get("AGAL"));
 
         ClaimLedgerParty abroad = person("Herr", "Max", "Schuldner");
         abroad.getContact().setCountry("AT");
-        assertEquals("AT", mapDebtor(abroad).get(2).get("AGAL"));
+        assertEquals("AT", mapDebtor(abroad).get(1).get("AGAL"));
     }
 
     @Test
@@ -811,7 +814,7 @@ public class EdaPartyMapperTest {
 
         assertEquals("2", records.get(0).get("ASANR"));
         assertEquals("Erika", records.get(0).get("ASN1"));
-        assertEquals("70173", records.get(2).get("ASPLZ"));
+        assertEquals("70173", records.get(1).get("ASPLZ"));
     }
 
     // ----- against the worked examples of the Satzbeschreibung -----
@@ -878,6 +881,66 @@ public class EdaPartyMapperTest {
         assertEquals("Test-Gesellschaft für Finanzdienstl", records.get(0).get("AGN1"));
         assertEquals("eistungen aller Art im Bereich der ", records.get(0).get("AGN2"));
         assertEquals("europäischen Länder mit der Währung", records.get(1).get("AGN3"));
+    }
+
+    // ----- das Gericht für das streitige Verfahren -----
+
+    @Test
+    public void everyDefendantNamesTheCourtForTheContestedProceedings() {
+        // § 690 Abs. 1 Nr. 5 ZPO: the application has to say which court would hear the matter if
+        // the defendant objects. Every file the courts produce carries this record per defendant
+        ClaimLedgerParty debtor = person("Herr", "Max", "Schuldner");
+        debtor.setLitigationCourtType(
+                com.jdimension.jlawyer.persistence.LitigationCourtType.AMTSGERICHT);
+        debtor.setLitigationCourtPostalCode("04275");
+        debtor.setLitigationCourtCity("Leipzig");
+
+        EdaRecord record = mapper.mapLitigationCourt(debtor,
+                EdaMahnbescheidLayouts.getLayout("C16"));
+
+        assertEquals("1", record.get("PGM"));
+        assertEquals("04275", record.get("PGPLZ"));
+        assertEquals("Leipzig", record.get("PGO"));
+    }
+
+    @Test
+    public void theKindOfCourtIsWrittenAsItsOwnKey() {
+        ClaimLedgerParty debtor = person("Herr", "Max", "Schuldner");
+        debtor.setLitigationCourtCity("Leipzig");
+        debtor.setLitigationCourtType(
+                com.jdimension.jlawyer.persistence.LitigationCourtType.LANDGERICHT);
+
+        assertEquals("2", mapper.mapLitigationCourt(debtor,
+                EdaMahnbescheidLayouts.getLayout("C16")).get("PGM"));
+
+        debtor.setLitigationCourtType(
+                com.jdimension.jlawyer.persistence.LitigationCourtType.LANDGERICHT_HANDELSSACHEN);
+        assertEquals("3", mapper.mapLitigationCourt(debtor,
+                EdaMahnbescheidLayouts.getLayout("C16")).get("PGM"));
+    }
+
+    @Test
+    public void withoutACourtNoEmptyRecordIsWritten() {
+        // a record carrying nothing would name no court and still be counted by the trailer
+        assertNull(mapper.mapLitigationCourt(person("Herr", "Max", "Schuldner"),
+                EdaMahnbescheidLayouts.getLayout("C16")));
+        assertNull(mapper.mapLitigationCourt(null, EdaMahnbescheidLayouts.getLayout("C16")));
+
+        ClaimLedgerParty halfEntered = person("Herr", "Max", "Schuldner");
+        halfEntered.setLitigationCourtType(
+                com.jdimension.jlawyer.persistence.LitigationCourtType.AMTSGERICHT);
+        assertNull("a kind of court without a place names nothing",
+                mapper.mapLitigationCourt(halfEntered, EdaMahnbescheidLayouts.getLayout("C16")));
+    }
+
+    @Test
+    public void aCompanyWhoseNameFitsGetsNoSecondNameRecord() throws Exception {
+        // the courts' own files carry no such record at all; ours would be one the trailer counts
+        List<EdaRecord> records = mapDebtor(company("Beispiel Handels GmbH", "GmbH"));
+
+        assertEquals(2, records.size());
+        assertEquals("C13", records.get(0).getLayout().getId());
+        assertEquals("C15", records.get(1).getLayout().getId());
     }
 
     // ----- the person who acts for a legal person -----

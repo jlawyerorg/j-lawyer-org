@@ -1131,6 +1131,11 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         stored.setOrderDate(dunningCase.getOrderDate());
         stored.setOffsetAmount(dunningCase.getOffsetAmount());
         stored.setSpecialEffort(dunningCase.isSpecialEffort());
+        stored.setCounterPerformanceRendered(dunningCase.isCounterPerformanceRendered());
+        stored.setCounterPerformanceIndependent(dunningCase.isCounterPerformanceIndependent());
+        stored.setLitigationRequested(dunningCase.isLitigationRequested());
+        stored.setRepresentativeFeeMode(dunningCase.getRepresentativeFeeMode());
+        stored.setRepresentativeFeeAmount(dunningCase.getRepresentativeFeeAmount());
         if (dunningCase.getOwnReference() != null && !dunningCase.getOwnReference().trim().isEmpty()) {
             stored.setOwnReference(dunningCase.getOwnReference());
         }
@@ -1314,6 +1319,9 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         representative.setOrderDate(dunningCase.getOrderDate());
         representative.setOffsetAmount(dunningCase.getOffsetAmount());
         representative.setSpecialEffortDeclared(dunningCase.isSpecialEffort());
+        // empty, zero and an amount are three different statements in one field; the procedure
+        // carries the choice by name and the entity works out which of the three to write
+        representative.setAgreedFee(dunningCase.getRepresentativeFeeForFormat());
 
         AppUserBean lawyer = lawyerByKennziffer(dunningCase.getKennziffer());
         if (lawyer != null) {

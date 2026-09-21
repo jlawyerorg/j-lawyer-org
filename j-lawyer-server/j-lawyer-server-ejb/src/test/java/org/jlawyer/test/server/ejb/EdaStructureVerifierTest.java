@@ -665,6 +665,7 @@ package org.jlawyer.test.server.ejb;
 import com.jdimension.jlawyer.eda.EdaFile;
 import com.jdimension.jlawyer.eda.EdaMahnbescheidLayouts;
 import com.jdimension.jlawyer.eda.EdaRecord;
+import com.jdimension.jlawyer.eda.EdaRecords;
 import com.jdimension.jlawyer.eda.EdaRecordLayout;
 import com.jdimension.jlawyer.eda.EdaStructureVerifier;
 import com.jdimension.jlawyer.eda.EdaViolation;
@@ -735,7 +736,7 @@ public class EdaStructureVerifierTest {
 
     @Test
     public void aRecordOfTheWrongLengthIsNamedWithItsNumber() throws Exception {
-        String[] lines = soundFile(2).split("\r\n");
+        String[] lines = EdaRecords.split(soundFile(2)).toArray(new String[0]);
         lines[1] = lines[1].substring(0, 100);
 
         List<EdaViolation> violations = verifier.verify(String.join("\r\n", lines), null);
@@ -747,7 +748,7 @@ public class EdaStructureVerifierTest {
 
     @Test
     public void aFileWithoutItsHeaderIsRejected() throws Exception {
-        String[] lines = soundFile(1).split("\r\n");
+        String[] lines = EdaRecords.split(soundFile(1)).toArray(new String[0]);
         List<EdaViolation> violations = verifier.verify(
                 String.join("\r\n", lines[1], lines[2]), null);
 
@@ -756,7 +757,7 @@ public class EdaStructureVerifierTest {
 
     @Test
     public void aFileWithoutItsTrailerIsRejected() throws Exception {
-        String[] lines = soundFile(1).split("\r\n");
+        String[] lines = EdaRecords.split(soundFile(1)).toArray(new String[0]);
         List<EdaViolation> violations = verifier.verify(
                 String.join("\r\n", lines[0], lines[1]), null);
 
@@ -765,7 +766,7 @@ public class EdaStructureVerifierTest {
 
     @Test
     public void aHeaderInTheMiddleIsRejected() throws Exception {
-        String[] lines = soundFile(1).split("\r\n");
+        String[] lines = EdaRecords.split(soundFile(1)).toArray(new String[0]);
         String damaged = String.join("\r\n", lines[0], lines[0], lines[1], lines[2]);
 
         List<EdaViolation> violations = verifier.verify(damaged, null);
@@ -775,7 +776,7 @@ public class EdaStructureVerifierTest {
 
     @Test
     public void aTrailerThatDisagreesWithTheFileIsRejected() throws Exception {
-        String[] lines = soundFile(2).split("\r\n");
+        String[] lines = EdaRecords.split(soundFile(2)).toArray(new String[0]);
         // claim one application where there are two
         EdaRecordLayout trailer = EdaMahnbescheidLayouts.FILE_TRAILER;
         int off = trailer.getField("ANTANZ").getOffset();
@@ -798,7 +799,7 @@ public class EdaStructureVerifierTest {
 
     @Test
     public void anUnknownRecordBetweenTheFramesIsRejected() throws Exception {
-        String[] lines = soundFile(1).split("\r\n");
+        String[] lines = EdaRecords.split(soundFile(1)).toArray(new String[0]);
         StringBuilder unknown = new StringBuilder("99ZZ   00");
         while (unknown.length() < EdaRecordLayout.RECORD_LENGTH) {
             unknown.append(' ');
@@ -812,7 +813,7 @@ public class EdaStructureVerifierTest {
 
     @Test
     public void aCharacterOutsideTheCodePageIsNamed() throws Exception {
-        String[] lines = soundFile(1).split("\r\n");
+        String[] lines = EdaRecords.split(soundFile(1)).toArray(new String[0]);
         // slip a character past the writer, as a later edit of the file might
         lines[1] = lines[1].substring(0, 50) + "ł" + lines[1].substring(51);
 
@@ -824,7 +825,7 @@ public class EdaStructureVerifierTest {
 
     @Test
     public void everyFaultIsCollectedRatherThanTheFirstOne() throws Exception {
-        String[] lines = soundFile(2).split("\r\n");
+        String[] lines = EdaRecords.split(soundFile(2)).toArray(new String[0]);
         lines[1] = lines[1].substring(0, 100);
         lines[2] = lines[2].substring(0, 90);
 
@@ -842,7 +843,7 @@ public class EdaStructureVerifierTest {
 
     @Test
     public void aViolationReadsAsSomethingAUserCanAct() throws Exception {
-        String[] lines = soundFile(1).split("\r\n");
+        String[] lines = EdaRecords.split(soundFile(1)).toArray(new String[0]);
         lines[1] = lines[1].substring(0, 100);
 
         String rendered = verifier.verify(String.join("\r\n", lines), null).get(0).toString();

@@ -679,7 +679,12 @@ import java.util.List;
 public class EdaFile {
 
     /** Records are separated by CR LF in the exchange format. */
-    public static final String RECORD_SEPARATOR = "\r\n";
+    /**
+     * What goes between two records: nothing. The character repertoire of the EDA-Konditionen
+     * (section 4.3.2) starts at X'20' and lists only printable characters, so a carriage return or
+     * line feed between records is a character the format does not admit.
+     */
+    public static final String RECORD_SEPARATOR = "";
 
     private final EdaRecordCodec codec = new EdaRecordCodec();
     private final List<EdaRecord> records = new ArrayList<>();
@@ -829,7 +834,7 @@ public class EdaFile {
         }
         EdaRecordCodec codec = new EdaRecordCodec();
         int lineNumber = 0;
-        for (String line : content.split("\r\n|\n|\r")) {
+        for (String line : EdaRecords.split(content)) {
             lineNumber++;
             if (line.isEmpty()) {
                 continue;

@@ -660,132 +660,116 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.eda;
+package org.jlawyer.test.server.ejb;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import com.jdimension.jlawyer.persistence.CalendarSetup;
+import com.jdimension.jlawyer.persistence.EventTypes;
+import com.jdimension.jlawyer.services.FollowUpCalendarSelector;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 /**
- * Reads the messages a dunning court sends back out of an exchange file.
+ * Which calendar a follow-up created by the program goes into.
  *
- * A file can carry several messages, each opened by its own key record. What is extracted is what a
- * procedure acts on - type, kind, the reference the court echoes, its file number and the date
- * reported. Everything else is kept as raw records: a message this reader does not interpret must
- * still be storable and readable, because discarding it would lose news from a court.
+ * The case this guards is the one that was actually broken: an entry with no calendar. It exists in
+ * the database and is counted, but it is in no calendar and nobody ever sees it - which for a
+ * deadline is worse than never having created it, because the record suggests the date is being
+ * watched.
  *
  * @author jens
  */
-public class EdaMessageReader {
+public class FollowUpCalendarSelectorTest {
 
-    private static final String DATE_PATTERN = "yyMMdd";
+    private final FollowUpCalendarSelector selector = new FollowUpCalendarSelector();
 
-    /**
-     * Reads every message in a file.
-     *
-     * @param content the file as received
-     * @return the messages, in the order they appear; empty for an empty file
-     * @throws IllegalArgumentException if a record is not of record length
-     */
-    public List<EdaMessage> read(String content) {
-
-        List<EdaMessage> messages = new ArrayList<>();
-        if (content == null || content.trim().isEmpty()) {
-            return messages;
-        }
-
-        EdaMessage current = null;
-        int lineNumber = 0;
-        for (String line : EdaRecords.split(content)) {
-            lineNumber++;
-            if (line.isEmpty()) {
-                continue;
-            }
-            if (line.length() != EdaRecordLayout.RECORD_LENGTH) {
-                throw new IllegalArgumentException("Zeile " + lineNumber + ": ein Satz muss genau "
-                        + EdaRecordLayout.RECORD_LENGTH + " Zeichen lang sein, dieser hat "
-                        + line.length() + ".");
-            }
-            String satzart = line.substring(0, 2);
-            if ("AA".equals(satzart) || "BB".equals(satzart)) {
-                // the frame carries no message content
-                continue;
-            }
-
-            EdaRecordLayout layout = EdaMessageLayouts.findByRecordKey(line);
-            if (layout != null && "KS".equals(layout.getKennzeichen())) {
-                current = new EdaMessage();
-                current.setSatzart(satzart);
-                messages.add(current);
-                readKeyRecord(current, layout, line);
-            }
-            if (current == null) {
-                // records before the first key record belong to no message; they are kept with a
-                // message of their own rather than dropped
-                current = new EdaMessage();
-                current.setSatzart(satzart);
-                messages.add(current);
-            }
-            current.getRawRecords().add(line);
-        }
-        return messages;
+    private CalendarSetup calendar(String id, int eventType) {
+        CalendarSetup cs = new CalendarSetup();
+        cs.setId(id);
+        cs.setEventType(eventType);
+        cs.setDisplayName(id);
+        return cs;
     }
 
-    /**
-     * Takes from the key record what the procedure needs.
-     *
-     * The field names differ between message types, so each is asked for by name and simply absent
-     * where the type does not carry it.
-     */
-    private void readKeyRecord(EdaMessage message, EdaRecordLayout layout, String line) {
+    @Test
+    public void thecalendarLastUsedInThisCaseIsTakenFirst() {
+        List<CalendarSetup> available = Arrays.asList(
+                calendar("wv-allgemein", EventTypes.EVENTTYPE_FOLLOWUP),
+                calendar("wv-mahnwesen", EventTypes.EVENTTYPE_FOLLOWUP));
 
-        EdaRecord record = new EdaRecordCodec().parse(layout, line);
-
-        message.setOwnReference(record.get("ASGZ"));
-        message.setParticipantNumber(record.get("KEZI"));
-        message.setMessageKind(record.get("NAM"));
-
-        String fileNumber = record.get("GNR");
-        if (fileNumber == null) {
-            // the cost and issue notice carries up to five file numbers, one per application in the
-            // delivery; the first is the one this message is about
-            fileNumber = record.get("GNR1");
-        }
-        message.setCourtFileNumber(fileNumber);
-
-        message.setReportedDate(parseDate(firstOf(record, "ZUD", "ELD", "WIEFD")));
+        assertEquals("wv-mahnwesen", selector.select(available,
+                EventTypes.EVENTTYPE_FOLLOWUP, "wv-mahnwesen").getId());
     }
 
-    private String firstOf(EdaRecord record, String... fieldNames) {
-        for (String name : fieldNames) {
-            if (record.getLayout().getField(name) != null) {
-                String value = record.get(name);
-                if (value != null && !value.trim().isEmpty()) {
-                    return value;
-                }
-            }
-        }
-        return null;
+    @Test
+    public void withoutThatMemoryTheFirstOfTheRightKindIsUsed() {
+        List<CalendarSetup> available = Arrays.asList(
+                calendar("termine", EventTypes.EVENTTYPE_EVENT),
+                calendar("wv-allgemein", EventTypes.EVENTTYPE_FOLLOWUP));
+
+        assertEquals("wv-allgemein", selector.select(available,
+                EventTypes.EVENTTYPE_FOLLOWUP, null).getId());
+        assertEquals("blanks are not an id", "wv-allgemein", selector.select(available,
+                EventTypes.EVENTTYPE_FOLLOWUP, "   ").getId());
     }
 
-    /**
-     * Reads a JJMMTT date. The format carries no century, so a two-digit year is read as this one.
-     *
-     * @param value the six digits, or null
-     * @return the date, or null where none was given or it could not be read
-     */
-    private Date parseDate(String value) {
-        if (value == null || value.trim().length() != 6) {
-            return null;
-        }
-        try {
-            return new SimpleDateFormat(DATE_PATTERN).parse(value.trim());
-        } catch (ParseException ex) {
-            // a malformed date is not worth failing the whole import for; the message is kept and
-            // the missing date shows up when it is applied
-            return null;
-        }
+    @Test
+    public void acalendarOfTheWrongKindIsNeverChosen() {
+        // a calendar only takes the kind of entry it is meant for; addReview refuses the rest
+        List<CalendarSetup> onlyEvents = Arrays.asList(
+                calendar("termine", EventTypes.EVENTTYPE_EVENT),
+                calendar("fristen", EventTypes.EVENTTYPE_RESPITE));
+
+        assertNull(selector.select(onlyEvents, EventTypes.EVENTTYPE_FOLLOWUP, null));
+    }
+
+    @Test
+    public void aRememberedCalendarOfTheWrongKindDoesNotWin() {
+        // the case remembers an id; that it still takes follow-ups is not guaranteed
+        List<CalendarSetup> available = Arrays.asList(
+                calendar("termine", EventTypes.EVENTTYPE_EVENT),
+                calendar("wv-allgemein", EventTypes.EVENTTYPE_FOLLOWUP));
+
+        assertEquals("wv-allgemein", selector.select(available,
+                EventTypes.EVENTTYPE_FOLLOWUP, "termine").getId());
+    }
+
+    @Test
+    public void aRememberedCalendarTheUserMayNoLongerUseFallsBack() {
+        // access can have been withdrawn since the entry that set the memory
+        List<CalendarSetup> available = Collections.singletonList(
+                calendar("wv-allgemein", EventTypes.EVENTTYPE_FOLLOWUP));
+
+        assertEquals("wv-allgemein", selector.select(available,
+                EventTypes.EVENTTYPE_FOLLOWUP, "wv-entzogen").getId());
+    }
+
+    @Test
+    public void withoutAnyCalendarNothingIsInvented() {
+        assertNull(selector.select(null, EventTypes.EVENTTYPE_FOLLOWUP, "wv"));
+        assertNull(selector.select(new ArrayList<>(), EventTypes.EVENTTYPE_FOLLOWUP, "wv"));
+    }
+
+    @Test
+    public void anEmptyEntryInTheListIsSteppedOver() {
+        List<CalendarSetup> available = Arrays.asList(null,
+                calendar("wv-allgemein", EventTypes.EVENTTYPE_FOLLOWUP));
+
+        assertEquals("wv-allgemein", selector.select(available,
+                EventTypes.EVENTTYPE_FOLLOWUP, null).getId());
+    }
+
+    @Test
+    public void theReasonSaysWhatIsMissingAndWhereToFixIt() {
+        String reason = selector.noCalendarReason("Wiedervorlage");
+
+        assertTrue(reason.contains("Wiedervorlage"));
+        assertTrue("the user is told where to put it right",
+                reason.contains("Kalenderverwaltung"));
     }
 }

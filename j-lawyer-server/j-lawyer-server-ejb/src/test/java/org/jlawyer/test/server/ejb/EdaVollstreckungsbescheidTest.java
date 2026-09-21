@@ -664,6 +664,7 @@ package org.jlawyer.test.server.ejb;
 
 import com.jdimension.jlawyer.eda.EdaFile;
 import com.jdimension.jlawyer.eda.EdaRecord;
+import com.jdimension.jlawyer.eda.EdaRecords;
 import com.jdimension.jlawyer.eda.EdaRecordLayout;
 import com.jdimension.jlawyer.eda.EdaVollstreckungsbescheidBuilder;
 import com.jdimension.jlawyer.eda.EdaVollstreckungsbescheidLayouts;
@@ -843,7 +844,7 @@ public class EdaVollstreckungsbescheidTest {
         assertEquals("4100", file.getHeader().get("FORMAT"));
 
         String content = file.write("12345678");
-        for (String line : content.split("\r\n")) {
+        for (String line : EdaRecords.split(content)) {
             assertEquals(EdaRecordLayout.RECORD_LENGTH, line.length());
         }
         assertNotNull(content);

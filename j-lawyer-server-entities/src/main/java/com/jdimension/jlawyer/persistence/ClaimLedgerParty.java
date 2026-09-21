@@ -735,6 +735,23 @@ public class ClaimLedgerParty implements Serializable {
     @ManyToOne
     private AddressBean legalRepresentative;
 
+    /**
+     * Which kind of court would hear the matter if this defendant objects, and where it sits.
+     *
+     * § 690 Abs. 1 Nr. 5 ZPO requires the application to name the court competent for the contested
+     * proceedings. It is held per party because the format writes it per defendant: two defendants
+     * with their general venue in different places have different courts.
+     */
+    @Column(name = "litigation_court_type")
+    @Enumerated(EnumType.STRING)
+    private LitigationCourtType litigationCourtType;
+
+    @Column(name = "litigation_court_postalcode")
+    private String litigationCourtPostalCode;
+
+    @Column(name = "litigation_court_city")
+    private String litigationCourtCity;
+
     @JoinColumn(name = "authorised_representative_id", referencedColumnName = "id")
     @ManyToOne
     private AddressBean authorisedRepresentative;
@@ -890,6 +907,58 @@ public class ClaimLedgerParty implements Serializable {
     /**
      * @return the legalRepresentative
      */
+    /**
+     * @return the kind of court for contested proceedings, or null
+     */
+    public LitigationCourtType getLitigationCourtType() {
+        return litigationCourtType;
+    }
+
+    /**
+     * @param litigationCourtType the kind of court for contested proceedings
+     */
+    public void setLitigationCourtType(LitigationCourtType litigationCourtType) {
+        this.litigationCourtType = litigationCourtType;
+    }
+
+    /**
+     * @return the postal code of that court, or null
+     */
+    public String getLitigationCourtPostalCode() {
+        return litigationCourtPostalCode;
+    }
+
+    /**
+     * @param litigationCourtPostalCode the postal code of that court
+     */
+    public void setLitigationCourtPostalCode(String litigationCourtPostalCode) {
+        this.litigationCourtPostalCode = litigationCourtPostalCode;
+    }
+
+    /**
+     * @return the place of that court, or null
+     */
+    public String getLitigationCourtCity() {
+        return litigationCourtCity;
+    }
+
+    /**
+     * @param litigationCourtCity the place of that court
+     */
+    public void setLitigationCourtCity(String litigationCourtCity) {
+        this.litigationCourtCity = litigationCourtCity;
+    }
+
+    /**
+     * Whether this party names the court § 690 Abs. 1 Nr. 5 ZPO asks for.
+     *
+     * @return true if kind and place are both recorded
+     */
+    public boolean hasLitigationCourt() {
+        return this.litigationCourtType != null
+                && this.litigationCourtCity != null && !this.litigationCourtCity.trim().isEmpty();
+    }
+
     public AddressBean getLegalRepresentative() {
         return legalRepresentative;
     }
