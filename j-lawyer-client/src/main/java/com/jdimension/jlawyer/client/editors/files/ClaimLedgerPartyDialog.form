@@ -32,17 +32,38 @@
                           <Component id="lblRole" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="lblContact" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="lblSequence" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblLitigationCourt" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblRepresentatives" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="cmbRole" alignment="0" min="-2" pref="200" max="-2" attributes="0"/>
-                          <Component id="cmbContact" alignment="0" min="-2" pref="420" max="-2" attributes="0"/>
+                          <Component id="cmbContact" alignment="0" pref="420" max="32767" attributes="0"/>
                           <Component id="spnSequence" alignment="0" min="-2" pref="80" max="-2" attributes="0"/>
                           <Component id="chkConsumer" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Component id="cmbLitigationCourtType" min="-2" pref="260" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="txtLitigationCourtPostalCode" min="-2" pref="60" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="txtLitigationCourtCity" pref="180" max="32767" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="cmdSelectLitigationCourt" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Component id="scrlRepresentatives" pref="420" max="32767" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="cmdAddRepresentative" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="cmdRemoveRepresentative" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="cmdRepresentativeUp" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="cmdRepresentativeDown" alignment="0" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                          </Group>
+                          <Component id="scrlRepresentativeHint" alignment="0" pref="460" max="32767" attributes="0"/>
                       </Group>
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
-                  <Component id="lblHint" alignment="0" pref="580" max="32767" attributes="0"/>
+                  <Component id="scrlHint" alignment="0" pref="580" max="32767" attributes="0"/>
                   <Group type="102" alignment="1" attributes="0">
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                       <Component id="cmdSave" min="-2" max="-2" attributes="0"/>
@@ -74,8 +95,32 @@
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="chkConsumer" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lblLitigationCourt" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmbLitigationCourtType" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="txtLitigationCourtPostalCode" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="txtLitigationCourtCity" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdSelectLitigationCourt" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Component id="lblHint" min="-2" pref="34" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                  <Component id="lblRepresentatives" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="scrlRepresentatives" alignment="0" min="-2" pref="110" max="-2" attributes="0"/>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="cmdAddRepresentative" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdRemoveRepresentative" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdRepresentativeUp" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdRepresentativeDown" min="-2" max="-2" attributes="0"/>
+                  </Group>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="scrlRepresentativeHint" pref="72" max="32767" attributes="0"/>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <Component id="scrlHint" pref="40" max="32767" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="cmdSave" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -129,11 +174,140 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkConsumerActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JLabel" name="lblHint">
+    <Component class="javax.swing.JLabel" name="lblLitigationCourt">
       <Properties>
-        <Property name="text" type="java.lang.String" value=""/>
+        <Property name="text" type="java.lang.String" value="Prozessgericht:"/>
+        <Property name="toolTipText" type="java.lang.String" value="Das Gericht, das bei Widerspruch das streitige Verfahren führt (§ 690 Abs. 1 Nr. 5 ZPO). Nur für Antragsgegner."/>
       </Properties>
     </Component>
+    <Component class="javax.swing.JComboBox" name="cmbLitigationCourtType">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+          <StringArray count="0"/>
+        </Property>
+      </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value=""/>
+      </AuxValues>
+    </Component>
+    <Component class="javax.swing.JTextField" name="txtLitigationCourtPostalCode">
+      <Properties>
+        <Property name="text" type="java.lang.String" value=""/>
+        <Property name="toolTipText" type="java.lang.String" value="Postleitzahl des Prozessgerichts"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="txtLitigationCourtCity">
+      <Properties>
+        <Property name="text" type="java.lang.String" value=""/>
+        <Property name="toolTipText" type="java.lang.String" value="Ort des Prozessgerichts"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdSelectLitigationCourt">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/kfind.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="aus den Gerichtsstammdaten wählen"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSelectLitigationCourtActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblRepresentatives">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Gesetzl. Vertreter:"/>
+        <Property name="toolTipText" type="java.lang.String" value="Die Vertretungskette der Partei, von außen nach innen. Bis zu sechs Stufen."/>
+      </Properties>
+    </Component>
+    <Container class="javax.swing.JScrollPane" name="scrlRepresentatives">
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value=""/>
+      </AuxValues>
+
+      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+      <SubComponents>
+        <Component class="javax.swing.JTable" name="tblRepresentatives">
+          <Properties>
+            <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.editors2.TableModelEditor">
+              <Table columnCount="0" rowCount="0"/>
+            </Property>
+            <Property name="selectionMode" type="int" value="0"/>
+          </Properties>
+        </Component>
+      </SubComponents>
+    </Container>
+    <Component class="javax.swing.JButton" name="cmdAddRepresentative">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/edit_add.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Vertreter aus den Adressen hinzufügen"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdAddRepresentativeActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdRemoveRepresentative">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/editdelete.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Vertreter entfernen"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdRemoveRepresentativeActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdRepresentativeUp">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="&#9650;"/>
+        <Property name="toolTipText" type="java.lang.String" value="in der Kette nach oben"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdRepresentativeUpActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdRepresentativeDown">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="&#9660;"/>
+        <Property name="toolTipText" type="java.lang.String" value="in der Kette nach unten"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdRepresentativeDownActionPerformed"/>
+      </Events>
+    </Component>
+    <Container class="javax.swing.JScrollPane" name="scrlRepresentativeHint">
+
+      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+      <SubComponents>
+        <Component class="javax.swing.JTextArea" name="txtRepresentativeHint">
+          <Properties>
+            <Property name="editable" type="boolean" value="false"/>
+            <Property name="columns" type="int" value="20"/>
+            <Property name="lineWrap" type="boolean" value="true"/>
+            <Property name="rows" type="int" value="3"/>
+            <Property name="wrapStyleWord" type="boolean" value="true"/>
+            <Property name="focusable" type="boolean" value="false"/>
+          </Properties>
+        </Component>
+      </SubComponents>
+    </Container>
+    <Container class="javax.swing.JScrollPane" name="scrlHint">
+
+      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+      <SubComponents>
+        <Component class="javax.swing.JTextArea" name="txtHint">
+          <Properties>
+            <Property name="editable" type="boolean" value="false"/>
+            <Property name="columns" type="int" value="20"/>
+            <Property name="lineWrap" type="boolean" value="true"/>
+            <Property name="rows" type="int" value="2"/>
+            <Property name="wrapStyleWord" type="boolean" value="true"/>
+            <Property name="focusable" type="boolean" value="false"/>
+          </Properties>
+        </Component>
+      </SubComponents>
+    </Container>
     <Component class="javax.swing.JButton" name="cmdSave">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">

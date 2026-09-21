@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.eda.EdaEncodingException;
 import com.jdimension.jlawyer.eda.EdaFieldLengthException;
 import com.jdimension.jlawyer.eda.EdaFile;
 import com.jdimension.jlawyer.eda.EdaMahnbescheidBuilder;
+import com.jdimension.jlawyer.referencedata.CatalogueAddition;
 import com.jdimension.jlawyer.eda.EdaProcessRepresentative;
 import com.jdimension.jlawyer.eda.EdaMahnbescheidLayouts;
 import com.jdimension.jlawyer.eda.EdaMessage;
@@ -1537,6 +1538,10 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
      * A component that does not belong to this ledger is refused rather than silently skipped: a
      * request naming a foreign position is a mistake worth surfacing, not one to work around.
      */
+    private static boolean notEmpty(String s) {
+        return s != null && !s.trim().isEmpty();
+    }
+
     private List<EdaClaimMapper.Claim> toClaims(List<DunningClaimInput> inputs,
             List<ClaimComponent> components) throws Exception {
 
@@ -1562,6 +1567,21 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
                     input.getAmount() == null ? component.getPrincipalAmount() : input.getAmount());
             claim.setFrom(input.getFrom());
             claim.setTo(input.getTo());
+            // For a few catalogue numbers the further entry the catalogue demands occupies the very
+            // column the invoice number would use - the courts' wizard refuses the account number
+            // of catalogue 36 anywhere but "im Feld Rechnungsnummer". There is one field, so giving
+            // both means one of them is not transmitted, and which one is not ours to decide.
+            if (CatalogueAddition.of(component.getCatalogueNumber())
+                    == CatalogueAddition.REFERENCE_DETAIL
+                    && notEmpty(input.getInvoiceNumber())
+                    && notEmpty(component.getCatalogueReferenceDetail())) {
+
+                throw new Exception("Zur Forderungsposition \"" + component.getName()
+                        + "\" sind sowohl eine Rechnungsnummer als auch die Zusatzangabe zur "
+                        + "Katalognummer " + component.getCatalogueNumber().trim() + " erfasst. Der "
+                        + "Antrag hat dafür nur ein Feld: die Zusatzangabe steht dort, wo sonst die "
+                        + "Rechnungsnummer steht. Bitte eine von beiden entfernen.");
+            }
             claim.setInvoiceNumber(input.getInvoiceNumber());
             claim.setInterestTo(input.getInterestTo());
             claim.setInterestStartMode(component.getInterestStartMode());

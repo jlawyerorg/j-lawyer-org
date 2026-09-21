@@ -660,424 +660,139 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.test.server.ejb;
+package org.jlawyer.persistence.test;
 
-import com.jdimension.jlawyer.eda.EdaClaimMapper;
-import com.jdimension.jlawyer.eda.EdaFile;
-import com.jdimension.jlawyer.eda.EdaMahnbescheidBuilder;
-import com.jdimension.jlawyer.eda.EdaMahnbescheidLayouts;
-import com.jdimension.jlawyer.eda.EdaProcessRepresentative;
-import com.jdimension.jlawyer.eda.EdaRecord;
-import com.jdimension.jlawyer.eda.EdaRecords;
-import com.jdimension.jlawyer.eda.EdaRecordLayout;
-import com.jdimension.jlawyer.eda.EdaStructureVerifier;
-import com.jdimension.jlawyer.eda.EdaViolation;
-import com.jdimension.jlawyer.persistence.AddressBean;
-import com.jdimension.jlawyer.persistence.ClaimComponent;
-import com.jdimension.jlawyer.persistence.ClaimComponentType;
-import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
-import com.jdimension.jlawyer.persistence.ClaimLedgerPartyRepresentative;
-import com.jdimension.jlawyer.persistence.DunningCase;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.ZoneId;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 /**
- * Assembling a complete Mahnbescheid application.
+ * What every migration script has to satisfy, checked before a server tries to run it.
  *
- * The order of the records is what makes a file readable to the court: the key record opens an
- * application and everything after it belongs to it. A file whose records are individually sound but
- * out of order is rejected as a whole, so the assembly is tested as a sequence and the finished file
- * is put through the same verifier that guards a real export.
+ * A migration fails on a live database, in front of a user, with the instruction to restore a
+ * backup. That makes the cheap mistakes expensive, and the cheapest of them is a new table whose
+ * character set differs from the one it points at: MySQL then refuses the foreign key with errno
+ * 150, "Foreign key constraint is incorrectly formed", a message that names everything except the
+ * cause. This has happened once - V3_6_0_36 was written as utf8mb4 against a utf8 core - and this
+ * test is the reason it cannot happen again unnoticed.
+ *
+ * The check is deliberately not "every table is utf8". Several tables of this schema are utf8mb4
+ * and are fine, because nothing points from them into the older part. What cannot hold is a foreign
+ * key across the boundary, and that is what is asserted.
  *
  * @author jens
  */
-public class EdaMahnbescheidBuilderTest {
+public class MigrationConventionsTest {
 
-    private final EdaMahnbescheidBuilder builder = new EdaMahnbescheidBuilder();
+    /** What a table is created in where the script does not say - the server default for this schema. */
+    private static final String DEFAULT_CHARSET = "utf8";
 
-    private static Date date(int y, int m, int d) {
-        return Date.from(LocalDate.of(y, m, d).atStartOfDay(ZoneId.systemDefault()).toInstant());
+    private static final Pattern CREATE_TABLE = Pattern.compile(
+            "CREATE\\s+TABLE\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?`?(\\w+)`?\\s*\\((.*?)\\)\\s*(ENGINE[^;]*)?;",
+            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+
+    private static final Pattern CHARSET = Pattern.compile("CHARSET\\s*=\\s*([A-Za-z0-9_]+)",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern REFERENCES = Pattern.compile("REFERENCES\\s+`?(\\w+)`?\\s*\\(",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern ALTER_ADD_FK = Pattern.compile(
+            "ALTER\\s+TABLE\\s+`?(\\w+)`?[^;]*?FOREIGN\\s+KEY[^;]*?REFERENCES\\s+`?(\\w+)`?",
+            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+
+    private List<File> migrations() {
+        String base = System.getProperty("basedir");
+        File dir = new File(base == null ? "." : base, "src/main/resources/db/migration");
+        assertTrue("das Migrationsverzeichnis fehlt: " + dir.getAbsolutePath(), dir.isDirectory());
+        File[] files = dir.listFiles((d, name) -> name.endsWith(".sql"));
+        assertTrue("es wurden keine Migrationen gefunden", files != null && files.length > 0);
+        List<File> sorted = new ArrayList<>(Arrays.asList(files));
+        sorted.sort((a, b) -> a.getName().compareTo(b.getName()));
+        return sorted;
     }
 
-    private DunningCase dunningCase() {
-        DunningCase c = new DunningCase();
-        c.setOwnReference("AZ-2026-0815");
-        c.setKennziffer("12345678");
-        c.setCourtXJustizId("B2609");
-        c.setCourtName("Amtsgericht Stuttgart");
-        c.setCourtPostalCode("70154");
-        c.setCourtCity("Stuttgart");
-        return c;
+    private String read(File f) throws IOException {
+        return new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8);
     }
 
-    private ClaimLedgerParty party(String id, String salutation, String first, String last) {
-        AddressBean a = new AddressBean();
-        a.setSalutation(salutation);
-        a.setFirstName(first);
-        a.setName(last);
-        a.setStreet("Hauptstr.");
-        a.setStreetNumber("1");
-        a.setZipCode("70173");
-        a.setCity("Stuttgart");
-        ClaimLedgerParty p = new ClaimLedgerParty();
-        p.setId(id);
-        p.setContact(a);
-        return p;
-    }
-
-    private EdaClaimMapper.Claim claim(String catalogueNumber, String amount) {
-        ClaimComponent c = new ClaimComponent();
-        c.setId("c-" + catalogueNumber);
-        c.setName("Kaufpreis");
-        c.setType(ClaimComponentType.MAIN_CLAIM);
-        c.setCatalogueNumber(catalogueNumber);
-        return new EdaClaimMapper.Claim(c, new BigDecimal(amount));
-    }
-
-    private List<String> layoutSequence(List<EdaRecord> records) {
-        List<String> ids = new ArrayList<>();
-        for (EdaRecord r : records) {
-            ids.add(r.getLayout().getId());
+    private String charsetOf(String tail) {
+        if (tail == null) {
+            return normalise(DEFAULT_CHARSET);
         }
-        return ids;
+        Matcher m = CHARSET.matcher(tail);
+        return normalise(m.find() ? m.group(1) : DEFAULT_CHARSET);
     }
 
-    private ClaimLedgerParty representedParty(String id) {
-        ClaimLedgerParty p = party(id, null, null, null);
-        p.getContact().setCompany("Beispiel Handels GmbH");
-        p.getContact().setLegalForm("GmbH");
-        p.setSnapshotDesignation("Beispiel Handels GmbH");
-        AddressBean rep = new AddressBean();
-        rep.setFirstName("Max");
-        rep.setName("Muster");
-        rep.setStreet("Königstr.");
-        rep.setStreetNumber("1");
-        rep.setZipCode("70173");
-        rep.setCity("Stuttgart");
-        p.getRepresentatives().add(representative(rep, "Geschäftsführer", 1));
-        return p;
-    }
-
-    private ClaimLedgerPartyRepresentative representative(AddressBean contact, String function, int sequence) {
-        ClaimLedgerPartyRepresentative r = new ClaimLedgerPartyRepresentative();
-        r.setContact(contact);
-        r.setFunctionDesignation(function);
-        r.setSequenceNumber(sequence);
-        return r;
-    }
-
-
-    private EdaProcessRepresentative lawyers() {
-        EdaProcessRepresentative rep = new EdaProcessRepresentative();
-        rep.setSalutation(EdaProcessRepresentative.Salutation.RECHTSANWAELTE);
-        rep.setDesignation("Muster & Partner Rechtsanwälte");
-        rep.setStreet("Königstr. 1");
-        rep.setPostalCode("70173");
-        rep.setCity("Stuttgart");
-        rep.setOrderDate(date(2026, 3, 2));
-        return rep;
+    /**
+     * utf8 and utf8mb3 are the same character set under two names - MySQL renamed it and keeps the
+     * old name as an alias. Both spellings appear in these scripts, and treating them as different
+     * would report a mismatch where the server sees none.
+     */
+    private String normalise(String charset) {
+        String lower = charset.toLowerCase();
+        return "utf8".equals(lower) ? "utf8mb3" : lower;
     }
 
     @Test
-    public void theDeclarationOnTheCounterPerformanceTravelsInTheKeyRecord() throws Exception {
-        // § 688 Abs. 2 Nr. 2 ZPO: a Mahnbescheid is inadmissible where the claim depends on a
-        // counter-performance not yet rendered, so the court has to be told which case applies
-        DunningCase rendered = dunningCase();
-        rendered.setCounterPerformanceRendered(true);
+    public void everyForeignKeyPointsAtATableOfTheSameCharacterSet() throws Exception {
+        // MySQL verlangt für einen Fremdschlüssel übereinstimmende Zeichensätze und Kollationen und
+        // sagt beim Scheitern nur errno 150, "Foreign key constraint is incorrectly formed" - was
+        // die Ursache verschweigt. Eine neue Tabelle in utf8mb4, die auf den utf8-Kern des Schemas
+        // zeigt, ist deshalb kein Schönheitsfehler, sondern ein Deployment, das abbricht.
+        Map<String, String> charsetByTable = new HashMap<>();
+        List<String> references = new ArrayList<>();
 
-        EdaRecord kennsatz = builder.buildApplication(rendered,
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00"))).get(0);
+        for (File migration : migrations()) {
+            String sql = read(migration);
 
-        assertEquals("X", kennsatz.get("VGLM1"));
-        assertNull(kennsatz.get("VGLM2"));
-    }
+            Matcher create = CREATE_TABLE.matcher(sql);
+            while (create.find()) {
+                String table = create.group(1).toLowerCase();
+                charsetByTable.put(table, charsetOf(create.group(3)));
+                Matcher ref = REFERENCES.matcher(create.group(2));
+                while (ref.find()) {
+                    references.add(migration.getName() + "|" + table + "|" + ref.group(1).toLowerCase());
+                }
+            }
 
-    @Test
-    public void aClaimIndependentOfACounterPerformanceUsesTheOtherField() throws Exception {
-        DunningCase independent = dunningCase();
-        independent.setCounterPerformanceIndependent(true);
-
-        EdaRecord kennsatz = builder.buildApplication(independent,
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00"))).get(0);
-
-        assertNull(kennsatz.get("VGLM1"));
-        assertEquals("X", kennsatz.get("VGLM2"));
-    }
-
-    @Test
-    public void bothDeclarationsMayStandTogether() throws Exception {
-        // "Bei mehreren Ansprüchen können auch beide Felder belegt sein!" - they are not
-        // alternatives, and an application over several claims can carry claims of either kind
-        DunningCase both = dunningCase();
-        both.setCounterPerformanceRendered(true);
-        both.setCounterPerformanceIndependent(true);
-
-        EdaRecord kennsatz = builder.buildApplication(both,
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00"))).get(0);
-
-        assertEquals("X", kennsatz.get("VGLM1"));
-        assertEquals("X", kennsatz.get("VGLM2"));
-    }
-
-    @Test
-    public void theReferralIsOnlyAppliedForWhenItIsAskedFor() throws Exception {
-        // § 696 Abs. 1 ZPO; an empty field means it is not applied for, which is a statement of its
-        // own and must not be made by accident
-        EdaRecord notAsked = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00"))).get(0);
-        assertNull(notAsked.get("ASTRVM"));
-
-        DunningCase asked = dunningCase();
-        asked.setLitigationRequested(true);
-        EdaRecord requested = builder.buildApplication(asked,
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00"))).get(0);
-        assertEquals("X", requested.get("ASTRVM"));
-    }
-
-    @Test
-    public void aRepresentativeFollowsThePartyItActsFor() throws Exception {
-        // the format has no field pointing back at the party; position is the only link, so a
-        // representative record in the wrong place attaches itself to the wrong person
-        List<EdaRecord> records = builder.buildApplication(dunningCase(),
-                Arrays.asList(representedParty("p1")),
-                Arrays.asList(representedParty("p2")),
-                Arrays.asList(claim("11", "5000.00")));
-
-        assertEquals(Arrays.asList("C01", "C02", "C04", "C05", "C06", "C13", "C15", "C17", "C18", "C20"), layoutSequence(records));
-    }
-
-    @Test
-    public void theFilingLawyerSitsBetweenTheApplicantsAndTheDefendants() throws Exception {
-        DunningCase withoutKennziffer = dunningCase();
-        withoutKennziffer.setKennziffer(null);
-
-        List<EdaRecord> records = builder.buildApplication(withoutKennziffer,
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00")), lawyers());
-
-        assertEquals(Arrays.asList("C01", "C02", "C04", "C07", "C08", "C10", "C13", "C15", "C20"), layoutSequence(records));
-    }
-
-    @Test
-    public void theOwnKennzifferSuppressesTheIdentityButNotTheApplicationSpecificData() throws Exception {
-        List<EdaRecord> records = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00")), lawyers());
-
-        assertEquals(Arrays.asList("C01", "C02", "C04", "C10", "C13", "C15", "C20"), layoutSequence(records));
-    }
-
-    @Test
-    public void aFileNamingTheLawyerStillPassesTheVerifier() throws Exception {
-        DunningCase withoutKennziffer = dunningCase();
-        withoutKennziffer.setKennziffer(null);
-
-        EdaFile file = builder.buildFile(withoutKennziffer,
-                Arrays.asList(representedParty("p1")),
-                Arrays.asList(representedParty("p2")),
-                Arrays.asList(claim("11", "5000.00")), lawyers(),
-                "12345678", "MB0001", date(2026, 3, 2));
-
-        List<EdaViolation> violations = new EdaStructureVerifier()
-                .verify(file.write("12345678"), EdaMahnbescheidLayouts.FORMAT_MAHNBESCHEID);
-
-        assertTrue(violations.toString(), violations.isEmpty());
-    }
-
-    @Test
-    public void theDeclarationsOfTheExportStepTravelInTheApplicationSpecificRecord() throws Exception {
-        // what the export step asks for: the day of instruction, which § 60 Abs. 1 S. 1 RVG makes
-        // decisive for the applicable RVG version, and the offsetting of Vorbem. 3 Abs. 4 VV RVG
-        EdaProcessRepresentative rep = lawyers();
-        rep.setOrderDate(date(2026, 2, 17));
-        rep.setOffsetAmount(new java.math.BigDecimal("162.50"));
-        rep.setSpecialEffortDeclared(true);
-        rep.setOwnReference("00123/26");
-
-        List<EdaRecord> records = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00")), rep);
-
-        EdaRecord c10 = null;
-        for (EdaRecord r : records) {
-            if ("C10".equals(r.getLayout().getId())) {
-                c10 = r;
+            Matcher alter = ALTER_ADD_FK.matcher(sql);
+            while (alter.find()) {
+                references.add(migration.getName() + "|" + alter.group(1).toLowerCase()
+                        + "|" + alter.group(2).toLowerCase());
             }
         }
-        assertEquals("260217", c10.get("ASPVAUFD"));
-        assertEquals("16250", c10.get("VV2300MBET"));
-        assertEquals("X", c10.get("VV2300M"));
-        assertEquals("00123/26", c10.get("ASPVGZ"));
-    }
 
-    @Test
-    public void anApplicationWithDeclarationsAndAnAccountStillPassesTheVerifier() throws Exception {
-        // the records C10 and C11 are written beside a Kennziffer, where C07 to C09 are not - the
-        // structure has to hold with that combination, since it is the one every export produces
-        EdaProcessRepresentative rep = lawyers();
-        rep.setOrderDate(date(2026, 2, 17));
-        rep.setOffsetAmount(new java.math.BigDecimal("162.50"));
-        rep.setIban("DE82620901000123456789");
+        assertFalse("es wurde keine einzige Tabelle erkannt - der Parser ist kaputt, nicht das Schema",
+                charsetByTable.isEmpty());
+        assertFalse("es wurde kein einziger Fremdschlüssel erkannt", references.isEmpty());
 
-        EdaFile file = builder.buildFile(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00")), rep,
-                "12345678", "MB0001", date(2026, 3, 2));
-
-        assertEquals(Arrays.asList("C01", "C02", "C04", "C10", "C11", "C13", "C15", "C20"), layoutSequence(file.getRecords()));
-
-        List<EdaViolation> violations = new EdaStructureVerifier()
-                .verify(file.write("12345678"), EdaMahnbescheidLayouts.FORMAT_MAHNBESCHEID);
-
-        assertTrue(violations.toString(), violations.isEmpty());
-    }
-
-    @Test
-    public void anApplicationOpensWithItsKeyRecordAndFollowsTheExpectedOrder() throws Exception {
-        List<EdaRecord> records = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00")));
-
-        assertEquals(Arrays.asList("C01", "C02", "C04", "C13", "C15", "C20"),
-                layoutSequence(records));
-    }
-
-    @Test
-    public void theCourtIsAddressedByPostcodeAndPlace() throws Exception {
-        EdaRecord kennsatz = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00"))).get(0);
-
-        assertEquals("70154", kennsatz.get("MGPLZ"));
-        assertEquals("Stuttgart", kennsatz.get("MGO"));
-        assertEquals("AZ-2026-0815", kennsatz.get("TGZ"));
-        assertEquals("12345678", kennsatz.get("PVKEZI"));
-    }
-
-    @Test
-    public void severalDefendantsAreMarkedAsJointDebtors() throws Exception {
-        EdaRecord single = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "100.00"))).get(0);
-        assertNull("one defendant cannot be a joint debtor", single.get("AGGMM"));
-
-        EdaRecord several = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner"),
-                        party("p3", "Frau", "Maria", "Schuldner")),
-                Arrays.asList(claim("11", "100.00"))).get(0);
-        assertEquals("X", several.get("AGGMM"));
-    }
-
-    @Test
-    public void everyDefendantGetsItsOwnRecords() throws Exception {
-        List<String> ids = layoutSequence(builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner"),
-                        party("p3", "Frau", "Maria", "Schuldner")),
-                Arrays.asList(claim("11", "100.00"))));
-
-        assertEquals("two defendants, two opening records", 2,
-                java.util.Collections.frequency(ids, "C13"));
-        assertEquals("and two address records", 2, java.util.Collections.frequency(ids, "C15"));
-        assertEquals("the applicant is written once", 1, java.util.Collections.frequency(ids, "C02"));
-    }
-
-    // ----- the trailer -----
-
-    @Test
-    public void theTrailerSumsWhatTheFileContains() throws Exception {
-        EdaFile file = builder.buildFile(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00"), claim("43", "250.50")),
-                "12345678", "MBDAT", date(2026, 9, 1));
-
-        EdaRecord trailer = file.buildTrailer("12345678");
-
-        assertEquals("one application", "1", trailer.get("ANTANZ"));
-        assertEquals("two claims", "2", trailer.get("ASPANZ"));
-        assertEquals("the catalogue numbers 11 and 43 add up to 54", "54", trailer.get("SKATNR"));
-        assertEquals("5250.50 euro in cents", "525050", trailer.get("SUASP"));
-        assertEquals("no file number exists before the court assigns one", "0", trailer.get("SUGNR"));
-    }
-
-    @Test
-    public void aFreeTextClaimIsCountedOnceDespiteSpanningTwoRecords() throws Exception {
-        ClaimComponent free = new ClaimComponent();
-        free.setId("cf");
-        free.setName("Sonstiger Anspruch");
-        free.setType(ClaimComponentType.MAIN_CLAIM);
-
-        EdaFile file = builder.buildFile(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(new EdaClaimMapper.Claim(free, new BigDecimal("300.00"))),
-                "12345678", "MBDAT", date(2026, 9, 1));
-
-        EdaRecord trailer = file.buildTrailer("12345678");
-
-        assertEquals("counting the continuation record would count the claim twice",
-                "1", trailer.get("ASPANZ"));
-        assertEquals("30000", trailer.get("SUASP"));
-        assertEquals("a free-text claim contributes no catalogue number", "0", trailer.get("SKATNR"));
-    }
-
-    // ----- the finished file -----
-
-    @Test
-    public void theAssembledFilePassesTheVerifierThatGuardsARealExport() throws Exception {
-        EdaFile file = builder.buildFile(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00")),
-                "12345678", "MBDAT", date(2026, 9, 1));
-
-        String content = file.write("12345678");
-        List<EdaViolation> violations = new EdaStructureVerifier()
-                .verify(content, EdaMahnbescheidLayouts.FORMAT_MAHNBESCHEID);
-
-        assertTrue("an assembled application must survive its own verification: " + violations,
-                violations.isEmpty());
-
-        for (String line : EdaRecords.split(content)) {
-            assertEquals(EdaRecordLayout.RECORD_LENGTH, line.length());
+        List<String> mismatches = new ArrayList<>();
+        for (String reference : references) {
+            String[] parts = reference.split("\\|");
+            String from = charsetByTable.get(parts[1]);
+            String to = charsetByTable.get(parts[2]);
+            // Tabellen, die keine Migration angelegt hat, stammen aus der Ausgangsversion des
+            // Schemas; über deren Zeichensatz sagt das Verzeichnis nichts, also auch dieser Test nicht
+            if (from == null || to == null || from.equals(to)) {
+                continue;
+            }
+            mismatches.add(parts[0] + ": " + parts[1] + " (" + from + ") -> " + parts[2] + " (" + to + ")");
         }
-    }
 
-    @Test
-    public void theHeaderAnnouncesTheApplicationAndItsFormat() {
-        EdaRecord header = builder.header("12345678", "MBDAT", date(2026, 9, 1));
-
-        assertEquals("12345678", header.get("TKEZI"));
-        assertEquals("260901", header.get("DATUM"));
-        assertEquals("01", header.get("BELART"));
-        assertEquals("4000", header.get("FORMAT"));
+        assertEquals("Fremdschlüssel zwischen Tabellen verschiedener Zeichensätze, das scheitert "
+                + "beim Deployment mit errno 150: " + mismatches, 0, mismatches.size());
     }
 }

@@ -670,6 +670,9 @@ import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.persistence.InterestRule;
 import com.jdimension.jlawyer.persistence.InterestType;
 import java.math.BigDecimal;
+import com.jdimension.jlawyer.referencedata.CatalogueAddition;
+import com.jdimension.jlawyer.referencedata.MainClaimCatalogueEntry;
+import com.jdimension.jlawyer.referencedata.ReferenceData;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -715,11 +718,15 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         this.cmbType.addItemListener(e -> {
             if (e.getStateChange() == java.awt.event.ItemEvent.SELECTED) {
                 updateInterestRulesEnabled();
+                updateCatalogueAddition();
             }
         });
 
         // ComboBox für Zinssatz-Schnellauswahl initialisieren
         initializeInterestBaseRelatedComboBox();
+
+        initializeCatalogue();
+        updateCatalogueAddition();
 
         // Initialen Status setzen
         updateInterestRulesEnabled();
@@ -749,11 +756,13 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         this.cmbType.addItemListener(e -> {
             if (e.getStateChange() == java.awt.event.ItemEvent.SELECTED) {
                 updateInterestRulesEnabled();
+                updateCatalogueAddition();
             }
         });
 
         // ComboBox für Zinssatz-Schnellauswahl initialisieren
         initializeInterestBaseRelatedComboBox();
+        initializeCatalogue();
 
         this.setEntry(entry, interestRules);
     }
@@ -765,6 +774,7 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         this.txtAmount.setValue(entry.getPrincipalAmount());
         this.cmbType.setSelectedItem(entry.getType());
         this.tblInterestRules.setModel(new InterestRuleTableModel(interestRules));
+        showCatalogueOf(entry);
 
         // Status der Zinsregel-Elemente aktualisieren
         updateInterestRulesEnabled();
@@ -780,7 +790,152 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         this.entry.setName(this.txtName.getText());
         this.entry.setPrincipalAmount(BigDecimal.valueOf(((Number) this.txtAmount.getValue()).doubleValue()));
         this.entry.setType((ClaimComponentType) this.cmbType.getSelectedItem());
+        applyCatalogueTo(this.entry);
         return this.entry;
+    }
+
+    /** Was in der Auswahl steht, wenn die Position nicht über den Katalog geht. */
+    private static final String CATALOGUE_FREE_TEXT = "sonstiger Anspruch (Begründung im Feld Name)";
+
+    /** Was in der Auswahl steht, solange die Position keine Hauptforderung ist. */
+    private static final String CATALOGUE_NONE = "- keine -";
+
+    /**
+     * Füllt die Anspruchsart mit dem Katalog der Mahngerichte.
+     *
+     * Der Katalog ist geschlossen: eine Nummer, die es dort nicht gibt, weist das Gericht zurück,
+     * und eine frei eingetippte Nummer wäre nichts als eine Gelegenheit, sich zu vertippen. Was der
+     * Katalog nicht abdeckt, geht als sonstiger Anspruch mit eigener Begründung - das ist der erste
+     * Eintrag und keine Ausnahme, sondern der vom Format vorgesehene Weg.
+     */
+    private void initializeCatalogue() {
+        this.cmbCatalogue.removeAllItems();
+        this.cmbCatalogue.addItem(CATALOGUE_FREE_TEXT);
+        for (MainClaimCatalogueEntry entry : ReferenceData.getMainClaimCatalogue().getEntries()) {
+            this.cmbCatalogue.addItem(labelOf(entry));
+        }
+
+        this.cmbContractType.removeAllItems();
+        this.cmbContractType.addItem("");
+        for (String type : ReferenceData.getContractTypeCatalogue().getContractTypes()) {
+            this.cmbContractType.addItem(type);
+        }
+    }
+
+    private String labelOf(MainClaimCatalogueEntry entry) {
+        return entry.getNumber() + " - " + entry.getDesignation();
+    }
+
+    /**
+     * Die Katalognummer, die gerade gewählt ist, oder null für den sonstigen Anspruch.
+     */
+    private String selectedCatalogueNumber() {
+        Object selected = this.cmbCatalogue.getSelectedItem();
+        if (selected == null || CATALOGUE_FREE_TEXT.equals(selected) || CATALOGUE_NONE.equals(selected)) {
+            return null;
+        }
+        String label = selected.toString();
+        int dash = label.indexOf(" - ");
+        return dash < 0 ? null : label.substring(0, dash).trim();
+    }
+
+    /**
+     * Zeigt genau das Zusatzfeld, das die gewählte Nummer verlangt.
+     *
+     * Die Nummer bestimmt es, nicht der Anwender: 19 will PLZ und Ort der Wohnung, 28 die
+     * Vertragsart, 36 die Konto-Nummer. Ein Feld anzubieten, das zu dieser Nummer nicht gehört,
+     * lädt zu einer Eingabe ein, die den Antrag nicht vollständig macht.
+     */
+    private void updateCatalogueAddition() {
+        boolean mainClaim = this.cmbType.getSelectedItem() instanceof ClaimComponentType
+                && ((ClaimComponentType) this.cmbType.getSelectedItem()).isMainClaim();
+
+        this.lblCatalogue.setVisible(mainClaim);
+        this.cmbCatalogue.setVisible(mainClaim);
+
+        String number = mainClaim ? selectedCatalogueNumber() : null;
+        CatalogueAddition addition = CatalogueAddition.of(number);
+        MainClaimCatalogueEntry entry = number == null ? null
+                : ReferenceData.getMainClaimCatalogue().findByNumber(Integer.parseInt(number));
+
+        // Der Zeitraum, den Nr. 70 verlangt, ist das von/bis der Anspruchszeile und kein eigenes
+        // Feld - der Assistent der Gerichte fragt dort auch nicht danach. Statt eines Eingabefeldes
+        // steht deshalb nur der Hinweis, wo er herkommt.
+        this.lblAddition.setVisible(addition != CatalogueAddition.NONE);
+        if (addition == CatalogueAddition.CLAIM_PERIOD) {
+            this.lblAddition.setText("Zeitraum: wird aus dem Zeitraum der Forderung übernommen");
+        } else {
+            this.lblAddition.setText(addition == CatalogueAddition.NONE
+                    ? "" : addition.labelFor(entry) + ":");
+        }
+        this.txtAdditionZip.setVisible(addition == CatalogueAddition.PROPERTY_LOCATION);
+        this.txtAdditionCity.setVisible(addition == CatalogueAddition.PROPERTY_LOCATION);
+        this.cmbContractType.setVisible(addition == CatalogueAddition.CONTRACT_TYPE);
+        this.txtReferenceDetail.setVisible(addition == CatalogueAddition.REFERENCE_DETAIL);
+    }
+
+    private void cmbCatalogueActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbCatalogueActionPerformed
+        updateCatalogueAddition();
+    }//GEN-LAST:event_cmbCatalogueActionPerformed
+
+    /**
+     * Übernimmt Katalognummer und Zusatz aus der Position in die Auswahl.
+     */
+    private void showCatalogueOf(ClaimComponent component) {
+        String number = component.getCatalogueNumber();
+        this.cmbCatalogue.setSelectedItem(CATALOGUE_FREE_TEXT);
+        if (number != null && !number.trim().isEmpty()) {
+            try {
+                MainClaimCatalogueEntry entry = ReferenceData.getMainClaimCatalogue()
+                        .findByNumber(Integer.parseInt(number.trim()));
+                if (entry != null) {
+                    this.cmbCatalogue.setSelectedItem(labelOf(entry));
+                }
+            } catch (NumberFormatException ex) {
+                // eine Nummer, die der Katalog nicht kennt, hätte nie gespeichert werden dürfen;
+                // sie wird als sonstiger Anspruch gezeigt statt die Auswahl zu verfälschen
+                log.warn("Claim component " + component.getId() + " carries the catalogue number \""
+                        + number + "\", which is not one");
+            }
+        }
+        this.txtAdditionZip.setText(nonNull(component.getCataloguePropertyZip()));
+        this.txtAdditionCity.setText(nonNull(component.getCataloguePropertyCity()));
+        this.cmbContractType.setSelectedItem(nonNull(component.getCatalogueContractDesignation()));
+        this.txtReferenceDetail.setText(nonNull(component.getCatalogueReferenceDetail()));
+        updateCatalogueAddition();
+    }
+
+    /**
+     * Schreibt Katalognummer und Zusatz zurück - und räumt dabei auf.
+     *
+     * Die Zusatzfelder, die zur gewählten Nummer nicht gehören, werden geleert. Sonst bliebe die
+     * PLZ einer früher gewählten Mietforderung an einer Position stehen, die inzwischen ein
+     * Schadenersatz ist, und ginge unbemerkt mit in den Antrag.
+     */
+    private void applyCatalogueTo(ClaimComponent component) {
+        String number = selectedCatalogueNumber();
+        boolean mainClaim = component.getType() != null && component.getType().isMainClaim();
+
+        component.setCatalogueNumber(mainClaim ? number : null);
+        component.setFreeTextClaim(mainClaim && number == null);
+
+        CatalogueAddition addition = mainClaim ? CatalogueAddition.of(number) : CatalogueAddition.NONE;
+        component.setCataloguePropertyZip(addition == CatalogueAddition.PROPERTY_LOCATION
+                ? emptyToNull(this.txtAdditionZip.getText()) : null);
+        component.setCataloguePropertyCity(addition == CatalogueAddition.PROPERTY_LOCATION
+                ? emptyToNull(this.txtAdditionCity.getText()) : null);
+        component.setCatalogueContractDesignation(addition == CatalogueAddition.CONTRACT_TYPE
+                ? emptyToNull(String.valueOf(this.cmbContractType.getSelectedItem())) : null);
+        component.setCatalogueReferenceDetail(addition == CatalogueAddition.REFERENCE_DETAIL
+                ? emptyToNull(this.txtReferenceDetail.getText()) : null);
+    }
+
+    private String nonNull(String s) {
+        return s == null ? "" : s;
+    }
+
+    private String emptyToNull(String s) {
+        return s == null || s.trim().isEmpty() || "null".equals(s) ? null : s.trim();
     }
 
     public List<InterestRule> getInterestRules() {
@@ -805,6 +960,13 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         jLabel3 = new javax.swing.JLabel();
         txtAmount = new javax.swing.JFormattedTextField();
         jLabel4 = new javax.swing.JLabel();
+        lblCatalogue = new javax.swing.JLabel();
+        cmbCatalogue = new javax.swing.JComboBox<>();
+        lblAddition = new javax.swing.JLabel();
+        txtAdditionZip = new javax.swing.JTextField();
+        txtAdditionCity = new javax.swing.JTextField();
+        cmbContractType = new javax.swing.JComboBox<>();
+        txtReferenceDetail = new javax.swing.JTextField();
         cmdCancel = new javax.swing.JButton();
         cmdSave = new javax.swing.JButton();
         jLabel5 = new javax.swing.JLabel();
@@ -842,6 +1004,27 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
 
         jLabel4.setFont(jLabel4.getFont());
         jLabel4.setText("Betrag:");
+
+        lblCatalogue.setFont(lblCatalogue.getFont());
+        lblCatalogue.setText("Anspruchsart:");
+        lblCatalogue.setToolTipText("Die Katalognummer des Mahnbescheidsantrags. Die Mahngerichte führen dafür einen geschlossenen Katalog.");
+
+        cmbCatalogue.setModel(new javax.swing.DefaultComboBoxModel<>());
+        cmbCatalogue.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbCatalogueActionPerformed(evt);
+            }
+        });
+
+        lblAddition.setFont(lblAddition.getFont());
+        lblAddition.setText("");
+
+        txtAdditionZip.setToolTipText("Postleitzahl");
+
+        txtAdditionCity.setToolTipText("Ort");
+
+        cmbContractType.setModel(new javax.swing.DefaultComboBoxModel<>());
+        cmbContractType.setToolTipText("Die Vertragsart, die die Mahngerichte zu Katalog-Nr. 28 zulassen");
 
         cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
         cmdCancel.setText("Abbrechen");
@@ -947,15 +1130,24 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
                                     .addComponent(jLabel1)
                                     .addComponent(jLabel2)
                                     .addComponent(jLabel3)
-                                    .addComponent(jLabel4))
+                                    .addComponent(jLabel4)
+                                    .addComponent(lblCatalogue)
+                                    .addComponent(lblAddition))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(txtName)
                                     .addComponent(txtDescription)
+                                    .addComponent(cmbCatalogue)
                                     .addGroup(layout.createSequentialGroup()
                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                             .addComponent(cmbType, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addComponent(txtAmount))
+                                            .addComponent(txtAmount)
+                                            .addComponent(cmbContractType, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                            .addComponent(txtReferenceDetail)
+                                            .addGroup(layout.createSequentialGroup()
+                                                .addComponent(txtAdditionZip, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(txtAdditionCity, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE)))
                                         .addGap(0, 0, Short.MAX_VALUE))))
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                                 .addGap(0, 0, Short.MAX_VALUE)
@@ -1015,6 +1207,17 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtAmount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel4))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblCatalogue)
+                    .addComponent(cmbCatalogue, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblAddition)
+                    .addComponent(txtAdditionZip, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtAdditionCity, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmbContractType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtReferenceDetail, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(10, 10, 10)
@@ -1237,6 +1440,13 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
     private javax.swing.ButtonGroup btnGrpInterestType;
     private javax.swing.JComboBox<String> cmbInterestBaseRelated;
     private javax.swing.JComboBox<ClaimComponentType> cmbType;
+    private javax.swing.JComboBox<String> cmbCatalogue;
+    private javax.swing.JComboBox<String> cmbContractType;
+    private javax.swing.JLabel lblCatalogue;
+    private javax.swing.JLabel lblAddition;
+    private javax.swing.JTextField txtAdditionZip;
+    private javax.swing.JTextField txtAdditionCity;
+    private javax.swing.JTextField txtReferenceDetail;
     private javax.swing.JButton cmdAddInterestRule;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdRemoveInterestRule;

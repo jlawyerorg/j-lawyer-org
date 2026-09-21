@@ -717,6 +717,14 @@ public class ClaimLedgerCourtDunningPanel extends javax.swing.JPanel {
     /** Guards the combo listener while the combo is being filled. */
     private boolean loading = false;
 
+    /**
+     * The procedure the fields below currently show.
+     *
+     * Kept apart from the one the selector points at: when the selection changes, the fields still
+     * hold what was typed for the previous one, and that is what has to be asked about.
+     */
+    private DunningCase shownCase = null;
+
     /** The entry that files under no Kennziffer at all. */
     private static final String NO_KENNZIFFER = "- keine -";
 
@@ -838,6 +846,9 @@ public class ClaimLedgerCourtDunningPanel extends javax.swing.JPanel {
      * Loads the procedures of the ledger into the selector.
      */
     private void loadCases() {
+        // Welche Mahnsache gezeigt wurde, überlebt das Neuladen: sonst springt der Reiter nach jedem
+        // Speichern auf die erste zurück, und wer an der dritten arbeitet, sucht sie jedes Mal neu.
+        String previous = this.shownCase == null ? null : this.shownCase.getId();
         this.loading = true;
         try {
             this.cmbCase.removeAllItems();
@@ -870,10 +881,23 @@ public class ClaimLedgerCourtDunningPanel extends javax.swing.JPanel {
 
         if (this.dunningCases.isEmpty()) {
             showCase(null);
-        } else {
-            this.cmbCase.setSelectedIndex(0);
-            showCase(this.dunningCases.get(0));
+            return;
         }
+        int index = 0;
+        for (int i = 0; i < this.dunningCases.size(); i++) {
+            if (this.dunningCases.get(i).getId() != null
+                    && this.dunningCases.get(i).getId().equals(previous)) {
+                index = i;
+                break;
+            }
+        }
+        this.loading = true;
+        try {
+            this.cmbCase.setSelectedIndex(index);
+        } finally {
+            this.loading = false;
+        }
+        showCase(this.dunningCases.get(index));
     }
 
     private String label(DunningCase c) {
@@ -903,6 +927,7 @@ public class ClaimLedgerCourtDunningPanel extends javax.swing.JPanel {
      * Shows one procedure with its journal.
      */
     private void showCase(DunningCase dunningCase) {
+        this.shownCase = dunningCase;
         DefaultTableModel model = (DefaultTableModel) this.tblHistory.getModel();
         model.setRowCount(0);
 
@@ -1053,7 +1078,8 @@ public class ClaimLedgerCourtDunningPanel extends javax.swing.JPanel {
         txtCourtFileNumber.setText("");
 
         cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
-        cmdSave.setText("Speichern");
+        cmdSave.setText("Mahnsache speichern");
+        cmdSave.setToolTipText("Speichert eigenes Zeichen, Kennziffer und gerichtliches Aktenzeichen dieser Mahnsache. Das Forderungskonto selbst wird unten gespeichert.");
         cmdSave.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdSaveActionPerformed(evt);
@@ -1198,8 +1224,42 @@ public class ClaimLedgerCourtDunningPanel extends javax.swing.JPanel {
         if (this.loading) {
             return;
         }
+        // Der Wechsel überschreibt die Felder mit der anderen Mahnsache. Was hier getippt und nicht
+        // gespeichert wurde, wäre sonst fort, ohne dass es jemand bemerkt.
+        int wanted = this.cmbCase.getSelectedIndex();
+        if (!confirmPendingChanges(this)) {
+            restoreSelection();
+            return;
+        }
+        // Speichern lädt neu und stellt dabei die vorige Mahnsache wieder ein - gewollt ist aber
+        // die, auf die gerade gewechselt wurde.
+        if (wanted >= 0 && wanted < this.dunningCases.size()
+                && this.cmbCase.getSelectedIndex() != wanted) {
+            this.loading = true;
+            try {
+                this.cmbCase.setSelectedIndex(wanted);
+            } finally {
+                this.loading = false;
+            }
+        }
         showCase(selectedCase());
     }//GEN-LAST:event_cmbCaseActionPerformed
+
+    /**
+     * Puts the selector back on the procedure whose entries are still in the fields.
+     */
+    private void restoreSelection() {
+        int index = this.dunningCases.indexOf(this.shownCase);
+        if (index < 0) {
+            return;
+        }
+        this.loading = true;
+        try {
+            this.cmbCase.setSelectedIndex(index);
+        } finally {
+            this.loading = false;
+        }
+    }
 
     private void cmdNewCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewCaseActionPerformed
         if (this.ledger == null || this.ledger.getId() == null) {
@@ -1217,7 +1277,10 @@ public class ClaimLedgerCourtDunningPanel extends javax.swing.JPanel {
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            locator.lookupDunningServiceRemote().addDunningCase(this.ledger.getId(), created);
+            DunningCase stored = locator.lookupDunningServiceRemote()
+                    .addDunningCase(this.ledger.getId(), created);
+            // die neue Mahnsache soll danach auch die gezeigte sein, nicht die vorige
+            this.shownCase = stored;
         } catch (Exception ex) {
             log.error("Unable to create a dunning case for ledger " + this.ledger.getId(), ex);
             JOptionPane.showMessageDialog(this,
@@ -1336,9 +1399,16 @@ public class ClaimLedgerCourtDunningPanel extends javax.swing.JPanel {
         dunningCase.setCourtCity(chosen.getCourt().getCity());
         this.txtCourt.setText(chosen.getCourt().getName()
                 + (chosen.getCourt().getCity() == null ? "" : ", " + chosen.getCourt().getCity()));
+
+        // Festschreiben, nicht ankündigen. Die Wahl des Gerichts ist eine beantwortete Frage, und
+        // sie stand bisher nur im Speicher: wer danach unten auf "Speichern" klickte, speicherte
+        // das Forderungskonto, schloss den Dialog und verlor das Gericht, ohne es zu merken.
+        if (!saveSelectedCase()) {
+            return;
+        }
         JOptionPane.showMessageDialog(this,
                 (determined ? proposal.getReason() + "\n\n" : "")
-                + "Die Zuordnung wird mit \"Speichern\" übernommen.",
+                + "Das Mahngericht ist der Mahnsache zugeordnet und gespeichert.",
                 "Mahngericht", JOptionPane.INFORMATION_MESSAGE);
     }//GEN-LAST:event_cmdDetermineCourtActionPerformed
 
@@ -1430,9 +1500,21 @@ public class ClaimLedgerCourtDunningPanel extends javax.swing.JPanel {
     }
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
-        DunningCase dunningCase = selectedCase();
+        saveSelectedCase();
+    }//GEN-LAST:event_cmdSaveActionPerformed
+
+    /**
+     * Writes the fields of this tab onto the selected procedure and stores it.
+     *
+     * This is the dunning procedure, not the claim ledger. The two are saved separately and by
+     * different buttons, which is the reason this one says which of them it means.
+     *
+     * @return true if there was nothing to save or the save succeeded
+     */
+    private boolean saveSelectedCase() {
+        DunningCase dunningCase = this.shownCase;
         if (dunningCase == null) {
-            return;
+            return true;
         }
         dunningCase.setOwnReference(emptyToNull(this.txtOwnReference.getText()));
         dunningCase.setCourtFileNumber(emptyToNull(this.txtCourtFileNumber.getText()));
@@ -1446,10 +1528,59 @@ public class ClaimLedgerCourtDunningPanel extends javax.swing.JPanel {
             JOptionPane.showMessageDialog(this,
                     "Die Mahnsache konnte nicht gespeichert werden: " + ex.getMessage(),
                     "Fehler", JOptionPane.ERROR_MESSAGE);
-            return;
+            return false;
         }
         loadCases();
-    }//GEN-LAST:event_cmdSaveActionPerformed
+        return true;
+    }
+
+    /**
+     * Whether this tab holds entries that have not been written to the procedure yet.
+     *
+     * Asked before the enclosing dialog closes. The dialog's own save button stores the claim
+     * ledger and then shuts the window; without this question the reference, the file number and
+     * the Kennziffer typed here would go with it.
+     *
+     * @return true if something was typed and not saved
+     */
+    public boolean hasUnsavedChanges() {
+        DunningCase dunningCase = this.shownCase;
+        if (dunningCase == null) {
+            return false;
+        }
+        return differs(dunningCase.getOwnReference(), emptyToNull(this.txtOwnReference.getText()))
+                || differs(dunningCase.getCourtFileNumber(), emptyToNull(this.txtCourtFileNumber.getText()))
+                || differs(dunningCase.getKennziffer(), selectedKennziffer());
+    }
+
+    /**
+     * Offers to save what is pending, and says whether the caller may proceed.
+     *
+     * @param parent the window the question belongs to
+     * @return false only if the user asked to go back and finish here
+     */
+    public boolean confirmPendingChanges(java.awt.Component parent) {
+        if (!hasUnsavedChanges()) {
+            return true;
+        }
+        int answer = JOptionPane.showConfirmDialog(parent,
+                "Im Reiter \"Mahnverfahren\" sind Eingaben zur Mahnsache noch nicht gespeichert.\n\n"
+                + "Jetzt speichern?",
+                "Mahnsache", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (answer == JOptionPane.CANCEL_OPTION || answer == JOptionPane.CLOSED_OPTION) {
+            return false;
+        }
+        if (answer == JOptionPane.YES_OPTION) {
+            return saveSelectedCase();
+        }
+        return true;
+    }
+
+    private boolean differs(String stored, String shown) {
+        String a = stored == null ? "" : stored.trim();
+        String b = shown == null ? "" : shown.trim();
+        return !a.equals(b);
+    }
 
     private String emptyToNull(String s) {
         return s == null || s.trim().isEmpty() ? null : s.trim();

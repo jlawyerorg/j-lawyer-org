@@ -679,6 +679,8 @@ import com.jdimension.jlawyer.persistence.ClaimLedgerEntryFacadeLocal;
 import com.jdimension.jlawyer.persistence.ClaimLedgerFacadeLocal;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
 import com.jdimension.jlawyer.persistence.ClaimLedgerPartyFacadeLocal;
+import com.jdimension.jlawyer.persistence.ClaimLedgerPartyRepresentative;
+import com.jdimension.jlawyer.persistence.ClaimLedgerPartyRepresentativeFacadeLocal;
 import com.jdimension.jlawyer.persistence.EnforcementTitle;
 import com.jdimension.jlawyer.persistence.EnforcementTitleFacadeLocal;
 import com.jdimension.jlawyer.persistence.InterestRule;
@@ -774,6 +776,8 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
     @EJB
     private ClaimLedgerPartyFacadeLocal claimLedgerPartiesFacade;
     @EJB
+    private ClaimLedgerPartyRepresentativeFacadeLocal claimLedgerPartyRepresentativesFacade;
+    @EJB
     private EnforcementTitleFacadeLocal enforcementTitlesFacade;
     @EJB
     private ClaimComponentFacadeLocal claimComponentsFacade;
@@ -807,7 +811,11 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
     @RolesAllowed({"readArchiveFileRole"})
     public List<ClaimLedgerParty> getParties(String ledgerId) throws Exception {
         ClaimLedger ledger = requireLedger(ledgerId);
-        return this.claimLedgerPartiesFacade.findByLedger(ledger);
+        List<ClaimLedgerParty> parties = this.claimLedgerPartiesFacade.findByLedger(ledger);
+        for (ClaimLedgerParty party : parties) {
+            loadRepresentatives(party);
+        }
+        return parties;
     }
 
     @Override
@@ -828,8 +836,15 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
             party.setSequenceNumber(this.claimLedgerPartiesFacade.findByLedgerAndRole(ledger, party.getRole()).size() + 1);
         }
 
+        // the chain is written separately, so the party is created without it and the rows follow
+        List<ClaimLedgerPartyRepresentative> requested = new ArrayList<>(
+                party.getRepresentatives() == null ? new ArrayList<>() : party.getRepresentatives());
+        party.setRepresentatives(new ArrayList<>());
+
         this.claimLedgerPartiesFacade.create(party);
-        return this.claimLedgerPartiesFacade.find(party.getId());
+        ClaimLedgerParty stored = this.claimLedgerPartiesFacade.find(party.getId());
+        storeRepresentatives(stored, requested);
+        return loadRepresentatives(stored);
     }
 
     @Override
@@ -851,8 +866,68 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         party.setSnapshotAddress(current.getSnapshotAddress());
         party.setLedger(current.getLedger());
 
+        List<ClaimLedgerPartyRepresentative> requested = new ArrayList<>(
+                party.getRepresentatives() == null ? new ArrayList<>() : party.getRepresentatives());
+        party.setRepresentatives(new ArrayList<>());
+
         this.claimLedgerPartiesFacade.edit(party);
-        return this.claimLedgerPartiesFacade.find(party.getId());
+        ClaimLedgerParty stored = this.claimLedgerPartiesFacade.find(party.getId());
+        storeRepresentatives(stored, requested);
+        return loadRepresentatives(stored);
+    }
+
+    /**
+     * Replaces the collection on a party with the rows actually stored for it.
+     *
+     * The mapping is lazy and carries no cascade, so a party on its way to a remote client would
+     * otherwise arrive with a proxy that cannot be resolved any more.
+     */
+    private ClaimLedgerParty loadRepresentatives(ClaimLedgerParty party) {
+        if (party == null) {
+            return null;
+        }
+        party.setRepresentatives(new ArrayList<>(
+                this.claimLedgerPartyRepresentativesFacade.findByParty(party)));
+        return party;
+    }
+
+    /**
+     * Writes the chain of legal representatives as it was requested, discarding what was there before.
+     *
+     * The chain is short and its order is its meaning, so it is rewritten rather than reconciled
+     * entry by entry: positions shift when one is removed from the middle, and matching rows up would
+     * only reproduce the ordering that is being replaced.
+     *
+     * More than the format admits is refused rather than silently cut off - a representative dropped
+     * on the way to the court is worse than an application that is not accepted.
+     */
+    private void storeRepresentatives(ClaimLedgerParty party,
+            List<ClaimLedgerPartyRepresentative> requested) throws Exception {
+
+        if (requested.size() > ClaimLedgerPartyRepresentative.MAXIMUM_PER_PARTY) {
+            throw new Exception("Zu einer Partei können höchstens "
+                    + ClaimLedgerPartyRepresentative.MAXIMUM_PER_PARTY
+                    + " gesetzliche Vertreter erfasst werden!");
+        }
+
+        for (ClaimLedgerPartyRepresentative existing : this.claimLedgerPartyRepresentativesFacade.findByParty(party)) {
+            this.claimLedgerPartyRepresentativesFacade.remove(existing);
+        }
+
+        int sequence = 1;
+        for (ClaimLedgerPartyRepresentative r : requested) {
+            if (r == null || r.getContact() == null) {
+                // an entry without anybody in it says nothing and has no place in the chain
+                continue;
+            }
+            ClaimLedgerPartyRepresentative representative = new ClaimLedgerPartyRepresentative();
+            representative.setId(new StringGenerator().getID().toString());
+            representative.setParty(party);
+            representative.setContact(r.getContact());
+            representative.setFunctionDesignation(r.getFunctionDesignation());
+            representative.setSequenceNumber(sequence++);
+            this.claimLedgerPartyRepresentativesFacade.create(representative);
+        }
     }
 
     @Override
@@ -899,7 +974,7 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         party.setSnapshotAddress(formatAddress(contact));
 
         this.claimLedgerPartiesFacade.edit(party);
-        return this.claimLedgerPartiesFacade.find(partyId);
+        return loadRepresentatives(this.claimLedgerPartiesFacade.find(partyId));
     }
 
     @Override

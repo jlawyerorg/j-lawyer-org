@@ -665,7 +665,14 @@ package com.jdimension.jlawyer.client.editors.files;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
+import com.jdimension.jlawyer.persistence.ClaimLedgerPartyRepresentative;
 import com.jdimension.jlawyer.persistence.ClaimPartyRole;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.persistence.LitigationCourtType;
+import com.jdimension.jlawyer.referencedata.ReferenceData;
+import com.jdimension.jlawyer.persistence.Court;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -685,6 +692,12 @@ public class ClaimLedgerPartyDialog extends javax.swing.JDialog {
 
     private ClaimLedgerParty party = null;
     private boolean saved = false;
+
+    /**
+     * The chain being edited, outermost first. Held here rather than on the party so that cancelling
+     * the dialog leaves the party as it was.
+     */
+    private final List<ClaimLedgerPartyRepresentative> representatives = new ArrayList<>();
 
     /**
      * Wraps a case party so the combo box shows a readable designation.
@@ -730,6 +743,251 @@ public class ClaimLedgerPartyDialog extends javax.swing.JDialog {
             this.cmbRole.addItem(r);
         }
         this.spnSequence.setModel(new javax.swing.SpinnerNumberModel(1, 1, 99, 1));
+
+        this.tblRepresentatives.setModel(new javax.swing.table.DefaultTableModel(
+                new Object[]{"Stellung / Funktion", "Vertreter"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                // the representative comes from the address book, so only the function is edited -
+                // and not even that where the representative is a company: the court reads a company
+                // by its name in the Stellung field, and a function beside it has nowhere to go
+                return column == 0 && !isCompanyRepresentative(row);
+            }
+        });
+        // Die Hinweise sollen wie Text aussehen und nicht wie Eingabefelder - ein Textbereich bringt
+        // den Umbruch und die richtige Höhe mit, den Rahmen und den eigenen Hintergrund braucht er
+        // dafür nicht.
+        asHintArea(this.txtRepresentativeHint, this.scrlRepresentativeHint);
+        asHintArea(this.txtHint, this.scrlHint);
+
+        // Unter diese Maße wird der Dialog nicht brauchbar: die Tabelle zeigt sonst keine Zeile
+        // mehr und der Hinweis keine Zeile Text.
+        setMinimumSize(new java.awt.Dimension(560, 520));
+
+        this.tblRepresentatives.getColumnModel().getColumn(0).setCellEditor(new FunctionCellEditor());
+        this.tblRepresentatives.getSelectionModel().addListSelectionListener(e -> updateRepresentativeButtons());
+        updateRepresentativeButtons();
+    }
+
+    /**
+     * Lets the function be chosen from the list the courts publish for this step of the chain.
+     *
+     * Where there is a list, it is the only choice: the courts publish these as the admissible
+     * designations, they exist nowhere else in j-lawyer, and there is nothing a free hand could add
+     * except a word the court will monition. Where the legal form is one the directory does not
+     * know there is no list to choose from, and the field takes what the user types - a gap in our
+     * reference data must not become a locked field.
+     *
+     * A value recorded earlier is kept even if it is not on the list, so that opening an existing
+     * party does not silently drop what was already sent to a court. It shows as the first entry and
+     * can be replaced but not re-entered.
+     */
+    private class FunctionCellEditor extends javax.swing.AbstractCellEditor
+            implements javax.swing.table.TableCellEditor {
+
+        private final javax.swing.JComboBox<String> combo = new javax.swing.JComboBox<>();
+
+        @Override
+        public java.awt.Component getTableCellEditorComponent(javax.swing.JTable table, Object value,
+                boolean isSelected, int row, int column) {
+
+            List<String> admitted = admittedFunctions(row);
+            String current = value == null ? "" : value.toString().trim();
+
+            this.combo.removeAllItems();
+            this.combo.setEditable(admitted.isEmpty());
+            this.combo.addItem("");
+            if (!current.isEmpty() && !containsIgnoringCase(admitted, current)) {
+                // was schon einmal zu Gericht ging, verschwindet nicht, weil die Liste es nicht führt
+                this.combo.addItem(current);
+            }
+            for (String function : admitted) {
+                this.combo.addItem(function);
+            }
+            this.combo.setSelectedItem(current);
+            return this.combo;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            Object selected = this.combo.getSelectedItem();
+            return selected == null ? "" : selected.toString();
+        }
+    }
+
+    private boolean containsIgnoringCase(List<String> values, String wanted) {
+        for (String value : values) {
+            if (value.equalsIgnoreCase(wanted)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * The designations in the chain that the courts do not admit for the step they stand at.
+     *
+     * A company named as representative is not checked: its name goes into the Stellung field and no
+     * function is written for it. Nor is a step whose legal form the directory does not know, because
+     * then there is no list to measure against and silence is the honest answer.
+     *
+     * @return the offending entries as one HTML fragment, or null where there is nothing to warn about
+     */
+    private String unadmittedFunctions() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < this.representatives.size(); i++) {
+            String function = this.representatives.get(i).getFunctionDesignation();
+            if (function == null || function.trim().isEmpty() || isCompanyRepresentative(i)) {
+                continue;
+            }
+            List<String> admitted = admittedFunctions(i);
+            if (admitted.isEmpty()) {
+                continue;
+            }
+            boolean found = false;
+            for (String a : admitted) {
+                if (a.equalsIgnoreCase(function.trim())) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                sb.append("&nbsp;&nbsp;").append(i + 1).append(". ").append(function.trim())
+                        .append("<br/>");
+            }
+        }
+        return sb.length() == 0 ? null : sb.toString();
+    }
+
+    /**
+     * Lets a text area pass for a hint: wrapping and scrollable like a text area, but without the
+     * frame and the paper of one.
+     */
+    private void asHintArea(javax.swing.JTextArea area, javax.swing.JScrollPane scroll) {
+        area.setOpaque(false);
+        area.setBackground(new java.awt.Color(0, 0, 0, 0));
+        area.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        area.setFont(this.lblRole.getFont());
+        area.setForeground(javax.swing.UIManager.getColor("Label.foreground"));
+        scroll.setOpaque(false);
+        scroll.getViewport().setOpaque(false);
+        scroll.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        scroll.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    }
+
+    private boolean isCompanyRepresentative(int row) {
+        if (row < 0 || row >= this.representatives.size()) {
+            return false;
+        }
+        AddressBean contact = this.representatives.get(row).getContact();
+        return contact != null && contact.getCompany() != null && !contact.getCompany().trim().isEmpty();
+    }
+
+    /**
+     * Offers the designations the courts admit for this step of the chain.
+     *
+     * Which ones those are depends on whom this representative acts for, not on itself: the first
+     * entry acts for the party, every later one for the entry before it. The courts key the
+     * admissible designations to the legal form of the one being represented, so that is the legal
+     * form asked for here.
+     */
+    private List<String> admittedFunctions(int row) {
+        String legalForm;
+        if (row <= 0) {
+            AddressBean contact = this.party == null ? null : this.party.getContact();
+            if (contact == null) {
+                ContactItem item = (ContactItem) this.cmbContact.getSelectedItem();
+                contact = item == null ? null : item.contact();
+            }
+            legalForm = contact == null ? null : contact.getLegalForm();
+        } else {
+            AddressBean previous = this.representatives.get(row - 1).getContact();
+            legalForm = previous == null ? null : previous.getLegalForm();
+        }
+        return ReferenceData.getLegalRepresentativeDirectory().getFunctionsForLegalForm(legalForm);
+    }
+
+    /**
+     * Shows the chain as it currently stands.
+     *
+     * The position in the table is the position in the chain, which is why the table is not sortable
+     * and the order is changed with the buttons beside it rather than by clicking a header.
+     */
+    private void refreshRepresentatives() {
+        javax.swing.table.DefaultTableModel model
+                = (javax.swing.table.DefaultTableModel) this.tblRepresentatives.getModel();
+        model.setRowCount(0);
+        for (ClaimLedgerPartyRepresentative r : this.representatives) {
+            model.addRow(new Object[]{
+                r.getFunctionDesignation() == null ? "" : r.getFunctionDesignation(),
+                r.getContact() == null ? "" : r.getContact().toDisplayName()});
+        }
+        updateRepresentativeButtons();
+        updateRepresentativeHint();
+    }
+
+    private void updateRepresentativeButtons() {
+        int row = this.tblRepresentatives.getSelectedRow();
+        boolean selected = row >= 0;
+        this.cmdRemoveRepresentative.setEnabled(selected);
+        this.cmdRepresentativeUp.setEnabled(selected && row > 0);
+        this.cmdRepresentativeDown.setEnabled(selected && row < this.representatives.size() - 1);
+        this.cmdAddRepresentative.setEnabled(
+                this.representatives.size() < ClaimLedgerPartyRepresentative.MAXIMUM_PER_PARTY);
+    }
+
+    /**
+     * Says what the chain currently asserts, in the words the application will use.
+     *
+     * Plain text with line breaks rather than HTML: the text is as long as the chain is, and a
+     * JLabel gives it the height it was laid out with and clips the rest. A wrapping text area
+     * reports the height its content actually needs and can be scrolled when the dialog is small.
+     */
+    private void updateRepresentativeHint() {
+        if (this.representatives.isEmpty()) {
+            this.txtRepresentativeHint.setText("Nur auszufüllen, wenn die Partei nicht selbst "
+                    + "handeln kann. Die Reihenfolge ist die Vertretungskette: eine GmbH & Co. KG "
+                    + "wird von ihrer Komplementär-GmbH vertreten, diese von ihrem "
+                    + "Geschäftsführer.");
+            this.txtRepresentativeHint.setCaretPosition(0);
+            return;
+        }
+        StringBuilder sb = new StringBuilder();
+        String subject = designationOfParty();
+        List<String> withoutList = new ArrayList<>();
+        for (int i = 0; i < this.representatives.size(); i++) {
+            ClaimLedgerPartyRepresentative r = this.representatives.get(i);
+            sb.append(subject).append(", vertreten durch ");
+            String function = r.getFunctionDesignation();
+            if (function != null && !function.trim().isEmpty()) {
+                sb.append(function.trim()).append(" ");
+            }
+            if (!isCompanyRepresentative(i) && admittedFunctions(i).isEmpty()) {
+                withoutList.add(String.valueOf(i + 1));
+            }
+            subject = r.getContact() == null ? "?" : r.getContact().toDisplayName();
+            sb.append(subject).append("\n");
+        }
+        // Ein leeres Auswahlfeld ohne Erklärung liest sich wie ein Fehler. Es ist aber die richtige
+        // Antwort, wenn die Rechtsform in den Verzeichnissen der Gerichte nicht vorkommt: dann gibt
+        // es keine Liste, gegen die sich messen ließe, und eine geratene wäre schlechter als keine.
+        if (!withoutList.isEmpty()) {
+            sb.append("\nZu Stufe ").append(String.join(", ", withoutList))
+                    .append(" führen die Mahngerichte keine Bezeichnungen - die Rechtsform des "
+                            + "Vertretenen steht nicht in ihrem Verzeichnis. Nur dort ist die "
+                            + "Bezeichnung frei einzutragen; sonst gilt die Auswahl.");
+        }
+        this.txtRepresentativeHint.setText(sb.toString());
+        this.txtRepresentativeHint.setCaretPosition(0);
+    }
+
+    private String designationOfParty() {
+        if (this.party != null && this.party.getEffectiveDesignation() != null
+                && !this.party.getEffectiveDesignation().trim().isEmpty()) {
+            return this.party.getEffectiveDesignation();
+        }
+        ContactItem item = (ContactItem) this.cmbContact.getSelectedItem();
+        return item == null || item.contact() == null ? "Die Partei" : item.contact().toDisplayName();
     }
 
     /**
@@ -766,6 +1024,22 @@ public class ClaimLedgerPartyDialog extends javax.swing.JDialog {
         this.spnSequence.setValue(this.party.getSequenceNumber() <= 0 ? 1 : this.party.getSequenceNumber());
         this.chkConsumer.setSelected(this.party.isConsumer());
 
+        // the court for the contested proceedings is asked of the defendant only; § 690 Abs. 1
+        // Nr. 5 ZPO ties it to that party's general venue
+        this.cmbLitigationCourtType.removeAllItems();
+        this.cmbLitigationCourtType.addItem("- nicht angegeben -");
+        for (LitigationCourtType type : LitigationCourtType.values()) {
+            this.cmbLitigationCourtType.addItem(type.getLabel());
+        }
+        this.cmbLitigationCourtType.setSelectedIndex(this.party.getLitigationCourtType() == null
+                ? 0 : this.party.getLitigationCourtType().ordinal() + 1);
+        this.txtLitigationCourtPostalCode.setText(
+                this.party.getLitigationCourtPostalCode() == null
+                        ? "" : this.party.getLitigationCourtPostalCode());
+        this.txtLitigationCourtCity.setText(this.party.getLitigationCourtCity() == null
+                ? "" : this.party.getLitigationCourtCity());
+        updateLitigationCourtEnabled();
+
         if (this.party.getContact() != null) {
             for (int i = 0; i < this.cmbContact.getItemCount(); i++) {
                 ContactItem item = (ContactItem) this.cmbContact.getItemAt(i);
@@ -781,6 +1055,13 @@ public class ClaimLedgerPartyDialog extends javax.swing.JDialog {
         // change identity, so the contact is fixed once a snapshot exists
         boolean frozen = this.party.hasSnapshot();
         this.cmbContact.setEnabled(!frozen);
+
+        this.representatives.clear();
+        if (this.party.getRepresentatives() != null) {
+            this.representatives.addAll(this.party.getRepresentatives());
+            this.representatives.sort((a, b) -> Integer.compare(a.getSequenceNumber(), b.getSequenceNumber()));
+        }
+        refreshRepresentatives();
 
         updateHint();
     }
@@ -803,11 +1084,12 @@ public class ClaimLedgerPartyDialog extends javax.swing.JDialog {
      * Explains what the current choices mean for the ledger.
      */
     private void updateHint() {
-        StringBuilder sb = new StringBuilder("<html>");
+        StringBuilder sb = new StringBuilder();
 
         if (this.party != null && this.party.hasSnapshot()) {
             sb.append("Die Bezeichnung dieser Partei wurde bereits gegenüber einem Gericht verwendet "
-                    + "und bleibt unverändert erhalten; der Kontakt kann nicht mehr getauscht werden.<br/>");
+                    + "und bleibt unverändert erhalten; der Kontakt kann nicht mehr getauscht "
+                    + "werden.\n");
         }
 
         if (this.cmbRole.getSelectedItem() == ClaimPartyRole.DEBTOR) {
@@ -821,8 +1103,8 @@ public class ClaimLedgerPartyDialog extends javax.swing.JDialog {
         } else {
             sb.append("Mehrere Gläubiger erhöhen die Gebühr nach Nr. 1008 VV RVG.");
         }
-        sb.append("</html>");
-        this.lblHint.setText(sb.toString());
+        this.txtHint.setText(sb.toString());
+        this.txtHint.setCaretPosition(0);
     }
 
     /**
@@ -841,7 +1123,22 @@ public class ClaimLedgerPartyDialog extends javax.swing.JDialog {
         lblSequence = new javax.swing.JLabel();
         spnSequence = new javax.swing.JSpinner();
         chkConsumer = new javax.swing.JCheckBox();
-        lblHint = new javax.swing.JLabel();
+        lblLitigationCourt = new javax.swing.JLabel();
+        cmbLitigationCourtType = new javax.swing.JComboBox();
+        txtLitigationCourtPostalCode = new javax.swing.JTextField();
+        txtLitigationCourtCity = new javax.swing.JTextField();
+        cmdSelectLitigationCourt = new javax.swing.JButton();
+        lblRepresentatives = new javax.swing.JLabel();
+        scrlRepresentatives = new javax.swing.JScrollPane();
+        tblRepresentatives = new javax.swing.JTable();
+        cmdAddRepresentative = new javax.swing.JButton();
+        cmdRemoveRepresentative = new javax.swing.JButton();
+        cmdRepresentativeUp = new javax.swing.JButton();
+        cmdRepresentativeDown = new javax.swing.JButton();
+        scrlRepresentativeHint = new javax.swing.JScrollPane();
+        txtRepresentativeHint = new javax.swing.JTextArea();
+        scrlHint = new javax.swing.JScrollPane();
+        txtHint = new javax.swing.JTextArea();
         cmdSave = new javax.swing.JButton();
         cmdCancel = new javax.swing.JButton();
 
@@ -870,7 +1167,79 @@ public class ClaimLedgerPartyDialog extends javax.swing.JDialog {
             }
         });
 
-        lblHint.setText("");
+lblLitigationCourt.setText("Prozessgericht:");
+        lblLitigationCourt.setToolTipText("Das Gericht, das bei Widerspruch das streitige Verfahren führt (§ 690 Abs. 1 Nr. 5 ZPO). Nur für Antragsgegner.");
+
+        cmbLitigationCourtType.setModel(new javax.swing.DefaultComboBoxModel());
+
+        txtLitigationCourtPostalCode.setText("");
+        txtLitigationCourtPostalCode.setToolTipText("Postleitzahl des Prozessgerichts");
+
+        txtLitigationCourtCity.setText("");
+        txtLitigationCourtCity.setToolTipText("Ort des Prozessgerichts");
+
+        cmdSelectLitigationCourt.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfind.png"))); // NOI18N
+        cmdSelectLitigationCourt.setToolTipText("aus den Gerichtsstammdaten wählen");
+        cmdSelectLitigationCourt.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSelectLitigationCourtActionPerformed(evt);
+            }
+        });
+
+        lblRepresentatives.setText("Gesetzl. Vertreter:");
+        lblRepresentatives.setToolTipText("Die Vertretungskette der Partei, von außen nach innen. Bis zu sechs Stufen.");
+
+        tblRepresentatives.setModel(new javax.swing.table.DefaultTableModel());
+        tblRepresentatives.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        scrlRepresentatives.setViewportView(tblRepresentatives);
+
+        cmdAddRepresentative.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdAddRepresentative.setToolTipText("Vertreter aus den Adressen hinzufügen");
+        cmdAddRepresentative.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddRepresentativeActionPerformed(evt);
+            }
+        });
+
+        cmdRemoveRepresentative.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdRemoveRepresentative.setToolTipText("Vertreter entfernen");
+        cmdRemoveRepresentative.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRemoveRepresentativeActionPerformed(evt);
+            }
+        });
+
+        cmdRepresentativeUp.setText("\u25b2");
+        cmdRepresentativeUp.setToolTipText("in der Kette nach oben");
+        cmdRepresentativeUp.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRepresentativeUpActionPerformed(evt);
+            }
+        });
+
+        cmdRepresentativeDown.setText("\u25bc");
+        cmdRepresentativeDown.setToolTipText("in der Kette nach unten");
+        cmdRepresentativeDown.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRepresentativeDownActionPerformed(evt);
+            }
+        });
+
+        txtRepresentativeHint.setEditable(false);
+        txtRepresentativeHint.setColumns(20);
+        txtRepresentativeHint.setLineWrap(true);
+        txtRepresentativeHint.setRows(3);
+        txtRepresentativeHint.setWrapStyleWord(true);
+        txtRepresentativeHint.setFocusable(false);
+        scrlRepresentativeHint.setViewportView(txtRepresentativeHint);
+
+        txtHint.setEditable(false);
+        txtHint.setColumns(20);
+        txtHint.setLineWrap(true);
+        txtHint.setRows(2);
+        txtHint.setWrapStyleWord(true);
+        txtHint.setFocusable(false);
+        scrlHint.setViewportView(txtHint);
 
         cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         cmdSave.setText("Speichern");
@@ -899,15 +1268,33 @@ public class ClaimLedgerPartyDialog extends javax.swing.JDialog {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                             .addComponent(lblRole)
                             .addComponent(lblContact)
-                            .addComponent(lblSequence))
+                            .addComponent(lblSequence)
+                            .addComponent(lblLitigationCourt)
+                            .addComponent(lblRepresentatives))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(cmbRole, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(cmbContact, javax.swing.GroupLayout.PREFERRED_SIZE, 420, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(cmbContact, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE)
                             .addComponent(spnSequence, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(chkConsumer))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(lblHint, javax.swing.GroupLayout.DEFAULT_SIZE, 580, Short.MAX_VALUE)
+                            .addComponent(chkConsumer)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(cmbLitigationCourtType, javax.swing.GroupLayout.PREFERRED_SIZE, 260, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtLitigationCourtPostalCode, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtLitigationCourtCity, javax.swing.GroupLayout.DEFAULT_SIZE, 180, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdSelectLitigationCourt))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(scrlRepresentatives, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(cmdAddRepresentative)
+                                    .addComponent(cmdRemoveRepresentative)
+                                    .addComponent(cmdRepresentativeUp)
+                                    .addComponent(cmdRepresentativeDown)))
+                            .addComponent(scrlRepresentativeHint, javax.swing.GroupLayout.DEFAULT_SIZE, 460, Short.MAX_VALUE)))
+                    .addComponent(scrlHint, javax.swing.GroupLayout.DEFAULT_SIZE, 580, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(cmdSave)
@@ -932,8 +1319,29 @@ public class ClaimLedgerPartyDialog extends javax.swing.JDialog {
                     .addComponent(spnSequence, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(chkConsumer)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblLitigationCourt)
+                    .addComponent(cmbLitigationCourtType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtLitigationCourtPostalCode, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtLitigationCourtCity, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdSelectLitigationCourt))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(lblHint, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(lblRepresentatives)
+                    .addComponent(scrlRepresentatives, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(cmdAddRepresentative)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdRemoveRepresentative)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdRepresentativeUp)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdRepresentativeDown)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(scrlRepresentativeHint, javax.swing.GroupLayout.DEFAULT_SIZE, 72, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(scrlHint, javax.swing.GroupLayout.DEFAULT_SIZE, 40, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdSave)
@@ -945,12 +1353,67 @@ public class ClaimLedgerPartyDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmbRoleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRoleActionPerformed
+        updateLitigationCourtEnabled();
         updateHint();
     }//GEN-LAST:event_cmbRoleActionPerformed
 
     private void chkConsumerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkConsumerActionPerformed
         updateHint();
     }//GEN-LAST:event_chkConsumerActionPerformed
+
+    /**
+     * The court for contested proceedings belongs to the defendant; for an applicant the fields
+     * mean nothing and are therefore not offered.
+     */
+    private void updateLitigationCourtEnabled() {
+        boolean debtor = this.cmbRole.getSelectedItem() == ClaimPartyRole.DEBTOR;
+        this.lblLitigationCourt.setEnabled(debtor);
+        this.cmbLitigationCourtType.setEnabled(debtor);
+        this.txtLitigationCourtPostalCode.setEnabled(debtor);
+        this.txtLitigationCourtCity.setEnabled(debtor);
+        this.cmdSelectLitigationCourt.setEnabled(debtor);
+    }
+
+    private String emptyToNull(String s) {
+        return s == null || s.trim().isEmpty() ? null : s.trim();
+    }
+
+    private void cmdSelectLitigationCourtActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectLitigationCourtActionPerformed
+        List<Court> courts;
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            courts = locator.lookupCourtServiceRemote().getCourts(true);
+        } catch (Exception ex) {
+            log.error("Unable to load the courts", ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Gerichte konnten nicht geladen werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        if (courts == null || courts.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Es sind keine Gerichte hinterlegt. Sie lassen sich unter Finanzen → Gerichte "
+                    + "erfassen oder aus dem beA-Verzeichnis importieren.",
+                    "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        String[] options = new String[courts.size()];
+        for (int i = 0; i < courts.size(); i++) {
+            Court c = courts.get(i);
+            options[i] = c.getName() + (c.getCity() == null ? "" : ", " + c.getCity());
+        }
+        Object selection = JOptionPane.showInputDialog(this,
+                "Welches Gericht führt bei Widerspruch das streitige Verfahren?",
+                "Prozessgericht", JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+        if (selection == null) {
+            return;
+        }
+        Court chosen = courts.get(java.util.Arrays.asList(options).indexOf(selection.toString()));
+        this.txtLitigationCourtPostalCode.setText(chosen.getPostalCode() == null
+                ? "" : chosen.getPostalCode());
+        this.txtLitigationCourtCity.setText(chosen.getCity() == null ? "" : chosen.getCity());
+    }//GEN-LAST:event_cmdSelectLitigationCourtActionPerformed
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
         ContactItem selected = (ContactItem) this.cmbContact.getSelectedItem();
@@ -964,10 +1427,37 @@ public class ClaimLedgerPartyDialog extends javax.swing.JDialog {
         this.party.setRole((ClaimPartyRole) this.cmbRole.getSelectedItem());
         this.party.setSequenceNumber(((Number) this.spnSequence.getValue()).intValue());
         this.party.setConsumer(this.chkConsumer.isSelected());
+        int courtType = this.cmbLitigationCourtType.getSelectedIndex();
+        this.party.setLitigationCourtType(courtType <= 0
+                ? null : LitigationCourtType.values()[courtType - 1]);
+        this.party.setLitigationCourtPostalCode(
+                emptyToNull(this.txtLitigationCourtPostalCode.getText()));
+        this.party.setLitigationCourtCity(emptyToNull(this.txtLitigationCourtCity.getText()));
         if (this.cmbContact.isEnabled() && selected != null) {
             this.party.setContact(selected.contact());
             this.party.setCaseContact(selected.caseParty());
         }
+
+        if (this.tblRepresentatives.isEditing()) {
+            this.tblRepresentatives.getCellEditor().stopCellEditing();
+        }
+        for (int i = 0; i < this.representatives.size(); i++) {
+            ClaimLedgerPartyRepresentative r = this.representatives.get(i);
+            r.setFunctionDesignation(emptyToNull(
+                    String.valueOf(this.tblRepresentatives.getValueAt(i, 0))));
+            r.setSequenceNumber(i + 1);
+        }
+        String notAdmitted = unadmittedFunctions();
+        if (notAdmitted != null && JOptionPane.showConfirmDialog(this,
+                "<html>Die Mahngerichte führen eine geschlossene Liste zulässiger Bezeichnungen für "
+                + "gesetzliche Vertreter. Diese steht nicht darin:<br/><br/>" + notAdmitted
+                + "<br/><br/>Das Gericht kann den Antrag deswegen monieren. Trotzdem speichern?</html>",
+                "Bezeichnung des Vertreters", JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE) != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        this.party.setRepresentatives(new ArrayList<>(this.representatives));
 
         this.saved = true;
         this.setVisible(false);
@@ -980,14 +1470,136 @@ public class ClaimLedgerPartyDialog extends javax.swing.JDialog {
         this.dispose();
     }//GEN-LAST:event_cmdCancelActionPerformed
 
+
+    private void cmdAddRepresentativeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddRepresentativeActionPerformed
+        AddressBean contact = searchContact();
+        if (contact == null) {
+            return;
+        }
+        ClaimLedgerPartyRepresentative r = new ClaimLedgerPartyRepresentative();
+        r.setContact(contact);
+        // a company as representative is named by itself - its designation is what the court reads,
+        // and a function beside it would have nowhere to go in the record
+        r.setFunctionDesignation(contact.getCompany() != null && !contact.getCompany().trim().isEmpty()
+                ? null : contact.getRole());
+        r.setSequenceNumber(this.representatives.size() + 1);
+        this.representatives.add(r);
+        refreshRepresentatives();
+        this.tblRepresentatives.getSelectionModel().setSelectionInterval(
+                this.representatives.size() - 1, this.representatives.size() - 1);
+    }//GEN-LAST:event_cmdAddRepresentativeActionPerformed
+
+    private void cmdRemoveRepresentativeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveRepresentativeActionPerformed
+        int row = this.tblRepresentatives.getSelectedRow();
+        if (row < 0) {
+            return;
+        }
+        this.representatives.remove(row);
+        refreshRepresentatives();
+    }//GEN-LAST:event_cmdRemoveRepresentativeActionPerformed
+
+    private void cmdRepresentativeUpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRepresentativeUpActionPerformed
+        moveRepresentative(-1);
+    }//GEN-LAST:event_cmdRepresentativeUpActionPerformed
+
+    private void cmdRepresentativeDownActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRepresentativeDownActionPerformed
+        moveRepresentative(1);
+    }//GEN-LAST:event_cmdRepresentativeDownActionPerformed
+
+    /**
+     * Moves the selected entry within the chain, carrying the typed function along with it.
+     */
+    private void moveRepresentative(int offset) {
+        int row = this.tblRepresentatives.getSelectedRow();
+        int target = row + offset;
+        if (row < 0 || target < 0 || target >= this.representatives.size()) {
+            return;
+        }
+        if (this.tblRepresentatives.isEditing()) {
+            this.tblRepresentatives.getCellEditor().stopCellEditing();
+        }
+        for (int i = 0; i < this.representatives.size(); i++) {
+            this.representatives.get(i).setFunctionDesignation(
+                    emptyToNull(String.valueOf(this.tblRepresentatives.getValueAt(i, 0))));
+        }
+        ClaimLedgerPartyRepresentative moved = this.representatives.remove(row);
+        this.representatives.add(target, moved);
+        refreshRepresentatives();
+        this.tblRepresentatives.getSelectionModel().setSelectionInterval(target, target);
+    }
+
+    /**
+     * Looks a contact up in the address book.
+     *
+     * The representative is not necessarily a party of the case - a Komplementär-GmbH usually is not
+     * - so the choice cannot be limited to the case parties the way the party's own contact is.
+     *
+     * @return the chosen contact, or null if the search was cancelled or found nothing
+     */
+    private AddressBean searchContact() {
+        String query = JOptionPane.showInputDialog(this,
+                "Name des gesetzlichen Vertreters (Person oder Gesellschaft):",
+                "Vertreter suchen", JOptionPane.QUESTION_MESSAGE);
+        if (query == null || query.trim().isEmpty()) {
+            return null;
+        }
+
+        AddressBean[] hits;
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            hits = locator.lookupAddressServiceRemote().searchEnhanced(query.trim(), new String[0]);
+        } catch (Exception ex) {
+            log.error("Unable to search for contacts", ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Kontaktsuche ist fehlgeschlagen: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
+
+        if (hits == null || hits.length == 0) {
+            JOptionPane.showMessageDialog(this,
+                    "Zu \"" + query.trim() + "\" wurde kein Kontakt gefunden. Der gesetzliche "
+                    + "Vertreter muss zuvor in den Adressen angelegt werden.",
+                    "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+            return null;
+        }
+
+        String[] options = new String[hits.length];
+        for (int i = 0; i < hits.length; i++) {
+            options[i] = hits[i].toDisplayName();
+        }
+        Object selection = JOptionPane.showInputDialog(this, "Wer vertritt?", "Vertreter",
+                JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+        if (selection == null) {
+            return null;
+        }
+        return hits[java.util.Arrays.asList(options).indexOf(selection.toString())];
+    }
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkConsumer;
+    private javax.swing.JButton cmdAddRepresentative;
+    private javax.swing.JButton cmdRemoveRepresentative;
+    private javax.swing.JButton cmdRepresentativeDown;
+    private javax.swing.JButton cmdRepresentativeUp;
+    private javax.swing.JScrollPane scrlRepresentativeHint;
+    private javax.swing.JTextArea txtRepresentativeHint;
+    private javax.swing.JLabel lblRepresentatives;
+    private javax.swing.JScrollPane scrlRepresentatives;
+    private javax.swing.JTable tblRepresentatives;
+    private javax.swing.JComboBox cmbLitigationCourtType;
+    private javax.swing.JButton cmdSelectLitigationCourt;
+    private javax.swing.JLabel lblLitigationCourt;
+    private javax.swing.JTextField txtLitigationCourtCity;
+    private javax.swing.JTextField txtLitigationCourtPostalCode;
     private javax.swing.JComboBox cmbContact;
     private javax.swing.JComboBox cmbRole;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdSave;
     private javax.swing.JLabel lblContact;
-    private javax.swing.JLabel lblHint;
+    private javax.swing.JScrollPane scrlHint;
+    private javax.swing.JTextArea txtHint;
     private javax.swing.JLabel lblRole;
     private javax.swing.JLabel lblSequence;
     private javax.swing.JSpinner spnSequence;

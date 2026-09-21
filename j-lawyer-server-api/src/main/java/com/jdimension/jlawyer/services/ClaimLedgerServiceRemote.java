@@ -697,6 +697,9 @@ public interface ClaimLedgerServiceRemote {
     /**
      * Returns the creditors and debtors of a claim ledger, ordered by role and sequence number.
      *
+     * Each party carries its chain of legal representatives, ordered outermost first, so a caller
+     * does not have to fetch them separately.
+     *
      * @param ledgerId id of the claim ledger
      * @return the parties of the ledger, empty if none are recorded yet
      * @throws Exception if the ledger does not exist or the user may not access its case
@@ -709,6 +712,11 @@ public interface ClaimLedgerServiceRemote {
      * The party is identified by the address book contact it references; deleting that contact
      * later does not delete the party. Where the party is also a party of the case, the case party
      * record may be referenced as well, but it does not determine who the ledger runs against.
+     *
+     * The chain of legal representatives passed with the party is stored with it. Its order is its
+     * meaning - a GmbH &amp; Co. KG is represented by its Komplementär-GmbH and that company by its
+     * Geschäftsführer - and the sequence numbers are assigned from the order of the list. At most
+     * six are admitted; more is refused rather than truncated.
      *
      * @param ledgerId id of the claim ledger
      * @param party the party to add; its id is assigned by the server
@@ -723,6 +731,10 @@ public interface ClaimLedgerServiceRemote {
      * The designation and address snapshot taken for use towards a court is not changed by this
      * operation: once a party has been named in a dunning application or a title, that wording has
      * to stay reproducible.
+     *
+     * The chain of legal representatives is replaced by what is passed with the party: entries that
+     * are no longer in the list are removed, and the sequence numbers are reassigned from the order
+     * of the list. Passing a party whose chain was not loaded therefore clears it.
      *
      * @param party the party to update
      * @return the stored party
@@ -747,7 +759,7 @@ public interface ClaimLedgerServiceRemote {
      * reproducible; later corrections to the contact reach current work but not the history.
      *
      * @param partyId id of the party
-     * @return the party including its snapshot
+     * @return the party including its snapshot and its chain of legal representatives
      * @throws Exception if the party does not exist or the user may not access its case
      */
     ClaimLedgerParty freezePartyDesignation(String partyId) throws Exception;

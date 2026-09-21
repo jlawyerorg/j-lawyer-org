@@ -685,6 +685,7 @@ public class ReferenceData {
     private static volatile MainClaimCatalogue mainClaimCatalogue = new BundledMainClaimCatalogue();
     private static volatile ContractTypeCatalogue contractTypeCatalogue = new BundledContractTypeCatalogue();
     private static volatile DunningCourtDirectory dunningCourtDirectory = new BundledDunningCourtDirectory();
+    private static volatile LegalRepresentativeDirectory legalRepresentativeDirectory = new BundledLegalRepresentativeDirectory();
 
     private ReferenceData() {
     }
@@ -735,5 +736,22 @@ public class ReferenceData {
      */
     public static void setDunningCourtDirectory(DunningCourtDirectory directory) {
         dunningCourtDirectory = directory == null ? new BundledDunningCourtDirectory() : directory;
+    }
+
+    /**
+     * @return the directory of legal forms and admissible representative designations in use
+     */
+    public static LegalRepresentativeDirectory getLegalRepresentativeDirectory() {
+        return legalRepresentativeDirectory;
+    }
+
+    /**
+     * Replaces the directory of legal forms and representative designations.
+     *
+     * @param directory the directory to use; null restores the bundled one
+     */
+    public static void setLegalRepresentativeDirectory(LegalRepresentativeDirectory directory) {
+        legalRepresentativeDirectory = directory == null
+                ? new BundledLegalRepresentativeDirectory() : directory;
     }
 }

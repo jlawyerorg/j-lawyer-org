@@ -663,7 +663,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -674,6 +676,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -731,9 +734,19 @@ public class ClaimLedgerParty implements Serializable {
     @ManyToOne
     private ArchiveFileAddressesBean caseContact;
 
-    @JoinColumn(name = "legal_representative_id", referencedColumnName = "id")
-    @ManyToOne
-    private AddressBean legalRepresentative;
+    /**
+     * The chain of legal representatives, in order, outermost first.
+     *
+     * A chain rather than a single entry: a GmbH &amp; Co. KG is represented by its
+     * Komplementär-GmbH (§ 161 Abs. 2 i. V. m. § 125 HGB), and that company acts through its
+     * Geschäftsführer. Either one alone would be an incomplete answer to the question who acts for
+     * this party. The format admits up to six.
+     *
+     * No cascade and no orphan removal - the rows belong to ClaimLedgerService, which writes them
+     * explicitly and replaces this collection when reading a party for a remote client.
+     */
+    @OneToMany(mappedBy = "party", fetch = javax.persistence.FetchType.LAZY)
+    private List<ClaimLedgerPartyRepresentative> representatives = new ArrayList<>();
 
     /**
      * Which kind of court would hear the matter if this defendant objects, and where it sits.
@@ -905,9 +918,6 @@ public class ClaimLedgerParty implements Serializable {
     }
 
     /**
-     * @return the legalRepresentative
-     */
-    /**
      * @return the kind of court for contested proceedings, or null
      */
     public LitigationCourtType getLitigationCourtType() {
@@ -959,15 +969,21 @@ public class ClaimLedgerParty implements Serializable {
                 && this.litigationCourtCity != null && !this.litigationCourtCity.trim().isEmpty();
     }
 
-    public AddressBean getLegalRepresentative() {
-        return legalRepresentative;
+    /**
+     * @return the chain of legal representatives, outermost first, never null
+     */
+    public List<ClaimLedgerPartyRepresentative> getRepresentatives() {
+        if (this.representatives == null) {
+            this.representatives = new ArrayList<>();
+        }
+        return representatives;
     }
 
     /**
-     * @param legalRepresentative the legalRepresentative to set
+     * @param representatives the chain of legal representatives, outermost first
      */
-    public void setLegalRepresentative(AddressBean legalRepresentative) {
-        this.legalRepresentative = legalRepresentative;
+    public void setRepresentatives(List<ClaimLedgerPartyRepresentative> representatives) {
+        this.representatives = representatives;
     }
 
     /**

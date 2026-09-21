@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.eda;
 
 import com.jdimension.jlawyer.persistence.ClaimComponent;
+import com.jdimension.jlawyer.referencedata.CatalogueAddition;
 import com.jdimension.jlawyer.persistence.InterestRule;
 import com.jdimension.jlawyer.persistence.InterestStartMode;
 import com.jdimension.jlawyer.persistence.InterestType;
@@ -940,17 +941,31 @@ public class EdaClaimMapper {
 
     /**
      * A claim entered by its catalogue number.
+     *
+     * Three numbers demand a further entry that has no record of its own: the account number of 36,
+     * the meter number of 42, the kind of optional service of 61. All three go where the invoice
+     * number would go and displace it, because the application has one column for them, not two -
+     * the courts' own wizard refuses each of them anywhere else, in as many words.
      */
     private EdaRecord catalogueClaim(Claim claim) {
         ClaimComponent component = claim.getComponent();
         EdaRecord record = new EdaRecord(EdaMahnbescheidLayouts.getLayout("C20"));
         record.set("ASPKAT1", component.getCatalogueNumber().trim());
+
+        String detail = component.getCatalogueReferenceDetail();
+        boolean detailTakesTheColumn = notEmpty(detail)
+                && CatalogueAddition.of(component.getCatalogueNumber()) == CatalogueAddition.REFERENCE_DETAIL;
+
         record.set("ASPGR", component.getName());
-        record.set("ASPRNR", claim.getInvoiceNumber());
+        record.set("ASPRNR", detailTakesTheColumn ? detail.trim() : claim.getInvoiceNumber());
         record.set("ASPVD", EdaValues.date(claim.getFrom()));
         record.set("ASPBD", EdaValues.date(claim.getTo()));
         record.set("ASPBET", EdaValues.amount(claim.getAmount()));
         return record;
+    }
+
+    private boolean notEmpty(String s) {
+        return s != null && !s.trim().isEmpty();
     }
 
     /**

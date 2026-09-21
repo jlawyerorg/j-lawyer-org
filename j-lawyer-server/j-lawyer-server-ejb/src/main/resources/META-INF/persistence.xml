@@ -76,6 +76,7 @@
     <class>com.jdimension.jlawyer.persistence.InterestRule</class>
     <class>com.jdimension.jlawyer.persistence.BaseInterest</class>
     <class>com.jdimension.jlawyer.persistence.ClaimLedgerParty</class>
+    <class>com.jdimension.jlawyer.persistence.ClaimLedgerPartyRepresentative</class>
     <class>com.jdimension.jlawyer.persistence.EnforcementTitle</class>
     <class>com.jdimension.jlawyer.persistence.DunningStage</class>
     <class>com.jdimension.jlawyer.persistence.DunningStageEvent</class>

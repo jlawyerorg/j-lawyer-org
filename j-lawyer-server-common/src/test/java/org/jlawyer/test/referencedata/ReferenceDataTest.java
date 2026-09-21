@@ -668,6 +668,9 @@ import com.jdimension.jlawyer.referencedata.DunningCourt;
 import com.jdimension.jlawyer.referencedata.DunningCourtDirectory;
 import com.jdimension.jlawyer.referencedata.DunningCourtResponsibility;
 import com.jdimension.jlawyer.referencedata.MainClaimCatalogue;
+import com.jdimension.jlawyer.referencedata.BundledLegalRepresentativeDirectory;
+import com.jdimension.jlawyer.referencedata.CatalogueAddition;
+import com.jdimension.jlawyer.referencedata.LegalRepresentativeDirectory;
 import com.jdimension.jlawyer.referencedata.MainClaimCatalogueEntry;
 import com.jdimension.jlawyer.referencedata.ReferenceData;
 import java.util.ArrayList;
@@ -697,12 +700,14 @@ public class ReferenceDataTest {
     private final MainClaimCatalogue catalogue = ReferenceData.getMainClaimCatalogue();
     private final DunningCourtDirectory courts = ReferenceData.getDunningCourtDirectory();
     private final ContractTypeCatalogue contractTypes = ReferenceData.getContractTypeCatalogue();
+    private final LegalRepresentativeDirectory representatives = ReferenceData.getLegalRepresentativeDirectory();
 
     @After
     public void restoreDefaults() {
         ReferenceData.setMainClaimCatalogue(null);
         ReferenceData.setDunningCourtDirectory(null);
         ReferenceData.setContractTypeCatalogue(null);
+        ReferenceData.setLegalRepresentativeDirectory(null);
     }
 
     // ----- main claim catalogue -----
@@ -948,5 +953,260 @@ public class ReferenceDataTest {
         ReferenceData.setMainClaimCatalogue(null);
         assertEquals("Anzeigen in Zeitungen u.a.",
                 ReferenceData.getMainClaimCatalogue().findByNumber(1).getDesignation());
+    }
+
+    // ----- Rechtsformen und Funktionen der gesetzlichen Vertreter -----
+
+    @Test
+    public void aGmbHCoKgAdmitsTheDesignationsPublishedUnderItsKey() {
+        // der Fall, an dem das Verzeichnis überhaupt gebraucht wird: die Komplementär-GmbH handelt
+        // durch ihren Geschäftsführer, und wie der zu heißen hat, bestimmt nicht die Kanzlei
+        assertEquals("31", representatives.getKeyForLegalForm("GmbH & Co KG"));
+
+        List<String> functions = representatives.getFunctionsForLegalForm("GmbH & Co KG");
+        assertTrue(functions.contains("GESCHÄFTSFÜHRER"));
+        assertTrue(functions.contains("DIREKTOR"));
+        assertTrue(functions.contains("GESCHÄFTSFÜHRENDE GESELLSCHAFTERIN"));
+        assertFalse("ein Vorstand vertritt keine KG", functions.contains("VORSTAND"));
+    }
+
+    @Test
+    public void theLookupIgnoresHowTheUserWroteIt() {
+        // die Rechtsform steht am Kontakt so, wie sie jemand eingetippt hat
+        assertEquals("31", representatives.getKeyForLegalForm("  gmbh & co kg  "));
+        assertTrue(representatives.isAdmittedFunction("GMBH & CO KG", "geschäftsführer"));
+        assertTrue(representatives.isAdmittedFunction("GmbH & Co KG", " Geschäftsführer "));
+    }
+
+    @Test
+    public void aDesignationOutsideTheListIsNotAdmitted() {
+        // eine erfundene Bezeichnung ist eine Monierung, deshalb wird geprüft und nicht ergänzt
+        assertFalse(representatives.isAdmittedFunction("GmbH", "Chef"));
+        assertFalse(representatives.isAdmittedFunction("GmbH", ""));
+        assertFalse(representatives.isAdmittedFunction("GmbH", null));
+    }
+
+    @Test
+    public void anUnknownLegalFormYieldsNothingRatherThanAGuess() {
+        assertNull(representatives.getKeyForLegalForm("Wohnzimmer GbR & Freunde"));
+        assertTrue(representatives.getFunctionsForLegalForm("Wohnzimmer GbR & Freunde").isEmpty());
+    }
+
+    @Test
+    public void apartyWithoutALegalFormFallsToTheGroupForNaturalPersons() {
+        // Schlüssel 00: die zulässigen Vertreter nicht voll geschäftsfähiger Personen
+        List<String> functions = representatives.getFunctionsForLegalForm(null);
+        assertFalse(functions.isEmpty());
+        assertTrue(functions.contains("AMTSVORMUND"));
+        assertEquals(functions, representatives.getFunctionsForLegalForm("  "));
+    }
+
+    @Test
+    public void everyLegalFormCarriesTheSalutationKeyTheFormatExpects() {
+        // der Anredeschlüssel steht in diesem Verzeichnis und nirgends sonst; er aus der Schreibweise
+        // der Rechtsform zu erraten war bisher genau die Stelle, an der wir danebenlagen
+        assertEquals("4", representatives.getSalutationKeyForLegalForm("GmbH & Co KG"));
+        assertEquals("5", representatives.getSalutationKeyForLegalForm("Aktiengesellschaft"));
+
+        for (String legalForm : representatives.getLegalForms()) {
+            assertNotNull("ohne Anredeschlüssel: " + legalForm,
+                    representatives.getSalutationKeyForLegalForm(legalForm));
+            assertNotNull("ohne Schlüssel: " + legalForm,
+                    representatives.getKeyForLegalForm(legalForm));
+        }
+    }
+
+    @Test
+    public void onlyTheThreeKeysWithoutRepresentativesOfTheirOwnHaveNoGroup() {
+        // Die Funktionsliste führt zu 52, 57 und 90 nichts, und das ist keine Lücke der Übernahme:
+        // Schlüssel 90 sind die Parteien kraft Amtes - der Insolvenzverwalter ist selbst die
+        // Vertretung und hat keine. Bei 57 steht die Verwalterin schon in der Rechtsform ("WEG
+        // VERTRETEN DURCH VERWALTER-AG"), wer für sie handelt, sagt das nächste Glied der Kette.
+        // Jede weitere Rechtsform ohne Gruppe wäre dagegen eine halb eingelesene Datei, die
+        // zulässige Bezeichnungen als unzulässig abweisen würde.
+        Set<String> keysWithoutFunctions = new HashSet<>();
+        for (String legalForm : representatives.getLegalForms()) {
+            if (representatives.getFunctionsForLegalForm(legalForm).isEmpty()) {
+                keysWithoutFunctions.add(representatives.getKeyForLegalForm(legalForm));
+            }
+        }
+        assertEquals(new HashSet<>(Arrays.asList("52", "57", "90")), keysWithoutFunctions);
+    }
+
+    @Test
+    public void apartyKraftAmtesIsNotAskedForARepresentative() {
+        // ein Insolvenzverwalter vertritt; er wird nicht vertreten
+        assertEquals("90", representatives.getKeyForLegalForm("Insolvenzverwalter"));
+        assertTrue(representatives.getFunctionsForLegalForm("Insolvenzverwalter").isEmpty());
+    }
+
+    @Test
+    public void theQuestionMarkInTwoEntriesIsWhatTheCourtsPublish() {
+        // im Textstrom des PDF steht dort 0x3F, nicht das Paragraphenzeichen der Nachbareinträge.
+        // Wahrscheinlich ein alter Zeichensatzschaden der Gerichte - aber die Liste sagt, welche
+        // Schreibweisen zulässig sind, also steht hier ihre und nicht unsere Verbesserung
+        assertEquals("90", representatives.getKeyForLegalForm("TREUHÄNDER ? 313 INSO"));
+        assertEquals("90", representatives.getKeyForLegalForm("TREUHÄNDER § 313 INSO"));
+    }
+
+    @Test
+    public void theDirectoriesAreTranscribedCompletely() {
+        // gegen die veröffentlichten Listen ausgezählt; eine stillschweigend halbe Übernahme wäre
+        // schlimmer als gar keine, weil sie zulässige Bezeichnungen als unzulässig abweist
+        assertEquals(632, representatives.getLegalForms().size());
+
+        Set<String> allFunctions = new HashSet<>();
+        for (String legalForm : representatives.getLegalForms()) {
+            allFunctions.addAll(representatives.getFunctionsForLegalForm(legalForm));
+        }
+        allFunctions.addAll(representatives.getFunctionsForKey("00"));
+        assertFalse(allFunctions.isEmpty());
+    }
+
+    @Test
+    public void theDirectoryNamesItsSourceAndTheOlderOfItsTwoDates() {
+        assertTrue(representatives.getSourceDescription().contains("mahngerichte.de"));
+        // die Funktionsliste ist die ältere der beiden; die schwächere Auskunft ist die ehrliche
+        assertEquals("2015-10-06", representatives.getSourceDate());
+    }
+
+    // ----- die Abkürzungen, die j-lawyer führt und die Gerichte nicht -----
+
+    /**
+     * Die Rechtsformen, die eine frische Installation anbietet (create_database.sql,
+     * `address.legalform.1` bis `.9`). Sie sind der Maßstab: wenn die Funktionsliste für diese nicht
+     * gefunden wird, ist die Prüfung in der Praxis wirkungslos.
+     */
+    private static final String[] SEEDED_LEGAL_FORMS = {
+        "AG", "Einzelunternehmen", "e.K", "GbR", "OHG", "KG", "GmbH", "UG", "eG"};
+
+    @Test
+    public void everyLegalFormAfreshInstallationOffersFindsItsFunctions() {
+        // Das Verzeichnis der Gerichte schreibt jede Rechtsform aus - GESELLSCHAFT MIT BESCHR.
+        // HAFTUNG, AKTIENGESELLSCHAFT - und führt die Abkürzungen nicht, die j-lawyers eigene
+        // Stammdaten anbieten. Ohne Auflösung schlug die Suche bei sieben von neun fehl, und das
+        // Auswahlfeld im Dialog blieb leer.
+        List<String> without = new ArrayList<>();
+        for (String legalForm : SEEDED_LEGAL_FORMS) {
+            if (representatives.getFunctionsForLegalForm(legalForm).isEmpty()) {
+                without.add(legalForm);
+            }
+        }
+        assertEquals("ohne zulässige Vertreterbezeichnungen: " + without, 0, without.size());
+    }
+
+    @Test
+    public void anAbbreviationLandsOnTheFormItStandsFor() {
+        // die Zuordnung behauptet nichts über die Praxis der Gerichte, sondern nur, dass eine GmbH
+        // eine Gesellschaft mit beschränkter Haftung ist
+        assertEquals(representatives.getKeyForLegalForm("Gesellschaft mit beschr. Haftung"),
+                representatives.getKeyForLegalForm("GmbH"));
+        assertEquals(representatives.getKeyForLegalForm("Aktiengesellschaft"),
+                representatives.getKeyForLegalForm("AG"));
+        assertEquals(representatives.getKeyForLegalForm("Kommanditgesellschaft"),
+                representatives.getKeyForLegalForm("KG"));
+        assertTrue(representatives.isAdmittedFunction("GmbH", "Geschäftsführer"));
+        assertTrue(representatives.isAdmittedFunction("AG", "Vorstand"));
+        // die Auflösung darf nicht alles zulassen: den Aufsichtsrat führt die Liste bei der
+        // Aktiengesellschaft, bei der GmbH nicht. (Den Geschäftsführer führt sie bei beiden -
+        // auch bei der AG, was überrascht, aber so steht es dort.)
+        assertTrue(representatives.isAdmittedFunction("AG", "Aufsichtsrat"));
+        assertFalse(representatives.isAdmittedFunction("GmbH", "Aufsichtsrat"));
+    }
+
+    @Test
+    public void punctuationIsNotPartOfTheIdentityOfALegalForm() {
+        // der Fall, der die ganze Kette ausgelöst hat: getippt wird "GmbH & Co. KG", die Liste
+        // führt "GMBH & CO KG"
+        assertEquals("31", representatives.getKeyForLegalForm("GmbH & Co. KG"));
+        assertEquals("31", representatives.getKeyForLegalForm("GmbH & Co KG"));
+        assertEquals("01", representatives.getKeyForLegalForm("e.K"));
+    }
+
+    @Test
+    public void thePublishedSpellingIsNeverOverruledByTheRelaxedOne() {
+        // exakt vor entschärft vor aufgelöst - sonst könnte eine Abkürzung eine Rechtsform
+        // verdrängen, die genau so veröffentlicht ist
+        assertEquals("10", representatives.getKeyForLegalForm("UG"));
+        assertEquals("78", representatives.getKeyForLegalForm("GbR"));
+    }
+
+    @Test
+    public void onlyTheOneFormTheCourtsListTwiceIsAmbiguous() {
+        // "WEG VERTRETEN DURCH VERWALTER-GMBH" steht im PDF der Gerichte unter Schlüssel 10 und
+        // unter 57. Diese Doppelung ist ihre, nicht unsere - aber eine Neuübernahme, die weitere
+        // erzeugt, würde stillschweigend Rechtsformen ohne Antwort zurücklassen
+        BundledLegalRepresentativeDirectory bundled = new BundledLegalRepresentativeDirectory();
+        assertEquals(bundled.getFormsAmbiguousWithoutPunctuation().toString(),
+                1, bundled.getFormsAmbiguousWithoutPunctuation().size());
+    }
+
+    // ----- welcher Zusatz zu welcher Katalognummer gehört -----
+
+    @Test
+    public void everyNumberThatDemandsSomethingIsResolvedToAField() {
+        // Der Katalog nennt die Forderung in Prosa - "PLZ und Ort der Wohnung", "Die Vertragsart",
+        // "Konto-Nr." - was einem Leser sagt, was gemeint ist, einem Programm aber nicht, welches
+        // Feld das ist. Bleibt eine Nummer unaufgelöst, prüft der Validator sie gegen nichts.
+        List<String> unresolved = new ArrayList<>();
+        for (MainClaimCatalogueEntry entry : catalogue.getEntries()) {
+            if (entry.requiresAdditionalEntry()
+                    && CatalogueAddition.of(entry.getNumber()) == CatalogueAddition.NONE) {
+                unresolved.add(entry.getNumber() + " (" + entry.getRequiredAdditionalEntry() + ")");
+            }
+        }
+        assertEquals("Katalognummern mit Zusatzforderung ohne zugeordnetes Feld: " + unresolved,
+                0, unresolved.size());
+    }
+
+    @Test
+    public void noNumberIsGivenAfieldItDoesNotAskFor() {
+        // die Gegenrichtung: ein Zusatzfeld zu einer Nummer, die keines verlangt, würde im Dialog
+        // erscheinen und im Antrag nichts bedeuten
+        List<String> spurious = new ArrayList<>();
+        for (MainClaimCatalogueEntry entry : catalogue.getEntries()) {
+            if (!entry.requiresAdditionalEntry()
+                    && CatalogueAddition.of(entry.getNumber()) != CatalogueAddition.NONE) {
+                spurious.add(String.valueOf(entry.getNumber()));
+            }
+        }
+        assertEquals("Katalognummern mit Feld ohne Zusatzforderung: " + spurious, 0, spurious.size());
+    }
+
+    @Test
+    public void eachKindOfAdditionIsAssignedToTheNumbersThatAskForIt() {
+        assertEquals(CatalogueAddition.PROPERTY_LOCATION, CatalogueAddition.of(19));
+        assertEquals(CatalogueAddition.PROPERTY_LOCATION, CatalogueAddition.of(20));
+        assertEquals(CatalogueAddition.PROPERTY_LOCATION, CatalogueAddition.of(90));
+        assertEquals(CatalogueAddition.CONTRACT_TYPE, CatalogueAddition.of(28));
+        assertEquals(CatalogueAddition.REFERENCE_DETAIL, CatalogueAddition.of(36));
+        assertEquals(CatalogueAddition.REFERENCE_DETAIL, CatalogueAddition.of(42));
+        assertEquals(CatalogueAddition.REFERENCE_DETAIL, CatalogueAddition.of(61));
+        // 70 verlangt einen Zeitraum, und den trägt die Anspruchszeile selbst - deshalb eine
+        // eigene Art und nicht NONE: der Katalog stellt sehr wohl eine Forderung, sie ist nur
+        // anderswo erfüllt
+        assertEquals(CatalogueAddition.CLAIM_PERIOD, CatalogueAddition.of(70));
+        assertFalse(CatalogueAddition.CLAIM_PERIOD.needsOwnField());
+        assertTrue(CatalogueAddition.REFERENCE_DETAIL.needsOwnField());
+        // 17 ist Geschäftsraummiete und verlangt nichts - anders als die Wohnraummiete
+        assertEquals(CatalogueAddition.NONE, CatalogueAddition.of(17));
+    }
+
+    @Test
+    public void whatIsNotAnumberDemandsNothing() {
+        assertEquals(CatalogueAddition.NONE, CatalogueAddition.of((String) null));
+        assertEquals(CatalogueAddition.NONE, CatalogueAddition.of("  "));
+        assertEquals(CatalogueAddition.NONE, CatalogueAddition.of("sonstiger"));
+        assertEquals(CatalogueAddition.PROPERTY_LOCATION, CatalogueAddition.of(" 19 "));
+    }
+
+    @Test
+    public void theLabelComesFromTheCatalogueWhereItSaysSo() {
+        // im Dialog soll das Feld so heißen, wie der Katalog es nennt, nicht wie wir es nennen
+        assertEquals("Die Vertragsart",
+                CatalogueAddition.CONTRACT_TYPE.labelFor(catalogue.findByNumber(28)));
+        assertEquals("Konto-Nr.",
+                CatalogueAddition.REFERENCE_DETAIL.labelFor(catalogue.findByNumber(36)));
+        assertEquals("Vertragsart", CatalogueAddition.CONTRACT_TYPE.labelFor(null));
     }
 }

@@ -491,30 +491,202 @@
       without effect is worse than an absent one. The documentation in `doc/` says today that a
       ledger *can* be assigned to another without noting that this is not possible through the user
       interface; it is to be corrected either way.
-- [ ] 5.3b Legal representatives: a chain, not a single person, and their function from the court's
-      own directory. `ClaimLedgerParty.legalRepresentative` holds **one** `AddressBean`, and
-      `EdaPartyMapper.mapLegalRepresentative` writes at most one pair of records from it. The format
+- [x] 5.3b Legal representatives: a chain, not a single person, and their function from the court's
+      own directory. `ClaimLedgerParty.legalRepresentative` held **one** `AddressBean`, and
+      `EdaPartyMapper.mapLegalRepresentative` wrote at most one pair of records from it. The format
       allows six: *"Zu jedem Antragsteller können maximal 6 gesetzliche Vertreter (ASGV_01/ASGV_02)
       eingetragen werden! Gesetzliche Vertreter werden immer dem unmittelbar vorausgegangenen
       Antragsteller zugeordnet!"*
       That is not an exotic case. A GmbH & Co. KG — one of the commonest German legal forms — is
       represented by its personally liable partner (§ 161 Abs. 2 i. V. m. § 125 HGB), which is the
       Komplementär-GmbH, and that GmbH acts through its Geschäftsführer. Two levels, and the
-      Online-Mahnantrag asks for both. With one slot we can enter the GmbH or the Geschäftsführer,
-      not the chain, and whichever is entered is wrong on its own. The good half: `fullName()`
-      already prefers the company name, so a company as representative writes correctly once the
-      model can hold it.
-      Second half of the same task: the *function* is written as free text from `AddressBean.getRole()`,
-      while the courts maintain a closed list. Their *Liste der Rechtsformen* (Stand 26.02.2024) maps
-      each legal form to a key, and the *Liste der Funktionen der gesetzlichen Vertreter*
-      (Stand 06.10.2015) gives the admissible functions per key — `GMBH & CO KG` is key 31 with
-      `Geschäftsführende Gesellschafterin`, `Geschäftsführer`, `Direktor`. Both are published at
-      https://www.mahngerichte.de/verzeichnisse/rechtsformen-und-gesetzliche-vertreter/ as PDFs.
-      *Proposed:* an ordered list of representatives per party, and the two directories as reference
-      data behind interfaces like the main claim catalogue of 0.1, so the function can be offered
-      per legal form rather than typed — and checked by the validator before the court checks it.
-      Found while writing the instructions for the reference files; the court's own wizard demands
-      both levels, so a file we generate for such a party would be monited.
+      Online-Mahnantrag asks for both. With one slot we could enter the GmbH or the Geschäftsführer,
+      not the chain, and whichever was entered was wrong on its own.
+      **Built.** `ClaimLedgerPartyRepresentative` (table `claimledger_party_representatives`,
+      migration V3_6_0_36) holds one step of the chain: the party, the contact, the position and the
+      function. `ClaimLedgerParty.representatives` replaces the single field — lazy, uncascaded,
+      owned by `ClaimLedgerService`, which loads it for remote clients and rewrites it on save, the
+      way `CourtService` handles court scopes. The migration copies existing single representatives
+      in as the first step and drops the old column. `EdaPartyMapper.mapLegalRepresentatives` writes
+      the chain in order; the party dialog edits it as a table with a chain preview ("X, vertreten
+      durch Geschäftsführer Y").
+      How an entry is written follows the courts' own files rather than our guess: a **company** as
+      representative goes into the Stellung field by its name with the name field left empty, a
+      **person** into both. The address record follows only where an address is recorded — the
+      reference files omit it for a representative given by name alone. Both rules were read off
+      `03-ag-gmbh-co-kg.eda` and `03b-ag-ag-co-kg.eda` and are now held by conformance tests.
+      **Second half, also built.** The two directories are transcribed verbatim into
+      `legal-representatives.txt` beside the other reference data (632 legal forms, 1130 functions,
+      retrieved 2026-09-21) and read through `LegalRepresentativeDirectory` /
+      `BundledLegalRepresentativeDirectory`, reachable as
+      `ReferenceData.getLegalRepresentativeDirectory()`. The party dialog offers the admitted
+      designations per chain step, and `DunningApplicationValidator` warns where one is outside the
+      list. Which list applies depends on whom the step acts for: the first entry is measured against
+      the party's legal form, every later one against its predecessor's.
+      Deliberately a **warning, not a block**: the function list is Stand 06.10.2015 and the legal
+      form it is keyed by is free text on the contact, so an unknown legal form yields no list and
+      nothing can be said. Refusing an application over a gap in our reference data would be worse
+      than the monition it is meant to prevent. The chain being longer than six *is* an error — the
+      seventh entry would simply not be written.
+      Three things the transcription turned up, recorded in the resource header so nobody reads them
+      as our damage:
+      - The list contains **no bare `GMBH`**. It has `GESELLSCHAFT MIT BESCHRÄNKTER HAFTU` and
+        `GESELLSCHAFT MIT BESCHR. HAFTUNG` (key 10) and every combination like `GMBH & CO KG`, but
+        not the abbreviation every contact record in practice carries. Resolved in 5.3e by an alias
+        table of our own; the published data stays untouched.
+      - `TREUHÄNDER ? 313 INSO` and `TREUHÄNDER GEM. ? 313 INSO` carry a literal question mark in the
+        courts' PDF (0x3F in the text stream, where the neighbouring entries have 0xA7). Presumably
+        old charset damage on their side. The list says which spellings are admitted, so ours says
+        what theirs says.
+      - Keys 52, 57 and 90 appear among the legal forms but have no function group, and that is
+        correct: key 90 are the Parteien kraft Amtes — an Insolvenzverwalter *is* the representation
+        and has none — and key 57 names the WEG's administrator in the legal form itself, so who acts
+        for it follows from the next link of the chain. A test asserts it is exactly these three, so
+        a botched re-import cannot pass as a property of the source.
+- [x] 5.3d Migration V3_6_0_36 failed on deployment, and a test now stands where it failed.
+      *Two defects in one script.* The table was written `CHARSET=utf8mb4` while the tables it points
+      at are utf8, so MySQL refused both foreign keys with errno 150, "Foreign key constraint is
+      incorrectly formed" — a message that names everything except the cause. And the copy of the
+      existing single representatives built its key as `concat('rep-', p.id)`, which can exceed the
+      50 characters of the column; the row id is now the party id itself, which is unique and cannot
+      overrun.
+      `MigrationConventionsTest` reads every migration, works out the character set of every table
+      it creates and every foreign key it declares, and fails where one crosses a character set
+      boundary. Deliberately not "every table must be utf8": several tables of this schema are
+      utf8mb4 and are fine, because nothing points from them into the older part. utf8 and utf8mb3
+      are treated as one, which they are. Planting the original defect again makes the test fail with
+      the table names in the message.
+      *To redeploy:* the failed attempt left a row in `flyway_schema_history`, and Flyway refuses to
+      continue past it. It has to go before the next start:
+      `delete from flyway_schema_history where version = '3.6.0.36' and success = 0;`
+      The script itself is re-runnable — the CREATE TABLE never took effect, so nothing was left
+      half-done.
+- [x] 5.3e The function dropdown was empty, because our master data and the courts' list do not
+      speak the same language. j-lawyer seeds nine legal forms — `AG, Einzelunternehmen, e.K, GbR,
+      OHG, KG, GmbH, UG, eG` — and the courts' list spells every form out and carries no
+      abbreviations at all: `AKTIENGESELLSCHAFT`, `GESELLSCHAFT MIT BESCHR. HAFTUNG`,
+      `KOMMANDITGESELLSCHAFT`. Seven of the nine found nothing, so the field stayed empty for nearly
+      every company a firm records, and the check that was supposed to prevent a monition never ran.
+      Two things were missing, and they are of different kinds.
+      *Punctuation is not part of the identity of a legal form.* `GmbH & Co. KG` — the case that
+      started this whole task — did not reach the published `GMBH & CO KG` for want of a full stop,
+      and `e.K` did not reach `EK`. Stops are now dropped before matching, not turned into a space,
+      because the list writes both `E.KFM.` and `EK`.
+      *Abbreviations need a table, and it is ours, not theirs.* It claims nothing about the practice
+      of the courts — only that a GmbH is a Gesellschaft mit beschränkter Haftung, which is a fact
+      about the legal form. It decides which list of designations is offered and checked against and
+      never touches what goes into the application, where the legal form is written as the user
+      recorded it.
+      Lookup is exact, then relaxed, then resolved, stopping at the first that answers, so a
+      published spelling is never overruled by a guess. Where a relaxed spelling would answer with
+      two different keys it answers with none — a wrong list is worse than no list, because it warns
+      the user off a designation that is in fact correct. The one such case is the courts' own:
+      `WEG VERTRETEN DURCH VERWALTER-GMBH` stands in their PDF under both key 10 and key 57, and a
+      test holds that it is still the only one.
+      Where no list is found the dialog now says so instead of showing an empty field: the
+      designation is then free text and is not checked.
+      *Also learned:* key 03 (Aktiengesellschaft) admits `GESCHÄFTSFÜHRER`. Surprising, but it is
+      what the list says — the test distinguishes AG from GmbH by `AUFSICHTSRAT` instead, which only
+      the AG carries.
+- [x] 5.3f Closed value sets where the format prescribes one, and the missing UI behind them.
+      The question was whether every dropdown should be restricted to the values the EDA format
+      admits, accepting that a firm might have to record dunning master data a second time. The
+      answer differs per field, and the distinction is what the reference files show:
+      *Closed, and nothing is duplicated.* The **function of a legal representative** and the
+      **contract type for catalogue 28** exist nowhere else in j-lawyer — there is no second source
+      to keep in step, only the choice between picking from the list and typing a word the court
+      will monition. Both are now picked. The function field is a closed combo wherever a list
+      exists and takes free text only where the legal form is one the directory does not know; a
+      value recorded earlier survives even if it is off-list, so opening an old party does not
+      silently drop what already went to a court.
+      *Not closed: the legal form.* The courts' own Online-Mahnantrag writes values into `ASRF` that
+      are not on its own list — `02` and `03` carry a literal `GmbH`, and `GMBH` does not appear in
+      the *Liste der Rechtsformen*. Enforcing it would make us stricter than the court and would
+      break conformance case 02. The list is the key index, not the admissible content of the field.
+      Decided against an override per party; the contact's legal form stays the single source.
+      *The UI that was missing.* `catalogueNumber` and `catalogueContractDesignation` were entity
+      fields that the EDA mapper read and **nothing ever set** — the same shape of gap as the
+      ancillary claim mapper. `ClaimComponentEditorDialog` now offers the catalogue as a closed
+      list with "sonstiger Anspruch" as its first entry, and shows exactly the additional field the
+      chosen number demands. `ContractTypeCatalogue`, implemented long ago and called from nowhere,
+      is finally the source of that list.
+      *A validator that was accepting the wrong answer.* It asked whether **any** of the four
+      additional fields was filled, so a postcode satisfied catalogue 28, which wants the contract
+      type. `CatalogueAddition` resolves a number to the one field that answers it — 19/20/90 the
+      property location, 28 the contract type, 36/42/61/70 the reference detail — and the check now
+      asks that field. A contract type outside the published list is refused rather than warned
+      about: unlike the representative's designation, the monition is documented rather than
+      suspected. Two tests hold the resolver against the catalogue in both directions, so a number
+      that gains a requirement in a later Stand cannot pass unresolved.
+      *Since answered by the courts' own wizard, without a file having to be produced:*
+      `catalogueReferenceDetail` now reaches the record. Asked for catalogue 36 and again for 61, the
+      Online-Mahnantrag refused the entry anywhere but one place — *"Bitte die Kontonummer im Feld
+      Rechnungsnummer eintragen"*, *"Bitte die Art der Wahlleistung im Feld Rechnungsnummer
+      eintragen"*. So **36, 42 and 61 all go into `ASPRNR` and displace the invoice number**: one
+      column, not two.
+      That corrected a guess. The catalogue points 36 at the "3. Spalte" and 61 at the "2. Spalte",
+      and reading that prose I had put 61 into `ASPGR` and written a class, `EdaCatalogueDetailColumn`,
+      to express the distinction. There is no distinction; whatever those columns count on the paper
+      form, the file has one field. The class is gone and the decision lives in `CatalogueAddition`
+      where the rest of it already was.
+      Catalogue **70** turned out to demand no field at all: asked for a Kindertagesstättenbeitrag
+      the wizard wants nothing further, because the *Zeitraum vom – bis* it names is the claim line's
+      own from and to. It is a kind of its own, `CLAIM_PERIOD`, rather than `NONE` — the catalogue
+      does state a requirement and a reader should find out where it is met, not conclude there is
+      none. The validator no longer demands a field for it, which it had been doing.
+      One consequence remains: giving both an invoice number and the further entry for 36, 42 or 61
+      is refused at export rather than silently resolved. Which of the two is dropped is not ours to
+      decide.
+- [x] 5.3g The hint under the representative table was mostly invisible, and the dialog did not
+      reflow when resized. Both had the same cause: the hints were `JLabel`s carrying HTML at a
+      fixed height (60px and 34px) and a fixed width, and every other component in the dialog was
+      laid out at `PREFERRED_SIZE`, so growing the window changed nothing and the surplus was
+      swallowed by a trailing `addGap(0, 0, Short.MAX_VALUE)`.
+      A label given HTML wraps at whatever width it is laid out with but keeps the height it was
+      laid out with, so the rest is simply cut off — and the chain preview is as long as the chain
+      is. The two hints are now non-editable, word-wrapping `JTextArea`s in borderless, transparent
+      scroll panes: they report the height their content needs, they grow with the dialog, and a
+      chain longer than the space can be scrolled instead of lost. The text became plain with line
+      breaks; the HTML was only ever there for the `<br/>`.
+      The dialog itself now resizes: the contact combo, the court's place, the representative table
+      and both hints carry a range instead of one fixed size, and a minimum of 560x520 stops it
+      being dragged below the point where the table shows no row.
+      Measured rather than assumed, with a throwaway program that builds the dialog off-screen:
+      packed 725x520 with 74px of hint for the 51px a two-step chain needs; enlarged to 1025x780 it
+      gives the hint 204px. A six-step chain with a long designation needs 204px and scrolls at the
+      packed size. `setSize(100, 100)` is clamped to the minimum.
+      Not covered by a test: it would need a display, and a layout test that fails on a headless
+      build would cost more than it catches.
+- [x] 5.3h Two buttons saying "Speichern" in one tab, and a court that quietly went missing.
+      Reported as a usability problem: after choosing a dunning court the tab says the assignment is
+      taken over "mit Speichern", and there are two such buttons in view. Behind the ambiguity sat a
+      data loss. The claim ledger dialog's own save stores the ledger and **closes the window**; the
+      procedure in the "Mahnverfahren" tab is a separate record with its own button. Choosing a
+      court wrote it into memory only, so the natural next click — the big Speichern at the bottom —
+      saved the ledger, shut the dialog and dropped the court without a word.
+      *The court is now written at once.* Choosing one is an answered question, not a draft, so it
+      is stored there and then and the message says it is stored. That removes the sentence that
+      caused the confusion instead of rewording it.
+      *The buttons say what they save.* The tab's is "Mahnsache speichern" and carries a tooltip
+      naming the other one. Same-named buttons doing different things is the defect; a clearer hint
+      would only have described it.
+      *And nothing leaves silently.* The tab reports unsaved entries, and the dialog asks before it
+      closes — on Speichern and on Abbrechen alike — jumping back to the tab if the user wants to
+      finish there. Switching to another procedure in the selector asks too, because it overwrites
+      the same fields.
+      Two things found while doing it. `loadCases()` reset the selector to the first procedure after
+      every save, so anyone working on the third had to find it again each time; the shown procedure
+      now survives a reload. And a newly created procedure was not the one shown afterwards — it is
+      now.
+- [ ] 5.3c The salutation key from the legal form directory — decide whether to use it. The
+      *Liste der Rechtsformen* carries an `Anrede-MM` column, which is the key the format expects,
+      and `EdaPartyMapper.salutationKey` currently guesses it from the wording of the legal form.
+      Replacing the guess with the published value looks obvious but the reference files argue
+      against it: for `Muster Transport GmbH & Co. KG` the directory says key 4, and the courts'
+      own Online-Mahnantrag wrote **no key at all** and put the legal form in as text
+      (`01AG   01 GmbH & Co KG`). Same for the AG & Co. KG in `03b`. So either the wizard does not
+      apply this list to companies, or the key means something other than what the column name
+      suggests. Our current behaviour matches the reference files and is therefore left alone.
 - [x] 3.21 Conformance against real files of the dunning courts. Twelve applications were produced
       through the Online-Mahnantrag under a real Kennziffer and are kept in
       `src/test/resources/eda/reference` with the instructions that made them
@@ -554,6 +726,23 @@
       all — interest on part of a claim. And `TKEZI` of the file header can be alphanumeric, as the
       Online-Mahnantrag's own `SAH00003` shows, while our layout declares it numeric; that matters
       only for reading other people's files
+- [x] 3.21a Conformance of what we *produce*, not only of what we read. `EdaReferenceFileTest`
+      checks that we can read the courts' files; `EdaConformanceTest` builds the same cases from the
+      facts in `reference/README.md` and compares the sequence of record areas against the file the
+      court produced. Not byte for byte — the file name, the day of creation, the software that
+      wrote it and the Kennziffer in the header differ legitimately. The sequence is where the
+      defects were: a record missing, one too many, one in the wrong place. Seven cases are covered:
+      01 (natural person, catalogue claim), 02 (applicant GmbH with representative), 03 and 03b (the
+      two-step chain against a GmbH & Co. KG and an AG & Co. KG), 04 (two joint debtors, which pins
+      the order party → its litigation court → its chain → next party), 05 (a claim the catalogue
+      does not cover, written over two records) and 10 (ancillary claims).
+      *What case 10 found:* `EdaAncillaryClaimMapper` was complete and **never called**. The builder
+      passed every claim to `EdaClaimMapper`, so C28, C29 and C33 were missing from every application
+      that had a postage item, a reminder charge or a pre-court lawyer's fee — which is most of them.
+      The builder now separates them out and writes them after the main claims, sorted by record
+      area, because the order the firm entered them in the ledger is not the order the court reads.
+      Our own tests could not have found this: they encoded our own assumption that the claims list
+      held main claims only.
 - [ ] 5.4 Ledger REST endpoints (totals, payment booking, statement)
 - [ ] 5.5 Documentation: user-facing description of the workflow, admin guide for court table, fee
       tables, reminder stages and form templates

@@ -662,8 +662,12 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.eda;
 
+import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
 import com.jdimension.jlawyer.persistence.DunningCase;
+import com.jdimension.jlawyer.persistence.InterestRule;
+import com.jdimension.jlawyer.persistence.InterestType;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -686,6 +690,7 @@ public class EdaMahnbescheidBuilder {
     private final EdaPartyMapper partyMapper = new EdaPartyMapper();
     private final EdaClaimMapper claimMapper = new EdaClaimMapper();
     private final EdaRepresentativeMapper representativeMapper = new EdaRepresentativeMapper();
+    private final EdaAncillaryClaimMapper ancillaryMapper = new EdaAncillaryClaimMapper();
 
     /**
      * Builds the records of one application.
@@ -730,7 +735,7 @@ public class EdaMahnbescheidBuilder {
                     EdaMahnbescheidLayouts.getLayout("C04"), "AS"));
             // "Gesetzliche Vertreter werden immer dem unmittelbar vorausgegangenen Antragsteller
             // zugeordnet" - the format has no field pointing at the party, the position is the link
-            records.addAll(partyMapper.mapLegalRepresentative(creditor,
+            records.addAll(partyMapper.mapLegalRepresentatives(creditor,
                     EdaMahnbescheidLayouts.getLayout("C05"),
                     EdaMahnbescheidLayouts.getLayout("C06"), "ASGV"));
         }
@@ -750,12 +755,26 @@ public class EdaMahnbescheidBuilder {
             if (litigationCourt != null) {
                 records.add(litigationCourt);
             }
-            records.addAll(partyMapper.mapLegalRepresentative(debtor,
+            records.addAll(partyMapper.mapLegalRepresentatives(debtor,
                     EdaMahnbescheidLayouts.getLayout("C17"),
                     EdaMahnbescheidLayouts.getLayout("C18"), "AGGV"));
         }
+        // The application states the main claims first and the ancillary claims after them, each in
+        // the record area the format keeps for its kind - postage in C28, reminder charges in C29,
+        // the pre-court lawyer's fee in C33. Sorting the claims here rather than relying on the
+        // order they arrive in: the caller reads them out of the ledger, where their order is the
+        // order the firm entered them, which is not the order the court reads.
+        List<EdaClaimMapper.Claim> ancillary = new ArrayList<>();
         for (EdaClaimMapper.Claim claim : claims) {
-            records.addAll(claimMapper.map(claim));
+            if (ancillaryRecordIdOf(claim) != null) {
+                ancillary.add(claim);
+            } else {
+                records.addAll(claimMapper.map(claim));
+            }
+        }
+        ancillary.sort((a, b) -> ancillaryRecordIdOf(a).compareTo(ancillaryRecordIdOf(b)));
+        for (EdaClaimMapper.Claim claim : ancillary) {
+            records.add(mapAncillary(claim));
         }
         return records;
     }
@@ -832,6 +851,46 @@ public class EdaMahnbescheidBuilder {
      * The court is addressed by postcode and place - not by its name and not by an identifier - so
      * those two fields are what decide where the application lands.
      */
+    /**
+     * The record area an ancillary claim belongs in, or null if this claim is not one.
+     *
+     * A position of the ledger that carries a catalogue number is a main claim even where its kind
+     * would otherwise look ancillary, so the catalogue number is asked first.
+     */
+    private String ancillaryRecordIdOf(EdaClaimMapper.Claim claim) {
+        ClaimComponent component = claim == null ? null : claim.getComponent();
+        if (component == null) {
+            return null;
+        }
+        if (component.getCatalogueNumber() != null && !component.getCatalogueNumber().trim().isEmpty()) {
+            return null;
+        }
+        return ancillaryMapper.recordIdFor(component.getType());
+    }
+
+    /**
+     * Writes one ancillary claim, carrying over the interest claimed on it.
+     *
+     * Only the first interest rule is written: the ancillary records hold one rate and one period,
+     * and a second rule would have nowhere to go. That is not a limitation worth working around -
+     * staggered interest on a reminder charge is not something the format contemplates.
+     */
+    private EdaRecord mapAncillary(EdaClaimMapper.Claim claim) {
+        BigDecimal rate = null;
+        boolean aboveBaseRate = false;
+        Date from = null;
+        for (InterestRule rule : claim.getInterestRules()) {
+            aboveBaseRate = rule.getInterestType() != InterestType.FIXED;
+            rate = aboveBaseRate ? rule.getBaseMargin() : rule.getFixedRate();
+            if (rate != null) {
+                from = claim.getInterestFrom() != null ? claim.getInterestFrom() : rule.getValidFrom();
+                break;
+            }
+        }
+        return ancillaryMapper.map(claim.getComponent(), claim.getAmount(), rate, aboveBaseRate,
+                from, claim.getInterestTo());
+    }
+
     private EdaRecord kennsatz(DunningCase dunningCase, List<ClaimLedgerParty> debtors) {
 
         EdaRecord record = new EdaRecord(EdaMahnbescheidLayouts.KENNSATZ);

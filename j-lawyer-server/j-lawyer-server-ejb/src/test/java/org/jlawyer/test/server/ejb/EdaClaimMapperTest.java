@@ -961,4 +961,80 @@ public class EdaClaimMapperTest {
         assertNull("zero per cent interest is a claim; an unset rate is not",
                 recordOf(mapper.map(claim), "C26"));
     }
+
+    // ----- Zusatzangaben, die eine Spalte der Anspruchszeile belegen -----
+
+    @Test
+    public void theAccountNumberTakesTheColumnOfTheInvoiceNumber() throws Exception {
+        // Der Assistent der Gerichte sagt es wörtlich: "Bitte die Kontonummer im Feld
+        // Rechnungsnummer eintragen." Es gibt ein Feld, nicht zwei - die Zusatzangabe verdrängt.
+        ClaimComponent c = component("Kontoüberziehung", "36");
+        c.setCatalogueReferenceDetail("DE02120300000000202051");
+        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(c, new BigDecimal("5000.00"));
+        claim.setInvoiceNumber("RE-2026-0815");
+
+        EdaRecord record = recordOf(mapper.map(claim), "C20");
+
+        assertEquals("DE02120300000000202051", record.get("ASPRNR"));
+        assertEquals("die Anspruchsbegründung bleibt, wo sie ist",
+                "Kontoüberziehung", record.get("ASPGR"));
+    }
+
+    @Test
+    public void theMeterNumberTakesTheSameColumn() throws Exception {
+        ClaimComponent c = component("Stromlieferung", "42");
+        c.setCatalogueReferenceDetail("Zähler 7788-01");
+        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(c, new BigDecimal("500.00"));
+        claim.setInvoiceNumber("RE-2026-0815");
+
+        assertEquals("Zähler 7788-01", recordOf(mapper.map(claim), "C20").get("ASPRNR"));
+    }
+
+    @Test
+    public void theKindOfOptionalServiceTakesTheSameColumnAgain() throws Exception {
+        // Der Katalog verweist für 61 auf die 2. Spalte und für 36 auf die 3., was nach zwei
+        // verschiedenen Orten klingt und keiner ist: der Assistent verlangt auch hier
+        // "im Feld Rechnungsnummer". Was die Spalten auf dem Papiervordruck zählen, zählt für die
+        // Datei nicht.
+        ClaimComponent c = component("Wahlleistung", "61");
+        c.setCatalogueReferenceDetail("Chefarztbehandlung");
+        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(c, new BigDecimal("500.00"));
+        claim.setInvoiceNumber("RE-2026-0815");
+
+        EdaRecord record = recordOf(mapper.map(claim), "C20");
+
+        assertEquals("Chefarztbehandlung", record.get("ASPRNR"));
+        assertEquals("die Anspruchsbegründung bleibt, wo sie ist",
+                "Wahlleistung", record.get("ASPGR"));
+    }
+
+    @Test
+    public void thePeriodOfNumber70DisplacesNothing() throws Exception {
+        // 70 verlangt einen Zeitraum, und das ist das von/bis der Anspruchszeile selbst - der
+        // Assistent fragt dort nach keiner weiteren Angabe. Was jemand trotzdem einträgt, darf
+        // nichts verdrängen.
+        ClaimComponent c = component("Kita-Beitrag", "70");
+        c.setCatalogueReferenceDetail("01.01.2025 - 31.07.2025");
+        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(c, new BigDecimal("500.00"));
+        claim.setInvoiceNumber("RE-2026-0815");
+
+        EdaRecord record = recordOf(mapper.map(claim), "C20");
+
+        assertEquals("Kita-Beitrag", record.get("ASPGR"));
+        assertEquals("RE-2026-0815", record.get("ASPRNR"));
+    }
+
+    @Test
+    public void anOrdinaryNumberIsUnaffected() throws Exception {
+        // eine Zusatzangabe an einer Nummer, die keine verlangt, darf nichts verdrängen
+        ClaimComponent c = component("Kaufpreis", "11");
+        c.setCatalogueReferenceDetail("irrtümlich erfasst");
+        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(c, new BigDecimal("500.00"));
+        claim.setInvoiceNumber("RE-2026-0815");
+
+        EdaRecord record = recordOf(mapper.map(claim), "C20");
+
+        assertEquals("Kaufpreis", record.get("ASPGR"));
+        assertEquals("RE-2026-0815", record.get("ASPRNR"));
+    }
 }

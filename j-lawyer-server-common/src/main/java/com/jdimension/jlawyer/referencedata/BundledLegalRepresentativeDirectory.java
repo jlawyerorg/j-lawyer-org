@@ -660,424 +660,297 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.test.server.ejb;
+package com.jdimension.jlawyer.referencedata;
 
-import com.jdimension.jlawyer.eda.EdaClaimMapper;
-import com.jdimension.jlawyer.eda.EdaFile;
-import com.jdimension.jlawyer.eda.EdaMahnbescheidBuilder;
-import com.jdimension.jlawyer.eda.EdaMahnbescheidLayouts;
-import com.jdimension.jlawyer.eda.EdaProcessRepresentative;
-import com.jdimension.jlawyer.eda.EdaRecord;
-import com.jdimension.jlawyer.eda.EdaRecords;
-import com.jdimension.jlawyer.eda.EdaRecordLayout;
-import com.jdimension.jlawyer.eda.EdaStructureVerifier;
-import com.jdimension.jlawyer.eda.EdaViolation;
-import com.jdimension.jlawyer.persistence.AddressBean;
-import com.jdimension.jlawyer.persistence.ClaimComponent;
-import com.jdimension.jlawyer.persistence.ClaimComponentType;
-import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
-import com.jdimension.jlawyer.persistence.ClaimLedgerPartyRepresentative;
-import com.jdimension.jlawyer.persistence.DunningCase;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.ZoneId;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import org.junit.Test;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * Assembling a complete Mahnbescheid application.
+ * The two published directories, read from a resource next to this class.
  *
- * The order of the records is what makes a file readable to the court: the key record opens an
- * application and everything after it belongs to it. A file whose records are individually sound but
- * out of order is rejected as a whole, so the assembly is tested as a sequence and the finished file
- * is put through the same verifier that guards a real export.
+ * Unlike the other bundled providers this one does not carry its data in code. 632 legal forms and
+ * 1130 designations as string literals would be a class nobody can read and a static initialiser
+ * close to the limit the language sets for one; as a text file the data stays diffable, and the
+ * next Stand of either list is a replaced file rather than a rewritten class.
+ *
+ * <h2>Source</h2>
+ *
+ * https://www.mahngerichte.de/verzeichnisse/rechtsformen-und-gesetzliche-vertreter/ — retrieved
+ * 2026-09-21. The two lists carry different dates of their own: the legal forms are Stand
+ * 26.02.2024, the functions Stand 06.10.2015. {@link #getSourceDate()} reports the older of the
+ * two, because a caller asking how current the data is deserves the weaker answer rather than the
+ * flattering one.
+ *
+ * <p>Nothing outside this package should depend on this class - use
+ * {@link ReferenceData#getLegalRepresentativeDirectory()}.
  *
  * @author jens
  */
-public class EdaMahnbescheidBuilderTest {
+public class BundledLegalRepresentativeDirectory implements LegalRepresentativeDirectory {
 
-    private final EdaMahnbescheidBuilder builder = new EdaMahnbescheidBuilder();
+    private static final String RESOURCE = "legal-representatives.txt";
 
-    private static Date date(int y, int m, int d) {
-        return Date.from(LocalDate.of(y, m, d).atStartOfDay(ZoneId.systemDefault()).toInstant());
+    /** The key of the group that holds representatives of parties without a legal form. */
+    private static final String KEY_WITHOUT_LEGAL_FORM = "00";
+
+    /**
+     * The abbreviations German practice writes and the courts' list does not carry.
+     *
+     * The list spells every legal form out: it has GESELLSCHAFT MIT BESCHR. HAFTUNG and
+     * AKTIENGESELLSCHAFT but neither GMBH nor AG, while j-lawyer's own master data for legal forms
+     * offers exactly the abbreviations - AG, GmbH, KG, OHG, eG, e.K, Einzelunternehmen. Without this
+     * table a lookup misses for seven of the nine legal forms a fresh installation offers, which is
+     * to say: for nearly every company a firm records.
+     *
+     * This mapping is ours, not the courts'. It claims nothing about their practice - only that a
+     * GmbH is a Gesellschaft mit beschränkter Haftung, which is a fact about the legal form and not
+     * a guess. It decides which list of functions is offered and checked against; it never changes
+     * what is written into the application, where the legal form goes in as the user recorded it.
+     */
+    private static final Map<String, String> ABBREVIATIONS = new LinkedHashMap<>();
+
+    static {
+        ABBREVIATIONS.put("AG", "AKTIENGESELLSCHAFT");
+        ABBREVIATIONS.put("GMBH", "GESELLSCHAFT MIT BESCHR. HAFTUNG");
+        ABBREVIATIONS.put("GGMBH", "GESELLSCHAFT MIT BESCHR. HAFTUNG");
+        ABBREVIATIONS.put("MBH", "GESELLSCHAFT MIT BESCHR. HAFTUNG");
+        ABBREVIATIONS.put("KG", "KOMMANDITGESELLSCHAFT");
+        ABBREVIATIONS.put("KGAA", "KOMMANDITGESELLSCHAFT AUF AKTIEN");
+        ABBREVIATIONS.put("OHG", "OFFENE HANDELSGESELLSCHAFT");
+        ABBREVIATIONS.put("EG", "EINGETRAGENE GENOSSENSCHAFT");
+        ABBREVIATIONS.put("EK", "EINGETRAGENER KAUFMANN");
+        ABBREVIATIONS.put("EINZELUNTERNEHMEN", "EINZELFIRMA");
+        ABBREVIATIONS.put("EINZELKAUFMANN", "EINGETRAGENER KAUFMANN");
+        ABBREVIATIONS.put("EINGETRAGENE GENOSSENSCHAFT MIT BESCHRÄNKTER HAFTPFLICHT",
+                "EINGETRAGENE GENOSSENSCHAFT MBH");
+        ABBREVIATIONS.put("UNTERNEHMERGESELLSCHAFT (HAFTUNGSBESCHRÄNKT)", "UNTERNEHMERGESELLSCHAFT");
+        ABBREVIATIONS.put("UG (HAFTUNGSBESCHRÄNKT)", "UG");
+        ABBREVIATIONS.put("GESELLSCHAFT BÜRGERLICHEN RECHTS", "GBR");
+        ABBREVIATIONS.put("GESELLSCHAFT DES BÜRGERLICHEN RECHTS", "GBR");
     }
 
-    private DunningCase dunningCase() {
-        DunningCase c = new DunningCase();
-        c.setOwnReference("AZ-2026-0815");
-        c.setKennziffer("12345678");
-        c.setCourtXJustizId("B2609");
-        c.setCourtName("Amtsgericht Stuttgart");
-        c.setCourtPostalCode("70154");
-        c.setCourtCity("Stuttgart");
-        return c;
+    private final Map<String, String> keyByLegalForm = new LinkedHashMap<>();
+    private final Map<String, String> salutationByLegalForm = new LinkedHashMap<>();
+    private final List<String> legalForms = new ArrayList<>();
+    private final Map<String, List<String>> functionsByKey = new LinkedHashMap<>();
+
+    /**
+     * The same forms again, keyed without their punctuation, so that GmbH &amp; Co. KG finds
+     * GMBH &amp; CO KG. Spellings that collapse onto one another with different keys are left out
+     * rather than resolved by guesswork - see {@link #ambiguousWithoutPunctuation}.
+     */
+    private final Map<String, String> keyByRelaxedForm = new LinkedHashMap<>();
+    private final Map<String, String> salutationByRelaxedForm = new LinkedHashMap<>();
+
+    /** Forms that are ambiguous once punctuation is disregarded, exposed so a test can hold them. */
+    private final Set<String> ambiguousWithoutPunctuation = new HashSet<>();
+
+    public BundledLegalRepresentativeDirectory() {
+        load();
     }
 
-    private ClaimLedgerParty party(String id, String salutation, String first, String last) {
-        AddressBean a = new AddressBean();
-        a.setSalutation(salutation);
-        a.setFirstName(first);
-        a.setName(last);
-        a.setStreet("Hauptstr.");
-        a.setStreetNumber("1");
-        a.setZipCode("70173");
-        a.setCity("Stuttgart");
-        ClaimLedgerParty p = new ClaimLedgerParty();
-        p.setId(id);
-        p.setContact(a);
-        return p;
-    }
-
-    private EdaClaimMapper.Claim claim(String catalogueNumber, String amount) {
-        ClaimComponent c = new ClaimComponent();
-        c.setId("c-" + catalogueNumber);
-        c.setName("Kaufpreis");
-        c.setType(ClaimComponentType.MAIN_CLAIM);
-        c.setCatalogueNumber(catalogueNumber);
-        return new EdaClaimMapper.Claim(c, new BigDecimal(amount));
-    }
-
-    private List<String> layoutSequence(List<EdaRecord> records) {
-        List<String> ids = new ArrayList<>();
-        for (EdaRecord r : records) {
-            ids.add(r.getLayout().getId());
+    private void load() {
+        try (InputStream in = BundledLegalRepresentativeDirectory.class.getResourceAsStream(RESOURCE)) {
+            if (in == null) {
+                throw new IllegalStateException("Die Verzeichnisdatei " + RESOURCE
+                        + " fehlt im Klassenpfad.");
+            }
+            BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.isEmpty() || line.charAt(0) == '#') {
+                    continue;
+                }
+                String[] parts = line.split("\\|", -1);
+                if (parts.length == 4 && "RF".equals(parts[0])) {
+                    String legalForm = parts[3];
+                    legalForms.add(legalForm);
+                    String normalised = normalise(legalForm);
+                    // The courts' list carries one spelling twice under two different keys. Taking
+                    // the first silently would leave a legal form that answers with one of two
+                    // possible lists of designations and no sign that the other exists, so the
+                    // clash is recorded here where it arises rather than inferred later.
+                    String existing = keyByLegalForm.get(normalised);
+                    if (existing != null && !existing.equals(parts[1])) {
+                        ambiguousWithoutPunctuation.add(relax(legalForm));
+                    }
+                    keyByLegalForm.putIfAbsent(normalised, parts[1]);
+                    salutationByLegalForm.putIfAbsent(normalised, parts[2]);
+                } else if (parts.length == 3 && "FU".equals(parts[0])) {
+                    functionsByKey.computeIfAbsent(parts[1], k -> new ArrayList<>()).add(parts[2]);
+                }
+            }
+            buildRelaxedIndex();
+        } catch (IOException ex) {
+            throw new IllegalStateException("Die Verzeichnisdatei " + RESOURCE
+                    + " konnte nicht gelesen werden.", ex);
         }
-        return ids;
     }
 
-    private ClaimLedgerParty representedParty(String id) {
-        ClaimLedgerParty p = party(id, null, null, null);
-        p.getContact().setCompany("Beispiel Handels GmbH");
-        p.getContact().setLegalForm("GmbH");
-        p.setSnapshotDesignation("Beispiel Handels GmbH");
-        AddressBean rep = new AddressBean();
-        rep.setFirstName("Max");
-        rep.setName("Muster");
-        rep.setStreet("Königstr.");
-        rep.setStreetNumber("1");
-        rep.setZipCode("70173");
-        rep.setCity("Stuttgart");
-        p.getRepresentatives().add(representative(rep, "Geschäftsführer", 1));
-        return p;
+    /**
+     * Builds the punctuation-insensitive index, leaving out what would become ambiguous.
+     *
+     * The courts' list carries one form twice under two keys - WEG VERTRETEN DURCH VERWALTER-GMBH
+     * stands under 10 and under 57 - and disregarding punctuation could in principle create further
+     * such pairs. Where a relaxed spelling would answer with two different keys it answers with
+     * none: a wrong list of admissible designations is worse than no list, because the user would
+     * be warned off a designation that is in fact correct.
+     */
+    private void buildRelaxedIndex() {
+        for (Map.Entry<String, String> entry : keyByLegalForm.entrySet()) {
+            String relaxed = relax(entry.getKey());
+            String existing = keyByRelaxedForm.get(relaxed);
+            if (existing != null && !existing.equals(entry.getValue())) {
+                ambiguousWithoutPunctuation.add(relaxed);
+                continue;
+            }
+            keyByRelaxedForm.put(relaxed, entry.getValue());
+            salutationByRelaxedForm.put(relaxed, salutationByLegalForm.get(entry.getKey()));
+        }
+        for (String ambiguous : ambiguousWithoutPunctuation) {
+            keyByRelaxedForm.remove(ambiguous);
+            salutationByRelaxedForm.remove(ambiguous);
+        }
     }
 
-    private ClaimLedgerPartyRepresentative representative(AddressBean contact, String function, int sequence) {
-        ClaimLedgerPartyRepresentative r = new ClaimLedgerPartyRepresentative();
-        r.setContact(contact);
-        r.setFunctionDesignation(function);
-        r.setSequenceNumber(sequence);
-        return r;
+    /**
+     * Compares the way a user would: the published spelling is capitals, what the user typed is
+     * whatever they typed, and neither the case nor surrounding space is part of the identity.
+     */
+    private String normalise(String value) {
+        return value == null ? "" : value.trim().toUpperCase(Locale.GERMAN);
     }
 
-
-    private EdaProcessRepresentative lawyers() {
-        EdaProcessRepresentative rep = new EdaProcessRepresentative();
-        rep.setSalutation(EdaProcessRepresentative.Salutation.RECHTSANWAELTE);
-        rep.setDesignation("Muster & Partner Rechtsanwälte");
-        rep.setStreet("Königstr. 1");
-        rep.setPostalCode("70173");
-        rep.setCity("Stuttgart");
-        rep.setOrderDate(date(2026, 3, 2));
-        return rep;
+    /**
+     * The same, with the full stops dropped and runs of space collapsed, so that what somebody types
+     * as "GmbH &amp; Co. KG" reaches the published "GMBH &amp; CO KG" and "e.K" reaches "EK".
+     *
+     * Dropped, not turned into a space: the published list writes both "E.KFM." and "EK", and a stop
+     * that became a space would separate what the abbreviation joins.
+     */
+    private String relax(String value) {
+        return normalise(value).replace(".", "").replaceAll("\\s+", " ").trim();
     }
 
-    @Test
-    public void theDeclarationOnTheCounterPerformanceTravelsInTheKeyRecord() throws Exception {
-        // § 688 Abs. 2 Nr. 2 ZPO: a Mahnbescheid is inadmissible where the claim depends on a
-        // counter-performance not yet rendered, so the court has to be told which case applies
-        DunningCase rendered = dunningCase();
-        rendered.setCounterPerformanceRendered(true);
-
-        EdaRecord kennsatz = builder.buildApplication(rendered,
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00"))).get(0);
-
-        assertEquals("X", kennsatz.get("VGLM1"));
-        assertNull(kennsatz.get("VGLM2"));
-    }
-
-    @Test
-    public void aClaimIndependentOfACounterPerformanceUsesTheOtherField() throws Exception {
-        DunningCase independent = dunningCase();
-        independent.setCounterPerformanceIndependent(true);
-
-        EdaRecord kennsatz = builder.buildApplication(independent,
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00"))).get(0);
-
-        assertNull(kennsatz.get("VGLM1"));
-        assertEquals("X", kennsatz.get("VGLM2"));
-    }
-
-    @Test
-    public void bothDeclarationsMayStandTogether() throws Exception {
-        // "Bei mehreren Ansprüchen können auch beide Felder belegt sein!" - they are not
-        // alternatives, and an application over several claims can carry claims of either kind
-        DunningCase both = dunningCase();
-        both.setCounterPerformanceRendered(true);
-        both.setCounterPerformanceIndependent(true);
-
-        EdaRecord kennsatz = builder.buildApplication(both,
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00"))).get(0);
-
-        assertEquals("X", kennsatz.get("VGLM1"));
-        assertEquals("X", kennsatz.get("VGLM2"));
-    }
-
-    @Test
-    public void theReferralIsOnlyAppliedForWhenItIsAskedFor() throws Exception {
-        // § 696 Abs. 1 ZPO; an empty field means it is not applied for, which is a statement of its
-        // own and must not be made by accident
-        EdaRecord notAsked = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00"))).get(0);
-        assertNull(notAsked.get("ASTRVM"));
-
-        DunningCase asked = dunningCase();
-        asked.setLitigationRequested(true);
-        EdaRecord requested = builder.buildApplication(asked,
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00"))).get(0);
-        assertEquals("X", requested.get("ASTRVM"));
-    }
-
-    @Test
-    public void aRepresentativeFollowsThePartyItActsFor() throws Exception {
-        // the format has no field pointing back at the party; position is the only link, so a
-        // representative record in the wrong place attaches itself to the wrong person
-        List<EdaRecord> records = builder.buildApplication(dunningCase(),
-                Arrays.asList(representedParty("p1")),
-                Arrays.asList(representedParty("p2")),
-                Arrays.asList(claim("11", "5000.00")));
-
-        assertEquals(Arrays.asList("C01", "C02", "C04", "C05", "C06", "C13", "C15", "C17", "C18", "C20"), layoutSequence(records));
-    }
-
-    @Test
-    public void theFilingLawyerSitsBetweenTheApplicantsAndTheDefendants() throws Exception {
-        DunningCase withoutKennziffer = dunningCase();
-        withoutKennziffer.setKennziffer(null);
-
-        List<EdaRecord> records = builder.buildApplication(withoutKennziffer,
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00")), lawyers());
-
-        assertEquals(Arrays.asList("C01", "C02", "C04", "C07", "C08", "C10", "C13", "C15", "C20"), layoutSequence(records));
-    }
-
-    @Test
-    public void theOwnKennzifferSuppressesTheIdentityButNotTheApplicationSpecificData() throws Exception {
-        List<EdaRecord> records = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00")), lawyers());
-
-        assertEquals(Arrays.asList("C01", "C02", "C04", "C10", "C13", "C15", "C20"), layoutSequence(records));
-    }
-
-    @Test
-    public void aFileNamingTheLawyerStillPassesTheVerifier() throws Exception {
-        DunningCase withoutKennziffer = dunningCase();
-        withoutKennziffer.setKennziffer(null);
-
-        EdaFile file = builder.buildFile(withoutKennziffer,
-                Arrays.asList(representedParty("p1")),
-                Arrays.asList(representedParty("p2")),
-                Arrays.asList(claim("11", "5000.00")), lawyers(),
-                "12345678", "MB0001", date(2026, 3, 2));
-
-        List<EdaViolation> violations = new EdaStructureVerifier()
-                .verify(file.write("12345678"), EdaMahnbescheidLayouts.FORMAT_MAHNBESCHEID);
-
-        assertTrue(violations.toString(), violations.isEmpty());
-    }
-
-    @Test
-    public void theDeclarationsOfTheExportStepTravelInTheApplicationSpecificRecord() throws Exception {
-        // what the export step asks for: the day of instruction, which § 60 Abs. 1 S. 1 RVG makes
-        // decisive for the applicable RVG version, and the offsetting of Vorbem. 3 Abs. 4 VV RVG
-        EdaProcessRepresentative rep = lawyers();
-        rep.setOrderDate(date(2026, 2, 17));
-        rep.setOffsetAmount(new java.math.BigDecimal("162.50"));
-        rep.setSpecialEffortDeclared(true);
-        rep.setOwnReference("00123/26");
-
-        List<EdaRecord> records = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00")), rep);
-
-        EdaRecord c10 = null;
-        for (EdaRecord r : records) {
-            if ("C10".equals(r.getLayout().getId())) {
-                c10 = r;
+    /**
+     * Resolves a legal form as it was recorded to the way the courts spell it.
+     *
+     * Three attempts, in order of how much is being assumed: the published spelling itself, then the
+     * same disregarding punctuation, then our own table of abbreviations. Stopping at the first that
+     * answers means an exact spelling is never overruled by a guess.
+     *
+     * @return the published spelling, or null if none of the three finds it
+     */
+    private String resolve(String legalForm) {
+        String exact = normalise(legalForm);
+        if (keyByLegalForm.containsKey(exact)) {
+            return exact;
+        }
+        String relaxed = relax(legalForm);
+        if (keyByRelaxedForm.containsKey(relaxed)) {
+            return relaxed;
+        }
+        String spelledOut = ABBREVIATIONS.get(relaxed);
+        if (spelledOut != null) {
+            if (keyByLegalForm.containsKey(spelledOut)) {
+                return spelledOut;
+            }
+            String relaxedSpelledOut = relax(spelledOut);
+            if (keyByRelaxedForm.containsKey(relaxedSpelledOut)) {
+                return relaxedSpelledOut;
             }
         }
-        assertEquals("260217", c10.get("ASPVAUFD"));
-        assertEquals("16250", c10.get("VV2300MBET"));
-        assertEquals("X", c10.get("VV2300M"));
-        assertEquals("00123/26", c10.get("ASPVGZ"));
+        return null;
     }
 
-    @Test
-    public void anApplicationWithDeclarationsAndAnAccountStillPassesTheVerifier() throws Exception {
-        // the records C10 and C11 are written beside a Kennziffer, where C07 to C09 are not - the
-        // structure has to hold with that combination, since it is the one every export produces
-        EdaProcessRepresentative rep = lawyers();
-        rep.setOrderDate(date(2026, 2, 17));
-        rep.setOffsetAmount(new java.math.BigDecimal("162.50"));
-        rep.setIban("DE82620901000123456789");
-
-        EdaFile file = builder.buildFile(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00")), rep,
-                "12345678", "MB0001", date(2026, 3, 2));
-
-        assertEquals(Arrays.asList("C01", "C02", "C04", "C10", "C11", "C13", "C15", "C20"), layoutSequence(file.getRecords()));
-
-        List<EdaViolation> violations = new EdaStructureVerifier()
-                .verify(file.write("12345678"), EdaMahnbescheidLayouts.FORMAT_MAHNBESCHEID);
-
-        assertTrue(violations.toString(), violations.isEmpty());
-    }
-
-    @Test
-    public void anApplicationOpensWithItsKeyRecordAndFollowsTheExpectedOrder() throws Exception {
-        List<EdaRecord> records = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00")));
-
-        assertEquals(Arrays.asList("C01", "C02", "C04", "C13", "C15", "C20"),
-                layoutSequence(records));
-    }
-
-    @Test
-    public void theCourtIsAddressedByPostcodeAndPlace() throws Exception {
-        EdaRecord kennsatz = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00"))).get(0);
-
-        assertEquals("70154", kennsatz.get("MGPLZ"));
-        assertEquals("Stuttgart", kennsatz.get("MGO"));
-        assertEquals("AZ-2026-0815", kennsatz.get("TGZ"));
-        assertEquals("12345678", kennsatz.get("PVKEZI"));
-    }
-
-    @Test
-    public void severalDefendantsAreMarkedAsJointDebtors() throws Exception {
-        EdaRecord single = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "100.00"))).get(0);
-        assertNull("one defendant cannot be a joint debtor", single.get("AGGMM"));
-
-        EdaRecord several = builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner"),
-                        party("p3", "Frau", "Maria", "Schuldner")),
-                Arrays.asList(claim("11", "100.00"))).get(0);
-        assertEquals("X", several.get("AGGMM"));
-    }
-
-    @Test
-    public void everyDefendantGetsItsOwnRecords() throws Exception {
-        List<String> ids = layoutSequence(builder.buildApplication(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner"),
-                        party("p3", "Frau", "Maria", "Schuldner")),
-                Arrays.asList(claim("11", "100.00"))));
-
-        assertEquals("two defendants, two opening records", 2,
-                java.util.Collections.frequency(ids, "C13"));
-        assertEquals("and two address records", 2, java.util.Collections.frequency(ids, "C15"));
-        assertEquals("the applicant is written once", 1, java.util.Collections.frequency(ids, "C02"));
-    }
-
-    // ----- the trailer -----
-
-    @Test
-    public void theTrailerSumsWhatTheFileContains() throws Exception {
-        EdaFile file = builder.buildFile(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00"), claim("43", "250.50")),
-                "12345678", "MBDAT", date(2026, 9, 1));
-
-        EdaRecord trailer = file.buildTrailer("12345678");
-
-        assertEquals("one application", "1", trailer.get("ANTANZ"));
-        assertEquals("two claims", "2", trailer.get("ASPANZ"));
-        assertEquals("the catalogue numbers 11 and 43 add up to 54", "54", trailer.get("SKATNR"));
-        assertEquals("5250.50 euro in cents", "525050", trailer.get("SUASP"));
-        assertEquals("no file number exists before the court assigns one", "0", trailer.get("SUGNR"));
-    }
-
-    @Test
-    public void aFreeTextClaimIsCountedOnceDespiteSpanningTwoRecords() throws Exception {
-        ClaimComponent free = new ClaimComponent();
-        free.setId("cf");
-        free.setName("Sonstiger Anspruch");
-        free.setType(ClaimComponentType.MAIN_CLAIM);
-
-        EdaFile file = builder.buildFile(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(new EdaClaimMapper.Claim(free, new BigDecimal("300.00"))),
-                "12345678", "MBDAT", date(2026, 9, 1));
-
-        EdaRecord trailer = file.buildTrailer("12345678");
-
-        assertEquals("counting the continuation record would count the claim twice",
-                "1", trailer.get("ASPANZ"));
-        assertEquals("30000", trailer.get("SUASP"));
-        assertEquals("a free-text claim contributes no catalogue number", "0", trailer.get("SKATNR"));
-    }
-
-    // ----- the finished file -----
-
-    @Test
-    public void theAssembledFilePassesTheVerifierThatGuardsARealExport() throws Exception {
-        EdaFile file = builder.buildFile(dunningCase(),
-                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
-                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
-                Arrays.asList(claim("11", "5000.00")),
-                "12345678", "MBDAT", date(2026, 9, 1));
-
-        String content = file.write("12345678");
-        List<EdaViolation> violations = new EdaStructureVerifier()
-                .verify(content, EdaMahnbescheidLayouts.FORMAT_MAHNBESCHEID);
-
-        assertTrue("an assembled application must survive its own verification: " + violations,
-                violations.isEmpty());
-
-        for (String line : EdaRecords.split(content)) {
-            assertEquals(EdaRecordLayout.RECORD_LENGTH, line.length());
+    private String lookup(Map<String, String> exactMap, Map<String, String> relaxedMap,
+            String legalForm) {
+        String resolved = resolve(legalForm);
+        if (resolved == null) {
+            return null;
         }
+        String value = exactMap.get(resolved);
+        return value != null ? value : relaxedMap.get(resolved);
     }
 
-    @Test
-    public void theHeaderAnnouncesTheApplicationAndItsFormat() {
-        EdaRecord header = builder.header("12345678", "MBDAT", date(2026, 9, 1));
+    @Override
+    public String getKeyForLegalForm(String legalForm) {
+        return lookup(keyByLegalForm, keyByRelaxedForm, legalForm);
+    }
 
-        assertEquals("12345678", header.get("TKEZI"));
-        assertEquals("260901", header.get("DATUM"));
-        assertEquals("01", header.get("BELART"));
-        assertEquals("4000", header.get("FORMAT"));
+    @Override
+    public String getSalutationKeyForLegalForm(String legalForm) {
+        return lookup(salutationByLegalForm, salutationByRelaxedForm, legalForm);
+    }
+
+    /**
+     * The legal forms whose published spelling stops being unique once punctuation is disregarded.
+     *
+     * Exposed for the test that holds their number: a re-imported directory that quietly produced
+     * more of them would answer with no list where it used to answer correctly.
+     *
+     * @return those spellings, relaxed, never null
+     */
+    public Set<String> getFormsAmbiguousWithoutPunctuation() {
+        return Collections.unmodifiableSet(ambiguousWithoutPunctuation);
+    }
+
+    @Override
+    public List<String> getLegalForms() {
+        return Collections.unmodifiableList(legalForms);
+    }
+
+    @Override
+    public List<String> getFunctionsForLegalForm(String legalForm) {
+        if (legalForm == null || legalForm.trim().isEmpty()) {
+            // a party without a legal form is a natural person; the functions that may act for one
+            // are the group the courts keep under 00
+            return getFunctionsForKey(KEY_WITHOUT_LEGAL_FORM);
+        }
+        String key = getKeyForLegalForm(legalForm);
+        return key == null ? Collections.emptyList() : getFunctionsForKey(key);
+    }
+
+    @Override
+    public List<String> getFunctionsForKey(String key) {
+        List<String> functions = functionsByKey.get(key);
+        return functions == null ? Collections.emptyList() : Collections.unmodifiableList(functions);
+    }
+
+    @Override
+    public boolean isAdmittedFunction(String legalForm, String function) {
+        String wanted = normalise(function);
+        if (wanted.isEmpty()) {
+            return false;
+        }
+        for (String admitted : getFunctionsForLegalForm(legalForm)) {
+            if (normalise(admitted).equals(wanted)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public String getSourceDescription() {
+        return "Mahngerichte, Liste der Rechtsformen (Stand 26.02.2024) und Liste der Funktionen "
+                + "der gesetzlichen Vertreter (Stand 06.10.2015), "
+                + "https://www.mahngerichte.de/verzeichnisse/rechtsformen-und-gesetzliche-vertreter/";
+    }
+
+    @Override
+    public String getSourceDate() {
+        return "2015-10-06";
     }
 }

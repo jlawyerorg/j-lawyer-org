@@ -664,6 +664,7 @@ package com.jdimension.jlawyer.eda;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
+import com.jdimension.jlawyer.persistence.ClaimLedgerPartyRepresentative;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -786,12 +787,29 @@ public class EdaPartyMapper {
     }
 
     /**
-     * Writes the legal representative of a party into the two records provided for it.
+     * Writes the chain of legal representatives of a party into the records provided for them.
      *
      * A legal person acts through somebody, and the court has to know who: the Mahnbescheid is served
-     * on the company, but it is the representative who is addressed. The format keeps the function
-     * apart from the name - "Geschäftsführer" and the person - because they answer different
-     * questions.
+     * on the company, but it is the representative who is addressed. Often that is a chain rather
+     * than one entry. A GmbH &amp; Co. KG is represented by its Komplementär-GmbH (§ 161 Abs. 2
+     * i. V. m. § 125 HGB), and that GmbH acts through its Geschäftsführer; naming only one of the two
+     * answers the question by half. The format admits up to six entries per party and reads their
+     * order as the chain: "Gesetzliche Vertreter werden immer dem unmittelbar vorausgegangenen
+     * Antragsteller zugeordnet!"
+     *
+     * How an entry is written depends on what the representative is, and this follows what the courts'
+     * own Online-Mahnantrag produces for the same facts:
+     *
+     * <ul>
+     * <li>a company - the Komplementärin - goes into the Stellung field by its name, and the name
+     * field stays empty, because a company has no first and last name to put there;</li>
+     * <li>a person goes into both: the function - "Geschäftsführer", "Vorstand" - into the Stellung
+     * field, the person into the name field.</li>
+     * </ul>
+     *
+     * The address record follows only where an address is actually recorded. The reference files show
+     * it omitted for a representative given by name alone, and an empty record is not something the
+     * format wants to see.
      *
      * @param party the party being represented
      * @param part1 the layout carrying function and name (C05 for the applicant, C17 for the
@@ -801,29 +819,61 @@ public class EdaPartyMapper {
      * @return the records, or an empty list where no representative is recorded
      * @throws EdaFieldLengthException if a value does not fit its field
      */
-    public List<EdaRecord> mapLegalRepresentative(ClaimLedgerParty party, EdaRecordLayout part1,
+    public List<EdaRecord> mapLegalRepresentatives(ClaimLedgerParty party, EdaRecordLayout part1,
             EdaRecordLayout part2, String prefix) throws EdaFieldLengthException {
 
         List<EdaRecord> records = new ArrayList<>();
-        AddressBean representative = party.getLegalRepresentative();
-        if (representative == null) {
+        if (party == null || party.getRepresentatives() == null) {
             return records;
         }
 
-        EdaRecord r1 = new EdaRecord(part1);
-        // the function is what the format asks for first: Geschäftsführer, Vorstand, Verwalterin
-        r1.set(prefix + "FU", representative.getRole());
-        r1.set(prefix + "N", fullName(representative));
-        records.add(r1);
+        for (ClaimLedgerPartyRepresentative representative : sortedRepresentatives(party)) {
+            AddressBean contact = representative.getContact();
+            if (contact == null) {
+                continue;
+            }
 
-        EdaRecord r2 = new EdaRecord(part2);
-        r2.set(prefix + "SH", street(representative));
-        r2.set(prefix + "PLZ", representative.getZipCode());
-        r2.set(prefix + "O", representative.getCity());
-        r2.set(prefix + "AL", foreignCountry(representative));
-        records.add(r2);
+            EdaRecord r1 = new EdaRecord(part1);
+            if (notEmpty(contact.getCompany())) {
+                r1.set(prefix + "FU", contact.getCompany());
+            } else {
+                r1.set(prefix + "FU", representative.getFunctionDesignation());
+                r1.set(prefix + "N", fullName(contact));
+            }
+            records.add(r1);
+
+            if (hasAddress(contact)) {
+                EdaRecord r2 = new EdaRecord(part2);
+                r2.set(prefix + "SH", street(contact));
+                r2.set(prefix + "PLZ", contact.getZipCode());
+                r2.set(prefix + "O", contact.getCity());
+                r2.set(prefix + "AL", foreignCountry(contact));
+                records.add(r2);
+            }
+
+            if (records.size() >= 2 * ClaimLedgerPartyRepresentative.MAXIMUM_PER_PARTY) {
+                break;
+            }
+        }
 
         return records;
+    }
+
+    /**
+     * The chain in the order the format reads it, outermost first.
+     *
+     * Sorted here rather than trusted from the caller: the order is not a presentation detail but the
+     * chain itself, and a list that arrived from a client or from a detached entity has no guarantee
+     * of carrying it.
+     */
+    private List<ClaimLedgerPartyRepresentative> sortedRepresentatives(ClaimLedgerParty party) {
+        List<ClaimLedgerPartyRepresentative> sorted = new ArrayList<>(party.getRepresentatives());
+        sorted.sort((a, b) -> Integer.compare(a.getSequenceNumber(), b.getSequenceNumber()));
+        return sorted;
+    }
+
+    private boolean hasAddress(AddressBean contact) {
+        return notEmpty(contact.getStreet()) || notEmpty(contact.getZipCode()) || notEmpty(contact.getCity());
     }
 
     private String fullName(AddressBean contact) {

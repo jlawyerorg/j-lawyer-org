@@ -666,6 +666,7 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimComponentType;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
+import com.jdimension.jlawyer.persistence.ClaimLedgerPartyRepresentative;
 import com.jdimension.jlawyer.persistence.ClaimPartyRole;
 import com.jdimension.jlawyer.persistence.DunningCase;
 import com.jdimension.jlawyer.persistence.LitigationCourtType;
@@ -870,6 +871,85 @@ public class DunningApplicationValidatorTest {
     }
 
     @Test
+    public void theWrongFurtherEntryDoesNotSatisfyTheRule() {
+        // bisher genügte irgendeines der vier Zusatzfelder für jede Nummer - eine PLZ dort, wo die
+        // Vertragsart verlangt ist, hätte den Antrag passieren lassen. Das Gericht sähe es anders.
+        ClaimComponent damages = mainClaim("c1", "Schadenersatz", "28");
+        damages.setCataloguePropertyZip("70173");
+        damages.setCataloguePropertyCity("Stuttgart");
+
+        DunningValidationResult r = validate(completeCase(), completeParties(),
+                Arrays.asList(damages), "5000.00");
+
+        assertFalse(r.isReady());
+        assertTrue(hasIssueAbout(r, "Zusatzangabe"));
+    }
+
+    @Test
+    public void ahalfGivenPropertyLocationIsNotGiven() {
+        // die Nummer verlangt PLZ *und* Ort; nur eines davon nennt die Wohnung nicht
+        ClaimComponent rent = mainClaim("c1", "Miete", "19");
+        rent.setCataloguePropertyZip("70173");
+
+        DunningValidationResult r = validate(completeCase(), completeParties(),
+                Arrays.asList(rent), "5000.00");
+
+        assertFalse(r.isReady());
+    }
+
+    @Test
+    public void anAdmittedContractTypeSatisfiesTheRule() {
+        ClaimComponent damages = mainClaim("c1", "Schadenersatz", "28");
+        damages.setCatalogueContractDesignation("KAUF");
+
+        DunningValidationResult r = validate(completeCase(), completeParties(),
+                Arrays.asList(damages), "5000.00");
+
+        assertTrue("KAUF steht auf der veröffentlichten Liste: " + r.getIssues(), r.isReady());
+    }
+
+    @Test
+    public void acontractTypeOutsideTheListIsRefusedRatherThanWarnedAbout() {
+        // anders als bei der Bezeichnung des gesetzlichen Vertreters ist die Monierung hier belegt:
+        // die Anleitung der Gerichte sagt sie für eine Vertragsart außerhalb der Liste ausdrücklich
+        ClaimComponent damages = mainClaim("c1", "Schadenersatz", "28");
+        damages.setCatalogueContractDesignation("Handschlag");
+
+        DunningValidationResult r = validate(completeCase(), completeParties(),
+                Arrays.asList(damages), "5000.00");
+
+        assertFalse(r.isReady());
+        assertTrue(hasIssueAbout(r, "Vertragsart"));
+    }
+
+    @Test
+    public void areferenceDetailAnswersTheNumbersThatAskForOne() {
+        // 36 will die Konto-Nr., 42 die Zähler-Nr., 61 die Art der Wahlleistung - drei
+        // Bezeichnungen, ein Feld, und im Antrag eine Spalte
+        for (String number : new String[]{"36", "42", "61"}) {
+            ClaimComponent c = mainClaim("c1", "Forderung", number);
+            assertFalse("Nr. " + number + " müsste die Zusatzangabe verlangen",
+                    validate(completeCase(), completeParties(), Arrays.asList(c), "5000.00").isReady());
+
+            c.setCatalogueReferenceDetail("12345");
+            assertTrue("Nr. " + number + " müsste damit vollständig sein",
+                    validate(completeCase(), completeParties(), Arrays.asList(c), "5000.00").isReady());
+        }
+    }
+
+    @Test
+    public void thePeriodOfNumber70IsAnsweredByTheClaimItself() {
+        // Nr. 70 verlangt laut Katalog einen Zeitraum, aber der Assistent der Gerichte fragt bei
+        // ihr nach keiner weiteren Angabe: gemeint ist das von/bis der Anspruchszeile. Ein eigenes
+        // Feld einzufordern, das es nicht gibt, hielte einen vollständigen Antrag auf.
+        DunningValidationResult r = validate(completeCase(), completeParties(),
+                Arrays.asList(mainClaim("c1", "Kita-Beitrag", "70")), "5000.00");
+
+        assertTrue("nichts sollte zu beanstanden sein: " + r.getIssues(), r.isReady());
+        assertTrue(r.isEmpty());
+    }
+
+    @Test
     public void theFurtherEntryPresentSatisfiesTheRule() {
         ClaimComponent rent = mainClaim("c1", "Miete", "19");
         rent.setCataloguePropertyZip("70173");
@@ -1025,5 +1105,118 @@ public class DunningApplicationValidatorTest {
 
         assertTrue(validate(c, completeParties(),
                 Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00").isReady());
+    }
+
+    // ----- die Vertretungskette -----
+
+    private ClaimLedgerPartyRepresentative rep(String company, String first, String last,
+            String function, int sequence) {
+        AddressBean a = new AddressBean();
+        a.setCompany(company);
+        a.setFirstName(first);
+        a.setName(last);
+        ClaimLedgerPartyRepresentative r = new ClaimLedgerPartyRepresentative();
+        r.setContact(a);
+        r.setFunctionDesignation(function);
+        r.setSequenceNumber(sequence);
+        return r;
+    }
+
+    private List<ClaimLedgerParty> partiesWithChain(String legalForm,
+            ClaimLedgerPartyRepresentative... chain) {
+        List<ClaimLedgerParty> parties = completeParties();
+        ClaimLedgerParty debtor = parties.get(1);
+        debtor.getContact().setCompany("Muster Transport GmbH & Co. KG");
+        debtor.getContact().setLegalForm(legalForm);
+        debtor.getRepresentatives().addAll(Arrays.asList(chain));
+        return parties;
+    }
+
+    @Test
+    public void anAdmittedDesignationRaisesNothing() {
+        // Schlüssel 31 lässt für die GmbH & Co KG den Geschäftsführer zu
+        DunningValidationResult r = validate(completeCase(),
+                partiesWithChain("GmbH & Co KG", rep(null, "Max", "Muster", "Geschäftsführer", 1)),
+                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
+
+        assertTrue("nichts sollte zu beanstanden sein: " + r.getIssues(), r.isEmpty());
+    }
+
+    @Test
+    public void aDesignationOutsideTheListIsAWarningAndNotABlock() {
+        // die Liste ist Stand 06.10.2015; das Gericht kann monieren, aber die Kanzlei entscheidet,
+        // ob sie den Antrag trotzdem stellt
+        DunningValidationResult r = validate(completeCase(),
+                partiesWithChain("GmbH & Co KG", rep(null, "Max", "Muster", "Chef", 1)),
+                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
+
+        assertTrue(hasIssueAbout(r, "Antragsgegner"));
+        assertTrue("eine unzulässige Bezeichnung darf den Antrag nicht aufhalten", r.isReady());
+    }
+
+    @Test
+    public void theNextStepIsMeasuredAgainstTheLegalFormOfTheOneBeforeIt() {
+        // die Kette: die KG durch ihre Komplementär-GmbH, die GmbH durch ihren CEO. "CEO" lässt die
+        // Liste für die GmbH (Schlüssel 10) zu, für die KG (Schlüssel 31) nicht. Würde die zweite
+        // Stufe gegen die Rechtsform der Partei statt gegen die ihres Vorgängers gemessen, stünde
+        // hier eine Warnung, die der Sache nach falsch wäre
+        ClaimLedgerPartyRepresentative komplementaerin = rep("Muster Verwaltungs-GmbH", null, null, null, 1);
+        komplementaerin.getContact().setLegalForm("Gesellschaft mit beschr. Haftung");
+        DunningValidationResult r = validate(completeCase(),
+                partiesWithChain("GmbH & Co KG", komplementaerin,
+                        rep(null, "Max", "Muster", "CEO", 2)),
+                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
+
+        assertTrue("CEO ist für die GmbH zugelassen: " + r.getIssues(), r.isEmpty());
+    }
+
+    @Test
+    public void adesignationAdmittedOnlyFurtherUpTheChainIsStillFlagged() {
+        // die Gegenprobe: "CEO" auf der ersten Stufe wird gegen die KG gemessen und ist dort nicht
+        // zugelassen
+        DunningValidationResult r = validate(completeCase(),
+                partiesWithChain("GmbH & Co KG", rep(null, "Max", "Muster", "CEO", 1)),
+                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
+
+        assertTrue(hasIssueAbout(r, "Antragsgegner"));
+    }
+
+    @Test
+    public void acompanyAsRepresentativeIsNotMeasuredAgainstTheFunctionList() {
+        // ihr Name steht im Feld der Stellung; eine Funktion wird daneben nicht geschrieben
+        ClaimLedgerPartyRepresentative komplementaerin = rep("Muster Verwaltungs-GmbH", null, null,
+                "Komplementärin", 1);
+        komplementaerin.getContact().setLegalForm("GmbH");
+        DunningValidationResult r = validate(completeCase(),
+                partiesWithChain("GmbH & Co KG", komplementaerin),
+                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
+
+        assertTrue("nichts sollte zu beanstanden sein: " + r.getIssues(), r.isEmpty());
+    }
+
+    @Test
+    public void anUnknownLegalFormYieldsNoVerdictAtAll() {
+        // ohne Liste gibt es nichts zu messen, und eine Warnung ins Blaue wäre schlechter als keine
+        DunningValidationResult r = validate(completeCase(),
+                partiesWithChain("Wohnzimmer GbR & Freunde", rep(null, "Max", "Muster", "Chef", 1)),
+                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
+
+        assertTrue("nichts sollte zu beanstanden sein: " + r.getIssues(), r.isEmpty());
+    }
+
+    @Test
+    public void aChainLongerThanTheFormatCarriesIsAnError() {
+        // der siebte Vertreter würde nicht geschrieben - ein Antrag, der weniger Vertreter nennt
+        // als er soll, ist keiner, über den das Gericht wie gewollt entscheiden kann
+        ClaimLedgerPartyRepresentative[] chain = new ClaimLedgerPartyRepresentative[7];
+        for (int i = 0; i < chain.length; i++) {
+            chain[i] = rep(null, "Max", "Muster " + i, "Geschäftsführer", i + 1);
+        }
+        DunningValidationResult r = validate(completeCase(),
+                partiesWithChain("GmbH & Co KG", chain),
+                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
+
+        assertFalse(r.isReady());
+        assertTrue(hasIssueAbout(r, "Antragsgegner"));
     }
 }

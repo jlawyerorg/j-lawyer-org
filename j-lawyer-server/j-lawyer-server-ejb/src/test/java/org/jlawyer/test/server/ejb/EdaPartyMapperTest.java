@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.eda.EdaRecord;
 import com.jdimension.jlawyer.eda.EdaSalutationKey;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
+import com.jdimension.jlawyer.persistence.ClaimLedgerPartyRepresentative;
 import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -948,22 +949,30 @@ public class EdaPartyMapperTest {
     private ClaimLedgerParty withRepresentative(String role, String first, String last) {
         ClaimLedgerParty p = company("Beispiel Handels GmbH", "GmbH");
         AddressBean rep = new AddressBean();
-        rep.setRole(role);
         rep.setFirstName(first);
         rep.setName(last);
         rep.setStreet("Königstr.");
         rep.setStreetNumber("1");
         rep.setZipCode("70173");
         rep.setCity("Stuttgart");
-        p.setLegalRepresentative(rep);
+        p.getRepresentatives().add(representative(rep, role, 1));
         return p;
     }
+
+    private ClaimLedgerPartyRepresentative representative(AddressBean contact, String function, int sequence) {
+        ClaimLedgerPartyRepresentative r = new ClaimLedgerPartyRepresentative();
+        r.setContact(contact);
+        r.setFunctionDesignation(function);
+        r.setSequenceNumber(sequence);
+        return r;
+    }
+
 
     @Test
     public void theRepresentativeIsNamedTogetherWithTheFunctionHeActsIn() throws Exception {
         // the court needs both: 'Geschäftsführer' says why this person can be served for the
         // company, the name says who is to be served
-        List<EdaRecord> records = mapper.mapLegalRepresentative(
+        List<EdaRecord> records = mapper.mapLegalRepresentatives(
                 withRepresentative("Geschäftsführer", "Max", "Muster"),
                 EdaMahnbescheidLayouts.getLayout("C17"),
                 EdaMahnbescheidLayouts.getLayout("C18"), "AGGV");
@@ -979,7 +988,7 @@ public class EdaPartyMapperTest {
 
     @Test
     public void theSameMappingServesTheApplicantSideUnderItsOwnFieldNames() throws Exception {
-        List<EdaRecord> records = mapper.mapLegalRepresentative(
+        List<EdaRecord> records = mapper.mapLegalRepresentatives(
                 withRepresentative("Vorstand", "Erika", "Muster"),
                 EdaMahnbescheidLayouts.getLayout("C05"),
                 EdaMahnbescheidLayouts.getLayout("C06"), "ASGV");
@@ -992,8 +1001,65 @@ public class EdaPartyMapperTest {
     }
 
     @Test
+    public void aChainOfRepresentativesIsWrittenInItsOrder() throws Exception {
+        // the case the single field could never hold: a GmbH & Co. KG is represented by its
+        // Komplementär-GmbH (§ 161 Abs. 2 i. V. m. § 125 HGB), and that GmbH by its Geschäftsführer.
+        // Either one on its own is a wrong answer to the question who acts for this party.
+        ClaimLedgerParty kg = company("Muster Transport GmbH & Co. KG", "GmbH & Co KG");
+        AddressBean komplementaerin = new AddressBean();
+        komplementaerin.setCompany("Muster Verwaltungs-GmbH");
+        AddressBean geschaeftsfuehrer = new AddressBean();
+        geschaeftsfuehrer.setFirstName("Max");
+        geschaeftsfuehrer.setName("Muster");
+        kg.getRepresentatives().add(representative(geschaeftsfuehrer, "Geschäftsführer", 2));
+        kg.getRepresentatives().add(representative(komplementaerin, null, 1));
+
+        List<EdaRecord> records = mapper.mapLegalRepresentatives(kg,
+                EdaMahnbescheidLayouts.getLayout("C17"),
+                EdaMahnbescheidLayouts.getLayout("C18"), "AGGV");
+
+        // the list arrived out of order and the sequence numbers decide, not the position in it
+        assertEquals(2, records.size());
+        assertEquals("a company representative is named in the Stellung field, as the courts' own "
+                + "files have it", "Muster Verwaltungs-GmbH", records.get(0).get("AGGVFU"));
+        assertNull("a company has no first and last name to put in the name field",
+                records.get(0).get("AGGVN"));
+        assertEquals("Geschäftsführer", records.get(1).get("AGGVFU"));
+        assertEquals("Max Muster", records.get(1).get("AGGVN"));
+    }
+
+    @Test
+    public void aRepresentativeWithoutAnAddressGetsNoAddressRecord() throws Exception {
+        // an empty C18 would assert an address the application does not state
+        ClaimLedgerParty kg = company("Muster Transport GmbH & Co. KG", "GmbH & Co KG");
+        AddressBean komplementaerin = new AddressBean();
+        komplementaerin.setCompany("Muster Verwaltungs-GmbH");
+        kg.getRepresentatives().add(representative(komplementaerin, null, 1));
+
+        List<EdaRecord> records = mapper.mapLegalRepresentatives(kg,
+                EdaMahnbescheidLayouts.getLayout("C17"),
+                EdaMahnbescheidLayouts.getLayout("C18"), "AGGV");
+
+        assertEquals(1, records.size());
+        assertEquals("C17", records.get(0).getLayout().getId());
+    }
+
+    @Test
+    public void anEntryWithNobodyInItIsNotWritten() throws Exception {
+        // a row left behind in the dialog says nothing and must not reach the court
+        ClaimLedgerParty p = company("Beispiel Handels GmbH", "GmbH");
+        p.getRepresentatives().add(representative(null, "Geschäftsführer", 1));
+
+        List<EdaRecord> records = mapper.mapLegalRepresentatives(p,
+                EdaMahnbescheidLayouts.getLayout("C17"),
+                EdaMahnbescheidLayouts.getLayout("C18"), "AGGV");
+
+        assertTrue(records.isEmpty());
+    }
+
+    @Test
     public void apartyThatActsForItselfGetsNoRepresentativeRecords() throws Exception {
-        List<EdaRecord> records = mapper.mapLegalRepresentative(
+        List<EdaRecord> records = mapper.mapLegalRepresentatives(
                 company("Beispiel Handels GmbH", "GmbH"),
                 EdaMahnbescheidLayouts.getLayout("C17"),
                 EdaMahnbescheidLayouts.getLayout("C18"), "AGGV");

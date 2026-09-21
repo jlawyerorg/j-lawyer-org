@@ -666,12 +666,17 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimComponentType;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
+import com.jdimension.jlawyer.persistence.ClaimLedgerPartyRepresentative;
 import com.jdimension.jlawyer.persistence.ClaimPartyRole;
 import com.jdimension.jlawyer.persistence.DunningCase;
 import com.jdimension.jlawyer.pojo.DunningValidationResult;
+import com.jdimension.jlawyer.referencedata.CatalogueAddition;
+import com.jdimension.jlawyer.referencedata.LegalRepresentativeDirectory;
 import com.jdimension.jlawyer.referencedata.MainClaimCatalogue;
+import com.jdimension.jlawyer.referencedata.ReferenceData;
 import com.jdimension.jlawyer.referencedata.MainClaimCatalogueEntry;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -800,9 +805,11 @@ public class DunningApplicationValidator {
             if (party.getRole() == ClaimPartyRole.CREDITOR) {
                 creditors++;
                 validateAddress(party, "Antragsteller", result);
+                validateRepresentatives(party, "Antragsteller", result);
             } else if (party.getRole() == ClaimPartyRole.DEBTOR) {
                 debtors++;
                 validateAddress(party, "Antragsgegner", result);
+                validateRepresentatives(party, "Antragsgegner", result);
                 if (!party.hasLitigationCourt()) {
                     result.error("Prozessgericht",
                             "Für " + party.getEffectiveDesignation() + " ist nicht angegeben, "
@@ -816,6 +823,63 @@ public class DunningApplicationValidator {
         }
         if (debtors == 0) {
             result.error("Antragsgegner", "Es ist kein Schuldner erfasst.", null);
+        }
+    }
+
+    /**
+     * Checks the chain of legal representatives against what the courts admit.
+     *
+     * Two things are checked and they are of different weight. That the chain is not longer than the
+     * format can carry is an error: the sixth entry would simply not be written, and an application
+     * naming fewer representatives than it should is one the court cannot act on as intended.
+     *
+     * That a designation is outside the published list is a warning. The list is Stand 06.10.2015 and
+     * the legal form it is looked up by is free text on the contact, so an unknown legal form yields
+     * no list at all and nothing can be said. Where there is a list and the designation is not in it,
+     * the court may monition - which the firm should hear about before filing, and then decide.
+     *
+     * A company named as representative is not checked: its name goes into the Stellung field and no
+     * function is written beside it.
+     */
+    private void validateRepresentatives(ClaimLedgerParty party, String role,
+            DunningValidationResult result) {
+
+        List<ClaimLedgerPartyRepresentative> chain = new ArrayList<>(
+                party.getRepresentatives() == null
+                        ? new ArrayList<ClaimLedgerPartyRepresentative>() : party.getRepresentatives());
+        if (chain.isEmpty()) {
+            return;
+        }
+        chain.sort((a, b) -> Integer.compare(a.getSequenceNumber(), b.getSequenceNumber()));
+
+        String who = party.getEffectiveDesignation();
+        if (chain.size() > ClaimLedgerPartyRepresentative.MAXIMUM_PER_PARTY) {
+            result.error(role, who + ": es sind " + chain.size() + " gesetzliche Vertreter erfasst, "
+                    + "der Antrag kann höchstens " + ClaimLedgerPartyRepresentative.MAXIMUM_PER_PARTY
+                    + " übertragen.", party.getId());
+        }
+
+        LegalRepresentativeDirectory directory = ReferenceData.getLegalRepresentativeDirectory();
+        String legalForm = party.getContact() == null ? null : party.getContact().getLegalForm();
+        for (ClaimLedgerPartyRepresentative representative : chain) {
+            AddressBean contact = representative.getContact();
+            if (contact == null) {
+                continue;
+            }
+            boolean company = !isBlank(contact.getCompany());
+            String function = representative.getFunctionDesignation();
+            if (!company && !isBlank(function)
+                    && !directory.getFunctionsForLegalForm(legalForm).isEmpty()
+                    && !directory.isAdmittedFunction(legalForm, function)) {
+
+                result.warning(role, who + ": \"" + function.trim() + "\" ist für die Rechtsform "
+                        + (isBlank(legalForm) ? "einer natürlichen Person" : legalForm.trim())
+                        + " keine zugelassene Bezeichnung des gesetzlichen Vertreters.",
+                        "Liste der Funktionen der gesetzlichen Vertreter der Mahngerichte");
+            }
+            // the next step of the chain acts for this representative, so it is measured against
+            // this one's legal form
+            legalForm = contact.getLegalForm();
         }
     }
 
@@ -913,9 +977,37 @@ public class DunningApplicationValidator {
             return;
         }
 
-        if (isBlank(component.getCataloguePropertyZip()) && isBlank(component.getCataloguePropertyCity())
-                && isBlank(component.getCatalogueContractDesignation())
-                && isBlank(component.getCatalogueReferenceDetail())) {
+        // Asked of the one field that answers this number, not of any of the four: a postal code
+        // where the contract type was wanted satisfies nothing, and the court would say so.
+        CatalogueAddition addition = CatalogueAddition.of(parsed);
+        boolean given;
+        switch (addition) {
+            case PROPERTY_LOCATION:
+                given = !isBlank(component.getCataloguePropertyZip())
+                        && !isBlank(component.getCataloguePropertyCity());
+                break;
+            case CONTRACT_TYPE:
+                given = !isBlank(component.getCatalogueContractDesignation());
+                break;
+            case REFERENCE_DETAIL:
+                given = !isBlank(component.getCatalogueReferenceDetail());
+                break;
+            case CLAIM_PERIOD:
+                // der Zeitraum, den Nr. 70 verlangt, ist das von/bis der Anspruchszeile selbst -
+                // ein eigenes Feld gibt es dafür nicht, und der Assistent der Gerichte fragt auch
+                // nicht danach
+                return;
+            default:
+                // the catalogue demands something this code does not know how to hold. Saying so is
+                // better than passing it over: the application would go out incomplete
+                result.warning("Zusatzangabe zur Katalognummer",
+                        name + ": die Katalognummer " + parsed + " verlangt zusätzlich "
+                        + entry.getRequiredAdditionalEntry() + ", wofür das Forderungskonto kein "
+                        + "Feld führt.", component.getId());
+                return;
+        }
+
+        if (!given) {
             result.error("Zusatzangabe zur Katalognummer",
                     name + ": die Katalognummer " + parsed + " (" + entry.getDesignation()
                     + ") verlangt zusätzlich " + entry.getRequiredAdditionalEntry()
@@ -923,6 +1015,19 @@ public class DunningApplicationValidator {
                             ? "" : " (" + entry.getAdditionalEntryLocation() + ")")
                     + ". Ohne diese Angabe moniert das Gericht den Antrag.",
                     component.getId());
+            return;
+        }
+
+        // The contract type is one of a closed list the courts publish; a word outside it is a
+        // monition, which is documented rather than suspected, so this refuses rather than warns.
+        String contractType = component.getCatalogueContractDesignation();
+        if (addition == CatalogueAddition.CONTRACT_TYPE && !isBlank(contractType)
+                && !ReferenceData.getContractTypeCatalogue().isAdmitted(contractType)) {
+
+            result.error("Vertragsart",
+                    name + ": \"" + contractType.trim()
+                    + "\" ist keine der Vertragsarten, die die Mahngerichte zu Katalog-Nr. 28 "
+                    + "zulassen.", component.getId());
         }
     }
 

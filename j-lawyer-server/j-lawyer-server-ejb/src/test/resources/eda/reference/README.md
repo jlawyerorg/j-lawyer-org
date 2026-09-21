@@ -388,6 +388,29 @@ der Antragsteller immer in Vollform übermittelt wird.
 
 ---
 
+### 14 / 15 / 16 — Katalognummern mit Zusatzangabe — **beantwortet, keine Dateien nötig**
+*Die Weboberfläche hat die Frage in Worten beantwortet, bevor eine Datei entstehen musste.*
+
+Der Katalog verlangt zu acht Nummern eine weitere Angabe. Für Wohnungsanschrift (19, 20, 90) und
+Vertragsart (28) war klar, wohin sie geht: in die eigenen Sätze C21 und C22. Für die übrigen vier
+verweist der Katalog auf *„Vordruck Zeile 32-34"* und nennt eine **Spalte** — bei Nr. 36 die dritte,
+bei Nr. 61 die zweite. Das klang nach zwei verschiedenen Orten.
+
+Es ist keiner. Der Assistent weist beide Eingaben mit derselben Anweisung zurück:
+
+> *„Bitte die Kontonummer im Feld Rechnungsnummer eintragen."* (Nr. 36)
+> *„Bitte die Art der Wahlleistung im Feld Rechnungsnummer eintragen."* (Nr. 61)
+
+Also **36, 42 und 61 gehen alle in `ASPRNR` und verdrängen die Rechnungsnummer** — es gibt eine
+Spalte, nicht zwei. Was die Spaltenzählung des Papiervordrucks bedeutet, ist für die Datei
+unerheblich.
+
+Zu **Nr. 70** hat der Assistent **überhaupt keine Zusatzangabe verlangt**. Der *Zeitraum vom – bis*,
+den der Katalog nennt, ist das von/bis der Anspruchszeile selbst, das ohnehin gefüllt wird. Ein
+eigenes Feld dafür gibt es nicht.
+
+Damit ist der offene Punkt geschlossen; die Dateien 14 bis 16 werden nicht gebraucht.
+
 ## Ablage
 
 | Nr. | Datei | Antrags-ID | erzeugt am |

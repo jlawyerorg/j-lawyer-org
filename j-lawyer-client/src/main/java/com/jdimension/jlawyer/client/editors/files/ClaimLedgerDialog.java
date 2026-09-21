@@ -1692,6 +1692,10 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     }//GEN-LAST:event_formComponentResized
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
+        if (!this.pnlCourtDunning.confirmPendingChanges(this)) {
+            this.jTabbedPane1.setSelectedComponent(this.pnlCourtDunning);
+            return;
+        }
         this.cancelled = true;
         this.setVisible(false);
         this.dispose();
@@ -1755,6 +1759,14 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     }
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+
+        // Dieser Knopf speichert das Forderungskonto und schließt den Dialog. Die Mahnsache im
+        // Reiter "Mahnverfahren" ist ein eigener Datensatz mit eigenem Knopf - ohne diese Frage
+        // ginge, was dort getippt wurde, beim Schließen verloren.
+        if (!this.pnlCourtDunning.confirmPendingChanges(this)) {
+            this.jTabbedPane1.setSelectedComponent(this.pnlCourtDunning);
+            return;
+        }
 
         this.save();
         this.cancelled = false;
