@@ -28,9 +28,27 @@
       and Nr. 1100 KV GKG, all taken from the official Vergütungs- and Kostenverzeichnis. *Still
       open:* the GvKostG positions for 4.6, and the pre-2025 scale and items, which an installation
       needs for matters commissioned before 1 June 2025 (§ 60 RVG)
-- [ ] 0.4 Obtain at least one official ZVFV form PDF per annex in scope and record its AcroForm
-      field names, so the mapping profiles of 4.2/4.3 and the tests of 4.10 can be written against
-      the real forms rather than assumptions
+- [x] 0.4 The official ZVFV forms are in, and their field names are recorded. All eight annexes of
+      the ZVFV 2022, version of 01.09.2024, obtained from the BMJ — they were not findable under
+      justiz.de — and kept under `j-lawyer-server/j-lawyer-server-ejb/src/test/resources/zvfv/`
+      together with three Hinweisblätter, which carry no fields. As annexes of a Rechtsverordnung
+      they are amtliche Werke under § 5 Abs. 1 UrhG, so keeping them in the repository is
+      unproblematic.
+      `felder/` holds one index per form — page, technical name, kind, admissible values, label —
+      read with the same PDFBox the server uses. 1894 fields across the eight.
+      *Two findings that shape 4.2 and 4.3.* The technical names carry no meaning whatsoever:
+      `Textfeld 353`, `Kontrollkästchen 3036`. What a field is stands only in its tooltip — and
+      every field of all eight forms has one, which is what makes a mapping profile writable at all
+      rather than a search on the printed form. And every one of the 663 check boxes uses the same
+      on-state, `Ja`. The filler will still read it instead of assuming it: a later version may
+      change it, and a wrong on-state produces a form that prints as ticked and reads as empty.
+      *Also worth knowing:* Anlage 4 is the application and Anlage 5 the draft order the court
+      adopts, which is why the draft has five times the fields (411 against 84). Both are needed;
+      the court expects the draft with the application.
+      `ZvfvFormFieldIndexTest` binds the index to the files: a replaced form whose index was not
+      regenerated would send the mapping after fields that no longer exist. It also holds the two
+      properties above, so that if a future version drops a tooltip or changes an on-state, that
+      shows up here rather than in a form filed with a court.
 - [ ] 0.5 Register for the EDA (Kennziffer) and agree a test exchange with the dunning court.
       Organisational and not doable from here, but on the critical path: phase 3 cannot be verified
       end to end without a Kennziffer of the firm's own.
@@ -446,12 +464,77 @@
 
 ## 4. Phase 4 — Enforcement
 
-- [ ] 4.1 `EnforcementMeasure` entity, catalog of measure types and their configuration
+- [x] 4.1 `EnforcementMeasure` entity, catalog of measure types and their configuration.
+      `EnforcementMeasure` (V3_6_0_37) records what was done, to whom, when and what came of it —
+      a workflow object, not a second place where money lives: what is recovered is booked into the
+      ledger. It names its debtors explicitly rather than taking all of the ledger's, because
+      enforcement runs against the debtor named in the title and can be pursued against one joint
+      debtor and not another. The addressee is frozen in the wording used towards them, like a party
+      designation, so a measure filed years ago stays reconstructable after a bailiff's district has
+      been redrawn.
+      `EnforcementMeasureOutcome` distinguishes the six the specification asks for, and the
+      distinction that matters is `isClosed()`: a stayed measure — the debtor paying by instalments
+      under § 802b Abs. 2 ZPO — has *not* run its course. If the instalments fail it goes on from
+      where it stood rather than being started again.
+      The kinds are a table (V3_6_0_38, fifteen seeded entries), not an enum. Firms differ in what
+      they use and a practice that never files a compulsory mortgage should not have to look at one;
+      and what a kind entails — which ZVFV annex, which addressee, which follow-up period, whether
+      it needs a title at all — is configuration. `form_key` names the annex rather than a template,
+      because templates carry validity periods and the one in force when the measure is created is
+      the one to use.
+      *Corrected in V3_6_0_39:* the annex numbers of the seed were given from memory and several
+      were wrong. The ZVFV 2022 has eight annexes, and the two mistakes mattered: the attachment
+      order is Anlage 4, not 2 — Anlage 2 is the application for a judicial search order, which I
+      had recorded as having no form at all — and there is only **one** attachment application
+      whether the claim is maintenance or not. What differs is the itemisation attached to it,
+      Anlage 7 against Anlage 8, so the type gained a second key, `itemisation_form_key`, and the
+      bailiff order takes Anlage 6. The correction updates only rows still carrying the wrong value,
+      so a firm that fixed it first keeps its own.
+      `EnforcementMeasurePlanner` answers which kinds can be taken today and, for the rest, what is
+      missing — each of the three conditions of § 750 Abs. 1 ZPO named separately, because "the
+      title is incomplete" does not tell a firm what to go and fetch. It also holds the 750-euro
+      floor of § 866 Abs. 3 ZPO for the compulsory mortgage. Kinds that cannot be taken are returned
+      with their reason rather than dropped: a dialog that silently omits the bailiff order leaves
+      the user wondering.
+      `MigrationConventionsTest` gained two further checks, both paid for by a failed deployment.
+      Hibernate writes an `@Enumerated(STRING)` as the name of the constant, so a typo in a seed
+      settles into the database without complaint and surfaces much later as an
+      `IllegalArgumentException` far from its cause; every uppercase literal of these migrations now
+      has to be an addressee type, an outcome or a form key.
+      And V3_6_0_38 failed on deployment with "Duplicate column name '1'": only the first of the
+      fifteen seed blocks aliased its columns, and a derived table names an unaliased column after
+      the text of its expression — so three columns holding the literal 1 were three columns called
+      "1". The test now derives the column names of every `FROM (SELECT ...)` the way MySQL does and
+      requires them to be distinct. Removing the aliases again makes it fail with the offending
+      name.
 - [ ] 4.2 Form template management (PDF + field mapping + validity) with admin UI, listing of the
       AcroForm field names of an uploaded PDF, and import of a default package built from 0.4
-- [ ] 4.3 New name-based AcroForm filler beside `PdfFormsAccess` (fields addressed by name,
-      on-state values for check boxes and radio groups), form generation incl. mandatory-field
-      validation, storage in the case, recording of the form version
+- [~] 4.3 New name-based AcroForm filler beside `PdfFormsAccess`. **The filler is built and tested
+      against the real forms; storage in the case and recording of the form version wait for the
+      service of 4.8.**
+      Beside `PdfFormsAccess` rather than inside it because the two solve different problems. That
+      one fills a firm's own templates, where a placeholder is written into a field's value or its
+      tooltip and is found by searching for it. The ZVFV forms carry no placeholders: their fields
+      have fixed names, meaningless in themselves, and a mapping profile says which holds what.
+      Searching would find nothing.
+      *Check boxes are where this earns its keep.* A box is not ticked by writing "true" into it;
+      each carries an on-state of its own, and `AcroFormFiller` reads it from the field rather than
+      assuming it. A value that means neither clearly ticked nor clearly empty is **refused**, not
+      guessed at — ticking a box because the data said "vielleicht" would assert something nobody
+      said, and nobody would notice before the court did. "nein" and "false" untick it.
+      *Mandatory fields come from the profile, not the form.* None of the eight forms sets the
+      Required flag on a single field, so there is nothing in the PDF to validate against; the
+      profile names them and `AcroFormFillResult` reports which stayed empty. It separates three
+      findings of different weight: a field the form does not have (a broken profile), a mandatory
+      field left empty (missing data), and a value that could not be applied (the dangerous one).
+      Twelve tests, every one against a real court form and every one **reading the saved file
+      back**. Setting a value and believing it is how one produces a form that looks right in the
+      code and is empty on the paper. Five mutations — hard-coding the on-state, accepting any
+      non-empty value as ticked, swallowing unknown fields, letting whitespace pass as a mandatory
+      entry, not flattening — all killed.
+      *Noted for 4.9:* Anlage 4 is the application and Anlage 5 the draft order the court adopts, so
+      a PfÜB measure produces **two** documents, not one. The measure type carries only `form_key`
+      today; that needs a second one, or the draft has to be derived from the application.
 - [ ] 4.4 Claim itemisation for ZVFV Anlagen 6–8 from the ledger, sharing the statement calculation
 - [ ] 4.5 Third-party debtors incl. § 840 ZPO declaration deadline and payment booking
 - [ ] 4.6 Enforcement cost proposal and booking (§ 788 ZPO, Nr. 3309/3310 VV RVG, GvKostG, court

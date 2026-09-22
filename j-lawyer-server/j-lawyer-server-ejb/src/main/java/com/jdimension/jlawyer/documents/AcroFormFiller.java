@@ -660,342 +660,283 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.persistence.test;
+package com.jdimension.jlawyer.documents;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.Set;
-import java.util.HashMap;
 import java.util.List;
-import com.jdimension.jlawyer.persistence.EnforcementAddresseeType;
-import com.jdimension.jlawyer.persistence.EnforcementMeasureOutcome;
+import java.util.Locale;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import org.junit.Test;
+import java.util.Set;
+import org.apache.log4j.Logger;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
+import org.apache.pdfbox.pdmodel.interactive.form.PDButton;
+import org.apache.pdfbox.pdmodel.interactive.form.PDCheckBox;
+import org.apache.pdfbox.pdmodel.interactive.form.PDChoice;
+import org.apache.pdfbox.pdmodel.interactive.form.PDField;
+import org.apache.pdfbox.pdmodel.interactive.form.PDNonTerminalField;
+import org.apache.pdfbox.pdmodel.interactive.form.PDRadioButton;
+import org.apache.pdfbox.pdmodel.interactive.form.PDTextField;
 
 /**
- * What every migration script has to satisfy, checked before a server tries to run it.
+ * Fills an official form by addressing its fields by name.
  *
- * A migration fails on a live database, in front of a user, with the instruction to restore a
- * backup. That makes the cheap mistakes expensive, and the cheapest of them is a new table whose
- * character set differs from the one it points at: MySQL then refuses the foreign key with errno
- * 150, "Foreign key constraint is incorrectly formed", a message that names everything except the
- * cause. This has happened once - V3_6_0_36 was written as utf8mb4 against a utf8 core - and this
- * test is the reason it cannot happen again unnoticed.
+ * Beside {@link PdfFormsAccess} rather than inside it, because the two solve different problems.
+ * That one fills a firm's own templates, where the placeholder is written into the field's value or
+ * its tooltip and is found by searching for it. The forms of the ZVFV carry no placeholders: their
+ * fields have fixed names, meaningless in themselves - "Textfeld 353" - and a mapping profile says
+ * which of them holds what. Searching would find nothing; only the name works.
  *
- * The check is deliberately not "every table is utf8". Several tables of this schema are utf8mb4
- * and are fine, because nothing points from them into the older part. What cannot hold is a foreign
- * key across the boundary, and that is what is asserted.
+ * <h2>Check boxes</h2>
+ *
+ * A check box is not ticked by writing "true" into it. Each one has an on-state of its own, the
+ * value that means ticked, and it is read from the field rather than assumed: all 663 check boxes
+ * of the current forms use {@code Ja}, a later version may not, and a wrong on-state produces a
+ * form that prints as ticked and reads as empty.
+ *
+ * A value that is neither clearly a tick nor clearly empty is refused instead of guessed at.
+ * Ticking a box because the data said "nein" would assert the opposite of what was meant, and that
+ * is a mistake nobody notices before the court does.
  *
  * @author jens
  */
-public class MigrationConventionsTest {
+public class AcroFormFiller {
 
-    /** What a table is created in where the script does not say - the server default for this schema. */
-    private static final String DEFAULT_CHARSET = "utf8";
+    private static final Logger log = Logger.getLogger(AcroFormFiller.class.getName());
 
-    private static final Pattern CREATE_TABLE = Pattern.compile(
-            "CREATE\\s+TABLE\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?`?(\\w+)`?\\s*\\((.*?)\\)\\s*(ENGINE[^;]*)?;",
-            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    /** What a mapping may write into a check box to mean "ticked", besides its own on-state. */
+    private static final Set<String> TICKED = new HashSet<>(Arrays.asList(
+            "true", "1", "x", "ja", "yes", "on"));
 
-    private static final Pattern CHARSET = Pattern.compile("CHARSET\\s*=\\s*([A-Za-z0-9_]+)",
-            Pattern.CASE_INSENSITIVE);
-
-    private static final Pattern REFERENCES = Pattern.compile("REFERENCES\\s+`?(\\w+)`?\\s*\\(",
-            Pattern.CASE_INSENSITIVE);
-
-    private static final Pattern ALTER_ADD_FK = Pattern.compile(
-            "ALTER\\s+TABLE\\s+`?(\\w+)`?[^;]*?FOREIGN\\s+KEY[^;]*?REFERENCES\\s+`?(\\w+)`?",
-            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-
-    private List<File> migrations() {
-        String base = System.getProperty("basedir");
-        File dir = new File(base == null ? "." : base, "src/main/resources/db/migration");
-        assertTrue("das Migrationsverzeichnis fehlt: " + dir.getAbsolutePath(), dir.isDirectory());
-        File[] files = dir.listFiles((d, name) -> name.endsWith(".sql"));
-        assertTrue("es wurden keine Migrationen gefunden", files != null && files.length > 0);
-        List<File> sorted = new ArrayList<>(Arrays.asList(files));
-        sorted.sort((a, b) -> a.getName().compareTo(b.getName()));
-        return sorted;
-    }
-
-    private String read(File f) throws IOException {
-        return new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8);
-    }
-
-    private String charsetOf(String tail) {
-        if (tail == null) {
-            return normalise(DEFAULT_CHARSET);
-        }
-        Matcher m = CHARSET.matcher(tail);
-        return normalise(m.find() ? m.group(1) : DEFAULT_CHARSET);
-    }
+    /** And to mean "not ticked" - anything empty means it too. */
+    private static final Set<String> NOT_TICKED = new HashSet<>(Arrays.asList(
+            "false", "0", "nein", "no", "off"));
 
     /**
-     * utf8 and utf8mb3 are the same character set under two names - MySQL renamed it and keeps the
-     * old name as an alias. Both spellings appear in these scripts, and treating them as different
-     * would report a mismatch where the server sees none.
+     * Fills a form and writes the result to a new file.
+     *
+     * @param template the empty official form
+     * @param values the value per field name; a null or empty value clears the field
+     * @param mandatoryFields the field names the profile requires to carry something, may be null
+     * @param target where to write the filled form
+     * @param flatten whether to fix the values in place, so the form can no longer be edited
+     * @return what was set and what was found wrong
+     * @throws IOException if the template cannot be read or the result cannot be written
      */
-    private String normalise(String charset) {
-        String lower = charset.toLowerCase();
-        return "utf8".equals(lower) ? "utf8mb3" : lower;
-    }
+    public AcroFormFillResult fill(File template, Map<String, String> values,
+            Collection<String> mandatoryFields, File target, boolean flatten) throws IOException {
 
-    @Test
-    public void everyForeignKeyPointsAtATableOfTheSameCharacterSet() throws Exception {
-        // MySQL verlangt für einen Fremdschlüssel übereinstimmende Zeichensätze und Kollationen und
-        // sagt beim Scheitern nur errno 150, "Foreign key constraint is incorrectly formed" - was
-        // die Ursache verschweigt. Eine neue Tabelle in utf8mb4, die auf den utf8-Kern des Schemas
-        // zeigt, ist deshalb kein Schönheitsfehler, sondern ein Deployment, das abbricht.
-        Map<String, String> charsetByTable = new HashMap<>();
-        List<String> references = new ArrayList<>();
+        AcroFormFillResult result = new AcroFormFillResult();
 
-        for (File migration : migrations()) {
-            String sql = read(migration);
-
-            Matcher create = CREATE_TABLE.matcher(sql);
-            while (create.find()) {
-                String table = create.group(1).toLowerCase();
-                charsetByTable.put(table, charsetOf(create.group(3)));
-                Matcher ref = REFERENCES.matcher(create.group(2));
-                while (ref.find()) {
-                    references.add(migration.getName() + "|" + table + "|" + ref.group(1).toLowerCase());
-                }
+        try (PDDocument document = PDDocument.load(template)) {
+            PDAcroForm form = document.getDocumentCatalog().getAcroForm();
+            if (form == null) {
+                throw new IOException("Die Vorlage " + template.getName()
+                        + " enthält kein ausfüllbares Formular.");
             }
 
-            Matcher alter = ALTER_ADD_FK.matcher(sql);
-            while (alter.find()) {
-                references.add(migration.getName() + "|" + alter.group(1).toLowerCase()
-                        + "|" + alter.group(2).toLowerCase());
-            }
-        }
+            List<PDField> fields = new ArrayList<>();
+            collect(form.getFields(), fields);
 
-        assertFalse("es wurde keine einzige Tabelle erkannt - der Parser ist kaputt, nicht das Schema",
-                charsetByTable.isEmpty());
-        assertFalse("es wurde kein einziger Fremdschlüssel erkannt", references.isEmpty());
-
-        List<String> mismatches = new ArrayList<>();
-        for (String reference : references) {
-            String[] parts = reference.split("\\|");
-            String from = charsetByTable.get(parts[1]);
-            String to = charsetByTable.get(parts[2]);
-            // Tabellen, die keine Migration angelegt hat, stammen aus der Ausgangsversion des
-            // Schemas; über deren Zeichensatz sagt das Verzeichnis nichts, also auch dieser Test nicht
-            if (from == null || to == null || from.equals(to)) {
-                continue;
+            Set<String> known = new HashSet<>();
+            for (PDField field : fields) {
+                known.add(field.getFullyQualifiedName());
             }
-            mismatches.add(parts[0] + ": " + parts[1] + " (" + from + ") -> " + parts[2] + " (" + to + ")");
-        }
-
-        assertEquals("Fremdschlüssel zwischen Tabellen verschiedener Zeichensätze, das scheitert "
-                + "beim Deployment mit errno 150: " + mismatches, 0, mismatches.size());
-    }
-
-    @Test
-    public void everyEnumValueASeedWritesIsOneTheCodeKnows() {
-        // Hibernate schreibt ein @Enumerated(STRING) als Namen der Konstante. Ein Tippfehler im
-        // Seed legt sich anstandslos in die Datenbank und fällt erst auf, wenn jemand die Zeile
-        // liest - dann mit einer IllegalArgumentException aus dem EnumType, weit weg von der
-        // Ursache. Deshalb hier, wo die Ursache steht.
-        //
-        // Geprüft werden alle Großbuchstaben-Literale der Vollstreckungsmigrationen. Das sind drei
-        // Sorten: Empfängertypen, Ergebnisse - auch als Spaltenvorgabewert - und
-        // Formularschlüssel. Was keines davon ist, ist ein Vertipper.
-        Set<String> known = new HashSet<>();
-        for (EnforcementAddresseeType t : EnforcementAddresseeType.values()) {
-            known.add(t.name());
-        }
-        for (EnforcementMeasureOutcome o : EnforcementMeasureOutcome.values()) {
-            known.add(o.name());
-        }
-        Pattern formKey = Pattern.compile("ANLAGE_\\d+");
-        Pattern literal = Pattern.compile("'([A-Z][A-Z_0-9]{2,})'");
-
-        List<String> unknown = new ArrayList<>();
-        for (File migration : migrations()) {
-            String sql;
-            try {
-                sql = read(migration);
-            } catch (IOException ex) {
-                throw new IllegalStateException(ex);
-            }
-            if (!sql.contains("enforcement_measure_types")) {
-                continue;
-            }
-            Matcher m = literal.matcher(sql);
-            while (m.find()) {
-                String value = m.group(1);
-                if (!known.contains(value) && !formKey.matcher(value).matches()) {
-                    unknown.add(migration.getName() + ": " + value);
-                }
-            }
-        }
-        assertEquals("weder Empfängertyp, Ergebnis noch Formularschlüssel: " + unknown,
-                0, unknown.size());
-    }
-
-    @Test
-    public void noDerivedTableHasTwoColumnsOfTheSameName() {
-        // Die Seeds dieses Projekts schreiben "INSERT ... SELECT * FROM (SELECT ...) AS tmp WHERE
-        // NOT EXISTS ...", damit ein zweiter Lauf keine zweite Kopie anlegt. Eine abgeleitete
-        // Tabelle braucht für jede Spalte einen eindeutigen Namen. Fehlt das AS, benennt MySQL die
-        // Spalte nach dem Ausdruckstext - und drei Spalten mit dem Literal 1 heißen dann dreimal
-        // "1". Der Fehler lautet "Duplicate column name '1'" und zeigt sich erst beim Deployment.
-        List<String> offenders = new ArrayList<>();
-        for (File migration : migrations()) {
-            String sql;
-            try {
-                sql = read(migration);
-            } catch (IOException ex) {
-                throw new IllegalStateException(ex);
-            }
-            int from = sql.indexOf("FROM (SELECT");
-            while (from >= 0) {
-                int open = sql.indexOf('(', from);
-                int close = matchingParenthesis(sql, open);
-                if (close < 0) {
-                    break;
-                }
-                String body = sql.substring(open + 1, close);
-                List<String> names = columnNamesOf(body);
-                Set<String> seen = new HashSet<>();
-                for (String name : names) {
-                    if (!seen.add(name)) {
-                        offenders.add(migration.getName() + ": Spaltenname \"" + name
-                                + "\" kommt zweimal vor in " + names);
-                        break;
+            if (values != null) {
+                for (String name : values.keySet()) {
+                    if (!known.contains(name)) {
+                        // ein Profil, das ein Feld nennt, das es nicht gibt, ist kaputt - und zwar
+                        // still, wenn man es durchgehen lässt
+                        result.getUnknownFields().add(name);
                     }
                 }
-                from = sql.indexOf("FROM (SELECT", close);
             }
+
+            for (PDField field : fields) {
+                String name = field.getFullyQualifiedName();
+                String value = values == null ? null : values.get(name);
+                if (value == null) {
+                    continue;
+                }
+                apply(field, value, result);
+            }
+
+            if (mandatoryFields != null) {
+                for (String name : mandatoryFields) {
+                    String value = values == null ? null : values.get(name);
+                    if (value == null || value.trim().isEmpty()) {
+                        result.getMissingMandatoryFields().add(name);
+                    }
+                }
+            }
+
+            if (flatten) {
+                form.flatten();
+            }
+            document.save(target);
         }
-        assertEquals("abgeleitete Tabellen mit doppelten Spaltennamen: " + offenders,
-                0, offenders.size());
+        return result;
     }
 
     /**
-     * The names the columns of a derived table end up with.
-     *
-     * An alias if one is given, otherwise the text of the expression - which is what MySQL does,
-     * and the reason three columns holding the literal 1 collide.
+     * Writes one value into one field, in the way that field admits.
      */
-    private List<String> columnNamesOf(String body) {
-        String afterSelect = body.substring(body.indexOf("SELECT") + "SELECT".length());
-        String columns = beforeTopLevelFrom(afterSelect);
-        List<String> names = new ArrayList<>();
-        for (String part : splitTopLevel(columns)) {
-            String expression = part.trim();
-            Matcher alias = Pattern.compile("\\sAS\\s+(\\w+)$", Pattern.CASE_INSENSITIVE)
-                    .matcher(expression);
-            names.add(alias.find() ? alias.group(1).toLowerCase()
-                    : expression.replaceAll("\\s+", " ").toLowerCase());
-        }
-        return names;
-    }
-
-    /**
-     * The column list of a SELECT, cut before its FROM.
-     *
-     * Only a FROM that belongs to this SELECT ends the list - not one inside a string literal or a
-     * subquery.
-     */
-    private String beforeTopLevelFrom(String select) {
-        boolean inString = false;
-        int depth = 0;
-        for (int i = 0; i < select.length(); i++) {
-            char c = select.charAt(i);
-            if (c == '\'') {
-                if (inString && i + 1 < select.length() && select.charAt(i + 1) == '\'') {
-                    i++;
-                    continue;
-                }
-                inString = !inString;
-            } else if (!inString && c == '(') {
-                depth++;
-            } else if (!inString && c == ')') {
-                depth--;
-            } else if (!inString && depth == 0 && (c == 'F' || c == 'f')
-                    && select.regionMatches(true, i, "FROM", 0, 4)
-                    && (i == 0 || Character.isWhitespace(select.charAt(i - 1)))
-                    && i + 4 < select.length() && Character.isWhitespace(select.charAt(i + 4))) {
-                return select.substring(0, i);
-            }
-        }
-        return select;
-    }
-
-    private String shorten(String value) {
-        String trimmed = value.trim().replaceAll("\\s+", " ");
-        return trimmed.length() <= 60 ? trimmed : trimmed.substring(0, 57) + "...";
-    }
-
-    private int matchingParenthesis(String sql, int open) {
-        int depth = 0;
-        boolean inString = false;
-        for (int i = open; i < sql.length(); i++) {
-            char c = sql.charAt(i);
-            if (c == '\'') {
-                if (inString && i + 1 < sql.length() && sql.charAt(i + 1) == '\'') {
-                    i++;
-                    continue;
-                }
-                inString = !inString;
-            } else if (!inString && c == '(') {
-                depth++;
-            } else if (!inString && c == ')') {
-                depth--;
-                if (depth == 0) {
-                    return i;
-                }
-            }
-        }
-        return -1;
-    }
-
-    /**
-     * Splits a list of expressions at the commas that separate them, leaving alone the commas that
-     * sit inside a string literal or inside a nested call.
-     */
-    private List<String> splitTopLevel(String expressions) {
-        List<String> parts = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        boolean inString = false;
-        int depth = 0;
-        for (int i = 0; i < expressions.length(); i++) {
-            char c = expressions.charAt(i);
-            if (c == '\'') {
-                if (inString && i + 1 < expressions.length() && expressions.charAt(i + 1) == '\'') {
-                    current.append("''");
-                    i++;
-                    continue;
-                }
-                inString = !inString;
-                current.append(c);
-            } else if (!inString && c == '(') {
-                depth++;
-                current.append(c);
-            } else if (!inString && c == ')') {
-                depth--;
-                current.append(c);
-            } else if (!inString && depth == 0 && c == ',') {
-                parts.add(current.toString());
-                current.setLength(0);
+    private void apply(PDField field, String value, AcroFormFillResult result) {
+        String name = field.getFullyQualifiedName();
+        try {
+            if (field instanceof PDCheckBox) {
+                applyCheckBox((PDCheckBox) field, value, result);
+            } else if (field instanceof PDRadioButton) {
+                applyRadioButton((PDRadioButton) field, value, result);
+            } else if (field instanceof PDChoice) {
+                applyChoice((PDChoice) field, value, result);
+            } else if (field instanceof PDTextField || !(field instanceof PDButton)) {
+                field.setValue(value);
+                result.countFieldSet();
             } else {
-                current.append(c);
+                result.getRejectedValues().add(name + ": Feldart wird nicht unterstützt");
+            }
+        } catch (IOException | IllegalArgumentException ex) {
+            log.error("Unable to set field " + name + " of an official form", ex);
+            result.getRejectedValues().add(name + ": " + ex.getMessage());
+        }
+    }
+
+    private void applyCheckBox(PDCheckBox box, String value, AcroFormFillResult result)
+            throws IOException {
+
+        String name = box.getFullyQualifiedName();
+        String normalised = value.trim().toLowerCase(Locale.GERMAN);
+        Set<String> onValues = box.getOnValues();
+
+        if (normalised.isEmpty() || NOT_TICKED.contains(normalised)) {
+            box.unCheck();
+            result.countFieldSet();
+            return;
+        }
+        if (TICKED.contains(normalised) || containsIgnoringCase(onValues, value.trim())) {
+            // der On-State kommt aus dem Feld, nicht aus einer Annahme
+            if (onValues.isEmpty()) {
+                result.getRejectedValues().add(name + ": das Ankreuzfeld nennt keinen Wert für "
+                        + "\"angekreuzt\"");
+                return;
+            }
+            box.setValue(onValues.iterator().next());
+            result.countFieldSet();
+            return;
+        }
+        result.getRejectedValues().add(name + ": \"" + value.trim()
+                + "\" heißt weder angekreuzt noch nicht angekreuzt");
+    }
+
+    private void applyRadioButton(PDRadioButton radio, String value, AcroFormFillResult result)
+            throws IOException {
+
+        String name = radio.getFullyQualifiedName();
+        String wanted = value.trim();
+        if (wanted.isEmpty()) {
+            radio.setValue("Off");
+            result.countFieldSet();
+            return;
+        }
+        for (String on : radio.getOnValues()) {
+            if (on.equalsIgnoreCase(wanted)) {
+                radio.setValue(on);
+                result.countFieldSet();
+                return;
             }
         }
-        if (current.toString().trim().length() > 0) {
-            parts.add(current.toString());
+        result.getRejectedValues().add(name + ": \"" + wanted
+                + "\" ist keine der Möglichkeiten " + radio.getOnValues());
+    }
+
+    private void applyChoice(PDChoice choice, String value, AcroFormFillResult result)
+            throws IOException {
+
+        String name = choice.getFullyQualifiedName();
+        String wanted = value.trim();
+        if (wanted.isEmpty()) {
+            choice.setValue("");
+            result.countFieldSet();
+            return;
         }
-        return parts;
+        for (String option : choice.getOptions()) {
+            if (option.equalsIgnoreCase(wanted)) {
+                choice.setValue(option);
+                result.countFieldSet();
+                return;
+            }
+        }
+        result.getRejectedValues().add(name + ": \"" + wanted + "\" ist keine der Möglichkeiten "
+                + choice.getOptions());
+    }
+
+    private boolean containsIgnoringCase(Collection<String> values, String wanted) {
+        for (String value : values) {
+            if (value.equalsIgnoreCase(wanted)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Reads the fields a form offers, with their kind and the values they admit.
+     *
+     * Used by the administration that writes a mapping profile: the names are meaningless on their
+     * own, so each is returned with the label the form carries for it.
+     *
+     * @param template the form
+     * @return one description per field, in the order the form holds them
+     * @throws IOException if the file cannot be read
+     */
+    public List<AcroFormFieldDescription> describe(File template) throws IOException {
+        List<AcroFormFieldDescription> described = new ArrayList<>();
+        try (PDDocument document = PDDocument.load(template)) {
+            PDAcroForm form = document.getDocumentCatalog().getAcroForm();
+            if (form == null) {
+                return described;
+            }
+            List<PDField> fields = new ArrayList<>();
+            collect(form.getFields(), fields);
+            for (PDField field : fields) {
+                described.add(describe(field));
+            }
+        }
+        return described;
+    }
+
+    private AcroFormFieldDescription describe(PDField field) {
+        AcroFormFieldDescription description = new AcroFormFieldDescription();
+        description.setName(field.getFullyQualifiedName());
+        description.setLabel(field.getAlternateFieldName());
+        if (field instanceof PDCheckBox) {
+            description.setKind(AcroFormFieldDescription.Kind.CHECK_BOX);
+            description.getAdmittedValues().addAll(((PDCheckBox) field).getOnValues());
+        } else if (field instanceof PDRadioButton) {
+            description.setKind(AcroFormFieldDescription.Kind.RADIO_GROUP);
+            description.getAdmittedValues().addAll(((PDRadioButton) field).getOnValues());
+        } else if (field instanceof PDChoice) {
+            description.setKind(AcroFormFieldDescription.Kind.CHOICE);
+            description.getAdmittedValues().addAll(((PDChoice) field).getOptions());
+        } else {
+            description.setKind(AcroFormFieldDescription.Kind.TEXT);
+        }
+        return description;
+    }
+
+    private void collect(List<PDField> fields, List<PDField> out) {
+        for (PDField field : fields) {
+            if (field instanceof PDNonTerminalField) {
+                collect(((PDNonTerminalField) field).getChildren(), out);
+            } else {
+                out.add(field);
+            }
+        }
     }
 }

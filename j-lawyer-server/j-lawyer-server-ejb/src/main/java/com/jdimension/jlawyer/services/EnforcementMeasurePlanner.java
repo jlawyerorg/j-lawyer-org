@@ -660,342 +660,142 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.persistence.test;
+package com.jdimension.jlawyer.services;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureType;
+import com.jdimension.jlawyer.persistence.EnforcementTitle;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.HashMap;
+import java.util.Date;
 import java.util.List;
-import com.jdimension.jlawyer.persistence.EnforcementAddresseeType;
-import com.jdimension.jlawyer.persistence.EnforcementMeasureOutcome;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import org.junit.Test;
 
 /**
- * What every migration script has to satisfy, checked before a server tries to run it.
+ * Which enforcement measures can be taken right now, and what is missing for the others.
  *
- * A migration fails on a live database, in front of a user, with the instruction to restore a
- * backup. That makes the cheap mistakes expensive, and the cheapest of them is a new table whose
- * character set differs from the one it points at: MySQL then refuses the foreign key with errno
- * 150, "Foreign key constraint is incorrectly formed", a message that names everything except the
- * cause. This has happened once - V3_6_0_36 was written as utf8mb4 against a utf8 core - and this
- * test is the reason it cannot happen again unnoticed.
+ * The catalogue says what a firm does; this says what it can do today with the title it holds.
+ * Separated from the service because it is a decision, not a database operation, and because the
+ * answer is needed in two places that must not disagree - the dialog that offers the measures and
+ * the service that refuses one it should not have offered.
  *
- * The check is deliberately not "every table is utf8". Several tables of this schema are utf8mb4
- * and are fine, because nothing points from them into the older part. What cannot hold is a foreign
- * key across the boundary, and that is what is asserted.
+ * Enforcement needs a title, a clause and service of it (§ 750 Abs. 1 ZPO) - the three conditions
+ * that have to be met before the bailiff may act. Not every kind needs them: an enforcement warning
+ * goes out before enforcement starts, and an inquiry at the residents' register only needs a
+ * legitimate interest.
  *
  * @author jens
  */
-public class MigrationConventionsTest {
-
-    /** What a table is created in where the script does not say - the server default for this schema. */
-    private static final String DEFAULT_CHARSET = "utf8";
-
-    private static final Pattern CREATE_TABLE = Pattern.compile(
-            "CREATE\\s+TABLE\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?`?(\\w+)`?\\s*\\((.*?)\\)\\s*(ENGINE[^;]*)?;",
-            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-
-    private static final Pattern CHARSET = Pattern.compile("CHARSET\\s*=\\s*([A-Za-z0-9_]+)",
-            Pattern.CASE_INSENSITIVE);
-
-    private static final Pattern REFERENCES = Pattern.compile("REFERENCES\\s+`?(\\w+)`?\\s*\\(",
-            Pattern.CASE_INSENSITIVE);
-
-    private static final Pattern ALTER_ADD_FK = Pattern.compile(
-            "ALTER\\s+TABLE\\s+`?(\\w+)`?[^;]*?FOREIGN\\s+KEY[^;]*?REFERENCES\\s+`?(\\w+)`?",
-            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-
-    private List<File> migrations() {
-        String base = System.getProperty("basedir");
-        File dir = new File(base == null ? "." : base, "src/main/resources/db/migration");
-        assertTrue("das Migrationsverzeichnis fehlt: " + dir.getAbsolutePath(), dir.isDirectory());
-        File[] files = dir.listFiles((d, name) -> name.endsWith(".sql"));
-        assertTrue("es wurden keine Migrationen gefunden", files != null && files.length > 0);
-        List<File> sorted = new ArrayList<>(Arrays.asList(files));
-        sorted.sort((a, b) -> a.getName().compareTo(b.getName()));
-        return sorted;
-    }
-
-    private String read(File f) throws IOException {
-        return new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8);
-    }
-
-    private String charsetOf(String tail) {
-        if (tail == null) {
-            return normalise(DEFAULT_CHARSET);
-        }
-        Matcher m = CHARSET.matcher(tail);
-        return normalise(m.find() ? m.group(1) : DEFAULT_CHARSET);
-    }
+public class EnforcementMeasurePlanner {
 
     /**
-     * utf8 and utf8mb3 are the same character set under two names - MySQL renamed it and keeps the
-     * old name as an alias. Both spellings appear in these scripts, and treating them as different
-     * would report a mismatch where the server sees none.
+     * The lower limit for a compulsory mortgage, § 866 Abs. 3 S. 1 ZPO. Below it the land registry
+     * refuses the entry, and the costs would be spent for nothing.
      */
-    private String normalise(String charset) {
-        String lower = charset.toLowerCase();
-        return "utf8".equals(lower) ? "utf8mb3" : lower;
-    }
+    public static final java.math.BigDecimal MORTGAGE_MINIMUM = new java.math.BigDecimal("750.00");
 
-    @Test
-    public void everyForeignKeyPointsAtATableOfTheSameCharacterSet() throws Exception {
-        // MySQL verlangt für einen Fremdschlüssel übereinstimmende Zeichensätze und Kollationen und
-        // sagt beim Scheitern nur errno 150, "Foreign key constraint is incorrectly formed" - was
-        // die Ursache verschweigt. Eine neue Tabelle in utf8mb4, die auf den utf8-Kern des Schemas
-        // zeigt, ist deshalb kein Schönheitsfehler, sondern ein Deployment, das abbricht.
-        Map<String, String> charsetByTable = new HashMap<>();
-        List<String> references = new ArrayList<>();
+    /** The form key of the kinds that are a compulsory mortgage, kept here so the rule can find them. */
+    private static final String MORTGAGE_TYPE_ID = "seed-measure-mortgage";
 
-        for (File migration : migrations()) {
-            String sql = read(migration);
+    /**
+     * What stands in the way of a measure, or that nothing does.
+     */
+    public static class Availability {
 
-            Matcher create = CREATE_TABLE.matcher(sql);
-            while (create.find()) {
-                String table = create.group(1).toLowerCase();
-                charsetByTable.put(table, charsetOf(create.group(3)));
-                Matcher ref = REFERENCES.matcher(create.group(2));
-                while (ref.find()) {
-                    references.add(migration.getName() + "|" + table + "|" + ref.group(1).toLowerCase());
-                }
-            }
+        private final EnforcementMeasureType measureType;
+        private final String obstacle;
 
-            Matcher alter = ALTER_ADD_FK.matcher(sql);
-            while (alter.find()) {
-                references.add(migration.getName() + "|" + alter.group(1).toLowerCase()
-                        + "|" + alter.group(2).toLowerCase());
-            }
+        Availability(EnforcementMeasureType measureType, String obstacle) {
+            this.measureType = measureType;
+            this.obstacle = obstacle;
         }
 
-        assertFalse("es wurde keine einzige Tabelle erkannt - der Parser ist kaputt, nicht das Schema",
-                charsetByTable.isEmpty());
-        assertFalse("es wurde kein einziger Fremdschlüssel erkannt", references.isEmpty());
-
-        List<String> mismatches = new ArrayList<>();
-        for (String reference : references) {
-            String[] parts = reference.split("\\|");
-            String from = charsetByTable.get(parts[1]);
-            String to = charsetByTable.get(parts[2]);
-            // Tabellen, die keine Migration angelegt hat, stammen aus der Ausgangsversion des
-            // Schemas; über deren Zeichensatz sagt das Verzeichnis nichts, also auch dieser Test nicht
-            if (from == null || to == null || from.equals(to)) {
-                continue;
-            }
-            mismatches.add(parts[0] + ": " + parts[1] + " (" + from + ") -> " + parts[2] + " (" + to + ")");
+        /**
+         * @return the kind this is about
+         */
+        public EnforcementMeasureType getMeasureType() {
+            return measureType;
         }
 
-        assertEquals("Fremdschlüssel zwischen Tabellen verschiedener Zeichensätze, das scheitert "
-                + "beim Deployment mit errno 150: " + mismatches, 0, mismatches.size());
-    }
+        /**
+         * @return why it cannot be taken, or null if it can
+         */
+        public String getObstacle() {
+            return obstacle;
+        }
 
-    @Test
-    public void everyEnumValueASeedWritesIsOneTheCodeKnows() {
-        // Hibernate schreibt ein @Enumerated(STRING) als Namen der Konstante. Ein Tippfehler im
-        // Seed legt sich anstandslos in die Datenbank und fällt erst auf, wenn jemand die Zeile
-        // liest - dann mit einer IllegalArgumentException aus dem EnumType, weit weg von der
-        // Ursache. Deshalb hier, wo die Ursache steht.
-        //
-        // Geprüft werden alle Großbuchstaben-Literale der Vollstreckungsmigrationen. Das sind drei
-        // Sorten: Empfängertypen, Ergebnisse - auch als Spaltenvorgabewert - und
-        // Formularschlüssel. Was keines davon ist, ist ein Vertipper.
-        Set<String> known = new HashSet<>();
-        for (EnforcementAddresseeType t : EnforcementAddresseeType.values()) {
-            known.add(t.name());
+        /**
+         * @return whether the measure can be taken as things stand
+         */
+        public boolean isAvailable() {
+            return obstacle == null;
         }
-        for (EnforcementMeasureOutcome o : EnforcementMeasureOutcome.values()) {
-            known.add(o.name());
-        }
-        Pattern formKey = Pattern.compile("ANLAGE_\\d+");
-        Pattern literal = Pattern.compile("'([A-Z][A-Z_0-9]{2,})'");
-
-        List<String> unknown = new ArrayList<>();
-        for (File migration : migrations()) {
-            String sql;
-            try {
-                sql = read(migration);
-            } catch (IOException ex) {
-                throw new IllegalStateException(ex);
-            }
-            if (!sql.contains("enforcement_measure_types")) {
-                continue;
-            }
-            Matcher m = literal.matcher(sql);
-            while (m.find()) {
-                String value = m.group(1);
-                if (!known.contains(value) && !formKey.matcher(value).matches()) {
-                    unknown.add(migration.getName() + ": " + value);
-                }
-            }
-        }
-        assertEquals("weder Empfängertyp, Ergebnis noch Formularschlüssel: " + unknown,
-                0, unknown.size());
-    }
-
-    @Test
-    public void noDerivedTableHasTwoColumnsOfTheSameName() {
-        // Die Seeds dieses Projekts schreiben "INSERT ... SELECT * FROM (SELECT ...) AS tmp WHERE
-        // NOT EXISTS ...", damit ein zweiter Lauf keine zweite Kopie anlegt. Eine abgeleitete
-        // Tabelle braucht für jede Spalte einen eindeutigen Namen. Fehlt das AS, benennt MySQL die
-        // Spalte nach dem Ausdruckstext - und drei Spalten mit dem Literal 1 heißen dann dreimal
-        // "1". Der Fehler lautet "Duplicate column name '1'" und zeigt sich erst beim Deployment.
-        List<String> offenders = new ArrayList<>();
-        for (File migration : migrations()) {
-            String sql;
-            try {
-                sql = read(migration);
-            } catch (IOException ex) {
-                throw new IllegalStateException(ex);
-            }
-            int from = sql.indexOf("FROM (SELECT");
-            while (from >= 0) {
-                int open = sql.indexOf('(', from);
-                int close = matchingParenthesis(sql, open);
-                if (close < 0) {
-                    break;
-                }
-                String body = sql.substring(open + 1, close);
-                List<String> names = columnNamesOf(body);
-                Set<String> seen = new HashSet<>();
-                for (String name : names) {
-                    if (!seen.add(name)) {
-                        offenders.add(migration.getName() + ": Spaltenname \"" + name
-                                + "\" kommt zweimal vor in " + names);
-                        break;
-                    }
-                }
-                from = sql.indexOf("FROM (SELECT", close);
-            }
-        }
-        assertEquals("abgeleitete Tabellen mit doppelten Spaltennamen: " + offenders,
-                0, offenders.size());
     }
 
     /**
-     * The names the columns of a derived table end up with.
+     * Judges every configured kind against the title and the amount at hand.
      *
-     * An alias if one is given, otherwise the text of the expression - which is what MySQL does,
-     * and the reason three columns holding the literal 1 collide.
-     */
-    private List<String> columnNamesOf(String body) {
-        String afterSelect = body.substring(body.indexOf("SELECT") + "SELECT".length());
-        String columns = beforeTopLevelFrom(afterSelect);
-        List<String> names = new ArrayList<>();
-        for (String part : splitTopLevel(columns)) {
-            String expression = part.trim();
-            Matcher alias = Pattern.compile("\\sAS\\s+(\\w+)$", Pattern.CASE_INSENSITIVE)
-                    .matcher(expression);
-            names.add(alias.find() ? alias.group(1).toLowerCase()
-                    : expression.replaceAll("\\s+", " ").toLowerCase());
-        }
-        return names;
-    }
-
-    /**
-     * The column list of a SELECT, cut before its FROM.
+     * Kinds that cannot be taken are returned with their reason rather than dropped. A dialog that
+     * silently omits the bailiff order leaves the user wondering; one that shows it greyed out with
+     * "der Titel ist noch nicht zugestellt" tells them what to do next.
      *
-     * Only a FROM that belongs to this SELECT ends the list - not one inside a string literal or a
-     * subquery.
+     * @param types the kinds the firm has switched on
+     * @param title the title to enforce, or null if none is chosen
+     * @param outstanding what is still owed, or null if unknown
+     * @param today the day the judgement is made
+     * @return one entry per kind, in the order the kinds came in, never null
      */
-    private String beforeTopLevelFrom(String select) {
-        boolean inString = false;
-        int depth = 0;
-        for (int i = 0; i < select.length(); i++) {
-            char c = select.charAt(i);
-            if (c == '\'') {
-                if (inString && i + 1 < select.length() && select.charAt(i + 1) == '\'') {
-                    i++;
-                    continue;
-                }
-                inString = !inString;
-            } else if (!inString && c == '(') {
-                depth++;
-            } else if (!inString && c == ')') {
-                depth--;
-            } else if (!inString && depth == 0 && (c == 'F' || c == 'f')
-                    && select.regionMatches(true, i, "FROM", 0, 4)
-                    && (i == 0 || Character.isWhitespace(select.charAt(i - 1)))
-                    && i + 4 < select.length() && Character.isWhitespace(select.charAt(i + 4))) {
-                return select.substring(0, i);
-            }
-        }
-        return select;
-    }
+    public List<Availability> plan(List<EnforcementMeasureType> types, EnforcementTitle title,
+            java.math.BigDecimal outstanding, Date today) {
 
-    private String shorten(String value) {
-        String trimmed = value.trim().replaceAll("\\s+", " ");
-        return trimmed.length() <= 60 ? trimmed : trimmed.substring(0, 57) + "...";
-    }
-
-    private int matchingParenthesis(String sql, int open) {
-        int depth = 0;
-        boolean inString = false;
-        for (int i = open; i < sql.length(); i++) {
-            char c = sql.charAt(i);
-            if (c == '\'') {
-                if (inString && i + 1 < sql.length() && sql.charAt(i + 1) == '\'') {
-                    i++;
-                    continue;
-                }
-                inString = !inString;
-            } else if (!inString && c == '(') {
-                depth++;
-            } else if (!inString && c == ')') {
-                depth--;
-                if (depth == 0) {
-                    return i;
-                }
-            }
+        List<Availability> result = new ArrayList<>();
+        if (types == null) {
+            return result;
         }
-        return -1;
+        for (EnforcementMeasureType type : types) {
+            result.add(new Availability(type, obstacleFor(type, title, outstanding, today)));
+        }
+        return result;
     }
 
     /**
-     * Splits a list of expressions at the commas that separate them, leaving alone the commas that
-     * sit inside a string literal or inside a nested call.
+     * What stands in the way of one kind.
+     *
+     * @param type the kind
+     * @param title the title to enforce, or null
+     * @param outstanding what is still owed, or null if unknown
+     * @param today the day the judgement is made
+     * @return the obstacle, or null if there is none
      */
-    private List<String> splitTopLevel(String expressions) {
-        List<String> parts = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        boolean inString = false;
-        int depth = 0;
-        for (int i = 0; i < expressions.length(); i++) {
-            char c = expressions.charAt(i);
-            if (c == '\'') {
-                if (inString && i + 1 < expressions.length() && expressions.charAt(i + 1) == '\'') {
-                    current.append("''");
-                    i++;
-                    continue;
-                }
-                inString = !inString;
-                current.append(c);
-            } else if (!inString && c == '(') {
-                depth++;
-                current.append(c);
-            } else if (!inString && c == ')') {
-                depth--;
-                current.append(c);
-            } else if (!inString && depth == 0 && c == ',') {
-                parts.add(current.toString());
-                current.setLength(0);
-            } else {
-                current.append(c);
+    public String obstacleFor(EnforcementMeasureType type, EnforcementTitle title,
+            java.math.BigDecimal outstanding, Date today) {
+
+        if (type == null) {
+            return "Es ist keine Maßnahmeart angegeben.";
+        }
+        if (!type.isActive()) {
+            return "Diese Maßnahmeart ist in den Einstellungen abgeschaltet.";
+        }
+
+        if (type.isRequiresTitle()) {
+            if (title == null) {
+                return "Dafür wird ein Titel benötigt (§ 750 Abs. 1 ZPO); es ist keiner ausgewählt.";
+            }
+            if (title.getClauseDate() == null) {
+                return "Der Titel trägt noch keine Vollstreckungsklausel (§ 724 ZPO).";
+            }
+            if (title.getServiceDate() == null) {
+                return "Der Titel ist dem Schuldner noch nicht zugestellt (§ 750 Abs. 1 ZPO).";
+            }
+            if (today != null && title.getServiceDate().after(today)) {
+                return "Die Zustellung des Titels ist auf einen späteren Tag datiert.";
             }
         }
-        if (current.toString().trim().length() > 0) {
-            parts.add(current.toString());
+
+        // § 866 Abs. 3 S. 1 ZPO: unterhalb von 750 Euro trägt das Grundbuchamt nicht ein. Die Grenze
+        // gilt für die Hauptforderung ohne Zinsen und Kosten.
+        if (MORTGAGE_TYPE_ID.equals(type.getId()) && outstanding != null
+                && outstanding.compareTo(MORTGAGE_MINIMUM) < 0) {
+            return "Eine Zwangssicherungshypothek ist erst ab 750 Euro zulässig (§ 866 Abs. 3 ZPO).";
         }
-        return parts;
+
+        return null;
     }
 }

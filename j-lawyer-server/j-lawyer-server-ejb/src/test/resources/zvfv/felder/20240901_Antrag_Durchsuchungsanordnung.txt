@@ -1,0 +1,60 @@
+# Feldverzeichnis von 20240901_Antrag_Durchsuchungsanordnung.pdf
+# 47 Felder auf 2 Seiten
+#
+# Spalten: Seite <TAB> Name <TAB> Art <TAB> Werte <TAB> Bezeichnung
+#
+# Die technischen Namen sind nichtssagend - "Textfeld 353". Was ein Feld
+# bedeutet, steht in seinem Tooltip, und der ist hier die letzte Spalte.
+# Ohne ihn waere die Zuordnung reine Sucharbeit am gedruckten Formular.
+#
+# Bei Ankreuzfeldern ist "Werte" der On-State - der Wert, der "angekreuzt"
+# bedeutet. Er steht nirgends ausser in der Datei und laesst sich nicht
+# raten; ein falscher erzeugt ein Formular, das gedruckt richtig aussieht
+# und maschinell leer ist.
+1	Kontrollkästchen 3033	Ankreuzfeld	Ja	Herr
+1	Kontrollkästchen 3032	Ankreuzfeld	Ja	Frau
+1	Kontrollkästchen 331	Ankreuzfeld	Ja	Unternehmen
+1	Kontrollkästchen 3031	Ankreuzfeld	Ja	Sonstige
+1	Textfeld 352	Text		Name/Firma
+1	Textfeld 351	Text		ggf. Vorname(n)
+1	Textfeld 350	Text		Straße
+1	Textfeld 349	Text		Hausnummer
+1	Textfeld 348	Text		Postleitzahl
+1	Textfeld 347	Text		Ort
+1	Textfeld 346	Text		Land (wenn nicht Deutschland)
+1	Kontrollkästchen 190	Ankreuzfeld	Ja	Gläubiger
+1	Kontrollkästchen 189	Ankreuzfeld	Ja	gesetzlicher Vertreter
+1	Kontrollkästchen 188	Ankreuzfeld	Ja	Bevollmächtigter
+1	Textfeld 338	Text		Name/Firma
+1	Textfeld 339	Text		ggf. Vorname(n)
+1	Textfeld 345	Text		Geschäftszeichen
+1	Textfeld 832	Text		Sonstige
+1	Textfeld 835	Text		Telefon
+1	Textfeld 834	Text		E-Mail
+1	Textfeld 833	Text		Fax
+1	Textfeld 357	Text		Begründung für Antrag auf Anordnung der Durchsuchung nach § 758a Absatz 1 ZPO
+1	Textfeld 358	Text		Begründung für Antrag auf Anordnung der Vollstreckung zur Nachtzeit und an Sonn- und Feiertagen in der Wohnung nach § 758a Absatz 4 ZPO
+1	Textfeld 355	Text		Ort
+1	Textfeld 356	Text		Datum
+1	Textfeld 838	Text		Bezeichnung des Amtsgerichts
+1	Textfeld 837	Text		Straße und Hausnummer oder gegebenenfalls Postfach
+1	Textfeld 836	Text		Postleitzahl Ort
+2	Textfeld 513	Text		Anzahl
+2	Kontrollkästchen 10	Ankreuzfeld	Ja	Ausfertigung
+2	Kontrollkästchen 11	Ankreuzfeld	Ja	Direktweiterleitung
+2	Kontrollkästchen 12	Ankreuzfeld	Ja	keine Anhörung
+2	Kontrollkästchen 13	Ankreuzfeld	Ja	Weiterer Antrag
+2	Textfeld 359	Text		Gründe
+2	Textfeld 360	Text		Weiterer Antrag
+2	Kontrollkästchen 345	Ankreuzfeld	Ja	Mitteilungen
+2	Kontrollkästchen 344	Ankreuzfeld	Ja	Unterlagen
+2	Kontrollkästchen 343	Ankreuzfeld	Ja	Vollmacht
+2	Kontrollkästchen 342	Ankreuzfeld	Ja	Bescheid
+2	Kontrollkästchen 341	Ankreuzfeld	Ja	Weitere Anlagen
+2	Kontrollkästchen 340	Ankreuzfeld	Ja	Weitere Anlagen
+2	Textfeld 842	Text		Weitere Anlagen
+2	Textfeld 841	Text		Weitere Anlagen
+2	Textfeld 839	Text		Namen
+2	Kontrollkästchen 339	Ankreuzfeld	Ja	Versicherung
+2	Kontrollkästchen 338	Ankreuzfeld	Ja	Weitere Versicherung
+2	Textfeld 840	Text		Weitere Versicherung

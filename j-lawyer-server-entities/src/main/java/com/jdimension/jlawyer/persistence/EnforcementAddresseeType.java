@@ -660,342 +660,52 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.persistence.test;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.HashMap;
-import java.util.List;
-import com.jdimension.jlawyer.persistence.EnforcementAddresseeType;
-import com.jdimension.jlawyer.persistence.EnforcementMeasureOutcome;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import org.junit.Test;
+package com.jdimension.jlawyer.persistence;
 
 /**
- * What every migration script has to satisfy, checked before a server tries to run it.
+ * Who an enforcement measure is addressed to.
  *
- * A migration fails on a live database, in front of a user, with the instruction to restore a
- * backup. That makes the cheap mistakes expensive, and the cheapest of them is a new table whose
- * character set differs from the one it points at: MySQL then refuses the foreign key with errno
- * 150, "Foreign key constraint is incorrectly formed", a message that names everything except the
- * cause. This has happened once - V3_6_0_36 was written as utf8mb4 against a utf8 core - and this
- * test is the reason it cannot happen again unnoticed.
- *
- * The check is deliberately not "every table is utf8". Several tables of this schema are utf8mb4
- * and are fine, because nothing points from them into the older part. What cannot hold is a foreign
- * key across the boundary, and that is what is asserted.
+ * Not a cosmetic grouping: it decides where the address comes from. A bailiff is found through the
+ * debtor's postal code, an enforcement court and a land registry through the court directory by
+ * their scope, and a third-party debtor is a contact of the case like any other party.
  *
  * @author jens
  */
-public class MigrationConventionsTest {
+public enum EnforcementAddresseeType {
 
-    /** What a table is created in where the script does not say - the server default for this schema. */
-    private static final String DEFAULT_CHARSET = "utf8";
+    /** Gerichtsvollzieher, reached through the Gerichtsvollzieherverteilungsstelle of his district. */
+    BAILIFF("Gerichtsvollzieher"),
 
-    private static final Pattern CREATE_TABLE = Pattern.compile(
-            "CREATE\\s+TABLE\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?`?(\\w+)`?\\s*\\((.*?)\\)\\s*(ENGINE[^;]*)?;",
-            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    /** Vollstreckungsgericht - the Amtsgericht of the debtor's general venue (§ 828 Abs. 2 ZPO). */
+    ENFORCEMENT_COURT("Vollstreckungsgericht"),
 
-    private static final Pattern CHARSET = Pattern.compile("CHARSET\\s*=\\s*([A-Za-z0-9_]+)",
-            Pattern.CASE_INSENSITIVE);
+    /** Drittschuldner - an employer, a bank, anyone owing the debtor. */
+    THIRD_PARTY_DEBTOR("Drittschuldner"),
 
-    private static final Pattern REFERENCES = Pattern.compile("REFERENCES\\s+`?(\\w+)`?\\s*\\(",
-            Pattern.CASE_INSENSITIVE);
+    /** Grundbuchamt, for a compulsory mortgage or a referral to forced sale. */
+    LAND_REGISTRY("Grundbuchamt"),
 
-    private static final Pattern ALTER_ADD_FK = Pattern.compile(
-            "ALTER\\s+TABLE\\s+`?(\\w+)`?[^;]*?FOREIGN\\s+KEY[^;]*?REFERENCES\\s+`?(\\w+)`?",
-            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    /** A registry or authority asked for information - residents' register, register of debtors. */
+    REGISTRY("Register oder Behörde"),
 
-    private List<File> migrations() {
-        String base = System.getProperty("basedir");
-        File dir = new File(base == null ? "." : base, "src/main/resources/db/migration");
-        assertTrue("das Migrationsverzeichnis fehlt: " + dir.getAbsolutePath(), dir.isDirectory());
-        File[] files = dir.listFiles((d, name) -> name.endsWith(".sql"));
-        assertTrue("es wurden keine Migrationen gefunden", files != null && files.length > 0);
-        List<File> sorted = new ArrayList<>(Arrays.asList(files));
-        sorted.sort((a, b) -> a.getName().compareTo(b.getName()));
-        return sorted;
-    }
+    /** Anything the list above does not cover. */
+    OTHER("sonstiger Empfänger");
 
-    private String read(File f) throws IOException {
-        return new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8);
-    }
+    private final String label;
 
-    private String charsetOf(String tail) {
-        if (tail == null) {
-            return normalise(DEFAULT_CHARSET);
-        }
-        Matcher m = CHARSET.matcher(tail);
-        return normalise(m.find() ? m.group(1) : DEFAULT_CHARSET);
+    EnforcementAddresseeType(String label) {
+        this.label = label;
     }
 
     /**
-     * utf8 and utf8mb3 are the same character set under two names - MySQL renamed it and keeps the
-     * old name as an alias. Both spellings appear in these scripts, and treating them as different
-     * would report a mismatch where the server sees none.
+     * @return the German designation shown to the user
      */
-    private String normalise(String charset) {
-        String lower = charset.toLowerCase();
-        return "utf8".equals(lower) ? "utf8mb3" : lower;
+    public String getLabel() {
+        return label;
     }
 
-    @Test
-    public void everyForeignKeyPointsAtATableOfTheSameCharacterSet() throws Exception {
-        // MySQL verlangt für einen Fremdschlüssel übereinstimmende Zeichensätze und Kollationen und
-        // sagt beim Scheitern nur errno 150, "Foreign key constraint is incorrectly formed" - was
-        // die Ursache verschweigt. Eine neue Tabelle in utf8mb4, die auf den utf8-Kern des Schemas
-        // zeigt, ist deshalb kein Schönheitsfehler, sondern ein Deployment, das abbricht.
-        Map<String, String> charsetByTable = new HashMap<>();
-        List<String> references = new ArrayList<>();
-
-        for (File migration : migrations()) {
-            String sql = read(migration);
-
-            Matcher create = CREATE_TABLE.matcher(sql);
-            while (create.find()) {
-                String table = create.group(1).toLowerCase();
-                charsetByTable.put(table, charsetOf(create.group(3)));
-                Matcher ref = REFERENCES.matcher(create.group(2));
-                while (ref.find()) {
-                    references.add(migration.getName() + "|" + table + "|" + ref.group(1).toLowerCase());
-                }
-            }
-
-            Matcher alter = ALTER_ADD_FK.matcher(sql);
-            while (alter.find()) {
-                references.add(migration.getName() + "|" + alter.group(1).toLowerCase()
-                        + "|" + alter.group(2).toLowerCase());
-            }
-        }
-
-        assertFalse("es wurde keine einzige Tabelle erkannt - der Parser ist kaputt, nicht das Schema",
-                charsetByTable.isEmpty());
-        assertFalse("es wurde kein einziger Fremdschlüssel erkannt", references.isEmpty());
-
-        List<String> mismatches = new ArrayList<>();
-        for (String reference : references) {
-            String[] parts = reference.split("\\|");
-            String from = charsetByTable.get(parts[1]);
-            String to = charsetByTable.get(parts[2]);
-            // Tabellen, die keine Migration angelegt hat, stammen aus der Ausgangsversion des
-            // Schemas; über deren Zeichensatz sagt das Verzeichnis nichts, also auch dieser Test nicht
-            if (from == null || to == null || from.equals(to)) {
-                continue;
-            }
-            mismatches.add(parts[0] + ": " + parts[1] + " (" + from + ") -> " + parts[2] + " (" + to + ")");
-        }
-
-        assertEquals("Fremdschlüssel zwischen Tabellen verschiedener Zeichensätze, das scheitert "
-                + "beim Deployment mit errno 150: " + mismatches, 0, mismatches.size());
-    }
-
-    @Test
-    public void everyEnumValueASeedWritesIsOneTheCodeKnows() {
-        // Hibernate schreibt ein @Enumerated(STRING) als Namen der Konstante. Ein Tippfehler im
-        // Seed legt sich anstandslos in die Datenbank und fällt erst auf, wenn jemand die Zeile
-        // liest - dann mit einer IllegalArgumentException aus dem EnumType, weit weg von der
-        // Ursache. Deshalb hier, wo die Ursache steht.
-        //
-        // Geprüft werden alle Großbuchstaben-Literale der Vollstreckungsmigrationen. Das sind drei
-        // Sorten: Empfängertypen, Ergebnisse - auch als Spaltenvorgabewert - und
-        // Formularschlüssel. Was keines davon ist, ist ein Vertipper.
-        Set<String> known = new HashSet<>();
-        for (EnforcementAddresseeType t : EnforcementAddresseeType.values()) {
-            known.add(t.name());
-        }
-        for (EnforcementMeasureOutcome o : EnforcementMeasureOutcome.values()) {
-            known.add(o.name());
-        }
-        Pattern formKey = Pattern.compile("ANLAGE_\\d+");
-        Pattern literal = Pattern.compile("'([A-Z][A-Z_0-9]{2,})'");
-
-        List<String> unknown = new ArrayList<>();
-        for (File migration : migrations()) {
-            String sql;
-            try {
-                sql = read(migration);
-            } catch (IOException ex) {
-                throw new IllegalStateException(ex);
-            }
-            if (!sql.contains("enforcement_measure_types")) {
-                continue;
-            }
-            Matcher m = literal.matcher(sql);
-            while (m.find()) {
-                String value = m.group(1);
-                if (!known.contains(value) && !formKey.matcher(value).matches()) {
-                    unknown.add(migration.getName() + ": " + value);
-                }
-            }
-        }
-        assertEquals("weder Empfängertyp, Ergebnis noch Formularschlüssel: " + unknown,
-                0, unknown.size());
-    }
-
-    @Test
-    public void noDerivedTableHasTwoColumnsOfTheSameName() {
-        // Die Seeds dieses Projekts schreiben "INSERT ... SELECT * FROM (SELECT ...) AS tmp WHERE
-        // NOT EXISTS ...", damit ein zweiter Lauf keine zweite Kopie anlegt. Eine abgeleitete
-        // Tabelle braucht für jede Spalte einen eindeutigen Namen. Fehlt das AS, benennt MySQL die
-        // Spalte nach dem Ausdruckstext - und drei Spalten mit dem Literal 1 heißen dann dreimal
-        // "1". Der Fehler lautet "Duplicate column name '1'" und zeigt sich erst beim Deployment.
-        List<String> offenders = new ArrayList<>();
-        for (File migration : migrations()) {
-            String sql;
-            try {
-                sql = read(migration);
-            } catch (IOException ex) {
-                throw new IllegalStateException(ex);
-            }
-            int from = sql.indexOf("FROM (SELECT");
-            while (from >= 0) {
-                int open = sql.indexOf('(', from);
-                int close = matchingParenthesis(sql, open);
-                if (close < 0) {
-                    break;
-                }
-                String body = sql.substring(open + 1, close);
-                List<String> names = columnNamesOf(body);
-                Set<String> seen = new HashSet<>();
-                for (String name : names) {
-                    if (!seen.add(name)) {
-                        offenders.add(migration.getName() + ": Spaltenname \"" + name
-                                + "\" kommt zweimal vor in " + names);
-                        break;
-                    }
-                }
-                from = sql.indexOf("FROM (SELECT", close);
-            }
-        }
-        assertEquals("abgeleitete Tabellen mit doppelten Spaltennamen: " + offenders,
-                0, offenders.size());
-    }
-
-    /**
-     * The names the columns of a derived table end up with.
-     *
-     * An alias if one is given, otherwise the text of the expression - which is what MySQL does,
-     * and the reason three columns holding the literal 1 collide.
-     */
-    private List<String> columnNamesOf(String body) {
-        String afterSelect = body.substring(body.indexOf("SELECT") + "SELECT".length());
-        String columns = beforeTopLevelFrom(afterSelect);
-        List<String> names = new ArrayList<>();
-        for (String part : splitTopLevel(columns)) {
-            String expression = part.trim();
-            Matcher alias = Pattern.compile("\\sAS\\s+(\\w+)$", Pattern.CASE_INSENSITIVE)
-                    .matcher(expression);
-            names.add(alias.find() ? alias.group(1).toLowerCase()
-                    : expression.replaceAll("\\s+", " ").toLowerCase());
-        }
-        return names;
-    }
-
-    /**
-     * The column list of a SELECT, cut before its FROM.
-     *
-     * Only a FROM that belongs to this SELECT ends the list - not one inside a string literal or a
-     * subquery.
-     */
-    private String beforeTopLevelFrom(String select) {
-        boolean inString = false;
-        int depth = 0;
-        for (int i = 0; i < select.length(); i++) {
-            char c = select.charAt(i);
-            if (c == '\'') {
-                if (inString && i + 1 < select.length() && select.charAt(i + 1) == '\'') {
-                    i++;
-                    continue;
-                }
-                inString = !inString;
-            } else if (!inString && c == '(') {
-                depth++;
-            } else if (!inString && c == ')') {
-                depth--;
-            } else if (!inString && depth == 0 && (c == 'F' || c == 'f')
-                    && select.regionMatches(true, i, "FROM", 0, 4)
-                    && (i == 0 || Character.isWhitespace(select.charAt(i - 1)))
-                    && i + 4 < select.length() && Character.isWhitespace(select.charAt(i + 4))) {
-                return select.substring(0, i);
-            }
-        }
-        return select;
-    }
-
-    private String shorten(String value) {
-        String trimmed = value.trim().replaceAll("\\s+", " ");
-        return trimmed.length() <= 60 ? trimmed : trimmed.substring(0, 57) + "...";
-    }
-
-    private int matchingParenthesis(String sql, int open) {
-        int depth = 0;
-        boolean inString = false;
-        for (int i = open; i < sql.length(); i++) {
-            char c = sql.charAt(i);
-            if (c == '\'') {
-                if (inString && i + 1 < sql.length() && sql.charAt(i + 1) == '\'') {
-                    i++;
-                    continue;
-                }
-                inString = !inString;
-            } else if (!inString && c == '(') {
-                depth++;
-            } else if (!inString && c == ')') {
-                depth--;
-                if (depth == 0) {
-                    return i;
-                }
-            }
-        }
-        return -1;
-    }
-
-    /**
-     * Splits a list of expressions at the commas that separate them, leaving alone the commas that
-     * sit inside a string literal or inside a nested call.
-     */
-    private List<String> splitTopLevel(String expressions) {
-        List<String> parts = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        boolean inString = false;
-        int depth = 0;
-        for (int i = 0; i < expressions.length(); i++) {
-            char c = expressions.charAt(i);
-            if (c == '\'') {
-                if (inString && i + 1 < expressions.length() && expressions.charAt(i + 1) == '\'') {
-                    current.append("''");
-                    i++;
-                    continue;
-                }
-                inString = !inString;
-                current.append(c);
-            } else if (!inString && c == '(') {
-                depth++;
-                current.append(c);
-            } else if (!inString && c == ')') {
-                depth--;
-                current.append(c);
-            } else if (!inString && depth == 0 && c == ',') {
-                parts.add(current.toString());
-                current.setLength(0);
-            } else {
-                current.append(c);
-            }
-        }
-        if (current.toString().trim().length() > 0) {
-            parts.add(current.toString());
-        }
-        return parts;
+    @Override
+    public String toString() {
+        return label;
     }
 }

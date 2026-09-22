@@ -660,342 +660,385 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.persistence.test;
+package com.jdimension.jlawyer.persistence;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.HashMap;
+import java.util.Date;
 import java.util.List;
-import com.jdimension.jlawyer.persistence.EnforcementAddresseeType;
-import com.jdimension.jlawyer.persistence.EnforcementMeasureOutcome;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import org.junit.Test;
+import javax.persistence.Basic;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.xml.bind.annotation.XmlRootElement;
 
 /**
- * What every migration script has to satisfy, checked before a server tries to run it.
+ * One enforcement measure taken out of a claim ledger on the strength of one of its titles.
  *
- * A migration fails on a live database, in front of a user, with the instruction to restore a
- * backup. That makes the cheap mistakes expensive, and the cheapest of them is a new table whose
- * character set differs from the one it points at: MySQL then refuses the foreign key with errno
- * 150, "Foreign key constraint is incorrectly formed", a message that names everything except the
- * cause. This has happened once - V3_6_0_36 was written as utf8mb4 against a utf8 core - and this
- * test is the reason it cannot happen again unnoticed.
+ * A measure is a workflow object, not a second place where money lives: what was recovered is
+ * booked into the ledger, and this record says what was done, to whom, when, and what came of it.
  *
- * The check is deliberately not "every table is utf8". Several tables of this schema are utf8mb4
- * and are fine, because nothing points from them into the older part. What cannot hold is a foreign
- * key across the boundary, and that is what is asserted.
+ * It knows its debtors explicitly rather than taking all of the ledger's. Enforcement runs against
+ * the debtor named in the title and can be pursued against one joint debtor and not another - the
+ * bailiff order names whom it is directed against, and so does this.
  *
  * @author jens
  */
-public class MigrationConventionsTest {
+@Entity
+@Table(name = "enforcement_measures")
+@XmlRootElement
+@NamedQueries({
+    @NamedQuery(name = "EnforcementMeasure.findAll", query = "SELECT m FROM EnforcementMeasure m"),
+    @NamedQuery(name = "EnforcementMeasure.findById", query = "SELECT m FROM EnforcementMeasure m WHERE m.id = :id"),
+    @NamedQuery(name = "EnforcementMeasure.findByLedger", query = "SELECT m FROM EnforcementMeasure m WHERE m.ledger = :ledger ORDER BY m.orderedDate ASC"),
+    @NamedQuery(name = "EnforcementMeasure.findByTitle", query = "SELECT m FROM EnforcementMeasure m WHERE m.title = :title ORDER BY m.orderedDate ASC"),
+    @NamedQuery(name = "EnforcementMeasure.findOpenByLedger", query = "SELECT m FROM EnforcementMeasure m WHERE m.ledger = :ledger AND m.outcome IN (:outcomes) ORDER BY m.orderedDate ASC")
+})
+public class EnforcementMeasure implements Serializable {
 
-    /** What a table is created in where the script does not say - the server default for this schema. */
-    private static final String DEFAULT_CHARSET = "utf8";
+    private static final long serialVersionUID = 1L;
 
-    private static final Pattern CREATE_TABLE = Pattern.compile(
-            "CREATE\\s+TABLE\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?`?(\\w+)`?\\s*\\((.*?)\\)\\s*(ENGINE[^;]*)?;",
-            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    @Id
+    @Basic(optional = false)
+    @Column(name = "id")
+    private String id;
 
-    private static final Pattern CHARSET = Pattern.compile("CHARSET\\s*=\\s*([A-Za-z0-9_]+)",
-            Pattern.CASE_INSENSITIVE);
-
-    private static final Pattern REFERENCES = Pattern.compile("REFERENCES\\s+`?(\\w+)`?\\s*\\(",
-            Pattern.CASE_INSENSITIVE);
-
-    private static final Pattern ALTER_ADD_FK = Pattern.compile(
-            "ALTER\\s+TABLE\\s+`?(\\w+)`?[^;]*?FOREIGN\\s+KEY[^;]*?REFERENCES\\s+`?(\\w+)`?",
-            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-
-    private List<File> migrations() {
-        String base = System.getProperty("basedir");
-        File dir = new File(base == null ? "." : base, "src/main/resources/db/migration");
-        assertTrue("das Migrationsverzeichnis fehlt: " + dir.getAbsolutePath(), dir.isDirectory());
-        File[] files = dir.listFiles((d, name) -> name.endsWith(".sql"));
-        assertTrue("es wurden keine Migrationen gefunden", files != null && files.length > 0);
-        List<File> sorted = new ArrayList<>(Arrays.asList(files));
-        sorted.sort((a, b) -> a.getName().compareTo(b.getName()));
-        return sorted;
-    }
-
-    private String read(File f) throws IOException {
-        return new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8);
-    }
-
-    private String charsetOf(String tail) {
-        if (tail == null) {
-            return normalise(DEFAULT_CHARSET);
-        }
-        Matcher m = CHARSET.matcher(tail);
-        return normalise(m.find() ? m.group(1) : DEFAULT_CHARSET);
-    }
+    @JoinColumn(name = "ledger_id", referencedColumnName = "id")
+    @ManyToOne
+    private ClaimLedger ledger;
 
     /**
-     * utf8 and utf8mb3 are the same character set under two names - MySQL renamed it and keeps the
-     * old name as an alias. Both spellings appear in these scripts, and treating them as different
-     * would report a mismatch where the server sees none.
-     */
-    private String normalise(String charset) {
-        String lower = charset.toLowerCase();
-        return "utf8".equals(lower) ? "utf8mb3" : lower;
-    }
-
-    @Test
-    public void everyForeignKeyPointsAtATableOfTheSameCharacterSet() throws Exception {
-        // MySQL verlangt für einen Fremdschlüssel übereinstimmende Zeichensätze und Kollationen und
-        // sagt beim Scheitern nur errno 150, "Foreign key constraint is incorrectly formed" - was
-        // die Ursache verschweigt. Eine neue Tabelle in utf8mb4, die auf den utf8-Kern des Schemas
-        // zeigt, ist deshalb kein Schönheitsfehler, sondern ein Deployment, das abbricht.
-        Map<String, String> charsetByTable = new HashMap<>();
-        List<String> references = new ArrayList<>();
-
-        for (File migration : migrations()) {
-            String sql = read(migration);
-
-            Matcher create = CREATE_TABLE.matcher(sql);
-            while (create.find()) {
-                String table = create.group(1).toLowerCase();
-                charsetByTable.put(table, charsetOf(create.group(3)));
-                Matcher ref = REFERENCES.matcher(create.group(2));
-                while (ref.find()) {
-                    references.add(migration.getName() + "|" + table + "|" + ref.group(1).toLowerCase());
-                }
-            }
-
-            Matcher alter = ALTER_ADD_FK.matcher(sql);
-            while (alter.find()) {
-                references.add(migration.getName() + "|" + alter.group(1).toLowerCase()
-                        + "|" + alter.group(2).toLowerCase());
-            }
-        }
-
-        assertFalse("es wurde keine einzige Tabelle erkannt - der Parser ist kaputt, nicht das Schema",
-                charsetByTable.isEmpty());
-        assertFalse("es wurde kein einziger Fremdschlüssel erkannt", references.isEmpty());
-
-        List<String> mismatches = new ArrayList<>();
-        for (String reference : references) {
-            String[] parts = reference.split("\\|");
-            String from = charsetByTable.get(parts[1]);
-            String to = charsetByTable.get(parts[2]);
-            // Tabellen, die keine Migration angelegt hat, stammen aus der Ausgangsversion des
-            // Schemas; über deren Zeichensatz sagt das Verzeichnis nichts, also auch dieser Test nicht
-            if (from == null || to == null || from.equals(to)) {
-                continue;
-            }
-            mismatches.add(parts[0] + ": " + parts[1] + " (" + from + ") -> " + parts[2] + " (" + to + ")");
-        }
-
-        assertEquals("Fremdschlüssel zwischen Tabellen verschiedener Zeichensätze, das scheitert "
-                + "beim Deployment mit errno 150: " + mismatches, 0, mismatches.size());
-    }
-
-    @Test
-    public void everyEnumValueASeedWritesIsOneTheCodeKnows() {
-        // Hibernate schreibt ein @Enumerated(STRING) als Namen der Konstante. Ein Tippfehler im
-        // Seed legt sich anstandslos in die Datenbank und fällt erst auf, wenn jemand die Zeile
-        // liest - dann mit einer IllegalArgumentException aus dem EnumType, weit weg von der
-        // Ursache. Deshalb hier, wo die Ursache steht.
-        //
-        // Geprüft werden alle Großbuchstaben-Literale der Vollstreckungsmigrationen. Das sind drei
-        // Sorten: Empfängertypen, Ergebnisse - auch als Spaltenvorgabewert - und
-        // Formularschlüssel. Was keines davon ist, ist ein Vertipper.
-        Set<String> known = new HashSet<>();
-        for (EnforcementAddresseeType t : EnforcementAddresseeType.values()) {
-            known.add(t.name());
-        }
-        for (EnforcementMeasureOutcome o : EnforcementMeasureOutcome.values()) {
-            known.add(o.name());
-        }
-        Pattern formKey = Pattern.compile("ANLAGE_\\d+");
-        Pattern literal = Pattern.compile("'([A-Z][A-Z_0-9]{2,})'");
-
-        List<String> unknown = new ArrayList<>();
-        for (File migration : migrations()) {
-            String sql;
-            try {
-                sql = read(migration);
-            } catch (IOException ex) {
-                throw new IllegalStateException(ex);
-            }
-            if (!sql.contains("enforcement_measure_types")) {
-                continue;
-            }
-            Matcher m = literal.matcher(sql);
-            while (m.find()) {
-                String value = m.group(1);
-                if (!known.contains(value) && !formKey.matcher(value).matches()) {
-                    unknown.add(migration.getName() + ": " + value);
-                }
-            }
-        }
-        assertEquals("weder Empfängertyp, Ergebnis noch Formularschlüssel: " + unknown,
-                0, unknown.size());
-    }
-
-    @Test
-    public void noDerivedTableHasTwoColumnsOfTheSameName() {
-        // Die Seeds dieses Projekts schreiben "INSERT ... SELECT * FROM (SELECT ...) AS tmp WHERE
-        // NOT EXISTS ...", damit ein zweiter Lauf keine zweite Kopie anlegt. Eine abgeleitete
-        // Tabelle braucht für jede Spalte einen eindeutigen Namen. Fehlt das AS, benennt MySQL die
-        // Spalte nach dem Ausdruckstext - und drei Spalten mit dem Literal 1 heißen dann dreimal
-        // "1". Der Fehler lautet "Duplicate column name '1'" und zeigt sich erst beim Deployment.
-        List<String> offenders = new ArrayList<>();
-        for (File migration : migrations()) {
-            String sql;
-            try {
-                sql = read(migration);
-            } catch (IOException ex) {
-                throw new IllegalStateException(ex);
-            }
-            int from = sql.indexOf("FROM (SELECT");
-            while (from >= 0) {
-                int open = sql.indexOf('(', from);
-                int close = matchingParenthesis(sql, open);
-                if (close < 0) {
-                    break;
-                }
-                String body = sql.substring(open + 1, close);
-                List<String> names = columnNamesOf(body);
-                Set<String> seen = new HashSet<>();
-                for (String name : names) {
-                    if (!seen.add(name)) {
-                        offenders.add(migration.getName() + ": Spaltenname \"" + name
-                                + "\" kommt zweimal vor in " + names);
-                        break;
-                    }
-                }
-                from = sql.indexOf("FROM (SELECT", close);
-            }
-        }
-        assertEquals("abgeleitete Tabellen mit doppelten Spaltennamen: " + offenders,
-                0, offenders.size());
-    }
-
-    /**
-     * The names the columns of a derived table end up with.
+     * The title the measure runs on.
      *
-     * An alias if one is given, otherwise the text of the expression - which is what MySQL does,
-     * and the reason three columns holding the literal 1 collide.
+     * Required for almost every kind (§ 750 Abs. 1 ZPO) but not for all: an enforcement warning
+     * goes out before there is anything to enforce. Which kinds may do without is on the type.
      */
-    private List<String> columnNamesOf(String body) {
-        String afterSelect = body.substring(body.indexOf("SELECT") + "SELECT".length());
-        String columns = beforeTopLevelFrom(afterSelect);
-        List<String> names = new ArrayList<>();
-        for (String part : splitTopLevel(columns)) {
-            String expression = part.trim();
-            Matcher alias = Pattern.compile("\\sAS\\s+(\\w+)$", Pattern.CASE_INSENSITIVE)
-                    .matcher(expression);
-            names.add(alias.find() ? alias.group(1).toLowerCase()
-                    : expression.replaceAll("\\s+", " ").toLowerCase());
-        }
-        return names;
-    }
+    @JoinColumn(name = "title_id", referencedColumnName = "id")
+    @ManyToOne
+    private EnforcementTitle title;
+
+    @JoinColumn(name = "measure_type_id", referencedColumnName = "id")
+    @ManyToOne
+    private EnforcementMeasureType measureType;
 
     /**
-     * The column list of a SELECT, cut before its FROM.
+     * The debtors this measure is directed against - a subset of the ledger's, not all of them.
+     */
+    @ManyToMany
+    @JoinTable(name = "enforcement_measure_debtors",
+            joinColumns = @JoinColumn(name = "measure_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "party_id", referencedColumnName = "id"))
+    private List<ClaimLedgerParty> debtors = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "addressee_type", length = 50)
+    private EnforcementAddresseeType addresseeType;
+
+    /**
+     * The contact the measure was sent to, where it is one the address book holds.
      *
-     * Only a FROM that belongs to this SELECT ends the list - not one inside a string literal or a
-     * subquery.
+     * A bailiff usually is not, which is why the designation below stands on its own feet.
      */
-    private String beforeTopLevelFrom(String select) {
-        boolean inString = false;
-        int depth = 0;
-        for (int i = 0; i < select.length(); i++) {
-            char c = select.charAt(i);
-            if (c == '\'') {
-                if (inString && i + 1 < select.length() && select.charAt(i + 1) == '\'') {
-                    i++;
-                    continue;
-                }
-                inString = !inString;
-            } else if (!inString && c == '(') {
-                depth++;
-            } else if (!inString && c == ')') {
-                depth--;
-            } else if (!inString && depth == 0 && (c == 'F' || c == 'f')
-                    && select.regionMatches(true, i, "FROM", 0, 4)
-                    && (i == 0 || Character.isWhitespace(select.charAt(i - 1)))
-                    && i + 4 < select.length() && Character.isWhitespace(select.charAt(i + 4))) {
-                return select.substring(0, i);
-            }
-        }
-        return select;
-    }
+    @JoinColumn(name = "addressee_contact_id", referencedColumnName = "id")
+    @ManyToOne
+    private AddressBean addresseeContact;
 
-    private String shorten(String value) {
-        String trimmed = value.trim().replaceAll("\\s+", " ");
-        return trimmed.length() <= 60 ? trimmed : trimmed.substring(0, 57) + "...";
-    }
+    /**
+     * Whom the measure went to, in the wording used towards them.
+     *
+     * Frozen like a party designation, and for the same reason: a measure filed years ago has to
+     * stay reconstructable when the bailiff's district has since been redrawn.
+     */
+    @Column(name = "addressee_designation", length = 500)
+    private String addresseeDesignation;
 
-    private int matchingParenthesis(String sql, int open) {
-        int depth = 0;
-        boolean inString = false;
-        for (int i = open; i < sql.length(); i++) {
-            char c = sql.charAt(i);
-            if (c == '\'') {
-                if (inString && i + 1 < sql.length() && sql.charAt(i + 1) == '\'') {
-                    i++;
-                    continue;
-                }
-                inString = !inString;
-            } else if (!inString && c == '(') {
-                depth++;
-            } else if (!inString && c == ')') {
-                depth--;
-                if (depth == 0) {
-                    return i;
-                }
-            }
-        }
-        return -1;
+    @Column(name = "addressee_address", length = 1000)
+    private String addresseeAddress;
+
+    /** The day the firm decided on the measure. */
+    @Column(name = "ordered_date")
+    @Temporal(TemporalType.DATE)
+    private Date orderedDate;
+
+    /** The day it left the firm - the day the deadlines of this measure count from. */
+    @Column(name = "dispatched_date")
+    @Temporal(TemporalType.DATE)
+    private Date dispatchedDate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "outcome", nullable = false, length = 50)
+    private EnforcementMeasureOutcome outcome = EnforcementMeasureOutcome.PENDING;
+
+    @Column(name = "outcome_date")
+    @Temporal(TemporalType.DATE)
+    private Date outcomeDate;
+
+    /**
+     * The version of the official form the documents of this measure were produced with.
+     *
+     * Recorded rather than derived: the ZVFV forms are replaced from time to time, and a measure
+     * generated under the old one was not wrong, it was current.
+     */
+    @Column(name = "form_version", length = 50)
+    private String formVersion;
+
+    @Column(name = "notes", length = 2000)
+    private String notes;
+
+    /**
+     * @return the technical identifier
+     */
+    public String getId() {
+        return id;
     }
 
     /**
-     * Splits a list of expressions at the commas that separate them, leaving alone the commas that
-     * sit inside a string literal or inside a nested call.
+     * @param id the technical identifier
      */
-    private List<String> splitTopLevel(String expressions) {
-        List<String> parts = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        boolean inString = false;
-        int depth = 0;
-        for (int i = 0; i < expressions.length(); i++) {
-            char c = expressions.charAt(i);
-            if (c == '\'') {
-                if (inString && i + 1 < expressions.length() && expressions.charAt(i + 1) == '\'') {
-                    current.append("''");
-                    i++;
-                    continue;
-                }
-                inString = !inString;
-                current.append(c);
-            } else if (!inString && c == '(') {
-                depth++;
-                current.append(c);
-            } else if (!inString && c == ')') {
-                depth--;
-                current.append(c);
-            } else if (!inString && depth == 0 && c == ',') {
-                parts.add(current.toString());
-                current.setLength(0);
-            } else {
-                current.append(c);
-            }
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @return the claim ledger this measure enforces
+     */
+    public ClaimLedger getLedger() {
+        return ledger;
+    }
+
+    /**
+     * @param ledger the claim ledger this measure enforces
+     */
+    public void setLedger(ClaimLedger ledger) {
+        this.ledger = ledger;
+    }
+
+    /**
+     * @return the title the measure runs on, or null where the kind needs none
+     */
+    public EnforcementTitle getTitle() {
+        return title;
+    }
+
+    /**
+     * @param title the title the measure runs on
+     */
+    public void setTitle(EnforcementTitle title) {
+        this.title = title;
+    }
+
+    /**
+     * @return the kind of measure
+     */
+    public EnforcementMeasureType getMeasureType() {
+        return measureType;
+    }
+
+    /**
+     * @param measureType the kind of measure
+     */
+    public void setMeasureType(EnforcementMeasureType measureType) {
+        this.measureType = measureType;
+    }
+
+    /**
+     * @return the debtors this measure is directed against, never null
+     */
+    public List<ClaimLedgerParty> getDebtors() {
+        if (this.debtors == null) {
+            this.debtors = new ArrayList<>();
         }
-        if (current.toString().trim().length() > 0) {
-            parts.add(current.toString());
+        return debtors;
+    }
+
+    /**
+     * @param debtors the debtors this measure is directed against
+     */
+    public void setDebtors(List<ClaimLedgerParty> debtors) {
+        this.debtors = debtors;
+    }
+
+    /**
+     * @return whom the measure is addressed to
+     */
+    public EnforcementAddresseeType getAddresseeType() {
+        return addresseeType;
+    }
+
+    /**
+     * @param addresseeType whom the measure is addressed to
+     */
+    public void setAddresseeType(EnforcementAddresseeType addresseeType) {
+        this.addresseeType = addresseeType;
+    }
+
+    /**
+     * @return the addressee as a contact, or null where none is recorded
+     */
+    public AddressBean getAddresseeContact() {
+        return addresseeContact;
+    }
+
+    /**
+     * @param addresseeContact the addressee as a contact
+     */
+    public void setAddresseeContact(AddressBean addresseeContact) {
+        this.addresseeContact = addresseeContact;
+    }
+
+    /**
+     * @return the addressee in the wording used towards them
+     */
+    public String getAddresseeDesignation() {
+        return addresseeDesignation;
+    }
+
+    /**
+     * @param addresseeDesignation the addressee in the wording used towards them
+     */
+    public void setAddresseeDesignation(String addresseeDesignation) {
+        this.addresseeDesignation = addresseeDesignation;
+    }
+
+    /**
+     * @return the postal address the measure was sent to
+     */
+    public String getAddresseeAddress() {
+        return addresseeAddress;
+    }
+
+    /**
+     * @param addresseeAddress the postal address the measure was sent to
+     */
+    public void setAddresseeAddress(String addresseeAddress) {
+        this.addresseeAddress = addresseeAddress;
+    }
+
+    /**
+     * @return the day the measure was decided on
+     */
+    public Date getOrderedDate() {
+        return orderedDate;
+    }
+
+    /**
+     * @param orderedDate the day the measure was decided on
+     */
+    public void setOrderedDate(Date orderedDate) {
+        this.orderedDate = orderedDate;
+    }
+
+    /**
+     * @return the day the measure left the firm, or null while it has not
+     */
+    public Date getDispatchedDate() {
+        return dispatchedDate;
+    }
+
+    /**
+     * @param dispatchedDate the day the measure left the firm
+     */
+    public void setDispatchedDate(Date dispatchedDate) {
+        this.dispatchedDate = dispatchedDate;
+    }
+
+    /**
+     * @return how the measure ended, or that it has not
+     */
+    public EnforcementMeasureOutcome getOutcome() {
+        return outcome;
+    }
+
+    /**
+     * @param outcome how the measure ended
+     */
+    public void setOutcome(EnforcementMeasureOutcome outcome) {
+        this.outcome = outcome;
+    }
+
+    /**
+     * @return the day the outcome is dated, or null while there is none
+     */
+    public Date getOutcomeDate() {
+        return outcomeDate;
+    }
+
+    /**
+     * @param outcomeDate the day the outcome is dated
+     */
+    public void setOutcomeDate(Date outcomeDate) {
+        this.outcomeDate = outcomeDate;
+    }
+
+    /**
+     * @return the version of the official form used, or null where no form was generated
+     */
+    public String getFormVersion() {
+        return formVersion;
+    }
+
+    /**
+     * @param formVersion the version of the official form used
+     */
+    public void setFormVersion(String formVersion) {
+        this.formVersion = formVersion;
+    }
+
+    /**
+     * @return free-text notes on the measure
+     */
+    public String getNotes() {
+        return notes;
+    }
+
+    /**
+     * @param notes free-text notes on the measure
+     */
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    /**
+     * Whether this measure still expects something to happen.
+     *
+     * @return true while it is pending or stayed
+     */
+    public boolean isOpen() {
+        return this.outcome == null || !this.outcome.isClosed();
+    }
+
+    @Override
+    public int hashCode() {
+        return id == null ? 0 : id.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (!(object instanceof EnforcementMeasure)) {
+            return false;
         }
-        return parts;
+        EnforcementMeasure other = (EnforcementMeasure) object;
+        return this.id != null && this.id.equals(other.id);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(this.measureType == null ? "Maßnahme" : this.measureType.getName());
+        if (this.orderedDate != null) {
+            sb.append(" vom ").append(new java.text.SimpleDateFormat("dd.MM.yyyy").format(this.orderedDate));
+        }
+        return sb.toString();
     }
 }
