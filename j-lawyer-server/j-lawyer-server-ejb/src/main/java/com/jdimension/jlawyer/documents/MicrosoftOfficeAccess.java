@@ -1292,9 +1292,25 @@ public class MicrosoftOfficeAccess {
 
     }
 
+    /**
+     * Removes w:lastRenderedPageBreak elements from all runs of a paragraph.
+     * Word writes them as a layout cache wherever a page break fell at the time
+     * of saving - also in the middle of a placeholder or script. POIs searchText
+     * aborts a match at such an element, so it must be removed before replacing.
+     * Word recalculates these elements when opening the document.
+     */
+    private static void stripLastRenderedPageBreaks(XWPFParagraph xwpfParagraph) {
+        for (CTR r : xwpfParagraph.getCTP().getRList()) {
+            while (r.sizeOfLastRenderedPageBreakArray() > 0) {
+                r.removeLastRenderedPageBreak(0);
+            }
+        }
+    }
+
     private static void replaceInParagraph(String key, String value, XWPFParagraph xwpfParagraph) {
 
         try {
+            stripLastRenderedPageBreaks(xwpfParagraph);
 
             //for (XWPFParagraph paragraph : xwpfParagraphs) {
             List<XWPFRun> runs = xwpfParagraph.getRuns();
@@ -1341,6 +1357,7 @@ public class MicrosoftOfficeAccess {
 
         ArrayList<String> scriptList = new ArrayList<>();
 
+        stripLastRenderedPageBreaks(xwpfParagraph);
         String fullParagraph = xwpfParagraph.getText();
         Matcher m = pattern.matcher(fullParagraph);
         while (m.find()) {
@@ -1392,7 +1409,8 @@ public class MicrosoftOfficeAccess {
                 }
             } else {
                 log.warn("script found in paragraph, but finding its position in runs failed");
-                String newParagraphText = fullParagraph.replace(find, repl);
+                // use the current paragraph text - scripts replaced in previous iterations must not be restored
+                String newParagraphText = xwpfParagraph.getText().replace(find, repl);
                 for (int runPos = 0; runPos < runs.size(); runPos++) {
                     XWPFRun replRun = runs.get(runPos);
                     if (runPos == 0) {
