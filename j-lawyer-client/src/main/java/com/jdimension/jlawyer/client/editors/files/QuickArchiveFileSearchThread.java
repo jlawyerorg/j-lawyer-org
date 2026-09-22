@@ -792,7 +792,7 @@ public class QuickArchiveFileSearchThread implements Runnable {
                 dtrs.setComparator(0, new FileNumberComparatorRowIdentifier());
                 target.setRowSorter(dtrs);
                 ArrayList list = new ArrayList();
-                list.add(new RowSorter.SortKey(0, SortOrder.ASCENDING));
+                list.add(new RowSorter.SortKey(1, SortOrder.DESCENDING));
                 dtrs.setSortKeys(list);
                 dtrs.sort();
 
