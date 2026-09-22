@@ -660,413 +660,154 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.services;
 
-import java.io.Serializable;
-import java.time.LocalDate;
-import java.time.ZoneId;
+import com.jdimension.jlawyer.persistence.EnforcementFormTemplate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import javax.xml.bind.annotation.XmlRootElement;
 
 /**
- * An enforcement title (Titel) a claim ledger rests on.
+ * Which version of an official form applies on a given day.
  *
- * Enforcement requires three formal prerequisites - the title itself, the enforceable copy with
- * its clause (Klausel) and service on the debtor (Zustellung). A title established by judgment or
- * order is subject to the 30-year limitation period of § 197 Abs. 1 Nr. 3 BGB, which is computed
- * from the date of issue.
+ * The forms of the ZVFV are replaced from time to time, and the one in force when a measure is
+ * created is the one to use. A measure generated under an older version was not wrong, it was
+ * current - which is why versions live alongside one another and this decides between them rather
+ * than a firm being told to delete the old file.
+ *
+ * Where nothing is in force the selection is not refused: the newest version is offered with a
+ * reason, and the caller asks the user to confirm. A firm that has to file today cannot wait for us
+ * to ship a template, and filing on last month's form is better than not filing.
  *
  * @author jens
  */
-@Entity
-@Table(name = "enforcement_titles")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "EnforcementTitle.findAll", query = "SELECT t FROM EnforcementTitle t"),
-    @NamedQuery(name = "EnforcementTitle.findById", query = "SELECT t FROM EnforcementTitle t WHERE t.id = :id"),
-    @NamedQuery(name = "EnforcementTitle.findByLedger", query = "SELECT t FROM EnforcementTitle t WHERE t.ledger = :ledger ORDER BY t.issueDate ASC")
-})
-public class EnforcementTitle implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class EnforcementFormTemplateSelector {
 
     /**
-     * Limitation period of a titled claim under § 197 Abs. 1 Nr. 3 BGB, in years.
+     * What was chosen, and what the user has to be told about it.
      */
-    public static final int LIMITATION_YEARS = 30;
+    public static class Selection {
 
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
+        private final EnforcementFormTemplate template;
+        private final String warning;
 
-    @JoinColumn(name = "ledger_id", referencedColumnName = "id")
-    @ManyToOne(optional = false)
-    private ClaimLedger ledger;
+        Selection(EnforcementFormTemplate template, String warning) {
+            this.template = template;
+            this.warning = warning;
+        }
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "title_type", nullable = false, length = 50)
-    private EnforcementTitleType titleType;
+        /**
+         * @return the version to fill, or null where there is none at all
+         */
+        public EnforcementFormTemplate getTemplate() {
+            return template;
+        }
 
-    @Column(name = "issuing_body")
-    private String issuingBody;
+        /**
+         * @return what to tell the user before producing the form, or null where nothing is amiss
+         */
+        public String getWarning() {
+            return warning;
+        }
 
-    @Column(name = "file_number")
-    private String fileNumber;
+        /**
+         * @return whether a version was found
+         */
+        public boolean isFound() {
+            return template != null;
+        }
 
-    @Column(name = "issue_date")
-    @Temporal(TemporalType.DATE)
-    private Date issueDate;
-
-    @Column(name = "clause_date")
-    @Temporal(TemporalType.DATE)
-    private Date clauseDate;
-
-    @Column(name = "service_date")
-    @Temporal(TemporalType.DATE)
-    private Date serviceDate;
-
-    @Column(name = "limitation_date")
-    @Temporal(TemporalType.DATE)
-    private Date limitationDate;
-
-    @Column(name = "subject_matter")
-    private String subjectMatter;
-
-    @Column(name = "comment")
-    private String comment;
+        /**
+         * @return whether the version found is the one prescribed on that day
+         */
+        public boolean isCurrent() {
+            return template != null && warning == null;
+        }
+    }
 
     /**
-     * The case event that reminds of this title's limitation date. Kept as an explicit reference so
-     * the follow-up can be found, moved and removed again without writing a technical marker into
-     * text the user reads.
-     */
-    @Column(name = "limitation_review_id")
-    private String limitationReviewId;
-
-    @ManyToMany
-    @JoinTable(name = "enforcement_title_debtors",
-            joinColumns = @JoinColumn(name = "title_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "party_id", referencedColumnName = "id"))
-    private List<ClaimLedgerParty> debtors = new ArrayList<>();
-
-    /**
-     * The positions of the ledger this title covers.
+     * Picks the version of a form that applies on a day.
      *
-     * Enforcement runs on what the title says, and the official itemisation separates a titled claim
-     * from a further one - Anlagen 6 to 8 give them different lines and different treatment. Without
-     * knowing which positions a title carries, a form would either claim enforcement of something
-     * the title does not cover, which the bailiff refuses, or leave out something it does.
-     *
-     * Empty where a title predates this record. The itemisation says so rather than guessing: a
-     * silent classification would be a statement about the title that nobody made.
+     * @param templates the versions held of that form, in any order
+     * @param formKey the annex wanted
+     * @param day the day the measure is created
+     * @return the selection, never null
      */
-    @ManyToMany
-    @JoinTable(name = "enforcement_title_components",
-            joinColumns = @JoinColumn(name = "title_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "component_id", referencedColumnName = "id"))
-    private List<ClaimComponent> coveredComponents = new ArrayList<>();
+    public Selection select(List<EnforcementFormTemplate> templates, String formKey, Date day) {
 
-    /**
-     * Whether all three formal prerequisites of enforcement are present: the title, the enforceable
-     * copy with its clause and service on the debtor.
-     *
-     * @return true if enforcement may proceed without an override
-     */
-    public boolean isEnforceable() {
-        return this.issueDate != null && this.clauseDate != null && this.serviceDate != null;
-    }
-
-    /**
-     * Names the formal prerequisites of enforcement that are still missing.
-     *
-     * @return the missing prerequisites, empty if the title is complete
-     */
-    public List<String> getMissingPrerequisites() {
-        List<String> missing = new ArrayList<>();
-        if (this.issueDate == null) {
-            missing.add("Titel");
+        List<EnforcementFormTemplate> ofThatForm = new ArrayList<>();
+        if (templates != null) {
+            for (EnforcementFormTemplate template : templates) {
+                if (template.getFormKey() != null && template.getFormKey().equals(formKey)) {
+                    ofThatForm.add(template);
+                }
+            }
         }
-        if (this.clauseDate == null) {
-            missing.add("Klausel");
+        if (ofThatForm.isEmpty()) {
+            return new Selection(null, "Für " + describe(formKey)
+                    + " ist keine Formularvorlage hinterlegt. Sie lässt sich unter "
+                    + "Einstellungen → Zwangsvollstreckung → Formulare erfassen.");
         }
-        if (this.serviceDate == null) {
-            missing.add("Zustellung");
+
+        List<EnforcementFormTemplate> valid = new ArrayList<>();
+        for (EnforcementFormTemplate template : ofThatForm) {
+            if (template.isValidOn(day)) {
+                valid.add(template);
+            }
         }
-        return missing;
-    }
 
-    /**
-     * Computes the date on which the titled claim becomes time-barred under § 197 Abs. 1 Nr. 3 BGB,
-     * 30 years after the title was issued.
-     *
-     * @return the limitation date, or null if the title carries no date of issue
-     */
-    public Date computeLimitationDate() {
-        if (this.issueDate == null) {
-            return null;
+        if (valid.size() == 1) {
+            return new Selection(valid.get(0), null);
         }
-        LocalDate issued = this.issueDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate limitation = issued.plusYears(LIMITATION_YEARS);
-        return Date.from(limitation.atStartOfDay(ZoneId.systemDefault()).toInstant());
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (getId() != null ? getId().hashCode() : 0);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof EnforcementTitle)) {
-            return false;
+        if (valid.size() > 1) {
+            // Zwei gleichzeitig gültige Fassungen sind ein Fehler in den Stammdaten. Die jüngste zu
+            // nehmen ist die bessere Vermutung, aber sie bleibt eine - deshalb wird es gesagt.
+            EnforcementFormTemplate newest = newestOf(valid);
+            return new Selection(newest, "Zu " + describe(formKey) + " sind für den "
+                    + format(day) + " mehrere Fassungen als gültig hinterlegt. Verwendet wird "
+                    + describe(newest) + "; bitte die Gültigkeitszeiträume prüfen.");
         }
-        EnforcementTitle other = (EnforcementTitle) object;
-        if ((this.getId() == null && other.getId() != null) || (this.getId() != null && !this.id.equals(other.id))) {
-            return false;
+
+        EnforcementFormTemplate newest = newestOf(ofThatForm);
+        return new Selection(newest, "Zu " + describe(formKey) + " gilt am " + format(day)
+                + " keine der hinterlegten Fassungen. Verwendet wird " + describe(newest)
+                + ". Das Formular ist möglicherweise nicht mehr das vorgeschriebene.");
+    }
+
+    private EnforcementFormTemplate newestOf(List<EnforcementFormTemplate> templates) {
+        EnforcementFormTemplate newest = null;
+        for (EnforcementFormTemplate template : templates) {
+            if (newest == null) {
+                newest = template;
+                continue;
+            }
+            Date a = template.getValidFrom();
+            Date b = newest.getValidFrom();
+            // eine Fassung ohne Beginn ist die aelteste - sie stammt aus einer Zeit, in der das
+            // niemand festgehalten hat
+            if (b == null && a != null) {
+                newest = template;
+            } else if (a != null && a.after(b)) {
+                newest = template;
+            }
         }
-        return true;
+        return newest;
     }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (this.titleType != null) {
-            sb.append(this.titleType.toString());
+    private String describe(String formKey) {
+        return formKey == null ? "das Formular" : "Formular " + formKey.replace("_", " ");
+    }
+
+    private String describe(EnforcementFormTemplate template) {
+        if (template == null) {
+            return "keine Fassung";
         }
-        if (this.fileNumber != null && !this.fileNumber.isEmpty()) {
-            sb.append(" ").append(this.fileNumber);
-        }
-        return sb.toString();
+        String version = template.getVersion();
+        return version == null || version.trim().isEmpty()
+                ? template.getName() : template.getName() + " (" + version.trim() + ")";
     }
 
-    /**
-     * @return the id
-     */
-    public String getId() {
-        return id;
+    private String format(Date day) {
+        return day == null ? "heute" : new java.text.SimpleDateFormat("dd.MM.yyyy").format(day);
     }
-
-    /**
-     * @param id the id to set
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the ledger
-     */
-    public ClaimLedger getLedger() {
-        return ledger;
-    }
-
-    /**
-     * @param ledger the ledger to set
-     */
-    public void setLedger(ClaimLedger ledger) {
-        this.ledger = ledger;
-    }
-
-    /**
-     * @return the titleType
-     */
-    public EnforcementTitleType getTitleType() {
-        return titleType;
-    }
-
-    /**
-     * @param titleType the titleType to set
-     */
-    public void setTitleType(EnforcementTitleType titleType) {
-        this.titleType = titleType;
-    }
-
-    /**
-     * @return the issuingBody
-     */
-    public String getIssuingBody() {
-        return issuingBody;
-    }
-
-    /**
-     * @param issuingBody the issuingBody to set
-     */
-    public void setIssuingBody(String issuingBody) {
-        this.issuingBody = issuingBody;
-    }
-
-    /**
-     * @return the fileNumber
-     */
-    public String getFileNumber() {
-        return fileNumber;
-    }
-
-    /**
-     * @param fileNumber the fileNumber to set
-     */
-    public void setFileNumber(String fileNumber) {
-        this.fileNumber = fileNumber;
-    }
-
-    /**
-     * @return the issueDate
-     */
-    public Date getIssueDate() {
-        return issueDate;
-    }
-
-    /**
-     * @param issueDate the issueDate to set
-     */
-    public void setIssueDate(Date issueDate) {
-        this.issueDate = issueDate;
-    }
-
-    /**
-     * @return the clauseDate
-     */
-    public Date getClauseDate() {
-        return clauseDate;
-    }
-
-    /**
-     * @param clauseDate the clauseDate to set
-     */
-    public void setClauseDate(Date clauseDate) {
-        this.clauseDate = clauseDate;
-    }
-
-    /**
-     * @return the serviceDate
-     */
-    public Date getServiceDate() {
-        return serviceDate;
-    }
-
-    /**
-     * @param serviceDate the serviceDate to set
-     */
-    public void setServiceDate(Date serviceDate) {
-        this.serviceDate = serviceDate;
-    }
-
-    /**
-     * @return the limitationDate
-     */
-    public Date getLimitationDate() {
-        return limitationDate;
-    }
-
-    /**
-     * @param limitationDate the limitationDate to set
-     */
-    public void setLimitationDate(Date limitationDate) {
-        this.limitationDate = limitationDate;
-    }
-
-    /**
-     * @return the subjectMatter
-     */
-    public String getSubjectMatter() {
-        return subjectMatter;
-    }
-
-    /**
-     * @param subjectMatter the subjectMatter to set
-     */
-    public void setSubjectMatter(String subjectMatter) {
-        this.subjectMatter = subjectMatter;
-    }
-
-    /**
-     * @return the comment
-     */
-    public String getComment() {
-        return comment;
-    }
-
-    /**
-     * @param comment the comment to set
-     */
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
-    /**
-     * @return the debtors
-     */
-    public List<ClaimLedgerParty> getDebtors() {
-        return debtors;
-    }
-
-    /**
-     * @param debtors the debtors to set
-     */
-    public void setDebtors(List<ClaimLedgerParty> debtors) {
-        this.debtors = debtors;
-    }
-
-    /**
-     * @return the positions of the ledger this title covers, never null; empty where it is unknown
-     */
-    public List<ClaimComponent> getCoveredComponents() {
-        if (this.coveredComponents == null) {
-            this.coveredComponents = new ArrayList<>();
-        }
-        return coveredComponents;
-    }
-
-    /**
-     * @param coveredComponents the positions of the ledger this title covers
-     */
-    public void setCoveredComponents(List<ClaimComponent> coveredComponents) {
-        this.coveredComponents = coveredComponents;
-    }
-
-    /**
-     * Whether this title says which positions it covers.
-     *
-     * @return false for a title recorded before the coverage was tracked, whose itemisation
-     * therefore cannot separate titled from further claims
-     */
-    public boolean hasCoverage() {
-        return this.coveredComponents != null && !this.coveredComponents.isEmpty();
-    }
-
-
-    /**
-     * @return the id of the case event guarding the limitation date, or null if none exists
-     */
-    public String getLimitationReviewId() {
-        return limitationReviewId;
-    }
-
-    /**
-     * @param limitationReviewId the limitationReviewId to set
-     */
-    public void setLimitationReviewId(String limitationReviewId) {
-        this.limitationReviewId = limitationReviewId;
-    }
-
 }

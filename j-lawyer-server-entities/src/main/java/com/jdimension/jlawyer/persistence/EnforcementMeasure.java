@@ -793,6 +793,16 @@ public class EnforcementMeasure implements Serializable {
     @Column(name = "form_version", length = 50)
     private String formVersion;
 
+    /**
+     * The template the documents of this measure were produced from.
+     *
+     * Beside the version as text, not instead of it: the text survives even if an administrator
+     * later deletes the template, and a filing has to stay describable after that.
+     */
+    @JoinColumn(name = "form_template_id", referencedColumnName = "id")
+    @ManyToOne
+    private EnforcementFormTemplate formTemplate;
+
     @Column(name = "notes", length = 2000)
     private String notes;
 
@@ -993,6 +1003,20 @@ public class EnforcementMeasure implements Serializable {
      */
     public void setFormVersion(String formVersion) {
         this.formVersion = formVersion;
+    }
+
+    /**
+     * @return the template the documents were produced from, or null
+     */
+    public EnforcementFormTemplate getFormTemplate() {
+        return formTemplate;
+    }
+
+    /**
+     * @param formTemplate the template the documents were produced from
+     */
+    public void setFormTemplate(EnforcementFormTemplate formTemplate) {
+        this.formTemplate = formTemplate;
     }
 
     /**

@@ -705,7 +705,7 @@ public class AcroFormFillerTest {
     private File bailiffOrder() {
         String base = System.getProperty("basedir");
         File f = new File(base == null ? "." : base,
-                "src/test/resources/zvfv/20240901_Vollstreckungsauftrag-Gerichtsvollzieher.pdf");
+                "src/main/resources/zvfv/20240901_Vollstreckungsauftrag-Gerichtsvollzieher.pdf");
         Assume.assumeTrue("the ZVFV forms are not present", f.isFile());
         return f;
     }

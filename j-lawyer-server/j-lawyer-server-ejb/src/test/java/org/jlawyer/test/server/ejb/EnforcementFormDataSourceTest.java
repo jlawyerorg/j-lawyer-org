@@ -660,413 +660,252 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package org.jlawyer.test.server.ejb;
 
-import java.io.Serializable;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
+import com.jdimension.jlawyer.persistence.EnforcementMeasure;
+import com.jdimension.jlawyer.persistence.EnforcementTitle;
+import com.jdimension.jlawyer.pojo.EnforcementItemisation;
+import com.jdimension.jlawyer.pojo.EnforcementItemisationCategory;
+import com.jdimension.jlawyer.pojo.EnforcementItemisationRow;
+import com.jdimension.jlawyer.services.EnforcementFormDataSource;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Map;
+import java.util.Set;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 /**
- * An enforcement title (Titel) a claim ledger rests on.
+ * The values an official form is filled from.
  *
- * Enforcement requires three formal prerequisites - the title itself, the enforceable copy with
- * its clause (Klausel) and service on the debtor (Zustellung). A title established by judgment or
- * order is subject to the 30-year limitation period of § 197 Abs. 1 Nr. 3 BGB, which is computed
- * from the date of issue.
+ * Two properties carry the whole design. Every key answers, whether or not the case has the data -
+ * a profile pointing at something absent must clear the field, not leave whatever the template had.
+ * And a tick is a key of its own, because the forms do not ask for a salutation, they offer four
+ * boxes.
  *
  * @author jens
  */
-@Entity
-@Table(name = "enforcement_titles")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "EnforcementTitle.findAll", query = "SELECT t FROM EnforcementTitle t"),
-    @NamedQuery(name = "EnforcementTitle.findById", query = "SELECT t FROM EnforcementTitle t WHERE t.id = :id"),
-    @NamedQuery(name = "EnforcementTitle.findByLedger", query = "SELECT t FROM EnforcementTitle t WHERE t.ledger = :ledger ORDER BY t.issueDate ASC")
-})
-public class EnforcementTitle implements Serializable {
+public class EnforcementFormDataSourceTest {
 
-    private static final long serialVersionUID = 1L;
+    private final EnforcementFormDataSource source = new EnforcementFormDataSource();
 
-    /**
-     * Limitation period of a titled claim under § 197 Abs. 1 Nr. 3 BGB, in years.
-     */
-    public static final int LIMITATION_YEARS = 30;
-
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
-
-    @JoinColumn(name = "ledger_id", referencedColumnName = "id")
-    @ManyToOne(optional = false)
-    private ClaimLedger ledger;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "title_type", nullable = false, length = 50)
-    private EnforcementTitleType titleType;
-
-    @Column(name = "issuing_body")
-    private String issuingBody;
-
-    @Column(name = "file_number")
-    private String fileNumber;
-
-    @Column(name = "issue_date")
-    @Temporal(TemporalType.DATE)
-    private Date issueDate;
-
-    @Column(name = "clause_date")
-    @Temporal(TemporalType.DATE)
-    private Date clauseDate;
-
-    @Column(name = "service_date")
-    @Temporal(TemporalType.DATE)
-    private Date serviceDate;
-
-    @Column(name = "limitation_date")
-    @Temporal(TemporalType.DATE)
-    private Date limitationDate;
-
-    @Column(name = "subject_matter")
-    private String subjectMatter;
-
-    @Column(name = "comment")
-    private String comment;
-
-    /**
-     * The case event that reminds of this title's limitation date. Kept as an explicit reference so
-     * the follow-up can be found, moved and removed again without writing a technical marker into
-     * text the user reads.
-     */
-    @Column(name = "limitation_review_id")
-    private String limitationReviewId;
-
-    @ManyToMany
-    @JoinTable(name = "enforcement_title_debtors",
-            joinColumns = @JoinColumn(name = "title_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "party_id", referencedColumnName = "id"))
-    private List<ClaimLedgerParty> debtors = new ArrayList<>();
-
-    /**
-     * The positions of the ledger this title covers.
-     *
-     * Enforcement runs on what the title says, and the official itemisation separates a titled claim
-     * from a further one - Anlagen 6 to 8 give them different lines and different treatment. Without
-     * knowing which positions a title carries, a form would either claim enforcement of something
-     * the title does not cover, which the bailiff refuses, or leave out something it does.
-     *
-     * Empty where a title predates this record. The itemisation says so rather than guessing: a
-     * silent classification would be a statement about the title that nobody made.
-     */
-    @ManyToMany
-    @JoinTable(name = "enforcement_title_components",
-            joinColumns = @JoinColumn(name = "title_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "component_id", referencedColumnName = "id"))
-    private List<ClaimComponent> coveredComponents = new ArrayList<>();
-
-    /**
-     * Whether all three formal prerequisites of enforcement are present: the title, the enforceable
-     * copy with its clause and service on the debtor.
-     *
-     * @return true if enforcement may proceed without an override
-     */
-    public boolean isEnforceable() {
-        return this.issueDate != null && this.clauseDate != null && this.serviceDate != null;
+    private static Date date(int y, int m, int d) {
+        return Date.from(LocalDate.of(y, m, d).atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 
-    /**
-     * Names the formal prerequisites of enforcement that are still missing.
-     *
-     * @return the missing prerequisites, empty if the title is complete
-     */
-    public List<String> getMissingPrerequisites() {
-        List<String> missing = new ArrayList<>();
-        if (this.issueDate == null) {
-            missing.add("Titel");
+    private ClaimLedgerParty person(String salutation, String first, String last) {
+        AddressBean a = new AddressBean();
+        a.setSalutation(salutation);
+        a.setFirstName(first);
+        a.setName(last);
+        a.setStreet("Bahnhofstr.");
+        a.setStreetNumber("12");
+        a.setZipCode("04109");
+        a.setCity("Leipzig");
+        ClaimLedgerParty p = new ClaimLedgerParty();
+        p.setId("p");
+        p.setContact(a);
+        return p;
+    }
+
+    private ClaimLedgerParty company(String name) {
+        AddressBean a = new AddressBean();
+        a.setCompany(name);
+        a.setLegalForm("GmbH");
+        a.setStreet("Industriestr.");
+        a.setStreetNumber("7");
+        a.setZipCode("01067");
+        a.setCity("Dresden");
+        ClaimLedgerParty p = new ClaimLedgerParty();
+        p.setId("c");
+        p.setContact(a);
+        return p;
+    }
+
+    private Map<String, String> valuesFor(ClaimLedgerParty creditor, ClaimLedgerParty debtor) {
+        return source.valuesOf(null, Arrays.asList(creditor), Arrays.asList(debtor),
+                null, null, null, date(2026, 9, 22));
+    }
+
+    @Test
+    public void everyKeyAnswersEvenWithNothingToAnswerFrom() {
+        // Ein Profil, das auf etwas zeigt, das dieser Fall nicht hat, muss das Feld leeren - sonst
+        // bliebe stehen, was in der Vorlage stand, und niemand saehe es.
+        Map<String, String> values = source.valuesOf(null, null, null, null, null, null, null);
+
+        assertFalse(values.isEmpty());
+        for (Map.Entry<String, String> entry : values.entrySet()) {
+            assertNotNull("null statt leer bei " + entry.getKey(), entry.getValue());
         }
-        if (this.clauseDate == null) {
-            missing.add("Klausel");
-        }
-        if (this.serviceDate == null) {
-            missing.add("Zustellung");
-        }
-        return missing;
     }
 
-    /**
-     * Computes the date on which the titled claim becomes time-barred under § 197 Abs. 1 Nr. 3 BGB,
-     * 30 years after the title was issued.
-     *
-     * @return the limitation date, or null if the title carries no date of issue
-     */
-    public Date computeLimitationDate() {
-        if (this.issueDate == null) {
-            return null;
-        }
-        LocalDate issued = this.issueDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate limitation = issued.plusYears(LIMITATION_YEARS);
-        return Date.from(limitation.atStartOfDay(ZoneId.systemDefault()).toInstant());
+    @Test
+    public void theVocabularyCanBeListedWithoutACase() {
+        // die Verwaltung bietet die Schluessel zur Auswahl an; eine Liste, die nur die Schluessel
+        // eines konkreten Falls kennt, waere genau dann unvollstaendig, wenn sie gebraucht wird
+        Set<String> keys = source.knownKeys();
+
+        assertTrue(keys.contains("glaeubiger.name"));
+        assertTrue(keys.contains("schuldner.ist_herr"));
+        assertTrue(keys.contains("forderung.gesamt"));
+        assertTrue(keys.contains("titel.aktenzeichen"));
     }
 
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (getId() != null ? getId().hashCode() : 0);
-        return hash;
+    @Test
+    public void amanIsTickedAsAmanAndNothingElse() {
+        Map<String, String> values = valuesFor(company("Beispiel GmbH"), person("Herr", "Max", "Schuldner"));
+
+        assertEquals("true", values.get("schuldner.ist_herr"));
+        assertEquals("", values.get("schuldner.ist_frau"));
+        assertEquals("", values.get("schuldner.ist_unternehmen"));
+        assertEquals("", values.get("schuldner.ist_sonstige"));
     }
 
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof EnforcementTitle)) {
-            return false;
-        }
-        EnforcementTitle other = (EnforcementTitle) object;
-        if ((this.getId() == null && other.getId() != null) || (this.getId() != null && !this.id.equals(other.id))) {
-            return false;
-        }
-        return true;
+    @Test
+    public void acompanyIsAcompanyWhateverItsSalutation() {
+        // Ein Firmenkontakt traegt haeufig trotzdem eine Anrede, weil sie beim Anlegen vorbelegt
+        // war. Wuerde sie mitgelesen, kreuzte das Formular "Unternehmen" *und* "Herr" an und
+        // behauptete zweierlei zugleich.
+        ClaimLedgerParty creditor = company("Beispiel GmbH");
+        creditor.getContact().setSalutation("Herr");
+
+        Map<String, String> values = valuesFor(creditor, person("Frau", "Erika", "Schuldner"));
+
+        assertEquals("true", values.get("glaeubiger.ist_unternehmen"));
+        assertEquals("", values.get("glaeubiger.ist_herr"));
+        assertEquals("", values.get("glaeubiger.ist_frau"));
+        assertEquals("", values.get("glaeubiger.ist_sonstige"));
+        assertEquals("Beispiel GmbH", values.get("glaeubiger.name"));
+        assertEquals("eine Firma hat keinen Vornamen", "", values.get("glaeubiger.vorname"));
     }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (this.titleType != null) {
-            sb.append(this.titleType.toString());
-        }
-        if (this.fileNumber != null && !this.fileNumber.isEmpty()) {
-            sb.append(" ").append(this.fileNumber);
-        }
-        return sb.toString();
+    @Test
+    public void apartyThatIsNeitherManWomanNorCompanyIsSonstige() {
+        // eine Erbengemeinschaft, eine Behoerde, eine GbR - das Formular hat dafuer ein Kaestchen
+        Map<String, String> values = valuesFor(person(null, null, "Erbengemeinschaft Muster"),
+                person("Herr", "Max", "Schuldner"));
+
+        assertEquals("true", values.get("glaeubiger.ist_sonstige"));
     }
 
-    /**
-     * @return the id
-     */
-    public String getId() {
-        return id;
+    @Test
+    public void nothingIsTickedForApartyThatIsNotThere() {
+        Map<String, String> values = source.valuesOf(null, null, null, null, null, null, null);
+
+        assertEquals("", values.get("schuldner.ist_herr"));
+        assertEquals("", values.get("schuldner.ist_sonstige"));
     }
 
-    /**
-     * @param id the id to set
-     */
-    public void setId(String id) {
-        this.id = id;
+    @Test
+    public void theDesignationUsedTowardsTheCourtGoesBeforeTheCurrentOne() {
+        // Ein Verfahren bleibt sonst nicht nachvollziehbar, wenn jemand den Kontakt pflegt.
+        ClaimLedgerParty debtor = person("Herr", "Max", "Schuldner");
+        debtor.setSnapshotDesignation("Max Schuldner (vormals Mustermann)");
+
+        assertEquals("Max Schuldner (vormals Mustermann)",
+                valuesFor(company("Beispiel GmbH"), debtor).get("schuldner.name"));
     }
 
-    /**
-     * @return the ledger
-     */
-    public ClaimLedger getLedger() {
-        return ledger;
+    @Test
+    public void germanyIsNotWrittenIntoTheFieldThatAsksForAnythingElse() {
+        // das Feld heisst "Land (wenn nicht Deutschland)"; "Deutschland" hineinzuschreiben sagt
+        // etwas anderes, als gemeint ist
+        ClaimLedgerParty debtor = person("Herr", "Max", "Schuldner");
+        debtor.getContact().setCountry("Deutschland");
+        assertEquals("", valuesFor(company("X"), debtor).get("schuldner.land"));
+
+        debtor.getContact().setCountry("Belgien");
+        assertEquals("Belgien", valuesFor(company("X"), debtor).get("schuldner.land"));
     }
 
-    /**
-     * @param ledger the ledger to set
-     */
-    public void setLedger(ClaimLedger ledger) {
-        this.ledger = ledger;
+    @Test
+    public void theAddresseeComesFromTheMeasureAndNotFromAlookupAgain() {
+        // die Bezeichnung wurde festgeschrieben, als die Massnahme entstand - ein neu geschnittener
+        // Gerichtsvollzieherbezirk darf ein altes Formular nicht unlesbar machen
+        EnforcementMeasure measure = new EnforcementMeasure();
+        measure.setAddresseeDesignation("Gerichtsvollzieherverteilungsstelle\nbeim Amtsgericht Leipzig");
+        measure.setAddresseeAddress("Bernhard-Göring-Str. 64\n04275 Leipzig");
+
+        Map<String, String> values = source.valuesOf(measure, null, null, null, null, null, null);
+
+        assertEquals("Gerichtsvollzieherverteilungsstelle", values.get("empfaenger.name"));
+        assertEquals("beim Amtsgericht Leipzig", values.get("empfaenger.name_fortsetzung"));
+        assertEquals("Bernhard-Göring-Str. 64", values.get("empfaenger.strasse"));
+        assertEquals("04275 Leipzig", values.get("empfaenger.plz_ort"));
     }
 
-    /**
-     * @return the titleType
-     */
-    public EnforcementTitleType getTitleType() {
-        return titleType;
+    @Test
+    public void whoFilesDecidesWhichBoxIsTicked() {
+        AddressBean firm = new AddressBean();
+        firm.setCompany("Kutschke Rechtsanwälte");
+
+        Map<String, String> byFirm = source.valuesOf(null, null, null, null, null, firm, null);
+        assertEquals("true", byFirm.get("absender.ist_bevollmaechtigter"));
+        assertEquals("", byFirm.get("absender.ist_glaeubiger"));
+        assertEquals("Kutschke Rechtsanwälte", byFirm.get("bevollmaechtigter.name"));
+
+        Map<String, String> bySelf = source.valuesOf(null, null, null, null, null, null, null);
+        assertEquals("true", bySelf.get("absender.ist_glaeubiger"));
+        assertEquals("", bySelf.get("absender.ist_bevollmaechtigter"));
     }
 
-    /**
-     * @param titleType the titleType to set
-     */
-    public void setTitleType(EnforcementTitleType titleType) {
-        this.titleType = titleType;
+    @Test
+    public void theAmountsComeFromTheItemisationSoTheyCannotDisagreeWithIt() {
+        EnforcementItemisation itemisation = new EnforcementItemisation();
+        itemisation.setKeyDate(date(2026, 9, 15));
+        itemisation.getRows().add(row(EnforcementItemisationCategory.TITLED_MAIN_CLAIM, "5000.00", "312.50"));
+        itemisation.getRows().add(row(EnforcementItemisationCategory.TITLED_COSTS, "166.00", "0.00"));
+        itemisation.getRows().add(row(EnforcementItemisationCategory.PAYMENT, "500.00", "0.00"));
+
+        Map<String, String> values = source.valuesOf(null, null, null, null, itemisation, null, null);
+
+        assertEquals("5.000,00", values.get("forderung.hauptforderung"));
+        assertEquals("166,00", values.get("forderung.kosten"));
+        assertEquals("312,50", values.get("forderung.zinsen"));
+        assertEquals("4.978,50", values.get("forderung.gesamt"));
+        assertEquals("15.09.2026", values.get("forderung.stichtag"));
     }
 
-    /**
-     * @return the issuingBody
-     */
-    public String getIssuingBody() {
-        return issuingBody;
+    private EnforcementItemisationRow row(EnforcementItemisationCategory category,
+            String amount, String interest) {
+        EnforcementItemisationRow row = new EnforcementItemisationRow();
+        row.setCategory(category);
+        row.setAmount(new BigDecimal(amount));
+        row.setInterestAmount(new BigDecimal(interest));
+        return row;
     }
 
-    /**
-     * @param issuingBody the issuingBody to set
-     */
-    public void setIssuingBody(String issuingBody) {
-        this.issuingBody = issuingBody;
+    @Test
+    public void amountsAreWrittenTheGermanWay() {
+        EnforcementItemisation itemisation = new EnforcementItemisation();
+        itemisation.getRows().add(row(EnforcementItemisationCategory.TITLED_MAIN_CLAIM, "1234567.89", "0.00"));
+
+        assertEquals("1.234.567,89",
+                source.valuesOf(null, null, null, null, itemisation, null, null)
+                        .get("forderung.hauptforderung"));
     }
 
-    /**
-     * @return the fileNumber
-     */
-    public String getFileNumber() {
-        return fileNumber;
+    @Test
+    public void theTitleTravelsWithItsFileNumberAndDates() {
+        EnforcementTitle title = new EnforcementTitle();
+        title.setIssuingBody("Amtsgericht Leipzig");
+        title.setFileNumber("12 C 345/26");
+        title.setIssueDate(date(2026, 3, 10));
+        title.setServiceDate(date(2026, 3, 20));
+
+        Map<String, String> values = source.valuesOf(null, null, null, title, null, null, null);
+
+        assertEquals("Amtsgericht Leipzig", values.get("titel.gericht"));
+        assertEquals("12 C 345/26", values.get("titel.aktenzeichen"));
+        assertEquals("10.03.2026", values.get("titel.datum"));
+        assertEquals("20.03.2026", values.get("titel.zustellung"));
     }
-
-    /**
-     * @param fileNumber the fileNumber to set
-     */
-    public void setFileNumber(String fileNumber) {
-        this.fileNumber = fileNumber;
-    }
-
-    /**
-     * @return the issueDate
-     */
-    public Date getIssueDate() {
-        return issueDate;
-    }
-
-    /**
-     * @param issueDate the issueDate to set
-     */
-    public void setIssueDate(Date issueDate) {
-        this.issueDate = issueDate;
-    }
-
-    /**
-     * @return the clauseDate
-     */
-    public Date getClauseDate() {
-        return clauseDate;
-    }
-
-    /**
-     * @param clauseDate the clauseDate to set
-     */
-    public void setClauseDate(Date clauseDate) {
-        this.clauseDate = clauseDate;
-    }
-
-    /**
-     * @return the serviceDate
-     */
-    public Date getServiceDate() {
-        return serviceDate;
-    }
-
-    /**
-     * @param serviceDate the serviceDate to set
-     */
-    public void setServiceDate(Date serviceDate) {
-        this.serviceDate = serviceDate;
-    }
-
-    /**
-     * @return the limitationDate
-     */
-    public Date getLimitationDate() {
-        return limitationDate;
-    }
-
-    /**
-     * @param limitationDate the limitationDate to set
-     */
-    public void setLimitationDate(Date limitationDate) {
-        this.limitationDate = limitationDate;
-    }
-
-    /**
-     * @return the subjectMatter
-     */
-    public String getSubjectMatter() {
-        return subjectMatter;
-    }
-
-    /**
-     * @param subjectMatter the subjectMatter to set
-     */
-    public void setSubjectMatter(String subjectMatter) {
-        this.subjectMatter = subjectMatter;
-    }
-
-    /**
-     * @return the comment
-     */
-    public String getComment() {
-        return comment;
-    }
-
-    /**
-     * @param comment the comment to set
-     */
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
-    /**
-     * @return the debtors
-     */
-    public List<ClaimLedgerParty> getDebtors() {
-        return debtors;
-    }
-
-    /**
-     * @param debtors the debtors to set
-     */
-    public void setDebtors(List<ClaimLedgerParty> debtors) {
-        this.debtors = debtors;
-    }
-
-    /**
-     * @return the positions of the ledger this title covers, never null; empty where it is unknown
-     */
-    public List<ClaimComponent> getCoveredComponents() {
-        if (this.coveredComponents == null) {
-            this.coveredComponents = new ArrayList<>();
-        }
-        return coveredComponents;
-    }
-
-    /**
-     * @param coveredComponents the positions of the ledger this title covers
-     */
-    public void setCoveredComponents(List<ClaimComponent> coveredComponents) {
-        this.coveredComponents = coveredComponents;
-    }
-
-    /**
-     * Whether this title says which positions it covers.
-     *
-     * @return false for a title recorded before the coverage was tracked, whose itemisation
-     * therefore cannot separate titled from further claims
-     */
-    public boolean hasCoverage() {
-        return this.coveredComponents != null && !this.coveredComponents.isEmpty();
-    }
-
-
-    /**
-     * @return the id of the case event guarding the limitation date, or null if none exists
-     */
-    public String getLimitationReviewId() {
-        return limitationReviewId;
-    }
-
-    /**
-     * @param limitationReviewId the limitationReviewId to set
-     */
-    public void setLimitationReviewId(String limitationReviewId) {
-        this.limitationReviewId = limitationReviewId;
-    }
-
 }

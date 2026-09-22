@@ -673,6 +673,7 @@ import java.util.Set;
 import java.util.HashMap;
 import java.util.List;
 import com.jdimension.jlawyer.persistence.EnforcementAddresseeType;
+import com.jdimension.jlawyer.persistence.EnforcementFormRole;
 import com.jdimension.jlawyer.persistence.EnforcementMeasureOutcome;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -807,8 +808,8 @@ public class MigrationConventionsTest {
         // liest - dann mit einer IllegalArgumentException aus dem EnumType, weit weg von der
         // Ursache. Deshalb hier, wo die Ursache steht.
         //
-        // Geprüft werden alle Großbuchstaben-Literale der Vollstreckungsmigrationen. Das sind drei
-        // Sorten: Empfängertypen, Ergebnisse - auch als Spaltenvorgabewert - und
+        // Geprüft werden alle Großbuchstaben-Literale der Vollstreckungsmigrationen. Das sind vier
+        // Sorten: Empfängertypen, Ergebnisse, Formularrollen - auch als Spaltenvorgabewert - und
         // Formularschlüssel. Was keines davon ist, ist ein Vertipper.
         Set<String> known = new HashSet<>();
         for (EnforcementAddresseeType t : EnforcementAddresseeType.values()) {
@@ -816,6 +817,9 @@ public class MigrationConventionsTest {
         }
         for (EnforcementMeasureOutcome o : EnforcementMeasureOutcome.values()) {
             known.add(o.name());
+        }
+        for (EnforcementFormRole r : EnforcementFormRole.values()) {
+            known.add(r.name());
         }
         Pattern formKey = Pattern.compile("ANLAGE_\\d+");
         Pattern literal = Pattern.compile("'([A-Z][A-Z_0-9]{2,})'");
@@ -828,7 +832,7 @@ public class MigrationConventionsTest {
             } catch (IOException ex) {
                 throw new IllegalStateException(ex);
             }
-            if (!sql.contains("enforcement_measure_types")) {
+            if (!sql.contains("enforcement_measure_type")) {
                 continue;
             }
             Matcher m = literal.matcher(sql);

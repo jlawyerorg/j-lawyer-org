@@ -663,410 +663,278 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
+import javax.persistence.Lob;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
-import javax.xml.bind.annotation.XmlRootElement;
 
 /**
- * An enforcement title (Titel) a claim ledger rests on.
+ * One version of one official form, with the profile that says how to fill it.
  *
- * Enforcement requires three formal prerequisites - the title itself, the enforceable copy with
- * its clause (Klausel) and service on the debtor (Zustellung). A title established by judgment or
- * order is subject to the 30-year limitation period of § 197 Abs. 1 Nr. 3 BGB, which is computed
- * from the date of issue.
+ * The forms of the ZVFV are replaced from time to time. A measure generated under an older version
+ * was not wrong, it was current - so versions live alongside one another with a validity period,
+ * and a measure records which one it used. Producing a form from a version whose validity has ended
+ * is possible but has to be confirmed.
+ *
+ * The PDF is held here rather than in the file system. The number of forms is small, the versions
+ * few, and keeping them with their mapping means a backup of the database is a backup of everything
+ * needed to reproduce a filing.
  *
  * @author jens
  */
 @Entity
-@Table(name = "enforcement_titles")
-@XmlRootElement
+@Table(name = "enforcement_form_templates")
 @NamedQueries({
-    @NamedQuery(name = "EnforcementTitle.findAll", query = "SELECT t FROM EnforcementTitle t"),
-    @NamedQuery(name = "EnforcementTitle.findById", query = "SELECT t FROM EnforcementTitle t WHERE t.id = :id"),
-    @NamedQuery(name = "EnforcementTitle.findByLedger", query = "SELECT t FROM EnforcementTitle t WHERE t.ledger = :ledger ORDER BY t.issueDate ASC")
+    @NamedQuery(name = "EnforcementFormTemplate.findAll", query = "SELECT t FROM EnforcementFormTemplate t ORDER BY t.formKey ASC, t.validFrom DESC"),
+    @NamedQuery(name = "EnforcementFormTemplate.findById", query = "SELECT t FROM EnforcementFormTemplate t WHERE t.id = :id"),
+    @NamedQuery(name = "EnforcementFormTemplate.findByKey", query = "SELECT t FROM EnforcementFormTemplate t WHERE t.formKey = :formKey ORDER BY t.validFrom DESC")
 })
-public class EnforcementTitle implements Serializable {
+public class EnforcementFormTemplate implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    /**
-     * Limitation period of a titled claim under § 197 Abs. 1 Nr. 3 BGB, in years.
-     */
-    public static final int LIMITATION_YEARS = 30;
 
     @Id
     @Basic(optional = false)
     @Column(name = "id")
     private String id;
 
-    @JoinColumn(name = "ledger_id", referencedColumnName = "id")
-    @ManyToOne(optional = false)
-    private ClaimLedger ledger;
+    /** The annex of the ZVFV this is a version of - "ANLAGE_1". */
+    @Column(name = "form_key", nullable = false, length = 50)
+    private String formKey;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "title_type", nullable = false, length = 50)
-    private EnforcementTitleType titleType;
+    @Column(name = "name", nullable = false)
+    private String name;
 
-    @Column(name = "issuing_body")
-    private String issuingBody;
+    /**
+     * The version, as the publisher dates it - "2024-09-01".
+     *
+     * Recorded on every measure generated from it, so a filing stays reproducible after the form has
+     * been replaced.
+     */
+    @Column(name = "version", length = 50)
+    private String version;
 
-    @Column(name = "file_number")
-    private String fileNumber;
-
-    @Column(name = "issue_date")
+    @Column(name = "valid_from")
     @Temporal(TemporalType.DATE)
-    private Date issueDate;
+    private Date validFrom;
 
-    @Column(name = "clause_date")
+    /** Null while the version is the current one. */
+    @Column(name = "valid_to")
     @Temporal(TemporalType.DATE)
-    private Date clauseDate;
-
-    @Column(name = "service_date")
-    @Temporal(TemporalType.DATE)
-    private Date serviceDate;
-
-    @Column(name = "limitation_date")
-    @Temporal(TemporalType.DATE)
-    private Date limitationDate;
-
-    @Column(name = "subject_matter")
-    private String subjectMatter;
-
-    @Column(name = "comment")
-    private String comment;
+    private Date validTo;
 
     /**
-     * The case event that reminds of this title's limitation date. Kept as an explicit reference so
-     * the follow-up can be found, moved and removed again without writing a technical marker into
-     * text the user reads.
-     */
-    @Column(name = "limitation_review_id")
-    private String limitationReviewId;
-
-    @ManyToMany
-    @JoinTable(name = "enforcement_title_debtors",
-            joinColumns = @JoinColumn(name = "title_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "party_id", referencedColumnName = "id"))
-    private List<ClaimLedgerParty> debtors = new ArrayList<>();
-
-    /**
-     * The positions of the ledger this title covers.
+     * The fillable PDF.
      *
-     * Enforcement runs on what the title says, and the official itemisation separates a titled claim
-     * from a further one - Anlagen 6 to 8 give them different lines and different treatment. Without
-     * knowing which positions a title carries, a form would either claim enforcement of something
-     * the title does not cover, which the bailiff refuses, or leave out something it does.
-     *
-     * Empty where a title predates this record. The itemisation says so rather than guessing: a
-     * silent classification would be a statement about the title that nobody made.
+     * Lazy because it is a few hundred kilobytes and most reads of a template only want to know
+     * which versions exist.
      */
-    @ManyToMany
-    @JoinTable(name = "enforcement_title_components",
-            joinColumns = @JoinColumn(name = "title_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "component_id", referencedColumnName = "id"))
-    private List<ClaimComponent> coveredComponents = new ArrayList<>();
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    @Column(name = "pdf_content")
+    private byte[] pdfContent;
+
+    @Column(name = "file_name")
+    private String fileName;
+
+    @Column(name = "description", length = 1000)
+    private String description;
 
     /**
-     * Whether all three formal prerequisites of enforcement are present: the title, the enforceable
-     * copy with its clause and service on the debtor.
+     * How the fields of this form are filled.
      *
-     * @return true if enforcement may proceed without an override
+     * Belongs to the version, not to the form: a new version may rename its fields, and a profile
+     * written for the old one would then address fields that no longer exist.
      */
-    public boolean isEnforceable() {
-        return this.issueDate != null && this.clauseDate != null && this.serviceDate != null;
-    }
+    @OneToMany(mappedBy = "template", fetch = FetchType.LAZY)
+    private List<EnforcementFormFieldMapping> fieldMappings = new ArrayList<>();
 
     /**
-     * Names the formal prerequisites of enforcement that are still missing.
-     *
-     * @return the missing prerequisites, empty if the title is complete
-     */
-    public List<String> getMissingPrerequisites() {
-        List<String> missing = new ArrayList<>();
-        if (this.issueDate == null) {
-            missing.add("Titel");
-        }
-        if (this.clauseDate == null) {
-            missing.add("Klausel");
-        }
-        if (this.serviceDate == null) {
-            missing.add("Zustellung");
-        }
-        return missing;
-    }
-
-    /**
-     * Computes the date on which the titled claim becomes time-barred under § 197 Abs. 1 Nr. 3 BGB,
-     * 30 years after the title was issued.
-     *
-     * @return the limitation date, or null if the title carries no date of issue
-     */
-    public Date computeLimitationDate() {
-        if (this.issueDate == null) {
-            return null;
-        }
-        LocalDate issued = this.issueDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate limitation = issued.plusYears(LIMITATION_YEARS);
-        return Date.from(limitation.atStartOfDay(ZoneId.systemDefault()).toInstant());
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (getId() != null ? getId().hashCode() : 0);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof EnforcementTitle)) {
-            return false;
-        }
-        EnforcementTitle other = (EnforcementTitle) object;
-        if ((this.getId() == null && other.getId() != null) || (this.getId() != null && !this.id.equals(other.id))) {
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (this.titleType != null) {
-            sb.append(this.titleType.toString());
-        }
-        if (this.fileNumber != null && !this.fileNumber.isEmpty()) {
-            sb.append(" ").append(this.fileNumber);
-        }
-        return sb.toString();
-    }
-
-    /**
-     * @return the id
+     * @return the technical identifier
      */
     public String getId() {
         return id;
     }
 
     /**
-     * @param id the id to set
+     * @param id the technical identifier
      */
     public void setId(String id) {
         this.id = id;
     }
 
     /**
-     * @return the ledger
+     * @return the annex of the ZVFV this is a version of
      */
-    public ClaimLedger getLedger() {
-        return ledger;
+    public String getFormKey() {
+        return formKey;
     }
 
     /**
-     * @param ledger the ledger to set
+     * @param formKey the annex of the ZVFV
      */
-    public void setLedger(ClaimLedger ledger) {
-        this.ledger = ledger;
+    public void setFormKey(String formKey) {
+        this.formKey = formKey;
     }
 
     /**
-     * @return the titleType
+     * @return the designation shown to the user
      */
-    public EnforcementTitleType getTitleType() {
-        return titleType;
+    public String getName() {
+        return name;
     }
 
     /**
-     * @param titleType the titleType to set
+     * @param name the designation shown to the user
      */
-    public void setTitleType(EnforcementTitleType titleType) {
-        this.titleType = titleType;
+    public void setName(String name) {
+        this.name = name;
     }
 
     /**
-     * @return the issuingBody
+     * @return the version as the publisher dates it
      */
-    public String getIssuingBody() {
-        return issuingBody;
+    public String getVersion() {
+        return version;
     }
 
     /**
-     * @param issuingBody the issuingBody to set
+     * @param version the version as the publisher dates it
      */
-    public void setIssuingBody(String issuingBody) {
-        this.issuingBody = issuingBody;
+    public void setVersion(String version) {
+        this.version = version;
     }
 
     /**
-     * @return the fileNumber
+     * @return the day this version takes effect, or null if unstated
      */
-    public String getFileNumber() {
-        return fileNumber;
+    public Date getValidFrom() {
+        return validFrom;
     }
 
     /**
-     * @param fileNumber the fileNumber to set
+     * @param validFrom the day this version takes effect
      */
-    public void setFileNumber(String fileNumber) {
-        this.fileNumber = fileNumber;
+    public void setValidFrom(Date validFrom) {
+        this.validFrom = validFrom;
     }
 
     /**
-     * @return the issueDate
+     * @return the day this version ceased to be prescribed, or null while it is current
      */
-    public Date getIssueDate() {
-        return issueDate;
+    public Date getValidTo() {
+        return validTo;
     }
 
     /**
-     * @param issueDate the issueDate to set
+     * @param validTo the day this version ceased to be prescribed
      */
-    public void setIssueDate(Date issueDate) {
-        this.issueDate = issueDate;
+    public void setValidTo(Date validTo) {
+        this.validTo = validTo;
     }
 
     /**
-     * @return the clauseDate
+     * @return the fillable PDF
      */
-    public Date getClauseDate() {
-        return clauseDate;
+    public byte[] getPdfContent() {
+        return pdfContent;
     }
 
     /**
-     * @param clauseDate the clauseDate to set
+     * @param pdfContent the fillable PDF
      */
-    public void setClauseDate(Date clauseDate) {
-        this.clauseDate = clauseDate;
+    public void setPdfContent(byte[] pdfContent) {
+        this.pdfContent = pdfContent;
     }
 
     /**
-     * @return the serviceDate
+     * @return the name the file was uploaded under
      */
-    public Date getServiceDate() {
-        return serviceDate;
+    public String getFileName() {
+        return fileName;
     }
 
     /**
-     * @param serviceDate the serviceDate to set
+     * @param fileName the name the file was uploaded under
      */
-    public void setServiceDate(Date serviceDate) {
-        this.serviceDate = serviceDate;
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
     }
 
     /**
-     * @return the limitationDate
+     * @return what this version is, in the words a user needs
      */
-    public Date getLimitationDate() {
-        return limitationDate;
+    public String getDescription() {
+        return description;
     }
 
     /**
-     * @param limitationDate the limitationDate to set
+     * @param description what this version is
      */
-    public void setLimitationDate(Date limitationDate) {
-        this.limitationDate = limitationDate;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     /**
-     * @return the subjectMatter
+     * @return how the fields of this form are filled, never null
      */
-    public String getSubjectMatter() {
-        return subjectMatter;
-    }
-
-    /**
-     * @param subjectMatter the subjectMatter to set
-     */
-    public void setSubjectMatter(String subjectMatter) {
-        this.subjectMatter = subjectMatter;
-    }
-
-    /**
-     * @return the comment
-     */
-    public String getComment() {
-        return comment;
-    }
-
-    /**
-     * @param comment the comment to set
-     */
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
-    /**
-     * @return the debtors
-     */
-    public List<ClaimLedgerParty> getDebtors() {
-        return debtors;
-    }
-
-    /**
-     * @param debtors the debtors to set
-     */
-    public void setDebtors(List<ClaimLedgerParty> debtors) {
-        this.debtors = debtors;
-    }
-
-    /**
-     * @return the positions of the ledger this title covers, never null; empty where it is unknown
-     */
-    public List<ClaimComponent> getCoveredComponents() {
-        if (this.coveredComponents == null) {
-            this.coveredComponents = new ArrayList<>();
+    public List<EnforcementFormFieldMapping> getFieldMappings() {
+        if (this.fieldMappings == null) {
+            this.fieldMappings = new ArrayList<>();
         }
-        return coveredComponents;
+        return fieldMappings;
     }
 
     /**
-     * @param coveredComponents the positions of the ledger this title covers
+     * @param fieldMappings how the fields of this form are filled
      */
-    public void setCoveredComponents(List<ClaimComponent> coveredComponents) {
-        this.coveredComponents = coveredComponents;
+    public void setFieldMappings(List<EnforcementFormFieldMapping> fieldMappings) {
+        this.fieldMappings = fieldMappings;
     }
 
     /**
-     * Whether this title says which positions it covers.
+     * Whether this version is the one prescribed on a given day.
      *
-     * @return false for a title recorded before the coverage was tracked, whose itemisation
-     * therefore cannot separate titled from further claims
+     * @param day the day to judge by
+     * @return true if the day falls inside the validity period
      */
-    public boolean hasCoverage() {
-        return this.coveredComponents != null && !this.coveredComponents.isEmpty();
+    public boolean isValidOn(Date day) {
+        if (day == null) {
+            return this.validTo == null;
+        }
+        if (this.validFrom != null && day.before(this.validFrom)) {
+            return false;
+        }
+        return this.validTo == null || !day.after(this.validTo);
     }
 
-
-    /**
-     * @return the id of the case event guarding the limitation date, or null if none exists
-     */
-    public String getLimitationReviewId() {
-        return limitationReviewId;
+    @Override
+    public int hashCode() {
+        return id == null ? 0 : id.hashCode();
     }
 
-    /**
-     * @param limitationReviewId the limitationReviewId to set
-     */
-    public void setLimitationReviewId(String limitationReviewId) {
-        this.limitationReviewId = limitationReviewId;
+    @Override
+    public boolean equals(Object object) {
+        if (!(object instanceof EnforcementFormTemplate)) {
+            return false;
+        }
+        EnforcementFormTemplate other = (EnforcementFormTemplate) object;
+        return this.id != null && this.id.equals(other.id);
     }
 
+    @Override
+    public String toString() {
+        return name + (version == null || version.trim().isEmpty() ? "" : " (" + version + ")");
+    }
 }

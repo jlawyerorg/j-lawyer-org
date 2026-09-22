@@ -660,413 +660,195 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.services;
 
-import java.io.Serializable;
-import java.time.LocalDate;
-import java.time.ZoneId;
+import com.jdimension.jlawyer.documents.AcroFormFieldDescription;
+import com.jdimension.jlawyer.documents.AcroFormFiller;
+import com.jdimension.jlawyer.persistence.EnforcementFormFieldMapping;
+import com.jdimension.jlawyer.persistence.EnforcementFormFieldMappingFacadeLocal;
+import com.jdimension.jlawyer.persistence.EnforcementFormTemplate;
+import com.jdimension.jlawyer.persistence.EnforcementFormTemplateFacadeLocal;
+import com.jdimension.jlawyer.pojo.AcroFormFieldInfo;
+import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import java.io.File;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.annotation.security.RolesAllowed;
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import org.apache.log4j.Logger;
 
 /**
- * An enforcement title (Titel) a claim ledger rests on.
- *
- * Enforcement requires three formal prerequisites - the title itself, the enforceable copy with
- * its clause (Klausel) and service on the debtor (Zustellung). A title established by judgment or
- * order is subject to the 30-year limitation period of § 197 Abs. 1 Nr. 3 BGB, which is computed
- * from the date of issue.
+ * Enforcement: the measures taken on a title and the official forms they are filed on.
  *
  * @author jens
  */
-@Entity
-@Table(name = "enforcement_titles")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "EnforcementTitle.findAll", query = "SELECT t FROM EnforcementTitle t"),
-    @NamedQuery(name = "EnforcementTitle.findById", query = "SELECT t FROM EnforcementTitle t WHERE t.id = :id"),
-    @NamedQuery(name = "EnforcementTitle.findByLedger", query = "SELECT t FROM EnforcementTitle t WHERE t.ledger = :ledger ORDER BY t.issueDate ASC")
-})
-public class EnforcementTitle implements Serializable {
+@Stateless
+public class EnforcementService implements EnforcementServiceRemote, EnforcementServiceLocal {
 
-    private static final long serialVersionUID = 1L;
+    private static final Logger log = Logger.getLogger(EnforcementService.class.getName());
 
-    /**
-     * Limitation period of a titled claim under § 197 Abs. 1 Nr. 3 BGB, in years.
-     */
-    public static final int LIMITATION_YEARS = 30;
+    @EJB
+    private EnforcementFormTemplateFacadeLocal formTemplatesFacade;
+    @EJB
+    private EnforcementFormFieldMappingFacadeLocal formFieldMappingsFacade;
 
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
+    private final EnforcementFormPackage formPackage = new EnforcementFormPackage();
+    private final EnforcementFormTemplateSelector templateSelector = new EnforcementFormTemplateSelector();
+    private final AcroFormFiller filler = new AcroFormFiller();
 
-    @JoinColumn(name = "ledger_id", referencedColumnName = "id")
-    @ManyToOne(optional = false)
-    private ClaimLedger ledger;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "title_type", nullable = false, length = 50)
-    private EnforcementTitleType titleType;
-
-    @Column(name = "issuing_body")
-    private String issuingBody;
-
-    @Column(name = "file_number")
-    private String fileNumber;
-
-    @Column(name = "issue_date")
-    @Temporal(TemporalType.DATE)
-    private Date issueDate;
-
-    @Column(name = "clause_date")
-    @Temporal(TemporalType.DATE)
-    private Date clauseDate;
-
-    @Column(name = "service_date")
-    @Temporal(TemporalType.DATE)
-    private Date serviceDate;
-
-    @Column(name = "limitation_date")
-    @Temporal(TemporalType.DATE)
-    private Date limitationDate;
-
-    @Column(name = "subject_matter")
-    private String subjectMatter;
-
-    @Column(name = "comment")
-    private String comment;
-
-    /**
-     * The case event that reminds of this title's limitation date. Kept as an explicit reference so
-     * the follow-up can be found, moved and removed again without writing a technical marker into
-     * text the user reads.
-     */
-    @Column(name = "limitation_review_id")
-    private String limitationReviewId;
-
-    @ManyToMany
-    @JoinTable(name = "enforcement_title_debtors",
-            joinColumns = @JoinColumn(name = "title_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "party_id", referencedColumnName = "id"))
-    private List<ClaimLedgerParty> debtors = new ArrayList<>();
-
-    /**
-     * The positions of the ledger this title covers.
-     *
-     * Enforcement runs on what the title says, and the official itemisation separates a titled claim
-     * from a further one - Anlagen 6 to 8 give them different lines and different treatment. Without
-     * knowing which positions a title carries, a form would either claim enforcement of something
-     * the title does not cover, which the bailiff refuses, or leave out something it does.
-     *
-     * Empty where a title predates this record. The itemisation says so rather than guessing: a
-     * silent classification would be a statement about the title that nobody made.
-     */
-    @ManyToMany
-    @JoinTable(name = "enforcement_title_components",
-            joinColumns = @JoinColumn(name = "title_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "component_id", referencedColumnName = "id"))
-    private List<ClaimComponent> coveredComponents = new ArrayList<>();
-
-    /**
-     * Whether all three formal prerequisites of enforcement are present: the title, the enforceable
-     * copy with its clause and service on the debtor.
-     *
-     * @return true if enforcement may proceed without an override
-     */
-    public boolean isEnforceable() {
-        return this.issueDate != null && this.clauseDate != null && this.serviceDate != null;
-    }
-
-    /**
-     * Names the formal prerequisites of enforcement that are still missing.
-     *
-     * @return the missing prerequisites, empty if the title is complete
-     */
-    public List<String> getMissingPrerequisites() {
-        List<String> missing = new ArrayList<>();
-        if (this.issueDate == null) {
-            missing.add("Titel");
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<EnforcementFormTemplate> getFormTemplates() throws Exception {
+        List<EnforcementFormTemplate> templates = this.formTemplatesFacade.findAll();
+        for (EnforcementFormTemplate template : templates) {
+            // Ein Verzeichnis will wissen, welche Fassungen es gibt, nicht die Dateien selbst -
+            // acht mal ein paar hundert Kilobyte über die Leitung wäre für eine Liste verschwendet.
+            template.setPdfContent(null);
         }
-        if (this.clauseDate == null) {
-            missing.add("Klausel");
-        }
-        if (this.serviceDate == null) {
-            missing.add("Zustellung");
-        }
-        return missing;
-    }
-
-    /**
-     * Computes the date on which the titled claim becomes time-barred under § 197 Abs. 1 Nr. 3 BGB,
-     * 30 years after the title was issued.
-     *
-     * @return the limitation date, or null if the title carries no date of issue
-     */
-    public Date computeLimitationDate() {
-        if (this.issueDate == null) {
-            return null;
-        }
-        LocalDate issued = this.issueDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate limitation = issued.plusYears(LIMITATION_YEARS);
-        return Date.from(limitation.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        return templates;
     }
 
     @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (getId() != null ? getId().hashCode() : 0);
-        return hash;
+    @RolesAllowed({"loginRole"})
+    public EnforcementFormTemplate getFormTemplate(String templateId) throws Exception {
+        return this.formTemplatesFacade.find(templateId);
     }
 
     @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof EnforcementTitle)) {
-            return false;
+    @RolesAllowed({"adminRole"})
+    public List<String> importDefaultFormPackage() throws Exception {
+
+        List<String> report = new ArrayList<>();
+        List<EnforcementFormTemplate> held = this.formTemplatesFacade.findAll();
+
+        for (EnforcementFormPackage.Entry entry : this.formPackage.getEntries()) {
+            EnforcementFormTemplate existing = find(held, entry.getFormKey(),
+                    EnforcementFormPackage.VERSION);
+            if (existing != null) {
+                // Was schon da ist, bleibt, wie es ist - samt der Anpassungen einer Kanzlei. Der
+                // Import ergänzt, was fehlt, und ändert nichts, was steht.
+                report.add(entry.getName() + " (" + entry.getFormKey() + "): bereits vorhanden");
+                continue;
+            }
+
+            EnforcementFormTemplate template = new EnforcementFormTemplate();
+            template.setId(new StringGenerator().getID().toString());
+            template.setFormKey(entry.getFormKey());
+            template.setName(entry.getName());
+            template.setVersion(EnforcementFormPackage.VERSION);
+            template.setValidFrom(this.formPackage.getValidFrom());
+            template.setValidTo(null);
+            template.setFileName(entry.getFileName());
+            template.setDescription(entry.getDescription());
+            template.setPdfContent(this.formPackage.read(entry));
+
+            this.formTemplatesFacade.create(template);
+            report.add(entry.getName() + " (" + entry.getFormKey() + "): importiert");
         }
-        EnforcementTitle other = (EnforcementTitle) object;
-        if ((this.getId() == null && other.getId() != null) || (this.getId() != null && !this.id.equals(other.id))) {
-            return false;
-        }
-        return true;
+        return report;
     }
 
     @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (this.titleType != null) {
-            sb.append(this.titleType.toString());
+    @RolesAllowed({"adminRole"})
+    public List<AcroFormFieldInfo> getFormFields(String templateId) throws Exception {
+
+        EnforcementFormTemplate template = this.formTemplatesFacade.find(templateId);
+        if (template == null) {
+            throw new Exception("Die Formularvorlage existiert nicht!");
         }
-        if (this.fileNumber != null && !this.fileNumber.isEmpty()) {
-            sb.append(" ").append(this.fileNumber);
+        if (template.getPdfContent() == null || template.getPdfContent().length == 0) {
+            return new ArrayList<>();
         }
-        return sb.toString();
-    }
 
-    /**
-     * @return the id
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * @param id the id to set
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the ledger
-     */
-    public ClaimLedger getLedger() {
-        return ledger;
-    }
-
-    /**
-     * @param ledger the ledger to set
-     */
-    public void setLedger(ClaimLedger ledger) {
-        this.ledger = ledger;
-    }
-
-    /**
-     * @return the titleType
-     */
-    public EnforcementTitleType getTitleType() {
-        return titleType;
-    }
-
-    /**
-     * @param titleType the titleType to set
-     */
-    public void setTitleType(EnforcementTitleType titleType) {
-        this.titleType = titleType;
-    }
-
-    /**
-     * @return the issuingBody
-     */
-    public String getIssuingBody() {
-        return issuingBody;
-    }
-
-    /**
-     * @param issuingBody the issuingBody to set
-     */
-    public void setIssuingBody(String issuingBody) {
-        this.issuingBody = issuingBody;
-    }
-
-    /**
-     * @return the fileNumber
-     */
-    public String getFileNumber() {
-        return fileNumber;
-    }
-
-    /**
-     * @param fileNumber the fileNumber to set
-     */
-    public void setFileNumber(String fileNumber) {
-        this.fileNumber = fileNumber;
-    }
-
-    /**
-     * @return the issueDate
-     */
-    public Date getIssueDate() {
-        return issueDate;
-    }
-
-    /**
-     * @param issueDate the issueDate to set
-     */
-    public void setIssueDate(Date issueDate) {
-        this.issueDate = issueDate;
-    }
-
-    /**
-     * @return the clauseDate
-     */
-    public Date getClauseDate() {
-        return clauseDate;
-    }
-
-    /**
-     * @param clauseDate the clauseDate to set
-     */
-    public void setClauseDate(Date clauseDate) {
-        this.clauseDate = clauseDate;
-    }
-
-    /**
-     * @return the serviceDate
-     */
-    public Date getServiceDate() {
-        return serviceDate;
-    }
-
-    /**
-     * @param serviceDate the serviceDate to set
-     */
-    public void setServiceDate(Date serviceDate) {
-        this.serviceDate = serviceDate;
-    }
-
-    /**
-     * @return the limitationDate
-     */
-    public Date getLimitationDate() {
-        return limitationDate;
-    }
-
-    /**
-     * @param limitationDate the limitationDate to set
-     */
-    public void setLimitationDate(Date limitationDate) {
-        this.limitationDate = limitationDate;
-    }
-
-    /**
-     * @return the subjectMatter
-     */
-    public String getSubjectMatter() {
-        return subjectMatter;
-    }
-
-    /**
-     * @param subjectMatter the subjectMatter to set
-     */
-    public void setSubjectMatter(String subjectMatter) {
-        this.subjectMatter = subjectMatter;
-    }
-
-    /**
-     * @return the comment
-     */
-    public String getComment() {
-        return comment;
-    }
-
-    /**
-     * @param comment the comment to set
-     */
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
-    /**
-     * @return the debtors
-     */
-    public List<ClaimLedgerParty> getDebtors() {
-        return debtors;
-    }
-
-    /**
-     * @param debtors the debtors to set
-     */
-    public void setDebtors(List<ClaimLedgerParty> debtors) {
-        this.debtors = debtors;
-    }
-
-    /**
-     * @return the positions of the ledger this title covers, never null; empty where it is unknown
-     */
-    public List<ClaimComponent> getCoveredComponents() {
-        if (this.coveredComponents == null) {
-            this.coveredComponents = new ArrayList<>();
+        // PDFBox liest aus einer Datei; die Vorlage liegt in der Datenbank. Der Umweg über eine
+        // temporäre Datei ist kürzer als ein zweiter Lesepfad, und sie wird in jedem Fall gelöscht.
+        File temporary = File.createTempFile("zvfv-", ".pdf");
+        try {
+            Files.write(temporary.toPath(), template.getPdfContent());
+            List<AcroFormFieldInfo> fields = new ArrayList<>();
+            for (AcroFormFieldDescription description : this.filler.describe(temporary)) {
+                AcroFormFieldInfo info = new AcroFormFieldInfo();
+                info.setName(description.getName());
+                info.setLabel(description.getLabel());
+                info.setKind(description.getKind().name());
+                info.getAdmittedValues().addAll(description.getAdmittedValues());
+                fields.add(info);
+            }
+            return fields;
+        } finally {
+            if (!temporary.delete()) {
+                log.warn("Unable to delete the temporary copy of form template " + templateId);
+            }
         }
-        return coveredComponents;
     }
 
-    /**
-     * @param coveredComponents the positions of the ledger this title covers
-     */
-    public void setCoveredComponents(List<ClaimComponent> coveredComponents) {
-        this.coveredComponents = coveredComponents;
+    @Override
+    @RolesAllowed({"adminRole"})
+    public EnforcementFormTemplate updateFormTemplate(EnforcementFormTemplate template)
+            throws Exception {
+
+        if (template == null) {
+            throw new Exception("Es wurde keine Formularvorlage übergeben!");
+        }
+        if (template.getFormKey() == null || template.getFormKey().trim().isEmpty()) {
+            throw new Exception("Der Formularvorlage ist keine Anlage der ZVFV zugeordnet!");
+        }
+
+        if (template.getId() == null || this.formTemplatesFacade.find(template.getId()) == null) {
+            template.setId(template.getId() == null
+                    ? new StringGenerator().getID().toString() : template.getId());
+            this.formTemplatesFacade.create(template);
+            return this.formTemplatesFacade.find(template.getId());
+        }
+
+        EnforcementFormTemplate stored = this.formTemplatesFacade.find(template.getId());
+        if (template.getPdfContent() == null || template.getPdfContent().length == 0) {
+            // Eine Vorlage, die ohne Datei zurückkommt, ist aus einer Liste bearbeitet worden - die
+            // Datei ist dort absichtlich nicht mitgereist und darf nicht dabei verlorengehen.
+            template.setPdfContent(stored.getPdfContent());
+        }
+        this.formTemplatesFacade.edit(template);
+        return this.formTemplatesFacade.find(template.getId());
     }
 
-    /**
-     * Whether this title says which positions it covers.
-     *
-     * @return false for a title recorded before the coverage was tracked, whose itemisation
-     * therefore cannot separate titled from further claims
-     */
-    public boolean hasCoverage() {
-        return this.coveredComponents != null && !this.coveredComponents.isEmpty();
+    @Override
+    @RolesAllowed({"adminRole"})
+    public void removeFormTemplate(String templateId) throws Exception {
+        EnforcementFormTemplate template = this.formTemplatesFacade.find(templateId);
+        if (template == null) {
+            throw new Exception("Die Formularvorlage existiert nicht!");
+        }
+        for (EnforcementFormFieldMapping mapping : this.formFieldMappingsFacade.findByTemplate(template)) {
+            this.formFieldMappingsFacade.remove(mapping);
+        }
+        this.formTemplatesFacade.remove(template);
     }
 
-
-    /**
-     * @return the id of the case event guarding the limitation date, or null if none exists
-     */
-    public String getLimitationReviewId() {
-        return limitationReviewId;
+    @Override
+    @RolesAllowed({"loginRole"})
+    public EnforcementFormTemplate getFormTemplateFor(String formKey, Date day) throws Exception {
+        EnforcementFormTemplateSelector.Selection selection =
+                this.templateSelector.select(this.formTemplatesFacade.findAll(), formKey, day);
+        return selection.getTemplate();
     }
 
-    /**
-     * @param limitationReviewId the limitationReviewId to set
-     */
-    public void setLimitationReviewId(String limitationReviewId) {
-        this.limitationReviewId = limitationReviewId;
+    @Override
+    @RolesAllowed({"loginRole"})
+    public String describeFormTemplateSelection(String formKey, Date day) throws Exception {
+        return this.templateSelector.select(this.formTemplatesFacade.findAll(), formKey, day)
+                .getWarning();
     }
 
+    private EnforcementFormTemplate find(List<EnforcementFormTemplate> templates, String formKey,
+            String version) {
+        for (EnforcementFormTemplate template : templates) {
+            if (formKey.equals(template.getFormKey()) && version.equals(template.getVersion())) {
+                return template;
+            }
+        }
+        return null;
+    }
 }

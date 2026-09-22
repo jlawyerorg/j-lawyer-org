@@ -660,413 +660,177 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package org.jlawyer.test.server.ejb;
 
-import java.io.Serializable;
-import java.time.LocalDate;
-import java.time.ZoneId;
+import com.jdimension.jlawyer.documents.AcroFormFieldDescription;
+import com.jdimension.jlawyer.documents.AcroFormFillResult;
+import com.jdimension.jlawyer.documents.AcroFormFiller;
+import com.jdimension.jlawyer.services.EnforcementFormDataSource;
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import org.junit.Assume;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
- * An enforcement title (Titel) a claim ledger rests on.
+ * The mapping profile for Anlage 1, held against the form it maps and the vocabulary it uses.
  *
- * Enforcement requires three formal prerequisites - the title itself, the enforceable copy with
- * its clause (Klausel) and service on the debtor (Zustellung). A title established by judgment or
- * order is subject to the 30-year limitation period of § 197 Abs. 1 Nr. 3 BGB, which is computed
- * from the date of issue.
+ * A profile is data, and data of this kind goes wrong quietly: a field name that the form does not
+ * have fills nothing, a source key the vocabulary does not answer leaves a field with whatever the
+ * template had. Neither shows until somebody reads the finished form - by which time it is at a
+ * court.
+ *
+ * So both ends are checked here. What the profile cannot prove is that a field *means* what its
+ * label says; that is settled by filling the form and looking at it.
  *
  * @author jens
  */
-@Entity
-@Table(name = "enforcement_titles")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "EnforcementTitle.findAll", query = "SELECT t FROM EnforcementTitle t"),
-    @NamedQuery(name = "EnforcementTitle.findById", query = "SELECT t FROM EnforcementTitle t WHERE t.id = :id"),
-    @NamedQuery(name = "EnforcementTitle.findByLedger", query = "SELECT t FROM EnforcementTitle t WHERE t.ledger = :ledger ORDER BY t.issueDate ASC")
-})
-public class EnforcementTitle implements Serializable {
+public class Anlage1MappingTest {
 
-    private static final long serialVersionUID = 1L;
+    @Rule
+    public TemporaryFolder temporary = new TemporaryFolder();
 
-    /**
-     * Limitation period of a titled claim under § 197 Abs. 1 Nr. 3 BGB, in years.
-     */
-    public static final int LIMITATION_YEARS = 30;
+    private static final Pattern MAPPING = Pattern.compile(
+            "'([^']+)' as field_name, '([^']*)' as field_label, '([^']+)' as source_key");
 
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
-
-    @JoinColumn(name = "ledger_id", referencedColumnName = "id")
-    @ManyToOne(optional = false)
-    private ClaimLedger ledger;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "title_type", nullable = false, length = 50)
-    private EnforcementTitleType titleType;
-
-    @Column(name = "issuing_body")
-    private String issuingBody;
-
-    @Column(name = "file_number")
-    private String fileNumber;
-
-    @Column(name = "issue_date")
-    @Temporal(TemporalType.DATE)
-    private Date issueDate;
-
-    @Column(name = "clause_date")
-    @Temporal(TemporalType.DATE)
-    private Date clauseDate;
-
-    @Column(name = "service_date")
-    @Temporal(TemporalType.DATE)
-    private Date serviceDate;
-
-    @Column(name = "limitation_date")
-    @Temporal(TemporalType.DATE)
-    private Date limitationDate;
-
-    @Column(name = "subject_matter")
-    private String subjectMatter;
-
-    @Column(name = "comment")
-    private String comment;
-
-    /**
-     * The case event that reminds of this title's limitation date. Kept as an explicit reference so
-     * the follow-up can be found, moved and removed again without writing a technical marker into
-     * text the user reads.
-     */
-    @Column(name = "limitation_review_id")
-    private String limitationReviewId;
-
-    @ManyToMany
-    @JoinTable(name = "enforcement_title_debtors",
-            joinColumns = @JoinColumn(name = "title_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "party_id", referencedColumnName = "id"))
-    private List<ClaimLedgerParty> debtors = new ArrayList<>();
-
-    /**
-     * The positions of the ledger this title covers.
-     *
-     * Enforcement runs on what the title says, and the official itemisation separates a titled claim
-     * from a further one - Anlagen 6 to 8 give them different lines and different treatment. Without
-     * knowing which positions a title carries, a form would either claim enforcement of something
-     * the title does not cover, which the bailiff refuses, or leave out something it does.
-     *
-     * Empty where a title predates this record. The itemisation says so rather than guessing: a
-     * silent classification would be a statement about the title that nobody made.
-     */
-    @ManyToMany
-    @JoinTable(name = "enforcement_title_components",
-            joinColumns = @JoinColumn(name = "title_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "component_id", referencedColumnName = "id"))
-    private List<ClaimComponent> coveredComponents = new ArrayList<>();
-
-    /**
-     * Whether all three formal prerequisites of enforcement are present: the title, the enforceable
-     * copy with its clause and service on the debtor.
-     *
-     * @return true if enforcement may proceed without an override
-     */
-    public boolean isEnforceable() {
-        return this.issueDate != null && this.clauseDate != null && this.serviceDate != null;
+    private File migration() {
+        String base = System.getProperty("basedir");
+        // die Migration liegt im Entities-Modul, daneben
+        File file = new File(base == null ? "." : base,
+                "../../j-lawyer-server-entities/src/main/resources/db/migration/V3_6_0_43__Anlage1FieldMapping.sql");
+        Assume.assumeTrue("the mapping migration is not present", file.isFile());
+        return file;
     }
 
-    /**
-     * Names the formal prerequisites of enforcement that are still missing.
-     *
-     * @return the missing prerequisites, empty if the title is complete
-     */
-    public List<String> getMissingPrerequisites() {
-        List<String> missing = new ArrayList<>();
-        if (this.issueDate == null) {
-            missing.add("Titel");
+    private File form() {
+        String base = System.getProperty("basedir");
+        File file = new File(base == null ? "." : base,
+                "src/main/resources/zvfv/20240901_Vollstreckungsauftrag-Gerichtsvollzieher.pdf");
+        Assume.assumeTrue("the ZVFV forms are not present", file.isFile());
+        return file;
+    }
+
+    /** The profile as the migration writes it: field name to source key, with the label. */
+    private Map<String, String[]> profile() throws Exception {
+        Map<String, String[]> mapping = new LinkedHashMap<>();
+        String sql = new String(Files.readAllBytes(migration().toPath()), StandardCharsets.UTF_8);
+        Matcher m = MAPPING.matcher(sql);
+        while (m.find()) {
+            mapping.put(m.group(1), new String[]{m.group(3), m.group(2)});
         }
-        if (this.clauseDate == null) {
-            missing.add("Klausel");
+        return mapping;
+    }
+
+    @Test
+    public void theProfileIsNotEmpty() throws Exception {
+        assertFalse("ohne Zuordnungen fuellt das Profil nichts", profile().isEmpty());
+    }
+
+    @Test
+    public void everyFieldItNamesExistsInTheForm() throws Exception {
+        // Ein Name, den das Formular nicht hat, fuellt nichts - und sagt es nicht.
+        Map<String, AcroFormFieldDescription> fields = new HashMap<>();
+        for (AcroFormFieldDescription field : new AcroFormFiller().describe(form())) {
+            fields.put(field.getName(), field);
         }
-        if (this.serviceDate == null) {
-            missing.add("Zustellung");
+
+        List<String> unknown = new ArrayList<>();
+        for (String fieldName : profile().keySet()) {
+            if (!fields.containsKey(fieldName)) {
+                unknown.add(fieldName);
+            }
         }
-        return missing;
+        assertEquals("Felder, die das Formular nicht kennt: " + unknown, 0, unknown.size());
     }
 
-    /**
-     * Computes the date on which the titled claim becomes time-barred under § 197 Abs. 1 Nr. 3 BGB,
-     * 30 years after the title was issued.
-     *
-     * @return the limitation date, or null if the title carries no date of issue
-     */
-    public Date computeLimitationDate() {
-        if (this.issueDate == null) {
-            return null;
+    @Test
+    public void everyKeyItUsesIsOneTheVocabularyAnswers() throws Exception {
+        // Ein Schluessel, den niemand beantwortet, laesst das Feld so, wie es in der Vorlage stand.
+        java.util.Set<String> known = new EnforcementFormDataSource().knownKeys();
+
+        List<String> unknown = new ArrayList<>();
+        for (Map.Entry<String, String[]> entry : profile().entrySet()) {
+            if (!known.contains(entry.getValue()[0])) {
+                unknown.add(entry.getKey() + " -> " + entry.getValue()[0]);
+            }
         }
-        LocalDate issued = this.issueDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate limitation = issued.plusYears(LIMITATION_YEARS);
-        return Date.from(limitation.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        assertEquals("Schluessel, die das Vokabular nicht beantwortet: " + unknown, 0, unknown.size());
     }
 
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (getId() != null ? getId().hashCode() : 0);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof EnforcementTitle)) {
-            return false;
+    @Test
+    public void theLabelItRecordsIsTheLabelTheFormCarries() throws Exception {
+        // Die Bezeichnung ist der einzige Beleg dafuer, dass die Zuordnung das meint, was sie
+        // behauptet. Weicht sie ab, hat eine neue Fassung dem Namen eine andere Bedeutung gegeben -
+        // und die Zuordnung zeigt seither woanders hin, ohne dass es jemandem auffiele.
+        Map<String, String> labels = new HashMap<>();
+        for (AcroFormFieldDescription field : new AcroFormFiller().describe(form())) {
+            labels.put(field.getName(), field.getLabel() == null ? "" : field.getLabel().trim());
         }
-        EnforcementTitle other = (EnforcementTitle) object;
-        if ((this.getId() == null && other.getId() != null) || (this.getId() != null && !this.id.equals(other.id))) {
-            return false;
+
+        List<String> differing = new ArrayList<>();
+        for (Map.Entry<String, String[]> entry : profile().entrySet()) {
+            String recorded = entry.getValue()[1];
+            String actual = labels.get(entry.getKey());
+            if (actual != null && !actual.equals(recorded)) {
+                differing.add(entry.getKey() + ": Profil \"" + recorded + "\", Formular \"" + actual + "\"");
+            }
         }
-        return true;
+        assertEquals("Bezeichnungen, die nicht mehr stimmen: " + differing, 0, differing.size());
     }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (this.titleType != null) {
-            sb.append(this.titleType.toString());
+    @Test
+    public void aCheckBoxIsNeverGivenAtextKeyAndTheOtherWayRound() throws Exception {
+        // "glaeubiger.name" in ein Ankreuzfeld zu schreiben ergaebe ein abgelehntes Feld; ein
+        // "ist_"-Schluessel in einem Textfeld schriebe dort das Wort "true" hin.
+        Map<String, AcroFormFieldDescription> fields = new HashMap<>();
+        for (AcroFormFieldDescription field : new AcroFormFiller().describe(form())) {
+            fields.put(field.getName(), field);
         }
-        if (this.fileNumber != null && !this.fileNumber.isEmpty()) {
-            sb.append(" ").append(this.fileNumber);
+
+        List<String> mismatched = new ArrayList<>();
+        for (Map.Entry<String, String[]> entry : profile().entrySet()) {
+            AcroFormFieldDescription field = fields.get(entry.getKey());
+            if (field == null) {
+                continue;
+            }
+            boolean tickKey = entry.getValue()[0].contains(".ist_");
+            boolean tickField = field.getKind() == AcroFormFieldDescription.Kind.CHECK_BOX
+                    || field.getKind() == AcroFormFieldDescription.Kind.RADIO_GROUP;
+            if (tickKey != tickField) {
+                mismatched.add(entry.getKey() + " (" + field.getKind() + ") <- " + entry.getValue()[0]);
+            }
         }
-        return sb.toString();
+        assertEquals("Feldart und Schluessel passen nicht zusammen: " + mismatched,
+                0, mismatched.size());
     }
 
-    /**
-     * @return the id
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * @param id the id to set
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the ledger
-     */
-    public ClaimLedger getLedger() {
-        return ledger;
-    }
-
-    /**
-     * @param ledger the ledger to set
-     */
-    public void setLedger(ClaimLedger ledger) {
-        this.ledger = ledger;
-    }
-
-    /**
-     * @return the titleType
-     */
-    public EnforcementTitleType getTitleType() {
-        return titleType;
-    }
-
-    /**
-     * @param titleType the titleType to set
-     */
-    public void setTitleType(EnforcementTitleType titleType) {
-        this.titleType = titleType;
-    }
-
-    /**
-     * @return the issuingBody
-     */
-    public String getIssuingBody() {
-        return issuingBody;
-    }
-
-    /**
-     * @param issuingBody the issuingBody to set
-     */
-    public void setIssuingBody(String issuingBody) {
-        this.issuingBody = issuingBody;
-    }
-
-    /**
-     * @return the fileNumber
-     */
-    public String getFileNumber() {
-        return fileNumber;
-    }
-
-    /**
-     * @param fileNumber the fileNumber to set
-     */
-    public void setFileNumber(String fileNumber) {
-        this.fileNumber = fileNumber;
-    }
-
-    /**
-     * @return the issueDate
-     */
-    public Date getIssueDate() {
-        return issueDate;
-    }
-
-    /**
-     * @param issueDate the issueDate to set
-     */
-    public void setIssueDate(Date issueDate) {
-        this.issueDate = issueDate;
-    }
-
-    /**
-     * @return the clauseDate
-     */
-    public Date getClauseDate() {
-        return clauseDate;
-    }
-
-    /**
-     * @param clauseDate the clauseDate to set
-     */
-    public void setClauseDate(Date clauseDate) {
-        this.clauseDate = clauseDate;
-    }
-
-    /**
-     * @return the serviceDate
-     */
-    public Date getServiceDate() {
-        return serviceDate;
-    }
-
-    /**
-     * @param serviceDate the serviceDate to set
-     */
-    public void setServiceDate(Date serviceDate) {
-        this.serviceDate = serviceDate;
-    }
-
-    /**
-     * @return the limitationDate
-     */
-    public Date getLimitationDate() {
-        return limitationDate;
-    }
-
-    /**
-     * @param limitationDate the limitationDate to set
-     */
-    public void setLimitationDate(Date limitationDate) {
-        this.limitationDate = limitationDate;
-    }
-
-    /**
-     * @return the subjectMatter
-     */
-    public String getSubjectMatter() {
-        return subjectMatter;
-    }
-
-    /**
-     * @param subjectMatter the subjectMatter to set
-     */
-    public void setSubjectMatter(String subjectMatter) {
-        this.subjectMatter = subjectMatter;
-    }
-
-    /**
-     * @return the comment
-     */
-    public String getComment() {
-        return comment;
-    }
-
-    /**
-     * @param comment the comment to set
-     */
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
-    /**
-     * @return the debtors
-     */
-    public List<ClaimLedgerParty> getDebtors() {
-        return debtors;
-    }
-
-    /**
-     * @param debtors the debtors to set
-     */
-    public void setDebtors(List<ClaimLedgerParty> debtors) {
-        this.debtors = debtors;
-    }
-
-    /**
-     * @return the positions of the ledger this title covers, never null; empty where it is unknown
-     */
-    public List<ClaimComponent> getCoveredComponents() {
-        if (this.coveredComponents == null) {
-            this.coveredComponents = new ArrayList<>();
+    @Test
+    public void theFormFillsWithoutAsingleRejection() throws Exception {
+        // Der Durchstich: jeden Schluessel mit seinem eigenen Namen belegen und das Formular damit
+        // fuellen. Was dabei abgelehnt wird, ist ein Fehler des Profils und keiner der Daten.
+        Map<String, String> values = new LinkedHashMap<>();
+        for (Map.Entry<String, String[]> entry : profile().entrySet()) {
+            String key = entry.getValue()[0];
+            values.put(entry.getKey(), key.contains(".ist_") ? "true" : key);
         }
-        return coveredComponents;
+
+        File target = temporary.newFile("anlage1.pdf");
+        AcroFormFillResult result = new AcroFormFiller().fill(form(), values, null, target, false);
+
+        assertTrue(result.describe(), result.isComplete());
+        assertEquals(values.size(), result.getFieldsSet());
+        assertTrue(target.length() > 0);
     }
-
-    /**
-     * @param coveredComponents the positions of the ledger this title covers
-     */
-    public void setCoveredComponents(List<ClaimComponent> coveredComponents) {
-        this.coveredComponents = coveredComponents;
-    }
-
-    /**
-     * Whether this title says which positions it covers.
-     *
-     * @return false for a title recorded before the coverage was tracked, whose itemisation
-     * therefore cannot separate titled from further claims
-     */
-    public boolean hasCoverage() {
-        return this.coveredComponents != null && !this.coveredComponents.isEmpty();
-    }
-
-
-    /**
-     * @return the id of the case event guarding the limitation date, or null if none exists
-     */
-    public String getLimitationReviewId() {
-        return limitationReviewId;
-    }
-
-    /**
-     * @param limitationReviewId the limitationReviewId to set
-     */
-    public void setLimitationReviewId(String limitationReviewId) {
-        this.limitationReviewId = limitationReviewId;
-    }
-
 }

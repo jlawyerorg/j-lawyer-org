@@ -660,413 +660,132 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package org.jlawyer.test.server.ejb;
 
-import java.io.Serializable;
+import com.jdimension.jlawyer.documents.AcroFormFieldDescription;
+import com.jdimension.jlawyer.documents.AcroFormFiller;
+import com.jdimension.jlawyer.services.EnforcementFormPackage;
+import java.io.File;
+import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Set;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
- * An enforcement title (Titel) a claim ledger rests on.
+ * The official forms shipped with the software.
  *
- * Enforcement requires three formal prerequisites - the title itself, the enforceable copy with
- * its clause (Klausel) and service on the debtor (Zustellung). A title established by judgment or
- * order is subject to the 30-year limitation period of § 197 Abs. 1 Nr. 3 BGB, which is computed
- * from the date of issue.
+ * The package says which file is which annex, and that assignment cannot be checked by reading it -
+ * the publisher's file names say "Antrag_Pfaendungsbeschluss", not "Anlage 4". What can be checked
+ * is that every file it promises is actually in the deployment and is actually a fillable form. A
+ * package that names a file nobody shipped fails at the moment an administrator presses import, on
+ * a server, with the forms needed.
  *
  * @author jens
  */
-@Entity
-@Table(name = "enforcement_titles")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "EnforcementTitle.findAll", query = "SELECT t FROM EnforcementTitle t"),
-    @NamedQuery(name = "EnforcementTitle.findById", query = "SELECT t FROM EnforcementTitle t WHERE t.id = :id"),
-    @NamedQuery(name = "EnforcementTitle.findByLedger", query = "SELECT t FROM EnforcementTitle t WHERE t.ledger = :ledger ORDER BY t.issueDate ASC")
-})
-public class EnforcementTitle implements Serializable {
+public class EnforcementFormPackageTest {
 
-    private static final long serialVersionUID = 1L;
+    @Rule
+    public TemporaryFolder temporary = new TemporaryFolder();
 
-    /**
-     * Limitation period of a titled claim under § 197 Abs. 1 Nr. 3 BGB, in years.
-     */
-    public static final int LIMITATION_YEARS = 30;
+    private final EnforcementFormPackage formPackage = new EnforcementFormPackage();
 
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
-
-    @JoinColumn(name = "ledger_id", referencedColumnName = "id")
-    @ManyToOne(optional = false)
-    private ClaimLedger ledger;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "title_type", nullable = false, length = 50)
-    private EnforcementTitleType titleType;
-
-    @Column(name = "issuing_body")
-    private String issuingBody;
-
-    @Column(name = "file_number")
-    private String fileNumber;
-
-    @Column(name = "issue_date")
-    @Temporal(TemporalType.DATE)
-    private Date issueDate;
-
-    @Column(name = "clause_date")
-    @Temporal(TemporalType.DATE)
-    private Date clauseDate;
-
-    @Column(name = "service_date")
-    @Temporal(TemporalType.DATE)
-    private Date serviceDate;
-
-    @Column(name = "limitation_date")
-    @Temporal(TemporalType.DATE)
-    private Date limitationDate;
-
-    @Column(name = "subject_matter")
-    private String subjectMatter;
-
-    @Column(name = "comment")
-    private String comment;
-
-    /**
-     * The case event that reminds of this title's limitation date. Kept as an explicit reference so
-     * the follow-up can be found, moved and removed again without writing a technical marker into
-     * text the user reads.
-     */
-    @Column(name = "limitation_review_id")
-    private String limitationReviewId;
-
-    @ManyToMany
-    @JoinTable(name = "enforcement_title_debtors",
-            joinColumns = @JoinColumn(name = "title_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "party_id", referencedColumnName = "id"))
-    private List<ClaimLedgerParty> debtors = new ArrayList<>();
-
-    /**
-     * The positions of the ledger this title covers.
-     *
-     * Enforcement runs on what the title says, and the official itemisation separates a titled claim
-     * from a further one - Anlagen 6 to 8 give them different lines and different treatment. Without
-     * knowing which positions a title carries, a form would either claim enforcement of something
-     * the title does not cover, which the bailiff refuses, or leave out something it does.
-     *
-     * Empty where a title predates this record. The itemisation says so rather than guessing: a
-     * silent classification would be a statement about the title that nobody made.
-     */
-    @ManyToMany
-    @JoinTable(name = "enforcement_title_components",
-            joinColumns = @JoinColumn(name = "title_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "component_id", referencedColumnName = "id"))
-    private List<ClaimComponent> coveredComponents = new ArrayList<>();
-
-    /**
-     * Whether all three formal prerequisites of enforcement are present: the title, the enforceable
-     * copy with its clause and service on the debtor.
-     *
-     * @return true if enforcement may proceed without an override
-     */
-    public boolean isEnforceable() {
-        return this.issueDate != null && this.clauseDate != null && this.serviceDate != null;
-    }
-
-    /**
-     * Names the formal prerequisites of enforcement that are still missing.
-     *
-     * @return the missing prerequisites, empty if the title is complete
-     */
-    public List<String> getMissingPrerequisites() {
+    @Test
+    public void everyFormItPromisesIsInTheDeployment() throws Exception {
         List<String> missing = new ArrayList<>();
-        if (this.issueDate == null) {
-            missing.add("Titel");
+        for (EnforcementFormPackage.Entry entry : formPackage.getEntries()) {
+            try {
+                byte[] content = formPackage.read(entry);
+                if (content == null || content.length == 0) {
+                    missing.add(entry.getFileName() + " (leer)");
+                }
+            } catch (Exception ex) {
+                missing.add(entry.getFileName() + " (" + ex.getMessage() + ")");
+            }
         }
-        if (this.clauseDate == null) {
-            missing.add("Klausel");
+        assertEquals("Formulare, die das Paket verspricht und nicht liefert: " + missing,
+                0, missing.size());
+    }
+
+    @Test
+    public void eachOfTheEightAnnexesIsCoveredExactlyOnce() {
+        // Anlage 1 bis 8 der ZVFV 2022. Eine doppelt vergebene Nummer hiesse, dass zwei Dateien
+        // dasselbe Formular sein wollen, und die Auswahl der Fassung wuerde sie verwechseln.
+        List<String> keys = formPackage.getFormKeys();
+        Set<String> distinct = new HashSet<>(keys);
+
+        assertEquals("jede Anlage genau einmal", keys.size(), distinct.size());
+        assertEquals(8, keys.size());
+        for (int i = 1; i <= 8; i++) {
+            assertTrue("Anlage " + i + " fehlt", distinct.contains("ANLAGE_" + i));
         }
-        if (this.serviceDate == null) {
-            missing.add("Zustellung");
+    }
+
+    @Test
+    public void everyShippedFileIsAfillableForm() throws Exception {
+        // Ein Merkblatt sieht aus wie ein Formular und traegt kein einziges Feld. Wuerde eines
+        // versehentlich als Anlage eingetragen, liesse es sich importieren und nie ausfuellen.
+        AcroFormFiller filler = new AcroFormFiller();
+        List<String> withoutFields = new ArrayList<>();
+
+        for (EnforcementFormPackage.Entry entry : formPackage.getEntries()) {
+            File file = temporary.newFile(entry.getFormKey() + ".pdf");
+            Files.write(file.toPath(), formPackage.read(entry));
+            List<AcroFormFieldDescription> fields = filler.describe(file);
+            if (fields.isEmpty()) {
+                withoutFields.add(entry.getFormKey() + " / " + entry.getFileName());
+            }
         }
-        return missing;
+        assertEquals("ausgelieferte Dateien ohne Formularfelder: " + withoutFields,
+                0, withoutFields.size());
     }
 
-    /**
-     * Computes the date on which the titled claim becomes time-barred under § 197 Abs. 1 Nr. 3 BGB,
-     * 30 years after the title was issued.
-     *
-     * @return the limitation date, or null if the title carries no date of issue
-     */
-    public Date computeLimitationDate() {
-        if (this.issueDate == null) {
-            return null;
+    @Test
+    public void theVersionAndItsStartAgree() {
+        assertEquals("2024-09-01", EnforcementFormPackage.VERSION);
+
+        Date expected = Date.from(LocalDate.of(2024, 9, 1)
+                .atStartOfDay(ZoneId.systemDefault()).toInstant());
+        assertEquals(expected, formPackage.getValidFrom());
+    }
+
+    @Test
+    public void everyEntryCarriesAnameAndAdescription() {
+        // Ohne Beschreibung steht im Verwaltungsdialog eine Anlagennummer und sonst nichts; wer
+        // dort eine Vorlage auswaehlt, soll wissen, wofuer sie ist.
+        for (EnforcementFormPackage.Entry entry : formPackage.getEntries()) {
+            assertFalse(entry.getName() == null || entry.getName().trim().isEmpty());
+            assertFalse(entry.getDescription() == null || entry.getDescription().trim().isEmpty());
+            assertFalse(entry.getFileName() == null || entry.getFileName().trim().isEmpty());
         }
-        LocalDate issued = this.issueDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate limitation = issued.plusYears(LIMITATION_YEARS);
-        return Date.from(limitation.atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (getId() != null ? getId().hashCode() : 0);
-        return hash;
+    @Test
+    public void theApplicationAndItsDraftAreBothShipped() {
+        // Das Gericht erwartet den Entwurf mit dem Antrag. Faehlte er im Paket, waere der Antrag
+        // unvollstaendig und niemand saehe es an der Vorlagenliste.
+        Set<String> keys = new HashSet<>(formPackage.getFormKeys());
+
+        assertTrue(keys.contains("ANLAGE_4") && keys.contains("ANLAGE_5"));
+        assertTrue(keys.contains("ANLAGE_2") && keys.contains("ANLAGE_3"));
     }
 
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof EnforcementTitle)) {
-            return false;
-        }
-        EnforcementTitle other = (EnforcementTitle) object;
-        if ((this.getId() == null && other.getId() != null) || (this.getId() != null && !this.id.equals(other.id))) {
-            return false;
-        }
-        return true;
+    @Test
+    public void allThreeItemisationsAreShipped() {
+        // Anlage 6 zum Gerichtsvollzieherauftrag, 7 und 8 zum PfÜB - ohne Unterhalt und mit
+        Set<String> keys = new HashSet<>(formPackage.getFormKeys());
+
+        assertTrue(keys.contains("ANLAGE_6"));
+        assertTrue(keys.contains("ANLAGE_7"));
+        assertTrue(keys.contains("ANLAGE_8"));
     }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (this.titleType != null) {
-            sb.append(this.titleType.toString());
-        }
-        if (this.fileNumber != null && !this.fileNumber.isEmpty()) {
-            sb.append(" ").append(this.fileNumber);
-        }
-        return sb.toString();
-    }
-
-    /**
-     * @return the id
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * @param id the id to set
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the ledger
-     */
-    public ClaimLedger getLedger() {
-        return ledger;
-    }
-
-    /**
-     * @param ledger the ledger to set
-     */
-    public void setLedger(ClaimLedger ledger) {
-        this.ledger = ledger;
-    }
-
-    /**
-     * @return the titleType
-     */
-    public EnforcementTitleType getTitleType() {
-        return titleType;
-    }
-
-    /**
-     * @param titleType the titleType to set
-     */
-    public void setTitleType(EnforcementTitleType titleType) {
-        this.titleType = titleType;
-    }
-
-    /**
-     * @return the issuingBody
-     */
-    public String getIssuingBody() {
-        return issuingBody;
-    }
-
-    /**
-     * @param issuingBody the issuingBody to set
-     */
-    public void setIssuingBody(String issuingBody) {
-        this.issuingBody = issuingBody;
-    }
-
-    /**
-     * @return the fileNumber
-     */
-    public String getFileNumber() {
-        return fileNumber;
-    }
-
-    /**
-     * @param fileNumber the fileNumber to set
-     */
-    public void setFileNumber(String fileNumber) {
-        this.fileNumber = fileNumber;
-    }
-
-    /**
-     * @return the issueDate
-     */
-    public Date getIssueDate() {
-        return issueDate;
-    }
-
-    /**
-     * @param issueDate the issueDate to set
-     */
-    public void setIssueDate(Date issueDate) {
-        this.issueDate = issueDate;
-    }
-
-    /**
-     * @return the clauseDate
-     */
-    public Date getClauseDate() {
-        return clauseDate;
-    }
-
-    /**
-     * @param clauseDate the clauseDate to set
-     */
-    public void setClauseDate(Date clauseDate) {
-        this.clauseDate = clauseDate;
-    }
-
-    /**
-     * @return the serviceDate
-     */
-    public Date getServiceDate() {
-        return serviceDate;
-    }
-
-    /**
-     * @param serviceDate the serviceDate to set
-     */
-    public void setServiceDate(Date serviceDate) {
-        this.serviceDate = serviceDate;
-    }
-
-    /**
-     * @return the limitationDate
-     */
-    public Date getLimitationDate() {
-        return limitationDate;
-    }
-
-    /**
-     * @param limitationDate the limitationDate to set
-     */
-    public void setLimitationDate(Date limitationDate) {
-        this.limitationDate = limitationDate;
-    }
-
-    /**
-     * @return the subjectMatter
-     */
-    public String getSubjectMatter() {
-        return subjectMatter;
-    }
-
-    /**
-     * @param subjectMatter the subjectMatter to set
-     */
-    public void setSubjectMatter(String subjectMatter) {
-        this.subjectMatter = subjectMatter;
-    }
-
-    /**
-     * @return the comment
-     */
-    public String getComment() {
-        return comment;
-    }
-
-    /**
-     * @param comment the comment to set
-     */
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
-    /**
-     * @return the debtors
-     */
-    public List<ClaimLedgerParty> getDebtors() {
-        return debtors;
-    }
-
-    /**
-     * @param debtors the debtors to set
-     */
-    public void setDebtors(List<ClaimLedgerParty> debtors) {
-        this.debtors = debtors;
-    }
-
-    /**
-     * @return the positions of the ledger this title covers, never null; empty where it is unknown
-     */
-    public List<ClaimComponent> getCoveredComponents() {
-        if (this.coveredComponents == null) {
-            this.coveredComponents = new ArrayList<>();
-        }
-        return coveredComponents;
-    }
-
-    /**
-     * @param coveredComponents the positions of the ledger this title covers
-     */
-    public void setCoveredComponents(List<ClaimComponent> coveredComponents) {
-        this.coveredComponents = coveredComponents;
-    }
-
-    /**
-     * Whether this title says which positions it covers.
-     *
-     * @return false for a title recorded before the coverage was tracked, whose itemisation
-     * therefore cannot separate titled from further claims
-     */
-    public boolean hasCoverage() {
-        return this.coveredComponents != null && !this.coveredComponents.isEmpty();
-    }
-
-
-    /**
-     * @return the id of the case event guarding the limitation date, or null if none exists
-     */
-    public String getLimitationReviewId() {
-        return limitationReviewId;
-    }
-
-    /**
-     * @param limitationReviewId the limitationReviewId to set
-     */
-    public void setLimitationReviewId(String limitationReviewId) {
-        this.limitationReviewId = limitationReviewId;
-    }
-
 }

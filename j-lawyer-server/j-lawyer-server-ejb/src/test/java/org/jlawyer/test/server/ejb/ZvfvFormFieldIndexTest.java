@@ -700,7 +700,7 @@ public class ZvfvFormFieldIndexTest {
 
     private File formsDirectory() {
         String base = System.getProperty("basedir");
-        File dir = new File(base == null ? "." : base, "src/test/resources/zvfv");
+        File dir = new File(base == null ? "." : base, "src/main/resources/zvfv");
         Assume.assumeTrue("the ZVFV forms are not present", dir.isDirectory());
         return dir;
     }
@@ -733,9 +733,14 @@ public class ZvfvFormFieldIndexTest {
         return all;
     }
 
+    /**
+     * The index sits in the test resources while the forms are shipped in the deployment: the forms
+     * are part of the product, the index is working material for whoever writes a mapping profile.
+     */
     private File indexFor(File pdf) {
-        return new File(new File(formsDirectory(), "felder"),
-                pdf.getName().replaceAll("\\.pdf$", "") + ".txt");
+        String base = System.getProperty("basedir");
+        File felder = new File(base == null ? "." : base, "src/test/resources/zvfv/felder");
+        return new File(felder, pdf.getName().replaceAll("\\.pdf$", "") + ".txt");
     }
 
     /** The field names the index records, in the order it records them. */

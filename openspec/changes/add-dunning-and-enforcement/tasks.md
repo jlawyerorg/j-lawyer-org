@@ -507,8 +507,95 @@
       "1". The test now derives the column names of every `FROM (SELECT ...)` the way MySQL does and
       requires them to be distinct. Removing the aliases again makes it fail with the offending
       name.
-- [ ] 4.2 Form template management (PDF + field mapping + validity) with admin UI, listing of the
-      AcroForm field names of an uploaded PDF, and import of a default package built from 0.4
+- [~] 4.2 Form template management (PDF + field mapping + validity). **The model is built; the admin
+      UI and the import of the default package are still open.**
+      *Two decisions, both the user's.* The PDFs live in the database — the number of forms is small
+      and the versions few, and a backup of the database is then a backup of everything needed to
+      reproduce a filing. And the forms of a measure are a list with roles, not a column each.
+      The second deserves its reasoning. `form_key` and the hastily added `itemisation_form_key`
+      were really two entries of one list, and the list is longer than two: an attachment order is
+      the application (Anlage 4), the draft order the court adopts as its own (Anlage 5) and the
+      itemisation (Anlage 7 or 8). Three is the most any kind needs today — but the number is not
+      the point, the **role** is, because it decides what fills the form: the application from the
+      measure, parties and title, the draft from the same in the language of a decision, the
+      itemisation from the ledger through 4.4. Three unnamed columns would leave the code to work
+      that out from their order. V3_6_0_41 moves the two columns into
+      `enforcement_measure_type_forms` and adds the draft orders, which had been missing entirely —
+      the court expects the draft with the application.
+      V3_6_0_42 adds the templates with their validity and the mapping profile. The profile belongs
+      to the **version**, not the form: a new version may rename its fields, and a profile written
+      for the old one would address fields that no longer exist. It is rows rather than a document
+      in a column, because a profile is edited a field at a time, compared between versions and
+      checked against the form — and a mapping naming a field the form no longer has should be a
+      query, not a parse.
+      `EnforcementFormTemplateSelector` picks the version in force on the day the measure is
+      created. Where none is in force it **warns rather than refuses**: a firm that has to file
+      today cannot wait for us to ship a template, and filing on last month's form beats not
+      filing. Two versions valid at once is a master-data defect; the newest is used and said to be
+      a guess.
+      Ten tests, three mutations killed. A fourth survived at first and was worth the catch: the
+      boundary test checked *which* version came back on the day a new one takes effect, and under
+      an exclusive start date the same version came back through the "none valid" branch — right
+      answer, wrong reason. It now asserts the selection is current as well.
+      *The default package is imported, on a button.* The eight forms moved from the test resources
+      to `src/main/resources/zvfv/` so they exist once in the repository and travel in the
+      deployment; the field index stays behind as working material. `EnforcementFormPackage` holds
+      what cannot be read off a file — which file is which annex, since the publisher names them
+      "Antrag_Pfaendungsbeschluss" and not "Anlage 4" — and `EnforcementService.importDefaultForm​Package()`
+      creates a template per form. It runs without harm a second time: a form already held under the
+      same version is left as it is, adjustments included. The import adds what is missing and
+      changes nothing that is there.
+      Deliberately **not** on startup. `ContainerLifecycleBean` wires reference data and writes
+      nothing to the database today, and giving it silent write access for this would be the wrong
+      trade; the forms are master data of an installation and appear because somebody decided they
+      should. An empty template store is visible in the enforcement tab instead.
+      Considered and rejected: the PDFs as hex literals in a Flyway migration. 3.1 MB become 6.2 MB
+      of hex, a single statement of that size runs into `max_allowed_packet`, the file is frozen by
+      its checksum forever — every new form version another one — and the bytes would sit in the
+      repository twice.
+      Seven tests on the package, three mutations killed: naming a file that is not shipped, listing
+      a Hinweisblatt (which looks like a form and carries no fields) as an annex, and giving two
+      entries the same annex number.
+      *The vocabulary a profile is written against.* `EnforcementFormDataSource` answers the keys a
+      mapping may point at — `glaeubiger.name`, `schuldner.ist_herr`, `forderung.gesamt` — built
+      from the measure, the parties, the title and the itemisation of 4.4, so the form and the
+      firm's own statement cannot disagree about a sum.
+      Deliberately a closed vocabulary and not an expression language. A profile is written by an
+      administrator, not a programmer; a language would let them write something almost right, and
+      the place that shows is a form already at a court. A closed set can be offered in a list and
+      got wrong only by choosing the wrong key, which is visible when the form is read back.
+      The tick marks are keys of their own for the same reason. The forms do not ask for a
+      salutation, they offer four boxes — Herr, Frau, Unternehmen, Sonstige — so the vocabulary
+      answers in that shape and the profile stays a plain assignment of field to key. A key plus a
+      condition would be a small language again.
+      Two properties carry it: **every key answers** whether or not the case has the data, so a
+      profile pointing at something absent clears the field instead of leaving what the template
+      held; and the designation used towards the court goes before the contact's current one, so a
+      filing stays reconstructable after somebody tidies an address.
+      Thirteen tests, four mutations killed — among them writing "Deutschland" into the field
+      labelled "Land (wenn nicht Deutschland)", and ignoring the frozen designation. A fifth
+      survived and was worth it: the test called "a company is a company whatever its salutation"
+      gave its company no salutation, so a company carrying a stale "Herr" would have been ticked as
+      a company *and* as a man. The fixture now carries one.
+      *The profile for Anlage 1* (V3_6_0_43, 40 fields) assigns the bailiff order's fields to those
+      keys: addressee, who is filing, creditor, debtor, reference, place and date — what an order
+      needs at minimum. The options of § 802a Abs. 2 ZPO belong to the individual measure, not to
+      the form, and arrive with the measure UI.
+      `field_label` carries the form's own tooltip alongside each assignment. It is the only evidence
+      that a mapping means what it claims: `Textfeld 220` says nothing, "Name/Firma" says something,
+      and if a later version gives that name a different meaning the comparison against the field
+      index shows it.
+      `Anlage1MappingTest` holds the profile against both ends — every field it names exists in the
+      form, every key it uses is one the vocabulary answers, every recorded label still matches, and
+      no tick key sits in a text field or the reverse. Plus the through-test: fill the form from the
+      profile and accept not one rejection.
+      *What none of that proves* is that a field **means** what its label says — that the block on
+      page 3 carrying a Geburtsdatum really is the debtor and not a second creditor. The labels
+      repeat across blocks ("Name/Firma" appears for creditor, debtor and representative alike), so
+      the assignment was read off the form's order. Settled the only way it can be: a filled sample
+      was produced from the profile and checked against the form. Creditor, debtor and the filing
+      firm each land where they belong.
+      *Still open in 4.2:* the administration UI.
 - [~] 4.3 New name-based AcroForm filler beside `PdfFormsAccess`. **The filler is built and tested
       against the real forms; storage in the case and recording of the form version wait for the
       service of 4.8.**
@@ -535,7 +622,32 @@
       *Noted for 4.9:* Anlage 4 is the application and Anlage 5 the draft order the court adopts, so
       a PfÜB measure produces **two** documents, not one. The measure type carries only `form_key`
       today; that needs a second one, or the draft has to be derived from the application.
-- [ ] 4.4 Claim itemisation for ZVFV Anlagen 6–8 from the ledger, sharing the statement calculation
+- [x] 4.4 Claim itemisation for ZVFV Anlagen 6–8 from the ledger, sharing the statement calculation.
+      **Derived from the claim statement, not computed a second time.** The specification requires
+      the two to agree; deriving makes them agree by construction rather than by a test that has to
+      be re-run whenever either side changes. Two calculations meant to produce the same figure
+      eventually stop doing so, and the day they diverge is the day a bailiff collects a different
+      sum from the one the firm's own statement shows.
+      *A gap in the model had to be closed first.* Anlagen 6 to 8 give a titled claim a different
+      line from a further one, and the bailiff acts on the difference — he enforces what the title
+      carries and nothing else. But a title did not know which positions it covered: there was no
+      link between `EnforcementTitle` and `ClaimComponent` and no date on a component to infer one
+      from. V3_6_0_40 adds `enforcement_title_components`. Without it the classification would have
+      been a guess, and a guess here either asks the bailiff to enforce without a basis or leaves
+      out what the title awards.
+      Where a title says nothing — one recorded before this was tracked — everything goes on the
+      further line and the itemisation is **marked as not knowing**. That asks for less than the
+      title allows rather than more, and it is visible rather than silent.
+      Costs the title does not carry are not a further *claim*: the costs of the enforcement itself
+      are recoverable under § 788 ZPO without a title of their own, and the form gives them their
+      own line.
+      The rate goes on the form, not the money — the bailiff works out the interest on the day he
+      collects. So the row carries the rate, which of the form's two boxes applies ("Prozentpunkte
+      über dem Basiszinssatz" or "Prozent") and from when it runs, all taken from the continuing
+      interest the statement already worked out rather than derived from the interest rules again.
+      Fourteen tests, five mutations killed: deducting a reversed payment twice, treating any
+      booking as a payment, filing untitled costs as a further claim, declaring everything titled
+      when the coverage is unknown, and writing the computed rate where the margin belongs.
 - [ ] 4.5 Third-party debtors incl. § 840 ZPO declaration deadline and payment booking
 - [ ] 4.6 Enforcement cost proposal and booking (§ 788 ZPO, Nr. 3309/3310 VV RVG, GvKostG, court
       fees), joint or single debtor, advanced-by-firm handling

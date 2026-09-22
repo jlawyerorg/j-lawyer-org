@@ -660,413 +660,170 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.services;
 
-import java.io.Serializable;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import javax.xml.bind.annotation.XmlRootElement;
+import com.jdimension.jlawyer.persistence.ClaimComponent;
+import com.jdimension.jlawyer.persistence.ClaimComponentType;
+import com.jdimension.jlawyer.persistence.EnforcementTitle;
+import com.jdimension.jlawyer.persistence.LedgerEntryType;
+import com.jdimension.jlawyer.pojo.ClaimStatement;
+import com.jdimension.jlawyer.pojo.ClaimStatementBooking;
+import com.jdimension.jlawyer.pojo.ClaimStatementPosition;
+import com.jdimension.jlawyer.pojo.ContinuingInterest;
+import com.jdimension.jlawyer.pojo.EnforcementItemisation;
+import com.jdimension.jlawyer.pojo.EnforcementItemisationCategory;
+import com.jdimension.jlawyer.pojo.EnforcementItemisationRow;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
- * An enforcement title (Titel) a claim ledger rests on.
+ * Turns a claim statement into the itemisation the enforcement forms ask for.
  *
- * Enforcement requires three formal prerequisites - the title itself, the enforceable copy with
- * its clause (Klausel) and service on the debtor (Zustellung). A title established by judgment or
- * order is subject to the 30-year limitation period of § 197 Abs. 1 Nr. 3 BGB, which is computed
- * from the date of issue.
+ * <h2>Derived, not computed again</h2>
+ *
+ * Every figure comes from the statement of the same ledger for the same day. The specification
+ * requires the two to agree, and deriving makes them agree by construction rather than by a test
+ * that has to be re-run whenever either side changes. Two separate calculations meant to produce
+ * the same number eventually stop doing so, and the day they diverge is the day a bailiff collects
+ * a different sum from the one the firm's own statement shows.
+ *
+ * <h2>Titled or not</h2>
+ *
+ * Anlagen 6 to 8 give a titled claim a different line from a further one, and the bailiff acts on
+ * the difference: he enforces what the title carries and nothing else. The title therefore says
+ * which positions it covers, and this sorts the lines accordingly.
+ *
+ * Where a title says nothing - one recorded before that was tracked - everything goes on the
+ * further line and the itemisation is marked as not knowing. That is the cautious reading: it asks
+ * for less than the title allows rather than for more, and it is visible rather than silent.
  *
  * @author jens
  */
-@Entity
-@Table(name = "enforcement_titles")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "EnforcementTitle.findAll", query = "SELECT t FROM EnforcementTitle t"),
-    @NamedQuery(name = "EnforcementTitle.findById", query = "SELECT t FROM EnforcementTitle t WHERE t.id = :id"),
-    @NamedQuery(name = "EnforcementTitle.findByLedger", query = "SELECT t FROM EnforcementTitle t WHERE t.ledger = :ledger ORDER BY t.issueDate ASC")
-})
-public class EnforcementTitle implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class EnforcementItemisationBuilder {
 
     /**
-     * Limitation period of a titled claim under § 197 Abs. 1 Nr. 3 BGB, in years.
-     */
-    public static final int LIMITATION_YEARS = 30;
-
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
-
-    @JoinColumn(name = "ledger_id", referencedColumnName = "id")
-    @ManyToOne(optional = false)
-    private ClaimLedger ledger;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "title_type", nullable = false, length = 50)
-    private EnforcementTitleType titleType;
-
-    @Column(name = "issuing_body")
-    private String issuingBody;
-
-    @Column(name = "file_number")
-    private String fileNumber;
-
-    @Column(name = "issue_date")
-    @Temporal(TemporalType.DATE)
-    private Date issueDate;
-
-    @Column(name = "clause_date")
-    @Temporal(TemporalType.DATE)
-    private Date clauseDate;
-
-    @Column(name = "service_date")
-    @Temporal(TemporalType.DATE)
-    private Date serviceDate;
-
-    @Column(name = "limitation_date")
-    @Temporal(TemporalType.DATE)
-    private Date limitationDate;
-
-    @Column(name = "subject_matter")
-    private String subjectMatter;
-
-    @Column(name = "comment")
-    private String comment;
-
-    /**
-     * The case event that reminds of this title's limitation date. Kept as an explicit reference so
-     * the follow-up can be found, moved and removed again without writing a technical marker into
-     * text the user reads.
-     */
-    @Column(name = "limitation_review_id")
-    private String limitationReviewId;
-
-    @ManyToMany
-    @JoinTable(name = "enforcement_title_debtors",
-            joinColumns = @JoinColumn(name = "title_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "party_id", referencedColumnName = "id"))
-    private List<ClaimLedgerParty> debtors = new ArrayList<>();
-
-    /**
-     * The positions of the ledger this title covers.
+     * Builds the itemisation of a measure.
      *
-     * Enforcement runs on what the title says, and the official itemisation separates a titled claim
-     * from a further one - Anlagen 6 to 8 give them different lines and different treatment. Without
-     * knowing which positions a title carries, a form would either claim enforcement of something
-     * the title does not cover, which the bailiff refuses, or leave out something it does.
-     *
-     * Empty where a title predates this record. The itemisation says so rather than guessing: a
-     * silent classification would be a statement about the title that nobody made.
+     * @param statement the claim statement for the day the measure is created
+     * @param title the title being enforced, or null where the measure needs none
+     * @return the itemisation, never null
      */
-    @ManyToMany
-    @JoinTable(name = "enforcement_title_components",
-            joinColumns = @JoinColumn(name = "title_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "component_id", referencedColumnName = "id"))
-    private List<ClaimComponent> coveredComponents = new ArrayList<>();
+    public EnforcementItemisation build(ClaimStatement statement, EnforcementTitle title) {
 
-    /**
-     * Whether all three formal prerequisites of enforcement are present: the title, the enforceable
-     * copy with its clause and service on the debtor.
-     *
-     * @return true if enforcement may proceed without an override
-     */
-    public boolean isEnforceable() {
-        return this.issueDate != null && this.clauseDate != null && this.serviceDate != null;
+        EnforcementItemisation itemisation = new EnforcementItemisation();
+        if (statement == null) {
+            return itemisation;
+        }
+        itemisation.setLedgerId(statement.getLedgerId());
+        itemisation.setKeyDate(statement.getKeyDate());
+        itemisation.setTitleId(title == null ? null : title.getId());
+        itemisation.setCoverageKnown(title != null && title.hasCoverage());
+
+        Set<String> covered = new HashSet<>();
+        if (title != null) {
+            for (ClaimComponent component : title.getCoveredComponents()) {
+                if (component != null && component.getId() != null) {
+                    covered.add(component.getId());
+                }
+            }
+        }
+
+        int number = 1;
+        for (ClaimStatementPosition position : statement.getPositions()) {
+            EnforcementItemisationRow row = new EnforcementItemisationRow();
+            row.setNumber(number++);
+            row.setCategory(categoryOf(position, covered));
+            row.setDesignation(position.getDesignation());
+            row.setAmount(position.getPrincipal());
+            row.setInterestAmount(position.getInterest());
+            row.setInterestFrom(position.getInterestFrom());
+            applyRate(row, statement, position);
+            itemisation.getRows().add(row);
+        }
+
+        for (ClaimStatementBooking booking : statement.getBookings()) {
+            if (booking.isReversal() || booking.getType() != LedgerEntryType.PAYMENT) {
+                // eine Stornierung hat ihre Buchung bereits aufgehoben; sie ein zweites Mal
+                // abzuziehen zoege dem Schuldner etwas ab, das er nie bezahlt hat
+                continue;
+            }
+            EnforcementItemisationRow row = new EnforcementItemisationRow();
+            row.setNumber(number++);
+            row.setCategory(EnforcementItemisationCategory.PAYMENT);
+            row.setDesignation(booking.getDescription());
+            row.setAmount(booking.getAmount());
+            row.setBookingDate(booking.getEntryDate());
+            itemisation.getRows().add(row);
+        }
+
+        if (statement.getTotals() != null) {
+            itemisation.getContinuingInterest().addAll(statement.getTotals().getContinuingInterest());
+        }
+        return itemisation;
     }
 
     /**
-     * Names the formal prerequisites of enforcement that are still missing.
+     * Which line of the form a position belongs on.
      *
-     * @return the missing prerequisites, empty if the title is complete
+     * Two questions in order: does the title carry it, and is it a claim or a cost. A cost the title
+     * does not carry is not simply a further claim - the costs of the enforcement itself are
+     * recoverable under § 788 ZPO without a title of their own, and the form gives them their own
+     * line.
      */
-    public List<String> getMissingPrerequisites() {
-        List<String> missing = new ArrayList<>();
-        if (this.issueDate == null) {
-            missing.add("Titel");
+    private EnforcementItemisationCategory categoryOf(ClaimStatementPosition position,
+            Set<String> covered) {
+
+        boolean titled = position.getComponentId() != null && covered.contains(position.getComponentId());
+        boolean cost = isCost(position.getType());
+
+        if (titled) {
+            return cost ? EnforcementItemisationCategory.TITLED_COSTS
+                    : EnforcementItemisationCategory.TITLED_MAIN_CLAIM;
         }
-        if (this.clauseDate == null) {
-            missing.add("Klausel");
-        }
-        if (this.serviceDate == null) {
-            missing.add("Zustellung");
-        }
-        return missing;
+        return cost ? EnforcementItemisationCategory.FURTHER_ENFORCEMENT_COSTS
+                : EnforcementItemisationCategory.FURTHER_CLAIM;
     }
 
-    /**
-     * Computes the date on which the titled claim becomes time-barred under § 197 Abs. 1 Nr. 3 BGB,
-     * 30 years after the title was issued.
-     *
-     * @return the limitation date, or null if the title carries no date of issue
-     */
-    public Date computeLimitationDate() {
-        if (this.issueDate == null) {
-            return null;
-        }
-        LocalDate issued = this.issueDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate limitation = issued.plusYears(LIMITATION_YEARS);
-        return Date.from(limitation.atStartOfDay(ZoneId.systemDefault()).toInstant());
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (getId() != null ? getId().hashCode() : 0);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof EnforcementTitle)) {
+    private boolean isCost(ClaimComponentType type) {
+        if (type == null) {
             return false;
         }
-        EnforcementTitle other = (EnforcementTitle) object;
-        if ((this.getId() == null && other.getId() != null) || (this.getId() != null && !this.id.equals(other.id))) {
-            return false;
+        switch (type) {
+            case MAIN_CLAIM:
+            case MAIN_CLAIM_RECURRING:
+            case INTEREST_ARREARS:
+                return false;
+            default:
+                return true;
         }
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (this.titleType != null) {
-            sb.append(this.titleType.toString());
-        }
-        if (this.fileNumber != null && !this.fileNumber.isEmpty()) {
-            sb.append(" ").append(this.fileNumber);
-        }
-        return sb.toString();
     }
 
     /**
-     * @return the id
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * @param id the id to set
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the ledger
-     */
-    public ClaimLedger getLedger() {
-        return ledger;
-    }
-
-    /**
-     * @param ledger the ledger to set
-     */
-    public void setLedger(ClaimLedger ledger) {
-        this.ledger = ledger;
-    }
-
-    /**
-     * @return the titleType
-     */
-    public EnforcementTitleType getTitleType() {
-        return titleType;
-    }
-
-    /**
-     * @param titleType the titleType to set
-     */
-    public void setTitleType(EnforcementTitleType titleType) {
-        this.titleType = titleType;
-    }
-
-    /**
-     * @return the issuingBody
-     */
-    public String getIssuingBody() {
-        return issuingBody;
-    }
-
-    /**
-     * @param issuingBody the issuingBody to set
-     */
-    public void setIssuingBody(String issuingBody) {
-        this.issuingBody = issuingBody;
-    }
-
-    /**
-     * @return the fileNumber
-     */
-    public String getFileNumber() {
-        return fileNumber;
-    }
-
-    /**
-     * @param fileNumber the fileNumber to set
-     */
-    public void setFileNumber(String fileNumber) {
-        this.fileNumber = fileNumber;
-    }
-
-    /**
-     * @return the issueDate
-     */
-    public Date getIssueDate() {
-        return issueDate;
-    }
-
-    /**
-     * @param issueDate the issueDate to set
-     */
-    public void setIssueDate(Date issueDate) {
-        this.issueDate = issueDate;
-    }
-
-    /**
-     * @return the clauseDate
-     */
-    public Date getClauseDate() {
-        return clauseDate;
-    }
-
-    /**
-     * @param clauseDate the clauseDate to set
-     */
-    public void setClauseDate(Date clauseDate) {
-        this.clauseDate = clauseDate;
-    }
-
-    /**
-     * @return the serviceDate
-     */
-    public Date getServiceDate() {
-        return serviceDate;
-    }
-
-    /**
-     * @param serviceDate the serviceDate to set
-     */
-    public void setServiceDate(Date serviceDate) {
-        this.serviceDate = serviceDate;
-    }
-
-    /**
-     * @return the limitationDate
-     */
-    public Date getLimitationDate() {
-        return limitationDate;
-    }
-
-    /**
-     * @param limitationDate the limitationDate to set
-     */
-    public void setLimitationDate(Date limitationDate) {
-        this.limitationDate = limitationDate;
-    }
-
-    /**
-     * @return the subjectMatter
-     */
-    public String getSubjectMatter() {
-        return subjectMatter;
-    }
-
-    /**
-     * @param subjectMatter the subjectMatter to set
-     */
-    public void setSubjectMatter(String subjectMatter) {
-        this.subjectMatter = subjectMatter;
-    }
-
-    /**
-     * @return the comment
-     */
-    public String getComment() {
-        return comment;
-    }
-
-    /**
-     * @param comment the comment to set
-     */
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
-    /**
-     * @return the debtors
-     */
-    public List<ClaimLedgerParty> getDebtors() {
-        return debtors;
-    }
-
-    /**
-     * @param debtors the debtors to set
-     */
-    public void setDebtors(List<ClaimLedgerParty> debtors) {
-        this.debtors = debtors;
-    }
-
-    /**
-     * @return the positions of the ledger this title covers, never null; empty where it is unknown
-     */
-    public List<ClaimComponent> getCoveredComponents() {
-        if (this.coveredComponents == null) {
-            this.coveredComponents = new ArrayList<>();
-        }
-        return coveredComponents;
-    }
-
-    /**
-     * @param coveredComponents the positions of the ledger this title covers
-     */
-    public void setCoveredComponents(List<ClaimComponent> coveredComponents) {
-        this.coveredComponents = coveredComponents;
-    }
-
-    /**
-     * Whether this title says which positions it covers.
+     * Takes the rate and its kind from the continuing interest the statement already worked out.
      *
-     * @return false for a title recorded before the coverage was tracked, whose itemisation
-     * therefore cannot separate titled from further claims
+     * The form wants the rate, not the money: the bailiff is told the principal, whether the rate is
+     * a margin above the base rate or a fixed percentage, and from when it runs, and he works out
+     * the rest on the day he collects. The statement holds exactly that, so it is read from there
+     * rather than derived from the interest rules a second time.
      */
-    public boolean hasCoverage() {
-        return this.coveredComponents != null && !this.coveredComponents.isEmpty();
+    private void applyRate(EnforcementItemisationRow row, ClaimStatement statement,
+            ClaimStatementPosition position) {
+
+        if (statement.getTotals() == null) {
+            return;
+        }
+        for (ContinuingInterest continuing : statement.getTotals().getContinuingInterest()) {
+            if (continuing.getComponentId() == null
+                    || !continuing.getComponentId().equals(position.getComponentId())) {
+                continue;
+            }
+            row.setInterestAboveBaseRate(continuing.isBaseRateRelated());
+            row.setInterestRate(continuing.isBaseRateRelated()
+                    ? continuing.getMarginPercent() : continuing.getRatePercent());
+            if (row.getInterestFrom() == null) {
+                row.setInterestFrom(continuing.getRunningFrom());
+            }
+            return;
+        }
     }
-
-
-    /**
-     * @return the id of the case event guarding the limitation date, or null if none exists
-     */
-    public String getLimitationReviewId() {
-        return limitationReviewId;
-    }
-
-    /**
-     * @param limitationReviewId the limitationReviewId to set
-     */
-    public void setLimitationReviewId(String limitationReviewId) {
-        this.limitationReviewId = limitationReviewId;
-    }
-
 }

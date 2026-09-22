@@ -660,413 +660,170 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.services;
 
-import java.io.Serializable;
-import java.time.LocalDate;
-import java.time.ZoneId;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import javax.xml.bind.annotation.XmlRootElement;
 
 /**
- * An enforcement title (Titel) a claim ledger rests on.
+ * The official forms shipped with the software, and what each of them is.
  *
- * Enforcement requires three formal prerequisites - the title itself, the enforceable copy with
- * its clause (Klausel) and service on the debtor (Zustellung). A title established by judgment or
- * order is subject to the 30-year limitation period of § 197 Abs. 1 Nr. 3 BGB, which is computed
- * from the date of issue.
+ * The forms of the ZVFV are annexes of a Rechtsverordnung and therefore amtliche Werke under § 5
+ * Abs. 1 UrhG, so they travel with the software instead of every installation having to go and find
+ * them. What cannot travel with them is the knowledge of which file is which annex - the file names
+ * of the publisher say "Antrag_Pfaendungsbeschluss", not "Anlage 4" - and that is what this holds.
+ *
+ * Kept apart from the service so the assignment can be read and tested without a database.
  *
  * @author jens
  */
-@Entity
-@Table(name = "enforcement_titles")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "EnforcementTitle.findAll", query = "SELECT t FROM EnforcementTitle t"),
-    @NamedQuery(name = "EnforcementTitle.findById", query = "SELECT t FROM EnforcementTitle t WHERE t.id = :id"),
-    @NamedQuery(name = "EnforcementTitle.findByLedger", query = "SELECT t FROM EnforcementTitle t WHERE t.ledger = :ledger ORDER BY t.issueDate ASC")
-})
-public class EnforcementTitle implements Serializable {
+public class EnforcementFormPackage {
 
-    private static final long serialVersionUID = 1L;
+    /** Where the files sit in the deployment. */
+    private static final String RESOURCE_PATH = "/zvfv/";
 
     /**
-     * Limitation period of a titled claim under § 197 Abs. 1 Nr. 3 BGB, in years.
-     */
-    public static final int LIMITATION_YEARS = 30;
-
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
-
-    @JoinColumn(name = "ledger_id", referencedColumnName = "id")
-    @ManyToOne(optional = false)
-    private ClaimLedger ledger;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "title_type", nullable = false, length = 50)
-    private EnforcementTitleType titleType;
-
-    @Column(name = "issuing_body")
-    private String issuingBody;
-
-    @Column(name = "file_number")
-    private String fileNumber;
-
-    @Column(name = "issue_date")
-    @Temporal(TemporalType.DATE)
-    private Date issueDate;
-
-    @Column(name = "clause_date")
-    @Temporal(TemporalType.DATE)
-    private Date clauseDate;
-
-    @Column(name = "service_date")
-    @Temporal(TemporalType.DATE)
-    private Date serviceDate;
-
-    @Column(name = "limitation_date")
-    @Temporal(TemporalType.DATE)
-    private Date limitationDate;
-
-    @Column(name = "subject_matter")
-    private String subjectMatter;
-
-    @Column(name = "comment")
-    private String comment;
-
-    /**
-     * The case event that reminds of this title's limitation date. Kept as an explicit reference so
-     * the follow-up can be found, moved and removed again without writing a technical marker into
-     * text the user reads.
-     */
-    @Column(name = "limitation_review_id")
-    private String limitationReviewId;
-
-    @ManyToMany
-    @JoinTable(name = "enforcement_title_debtors",
-            joinColumns = @JoinColumn(name = "title_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "party_id", referencedColumnName = "id"))
-    private List<ClaimLedgerParty> debtors = new ArrayList<>();
-
-    /**
-     * The positions of the ledger this title covers.
+     * The version of the forms shipped here.
      *
-     * Enforcement runs on what the title says, and the official itemisation separates a titled claim
-     * from a further one - Anlagen 6 to 8 give them different lines and different treatment. Without
-     * knowing which positions a title carries, a form would either claim enforcement of something
-     * the title does not cover, which the bailiff refuses, or leave out something it does.
+     * Taken from the publisher's file names, which carry 20240901. Not verified against the
+     * commencement provisions of the ZVFV itself - for choosing between versions it is enough, and
+     * an administrator can correct the date on the template.
+     */
+    public static final String VERSION = "2024-09-01";
+
+    /**
+     * One shipped form: which annex it is, what to call it and where its file is.
+     */
+    public static class Entry {
+
+        private final String formKey;
+        private final String name;
+        private final String fileName;
+        private final String description;
+
+        Entry(String formKey, String name, String fileName, String description) {
+            this.formKey = formKey;
+            this.name = name;
+            this.fileName = fileName;
+            this.description = description;
+        }
+
+        /**
+         * @return the annex of the ZVFV
+         */
+        public String getFormKey() {
+            return formKey;
+        }
+
+        /**
+         * @return the designation shown to the user
+         */
+        public String getName() {
+            return name;
+        }
+
+        /**
+         * @return the name of the file as the publisher issued it
+         */
+        public String getFileName() {
+            return fileName;
+        }
+
+        /**
+         * @return what the form is for
+         */
+        public String getDescription() {
+            return description;
+        }
+    }
+
+    private static final List<Entry> ENTRIES = Collections.unmodifiableList(Arrays.asList(
+            new Entry("ANLAGE_1", "Vollstreckungsauftrag an Gerichtsvollzieher",
+                    "20240901_Vollstreckungsauftrag-Gerichtsvollzieher.pdf",
+                    "Der Auftrag nach § 753 ZPO mit den Optionen des § 802a Abs. 2 ZPO: "
+                    + "Sachpfändung, gütliche Erledigung, Vermögensauskunft, Haftbefehl, Zustellung."),
+            new Entry("ANLAGE_2", "Antrag auf richterliche Durchsuchungsanordnung",
+                    "20240901_Antrag_Durchsuchungsanordnung.pdf",
+                    "Auch für die Vollstreckung zur Nachtzeit und an Sonn- und Feiertagen."),
+            new Entry("ANLAGE_3", "Entwurf der richterlichen Durchsuchungsanordnung",
+                    "20240901_Entwurf_Durchsuchungsanordnung.pdf",
+                    "Der Entwurf, den das Gericht als seine Anordnung übernimmt."),
+            new Entry("ANLAGE_4", "Antrag auf Pfändungs- und Überweisungsbeschluss",
+                    "20240901_Antrag_Pfaendungsbeschluss.pdf",
+                    "Ein Antragsformular für alle Geldforderungen; ob es um Unterhalt geht, "
+                    + "entscheidet allein die beigefügte Forderungsaufstellung."),
+            new Entry("ANLAGE_5", "Entwurf des Pfändungs- und Überweisungsbeschlusses",
+                    "20240901_Entwurf_Pfaendungsbeschluss.pdf",
+                    "Der Entwurf, den das Gericht als seinen Beschluss übernimmt - er wird mit dem "
+                    + "Antrag eingereicht."),
+            new Entry("ANLAGE_6", "Forderungsaufstellung zum Vollstreckungsauftrag",
+                    "20240901_Forderungsaufstellung_Gerichtsvollzieher.pdf",
+                    "Die Aufstellung, die dem Gerichtsvollzieherauftrag beiliegt."),
+            new Entry("ANLAGE_7", "Forderungsaufstellung zum PfÜB (kein Unterhalt)",
+                    "20240901_ForderungsaufstK_eUnterhaltsansprueche.pdf",
+                    "Für Forderungen, die keine gesetzlichen Unterhaltsansprüche sind."),
+            new Entry("ANLAGE_8", "Forderungsaufstellung zum PfÜB (Unterhalt)",
+                    "20240901_Forderungsaufstellg_Unterhaltsansprueche.pdf",
+                    "Für gesetzliche Unterhaltsansprüche - sie sind bevorrechtigt und unterliegen "
+                    + "anderen Pfändungsgrenzen (§ 850d ZPO).")));
+
+    /**
+     * @return the forms shipped, in the order of their annexes
+     */
+    public List<Entry> getEntries() {
+        return ENTRIES;
+    }
+
+    /**
+     * The day this version takes effect, as the publisher's file names date it.
      *
-     * Empty where a title predates this record. The itemisation says so rather than guessing: a
-     * silent classification would be a statement about the title that nobody made.
+     * @return the date, never null
      */
-    @ManyToMany
-    @JoinTable(name = "enforcement_title_components",
-            joinColumns = @JoinColumn(name = "title_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "component_id", referencedColumnName = "id"))
-    private List<ClaimComponent> coveredComponents = new ArrayList<>();
+    public Date getValidFrom() {
+        java.util.Calendar calendar = java.util.Calendar.getInstance();
+        calendar.clear();
+        calendar.set(2024, java.util.Calendar.SEPTEMBER, 1);
+        return calendar.getTime();
+    }
 
     /**
-     * Whether all three formal prerequisites of enforcement are present: the title, the enforceable
-     * copy with its clause and service on the debtor.
+     * Reads one shipped form out of the deployment.
      *
-     * @return true if enforcement may proceed without an override
+     * @param entry the form wanted
+     * @return its bytes
+     * @throws IOException if the file is not in the deployment or cannot be read
      */
-    public boolean isEnforceable() {
-        return this.issueDate != null && this.clauseDate != null && this.serviceDate != null;
-    }
-
-    /**
-     * Names the formal prerequisites of enforcement that are still missing.
-     *
-     * @return the missing prerequisites, empty if the title is complete
-     */
-    public List<String> getMissingPrerequisites() {
-        List<String> missing = new ArrayList<>();
-        if (this.issueDate == null) {
-            missing.add("Titel");
+    public byte[] read(Entry entry) throws IOException {
+        String resource = RESOURCE_PATH + entry.getFileName();
+        try (InputStream in = EnforcementFormPackage.class.getResourceAsStream(resource)) {
+            if (in == null) {
+                throw new IOException("Das Formular " + entry.getFileName()
+                        + " fehlt in der Auslieferung.");
+            }
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = in.read(buffer)) > 0) {
+                out.write(buffer, 0, read);
+            }
+            return out.toByteArray();
         }
-        if (this.clauseDate == null) {
-            missing.add("Klausel");
+    }
+
+    /**
+     * @return the annexes this package covers
+     */
+    public List<String> getFormKeys() {
+        List<String> keys = new ArrayList<>();
+        for (Entry entry : ENTRIES) {
+            keys.add(entry.getFormKey());
         }
-        if (this.serviceDate == null) {
-            missing.add("Zustellung");
-        }
-        return missing;
+        return keys;
     }
-
-    /**
-     * Computes the date on which the titled claim becomes time-barred under § 197 Abs. 1 Nr. 3 BGB,
-     * 30 years after the title was issued.
-     *
-     * @return the limitation date, or null if the title carries no date of issue
-     */
-    public Date computeLimitationDate() {
-        if (this.issueDate == null) {
-            return null;
-        }
-        LocalDate issued = this.issueDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate limitation = issued.plusYears(LIMITATION_YEARS);
-        return Date.from(limitation.atStartOfDay(ZoneId.systemDefault()).toInstant());
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (getId() != null ? getId().hashCode() : 0);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof EnforcementTitle)) {
-            return false;
-        }
-        EnforcementTitle other = (EnforcementTitle) object;
-        if ((this.getId() == null && other.getId() != null) || (this.getId() != null && !this.id.equals(other.id))) {
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (this.titleType != null) {
-            sb.append(this.titleType.toString());
-        }
-        if (this.fileNumber != null && !this.fileNumber.isEmpty()) {
-            sb.append(" ").append(this.fileNumber);
-        }
-        return sb.toString();
-    }
-
-    /**
-     * @return the id
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * @param id the id to set
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the ledger
-     */
-    public ClaimLedger getLedger() {
-        return ledger;
-    }
-
-    /**
-     * @param ledger the ledger to set
-     */
-    public void setLedger(ClaimLedger ledger) {
-        this.ledger = ledger;
-    }
-
-    /**
-     * @return the titleType
-     */
-    public EnforcementTitleType getTitleType() {
-        return titleType;
-    }
-
-    /**
-     * @param titleType the titleType to set
-     */
-    public void setTitleType(EnforcementTitleType titleType) {
-        this.titleType = titleType;
-    }
-
-    /**
-     * @return the issuingBody
-     */
-    public String getIssuingBody() {
-        return issuingBody;
-    }
-
-    /**
-     * @param issuingBody the issuingBody to set
-     */
-    public void setIssuingBody(String issuingBody) {
-        this.issuingBody = issuingBody;
-    }
-
-    /**
-     * @return the fileNumber
-     */
-    public String getFileNumber() {
-        return fileNumber;
-    }
-
-    /**
-     * @param fileNumber the fileNumber to set
-     */
-    public void setFileNumber(String fileNumber) {
-        this.fileNumber = fileNumber;
-    }
-
-    /**
-     * @return the issueDate
-     */
-    public Date getIssueDate() {
-        return issueDate;
-    }
-
-    /**
-     * @param issueDate the issueDate to set
-     */
-    public void setIssueDate(Date issueDate) {
-        this.issueDate = issueDate;
-    }
-
-    /**
-     * @return the clauseDate
-     */
-    public Date getClauseDate() {
-        return clauseDate;
-    }
-
-    /**
-     * @param clauseDate the clauseDate to set
-     */
-    public void setClauseDate(Date clauseDate) {
-        this.clauseDate = clauseDate;
-    }
-
-    /**
-     * @return the serviceDate
-     */
-    public Date getServiceDate() {
-        return serviceDate;
-    }
-
-    /**
-     * @param serviceDate the serviceDate to set
-     */
-    public void setServiceDate(Date serviceDate) {
-        this.serviceDate = serviceDate;
-    }
-
-    /**
-     * @return the limitationDate
-     */
-    public Date getLimitationDate() {
-        return limitationDate;
-    }
-
-    /**
-     * @param limitationDate the limitationDate to set
-     */
-    public void setLimitationDate(Date limitationDate) {
-        this.limitationDate = limitationDate;
-    }
-
-    /**
-     * @return the subjectMatter
-     */
-    public String getSubjectMatter() {
-        return subjectMatter;
-    }
-
-    /**
-     * @param subjectMatter the subjectMatter to set
-     */
-    public void setSubjectMatter(String subjectMatter) {
-        this.subjectMatter = subjectMatter;
-    }
-
-    /**
-     * @return the comment
-     */
-    public String getComment() {
-        return comment;
-    }
-
-    /**
-     * @param comment the comment to set
-     */
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
-    /**
-     * @return the debtors
-     */
-    public List<ClaimLedgerParty> getDebtors() {
-        return debtors;
-    }
-
-    /**
-     * @param debtors the debtors to set
-     */
-    public void setDebtors(List<ClaimLedgerParty> debtors) {
-        this.debtors = debtors;
-    }
-
-    /**
-     * @return the positions of the ledger this title covers, never null; empty where it is unknown
-     */
-    public List<ClaimComponent> getCoveredComponents() {
-        if (this.coveredComponents == null) {
-            this.coveredComponents = new ArrayList<>();
-        }
-        return coveredComponents;
-    }
-
-    /**
-     * @param coveredComponents the positions of the ledger this title covers
-     */
-    public void setCoveredComponents(List<ClaimComponent> coveredComponents) {
-        this.coveredComponents = coveredComponents;
-    }
-
-    /**
-     * Whether this title says which positions it covers.
-     *
-     * @return false for a title recorded before the coverage was tracked, whose itemisation
-     * therefore cannot separate titled from further claims
-     */
-    public boolean hasCoverage() {
-        return this.coveredComponents != null && !this.coveredComponents.isEmpty();
-    }
-
-
-    /**
-     * @return the id of the case event guarding the limitation date, or null if none exists
-     */
-    public String getLimitationReviewId() {
-        return limitationReviewId;
-    }
-
-    /**
-     * @param limitationReviewId the limitationReviewId to set
-     */
-    public void setLimitationReviewId(String limitationReviewId) {
-        this.limitationReviewId = limitationReviewId;
-    }
-
 }

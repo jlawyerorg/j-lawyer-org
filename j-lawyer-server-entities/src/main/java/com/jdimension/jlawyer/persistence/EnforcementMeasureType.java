@@ -663,6 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -671,6 +673,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -724,19 +727,18 @@ public class EnforcementMeasureType implements Serializable {
      * letters. The key rather than a reference to a template, because templates carry validity
      * periods and the one in force at the time the measure is created is the one to use.
      */
-    @Column(name = "form_key", length = 50)
-    private String formKey;
-
     /**
-     * The annex that carries the itemisation of the claim, where the kind needs one.
+     * The forms a measure of this kind is filed on, in the order they are produced.
      *
-     * A separate key because the ZVFV separates them. There is one application for an attachment
-     * order - Anlage 4 - whether the claim is maintenance or anything else; what differs is the
-     * itemisation attached to it, Anlage 7 for ordinary claims and Anlage 8 for statutory
-     * maintenance. Anlage 6 does the same for the bailiff order.
+     * A list because a measure rarely goes out on one sheet: an attachment order is an application,
+     * the draft order the court adopts, and the itemisation of what is owed. Each entry says which
+     * annex and what it does, and the role is what decides which data fills it.
+     *
+     * No cascade and no orphan removal - the rows belong to the administration that maintains the
+     * catalogue, which writes them explicitly.
      */
-    @Column(name = "itemisation_form_key", length = 50)
-    private String itemisationFormKey;
+    @OneToMany(mappedBy = "measureType", fetch = javax.persistence.FetchType.LAZY)
+    private List<EnforcementMeasureTypeForm> forms = new ArrayList<>();
 
     /**
      * Whether a measure of this kind needs a title before it can be filed.
@@ -827,31 +829,42 @@ public class EnforcementMeasureType implements Serializable {
     }
 
     /**
-     * @return the ZVFV annex this kind is filed on, or null where no form is prescribed
+     * @return the forms this kind is filed on, in the order they are produced, never null
      */
-    public String getFormKey() {
-        return formKey;
+    public List<EnforcementMeasureTypeForm> getForms() {
+        if (this.forms == null) {
+            this.forms = new ArrayList<>();
+        }
+        return forms;
     }
 
     /**
-     * @param formKey the ZVFV annex this kind is filed on
+     * @param forms the forms this kind is filed on
      */
-    public void setFormKey(String formKey) {
-        this.formKey = formKey;
+    public void setForms(List<EnforcementMeasureTypeForm> forms) {
+        this.forms = forms;
     }
 
     /**
-     * @return the ZVFV annex carrying the itemisation, or null where the kind needs none
+     * The annex carrying a particular part of the filing.
+     *
+     * @param role what the form is for
+     * @return the annex, or null where this kind has no form in that role
      */
-    public String getItemisationFormKey() {
-        return itemisationFormKey;
+    public String formKeyFor(EnforcementFormRole role) {
+        for (EnforcementMeasureTypeForm form : getForms()) {
+            if (form.getFormRole() == role) {
+                return form.getFormKey();
+            }
+        }
+        return null;
     }
 
     /**
-     * @param itemisationFormKey the ZVFV annex carrying the itemisation
+     * @return whether an official form is prescribed for this kind at all
      */
-    public void setItemisationFormKey(String itemisationFormKey) {
-        this.itemisationFormKey = itemisationFormKey;
+    public boolean hasForms() {
+        return !getForms().isEmpty();
     }
 
     /**
