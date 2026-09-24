@@ -660,319 +660,279 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package org.jlawyer.test.server.ejb;
 
-import java.io.Serializable;
+import com.jdimension.jlawyer.documents.AcroFormFieldDescription;
+import com.jdimension.jlawyer.documents.AcroFormFillResult;
+import com.jdimension.jlawyer.documents.AcroFormFiller;
+import com.jdimension.jlawyer.services.EnforcementFormDataSource;
+import com.jdimension.jlawyer.services.EnforcementFormFieldOrigin;
+import com.jdimension.jlawyer.services.EnforcementFormPackage;
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.Lob;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import java.util.Map;
+import java.util.Set;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import org.junit.Assume;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
- * One version of one official form, with the profile that says how to fill it.
+ * Checks every shipped mapping profile against the form it belongs to.
  *
- * The forms of the ZVFV are replaced from time to time. A measure generated under an older version
- * was not wrong, it was current - so versions live alongside one another with a validity period,
- * and a measure records which one it used. Producing a form from a version whose validity has ended
- * is possible but has to be confirmed.
+ * A profile is the only thing between a lawyer's data and an official form, and everything that can
+ * be wrong with it is silent: a field name the form does not have fills nothing, a key the
+ * vocabulary does not answer leaves whatever the template carried, and a tick key in a text field
+ * writes the word "true" onto a document that goes to a court.
  *
- * The PDF is held here rather than in the file system. The number of forms is small, the versions
- * few, and keeping them with their mapping means a backup of the database is a backup of everything
- * needed to reproduce a filing.
+ * The test runs over whatever profiles are shipped rather than over a list, so a profile added for
+ * the next annex is covered the day it arrives - and the forms change by regulation, on a date
+ * somebody else picks.
  *
  * @author jens
  */
-@Entity
-@Table(name = "enforcement_form_templates")
-@NamedQueries({
-    @NamedQuery(name = "EnforcementFormTemplate.findAll", query = "SELECT t FROM EnforcementFormTemplate t ORDER BY t.formKey ASC, t.validFrom DESC"),
-    @NamedQuery(name = "EnforcementFormTemplate.findById", query = "SELECT t FROM EnforcementFormTemplate t WHERE t.id = :id"),
-    @NamedQuery(name = "EnforcementFormTemplate.findByKey", query = "SELECT t FROM EnforcementFormTemplate t WHERE t.formKey = :formKey ORDER BY t.validFrom DESC"),
-    // Ein Verzeichnis ohne die Dateien - und ohne verwaltete Entities. Wer eine verwaltete Entity
-    // abräumt, um sie leichter zu machen, schreibt die Leere beim Commit in die Datenbank.
-    @NamedQuery(name = "EnforcementFormTemplate.findAllSummaries", query = "SELECT NEW com.jdimension.jlawyer.persistence.EnforcementFormTemplate(t.id, t.formKey, t.name, t.version, t.validFrom, t.validTo, t.fileName, t.description) FROM EnforcementFormTemplate t ORDER BY t.formKey ASC, t.validFrom DESC")
-})
-public class EnforcementFormTemplate implements Serializable {
+public class ZvfvMappingProfileTest {
 
-    private static final long serialVersionUID = 1L;
+    @Rule
+    public TemporaryFolder temporary = new TemporaryFolder();
 
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
-
-    /** The annex of the ZVFV this is a version of - "ANLAGE_1". */
-    @Column(name = "form_key", nullable = false, length = 50)
-    private String formKey;
-
-    @Column(name = "name", nullable = false)
-    private String name;
-
-    /**
-     * The version, as the publisher dates it - "2024-09-01".
-     *
-     * Recorded on every measure generated from it, so a filing stays reproducible after the form has
-     * been replaced.
-     */
-    @Column(name = "version", length = 50)
-    private String version;
-
-    @Column(name = "valid_from")
-    @Temporal(TemporalType.DATE)
-    private Date validFrom;
-
-    /** Null while the version is the current one. */
-    @Column(name = "valid_to")
-    @Temporal(TemporalType.DATE)
-    private Date validTo;
-
-    /**
-     * The fillable PDF.
-     *
-     * Lazy because it is a few hundred kilobytes and most reads of a template only want to know
-     * which versions exist.
-     */
-    @Lob
-    @Basic(fetch = FetchType.LAZY)
-    @Column(name = "pdf_content")
-    private byte[] pdfContent;
-
-    @Column(name = "file_name")
-    private String fileName;
-
-    @Column(name = "description", length = 1000)
-    private String description;
-
-    /**
-     * How the fields of this form are filled.
-     *
-     * Belongs to the version, not to the form: a new version may rename its fields, and a profile
-     * written for the old one would then address fields that no longer exist.
-     */
-    @OneToMany(mappedBy = "template", fetch = FetchType.LAZY)
-    private List<EnforcementFormFieldMapping> fieldMappings = new ArrayList<>();
-
-    /**
-     * The constructor JPA needs.
-     */
-    public EnforcementFormTemplate() {
+    private File basedir() {
+        String base = System.getProperty("basedir");
+        return new File(base == null ? "." : base);
     }
 
     /**
-     * Builds a template without its PDF, for a listing.
-     *
-     * Exists so a listing can be produced by a query rather than by emptying loaded entities.
-     * Clearing the content of a <em>managed</em> entity to make it lighter on the wire writes that
-     * emptiness into the database when the transaction commits - the templates are then listed
-     * correctly and gone.
-     *
-     * @param id the technical identifier
-     * @param formKey the annex of the ZVFV
-     * @param name the designation
-     * @param version the version as the publisher dates it
-     * @param validFrom the day the version takes effect
-     * @param validTo the day it ceased to be prescribed
-     * @param fileName the name the file was uploaded under
-     * @param description what this version is
+     * The shipped profiles, by the form key they belong to.
      */
-    public EnforcementFormTemplate(String id, String formKey, String name, String version,
-            Date validFrom, Date validTo, String fileName, String description) {
-        this.id = id;
-        this.formKey = formKey;
-        this.name = name;
-        this.version = version;
-        this.validFrom = validFrom;
-        this.validTo = validTo;
-        this.fileName = fileName;
-        this.description = description;
-    }
-
-    /**
-     * @return the technical identifier
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * @param id the technical identifier
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the annex of the ZVFV this is a version of
-     */
-    public String getFormKey() {
-        return formKey;
-    }
-
-    /**
-     * @param formKey the annex of the ZVFV
-     */
-    public void setFormKey(String formKey) {
-        this.formKey = formKey;
-    }
-
-    /**
-     * @return the designation shown to the user
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name the designation shown to the user
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return the version as the publisher dates it
-     */
-    public String getVersion() {
-        return version;
-    }
-
-    /**
-     * @param version the version as the publisher dates it
-     */
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    /**
-     * @return the day this version takes effect, or null if unstated
-     */
-    public Date getValidFrom() {
-        return validFrom;
-    }
-
-    /**
-     * @param validFrom the day this version takes effect
-     */
-    public void setValidFrom(Date validFrom) {
-        this.validFrom = validFrom;
-    }
-
-    /**
-     * @return the day this version ceased to be prescribed, or null while it is current
-     */
-    public Date getValidTo() {
-        return validTo;
-    }
-
-    /**
-     * @param validTo the day this version ceased to be prescribed
-     */
-    public void setValidTo(Date validTo) {
-        this.validTo = validTo;
-    }
-
-    /**
-     * @return the fillable PDF
-     */
-    public byte[] getPdfContent() {
-        return pdfContent;
-    }
-
-    /**
-     * @param pdfContent the fillable PDF
-     */
-    public void setPdfContent(byte[] pdfContent) {
-        this.pdfContent = pdfContent;
-    }
-
-    /**
-     * @return the name the file was uploaded under
-     */
-    public String getFileName() {
-        return fileName;
-    }
-
-    /**
-     * @param fileName the name the file was uploaded under
-     */
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
-
-    /**
-     * @return what this version is, in the words a user needs
-     */
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * @param description what this version is
-     */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    /**
-     * @return how the fields of this form are filled, never null
-     */
-    public List<EnforcementFormFieldMapping> getFieldMappings() {
-        if (this.fieldMappings == null) {
-            this.fieldMappings = new ArrayList<>();
+    private Map<String, File> profiles() {
+        Map<String, File> profiles = new LinkedHashMap<>();
+        File directory = new File(basedir(), "src/main/resources/zvfv/mapping");
+        Assume.assumeTrue("no mapping profiles are shipped", directory.isDirectory());
+        File[] files = directory.listFiles((d, n) -> n.endsWith(".txt"));
+        Assume.assumeTrue("no mapping profiles are shipped", files != null && files.length > 0);
+        for (File file : files) {
+            profiles.put(file.getName().substring(0, file.getName().length() - 4), file);
         }
-        return fieldMappings;
+        return profiles;
     }
 
     /**
-     * @param fieldMappings how the fields of this form are filled
+     * The form a profile belongs to, taken from the package rather than from a second list that
+     * could drift away from it.
      */
-    public void setFieldMappings(List<EnforcementFormFieldMapping> fieldMappings) {
-        this.fieldMappings = fieldMappings;
-    }
-
-    /**
-     * Whether this version is the one prescribed on a given day.
-     *
-     * @param day the day to judge by
-     * @return true if the day falls inside the validity period
-     */
-    public boolean isValidOn(Date day) {
-        if (day == null) {
-            return this.validTo == null;
+    private File formOf(String formKey) {
+        for (EnforcementFormPackage.Entry entry : new EnforcementFormPackage().getEntries()) {
+            if (entry.getFormKey().equals(formKey)) {
+                File file = new File(basedir(), "src/main/resources/zvfv/" + entry.getFileName());
+                return file.isFile() ? file : null;
+            }
         }
-        if (this.validFrom != null && day.before(this.validFrom)) {
-            return false;
+        return null;
+    }
+
+    private Map<String, String[]> read(File profile) throws Exception {
+        Map<String, String[]> mapping = new LinkedHashMap<>();
+        for (String line : Files.readAllLines(profile.toPath(), StandardCharsets.UTF_8)) {
+            if (line.isEmpty() || line.charAt(0) == '#') {
+                continue;
+            }
+            String[] parts = line.split("\t", -1);
+            if (parts.length >= 3) {
+                mapping.put(parts[0], new String[]{parts[1], parts.length > 3 ? parts[3] : "",
+                    parts[2]});
+            }
         }
-        return this.validTo == null || !day.after(this.validTo);
+        return mapping;
     }
 
-    @Override
-    public int hashCode() {
-        return id == null ? 0 : id.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof EnforcementFormTemplate)) {
-            return false;
+    private Map<String, AcroFormFieldDescription> fieldsOf(File form) throws Exception {
+        Map<String, AcroFormFieldDescription> fields = new HashMap<>();
+        for (AcroFormFieldDescription field : new AcroFormFiller().describe(form)) {
+            fields.put(field.getName(), field);
         }
-        EnforcementFormTemplate other = (EnforcementFormTemplate) object;
-        return this.id != null && this.id.equals(other.id);
+        return fields;
     }
 
-    @Override
-    public String toString() {
-        return name + (version == null || version.trim().isEmpty() ? "" : " (" + version + ")");
+    @Test
+    public void everyProfileBelongsToAformThatIsShippedWithIt() {
+        List<String> orphaned = new ArrayList<>();
+        for (Map.Entry<String, File> profile : profiles().entrySet()) {
+            if (formOf(profile.getKey()) == null) {
+                orphaned.add(profile.getKey());
+            }
+        }
+        assertEquals("Profile ohne Formular: " + orphaned, 0, orphaned.size());
+    }
+
+    @Test
+    public void noProfileNamesAfieldItsFormDoesNotHave() throws Exception {
+        List<String> unknown = new ArrayList<>();
+        for (Map.Entry<String, File> profile : profiles().entrySet()) {
+            File form = formOf(profile.getKey());
+            if (form == null) {
+                continue;
+            }
+            Set<String> fields = fieldsOf(form).keySet();
+            for (String name : read(profile.getValue()).keySet()) {
+                if (!fields.contains(name)) {
+                    unknown.add(profile.getKey() + ": " + name);
+                }
+            }
+        }
+        assertEquals("Felder, die das Formular nicht kennt: " + unknown, 0, unknown.size());
+    }
+
+    @Test
+    public void noProfileUsesAkeyTheVocabularyDoesNotAnswer() throws Exception {
+        Set<String> known = new EnforcementFormDataSource().knownKeys();
+        List<String> unknown = new ArrayList<>();
+        for (Map.Entry<String, File> profile : profiles().entrySet()) {
+            for (Map.Entry<String, String[]> entry : read(profile.getValue()).entrySet()) {
+                if (!known.contains(entry.getValue()[0])) {
+                    unknown.add(profile.getKey() + ": " + entry.getKey() + " -> " + entry.getValue()[0]);
+                }
+            }
+        }
+        assertEquals("Schluessel, die das Vokabular nicht beantwortet: " + unknown, 0, unknown.size());
+    }
+
+    @Test
+    public void theLabelEveryProfileRecordsIsStillTheOneTheFormCarries() throws Exception {
+        // Die Bezeichnung ist der Beleg dafuer, dass die Zuordnung meint, was sie behauptet. Gibt
+        // eine neue Fassung demselben Namen eine andere Bedeutung, faellt es nur hier auf.
+        List<String> differing = new ArrayList<>();
+        for (Map.Entry<String, File> profile : profiles().entrySet()) {
+            File form = formOf(profile.getKey());
+            if (form == null) {
+                continue;
+            }
+            Map<String, AcroFormFieldDescription> fields = fieldsOf(form);
+            for (Map.Entry<String, String[]> entry : read(profile.getValue()).entrySet()) {
+                AcroFormFieldDescription field = fields.get(entry.getKey());
+                if (field == null) {
+                    continue;
+                }
+                String actual = field.getLabel() == null ? "" : field.getLabel().trim();
+                if (!actual.equals(entry.getValue()[1])) {
+                    differing.add(profile.getKey() + ": " + entry.getKey() + " - Profil \""
+                            + entry.getValue()[1] + "\", Formular \"" + actual + "\"");
+                }
+            }
+        }
+        assertEquals("Bezeichnungen, die nicht mehr stimmen: " + differing, 0, differing.size());
+    }
+
+    @Test
+    public void noTickKeyIsPutIntoAtextFieldAndNoTextKeyIntoAcheckBox() throws Exception {
+        List<String> mismatched = new ArrayList<>();
+        for (Map.Entry<String, File> profile : profiles().entrySet()) {
+            File form = formOf(profile.getKey());
+            if (form == null) {
+                continue;
+            }
+            Map<String, AcroFormFieldDescription> fields = fieldsOf(form);
+            for (Map.Entry<String, String[]> entry : read(profile.getValue()).entrySet()) {
+                AcroFormFieldDescription field = fields.get(entry.getKey());
+                if (field == null) {
+                    continue;
+                }
+                boolean tickKey = entry.getValue()[0].contains(".ist_");
+                boolean tickField = field.getKind() == AcroFormFieldDescription.Kind.CHECK_BOX
+                        || field.getKind() == AcroFormFieldDescription.Kind.RADIO_GROUP;
+                if (tickKey != tickField) {
+                    mismatched.add(profile.getKey() + ": " + entry.getKey() + " (" + field.getKind()
+                            + ") <- " + entry.getValue()[0]);
+                }
+            }
+        }
+        assertEquals("Feldart und Schluessel passen nicht zusammen: " + mismatched,
+                0, mismatched.size());
+    }
+
+    @Test
+    public void noProfileAssignsTwoKeysToTheSameField() throws Exception {
+        // Die zweite Zuordnung gewaenne stillschweigend; das Feld zeigte etwas anderes, als die
+        // Zeile verspricht, die man beim Lesen findet.
+        List<String> twice = new ArrayList<>();
+        for (Map.Entry<String, File> profile : profiles().entrySet()) {
+            Set<String> seen = new LinkedHashSet<>();
+            for (String line : Files.readAllLines(profile.getValue().toPath(), StandardCharsets.UTF_8)) {
+                if (line.isEmpty() || line.charAt(0) == '#') {
+                    continue;
+                }
+                String name = line.split("\t", -1)[0];
+                if (!seen.add(name)) {
+                    twice.add(profile.getKey() + ": " + name);
+                }
+            }
+        }
+        assertEquals("Felder mit zwei Zuordnungen: " + twice, 0, twice.size());
+    }
+
+    @Test
+    public void everyMandatoryEntryCanSayWhereItIsEnteredAndWhatTheFormCallsIt() throws Exception {
+        // Eine Pflichtangabe ist die einzige, die einen Antrag scheitern laesst. Die Meldung darf
+        // dann nicht "Textfeld 4" sagen: das ist der Name im PDF, und in der Oberflaeche gibt es
+        // ihn nicht. Ohne Bezeichnung und ohne uebersetzten Schluessel bliebe genau das uebrig.
+        EnforcementFormFieldOrigin origin = new EnforcementFormFieldOrigin();
+
+        List<String> mute = new ArrayList<>();
+        for (Map.Entry<String, File> profile : profiles().entrySet()) {
+            for (Map.Entry<String, String[]> entry : read(profile.getValue()).entrySet()) {
+                if (!"1".equals(entry.getValue()[2].trim())) {
+                    continue;
+                }
+                String key = entry.getValue()[0];
+                if (entry.getValue()[1].trim().isEmpty()) {
+                    mute.add(profile.getKey() + ": " + entry.getKey() + " ohne Bezeichnung");
+                }
+                if (origin.of(key).equals(key)) {
+                    mute.add(profile.getKey() + ": " + entry.getKey() + " -> " + key
+                            + " sagt nicht, wo es einzutragen ist");
+                }
+            }
+        }
+        assertEquals("Pflichtangaben, die sich nicht erklaeren koennen: " + mute, 0, mute.size());
+    }
+
+    @Test
+    public void everyProfileFillsItsFormWithoutAsingleRejection() throws Exception {
+        // Der Durchstich: jeden Schluessel mit seinem eigenen Namen belegen und damit fuellen. Was
+        // dabei abgelehnt wird, ist ein Fehler des Profils und keiner der Daten.
+        for (Map.Entry<String, File> profile : profiles().entrySet()) {
+            File form = formOf(profile.getKey());
+            if (form == null) {
+                continue;
+            }
+            Map<String, String[]> mapping = read(profile.getValue());
+            assertFalse("ohne Zuordnungen fuellt " + profile.getKey() + " nichts", mapping.isEmpty());
+
+            Map<String, String> values = new LinkedHashMap<>();
+            List<String> mandatory = new ArrayList<>();
+            for (Map.Entry<String, String[]> entry : mapping.entrySet()) {
+                String key = entry.getValue()[0];
+                values.put(entry.getKey(), key.contains(".ist_") ? "true" : key);
+                if ("1".equals(entry.getValue()[2].trim())) {
+                    mandatory.add(entry.getKey());
+                }
+            }
+
+            File target = temporary.newFile(profile.getKey() + ".pdf");
+            AcroFormFillResult result =
+                    new AcroFormFiller().fill(form, values, mandatory, target, false);
+
+            assertTrue(profile.getKey() + ": " + result.describe(), result.isComplete());
+            assertEquals(profile.getKey(), values.size(), result.getFieldsSet());
+            assertTrue(profile.getKey() + " ist leer geblieben", target.length() > 0);
+        }
     }
 }

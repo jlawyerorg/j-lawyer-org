@@ -778,14 +778,34 @@ public class EnforcementItemisationBuilderTest {
     }
 
     @Test
-    public void atitleThatSaysNothingIsSaidToSayNothing() {
-        // Ein vor dieser Zuordnung erfasster Titel weiß nicht, was er trägt. Alles als tituliert
-        // auszugeben wäre eine Behauptung über den Titel, die niemand getroffen hat; alles als
-        // weitere Forderung zu führen verlangt weniger, als der Titel hergibt - das ist die
-        // vorsichtige Lesart, und sie ist sichtbar statt still.
+    public void atitleThatSaysNothingCoversEverything() {
+        // Ein Titel, zu dem nicht hinterlegt ist, was er traegt, deckt alles.
+        //
+        // Die Gegenlesart - alles als weitere Forderung - sah vorsichtiger aus und war es nicht:
+        // sie ist ebenso eine Behauptung, naemlich dass keine dieser Forderungen tituliert sei,
+        // und sie ergab am erzeugten Formular einen Vollstreckungsauftrag ohne eine einzige
+        // titulierte Hauptforderung. Vollstreckt wird nur aus einem Titel (§ 750 Abs. 1 ZPO); ein
+        // solcher Auftrag ist widersinnig. Dass niemand die Deckung ausdruecklich erfasst hat,
+        // bleibt in coverageKnown sichtbar.
         EnforcementItemisation itemisation = builder.build(statement(), titleCovering());
 
         assertFalse(itemisation.isCoverageKnown());
+        for (EnforcementItemisationRow row : itemisation.getRows()) {
+            if (row.getCategory() == EnforcementItemisationCategory.PAYMENT) {
+                continue;
+            }
+            assertTrue("ohne hinterlegte Deckung gilt alles als tituliert: " + row,
+                    row.getCategory() == EnforcementItemisationCategory.TITLED_MAIN_CLAIM
+                    || row.getCategory() == EnforcementItemisationCategory.TITLED_COSTS);
+        }
+    }
+
+    @Test
+    public void withoutAtitleNothingIsTitled() {
+        // Ohne Titel gibt es nichts zu decken - die Vorgabe "deckt alles" haengt am Titel und
+        // nicht daran, dass eine Deckung fehlt.
+        EnforcementItemisation itemisation = builder.build(statement(), null);
+
         for (EnforcementItemisationRow row : itemisation.getRows()) {
             assertTrue(row.getCategory() != EnforcementItemisationCategory.TITLED_MAIN_CLAIM
                     && row.getCategory() != EnforcementItemisationCategory.TITLED_COSTS);
@@ -817,8 +837,26 @@ public class EnforcementItemisationBuilderTest {
         }
 
         assertEquals(interestOfStatement, itemisation.totalInterest());
-        assertEquals(principalOfStatement.add(interestOfStatement).subtract(new BigDecimal("500.00")),
-                itemisation.totalDemanded());
+
+        // Ohne Abzug der Zahlung: der Betrag einer Position ist der offene Betrag zum Stichtag,
+        // den ClaimLedgerService bereits um die Zahlungen vermindert hat. Diese Zusicherung hatte
+        // die Zahlung zuvor ein zweites Mal abgezogen - sie beschrieb eine Aufstellung, die so nie
+        // entsteht, weil ihr Prüfling von Hand gebaut war und nicht aus dem Dienst kam.
+        assertEquals(principalOfStatement.add(interestOfStatement), itemisation.totalDemanded());
+    }
+
+    @Test
+    public void apaymentDoesNotReduceTheDemandAsecondTime() {
+        // Der Fehler, den die Zusicherung oben deckte: die Positionen kommen bereits vermindert
+        // aus der Forderungsaufstellung. Wer die Zahlung hier erneut abzieht, schickt den
+        // Gerichtsvollzieher mit 500 Euro zu wenig los - und niemandem fällt es auf, weil die
+        // Summe plausibel aussieht.
+        ClaimStatement withoutPayment = statement();
+        ClaimStatement withPayment = statement();
+        withPayment.getBookings().add(booking("Zahlung", "500.00", false));
+
+        assertEquals(builder.build(withoutPayment, titleCovering("c1", "c2", "c3")).totalDemanded(),
+                builder.build(withPayment, titleCovering("c1", "c2", "c3")).totalDemanded());
     }
 
     private ClaimStatementBooking booking(String description, String amount, boolean reversal) {

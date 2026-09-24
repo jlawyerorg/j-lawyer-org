@@ -662,6 +662,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.pojo;
 
+import com.jdimension.jlawyer.persistence.ClaimComponentType;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -681,6 +682,9 @@ public class EnforcementItemisationRow implements Serializable {
 
     private int number;
     private EnforcementItemisationCategory category;
+    private String componentId;
+    private ClaimComponentType componentType;
+    private BigDecimal payments = BigDecimal.ZERO;
     private String designation;
     private BigDecimal amount = BigDecimal.ZERO;
 
@@ -847,6 +851,74 @@ public class EnforcementItemisationRow implements Serializable {
      */
     public void setLegalBasis(String legalBasis) {
         this.legalBasis = legalBasis;
+    }
+
+    /**
+     * The ledger component this line was taken from.
+     *
+     * It is what ties the line to the interest that keeps running on it after the key date; the
+     * designation would not do, as two components may carry the same name.
+     *
+     * @return the component id, or null for a line that has none, such as a payment
+     */
+    public String getComponentId() {
+        return componentId;
+    }
+
+    /**
+     * @param componentId the component id
+     */
+    public void setComponentId(String componentId) {
+        this.componentId = componentId;
+    }
+
+    /**
+     * What has been paid on this line up to the key date.
+     *
+     * The amount is already net of it. It is kept because the official itemisation asks a question
+     * the net amount cannot answer: whether this is the whole titled claim or what is left of it.
+     * A claim that has been paid on is a "Restforderung", and the form wants the original beside
+     * the remainder.
+     *
+     * @return what was paid, never null
+     */
+    public BigDecimal getPayments() {
+        return payments == null ? BigDecimal.ZERO : payments;
+    }
+
+    /**
+     * @param payments what was paid up to the key date
+     */
+    public void setPayments(BigDecimal payments) {
+        this.payments = payments;
+    }
+
+    /**
+     * @return the claim as it was titled, that is what is left plus what has been paid on it
+     */
+    public BigDecimal getOriginalAmount() {
+        return getAmount().add(getPayments());
+    }
+
+    /**
+     * What kind of claim this line is, as the ledger records it.
+     *
+     * The category says whether it is a claim or a payment and whether the title covers it; the
+     * type says what it is. The official itemisation asks for both: it keeps court costs, costs
+     * incurred before proceedings and assessed costs in separate blocks, and only the type tells
+     * them apart.
+     *
+     * @return the component type, or null for a line that has none, such as a payment
+     */
+    public ClaimComponentType getComponentType() {
+        return componentType;
+    }
+
+    /**
+     * @param componentType the component type
+     */
+    public void setComponentType(ClaimComponentType componentType) {
+        this.componentType = componentType;
     }
 
     /**

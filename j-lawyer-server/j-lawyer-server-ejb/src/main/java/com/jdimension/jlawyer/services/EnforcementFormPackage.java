@@ -817,6 +817,90 @@ public class EnforcementFormPackage {
     }
 
     /**
+     * One assignment of a form field to where its value comes from.
+     */
+    public static class Mapping {
+
+        private final String fieldName;
+        private final String sourceKey;
+        private final boolean mandatory;
+        private final String label;
+
+        Mapping(String fieldName, String sourceKey, boolean mandatory, String label) {
+            this.fieldName = fieldName;
+            this.sourceKey = sourceKey;
+            this.mandatory = mandatory;
+            this.label = label;
+        }
+
+        /**
+         * @return the name the field carries in the PDF
+         */
+        public String getFieldName() {
+            return fieldName;
+        }
+
+        /**
+         * @return the key the value is taken from
+         */
+        public String getSourceKey() {
+            return sourceKey;
+        }
+
+        /**
+         * @return whether the form may not go out without this field
+         */
+        public boolean isMandatory() {
+            return mandatory;
+        }
+
+        /**
+         * @return what the form calls this field
+         */
+        public String getLabel() {
+            return label;
+        }
+    }
+
+    /**
+     * The mapping profile shipped for a form, if one is.
+     *
+     * The profile belongs to the package for the same reason the PDF does: it is expert work that
+     * nobody should repeat per installation, and it has to arrive together with the version it was
+     * written for. It is emphatically not a database seed - a seed runs at deployment, when no
+     * template exists yet, and would silently insert nothing.
+     *
+     * @param formKey the annex
+     * @return the assignments, empty where no profile is shipped for that form
+     * @throws IOException if the file is there but cannot be read
+     */
+    public List<Mapping> readMapping(String formKey) throws IOException {
+        List<Mapping> mappings = new ArrayList<>();
+        String resource = RESOURCE_PATH + "mapping/" + formKey + ".txt";
+
+        try (InputStream in = EnforcementFormPackage.class.getResourceAsStream(resource)) {
+            if (in == null) {
+                return mappings;
+            }
+            java.io.BufferedReader reader = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.isEmpty() || line.charAt(0) == '#') {
+                    continue;
+                }
+                String[] parts = line.split("\t", -1);
+                if (parts.length < 3) {
+                    continue;
+                }
+                mappings.add(new Mapping(parts[0], parts[1], "1".equals(parts[2].trim()),
+                        parts.length > 3 ? parts[3] : null));
+            }
+        }
+        return mappings;
+    }
+
+    /**
      * @return the annexes this package covers
      */
     public List<String> getFormKeys() {

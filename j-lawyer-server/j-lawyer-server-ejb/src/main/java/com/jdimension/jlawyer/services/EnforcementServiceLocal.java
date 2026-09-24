@@ -662,8 +662,16 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.EnforcementFormTemplate;
+import com.jdimension.jlawyer.persistence.EnforcementMeasure;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureOutcome;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureType;
 import com.jdimension.jlawyer.pojo.AcroFormFieldInfo;
+import com.jdimension.jlawyer.pojo.EnforcementCostProposal;
+import com.jdimension.jlawyer.pojo.EnforcementItemisation;
+import com.jdimension.jlawyer.pojo.EnforcementMeasureOption;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import javax.ejb.Local;
@@ -690,4 +698,86 @@ public interface EnforcementServiceLocal {
     EnforcementFormTemplate getFormTemplateFor(String formKey, Date day) throws Exception;
 
     String describeFormTemplateSelection(String formKey, Date day) throws Exception;
+
+    List<EnforcementMeasureType> getMeasureTypes() throws Exception;
+
+    List<EnforcementMeasure> getMeasures(String ledgerId) throws Exception;
+
+    List<EnforcementMeasureOption> getMeasureOptions(String ledgerId, String titleId, Date day) throws Exception;
+
+    EnforcementMeasure addMeasure(String ledgerId, EnforcementMeasure measure) throws Exception;
+
+    EnforcementMeasure updateMeasure(EnforcementMeasure measure) throws Exception;
+
+    void removeMeasure(String measureId) throws Exception;
+
+    EnforcementMeasure recordOutcome(String measureId, EnforcementMeasureOutcome outcome, Date outcomeDate) throws Exception;
+
+    EnforcementItemisation getItemisation(String ledgerId, String titleId, Date keyDate) throws Exception;
+
+    List<ArchiveFileDocumentsBean> generateForms(String measureId, boolean flatten) throws Exception;
+
+    /**
+     * Proposes what an enforcement measure costs.
+     *
+     * § 788 Abs. 1 ZPO lets the costs of enforcement be collected with the claim, so they belong in
+     * the ledger rather than on an invoice of their own. What they are follows from the law: the
+     * 0.3 procedural fee of Nr. 3309 VV RVG on the value being enforced at the day of the measure,
+     * the 0.3 fee of Nr. 3310 where a hearing takes place, the flat rate of Nr. 7002, VAT where the
+     * creditor cannot deduct it, and the court fee of Nr. 2111 KV GKG where the measure goes to a
+     * court.
+     *
+     * The costs of a bailiff are listed without an amount. They follow from the acts he performs
+     * and from how far he travels, not from the value; proposing a figure would mean inventing one.
+     *
+     * Nothing is booked by this - every position may be changed, and one that is not claimed is
+     * simply left out.
+     *
+     * @param measureId the measure
+     * @param vatRate the VAT rate to apply, for example 19.00
+     * @param vatDeductible whether the creditor can deduct input tax, in which case no VAT is
+     * proposed - it is then not a loss and not recoverable from the debtor
+     * @param hearing whether a hearing takes place, which is what Nr. 3310 VV RVG asks
+     * @return the proposal
+     * @throws Exception if the measure does not exist, belongs to no ledger, the user may not
+     * access its case, or no fee table applies on that day
+     */
+    EnforcementCostProposal proposeCosts(String measureId, BigDecimal vatRate,
+            boolean vatDeductible, boolean hearing) throws Exception;
+
+    /**
+     * Books the costs of a measure into the claim ledger.
+     *
+     * Each position becomes a cost of its own, named after the position and carrying the provision
+     * it rests on. A position without an amount or one that was not included is passed over: a
+     * booking of 0.00 would stand in every statement from now on and say nothing.
+     *
+     * @param measureId the measure the costs were caused by
+     * @param proposal the positions to book, as the user left them
+     * @param debtorPartyId the debtor who owes them alone, or null where all debtors owe them
+     * jointly
+     * @param advancedByFirm whether the firm paid them, in which case a matching entry is made in
+     * the case account - the money left the firm long before the debtor pays
+     * @return the ids of the bookings that were created
+     * @throws Exception if the measure does not exist, belongs to no ledger, or the user may not
+     * access its case
+     */
+    List<String> bookCosts(String measureId, EnforcementCostProposal proposal, String debtorPartyId,
+            boolean advancedByFirm) throws Exception;
+
+
+    /**
+     * Replaces the field mapping of a template with the one shipped for it.
+     *
+     * The ordinary import never overwrites an assignment a firm may have adjusted, which is right
+     * - and leaves no way to take over a corrected one short of deleting the template, losing its
+     * file, its validity dates and its name with it. This is that way: it is asked for explicitly,
+     * it throws away what is stored, and it writes what the package carries.
+     *
+     * @param templateId the template whose mapping is to be replaced
+     * @return how many assignments were written
+     * @throws Exception if the template does not exist or no mapping is shipped for its form
+     */
+    int replaceFormMapping(String templateId) throws Exception;
+
 }

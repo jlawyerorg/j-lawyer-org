@@ -762,6 +762,18 @@ public class JLawyerServiceLocator {
     /**
      * @return the court dunning procedure
      */
+    /**
+     * @return the enforcement measures and the official ZVFV forms
+     */
+    public EnforcementServiceRemote lookupEnforcementServiceRemote() {
+        try {
+            return (EnforcementServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//EnforcementService!com.jdimension.jlawyer.services.EnforcementServiceRemote");
+        } catch (NamingException ne) {
+            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
+            throw new RuntimeException(ne);
+        }
+    }
+
     public DunningServiceRemote lookupDunningServiceRemote() {
         try {
             return (DunningServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//DunningService!com.jdimension.jlawyer.services.DunningServiceRemote");

@@ -662,8 +662,16 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.EnforcementFormTemplate;
+import com.jdimension.jlawyer.persistence.EnforcementMeasure;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureOutcome;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureType;
 import com.jdimension.jlawyer.pojo.AcroFormFieldInfo;
+import com.jdimension.jlawyer.pojo.EnforcementCostProposal;
+import com.jdimension.jlawyer.pojo.EnforcementItemisation;
+import com.jdimension.jlawyer.pojo.EnforcementMeasureOption;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import javax.ejb.Remote;
@@ -771,4 +779,205 @@ public interface EnforcementServiceRemote {
      * @throws Exception if the templates cannot be read
      */
     String describeFormTemplateSelection(String formKey, Date day) throws Exception;
+
+    // ----- Maßnahmen -----
+
+    /**
+     * Returns the kinds of measure a firm has switched on, in the order they are offered.
+     *
+     * @return the kinds, empty if all are switched off
+     * @throws Exception if the catalogue cannot be read
+     */
+    List<EnforcementMeasureType> getMeasureTypes() throws Exception;
+
+    /**
+     * Returns the measures taken out of a claim ledger, oldest first.
+     *
+     * @param ledgerId id of the claim ledger
+     * @return the measures, empty if none have been taken
+     * @throws Exception if the ledger does not exist or the user may not access its case
+     */
+    List<EnforcementMeasure> getMeasures(String ledgerId) throws Exception;
+
+    /**
+     * Judges every kind of measure against the title at hand and says what stands in the way.
+     *
+     * Kinds that cannot be taken are returned with their reason rather than left out. A dialog that
+     * silently omits the bailiff order leaves the user wondering; one that shows it greyed out with
+     * "the title has not been served yet" says what to do next.
+     *
+     * The three conditions of § 750 Abs. 1 ZPO — a title, its clause and its service — are named
+     * separately, because "the title is incomplete" does not tell a firm what to go and fetch.
+     *
+     * @param ledgerId id of the claim ledger
+     * @param titleId id of the title to enforce, or null if none is chosen yet
+     * @param day the day the measure would be created
+     * @return one entry per kind, in the order the kinds are offered
+     * @throws Exception if the ledger does not exist or the user may not access its case
+     */
+    List<EnforcementMeasureOption> getMeasureOptions(String ledgerId, String titleId, Date day)
+            throws Exception;
+
+    /**
+     * Records a measure against a claim ledger.
+     *
+     * The addressee's designation and address are frozen as they are given: a measure filed years
+     * ago has to stay reconstructable after a bailiff's district has been redrawn.
+     *
+     * A kind that cannot be taken as things stand is refused, with the same reason
+     * {@link #getMeasureOptions(String, String, Date)} gives.
+     *
+     * @param ledgerId id of the claim ledger
+     * @param measure the measure to record; its id is assigned by the server
+     * @return the stored measure
+     * @throws Exception if the ledger does not exist, the user may not access its case, or the kind
+     * of measure cannot be taken
+     */
+    EnforcementMeasure addMeasure(String ledgerId, EnforcementMeasure measure) throws Exception;
+
+    /**
+     * Updates a measure.
+     *
+     * The title, the kind of measure, the addressee, the dates and the notes are taken over; the
+     * rest of the measure is left as it stands. The ledger it belongs to is not changed, because a
+     * measure does not move between ledgers; the version of the form its documents were produced
+     * from is not, because it records what happened rather than what is wanted; the outcome is not,
+     * because {@link #recordOutcome(java.lang.String,
+     * com.jdimension.jlawyer.persistence.EnforcementMeasureOutcome, java.util.Date)} is where that
+     * is said, and a caller holding an older copy of the measure would otherwise undo it; and the
+     * debtors of the measure are not, because a caller that never loaded them would otherwise clear
+     * them.
+     *
+     * @param measure the measure to update
+     * @return the stored measure
+     * @throws Exception if the measure does not exist or the user may not access its case
+     */
+    EnforcementMeasure updateMeasure(EnforcementMeasure measure) throws Exception;
+
+    /**
+     * Removes a measure.
+     *
+     * The documents it produced stay in the case. They went to a bailiff or a court, and deleting
+     * the record of a measure does not undo that.
+     *
+     * @param measureId id of the measure
+     * @throws Exception if the measure does not exist or the user may not access its case
+     */
+    void removeMeasure(String measureId) throws Exception;
+
+    /**
+     * Records what became of a measure.
+     *
+     * A stayed measure is not closed — the debtor pays by instalments under § 802b Abs. 2 ZPO, and
+     * if the instalments fail the measure goes on from where it stood rather than being started
+     * again.
+     *
+     * @param measureId id of the measure
+     * @param outcome how it ended, or that it is stayed
+     * @param outcomeDate the day the outcome is dated
+     * @return the stored measure
+     * @throws Exception if the measure does not exist or the user may not access its case
+     */
+    EnforcementMeasure recordOutcome(String measureId, EnforcementMeasureOutcome outcome,
+            Date outcomeDate) throws Exception;
+
+    /**
+     * Returns the itemisation of what is owed, as the enforcement forms ask for it.
+     *
+     * Derived from the claim statement of the same ledger for the same day, so the form and the
+     * firm's own statement cannot disagree about a sum.
+     *
+     * @param ledgerId id of the claim ledger
+     * @param titleId id of the title being enforced, or null
+     * @param keyDate the day the figures are computed to
+     * @return the itemisation
+     * @throws Exception if the ledger does not exist or the user may not access its case
+     */
+    EnforcementItemisation getItemisation(String ledgerId, String titleId, Date keyDate)
+            throws Exception;
+
+    /**
+     * Produces the official forms of a measure and stores them in the case.
+     *
+     * One document per form the kind of measure is filed on: an attachment order is an application,
+     * the draft order the court adopts as its own, and the itemisation of what is owed. Each is
+     * filled from the template version in force on the day the measure was ordered, and that
+     * version is recorded on the measure so the filing stays reproducible after the form is
+     * replaced.
+     *
+     * A form whose mapping profile leaves a mandatory field empty is refused rather than produced
+     * incomplete. What the profile cannot fill at all — because the case does not hold it — is
+     * reported, and the caller decides.
+     *
+     * @param measureId id of the measure
+     * @param flatten whether to fix the values in place, so the documents can no longer be edited
+     * @return the documents stored, one per form
+     * @throws Exception if the measure does not exist, the user may not access its case, no
+     * template is held for one of its forms, or a mandatory field is empty
+     */
+    List<ArchiveFileDocumentsBean> generateForms(String measureId, boolean flatten) throws Exception;
+
+    /**
+     * Proposes what an enforcement measure costs.
+     *
+     * § 788 Abs. 1 ZPO lets the costs of enforcement be collected with the claim, so they belong in
+     * the ledger rather than on an invoice of their own. What they are follows from the law: the
+     * 0.3 procedural fee of Nr. 3309 VV RVG on the value being enforced at the day of the measure,
+     * the 0.3 fee of Nr. 3310 where a hearing takes place, the flat rate of Nr. 7002, VAT where the
+     * creditor cannot deduct it, and the court fee of Nr. 2111 KV GKG where the measure goes to a
+     * court.
+     *
+     * The costs of a bailiff are listed without an amount. They follow from the acts he performs
+     * and from how far he travels, not from the value; proposing a figure would mean inventing one.
+     *
+     * Nothing is booked by this - every position may be changed, and one that is not claimed is
+     * simply left out.
+     *
+     * @param measureId the measure
+     * @param vatRate the VAT rate to apply, for example 19.00
+     * @param vatDeductible whether the creditor can deduct input tax, in which case no VAT is
+     * proposed - it is then not a loss and not recoverable from the debtor
+     * @param hearing whether a hearing takes place, which is what Nr. 3310 VV RVG asks
+     * @return the proposal
+     * @throws Exception if the measure does not exist, belongs to no ledger, the user may not
+     * access its case, or no fee table applies on that day
+     */
+    EnforcementCostProposal proposeCosts(String measureId, BigDecimal vatRate,
+            boolean vatDeductible, boolean hearing) throws Exception;
+
+    /**
+     * Books the costs of a measure into the claim ledger.
+     *
+     * Each position becomes a cost of its own, named after the position and carrying the provision
+     * it rests on. A position without an amount or one that was not included is passed over: a
+     * booking of 0.00 would stand in every statement from now on and say nothing.
+     *
+     * @param measureId the measure the costs were caused by
+     * @param proposal the positions to book, as the user left them
+     * @param debtorPartyId the debtor who owes them alone, or null where all debtors owe them
+     * jointly
+     * @param advancedByFirm whether the firm paid them, in which case a matching entry is made in
+     * the case account - the money left the firm long before the debtor pays
+     * @return the ids of the bookings that were created
+     * @throws Exception if the measure does not exist, belongs to no ledger, or the user may not
+     * access its case
+     */
+    List<String> bookCosts(String measureId, EnforcementCostProposal proposal, String debtorPartyId,
+            boolean advancedByFirm) throws Exception;
+
+
+    /**
+     * Replaces the field mapping of a template with the one shipped for it.
+     *
+     * The ordinary import never overwrites an assignment a firm may have adjusted, which is right
+     * - and leaves no way to take over a corrected one short of deleting the template, losing its
+     * file, its validity dates and its name with it. This is that way: it is asked for explicitly,
+     * it throws away what is stored, and it writes what the package carries.
+     *
+     * @param templateId the template whose mapping is to be replaced
+     * @return how many assignments were written
+     * @throws Exception if the template does not exist or no mapping is shipped for its form
+     */
+    int replaceFormMapping(String templateId) throws Exception;
+
 }

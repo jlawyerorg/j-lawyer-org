@@ -660,319 +660,215 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package org.jlawyer.test.server.ejb;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.Lob;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import com.jdimension.jlawyer.persistence.ClaimComponentType;
+import com.jdimension.jlawyer.pojo.ContinuingInterest;
+import com.jdimension.jlawyer.pojo.EnforcementItemisation;
+import com.jdimension.jlawyer.pojo.EnforcementItemisationCategory;
+import com.jdimension.jlawyer.pojo.EnforcementItemisationRow;
+import com.jdimension.jlawyer.services.EnforcementItemisationSlots;
+import com.jdimension.jlawyer.services.EnforcementItemisationSlots.CostBlock;
+import java.math.BigDecimal;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 /**
- * One version of one official form, with the profile that says how to fill it.
+ * The rules by which an itemisation is put onto the official form.
  *
- * The forms of the ZVFV are replaced from time to time. A measure generated under an older version
- * was not wrong, it was current - so versions live alongside one another with a validity period,
- * and a measure records which one it used. Producing a form from a version whose validity has ended
- * is possible but has to be confirmed.
- *
- * The PDF is held here rather than in the file system. The number of forms is small, the versions
- * few, and keeping them with their mapping means a backup of the database is a backup of everything
- * needed to reproduce a filing.
+ * They are legal statements and not layout: a cost stated under "Festgesetzte Kosten" claims a
+ * costs order that may not exist, and a claim that finds no place would otherwise simply not be
+ * collected.
  *
  * @author jens
  */
-@Entity
-@Table(name = "enforcement_form_templates")
-@NamedQueries({
-    @NamedQuery(name = "EnforcementFormTemplate.findAll", query = "SELECT t FROM EnforcementFormTemplate t ORDER BY t.formKey ASC, t.validFrom DESC"),
-    @NamedQuery(name = "EnforcementFormTemplate.findById", query = "SELECT t FROM EnforcementFormTemplate t WHERE t.id = :id"),
-    @NamedQuery(name = "EnforcementFormTemplate.findByKey", query = "SELECT t FROM EnforcementFormTemplate t WHERE t.formKey = :formKey ORDER BY t.validFrom DESC"),
-    // Ein Verzeichnis ohne die Dateien - und ohne verwaltete Entities. Wer eine verwaltete Entity
-    // abräumt, um sie leichter zu machen, schreibt die Leere beim Commit in die Datenbank.
-    @NamedQuery(name = "EnforcementFormTemplate.findAllSummaries", query = "SELECT NEW com.jdimension.jlawyer.persistence.EnforcementFormTemplate(t.id, t.formKey, t.name, t.version, t.validFrom, t.validTo, t.fileName, t.description) FROM EnforcementFormTemplate t ORDER BY t.formKey ASC, t.validFrom DESC")
-})
-public class EnforcementFormTemplate implements Serializable {
+public class EnforcementItemisationSlotsTest {
 
-    private static final long serialVersionUID = 1L;
+    private EnforcementItemisationRow row(String id, EnforcementItemisationCategory category,
+            ClaimComponentType type, String designation, String amount) {
 
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
-
-    /** The annex of the ZVFV this is a version of - "ANLAGE_1". */
-    @Column(name = "form_key", nullable = false, length = 50)
-    private String formKey;
-
-    @Column(name = "name", nullable = false)
-    private String name;
-
-    /**
-     * The version, as the publisher dates it - "2024-09-01".
-     *
-     * Recorded on every measure generated from it, so a filing stays reproducible after the form has
-     * been replaced.
-     */
-    @Column(name = "version", length = 50)
-    private String version;
-
-    @Column(name = "valid_from")
-    @Temporal(TemporalType.DATE)
-    private Date validFrom;
-
-    /** Null while the version is the current one. */
-    @Column(name = "valid_to")
-    @Temporal(TemporalType.DATE)
-    private Date validTo;
-
-    /**
-     * The fillable PDF.
-     *
-     * Lazy because it is a few hundred kilobytes and most reads of a template only want to know
-     * which versions exist.
-     */
-    @Lob
-    @Basic(fetch = FetchType.LAZY)
-    @Column(name = "pdf_content")
-    private byte[] pdfContent;
-
-    @Column(name = "file_name")
-    private String fileName;
-
-    @Column(name = "description", length = 1000)
-    private String description;
-
-    /**
-     * How the fields of this form are filled.
-     *
-     * Belongs to the version, not to the form: a new version may rename its fields, and a profile
-     * written for the old one would then address fields that no longer exist.
-     */
-    @OneToMany(mappedBy = "template", fetch = FetchType.LAZY)
-    private List<EnforcementFormFieldMapping> fieldMappings = new ArrayList<>();
-
-    /**
-     * The constructor JPA needs.
-     */
-    public EnforcementFormTemplate() {
+        EnforcementItemisationRow row = new EnforcementItemisationRow();
+        row.setComponentId(id);
+        row.setCategory(category);
+        row.setComponentType(type);
+        row.setDesignation(designation);
+        row.setAmount(new BigDecimal(amount));
+        return row;
     }
 
-    /**
-     * Builds a template without its PDF, for a listing.
-     *
-     * Exists so a listing can be produced by a query rather than by emptying loaded entities.
-     * Clearing the content of a <em>managed</em> entity to make it lighter on the wire writes that
-     * emptiness into the database when the transaction commits - the templates are then listed
-     * correctly and gone.
-     *
-     * @param id the technical identifier
-     * @param formKey the annex of the ZVFV
-     * @param name the designation
-     * @param version the version as the publisher dates it
-     * @param validFrom the day the version takes effect
-     * @param validTo the day it ceased to be prescribed
-     * @param fileName the name the file was uploaded under
-     * @param description what this version is
-     */
-    public EnforcementFormTemplate(String id, String formKey, String name, String version,
-            Date validFrom, Date validTo, String fileName, String description) {
-        this.id = id;
-        this.formKey = formKey;
-        this.name = name;
-        this.version = version;
-        this.validFrom = validFrom;
-        this.validTo = validTo;
-        this.fileName = fileName;
-        this.description = description;
-    }
-
-    /**
-     * @return the technical identifier
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * @param id the technical identifier
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the annex of the ZVFV this is a version of
-     */
-    public String getFormKey() {
-        return formKey;
-    }
-
-    /**
-     * @param formKey the annex of the ZVFV
-     */
-    public void setFormKey(String formKey) {
-        this.formKey = formKey;
-    }
-
-    /**
-     * @return the designation shown to the user
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name the designation shown to the user
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return the version as the publisher dates it
-     */
-    public String getVersion() {
-        return version;
-    }
-
-    /**
-     * @param version the version as the publisher dates it
-     */
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    /**
-     * @return the day this version takes effect, or null if unstated
-     */
-    public Date getValidFrom() {
-        return validFrom;
-    }
-
-    /**
-     * @param validFrom the day this version takes effect
-     */
-    public void setValidFrom(Date validFrom) {
-        this.validFrom = validFrom;
-    }
-
-    /**
-     * @return the day this version ceased to be prescribed, or null while it is current
-     */
-    public Date getValidTo() {
-        return validTo;
-    }
-
-    /**
-     * @param validTo the day this version ceased to be prescribed
-     */
-    public void setValidTo(Date validTo) {
-        this.validTo = validTo;
-    }
-
-    /**
-     * @return the fillable PDF
-     */
-    public byte[] getPdfContent() {
-        return pdfContent;
-    }
-
-    /**
-     * @param pdfContent the fillable PDF
-     */
-    public void setPdfContent(byte[] pdfContent) {
-        this.pdfContent = pdfContent;
-    }
-
-    /**
-     * @return the name the file was uploaded under
-     */
-    public String getFileName() {
-        return fileName;
-    }
-
-    /**
-     * @param fileName the name the file was uploaded under
-     */
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
-
-    /**
-     * @return what this version is, in the words a user needs
-     */
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * @param description what this version is
-     */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    /**
-     * @return how the fields of this form are filled, never null
-     */
-    public List<EnforcementFormFieldMapping> getFieldMappings() {
-        if (this.fieldMappings == null) {
-            this.fieldMappings = new ArrayList<>();
+    private EnforcementItemisation itemisationOf(EnforcementItemisationRow... rows) {
+        EnforcementItemisation itemisation = new EnforcementItemisation();
+        for (EnforcementItemisationRow row : rows) {
+            itemisation.getRows().add(row);
         }
-        return fieldMappings;
+        return itemisation;
     }
 
-    /**
-     * @param fieldMappings how the fields of this form are filled
-     */
-    public void setFieldMappings(List<EnforcementFormFieldMapping> fieldMappings) {
-        this.fieldMappings = fieldMappings;
+    @Test
+    public void thetwoBlocksOfSectionOneTakeTheTitledPrincipalClaims() {
+        EnforcementItemisationRow first = row("c1", EnforcementItemisationCategory.TITLED_MAIN_CLAIM,
+                ClaimComponentType.MAIN_CLAIM, "Kaufpreis", "5000.00");
+        EnforcementItemisationRow second = row("c2", EnforcementItemisationCategory.TITLED_MAIN_CLAIM,
+                ClaimComponentType.MAIN_CLAIM, "Miete", "1200.00");
+
+        EnforcementItemisationSlots slots =
+                new EnforcementItemisationSlots(itemisationOf(first, second), false);
+
+        assertEquals(2, slots.getClaims().size());
+        assertSame(first, slots.getClaims().get(0));
+        assertSame(second, slots.getClaims().get(1));
+        assertTrue(slots.fits());
     }
 
-    /**
-     * Whether this version is the one prescribed on a given day.
-     *
-     * @param day the day to judge by
-     * @return true if the day falls inside the validity period
-     */
-    public boolean isValidOn(Date day) {
-        if (day == null) {
-            return this.validTo == null;
-        }
-        if (this.validFrom != null && day.before(this.validFrom)) {
-            return false;
-        }
-        return this.validTo == null || !day.after(this.validTo);
+    @Test
+    public void athirdTitledClaimIsReportedInsteadOfDropped() {
+        // Der Fehler, der sonst niemandem auffiele: das Formular bliebe vollstaendig aussehend,
+        // und der Gerichtsvollzieher triebe eine Forderung nicht bei, von der er nichts weiss.
+        EnforcementItemisationSlots slots = new EnforcementItemisationSlots(itemisationOf(
+                row("c1", EnforcementItemisationCategory.TITLED_MAIN_CLAIM, ClaimComponentType.MAIN_CLAIM, "eins", "1.00"),
+                row("c2", EnforcementItemisationCategory.TITLED_MAIN_CLAIM, ClaimComponentType.MAIN_CLAIM, "zwei", "2.00"),
+                row("c3", EnforcementItemisationCategory.TITLED_MAIN_CLAIM, ClaimComponentType.MAIN_CLAIM, "drei", "3.00")), false);
+
+        assertEquals(2, slots.getClaims().size());
+        assertFalse(slots.fits());
+        assertEquals(1, slots.getOverflow().size());
+        assertEquals("drei", slots.getOverflow().get(0).getDesignation());
     }
 
-    @Override
-    public int hashCode() {
-        return id == null ? 0 : id.hashCode();
+    @Test
+    public void assessedCostsGoUnderTheHeadingThatNamesThem() {
+        EnforcementItemisationSlots slots = new EnforcementItemisationSlots(itemisationOf(
+                row("c1", EnforcementItemisationCategory.TITLED_COSTS,
+                        ClaimComponentType.COST_ASSESSED, "festgesetzte Kosten", "166.00")), false);
+
+        assertEquals("festgesetzte Kosten", slots.getCost(CostBlock.ASSESSED).getDesignation());
+        assertNull(slots.getCost(CostBlock.PRE_COURT));
+        assertNull(slots.getCost(CostBlock.DUNNING_ORDER));
     }
 
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof EnforcementFormTemplate)) {
-            return false;
-        }
-        EnforcementFormTemplate other = (EnforcementFormTemplate) object;
-        return this.id != null && this.id.equals(other.id);
+    @Test
+    public void costsIncurredBeforeProceedingsGoUnderTheirOwnHeading() {
+        EnforcementItemisationSlots slots = new EnforcementItemisationSlots(itemisationOf(
+                row("c1", EnforcementItemisationCategory.TITLED_COSTS,
+                        ClaimComponentType.PRECOURT_LAWYER_FEE, "Anwaltskosten", "83.54")), false);
+
+        assertEquals("Anwaltskosten", slots.getCost(CostBlock.PRE_COURT).getDesignation());
     }
 
-    @Override
-    public String toString() {
-        return name + (version == null || version.trim().isEmpty() ? "" : " (" + version + ")");
+    @Test
+    public void theCostsOfTheDunningProcedureAreStatedAsSuchOnlyUnderAdunningOrder() {
+        // "In den Vollstreckungsbescheid aufgenommene Kosten des Mahnverfahrens" ist eine Aussage
+        // ueber den Titel. Steht daneben ein Urteil, ist sie falsch - und niemand pruefte sie nach.
+        EnforcementItemisationRow cost = row("c1", EnforcementItemisationCategory.TITLED_COSTS,
+                ClaimComponentType.COST_INTEREST_BEARING, "Kosten des Mahnverfahrens", "32.00");
+
+        EnforcementItemisationSlots underOrder =
+                new EnforcementItemisationSlots(itemisationOf(cost), true);
+        assertSame(cost, underOrder.getCost(CostBlock.DUNNING_ORDER));
+
+        EnforcementItemisationSlots underJudgment =
+                new EnforcementItemisationSlots(itemisationOf(cost), false);
+        assertNull(underJudgment.getCost(CostBlock.DUNNING_ORDER));
+        assertTrue(underJudgment.getFurtherTitledCosts().isSet());
+        assertEquals(new BigDecimal("32.00"), underJudgment.getFurtherTitledCosts().getAmount());
+    }
+
+    @Test
+    public void alineThatBearsInterestNeverEndsUpOnAfreeLine() {
+        // Die freie Zeile hat kein Zinsfeld. Was dort landet, verloere seine Zinsen lautlos.
+        EnforcementItemisationRow cost = row("c1", EnforcementItemisationCategory.TITLED_COSTS,
+                ClaimComponentType.COST_INTEREST_BEARING, "verzinsliche Kosten", "100.00");
+        cost.setInterestAmount(new BigDecimal("4.20"));
+
+        EnforcementItemisationSlots slots = new EnforcementItemisationSlots(itemisationOf(cost), false);
+
+        assertFalse(slots.getFurtherTitledCosts().isSet());
+        assertFalse(slots.fits());
+        assertEquals("verzinsliche Kosten", slots.getOverflow().get(0).getDesignation());
+    }
+
+    @Test
+    public void asecondCostOfTheSameKindGoesToTheFreeLineOfItsSection() {
+        EnforcementItemisationSlots slots = new EnforcementItemisationSlots(itemisationOf(
+                row("c1", EnforcementItemisationCategory.TITLED_COSTS,
+                        ClaimComponentType.COST_ASSESSED, "Kostenfestsetzung", "166.00"),
+                row("c2", EnforcementItemisationCategory.TITLED_COSTS,
+                        ClaimComponentType.COST_ASSESSED, "weitere Festsetzung", "34.00")), false);
+
+        assertEquals("Kostenfestsetzung", slots.getCost(CostBlock.ASSESSED).getDesignation());
+        assertEquals("weitere Festsetzung", slots.getFurtherTitledCosts().getDesignation());
+        assertEquals(new BigDecimal("34.00"), slots.getFurtherTitledCosts().getAmount());
+        assertTrue(slots.fits());
+    }
+
+    @Test
+    public void claimsAndCostsTheTitleDoesNotCoverGoToTheFreeLinesOfTheirSections() {
+        EnforcementItemisationSlots slots = new EnforcementItemisationSlots(itemisationOf(
+                row("c1", EnforcementItemisationCategory.FURTHER_CLAIM,
+                        ClaimComponentType.MAIN_CLAIM, "weitere Forderung", "50.00"),
+                row("c2", EnforcementItemisationCategory.FURTHER_ENFORCEMENT_COSTS,
+                        ClaimComponentType.OTHER_ANCILLARY_CLAIM, "Zustellkosten", "7.50")), false);
+
+        assertEquals(new BigDecimal("50.00"), slots.getFurtherClaims().getAmount());
+        assertEquals(new BigDecimal("7.50"), slots.getFurtherEnforcementCosts().getAmount());
+        assertFalse(slots.getFurtherTitledCosts().isSet());
+    }
+
+    @Test
+    public void afreeLineSumsWhatItCarriesAndNamesAllOfIt() {
+        EnforcementItemisationSlots slots = new EnforcementItemisationSlots(itemisationOf(
+                row("c1", EnforcementItemisationCategory.FURTHER_CLAIM,
+                        ClaimComponentType.MAIN_CLAIM, "Nutzungsausfall", "50.00"),
+                row("c2", EnforcementItemisationCategory.FURTHER_CLAIM,
+                        ClaimComponentType.MAIN_CLAIM, "Gutachten", "25.50")), false);
+
+        assertEquals(new BigDecimal("75.50"), slots.getFurtherClaims().getAmount());
+        assertEquals("Nutzungsausfall, Gutachten", slots.getFurtherClaims().getDesignation());
+    }
+
+    @Test
+    public void paymentsAreNotPlacedAnywhere() {
+        // Sie haben die Betraege bereits vermindert; das Formular kennt sie nicht.
+        EnforcementItemisationSlots slots = new EnforcementItemisationSlots(itemisationOf(
+                row(null, EnforcementItemisationCategory.PAYMENT, null, "Zahlung", "500.00")), false);
+
+        assertTrue(slots.getClaims().isEmpty());
+        assertFalse(slots.getFurtherClaims().isSet());
+        assertTrue(slots.fits());
+    }
+
+    @Test
+    public void runningInterestIsFoundByComponentAndNotByName() {
+        // Zwei Positionen duerfen gleich heissen. Der laufende Zins der einen an die andere zu
+        // haengen, verschoebe ihn auf einen anderen Betrag.
+        EnforcementItemisationRow first = row("c1", EnforcementItemisationCategory.TITLED_MAIN_CLAIM,
+                ClaimComponentType.MAIN_CLAIM, "Rechnung", "1000.00");
+        EnforcementItemisationRow second = row("c2", EnforcementItemisationCategory.TITLED_MAIN_CLAIM,
+                ClaimComponentType.MAIN_CLAIM, "Rechnung", "2000.00");
+
+        EnforcementItemisation itemisation = itemisationOf(first, second);
+        ContinuingInterest continuing = new ContinuingInterest();
+        continuing.setComponentId("c2");
+        continuing.setBaseAmount(new BigDecimal("2000.00"));
+        itemisation.getContinuingInterest().add(continuing);
+
+        EnforcementItemisationSlots slots = new EnforcementItemisationSlots(itemisation, false);
+
+        assertNull(slots.continuingFor(first));
+        assertSame(continuing, slots.continuingFor(second));
+    }
+
+    @Test
+    public void anItemisationThatIsNotThereFitsAndPlacesNothing() {
+        EnforcementItemisationSlots slots = new EnforcementItemisationSlots(null, false);
+
+        assertTrue(slots.getClaims().isEmpty());
+        assertTrue(slots.fits());
+        assertNull(slots.getCost(CostBlock.ASSESSED));
+        assertNull(slots.continuingFor(null));
     }
 }

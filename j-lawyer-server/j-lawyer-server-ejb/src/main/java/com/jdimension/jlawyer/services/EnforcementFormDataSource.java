@@ -666,8 +666,11 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
 import com.jdimension.jlawyer.persistence.EnforcementMeasure;
 import com.jdimension.jlawyer.persistence.EnforcementTitle;
+import com.jdimension.jlawyer.persistence.EnforcementTitleType;
+import com.jdimension.jlawyer.pojo.ContinuingInterest;
 import com.jdimension.jlawyer.pojo.EnforcementItemisation;
 import com.jdimension.jlawyer.pojo.EnforcementItemisationCategory;
+import com.jdimension.jlawyer.pojo.EnforcementItemisationRow;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -749,6 +752,30 @@ public class EnforcementFormDataSource {
             EnforcementItemisation itemisation, AddressBean filedBy, Date day,
             String fileNumber, String place) {
 
+        return valuesOf(measure, creditors, debtors, title, itemisation, filedBy, day, fileNumber,
+                place, null);
+    }
+
+    /**
+     * The same, with the costs this measure caused.
+     *
+     * @param measure the measure
+     * @param creditors the creditors
+     * @param debtors the debtors
+     * @param title the title
+     * @param itemisation the itemisation
+     * @param filedBy who files
+     * @param day the day
+     * @param fileNumber the case reference
+     * @param place the place
+     * @param costs the two blocks of section IV, or null where they are not known
+     * @return the values
+     */
+    public Map<String, String> valuesOf(EnforcementMeasure measure, List<ClaimLedgerParty> creditors,
+            List<ClaimLedgerParty> debtors, EnforcementTitle title,
+            EnforcementItemisation itemisation, AddressBean filedBy, Date day,
+            String fileNumber, String place, EnforcementCostView.Block[] costs) {
+
         Map<String, String> values = new LinkedHashMap<>();
 
         addressee(values, measure);
@@ -757,6 +784,8 @@ public class EnforcementFormDataSource {
         representative(values, filedBy);
         title(values, title);
         amounts(values, itemisation);
+        itemisation(values, itemisation, title);
+        costs(values, costs);
 
         values.put("akte.zeichen", nonNull(fileNumber));
         values.put("ort", nonNull(place));
@@ -794,10 +823,12 @@ public class EnforcementFormDataSource {
     private void party(Map<String, String> values, String prefix, ClaimLedgerParty party) {
         AddressBean contact = party == null ? null : party.getContact();
 
-        boolean company = contact != null && notEmpty(contact.getCompany());
-        String salutation = contact == null ? EMPTY : nonNull(contact.getSalutation()).trim();
-        boolean male = !company && "Herr".equalsIgnoreCase(salutation);
-        boolean female = !company && "Frau".equalsIgnoreCase(salutation);
+        // Die Anrede steht am Kontakt im Feld "title" - das ist die Auswahlliste "Anrede" im
+        // Kontakteditor. "salutation" ist die "Begrüßung", also die Briefanrede.
+        ContactSalutation anrede = new ContactSalutation();
+        boolean company = anrede.isCompany(contact);
+        boolean male = anrede.isMale(contact);
+        boolean female = anrede.isFemale(contact);
 
         values.put(prefix + ".ist_herr", tick(male));
         values.put(prefix + ".ist_frau", tick(female));
@@ -880,6 +911,148 @@ public class EnforcementFormDataSource {
     }
 
     /**
+     * The itemisation as the official itemisation forms want it: block by block.
+     *
+     * The form has a fixed number of places, and which claim goes into which is a legal statement
+     * rather than a layout decision - {@link EnforcementItemisationSlots} makes it. Here the chosen
+     * lines only become text.
+     *
+     * Every key is written even when nothing fills it. A key that appears only when data happens to
+     * be there would be missing from the administration's list exactly when somebody wants to
+     * assign it, and would leave whatever the template carried in a field that a firm has mapped.
+     */
+    private void itemisation(Map<String, String> values, EnforcementItemisation itemisation,
+            EnforcementTitle title) {
+
+        EnforcementItemisationSlots slots = new EnforcementItemisationSlots(itemisation,
+                title != null && title.getTitleType() == EnforcementTitleType.VOLLSTRECKUNGSBESCHEID);
+
+        for (int slot = 1; slot <= EnforcementItemisationSlots.CLAIM_SLOTS; slot++) {
+            List<EnforcementItemisationRow> claims = slots.getClaims();
+            claim(values, "aufstellung.forderung." + slot,
+                    claims.size() >= slot ? claims.get(slot - 1) : null, slots, itemisation, false);
+        }
+
+        claim(values, "aufstellung.kosten.mahnverfahren",
+                slots.getCost(EnforcementItemisationSlots.CostBlock.DUNNING_ORDER), slots, itemisation, true);
+        claim(values, "aufstellung.kosten.vorgerichtlich",
+                slots.getCost(EnforcementItemisationSlots.CostBlock.PRE_COURT), slots, itemisation, true);
+        claim(values, "aufstellung.kosten.festgesetzt",
+                slots.getCost(EnforcementItemisationSlots.CostBlock.ASSESSED), slots, itemisation, true);
+
+        freeLine(values, "aufstellung.weitere_forderung", slots.getFurtherClaims());
+        freeLine(values, "aufstellung.weitere_kosten", slots.getFurtherTitledCosts());
+        freeLine(values, "aufstellung.vollstreckungskosten", slots.getFurtherEnforcementCosts());
+
+        values.put("aufstellung.summe", itemisation == null ? EMPTY
+                : amount(itemisation.totalDemanded()));
+    }
+
+    /**
+     * One block of the itemisation: the claim, what is left of it, and its interest.
+     *
+     * @param costs whether the block is a cost block, whose boxes are named after costs
+     */
+    private void claim(Map<String, String> values, String prefix, EnforcementItemisationRow row,
+            EnforcementItemisationSlots slots, EnforcementItemisation itemisation, boolean costs) {
+
+        boolean present = row != null;
+        // Eine Forderung, auf die gezahlt wurde, ist eine Restforderung; das Formular will dann die
+        // urspruengliche Hoehe neben dem Rest. "Teilforderung" bliebe leer: dass ein Glaeubiger nur
+        // einen Teil seines Titels vollstreckt, waere seine Entscheidung und steht nirgends im
+        // Forderungskonto - sie zu unterstellen hiesse, dem Gerichtsvollzieher etwas zu sagen, das
+        // niemand gesagt hat.
+        boolean remainder = present && row.getPayments().signum() != 0;
+
+        values.put(prefix + (costs ? ".ist_gesamtkosten" : ".ist_hauptforderung"),
+                tick(present && !remainder));
+        values.put(prefix + (costs ? ".ist_restkosten" : ".ist_restforderung"), tick(remainder));
+        values.put(prefix + (costs ? ".ist_teilkosten" : ".ist_teilforderung"), EMPTY);
+        values.put(prefix + (costs ? ".restkosten" : ".restbetrag"),
+                remainder ? amount(row.getOriginalAmount()) : EMPTY);
+        values.put(prefix + (costs ? ".teilkosten" : ".teilbetrag"), EMPTY);
+        values.put(prefix + ".bezeichnung", present ? nonNull(row.getDesignation()) : EMPTY);
+        values.put(prefix + ".betrag", present ? amount(row.getAmount()) : EMPTY);
+        values.put(prefix + ".zinsen_ausgerechnet",
+                present && row.getInterestAmount().signum() != 0
+                        ? amount(row.getInterestAmount()) : EMPTY);
+
+        // Die ausgerechneten Zinsen: vom Zinsbeginn bis zum Stichtag, mit Betrag. Der
+        // Gerichtsvollzieher rechnet sie nicht nach, er treibt sie bei.
+        boolean interest = present && row.getInterestAmount().signum() != 0;
+        values.put(prefix + ".zins.ist_prozentpunkte", tick(interest && row.isInterestAboveBaseRate()));
+        values.put(prefix + ".zins.ist_prozent", tick(interest && !row.isInterestAboveBaseRate()));
+        values.put(prefix + ".zins.prozentpunkte",
+                interest && row.isInterestAboveBaseRate() ? rate(row.getInterestRate()) : EMPTY);
+        values.put(prefix + ".zins.prozent",
+                interest && !row.isInterestAboveBaseRate() ? rate(row.getInterestRate()) : EMPTY);
+        values.put(prefix + ".zins.aus_betrag", interest ? amount(row.getAmount()) : EMPTY);
+        values.put(prefix + ".zins.von", interest ? format(row.getInterestFrom()) : EMPTY);
+        values.put(prefix + ".zins.bis", interest && itemisation != null
+                ? format(itemisation.getKeyDate()) : EMPTY);
+        values.put(prefix + ".zins.betrag", interest ? amount(row.getInterestAmount()) : EMPTY);
+
+        // Der laufende Zins: ohne Betrag und ohne Enddatum, denn er laeuft weiter. Das Formular
+        // haelt dafuer eigene Zeilen bereit, und die Summe unten zaehlt ihn ausdruecklich nicht mit.
+        ContinuingInterest continuing = present ? slots.continuingFor(row) : null;
+        boolean running = continuing != null;
+        values.put(prefix + ".laufender_zins.ist_prozentpunkte",
+                tick(running && continuing.isBaseRateRelated()));
+        values.put(prefix + ".laufender_zins.ist_prozent",
+                tick(running && !continuing.isBaseRateRelated()));
+        values.put(prefix + ".laufender_zins.prozentpunkte",
+                running && continuing.isBaseRateRelated() ? rate(continuing.getMarginPercent()) : EMPTY);
+        values.put(prefix + ".laufender_zins.prozent",
+                running && !continuing.isBaseRateRelated() ? rate(continuing.getRatePercent()) : EMPTY);
+        values.put(prefix + ".laufender_zins.aus_betrag",
+                running ? amount(continuing.getBaseAmount()) : EMPTY);
+        values.put(prefix + ".laufender_zins.seit", running ? format(continuing.getRunningFrom()) : EMPTY);
+    }
+
+    /**
+     * One of the form's free lines, which carry a designation and an amount and nothing else.
+     */
+    private void freeLine(Map<String, String> values, String prefix,
+            EnforcementItemisationSlots.FreeLine line) {
+
+        values.put(prefix + ".ist_gesetzt", tick(line.isSet()));
+        values.put(prefix + ".bezeichnung", line.isSet() ? line.getDesignation() : EMPTY);
+        values.put(prefix + ".betrag", line.isSet() ? amount(line.getAmount()) : EMPTY);
+    }
+
+    /**
+     * The costs of this measure, as section IV of the itemisation asks for them.
+     *
+     * The form has two blocks of the same shape. The first carries the measure - the procedural
+     * fee, the flat rate, further outlays, VAT and their sub-total. The second carries a hearing
+     * fee where one arose, with its own value and sub-total, because a fee is not an outlay and
+     * putting it among them would say something else.
+     */
+    private void costs(Map<String, String> values, EnforcementCostView.Block[] costs) {
+
+        EnforcementCostView.Block measure = costs != null && costs.length > 0 ? costs[0] : null;
+        EnforcementCostView.Block hearing = costs != null && costs.length > 1 ? costs[1] : null;
+
+        costBlock(values, "massnahme.kosten", measure);
+        costBlock(values, "massnahme.kosten2", hearing);
+    }
+
+    private void costBlock(Map<String, String> values, String prefix,
+            EnforcementCostView.Block block) {
+
+        boolean present = block != null && !block.isEmpty();
+        values.put(prefix + ".bezeichnung", present ? nonNull(block.getDesignation()) : EMPTY);
+        values.put(prefix + ".gegenstandswert", present ? amount(block.getBaseValue()) : EMPTY);
+        values.put(prefix + ".verfahrensgebuehr", present ? amount(block.getProcedureFee()) : EMPTY);
+        values.put(prefix + ".post_telekom", present ? amount(block.getPostage()) : EMPTY);
+        values.put(prefix + ".weitere_auslagen_bezeichnung",
+                present ? nonNull(block.getOtherExpensesDesignation()) : EMPTY);
+        values.put(prefix + ".weitere_auslagen", present ? amount(block.getOtherExpenses()) : EMPTY);
+        values.put(prefix + ".umsatzsteuer", present ? amount(block.getVat()) : EMPTY);
+        values.put(prefix + ".zwischensumme", present ? amount(block.getTotal()) : EMPTY);
+    }
+
+    /**
      * Every key this vocabulary answers, for the administration that writes a profile.
      *
      * Produced by building the values of an empty measure: a key that is only set when data happens
@@ -888,7 +1061,7 @@ public class EnforcementFormDataSource {
      * @return the keys, in a stable order
      */
     public java.util.Set<String> knownKeys() {
-        return valuesOf(null, null, null, null, null, null, null).keySet();
+        return valuesOf(null, null, null, null, null, null, null, null, null, null).keySet();
     }
 
     private ClaimLedgerParty first(List<ClaimLedgerParty> parties) {
@@ -946,5 +1119,18 @@ public class EnforcementFormDataSource {
         }
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.GERMANY);
         return new DecimalFormat("#,##0.00", symbols).format(value);
+    }
+
+    /**
+     * A rate as the form prints it: without a thousands separator, and without trailing zeroes
+     * that would suggest a precision the rule does not have. Five points above the base rate are
+     * "5", not "5,00 %".
+     */
+    private String rate(BigDecimal value) {
+        if (value == null) {
+            return EMPTY;
+        }
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.GERMANY);
+        return new DecimalFormat("0.##", symbols).format(value);
     }
 }

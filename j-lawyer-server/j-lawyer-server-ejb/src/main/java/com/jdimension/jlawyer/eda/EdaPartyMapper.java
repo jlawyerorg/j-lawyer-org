@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.eda;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.services.ContactSalutation;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
 import com.jdimension.jlawyer.persistence.ClaimLedgerPartyRepresentative;
 import java.util.ArrayList;
@@ -903,11 +904,13 @@ public class EdaPartyMapper {
         if (notEmpty(contact.getCompany())) {
             return isGmbHCoKg(contact.getLegalForm()) ? EdaSalutationKey.GMBH_CO_KG : EdaSalutationKey.NONE;
         }
-        String salutation = contact.getSalutation() == null ? "" : contact.getSalutation().trim();
-        if ("Herr".equalsIgnoreCase(salutation)) {
+        // Aus dem Feld, das die Auswahlliste "Anrede" des Kontakteditors fuellt - nicht aus der
+        // Begruessung, die den ganzen Briefkopfsatz enthaelt und deshalb nie passt.
+        ContactSalutation anrede = new ContactSalutation();
+        if (anrede.isMale(contact)) {
             return EdaSalutationKey.PERSON_MALE;
         }
-        if ("Frau".equalsIgnoreCase(salutation)) {
+        if (anrede.isFemale(contact)) {
             return EdaSalutationKey.PERSON_FEMALE;
         }
         return EdaSalutationKey.PERSON_UNSPECIFIED;

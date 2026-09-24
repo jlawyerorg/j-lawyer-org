@@ -798,6 +798,18 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuDunningStagesActionPerformed"/>
                   </Events>
                 </MenuItem>
+          <MenuItem class="javax.swing.JMenuItem" name="mnuEnforcementForms">
+            <Properties>
+              <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                <Image iconType="3" name="/icons16/material/baseline_receipt_long_black_48dp.png"/>
+              </Property>
+              <Property name="text" type="java.lang.String" value="Vollstreckungsformulare"/>
+              <Property name="toolTipText" type="java.lang.String" value="Die amtlichen Formulare der ZVFV und ihre Fassungen"/>
+            </Properties>
+            <Events>
+              <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuEnforcementFormsActionPerformed"/>
+            </Events>
+          </MenuItem>
                 <MenuItem class="javax.swing.JMenuItem" name="mnuCourts">
                   <Properties>
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">

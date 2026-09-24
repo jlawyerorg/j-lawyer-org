@@ -815,12 +815,17 @@ public class EnforcementItemisation implements Serializable {
      * @return the sum to be enforced, never null
      */
     public BigDecimal totalDemanded() {
+        // Zahlungen werden hier NICHT abgezogen. Der Betrag einer Forderungszeile ist der offene
+        // Betrag zum Stichtag - die Aufstellung entsteht aus einer Forderungsaufstellung, deren
+        // Positionen bereits um die Zahlungen vermindert sind. Wer sie hier noch einmal abzoege,
+        // liesse den Gerichtsvollzieher zweimal gutschreiben, was einmal gezahlt wurde; bei einer
+        // Zahlung von 500 Euro triebe er 500 Euro zu wenig bei. Die Zahlungszeilen stehen in der
+        // Aufstellung, damit nachvollziehbar bleibt, warum die Hauptforderung eine Restforderung
+        // ist, und nicht, um noch einmal zu wirken.
         BigDecimal total = BigDecimal.ZERO;
         for (EnforcementItemisationRow row : rows) {
             if (row.getCategory() != null && row.getCategory().isClaim()) {
                 total = total.add(row.getAmount()).add(row.getInterestAmount());
-            } else {
-                total = total.subtract(row.getAmount());
             }
         }
         return total;

@@ -660,319 +660,511 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.client.configuration;
 
-import java.io.Serializable;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.persistence.EnforcementFormTemplate;
+import com.jdimension.jlawyer.pojo.AcroFormFieldInfo;
+import com.jdimension.jlawyer.services.EnforcementServiceRemote;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.io.File;
+import java.nio.file.Files;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.Lob;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.table.DefaultTableModel;
+import org.apache.log4j.Logger;
 
 /**
- * One version of one official form, with the profile that says how to fill it.
+ * The official enforcement forms held by this installation, and their versions.
  *
- * The forms of the ZVFV are replaced from time to time. A measure generated under an older version
- * was not wrong, it was current - so versions live alongside one another with a validity period,
- * and a measure records which one it used. Producing a form from a version whose validity has ended
- * is possible but has to be confirmed.
+ * Two things a firm does here. It imports the forms shipped with the software - once, on a button,
+ * because they are master data of the installation and should appear because somebody decided they
+ * should, not as a side effect of a restart. And it adds a new version when the ZVFV replaces one,
+ * without deleting the old: a measure generated under the old version was not wrong, it was current,
+ * and it has to stay reproducible.
  *
- * The PDF is held here rather than in the file system. The number of forms is small, the versions
- * few, and keeping them with their mapping means a backup of the database is a backup of everything
- * needed to reproduce a filing.
+ * The fields of a form are shown with the label the form carries for them. The technical names say
+ * nothing - "Textfeld 353" - so without the label, writing a mapping profile would mean counting
+ * fields on the printed form.
  *
  * @author jens
  */
-@Entity
-@Table(name = "enforcement_form_templates")
-@NamedQueries({
-    @NamedQuery(name = "EnforcementFormTemplate.findAll", query = "SELECT t FROM EnforcementFormTemplate t ORDER BY t.formKey ASC, t.validFrom DESC"),
-    @NamedQuery(name = "EnforcementFormTemplate.findById", query = "SELECT t FROM EnforcementFormTemplate t WHERE t.id = :id"),
-    @NamedQuery(name = "EnforcementFormTemplate.findByKey", query = "SELECT t FROM EnforcementFormTemplate t WHERE t.formKey = :formKey ORDER BY t.validFrom DESC"),
-    // Ein Verzeichnis ohne die Dateien - und ohne verwaltete Entities. Wer eine verwaltete Entity
-    // abräumt, um sie leichter zu machen, schreibt die Leere beim Commit in die Datenbank.
-    @NamedQuery(name = "EnforcementFormTemplate.findAllSummaries", query = "SELECT NEW com.jdimension.jlawyer.persistence.EnforcementFormTemplate(t.id, t.formKey, t.name, t.version, t.validFrom, t.validTo, t.fileName, t.description) FROM EnforcementFormTemplate t ORDER BY t.formKey ASC, t.validFrom DESC")
-})
-public class EnforcementFormTemplate implements Serializable {
+public class EnforcementFormsConfigurationDialog extends javax.swing.JDialog {
 
-    private static final long serialVersionUID = 1L;
+    private static final Logger log = Logger.getLogger(EnforcementFormsConfigurationDialog.class.getName());
 
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
+    private static final SimpleDateFormat DAY = new SimpleDateFormat("dd.MM.yyyy");
 
-    /** The annex of the ZVFV this is a version of - "ANLAGE_1". */
-    @Column(name = "form_key", nullable = false, length = 50)
-    private String formKey;
-
-    @Column(name = "name", nullable = false)
-    private String name;
+    private final List<EnforcementFormTemplate> templates = new ArrayList<>();
 
     /**
-     * The version, as the publisher dates it - "2024-09-01".
+     * Creates the dialog.
      *
-     * Recorded on every measure generated from it, so a filing stays reproducible after the form has
-     * been replaced.
+     * @param parent the parent window
+     * @param modal whether the dialog is modal
      */
-    @Column(name = "version", length = 50)
-    private String version;
+    public EnforcementFormsConfigurationDialog(java.awt.Frame parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
 
-    @Column(name = "valid_from")
-    @Temporal(TemporalType.DATE)
-    private Date validFrom;
+        this.tblTemplates.setModel(new DefaultTableModel(
+                new Object[]{"Anlage", "Bezeichnung", "Fassung", "gültig ab", "gültig bis"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        });
+        this.tblFields.setModel(new DefaultTableModel(
+                new Object[]{"Seite", "Feldname", "Art", "Werte", "Bezeichnung"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        });
+        this.tblTemplates.getSelectionModel().addListSelectionListener(e -> showFieldsOfSelection());
 
-    /** Null while the version is the current one. */
-    @Column(name = "valid_to")
-    @Temporal(TemporalType.DATE)
-    private Date validTo;
-
-    /**
-     * The fillable PDF.
-     *
-     * Lazy because it is a few hundred kilobytes and most reads of a template only want to know
-     * which versions exist.
-     */
-    @Lob
-    @Basic(fetch = FetchType.LAZY)
-    @Column(name = "pdf_content")
-    private byte[] pdfContent;
-
-    @Column(name = "file_name")
-    private String fileName;
-
-    @Column(name = "description", length = 1000)
-    private String description;
-
-    /**
-     * How the fields of this form are filled.
-     *
-     * Belongs to the version, not to the form: a new version may rename its fields, and a profile
-     * written for the old one would then address fields that no longer exist.
-     */
-    @OneToMany(mappedBy = "template", fetch = FetchType.LAZY)
-    private List<EnforcementFormFieldMapping> fieldMappings = new ArrayList<>();
-
-    /**
-     * The constructor JPA needs.
-     */
-    public EnforcementFormTemplate() {
+        loadTemplates();
     }
 
-    /**
-     * Builds a template without its PDF, for a listing.
-     *
-     * Exists so a listing can be produced by a query rather than by emptying loaded entities.
-     * Clearing the content of a <em>managed</em> entity to make it lighter on the wire writes that
-     * emptiness into the database when the transaction commits - the templates are then listed
-     * correctly and gone.
-     *
-     * @param id the technical identifier
-     * @param formKey the annex of the ZVFV
-     * @param name the designation
-     * @param version the version as the publisher dates it
-     * @param validFrom the day the version takes effect
-     * @param validTo the day it ceased to be prescribed
-     * @param fileName the name the file was uploaded under
-     * @param description what this version is
-     */
-    public EnforcementFormTemplate(String id, String formKey, String name, String version,
-            Date validFrom, Date validTo, String fileName, String description) {
-        this.id = id;
-        this.formKey = formKey;
-        this.name = name;
-        this.version = version;
-        this.validFrom = validFrom;
-        this.validTo = validTo;
-        this.fileName = fileName;
-        this.description = description;
+    private EnforcementServiceRemote enforcement() throws Exception {
+        ClientSettings settings = ClientSettings.getInstance();
+        return JLawyerServiceLocator.getInstance(settings.getLookupProperties())
+                .lookupEnforcementServiceRemote();
     }
 
-    /**
-     * @return the technical identifier
-     */
-    public String getId() {
-        return id;
-    }
+    private void loadTemplates() {
+        DefaultTableModel model = (DefaultTableModel) this.tblTemplates.getModel();
+        model.setRowCount(0);
+        this.templates.clear();
 
-    /**
-     * @param id the technical identifier
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the annex of the ZVFV this is a version of
-     */
-    public String getFormKey() {
-        return formKey;
-    }
-
-    /**
-     * @param formKey the annex of the ZVFV
-     */
-    public void setFormKey(String formKey) {
-        this.formKey = formKey;
-    }
-
-    /**
-     * @return the designation shown to the user
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name the designation shown to the user
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return the version as the publisher dates it
-     */
-    public String getVersion() {
-        return version;
-    }
-
-    /**
-     * @param version the version as the publisher dates it
-     */
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    /**
-     * @return the day this version takes effect, or null if unstated
-     */
-    public Date getValidFrom() {
-        return validFrom;
-    }
-
-    /**
-     * @param validFrom the day this version takes effect
-     */
-    public void setValidFrom(Date validFrom) {
-        this.validFrom = validFrom;
-    }
-
-    /**
-     * @return the day this version ceased to be prescribed, or null while it is current
-     */
-    public Date getValidTo() {
-        return validTo;
-    }
-
-    /**
-     * @param validTo the day this version ceased to be prescribed
-     */
-    public void setValidTo(Date validTo) {
-        this.validTo = validTo;
-    }
-
-    /**
-     * @return the fillable PDF
-     */
-    public byte[] getPdfContent() {
-        return pdfContent;
-    }
-
-    /**
-     * @param pdfContent the fillable PDF
-     */
-    public void setPdfContent(byte[] pdfContent) {
-        this.pdfContent = pdfContent;
-    }
-
-    /**
-     * @return the name the file was uploaded under
-     */
-    public String getFileName() {
-        return fileName;
-    }
-
-    /**
-     * @param fileName the name the file was uploaded under
-     */
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
-
-    /**
-     * @return what this version is, in the words a user needs
-     */
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * @param description what this version is
-     */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    /**
-     * @return how the fields of this form are filled, never null
-     */
-    public List<EnforcementFormFieldMapping> getFieldMappings() {
-        if (this.fieldMappings == null) {
-            this.fieldMappings = new ArrayList<>();
+        try {
+            List<EnforcementFormTemplate> loaded = enforcement().getFormTemplates();
+            if (loaded != null) {
+                this.templates.addAll(loaded);
+            }
+        } catch (Exception ex) {
+            log.error("Unable to load the enforcement form templates", ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Formularvorlagen konnten nicht geladen werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
         }
-        return fieldMappings;
+
+        for (EnforcementFormTemplate template : this.templates) {
+            model.addRow(new Object[]{
+                template.getFormKey() == null ? "" : template.getFormKey().replace("_", " "),
+                template.getName(),
+                template.getVersion() == null ? "" : template.getVersion(),
+                template.getValidFrom() == null ? "" : DAY.format(template.getValidFrom()),
+                template.getValidTo() == null ? "" : DAY.format(template.getValidTo())});
+        }
+        ((DefaultTableModel) this.tblFields.getModel()).setRowCount(0);
+        updateHint();
     }
 
     /**
-     * @param fieldMappings how the fields of this form are filled
+     * Says what the store holds, and what to do when it holds nothing.
      */
-    public void setFieldMappings(List<EnforcementFormFieldMapping> fieldMappings) {
-        this.fieldMappings = fieldMappings;
+    private void updateHint() {
+        if (this.templates.isEmpty()) {
+            this.txtHint.setText("Es sind keine Formularvorlagen hinterlegt. Ohne sie lassen sich "
+                    + "keine Vollstreckungsformulare erzeugen. Mit \"Standardpaket importieren\" "
+                    + "werden die acht amtlichen Anlagen der ZVFV übernommen, die mit der Software "
+                    + "ausgeliefert werden.");
+        } else {
+            this.txtHint.setText(this.templates.size() + " Vorlage(n). Eine abgelöste Fassung wird "
+                    + "nicht ersetzt, sondern bekommt ein Gültigkeitsende und die neue daneben: "
+                    + "eine unter der alten Fassung erzeugte Maßnahme war nicht falsch, sie war "
+                    + "aktuell, und muss nachvollziehbar bleiben.");
+        }
+        this.txtHint.setCaretPosition(0);
+    }
+
+    private EnforcementFormTemplate selectedTemplate() {
+        int row = this.tblTemplates.getSelectedRow();
+        return row < 0 || row >= this.templates.size() ? null : this.templates.get(row);
     }
 
     /**
-     * Whether this version is the one prescribed on a given day.
-     *
-     * @param day the day to judge by
-     * @return true if the day falls inside the validity period
+     * Shows the fields of the selected form, each with what the form calls it.
      */
-    public boolean isValidOn(Date day) {
-        if (day == null) {
-            return this.validTo == null;
+    private void showFieldsOfSelection() {
+        DefaultTableModel model = (DefaultTableModel) this.tblFields.getModel();
+        model.setRowCount(0);
+
+        EnforcementFormTemplate template = selectedTemplate();
+        this.cmdRemoveTemplate.setEnabled(template != null);
+        this.cmdSetValidTo.setEnabled(template != null);
+        if (template == null) {
+            return;
         }
-        if (this.validFrom != null && day.before(this.validFrom)) {
-            return false;
+        try {
+            List<AcroFormFieldInfo> fields = enforcement().getFormFields(template.getId());
+            for (AcroFormFieldInfo field : fields) {
+                model.addRow(new Object[]{"", field.getName(), field.getKind(),
+                    String.join("|", field.getAdmittedValues()),
+                    field.getLabel() == null ? "" : field.getLabel()});
+            }
+        } catch (Exception ex) {
+            log.error("Unable to read the fields of form template " + template.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Felder des Formulars konnten nicht gelesen werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
         }
-        return this.validTo == null || !day.after(this.validTo);
     }
 
-    @Override
-    public int hashCode() {
-        return id == null ? 0 : id.hashCode();
-    }
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
 
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof EnforcementFormTemplate)) {
-            return false;
+        lblTemplates = new javax.swing.JLabel();
+        scrlTemplates = new javax.swing.JScrollPane();
+        tblTemplates = new javax.swing.JTable();
+        cmdImportPackage = new javax.swing.JButton();
+        cmdReplaceMapping = new javax.swing.JButton();
+        cmdAddTemplate = new javax.swing.JButton();
+        cmdRemoveTemplate = new javax.swing.JButton();
+        cmdSetValidTo = new javax.swing.JButton();
+        lblFields = new javax.swing.JLabel();
+        scrlFields = new javax.swing.JScrollPane();
+        tblFields = new javax.swing.JTable();
+        scrlHint = new javax.swing.JScrollPane();
+        txtHint = new javax.swing.JTextArea();
+        cmdClose = new javax.swing.JButton();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Vollstreckungsformulare");
+
+        lblTemplates.setFont(lblTemplates.getFont().deriveFont(lblTemplates.getFont().getStyle() | java.awt.Font.BOLD));
+        lblTemplates.setText("Formularvorlagen");
+
+        tblTemplates.setModel(new javax.swing.table.DefaultTableModel());
+        tblTemplates.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        scrlTemplates.setViewportView(tblTemplates);
+
+        cmdImportPackage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_update_misc.png"))); // NOI18N
+        cmdImportPackage.setText("Standardpaket importieren");
+        cmdImportPackage.setToolTipText("Die acht amtlichen Anlagen der ZVFV übernehmen, die mit der Software ausgeliefert werden; vorhandene Vorlagen bleiben unverändert");
+        cmdReplaceMapping.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/reload.png"))); // NOI18N
+        cmdReplaceMapping.setText("Zuordnung übernehmen");
+        cmdReplaceMapping.setToolTipText("Die mitgelieferte Feldzuordnung für die gewählte Vorlage übernehmen und die vorhandene dabei verwerfen");
+        cmdReplaceMapping.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdReplaceMappingActionPerformed(evt);
+            }
+        });
+
+        cmdImportPackage.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdImportPackageActionPerformed(evt);
+            }
+        });
+
+        cmdAddTemplate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdAddTemplate.setText("Fassung hinzufügen");
+        cmdAddTemplate.setToolTipText("Eine neue Fassung eines Formulars als PDF hinterlegen");
+        cmdAddTemplate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddTemplateActionPerformed(evt);
+            }
+        });
+
+        cmdSetValidTo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
+        cmdSetValidTo.setText("Gültigkeit beenden");
+        cmdSetValidTo.setToolTipText("Das Gültigkeitsende der gewählten Fassung setzen, ohne sie zu löschen");
+        cmdSetValidTo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSetValidToActionPerformed(evt);
+            }
+        });
+
+        cmdRemoveTemplate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdRemoveTemplate.setToolTipText("Vorlage samt Feldzuordnung entfernen");
+        cmdRemoveTemplate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRemoveTemplateActionPerformed(evt);
+            }
+        });
+
+        lblFields.setFont(lblFields.getFont().deriveFont(lblFields.getFont().getStyle() | java.awt.Font.BOLD));
+        lblFields.setText("Felder der gewählten Vorlage");
+
+        tblFields.setModel(new javax.swing.table.DefaultTableModel());
+        scrlFields.setViewportView(tblFields);
+
+        txtHint.setEditable(false);
+        txtHint.setColumns(20);
+        txtHint.setLineWrap(true);
+        txtHint.setRows(3);
+        txtHint.setWrapStyleWord(true);
+        txtHint.setFocusable(false);
+        scrlHint.setViewportView(txtHint);
+
+        cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdClose.setText("Schließen");
+        cmdClose.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCloseActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblTemplates)
+                    .addComponent(scrlTemplates, javax.swing.GroupLayout.DEFAULT_SIZE, 820, Short.MAX_VALUE)
+                    .addComponent(lblFields)
+                    .addComponent(scrlFields, javax.swing.GroupLayout.DEFAULT_SIZE, 820, Short.MAX_VALUE)
+                    .addComponent(scrlHint, javax.swing.GroupLayout.DEFAULT_SIZE, 820, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(cmdImportPackage)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdReplaceMapping)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(cmdAddTemplate)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdSetValidTo)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdRemoveTemplate)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdClose)))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(lblTemplates)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(scrlTemplates, javax.swing.GroupLayout.DEFAULT_SIZE, 180, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(lblFields)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(scrlFields, javax.swing.GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(scrlHint, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdImportPackage)
+                    .addComponent(cmdReplaceMapping)
+                    .addComponent(cmdAddTemplate)
+                    .addComponent(cmdSetValidTo)
+                    .addComponent(cmdRemoveTemplate)
+                    .addComponent(cmdClose))
+                .addContainerGap())
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void cmdReplaceMappingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplaceMappingActionPerformed
+        EnforcementFormTemplate template = selectedTemplate();
+        if (template == null) {
+            JOptionPane.showMessageDialog(this, "Bitte zuerst eine Vorlage auswählen.",
+                    "Zuordnung übernehmen", JOptionPane.INFORMATION_MESSAGE);
+            return;
         }
-        EnforcementFormTemplate other = (EnforcementFormTemplate) object;
-        return this.id != null && this.id.equals(other.id);
+        // Verworfen wird nur auf ausdrueckliche Bestaetigung: eine angepasste Zuordnung ist Arbeit,
+        // die niemand ungefragt wegwerfen darf.
+        if (JOptionPane.showConfirmDialog(this,
+                "Die Feldzuordnung von \"" + template.getName() + "\" durch die mitgelieferte "
+                + "ersetzen?\n\nEine von Ihnen angepasste Zuordnung geht dabei verloren.",
+                "Zuordnung übernehmen", JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE) != JOptionPane.YES_OPTION) {
+            return;
+        }
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            int written = JLawyerServiceLocator.getInstance(settings.getLookupProperties())
+                    .lookupEnforcementServiceRemote().replaceFormMapping(template.getId());
+            JOptionPane.showMessageDialog(this, written + " Felder zugeordnet.",
+                    "Zuordnung übernommen", JOptionPane.INFORMATION_MESSAGE);
+            showFieldsOfSelection();
+        } catch (Exception ex) {
+            log.error("Unable to replace the field mapping of template " + template.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Zuordnung konnte nicht übernommen werden: " + ex.getMessage(),
+                    com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdReplaceMappingActionPerformed
+
+    private void cmdImportPackageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdImportPackageActionPerformed
+        List<String> report;
+        try {
+            report = enforcement().importDefaultFormPackage();
+        } catch (Exception ex) {
+            log.error("Unable to import the default form package", ex);
+            JOptionPane.showMessageDialog(this,
+                    "Das Standardpaket konnte nicht importiert werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        // Der Bericht sagt je Formular, ob es übernommen wurde oder schon da war. Ein blosses
+        // "fertig" liesse offen, ob eine angepasste Vorlage überschrieben wurde - sie wurde nicht.
+        JOptionPane.showMessageDialog(this, String.join("\n", report),
+                "Standardpaket", JOptionPane.INFORMATION_MESSAGE);
+        loadTemplates();
+    }//GEN-LAST:event_cmdImportPackageActionPerformed
+
+    private void cmdAddTemplateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddTemplateActionPerformed
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Ausfüllbares Formular wählen");
+        chooser.setFileFilter(new FileNameExtensionFilter("PDF-Formular", "pdf"));
+        if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+        File file = chooser.getSelectedFile();
+
+        String formKey = JOptionPane.showInputDialog(this,
+                "Welche Anlage der ZVFV ist das?\n\n"
+                + "  ANLAGE_1  Vollstreckungsauftrag an Gerichtsvollzieher\n"
+                + "  ANLAGE_2  Antrag auf Durchsuchungsanordnung\n"
+                + "  ANLAGE_3  Entwurf der Durchsuchungsanordnung\n"
+                + "  ANLAGE_4  Antrag auf Pfändungs- und Überweisungsbeschluss\n"
+                + "  ANLAGE_5  Entwurf des Beschlusses\n"
+                + "  ANLAGE_6  Forderungsaufstellung zum Gerichtsvollzieherauftrag\n"
+                + "  ANLAGE_7  Forderungsaufstellung zum PfÜB\n"
+                + "  ANLAGE_8  Forderungsaufstellung bei Unterhalt",
+                "ANLAGE_1");
+        if (formKey == null || formKey.trim().isEmpty()) {
+            return;
+        }
+
+        String version = JOptionPane.showInputDialog(this,
+                "Fassung, wie der Herausgeber sie datiert:", "2026-01-01");
+        if (version == null) {
+            return;
+        }
+
+        Date validFrom = askForDate("Ab wann gilt diese Fassung?", new Date());
+        if (validFrom == null) {
+            return;
+        }
+
+        try {
+            EnforcementFormTemplate template = new EnforcementFormTemplate();
+            template.setFormKey(formKey.trim().toUpperCase());
+            template.setName(file.getName().replaceAll("\\.pdf$", ""));
+            template.setVersion(version.trim());
+            template.setValidFrom(validFrom);
+            template.setFileName(file.getName());
+            template.setPdfContent(Files.readAllBytes(file.toPath()));
+            enforcement().updateFormTemplate(template);
+        } catch (Exception ex) {
+            log.error("Unable to store a new form template from " + file.getAbsolutePath(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Vorlage konnte nicht gespeichert werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        JOptionPane.showMessageDialog(this,
+                "Die Fassung ist hinterlegt.\n\n"
+                + "Sie trägt noch keine Feldzuordnung - ohne sie bliebe ein damit erzeugtes "
+                + "Formular leer. Prüfen Sie, ob die Feldnamen denen der abgelösten Fassung "
+                + "entsprechen; wo sie es tun, lässt sich die Zuordnung übernehmen.",
+                "Fassung hinterlegt", JOptionPane.INFORMATION_MESSAGE);
+        loadTemplates();
+    }//GEN-LAST:event_cmdAddTemplateActionPerformed
+
+    private void cmdSetValidToActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSetValidToActionPerformed
+        EnforcementFormTemplate template = selectedTemplate();
+        if (template == null) {
+            return;
+        }
+        Date validTo = askForDate("Bis wann galt \"" + template.getName() + "\"?",
+                template.getValidTo() == null ? new Date() : template.getValidTo());
+        if (validTo == null) {
+            return;
+        }
+        try {
+            template.setValidTo(validTo);
+            enforcement().updateFormTemplate(template);
+        } catch (Exception ex) {
+            log.error("Unable to set the end of validity of form template " + template.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Gültigkeit konnte nicht gesetzt werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        loadTemplates();
+    }//GEN-LAST:event_cmdSetValidToActionPerformed
+
+    private void cmdRemoveTemplateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveTemplateActionPerformed
+        EnforcementFormTemplate template = selectedTemplate();
+        if (template == null) {
+            return;
+        }
+        if (JOptionPane.showConfirmDialog(this,
+                "Die Vorlage \"" + template.getName() + "\" samt ihrer Feldzuordnung entfernen?\n\n"
+                + "Maßnahmen, die damit erzeugt wurden, behalten den Vermerk der Fassung - die "
+                + "Datei selbst ist danach aber fort. Soll eine abgelöste Fassung nur nicht mehr "
+                + "verwendet werden, setzen Sie besser ihr Gültigkeitsende.",
+                "Vorlage entfernen", JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE) != JOptionPane.YES_OPTION) {
+            return;
+        }
+        try {
+            enforcement().removeFormTemplate(template.getId());
+        } catch (Exception ex) {
+            log.error("Unable to remove form template " + template.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Vorlage konnte nicht entfernt werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        loadTemplates();
+    }//GEN-LAST:event_cmdRemoveTemplateActionPerformed
+
+    private Date askForDate(String question, Date preset) {
+        String entered = JOptionPane.showInputDialog(this, question, DAY.format(preset));
+        if (entered == null) {
+            return null;
+        }
+        try {
+            return DAY.parse(entered.trim());
+        } catch (java.text.ParseException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Das Datum konnte nicht gelesen werden. Erwartet wird TT.MM.JJJJ.",
+                    "Eingabe", JOptionPane.WARNING_MESSAGE);
+            return null;
+        }
     }
 
-    @Override
-    public String toString() {
-        return name + (version == null || version.trim().isEmpty() ? "" : " (" + version + ")");
-    }
+    private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdCloseActionPerformed
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdAddTemplate;
+    private javax.swing.JButton cmdClose;
+    private javax.swing.JButton cmdImportPackage;
+    private javax.swing.JButton cmdReplaceMapping;
+    private javax.swing.JButton cmdRemoveTemplate;
+    private javax.swing.JButton cmdSetValidTo;
+    private javax.swing.JLabel lblFields;
+    private javax.swing.JLabel lblTemplates;
+    private javax.swing.JScrollPane scrlFields;
+    private javax.swing.JScrollPane scrlHint;
+    private javax.swing.JScrollPane scrlTemplates;
+    private javax.swing.JTable tblFields;
+    private javax.swing.JTable tblTemplates;
+    private javax.swing.JTextArea txtHint;
+    // End of variables declaration//GEN-END:variables
 }

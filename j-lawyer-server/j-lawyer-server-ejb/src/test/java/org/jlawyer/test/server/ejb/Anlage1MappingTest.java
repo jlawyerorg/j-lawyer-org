@@ -674,8 +674,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -702,15 +700,11 @@ public class Anlage1MappingTest {
     @Rule
     public TemporaryFolder temporary = new TemporaryFolder();
 
-    private static final Pattern MAPPING = Pattern.compile(
-            "'([^']+)' as field_name, '([^']*)' as field_label, '([^']+)' as source_key");
-
-    private File migration() {
+    private File profileFile() {
         String base = System.getProperty("basedir");
-        // die Migration liegt im Entities-Modul, daneben
         File file = new File(base == null ? "." : base,
-                "../../j-lawyer-server-entities/src/main/resources/db/migration/V3_6_0_43__Anlage1FieldMapping.sql");
-        Assume.assumeTrue("the mapping migration is not present", file.isFile());
+                "src/main/resources/zvfv/mapping/ANLAGE_1.txt");
+        Assume.assumeTrue("the mapping profile is not present", file.isFile());
         return file;
     }
 
@@ -722,13 +716,17 @@ public class Anlage1MappingTest {
         return file;
     }
 
-    /** The profile as the migration writes it: field name to source key, with the label. */
+    /** The shipped profile: field name to source key, with the label the form carries. */
     private Map<String, String[]> profile() throws Exception {
         Map<String, String[]> mapping = new LinkedHashMap<>();
-        String sql = new String(Files.readAllBytes(migration().toPath()), StandardCharsets.UTF_8);
-        Matcher m = MAPPING.matcher(sql);
-        while (m.find()) {
-            mapping.put(m.group(1), new String[]{m.group(3), m.group(2)});
+        for (String line : Files.readAllLines(profileFile().toPath(), StandardCharsets.UTF_8)) {
+            if (line.isEmpty() || line.charAt(0) == '#') {
+                continue;
+            }
+            String[] parts = line.split("\t", -1);
+            if (parts.length >= 3) {
+                mapping.put(parts[0], new String[]{parts[1], parts.length > 3 ? parts[3] : ""});
+            }
         }
         return mapping;
     }
@@ -736,6 +734,29 @@ public class Anlage1MappingTest {
     @Test
     public void theProfileIsNotEmpty() throws Exception {
         assertFalse("ohne Zuordnungen fuellt das Profil nichts", profile().isEmpty());
+        assertEquals(47, profile().size());
+    }
+
+    @Test
+    public void theProfileTravelsWithTheFormsAndNotAsAdatabaseSeed() throws Exception {
+        // Eine Migration laeuft beim Deployment, und da gibt es noch keine Vorlage, der eine
+        // Zuordnung gehoeren koennte - der Seed fuegte still nichts ein. Das Profil gehoert
+        // deshalb in die Auslieferung, neben das PDF, und wird beim Import geschrieben.
+        String base = System.getProperty("basedir");
+        File shipped = new File(base == null ? "." : base, "src/main/resources/zvfv/mapping");
+        assertTrue("die Profile muessen mit den Formularen ausgeliefert werden", shipped.isDirectory());
+
+        // Die wirkungslose Migration bleibt unveraendert stehen - Flyway erkennt sie an der
+        // Pruefsumme der ganzen Datei, ein nachtraeglich eingefuegter Kommentar liesse jede
+        // Installation, die sie bereits gelaufen hat, die Validierung verweigern. Vermerkt wird
+        // das deshalb im Entwurf und nicht in der Datei.
+        File design = new File(base == null ? "." : base,
+                "../../openspec/changes/add-dunning-and-enforcement/design.md");
+        if (design.isFile()) {
+            String text = new String(Files.readAllBytes(design.toPath()), StandardCharsets.UTF_8);
+            assertTrue("der Entwurf muss festhalten, dass V3_6_0_43 wirkungslos ist",
+                    text.contains("V3_6_0_43__Anlage1FieldMapping.sql") && text.contains("no effect"));
+        }
     }
 
     @Test

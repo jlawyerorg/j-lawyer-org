@@ -660,319 +660,230 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package org.jlawyer.test.server.ejb;
 
-import java.io.Serializable;
-import java.util.ArrayList;
+import com.jdimension.jlawyer.persistence.EnforcementFormFieldMapping;
+import com.jdimension.jlawyer.persistence.EnforcementFormRole;
+import com.jdimension.jlawyer.persistence.EnforcementMeasure;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureType;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureTypeForm;
+import com.jdimension.jlawyer.services.EnforcementFormPreparation;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.Lob;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import java.util.Map;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 /**
- * One version of one official form, with the profile that says how to fill it.
+ * What goes into a form's fields, and what the finished document is called.
  *
- * The forms of the ZVFV are replaced from time to time. A measure generated under an older version
- * was not wrong, it was current - so versions live alongside one another with a validity period,
- * and a measure records which one it used. Producing a form from a version whose validity has ended
- * is possible but has to be confirmed.
- *
- * The PDF is held here rather than in the file system. The number of forms is small, the versions
- * few, and keeping them with their mapping means a backup of the database is a backup of everything
- * needed to reproduce a filing.
+ * Both are the quiet kind of decision. A field left untouched keeps whatever the template held; a
+ * document named like the one beside it is a document nobody can tell apart from it, and the one
+ * that goes back to the bailiff is then a matter of luck.
  *
  * @author jens
  */
-@Entity
-@Table(name = "enforcement_form_templates")
-@NamedQueries({
-    @NamedQuery(name = "EnforcementFormTemplate.findAll", query = "SELECT t FROM EnforcementFormTemplate t ORDER BY t.formKey ASC, t.validFrom DESC"),
-    @NamedQuery(name = "EnforcementFormTemplate.findById", query = "SELECT t FROM EnforcementFormTemplate t WHERE t.id = :id"),
-    @NamedQuery(name = "EnforcementFormTemplate.findByKey", query = "SELECT t FROM EnforcementFormTemplate t WHERE t.formKey = :formKey ORDER BY t.validFrom DESC"),
-    // Ein Verzeichnis ohne die Dateien - und ohne verwaltete Entities. Wer eine verwaltete Entity
-    // abräumt, um sie leichter zu machen, schreibt die Leere beim Commit in die Datenbank.
-    @NamedQuery(name = "EnforcementFormTemplate.findAllSummaries", query = "SELECT NEW com.jdimension.jlawyer.persistence.EnforcementFormTemplate(t.id, t.formKey, t.name, t.version, t.validFrom, t.validTo, t.fileName, t.description) FROM EnforcementFormTemplate t ORDER BY t.formKey ASC, t.validFrom DESC")
-})
-public class EnforcementFormTemplate implements Serializable {
+public class EnforcementFormPreparationTest {
 
-    private static final long serialVersionUID = 1L;
+    private final EnforcementFormPreparation preparation = new EnforcementFormPreparation();
 
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
-
-    /** The annex of the ZVFV this is a version of - "ANLAGE_1". */
-    @Column(name = "form_key", nullable = false, length = 50)
-    private String formKey;
-
-    @Column(name = "name", nullable = false)
-    private String name;
-
-    /**
-     * The version, as the publisher dates it - "2024-09-01".
-     *
-     * Recorded on every measure generated from it, so a filing stays reproducible after the form has
-     * been replaced.
-     */
-    @Column(name = "version", length = 50)
-    private String version;
-
-    @Column(name = "valid_from")
-    @Temporal(TemporalType.DATE)
-    private Date validFrom;
-
-    /** Null while the version is the current one. */
-    @Column(name = "valid_to")
-    @Temporal(TemporalType.DATE)
-    private Date validTo;
-
-    /**
-     * The fillable PDF.
-     *
-     * Lazy because it is a few hundred kilobytes and most reads of a template only want to know
-     * which versions exist.
-     */
-    @Lob
-    @Basic(fetch = FetchType.LAZY)
-    @Column(name = "pdf_content")
-    private byte[] pdfContent;
-
-    @Column(name = "file_name")
-    private String fileName;
-
-    @Column(name = "description", length = 1000)
-    private String description;
-
-    /**
-     * How the fields of this form are filled.
-     *
-     * Belongs to the version, not to the form: a new version may rename its fields, and a profile
-     * written for the old one would then address fields that no longer exist.
-     */
-    @OneToMany(mappedBy = "template", fetch = FetchType.LAZY)
-    private List<EnforcementFormFieldMapping> fieldMappings = new ArrayList<>();
-
-    /**
-     * The constructor JPA needs.
-     */
-    public EnforcementFormTemplate() {
+    private static Date date(int y, int m, int d) {
+        return Date.from(LocalDate.of(y, m, d).atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 
-    /**
-     * Builds a template without its PDF, for a listing.
-     *
-     * Exists so a listing can be produced by a query rather than by emptying loaded entities.
-     * Clearing the content of a <em>managed</em> entity to make it lighter on the wire writes that
-     * emptiness into the database when the transaction commits - the templates are then listed
-     * correctly and gone.
-     *
-     * @param id the technical identifier
-     * @param formKey the annex of the ZVFV
-     * @param name the designation
-     * @param version the version as the publisher dates it
-     * @param validFrom the day the version takes effect
-     * @param validTo the day it ceased to be prescribed
-     * @param fileName the name the file was uploaded under
-     * @param description what this version is
-     */
-    public EnforcementFormTemplate(String id, String formKey, String name, String version,
-            Date validFrom, Date validTo, String fileName, String description) {
-        this.id = id;
-        this.formKey = formKey;
-        this.name = name;
-        this.version = version;
-        this.validFrom = validFrom;
-        this.validTo = validTo;
-        this.fileName = fileName;
-        this.description = description;
+    private EnforcementFormFieldMapping labelled(String field, String key, String label) {
+        EnforcementFormFieldMapping m = mapping(field, key, null, true);
+        m.setFieldLabel(label);
+        return m;
     }
 
-    /**
-     * @return the technical identifier
-     */
-    public String getId() {
-        return id;
+    @Test
+    public void amissingEntryIsNamedAsTheFormCallsItAndAsItIsEntered() {
+        // "Textfeld 4" ist der Name im PDF. Wer den Antrag stellt, findet dazu nichts in der
+        // Oberflaeche - und weiss auch nicht, dass die Postleitzahl in die zweite Zeile der
+        // Anschrift gehoert.
+        List<String> described = preparation.describeMissing(Arrays.asList(
+                labelled("Textfeld 1", "empfaenger.name",
+                        "Name Gerichtsvollzieher oder Bezeichnung Verteilungsstelle des Amtsgerichts"),
+                labelled("Textfeld 4", "empfaenger.plz_ort", "Postleitzahl und Ort")),
+                Arrays.asList("Textfeld 1", "Textfeld 4"));
+
+        assertEquals(2, described.size());
+        assertEquals("Name Gerichtsvollzieher oder Bezeichnung Verteilungsstelle des Amtsgerichts"
+                + " (einzutragen unter: Empfänger der Maßnahme, Bezeichnung)", described.get(0));
+        assertEquals("Postleitzahl und Ort"
+                + " (einzutragen unter: Empfänger der Maßnahme, weitere Zeilen der Anschrift)",
+                described.get(1));
     }
 
-    /**
-     * @param id the technical identifier
-     */
-    public void setId(String id) {
-        this.id = id;
+    @Test
+    public void afieldWithoutAlabelIsStillNamedByItsFieldName() {
+        List<String> described = preparation.describeMissing(
+                Arrays.asList(labelled("Textfeld 7", "titel.aktenzeichen", "  ")),
+                Arrays.asList("Textfeld 7"));
+
+        assertEquals("Textfeld 7 (einzutragen unter: Titel im Forderungskonto)", described.get(0));
     }
 
-    /**
-     * @return the annex of the ZVFV this is a version of
-     */
-    public String getFormKey() {
-        return formKey;
+    @Test
+    public void afieldTheProfileDoesNotKnowIsPassedThroughRatherThanDropped() {
+        // Eine Pflichtangabe, zu der keine Zuordnung mehr existiert, ist ein Fehler des Profils -
+        // sie zu verschweigen liesse die Meldung behaupten, es fehle nichts.
+        List<String> described = preparation.describeMissing(
+                Arrays.asList(labelled("Textfeld 1", "empfaenger.name", "Name")),
+                Arrays.asList("Textfeld 1", "Textfeld 99"));
+
+        assertEquals(2, described.size());
+        assertEquals("Textfeld 99", described.get(1));
     }
 
-    /**
-     * @param formKey the annex of the ZVFV
-     */
-    public void setFormKey(String formKey) {
-        this.formKey = formKey;
+    @Test
+    public void nothingMissingIsNothingSaid() {
+        assertTrue(preparation.describeMissing(null, null).isEmpty());
+        assertTrue(preparation.describeMissing(null, new java.util.ArrayList<>()).isEmpty());
     }
 
-    /**
-     * @return the designation shown to the user
-     */
-    public String getName() {
-        return name;
+    private EnforcementFormFieldMapping mapping(String field, String key, String fixed, boolean mandatory) {
+        EnforcementFormFieldMapping m = new EnforcementFormFieldMapping();
+        m.setFieldName(field);
+        m.setSourceKey(key);
+        m.setFixedValue(fixed);
+        m.setMandatory(mandatory);
+        return m;
     }
 
-    /**
-     * @param name the designation shown to the user
-     */
-    public void setName(String name) {
-        this.name = name;
+    private Map<String, String> values() {
+        Map<String, String> values = new HashMap<>();
+        values.put("glaeubiger.name", "Beispiel Handels GmbH");
+        values.put("schuldner.name", "Schuldner");
+        values.put("glaeubiger.land", "");
+        return values;
     }
 
-    /**
-     * @return the version as the publisher dates it
-     */
-    public String getVersion() {
-        return version;
+    @Test
+    public void avalueIsTakenFromTheVocabularyUnderItsKey() {
+        Map<String, String> fields = preparation.fieldsFor(
+                Arrays.asList(mapping("Textfeld 220", "glaeubiger.name", null, false)), values());
+
+        assertEquals("Beispiel Handels GmbH", fields.get("Textfeld 220"));
     }
 
-    /**
-     * @param version the version as the publisher dates it
-     */
-    public void setVersion(String version) {
-        this.version = version;
+    @Test
+    public void afixedValueBeatsAsourceKey() {
+        // Traegt ein Profil beides, hat der Administrator entschieden, dass dieses Feld nicht vom
+        // Fall abhaengt - ein Kreuzchen etwa, das fuer diese Massnahmeart immer gilt.
+        Map<String, String> fields = preparation.fieldsFor(
+                Arrays.asList(mapping("Kontrollkästchen 9", "glaeubiger.name", "true", false)), values());
+
+        assertEquals("true", fields.get("Kontrollkästchen 9"));
     }
 
-    /**
-     * @return the day this version takes effect, or null if unstated
-     */
-    public Date getValidFrom() {
-        return validFrom;
+    @Test
+    public void akeyNobodyAnswersClearsTheFieldRatherThanLeavingIt() {
+        // Das Feld unberuehrt zu lassen behielte, was in der Vorlage stand - und eine Vorlage ist
+        // nicht immer leer.
+        Map<String, String> fields = preparation.fieldsFor(
+                Arrays.asList(mapping("Textfeld 1", "gibt.es.nicht", null, false)), values());
+
+        assertTrue(fields.containsKey("Textfeld 1"));
+        assertEquals("", fields.get("Textfeld 1"));
     }
 
-    /**
-     * @param validFrom the day this version takes effect
-     */
-    public void setValidFrom(Date validFrom) {
-        this.validFrom = validFrom;
+    @Test
+    public void anEmptyAnswerStaysEmptyAndIsStillWritten() {
+        Map<String, String> fields = preparation.fieldsFor(
+                Arrays.asList(mapping("Textfeld 222", "glaeubiger.land", null, false)), values());
+
+        assertEquals("", fields.get("Textfeld 222"));
     }
 
-    /**
-     * @return the day this version ceased to be prescribed, or null while it is current
-     */
-    public Date getValidTo() {
-        return validTo;
+    @Test
+    public void onlyWhatTheProfileCallsMandatoryIsMandatory() {
+        // Keines der acht amtlichen Formulare setzt das Required-Flag; die Pflichtangaben kommen
+        // aus dem Profil und sonst nirgendwoher.
+        List<EnforcementFormFieldMapping> mappings = Arrays.asList(
+                mapping("Textfeld 1", "empfaenger.name", null, true),
+                mapping("Textfeld 2", "empfaenger.name_fortsetzung", null, false),
+                mapping("Textfeld 220", "glaeubiger.name", null, true));
+
+        assertEquals(Arrays.asList("Textfeld 1", "Textfeld 220"),
+                preparation.mandatoryFieldsOf(mappings));
     }
 
-    /**
-     * @param validTo the day this version ceased to be prescribed
-     */
-    public void setValidTo(Date validTo) {
-        this.validTo = validTo;
+    @Test
+    public void anEmptyProfileYieldsNothingAndDoesNotFail() {
+        assertTrue(preparation.fieldsFor(null, values()).isEmpty());
+        assertTrue(preparation.mandatoryFieldsOf(null).isEmpty());
     }
 
-    /**
-     * @return the fillable PDF
-     */
-    public byte[] getPdfContent() {
-        return pdfContent;
+    private EnforcementMeasure measure(String typeName, Date ordered) {
+        EnforcementMeasureType type = new EnforcementMeasureType();
+        type.setName(typeName);
+        EnforcementMeasure measure = new EnforcementMeasure();
+        measure.setMeasureType(type);
+        measure.setOrderedDate(ordered);
+        return measure;
     }
 
-    /**
-     * @param pdfContent the fillable PDF
-     */
-    public void setPdfContent(byte[] pdfContent) {
-        this.pdfContent = pdfContent;
+    private EnforcementMeasureTypeForm form(EnforcementFormRole role) {
+        EnforcementMeasureTypeForm form = new EnforcementMeasureTypeForm();
+        form.setFormRole(role);
+        return form;
     }
 
-    /**
-     * @return the name the file was uploaded under
-     */
-    public String getFileName() {
-        return fileName;
+    @Test
+    public void theApplicationIsNamedAfterTheDayAndTheKind() {
+        assertEquals("2026-09-22 Vollstreckungsauftrag an den Gerichtsvollzieher.pdf",
+                preparation.documentName(
+                        measure("Vollstreckungsauftrag an den Gerichtsvollzieher", date(2026, 9, 22)),
+                        form(EnforcementFormRole.APPLICATION), null));
     }
 
-    /**
-     * @param fileName the name the file was uploaded under
-     */
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
+    @Test
+    public void theOtherFormsSayWhatTheyAreFor() {
+        // Drei Dokumente derselben Massnahme am selben Tag - ohne die Rolle waeren sie nicht zu
+        // unterscheiden, und der Entwurf ginge als Antrag hinaus.
+        EnforcementMeasure measure = measure("Pfändungs- und Überweisungsbeschluss", date(2026, 9, 22));
+
+        assertEquals("2026-09-22 Pfändungs- und Überweisungsbeschluss - Entwurf der Entscheidung.pdf",
+                preparation.documentName(measure, form(EnforcementFormRole.DRAFT_ORDER), null));
+        assertEquals("2026-09-22 Pfändungs- und Überweisungsbeschluss - Forderungsaufstellung.pdf",
+                preparation.documentName(measure, form(EnforcementFormRole.ITEMISATION), null));
     }
 
-    /**
-     * @return what this version is, in the words a user needs
-     */
-    public String getDescription() {
-        return description;
+    @Test
+    public void theDayLeadsSoTheDocumentsSortIntoTheOrderTheyHappened() {
+        String earlier = preparation.documentName(measure("Auftrag", date(2026, 3, 1)),
+                form(EnforcementFormRole.APPLICATION), null);
+        String later = preparation.documentName(measure("Auftrag", date(2026, 11, 1)),
+                form(EnforcementFormRole.APPLICATION), null);
+
+        assertTrue(earlier.compareTo(later) < 0);
     }
 
-    /**
-     * @param description what this version is
-     */
-    public void setDescription(String description) {
-        this.description = description;
+    @Test
+    public void aslashInTheKindDoesNotBecomeADirectory() {
+        String name = preparation.documentName(
+                measure("Pfändung / Überweisung", date(2026, 9, 22)),
+                form(EnforcementFormRole.APPLICATION), null);
+
+        assertFalse(name.contains("/"));
+        assertFalse(name.contains("\\"));
+        assertTrue(name.endsWith(".pdf"));
     }
 
-    /**
-     * @return how the fields of this form are filled, never null
-     */
-    public List<EnforcementFormFieldMapping> getFieldMappings() {
-        if (this.fieldMappings == null) {
-            this.fieldMappings = new ArrayList<>();
-        }
-        return fieldMappings;
-    }
+    @Test
+    public void ameasureWithoutAdateStillGetsAname() {
+        String name = preparation.documentName(measure("Auftrag", null),
+                form(EnforcementFormRole.APPLICATION), null);
 
-    /**
-     * @param fieldMappings how the fields of this form are filled
-     */
-    public void setFieldMappings(List<EnforcementFormFieldMapping> fieldMappings) {
-        this.fieldMappings = fieldMappings;
-    }
-
-    /**
-     * Whether this version is the one prescribed on a given day.
-     *
-     * @param day the day to judge by
-     * @return true if the day falls inside the validity period
-     */
-    public boolean isValidOn(Date day) {
-        if (day == null) {
-            return this.validTo == null;
-        }
-        if (this.validFrom != null && day.before(this.validFrom)) {
-            return false;
-        }
-        return this.validTo == null || !day.after(this.validTo);
-    }
-
-    @Override
-    public int hashCode() {
-        return id == null ? 0 : id.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof EnforcementFormTemplate)) {
-            return false;
-        }
-        EnforcementFormTemplate other = (EnforcementFormTemplate) object;
-        return this.id != null && this.id.equals(other.id);
-    }
-
-    @Override
-    public String toString() {
-        return name + (version == null || version.trim().isEmpty() ? "" : " (" + version + ")");
+        assertTrue(name.endsWith("Auftrag.pdf"));
+        assertTrue(name.length() > "Auftrag.pdf".length());
     }
 }

@@ -660,319 +660,72 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.services;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.Lob;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
- * One version of one official form, with the profile that says how to fill it.
+ * Says, in the words of the application, where a form field is filled from.
  *
- * The forms of the ZVFV are replaced from time to time. A measure generated under an older version
- * was not wrong, it was current - so versions live alongside one another with a validity period,
- * and a measure records which one it used. Producing a form from a version whose validity has ended
- * is possible but has to be confirmed.
+ * A form that cannot be produced has to say what is missing, and it has to say it to a lawyer
+ * rather than to whoever wrote the mapping profile. "Textfeld 4" names nothing: it is the name the
+ * form carries internally, chosen by whoever drew it. The tooltip of the field is better - it says
+ * "Postleitzahl und Ort" - but it still describes a place on a sheet of paper and not the field of
+ * the application that would fill it.
  *
- * The PDF is held here rather than in the file system. The number of forms is small, the versions
- * few, and keeping them with their mapping means a backup of the database is a backup of everything
- * needed to reproduce a filing.
+ * This is the last step: from the key of the vocabulary to the place in the application where the
+ * value is entered. It is a table rather than a derivation, because the answer is a sentence for a
+ * person and cannot be computed from a key.
  *
  * @author jens
  */
-@Entity
-@Table(name = "enforcement_form_templates")
-@NamedQueries({
-    @NamedQuery(name = "EnforcementFormTemplate.findAll", query = "SELECT t FROM EnforcementFormTemplate t ORDER BY t.formKey ASC, t.validFrom DESC"),
-    @NamedQuery(name = "EnforcementFormTemplate.findById", query = "SELECT t FROM EnforcementFormTemplate t WHERE t.id = :id"),
-    @NamedQuery(name = "EnforcementFormTemplate.findByKey", query = "SELECT t FROM EnforcementFormTemplate t WHERE t.formKey = :formKey ORDER BY t.validFrom DESC"),
-    // Ein Verzeichnis ohne die Dateien - und ohne verwaltete Entities. Wer eine verwaltete Entity
-    // abräumt, um sie leichter zu machen, schreibt die Leere beim Commit in die Datenbank.
-    @NamedQuery(name = "EnforcementFormTemplate.findAllSummaries", query = "SELECT NEW com.jdimension.jlawyer.persistence.EnforcementFormTemplate(t.id, t.formKey, t.name, t.version, t.validFrom, t.validTo, t.fileName, t.description) FROM EnforcementFormTemplate t ORDER BY t.formKey ASC, t.validFrom DESC")
-})
-public class EnforcementFormTemplate implements Serializable {
+public class EnforcementFormFieldOrigin {
 
-    private static final long serialVersionUID = 1L;
+    private static final Map<String, String> EXACT = new LinkedHashMap<>();
+    private static final Map<String, String> BY_PREFIX = new LinkedHashMap<>();
 
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
+    static {
+        EXACT.put("empfaenger.name", "Empfänger der Maßnahme, Bezeichnung");
+        EXACT.put("empfaenger.name_fortsetzung", "Empfänger der Maßnahme, weitere Zeilen der Bezeichnung");
+        EXACT.put("empfaenger.strasse", "Empfänger der Maßnahme, erste Zeile der Anschrift");
+        EXACT.put("empfaenger.plz_ort", "Empfänger der Maßnahme, weitere Zeilen der Anschrift");
 
-    /** The annex of the ZVFV this is a version of - "ANLAGE_1". */
-    @Column(name = "form_key", nullable = false, length = 50)
-    private String formKey;
-
-    @Column(name = "name", nullable = false)
-    private String name;
+        BY_PREFIX.put("empfaenger.", "Empfänger der Maßnahme");
+        BY_PREFIX.put("massnahme.", "Maßnahme");
+        BY_PREFIX.put("glaeubiger.", "Gläubiger des Forderungskontos");
+        BY_PREFIX.put("schuldner.", "Schuldner des Forderungskontos");
+        BY_PREFIX.put("bevollmaechtigter.", "Anschrift der Kanzlei in den Benutzerdaten");
+        BY_PREFIX.put("absender.", "Wer den Antrag stellt");
+        BY_PREFIX.put("titel.", "Titel im Forderungskonto");
+        BY_PREFIX.put("forderung.", "Forderungskonto");
+        BY_PREFIX.put("aufstellung.", "Forderungskonto");
+        BY_PREFIX.put("akte.", "Akte");
+        BY_PREFIX.put("ort", "Ort");
+        BY_PREFIX.put("datum", "Datum der Maßnahme");
+    }
 
     /**
-     * The version, as the publisher dates it - "2024-09-01".
+     * Where a value is entered in the application.
      *
-     * Recorded on every measure generated from it, so a filing stays reproducible after the form has
-     * been replaced.
+     * @param sourceKey the key of the vocabulary, as the mapping profile names it
+     * @return the place, or the key itself where none is recorded - a key without an entry here is
+     * still more use than nothing, and inventing a place would be worse than naming none
      */
-    @Column(name = "version", length = 50)
-    private String version;
-
-    @Column(name = "valid_from")
-    @Temporal(TemporalType.DATE)
-    private Date validFrom;
-
-    /** Null while the version is the current one. */
-    @Column(name = "valid_to")
-    @Temporal(TemporalType.DATE)
-    private Date validTo;
-
-    /**
-     * The fillable PDF.
-     *
-     * Lazy because it is a few hundred kilobytes and most reads of a template only want to know
-     * which versions exist.
-     */
-    @Lob
-    @Basic(fetch = FetchType.LAZY)
-    @Column(name = "pdf_content")
-    private byte[] pdfContent;
-
-    @Column(name = "file_name")
-    private String fileName;
-
-    @Column(name = "description", length = 1000)
-    private String description;
-
-    /**
-     * How the fields of this form are filled.
-     *
-     * Belongs to the version, not to the form: a new version may rename its fields, and a profile
-     * written for the old one would then address fields that no longer exist.
-     */
-    @OneToMany(mappedBy = "template", fetch = FetchType.LAZY)
-    private List<EnforcementFormFieldMapping> fieldMappings = new ArrayList<>();
-
-    /**
-     * The constructor JPA needs.
-     */
-    public EnforcementFormTemplate() {
-    }
-
-    /**
-     * Builds a template without its PDF, for a listing.
-     *
-     * Exists so a listing can be produced by a query rather than by emptying loaded entities.
-     * Clearing the content of a <em>managed</em> entity to make it lighter on the wire writes that
-     * emptiness into the database when the transaction commits - the templates are then listed
-     * correctly and gone.
-     *
-     * @param id the technical identifier
-     * @param formKey the annex of the ZVFV
-     * @param name the designation
-     * @param version the version as the publisher dates it
-     * @param validFrom the day the version takes effect
-     * @param validTo the day it ceased to be prescribed
-     * @param fileName the name the file was uploaded under
-     * @param description what this version is
-     */
-    public EnforcementFormTemplate(String id, String formKey, String name, String version,
-            Date validFrom, Date validTo, String fileName, String description) {
-        this.id = id;
-        this.formKey = formKey;
-        this.name = name;
-        this.version = version;
-        this.validFrom = validFrom;
-        this.validTo = validTo;
-        this.fileName = fileName;
-        this.description = description;
-    }
-
-    /**
-     * @return the technical identifier
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * @param id the technical identifier
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the annex of the ZVFV this is a version of
-     */
-    public String getFormKey() {
-        return formKey;
-    }
-
-    /**
-     * @param formKey the annex of the ZVFV
-     */
-    public void setFormKey(String formKey) {
-        this.formKey = formKey;
-    }
-
-    /**
-     * @return the designation shown to the user
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name the designation shown to the user
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return the version as the publisher dates it
-     */
-    public String getVersion() {
-        return version;
-    }
-
-    /**
-     * @param version the version as the publisher dates it
-     */
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    /**
-     * @return the day this version takes effect, or null if unstated
-     */
-    public Date getValidFrom() {
-        return validFrom;
-    }
-
-    /**
-     * @param validFrom the day this version takes effect
-     */
-    public void setValidFrom(Date validFrom) {
-        this.validFrom = validFrom;
-    }
-
-    /**
-     * @return the day this version ceased to be prescribed, or null while it is current
-     */
-    public Date getValidTo() {
-        return validTo;
-    }
-
-    /**
-     * @param validTo the day this version ceased to be prescribed
-     */
-    public void setValidTo(Date validTo) {
-        this.validTo = validTo;
-    }
-
-    /**
-     * @return the fillable PDF
-     */
-    public byte[] getPdfContent() {
-        return pdfContent;
-    }
-
-    /**
-     * @param pdfContent the fillable PDF
-     */
-    public void setPdfContent(byte[] pdfContent) {
-        this.pdfContent = pdfContent;
-    }
-
-    /**
-     * @return the name the file was uploaded under
-     */
-    public String getFileName() {
-        return fileName;
-    }
-
-    /**
-     * @param fileName the name the file was uploaded under
-     */
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
-
-    /**
-     * @return what this version is, in the words a user needs
-     */
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * @param description what this version is
-     */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    /**
-     * @return how the fields of this form are filled, never null
-     */
-    public List<EnforcementFormFieldMapping> getFieldMappings() {
-        if (this.fieldMappings == null) {
-            this.fieldMappings = new ArrayList<>();
+    public String of(String sourceKey) {
+        if (sourceKey == null || sourceKey.trim().isEmpty()) {
+            return "";
         }
-        return fieldMappings;
-    }
-
-    /**
-     * @param fieldMappings how the fields of this form are filled
-     */
-    public void setFieldMappings(List<EnforcementFormFieldMapping> fieldMappings) {
-        this.fieldMappings = fieldMappings;
-    }
-
-    /**
-     * Whether this version is the one prescribed on a given day.
-     *
-     * @param day the day to judge by
-     * @return true if the day falls inside the validity period
-     */
-    public boolean isValidOn(Date day) {
-        if (day == null) {
-            return this.validTo == null;
+        String key = sourceKey.trim();
+        String exact = EXACT.get(key);
+        if (exact != null) {
+            return exact;
         }
-        if (this.validFrom != null && day.before(this.validFrom)) {
-            return false;
+        for (Map.Entry<String, String> entry : BY_PREFIX.entrySet()) {
+            if (key.startsWith(entry.getKey())) {
+                return entry.getValue();
+            }
         }
-        return this.validTo == null || !day.after(this.validTo);
-    }
-
-    @Override
-    public int hashCode() {
-        return id == null ? 0 : id.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof EnforcementFormTemplate)) {
-            return false;
-        }
-        EnforcementFormTemplate other = (EnforcementFormTemplate) object;
-        return this.id != null && this.id.equals(other.id);
-    }
-
-    @Override
-    public String toString() {
-        return name + (version == null || version.trim().isEmpty() ? "" : " (" + version + ")");
+        return key;
     }
 }

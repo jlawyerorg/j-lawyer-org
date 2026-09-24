@@ -729,6 +729,21 @@ public class EdaPartyMapperTest {
     }
 
     @Test
+    public void theSalutationKeyComesFromTheAnredeAndNotFromTheGreeting() {
+        // Dieselbe Verwechslung wie auf den Vollstreckungsformularen: gelesen wurde die
+        // Begruessung, und jede natuerliche Person bekam den Schluessel "ohne Angabe".
+        com.jdimension.jlawyer.persistence.AddressBean contact =
+                new com.jdimension.jlawyer.persistence.AddressBean();
+        contact.setName("Schuldner");
+        contact.setFirstName("Max");
+        contact.setTitle("Herr");
+        contact.setSalutation("Sehr geehrter Herr Schuldner,");
+
+        assertEquals(com.jdimension.jlawyer.eda.EdaSalutationKey.PERSON_MALE,
+                new com.jdimension.jlawyer.eda.EdaPartyMapper().salutationKey(contact));
+    }
+
+    @Test
     public void aNaturalPersonKeepsGivenNameAndSurnameApart() throws Exception {
         List<EdaRecord> records = mapDebtor(person("Herr", "Max", "Schuldner"));
 

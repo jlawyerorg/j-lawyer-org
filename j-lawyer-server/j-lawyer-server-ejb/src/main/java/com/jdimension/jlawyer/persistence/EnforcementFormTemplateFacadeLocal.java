@@ -691,4 +691,15 @@ public interface EnforcementFormTemplateFacadeLocal {
      * @return the matching rows
      */
     List<EnforcementFormTemplate> findByKey(String formKey);
+
+    /**
+     * The templates without their PDFs, as unmanaged instances.
+     *
+     * A listing wants to know which versions exist, not the files. Loading them and then clearing
+     * the content would write that clearing into the database at commit, because what comes out of
+     * a facade is managed.
+     *
+     * @return the templates, newest version of each form first
+     */
+    List<EnforcementFormTemplate> findAllSummaries();
 }

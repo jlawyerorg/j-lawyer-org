@@ -690,4 +690,9 @@ public class EnforcementFormTemplateFacade extends AbstractFacade<EnforcementFor
     public List<EnforcementFormTemplate> findByKey(String formKey) {
         return (List<EnforcementFormTemplate>) em.createNamedQuery("EnforcementFormTemplate.findByKey").setParameter("formKey", formKey).getResultList();
     }
+
+    @Override
+    public List<EnforcementFormTemplate> findAllSummaries() {
+        return (List<EnforcementFormTemplate>) em.createNamedQuery("EnforcementFormTemplate.findAllSummaries").getResultList();
+    }
 }

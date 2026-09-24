@@ -663,7 +663,47 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.documents.AcroFormFieldDescription;
+import com.jdimension.jlawyer.documents.AcroFormFillResult;
 import com.jdimension.jlawyer.documents.AcroFormFiller;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.AppUserBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ClaimLedger;
+import com.jdimension.jlawyer.persistence.ClaimLedgerFacadeLocal;
+import com.jdimension.jlawyer.persistence.CaseAccountEntry;
+import com.jdimension.jlawyer.persistence.EnforcementAddresseeType;
+import com.jdimension.jlawyer.persistence.ClaimComponentType;
+import com.jdimension.jlawyer.persistence.ClaimComponent;
+import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
+import com.jdimension.jlawyer.persistence.FeeItem;
+import com.jdimension.jlawyer.persistence.FeeItemFacadeLocal;
+import com.jdimension.jlawyer.persistence.FeeScale;
+import com.jdimension.jlawyer.persistence.FeeScaleBracketFacadeLocal;
+import com.jdimension.jlawyer.persistence.FeeScaleFacadeLocal;
+import com.jdimension.jlawyer.persistence.ClaimPartyRole;
+import com.jdimension.jlawyer.persistence.EnforcementFormRole;
+import com.jdimension.jlawyer.persistence.EnforcementMeasure;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureFacadeLocal;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureOutcome;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureType;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureTypeFacadeLocal;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureTypeForm;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureTypeFormFacadeLocal;
+import com.jdimension.jlawyer.persistence.EnforcementTitle;
+import com.jdimension.jlawyer.persistence.EnforcementTitleFacadeLocal;
+import com.jdimension.jlawyer.persistence.Group;
+import com.jdimension.jlawyer.pojo.ClaimStatement;
+import com.jdimension.jlawyer.persistence.EnforcementTitleType;
+import com.jdimension.jlawyer.pojo.EnforcementCostPosition;
+import com.jdimension.jlawyer.pojo.EnforcementCostProposal;
+import com.jdimension.jlawyer.pojo.EnforcementItemisation;
+import com.jdimension.jlawyer.pojo.ProceduralCostBooking;
+import com.jdimension.jlawyer.pojo.EnforcementItemisationRow;
+import com.jdimension.jlawyer.pojo.EnforcementMeasureOption;
+import com.jdimension.jlawyer.server.utils.SecurityUtils;
 import com.jdimension.jlawyer.persistence.EnforcementFormFieldMapping;
 import com.jdimension.jlawyer.persistence.EnforcementFormFieldMappingFacadeLocal;
 import com.jdimension.jlawyer.persistence.EnforcementFormTemplate;
@@ -671,12 +711,17 @@ import com.jdimension.jlawyer.persistence.EnforcementFormTemplateFacadeLocal;
 import com.jdimension.jlawyer.pojo.AcroFormFieldInfo;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import java.io.File;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
+import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import org.apache.log4j.Logger;
 
@@ -688,27 +733,72 @@ import org.apache.log4j.Logger;
 @Stateless
 public class EnforcementService implements EnforcementServiceRemote, EnforcementServiceLocal {
 
+    /** Die Wertgebuehrentabelle des § 13 RVG. */
+    private static final String SCALE_LAWYER = "RVG_13";
+    /** Nr. 3309 VV RVG - die 0,3 Verfahrensgebuehr je Vollstreckungsmassnahme. */
+    private static final String ITEM_PROCEDURE_FEE = "RVG_VV_3309";
+    /** Nr. 3310 VV RVG - die 0,3 Terminsgebuehr, wenn ein Termin stattfindet. */
+    private static final String ITEM_HEARING_FEE = "RVG_VV_3310";
+    /** Nr. 7002 VV RVG - die Post- und Telekommunikationspauschale. */
+    private static final String ITEM_EXPENSES = "RVG_VV_7002";
+    /** Nr. 2111 KV GKG - die Gebuehr des Vollstreckungsgerichts. */
+    private static final String ITEM_COURT_FEE = "GKG_KV_2111";
+
     private static final Logger log = Logger.getLogger(EnforcementService.class.getName());
 
     @EJB
     private EnforcementFormTemplateFacadeLocal formTemplatesFacade;
     @EJB
     private EnforcementFormFieldMappingFacadeLocal formFieldMappingsFacade;
+    @EJB
+    private EnforcementMeasureFacadeLocal measuresFacade;
+    @EJB
+    private EnforcementMeasureTypeFacadeLocal measureTypesFacade;
+    @EJB
+    private EnforcementMeasureTypeFormFacadeLocal measureTypeFormsFacade;
+    @EJB
+    private EnforcementTitleFacadeLocal titlesFacade;
+    @EJB
+    private ClaimLedgerFacadeLocal claimLedgersFacade;
+    @EJB
+    private ClaimLedgerServiceLocal claimLedgerService;
+    @EJB
+    private ArchiveFileServiceLocal archiveFileService;
+    @EJB
+    private SecurityServiceLocal securityFacade;
+    @EJB
+    private AppUserBeanFacadeLocal userFacade;
+    @EJB
+    private FeeScaleFacadeLocal feeScalesFacade;
+    @EJB
+    private FeeScaleBracketFacadeLocal feeScaleBracketsFacade;
+    @EJB
+    private FeeItemFacadeLocal feeItemsFacade;
+    @EJB
+    private ArchiveFileGroupsBeanFacadeLocal caseGroupsFacade;
+
+    @Resource
+    private SessionContext context;
 
     private final EnforcementFormPackage formPackage = new EnforcementFormPackage();
     private final EnforcementFormTemplateSelector templateSelector = new EnforcementFormTemplateSelector();
+    private final EnforcementMeasurePlanner measurePlanner = new EnforcementMeasurePlanner();
+    private final EnforcementItemisationBuilder itemisationBuilder = new EnforcementItemisationBuilder();
+    private final EnforcementFormDataSource formData = new EnforcementFormDataSource();
+    private final EnforcementFormPreparation formPreparation = new EnforcementFormPreparation();
     private final AcroFormFiller filler = new AcroFormFiller();
 
     @Override
     @RolesAllowed({"loginRole"})
     public List<EnforcementFormTemplate> getFormTemplates() throws Exception {
-        List<EnforcementFormTemplate> templates = this.formTemplatesFacade.findAll();
-        for (EnforcementFormTemplate template : templates) {
-            // Ein Verzeichnis will wissen, welche Fassungen es gibt, nicht die Dateien selbst -
-            // acht mal ein paar hundert Kilobyte über die Leitung wäre für eine Liste verschwendet.
-            template.setPdfContent(null);
-        }
-        return templates;
+        // Ein Verzeichnis will wissen, welche Fassungen es gibt, nicht die Dateien selbst - acht
+        // mal ein paar hundert Kilobyte über die Leitung wäre für eine Liste verschwendet.
+        //
+        // Die Abfrage baut die Einträge ohne Inhalt auf, statt geladene Entities leerzuräumen. Was
+        // aus einer Facade kommt, ist verwaltet: eine verwaltete Entity abzuräumen, um sie leichter
+        // zu machen, schreibt die Leere beim Commit in die Datenbank - die Vorlagen werden dann
+        // richtig aufgelistet und sind fort.
+        return this.formTemplatesFacade.findAllSummaries();
     }
 
     @Override
@@ -728,9 +818,33 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
             EnforcementFormTemplate existing = find(held, entry.getFormKey(),
                     EnforcementFormPackage.VERSION);
             if (existing != null) {
-                // Was schon da ist, bleibt, wie es ist - samt der Anpassungen einer Kanzlei. Der
-                // Import ergänzt, was fehlt, und ändert nichts, was steht.
-                report.add(entry.getName() + " (" + entry.getFormKey() + "): bereits vorhanden");
+                // Was schon da ist, bleibt, wie es ist - samt der Anpassungen einer Kanzlei.
+                //
+                // Eine fehlende Datei ist davon ausgenommen: eine Vorlage ohne PDF ist keine
+                // Anpassung, sondern eine Vorlage, mit der sich nichts erzeugen lässt. Der Import
+                // ergänzt, was fehlt, und dazu gehört sie.
+                if (existing.getPdfContent() == null || existing.getPdfContent().length == 0) {
+                    existing.setPdfContent(this.formPackage.read(entry));
+                    if (existing.getFileName() == null || existing.getFileName().trim().isEmpty()) {
+                        existing.setFileName(entry.getFileName());
+                    }
+                    this.formTemplatesFacade.edit(existing);
+                    report.add(entry.getName() + " (" + entry.getFormKey()
+                            + "): vorhanden, fehlende Datei ergänzt");
+                } else {
+                    report.add(entry.getName() + " (" + entry.getFormKey() + "): bereits vorhanden");
+                }
+                // Eine fehlende Zuordnung wird ebenso ergänzt wie eine fehlende Datei - aber nur
+                // eine fehlende: was eine Kanzlei angepasst hat, bleibt unangetastet.
+                int mapped = importMapping(existing);
+                if (mapped > 0) {
+                    report.add("    " + mapped + " Felder zugeordnet");
+                } else if (this.formFieldMappingsFacade.findByTemplate(existing).isEmpty()) {
+                    // Schweigen waere hier das Schlimmste: die Vorlage sieht vollstaendig aus, und
+                    // erst die Formularerzeugung sagt Wochen spaeter, dass sie es nicht ist.
+                    report.add("    weiterhin ohne Feldzuordnung - für dieses Formular wird keine "
+                            + "mitgeliefert");
+                }
                 continue;
             }
 
@@ -746,7 +860,10 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
             template.setPdfContent(this.formPackage.read(entry));
 
             this.formTemplatesFacade.create(template);
-            report.add(entry.getName() + " (" + entry.getFormKey() + "): importiert");
+            int mapped = importMapping(template);
+            report.add(entry.getName() + " (" + entry.getFormKey() + "): importiert"
+                    + (mapped > 0 ? ", " + mapped + " Felder zugeordnet"
+                            : ", ohne Feldzuordnung"));
         }
         return report;
     }
@@ -760,7 +877,11 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
             throw new Exception("Die Formularvorlage existiert nicht!");
         }
         if (template.getPdfContent() == null || template.getPdfContent().length == 0) {
-            return new ArrayList<>();
+            // Eine leere Liste sähe aus wie ein Formular ohne Felder. Das wäre eine Aussage über
+            // das Formular; richtig ist eine über die Vorlage.
+            throw new Exception("Zur Vorlage \"" + template.getName() + "\" ist keine Datei "
+                    + "hinterlegt. Mit \"Standardpaket importieren\" lässt sich die ausgelieferte "
+                    + "Fassung ergänzen.");
         }
 
         // PDFBox liest aus einer Datei; die Vorlage liegt in der Datenbank. Der Umweg über eine
@@ -842,6 +963,61 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
                 .getWarning();
     }
 
+    @Override
+    @RolesAllowed({"adminRole"})
+    public int replaceFormMapping(String templateId) throws Exception {
+
+        EnforcementFormTemplate template = this.formTemplatesFacade.find(templateId);
+        if (template == null) {
+            throw new Exception("Die Formularvorlage existiert nicht!");
+        }
+        List<EnforcementFormPackage.Mapping> shipped =
+                this.formPackage.readMapping(template.getFormKey());
+        if (shipped.isEmpty()) {
+            throw new Exception("Für \"" + template.getName() + "\" wird keine Zuordnung "
+                    + "mitgeliefert; es gibt nichts zu übernehmen.");
+        }
+
+        // Erst raeumen, dann schreiben: der Import ergaenzt sonst nichts, weil er eine vorhandene
+        // Zuordnung nie ueberschreibt - und genau das ist hier gewollt und ausdruecklich verlangt.
+        for (EnforcementFormFieldMapping mapping : this.formFieldMappingsFacade.findByTemplate(template)) {
+            this.formFieldMappingsFacade.remove(mapping);
+        }
+        return importMapping(template);
+    }
+
+    /**
+     * Writes the shipped mapping profile of a template, unless it already carries one.
+     *
+     * Only a template without any assignment gets them. A profile a firm has adjusted is its own,
+     * and an import that replaced it would undo work nobody asked to have undone.
+     *
+     * @param template the template
+     * @return how many assignments were written, zero if it already had some or none are shipped
+     */
+    private int importMapping(EnforcementFormTemplate template) throws Exception {
+
+        if (!this.formFieldMappingsFacade.findByTemplate(template).isEmpty()) {
+            return 0;
+        }
+        List<EnforcementFormPackage.Mapping> shipped =
+                this.formPackage.readMapping(template.getFormKey());
+
+        int written = 0;
+        for (EnforcementFormPackage.Mapping mapping : shipped) {
+            EnforcementFormFieldMapping row = new EnforcementFormFieldMapping();
+            row.setId(new StringGenerator().getID().toString());
+            row.setTemplate(template);
+            row.setFieldName(mapping.getFieldName());
+            row.setFieldLabel(mapping.getLabel());
+            row.setSourceKey(mapping.getSourceKey());
+            row.setMandatory(mapping.isMandatory());
+            this.formFieldMappingsFacade.create(row);
+            written++;
+        }
+        return written;
+    }
+
     private EnforcementFormTemplate find(List<EnforcementFormTemplate> templates, String formKey,
             String version) {
         for (EnforcementFormTemplate template : templates) {
@@ -850,5 +1026,643 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
             }
         }
         return null;
+    }
+
+    // ----- Maßnahmen -----
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<EnforcementMeasureType> getMeasureTypes() throws Exception {
+        List<EnforcementMeasureType> types = this.measureTypesFacade.findActive();
+        for (EnforcementMeasureType type : types) {
+            withForms(type);
+        }
+        return types;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<EnforcementMeasure> getMeasures(String ledgerId) throws Exception {
+        List<EnforcementMeasure> measures = this.measuresFacade.findByLedger(requireLedger(ledgerId));
+        for (EnforcementMeasure measure : measures) {
+            withForms(measure.getMeasureType());
+        }
+        return measures;
+    }
+
+    /**
+     * Fills in the forms of a kind of measure before it travels to a remote client.
+     *
+     * The association is lazy, so it arrives empty and a client asking whether a kind has a form at
+     * all gets "no" - which is how the button for generating them stayed grey.
+     *
+     * Replacing the collection on a loaded entity is safe here and only here: the association is the
+     * inverse side and carries neither cascade nor orphan removal, so what is put into it is never
+     * written back. The same reasoning as for the scopes of a court.
+     *
+     * @param type the kind, may be null
+     * @return the same kind, with its forms
+     */
+    private EnforcementMeasureType withForms(EnforcementMeasureType type) {
+        if (type == null) {
+            return null;
+        }
+        type.setForms(new ArrayList<>(this.measureTypeFormsFacade.findByMeasureType(type)));
+        return type;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<EnforcementMeasureOption> getMeasureOptions(String ledgerId, String titleId, Date day)
+            throws Exception {
+
+        ClaimLedger ledger = requireLedger(ledgerId);
+        EnforcementTitle title = titleId == null ? null : this.titlesFacade.find(titleId);
+        java.math.BigDecimal outstanding = outstandingOf(ledger, day);
+
+        List<EnforcementMeasureOption> options = new ArrayList<>();
+        for (EnforcementMeasurePlanner.Availability availability
+                : this.measurePlanner.plan(this.measureTypesFacade.findActive(), title, outstanding, day)) {
+
+            EnforcementMeasureOption option = new EnforcementMeasureOption();
+            option.setMeasureType(withForms(availability.getMeasureType()));
+            option.setObstacle(availability.getObstacle());
+            options.add(option);
+        }
+        return options;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public EnforcementMeasure addMeasure(String ledgerId, EnforcementMeasure measure) throws Exception {
+
+        ClaimLedger ledger = requireLedger(ledgerId);
+        if (measure == null) {
+            throw new Exception("Es wurde keine Maßnahme übergeben!");
+        }
+        if (measure.getMeasureType() == null) {
+            throw new Exception("Für die Maßnahme ist keine Art angegeben!");
+        }
+
+        EnforcementMeasureType type = this.measureTypesFacade.find(measure.getMeasureType().getId());
+        if (type == null) {
+            throw new Exception("Die Maßnahmeart existiert nicht!");
+        }
+
+        // Dieselbe Prüfung, die auch die Auswahl beantwortet hat. Was dort mit Grund ausgegraut
+        // war, darf hier nicht über einen anderen Weg doch entstehen.
+        Date day = measure.getOrderedDate() == null ? new Date() : measure.getOrderedDate();
+        String obstacle = this.measurePlanner.obstacleFor(type, measure.getTitle(),
+                outstandingOf(ledger, day), day);
+        if (obstacle != null) {
+            throw new Exception(obstacle);
+        }
+
+        measure.setId(new StringGenerator().getID().toString());
+        measure.setLedger(ledger);
+        measure.setMeasureType(type);
+        if (measure.getOutcome() == null) {
+            measure.setOutcome(EnforcementMeasureOutcome.PENDING);
+        }
+        if (measure.getOrderedDate() == null) {
+            measure.setOrderedDate(new Date());
+        }
+        if (measure.getAddresseeType() == null) {
+            measure.setAddresseeType(type.getAddresseeType());
+        }
+
+        this.measuresFacade.create(measure);
+        EnforcementMeasure stored = this.measuresFacade.find(measure.getId());
+        withForms(stored.getMeasureType());
+        return stored;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public EnforcementMeasure updateMeasure(EnforcementMeasure measure) throws Exception {
+
+        if (measure == null || measure.getId() == null) {
+            throw new Exception("Es wurde keine Maßnahme übergeben!");
+        }
+        EnforcementMeasure stored = requireMeasure(measure.getId());
+
+        // Uebernommen wird Feld fuer Feld auf die gespeicherte Maßnahme, statt die abgeloeste
+        // zusammenzufuehren. Ein merge schriebe alles, was an ihr haengt - auch das, was der
+        // Aufrufer nie geladen hat. Die Schuldner der Maßnahme sind eine ManyToMany-Beziehung mit
+        // eigener Tabelle: käme die Liste leer zurueck, weil sie ueber die Remote-Grenze nie
+        // gefuellt wurde, loeschte der merge die Zuordnung, ohne dass jemand danach gefragt hat.
+        //
+        // Nicht uebernommen wird deshalb auch, was hier nichts zu suchen hat: das Forderungskonto
+        // (eine Maßnahme wandert nicht), die Formularfassung (sie haelt fest, was geschehen ist,
+        // nicht was gewuenscht wird), das Ergebnis (dafuer gibt es recordOutcome, und ein
+        // veraltetes Objekt duerfte es nicht zuruecksetzen) und die Schuldner.
+        stored.setTitle(measure.getTitle());
+        stored.setMeasureType(measure.getMeasureType());
+        stored.setAddresseeType(measure.getAddresseeType());
+        stored.setAddresseeContact(measure.getAddresseeContact());
+        stored.setAddresseeDesignation(measure.getAddresseeDesignation());
+        stored.setAddresseeAddress(measure.getAddresseeAddress());
+        stored.setOrderedDate(measure.getOrderedDate());
+        stored.setDispatchedDate(measure.getDispatchedDate());
+        stored.setNotes(measure.getNotes());
+
+        this.measuresFacade.edit(stored);
+        EnforcementMeasure stored2 = this.measuresFacade.find(measure.getId());
+        withForms(stored2.getMeasureType());
+        return stored2;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void removeMeasure(String measureId) throws Exception {
+        // Die erzeugten Dokumente bleiben in der Akte. Sie sind bei einem Gerichtsvollzieher oder
+        // einem Gericht gewesen, und den Vorgang zu löschen macht das nicht ungeschehen.
+        this.measuresFacade.remove(requireMeasure(measureId));
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public EnforcementMeasure recordOutcome(String measureId, EnforcementMeasureOutcome outcome,
+            Date outcomeDate) throws Exception {
+
+        EnforcementMeasure measure = requireMeasure(measureId);
+        if (outcome == null) {
+            throw new Exception("Es wurde kein Ergebnis angegeben!");
+        }
+        measure.setOutcome(outcome);
+        measure.setOutcomeDate(outcomeDate == null ? new Date() : outcomeDate);
+        this.measuresFacade.edit(measure);
+        EnforcementMeasure stored = this.measuresFacade.find(measureId);
+        withForms(stored.getMeasureType());
+        return stored;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public EnforcementItemisation getItemisation(String ledgerId, String titleId, Date keyDate)
+            throws Exception {
+
+        requireLedger(ledgerId);
+        Date day = keyDate == null ? new Date() : keyDate;
+        ClaimStatement statement = this.claimLedgerService.assembleClaimStatement(ledgerId, day, false);
+        EnforcementTitle title = titleId == null ? null : this.titlesFacade.find(titleId);
+        return this.itemisationBuilder.build(statement, title);
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public List<ArchiveFileDocumentsBean> generateForms(String measureId, boolean flatten)
+            throws Exception {
+
+        EnforcementMeasure measure = requireMeasure(measureId);
+        ClaimLedger ledger = measure.getLedger();
+        if (ledger == null || ledger.getArchiveFileKey() == null) {
+            throw new Exception("Die Maßnahme ist keiner Akte zugeordnet!");
+        }
+
+        List<EnforcementMeasureTypeForm> forms =
+                this.measureTypeFormsFacade.findByMeasureType(measure.getMeasureType());
+        if (forms.isEmpty()) {
+            throw new Exception("Für die Maßnahmeart \"" + measure.getMeasureType().getName()
+                    + "\" ist kein amtliches Formular vorgesehen.");
+        }
+
+        Date day = measure.getOrderedDate() == null ? new Date() : measure.getOrderedDate();
+
+        boolean itemised = false;
+        for (EnforcementMeasureTypeForm form : forms) {
+            itemised = itemised || form.getFormRole() == EnforcementFormRole.ITEMISATION;
+        }
+        Map<String, String> values = valuesFor(measure, ledger, day, itemised);
+
+        // Erst alles prüfen, dann erst erzeugen. Eine Maßnahme besteht aus mehreren Formularen, und
+        // wer sie der Reihe nach schreibt und beim dritten scheitert, hinterlässt zwei in der Akte
+        // und eine Fehlermeldung. Die Akte hielte dann einen halben Antrag, den niemand als solchen
+        // erkennt.
+        List<EnforcementFormTemplate> templates = new ArrayList<>();
+        List<EnforcementFormTemplate> held = this.formTemplatesFacade.findAll();
+        for (EnforcementMeasureTypeForm form : forms) {
+            EnforcementFormTemplateSelector.Selection selection =
+                    this.templateSelector.select(held, form.getFormKey(), day);
+            if (!selection.isFound()) {
+                throw new Exception(selection.getWarning());
+            }
+            EnforcementFormTemplate template = selection.getTemplate();
+            if (template.getPdfContent() == null || template.getPdfContent().length == 0) {
+                throw new Exception("Zur Formularvorlage \"" + template.getName()
+                        + "\" ist keine Datei hinterlegt. Mit \"Standardpaket importieren\" lässt "
+                        + "sich die ausgelieferte Fassung ergänzen.");
+            }
+            if (this.formFieldMappingsFacade.findByTemplate(template).isEmpty()) {
+                throw new Exception("Zur Formularvorlage \"" + template.getName()
+                        + "\" ist keine Feldzuordnung hinterlegt; das Formular bliebe leer. Mit "
+                        + "\"Standardpaket importieren\" wird eine mitgelieferte Zuordnung "
+                        + "ergänzt; wird für dieses Formular keine mitgeliefert, ist sie in der "
+                        + "Formularverwaltung anzulegen.");
+            }
+            templates.add(template);
+        }
+
+        List<ArchiveFileDocumentsBean> documents = new ArrayList<>();
+        EnforcementFormTemplate used = null;
+
+        for (int i = 0; i < forms.size(); i++) {
+            EnforcementFormTemplate template = templates.get(i);
+            documents.add(produce(measure, ledger, template, forms.get(i), values, flatten));
+            if (used == null) {
+                used = template;
+            }
+        }
+
+        // Welche Fassung benutzt wurde, gehört an die Maßnahme: nach einer Ablösung des Formulars
+        // muss eine Einreichung nachvollziehbar bleiben.
+        measure.setFormTemplate(used);
+        measure.setFormVersion(used == null ? null : used.getVersion());
+        this.measuresFacade.edit(measure);
+
+        return documents;
+    }
+
+    /**
+     * Fills one form and stores it in the case.
+     */
+    private ArchiveFileDocumentsBean produce(EnforcementMeasure measure, ClaimLedger ledger,
+            EnforcementFormTemplate template, EnforcementMeasureTypeForm form,
+            Map<String, String> values, boolean flatten) throws Exception {
+
+        // Bereits vor dem ersten Dokument geprüft; hier als zweite Verteidigung, damit ein
+        // künftiger Aufrufer die Reihenfolge nicht stillschweigend umgehen kann.
+        List<EnforcementFormFieldMapping> mappings = this.formFieldMappingsFacade.findByTemplate(template);
+        if (mappings.isEmpty()) {
+            throw new Exception("Zur Formularvorlage \"" + template.getName()
+                    + "\" ist keine Feldzuordnung hinterlegt; das Formular bliebe leer.");
+        }
+
+        Map<String, String> fields = this.formPreparation.fieldsFor(mappings, values);
+        List<String> mandatory = this.formPreparation.mandatoryFieldsOf(mappings);
+
+        File source = File.createTempFile("zvfv-vorlage-", ".pdf");
+        File target = File.createTempFile("zvfv-", ".pdf");
+        try {
+            Files.write(source.toPath(), template.getPdfContent());
+            AcroFormFillResult result = this.filler.fill(source, fields, mandatory, target, flatten);
+            if (!result.isComplete()) {
+                // Nichts wird gespeichert, was unvollständig ist: ein Formular, das erst beim
+                // Gerichtsvollzieher auffällt, kostet Wochen und die Kosten des Versuchs.
+                //
+                // Die Meldung nennt die fehlenden Angaben so, wie sie einzutragen sind. Der Fueller
+                // kennt nur die Namen im PDF - "Textfeld 4" -, und wer den Antrag stellt, findet
+                // dazu nichts in der Oberflaeche.
+                StringBuilder message = new StringBuilder("Das Formular \"")
+                        .append(template.getName())
+                        .append("\" konnte nicht vollständig erzeugt werden.");
+                List<String> missing = this.formPreparation.describeMissing(mappings,
+                        result.getMissingMandatoryFields());
+                if (!missing.isEmpty()) {
+                    message.append("\n\nDiese Pflichtangaben fehlen:");
+                    for (String entry : missing) {
+                        message.append("\n  - ").append(entry);
+                    }
+                }
+                if (!result.getUnknownFields().isEmpty() || !result.getRejectedValues().isEmpty()) {
+                    // Beides sind Fehler der Zuordnung und keine fehlenden Eingaben; sie bleiben
+                    // technisch, weil sie in der Formularverwaltung behoben werden.
+                    message.append("\n\n").append(result.describe());
+                }
+                throw new Exception(message.toString());
+            }
+            return this.archiveFileService.addDocument(ledger.getArchiveFileKey().getId(),
+                    this.formPreparation.documentName(measure, form, template),
+                    Files.readAllBytes(target.toPath()),
+                    null, null);
+        } finally {
+            delete(source);
+            delete(target);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public EnforcementCostProposal proposeCosts(String measureId, BigDecimal vatRate,
+            boolean vatDeductible, boolean hearing) throws Exception {
+
+        EnforcementMeasure measure = requireMeasure(measureId);
+        ClaimLedger ledger = measure.getLedger();
+        if (ledger == null) {
+            throw new Exception("Die Maßnahme gehört zu keinem Forderungskonto!");
+        }
+        Date day = measure.getOrderedDate() == null ? new Date() : measure.getOrderedDate();
+
+        EnforcementCostCalculator.Request request = new EnforcementCostCalculator.Request();
+        // Der Gegenstandswert der Vollstreckung ist die Forderung, die vollstreckt wird (§ 25
+        // Abs. 1 Nr. 1 RVG) - und zwar zum Tag der Maßnahme, nicht zu heute.
+        request.setClaimValue(outstandingOf(ledger, day));
+        request.setLawyerScale(scale(SCALE_LAWYER, day));
+        request.setProcedureFee(item(ITEM_PROCEDURE_FEE, day));
+        request.setHearingFee(item(ITEM_HEARING_FEE, day));
+        request.setExpensesFlatRate(item(ITEM_EXPENSES, day));
+        request.setCourtFee(item(ITEM_COURT_FEE, day));
+        request.setVatRate(vatRate);
+        request.setVatDeductible(vatDeductible);
+        request.setHearing(hearing);
+
+        EnforcementAddresseeType addressee = measure.getMeasureType() == null
+                ? null : measure.getMeasureType().getAddresseeType();
+        request.setCourtMeasure(addressee == EnforcementAddresseeType.ENFORCEMENT_COURT);
+        request.setBailiffMeasure(addressee == EnforcementAddresseeType.BAILIFF);
+
+        if (request.getLawyerScale() == null) {
+            throw new Exception("Für den " + day + " ist keine Gebührentabelle nach § 13 RVG "
+                    + "hinterlegt.");
+        }
+
+        EnforcementCostProposal proposal = new EnforcementCostCalculator().propose(request);
+        proposal.setMeasureId(measure.getId());
+        return proposal;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public List<String> bookCosts(String measureId, EnforcementCostProposal proposal,
+            String debtorPartyId, boolean advancedByFirm) throws Exception {
+
+        EnforcementMeasure measure = requireMeasure(measureId);
+        ClaimLedger ledger = measure.getLedger();
+        if (ledger == null) {
+            throw new Exception("Die Maßnahme gehört zu keinem Forderungskonto!");
+        }
+        List<String> booked = new ArrayList<>();
+        if (proposal == null) {
+            return booked;
+        }
+        Date day = measure.getOrderedDate() == null ? new Date() : measure.getOrderedDate();
+
+        for (EnforcementCostPosition position : proposal.getPositions()) {
+            if (!position.isIncluded() || position.getAmount() == null
+                    || position.getAmount().signum() == 0) {
+                // Was nicht angesetzt wird oder keinen Betrag hat, wird nicht gebucht - eine
+                // Position ueber 0,00 Euro steht spaeter in jeder Aufstellung und sagt nichts.
+                continue;
+            }
+            ProceduralCostBooking booking = new ProceduralCostBooking(ledger.getId(),
+                    position.getAmount(), position.getLabel());
+            // Kosten der Zwangsvollstreckung sind nach § 788 Abs. 1 ZPO mit der Hauptforderung
+            // beizutreiben; sie gehoeren deshalb ins Forderungskonto und nicht auf eine Rechnung.
+            booking.setCostType(ClaimComponentType.COST_NON_INTEREST_BEARING);
+            booking.setBookingDate(day);
+            booking.setOriginReference(originOf(measure));
+            booking.setDebtorPartyId(debtorPartyId);
+            booking.setComment(describe(position));
+            booked.add(this.claimLedgerService.bookProceduralCost(booking).getId());
+        }
+
+        if (advancedByFirm && ledger.getArchiveFileKey() != null
+                && proposal.getTotal().signum() != 0) {
+            // Verauslagt die Kanzlei, ist das Geld aus ihrer Kasse geflossen, lange bevor der
+            // Schuldner zahlt. Das Aktenkonto haelt das fest; das Forderungskonto sagt nur, was der
+            // Schuldner schuldet.
+            CaseAccountEntry advance = new CaseAccountEntry();
+            advance.setEntryDate(day);
+            advance.setDescription("Verauslagt: " + originOf(measure));
+            advance.setExpendituresOut(proposal.getTotal());
+            this.archiveFileService.addAccountEntry(ledger.getArchiveFileKey().getId(), advance);
+        }
+        return booked;
+    }
+
+    /**
+     * How a cost booking names the measure it was caused by.
+     */
+    private String originOf(EnforcementMeasure measure) {
+        return "Zwangsvollstreckung: " + (measure.getMeasureType() == null
+                ? "Maßnahme" : measure.getMeasureType().getName())
+                + " vom " + new java.text.SimpleDateFormat("dd.MM.yyyy").format(
+                        measure.getOrderedDate() == null ? new Date() : measure.getOrderedDate());
+    }
+
+    /**
+     * What a booking says about where its amount comes from.
+     */
+    private String describe(EnforcementCostPosition position) {
+        StringBuilder sb = new StringBuilder();
+        if (position.getLegalBasis() != null) {
+            sb.append(position.getLegalBasis());
+        }
+        if (position.getRate() != null) {
+            sb.append(sb.length() == 0 ? "" : ", ").append("Satz ")
+                    .append(GermanNumbers.format(position.getRate()));
+        }
+        if (position.getBaseValue() != null) {
+            sb.append(sb.length() == 0 ? "" : ", ").append("Wert ")
+                    .append(GermanNumbers.format(position.getBaseValue()));
+        }
+        if (position.getNote() != null && !position.getNote().trim().isEmpty()) {
+            sb.append(sb.length() == 0 ? "" : "\n").append(position.getNote().trim());
+        }
+        return sb.toString();
+    }
+
+    private FeeScale scale(String scaleKey, Date day) {
+        for (FeeScale feeScale : this.feeScalesFacade.findByKey(scaleKey)) {
+            if (feeScale.isValidAt(day)) {
+                feeScale.setBrackets(new ArrayList<>(this.feeScaleBracketsFacade.findByScale(feeScale)));
+                return feeScale;
+            }
+        }
+        return null;
+    }
+
+    private FeeItem item(String itemKey, Date day) {
+        for (FeeItem feeItem : this.feeItemsFacade.findByKey(itemKey)) {
+            if (feeItem.isValidAt(day)) {
+                return feeItem;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The values every form of this measure is filled from.
+     *
+     * Built once per measure rather than per form: the three forms of an attachment order state the
+     * same facts, and building them twice would be an invitation for them to differ.
+     */
+    private Map<String, String> valuesFor(EnforcementMeasure measure, ClaimLedger ledger, Date day,
+            boolean itemised) throws Exception {
+
+        List<ClaimLedgerParty> parties = this.claimLedgerService.getParties(ledger.getId());
+        List<ClaimLedgerParty> creditors = new ArrayList<>();
+        for (ClaimLedgerParty party : parties) {
+            if (party.getRole() == ClaimPartyRole.CREDITOR) {
+                creditors.add(party);
+            }
+        }
+        // Gegen wen die Maßnahme läuft, sagt die Maßnahme - nicht das Forderungskonto. Sie kann
+        // gegen einen Gesamtschuldner betrieben werden und gegen den anderen nicht.
+        List<ClaimLedgerParty> debtors = new ArrayList<>(measure.getDebtors());
+        if (debtors.isEmpty()) {
+            for (ClaimLedgerParty party : parties) {
+                if (party.getRole() == ClaimPartyRole.DEBTOR) {
+                    debtors.add(party);
+                }
+            }
+        }
+
+        ClaimStatement statement =
+                this.claimLedgerService.assembleClaimStatement(ledger.getId(), day, false);
+        EnforcementItemisation itemisation =
+                this.itemisationBuilder.build(statement, measure.getTitle());
+
+        if (itemised) {
+            // Das amtliche Formular hat feste Plaetze. Was keinen findet, fehlte sonst schweigend
+            // im Antrag - und der Gerichtsvollzieher triebe weniger bei, als der Titel hergibt.
+            EnforcementItemisationSlots slots = new EnforcementItemisationSlots(itemisation,
+                    measure.getTitle() != null && measure.getTitle().getTitleType()
+                            == EnforcementTitleType.VOLLSTRECKUNGSBESCHEID);
+            if (!slots.fits()) {
+                StringBuilder left = new StringBuilder();
+                for (EnforcementItemisationRow row : slots.getOverflow()) {
+                    left.append("\n  - ").append(row.getDesignation());
+                }
+                throw new Exception("Die Forderungsaufstellung hat mehr Positionen, als das "
+                        + "amtliche Formular Plaetze hat. Ohne Platz blieben:" + left
+                        + "\n\nDas Formular sieht zwei titulierte Hauptforderungen und je einen "
+                        + "Block fuer Kosten des Mahnverfahrens, vorgerichtliche und festgesetzte "
+                        + "Kosten vor. Weitere Positionen gehoeren in eine gesonderte Anlage.");
+            }
+        }
+
+        ArchiveFileBean caseFile = ledger.getArchiveFileKey();
+
+        // Wer den Antrag stellt, steht im Formular im Block "Kontaktdaten des Auftraggebers", und
+        // das ist die Kanzlei: der angemeldete Benutzer mit seinen Stammdaten. Ohne ihn bliebe der
+        // Block leer und das Ankreuzfeld "Bevollmächtigter" ungesetzt - der Gerichtsvollzieher
+        // wuesste nicht, an wen er sich wendet.
+        AddressBean filedBy = filingUser();
+        return this.formData.valuesOf(measure, creditors, debtors, measure.getTitle(), itemisation,
+                filedBy, day, caseFile == null ? null : caseFile.getFileNumber(),
+                filedBy == null ? null : filedBy.getCity(), costsOf(measure, ledger));
+    }
+
+    /**
+     * The costs of this measure for section IV of the itemisation.
+     *
+     * What has been booked wins over what would be proposed: the firm may have struck the VAT or
+     * entered the bailiff's invoice, and a form that showed the computation while the ledger held
+     * something else would make two documents of one case disagree.
+     */
+    private EnforcementCostView.Block[] costsOf(EnforcementMeasure measure, ClaimLedger ledger)
+            throws Exception {
+
+        String origin = originOf(measure);
+        List<ClaimComponent> booked = new ArrayList<>();
+        for (ClaimComponent component : this.claimLedgerService.getClaimComponents(ledger.getId())) {
+            if (origin.equals(component.getOriginReference())) {
+                booked.add(component);
+            }
+        }
+
+        EnforcementCostProposal proposal = null;
+        if (booked.isEmpty()) {
+            try {
+                proposal = proposeCosts(measure.getId(), new java.math.BigDecimal("19.00"), false, false);
+            } catch (Exception ex) {
+                // Ohne Gebuehrentabelle bleibt der Abschnitt leer - das Formular deshalb nicht zu
+                // erzeugen, waere unverhaeltnismaessig.
+                log.warn("Unable to propose the costs of measure " + measure.getId(), ex);
+            }
+        }
+        return new EnforcementCostView().blocksOf(proposal, booked,
+                measure.getMeasureType() == null ? null : measure.getMeasureType().getName());
+    }
+
+    /**
+     * The firm as the form wants it: the user who is filing, from their own master data.
+     *
+     * Built as a contact rather than taken from one, because the firm is not a contact record. The
+     * object is never stored; it exists for the length of one form.
+     *
+     * @return the filing user as a contact, or null where their data is not available
+     */
+    private AddressBean filingUser() {
+        String principalId;
+        try {
+            principalId = this.context.getCallerPrincipal().getName();
+        } catch (Throwable t) {
+            log.warn("Unable to determine the caller when filling an enforcement form", t);
+            return null;
+        }
+        AppUserBean user = principalId == null ? null : this.userFacade.findByPrincipalId(principalId);
+        if (user == null) {
+            return null;
+        }
+        AddressBean filedBy = new AddressBean();
+        filedBy.setCompany(user.getCompany());
+        filedBy.setName(user.getName());
+        filedBy.setFirstName(user.getFirstName());
+        filedBy.setStreet(user.getStreet());
+        filedBy.setZipCode(user.getZipCode());
+        filedBy.setCity(user.getCity());
+        filedBy.setPhone(user.getPhone());
+        filedBy.setEmail(user.getEmail());
+        return filedBy;
+    }
+
+    /**
+     * What is still owed, which decides whether the cheaper measures are worth taking at all.
+     */
+    private java.math.BigDecimal outstandingOf(ClaimLedger ledger, Date day) {
+        try {
+            ClaimStatement statement = this.claimLedgerService.assembleClaimStatement(
+                    ledger.getId(), day == null ? new Date() : day, false);
+            return statement.getTotals() == null ? null : statement.getTotals().getOpenClaim();
+        } catch (Exception ex) {
+            // Die Höhe entscheidet nur über eine einzige Grenze (§ 866 Abs. 3 ZPO). Sie nicht zu
+            // kennen darf die Auswahl nicht verhindern - unbekannt heisst dort "kein Hindernis".
+            log.warn("Unable to determine the outstanding amount of ledger " + ledger.getId(), ex);
+            return null;
+        }
+    }
+
+    private ClaimLedger requireLedger(String ledgerId) throws Exception {
+        ClaimLedger ledger = this.claimLedgersFacade.find(ledgerId);
+        if (ledger == null) {
+            throw new Exception("Das Forderungskonto existiert nicht!");
+        }
+        requireAccess(ledger.getArchiveFileKey());
+        return ledger;
+    }
+
+    private EnforcementMeasure requireMeasure(String measureId) throws Exception {
+        EnforcementMeasure measure = this.measuresFacade.find(measureId);
+        if (measure == null) {
+            throw new Exception("Die Maßnahme existiert nicht!");
+        }
+        if (measure.getLedger() != null) {
+            requireAccess(measure.getLedger().getArchiveFileKey());
+        }
+        return measure;
+    }
+
+    private void requireAccess(ArchiveFileBean caseFile) throws Exception {
+        if (caseFile == null) {
+            return;
+        }
+        String principalId = this.context.getCallerPrincipal().getName();
+        List<Group> userGroups = new ArrayList<>();
+        try {
+            userGroups = this.securityFacade.getGroupsForUser(principalId);
+        } catch (Throwable t) {
+            log.error("Unable to determine groups for user " + principalId, t);
+        }
+        if (!SecurityUtils.checkGroupsForCase(userGroups, caseFile, this.caseGroupsFacade)) {
+            throw new Exception("Sie haben keinen Zugriff auf diese Akte!");
+        }
+    }
+
+    private void delete(File file) {
+        if (file != null && file.exists() && !file.delete()) {
+            log.warn("Unable to delete the temporary file " + file.getAbsolutePath());
+        }
     }
 }

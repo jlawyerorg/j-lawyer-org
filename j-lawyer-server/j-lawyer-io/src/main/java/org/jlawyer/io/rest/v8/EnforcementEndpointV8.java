@@ -660,319 +660,341 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package org.jlawyer.io.rest.v8;
 
-import java.io.Serializable;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.EnforcementMeasure;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureOutcome;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureType;
+import com.jdimension.jlawyer.persistence.EnforcementTitle;
+import com.jdimension.jlawyer.pojo.EnforcementItemisation;
+import com.jdimension.jlawyer.pojo.EnforcementMeasureOption;
+import com.jdimension.jlawyer.services.EnforcementServiceLocal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.Lob;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import javax.annotation.security.RolesAllowed;
+import javax.ejb.Stateless;
+import javax.naming.InitialContext;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.tools.RestErrorResponses;
+import org.jlawyer.io.rest.v8.pojo.RestfulEnforcementMeasureOptionV8;
+import org.jlawyer.io.rest.v8.pojo.RestfulEnforcementMeasureV8;
 
 /**
- * One version of one official form, with the profile that says how to fill it.
+ * Enforcement (Zwangsvollstreckung): the measures taken out of a claim ledger on the strength of one
+ * of its titles, and the official ZVFV forms they are filed on.
  *
- * The forms of the ZVFV are replaced from time to time. A measure generated under an older version
- * was not wrong, it was current - so versions live alongside one another with a validity period,
- * and a measure records which one it used. Producing a form from a version whose validity has ended
- * is possible but has to be confirmed.
- *
- * The PDF is held here rather than in the file system. The number of forms is small, the versions
- * few, and keeping them with their mapping means a backup of the database is a backup of everything
- * needed to reproduce a filing.
+ * The measures of a ledger, what may be taken and what stands in the way of the rest, the itemisation
+ * the forms ask for, and the generation of the forms themselves into the case. Reading needs
+ * {@code readArchiveFileRole}, everything that changes something {@code writeArchiveFileRole}.
  *
  * @author jens
  */
-@Entity
-@Table(name = "enforcement_form_templates")
-@NamedQueries({
-    @NamedQuery(name = "EnforcementFormTemplate.findAll", query = "SELECT t FROM EnforcementFormTemplate t ORDER BY t.formKey ASC, t.validFrom DESC"),
-    @NamedQuery(name = "EnforcementFormTemplate.findById", query = "SELECT t FROM EnforcementFormTemplate t WHERE t.id = :id"),
-    @NamedQuery(name = "EnforcementFormTemplate.findByKey", query = "SELECT t FROM EnforcementFormTemplate t WHERE t.formKey = :formKey ORDER BY t.validFrom DESC"),
-    // Ein Verzeichnis ohne die Dateien - und ohne verwaltete Entities. Wer eine verwaltete Entity
-    // abräumt, um sie leichter zu machen, schreibt die Leere beim Commit in die Datenbank.
-    @NamedQuery(name = "EnforcementFormTemplate.findAllSummaries", query = "SELECT NEW com.jdimension.jlawyer.persistence.EnforcementFormTemplate(t.id, t.formKey, t.name, t.version, t.validFrom, t.validTo, t.fileName, t.description) FROM EnforcementFormTemplate t ORDER BY t.formKey ASC, t.validFrom DESC")
-})
-public class EnforcementFormTemplate implements Serializable {
+@Stateless
+@Path("/v8/enforcement")
+@Consumes({"application/json"})
+@Produces({"application/json"})
+@io.swagger.annotations.Api(tags = {"Enforcement"})
+public class EnforcementEndpointV8 implements EnforcementEndpointLocalV8 {
 
-    private static final long serialVersionUID = 1L;
+    private static final Logger log = Logger.getLogger(EnforcementEndpointV8.class.getName());
+    private static final String LOOKUP_ENFORCEMENT = "java:global/j-lawyer-server/j-lawyer-server-ejb/EnforcementService!com.jdimension.jlawyer.services.EnforcementServiceLocal";
 
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
-
-    /** The annex of the ZVFV this is a version of - "ANLAGE_1". */
-    @Column(name = "form_key", nullable = false, length = 50)
-    private String formKey;
-
-    @Column(name = "name", nullable = false)
-    private String name;
+    private EnforcementServiceLocal enforcement() throws Exception {
+        return (EnforcementServiceLocal) new InitialContext().lookup(LOOKUP_ENFORCEMENT);
+    }
 
     /**
-     * The version, as the publisher dates it - "2024-09-01".
+     * Returns the measures taken out of a claim ledger, oldest first.
      *
-     * Recorded on every measure generated from it, so a filing stays reproducible after the form has
-     * been replaced.
+     * @param ledgerId id of the claim ledger
+     * @response 200 The measures
+     * @response 401 User not authorized
+     * @response 404 The ledger does not exist or is not accessible
      */
-    @Column(name = "version", length = 50)
-    private String version;
-
-    @Column(name = "valid_from")
-    @Temporal(TemporalType.DATE)
-    private Date validFrom;
-
-    /** Null while the version is the current one. */
-    @Column(name = "valid_to")
-    @Temporal(TemporalType.DATE)
-    private Date validTo;
-
-    /**
-     * The fillable PDF.
-     *
-     * Lazy because it is a few hundred kilobytes and most reads of a template only want to know
-     * which versions exist.
-     */
-    @Lob
-    @Basic(fetch = FetchType.LAZY)
-    @Column(name = "pdf_content")
-    private byte[] pdfContent;
-
-    @Column(name = "file_name")
-    private String fileName;
-
-    @Column(name = "description", length = 1000)
-    private String description;
-
-    /**
-     * How the fields of this form are filled.
-     *
-     * Belongs to the version, not to the form: a new version may rename its fields, and a profile
-     * written for the old one would then address fields that no longer exist.
-     */
-    @OneToMany(mappedBy = "template", fetch = FetchType.LAZY)
-    private List<EnforcementFormFieldMapping> fieldMappings = new ArrayList<>();
-
-    /**
-     * The constructor JPA needs.
-     */
-    public EnforcementFormTemplate() {
-    }
-
-    /**
-     * Builds a template without its PDF, for a listing.
-     *
-     * Exists so a listing can be produced by a query rather than by emptying loaded entities.
-     * Clearing the content of a <em>managed</em> entity to make it lighter on the wire writes that
-     * emptiness into the database when the transaction commits - the templates are then listed
-     * correctly and gone.
-     *
-     * @param id the technical identifier
-     * @param formKey the annex of the ZVFV
-     * @param name the designation
-     * @param version the version as the publisher dates it
-     * @param validFrom the day the version takes effect
-     * @param validTo the day it ceased to be prescribed
-     * @param fileName the name the file was uploaded under
-     * @param description what this version is
-     */
-    public EnforcementFormTemplate(String id, String formKey, String name, String version,
-            Date validFrom, Date validTo, String fileName, String description) {
-        this.id = id;
-        this.formKey = formKey;
-        this.name = name;
-        this.version = version;
-        this.validFrom = validFrom;
-        this.validTo = validTo;
-        this.fileName = fileName;
-        this.description = description;
-    }
-
-    /**
-     * @return the technical identifier
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * @param id the technical identifier
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the annex of the ZVFV this is a version of
-     */
-    public String getFormKey() {
-        return formKey;
-    }
-
-    /**
-     * @param formKey the annex of the ZVFV
-     */
-    public void setFormKey(String formKey) {
-        this.formKey = formKey;
-    }
-
-    /**
-     * @return the designation shown to the user
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name the designation shown to the user
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return the version as the publisher dates it
-     */
-    public String getVersion() {
-        return version;
-    }
-
-    /**
-     * @param version the version as the publisher dates it
-     */
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    /**
-     * @return the day this version takes effect, or null if unstated
-     */
-    public Date getValidFrom() {
-        return validFrom;
-    }
-
-    /**
-     * @param validFrom the day this version takes effect
-     */
-    public void setValidFrom(Date validFrom) {
-        this.validFrom = validFrom;
-    }
-
-    /**
-     * @return the day this version ceased to be prescribed, or null while it is current
-     */
-    public Date getValidTo() {
-        return validTo;
-    }
-
-    /**
-     * @param validTo the day this version ceased to be prescribed
-     */
-    public void setValidTo(Date validTo) {
-        this.validTo = validTo;
-    }
-
-    /**
-     * @return the fillable PDF
-     */
-    public byte[] getPdfContent() {
-        return pdfContent;
-    }
-
-    /**
-     * @param pdfContent the fillable PDF
-     */
-    public void setPdfContent(byte[] pdfContent) {
-        this.pdfContent = pdfContent;
-    }
-
-    /**
-     * @return the name the file was uploaded under
-     */
-    public String getFileName() {
-        return fileName;
-    }
-
-    /**
-     * @param fileName the name the file was uploaded under
-     */
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
-
-    /**
-     * @return what this version is, in the words a user needs
-     */
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * @param description what this version is
-     */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    /**
-     * @return how the fields of this form are filled, never null
-     */
-    public List<EnforcementFormFieldMapping> getFieldMappings() {
-        if (this.fieldMappings == null) {
-            this.fieldMappings = new ArrayList<>();
-        }
-        return fieldMappings;
-    }
-
-    /**
-     * @param fieldMappings how the fields of this form are filled
-     */
-    public void setFieldMappings(List<EnforcementFormFieldMapping> fieldMappings) {
-        this.fieldMappings = fieldMappings;
-    }
-
-    /**
-     * Whether this version is the one prescribed on a given day.
-     *
-     * @param day the day to judge by
-     * @return true if the day falls inside the validity period
-     */
-    public boolean isValidOn(Date day) {
-        if (day == null) {
-            return this.validTo == null;
-        }
-        if (this.validFrom != null && day.before(this.validFrom)) {
-            return false;
-        }
-        return this.validTo == null || !day.after(this.validTo);
-    }
-
     @Override
-    public int hashCode() {
-        return id == null ? 0 : id.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof EnforcementFormTemplate)) {
-            return false;
+    @GET
+    @Path("/ledger/{ledgerId}/measures")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the enforcement measures of a claim ledger", response = RestfulEnforcementMeasureV8.class, responseContainer = "List")
+    public Response getMeasures(@PathParam("ledgerId") String ledgerId) {
+        try {
+            List<RestfulEnforcementMeasureV8> result = new ArrayList<>();
+            for (EnforcementMeasure measure : enforcement().getMeasures(ledgerId)) {
+                result.add(toRest(measure));
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("can not get enforcement measures of ledger " + ledgerId, ex);
+            return RestErrorResponses.serverError(ex);
         }
-        EnforcementFormTemplate other = (EnforcementFormTemplate) object;
-        return this.id != null && this.id.equals(other.id);
     }
 
+    /**
+     * Returns every kind of measure with the reason it cannot be taken, if it cannot.
+     *
+     * Kinds that cannot be taken are returned all the same. A list that silently omits the bailiff
+     * order leaves the caller wondering; one that reports "the title has not been served yet" says
+     * what to do next.
+     *
+     * @param ledgerId id of the claim ledger
+     * @param titleId id of the title to enforce, may be omitted
+     * @response 200 The kinds with their availability
+     * @response 401 User not authorized
+     * @response 404 The ledger does not exist or is not accessible
+     */
     @Override
-    public String toString() {
-        return name + (version == null || version.trim().isEmpty() ? "" : " (" + version + ")");
+    @GET
+    @Path("/ledger/{ledgerId}/options")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the measures that can be taken, and why the others cannot", response = RestfulEnforcementMeasureOptionV8.class, responseContainer = "List")
+    public Response getMeasureOptions(@PathParam("ledgerId") String ledgerId,
+            @QueryParam("titleId") String titleId) {
+        try {
+            List<RestfulEnforcementMeasureOptionV8> result = new ArrayList<>();
+            for (EnforcementMeasureOption option
+                    : enforcement().getMeasureOptions(ledgerId, titleId, new Date())) {
+                result.add(toRest(option));
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("can not get enforcement measure options of ledger " + ledgerId, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Returns the kinds of measure a firm has switched on.
+     *
+     * @response 200 The kinds
+     * @response 401 User not authorized
+     */
+    @Override
+    @GET
+    @Path("/measuretypes")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the configured kinds of enforcement measure", response = RestfulEnforcementMeasureOptionV8.class, responseContainer = "List")
+    public Response getMeasureTypes() {
+        try {
+            List<RestfulEnforcementMeasureOptionV8> result = new ArrayList<>();
+            for (EnforcementMeasureType type : enforcement().getMeasureTypes()) {
+                RestfulEnforcementMeasureOptionV8 dto = new RestfulEnforcementMeasureOptionV8();
+                dto.setMeasureTypeId(type.getId());
+                dto.setName(type.getName());
+                dto.setDescription(type.getDescription());
+                dto.setAddresseeType(type.getAddresseeType() == null ? null : type.getAddresseeType().name());
+                dto.setAvailable(true);
+                result.add(dto);
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("can not get enforcement measure types", ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Records a measure against a claim ledger.
+     *
+     * A kind that cannot be taken as things stand is refused with the reason
+     * {@link #getMeasureOptions(String, String)} would have given.
+     *
+     * @param ledgerId id of the claim ledger
+     * @param measure the measure to record
+     * @response 200 The stored measure
+     * @response 401 User not authorized
+     * @response 404 The ledger does not exist or is not accessible
+     */
+    @Override
+    @PUT
+    @Path("/ledger/{ledgerId}/measures")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Records an enforcement measure", response = RestfulEnforcementMeasureV8.class)
+    public Response addMeasure(@PathParam("ledgerId") String ledgerId,
+            RestfulEnforcementMeasureV8 measure) {
+        try {
+            if (measure == null || measure.getMeasureTypeId() == null) {
+                return badRequest("Für die Maßnahme ist keine Art angegeben!");
+            }
+
+            EnforcementMeasure entity = new EnforcementMeasure();
+            EnforcementMeasureType type = new EnforcementMeasureType();
+            type.setId(measure.getMeasureTypeId());
+            entity.setMeasureType(type);
+            if (measure.getTitleId() != null) {
+                EnforcementTitle title = new EnforcementTitle();
+                title.setId(measure.getTitleId());
+                entity.setTitle(title);
+            }
+            entity.setAddresseeDesignation(measure.getAddresseeDesignation());
+            entity.setAddresseeAddress(measure.getAddresseeAddress());
+            entity.setOrderedDate(measure.getOrderedDate() > 0 ? new Date(measure.getOrderedDate()) : null);
+            entity.setNotes(measure.getNotes());
+
+            return Response.ok(toRest(enforcement().addMeasure(ledgerId, entity))).build();
+        } catch (Exception ex) {
+            log.error("can not add an enforcement measure to ledger " + ledgerId, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Records what became of a measure.
+     *
+     * @param measureId id of the measure
+     * @param outcome how it ended - PENDING, SUCCESSFUL, PARTIALLY_SUCCESSFUL, UNSUCCESSFUL,
+     * WITHDRAWN or STAYED
+     * @param outcomeDate the day the outcome is dated, in milliseconds; omitted means today
+     * @response 200 The stored measure
+     * @response 401 User not authorized
+     * @response 404 The measure does not exist or is not accessible
+     */
+    @Override
+    @POST
+    @Path("/measures/{measureId}/outcome")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Records the outcome of an enforcement measure", response = RestfulEnforcementMeasureV8.class)
+    public Response recordOutcome(@PathParam("measureId") String measureId,
+            @QueryParam("outcome") String outcome, @QueryParam("outcomeDate") Long outcomeDate) {
+        try {
+            EnforcementMeasureOutcome value;
+            try {
+                value = EnforcementMeasureOutcome.valueOf(outcome);
+            } catch (IllegalArgumentException | NullPointerException ex) {
+                return badRequest("\"" + outcome + "\" ist kein Ergebnis einer "
+                        + "Vollstreckungsmaßnahme.");
+            }
+            EnforcementMeasure stored = enforcement().recordOutcome(measureId, value,
+                    outcomeDate == null ? null : new Date(outcomeDate));
+            return Response.ok(toRest(stored)).build();
+        } catch (Exception ex) {
+            log.error("can not record the outcome of enforcement measure " + measureId, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Produces the official forms of a measure and stores them in the case.
+     *
+     * One document per form the kind is filed on. A form whose mapping leaves a mandatory field
+     * empty is refused rather than produced incomplete.
+     *
+     * @param measureId id of the measure
+     * @param flatten whether to fix the values in place; omitted means no
+     * @response 200 The names of the documents stored
+     * @response 401 User not authorized
+     * @response 404 The measure does not exist or is not accessible
+     */
+    @Override
+    @POST
+    @Path("/measures/{measureId}/forms")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Produces the official forms of a measure into the case", response = String.class, responseContainer = "List")
+    public Response generateForms(@PathParam("measureId") String measureId,
+            @QueryParam("flatten") Boolean flatten) {
+        try {
+            List<String> names = new ArrayList<>();
+            for (ArchiveFileDocumentsBean document
+                    : enforcement().generateForms(measureId, Boolean.TRUE.equals(flatten))) {
+                names.add(document.getName());
+            }
+            return Response.ok(names).build();
+        } catch (Exception ex) {
+            log.error("can not generate the forms of enforcement measure " + measureId, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Returns the itemisation of what is owed, as the enforcement forms ask for it.
+     *
+     * @param ledgerId id of the claim ledger
+     * @param titleId id of the title being enforced, may be omitted
+     * @param keyDate the day the figures are computed to, in milliseconds; omitted means today
+     * @response 200 The itemisation
+     * @response 401 User not authorized
+     * @response 404 The ledger does not exist or is not accessible
+     */
+    @Override
+    @GET
+    @Path("/ledger/{ledgerId}/itemisation")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the itemisation the enforcement forms ask for", response = EnforcementItemisation.class)
+    public Response getItemisation(@PathParam("ledgerId") String ledgerId,
+            @QueryParam("titleId") String titleId, @QueryParam("keyDate") Long keyDate) {
+        try {
+            EnforcementItemisation itemisation = enforcement().getItemisation(ledgerId, titleId,
+                    keyDate == null ? new Date() : new Date(keyDate));
+            return Response.ok(itemisation).build();
+        } catch (Exception ex) {
+            log.error("can not get the itemisation of ledger " + ledgerId, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * A 400 carrying what the caller got wrong.
+     *
+     * {@link RestErrorResponses} only builds a 500 from a throwable. Throwing here just to be able
+     * to report a bad request would turn the caller's mistake into a server error, which is what
+     * the status code is there to distinguish.
+     */
+    private Response badRequest(String message) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                .entity(RestErrorResponses.body(new IllegalArgumentException(message)))
+                .type(MediaType.APPLICATION_JSON + ";charset=utf-8")
+                .build();
+    }
+
+    private RestfulEnforcementMeasureV8 toRest(EnforcementMeasure measure) {
+        RestfulEnforcementMeasureV8 dto = new RestfulEnforcementMeasureV8();
+        dto.setId(measure.getId());
+        if (measure.getMeasureType() != null) {
+            dto.setMeasureTypeId(measure.getMeasureType().getId());
+            dto.setMeasureTypeName(measure.getMeasureType().getName());
+        }
+        dto.setTitleId(measure.getTitle() == null ? null : measure.getTitle().getId());
+        dto.setAddresseeType(measure.getAddresseeType() == null ? null : measure.getAddresseeType().name());
+        dto.setAddresseeDesignation(measure.getAddresseeDesignation());
+        dto.setAddresseeAddress(measure.getAddresseeAddress());
+        dto.setOrderedDate(measure.getOrderedDate() == null ? 0L : measure.getOrderedDate().getTime());
+        dto.setDispatchedDate(measure.getDispatchedDate() == null ? 0L : measure.getDispatchedDate().getTime());
+        dto.setOutcome(measure.getOutcome() == null ? null : measure.getOutcome().name());
+        dto.setOutcomeDate(measure.getOutcomeDate() == null ? 0L : measure.getOutcomeDate().getTime());
+        dto.setFormVersion(measure.getFormVersion());
+        dto.setNotes(measure.getNotes());
+        return dto;
+    }
+
+    private RestfulEnforcementMeasureOptionV8 toRest(EnforcementMeasureOption option) {
+        RestfulEnforcementMeasureOptionV8 dto = new RestfulEnforcementMeasureOptionV8();
+        EnforcementMeasureType type = option.getMeasureType();
+        if (type != null) {
+            dto.setMeasureTypeId(type.getId());
+            dto.setName(type.getName());
+            dto.setDescription(type.getDescription());
+            dto.setAddresseeType(type.getAddresseeType() == null ? null : type.getAddresseeType().name());
+        }
+        dto.setAvailable(option.isAvailable());
+        dto.setObstacle(option.getObstacle());
+        return dto;
     }
 }

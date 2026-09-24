@@ -660,319 +660,154 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.services;
 
-import java.io.Serializable;
+import com.jdimension.jlawyer.persistence.EnforcementFormFieldMapping;
+import com.jdimension.jlawyer.persistence.EnforcementFormRole;
+import com.jdimension.jlawyer.persistence.EnforcementFormTemplate;
+import com.jdimension.jlawyer.persistence.EnforcementMeasure;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureTypeForm;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.Lob;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import java.util.Map;
 
 /**
- * One version of one official form, with the profile that says how to fill it.
+ * Turning a mapping profile and a set of values into what the form filler needs.
  *
- * The forms of the ZVFV are replaced from time to time. A measure generated under an older version
- * was not wrong, it was current - so versions live alongside one another with a validity period,
- * and a measure records which one it used. Producing a form from a version whose validity has ended
- * is possible but has to be confirmed.
- *
- * The PDF is held here rather than in the file system. The number of forms is small, the versions
- * few, and keeping them with their mapping means a backup of the database is a backup of everything
- * needed to reproduce a filing.
+ * Two small decisions that would otherwise sit unreachable inside a session bean, and both of them
+ * are the kind that go wrong quietly.
  *
  * @author jens
  */
-@Entity
-@Table(name = "enforcement_form_templates")
-@NamedQueries({
-    @NamedQuery(name = "EnforcementFormTemplate.findAll", query = "SELECT t FROM EnforcementFormTemplate t ORDER BY t.formKey ASC, t.validFrom DESC"),
-    @NamedQuery(name = "EnforcementFormTemplate.findById", query = "SELECT t FROM EnforcementFormTemplate t WHERE t.id = :id"),
-    @NamedQuery(name = "EnforcementFormTemplate.findByKey", query = "SELECT t FROM EnforcementFormTemplate t WHERE t.formKey = :formKey ORDER BY t.validFrom DESC"),
-    // Ein Verzeichnis ohne die Dateien - und ohne verwaltete Entities. Wer eine verwaltete Entity
-    // abräumt, um sie leichter zu machen, schreibt die Leere beim Commit in die Datenbank.
-    @NamedQuery(name = "EnforcementFormTemplate.findAllSummaries", query = "SELECT NEW com.jdimension.jlawyer.persistence.EnforcementFormTemplate(t.id, t.formKey, t.name, t.version, t.validFrom, t.validTo, t.fileName, t.description) FROM EnforcementFormTemplate t ORDER BY t.formKey ASC, t.validFrom DESC")
-})
-public class EnforcementFormTemplate implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
-
-    /** The annex of the ZVFV this is a version of - "ANLAGE_1". */
-    @Column(name = "form_key", nullable = false, length = 50)
-    private String formKey;
-
-    @Column(name = "name", nullable = false)
-    private String name;
+public class EnforcementFormPreparation {
 
     /**
-     * The version, as the publisher dates it - "2024-09-01".
+     * Works out what to write into each field of a form.
      *
-     * Recorded on every measure generated from it, so a filing stays reproducible after the form has
-     * been replaced.
-     */
-    @Column(name = "version", length = 50)
-    private String version;
-
-    @Column(name = "valid_from")
-    @Temporal(TemporalType.DATE)
-    private Date validFrom;
-
-    /** Null while the version is the current one. */
-    @Column(name = "valid_to")
-    @Temporal(TemporalType.DATE)
-    private Date validTo;
-
-    /**
-     * The fillable PDF.
+     * A fixed value beats a source key, because a profile that carries both means the administrator
+     * decided this field does not depend on the case - a tick that always applies to this kind of
+     * measure, say. A key the vocabulary does not answer yields an empty string rather than nothing
+     * at all: leaving the field untouched would keep whatever the template held, and a template is
+     * not always blank.
      *
-     * Lazy because it is a few hundred kilobytes and most reads of a template only want to know
-     * which versions exist.
+     * @param mappings the profile of the form
+     * @param values the vocabulary's answers for this measure
+     * @return the value per field name, never null
      */
-    @Lob
-    @Basic(fetch = FetchType.LAZY)
-    @Column(name = "pdf_content")
-    private byte[] pdfContent;
+    public Map<String, String> fieldsFor(List<EnforcementFormFieldMapping> mappings,
+            Map<String, String> values) {
 
-    @Column(name = "file_name")
-    private String fileName;
-
-    @Column(name = "description", length = 1000)
-    private String description;
-
-    /**
-     * How the fields of this form are filled.
-     *
-     * Belongs to the version, not to the form: a new version may rename its fields, and a profile
-     * written for the old one would then address fields that no longer exist.
-     */
-    @OneToMany(mappedBy = "template", fetch = FetchType.LAZY)
-    private List<EnforcementFormFieldMapping> fieldMappings = new ArrayList<>();
-
-    /**
-     * The constructor JPA needs.
-     */
-    public EnforcementFormTemplate() {
-    }
-
-    /**
-     * Builds a template without its PDF, for a listing.
-     *
-     * Exists so a listing can be produced by a query rather than by emptying loaded entities.
-     * Clearing the content of a <em>managed</em> entity to make it lighter on the wire writes that
-     * emptiness into the database when the transaction commits - the templates are then listed
-     * correctly and gone.
-     *
-     * @param id the technical identifier
-     * @param formKey the annex of the ZVFV
-     * @param name the designation
-     * @param version the version as the publisher dates it
-     * @param validFrom the day the version takes effect
-     * @param validTo the day it ceased to be prescribed
-     * @param fileName the name the file was uploaded under
-     * @param description what this version is
-     */
-    public EnforcementFormTemplate(String id, String formKey, String name, String version,
-            Date validFrom, Date validTo, String fileName, String description) {
-        this.id = id;
-        this.formKey = formKey;
-        this.name = name;
-        this.version = version;
-        this.validFrom = validFrom;
-        this.validTo = validTo;
-        this.fileName = fileName;
-        this.description = description;
-    }
-
-    /**
-     * @return the technical identifier
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * @param id the technical identifier
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the annex of the ZVFV this is a version of
-     */
-    public String getFormKey() {
-        return formKey;
-    }
-
-    /**
-     * @param formKey the annex of the ZVFV
-     */
-    public void setFormKey(String formKey) {
-        this.formKey = formKey;
-    }
-
-    /**
-     * @return the designation shown to the user
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name the designation shown to the user
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return the version as the publisher dates it
-     */
-    public String getVersion() {
-        return version;
-    }
-
-    /**
-     * @param version the version as the publisher dates it
-     */
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    /**
-     * @return the day this version takes effect, or null if unstated
-     */
-    public Date getValidFrom() {
-        return validFrom;
-    }
-
-    /**
-     * @param validFrom the day this version takes effect
-     */
-    public void setValidFrom(Date validFrom) {
-        this.validFrom = validFrom;
-    }
-
-    /**
-     * @return the day this version ceased to be prescribed, or null while it is current
-     */
-    public Date getValidTo() {
-        return validTo;
-    }
-
-    /**
-     * @param validTo the day this version ceased to be prescribed
-     */
-    public void setValidTo(Date validTo) {
-        this.validTo = validTo;
-    }
-
-    /**
-     * @return the fillable PDF
-     */
-    public byte[] getPdfContent() {
-        return pdfContent;
-    }
-
-    /**
-     * @param pdfContent the fillable PDF
-     */
-    public void setPdfContent(byte[] pdfContent) {
-        this.pdfContent = pdfContent;
-    }
-
-    /**
-     * @return the name the file was uploaded under
-     */
-    public String getFileName() {
-        return fileName;
-    }
-
-    /**
-     * @param fileName the name the file was uploaded under
-     */
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
-
-    /**
-     * @return what this version is, in the words a user needs
-     */
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * @param description what this version is
-     */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    /**
-     * @return how the fields of this form are filled, never null
-     */
-    public List<EnforcementFormFieldMapping> getFieldMappings() {
-        if (this.fieldMappings == null) {
-            this.fieldMappings = new ArrayList<>();
+        Map<String, String> fields = new LinkedHashMap<>();
+        if (mappings == null) {
+            return fields;
         }
-        return fieldMappings;
+        for (EnforcementFormFieldMapping mapping : mappings) {
+            String value = mapping.getFixedValue() != null
+                    ? mapping.getFixedValue()
+                    : (values == null ? null : values.get(mapping.getSourceKey()));
+            fields.put(mapping.getFieldName(), value == null ? "" : value);
+        }
+        return fields;
     }
 
     /**
-     * @param fieldMappings how the fields of this form are filled
-     */
-    public void setFieldMappings(List<EnforcementFormFieldMapping> fieldMappings) {
-        this.fieldMappings = fieldMappings;
-    }
-
-    /**
-     * Whether this version is the one prescribed on a given day.
+     * The fields the profile says the form may not go out without.
      *
-     * @param day the day to judge by
-     * @return true if the day falls inside the validity period
+     * @param mappings the profile of the form
+     * @return the field names, never null
      */
-    public boolean isValidOn(Date day) {
-        if (day == null) {
-            return this.validTo == null;
+    public List<String> mandatoryFieldsOf(List<EnforcementFormFieldMapping> mappings) {
+        List<String> mandatory = new ArrayList<>();
+        if (mappings == null) {
+            return mandatory;
         }
-        if (this.validFrom != null && day.before(this.validFrom)) {
-            return false;
+        for (EnforcementFormFieldMapping mapping : mappings) {
+            if (mapping.isMandatory()) {
+                mandatory.add(mapping.getFieldName());
+            }
         }
-        return this.validTo == null || !day.after(this.validTo);
+        return mandatory;
     }
 
-    @Override
-    public int hashCode() {
-        return id == null ? 0 : id.hashCode();
-    }
+    /**
+     * Says which entries are missing, in the words of the application.
+     *
+     * The filler reports the names the form carries internally - "Textfeld 4" - because that is all
+     * it knows. They are of no use to whoever has to supply the entry: they name a place on a sheet
+     * of paper, chosen by whoever drew it. The mapping profile knows two more things about each of
+     * them, and both belong in the message: what the form calls the field, and which entry of the
+     * application fills it.
+     *
+     * @param mappings the profile of the form
+     * @param missingFieldNames the field names the filler reported as empty
+     * @return one line per missing entry, or an empty list where nothing is missing
+     */
+    public List<String> describeMissing(List<EnforcementFormFieldMapping> mappings,
+            List<String> missingFieldNames) {
 
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof EnforcementFormTemplate)) {
-            return false;
+        List<String> described = new ArrayList<>();
+        if (missingFieldNames == null) {
+            return described;
         }
-        EnforcementFormTemplate other = (EnforcementFormTemplate) object;
-        return this.id != null && this.id.equals(other.id);
+        Map<String, EnforcementFormFieldMapping> byName = new LinkedHashMap<>();
+        if (mappings != null) {
+            for (EnforcementFormFieldMapping mapping : mappings) {
+                byName.put(mapping.getFieldName(), mapping);
+            }
+        }
+        EnforcementFormFieldOrigin origin = new EnforcementFormFieldOrigin();
+        for (String name : missingFieldNames) {
+            EnforcementFormFieldMapping mapping = byName.get(name);
+            if (mapping == null) {
+                described.add(name);
+                continue;
+            }
+            String label = mapping.getFieldLabel() == null || mapping.getFieldLabel().trim().isEmpty()
+                    ? name : mapping.getFieldLabel().trim();
+            String where = origin.of(mapping.getSourceKey());
+            described.add(where.isEmpty() ? label : label + " (einzutragen unter: " + where + ")");
+        }
+        return described;
     }
 
-    @Override
-    public String toString() {
-        return name + (version == null || version.trim().isEmpty() ? "" : " (" + version + ")");
+    /**
+     * What a generated document is called in the case.
+     *
+     * The day, the kind of measure and - where the form is not the application itself - what the
+     * form is for. A case that has seen three attempts against the same debtor otherwise holds
+     * three documents nobody can tell apart, and the one that goes back to the bailiff is then a
+     * matter of luck.
+     *
+     * The day leads so that the documents of a case sort into the order they happened.
+     *
+     * @param measure the measure
+     * @param form the form within it
+     * @param template the version used, for the extension
+     * @return the document name
+     */
+    public String documentName(EnforcementMeasure measure, EnforcementMeasureTypeForm form,
+            EnforcementFormTemplate template) {
+
+        StringBuilder sb = new StringBuilder();
+        Date day = measure == null || measure.getOrderedDate() == null
+                ? new Date() : measure.getOrderedDate();
+        sb.append(new SimpleDateFormat("yyyy-MM-dd").format(day));
+
+        if (measure != null && measure.getMeasureType() != null
+                && measure.getMeasureType().getName() != null) {
+            sb.append(" ").append(measure.getMeasureType().getName().trim());
+        }
+        if (form != null && form.getFormRole() != null
+                && form.getFormRole() != EnforcementFormRole.APPLICATION) {
+            sb.append(" - ").append(form.getFormRole().getLabel());
+        }
+        sb.append(".pdf");
+
+        // Ein Schrägstrich im Namen einer Maßnahmeart wäre ein Verzeichnistrenner; der Name muss
+        // ein Dateiname bleiben.
+        return sb.toString().replace('/', '-').replace('\\', '-');
     }
 }

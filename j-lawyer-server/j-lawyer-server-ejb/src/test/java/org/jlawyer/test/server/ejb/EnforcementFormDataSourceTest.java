@@ -663,9 +663,12 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package org.jlawyer.test.server.ejb;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ClaimComponentType;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
 import com.jdimension.jlawyer.persistence.EnforcementMeasure;
 import com.jdimension.jlawyer.persistence.EnforcementTitle;
+import com.jdimension.jlawyer.persistence.EnforcementTitleType;
+import com.jdimension.jlawyer.pojo.ContinuingInterest;
 import com.jdimension.jlawyer.pojo.EnforcementItemisation;
 import com.jdimension.jlawyer.pojo.EnforcementItemisationCategory;
 import com.jdimension.jlawyer.pojo.EnforcementItemisationRow;
@@ -699,6 +702,29 @@ public class EnforcementFormDataSourceTest {
 
     private static Date date(int y, int m, int d) {
         return Date.from(LocalDate.of(y, m, d).atStartOfDay(ZoneId.systemDefault()).toInstant());
+    }
+
+    @Test
+    public void theAnredeComesFromTheFieldTheContactEditorFills() {
+        // Aus dem erzeugten Vollstreckungsauftrag: neben "Max Schuldner" war "Sonstige"
+        // angekreuzt. Gelesen wurde die Begruessung ("Sehr geehrter Herr Schuldner,"), gemeint war
+        // die Anrede - und die steht im Feld title.
+        AddressBean contact = new AddressBean();
+        contact.setName("Schuldner");
+        contact.setFirstName("Max");
+        contact.setTitle("Herr");
+        contact.setSalutation("Sehr geehrter Herr Schuldner,");
+        ClaimLedgerParty debtor = new ClaimLedgerParty();
+        debtor.setId("p");
+        debtor.setContact(contact);
+
+        Map<String, String> values = source.valuesOf(null, null, Arrays.asList(debtor), null, null,
+                null, null);
+
+        assertEquals("true", values.get("schuldner.ist_herr"));
+        assertEquals("", values.get("schuldner.ist_sonstige"));
+        assertEquals("", values.get("schuldner.ist_frau"));
+        assertEquals("", values.get("schuldner.ist_unternehmen"));
     }
 
     private ClaimLedgerParty person(String salutation, String first, String last) {
@@ -870,7 +896,10 @@ public class EnforcementFormDataSourceTest {
         assertEquals("5.000,00", values.get("forderung.hauptforderung"));
         assertEquals("166,00", values.get("forderung.kosten"));
         assertEquals("312,50", values.get("forderung.zinsen"));
-        assertEquals("4.978,50", values.get("forderung.gesamt"));
+        // Die Zahlung wird hier nicht noch einmal abgezogen: die Betraege der Positionen kommen
+        // bereits vermindert aus der Forderungsaufstellung. Bis hierher stand 4.978,50 - 500 Euro
+        // zu wenig, die der Gerichtsvollzieher nie beigetrieben haette.
+        assertEquals("5.478,50", values.get("forderung.gesamt"));
         assertEquals("15.09.2026", values.get("forderung.stichtag"));
     }
 
@@ -881,6 +910,138 @@ public class EnforcementFormDataSourceTest {
         row.setAmount(new BigDecimal(amount));
         row.setInterestAmount(new BigDecimal(interest));
         return row;
+    }
+
+
+    private EnforcementItemisationRow claim(String id, EnforcementItemisationCategory category,
+            ClaimComponentType type, String designation, String amount, String interest) {
+
+        EnforcementItemisationRow row = new EnforcementItemisationRow();
+        row.setComponentId(id);
+        row.setCategory(category);
+        row.setComponentType(type);
+        row.setDesignation(designation);
+        row.setAmount(new BigDecimal(amount));
+        row.setInterestAmount(new BigDecimal(interest));
+        return row;
+    }
+
+    @Test
+    public void thefirstBlockOfTheItemisationCarriesTheFirstTitledClaim() {
+        EnforcementItemisation itemisation = new EnforcementItemisation();
+        itemisation.setKeyDate(date(2026, 9, 15));
+        EnforcementItemisationRow row = claim("c1", EnforcementItemisationCategory.TITLED_MAIN_CLAIM,
+                ClaimComponentType.MAIN_CLAIM, "Kaufpreis", "5000.00", "312.50");
+        row.setInterestAboveBaseRate(true);
+        row.setInterestRate(new BigDecimal("9.00"));
+        row.setInterestFrom(date(2025, 2, 1));
+        itemisation.getRows().add(row);
+
+        Map<String, String> values = source.valuesOf(null, null, null, null, itemisation, null, null);
+
+        assertEquals("true", values.get("aufstellung.forderung.1.ist_hauptforderung"));
+        assertEquals("", values.get("aufstellung.forderung.1.ist_restforderung"));
+        assertEquals("5.000,00", values.get("aufstellung.forderung.1.betrag"));
+        assertEquals("312,50", values.get("aufstellung.forderung.1.zinsen_ausgerechnet"));
+        assertEquals("true", values.get("aufstellung.forderung.1.zins.ist_prozentpunkte"));
+        assertEquals("", values.get("aufstellung.forderung.1.zins.ist_prozent"));
+        assertEquals("9", values.get("aufstellung.forderung.1.zins.prozentpunkte"));
+        assertEquals("5.000,00", values.get("aufstellung.forderung.1.zins.aus_betrag"));
+        assertEquals("01.02.2025", values.get("aufstellung.forderung.1.zins.von"));
+        assertEquals("15.09.2026", values.get("aufstellung.forderung.1.zins.bis"));
+        assertEquals("312,50", values.get("aufstellung.forderung.1.zins.betrag"));
+        assertEquals("5.312,50", values.get("aufstellung.summe"));
+    }
+
+    @Test
+    public void aclaimThatHasBeenPaidOnIsAremainderAndSaysWhatItWas() {
+        // Das Formular kennt "Hauptforderung" und "Restforderung aus Hauptforderung in Hoehe von".
+        // Wer 1.000 Euro von 5.000 gezahlt hat, schuldet einen Rest - und der Gerichtsvollzieher
+        // muss sehen, wovon.
+        EnforcementItemisation itemisation = new EnforcementItemisation();
+        itemisation.setKeyDate(date(2026, 9, 15));
+        EnforcementItemisationRow row = claim("c1", EnforcementItemisationCategory.TITLED_MAIN_CLAIM,
+                ClaimComponentType.MAIN_CLAIM, "Kaufpreis", "4000.00", "0.00");
+        row.setPayments(new BigDecimal("1000.00"));
+        itemisation.getRows().add(row);
+
+        Map<String, String> values = source.valuesOf(null, null, null, null, itemisation, null, null);
+
+        assertEquals("", values.get("aufstellung.forderung.1.ist_hauptforderung"));
+        assertEquals("true", values.get("aufstellung.forderung.1.ist_restforderung"));
+        assertEquals("5.000,00", values.get("aufstellung.forderung.1.restbetrag"));
+        assertEquals("4.000,00", values.get("aufstellung.forderung.1.betrag"));
+        // Teilforderung bleibt leer: dass nur ein Teil vollstreckt wird, steht nirgends.
+        assertEquals("", values.get("aufstellung.forderung.1.ist_teilforderung"));
+        assertEquals("", values.get("aufstellung.forderung.1.teilbetrag"));
+    }
+
+    @Test
+    public void interestThatKeepsRunningGetsNoEndAndNoAmount() {
+        // Die untere Zinszeile des Formulars hat weder "bis" noch Betrag - der Gerichtsvollzieher
+        // rechnet sie am Tag der Beitreibung selbst aus. Ein Betrag dort waere eine Behauptung
+        // ueber einen Tag, den niemand kennt.
+        EnforcementItemisation itemisation = new EnforcementItemisation();
+        itemisation.setKeyDate(date(2026, 9, 15));
+        itemisation.getRows().add(claim("c1", EnforcementItemisationCategory.TITLED_MAIN_CLAIM,
+                ClaimComponentType.MAIN_CLAIM, "Kaufpreis", "5000.00", "312.50"));
+
+        ContinuingInterest continuing = new ContinuingInterest();
+        continuing.setComponentId("c1");
+        continuing.setBaseRateRelated(true);
+        continuing.setMarginPercent(new BigDecimal("5.00"));
+        continuing.setBaseAmount(new BigDecimal("5000.00"));
+        continuing.setRunningFrom(date(2026, 9, 16));
+        itemisation.getContinuingInterest().add(continuing);
+
+        Map<String, String> values = source.valuesOf(null, null, null, null, itemisation, null, null);
+
+        assertEquals("true", values.get("aufstellung.forderung.1.laufender_zins.ist_prozentpunkte"));
+        assertEquals("5", values.get("aufstellung.forderung.1.laufender_zins.prozentpunkte"));
+        assertEquals("5.000,00", values.get("aufstellung.forderung.1.laufender_zins.aus_betrag"));
+        assertEquals("16.09.2026", values.get("aufstellung.forderung.1.laufender_zins.seit"));
+    }
+
+    @Test
+    public void theCostsOfTheDunningProcedureNeedAdunningOrderToBeStatedAsSuch() {
+        EnforcementItemisation itemisation = new EnforcementItemisation();
+        itemisation.setKeyDate(date(2026, 9, 15));
+        itemisation.getRows().add(claim("c1", EnforcementItemisationCategory.TITLED_COSTS,
+                ClaimComponentType.COST_INTEREST_BEARING, "Kosten des Mahnverfahrens", "32.00", "0.00"));
+
+        EnforcementTitle order = new EnforcementTitle();
+        order.setTitleType(EnforcementTitleType.VOLLSTRECKUNGSBESCHEID);
+        Map<String, String> underOrder =
+                source.valuesOf(null, null, null, order, itemisation, null, null);
+        assertEquals("32,00", underOrder.get("aufstellung.kosten.mahnverfahren.betrag"));
+        assertEquals("true", underOrder.get("aufstellung.kosten.mahnverfahren.ist_gesamtkosten"));
+
+        EnforcementTitle judgment = new EnforcementTitle();
+        judgment.setTitleType(EnforcementTitleType.URTEIL);
+        Map<String, String> underJudgment =
+                source.valuesOf(null, null, null, judgment, itemisation, null, null);
+        assertEquals("", underJudgment.get("aufstellung.kosten.mahnverfahren.betrag"));
+        assertEquals("true", underJudgment.get("aufstellung.weitere_kosten.ist_gesetzt"));
+        assertEquals("32,00", underJudgment.get("aufstellung.weitere_kosten.betrag"));
+        assertEquals("Kosten des Mahnverfahrens",
+                underJudgment.get("aufstellung.weitere_kosten.bezeichnung"));
+    }
+
+    @Test
+    public void everySlotAnswersEvenWhereNothingFillsIt() {
+        // Ein Schluessel, den es nur mit Daten gibt, fehlt der Verwaltung genau dann, wenn jemand
+        // ihn zuordnen will - und liesse im Formular stehen, was die Vorlage mitbrachte.
+        Set<String> known = source.knownKeys();
+
+        assertTrue(known.contains("aufstellung.forderung.2.laufender_zins.seit"));
+        assertTrue(known.contains("aufstellung.kosten.festgesetzt.zins.bis"));
+        assertTrue(known.contains("aufstellung.vollstreckungskosten.betrag"));
+        assertTrue(known.contains("aufstellung.summe"));
+
+        Map<String, String> empty = source.valuesOf(null, null, null, null, null, null, null);
+        assertEquals("", empty.get("aufstellung.forderung.1.betrag"));
+        assertEquals("", empty.get("aufstellung.summe"));
+        assertEquals("", empty.get("aufstellung.weitere_forderung.ist_gesetzt"));
     }
 
     @Test

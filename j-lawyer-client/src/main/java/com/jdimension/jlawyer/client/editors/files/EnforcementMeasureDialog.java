@@ -660,319 +660,526 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.client.editors.files;
 
-import java.io.Serializable;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.persistence.EnforcementMeasure;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureType;
+import com.jdimension.jlawyer.persistence.EnforcementTitle;
+import com.jdimension.jlawyer.pojo.EnforcementMeasureOption;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.Lob;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import javax.swing.JOptionPane;
+import org.apache.log4j.Logger;
 
 /**
- * One version of one official form, with the profile that says how to fill it.
+ * Starts one enforcement measure.
  *
- * The forms of the ZVFV are replaced from time to time. A measure generated under an older version
- * was not wrong, it was current - so versions live alongside one another with a validity period,
- * and a measure records which one it used. Producing a form from a version whose validity has ended
- * is possible but has to be confirmed.
- *
- * The PDF is held here rather than in the file system. The number of forms is small, the versions
- * few, and keeping them with their mapping means a backup of the database is a backup of everything
- * needed to reproduce a filing.
+ * The kinds that cannot be taken are shown too, greyed out and with their reason. Leaving them out
+ * would let a user wonder why the bailiff order is missing; saying "the title has not been served
+ * yet" tells them what to fetch. The reason comes from the server, which is also the place that
+ * refuses the measure if it is somehow asked for anyway.
  *
  * @author jens
  */
-@Entity
-@Table(name = "enforcement_form_templates")
-@NamedQueries({
-    @NamedQuery(name = "EnforcementFormTemplate.findAll", query = "SELECT t FROM EnforcementFormTemplate t ORDER BY t.formKey ASC, t.validFrom DESC"),
-    @NamedQuery(name = "EnforcementFormTemplate.findById", query = "SELECT t FROM EnforcementFormTemplate t WHERE t.id = :id"),
-    @NamedQuery(name = "EnforcementFormTemplate.findByKey", query = "SELECT t FROM EnforcementFormTemplate t WHERE t.formKey = :formKey ORDER BY t.validFrom DESC"),
-    // Ein Verzeichnis ohne die Dateien - und ohne verwaltete Entities. Wer eine verwaltete Entity
-    // abräumt, um sie leichter zu machen, schreibt die Leere beim Commit in die Datenbank.
-    @NamedQuery(name = "EnforcementFormTemplate.findAllSummaries", query = "SELECT NEW com.jdimension.jlawyer.persistence.EnforcementFormTemplate(t.id, t.formKey, t.name, t.version, t.validFrom, t.validTo, t.fileName, t.description) FROM EnforcementFormTemplate t ORDER BY t.formKey ASC, t.validFrom DESC")
-})
-public class EnforcementFormTemplate implements Serializable {
+public class EnforcementMeasureDialog extends javax.swing.JDialog {
 
-    private static final long serialVersionUID = 1L;
+    private static final Logger log = Logger.getLogger(EnforcementMeasureDialog.class.getName());
 
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
+    private String ledgerId = null;
+    private EnforcementMeasure measure = null;
+    private EnforcementMeasure edited = null;
+    private boolean saved = false;
 
-    /** The annex of the ZVFV this is a version of - "ANLAGE_1". */
-    @Column(name = "form_key", nullable = false, length = 50)
-    private String formKey;
-
-    @Column(name = "name", nullable = false)
-    private String name;
+    private final List<EnforcementMeasureOption> options = new ArrayList<>();
+    private final List<EnforcementTitle> titles = new ArrayList<>();
 
     /**
-     * The version, as the publisher dates it - "2024-09-01".
-     *
-     * Recorded on every measure generated from it, so a filing stays reproducible after the form has
-     * been replaced.
+     * Wraps a kind of measure so the list shows why it cannot be taken.
      */
-    @Column(name = "version", length = 50)
-    private String version;
+    private static class OptionItem {
 
-    @Column(name = "valid_from")
-    @Temporal(TemporalType.DATE)
-    private Date validFrom;
+        private final EnforcementMeasureOption option;
 
-    /** Null while the version is the current one. */
-    @Column(name = "valid_to")
-    @Temporal(TemporalType.DATE)
-    private Date validTo;
-
-    /**
-     * The fillable PDF.
-     *
-     * Lazy because it is a few hundred kilobytes and most reads of a template only want to know
-     * which versions exist.
-     */
-    @Lob
-    @Basic(fetch = FetchType.LAZY)
-    @Column(name = "pdf_content")
-    private byte[] pdfContent;
-
-    @Column(name = "file_name")
-    private String fileName;
-
-    @Column(name = "description", length = 1000)
-    private String description;
-
-    /**
-     * How the fields of this form are filled.
-     *
-     * Belongs to the version, not to the form: a new version may rename its fields, and a profile
-     * written for the old one would then address fields that no longer exist.
-     */
-    @OneToMany(mappedBy = "template", fetch = FetchType.LAZY)
-    private List<EnforcementFormFieldMapping> fieldMappings = new ArrayList<>();
-
-    /**
-     * The constructor JPA needs.
-     */
-    public EnforcementFormTemplate() {
-    }
-
-    /**
-     * Builds a template without its PDF, for a listing.
-     *
-     * Exists so a listing can be produced by a query rather than by emptying loaded entities.
-     * Clearing the content of a <em>managed</em> entity to make it lighter on the wire writes that
-     * emptiness into the database when the transaction commits - the templates are then listed
-     * correctly and gone.
-     *
-     * @param id the technical identifier
-     * @param formKey the annex of the ZVFV
-     * @param name the designation
-     * @param version the version as the publisher dates it
-     * @param validFrom the day the version takes effect
-     * @param validTo the day it ceased to be prescribed
-     * @param fileName the name the file was uploaded under
-     * @param description what this version is
-     */
-    public EnforcementFormTemplate(String id, String formKey, String name, String version,
-            Date validFrom, Date validTo, String fileName, String description) {
-        this.id = id;
-        this.formKey = formKey;
-        this.name = name;
-        this.version = version;
-        this.validFrom = validFrom;
-        this.validTo = validTo;
-        this.fileName = fileName;
-        this.description = description;
-    }
-
-    /**
-     * @return the technical identifier
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * @param id the technical identifier
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the annex of the ZVFV this is a version of
-     */
-    public String getFormKey() {
-        return formKey;
-    }
-
-    /**
-     * @param formKey the annex of the ZVFV
-     */
-    public void setFormKey(String formKey) {
-        this.formKey = formKey;
-    }
-
-    /**
-     * @return the designation shown to the user
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name the designation shown to the user
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return the version as the publisher dates it
-     */
-    public String getVersion() {
-        return version;
-    }
-
-    /**
-     * @param version the version as the publisher dates it
-     */
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    /**
-     * @return the day this version takes effect, or null if unstated
-     */
-    public Date getValidFrom() {
-        return validFrom;
-    }
-
-    /**
-     * @param validFrom the day this version takes effect
-     */
-    public void setValidFrom(Date validFrom) {
-        this.validFrom = validFrom;
-    }
-
-    /**
-     * @return the day this version ceased to be prescribed, or null while it is current
-     */
-    public Date getValidTo() {
-        return validTo;
-    }
-
-    /**
-     * @param validTo the day this version ceased to be prescribed
-     */
-    public void setValidTo(Date validTo) {
-        this.validTo = validTo;
-    }
-
-    /**
-     * @return the fillable PDF
-     */
-    public byte[] getPdfContent() {
-        return pdfContent;
-    }
-
-    /**
-     * @param pdfContent the fillable PDF
-     */
-    public void setPdfContent(byte[] pdfContent) {
-        this.pdfContent = pdfContent;
-    }
-
-    /**
-     * @return the name the file was uploaded under
-     */
-    public String getFileName() {
-        return fileName;
-    }
-
-    /**
-     * @param fileName the name the file was uploaded under
-     */
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
-
-    /**
-     * @return what this version is, in the words a user needs
-     */
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * @param description what this version is
-     */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    /**
-     * @return how the fields of this form are filled, never null
-     */
-    public List<EnforcementFormFieldMapping> getFieldMappings() {
-        if (this.fieldMappings == null) {
-            this.fieldMappings = new ArrayList<>();
+        OptionItem(EnforcementMeasureOption option) {
+            this.option = option;
         }
-        return fieldMappings;
+
+        EnforcementMeasureOption option() {
+            return this.option;
+        }
+
+        @Override
+        public String toString() {
+            if (this.option == null || this.option.getMeasureType() == null) {
+                return "";
+            }
+            String name = this.option.getMeasureType().getName();
+            return this.option.isAvailable() ? name : name + "  —  nicht möglich";
+        }
     }
 
     /**
-     * @param fieldMappings how the fields of this form are filled
+     * Wraps a title so the list shows what it is and when it was issued.
      */
-    public void setFieldMappings(List<EnforcementFormFieldMapping> fieldMappings) {
-        this.fieldMappings = fieldMappings;
+    private static class TitleItem {
+
+        private final EnforcementTitle title;
+
+        TitleItem(EnforcementTitle title) {
+            this.title = title;
+        }
+
+        EnforcementTitle title() {
+            return this.title;
+        }
+
+        @Override
+        public String toString() {
+            if (this.title == null) {
+                return "- ohne Titel -";
+            }
+            StringBuilder sb = new StringBuilder();
+            if (this.title.getTitleType() != null) {
+                sb.append(this.title.getTitleType()).append(", ");
+            }
+            sb.append(this.title.getIssuingBody() == null ? "" : this.title.getIssuingBody());
+            if (this.title.getFileNumber() != null && !this.title.getFileNumber().trim().isEmpty()) {
+                sb.append(" ").append(this.title.getFileNumber().trim());
+            }
+            return sb.toString().trim();
+        }
     }
 
     /**
-     * Whether this version is the one prescribed on a given day.
+     * Creates the dialog.
      *
-     * @param day the day to judge by
-     * @return true if the day falls inside the validity period
+     * @param parent the parent window
+     * @param modal whether the dialog is modal
      */
-    public boolean isValidOn(Date day) {
-        if (day == null) {
-            return this.validTo == null;
-        }
-        if (this.validFrom != null && day.before(this.validFrom)) {
-            return false;
-        }
-        return this.validTo == null || !day.after(this.validTo);
+    public EnforcementMeasureDialog(java.awt.Dialog parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
+
+        this.cmbMeasureType.addActionListener(e -> updateHint());
+        this.txtOrderedDate.setText(
+                new java.text.SimpleDateFormat("dd.MM.yyyy").format(new Date()));
     }
 
-    @Override
-    public int hashCode() {
-        return id == null ? 0 : id.hashCode();
-    }
+    /**
+     * Loads what can be taken out of this ledger, and on which title.
+     *
+     * @param ledgerId id of the claim ledger
+     * @param titles the titles of the ledger
+     */
+    public void setLedger(String ledgerId, List<EnforcementTitle> titles) {
+        this.ledgerId = ledgerId;
 
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof EnforcementFormTemplate)) {
-            return false;
+        this.cmbTitle.removeAllItems();
+        this.titles.clear();
+        this.cmbTitle.addItem(new TitleItem(null));
+        if (titles != null) {
+            for (EnforcementTitle title : titles) {
+                this.titles.add(title);
+                this.cmbTitle.addItem(new TitleItem(title));
+            }
         }
-        EnforcementFormTemplate other = (EnforcementFormTemplate) object;
-        return this.id != null && this.id.equals(other.id);
+        // Auf dem jüngsten Titel wird am häufigsten vollstreckt; ohne Vorauswahl wäre der erste
+        // Griff immer derselbe Klick.
+        if (this.cmbTitle.getItemCount() > 1) {
+            this.cmbTitle.setSelectedIndex(1);
+        }
+
+        loadOptions();
+
+        // Erneut packen, nachdem die Listen gefuellt sind. initComponents() packt den Dialog mit
+        // leeren Auswahlfeldern; die Maßnahmearten sind lang ("Vollstreckungsauftrag an den
+        // Gerichtsvollzieher"), und was danach breiter wird, findet in einem Fenster, das fuer
+        // leere Felder bemessen wurde, keinen Platz mehr.
+        fitToContent();
     }
 
-    @Override
-    public String toString() {
-        return name + (version == null || version.trim().isEmpty() ? "" : " (" + version + ")");
+    /**
+     * Sizes the dialog to what it now holds, and keeps it from being made smaller than that.
+     */
+    private void fitToContent() {
+        pack();
+        setMinimumSize(getSize());
     }
+
+    /**
+     * Opens the dialog on a measure that exists, rather than on a new one.
+     *
+     * Everything the dialog shows can be got wrong at the moment a measure is begun - an addressee
+     * above all, which the official form insists on and which nobody has at hand while deciding to
+     * enforce. Without this, the only way back would be to remove the measure and start again,
+     * which would take its outcome and its recorded debtors with it.
+     *
+     * Call it after {@link #setLedger(java.lang.String, java.util.List)}.
+     *
+     * @param existing the measure to change
+     */
+    public void setMeasure(EnforcementMeasure existing) {
+        if (existing == null) {
+            return;
+        }
+        this.edited = existing;
+
+        if (existing.getTitle() != null) {
+            for (int i = 0; i < this.cmbTitle.getItemCount(); i++) {
+                Object item = this.cmbTitle.getItemAt(i);
+                if (item instanceof TitleItem && ((TitleItem) item).title() != null
+                        && ((TitleItem) item).title().getId().equals(existing.getTitle().getId())) {
+                    this.cmbTitle.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
+        // Die Arten werden aus dem Titel heraus geladen; erst danach laesst sich die eigene
+        // wiederfinden.
+        if (existing.getMeasureType() != null) {
+            for (int i = 0; i < this.cmbMeasureType.getItemCount(); i++) {
+                Object item = this.cmbMeasureType.getItemAt(i);
+                if (item instanceof OptionItem
+                        && ((OptionItem) item).option().getMeasureType() != null
+                        && ((OptionItem) item).option().getMeasureType().getId()
+                                .equals(existing.getMeasureType().getId())) {
+                    this.cmbMeasureType.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
+        if (existing.getOrderedDate() != null) {
+            this.txtOrderedDate.setText(
+                    new java.text.SimpleDateFormat("dd.MM.yyyy").format(existing.getOrderedDate()));
+        }
+        this.txtAddresseeDesignation.setText(
+                existing.getAddresseeDesignation() == null ? "" : existing.getAddresseeDesignation());
+        this.txtAddresseeAddress.setText(
+                existing.getAddresseeAddress() == null ? "" : existing.getAddresseeAddress());
+        this.txtNotes.setText(existing.getNotes() == null ? "" : existing.getNotes());
+
+        // Die Maßnahme laeuft bereits. Ein Hinderungsgrund, der ihr Beginnen heute verboete - eine
+        // andere Maßnahme derselben Art etwa -, darf das Nachtragen eines Empfaengers nicht
+        // verhindern; es waere ausgerechnet die Eingabe, die sie erst brauchbar macht.
+        this.cmdSave.setEnabled(true);
+        fitToContent();
+    }
+
+    /**
+     * Asks the server which kinds can be taken with the title now chosen.
+     */
+    private void loadOptions() {
+        Object selected = this.cmbTitle.getSelectedItem();
+        EnforcementTitle title = selected instanceof TitleItem ? ((TitleItem) selected).title() : null;
+
+        this.options.clear();
+        this.cmbMeasureType.removeAllItems();
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<EnforcementMeasureOption> loaded = locator.lookupEnforcementServiceRemote()
+                    .getMeasureOptions(this.ledgerId, title == null ? null : title.getId(), new Date());
+            if (loaded != null) {
+                this.options.addAll(loaded);
+            }
+        } catch (Exception ex) {
+            log.error("Unable to load the enforcement measure options of ledger " + this.ledgerId, ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die möglichen Maßnahmen konnten nicht ermittelt werden: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        for (EnforcementMeasureOption option : this.options) {
+            this.cmbMeasureType.addItem(new OptionItem(option));
+        }
+        // Die erste Art, die tatsächlich geht, ist die sinnvolle Vorauswahl - sonst begrüßt der
+        // Dialog mit einer Maßnahme, die er gleich wieder ablehnt.
+        for (int i = 0; i < this.options.size(); i++) {
+            if (this.options.get(i).isAvailable()) {
+                this.cmbMeasureType.setSelectedIndex(i);
+                break;
+            }
+        }
+        updateHint();
+    }
+
+    /**
+     * Says what the chosen kind entails, or what stands in its way.
+     */
+    private void updateHint() {
+        EnforcementMeasureOption option = selectedOption();
+        if (option == null) {
+            this.txtHint.setText("");
+            this.cmdSave.setEnabled(false);
+            return;
+        }
+        StringBuilder sb = new StringBuilder();
+        if (!option.isAvailable()) {
+            sb.append(option.getObstacle());
+        } else if (option.getMeasureType() != null
+                && option.getMeasureType().getDescription() != null) {
+            sb.append(option.getMeasureType().getDescription());
+        }
+        this.txtHint.setText(sb.toString());
+        this.txtHint.setCaretPosition(0);
+        this.cmdSave.setEnabled(option.isAvailable());
+    }
+
+    private EnforcementMeasureOption selectedOption() {
+        Object selected = this.cmbMeasureType.getSelectedItem();
+        return selected instanceof OptionItem ? ((OptionItem) selected).option() : null;
+    }
+
+    /**
+     * @return the measure as entered, or null if the dialog was cancelled
+     */
+    public EnforcementMeasure getMeasure() {
+        return this.measure;
+    }
+
+    /**
+     * @return whether the user confirmed the dialog
+     */
+    public boolean isSaved() {
+        return this.saved;
+    }
+
+    private String emptyToNull(String s) {
+        return s == null || s.trim().isEmpty() ? null : s.trim();
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        lblTitle = new javax.swing.JLabel();
+        cmbTitle = new javax.swing.JComboBox();
+        lblMeasureType = new javax.swing.JLabel();
+        cmbMeasureType = new javax.swing.JComboBox();
+        lblOrderedDate = new javax.swing.JLabel();
+        txtOrderedDate = new javax.swing.JTextField();
+        lblAddressee = new javax.swing.JLabel();
+        txtAddresseeDesignation = new javax.swing.JTextField();
+        scrlAddresseeAddress = new javax.swing.JScrollPane();
+        txtAddresseeAddress = new javax.swing.JTextArea();
+        lblNotes = new javax.swing.JLabel();
+        scrlNotes = new javax.swing.JScrollPane();
+        txtNotes = new javax.swing.JTextArea();
+        scrlHint = new javax.swing.JScrollPane();
+        txtHint = new javax.swing.JTextArea();
+        cmdSave = new javax.swing.JButton();
+        cmdCancel = new javax.swing.JButton();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Vollstreckungsmaßnahme");
+
+        lblTitle.setText("Titel:");
+        lblTitle.setToolTipText("Der Titel, auf dem vollstreckt wird (§ 750 Abs. 1 ZPO)");
+
+        cmbTitle.setModel(new javax.swing.DefaultComboBoxModel());
+        cmbTitle.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbTitleActionPerformed(evt);
+            }
+        });
+
+        lblMeasureType.setText("Maßnahme:");
+
+        cmbMeasureType.setModel(new javax.swing.DefaultComboBoxModel());
+
+        lblOrderedDate.setText("Datum:");
+
+        txtOrderedDate.setText("");
+
+        lblAddressee.setText("Empfänger:");
+        lblAddressee.setToolTipText("Gerichtsvollzieher, Vollstreckungsgericht, Drittschuldner - Bezeichnung und Anschrift, wie sie auf das Formular gehen");
+        lblAddressee.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+
+        txtAddresseeDesignation.setText("");
+
+        txtAddresseeAddress.setColumns(20);
+        txtAddresseeAddress.setRows(3);
+        scrlAddresseeAddress.setViewportView(txtAddresseeAddress);
+
+        lblNotes.setText("Notizen:");
+        lblNotes.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+
+        txtNotes.setColumns(20);
+        txtNotes.setRows(3);
+        scrlNotes.setViewportView(txtNotes);
+
+        txtHint.setEditable(false);
+        txtHint.setColumns(20);
+        txtHint.setLineWrap(true);
+        txtHint.setRows(3);
+        txtHint.setWrapStyleWord(true);
+        txtHint.setFocusable(false);
+        scrlHint.setViewportView(txtHint);
+
+        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdSave.setText("Anlegen");
+        cmdSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveActionPerformed(evt);
+            }
+        });
+
+        cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdCancel.setText("Abbrechen");
+        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCancelActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(lblTitle)
+                            .addComponent(lblMeasureType)
+                            .addComponent(lblOrderedDate)
+                            .addComponent(lblAddressee)
+                            .addComponent(lblNotes))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cmbTitle, javax.swing.GroupLayout.DEFAULT_SIZE, 460, Short.MAX_VALUE)
+                            .addComponent(cmbMeasureType, javax.swing.GroupLayout.DEFAULT_SIZE, 460, Short.MAX_VALUE)
+                            .addComponent(txtOrderedDate, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(txtAddresseeDesignation, javax.swing.GroupLayout.DEFAULT_SIZE, 460, Short.MAX_VALUE)
+                            .addComponent(scrlAddresseeAddress, javax.swing.GroupLayout.DEFAULT_SIZE, 460, Short.MAX_VALUE)
+                            .addComponent(scrlNotes, javax.swing.GroupLayout.DEFAULT_SIZE, 460, Short.MAX_VALUE)))
+                    .addComponent(scrlHint, javax.swing.GroupLayout.DEFAULT_SIZE, 540, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdSave)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdCancel)))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblTitle)
+                    .addComponent(cmbTitle, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblMeasureType)
+                    .addComponent(cmbMeasureType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(scrlHint, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblOrderedDate)
+                    .addComponent(txtOrderedDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblAddressee)
+                    .addComponent(txtAddresseeDesignation, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(scrlAddresseeAddress, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblNotes)
+                    .addComponent(scrlNotes, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdSave)
+                    .addComponent(cmdCancel))
+                .addContainerGap())
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void cmbTitleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTitleActionPerformed
+        // Welche Maßnahmen möglich sind, hängt am Titel: ohne Klausel und Zustellung geht das
+        // meiste nicht. Der Wechsel muss die Liste deshalb neu beantworten lassen.
+        if (this.ledgerId != null) {
+            loadOptions();
+        }
+    }//GEN-LAST:event_cmbTitleActionPerformed
+
+    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+        EnforcementMeasureOption option = selectedOption();
+        if (option == null || (!option.isAvailable() && this.edited == null)) {
+            JOptionPane.showMessageDialog(this,
+                    option == null ? "Es ist keine Maßnahme ausgewählt."
+                            : option.getObstacle(),
+                    "Maßnahme", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        Date ordered;
+        try {
+            ordered = new java.text.SimpleDateFormat("dd.MM.yyyy")
+                    .parse(this.txtOrderedDate.getText().trim());
+        } catch (java.text.ParseException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Das Datum konnte nicht gelesen werden. Erwartet wird TT.MM.JJJJ.",
+                    "Eingabe", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        EnforcementMeasure created = this.edited == null ? new EnforcementMeasure() : this.edited;
+        EnforcementMeasureType type = option.getMeasureType();
+        created.setMeasureType(type);
+        created.setOrderedDate(ordered);
+        created.setAddresseeType(type == null ? null : type.getAddresseeType());
+        created.setAddresseeDesignation(emptyToNull(this.txtAddresseeDesignation.getText()));
+        created.setAddresseeAddress(emptyToNull(this.txtAddresseeAddress.getText()));
+        created.setNotes(emptyToNull(this.txtNotes.getText()));
+
+        Object selected = this.cmbTitle.getSelectedItem();
+        if (selected instanceof TitleItem) {
+            created.setTitle(((TitleItem) selected).title());
+        }
+
+        this.measure = created;
+        this.saved = true;
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdSaveActionPerformed
+
+    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
+        this.saved = false;
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdCancelActionPerformed
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox cmbMeasureType;
+    private javax.swing.JComboBox cmbTitle;
+    private javax.swing.JButton cmdCancel;
+    private javax.swing.JButton cmdSave;
+    private javax.swing.JLabel lblAddressee;
+    private javax.swing.JLabel lblMeasureType;
+    private javax.swing.JLabel lblNotes;
+    private javax.swing.JLabel lblOrderedDate;
+    private javax.swing.JLabel lblTitle;
+    private javax.swing.JScrollPane scrlAddresseeAddress;
+    private javax.swing.JScrollPane scrlHint;
+    private javax.swing.JScrollPane scrlNotes;
+    private javax.swing.JTextArea txtAddresseeAddress;
+    private javax.swing.JTextField txtAddresseeDesignation;
+    private javax.swing.JTextArea txtHint;
+    private javax.swing.JTextArea txtNotes;
+    private javax.swing.JTextField txtOrderedDate;
+    // End of variables declaration//GEN-END:variables
 }

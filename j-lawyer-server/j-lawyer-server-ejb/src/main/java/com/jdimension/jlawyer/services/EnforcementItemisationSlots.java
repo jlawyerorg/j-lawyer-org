@@ -660,319 +660,285 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.services;
 
-import java.io.Serializable;
+import com.jdimension.jlawyer.persistence.ClaimComponentType;
+import com.jdimension.jlawyer.pojo.ContinuingInterest;
+import com.jdimension.jlawyer.pojo.EnforcementItemisation;
+import com.jdimension.jlawyer.pojo.EnforcementItemisationCategory;
+import com.jdimension.jlawyer.pojo.EnforcementItemisationRow;
+import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.EnumMap;
 import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.Lob;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import java.util.Map;
 
 /**
- * One version of one official form, with the profile that says how to fill it.
+ * Puts an itemisation into the slots of the official itemisation forms.
  *
- * The forms of the ZVFV are replaced from time to time. A measure generated under an older version
- * was not wrong, it was current - so versions live alongside one another with a validity period,
- * and a measure records which one it used. Producing a form from a version whose validity has ended
- * is possible but has to be confirmed.
+ * The ZVFV itemisation is not a table that grows. It is a printed sheet with a fixed number of
+ * places: two blocks for titled principal claims, each with two interest lines that have ended and
+ * two that are still running, three blocks for titled costs - one for the costs taken into a
+ * Vollstreckungsbescheid, one for costs incurred before proceedings and one for assessed costs -
+ * and a free line per section for what does not have a block of its own. A ledger has no such
+ * limit.
  *
- * The PDF is held here rather than in the file system. The number of forms is small, the versions
- * few, and keeping them with their mapping means a backup of the database is a backup of everything
- * needed to reproduce a filing.
+ * Whoever fills the form must therefore decide which claim goes where, and the decision is not a
+ * formatting matter: a cost put under "Festgesetzte Kosten" that no court ever assessed is a false
+ * statement to the bailiff. The rules are therefore kept here, apart from the filling, where they
+ * can be read and tested:
+ *
+ * <ul>
+ * <li>Titled principal claims fill the two blocks in the order of the itemisation.</li>
+ * <li>Assessed costs go under "Festgesetzte Kosten", costs incurred before proceedings under
+ * "Titulierte vorgerichtliche Kosten".</li>
+ * <li>The remaining titled costs go under "Kosten des Mahnverfahrens" only if the title is a
+ * Vollstreckungsbescheid, because that is what the heading claims of them. Otherwise they go to
+ * the free line of the same section, which says nothing they are not.</li>
+ * <li>Claims and costs the title does not cover go to the free lines of section I and IV.</li>
+ * <li>Payments are not placed at all. They have already reduced the amounts.</li>
+ * </ul>
+ *
+ * What is left over is not dropped silently. A line that bears interest cannot go on a free line,
+ * which has no interest fields, and a third principal claim has no block; both end up in
+ * {@link #getOverflow()}, and the caller refuses rather than hand out a form that is short.
  *
  * @author jens
  */
-@Entity
-@Table(name = "enforcement_form_templates")
-@NamedQueries({
-    @NamedQuery(name = "EnforcementFormTemplate.findAll", query = "SELECT t FROM EnforcementFormTemplate t ORDER BY t.formKey ASC, t.validFrom DESC"),
-    @NamedQuery(name = "EnforcementFormTemplate.findById", query = "SELECT t FROM EnforcementFormTemplate t WHERE t.id = :id"),
-    @NamedQuery(name = "EnforcementFormTemplate.findByKey", query = "SELECT t FROM EnforcementFormTemplate t WHERE t.formKey = :formKey ORDER BY t.validFrom DESC"),
-    // Ein Verzeichnis ohne die Dateien - und ohne verwaltete Entities. Wer eine verwaltete Entity
-    // abräumt, um sie leichter zu machen, schreibt die Leere beim Commit in die Datenbank.
-    @NamedQuery(name = "EnforcementFormTemplate.findAllSummaries", query = "SELECT NEW com.jdimension.jlawyer.persistence.EnforcementFormTemplate(t.id, t.formKey, t.name, t.version, t.validFrom, t.validTo, t.fileName, t.description) FROM EnforcementFormTemplate t ORDER BY t.formKey ASC, t.validFrom DESC")
-})
-public class EnforcementFormTemplate implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
-
-    /** The annex of the ZVFV this is a version of - "ANLAGE_1". */
-    @Column(name = "form_key", nullable = false, length = 50)
-    private String formKey;
-
-    @Column(name = "name", nullable = false)
-    private String name;
+public class EnforcementItemisationSlots {
 
     /**
-     * The version, as the publisher dates it - "2024-09-01".
-     *
-     * Recorded on every measure generated from it, so a filing stays reproducible after the form has
-     * been replaced.
+     * Blocks for principal claims in section I. The third block of the form belongs to
+     * Säumniszuschläge, a tax-law surcharge the ledger does not model, and stays empty.
      */
-    @Column(name = "version", length = 50)
-    private String version;
-
-    @Column(name = "valid_from")
-    @Temporal(TemporalType.DATE)
-    private Date validFrom;
-
-    /** Null while the version is the current one. */
-    @Column(name = "valid_to")
-    @Temporal(TemporalType.DATE)
-    private Date validTo;
+    public static final int CLAIM_SLOTS = 2;
 
     /**
-     * The fillable PDF.
-     *
-     * Lazy because it is a few hundred kilobytes and most reads of a template only want to know
-     * which versions exist.
+     * The blocks of section III, each with its own printed heading.
      */
-    @Lob
-    @Basic(fetch = FetchType.LAZY)
-    @Column(name = "pdf_content")
-    private byte[] pdfContent;
-
-    @Column(name = "file_name")
-    private String fileName;
-
-    @Column(name = "description", length = 1000)
-    private String description;
-
-    /**
-     * How the fields of this form are filled.
-     *
-     * Belongs to the version, not to the form: a new version may rename its fields, and a profile
-     * written for the old one would then address fields that no longer exist.
-     */
-    @OneToMany(mappedBy = "template", fetch = FetchType.LAZY)
-    private List<EnforcementFormFieldMapping> fieldMappings = new ArrayList<>();
-
-    /**
-     * The constructor JPA needs.
-     */
-    public EnforcementFormTemplate() {
+    public enum CostBlock {
+        /** In den Vollstreckungsbescheid aufgenommene Kosten des Mahnverfahrens. */
+        DUNNING_ORDER,
+        /** Titulierte vorgerichtliche Kosten. */
+        PRE_COURT,
+        /** Festgesetzte Kosten. */
+        ASSESSED
     }
 
-    /**
-     * Builds a template without its PDF, for a listing.
-     *
-     * Exists so a listing can be produced by a query rather than by emptying loaded entities.
-     * Clearing the content of a <em>managed</em> entity to make it lighter on the wire writes that
-     * emptiness into the database when the transaction commits - the templates are then listed
-     * correctly and gone.
-     *
-     * @param id the technical identifier
-     * @param formKey the annex of the ZVFV
-     * @param name the designation
-     * @param version the version as the publisher dates it
-     * @param validFrom the day the version takes effect
-     * @param validTo the day it ceased to be prescribed
-     * @param fileName the name the file was uploaded under
-     * @param description what this version is
-     */
-    public EnforcementFormTemplate(String id, String formKey, String name, String version,
-            Date validFrom, Date validTo, String fileName, String description) {
-        this.id = id;
-        this.formKey = formKey;
-        this.name = name;
-        this.version = version;
-        this.validFrom = validFrom;
-        this.validTo = validTo;
-        this.fileName = fileName;
-        this.description = description;
-    }
+    private final EnforcementItemisation itemisation;
+    private final boolean titleIsDunningOrder;
+
+    private final List<EnforcementItemisationRow> claims = new ArrayList<>();
+    private final Map<CostBlock, EnforcementItemisationRow> costs = new EnumMap<>(CostBlock.class);
+    private final List<EnforcementItemisationRow> overflow = new ArrayList<>();
+
+    private final FreeLine furtherClaims = new FreeLine();
+    private final FreeLine furtherTitledCosts = new FreeLine();
+    private final FreeLine furtherEnforcementCosts = new FreeLine();
 
     /**
-     * @return the technical identifier
+     * @param itemisation the itemisation, or null
+     * @param titleIsDunningOrder whether the title is a Vollstreckungsbescheid, which decides
+     * whether the costs of the dunning procedure may be stated as such
      */
-    public String getId() {
-        return id;
+    public EnforcementItemisationSlots(EnforcementItemisation itemisation,
+            boolean titleIsDunningOrder) {
+
+        this.itemisation = itemisation;
+        this.titleIsDunningOrder = titleIsDunningOrder;
+        distribute();
     }
 
-    /**
-     * @param id the technical identifier
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the annex of the ZVFV this is a version of
-     */
-    public String getFormKey() {
-        return formKey;
-    }
-
-    /**
-     * @param formKey the annex of the ZVFV
-     */
-    public void setFormKey(String formKey) {
-        this.formKey = formKey;
-    }
-
-    /**
-     * @return the designation shown to the user
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name the designation shown to the user
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return the version as the publisher dates it
-     */
-    public String getVersion() {
-        return version;
-    }
-
-    /**
-     * @param version the version as the publisher dates it
-     */
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    /**
-     * @return the day this version takes effect, or null if unstated
-     */
-    public Date getValidFrom() {
-        return validFrom;
-    }
-
-    /**
-     * @param validFrom the day this version takes effect
-     */
-    public void setValidFrom(Date validFrom) {
-        this.validFrom = validFrom;
-    }
-
-    /**
-     * @return the day this version ceased to be prescribed, or null while it is current
-     */
-    public Date getValidTo() {
-        return validTo;
-    }
-
-    /**
-     * @param validTo the day this version ceased to be prescribed
-     */
-    public void setValidTo(Date validTo) {
-        this.validTo = validTo;
-    }
-
-    /**
-     * @return the fillable PDF
-     */
-    public byte[] getPdfContent() {
-        return pdfContent;
-    }
-
-    /**
-     * @param pdfContent the fillable PDF
-     */
-    public void setPdfContent(byte[] pdfContent) {
-        this.pdfContent = pdfContent;
-    }
-
-    /**
-     * @return the name the file was uploaded under
-     */
-    public String getFileName() {
-        return fileName;
-    }
-
-    /**
-     * @param fileName the name the file was uploaded under
-     */
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
-
-    /**
-     * @return what this version is, in the words a user needs
-     */
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * @param description what this version is
-     */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    /**
-     * @return how the fields of this form are filled, never null
-     */
-    public List<EnforcementFormFieldMapping> getFieldMappings() {
-        if (this.fieldMappings == null) {
-            this.fieldMappings = new ArrayList<>();
+    private void distribute() {
+        if (this.itemisation == null) {
+            return;
         }
-        return fieldMappings;
+        for (EnforcementItemisationRow row : this.itemisation.getRows()) {
+            if (row.getCategory() == null) {
+                continue;
+            }
+            switch (row.getCategory()) {
+                case TITLED_MAIN_CLAIM:
+                    placeClaim(row);
+                    break;
+                case TITLED_COSTS:
+                    placeTitledCost(row);
+                    break;
+                case FURTHER_CLAIM:
+                    place(row, this.furtherClaims);
+                    break;
+                case FURTHER_ENFORCEMENT_COSTS:
+                    place(row, this.furtherEnforcementCosts);
+                    break;
+                case PAYMENT:
+                default:
+                    break;
+            }
+        }
+    }
+
+    private void placeClaim(EnforcementItemisationRow row) {
+        if (this.claims.size() < CLAIM_SLOTS) {
+            this.claims.add(row);
+            return;
+        }
+        // Eine dritte titulierte Hauptforderung hat im Formular keinen Platz. Sie in die freie
+        // Zeile zu schieben verloere ihre Zinsen und ihre Restforderungsangabe.
+        this.overflow.add(row);
+    }
+
+    private void placeTitledCost(EnforcementItemisationRow row) {
+        CostBlock block = blockOf(row.getComponentType());
+        if (block != null && !this.costs.containsKey(block)) {
+            this.costs.put(block, row);
+            return;
+        }
+        place(row, this.furtherTitledCosts);
     }
 
     /**
-     * @param fieldMappings how the fields of this form are filled
+     * The block whose heading is true of this kind of cost, or null where none is.
      */
-    public void setFieldMappings(List<EnforcementFormFieldMapping> fieldMappings) {
-        this.fieldMappings = fieldMappings;
+    private CostBlock blockOf(ClaimComponentType type) {
+        if (type == null) {
+            return null;
+        }
+        switch (type) {
+            case COST_ASSESSED:
+                return CostBlock.ASSESSED;
+            case PRECOURT_EXPENSES:
+            case PRECOURT_REMINDER_COSTS:
+            case PRECOURT_INFORMATION_COSTS:
+            case PRECOURT_BANK_RETURN_COSTS:
+            case PRECOURT_COLLECTION_COSTS:
+            case PRECOURT_LAWYER_FEE:
+                return CostBlock.PRE_COURT;
+            case COST_INTEREST_BEARING:
+            case COST_NON_INTEREST_BEARING:
+            case OTHER_ANCILLARY_CLAIM:
+                return this.titleIsDunningOrder ? CostBlock.DUNNING_ORDER : null;
+            default:
+                return null;
+        }
     }
 
     /**
-     * Whether this version is the one prescribed on a given day.
+     * Adds a line to a free line, or to the overflow where the free line would swallow something.
+     */
+    private void place(EnforcementItemisationRow row, FreeLine line) {
+        if (row.getInterestAmount().signum() != 0 || row.hasInterest()) {
+            // Die freie Zeile hat kein Feld für Zinsen. Was verzinst ist, gehört in einen Block -
+            // und wenn keiner mehr frei ist, in die Meldung statt stillschweigend ohne Zinsen ins
+            // Formular.
+            this.overflow.add(row);
+            return;
+        }
+        line.add(row);
+    }
+
+    /**
+     * @return the titled principal claims that have a block, at most {@value #CLAIM_SLOTS}
+     */
+    public List<EnforcementItemisationRow> getClaims() {
+        return this.claims;
+    }
+
+    /**
+     * @param block the block
+     * @return the titled cost stated under that heading, or null if none is
+     */
+    public EnforcementItemisationRow getCost(CostBlock block) {
+        return this.costs.get(block);
+    }
+
+    /**
+     * @return the free line of section I, for claims the title does not cover
+     */
+    public FreeLine getFurtherClaims() {
+        return this.furtherClaims;
+    }
+
+    /**
+     * @return the free line of section III, for titled costs without a block of their own
+     */
+    public FreeLine getFurtherTitledCosts() {
+        return this.furtherTitledCosts;
+    }
+
+    /**
+     * @return the free line of section IV, for the costs of enforcement itself
+     */
+    public FreeLine getFurtherEnforcementCosts() {
+        return this.furtherEnforcementCosts;
+    }
+
+    /**
+     * @return what the form cannot express, empty when everything found a place
+     */
+    public List<EnforcementItemisationRow> getOverflow() {
+        return this.overflow;
+    }
+
+    /**
+     * @return whether the itemisation fits on the form
+     */
+    public boolean fits() {
+        return this.overflow.isEmpty();
+    }
+
+    /**
+     * The interest that keeps running on a line after the key date, as the form's lower interest
+     * lines ask for it.
      *
-     * @param day the day to judge by
-     * @return true if the day falls inside the validity period
+     * @param row the line
+     * @return the continuing interest of that line, or null if none runs
      */
-    public boolean isValidOn(Date day) {
-        if (day == null) {
-            return this.validTo == null;
+    public ContinuingInterest continuingFor(EnforcementItemisationRow row) {
+        if (this.itemisation == null || row == null) {
+            return null;
         }
-        if (this.validFrom != null && day.before(this.validFrom)) {
-            return false;
+        for (ContinuingInterest continuing : this.itemisation.getContinuingInterest()) {
+            if (continuing.getComponentId() != null
+                    && continuing.getComponentId().equals(row.getComponentId())) {
+                return continuing;
+            }
         }
-        return this.validTo == null || !day.after(this.validTo);
+        return null;
     }
 
-    @Override
-    public int hashCode() {
-        return id == null ? 0 : id.hashCode();
-    }
+    /**
+     * One of the form's free lines: a designation and an amount, however many ledger lines went
+     * into it.
+     */
+    public static class FreeLine {
 
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof EnforcementFormTemplate)) {
-            return false;
+        private final List<String> designations = new ArrayList<>();
+        private BigDecimal amount = BigDecimal.ZERO;
+
+        void add(EnforcementItemisationRow row) {
+            this.designations.add(row.getDesignation() == null ? "" : row.getDesignation());
+            this.amount = this.amount.add(row.getAmount());
         }
-        EnforcementFormTemplate other = (EnforcementFormTemplate) object;
-        return this.id != null && this.id.equals(other.id);
-    }
 
-    @Override
-    public String toString() {
-        return name + (version == null || version.trim().isEmpty() ? "" : " (" + version + ")");
+        /**
+         * @return whether anything was placed here
+         */
+        public boolean isSet() {
+            return !this.designations.isEmpty();
+        }
+
+        /**
+         * @return what the line is called, the designations of everything on it
+         */
+        public String getDesignation() {
+            return String.join(", ", this.designations);
+        }
+
+        /**
+         * @return the sum of what is on the line
+         */
+        public BigDecimal getAmount() {
+            return this.amount;
+        }
     }
 }

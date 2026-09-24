@@ -728,13 +728,23 @@ public class EnforcementItemisationBuilder {
             }
         }
 
+        // Ist zum Titel nicht hinterlegt, welche Forderungen er deckt, gelten alle als tituliert.
+        // Die Vollstreckung laeuft ueberhaupt nur auf einen Titel (§ 750 Abs. 1 ZPO); eine
+        // Aufstellung, die jede Forderung unter "Weitere Forderungen" fuehrt, behauptete das
+        // Gegenteil und ergaebe einen Auftrag ohne titulierte Hauptforderung. Dass die Deckung
+        // nicht ausdruecklich erfasst wurde, haelt die Aufstellung in coverageKnown fest.
+        boolean coversEverything = title != null && !title.hasCoverage();
+
         int number = 1;
         for (ClaimStatementPosition position : statement.getPositions()) {
             EnforcementItemisationRow row = new EnforcementItemisationRow();
             row.setNumber(number++);
-            row.setCategory(categoryOf(position, covered));
+            row.setCategory(categoryOf(position, covered, coversEverything));
+            row.setComponentId(position.getComponentId());
+            row.setComponentType(position.getType());
             row.setDesignation(position.getDesignation());
             row.setAmount(position.getPrincipal());
+            row.setPayments(position.getPayments());
             row.setInterestAmount(position.getInterest());
             row.setInterestFrom(position.getInterestFrom());
             applyRate(row, statement, position);
@@ -771,9 +781,10 @@ public class EnforcementItemisationBuilder {
      * line.
      */
     private EnforcementItemisationCategory categoryOf(ClaimStatementPosition position,
-            Set<String> covered) {
+            Set<String> covered, boolean coversEverything) {
 
-        boolean titled = position.getComponentId() != null && covered.contains(position.getComponentId());
+        boolean titled = coversEverything
+                || (position.getComponentId() != null && covered.contains(position.getComponentId()));
         boolean cost = isCost(position.getType());
 
         if (titled) {
