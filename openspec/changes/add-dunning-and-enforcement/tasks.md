@@ -595,7 +595,76 @@
       the assignment was read off the form's order. Settled the only way it can be: a filled sample
       was produced from the profile and checked against the form. Creditor, debtor and the filing
       firm each land where they belong.
-      *Still open in 4.2:* the administration UI.
+      *The administration UI* sits under Finanzen → Vollstreckungsformulare and needs the system
+      administrator role. It imports the shipped package on a button and reports per form whether it
+      was taken over or already held — a bare "done" would leave open whether an adjusted template
+      had been overwritten, and it had not. A new version is added beside the old rather than
+      replacing it, and the old one gets an end of validity: a measure generated under it was not
+      wrong, it was current. Removing warns that the record of the version survives on the measures
+      but the file does not, and points at ending the validity instead.
+      The fields of the selected form are listed with the label the form carries for each, because
+      the technical names say nothing and without the labels writing a mapping profile would mean
+      counting fields on the printed form.
+      *A destructive bug, found by a user opening that dialog.* `getFormTemplates` loaded the
+      templates through the facade and set their PDF content to null before returning them, to keep
+      a listing off the wire. What comes out of a facade is **managed**: the clearing was flushed to
+      the database when the transaction committed. Opening the administration dialog therefore
+      listed the templates correctly and deleted every stored PDF at the same moment. The symptom
+      the user saw was the next one along — the field list stayed empty, because there was no longer
+      a file to read fields from.
+      The listing is now a `SELECT NEW` projection, which builds unmanaged instances and never holds
+      the content at all. `NamedQueryProjectionTest` guards it: a projection whose argument count
+      stops matching a constructor is not a compile error and not always a startup error either —
+      it surfaces the first time a user opens the dialog. It also holds the no-argument constructor
+      that JPA needs and which adding the projection constructor silently removes.
+      Two consequences for recovery. The import now fills in a **missing file** on a template it
+      already holds: a template without a PDF is not a firm's adjustment, it is a template nothing
+      can be produced from, and "adds what is missing" covers it. And asking for the fields of a
+      template without a file now says so instead of returning an empty list, which read as a
+      statement about the form rather than about the template.
+      *The mapping profile was a seed that never ran.* V3_6_0_43 inserted the assignments by
+      selecting from `enforcement_form_templates` — and that table is empty at deployment, because
+      the templates are created later, on a button. The SELECT matched nothing, the migration
+      inserted nothing, and it reported no error: the kind of seed that looks like it worked. The
+      profile for Anlage 1 was simply absent from every installation.
+      It belongs to the shipped package, beside the PDF, and is written by the import — which is
+      also where it is present at the right moment on a fresh installation. `zvfv/mapping/ANLAGE_1.txt`
+      now holds it and `Anlage1MappingTest` reads it from there; the migration stays as a no-op
+      because Flyway knows it by its checksum — unchanged, down to its comments: a header added
+      afterwards changed the checksum and made every installation that had already run it refuse
+      to validate. Why it does nothing is recorded in `design.md` instead.
+      The import fills a missing profile the way it fills a missing file, and only a missing one: a
+      profile a firm has adjusted is its own, and an import that replaced it would undo work nobody
+      asked to have undone.
+      The profile for the itemisation (`zvfv/mapping/ANLAGE_6.txt`, 115 fields) followed, and with
+      it the per-slot vocabulary it needs. Anlage 6 is not a form with rows but one with places:
+      two blocks for titled principal claims, three for titled costs — each headed by what it
+      claims of them —, two interest lines per block that have ended and two that still run, and
+      one free line per section. Which claim goes where is a legal statement rather than a layout
+      decision, so `EnforcementItemisationSlots` makes it, apart from the filling and tested on its
+      own: assessed costs only under "Festgesetzte Kosten", the costs of the dunning procedure only
+      under a Vollstreckungsbescheid, and anything that finds no place is reported instead of
+      dropped — the form would otherwise look complete while the bailiff collected less than the
+      title allows.
+      The assignment was not guessed from the order of the field names. The names say nothing
+      ("Textfeld 4") and here the tooltips say almost as little ("Betrag", "Zahl", "Datum von");
+      what a field means follows from where it sits. It was read from the geometry: the widget
+      rectangles out of the PDF, the printed labels with their coordinates beside them, matched
+      line by line. `ZvfvMappingProfileTest` now holds every shipped profile against its form —
+      field names, keys, labels, field kinds, double assignments, and a fill of the real PDF
+      without a single rejection — and covers the next annex the day its profile arrives.
+      Two defects surfaced on the way, both of them silent. `EnforcementItemisation.totalDemanded()`
+      subtracted payments a second time, although a statement position already comes net of them:
+      a ledger with a 500 euro payment sent the bailiff out for 500 euro too little. The assertion
+      that covered it described a statement that never occurs, because its fixture was built by
+      hand instead of coming from the service. And `calculateClaimLedgerTotals` normalised its key
+      date with `setHours`, which a `java.sql.Date` from a `@Temporal(DATE)` field refuses by
+      contract — invisible while every caller passed a date it had built itself, and thrown the
+      moment the enforcement forms passed the measure's ordered date. `SqlDateMutationTest` now
+      bars mutating a date in place anywhere in this code.
+      *Still open in 4.2:* editing a mapping profile in the UI, and the profiles for Anlagen 2 to 5,
+      7 and 8 — the Gerichtsvollzieherauftrag is complete, the Pfändungs- und Überweisungsbeschluss
+      is not.
 - [~] 4.3 New name-based AcroForm filler beside `PdfFormsAccess`. **The filler is built and tested
       against the real forms; storage in the case and recording of the form version wait for the
       service of 4.8.**
@@ -623,6 +692,61 @@
       a PfÜB measure produces **two** documents, not one. The measure type carries only `form_key`
       today; that needs a second one, or the draft has to be derived from the application.
 - [x] 4.4 Claim itemisation for ZVFV Anlagen 6–8 from the ledger, sharing the statement calculation.
+      *Five defects only the produced document showed.* Two forms were generated from a real ledger
+      and read back: everything came out at 0,00, the debtor was ticked as "Sonstige", the firm's
+      block stayed empty and the single claim stood under "Weitere Forderungen".
+      The zeroes: `assembleClaimStatement` counted its key date from the *beginning* of the day.
+      The key date is a measure's ordered date, a DATE column, so everything booked on that day lay
+      behind it - and `calculateClaimLedgerTotals` counted to the end of the same day, so one
+      statement contradicted itself, totals with the claim beside positions of nothing.
+      `ClaimLedgerKeyDate` now holds the rule once, for all four paths.
+      The tick: a contact carries two fields that read like a salutation. The "Anrede" list of the
+      contact editor writes to `title`; `salutation` is the "Begrüßung", the opening line of a
+      letter. Both the enforcement forms and `EdaPartyMapper` read the second, which never matches,
+      so every natural person came out as neither man nor woman - on the form as a tick beside
+      "Sonstige", on an EDA record as an unspecified salutation key. `ContactSalutation` is now the
+      single reader, and both call sites are pinned by a test.
+      The firm's block: `filedBy` and the place were passed as null throughout, so the block
+      "Kontaktdaten des Auftraggebers" could not fill. They come from the filing user's master data
+      now.
+      The profile: `bevollmaechtigter.*` was mapped onto page 1's debtor summary. That block and
+      the one below it carry the same labels - "Name/Firma", "Straße", "Postleitzahl", "Ort" - so
+      the label test could not see it; the geometry could. The firm would have been printed as the
+      debtor, and it stayed invisible only because the firm's data were never filled. The
+      addressee block has no address fields at all, so four keys had no place on the form and were
+      dropped.
+      The single claim: a title records which claims it covers, and nothing fills that list yet.
+      Read as "covers nothing" it made every claim a further claim and produced a bailiff order
+      without one titled principal claim - absurd, since enforcement runs on a title in the first
+      place (§ 750 Abs. 1 ZPO). A title with no recorded coverage now covers everything, and
+      `coverageKnown` keeps the assumption visible. Recording a narrower coverage needs a user
+      interface that does not exist yet.
+      *A sixth, found in the ledger behind them.* A ledger stopped computing interest: its only
+      booking, the principal claim of the component, was stored as an interest booking. The booking
+      editor does not list "Hauptforderung" - a principal claim is made with the component and never
+      by hand - so opening an existing one selected nothing, left the first entry of the list
+      ("Zinsen") showing, and the save read the disabled box regardless. Opening the booking and
+      confirming it turned the claim into interest; an interest booking does not raise the
+      principal, and as interest runs on the principal, the interest disappeared with the claim.
+      The dialog now shows an existing booking's kind even when the list does not offer it, and
+      keeps kind and component on save. `updateClaimLedgerEntry` keeps both as well, for every
+      caller including the REST API: what a booking is, is decided when it is made, and a booking
+      of the wrong kind is reversed and entered again rather than reinterpreted.
+      *And a seventh, from the same test run.* The value limit of § 866 Abs. 3 ZPO was measured
+      against a figure nobody could see: the position was set to 500 euro, the compulsory mortgage
+      stayed available, because the ledger still carried the booking of 5.000. The amount at a
+      position is not what is owed - the bookings are, and the field merely repeats the booking
+      made with the position. `ClaimComponentAmountChange` now decides what the ledger does when
+      that field changes: the one booking made with the position follows it, and as soon as
+      anything else has been booked on it - a payment, interest, a second claim - the change is
+      refused with its reason, because interest has run on the old figure and a payment was
+      allocated against it. A correction belongs in the bookings, where a ledger moves.
+      The tab order of the ledger follows the work now: master data, positions, bookings, totals,
+      statement, then the dunning tabs, then title and enforcement, base rates last. Reordering
+      turned up a check on `getSelectedIndex() == 3` that was meant for the statement tab and had
+      been pointing at the dunning procedure ever since those tabs were inserted - the statement
+      was refreshed when the wrong tab was opened and never when its own was. It compares the
+      component now, which no reordering can break.
       **Derived from the claim statement, not computed a second time.** The specification requires
       the two to agree; deriving makes them agree by construction rather than by a test that has to
       be re-run whenever either side changes. Two calculations meant to produce the same figure
@@ -649,16 +773,230 @@
       booking as a payment, filing untitled costs as a further claim, declaring everything titled
       when the coverage is unknown, and writing the computed rate where the margin belongs.
 - [ ] 4.5 Third-party debtors incl. § 840 ZPO declaration deadline and payment booking
-- [ ] 4.6 Enforcement cost proposal and booking (§ 788 ZPO, Nr. 3309/3310 VV RVG, GvKostG, court
-      fees), joint or single debtor, advanced-by-firm handling
+- [~] 4.6 Enforcement cost proposal and booking (§ 788 ZPO, Nr. 3309/3310 VV RVG, GvKostG, court
+      fees), joint or single debtor, advanced-by-firm handling. **Proposal, booking and the dialog
+      are built; section IV of Anlage 6 is not filled from them yet, and the GvKostG table waits
+      for 0.3.**
+      Built on what the dunning procedure already had: the value tables of `V3_6_0_21` and the fee
+      items of `V3_6_0_22`. `V3_6_0_46` adds the three that enforcement needs - Nr. 3309 VV RVG
+      (0.3 per measure), Nr. 3310 (0.3 where a hearing takes place) and Nr. 2111 KV GKG, a fixed 20
+      euro without any relation to the value. The flat rate of Nr. 7002 and the VAT of Nr. 7008 were
+      there already and are not kept twice.
+      Three things are rules rather than figures and therefore live in `EnforcementCostCalculator`
+      instead of a table: the flat rate is taken from the lawyer's fees alone, because a court fee
+      is not a fee of his and he has no expenses on it; VAT is left out where the creditor deducts
+      it, because he has then not borne it and cannot claim it from the debtor; and the bailiff's
+      own costs get a position **without an amount**. They follow from the acts he performs and
+      from how far he travels, not from the value, and their table is not kept yet - proposing a
+      figure would mean inventing one. The position stands there so that nobody forgets to enter
+      what he actually charged, and it is not booked until somebody does.
+      The costs go into the ledger, not onto an invoice: § 788 Abs. 1 ZPO has them collected with
+      the claim. They can be owed by one debtor alone, and where the firm advanced them, a matching
+      expenditure is written to the case account - the money left the firm long before the debtor
+      pays.
+      *Und vier weitere aus der nächsten Runde.* Der Kopf des Kostendialogs schnitt seinen Text
+      immer noch ab: ein HTML-Label bemisst sich an seinem Inhalt und einer Schriftgröße, die es
+      nicht kennt. Jetzt ist es eine Textfläche im Rollbereich - was nicht hineinpasst, lässt sich
+      wenigstens rollen.
+      Die Kommentare der gebuchten Kosten mischten Dezimaltrenner: "Satz 19.00, Wert 281.60" neben
+      deutschen Beträgen im selben Satz, weil ein BigDecimal an einen String gehängt wird, wie er
+      gespeichert ist. `GermanNumbers` schreibt und liest jetzt beides an einer Stelle - beides,
+      weil die Forderungsaufstellung den Wert aus genau diesem Kommentar zurückliest und ein
+      Schreiber, der sein Format ändert, einen Leser mit dem alten still brechen würde. Alte
+      Kommentare mit Punkt bleiben lesbar; ein Test hält beide Schreibweisen fest.
+      Das Löschen einer Forderungsposition scheiterte mit einer NullPointerException. Zwei Fehler
+      auf einmal: die Tabelle entfernte bei mehreren markierten Zeilen zweimal dieselbe - sie nahm
+      `getSelectedRow()` statt der Zeile, die gerade an der Reihe war -, ließ die andere stehen,
+      obwohl der Server sie gelöscht hatte, und der nächste Versuch traf eine Position, die es
+      nicht mehr gab. Dort stand kein Satz, sondern eine `NullPointerException`: `find()` lieferte
+      null, und der Code las darauf weiter. Beides behoben, und die Meldung sagt jetzt, was zu tun
+      ist.
+
+      *Vier Befunde aus dem Handtest.* Der Kostendialog zeigte seinen Kopftext auf 32 Pixeln, von
+      denen man die Überschrift sah und den Satz nicht - jetzt 72. Nach dem Buchen blieb der Reiter
+      *Buchungen* stehen, als wäre nichts geschehen: gebucht wird im Forderungskonto, und der
+      Dialog davor erfuhr nichts davon; `ClaimLedgerDialog.reload()` ist der Anstoß, und der
+      Kostendialog gibt ihn, wenn er gebucht hat. Eine Buchung, die nur ein Schuldner trägt, sah in
+      der Tabelle aus wie jede andere - die Buchungen haben jetzt eine Spalte *Schuldner*, die
+      sonst "alle" sagt. Und Abschnitt IV blieb leer, weil die Zuordnung der Anlage 6 in der
+      Datenbank noch die alte war: der Import ergänzt nur eine fehlende und rührt eine vorhandene
+      nicht an, was richtig ist, aber keinen Weg ließ, eine korrigierte zu übernehmen, außer die
+      Vorlage zu löschen - mitsamt Datei, Fassung und Gültigkeiten. `replaceFormMapping` und der
+      Knopf *Zuordnung übernehmen* sind dieser Weg, mit Rückfrage, weil eine angepasste Zuordnung
+      Arbeit ist, die niemand ungefragt wegwirft. Das ist zugleich das erste der beiden Werkzeuge
+      aus 5.5a.
+
+      *The cost button broke the ledger dialog once.* It was added to the horizontal group of the
+      layout and not to the vertical one, and GroupLayout answers that by refusing to measure the
+      window at all - "is not attached to a vertical group", thrown when the dialog opens, taking
+      the whole ledger with it. It compiles, and nothing says a word until somebody clicks.
+      Editing generated layout code means editing two groups, and the second is easy to miss.
+      `GroupLayoutCompletenessTest` reads every layout of the client - 634 of them - and insists
+      that each component stands in both groups of its own layout, each layout compared by the
+      variable it was made on, because a form nests them. All 634 pass; a mutation that removes the
+      button from the vertical group again names the file, the layout and the component.
+
+      Section IV of Anlage 6 is filled from them now, and one rule decides what it shows: **what
+      has been booked wins over what would be proposed.** A proposal is a computation, a booking is
+      a decision - the firm may have struck the VAT or entered the bailiff's invoice - and a form
+      showing the computation while the ledger held something else would make two documents of one
+      case disagree, with the debtor the one to notice. `EnforcementCostView` holds that rule and
+      the two shapes it fills: the measure's own block, and a second one for a hearing fee, because
+      a fee is not an outlay and writing it among them would say something else. The court fee is
+      left out of the lawyer's sub-total; it stands elsewhere on the form, and counting it there
+      would make the lawyer's costs an amount that is not lawyer's costs.
+      The line "Bisherige Vollstreckungskosten gemäß Aufstellung in weiterer Anlage" stays empty on
+      purpose: it points at an annex we do not attach. Earlier enforcement costs stand in the free
+      line of the same section instead - once, not twice.
+      *Still open in 4.6:* the GvKostG table (task 0.3), and a place for the VAT rate and the
+      deduction flag, which the dialog currently takes as 19 % and "not deductible".
+- [ ] 4.6a **Offene Frage: der Gegenstandswert der Vollstreckungsgebühr.** Zurzeit ist es die offene
+      Forderung des Kontos - Hauptforderung, Kosten **und** aufgelaufene Zinsen. § 25 Abs. 1 Nr. 1
+      RVG meint den Betrag der zu vollstreckenden Forderung, und § 4 Abs. 1 ZPO lässt Zinsen als
+      Nebenforderung bei der Wertberechnung grundsätzlich außer Betracht; danach wäre nur der
+      Hauptforderungsteil anzusetzen, und die Gebühr fiele niedriger aus.
+      Die Frage ist gestellt und bewusst offen: sie entscheidet über eine Gebühr, die dem Schuldner
+      in Rechnung geht, und die Antwort gehört der Kanzlei. Bis dahin rechnet der Vorschlag mit der
+      offenen Forderung; der Betrag steht im Kostendialog oben und ist dort jederzeit änderbar.
 - [ ] 4.7 Measure follow-ups incl. outcome-driven closing and § 802d ZPO re-attempt scheduling
-- [ ] 4.8 `EnforcementServiceRemote` (English JavaDoc) and `EnforcementEndpointV8`
-- [ ] 4.9 Desktop UI: `Zwangsvollstreckung` tab (measures, third-party debtors, form generation) and
-      `Fristen & Dokumente` tab of the ledger workspace (+ `.form` files)
+- [x] 4.8 `EnforcementServiceRemote` (English JavaDoc) and `EnforcementEndpointV8`. The measures of a
+      ledger, what may be taken and what stands in the way of the rest, the itemisation the forms
+      ask for, and the generation of those forms into the case — **which closes the open half of
+      4.3**.
+      *The availability check is asked twice, on purpose.* `getMeasureOptions` answers the dialog and
+      `addMeasure` asks the same question again before it stores anything. What was greyed out with
+      a reason must not come into being through another route; a client is not a place to enforce
+      § 750 Abs. 1 ZPO.
+      *Which debtors a measure runs against comes from the measure, not from the ledger.* Enforcement
+      may be pursued against one joint debtor and not the other, and the bailiff order names whom it
+      is directed against. Only where a measure names none are the ledger's debtors used.
+      *The values are built once per measure, not once per form.* The three forms of an attachment
+      order state the same facts; building them twice would be an invitation for them to differ.
+      *Nothing incomplete is stored.* A form whose profile leaves a mandatory field empty is refused
+      rather than produced — a form that is first noticed at the bailiff's costs weeks and the fee of
+      the attempt. The version used is recorded on the measure, so a filing stays reproducible after
+      the form is replaced.
+      The refusal says what is missing in the words of the application, not in those of the PDF. The
+      filler can only report "Textfeld 4" - the name the form carries internally, chosen by whoever
+      drew it - and there is nothing of that name in the user interface. The profile knows two more
+      things about every field, and both belong in the message: what the form calls it ("Postleitzahl
+      und Ort") and which entry fills it ("Empfänger der Maßnahme, weitere Zeilen der Anschrift").
+      `EnforcementFormFieldOrigin` holds the second as a table rather than a derivation, because the
+      answer is a sentence for a person; `ZvfvMappingProfileTest` insists that every mandatory field
+      of every shipped profile can say both, so a new profile cannot quietly reintroduce
+      "Textfeld 4".
+      *Removing a measure leaves its documents in the case.* They went to a bailiff or a court, and
+      deleting the record does not undo that.
+      `EnforcementFormPreparation` holds the two decisions that would otherwise be unreachable inside
+      a session bean: what goes into a field — a fixed value beats a source key, and a key nobody
+      answers **clears** the field rather than leaving whatever the template held — and what the
+      document is called. The day leads so a case sorts into the order things happened, and the role
+      is named for everything but the application itself, because three documents of one measure on
+      one day are otherwise indistinguishable and the draft would go out as the application.
+      Eleven tests, four mutations killed. `EnforcementEndpointV8` exposes six paths and reaches the
+      generated swagger.
+      *A verification failure worth recording.* The endpoint was reported as building when it did
+      not: it called `RestErrorResponses.serverError(String)` and `badRequest(String)`, neither of
+      which exists — the helper takes a `Throwable` and has no bad-request method at all. It reached
+      the user as a compilation error.
+      The cause was the check, not the code. Builds were being verified by piping Maven through
+      `grep ERROR` and treating **no matching lines** as success. An empty grep says nothing about
+      whether the build ran, let alone whether it passed. Verification now asserts `BUILD SUCCESS`
+      instead of the absence of a pattern.
+      For the 400 there is now a local `badRequest` helper: throwing merely to be able to report a
+      caller's mistake would turn it into a server error, which is the distinction the status code
+      exists for.
+- [~] 4.9 Desktop UI: the `Zwangsvollstreckung` tab of the ledger, with the measures and the
+      generation of their forms. **Third-party debtors wait for 4.5, the `Fristen & Dokumente` tab
+      for 4.7.**
+      `ClaimLedgerEnforcementPanel` lists the measures with their outcome and the form version used;
+      `EnforcementMeasureDialog` starts one, and now also changes one. A measure could only be begun
+      and removed before, and the addressee the official form insists on is exactly what nobody has
+      at hand while deciding to enforce: the way back was to remove the measure and begin again,
+      taking its outcome with it. Editing takes over the title, the kind, the addressee, the dates
+      and the notes, and leaves the rest alone. `updateMeasure` copies those fields onto the stored
+      measure instead of merging the detached one - a merge writes everything hanging off it,
+      including the many-to-many list of debtors that a client never loaded, and would clear the
+      join table without anyone asking. That path had no caller until now. The dialog shows the kinds that **cannot** be taken as
+      well, greyed out with their reason — leaving them out would let a user wonder why the bailiff
+      order is missing, while "the title has not been served yet" says what to fetch. Changing the
+      title re-asks the server, because what is possible depends on the title and on nothing the
+      client could work out for itself.
+      Recording a fruitless attachment says what it opens rather than only what failed: it is the
+      precondition for the asset disclosure of § 802c ZPO and, after that, for the register of
+      debtors. A fruitless attempt is the beginning of the next step, not a dead end.
+      Generating asks whether to flatten — ready to send, or still fillable for what the ledger does
+      not hold — and publishes a `DocumentAddedEvent` per document so the Dokumente tab shows them
+      without the case being reopened.
+      Removing a measure warns that its documents stay: they went to a court or a bailiff, and
+      deleting the record does not undo that.
+      *Caught while writing it:* the new-measure handler both `invokeLater`-ed and directly called
+      `setVisible`, which would have opened the dialog twice.
+      *Found by a user trying to press the button:* "Formulare erzeugen" stayed grey for every
+      measure. It is gated on whether the kind of measure has an official form at all — and that
+      collection is lazy, so it crossed the remote boundary empty and every kind looked like a kind
+      without forms. The same gap that `ClaimLedgerParty.representatives` was given a loader for; the
+      measure types had not been. The service now fills them in before returning, which is safe
+      because the association is the inverse side without cascade or orphan removal — the reasoning
+      the court scopes already rest on.
+      And the grey button now says why it is grey, in the hint below: for a Vollstreckungsandrohung
+      or an inquiry the ZVFV prescribes no form, and a button that refuses without a reason is the
+      same puzzle as an empty list.
 - [ ] 4.10 Tests: form field mapping per annex incl. check-box on-states, itemisation vs. statement
       equality, cost bookings, follow-up lifecycle
 
 ## 5. Phase 5 — Plans, portfolio, polish
+
+- [x] 5.6 The EDA viewer renders the application as a readable page, modelled on the overview the
+      courts' own Online-Mahnantrag prints.
+      The viewer showed the file as what it is: records with their fields, which is what one needs
+      to check a file against the specification and useless for checking an application against the
+      intention behind it. The third tab now arranges the same data as the Online-Mahnantrag does -
+      who files, for whom, against whom, what is claimed - and a button files that page in the case.
+      `EdaApplicationSummarizer` reads the file, `EdaApplicationPdfWriter` lays it out, and both
+      keep to one rule: nothing is computed and nothing is added. Where the web application shows a
+      figure the file does not carry - the court fee, which it works out itself - the page leaves it
+      out. A rendering that quietly adds something has stopped being a rendering.
+      The layout was not guessed either. Beside each of the twelve reference files lies the overview
+      the court printed from the same data, and `EdaApplicationSummaryTest` holds one against the
+      other: for every label both sides use, the value has to match. That is the only independent
+      statement of what these files mean - our reader and our generator were written from the same
+      specification by the same hand, so testing one against the other would prove nothing. It found
+      four things straight away: the catalogue number belongs on its own line, a company
+      representing a party is named after the party's legal form ("Name der GmbH"), the
+      representative is one section however many records the file spreads him over, and his office
+      comes from a salutation key rather than from a legal form.
+      And then it earned its keep on the firm's own data. Read back, the application we generate
+      said "Mitteilungsform: PKW": `EdaClaimMapper` wrote the name of the claim position into ASPGR,
+      the field for what the claim rests on. The dunning order prints that field - "aus Rechnung
+      Nr. 4711 vom 15.09.2025" - so ours would have gone out naming the thing bought instead of the
+      ground of the claim. `ClaimReason` now holds the closed list the courts' own wizard offers
+      (Schreiben, Rechnung, Mahnung, Kontoauszug, Aufstellung, Vertrag, Stromrechnung, Gasrechnung,
+      andere), the claim position records it (`V3_6_0_44`), and the component editor offers it where
+      the wizard does. Nothing is invented: the editor shows "- nicht erfasst -" until somebody
+      says, the validator points out a position that has not, and only the generator falls back -
+      to "Rechnung" where an invoice number exists and "Schreiben" where none does, because the
+      field cannot go out empty and what stood there was worse.
+      Five assertions had held the old behaviour in place, one of them word for word ("die
+      Anspruchsbegründung bleibt, wo sie ist"). They described what the code did, not what the
+      courts print.
+      Its number followed, for a reason the same reading exposed: it was a column in the dunning
+      dialog and was stored nowhere. Every generation asked for it again, and the position never
+      knew which invoice it rested on, although a reminder, a claim statement and every further
+      application name the same one. It is recorded at the position now (`V3_6_0_45`), the dunning
+      dialog is prefilled from it and still has the last word for that one filing - a correction
+      there does not reach back into the master data. The additional entry of catalogue numbers 36,
+      42 and 61 keeps taking the column, so the editor hides the field where it would be thrown
+      away, and the check that refuses both now measures the number that would actually go out.
+      Neither field stuck, and the reason was older and larger than the two of them:
+      `updateClaimComponent` copied four fields onto the stored position while the position carried
+      seventeen. The catalogue number, the further entries the catalogue demands, the start of
+      interest and the recurrence had never been saved when a position was edited - the dialog
+      closed, the position reopened, and the old values were back, with nothing said. Copying field
+      by field is right, because merging a detached entity writes what nobody loaded; the price is a
+      list, and a list falls behind in silence. `ClaimComponentUpdateTest` now reads the persistent
+      fields out of the entity and the copied ones out of the service and insists they agree, with
+      the three deliberate exceptions named and checked for existence, so the list cannot rot again.
 
 - [ ] 5.1 Installment plan computation (from amount / from count) incl. continuing interest, plan
       document, due-date follow-ups and missed-installment detection
@@ -941,6 +1279,58 @@
 - [ ] 5.4 Ledger REST endpoints (totals, payment booking, statement)
 - [ ] 5.5 Documentation: user-facing description of the workflow, admin guide for court table, fee
       tables, reminder stages and form templates
+- [ ] 5.5b **Zum 01.10.2026 ändern sich die amtlichen Formulare.** Die neue Fassung ist zu
+      beschaffen, aufzunehmen und mit einer Feldzuordnung zu versehen — das ist der erste echte
+      Anwendungsfall von 5.5a, und er kommt, bevor die Werkzeuge von dort existieren.
+      Ausgeliefert ist heute der Stand 01.09.2024 (`EnforcementFormPackage.VERSION`), mit einem
+      Zuordnungsprofil für Anlage 1 (`zvfv/mapping/ANLAGE_1.txt`, 40 Felder).
+      *Zu tun:*
+      1. Die neuen ausfüllbaren PDFs beim BMJ holen und unter `src/main/resources/zvfv/` ablegen —
+         die alten **nicht** ersetzen, das Präfix im Dateinamen trägt den Stand ohnehin.
+      2. Das Feldverzeichnis der neuen Dateien erzeugen und gegen `zvfv/felder/` diffen. Das
+         entscheidet, ob die Zuordnung unverändert übernommen werden kann, ob einzelne Felder neu
+         zuzuordnen sind oder ob sie neu geschrieben werden muss.
+      3. `zvfv/mapping/ANLAGE_1.txt` für die neue Fassung fortschreiben — mit den Bezeichnungen aus
+         dem *neuen* Formular, denn sie sind der Beleg, dass die Zuordnung meint, was sie behauptet.
+      4. Ein Muster füllen und ansehen. Kein Test beweist, dass ein Feld bedeutet, was sein Tooltip
+         sagt.
+      5. Die alte Fassung bekommt ein Gültigkeitsende zum 30.09.2026, die neue beginnt am
+         01.10.2026.
+      *Eine Änderung am Code wird dabei unvermeidlich:* `EnforcementFormPackage` trägt heute **eine**
+      Konstante `VERSION` für das ganze Paket und liest das Profil unter `mapping/<ANLAGE>.txt`. Mit
+      zwei gleichzeitig ausgelieferten Fassungen muss die Fassung an den einzelnen Eintrag wandern
+      und das Profil den Stand im Namen führen. Das ist kein Randfall, sondern die Bauform, die 5.5a
+      ohnehin verlangt — dieser Termin erzwingt sie nur früher.
+      *Bis dahin ist nichts kaputt:* `EnforcementFormTemplateSelector` warnt, wenn am Stichtag keine
+      Fassung gilt, und liefert die jüngste. Eine Kanzlei kann also übergangsweise auf der alten
+      Fassung einreichen, statt gar nicht einreichen zu können.
+- [ ] 5.5a Write down how a changed official form is taken over, and build the two tools that make
+      it cheap. The forms of the ZVFV are replaced on their own schedule: the Verordnung is from
+      2022, the forms shipped here carry Stand 01.09.2024, so the annexes are amended faster than
+      the Verordnung — expect every one to two years.
+      *The procedure, to be written up for whoever does it next:* fetch the new fillable PDF from
+      the BMJ, add it as a version beside the old one and give the old one an end of validity (the
+      administration UI does this today); produce the field index of the new file and **diff it
+      against the old** — that says whether the mapping carries over unchanged, needs a few fields
+      re-assigned, or has to be written again; copy the profile; and finally fill a sample and look
+      at it, because no test proves that a field *means* what its tooltip says.
+      One safety net exists already: `Anlage1MappingTest` compares the label recorded in the profile
+      against the one the form carries, so a version that gives the same field name a different
+      meaning — the dangerous case, since everything keeps working and writes into the wrong box —
+      fails the build rather than a filing.
+      *Two tools are missing and are the point of this task.* A "Zuordnung von Fassung übernehmen"
+      in the administration UI, which copies a profile onto a new version and reports which fields
+      no longer exist; and the field-index comparison as a proper tool rather than the throwaway
+      program used to produce `zvfv/felder`. Together they turn a form change from an afternoon into
+      a quarter of an hour — and they are what lets a firm bridge the gap itself when a new form
+      takes effect before our next release.
+      *Delivery stays with the release* (PDFs in the EAR, profiles as migrations): the mapping is
+      expert work nobody should repeat per installation, profile and version travel together so they
+      cannot drift apart, and the migrations are idempotent so a firm's own adjustment survives. The
+      known weakness is the release cadence — the version selector warns rather than refuses, so a
+      firm can file on last month's form meanwhile. A separately downloadable, signed package would
+      remove that weakness and cost a distribution infrastructure; worth building only if the
+      cadence turns out to be a real problem in practice.
 - [ ] 5.6 End-to-end test: claim → reminder → Mahnbescheid → Vollstreckungsbescheid → bailiff order
       → PfÜB → payments → statement, verifying bookings, deadlines and documents
 - [ ] 5.7 Revisit the reference data decision for the two catalogues. The main claim catalogue and

@@ -244,6 +244,16 @@ endpoints in `org.jlawyer.io.rest.v8`, the current API version; swagger is gener
   (shipped), official forms (imported by the firm).
 - Rollback: the workflow objects can be removed without touching ledger data; bookings they created
   remain as ordinary ledger entries with a dangling origin reference, which is tolerated.
+- An applied migration is never edited again, not even its comments. Flyway recognises a migration
+  by the checksum of the whole file, so an added comment line fails validation on every installation
+  that already ran it ("Migration checksum mismatch"). Anything worth saying afterwards belongs
+  here, not in the file.
+- `V3_6_0_43__Anlage1FieldMapping.sql` has no effect and is kept only because it has run. It builds
+  the field mapping by selecting from `enforcement_form_templates`, and that table is empty at
+  deployment time: the templates are created later, when the firm imports the forms. The select
+  matches nothing, the migration inserts nothing and reports no error. The mapping profile is
+  shipped beside the PDFs instead, as `zvfv/mapping/ANLAGE_1.txt`, and written by the import - which
+  is also where a fresh installation gets it at the right moment.
 
 ## Client Scope
 
