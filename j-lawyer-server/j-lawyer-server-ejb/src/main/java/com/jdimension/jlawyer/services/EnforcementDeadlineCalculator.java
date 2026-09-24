@@ -660,612 +660,226 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.editors.files;
+package com.jdimension.jlawyer.services;
 
-import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.persistence.EnforcementDeadlineType;
 import com.jdimension.jlawyer.persistence.EnforcementMeasure;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureOutcome;
 import com.jdimension.jlawyer.persistence.EnforcementMeasureType;
-import com.jdimension.jlawyer.persistence.EnforcementTitle;
-import com.jdimension.jlawyer.pojo.EnforcementMeasureOption;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.pojo.EnforcementDeadline;
+import java.time.DayOfWeek;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import javax.swing.JOptionPane;
-import org.apache.log4j.Logger;
 
 /**
- * Starts one enforcement measure.
+ * The deadlines an enforcement measure produces.
  *
- * The kinds that cannot be taken are shown too, greyed out and with their reason. Leaving them out
- * would let a user wonder why the bailiff order is missing; saying "the title has not been served
- * yet" tells them what to fetch. The reason comes from the server, which is also the place that
- * refuses the measure if it is somehow asked for anyway.
+ * Enforcement is the one part of civil procedure in which nothing drives the matter but the firm.
+ * The bailiff owes no report by a given day; the enforcement court answers when it answers; the
+ * employer pays or does not. After every measure comes a silence, and that silence looks exactly
+ * like a finished matter. The dates computed here are what tells them apart.
+ *
+ * Two kinds of date arise, and they rest on quite different things.
+ *
+ * The first is the firm's own: after `follow_up_days` of the measure type somebody asks what has
+ * become of it. Six weeks for a bailiff, four for an attachment order, three for an enquiry - these
+ * are figures from experience and are kept as data, not here.
+ *
+ * The second is the law's: § 802d Abs. 1 ZPO lets the debtor refuse a further asset disclosure for
+ * two years after he gave one. That day is not a warning but an opportunity - by then he may have a
+ * new employer, a new account, an inheritance - and it lies so far ahead that no one remembers it.
+ * A title runs for thirty years (§ 197 Abs. 1 Nr. 3 BGB); in practice titles are not lost to
+ * limitation, they are lost to being forgotten.
+ *
+ * Counting starts from the day the measure went out, not from the day it was written. An order
+ * sitting on a desk for a week has not been with anyone, and asking after it would be asking too
+ * early.
  *
  * @author jens
  */
-public class EnforcementMeasureDialog extends javax.swing.JDialog {
+public class EnforcementDeadlineCalculator {
 
-    private static final Logger log = Logger.getLogger(EnforcementMeasureDialog.class.getName());
-
-    private String ledgerId = null;
-    private EnforcementMeasure measure = null;
-    private EnforcementMeasure edited = null;
-    private boolean saved = false;
-
-    private final List<EnforcementMeasureOption> options = new ArrayList<>();
-    private final List<EnforcementTitle> titles = new ArrayList<>();
+    /** § 802d Abs. 1 ZPO: two years in which no further asset disclosure can be demanded. */
+    public static final int ASSET_DISCLOSURE_BLOCK_YEARS = 2;
 
     /**
-     * Wraps a kind of measure so the list shows why it cannot be taken.
-     */
-    private static class OptionItem {
-
-        private final EnforcementMeasureOption option;
-
-        OptionItem(EnforcementMeasureOption option) {
-            this.option = option;
-        }
-
-        EnforcementMeasureOption option() {
-            return this.option;
-        }
-
-        @Override
-        public String toString() {
-            if (this.option == null || this.option.getMeasureType() == null) {
-                return "";
-            }
-            String name = this.option.getMeasureType().getName();
-            return this.option.isAvailable() ? name : name + "  —  nicht möglich";
-        }
-    }
-
-    /**
-     * Wraps a title so the list shows what it is and when it was issued.
-     */
-    private static class TitleItem {
-
-        private final EnforcementTitle title;
-
-        TitleItem(EnforcementTitle title) {
-            this.title = title;
-        }
-
-        EnforcementTitle title() {
-            return this.title;
-        }
-
-        @Override
-        public String toString() {
-            if (this.title == null) {
-                return "- ohne Titel -";
-            }
-            StringBuilder sb = new StringBuilder();
-            if (this.title.getTitleType() != null) {
-                sb.append(this.title.getTitleType()).append(", ");
-            }
-            sb.append(this.title.getIssuingBody() == null ? "" : this.title.getIssuingBody());
-            if (this.title.getFileNumber() != null && !this.title.getFileNumber().trim().isEmpty()) {
-                sb.append(" ").append(this.title.getFileNumber().trim());
-            }
-            return sb.toString().trim();
-        }
-    }
-
-    /**
-     * Creates the dialog.
+     * Decides whether a day is a public holiday.
      *
-     * @param parent the parent window
-     * @param modal whether the dialog is modal
+     * Kept as a parameter so the arithmetic can be tested without a holiday calendar, and so the
+     * region - which this class has no way of knowing - is supplied by the caller that does. It is
+     * deliberately not shared with the dunning calculator: the two compute different things, and
+     * tying them together would mean a change to one has to be argued for the other.
      */
-    public EnforcementMeasureDialog(java.awt.Dialog parent, boolean modal) {
-        super(parent, modal);
-        initComponents();
+    public interface HolidayTest {
 
-        this.cmbMeasureType.addActionListener(e -> updateHint());
-        this.cmbMeasureType.addActionListener(e -> updateDispatchHint());
-        this.txtDispatchedDate.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            @Override
-            public void insertUpdate(javax.swing.event.DocumentEvent e) {
-                updateDispatchHint();
-            }
+        /**
+         * @param day the day to judge
+         * @return whether it is a public holiday
+         */
+        boolean isHoliday(LocalDate day);
+    }
 
-            @Override
-            public void removeUpdate(javax.swing.event.DocumentEvent e) {
-                updateDispatchHint();
-            }
+    /** Weekends only; used where no holiday calendar is available. */
+    public static final HolidayTest NO_HOLIDAYS = day -> false;
 
-            @Override
-            public void changedUpdate(javax.swing.event.DocumentEvent e) {
-                updateDispatchHint();
-            }
-        });
-        this.txtOrderedDate.setText(
-                new java.text.SimpleDateFormat("dd.MM.yyyy").format(new Date()));
+    private final HolidayTest holidays;
+
+    public EnforcementDeadlineCalculator() {
+        this(NO_HOLIDAYS);
+    }
+
+    public EnforcementDeadlineCalculator(HolidayTest holidays) {
+        this.holidays = holidays == null ? NO_HOLIDAYS : holidays;
     }
 
     /**
-     * Says what the dispatch date will bring about, beside the field.
+     * Computes every deadline the measure currently produces.
      *
-     * The field decides whether the measure is watched at all, and nothing about the word
-     * "Absendung" says so. Somebody who leaves it empty has not decided against a follow-up; he has
-     * not been told that he was deciding.
-     */
-    private void updateDispatchHint() {
-        Object selected = this.cmbMeasureType.getSelectedItem();
-        int days = 0;
-        if (selected instanceof EnforcementMeasureOption
-                && ((EnforcementMeasureOption) selected).getMeasureType() != null) {
-            days = ((EnforcementMeasureOption) selected).getMeasureType().getFollowUpDays();
-        }
-        String entered = this.txtDispatchedDate.getText() == null
-                ? "" : this.txtDispatchedDate.getText().trim();
-
-        if (days <= 0) {
-            this.lblDispatchHint.setText("");
-        } else if (entered.isEmpty()) {
-            this.lblDispatchHint.setText("ohne Absendedatum keine Wiedervorlage zum Sachstand");
-        } else {
-            this.lblDispatchHint.setText("Wiedervorlage " + days + " Tage danach");
-        }
-    }
-
-    /**
-     * Loads what can be taken out of this ledger, and on which title.
+     * Only what has actually happened produces a date. A measure that has not gone out yet has
+     * nothing to ask after, and an asset disclosure that was not taken blocks nothing.
      *
-     * @param ledgerId id of the claim ledger
-     * @param titles the titles of the ledger
+     * @param measure the measure
+     * @return the deadlines, earliest first; never null
      */
-    public void setLedger(String ledgerId, List<EnforcementTitle> titles) {
-        this.ledgerId = ledgerId;
+    public List<EnforcementDeadline> computeDeadlines(EnforcementMeasure measure) {
 
-        this.cmbTitle.removeAllItems();
-        this.titles.clear();
-        this.cmbTitle.addItem(new TitleItem(null));
-        if (titles != null) {
-            for (EnforcementTitle title : titles) {
-                this.titles.add(title);
-                this.cmbTitle.addItem(new TitleItem(title));
+        List<EnforcementDeadline> deadlines = new ArrayList<>();
+        if (measure == null) {
+            return deadlines;
+        }
+
+        EnforcementDeadlineType[] order = {
+            EnforcementDeadlineType.REPORT, EnforcementDeadlineType.ASSET_DISCLOSURE_REPEAT};
+        for (EnforcementDeadlineType type : order) {
+            EnforcementDeadline deadline = type == EnforcementDeadlineType.REPORT
+                    ? report(measure) : assetDisclosureRepeat(measure);
+            if (deadline != null) {
+                deadlines.add(deadline);
             }
         }
-        // Auf dem jüngsten Titel wird am häufigsten vollstreckt; ohne Vorauswahl wäre der erste
-        // Griff immer derselbe Klick.
-        if (this.cmbTitle.getItemCount() > 1) {
-            this.cmbTitle.setSelectedIndex(1);
-        }
-
-        loadOptions();
-
-        // Erneut packen, nachdem die Listen gefuellt sind. initComponents() packt den Dialog mit
-        // leeren Auswahlfeldern; die Maßnahmearten sind lang ("Vollstreckungsauftrag an den
-        // Gerichtsvollzieher"), und was danach breiter wird, findet in einem Fenster, das fuer
-        // leere Felder bemessen wurde, keinen Platz mehr.
-        fitToContent();
+        return deadlines;
     }
 
     /**
-     * Sizes the dialog to what it now holds, and keeps it from being made smaller than that.
-     */
-    private void fitToContent() {
-        pack();
-        setMinimumSize(getSize());
-    }
-
-    /**
-     * Opens the dialog on a measure that exists, rather than on a new one.
+     * The day the firm asks what has become of the measure.
      *
-     * Everything the dialog shows can be got wrong at the moment a measure is begun - an addressee
-     * above all, which the official form insists on and which nobody has at hand while deciding to
-     * enforce. Without this, the only way back would be to remove the measure and start again,
-     * which would take its outcome and its recorded debtors with it.
+     * It exists only while the answer is still outstanding. Once the outcome is recorded there is
+     * nothing to ask - and a measure that is stayed is waiting on an agreement, not on an
+     * authority.
+     */
+    private EnforcementDeadline report(EnforcementMeasure measure) {
+
+        LocalDate dispatched = toLocalDate(measure.getDispatchedDate());
+        EnforcementMeasureType type = measure.getMeasureType();
+        if (dispatched == null || type == null || type.getFollowUpDays() <= 0) {
+            return null;
+        }
+        if (measure.getOutcome() != null && measure.getOutcome() != EnforcementMeasureOutcome.PENDING) {
+            return null;
+        }
+
+        return deadline(EnforcementDeadlineType.REPORT,
+                dispatched.plusDays(type.getFollowUpDays()),
+                "Die Maßnahme \"" + type.getName() + "\" ist am " + format(dispatched)
+                + " hinausgegangen und seither ohne Ergebnis. Erfahrungsgemäß ist sie nach "
+                + type.getFollowUpDays() + " Tagen entschieden; ist bis dahin nichts eingegangen, "
+                + "ist der Sachstand zu erfragen.");
+    }
+
+    /**
+     * The day a renewed asset disclosure may be demanded, § 802d Abs. 1 ZPO.
      *
-     * Call it after {@link #setLedger(java.lang.String, java.util.List)}.
+     * The period runs from the day the disclosure was given, which is the day the measure ended -
+     * whatever it yielded. A fruitless disclosure blocks a further one exactly as a fruitful one
+     * does; what it does not block is the second attempt two years later, and that is the point of
+     * the date.
      *
-     * @param existing the measure to change
+     * A withdrawn measure produces none: nothing was given, so nothing is blocked.
      */
-    public void setMeasure(EnforcementMeasure existing) {
-        if (existing == null) {
-            return;
-        }
-        this.edited = existing;
+    private EnforcementDeadline assetDisclosureRepeat(EnforcementMeasure measure) {
 
-        if (existing.getTitle() != null) {
-            for (int i = 0; i < this.cmbTitle.getItemCount(); i++) {
-                Object item = this.cmbTitle.getItemAt(i);
-                if (item instanceof TitleItem && ((TitleItem) item).title() != null
-                        && ((TitleItem) item).title().getId().equals(existing.getTitle().getId())) {
-                    this.cmbTitle.setSelectedIndex(i);
-                    break;
-                }
-            }
+        EnforcementMeasureType type = measure.getMeasureType();
+        if (type == null || !type.isAssetDisclosure()) {
+            return null;
         }
-        // Die Arten werden aus dem Titel heraus geladen; erst danach laesst sich die eigene
-        // wiederfinden.
-        if (existing.getMeasureType() != null) {
-            for (int i = 0; i < this.cmbMeasureType.getItemCount(); i++) {
-                Object item = this.cmbMeasureType.getItemAt(i);
-                if (item instanceof OptionItem
-                        && ((OptionItem) item).option().getMeasureType() != null
-                        && ((OptionItem) item).option().getMeasureType().getId()
-                                .equals(existing.getMeasureType().getId())) {
-                    this.cmbMeasureType.setSelectedIndex(i);
-                    break;
-                }
-            }
+        EnforcementMeasureOutcome outcome = measure.getOutcome();
+        if (outcome == null || !outcome.isClosed() || outcome == EnforcementMeasureOutcome.WITHDRAWN) {
+            return null;
         }
-        if (existing.getOrderedDate() != null) {
-            this.txtOrderedDate.setText(
-                    new java.text.SimpleDateFormat("dd.MM.yyyy").format(existing.getOrderedDate()));
+        LocalDate taken = toLocalDate(measure.getOutcomeDate());
+        if (taken == null) {
+            return null;
         }
-        this.txtDispatchedDate.setText(existing.getDispatchedDate() == null ? ""
-                : new java.text.SimpleDateFormat("dd.MM.yyyy").format(existing.getDispatchedDate()));
-        updateDispatchHint();
-        this.txtAddresseeDesignation.setText(
-                existing.getAddresseeDesignation() == null ? "" : existing.getAddresseeDesignation());
-        this.txtAddresseeAddress.setText(
-                existing.getAddresseeAddress() == null ? "" : existing.getAddresseeAddress());
-        this.txtNotes.setText(existing.getNotes() == null ? "" : existing.getNotes());
 
-        // Die Maßnahme laeuft bereits. Ein Hinderungsgrund, der ihr Beginnen heute verboete - eine
-        // andere Maßnahme derselben Art etwa -, darf das Nachtragen eines Empfaengers nicht
-        // verhindern; es waere ausgerechnet die Eingabe, die sie erst brauchbar macht.
-        this.cmdSave.setEnabled(true);
-        fitToContent();
+        return deadline(EnforcementDeadlineType.ASSET_DISCLOSURE_REPEAT,
+                taken.plusYears(ASSET_DISCLOSURE_BLOCK_YEARS),
+                "Der Schuldner hat am " + format(taken) + " die Vermögensauskunft abgegeben. "
+                + "Innerhalb von zwei Jahren muss er keine weitere abgeben (§ 802d Abs. 1 ZPO); "
+                + "ab diesem Tag wieder. Was sich in zwei Jahren geändert haben kann - ein neuer "
+                + "Arbeitgeber, ein neues Konto, eine Erbschaft -, macht den zweiten Versuch oft "
+                + "erfolgreicher als den ersten. Der Titel wirkt 30 Jahre (§ 197 Abs. 1 Nr. 3 BGB).");
     }
 
     /**
-     * Asks the server which kinds can be taken with the title now chosen.
+     * Builds one deadline and moves it off a day nobody works.
+     *
+     * @param type which deadline it is
+     * @param computed the day arithmetic alone arrives at
+     * @param description what the follow-up should say
+     * @return the deadline
      */
-    private void loadOptions() {
-        Object selected = this.cmbTitle.getSelectedItem();
-        EnforcementTitle title = selected instanceof TitleItem ? ((TitleItem) selected).title() : null;
+    private EnforcementDeadline deadline(EnforcementDeadlineType type, LocalDate computed,
+            String description) {
 
-        this.options.clear();
-        this.cmbMeasureType.removeAllItems();
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            List<EnforcementMeasureOption> loaded = locator.lookupEnforcementServiceRemote()
-                    .getMeasureOptions(this.ledgerId, title == null ? null : title.getId(), new Date());
-            if (loaded != null) {
-                this.options.addAll(loaded);
-            }
-        } catch (Exception ex) {
-            log.error("Unable to load the enforcement measure options of ledger " + this.ledgerId, ex);
-            JOptionPane.showMessageDialog(this,
-                    "Die möglichen Maßnahmen konnten nicht ermittelt werden: " + ex.getMessage(),
-                    "Fehler", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+        LocalDate effective = shiftToWorkingDay(computed);
 
-        for (EnforcementMeasureOption option : this.options) {
-            this.cmbMeasureType.addItem(new OptionItem(option));
-        }
-        // Die erste Art, die tatsächlich geht, ist die sinnvolle Vorauswahl - sonst begrüßt der
-        // Dialog mit einer Maßnahme, die er gleich wieder ablehnt.
-        for (int i = 0; i < this.options.size(); i++) {
-            if (this.options.get(i).isAvailable()) {
-                this.cmbMeasureType.setSelectedIndex(i);
-                break;
-            }
-        }
-        updateHint();
+        EnforcementDeadline deadline = new EnforcementDeadline();
+        deadline.setType(type);
+        deadline.setDeadline(toDate(effective));
+        deadline.setDescription(description);
+        deadline.setShiftedToWorkingDay(!effective.equals(computed));
+        return deadline;
     }
 
     /**
-     * Says what the chosen kind entails, or what stands in its way.
+     * Moves a date to the next working day if it falls on a Saturday, Sunday or public holiday.
+     *
+     * For the statutory date of § 802d ZPO this follows § 222 Abs. 2 ZPO; for the firm's own
+     * follow-up it follows common sense, since nobody reads a Sunday's list.
+     *
+     * @param day the computed day
+     * @return the day it is actually acted on
      */
-    private void updateHint() {
-        EnforcementMeasureOption option = selectedOption();
-        if (option == null) {
-            this.txtHint.setText("");
-            this.cmdSave.setEnabled(false);
-            return;
+    public LocalDate shiftToWorkingDay(LocalDate day) {
+        LocalDate d = day;
+        while (isNonWorkingDay(d)) {
+            d = d.plusDays(1);
         }
-        StringBuilder sb = new StringBuilder();
-        if (!option.isAvailable()) {
-            sb.append(option.getObstacle());
-        } else if (option.getMeasureType() != null
-                && option.getMeasureType().getDescription() != null) {
-            sb.append(option.getMeasureType().getDescription());
-        }
-        this.txtHint.setText(sb.toString());
-        this.txtHint.setCaretPosition(0);
-        this.cmdSave.setEnabled(option.isAvailable());
+        return d;
     }
 
-    private EnforcementMeasureOption selectedOption() {
-        Object selected = this.cmbMeasureType.getSelectedItem();
-        return selected instanceof OptionItem ? ((OptionItem) selected).option() : null;
+    private boolean isNonWorkingDay(LocalDate day) {
+        return day.getDayOfWeek() == DayOfWeek.SATURDAY
+                || day.getDayOfWeek() == DayOfWeek.SUNDAY
+                || this.holidays.isHoliday(day);
     }
 
-    /**
-     * @return the measure as entered, or null if the dialog was cancelled
-     */
-    public EnforcementMeasure getMeasure() {
-        return this.measure;
+    private static LocalDate toLocalDate(Date date) {
+        // not toInstant(): a date read back from the database through a @Temporal(DATE)
+        // mapping is a java.sql.Date, and java.sql.Date.toInstant() throws by contract
+        return date == null ? null
+                : Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
-    /**
-     * @return whether the user confirmed the dialog
-     */
-    public boolean isSaved() {
-        return this.saved;
+    private static Date toDate(LocalDate day) {
+        return Date.from(day.atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 
-    private String emptyToNull(String s) {
-        return s == null || s.trim().isEmpty() ? null : s.trim();
+    private static String format(LocalDate day) {
+        return String.format("%02d.%02d.%04d", day.getDayOfMonth(), day.getMonthValue(), day.getYear());
     }
-
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
-
-        lblTitle = new javax.swing.JLabel();
-        cmbTitle = new javax.swing.JComboBox();
-        lblMeasureType = new javax.swing.JLabel();
-        cmbMeasureType = new javax.swing.JComboBox();
-        lblOrderedDate = new javax.swing.JLabel();
-        txtOrderedDate = new javax.swing.JTextField();
-        lblDispatchedDate = new javax.swing.JLabel();
-        txtDispatchedDate = new javax.swing.JTextField();
-        lblDispatchHint = new javax.swing.JLabel();
-        lblAddressee = new javax.swing.JLabel();
-        txtAddresseeDesignation = new javax.swing.JTextField();
-        scrlAddresseeAddress = new javax.swing.JScrollPane();
-        txtAddresseeAddress = new javax.swing.JTextArea();
-        lblNotes = new javax.swing.JLabel();
-        scrlNotes = new javax.swing.JScrollPane();
-        txtNotes = new javax.swing.JTextArea();
-        scrlHint = new javax.swing.JScrollPane();
-        txtHint = new javax.swing.JTextArea();
-        cmdSave = new javax.swing.JButton();
-        cmdCancel = new javax.swing.JButton();
-
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Vollstreckungsmaßnahme");
-
-        lblTitle.setText("Titel:");
-        lblTitle.setToolTipText("Der Titel, auf dem vollstreckt wird (§ 750 Abs. 1 ZPO)");
-
-        cmbTitle.setModel(new javax.swing.DefaultComboBoxModel());
-        cmbTitle.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmbTitleActionPerformed(evt);
-            }
-        });
-
-        lblMeasureType.setText("Maßnahme:");
-
-        cmbMeasureType.setModel(new javax.swing.DefaultComboBoxModel());
-
-        lblOrderedDate.setText("Datum:");
-
-        txtOrderedDate.setText("");
-
-        lblDispatchedDate.setText("Absendung:");
-        lblDispatchedDate.setToolTipText("Tag, an dem die Maßnahme hinausgegangen ist - ab ihm läuft die Wiedervorlage zum Sachstand");
-
-        txtDispatchedDate.setText("");
-        txtDispatchedDate.setToolTipText("TT.MM.JJJJ - leer, solange die Maßnahme nicht hinausgegangen ist");
-
-        lblDispatchHint.setText("");
-
-        lblAddressee.setText("Empfänger:");
-        lblAddressee.setToolTipText("Gerichtsvollzieher, Vollstreckungsgericht, Drittschuldner - Bezeichnung und Anschrift, wie sie auf das Formular gehen");
-        lblAddressee.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-
-        txtAddresseeDesignation.setText("");
-
-        txtAddresseeAddress.setColumns(20);
-        txtAddresseeAddress.setRows(3);
-        scrlAddresseeAddress.setViewportView(txtAddresseeAddress);
-
-        lblNotes.setText("Notizen:");
-        lblNotes.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-
-        txtNotes.setColumns(20);
-        txtNotes.setRows(3);
-        scrlNotes.setViewportView(txtNotes);
-
-        txtHint.setEditable(false);
-        txtHint.setColumns(20);
-        txtHint.setLineWrap(true);
-        txtHint.setRows(3);
-        txtHint.setWrapStyleWord(true);
-        txtHint.setFocusable(false);
-        scrlHint.setViewportView(txtHint);
-
-        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
-        cmdSave.setText("Anlegen");
-        cmdSave.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSaveActionPerformed(evt);
-            }
-        });
-
-        cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
-        cmdCancel.setText("Abbrechen");
-        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdCancelActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(lblTitle)
-                            .addComponent(lblMeasureType)
-                            .addComponent(lblOrderedDate)
-                            .addComponent(lblDispatchedDate)
-                            .addComponent(lblAddressee)
-                            .addComponent(lblNotes))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cmbTitle, javax.swing.GroupLayout.DEFAULT_SIZE, 460, Short.MAX_VALUE)
-                            .addComponent(cmbMeasureType, javax.swing.GroupLayout.DEFAULT_SIZE, 460, Short.MAX_VALUE)
-                            .addComponent(txtOrderedDate, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(txtDispatchedDate, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(lblDispatchHint))
-                            .addComponent(txtAddresseeDesignation, javax.swing.GroupLayout.DEFAULT_SIZE, 460, Short.MAX_VALUE)
-                            .addComponent(scrlAddresseeAddress, javax.swing.GroupLayout.DEFAULT_SIZE, 460, Short.MAX_VALUE)
-                            .addComponent(scrlNotes, javax.swing.GroupLayout.DEFAULT_SIZE, 460, Short.MAX_VALUE)))
-                    .addComponent(scrlHint, javax.swing.GroupLayout.DEFAULT_SIZE, 540, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(cmdSave)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdCancel)))
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblTitle)
-                    .addComponent(cmbTitle, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblMeasureType)
-                    .addComponent(cmbMeasureType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(scrlHint, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblOrderedDate)
-                    .addComponent(txtOrderedDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblDispatchedDate)
-                    .addComponent(txtDispatchedDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblDispatchHint))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblAddressee)
-                    .addComponent(txtAddresseeDesignation, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(scrlAddresseeAddress, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblNotes)
-                    .addComponent(scrlNotes, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmdSave)
-                    .addComponent(cmdCancel))
-                .addContainerGap())
-        );
-
-        pack();
-    }// </editor-fold>//GEN-END:initComponents
-
-    private void cmbTitleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTitleActionPerformed
-        // Welche Maßnahmen möglich sind, hängt am Titel: ohne Klausel und Zustellung geht das
-        // meiste nicht. Der Wechsel muss die Liste deshalb neu beantworten lassen.
-        if (this.ledgerId != null) {
-            loadOptions();
-        }
-    }//GEN-LAST:event_cmbTitleActionPerformed
-
-    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
-        EnforcementMeasureOption option = selectedOption();
-        if (option == null || (!option.isAvailable() && this.edited == null)) {
-            JOptionPane.showMessageDialog(this,
-                    option == null ? "Es ist keine Maßnahme ausgewählt."
-                            : option.getObstacle(),
-                    "Maßnahme", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        Date ordered;
-        try {
-            ordered = new java.text.SimpleDateFormat("dd.MM.yyyy")
-                    .parse(this.txtOrderedDate.getText().trim());
-        } catch (java.text.ParseException ex) {
-            JOptionPane.showMessageDialog(this,
-                    "Das Datum konnte nicht gelesen werden. Erwartet wird TT.MM.JJJJ.",
-                    "Eingabe", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        // Die Absendung darf fehlen - eine Maßnahme wird beschlossen, bevor sie hinausgeht. Steht
-        // sie da, laeuft ab ihr die Wiedervorlage zum Sachstand.
-        Date dispatched;
-        try {
-            String entered = this.txtDispatchedDate.getText() == null
-                    ? "" : this.txtDispatchedDate.getText().trim();
-            dispatched = entered.isEmpty() ? null
-                    : new java.text.SimpleDateFormat("dd.MM.yyyy").parse(entered);
-        } catch (java.text.ParseException ex) {
-            JOptionPane.showMessageDialog(this,
-                    "Das Absendedatum konnte nicht gelesen werden. Erwartet wird TT.MM.JJJJ.",
-                    "Eingabe", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        EnforcementMeasure created = this.edited == null ? new EnforcementMeasure() : this.edited;
-        EnforcementMeasureType type = option.getMeasureType();
-        created.setMeasureType(type);
-        created.setOrderedDate(ordered);
-        created.setDispatchedDate(dispatched);
-        created.setAddresseeType(type == null ? null : type.getAddresseeType());
-        created.setAddresseeDesignation(emptyToNull(this.txtAddresseeDesignation.getText()));
-        created.setAddresseeAddress(emptyToNull(this.txtAddresseeAddress.getText()));
-        created.setNotes(emptyToNull(this.txtNotes.getText()));
-
-        Object selected = this.cmbTitle.getSelectedItem();
-        if (selected instanceof TitleItem) {
-            created.setTitle(((TitleItem) selected).title());
-        }
-
-        this.measure = created;
-        this.saved = true;
-        this.setVisible(false);
-        this.dispose();
-    }//GEN-LAST:event_cmdSaveActionPerformed
-
-    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
-        this.saved = false;
-        this.setVisible(false);
-        this.dispose();
-    }//GEN-LAST:event_cmdCancelActionPerformed
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox cmbMeasureType;
-    private javax.swing.JComboBox cmbTitle;
-    private javax.swing.JButton cmdCancel;
-    private javax.swing.JButton cmdSave;
-    private javax.swing.JLabel lblAddressee;
-    private javax.swing.JLabel lblMeasureType;
-    private javax.swing.JLabel lblNotes;
-    private javax.swing.JLabel lblDispatchHint;
-    private javax.swing.JLabel lblDispatchedDate;
-    private javax.swing.JLabel lblOrderedDate;
-    private javax.swing.JLabel lblTitle;
-    private javax.swing.JScrollPane scrlAddresseeAddress;
-    private javax.swing.JScrollPane scrlHint;
-    private javax.swing.JScrollPane scrlNotes;
-    private javax.swing.JTextArea txtAddresseeAddress;
-    private javax.swing.JTextField txtAddresseeDesignation;
-    private javax.swing.JTextArea txtHint;
-    private javax.swing.JTextArea txtNotes;
-    private javax.swing.JTextField txtDispatchedDate;
-    private javax.swing.JTextField txtOrderedDate;
-    // End of variables declaration//GEN-END:variables
 }

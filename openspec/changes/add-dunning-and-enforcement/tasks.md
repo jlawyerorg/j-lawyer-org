@@ -899,7 +899,73 @@
       Die Frage ist gestellt und bewusst offen: sie entscheidet über eine Gebühr, die dem Schuldner
       in Rechnung geht, und die Antwort gehört der Kanzlei. Bis dahin rechnet der Vorschlag mit der
       offenen Forderung; der Betrag steht im Kostendialog oben und ist dort jederzeit änderbar.
-- [ ] 4.7 Measure follow-ups incl. outcome-driven closing and § 802d ZPO re-attempt scheduling
+- [x] 4.7 Measure follow-ups incl. outcome-driven closing and § 802d ZPO re-attempt scheduling.
+      Enforcement is the one part of civil procedure in which nothing drives the matter but the
+      firm. No authority owes an answer by a given day, and the silence after a measure looks
+      exactly like a finished matter - which is how titles are lost: not to limitation (a title runs
+      thirty years, § 197 Abs. 1 Nr. 3 BGB) but to being forgotten.
+      `enforcement_measure_deadlines` (`V3_6_0_48`) is built like `dunning_case_deadlines` and for
+      the same reason: a measure carries several deadlines at once, and a corrected date has to find
+      its calendar entry again instead of adding a second one - hence the unique index over measure
+      and type. `EnforcementDeadlineService` mirrors `DunningDeadlineService` down to the rule that
+      an entry the user has already marked as done is reported rather than moved.
+      Two kinds of date, and they rest on different things. The first is the firm's own: after the
+      measure type's `follow_up_days` somebody asks what became of it. That column has been seeded
+      since 4.1 (14 for a warning, 42 for a bailiff, 30 for an attachment order, 21 for an enquiry)
+      and was read by nothing at all until now. Counting runs **from the dispatch date**, not from
+      the ordered date: an order that lay on a desk for a week has been with nobody, and asking
+      after it would be asking too early.
+      The second is the law's, and it is the point of the whole task. § 802d Abs. 1 ZPO bars a
+      further asset disclosure for two years; that day is not a warning but an opportunity, because
+      by then there may be a new employer, a new account, an inheritance. It lies beyond any
+      follow-up a human being sets by hand, and it is created **automatically** when the outcome of
+      an asset-disclosure measure is recorded. Which type that is hangs on a new flag
+      `asset_disclosure` and not on the name: a firm may rename its types, and a deadline two years
+      out must not vanish because somebody changed a word.
+      Recording the outcome closes the report deadline and its follow-up, with the outcome as the
+      reason. Nobody should have to close a follow-up in addition to recording what happened - a
+      deadline list with leftovers is overlooked within weeks, and it is then worth nothing at all.
+      Closing keeps the row and the reason: two years on, the reason is the only thing that explains
+      why a date that was being watched no longer is.
+      Synchronisation never fails the operation that triggered it. A user without a calendar that
+      takes follow-ups must still be able to record an enforcement step; what could not be done is
+      reported by `synchronizeDeadlines`, which the new tab offers as "Fristen neu berechnen".
+      The client gets the `Fristen & Dokumente` tab of design.md: the deadlines of all measures with
+      their state (offen, überfällig, erledigt with its reason) and the documents the measures
+      produced. For the documents `enforcement_measure_documents` records which paper came out of
+      which measure - the document itself stays a document of the case, but a case holds hundreds of
+      them and none says whether it is the application or the draft order, nor which of two bailiff
+      orders a year apart produced it.
+      Twelve tests, four mutations killed: counting from the ordered date instead of the dispatch
+      date, one year instead of two, a withdrawn disclosure blocking anyway, and dropping the shift
+      off Saturdays and Sundays.
+      *A defect the first use found, and the worst kind.* Not one row appeared in the new tab, and
+      no amount of clicking could have produced one: the report deadline counts from the dispatch
+      date, and **no screen in the client could enter a dispatch date at all**. The column has
+      existed since 4.1, `updateMeasure` copied it, and nothing ever filled it - four measures in
+      the test database, all with `dispatched_date` NULL. I chose the date the deadline hangs on
+      without checking that anybody can record it. `EnforcementMeasureDialog` now has the field, and
+      beside it a line that says what it brings about - "ohne Absendedatum keine Wiedervorlage zum
+      Sachstand" - because whoever leaves it empty has not decided against a follow-up, he has not
+      been told that he was deciding.
+      *The follow-ups now reach the open case.* They are created on the server, so the client never
+      saw them come into being and the case's `Kalender` tab showed them only after it had been
+      closed and opened again - which looks exactly like nothing having happened. The machinery
+      existed: `EventBroker` with `ReviewAddedEvent`/`ReviewUpdatedEvent`, and `ArchiveFilePanel`
+      already subscribed to the first of them. Two things were missing. `ArchiveFilePanel` did not
+      subscribe to `TYPE_REVIEWUPDATED` at all, so a follow-up that was closed or moved never
+      reached the case - a gap that hit `ArchivalDialog`, `EditOrDuplicateEventDialog` and
+      `CalendarPanel` just as much, and that is fixed for all of them: both events now run into one
+      insert-or-update by review id. And the enforcement had nothing to announce, because the
+      created entries never came back from the server; `getFollowUps(ledgerId)` returns them, and
+      `EnforcementFollowUpEvents` announces them after every operation that can touch one. Always as
+      a change, never as an addition: whether a follow-up is new or merely moved is something the
+      server knows and the caller does not, and announcing an addition twice would put the same date
+      in the case twice. Where an operation removes follow-ups, they are read **before** it and
+      announced afterwards, since afterwards there is no way to learn which they were.
+      *Open:* the deadlines are not in `EnforcementEndpointV8` yet, and there is still no master
+      data screen for measure types - `follow_up_days` and the new flag are editable only by SQL,
+      which matters more now that they do something.
 - [x] 4.8 `EnforcementServiceRemote` (English JavaDoc) and `EnforcementEndpointV8`. The measures of a
       ledger, what may be taken and what stands in the way of the rest, the itemisation the forms
       ask for, and the generation of those forms into the case — **which closes the open half of
@@ -948,8 +1014,8 @@
       caller's mistake would turn it into a server error, which is the distinction the status code
       exists for.
 - [~] 4.9 Desktop UI: the `Zwangsvollstreckung` tab of the ledger, with the measures and the
-      generation of their forms. **Third-party debtors wait for 4.5, the `Fristen & Dokumente` tab
-      for 4.7.**
+      generation of their forms. **The third-party debtors of a measure arrived with 4.5 and open
+      in a window of their own, and the `Fristen & Dokumente` tab arrived with 4.7.**
       `ClaimLedgerEnforcementPanel` lists the measures with their outcome and the form version used;
       `EnforcementMeasureDialog` starts one, and now also changes one. A measure could only be begun
       and removed before, and the addressee the official form insists on is exactly what nobody has

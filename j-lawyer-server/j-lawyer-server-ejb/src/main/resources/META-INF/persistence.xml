@@ -84,6 +84,8 @@
     <class>com.jdimension.jlawyer.persistence.EnforcementFormTemplate</class>
     <class>com.jdimension.jlawyer.persistence.EnforcementFormFieldMapping</class>
     <class>com.jdimension.jlawyer.persistence.EnforcementThirdPartyDebtor</class>
+    <class>com.jdimension.jlawyer.persistence.EnforcementMeasureDeadline</class>
+    <class>com.jdimension.jlawyer.persistence.EnforcementMeasureDocument</class>
     <class>com.jdimension.jlawyer.persistence.DunningStage</class>
     <class>com.jdimension.jlawyer.persistence.DunningStageEvent</class>
     <class>com.jdimension.jlawyer.persistence.DunningCase</class>

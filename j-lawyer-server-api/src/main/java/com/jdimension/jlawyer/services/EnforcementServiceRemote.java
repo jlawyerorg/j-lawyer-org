@@ -669,6 +669,9 @@ import com.jdimension.jlawyer.persistence.EnforcementMeasureOutcome;
 import com.jdimension.jlawyer.persistence.EnforcementMeasureType;
 import com.jdimension.jlawyer.pojo.AcroFormFieldInfo;
 import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureDeadline;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureDocument;
 import com.jdimension.jlawyer.persistence.EnforcementThirdPartyDebtor;
 import com.jdimension.jlawyer.pojo.EnforcementCostProposal;
 import com.jdimension.jlawyer.pojo.EnforcementItemisation;
@@ -1068,5 +1071,81 @@ public interface EnforcementServiceRemote {
     List<ClaimLedgerEntry> bookThirdPartyPayment(String debtorId, BigDecimal amount, Date paidOn,
             String description) throws Exception;
 
+
+    /**
+     * The deadlines the enforcement measures of a claim ledger currently carry.
+     *
+     * Enforcement is the one part of civil procedure in which nothing drives the matter but the
+     * firm: no authority owes an answer by a given day, and the silence after a measure looks
+     * exactly like a finished matter. These dates are what tells them apart - the day the firm asks
+     * again, and the day § 802d Abs. 1 ZPO allows a renewed asset disclosure.
+     *
+     * Closed deadlines are returned as well. What was watched, and why it stopped being watched, is
+     * part of the history of the matter.
+     *
+     * @param ledgerId the claim ledger
+     * @return the deadlines of all its measures, earliest first
+     * @throws Exception if the ledger does not exist or the user may not access its case
+     */
+    List<EnforcementMeasureDeadline> getDeadlines(String ledgerId) throws Exception;
+
+    /**
+     * Brings the deadlines of a measure in line with its current state.
+     *
+     * This happens by itself whenever a measure is created, changed or its outcome recorded; it is
+     * exposed because it is the only place that can report what could not be done - a follow-up for
+     * which the user has no calendar, or one that has already been marked as done and was therefore
+     * not moved.
+     *
+     * @param measureId the measure
+     * @return what was created, moved or closed, in words for the user; never null
+     * @throws Exception if the measure does not exist or the user may not access its case
+     */
+    List<String> synchronizeDeadlines(String measureId) throws Exception;
+
+    /**
+     * Closes one deadline and the follow-up watching it.
+     *
+     * The deadline is kept and marked, not deleted, and the reason is kept with it: two years later
+     * the reason is the only thing that explains why a date that was being watched no longer is.
+     *
+     * @param deadlineId the deadline
+     * @param reason why it no longer needs watching; a default is used when none is given
+     * @return the closed deadline
+     * @throws Exception if it does not exist or the user may not access its case
+     */
+    EnforcementMeasureDeadline closeDeadline(String deadlineId, String reason) throws Exception;
+
+    /**
+     * The documents the enforcement measures of a claim ledger produced.
+     *
+     * The documents themselves are documents of the case, where they belong and where everyone
+     * looks for them. What this adds is which measure each of them came out of - a case holds
+     * hundreds of documents, and none of them says whether it is the application or the draft
+     * order, nor which of two bailiff orders a year apart produced it.
+     *
+     * @param ledgerId the claim ledger
+     * @return the produced documents of all its measures, oldest first
+     * @throws Exception if the ledger does not exist or the user may not access its case
+     */
+    List<EnforcementMeasureDocument> getMeasureDocuments(String ledgerId) throws Exception;
+
+
+    /**
+     * The calendar entries that watch the enforcement deadlines of a claim ledger.
+     *
+     * They are created on the server - by a measure being dispatched, by an outcome being recorded,
+     * by an attachment order being served on a third-party debtor - and the client therefore never
+     * sees them come into being. It needs them to refresh the case's calendar without reloading the
+     * whole case, which is why they can be asked for as a set rather than one by one.
+     *
+     * Entries that have been deleted in the calendar are left out; the deadline itself remains
+     * recorded either way.
+     *
+     * @param ledgerId the claim ledger
+     * @return the follow-ups of its deadlines and of its third-party debtors' declarations
+     * @throws Exception if the ledger does not exist or the user may not access its case
+     */
+    List<ArchiveFileReviewsBean> getFollowUps(String ledgerId) throws Exception;
 
 }

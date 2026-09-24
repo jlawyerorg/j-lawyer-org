@@ -958,6 +958,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         this.pnlDunning.setLedger(savedLedger);
         this.pnlCourtDunning.setLedger(this.caseDto, savedLedger);
         this.pnlEnforcement.setLedger(this.caseDto, savedLedger);
+        this.pnlDeadlines.setLedger(this.caseDto, savedLedger);
 
         if (ledger == null) {
             this.setTitle("neues Forderungskonto erstellen");
@@ -1104,6 +1105,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         pnlDunning = new com.jdimension.jlawyer.client.editors.files.ClaimLedgerDunningPanel();
         pnlCourtDunning = new com.jdimension.jlawyer.client.editors.files.ClaimLedgerCourtDunningPanel();
         pnlEnforcement = new com.jdimension.jlawyer.client.editors.files.ClaimLedgerEnforcementPanel();
+        pnlDeadlines = new com.jdimension.jlawyer.client.editors.files.ClaimLedgerDeadlinesPanel();
         jPanel1 = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
@@ -1681,6 +1683,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         jTabbedPane1.addTab("Titel", pnlTitles);
 
         jTabbedPane1.addTab("Zwangsvollstreckung", pnlEnforcement);
+
+        jTabbedPane1.addTab("Fristen & Dokumente", pnlDeadlines);
 
         jTabbedPane1.addTab("Basiszinsen", jPanel6);
 
@@ -2380,6 +2384,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private javax.swing.JTabbedPane jTabbedPane1;
     private com.jdimension.jlawyer.client.editors.files.ClaimLedgerPartiesPanel pnlParties;
     private com.jdimension.jlawyer.client.editors.files.ClaimLedgerCourtDunningPanel pnlCourtDunning;
+    private com.jdimension.jlawyer.client.editors.files.ClaimLedgerDeadlinesPanel pnlDeadlines;
     private com.jdimension.jlawyer.client.editors.files.ClaimLedgerEnforcementPanel pnlEnforcement;
     private com.jdimension.jlawyer.client.editors.files.ClaimLedgerDunningPanel pnlDunning;
     private com.jdimension.jlawyer.client.editors.files.ClaimLedgerTitlesPanel pnlTitles;

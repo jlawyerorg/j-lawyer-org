@@ -766,6 +766,16 @@ public class EnforcementMeasureType implements Serializable {
     @Column(name = "follow_up_days")
     private int followUpDays = 0;
 
+    /**
+     * Whether this kind of measure is the taking of the asset disclosure.
+     *
+     * A flag and not a name, because the two-year bar of § 802d Abs. 1 ZPO hangs on it: a firm may
+     * rename its measure types and add its own, and a deadline two years out must not disappear
+     * because somebody changed a word.
+     */
+    @Column(name = "asset_disclosure")
+    private boolean assetDisclosure = false;
+
     @Column(name = "active")
     private boolean active = true;
 
@@ -907,6 +917,20 @@ public class EnforcementMeasureType implements Serializable {
      */
     public void setFollowUpDays(int followUpDays) {
         this.followUpDays = followUpDays;
+    }
+
+    /**
+     * @return whether this kind of measure is the taking of the asset disclosure (§ 802c ZPO)
+     */
+    public boolean isAssetDisclosure() {
+        return assetDisclosure;
+    }
+
+    /**
+     * @param assetDisclosure whether this kind of measure is the taking of the asset disclosure
+     */
+    public void setAssetDisclosure(boolean assetDisclosure) {
+        this.assetDisclosure = assetDisclosure;
     }
 
     /**

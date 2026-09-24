@@ -691,6 +691,10 @@ import com.jdimension.jlawyer.persistence.FeeScaleFacadeLocal;
 import com.jdimension.jlawyer.persistence.ClaimPartyRole;
 import com.jdimension.jlawyer.persistence.EnforcementFormRole;
 import com.jdimension.jlawyer.persistence.EnforcementMeasure;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureDeadline;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureDeadlineFacadeLocal;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureDocument;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureDocumentFacadeLocal;
 import com.jdimension.jlawyer.persistence.EnforcementMeasureFacadeLocal;
 import com.jdimension.jlawyer.persistence.EnforcementMeasureOutcome;
 import com.jdimension.jlawyer.persistence.EnforcementMeasureType;
@@ -721,6 +725,7 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Set;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -791,6 +796,12 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
     private FeeItemFacadeLocal feeItemsFacade;
     @EJB
     private ArchiveFileGroupsBeanFacadeLocal caseGroupsFacade;
+    @EJB
+    private EnforcementMeasureDeadlineFacadeLocal measureDeadlinesFacade;
+    @EJB
+    private EnforcementMeasureDocumentFacadeLocal measureDocumentsFacade;
+    @EJB
+    private EnforcementDeadlineServiceLocal deadlineService;
 
     @Resource
     private SessionContext context;
@@ -1148,6 +1159,7 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
 
         this.measuresFacade.create(measure);
         EnforcementMeasure stored = this.measuresFacade.find(measure.getId());
+        synchronizeDeadlinesQuietly(stored);
         withForms(stored.getMeasureType());
         return stored;
     }
@@ -1183,6 +1195,9 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
 
         this.measuresFacade.edit(stored);
         EnforcementMeasure stored2 = this.measuresFacade.find(measure.getId());
+        // Das Absendedatum traegt die Wiedervorlage. Wird es nachgetragen oder berichtigt, wandert
+        // die Frist mit, statt dass eine zweite entsteht.
+        synchronizeDeadlinesQuietly(stored2);
         withForms(stored2.getMeasureType());
         return stored2;
     }
@@ -1190,9 +1205,13 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public void removeMeasure(String measureId) throws Exception {
+        EnforcementMeasure measure = requireMeasure(measureId);
+        // Die Wiedervorlagen zuerst: mit der Maßnahme verschwinden nur die Fristsätze, der
+        // Kalendereintrag bliebe stehen und verwiese auf etwas, das es nicht mehr gibt.
+        this.deadlineService.closeAll(measure, "Die Maßnahme wurde entfernt.");
         // Die erzeugten Dokumente bleiben in der Akte. Sie sind bei einem Gerichtsvollzieher oder
         // einem Gericht gewesen, und den Vorgang zu löschen macht das nicht ungeschehen.
-        this.measuresFacade.remove(requireMeasure(measureId));
+        this.measuresFacade.remove(measure);
     }
 
     @Override
@@ -1208,8 +1227,92 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
         measure.setOutcomeDate(outcomeDate == null ? new Date() : outcomeDate);
         this.measuresFacade.edit(measure);
         EnforcementMeasure stored = this.measuresFacade.find(measureId);
+        // Wer das Ergebnis erfasst, soll nicht auch noch die Wiedervorlage schliessen muessen -
+        // sonst bleibt sie stehen, und eine Fristenliste mit Resten wird nach wenigen Wochen
+        // ueberlesen. Zugleich entsteht hier die Frist des § 802d ZPO, wenn die Auskunft abgegeben
+        // wurde: sie liegt zwei Jahre voraus und faellt sonst niemandem wieder ein.
+        synchronizeDeadlinesQuietly(stored);
         withForms(stored.getMeasureType());
         return stored;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<EnforcementMeasureDeadline> getDeadlines(String ledgerId) throws Exception {
+        return this.measureDeadlinesFacade.findByLedger(requireLedger(ledgerId));
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public List<String> synchronizeDeadlines(String measureId) throws Exception {
+        return this.deadlineService.synchronizeDeadlines(requireMeasure(measureId));
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public EnforcementMeasureDeadline closeDeadline(String deadlineId, String reason)
+            throws Exception {
+
+        EnforcementMeasureDeadline deadline = this.measureDeadlinesFacade.find(deadlineId);
+        if (deadline == null) {
+            throw new Exception("Die Frist existiert nicht mehr.");
+        }
+        if (deadline.getMeasure() != null) {
+            requireMeasure(deadline.getMeasure().getId());
+        }
+        // Ohne Grund geschlossen zu werden, ist das, was eine Frist unerklaerlich macht: zwei Jahre
+        // spaeter steht dort ein Datum, das niemand mehr ueberwacht, und niemand weiss warum.
+        this.deadlineService.close(deadline, reason == null || reason.trim().isEmpty()
+                ? "Von Hand erledigt." : reason.trim());
+        return this.measureDeadlinesFacade.find(deadlineId);
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<ArchiveFileReviewsBean> getFollowUps(String ledgerId) throws Exception {
+
+        ClaimLedger ledger = requireLedger(ledgerId);
+
+        // Die Reihenfolge ist die der Fristen; doppelt genannt wird keine, weil ein Kalendereintrag
+        // zu genau einer Frist gehoert - die Menge schuetzt trotzdem davor, falls sich das je
+        // aendert, denn zwei gleiche Zeilen in der Akte waeren schlimmer als eine fehlende.
+        List<ArchiveFileReviewsBean> followUps = new ArrayList<>();
+        Set<String> seen = new java.util.HashSet<>();
+
+        for (EnforcementMeasureDeadline deadline : this.measureDeadlinesFacade.findByLedger(ledger)) {
+            collectFollowUp(deadline.getReviewId(), seen, followUps);
+        }
+        for (EnforcementMeasure measure : this.measuresFacade.findByLedger(ledger)) {
+            for (EnforcementThirdPartyDebtor debtor : this.thirdPartyDebtorsFacade.findByMeasure(measure)) {
+                collectFollowUp(debtor.getReviewId(), seen, followUps);
+            }
+        }
+        return followUps;
+    }
+
+    /**
+     * Adds the calendar entry behind a deadline, where it still exists.
+     *
+     * A deadline can point at an entry somebody has deleted in the calendar. That is not an error
+     * worth failing over - the deadline itself is still recorded - and it must not cost the caller
+     * the entries that do exist.
+     */
+    private void collectFollowUp(String reviewId, Set<String> seen,
+            List<ArchiveFileReviewsBean> followUps) {
+
+        if (reviewId == null || !seen.add(reviewId)) {
+            return;
+        }
+        ArchiveFileReviewsBean review = this.archiveFileReviewsFacade.find(reviewId);
+        if (review != null) {
+            followUps.add(review);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<EnforcementMeasureDocument> getMeasureDocuments(String ledgerId) throws Exception {
+        return this.measureDocumentsFacade.findByLedger(requireLedger(ledgerId));
     }
 
     @Override
@@ -1283,7 +1386,13 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
 
         for (int i = 0; i < forms.size(); i++) {
             EnforcementFormTemplate template = templates.get(i);
-            documents.add(produce(measure, ledger, template, forms.get(i), values, flatten));
+            ArchiveFileDocumentsBean document = produce(measure, ledger, template, forms.get(i),
+                    values, flatten);
+            documents.add(document);
+            // Festgehalten wird, welches Papier aus welcher Maßnahme kam. Die Akte hat hunderte
+            // Dokumente, und keinem von ihnen sieht man an, ob es der Antrag oder der Entwurf des
+            // Beschlusses ist, noch welcher von zwei Auftraegen eines Jahres es hervorgebracht hat.
+            link(measure, document, forms.get(i), template);
             if (used == null) {
                 used = template;
             }
@@ -1296,6 +1405,51 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
         this.measuresFacade.edit(measure);
 
         return documents;
+    }
+
+    /**
+     * Records which document came out of which measure.
+     *
+     * A failure here must not cost the document: it is filled, it is in the case, and it may
+     * already be on its way out. The link is a convenience for finding it again, and losing the
+     * convenience is not a reason to lose the paper.
+     */
+    private void link(EnforcementMeasure measure, ArchiveFileDocumentsBean document,
+            EnforcementMeasureTypeForm form, EnforcementFormTemplate template) {
+
+        if (document == null) {
+            return;
+        }
+        try {
+            EnforcementMeasureDocument link = new EnforcementMeasureDocument();
+            link.setId(new StringGenerator().getID().toString());
+            link.setMeasure(measure);
+            link.setDocument(document);
+            link.setFormKey(form == null ? null : form.getFormKey());
+            link.setFormVersion(template == null ? null : template.getVersion());
+            link.setCreatedDate(new Date());
+            this.measureDocumentsFacade.create(link);
+        } catch (Exception ex) {
+            log.error("Unable to link document " + document.getId() + " to enforcement measure "
+                    + measure.getId(), ex);
+        }
+    }
+
+    /**
+     * Brings the deadlines of a measure in line with its state, without letting that fail the call.
+     *
+     * The measure is the point of the operation; its follow-up is not. A calendar that cannot be
+     * written - because the user has none that takes follow-ups - must not prevent an enforcement
+     * step from being recorded. What happened is reported through {@code synchronizeDeadlines},
+     * which the user can ask for at any time.
+     */
+    private void synchronizeDeadlinesQuietly(EnforcementMeasure measure) {
+        try {
+            this.deadlineService.synchronizeDeadlines(measure);
+        } catch (Exception ex) {
+            log.error("Unable to synchronize the deadlines of enforcement measure "
+                    + (measure == null ? null : measure.getId()), ex);
+        }
     }
 
     /**

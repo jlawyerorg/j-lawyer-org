@@ -935,6 +935,15 @@
             </Constraint>
           </Constraints>
         </Component>
+        <Component class="com.jdimension.jlawyer.client.editors.files.ClaimLedgerDeadlinesPanel" name="pnlDeadlines">
+          <Constraints>
+            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
+              <JTabbedPaneConstraints tabName="Fristen &amp; Dokumente">
+                <Property name="tabTitle" type="java.lang.String" value="Fristen &amp; Dokumente"/>
+              </JTabbedPaneConstraints>
+            </Constraint>
+          </Constraints>
+        </Component>
         <Container class="javax.swing.JPanel" name="jPanel6">
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
