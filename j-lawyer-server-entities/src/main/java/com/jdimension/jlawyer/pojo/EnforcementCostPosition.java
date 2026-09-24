@@ -660,149 +660,153 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.pojo;
 
-import com.jdimension.jlawyer.persistence.ClaimComponentType;
-import com.jdimension.jlawyer.persistence.FeeItem;
-import com.jdimension.jlawyer.persistence.FeeItemFacadeLocal;
-import com.jdimension.jlawyer.persistence.FeeScale;
-import com.jdimension.jlawyer.persistence.FeeScaleBracketFacadeLocal;
-import com.jdimension.jlawyer.persistence.FeeScaleFacadeLocal;
-import com.jdimension.jlawyer.pojo.DunningFeePosition;
-import com.jdimension.jlawyer.pojo.DunningFeeProposal;
-import com.jdimension.jlawyer.pojo.ProceduralCostBooking;
+import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import org.apache.log4j.Logger;
 
 /**
- * Proposes and books the fees of an application in the dunning procedure.
- *
- * The scales and items are looked up for the day whose law applies, not simply "the current ones":
- * § 60 RVG has a matter commissioned before a change billed under the earlier law, so a firm that
- * still runs older matters needs both and has to get the right one.
+ * One position of an enforcement cost proposal.
  *
  * @author jens
  */
-@Stateless
-public class DunningFeeService implements DunningFeeServiceLocal {
+public class EnforcementCostPosition implements Serializable {
 
-    private static final Logger log = Logger.getLogger(DunningFeeService.class.getName());
+    private static final long serialVersionUID = 1L;
 
-    static final String SCALE_LAWYER = "RVG_13";
-    static final String SCALE_COURT = "GKG_34";
-    static final String ITEM_MB_FEE = "RVG_VV_3305";
-    static final String ITEM_VB_FEE = "RVG_VV_3308";
-    static final String ITEM_INCREASE = "RVG_VV_1008";
-    static final String ITEM_EXPENSES = "RVG_VV_7002";
-    static final String ITEM_CREDIT = "RVG_VV_3305_ANRECHNUNG";
-    static final String ITEM_COURT_FEE = "GKG_KV_1100";
+    private String itemKey;
+    private String label;
+    private String legalBasis;
+    private BigDecimal rate;
+    private BigDecimal baseValue;
+    private BigDecimal amount;
+    private boolean taxable;
+    private boolean included = true;
+    private String note;
 
-    @EJB
-    private FeeScaleFacadeLocal feeScalesFacade;
-
-    @EJB
-    private FeeScaleBracketFacadeLocal feeScaleBracketsFacade;
-
-    @EJB
-    private FeeItemFacadeLocal feeItemsFacade;
-
-    @EJB
-    private ClaimLedgerServiceLocal claimLedgerService;
-
-    @Override
-    public DunningFeeProposal proposeFees(BigDecimal claimValue, boolean forEnforcementOrder,
-            int creditorCount, BigDecimal vatRate, BigDecimal businessFeeRate, Date at) throws Exception {
-
-        Date day = at == null ? new Date() : at;
-
-        DunningFeeCalculator.Request request = new DunningFeeCalculator.Request();
-        request.setClaimValue(claimValue);
-        request.setLawyerScale(scale(SCALE_LAWYER, day));
-        request.setCourtScale(scale(SCALE_COURT, day));
-        request.setProcedureFee(item(forEnforcementOrder ? ITEM_VB_FEE : ITEM_MB_FEE, day));
-        request.setIncreasePerCreditor(item(ITEM_INCREASE, day));
-        request.setExpensesFlatRate(item(ITEM_EXPENSES, day));
-        request.setCreditItem(item(ITEM_CREDIT, day));
-        request.setCourtFee(item(ITEM_COURT_FEE, day));
-        request.setCreditorCount(Math.max(1, creditorCount));
-        request.setVatRate(vatRate);
-        request.setBusinessFeeRate(businessFeeRate);
-        // the court fee arises once, with the Mahnbescheid; the application for the
-        // Vollstreckungsbescheid does not trigger Nr. 1100 KV GKG a second time
-        request.setIncludeCourtFee(!forEnforcementOrder);
-
-        if (request.getLawyerScale() == null) {
-            throw new Exception("Für den " + day + " ist keine Gebührentabelle nach § 13 RVG hinterlegt.");
-        }
-
-        return new DunningFeeCalculator().propose(request);
-    }
-
-    @Override
-    public List<String> bookFees(String ledgerId, DunningFeeProposal proposal, ClaimComponentType costType,
-            String originReference, Date bookingDate) throws Exception {
-
-        List<String> created = new ArrayList<>();
-        if (proposal == null) {
-            return created;
-        }
-        Date day = bookingDate == null ? new Date() : bookingDate;
-
-        List<DunningFeePosition> all = new ArrayList<>(proposal.getLawyerPositions());
-        all.addAll(proposal.getCourtPositions());
-
-        for (DunningFeePosition position : all) {
-            if (position.getAmount() == null || position.getAmount().signum() == 0) {
-                // a line of zero changes no balance and only lengthens the ledger
-                continue;
-            }
-            ProceduralCostBooking booking = new ProceduralCostBooking(ledgerId, position.getAmount(),
-                    position.getLabel());
-            booking.setCostType(costType == null ? ClaimComponentType.COST_NON_INTEREST_BEARING : costType);
-            booking.setBookingDate(day);
-            booking.setOriginReference(originReference);
-            booking.setComment(position.getLegalBasis()
-                    + (position.getRate() == null ? "" : ", Satz " + GermanNumbers.format(position.getRate()))
-                    + (position.getBaseValue() == null ? "" : ", Wert " + GermanNumbers.format(position.getBaseValue()))
-                    + (position.getNote() == null ? "" : "\n" + position.getNote()));
-            created.add(this.claimLedgerService.bookProceduralCost(booking).getId());
-        }
-        return created;
+    /**
+     * @return the key of the fee item this came from, where it came from one
+     */
+    public String getItemKey() {
+        return itemKey;
     }
 
     /**
-     * The scale in force on a day, with its brackets loaded.
-     *
-     * @param scaleKey which scale
-     * @param day the day whose law applies
-     * @return the scale, or null if none applies on that day
+     * @param itemKey the key of the fee item
      */
-    private FeeScale scale(String scaleKey, Date day) {
-        for (FeeScale scale : this.feeScalesFacade.findByKey(scaleKey)) {
-            if (scale.isValidAt(day)) {
-                scale.setBrackets(new ArrayList<>(this.feeScaleBracketsFacade.findByScale(scale)));
-                return scale;
-            }
-        }
-        return null;
+    public void setItemKey(String itemKey) {
+        this.itemKey = itemKey;
     }
 
     /**
-     * @param itemKey which item
-     * @param day the day whose law applies
-     * @return the item in force on that day, or null if none applies
+     * @return what the position is called
      */
-    private FeeItem item(String itemKey, Date day) {
-        for (FeeItem item : this.feeItemsFacade.findByKey(itemKey)) {
-            if (item.isValidAt(day)) {
-                return item;
-            }
-        }
-        return null;
+    public String getLabel() {
+        return label;
+    }
+
+    /**
+     * @param label what the position is called
+     */
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
+    /**
+     * @return the provision it rests on
+     */
+    public String getLegalBasis() {
+        return legalBasis;
+    }
+
+    /**
+     * @param legalBasis the provision it rests on
+     */
+    public void setLegalBasis(String legalBasis) {
+        this.legalBasis = legalBasis;
+    }
+
+    /**
+     * @return the fee rate, where the position is a fee on a value
+     */
+    public BigDecimal getRate() {
+        return rate;
+    }
+
+    /**
+     * @param rate the fee rate
+     */
+    public void setRate(BigDecimal rate) {
+        this.rate = rate;
+    }
+
+    /**
+     * @return the value the fee was computed from
+     */
+    public BigDecimal getBaseValue() {
+        return baseValue;
+    }
+
+    /**
+     * @param baseValue the value the fee is computed from
+     */
+    public void setBaseValue(BigDecimal baseValue) {
+        this.baseValue = baseValue;
+    }
+
+    /**
+     * @return the amount, or null where only the firm knows it
+     */
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    /**
+     * @param amount the amount
+     */
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
+    /**
+     * @return whether VAT applies to this position - a court fee or a bailiff's fee carries none
+     */
+    public boolean isTaxable() {
+        return taxable;
+    }
+
+    /**
+     * @param taxable whether VAT applies
+     */
+    public void setTaxable(boolean taxable) {
+        this.taxable = taxable;
+    }
+
+    /**
+     * @return whether the position is to be booked; a proposal may be declined position by position
+     */
+    public boolean isIncluded() {
+        return included;
+    }
+
+    /**
+     * @param included whether the position is to be booked
+     */
+    public void setIncluded(boolean included) {
+        this.included = included;
+    }
+
+    /**
+     * @return what the reader should know about this position
+     */
+    public String getNote() {
+        return note;
+    }
+
+    /**
+     * @param note what the reader should know
+     */
+    public void setNote(String note) {
+        this.note = note;
     }
 }

@@ -660,149 +660,212 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package org.jlawyer.test.server.ejb;
 
-import com.jdimension.jlawyer.persistence.ClaimComponentType;
 import com.jdimension.jlawyer.persistence.FeeItem;
-import com.jdimension.jlawyer.persistence.FeeItemFacadeLocal;
 import com.jdimension.jlawyer.persistence.FeeScale;
-import com.jdimension.jlawyer.persistence.FeeScaleBracketFacadeLocal;
-import com.jdimension.jlawyer.persistence.FeeScaleFacadeLocal;
-import com.jdimension.jlawyer.pojo.DunningFeePosition;
-import com.jdimension.jlawyer.pojo.DunningFeeProposal;
-import com.jdimension.jlawyer.pojo.ProceduralCostBooking;
+import com.jdimension.jlawyer.persistence.FeeScaleBracket;
+import com.jdimension.jlawyer.pojo.EnforcementCostPosition;
+import com.jdimension.jlawyer.pojo.EnforcementCostProposal;
+import com.jdimension.jlawyer.services.EnforcementCostCalculator;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import org.apache.log4j.Logger;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 /**
- * Proposes and books the fees of an application in the dunning procedure.
+ * What an enforcement measure costs.
  *
- * The scales and items are looked up for the day whose law applies, not simply "the current ones":
- * § 60 RVG has a matter commissioned before a change billed under the earlier law, so a firm that
- * still runs older matters needs both and has to get the right one.
+ * The figures come from the tables; what is tested here are the rules on top of them - that the
+ * flat rate of Nr. 7002 is taken from the lawyer's fees and not from the court's, that VAT is left
+ * out where the creditor deducts it, that a hearing fee arises only where there is a hearing, and
+ * that the bailiff's costs are never invented.
  *
  * @author jens
  */
-@Stateless
-public class DunningFeeService implements DunningFeeServiceLocal {
+public class EnforcementCostCalculatorTest {
 
-    private static final Logger log = Logger.getLogger(DunningFeeService.class.getName());
+    private final EnforcementCostCalculator calculator = new EnforcementCostCalculator();
 
-    static final String SCALE_LAWYER = "RVG_13";
-    static final String SCALE_COURT = "GKG_34";
-    static final String ITEM_MB_FEE = "RVG_VV_3305";
-    static final String ITEM_VB_FEE = "RVG_VV_3308";
-    static final String ITEM_INCREASE = "RVG_VV_1008";
-    static final String ITEM_EXPENSES = "RVG_VV_7002";
-    static final String ITEM_CREDIT = "RVG_VV_3305_ANRECHNUNG";
-    static final String ITEM_COURT_FEE = "GKG_KV_1100";
-
-    @EJB
-    private FeeScaleFacadeLocal feeScalesFacade;
-
-    @EJB
-    private FeeScaleBracketFacadeLocal feeScaleBracketsFacade;
-
-    @EJB
-    private FeeItemFacadeLocal feeItemsFacade;
-
-    @EJB
-    private ClaimLedgerServiceLocal claimLedgerService;
-
-    @Override
-    public DunningFeeProposal proposeFees(BigDecimal claimValue, boolean forEnforcementOrder,
-            int creditorCount, BigDecimal vatRate, BigDecimal businessFeeRate, Date at) throws Exception {
-
-        Date day = at == null ? new Date() : at;
-
-        DunningFeeCalculator.Request request = new DunningFeeCalculator.Request();
-        request.setClaimValue(claimValue);
-        request.setLawyerScale(scale(SCALE_LAWYER, day));
-        request.setCourtScale(scale(SCALE_COURT, day));
-        request.setProcedureFee(item(forEnforcementOrder ? ITEM_VB_FEE : ITEM_MB_FEE, day));
-        request.setIncreasePerCreditor(item(ITEM_INCREASE, day));
-        request.setExpensesFlatRate(item(ITEM_EXPENSES, day));
-        request.setCreditItem(item(ITEM_CREDIT, day));
-        request.setCourtFee(item(ITEM_COURT_FEE, day));
-        request.setCreditorCount(Math.max(1, creditorCount));
-        request.setVatRate(vatRate);
-        request.setBusinessFeeRate(businessFeeRate);
-        // the court fee arises once, with the Mahnbescheid; the application for the
-        // Vollstreckungsbescheid does not trigger Nr. 1100 KV GKG a second time
-        request.setIncludeCourtFee(!forEnforcementOrder);
-
-        if (request.getLawyerScale() == null) {
-            throw new Exception("Für den " + day + " ist keine Gebührentabelle nach § 13 RVG hinterlegt.");
+    private FeeScale rvg() {
+        FeeScale s = new FeeScale();
+        s.setBaseUpTo(new BigDecimal("500"));
+        s.setBaseAmount(new BigDecimal("51.50"));
+        s.setMinimumAmount(new BigDecimal("15.00"));
+        List<FeeScaleBracket> list = new ArrayList<>();
+        Object[][] brackets = {{"2000", "500", "41.50"}, {"10000", "1000", "59.50"},
+            {"25000", "3000", "55.00"}, {"50000", "5000", "86.00"}, {"200000", "15000", "99.50"},
+            {"500000", "30000", "140.00"}, {null, "50000", "175.00"}};
+        for (int i = 0; i < brackets.length; i++) {
+            FeeScaleBracket b = new FeeScaleBracket();
+            b.setUpTo(brackets[i][0] == null ? null : new BigDecimal((String) brackets[i][0]));
+            b.setStepAmount(new BigDecimal((String) brackets[i][1]));
+            b.setIncrementAmount(new BigDecimal((String) brackets[i][2]));
+            b.setSequenceNumber(i);
+            list.add(b);
         }
-
-        return new DunningFeeCalculator().propose(request);
+        s.setBrackets(list);
+        return s;
     }
 
-    @Override
-    public List<String> bookFees(String ledgerId, DunningFeeProposal proposal, ClaimComponentType costType,
-            String originReference, Date bookingDate) throws Exception {
-
-        List<String> created = new ArrayList<>();
-        if (proposal == null) {
-            return created;
-        }
-        Date day = bookingDate == null ? new Date() : bookingDate;
-
-        List<DunningFeePosition> all = new ArrayList<>(proposal.getLawyerPositions());
-        all.addAll(proposal.getCourtPositions());
-
-        for (DunningFeePosition position : all) {
-            if (position.getAmount() == null || position.getAmount().signum() == 0) {
-                // a line of zero changes no balance and only lengthens the ledger
-                continue;
-            }
-            ProceduralCostBooking booking = new ProceduralCostBooking(ledgerId, position.getAmount(),
-                    position.getLabel());
-            booking.setCostType(costType == null ? ClaimComponentType.COST_NON_INTEREST_BEARING : costType);
-            booking.setBookingDate(day);
-            booking.setOriginReference(originReference);
-            booking.setComment(position.getLegalBasis()
-                    + (position.getRate() == null ? "" : ", Satz " + GermanNumbers.format(position.getRate()))
-                    + (position.getBaseValue() == null ? "" : ", Wert " + GermanNumbers.format(position.getBaseValue()))
-                    + (position.getNote() == null ? "" : "\n" + position.getNote()));
-            created.add(this.claimLedgerService.bookProceduralCost(booking).getId());
-        }
-        return created;
+    private FeeItem item(String key, String name, String basis, String rate, String pct,
+            String min, String max) {
+        FeeItem i = new FeeItem();
+        i.setItemKey(key);
+        i.setName(name);
+        i.setLegalBasis(basis);
+        i.setRate(rate == null ? null : new BigDecimal(rate));
+        i.setPercentage(pct == null ? null : new BigDecimal(pct));
+        i.setMinimumAmount(min == null ? null : new BigDecimal(min));
+        i.setMaximumAmount(max == null ? null : new BigDecimal(max));
+        return i;
     }
 
-    /**
-     * The scale in force on a day, with its brackets loaded.
-     *
-     * @param scaleKey which scale
-     * @param day the day whose law applies
-     * @return the scale, or null if none applies on that day
-     */
-    private FeeScale scale(String scaleKey, Date day) {
-        for (FeeScale scale : this.feeScalesFacade.findByKey(scaleKey)) {
-            if (scale.isValidAt(day)) {
-                scale.setBrackets(new ArrayList<>(this.feeScaleBracketsFacade.findByScale(scale)));
-                return scale;
+    private EnforcementCostCalculator.Request request(String value) {
+        EnforcementCostCalculator.Request r = new EnforcementCostCalculator.Request();
+        r.setClaimValue(new BigDecimal(value));
+        r.setLawyerScale(rvg());
+        r.setProcedureFee(item("RVG_VV_3309", "Verfahrensgebühr Zwangsvollstreckung",
+                "Nr. 3309 VV RVG", "0.30", null, null, null));
+        r.setHearingFee(item("RVG_VV_3310", "Terminsgebühr Zwangsvollstreckung",
+                "Nr. 3310 VV RVG", "0.30", null, null, null));
+        r.setExpensesFlatRate(item("RVG_VV_7002", "Post- und Telekommunikationspauschale",
+                "Nr. 7002 VV RVG", null, "20.00", null, "20.00"));
+        r.setCourtFee(item("GKG_KV_2111", "Gerichtsgebühr Pfändungs- und Überweisungsbeschluss",
+                "Nr. 2111 KV GKG", null, null, "20.00", "20.00"));
+        r.setVatRate(new BigDecimal("19.00"));
+        return r;
+    }
+
+    private EnforcementCostPosition positionOf(EnforcementCostProposal proposal, String itemKey) {
+        for (EnforcementCostPosition position : proposal.getPositions()) {
+            if (itemKey.equals(position.getItemKey())) {
+                return position;
             }
         }
         return null;
     }
 
-    /**
-     * @param itemKey which item
-     * @param day the day whose law applies
-     * @return the item in force on that day, or null if none applies
-     */
-    private FeeItem item(String itemKey, Date day) {
-        for (FeeItem item : this.feeItemsFacade.findByKey(itemKey)) {
-            if (item.isValidAt(day)) {
-                return item;
-            }
-        }
-        return null;
+    @Test
+    public void theProcedureFeeIsThreeTenthsOfTheValueFee() {
+        // Nach der Tabelle: 51,50 bis 500, drei Stufen zu 41,50 bis 2.000, drei Stufen zu 59,50
+        // bis 5.000 - macht 354,50 als 1,0-Gebuehr. Davon 0,3 = 106,35.
+        EnforcementCostProposal proposal = calculator.propose(request("4200.00"));
+
+        EnforcementCostPosition fee = positionOf(proposal, "RVG_VV_3309");
+        assertNotNull(fee);
+        assertEquals(new BigDecimal("106.35"), fee.getAmount());
+        assertEquals(new BigDecimal("4200.00"), fee.getBaseValue());
+    }
+
+    @Test
+    public void thereIsNoHearingFeeWithoutAhearing() {
+        assertNull(positionOf(calculator.propose(request("4200.00")), "RVG_VV_3310"));
+
+        EnforcementCostCalculator.Request withHearing = request("4200.00");
+        withHearing.setHearing(true);
+
+        assertNotNull(positionOf(calculator.propose(withHearing), "RVG_VV_3310"));
+    }
+
+    @Test
+    public void theFlatRateIsTakenFromTheLawyersFeesAlone() {
+        // Bei 1.000 Euro: 1,0 = 93,00, davon 0,3 = 27,90. Die Pauschale ist 20 % davon = 5,58 -
+        // und nicht 20 % aus Gebuehr und Gerichtsgebuehr zusammen, denn die Gerichtsgebuehr ist
+        // keine Gebuehr des Anwalts und er hat dafuer keine Auslagen.
+        EnforcementCostCalculator.Request r = request("1000.00");
+        r.setCourtMeasure(true);
+
+        EnforcementCostPosition expenses =
+                positionOf(calculator.propose(r), "RVG_VV_7002");
+
+        assertEquals(new BigDecimal("5.58"), expenses.getAmount());
+    }
+
+    @Test
+    public void theFlatRateStopsAtItsCeiling() {
+        // 20 % waeren hier mehr als 20 Euro; Nr. 7002 deckelt.
+        EnforcementCostPosition expenses =
+                positionOf(calculator.propose(request("50000.00")), "RVG_VV_7002");
+
+        assertEquals(new BigDecimal("20.00"), expenses.getAmount());
+    }
+
+    @Test
+    public void vatIsLeftOutWhereTheCreditorDeductsIt() {
+        // Wer die Vorsteuer abzieht, hat die Steuer nicht getragen - sie vom Schuldner zu
+        // verlangen, verlangte einen Schaden, den es nicht gibt.
+        EnforcementCostCalculator.Request r = request("4200.00");
+        r.setVatDeductible(true);
+
+        EnforcementCostProposal proposal = calculator.propose(r);
+
+        assertNull(positionOf(proposal, "RVG_VV_7008"));
+        assertFalse(proposal.getNotes().isEmpty());
+    }
+
+    @Test
+    public void vatIsChargedOnTheFeesAndTheFlatRateOnly() {
+        // 19 % von (27,90 + 5,58) = 6,36. Die Gerichtsgebuehr traegt keine Umsatzsteuer.
+        EnforcementCostCalculator.Request r = request("1000.00");
+        r.setCourtMeasure(true);
+
+        EnforcementCostPosition vat = positionOf(calculator.propose(r), "RVG_VV_7008");
+
+        assertEquals(new BigDecimal("6.36"), vat.getAmount());
+    }
+
+    @Test
+    public void theCourtFeeArisesOnlyWhereAcourtActs() {
+        assertNull(positionOf(calculator.propose(request("4200.00")), "GKG_KV_2111"));
+
+        EnforcementCostCalculator.Request r = request("4200.00");
+        r.setCourtMeasure(true);
+
+        EnforcementCostPosition courtFee = positionOf(calculator.propose(r), "GKG_KV_2111");
+        assertEquals("ein Festbetrag ohne Wertbezug", new BigDecimal("20.00"), courtFee.getAmount());
+    }
+
+    @Test
+    public void theBailiffsCostsAreNeverInvented() {
+        // Sie haengen an seinen Amtshandlungen und am Wegegeld. Eine Zahl vorzuschlagen hiesse,
+        // sie zu erfinden - die Position steht ohne Betrag da, damit niemand sie vergisst.
+        EnforcementCostCalculator.Request r = request("4200.00");
+        r.setBailiffMeasure(true);
+
+        EnforcementCostProposal proposal = calculator.propose(r);
+        EnforcementCostPosition bailiff =
+                positionOf(proposal, EnforcementCostCalculator.ITEM_BAILIFF);
+
+        assertNotNull(bailiff);
+        assertNull(bailiff.getAmount());
+        assertFalse("eine Position ohne Betrag wird nicht mitgebucht", bailiff.isIncluded());
+        assertTrue(proposal.getNotes().toString().contains("Gerichtsvollziehers"));
+    }
+
+    @Test
+    public void theTotalCountsWhatIsToBeBooked() {
+        EnforcementCostCalculator.Request r = request("1000.00");
+        r.setCourtMeasure(true);
+        r.setBailiffMeasure(true);
+
+        EnforcementCostProposal proposal = calculator.propose(r);
+
+        // 27,90 + 5,58 + 6,36 + 20,00 - die Position ohne Betrag zaehlt nicht mit
+        assertEquals(new BigDecimal("59.84"), proposal.getTotal());
+    }
+
+    @Test
+    public void nothingIsProposedWithoutAtable() {
+        EnforcementCostCalculator.Request r = request("4200.00");
+        r.setLawyerScale(null);
+
+        assertTrue(calculator.propose(r).getPositions().isEmpty());
+        assertTrue(calculator.propose(null).getPositions().isEmpty());
     }
 }

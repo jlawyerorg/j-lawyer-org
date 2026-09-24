@@ -662,147 +662,225 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
-import com.jdimension.jlawyer.persistence.ClaimComponentType;
-import com.jdimension.jlawyer.persistence.FeeItem;
-import com.jdimension.jlawyer.persistence.FeeItemFacadeLocal;
-import com.jdimension.jlawyer.persistence.FeeScale;
-import com.jdimension.jlawyer.persistence.FeeScaleBracketFacadeLocal;
-import com.jdimension.jlawyer.persistence.FeeScaleFacadeLocal;
-import com.jdimension.jlawyer.pojo.DunningFeePosition;
-import com.jdimension.jlawyer.pojo.DunningFeeProposal;
-import com.jdimension.jlawyer.pojo.ProceduralCostBooking;
+import com.jdimension.jlawyer.persistence.ClaimComponent;
+import com.jdimension.jlawyer.pojo.EnforcementCostPosition;
+import com.jdimension.jlawyer.pojo.EnforcementCostProposal;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import org.apache.log4j.Logger;
 
 /**
- * Proposes and books the fees of an application in the dunning procedure.
+ * The costs of one measure as section IV of the official itemisation wants them.
  *
- * The scales and items are looked up for the day whose law applies, not simply "the current ones":
- * § 60 RVG has a matter commissioned before a change billed under the earlier law, so a firm that
- * still runs older matters needs both and has to get the right one.
+ * The form asks for the costs "für dieses Verfahren" in a block of its own: the procedural fee, the
+ * flat rate for post and telecommunications, further outlays, VAT and a sub-total. It offers two
+ * such blocks, because a measure can carry more than one set of fees.
+ *
+ * Which figures go in is decided here, and the rule matters: what has been booked wins over what is
+ * proposed. A proposal is a computation, a booking is a decision - and the firm may well have
+ * struck the VAT or entered the bailiff's invoice before the form goes out. A form that showed the
+ * computation while the ledger held something else would make two documents of one case disagree,
+ * and the debtor would be the one to notice.
  *
  * @author jens
  */
-@Stateless
-public class DunningFeeService implements DunningFeeServiceLocal {
+public class EnforcementCostView {
 
-    private static final Logger log = Logger.getLogger(DunningFeeService.class.getName());
+    /** Wie eine gebuchte Kostenposition ihre Vorschrift nennt. */
+    private static final String BASIS_PROCEDURE = "Nr. 3309";
+    private static final String BASIS_HEARING = "Nr. 3310";
+    private static final String BASIS_POSTAGE = "Nr. 7002";
+    private static final String BASIS_VAT = "Nr. 7008";
+    private static final String BASIS_COURT = "KV GKG";
 
-    static final String SCALE_LAWYER = "RVG_13";
-    static final String SCALE_COURT = "GKG_34";
-    static final String ITEM_MB_FEE = "RVG_VV_3305";
-    static final String ITEM_VB_FEE = "RVG_VV_3308";
-    static final String ITEM_INCREASE = "RVG_VV_1008";
-    static final String ITEM_EXPENSES = "RVG_VV_7002";
-    static final String ITEM_CREDIT = "RVG_VV_3305_ANRECHNUNG";
-    static final String ITEM_COURT_FEE = "GKG_KV_1100";
+    /**
+     * One block of the form.
+     */
+    public static class Block {
 
-    @EJB
-    private FeeScaleFacadeLocal feeScalesFacade;
+        private String designation;
+        private BigDecimal baseValue;
+        private BigDecimal procedureFee;
+        private BigDecimal postage;
+        private String otherExpensesDesignation;
+        private BigDecimal otherExpenses;
+        private BigDecimal vat;
 
-    @EJB
-    private FeeScaleBracketFacadeLocal feeScaleBracketsFacade;
-
-    @EJB
-    private FeeItemFacadeLocal feeItemsFacade;
-
-    @EJB
-    private ClaimLedgerServiceLocal claimLedgerService;
-
-    @Override
-    public DunningFeeProposal proposeFees(BigDecimal claimValue, boolean forEnforcementOrder,
-            int creditorCount, BigDecimal vatRate, BigDecimal businessFeeRate, Date at) throws Exception {
-
-        Date day = at == null ? new Date() : at;
-
-        DunningFeeCalculator.Request request = new DunningFeeCalculator.Request();
-        request.setClaimValue(claimValue);
-        request.setLawyerScale(scale(SCALE_LAWYER, day));
-        request.setCourtScale(scale(SCALE_COURT, day));
-        request.setProcedureFee(item(forEnforcementOrder ? ITEM_VB_FEE : ITEM_MB_FEE, day));
-        request.setIncreasePerCreditor(item(ITEM_INCREASE, day));
-        request.setExpensesFlatRate(item(ITEM_EXPENSES, day));
-        request.setCreditItem(item(ITEM_CREDIT, day));
-        request.setCourtFee(item(ITEM_COURT_FEE, day));
-        request.setCreditorCount(Math.max(1, creditorCount));
-        request.setVatRate(vatRate);
-        request.setBusinessFeeRate(businessFeeRate);
-        // the court fee arises once, with the Mahnbescheid; the application for the
-        // Vollstreckungsbescheid does not trigger Nr. 1100 KV GKG a second time
-        request.setIncludeCourtFee(!forEnforcementOrder);
-
-        if (request.getLawyerScale() == null) {
-            throw new Exception("Für den " + day + " ist keine Gebührentabelle nach § 13 RVG hinterlegt.");
+        /**
+         * @return what the block is about - the measure, or the hearing
+         */
+        public String getDesignation() {
+            return designation;
         }
 
-        return new DunningFeeCalculator().propose(request);
+        /**
+         * @return the value the fee was computed from
+         */
+        public BigDecimal getBaseValue() {
+            return baseValue;
+        }
+
+        /**
+         * @return the procedural fee
+         */
+        public BigDecimal getProcedureFee() {
+            return procedureFee;
+        }
+
+        /**
+         * @return the flat rate for post and telecommunications
+         */
+        public BigDecimal getPostage() {
+            return postage;
+        }
+
+        /**
+         * @return what the further outlays are
+         */
+        public String getOtherExpensesDesignation() {
+            return otherExpensesDesignation;
+        }
+
+        /**
+         * @return the further outlays
+         */
+        public BigDecimal getOtherExpenses() {
+            return otherExpenses;
+        }
+
+        /**
+         * @return the VAT
+         */
+        public BigDecimal getVat() {
+            return vat;
+        }
+
+        /**
+         * @return what the block comes to
+         */
+        public BigDecimal getTotal() {
+            BigDecimal total = BigDecimal.ZERO;
+            total = add(total, procedureFee);
+            total = add(total, postage);
+            total = add(total, otherExpenses);
+            total = add(total, vat);
+            return total;
+        }
+
+        /**
+         * @return whether the block holds anything at all
+         */
+        public boolean isEmpty() {
+            return getTotal().signum() == 0;
+        }
+
+        private BigDecimal add(BigDecimal total, BigDecimal value) {
+            return value == null ? total : total.add(value);
+        }
     }
 
-    @Override
-    public List<String> bookFees(String ledgerId, DunningFeeProposal proposal, ClaimComponentType costType,
-            String originReference, Date bookingDate) throws Exception {
+    /**
+     * The costs of a measure, taken from what was booked where anything was.
+     *
+     * @param proposal what the measure would cost, may be null
+     * @param booked the cost positions of this measure that are already in the ledger, may be empty
+     * @param measureName what the measure is called
+     * @return two blocks: the measure and, where a hearing fee arose, the hearing
+     */
+    public Block[] blocksOf(EnforcementCostProposal proposal, List<ClaimComponent> booked,
+            String measureName) {
 
-        List<String> created = new ArrayList<>();
-        if (proposal == null) {
-            return created;
+        Block measure = new Block();
+        Block hearing = new Block();
+        measure.designation = measureName;
+        hearing.designation = measureName == null ? "Termin" : measureName + " - Termin";
+
+        if (booked != null && !booked.isEmpty()) {
+            for (ClaimComponent component : booked) {
+                String basis = component.getComment() == null ? "" : component.getComment();
+                BigDecimal amount = component.getPrincipalAmount();
+                if (basis.contains(BASIS_PROCEDURE)) {
+                    measure.procedureFee = amount;
+                    measure.baseValue = baseValueOf(basis);
+                } else if (basis.contains(BASIS_HEARING)) {
+                    hearing.procedureFee = amount;
+                    hearing.baseValue = baseValueOf(basis);
+                } else if (basis.contains(BASIS_POSTAGE)) {
+                    measure.postage = amount;
+                } else if (basis.contains(BASIS_VAT)) {
+                    measure.vat = amount;
+                } else if (basis.contains(BASIS_COURT)) {
+                    // Die Gerichtsgebuehr ist keine Anwaltskosten-Position; sie steht im Formular
+                    // nicht in diesem Block und wird hier nicht mitgezaehlt.
+                    continue;
+                } else {
+                    measure.otherExpenses = add(measure.otherExpenses, amount);
+                    measure.otherExpensesDesignation = append(measure.otherExpensesDesignation,
+                            component.getName());
+                }
+            }
+            return new Block[]{measure, hearing};
         }
-        Date day = bookingDate == null ? new Date() : bookingDate;
 
-        List<DunningFeePosition> all = new ArrayList<>(proposal.getLawyerPositions());
-        all.addAll(proposal.getCourtPositions());
-
-        for (DunningFeePosition position : all) {
-            if (position.getAmount() == null || position.getAmount().signum() == 0) {
-                // a line of zero changes no balance and only lengthens the ledger
+        if (proposal == null) {
+            return new Block[]{measure, hearing};
+        }
+        for (EnforcementCostPosition position : proposal.getPositions()) {
+            if (!position.isIncluded() || position.getAmount() == null) {
                 continue;
             }
-            ProceduralCostBooking booking = new ProceduralCostBooking(ledgerId, position.getAmount(),
-                    position.getLabel());
-            booking.setCostType(costType == null ? ClaimComponentType.COST_NON_INTEREST_BEARING : costType);
-            booking.setBookingDate(day);
-            booking.setOriginReference(originReference);
-            booking.setComment(position.getLegalBasis()
-                    + (position.getRate() == null ? "" : ", Satz " + GermanNumbers.format(position.getRate()))
-                    + (position.getBaseValue() == null ? "" : ", Wert " + GermanNumbers.format(position.getBaseValue()))
-                    + (position.getNote() == null ? "" : "\n" + position.getNote()));
-            created.add(this.claimLedgerService.bookProceduralCost(booking).getId());
+            String basis = position.getLegalBasis() == null ? "" : position.getLegalBasis();
+            if (basis.contains(BASIS_PROCEDURE)) {
+                measure.procedureFee = position.getAmount();
+                measure.baseValue = position.getBaseValue();
+            } else if (basis.contains(BASIS_HEARING)) {
+                hearing.procedureFee = position.getAmount();
+                hearing.baseValue = position.getBaseValue();
+            } else if (basis.contains(BASIS_POSTAGE)) {
+                measure.postage = position.getAmount();
+            } else if (basis.contains(BASIS_VAT)) {
+                measure.vat = position.getAmount();
+            } else if (basis.contains(BASIS_COURT)) {
+                continue;
+            } else {
+                measure.otherExpenses = add(measure.otherExpenses, position.getAmount());
+                measure.otherExpensesDesignation = append(measure.otherExpensesDesignation,
+                        position.getLabel());
+            }
         }
-        return created;
+        return new Block[]{measure, hearing};
     }
 
     /**
-     * The scale in force on a day, with its brackets loaded.
-     *
-     * @param scaleKey which scale
-     * @param day the day whose law applies
-     * @return the scale, or null if none applies on that day
+     * The value a booking recorded its fee was computed from - it stands in the comment, because
+     * that is where the booking wrote it.
      */
-    private FeeScale scale(String scaleKey, Date day) {
-        for (FeeScale scale : this.feeScalesFacade.findByKey(scaleKey)) {
-            if (scale.isValidAt(day)) {
-                scale.setBrackets(new ArrayList<>(this.feeScaleBracketsFacade.findByScale(scale)));
-                return scale;
-            }
+    private BigDecimal baseValueOf(String comment) {
+        int at = comment.indexOf("Wert ");
+        if (at < 0) {
+            return null;
         }
-        return null;
+        String rest = comment.substring(at + 5).trim();
+        int end = 0;
+        while (end < rest.length() && (Character.isDigit(rest.charAt(end)) || rest.charAt(end) == '.'
+                || rest.charAt(end) == ',')) {
+            end++;
+        }
+        // Gelesen wird mit demselben Werkzeug, mit dem geschrieben wurde - auch die alten
+        // Kommentare mit Punkt als Dezimaltrenner stehen noch in der Datenbank.
+        return GermanNumbers.parse(rest.substring(0, end));
     }
 
-    /**
-     * @param itemKey which item
-     * @param day the day whose law applies
-     * @return the item in force on that day, or null if none applies
-     */
-    private FeeItem item(String itemKey, Date day) {
-        for (FeeItem item : this.feeItemsFacade.findByKey(itemKey)) {
-            if (item.isValidAt(day)) {
-                return item;
-            }
+    private BigDecimal add(BigDecimal total, BigDecimal value) {
+        if (value == null) {
+            return total;
         }
-        return null;
+        return total == null ? value : total.add(value);
+    }
+
+    private String append(String designation, String further) {
+        if (further == null || further.trim().isEmpty()) {
+            return designation;
+        }
+        return designation == null ? further.trim() : designation + ", " + further.trim();
     }
 }

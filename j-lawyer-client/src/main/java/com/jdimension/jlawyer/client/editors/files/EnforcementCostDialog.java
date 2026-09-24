@@ -660,149 +660,340 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.client.editors.files;
 
-import com.jdimension.jlawyer.persistence.ClaimComponentType;
-import com.jdimension.jlawyer.persistence.FeeItem;
-import com.jdimension.jlawyer.persistence.FeeItemFacadeLocal;
-import com.jdimension.jlawyer.persistence.FeeScale;
-import com.jdimension.jlawyer.persistence.FeeScaleBracketFacadeLocal;
-import com.jdimension.jlawyer.persistence.FeeScaleFacadeLocal;
-import com.jdimension.jlawyer.pojo.DunningFeePosition;
-import com.jdimension.jlawyer.pojo.DunningFeeProposal;
-import com.jdimension.jlawyer.pojo.ProceduralCostBooking;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
+import com.jdimension.jlawyer.persistence.EnforcementMeasure;
+import com.jdimension.jlawyer.pojo.EnforcementCostPosition;
+import com.jdimension.jlawyer.pojo.EnforcementCostProposal;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
+import java.util.Locale;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
 
 /**
- * Proposes and books the fees of an application in the dunning procedure.
+ * The costs an enforcement measure caused, before they are booked.
  *
- * The scales and items are looked up for the day whose law applies, not simply "the current ones":
- * § 60 RVG has a matter commissioned before a change billed under the earlier law, so a firm that
- * still runs older matters needs both and has to get the right one.
+ * It shows a proposal and not a bill. Every amount can be changed and every position can be left
+ * out, because the law says which fees arise but not what a firm charges its debtor; and the
+ * bailiff's own costs arrive with his invoice, weeks after the order went out, so his position is
+ * shown without an amount and is not booked until somebody enters one.
  *
  * @author jens
  */
-@Stateless
-public class DunningFeeService implements DunningFeeServiceLocal {
+public class EnforcementCostDialog extends javax.swing.JDialog {
 
-    private static final Logger log = Logger.getLogger(DunningFeeService.class.getName());
+    private static final Logger log = Logger.getLogger(EnforcementCostDialog.class.getName());
 
-    static final String SCALE_LAWYER = "RVG_13";
-    static final String SCALE_COURT = "GKG_34";
-    static final String ITEM_MB_FEE = "RVG_VV_3305";
-    static final String ITEM_VB_FEE = "RVG_VV_3308";
-    static final String ITEM_INCREASE = "RVG_VV_1008";
-    static final String ITEM_EXPENSES = "RVG_VV_7002";
-    static final String ITEM_CREDIT = "RVG_VV_3305_ANRECHNUNG";
-    static final String ITEM_COURT_FEE = "GKG_KV_1100";
+    private static final int COL_INCLUDED = 0;
+    private static final int COL_LABEL = 1;
+    private static final int COL_BASIS = 2;
+    private static final int COL_AMOUNT = 3;
 
-    @EJB
-    private FeeScaleFacadeLocal feeScalesFacade;
+    private final DecimalFormat currency =
+            new DecimalFormat("#,##0.00", new DecimalFormatSymbols(Locale.GERMANY));
 
-    @EJB
-    private FeeScaleBracketFacadeLocal feeScaleBracketsFacade;
+    private EnforcementMeasure measure = null;
+    private EnforcementCostProposal proposal = null;
+    private final List<ClaimLedgerParty> debtors = new ArrayList<>();
+    private boolean booked = false;
 
-    @EJB
-    private FeeItemFacadeLocal feeItemsFacade;
-
-    @EJB
-    private ClaimLedgerServiceLocal claimLedgerService;
-
-    @Override
-    public DunningFeeProposal proposeFees(BigDecimal claimValue, boolean forEnforcementOrder,
-            int creditorCount, BigDecimal vatRate, BigDecimal businessFeeRate, Date at) throws Exception {
-
-        Date day = at == null ? new Date() : at;
-
-        DunningFeeCalculator.Request request = new DunningFeeCalculator.Request();
-        request.setClaimValue(claimValue);
-        request.setLawyerScale(scale(SCALE_LAWYER, day));
-        request.setCourtScale(scale(SCALE_COURT, day));
-        request.setProcedureFee(item(forEnforcementOrder ? ITEM_VB_FEE : ITEM_MB_FEE, day));
-        request.setIncreasePerCreditor(item(ITEM_INCREASE, day));
-        request.setExpensesFlatRate(item(ITEM_EXPENSES, day));
-        request.setCreditItem(item(ITEM_CREDIT, day));
-        request.setCourtFee(item(ITEM_COURT_FEE, day));
-        request.setCreditorCount(Math.max(1, creditorCount));
-        request.setVatRate(vatRate);
-        request.setBusinessFeeRate(businessFeeRate);
-        // the court fee arises once, with the Mahnbescheid; the application for the
-        // Vollstreckungsbescheid does not trigger Nr. 1100 KV GKG a second time
-        request.setIncludeCourtFee(!forEnforcementOrder);
-
-        if (request.getLawyerScale() == null) {
-            throw new Exception("Für den " + day + " ist keine Gebührentabelle nach § 13 RVG hinterlegt.");
-        }
-
-        return new DunningFeeCalculator().propose(request);
-    }
-
-    @Override
-    public List<String> bookFees(String ledgerId, DunningFeeProposal proposal, ClaimComponentType costType,
-            String originReference, Date bookingDate) throws Exception {
-
-        List<String> created = new ArrayList<>();
-        if (proposal == null) {
-            return created;
-        }
-        Date day = bookingDate == null ? new Date() : bookingDate;
-
-        List<DunningFeePosition> all = new ArrayList<>(proposal.getLawyerPositions());
-        all.addAll(proposal.getCourtPositions());
-
-        for (DunningFeePosition position : all) {
-            if (position.getAmount() == null || position.getAmount().signum() == 0) {
-                // a line of zero changes no balance and only lengthens the ledger
-                continue;
-            }
-            ProceduralCostBooking booking = new ProceduralCostBooking(ledgerId, position.getAmount(),
-                    position.getLabel());
-            booking.setCostType(costType == null ? ClaimComponentType.COST_NON_INTEREST_BEARING : costType);
-            booking.setBookingDate(day);
-            booking.setOriginReference(originReference);
-            booking.setComment(position.getLegalBasis()
-                    + (position.getRate() == null ? "" : ", Satz " + GermanNumbers.format(position.getRate()))
-                    + (position.getBaseValue() == null ? "" : ", Wert " + GermanNumbers.format(position.getBaseValue()))
-                    + (position.getNote() == null ? "" : "\n" + position.getNote()));
-            created.add(this.claimLedgerService.bookProceduralCost(booking).getId());
-        }
-        return created;
+    /**
+     * @param parent the dialog it belongs to
+     * @param modal whether it blocks
+     */
+    public EnforcementCostDialog(java.awt.Dialog parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
     }
 
     /**
-     * The scale in force on a day, with its brackets loaded.
+     * Shows a proposal for a measure.
      *
-     * @param scaleKey which scale
-     * @param day the day whose law applies
-     * @return the scale, or null if none applies on that day
+     * @param measure the measure the costs belong to
+     * @param proposal what was proposed
+     * @param debtors the debtors of the ledger, for the case that one of them owes them alone
      */
-    private FeeScale scale(String scaleKey, Date day) {
-        for (FeeScale scale : this.feeScalesFacade.findByKey(scaleKey)) {
-            if (scale.isValidAt(day)) {
-                scale.setBrackets(new ArrayList<>(this.feeScaleBracketsFacade.findByScale(scale)));
-                return scale;
+    public void setProposal(EnforcementMeasure measure, EnforcementCostProposal proposal,
+            List<ClaimLedgerParty> debtors) {
+
+        this.measure = measure;
+        this.proposal = proposal;
+        this.debtors.clear();
+        if (debtors != null) {
+            this.debtors.addAll(debtors);
+        }
+
+        // Eine Textflaeche und kein HTML-Label: das Label bemisst sich an seinem Text und schnitt
+        // ihn ab, sobald die Schrift groesser war als gedacht. Was hier nicht hinpasst, laesst sich
+        // wenigstens rollen.
+        this.txtHeader.setText((measure == null || measure.getMeasureType() == null
+                ? "Maßnahme" : measure.getMeasureType().getName())
+                + "\nGegenstandswert: " + (proposal == null || proposal.getClaimValue() == null
+                        ? "-" : currency.format(proposal.getClaimValue()) + " EUR")
+                + "\nDiese Kosten sind nach § 788 Abs. 1 ZPO mit der Hauptforderung beizutreiben; "
+                + "sie werden deshalb ins Forderungskonto gebucht.");
+        this.txtHeader.setCaretPosition(0);
+
+        DefaultTableModel model = new DefaultTableModel(
+                new String[]{"ansetzen", "Position", "Rechtsgrundlage", "Betrag"}, 0) {
+            @Override
+            public Class<?> getColumnClass(int column) {
+                return column == COL_INCLUDED ? Boolean.class : String.class;
+            }
+
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                // Betrag und Ansatz gehören der Kanzlei; Bezeichnung und Vorschrift stehen im Gesetz
+                return column == COL_INCLUDED || column == COL_AMOUNT;
+            }
+        };
+        if (proposal != null) {
+            for (EnforcementCostPosition position : proposal.getPositions()) {
+                model.addRow(new Object[]{
+                    position.isIncluded(),
+                    position.getLabel(),
+                    position.getLegalBasis() == null ? "" : position.getLegalBasis(),
+                    position.getAmount() == null ? "" : currency.format(position.getAmount())});
             }
         }
-        return null;
+        model.addTableModelListener(e -> updateTotal());
+        this.tblPositions.setModel(model);
+        this.tblPositions.getColumnModel().getColumn(COL_INCLUDED).setMaxWidth(70);
+
+        this.txtNotes.setText(proposal == null ? "" : String.join("\n", proposal.getNotes()));
+        this.txtNotes.setCaretPosition(0);
+
+        this.cmbDebtor.removeAllItems();
+        this.cmbDebtor.addItem("alle gesamtschuldnerisch");
+        for (ClaimLedgerParty debtor : this.debtors) {
+            this.cmbDebtor.addItem(debtor.getEffectiveDesignation());
+        }
+        updateTotal();
+        pack();
+        setMinimumSize(getSize());
     }
 
     /**
-     * @param itemKey which item
-     * @param day the day whose law applies
-     * @return the item in force on that day, or null if none applies
+     * @return whether the costs were booked
      */
-    private FeeItem item(String itemKey, Date day) {
-        for (FeeItem item : this.feeItemsFacade.findByKey(itemKey)) {
-            if (item.isValidAt(day)) {
-                return item;
+    public boolean isBooked() {
+        return booked;
+    }
+
+    /**
+     * What the user made of the proposal.
+     */
+    private EnforcementCostProposal edited() {
+        DefaultTableModel model = (DefaultTableModel) this.tblPositions.getModel();
+        for (int i = 0; i < model.getRowCount() && i < this.proposal.getPositions().size(); i++) {
+            EnforcementCostPosition position = this.proposal.getPositions().get(i);
+            position.setIncluded(Boolean.TRUE.equals(model.getValueAt(i, COL_INCLUDED)));
+            position.setAmount(amountAt(model, i));
+        }
+        return this.proposal;
+    }
+
+    private BigDecimal amountAt(DefaultTableModel model, int row) {
+        Object value = model.getValueAt(row, COL_AMOUNT);
+        if (value == null || value.toString().trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return new BigDecimal(currency.parse(value.toString().trim()).toString())
+                    .setScale(2, java.math.RoundingMode.HALF_UP);
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private void updateTotal() {
+        DefaultTableModel model = (DefaultTableModel) this.tblPositions.getModel();
+        BigDecimal total = BigDecimal.ZERO;
+        for (int i = 0; i < model.getRowCount(); i++) {
+            BigDecimal amount = amountAt(model, i);
+            if (Boolean.TRUE.equals(model.getValueAt(i, COL_INCLUDED)) && amount != null) {
+                total = total.add(amount);
             }
         }
-        return null;
+        this.lblTotal.setText("Summe: " + currency.format(total) + " EUR");
     }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        scrlHeader = new javax.swing.JScrollPane();
+        txtHeader = new javax.swing.JTextArea();
+        scrlPositions = new javax.swing.JScrollPane();
+        tblPositions = new javax.swing.JTable();
+        scrlNotes = new javax.swing.JScrollPane();
+        txtNotes = new javax.swing.JTextArea();
+        lblDebtor = new javax.swing.JLabel();
+        cmbDebtor = new javax.swing.JComboBox<>();
+        chkAdvanced = new javax.swing.JCheckBox();
+        lblTotal = new javax.swing.JLabel();
+        cmdBook = new javax.swing.JButton();
+        cmdCancel = new javax.swing.JButton();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Kosten der Zwangsvollstreckung");
+
+        txtHeader.setEditable(false);
+        txtHeader.setColumns(20);
+        txtHeader.setLineWrap(true);
+        txtHeader.setRows(3);
+        txtHeader.setWrapStyleWord(true);
+        txtHeader.setFocusable(false);
+        scrlHeader.setViewportView(txtHeader);
+
+        tblPositions.setModel(new javax.swing.table.DefaultTableModel());
+        scrlPositions.setViewportView(tblPositions);
+
+        txtNotes.setEditable(false);
+        txtNotes.setColumns(20);
+        txtNotes.setLineWrap(true);
+        txtNotes.setRows(2);
+        txtNotes.setWrapStyleWord(true);
+        txtNotes.setFocusable(false);
+        scrlNotes.setViewportView(txtNotes);
+
+        lblDebtor.setText("Schuldner:");
+        lblDebtor.setToolTipText("Wer die Kosten schuldet - alle gesamtschuldnerisch oder einer allein");
+
+        cmbDebtor.setModel(new javax.swing.DefaultComboBoxModel<>());
+
+        chkAdvanced.setText("von der Kanzlei verauslagt");
+        chkAdvanced.setToolTipText("Legt zusätzlich eine Auslage im Aktenkonto an - das Geld ist aus der Kanzleikasse geflossen");
+
+        lblTotal.setText("");
+
+        cmdBook.setText("Buchen");
+        cmdBook.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdBookActionPerformed(evt);
+            }
+        });
+
+        cmdCancel.setText("Abbrechen");
+        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCancelActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(scrlHeader, javax.swing.GroupLayout.DEFAULT_SIZE, 640, Short.MAX_VALUE)
+                    .addComponent(scrlPositions, javax.swing.GroupLayout.DEFAULT_SIZE, 640, Short.MAX_VALUE)
+                    .addComponent(scrlNotes, javax.swing.GroupLayout.DEFAULT_SIZE, 640, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblDebtor)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmbDebtor, javax.swing.GroupLayout.PREFERRED_SIZE, 260, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(chkAdvanced)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(lblTotal))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdBook)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdCancel)))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(scrlHeader, javax.swing.GroupLayout.PREFERRED_SIZE, 72, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(scrlPositions, javax.swing.GroupLayout.DEFAULT_SIZE, 220, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(scrlNotes, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblDebtor)
+                    .addComponent(cmbDebtor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(chkAdvanced)
+                    .addComponent(lblTotal))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdBook)
+                    .addComponent(cmdCancel))
+                .addContainerGap())
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void cmdBookActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdBookActionPerformed
+        if (this.measure == null || this.proposal == null) {
+            return;
+        }
+        // Der Schuldner, der allein schuldet - oder keiner, dann schulden alle gesamtschuldnerisch.
+        String debtorId = null;
+        int selected = this.cmbDebtor.getSelectedIndex();
+        if (selected > 0 && selected - 1 < this.debtors.size()) {
+            debtorId = this.debtors.get(selected - 1).getId();
+        }
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            List<String> booking = JLawyerServiceLocator.getInstance(settings.getLookupProperties())
+                    .lookupEnforcementServiceRemote()
+                    .bookCosts(this.measure.getId(), edited(), debtorId,
+                            this.chkAdvanced.isSelected());
+
+            this.booked = true;
+            JOptionPane.showMessageDialog(this,
+                    booking.size() + " Kostenposition(en) im Forderungskonto gebucht.",
+                    "Gebucht", JOptionPane.INFORMATION_MESSAGE);
+            setVisible(false);
+            dispose();
+        } catch (Exception ex) {
+            log.error("Unable to book the costs of enforcement measure " + this.measure.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Kosten konnten nicht gebucht werden: " + ex.getMessage(),
+                    com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdBookActionPerformed
+
+    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
+        setVisible(false);
+        dispose();
+    }//GEN-LAST:event_cmdCancelActionPerformed
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox chkAdvanced;
+    private javax.swing.JComboBox<Object> cmbDebtor;
+    private javax.swing.JButton cmdBook;
+    private javax.swing.JButton cmdCancel;
+    private javax.swing.JLabel lblDebtor;
+    private javax.swing.JScrollPane scrlHeader;
+    private javax.swing.JTextArea txtHeader;
+    private javax.swing.JLabel lblTotal;
+    private javax.swing.JScrollPane scrlNotes;
+    private javax.swing.JScrollPane scrlPositions;
+    private javax.swing.JTable tblPositions;
+    private javax.swing.JTextArea txtNotes;
+    // End of variables declaration//GEN-END:variables
 }

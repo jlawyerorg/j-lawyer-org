@@ -662,147 +662,377 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
-import com.jdimension.jlawyer.persistence.ClaimComponentType;
 import com.jdimension.jlawyer.persistence.FeeItem;
-import com.jdimension.jlawyer.persistence.FeeItemFacadeLocal;
 import com.jdimension.jlawyer.persistence.FeeScale;
-import com.jdimension.jlawyer.persistence.FeeScaleBracketFacadeLocal;
-import com.jdimension.jlawyer.persistence.FeeScaleFacadeLocal;
-import com.jdimension.jlawyer.pojo.DunningFeePosition;
-import com.jdimension.jlawyer.pojo.DunningFeeProposal;
-import com.jdimension.jlawyer.pojo.ProceduralCostBooking;
+import com.jdimension.jlawyer.pojo.EnforcementCostPosition;
+import com.jdimension.jlawyer.pojo.EnforcementCostProposal;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import org.apache.log4j.Logger;
+import java.math.RoundingMode;
 
 /**
- * Proposes and books the fees of an application in the dunning procedure.
+ * What an enforcement measure costs.
  *
- * The scales and items are looked up for the day whose law applies, not simply "the current ones":
- * § 60 RVG has a matter commissioned before a change billed under the earlier law, so a firm that
- * still runs older matters needs both and has to get the right one.
+ * The figures are data, as they are for the dunning procedure: the value table gives the 1.0 fee,
+ * the fee items say which rate of it applies. This class computes and knows no amount of its own,
+ * so a change of the law is a change of the tables.
+ *
+ * Three things are decided here rather than in a table, because they are rules and not figures:
+ * VAT is not added where the creditor can deduct it - it is then not a loss and not recoverable
+ * from the debtor; the flat rate of Nr. 7002 is taken from the lawyer's fees alone, not from court
+ * or bailiff costs, which are not fees of his; and the bailiff's own costs get a position without
+ * an amount, because they follow from what he does and not from the value.
  *
  * @author jens
  */
-@Stateless
-public class DunningFeeService implements DunningFeeServiceLocal {
+public class EnforcementCostCalculator {
 
-    private static final Logger log = Logger.getLogger(DunningFeeService.class.getName());
+    /** What the bailiff's costs are called while their table is not kept. */
+    public static final String ITEM_BAILIFF = "GVKOSTG";
 
-    static final String SCALE_LAWYER = "RVG_13";
-    static final String SCALE_COURT = "GKG_34";
-    static final String ITEM_MB_FEE = "RVG_VV_3305";
-    static final String ITEM_VB_FEE = "RVG_VV_3308";
-    static final String ITEM_INCREASE = "RVG_VV_1008";
-    static final String ITEM_EXPENSES = "RVG_VV_7002";
-    static final String ITEM_CREDIT = "RVG_VV_3305_ANRECHNUNG";
-    static final String ITEM_COURT_FEE = "GKG_KV_1100";
+    private final FeeScaleCalculator scaleCalculator = new FeeScaleCalculator();
 
-    @EJB
-    private FeeScaleFacadeLocal feeScalesFacade;
+    /**
+     * What a proposal is asked for.
+     */
+    public static class Request {
 
-    @EJB
-    private FeeScaleBracketFacadeLocal feeScaleBracketsFacade;
+        private BigDecimal claimValue;
+        private FeeScale lawyerScale;
+        private FeeItem procedureFee;
+        private FeeItem hearingFee;
+        private FeeItem expensesFlatRate;
+        private FeeItem courtFee;
+        private BigDecimal vatRate;
+        private boolean vatDeductible;
+        private boolean hearing;
+        private boolean courtMeasure;
+        private boolean bailiffMeasure;
 
-    @EJB
-    private FeeItemFacadeLocal feeItemsFacade;
-
-    @EJB
-    private ClaimLedgerServiceLocal claimLedgerService;
-
-    @Override
-    public DunningFeeProposal proposeFees(BigDecimal claimValue, boolean forEnforcementOrder,
-            int creditorCount, BigDecimal vatRate, BigDecimal businessFeeRate, Date at) throws Exception {
-
-        Date day = at == null ? new Date() : at;
-
-        DunningFeeCalculator.Request request = new DunningFeeCalculator.Request();
-        request.setClaimValue(claimValue);
-        request.setLawyerScale(scale(SCALE_LAWYER, day));
-        request.setCourtScale(scale(SCALE_COURT, day));
-        request.setProcedureFee(item(forEnforcementOrder ? ITEM_VB_FEE : ITEM_MB_FEE, day));
-        request.setIncreasePerCreditor(item(ITEM_INCREASE, day));
-        request.setExpensesFlatRate(item(ITEM_EXPENSES, day));
-        request.setCreditItem(item(ITEM_CREDIT, day));
-        request.setCourtFee(item(ITEM_COURT_FEE, day));
-        request.setCreditorCount(Math.max(1, creditorCount));
-        request.setVatRate(vatRate);
-        request.setBusinessFeeRate(businessFeeRate);
-        // the court fee arises once, with the Mahnbescheid; the application for the
-        // Vollstreckungsbescheid does not trigger Nr. 1100 KV GKG a second time
-        request.setIncludeCourtFee(!forEnforcementOrder);
-
-        if (request.getLawyerScale() == null) {
-            throw new Exception("Für den " + day + " ist keine Gebührentabelle nach § 13 RVG hinterlegt.");
+        /**
+         * @return the value being enforced
+         */
+        public BigDecimal getClaimValue() {
+            return claimValue;
         }
 
-        return new DunningFeeCalculator().propose(request);
-    }
-
-    @Override
-    public List<String> bookFees(String ledgerId, DunningFeeProposal proposal, ClaimComponentType costType,
-            String originReference, Date bookingDate) throws Exception {
-
-        List<String> created = new ArrayList<>();
-        if (proposal == null) {
-            return created;
+        /**
+         * @param claimValue the value being enforced
+         */
+        public void setClaimValue(BigDecimal claimValue) {
+            this.claimValue = claimValue;
         }
-        Date day = bookingDate == null ? new Date() : bookingDate;
 
-        List<DunningFeePosition> all = new ArrayList<>(proposal.getLawyerPositions());
-        all.addAll(proposal.getCourtPositions());
-
-        for (DunningFeePosition position : all) {
-            if (position.getAmount() == null || position.getAmount().signum() == 0) {
-                // a line of zero changes no balance and only lengthens the ledger
-                continue;
-            }
-            ProceduralCostBooking booking = new ProceduralCostBooking(ledgerId, position.getAmount(),
-                    position.getLabel());
-            booking.setCostType(costType == null ? ClaimComponentType.COST_NON_INTEREST_BEARING : costType);
-            booking.setBookingDate(day);
-            booking.setOriginReference(originReference);
-            booking.setComment(position.getLegalBasis()
-                    + (position.getRate() == null ? "" : ", Satz " + GermanNumbers.format(position.getRate()))
-                    + (position.getBaseValue() == null ? "" : ", Wert " + GermanNumbers.format(position.getBaseValue()))
-                    + (position.getNote() == null ? "" : "\n" + position.getNote()));
-            created.add(this.claimLedgerService.bookProceduralCost(booking).getId());
+        /**
+         * @return the value table of § 13 RVG
+         */
+        public FeeScale getLawyerScale() {
+            return lawyerScale;
         }
-        return created;
+
+        /**
+         * @param lawyerScale the value table of § 13 RVG
+         */
+        public void setLawyerScale(FeeScale lawyerScale) {
+            this.lawyerScale = lawyerScale;
+        }
+
+        /**
+         * @return the item of Nr. 3309 VV RVG
+         */
+        public FeeItem getProcedureFee() {
+            return procedureFee;
+        }
+
+        /**
+         * @param procedureFee the item of Nr. 3309 VV RVG
+         */
+        public void setProcedureFee(FeeItem procedureFee) {
+            this.procedureFee = procedureFee;
+        }
+
+        /**
+         * @return the item of Nr. 3310 VV RVG
+         */
+        public FeeItem getHearingFee() {
+            return hearingFee;
+        }
+
+        /**
+         * @param hearingFee the item of Nr. 3310 VV RVG
+         */
+        public void setHearingFee(FeeItem hearingFee) {
+            this.hearingFee = hearingFee;
+        }
+
+        /**
+         * @return the item of Nr. 7002 VV RVG
+         */
+        public FeeItem getExpensesFlatRate() {
+            return expensesFlatRate;
+        }
+
+        /**
+         * @param expensesFlatRate the item of Nr. 7002 VV RVG
+         */
+        public void setExpensesFlatRate(FeeItem expensesFlatRate) {
+            this.expensesFlatRate = expensesFlatRate;
+        }
+
+        /**
+         * @return the court fee item of the measure, where it needs a court
+         */
+        public FeeItem getCourtFee() {
+            return courtFee;
+        }
+
+        /**
+         * @param courtFee the court fee item
+         */
+        public void setCourtFee(FeeItem courtFee) {
+            this.courtFee = courtFee;
+        }
+
+        /**
+         * @return the VAT rate
+         */
+        public BigDecimal getVatRate() {
+            return vatRate;
+        }
+
+        /**
+         * @param vatRate the VAT rate
+         */
+        public void setVatRate(BigDecimal vatRate) {
+            this.vatRate = vatRate;
+        }
+
+        /**
+         * @return whether the creditor can deduct input tax - then the VAT on the fees is none of
+         * the debtor's business
+         */
+        public boolean isVatDeductible() {
+            return vatDeductible;
+        }
+
+        /**
+         * @param vatDeductible whether the creditor can deduct input tax
+         */
+        public void setVatDeductible(boolean vatDeductible) {
+            this.vatDeductible = vatDeductible;
+        }
+
+        /**
+         * @return whether a hearing takes place, which is what Nr. 3310 VV RVG asks
+         */
+        public boolean isHearing() {
+            return hearing;
+        }
+
+        /**
+         * @param hearing whether a hearing takes place
+         */
+        public void setHearing(boolean hearing) {
+            this.hearing = hearing;
+        }
+
+        /**
+         * @return whether the measure goes to a court, which is what makes a court fee arise
+         */
+        public boolean isCourtMeasure() {
+            return courtMeasure;
+        }
+
+        /**
+         * @param courtMeasure whether the measure goes to a court
+         */
+        public void setCourtMeasure(boolean courtMeasure) {
+            this.courtMeasure = courtMeasure;
+        }
+
+        /**
+         * @return whether a bailiff acts, whose own costs then arise
+         */
+        public boolean isBailiffMeasure() {
+            return bailiffMeasure;
+        }
+
+        /**
+         * @param bailiffMeasure whether a bailiff acts
+         */
+        public void setBailiffMeasure(boolean bailiffMeasure) {
+            this.bailiffMeasure = bailiffMeasure;
+        }
     }
 
     /**
-     * The scale in force on a day, with its brackets loaded.
+     * Proposes what the measure costs.
      *
-     * @param scaleKey which scale
-     * @param day the day whose law applies
-     * @return the scale, or null if none applies on that day
+     * @param request what to compute from
+     * @return the proposal, never null
      */
-    private FeeScale scale(String scaleKey, Date day) {
-        for (FeeScale scale : this.feeScalesFacade.findByKey(scaleKey)) {
-            if (scale.isValidAt(day)) {
-                scale.setBrackets(new ArrayList<>(this.feeScaleBracketsFacade.findByScale(scale)));
-                return scale;
-            }
+    public EnforcementCostProposal propose(Request request) {
+
+        EnforcementCostProposal proposal = new EnforcementCostProposal();
+        if (request == null) {
+            return proposal;
         }
-        return null;
+        proposal.setClaimValue(request.getClaimValue());
+
+        BigDecimal fees = BigDecimal.ZERO;
+        fees = fees.add(addValueFee(proposal, request, request.getProcedureFee()));
+        if (request.isHearing()) {
+            fees = fees.add(addValueFee(proposal, request, request.getHearingFee()));
+        }
+        fees = fees.add(addExpenses(proposal, request, fees));
+        addVat(proposal, request, fees);
+
+        if (request.isCourtMeasure()) {
+            addCourtFee(proposal, request);
+        }
+        if (request.isBailiffMeasure()) {
+            addBailiffCosts(proposal);
+        }
+        return proposal;
     }
 
     /**
-     * @param itemKey which item
-     * @param day the day whose law applies
-     * @return the item in force on that day, or null if none applies
+     * A fee on the value being enforced.
+     *
+     * @return what it came to, zero where the item or the table is missing
      */
-    private FeeItem item(String itemKey, Date day) {
-        for (FeeItem item : this.feeItemsFacade.findByKey(itemKey)) {
-            if (item.isValidAt(day)) {
-                return item;
-            }
+    private BigDecimal addValueFee(EnforcementCostProposal proposal, Request request, FeeItem item) {
+
+        if (item == null || request.getLawyerScale() == null || request.getClaimValue() == null) {
+            return BigDecimal.ZERO;
         }
-        return null;
+        BigDecimal rate = item.getRate() == null ? BigDecimal.ONE : item.getRate();
+        BigDecimal amount = money(this.scaleCalculator
+                .fee(request.getLawyerScale(), request.getClaimValue()).multiply(rate));
+
+        EnforcementCostPosition position = new EnforcementCostPosition();
+        position.setItemKey(item.getItemKey());
+        position.setLabel(item.getName());
+        position.setLegalBasis(item.getLegalBasis());
+        position.setRate(rate);
+        position.setBaseValue(request.getClaimValue());
+        position.setAmount(amount);
+        position.setTaxable(true);
+        position.setNote(item.getNotes());
+        proposal.getPositions().add(position);
+        return amount;
+    }
+
+    /**
+     * The flat rate of Nr. 7002 VV RVG - on the lawyer's fees only.
+     */
+    private BigDecimal addExpenses(EnforcementCostProposal proposal, Request request, BigDecimal fees) {
+
+        FeeItem item = request.getExpensesFlatRate();
+        if (item == null || item.getPercentage() == null || fees.signum() == 0) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal amount = money(fees.multiply(item.getPercentage())
+                .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
+        if (item.getMaximumAmount() != null && amount.compareTo(item.getMaximumAmount()) > 0) {
+            amount = item.getMaximumAmount();
+        }
+
+        EnforcementCostPosition position = new EnforcementCostPosition();
+        position.setItemKey(item.getItemKey());
+        position.setLabel(item.getName());
+        position.setLegalBasis(item.getLegalBasis());
+        position.setAmount(amount);
+        position.setTaxable(true);
+        position.setNote(item.getNotes());
+        proposal.getPositions().add(position);
+        return amount;
+    }
+
+    /**
+     * VAT - but only where it is a loss to the creditor.
+     */
+    private void addVat(EnforcementCostProposal proposal, Request request, BigDecimal taxableBase) {
+
+        if (request.getVatRate() == null || request.getVatRate().signum() == 0
+                || taxableBase.signum() == 0) {
+            return;
+        }
+        if (request.isVatDeductible()) {
+            // Wer die Vorsteuer abziehen kann, hat die Umsatzsteuer nicht getragen; sie vom
+            // Schuldner zu verlangen, verlangte einen Schaden, den es nicht gibt.
+            proposal.getNotes().add("Umsatzsteuer nicht angesetzt: der Gläubiger ist zum "
+                    + "Vorsteuerabzug berechtigt.");
+            return;
+        }
+        BigDecimal amount = money(taxableBase.multiply(request.getVatRate())
+                .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
+
+        EnforcementCostPosition position = new EnforcementCostPosition();
+        position.setItemKey("RVG_VV_7008");
+        position.setLabel("Umsatzsteuer");
+        position.setLegalBasis("Nr. 7008 VV RVG");
+        position.setRate(request.getVatRate());
+        position.setBaseValue(taxableBase);
+        position.setAmount(amount);
+        proposal.getPositions().add(position);
+    }
+
+    /**
+     * The court fee, which does not depend on the value where the item carries a fixed amount.
+     */
+    private void addCourtFee(EnforcementCostProposal proposal, Request request) {
+
+        FeeItem item = request.getCourtFee();
+        if (item == null) {
+            return;
+        }
+        BigDecimal amount;
+        if (item.getRate() != null && request.getLawyerScale() != null) {
+            amount = money(this.scaleCalculator
+                    .fee(request.getLawyerScale(), request.getClaimValue()).multiply(item.getRate()));
+        } else {
+            amount = item.getMinimumAmount();
+        }
+        if (amount != null && item.getMinimumAmount() != null
+                && amount.compareTo(item.getMinimumAmount()) < 0) {
+            amount = item.getMinimumAmount();
+        }
+        if (amount != null && item.getMaximumAmount() != null
+                && amount.compareTo(item.getMaximumAmount()) > 0) {
+            amount = item.getMaximumAmount();
+        }
+
+        EnforcementCostPosition position = new EnforcementCostPosition();
+        position.setItemKey(item.getItemKey());
+        position.setLabel(item.getName());
+        position.setLegalBasis(item.getLegalBasis());
+        position.setAmount(amount);
+        position.setNote(item.getNotes());
+        proposal.getPositions().add(position);
+    }
+
+    /**
+     * The bailiff's own costs - a position without a figure.
+     *
+     * They follow from the acts he performs and from how far he travels, not from the value being
+     * enforced, and their table is not kept here. Proposing a figure would mean inventing one; the
+     * position exists so that nobody forgets to enter what the bailiff actually charged.
+     */
+    private void addBailiffCosts(EnforcementCostProposal proposal) {
+
+        EnforcementCostPosition position = new EnforcementCostPosition();
+        position.setItemKey(ITEM_BAILIFF);
+        position.setLabel("Kosten des Gerichtsvollziehers");
+        position.setLegalBasis("GvKostG");
+        position.setIncluded(false);
+        position.setNote("Betrag bitte eintragen: die Kosten des Gerichtsvollziehers hängen an "
+                + "seinen Amtshandlungen und am Wegegeld, nicht am Gegenstandswert.");
+        proposal.getPositions().add(position);
+        proposal.getNotes().add("Die Kosten des Gerichtsvollziehers stehen ohne Betrag in der "
+                + "Aufstellung; sie werden eingetragen, sobald seine Rechnung vorliegt.");
+    }
+
+    private static BigDecimal money(BigDecimal value) {
+        return value.setScale(2, RoundingMode.HALF_UP);
     }
 }
