@@ -660,549 +660,328 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package org.jlawyer.test.server.ejb;
 
-import com.jdimension.jlawyer.persistence.ClaimComponent;
-import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
-import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
-import com.jdimension.jlawyer.persistence.DunningStage;
+import com.jdimension.jlawyer.persistence.ClaimProcessStage;
+import com.jdimension.jlawyer.persistence.DunningCase;
+import com.jdimension.jlawyer.persistence.DunningCaseDeadline;
+import com.jdimension.jlawyer.persistence.DunningCaseStatus;
+import com.jdimension.jlawyer.persistence.DunningDeadlineType;
 import com.jdimension.jlawyer.persistence.DunningStageEvent;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.ClaimLedger;
-import com.jdimension.jlawyer.persistence.PaymentSplitProposal;
-import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
-import com.jdimension.jlawyer.pojo.ClaimProcessStatus;
+import com.jdimension.jlawyer.persistence.EnforcementDeadlineType;
+import com.jdimension.jlawyer.persistence.EnforcementMeasure;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureDeadline;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureOutcome;
+import com.jdimension.jlawyer.persistence.EnforcementMeasureType;
 import com.jdimension.jlawyer.persistence.EnforcementTitle;
-import com.jdimension.jlawyer.persistence.InterestRule;
-import com.jdimension.jlawyer.pojo.BalanceListFilter;
-import com.jdimension.jlawyer.pojo.ClaimLedgerSummary;
-import com.jdimension.jlawyer.pojo.ClaimStatement;
-import com.jdimension.jlawyer.pojo.DefaultInterestProposal;
-import com.jdimension.jlawyer.pojo.DunningStatus;
-import com.jdimension.jlawyer.pojo.ProceduralCostBooking;
+import com.jdimension.jlawyer.persistence.EnforcementTitleType;
+import com.jdimension.jlawyer.pojo.ClaimProcessStatus;
+import com.jdimension.jlawyer.services.ClaimProcessStatusAssembler;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import javax.ejb.Local;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 /**
- * Operations on a claim ledger (Forderungskonto) that go beyond its bookings: the parties it runs
- * for and against, the enforcement titles it rests on, and the procedural costs that the dunning
- * and enforcement workflows book into it.
+ * Where a claim stands, worked out from what has been recorded.
  *
  * @author jens
  */
-@Local
-public interface ClaimLedgerServiceLocal {
+public class ClaimProcessStatusAssemblerTest {
+
+    private static final Date TODAY = day(2026, 9, 24);
+
+    private static Date day(int y, int m, int d) {
+        return Date.from(LocalDate.of(y, m, d).atStartOfDay(ZoneId.systemDefault()).toInstant());
+    }
+
+    private ClaimProcessStatusAssembler.Input input() {
+        ClaimProcessStatusAssembler.Input in = new ClaimProcessStatusAssembler.Input();
+        in.setOpenAmount(new BigDecimal("4200.00"));
+        in.setStageEvents(new ArrayList<>());
+        in.setDunningCases(new ArrayList<>());
+        in.setTitles(new ArrayList<>());
+        in.setMeasures(new ArrayList<>());
+        in.setEnforcementDeadlines(new ArrayList<>());
+        in.setDunningDeadlines(new ArrayList<>());
+        return in;
+    }
+
+    private DunningStageEvent stageEvent(String name, Date sent) {
+        DunningStageEvent event = new DunningStageEvent();
+        event.setStageName(name);
+        event.setSentDate(sent);
+        return event;
+    }
+
+    private DunningCase dunningCase(DunningCaseStatus status, Date applied) {
+        DunningCase c = new DunningCase();
+        c.setStatus(status);
+        c.setMbAppliedDate(applied);
+        return c;
+    }
+
+    private EnforcementTitle title(EnforcementTitleType type, Date issued) {
+        EnforcementTitle t = new EnforcementTitle();
+        t.setTitleType(type);
+        t.setIssueDate(issued);
+        return t;
+    }
+
+    private EnforcementMeasure measure(String typeName, Date ordered,
+            EnforcementMeasureOutcome outcome) {
+
+        EnforcementMeasureType type = new EnforcementMeasureType();
+        type.setName(typeName);
+        EnforcementMeasure m = new EnforcementMeasure();
+        m.setMeasureType(type);
+        m.setOrderedDate(ordered);
+        m.setOutcome(outcome);
+        return m;
+    }
+
+    private EnforcementMeasureDeadline deadline(EnforcementDeadlineType type, Date date,
+            boolean closed) {
+
+        EnforcementMeasureDeadline d = new EnforcementMeasureDeadline();
+        d.setDeadlineType(type);
+        d.setDeadlineDate(date);
+        d.setClosed(closed);
+        return d;
+    }
+
+    private ClaimProcessStatus.Step stepOf(ClaimProcessStatus status, ClaimProcessStage stage) {
+        for (ClaimProcessStatus.Step step : status.getSteps()) {
+            if (step.getStage() == stage) {
+                return step;
+            }
+        }
+        return null;
+    }
 
     /**
-     * Returns the creditors and debtors of a claim ledger, ordered by role and sequence number.
-     *
-     * @param ledgerId id of the claim ledger
-     * @return the parties of the ledger, empty if none are recorded yet
-     * @throws Exception if the ledger does not exist or the user may not access its case
+     * Sechs Stationen, immer - eine Leiste, die je nach Stand andere Punkte zeigt, wäre keine.
      */
-    List<ClaimLedgerParty> getParties(String ledgerId) throws Exception;
+    @Test
+    public void thereAreAlwaysSixStations() {
+        ClaimProcessStatus status = new ClaimProcessStatusAssembler().assemble(input(), TODAY);
+
+        assertEquals(6, status.getSteps().size());
+        assertEquals(Arrays.asList(ClaimProcessStage.values()),
+                status.getSteps().stream().map(ClaimProcessStatus.Step::getStage)
+                        .collect(java.util.stream.Collectors.toList()));
+    }
+
+    @Test
+    public void anUntouchedClaimStandsAtOpen() {
+        ClaimProcessStatus status = new ClaimProcessStatusAssembler().assemble(input(), TODAY);
+
+        assertEquals(ClaimProcessStage.OPEN, status.getCurrentStage());
+        assertFalse(stepOf(status, ClaimProcessStage.DUNNED).isReached());
+        assertNull(status.getDeviation());
+    }
+
+    @Test
+    public void aDunningLetterMovesItToDunned() {
+        ClaimProcessStatusAssembler.Input in = input();
+        in.setStageEvents(Arrays.asList(stageEvent("1. Mahnung", day(2026, 3, 12)),
+                stageEvent("2. Mahnung", day(2026, 4, 2))));
+
+        ClaimProcessStatus status = new ClaimProcessStatusAssembler().assemble(in, TODAY);
+
+        assertEquals(ClaimProcessStage.DUNNED, status.getCurrentStage());
+        // das früheste Schreiben datiert die Station, das letzte beschreibt sie
+        assertEquals(day(2026, 3, 12), stepOf(status, ClaimProcessStage.DUNNED).getReachedOn());
+        assertTrue(status.getCurrentDescription().contains("2. Mahnung"));
+    }
 
     /**
-     * Adds a creditor or debtor to a claim ledger.
-     *
-     * The party is identified by the address book contact it references; deleting that contact
-     * later does not delete the party. Where the party is also a party of the case, the case party
-     * record may be referenced as well, but it does not determine who the ledger runs against.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param party the party to add; its id is assigned by the server
-     * @return the stored party
-     * @throws Exception if the ledger does not exist or the user may not access its case
+     * Ein Titel beweist, dass gemahnt wurde - auch wenn niemand das Schreiben erfasst hat. Eine
+     * Leiste, die das erste Feld leer lässt und das vierte füllt, streitet mit sich selbst.
      */
-    ClaimLedgerParty addParty(String ledgerId, ClaimLedgerParty party) throws Exception;
+    @Test
+    public void alaterStationImpliesTheEarlierOnes() {
+        ClaimProcessStatusAssembler.Input in = input();
+        in.setTitles(Arrays.asList(title(EnforcementTitleType.VOLLSTRECKUNGSBESCHEID, day(2026, 6, 1))));
+
+        ClaimProcessStatus status = new ClaimProcessStatusAssembler().assemble(in, TODAY);
+
+        assertEquals(ClaimProcessStage.TITLED, status.getCurrentStage());
+        assertTrue(stepOf(status, ClaimProcessStage.DUNNED).isReached());
+        assertTrue(stepOf(status, ClaimProcessStage.COURT_DUNNING).isReached());
+    }
 
     /**
-     * Updates a party of a claim ledger.
-     *
-     * The designation and address snapshot taken for use towards a court is not changed by this
-     * operation: once a party has been named in a dunning application or a title, that wording has
-     * to stay reproducible.
-     *
-     * @param party the party to update
-     * @return the stored party
-     * @throws Exception if the party does not exist or the user may not access its case
+     * In Vorbereitung ist nicht bei Gericht - und die Hemmung der Verjährung knüpft an den Eingang
+     * des Antrags, nicht an den Vorsatz, einen zu stellen.
      */
-    ClaimLedgerParty updateParty(ClaimLedgerParty party) throws Exception;
+    @Test
+    public void aPreparedProcedureHasNotReachedTheCourt() {
+        ClaimProcessStatusAssembler.Input in = input();
+        in.setStageEvents(Arrays.asList(stageEvent("1. Mahnung", day(2026, 3, 12))));
+        in.setDunningCases(Arrays.asList(dunningCase(DunningCaseStatus.PREPARED, null)));
+
+        ClaimProcessStatus status = new ClaimProcessStatusAssembler().assemble(in, TODAY);
+
+        assertEquals(ClaimProcessStage.DUNNED, status.getCurrentStage());
+        assertFalse(stepOf(status, ClaimProcessStage.COURT_DUNNING).isReached());
+    }
 
     /**
-     * Removes a party from a claim ledger.
-     *
-     * @param partyId id of the party
-     * @throws Exception if the party does not exist, the user may not access its case, or bookings
-     * are attributed to that party alone
+     * Der Widerspruch führt die Sache aus der Leiste heraus - das muss danebenstehen, sonst zeigt
+     * sie eine Ordnung, die es nicht mehr gibt.
      */
-    void removeParty(String partyId) throws Exception;
+    @Test
+    public void anObjectionIsShownAsADeviation() {
+        ClaimProcessStatusAssembler.Input in = input();
+        in.setDunningCases(Arrays.asList(dunningCase(DunningCaseStatus.OBJECTION, day(2026, 4, 28))));
+
+        ClaimProcessStatus status = new ClaimProcessStatusAssembler().assemble(in, TODAY);
+
+        assertNotNull(status.getDeviation());
+        assertTrue(status.getDeviation().contains("streitig"));
+    }
 
     /**
-     * Freezes the designation and postal address of a party as they are to be used towards a court.
-     *
-     * Called when a party is first named in a dunning application, a title or an enforcement
-     * document. A snapshot that already exists is kept, so an application filed earlier stays
-     * reproducible; later corrections to the contact reach current work but not the history.
-     *
-     * @param partyId id of the party
-     * @return the party including its snapshot
-     * @throws Exception if the party does not exist or the user may not access its case
+     * Zwei Mahnsachen: die weiter gediehene beschreibt das Konto. Eine zurückgenommene erste darf
+     * eine zugestellte zweite nicht überschreiben.
      */
-    ClaimLedgerParty freezePartyDesignation(String partyId) throws Exception;
+    @Test
+    public void theFurthestProcedureDescribesTheLedger() {
+        ClaimProcessStatusAssembler.Input in = input();
+        in.setDunningCases(Arrays.asList(
+                dunningCase(DunningCaseStatus.WITHDRAWN, day(2026, 2, 1)),
+                dunningCase(DunningCaseStatus.MB_SERVED, day(2026, 4, 28))));
+
+        ClaimProcessStatus status = new ClaimProcessStatusAssembler().assemble(in, TODAY);
+
+        assertEquals(ClaimProcessStage.COURT_DUNNING, status.getCurrentStage());
+        assertTrue(status.getCurrentDescription().contains("zugestellt"));
+        assertNull("eine überholte Rücknahme ist keine Abweichung", status.getDeviation());
+    }
 
     /**
-     * Returns the enforcement titles recorded for a claim ledger, oldest first.
-     *
-     * @param ledgerId id of the claim ledger
-     * @return the titles of the ledger, empty if none are recorded
-     * @throws Exception if the ledger does not exist or the user may not access its case
+     * Die Wartezeit des § 802d ZPO ist der Grund, warum eine Akte tot aussieht, obwohl sie lebt.
      */
-    List<EnforcementTitle> getTitles(String ledgerId) throws Exception;
+    @Test
+    public void theAssetDisclosureWaitIsShownWhileItRuns() {
+        ClaimProcessStatusAssembler.Input in = input();
+        in.setMeasures(Arrays.asList(measure("Abnahme der Vermögensauskunft", day(2026, 5, 4),
+                EnforcementMeasureOutcome.UNSUCCESSFUL)));
+        in.setEnforcementDeadlines(Arrays.asList(deadline(
+                EnforcementDeadlineType.ASSET_DISCLOSURE_REPEAT, day(2028, 5, 4), false)));
+
+        ClaimProcessStatus status = new ClaimProcessStatusAssembler().assemble(in, TODAY);
+
+        assertEquals(ClaimProcessStage.ENFORCEMENT, status.getCurrentStage());
+        assertTrue(status.getDeviation().contains("wartet bis 04.05.2028"));
+        assertTrue(status.getDeviation().contains("802d"));
+    }
 
     /**
-     * Records an enforcement title for a claim ledger.
-     *
-     * The limitation date under § 197 Abs. 1 Nr. 3 BGB is computed from the date of issue, and a
-     * follow-up is created on the case ahead of it, so that a title does not lapse unnoticed over
-     * the thirty years it stays enforceable.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param title the title to record; its id is assigned by the server
-     * @param followUpLeadTimeDays how many days before the limitation date the follow-up is due; a
-     * value of zero or less suppresses the follow-up
-     * @return the stored title including its computed limitation date
-     * @throws Exception if the ledger does not exist or the user may not access its case
+     * Ist der Tag da, ist es keine Wartezeit mehr, sondern eine Gelegenheit - und sie steht dann
+     * als Frist da, nicht als Grund, warum nichts geschieht.
      */
-    EnforcementTitle addTitle(String ledgerId, EnforcementTitle title, int followUpLeadTimeDays) throws Exception;
+    @Test
+    public void anExpiredWaitIsNoLongerADeviation() {
+        ClaimProcessStatusAssembler.Input in = input();
+        in.setMeasures(Arrays.asList(measure("Abnahme der Vermögensauskunft", day(2024, 5, 4),
+                EnforcementMeasureOutcome.UNSUCCESSFUL)));
+        in.setEnforcementDeadlines(Arrays.asList(deadline(
+                EnforcementDeadlineType.ASSET_DISCLOSURE_REPEAT, day(2026, 5, 4), false)));
+
+        ClaimProcessStatus status = new ClaimProcessStatusAssembler().assemble(in, TODAY);
+
+        assertNull(status.getDeviation());
+        assertEquals(day(2026, 5, 4), status.getNextDeadline());
+    }
 
     /**
-     * Updates an enforcement title.
-     *
-     * The limitation date is recomputed from the date of issue and the follow-up guarding it is
-     * moved accordingly. A follow-up already marked as done is left untouched and reported to the
-     * caller rather than silently reopened.
-     *
-     * @param title the title to update
-     * @param followUpLeadTimeDays how many days before the limitation date the follow-up is due
-     * @return the stored title
-     * @throws Exception if the title does not exist or the user may not access its case
+     * Die nächste Frist kommt aus beiden Verfahren, und die früheste gewinnt - eine Leiste, die nur
+     * die Vollstreckung kennt, übersieht die Widerspruchsfrist.
      */
-    EnforcementTitle updateTitle(EnforcementTitle title, int followUpLeadTimeDays) throws Exception;
+    @Test
+    public void theEarliestDeadlineOfBothProceduresWins() {
+        ClaimProcessStatusAssembler.Input in = input();
+        in.setEnforcementDeadlines(Arrays.asList(
+                deadline(EnforcementDeadlineType.REPORT, day(2026, 11, 5), false)));
+
+        DunningCaseDeadline dunning = new DunningCaseDeadline();
+        dunning.setDeadlineType(DunningDeadlineType.OBJECTION_PERIOD);
+        dunning.setDeadlineDate(day(2026, 10, 2));
+        in.setDunningDeadlines(Arrays.asList(dunning));
+
+        ClaimProcessStatus status = new ClaimProcessStatusAssembler().assemble(in, TODAY);
+
+        assertEquals(day(2026, 10, 2), status.getNextDeadline());
+        assertEquals(DunningDeadlineType.OBJECTION_PERIOD.getLabel(), status.getNextDeadlineLabel());
+    }
 
     /**
-     * Removes an enforcement title and the follow-up created for its limitation date.
-     *
-     * @param titleId id of the title
-     * @throws Exception if the title does not exist or the user may not access its case
+     * Eine geschlossene Frist ist keine Frist mehr.
      */
-    void removeTitle(String titleId) throws Exception;
+    @Test
+    public void closedDeadlinesAreNotProposed() {
+        ClaimProcessStatusAssembler.Input in = input();
+        in.setEnforcementDeadlines(Arrays.asList(
+                deadline(EnforcementDeadlineType.REPORT, day(2026, 11, 5), true)));
+
+        assertNull(new ClaimProcessStatusAssembler().assemble(in, TODAY).getNextDeadline());
+    }
 
     /**
-     * Converts costs that do not bear interest into assessed costs that do.
-     *
-     * After a cost assessment order the assessed amount bears interest under § 104 Abs. 1 S. 2 ZPO.
-     * The operation reduces or removes the original positions, creates one assessed-cost component
-     * carrying the given interest rule, and records the conversion in the ledger history, so the
-     * amount is not claimed twice.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param componentIds ids of the cost components to convert
-     * @param assessedAmount the amount the court assessed, which may be lower than the sum of the
-     * original positions
-     * @param interestRule the interest rule to apply to the assessed costs, with its effective date
-     * @param description designation of the resulting component
-     * @return the created assessed-cost component
-     * @throws Exception if the ledger or a component does not exist, the user may not access the
-     * case, or the assessed amount exceeds the positions being converted
+     * Eine überfällige Frist wird gezeigt und nicht verschwiegen - sie ist das Dringendste, was ein
+     * Konto tragen kann.
      */
-    ClaimComponent convertToAssessedCosts(String ledgerId, List<String> componentIds,
-            BigDecimal assessedAmount, InterestRule interestRule, String description) throws Exception;
+    @Test
+    public void anOverdueDeadlineIsStillProposed() {
+        ClaimProcessStatusAssembler.Input in = input();
+        in.setEnforcementDeadlines(Arrays.asList(
+                deadline(EnforcementDeadlineType.REPORT, day(2026, 8, 1), false)));
+
+        assertEquals(day(2026, 8, 1),
+                new ClaimProcessStatusAssembler().assemble(in, TODAY).getNextDeadline());
+    }
+
+    @Test
+    public void aSettledLedgerStandsAtSettled() {
+        ClaimProcessStatusAssembler.Input in = input();
+        in.setOpenAmount(BigDecimal.ZERO);
+        in.setMeasures(Arrays.asList(measure("Vollstreckungsauftrag", day(2026, 5, 4),
+                EnforcementMeasureOutcome.SUCCESSFUL)));
+
+        ClaimProcessStatus status = new ClaimProcessStatusAssembler().assemble(in, TODAY);
+
+        assertEquals(ClaimProcessStage.SETTLED, status.getCurrentStage());
+        assertTrue(stepOf(status, ClaimProcessStage.SETTLED).isReached());
+    }
 
     /**
-     * Books a procedural fee or disbursement into a claim ledger.
-     *
-     * This is the single path by which the dunning and enforcement workflows put money into a
-     * ledger. The booking records which cost category it belongs to, whether it bears interest,
-     * whether it is owed by all debtors jointly or by one alone, and which dunning case or
-     * enforcement measure caused it. Where the firm advanced the amount, a matching case account
-     * entry records the outlay.
-     *
-     * @param booking the cost to book
-     * @return the created ledger entry
-     * @throws Exception if the ledger does not exist, the user may not access its case, or the
-     * booking is incomplete
+     * Eine einstweilen eingestellte Maßnahme heisst: es geschieht nichts, und das hat einen Grund.
      */
-    ClaimLedgerEntry bookProceduralCost(ProceduralCostBooking booking) throws Exception;
+    @Test
+    public void aStayedMeasureIsShownAsResting() {
+        ClaimProcessStatusAssembler.Input in = input();
+        in.setMeasures(Arrays.asList(measure("Vollstreckungsauftrag", day(2026, 5, 4),
+                EnforcementMeasureOutcome.STAYED)));
 
-    /**
-     * Reverses a procedural cost booking.
-     *
-     * The original entry is kept and an adjustment of the opposite sign is booked against it, so
-     * that the history of the ledger stays complete and a reversal remains visible as such.
-     *
-     * @param entryId id of the ledger entry to reverse
-     * @param reason why the booking is reversed, recorded on the adjustment
-     * @return the created adjustment entry
-     * @throws Exception if the entry does not exist, the user may not access its case, or the entry
-     * has already been reversed
-     */
-    ClaimLedgerEntry reverseProceduralCost(String entryId, String reason) throws Exception;
+        assertTrue(new ClaimProcessStatusAssembler().assemble(in, TODAY)
+                .getDeviation().contains("ruht"));
+    }
 
-    /**
-     * Assembles a claim statement (Forderungsaufstellung) for a claim ledger to a key date.
-     *
-     * This operation only reads: it computes the statement and returns it, without storing anything
-     * in the case and without changing the ledger. Filing the statement as a document is a separate
-     * operation and requires write permission.
-     *
-     * The statement carries the parties, the titles, every position with the interest rule applied
-     * to it and the periods that interest was computed over, every booking in chronological order,
-     * and the resulting balance split into main claims, interest and costs, together with the
-     * interest that keeps running afterwards. Only bookings up to the key date are taken into
-     * account, so a statement to a past date reproduces what was owed then.
-     *
-     * Documents for the debtor and the itemisation annexed to an enforcement application are both
-     * rendered from this object, so they cannot state different amounts.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param keyDate the date to compute to; today if null
-     * @param includeSubLedgers whether the ledger's sub-ledgers are stated as well, each separately
-     * and with a combined total
-     * @return the assembled statement
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    ClaimStatement assembleClaimStatement(String ledgerId, Date keyDate, boolean includeSubLedgers) throws Exception;
-
-    /**
-     * Assembles a claim statement, renders it as a PDF and files it in the case.
-     *
-     * Unlike {@link #assembleClaimStatement(String, java.util.Date, boolean)} this operation
-     * changes the case: it stores a document and records on the ledger that a statement was
-     * produced, with its key date and the user who produced it, so it stays visible which figures
-     * were communicated and when.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param keyDate the date to compute to; today if null
-     * @param includeSubLedgers whether the sub-ledgers are stated as well
-     * @param fileName name of the document to create; a name derived from the key date is used if
-     * null or empty
-     * @return the stored document
-     * @throws Exception if the ledger does not exist, the user may not access its case, or the
-     * document cannot be created
-     */
-    ArchiveFileDocumentsBean storeClaimStatement(String ledgerId, Date keyDate,
-            boolean includeSubLedgers, String fileName) throws Exception;
-
-    /**
-     * Renders a claim statement as CSV, for creditors who process it further.
-     *
-     * @param statement the statement to render
-     * @return the statement as CSV, one row per position followed by one row per booking
-     * @throws Exception if the statement cannot be rendered
-     */
-    String exportClaimStatementAsCsv(ClaimStatement statement) throws Exception;
-
-    /**
-     * Returns the balance list (Saldenliste) over all claim ledgers of the cases the user may
-     * access, narrowed by the given filter.
-     *
-     * @param filter the criteria to apply; all ledgers of accessible cases if null
-     * @param keyDate the date to compute the open amounts to; today if null
-     * @return one row per matching ledger
-     * @throws Exception if the list cannot be assembled
-     */
-    List<ClaimLedgerSummary> getBalanceList(BalanceListFilter filter, Date keyDate) throws Exception;
-
-    /**
-     * Renders a balance list as CSV.
-     *
-     * @param rows the rows to render
-     * @return the balance list as CSV, including a sum row over the rendered rows
-     * @throws Exception if the list cannot be rendered
-     */
-    String exportBalanceListAsCsv(List<ClaimLedgerSummary> rows) throws Exception;
-
-    /**
-     * Returns the bookings a dunning case or enforcement measure caused.
-     *
-     * @param originReference the originating dunning case or enforcement measure
-     * @return the ledger entries created for it, empty if none exist
-     * @throws Exception if the user may not access the affected cases
-     */
-    List<ClaimLedgerEntry> getBookingsByOrigin(String originReference) throws Exception;
-
-
-    /**
-     * Returns the claim ledgers of a case.
-     *
-     * @param caseId id of the case
-     * @return the ledgers of that case, empty if the user may not access it
-     */
-    List<ClaimLedger> getClaimLedgers(String caseId);
-
-    /**
-     * Creates a claim ledger for a case.
-     *
-     * @param caseId id of the case
-     * @param ledger the ledger to create; its id is assigned by the server
-     * @return the stored ledger
-     * @throws Exception if the case does not exist or the user may not access it
-     */
-    ClaimLedger addClaimLedger(String caseId, ClaimLedger ledger) throws Exception;
-
-    /**
-     * Updates a claim ledger.
-     *
-     * @param caseId id of the case the ledger belongs to
-     * @param claimLedger the ledger to update
-     * @return the stored ledger
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    ClaimLedger updateClaimLedger(String caseId, ClaimLedger claimLedger) throws Exception;
-
-    /**
-     * Removes a claim ledger with everything booked on it.
-     *
-     * @param ledgerId id of the ledger
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    void removeClaimLedger(String ledgerId) throws Exception;
-
-    /**
-     * Returns the components (claims and cost positions) of a claim ledger.
-     *
-     * @param ledgerId id of the ledger
-     * @return the components of the ledger
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    List<ClaimComponent> getClaimComponents(String ledgerId) throws Exception;
-
-    /**
-     * Returns the bookings of a claim ledger, oldest first.
-     *
-     * @param ledgerId id of the ledger
-     * @return the bookings of the ledger
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    List<ClaimLedgerEntry> getClaimLedgerEntries(String ledgerId) throws Exception;
-
-    /**
-     * Adds a component to a claim ledger together with its interest rules.
-     *
-     * @param component the component to add
-     * @param interestRules the interest rules to apply to it, may be empty
-     * @param ledgerId id of the ledger
-     * @return the stored component
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    ClaimComponent addClaimComponent(ClaimComponent component, List<InterestRule> interestRules, String ledgerId) throws Exception;
-
-    /**
-     * Updates a component and replaces its interest rules.
-     *
-     * @param component the component to update
-     * @param interestRules the interest rules that from now on apply to it
-     * @return the stored component
-     * @throws Exception if the component does not exist or the user may not access its case
-     */
-    ClaimComponent updateClaimComponent(ClaimComponent component, List<InterestRule> interestRules) throws Exception;
-
-    /**
-     * Removes a component and everything booked on it.
-     *
-     * @param componentId id of the component
-     * @throws Exception if the component does not exist or the user may not access its case
-     */
-    void removeClaimComponent(String componentId) throws Exception;
-
-    /**
-     * Returns the interest rules of a component.
-     *
-     * @param componentId id of the component
-     * @return the interest rules, empty if the component bears no interest
-     * @throws Exception if the component does not exist or the user may not access its case
-     */
-    List<InterestRule> getClaimComponentInterestRules(String componentId) throws Exception;
-
-    /**
-     * Adds a booking to a claim ledger.
-     *
-     * An interest booking is not stored as a single entry: the interest is computed over the
-     * periods in which rate and principal stayed constant, and one entry is written per period, so
-     * that every interest amount stays traceable to the rate and the days it ran for.
-     *
-     * @param entry the booking to add
-     * @param ledgerId id of the ledger
-     * @return the entries that were created
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    List<ClaimLedgerEntry> addClaimLedgerEntry(ClaimLedgerEntry entry, String ledgerId) throws Exception;
-
-    /**
-     * Updates a booking of a claim ledger.
-     *
-     * @param entry the booking to update
-     * @return the stored booking
-     * @throws Exception if the booking does not exist or the user may not access its case
-     */
-    ClaimLedgerEntry updateClaimLedgerEntry(ClaimLedgerEntry entry) throws Exception;
-
-    /**
-     * Books a payment and distributes it over the positions of the ledger.
-     *
-     * @param proposal the payment and its distribution
-     * @return the entries that were created
-     * @throws Exception if the ledger does not exist, the user may not access its case, or the
-     * distribution does not add up to the payment
-     */
-    List<ClaimLedgerEntry> createPaymentSplit(PaymentSplitProposal proposal) throws Exception;
-
-    /**
-     * Removes a booking from a claim ledger.
-     *
-     * @param entryId id of the booking
-     * @throws Exception if the booking does not exist or the user may not access its case
-     */
-    void removeClaimLedgerEntry(String entryId) throws Exception;
-
-    /**
-     * Computes the totals of a claim ledger to a key date: main claims, costs, the interest accrued
-     * on each, the payments received, what each debtor owes and the interest that keeps running.
-     *
-     * @param ledgerId id of the ledger
-     * @param forDate the key date; today if null
-     * @return the totals of the ledger at that date
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    ClaimLedgerTotals calculateClaimLedgerTotals(String ledgerId, Date forDate) throws Exception;
-
-
-    /**
-     * Returns the reminder stages configured firm-wide, in their escalation order.
-     *
-     * @param activeOnly whether stages an administrator has deactivated are left out
-     * @return the configured stages
-     * @throws Exception if they cannot be read
-     */
-    List<DunningStage> getDunningStages(boolean activeOnly) throws Exception;
-
-    /**
-     * Creates a reminder stage.
-     *
-     * @param stage the stage to create; its id is assigned by the server
-     * @return the stored stage
-     * @throws Exception if the stage is incomplete
-     */
-    DunningStage addDunningStage(DunningStage stage) throws Exception;
-
-    /**
-     * Updates a reminder stage. Reminders already sent keep the wording and position they were sent
-     * with, so changing a stage does not rewrite the history of a claim.
-     *
-     * @param stage the stage to update
-     * @return the stored stage
-     * @throws Exception if the stage does not exist
-     */
-    DunningStage updateDunningStage(DunningStage stage) throws Exception;
-
-    /**
-     * Removes a reminder stage from the configuration. Reminders already sent are kept.
-     *
-     * @param stageId id of the stage
-     * @throws Exception if the stage does not exist
-     */
-    void removeDunningStage(String stageId) throws Exception;
-
-    /**
-     * Returns where a claim ledger stands in the reminder cycle: which reminders went out, whether
-     * the last one has run out, what would be sent next, and since when the debtor is in default.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param at the date to judge the payment period by; today if null
-     * @return the dunning status
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    DunningStatus getDunningStatus(String ledgerId, Date at) throws Exception;
-
-    /**
-     * Sends a reminder stage for a claim ledger.
-     *
-     * Generates the reminder document from the stage's template into the case, records the stage
-     * with the payment period it granted, creates a follow-up for that deadline and books the
-     * reminder charge into the ledger. Where the stage puts the debtor in default, the date is
-     * recorded, because default interest under § 288 BGB runs from it.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param stageId id of the stage to send
-     * @param sentDate the date the reminder goes out; today if null
-     * @param followUpLeadTimeDays how many days before the payment period ends the follow-up is due;
-     * zero or less makes it due on the deadline itself
-     * @return the recorded stage
-     * @throws Exception if the ledger or stage does not exist, the user may not access the case, or
-     * the document cannot be produced
-     */
-    DunningStageEvent sendDunningStage(String ledgerId, String stageId, Date sentDate,
-            int followUpLeadTimeDays) throws Exception;
-
-    /**
-     * Proposes the default interest of § 288 BGB for a claim, together with the lump sum of § 288
-     * Abs. 5 BGB where the creditor is entitled to it.
-     *
-     * The margin depends on whether the claim is a payment claim (Entgeltforderung) and whether a
-     * consumer is involved; both are taken from the ledger and remain a proposal the user may
-     * change.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param componentId id of the claim the interest is to run on
-     * @param defaultSince the date of default; taken from the reminder cycle if null
-     * @return the proposal
-     * @throws Exception if the ledger or component does not exist or the user may not access the
-     * case
-     */
-    DefaultInterestProposal proposeDefaultInterest(String ledgerId, String componentId,
-            Date defaultSince) throws Exception;
-
-
-    /**
-     * Books a payment and lets the ledger allocate it.
-     *
-     * The allocation follows the mode of the ledger and, in the legal one, §§ 366, 367 BGB: costs
-     * before interest before principal. It is done here rather than by the caller so that a payment
-     * booked without a screen in front of it - one made by a third-party debtor on an attachment,
-     * for instance - is allocated by the same rule as every other.
-     *
-     * @param ledgerId the ledger
-     * @param amount what was paid
-     * @param paidOn the day it was paid, or null for today
-     * @param description what the booking is called
-     * @return the bookings that were created, one per position the payment reached
-     * @throws Exception if the ledger does not exist, the amount is not positive, the payment
-     * exceeds what is owed, or the user may not access the case
-     */
-    List<ClaimLedgerEntry> bookPaymentAutomatically(String ledgerId, java.math.BigDecimal amount,
-            Date paidOn, String description) throws Exception;
-
-
-    /**
-     * Where the claim stands, as one glance: the stations it has passed and what is due next.
-     *
-     * Nothing in it is a state somebody sets. Every station follows from an event that left a trace
-     * of its own - a dunning letter that went out, an application the court has, a title, a measure
-     * - because a status field maintained by hand says what somebody last remembered to say, and
-     * that is what nobody can rely on when opening a file they have not touched in a year.
-     *
-     * Beside the stations it carries what has taken the matter off that line - an objection that
-     * sent it to the litigation court, an instalment agreement, the two years of § 802d ZPO - and
-     * the next deadline out of both procedures, overdue ones first. The stations say how far the
-     * matter has come; only the deadline says whether anybody has to do something.
-     *
-     * @param ledgerId the claim ledger
-     * @return its status; never null
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    ClaimProcessStatus getProcessStatus(String ledgerId) throws Exception;
-
+    @Test
+    public void nullInputDoesNotThrow() {
+        List<ClaimProcessStatus.Step> steps =
+                new ClaimProcessStatusAssembler().assemble(null, TODAY).getSteps();
+        assertTrue(steps.isEmpty());
+    }
 }

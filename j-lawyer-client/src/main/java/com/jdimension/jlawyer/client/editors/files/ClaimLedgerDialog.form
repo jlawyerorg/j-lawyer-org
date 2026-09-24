@@ -134,6 +134,7 @@
                       </Group>
                       <Component id="jScrollPane2" max="32767" attributes="0"/>
                       <Component id="txtName" max="32767" attributes="0"/>
+                      <Component id="pnlTimeline" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
@@ -153,6 +154,8 @@
                       <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
+                  <Component id="pnlTimeline" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Component id="cmdSelectDateTo" alignment="0" max="32767" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
@@ -169,6 +172,8 @@
         </DimensionLayout>
       </Layout>
       <SubComponents>
+        <Component class="com.jdimension.jlawyer.client.editors.files.ClaimProcessTimelinePanel" name="pnlTimeline">
+        </Component>
         <Component class="javax.swing.JLabel" name="jLabel1">
           <Properties>
             <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">

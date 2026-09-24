@@ -944,6 +944,29 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         }
     }
 
+    /**
+     * Zeigt im Kopf, wie weit die Sache gekommen ist.
+     *
+     * Abgeleitet wird der Stand auf dem Server aus dem, was erfasst ist - Mahnungen, Mahnsache,
+     * Titel, Maßnahmen. Scheitert das, bleibt die Leiste leer: ein falscher Stand im Kopf einer
+     * Akte ist schlimmer als gar keiner, denn er wird geglaubt.
+     */
+    private void updateTimeline(ClaimLedger ledger) {
+        if (ledger == null || ledger.getId() == null) {
+            this.pnlTimeline.setStatus(null);
+            return;
+        }
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            this.pnlTimeline.setStatus(JLawyerServiceLocator
+                    .getInstance(settings.getLookupProperties())
+                    .lookupClaimLedgerServiceRemote().getProcessStatus(ledger.getId()));
+        } catch (Exception ex) {
+            log.error("Unable to determine the process status of ledger " + ledger.getId(), ex);
+            this.pnlTimeline.setStatus(null);
+        }
+    }
+
     public final void setEntry(ClaimLedger ledger) {
 
         this.cmdSave.setEnabled(ledger != null && ledger.getId() != null);
@@ -959,6 +982,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         this.pnlCourtDunning.setLedger(this.caseDto, savedLedger);
         this.pnlEnforcement.setLedger(this.caseDto, savedLedger);
         this.pnlDeadlines.setLedger(this.caseDto, savedLedger);
+        updateTimeline(savedLedger);
 
         if (ledger == null) {
             this.setTitle("neues Forderungskonto erstellen");
@@ -1091,6 +1115,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         jLabel1 = new javax.swing.JLabel();
         txtName = new javax.swing.JTextField();
         jScrollPane2 = new javax.swing.JScrollPane();
+        pnlTimeline = new com.jdimension.jlawyer.client.editors.files.ClaimProcessTimelinePanel();
         taDescription = new javax.swing.JTextArea();
         jLabel4 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
@@ -1235,7 +1260,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                         .addComponent(cmdSelectDateTo)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(jScrollPane2)
-                    .addComponent(txtName))
+                    .addComponent(txtName)
+                    .addComponent(pnlTimeline, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         lblHeaderLayout.setVerticalGroup(
@@ -1249,6 +1275,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 .addGroup(lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel4))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(pnlTimeline, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(cmdSelectDateTo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -2389,6 +2417,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private com.jdimension.jlawyer.client.editors.files.ClaimLedgerDunningPanel pnlDunning;
     private com.jdimension.jlawyer.client.editors.files.ClaimLedgerTitlesPanel pnlTitles;
     private javax.swing.JPanel lblHeader;
+    private com.jdimension.jlawyer.client.editors.files.ClaimProcessTimelinePanel pnlTimeline;
     private javax.swing.JLabel lblOpenValue;
     private javax.swing.JLabel lblSumCost;
     private javax.swing.JLabel lblSumInterest;

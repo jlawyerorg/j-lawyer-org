@@ -806,6 +806,14 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
     private CalendarServiceLocal calendarService;
     @EJB
     private ArchiveFileGroupsBeanFacadeLocal caseGroupsFacade;
+    @EJB
+    private com.jdimension.jlawyer.persistence.DunningCaseFacadeLocal dunningCasesFacade;
+    @EJB
+    private com.jdimension.jlawyer.persistence.DunningCaseDeadlineFacadeLocal dunningDeadlinesFacade;
+    @EJB
+    private com.jdimension.jlawyer.persistence.EnforcementMeasureFacadeLocal enforcementMeasuresFacade;
+    @EJB
+    private com.jdimension.jlawyer.persistence.EnforcementMeasureDeadlineFacadeLocal enforcementDeadlinesFacade;
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
@@ -2996,6 +3004,59 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         }
 
         this.claimLedgerEntriesFacade.remove(currentEntry);
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public com.jdimension.jlawyer.pojo.ClaimProcessStatus getProcessStatus(String ledgerId)
+            throws Exception {
+
+        ClaimLedger ledger = this.claimLedgersFacade.find(ledgerId);
+        if (ledger == null) {
+            throw new Exception("Das Forderungskonto existiert nicht!");
+        }
+        SecurityUtils.checkGroupsForCase(
+                this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName()),
+                ledger.getArchiveFileKey(), this.caseGroupsFacade);
+
+        ClaimProcessStatusAssembler.Input input = new ClaimProcessStatusAssembler.Input();
+        input.setOpenAmount(calculateClaimLedgerTotals(ledgerId, new Date()).getOpenClaim());
+        input.setClaimDueSince(firstBookingOf(ledger));
+        input.setStageEvents(this.dunningStageEventsFacade.findByLedger(ledger));
+        input.setDunningCases(this.dunningCasesFacade.findByLedger(ledger));
+        input.setTitles(this.enforcementTitlesFacade.findByLedger(ledger));
+        input.setMeasures(this.enforcementMeasuresFacade.findByLedger(ledger));
+        input.setEnforcementDeadlines(this.enforcementDeadlinesFacade.findByLedger(ledger));
+
+        // Die Fristen des Mahnverfahrens haengen an der Mahnsache und nicht am Konto; es sind
+        // selten mehr als zwei Sachen, und die naechste Frist darf nicht davon abhaengen, in
+        // welcher von ihnen sie steht.
+        List<com.jdimension.jlawyer.persistence.DunningCaseDeadline> dunningDeadlines =
+                new ArrayList<>();
+        for (com.jdimension.jlawyer.persistence.DunningCase dunningCase : input.getDunningCases()) {
+            dunningDeadlines.addAll(this.dunningDeadlinesFacade.findByDunningCase(dunningCase));
+        }
+        input.setDunningDeadlines(dunningDeadlines);
+
+        return new ClaimProcessStatusAssembler().assemble(input, new Date());
+    }
+
+    /**
+     * When the claim was first recorded - the earliest booking of the ledger.
+     *
+     * The components themselves carry no date of their own; what a claim is owed since follows from
+     * its interest rules, and those answer a different question. For the timeline it is enough to
+     * say since when the matter exists.
+     */
+    private Date firstBookingOf(ClaimLedger ledger) {
+        Date earliest = null;
+        for (ClaimLedgerEntry entry : this.claimLedgerEntriesFacade.findByLedger(ledger)) {
+            if (entry.getEntryDate() != null
+                    && (earliest == null || entry.getEntryDate().before(earliest))) {
+                earliest = entry.getEntryDate();
+            }
+        }
+        return earliest;
     }
 
     @Override

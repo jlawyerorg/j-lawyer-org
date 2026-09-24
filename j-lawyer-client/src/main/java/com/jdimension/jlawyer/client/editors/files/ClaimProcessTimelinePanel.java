@@ -660,549 +660,249 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.client.editors.files;
 
-import com.jdimension.jlawyer.persistence.ClaimComponent;
-import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
-import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
-import com.jdimension.jlawyer.persistence.DunningStage;
-import com.jdimension.jlawyer.persistence.DunningStageEvent;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.ClaimLedger;
-import com.jdimension.jlawyer.persistence.PaymentSplitProposal;
-import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
 import com.jdimension.jlawyer.pojo.ClaimProcessStatus;
-import com.jdimension.jlawyer.persistence.EnforcementTitle;
-import com.jdimension.jlawyer.persistence.InterestRule;
-import com.jdimension.jlawyer.pojo.BalanceListFilter;
-import com.jdimension.jlawyer.pojo.ClaimLedgerSummary;
-import com.jdimension.jlawyer.pojo.ClaimStatement;
-import com.jdimension.jlawyer.pojo.DefaultInterestProposal;
-import com.jdimension.jlawyer.pojo.DunningStatus;
-import com.jdimension.jlawyer.pojo.ProceduralCostBooking;
-import java.math.BigDecimal;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
-import javax.ejb.Local;
+import javax.swing.JPanel;
+import javax.swing.UIManager;
+import themes.colors.DefaultColorTheme;
 
 /**
- * Operations on a claim ledger (Forderungskonto) that go beyond its bookings: the parties it runs
- * for and against, the enforcement titles it rests on, and the procedural costs that the dunning
- * and enforcement workflows book into it.
+ * The way of a claim from due to paid, as one strip at the top of the ledger.
+ *
+ * Drawn rather than assembled from labels, for one reason: what it has to show is the *relation*
+ * between the stations - how far along the matter is - and a row of components shows six pieces of
+ * text where a line shows one shape. It is read at a glance or it is not worth the space it takes.
+ *
+ * Three things are painted, and they answer three different questions. The stations say how far the
+ * matter has come. The line beneath says whether it is still on that path at all, because an
+ * objection has taken it to the litigation court and § 802d ZPO can make it wait two years - and a
+ * strip that showed only stations would claim an order the matter does not have. The last line says
+ * what is due next, which the other two never say: a matter can stand at "Vollstreckung" for two
+ * years with nothing to do, and one at "Gemahnt" can be a week from limitation.
  *
  * @author jens
  */
-@Local
-public interface ClaimLedgerServiceLocal {
+public class ClaimProcessTimelinePanel extends JPanel {
+
+    private static final SimpleDateFormat DAY = new SimpleDateFormat("dd.MM.yy");
+    private static final SimpleDateFormat FULL_DAY = new SimpleDateFormat("dd.MM.yyyy");
+
+    private static final int DOT = 11;
+    private static final int TOP = 14;
+    private static final int SIDE = 8;
+
+    /** Abstand zwischen Punktreihe und erster Textzeile. */
+    private static final int GAP = 6;
+
+    private static final Color REACHED = DefaultColorTheme.COLOR_LOGO_GREEN;
+    // Heller als es zunaechst aussieht: auf dem dunkelgrauen Kopf war das erste Grau kaum vom
+    // Hintergrund zu unterscheiden - und was noch aussteht, muss lesbar sein, sonst zeigt die
+    // Leiste nur die halbe Strecke.
+    private static final Color PENDING = new Color(190, 190, 190);
+    private static final Color CURRENT = Color.WHITE;
+    private static final Color OVERDUE = new Color(235, 130, 100);
+
+    private ClaimProcessStatus status = null;
 
     /**
-     * Returns the creditors and debtors of a claim ledger, ordered by role and sequence number.
-     *
-     * @param ledgerId id of the claim ledger
-     * @return the parties of the ledger, empty if none are recorded yet
-     * @throws Exception if the ledger does not exist or the user may not access its case
+     * Creates the strip.
      */
-    List<ClaimLedgerParty> getParties(String ledgerId) throws Exception;
+    public ClaimProcessTimelinePanel() {
+        setOpaque(false);
+    }
 
     /**
-     * Adds a creditor or debtor to a claim ledger.
+     * How tall the strip has to be, worked out from the font it will be drawn in.
      *
-     * The party is identified by the address book contact it references; deleting that contact
-     * later does not delete the party. Where the party is also a party of the case, the case party
-     * record may be referenced as well, but it does not determine who the ledger runs against.
+     * Not a number: four lines of text sit under the dots, and with a larger font a fixed height
+     * cuts the last of them off - which is the line saying what is due next, the one thing here
+     * that anybody has to act on.
      *
-     * @param ledgerId id of the claim ledger
-     * @param party the party to add; its id is assigned by the server
-     * @return the stored party
-     * @throws Exception if the ledger does not exist or the user may not access its case
+     * @return the preferred size
      */
-    ClaimLedgerParty addParty(String ledgerId, ClaimLedgerParty party) throws Exception;
+    @Override
+    public Dimension getPreferredSize() {
+        return new Dimension(600, TOP + DOT / 2 + GAP + 4 * lineHeight() + GAP);
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+        return new Dimension(200, getPreferredSize().height);
+    }
 
     /**
-     * Updates a party of a claim ledger.
-     *
-     * The designation and address snapshot taken for use towards a court is not changed by this
-     * operation: once a party has been named in a dunning application or a title, that wording has
-     * to stay reproducible.
-     *
-     * @param party the party to update
-     * @return the stored party
-     * @throws Exception if the party does not exist or the user may not access its case
+     * One line of the small font this strip writes in.
      */
-    ClaimLedgerParty updateParty(ClaimLedgerParty party) throws Exception;
+    private int lineHeight() {
+        Font base = getFont() == null ? UIManager.getFont("Label.font") : getFont();
+        if (base == null) {
+            return 15;
+        }
+        return getFontMetrics(base.deriveFont(base.getSize2D() - 1f)).getHeight();
+    }
 
     /**
-     * Removes a party from a claim ledger.
+     * Shows a status.
      *
-     * @param partyId id of the party
-     * @throws Exception if the party does not exist, the user may not access its case, or bookings
-     * are attributed to that party alone
+     * @param status what to show, or null to show nothing
      */
-    void removeParty(String partyId) throws Exception;
+    public void setStatus(ClaimProcessStatus status) {
+        this.status = status;
+        setToolTipText(tooltip());
+        repaint();
+    }
 
     /**
-     * Freezes the designation and postal address of a party as they are to be used towards a court.
-     *
-     * Called when a party is first named in a dunning application, a title or an enforcement
-     * document. A snapshot that already exists is kept, so an application filed earlier stays
-     * reproducible; later corrections to the contact reach current work but not the history.
-     *
-     * @param partyId id of the party
-     * @return the party including its snapshot
-     * @throws Exception if the party does not exist or the user may not access its case
+     * The whole story in words, for those who need more than the shape - and for anyone who cannot
+     * read a strip of dots at all.
      */
-    ClaimLedgerParty freezePartyDesignation(String partyId) throws Exception;
+    private String tooltip() {
+        if (this.status == null) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder("<html>");
+        for (ClaimProcessStatus.Step step : this.status.getSteps()) {
+            sb.append(step.isReached() ? "&#9679; " : "&#9675; ")
+                    .append(step.getStage() == null ? "" : step.getStage().getLabel());
+            if (step.getReachedOn() != null) {
+                sb.append(" (").append(FULL_DAY.format(step.getReachedOn())).append(")");
+            }
+            if (step.getDetail() != null && !step.getDetail().isEmpty()) {
+                sb.append(" - ").append(step.getDetail());
+            }
+            sb.append("<br/>");
+        }
+        return sb.append("</html>").toString();
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (this.status == null || this.status.getSteps().isEmpty()) {
+            return;
+        }
+
+        Graphics2D g2 = (Graphics2D) g.create();
+        try {
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                    RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+            int count = this.status.getSteps().size();
+            Font base = getFont() == null ? g2.getFont() : getFont();
+            Font small = base.deriveFont(base.getSize2D() - 1f);
+            Font bold = small.deriveFont(Font.BOLD);
+
+            int usable = getWidth() - 2 * SIDE;
+            int step = count < 2 ? usable : usable / (count - 1);
+            int y = TOP;
+
+            // Die Zeilen folgen der Schrift und nicht einer Zahl: zwölf Pixel waren bei dieser
+            // Schriftgröße kein Abstand, sondern ein Aufeinanderliegen.
+            java.awt.FontMetrics metrics = g2.getFontMetrics(small);
+            int line = metrics.getHeight();
+            int labelBaseline = y + DOT / 2 + GAP + metrics.getAscent();
+
+            // Zuerst die Linie, damit die Punkte darauf liegen und nicht daneben. Der erreichte
+            // Teil ist durchgezogen, der kommende blass - das ist die eigentliche Aussage.
+            int lastReached = -1;
+            for (int i = 0; i < count; i++) {
+                if (this.status.getSteps().get(i).isReached()) {
+                    lastReached = i;
+                }
+            }
+            g2.setStroke(new java.awt.BasicStroke(2f));
+            if (lastReached > 0) {
+                g2.setColor(REACHED);
+                g2.drawLine(SIDE, y, SIDE + lastReached * step, y);
+            }
+            if (lastReached < count - 1) {
+                g2.setColor(PENDING);
+                g2.drawLine(SIDE + Math.max(0, lastReached) * step, y, SIDE + (count - 1) * step, y);
+            }
+
+            for (int i = 0; i < count; i++) {
+                ClaimProcessStatus.Step s = this.status.getSteps().get(i);
+                int x = SIDE + i * step;
+                boolean current = this.status.getCurrentStage() != null
+                        && this.status.getCurrentStage() == s.getStage();
+
+                g2.setColor(s.isReached() ? REACHED : PENDING);
+                if (s.isReached()) {
+                    g2.fillOval(x - DOT / 2, y - DOT / 2, DOT, DOT);
+                } else {
+                    g2.drawOval(x - DOT / 2, y - DOT / 2, DOT, DOT);
+                }
+                if (current) {
+                    // Der Ring sagt "hier steht die Sache" - ohne ihn sähe man nur, wie weit sie
+                    // gekommen ist, nicht, wo sie wartet.
+                    g2.setColor(CURRENT);
+                    g2.drawOval(x - DOT / 2 - 3, y - DOT / 2 - 3, DOT + 6, DOT + 6);
+                }
+
+                g2.setFont(current ? bold : small);
+                g2.setColor(s.isReached() ? CURRENT : PENDING);
+                String label = s.getStage() == null ? "" : s.getStage().getLabel();
+                drawCentered(g2, label, x, labelBaseline, i, count, usable);
+
+                if (s.getReachedOn() != null) {
+                    g2.setFont(small);
+                    g2.setColor(s.isReached() ? REACHED : PENDING);
+                    drawCentered(g2, DAY.format(s.getReachedOn()), x, labelBaseline + line,
+                            i, count, usable);
+                }
+            }
+
+            int textY = labelBaseline + 2 * line;
+            g2.setFont(small);
+            if (this.status.getDeviation() != null) {
+                g2.setColor(OVERDUE);
+                g2.drawString(this.status.getDeviation(), SIDE, textY);
+            } else if (this.status.getCurrentDescription() != null) {
+                g2.setColor(CURRENT);
+                g2.drawString(this.status.getCurrentDescription(), SIDE, textY);
+            }
+
+            if (this.status.getNextDeadline() != null) {
+                boolean overdue = this.status.getNextDeadline().before(new Date());
+                g2.setColor(overdue ? OVERDUE : PENDING);
+                g2.drawString((overdue ? "überfällig seit " : "nächste Frist: ")
+                        + FULL_DAY.format(this.status.getNextDeadline())
+                        + (this.status.getNextDeadlineLabel() == null
+                                ? "" : " - " + this.status.getNextDeadlineLabel()),
+                        SIDE, textY + line);
+            }
+        } finally {
+            g2.dispose();
+        }
+    }
 
     /**
-     * Returns the enforcement titles recorded for a claim ledger, oldest first.
+     * Writes a caption under its dot, kept inside the strip at both ends.
      *
-     * @param ledgerId id of the claim ledger
-     * @return the titles of the ledger, empty if none are recorded
-     * @throws Exception if the ledger does not exist or the user may not access its case
+     * The first and last caption would otherwise hang over the edge and be cut off - and the last
+     * one is "Erledigt", which is the one nobody may be left guessing about.
      */
-    List<EnforcementTitle> getTitles(String ledgerId) throws Exception;
+    private void drawCentered(Graphics2D g2, String text, int x, int y, int index, int count,
+            int usable) {
 
-    /**
-     * Records an enforcement title for a claim ledger.
-     *
-     * The limitation date under § 197 Abs. 1 Nr. 3 BGB is computed from the date of issue, and a
-     * follow-up is created on the case ahead of it, so that a title does not lapse unnoticed over
-     * the thirty years it stays enforceable.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param title the title to record; its id is assigned by the server
-     * @param followUpLeadTimeDays how many days before the limitation date the follow-up is due; a
-     * value of zero or less suppresses the follow-up
-     * @return the stored title including its computed limitation date
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    EnforcementTitle addTitle(String ledgerId, EnforcementTitle title, int followUpLeadTimeDays) throws Exception;
-
-    /**
-     * Updates an enforcement title.
-     *
-     * The limitation date is recomputed from the date of issue and the follow-up guarding it is
-     * moved accordingly. A follow-up already marked as done is left untouched and reported to the
-     * caller rather than silently reopened.
-     *
-     * @param title the title to update
-     * @param followUpLeadTimeDays how many days before the limitation date the follow-up is due
-     * @return the stored title
-     * @throws Exception if the title does not exist or the user may not access its case
-     */
-    EnforcementTitle updateTitle(EnforcementTitle title, int followUpLeadTimeDays) throws Exception;
-
-    /**
-     * Removes an enforcement title and the follow-up created for its limitation date.
-     *
-     * @param titleId id of the title
-     * @throws Exception if the title does not exist or the user may not access its case
-     */
-    void removeTitle(String titleId) throws Exception;
-
-    /**
-     * Converts costs that do not bear interest into assessed costs that do.
-     *
-     * After a cost assessment order the assessed amount bears interest under § 104 Abs. 1 S. 2 ZPO.
-     * The operation reduces or removes the original positions, creates one assessed-cost component
-     * carrying the given interest rule, and records the conversion in the ledger history, so the
-     * amount is not claimed twice.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param componentIds ids of the cost components to convert
-     * @param assessedAmount the amount the court assessed, which may be lower than the sum of the
-     * original positions
-     * @param interestRule the interest rule to apply to the assessed costs, with its effective date
-     * @param description designation of the resulting component
-     * @return the created assessed-cost component
-     * @throws Exception if the ledger or a component does not exist, the user may not access the
-     * case, or the assessed amount exceeds the positions being converted
-     */
-    ClaimComponent convertToAssessedCosts(String ledgerId, List<String> componentIds,
-            BigDecimal assessedAmount, InterestRule interestRule, String description) throws Exception;
-
-    /**
-     * Books a procedural fee or disbursement into a claim ledger.
-     *
-     * This is the single path by which the dunning and enforcement workflows put money into a
-     * ledger. The booking records which cost category it belongs to, whether it bears interest,
-     * whether it is owed by all debtors jointly or by one alone, and which dunning case or
-     * enforcement measure caused it. Where the firm advanced the amount, a matching case account
-     * entry records the outlay.
-     *
-     * @param booking the cost to book
-     * @return the created ledger entry
-     * @throws Exception if the ledger does not exist, the user may not access its case, or the
-     * booking is incomplete
-     */
-    ClaimLedgerEntry bookProceduralCost(ProceduralCostBooking booking) throws Exception;
-
-    /**
-     * Reverses a procedural cost booking.
-     *
-     * The original entry is kept and an adjustment of the opposite sign is booked against it, so
-     * that the history of the ledger stays complete and a reversal remains visible as such.
-     *
-     * @param entryId id of the ledger entry to reverse
-     * @param reason why the booking is reversed, recorded on the adjustment
-     * @return the created adjustment entry
-     * @throws Exception if the entry does not exist, the user may not access its case, or the entry
-     * has already been reversed
-     */
-    ClaimLedgerEntry reverseProceduralCost(String entryId, String reason) throws Exception;
-
-    /**
-     * Assembles a claim statement (Forderungsaufstellung) for a claim ledger to a key date.
-     *
-     * This operation only reads: it computes the statement and returns it, without storing anything
-     * in the case and without changing the ledger. Filing the statement as a document is a separate
-     * operation and requires write permission.
-     *
-     * The statement carries the parties, the titles, every position with the interest rule applied
-     * to it and the periods that interest was computed over, every booking in chronological order,
-     * and the resulting balance split into main claims, interest and costs, together with the
-     * interest that keeps running afterwards. Only bookings up to the key date are taken into
-     * account, so a statement to a past date reproduces what was owed then.
-     *
-     * Documents for the debtor and the itemisation annexed to an enforcement application are both
-     * rendered from this object, so they cannot state different amounts.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param keyDate the date to compute to; today if null
-     * @param includeSubLedgers whether the ledger's sub-ledgers are stated as well, each separately
-     * and with a combined total
-     * @return the assembled statement
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    ClaimStatement assembleClaimStatement(String ledgerId, Date keyDate, boolean includeSubLedgers) throws Exception;
-
-    /**
-     * Assembles a claim statement, renders it as a PDF and files it in the case.
-     *
-     * Unlike {@link #assembleClaimStatement(String, java.util.Date, boolean)} this operation
-     * changes the case: it stores a document and records on the ledger that a statement was
-     * produced, with its key date and the user who produced it, so it stays visible which figures
-     * were communicated and when.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param keyDate the date to compute to; today if null
-     * @param includeSubLedgers whether the sub-ledgers are stated as well
-     * @param fileName name of the document to create; a name derived from the key date is used if
-     * null or empty
-     * @return the stored document
-     * @throws Exception if the ledger does not exist, the user may not access its case, or the
-     * document cannot be created
-     */
-    ArchiveFileDocumentsBean storeClaimStatement(String ledgerId, Date keyDate,
-            boolean includeSubLedgers, String fileName) throws Exception;
-
-    /**
-     * Renders a claim statement as CSV, for creditors who process it further.
-     *
-     * @param statement the statement to render
-     * @return the statement as CSV, one row per position followed by one row per booking
-     * @throws Exception if the statement cannot be rendered
-     */
-    String exportClaimStatementAsCsv(ClaimStatement statement) throws Exception;
-
-    /**
-     * Returns the balance list (Saldenliste) over all claim ledgers of the cases the user may
-     * access, narrowed by the given filter.
-     *
-     * @param filter the criteria to apply; all ledgers of accessible cases if null
-     * @param keyDate the date to compute the open amounts to; today if null
-     * @return one row per matching ledger
-     * @throws Exception if the list cannot be assembled
-     */
-    List<ClaimLedgerSummary> getBalanceList(BalanceListFilter filter, Date keyDate) throws Exception;
-
-    /**
-     * Renders a balance list as CSV.
-     *
-     * @param rows the rows to render
-     * @return the balance list as CSV, including a sum row over the rendered rows
-     * @throws Exception if the list cannot be rendered
-     */
-    String exportBalanceListAsCsv(List<ClaimLedgerSummary> rows) throws Exception;
-
-    /**
-     * Returns the bookings a dunning case or enforcement measure caused.
-     *
-     * @param originReference the originating dunning case or enforcement measure
-     * @return the ledger entries created for it, empty if none exist
-     * @throws Exception if the user may not access the affected cases
-     */
-    List<ClaimLedgerEntry> getBookingsByOrigin(String originReference) throws Exception;
-
-
-    /**
-     * Returns the claim ledgers of a case.
-     *
-     * @param caseId id of the case
-     * @return the ledgers of that case, empty if the user may not access it
-     */
-    List<ClaimLedger> getClaimLedgers(String caseId);
-
-    /**
-     * Creates a claim ledger for a case.
-     *
-     * @param caseId id of the case
-     * @param ledger the ledger to create; its id is assigned by the server
-     * @return the stored ledger
-     * @throws Exception if the case does not exist or the user may not access it
-     */
-    ClaimLedger addClaimLedger(String caseId, ClaimLedger ledger) throws Exception;
-
-    /**
-     * Updates a claim ledger.
-     *
-     * @param caseId id of the case the ledger belongs to
-     * @param claimLedger the ledger to update
-     * @return the stored ledger
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    ClaimLedger updateClaimLedger(String caseId, ClaimLedger claimLedger) throws Exception;
-
-    /**
-     * Removes a claim ledger with everything booked on it.
-     *
-     * @param ledgerId id of the ledger
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    void removeClaimLedger(String ledgerId) throws Exception;
-
-    /**
-     * Returns the components (claims and cost positions) of a claim ledger.
-     *
-     * @param ledgerId id of the ledger
-     * @return the components of the ledger
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    List<ClaimComponent> getClaimComponents(String ledgerId) throws Exception;
-
-    /**
-     * Returns the bookings of a claim ledger, oldest first.
-     *
-     * @param ledgerId id of the ledger
-     * @return the bookings of the ledger
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    List<ClaimLedgerEntry> getClaimLedgerEntries(String ledgerId) throws Exception;
-
-    /**
-     * Adds a component to a claim ledger together with its interest rules.
-     *
-     * @param component the component to add
-     * @param interestRules the interest rules to apply to it, may be empty
-     * @param ledgerId id of the ledger
-     * @return the stored component
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    ClaimComponent addClaimComponent(ClaimComponent component, List<InterestRule> interestRules, String ledgerId) throws Exception;
-
-    /**
-     * Updates a component and replaces its interest rules.
-     *
-     * @param component the component to update
-     * @param interestRules the interest rules that from now on apply to it
-     * @return the stored component
-     * @throws Exception if the component does not exist or the user may not access its case
-     */
-    ClaimComponent updateClaimComponent(ClaimComponent component, List<InterestRule> interestRules) throws Exception;
-
-    /**
-     * Removes a component and everything booked on it.
-     *
-     * @param componentId id of the component
-     * @throws Exception if the component does not exist or the user may not access its case
-     */
-    void removeClaimComponent(String componentId) throws Exception;
-
-    /**
-     * Returns the interest rules of a component.
-     *
-     * @param componentId id of the component
-     * @return the interest rules, empty if the component bears no interest
-     * @throws Exception if the component does not exist or the user may not access its case
-     */
-    List<InterestRule> getClaimComponentInterestRules(String componentId) throws Exception;
-
-    /**
-     * Adds a booking to a claim ledger.
-     *
-     * An interest booking is not stored as a single entry: the interest is computed over the
-     * periods in which rate and principal stayed constant, and one entry is written per period, so
-     * that every interest amount stays traceable to the rate and the days it ran for.
-     *
-     * @param entry the booking to add
-     * @param ledgerId id of the ledger
-     * @return the entries that were created
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    List<ClaimLedgerEntry> addClaimLedgerEntry(ClaimLedgerEntry entry, String ledgerId) throws Exception;
-
-    /**
-     * Updates a booking of a claim ledger.
-     *
-     * @param entry the booking to update
-     * @return the stored booking
-     * @throws Exception if the booking does not exist or the user may not access its case
-     */
-    ClaimLedgerEntry updateClaimLedgerEntry(ClaimLedgerEntry entry) throws Exception;
-
-    /**
-     * Books a payment and distributes it over the positions of the ledger.
-     *
-     * @param proposal the payment and its distribution
-     * @return the entries that were created
-     * @throws Exception if the ledger does not exist, the user may not access its case, or the
-     * distribution does not add up to the payment
-     */
-    List<ClaimLedgerEntry> createPaymentSplit(PaymentSplitProposal proposal) throws Exception;
-
-    /**
-     * Removes a booking from a claim ledger.
-     *
-     * @param entryId id of the booking
-     * @throws Exception if the booking does not exist or the user may not access its case
-     */
-    void removeClaimLedgerEntry(String entryId) throws Exception;
-
-    /**
-     * Computes the totals of a claim ledger to a key date: main claims, costs, the interest accrued
-     * on each, the payments received, what each debtor owes and the interest that keeps running.
-     *
-     * @param ledgerId id of the ledger
-     * @param forDate the key date; today if null
-     * @return the totals of the ledger at that date
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    ClaimLedgerTotals calculateClaimLedgerTotals(String ledgerId, Date forDate) throws Exception;
-
-
-    /**
-     * Returns the reminder stages configured firm-wide, in their escalation order.
-     *
-     * @param activeOnly whether stages an administrator has deactivated are left out
-     * @return the configured stages
-     * @throws Exception if they cannot be read
-     */
-    List<DunningStage> getDunningStages(boolean activeOnly) throws Exception;
-
-    /**
-     * Creates a reminder stage.
-     *
-     * @param stage the stage to create; its id is assigned by the server
-     * @return the stored stage
-     * @throws Exception if the stage is incomplete
-     */
-    DunningStage addDunningStage(DunningStage stage) throws Exception;
-
-    /**
-     * Updates a reminder stage. Reminders already sent keep the wording and position they were sent
-     * with, so changing a stage does not rewrite the history of a claim.
-     *
-     * @param stage the stage to update
-     * @return the stored stage
-     * @throws Exception if the stage does not exist
-     */
-    DunningStage updateDunningStage(DunningStage stage) throws Exception;
-
-    /**
-     * Removes a reminder stage from the configuration. Reminders already sent are kept.
-     *
-     * @param stageId id of the stage
-     * @throws Exception if the stage does not exist
-     */
-    void removeDunningStage(String stageId) throws Exception;
-
-    /**
-     * Returns where a claim ledger stands in the reminder cycle: which reminders went out, whether
-     * the last one has run out, what would be sent next, and since when the debtor is in default.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param at the date to judge the payment period by; today if null
-     * @return the dunning status
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    DunningStatus getDunningStatus(String ledgerId, Date at) throws Exception;
-
-    /**
-     * Sends a reminder stage for a claim ledger.
-     *
-     * Generates the reminder document from the stage's template into the case, records the stage
-     * with the payment period it granted, creates a follow-up for that deadline and books the
-     * reminder charge into the ledger. Where the stage puts the debtor in default, the date is
-     * recorded, because default interest under § 288 BGB runs from it.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param stageId id of the stage to send
-     * @param sentDate the date the reminder goes out; today if null
-     * @param followUpLeadTimeDays how many days before the payment period ends the follow-up is due;
-     * zero or less makes it due on the deadline itself
-     * @return the recorded stage
-     * @throws Exception if the ledger or stage does not exist, the user may not access the case, or
-     * the document cannot be produced
-     */
-    DunningStageEvent sendDunningStage(String ledgerId, String stageId, Date sentDate,
-            int followUpLeadTimeDays) throws Exception;
-
-    /**
-     * Proposes the default interest of § 288 BGB for a claim, together with the lump sum of § 288
-     * Abs. 5 BGB where the creditor is entitled to it.
-     *
-     * The margin depends on whether the claim is a payment claim (Entgeltforderung) and whether a
-     * consumer is involved; both are taken from the ledger and remain a proposal the user may
-     * change.
-     *
-     * @param ledgerId id of the claim ledger
-     * @param componentId id of the claim the interest is to run on
-     * @param defaultSince the date of default; taken from the reminder cycle if null
-     * @return the proposal
-     * @throws Exception if the ledger or component does not exist or the user may not access the
-     * case
-     */
-    DefaultInterestProposal proposeDefaultInterest(String ledgerId, String componentId,
-            Date defaultSince) throws Exception;
-
-
-    /**
-     * Books a payment and lets the ledger allocate it.
-     *
-     * The allocation follows the mode of the ledger and, in the legal one, §§ 366, 367 BGB: costs
-     * before interest before principal. It is done here rather than by the caller so that a payment
-     * booked without a screen in front of it - one made by a third-party debtor on an attachment,
-     * for instance - is allocated by the same rule as every other.
-     *
-     * @param ledgerId the ledger
-     * @param amount what was paid
-     * @param paidOn the day it was paid, or null for today
-     * @param description what the booking is called
-     * @return the bookings that were created, one per position the payment reached
-     * @throws Exception if the ledger does not exist, the amount is not positive, the payment
-     * exceeds what is owed, or the user may not access the case
-     */
-    List<ClaimLedgerEntry> bookPaymentAutomatically(String ledgerId, java.math.BigDecimal amount,
-            Date paidOn, String description) throws Exception;
-
-
-    /**
-     * Where the claim stands, as one glance: the stations it has passed and what is due next.
-     *
-     * Nothing in it is a state somebody sets. Every station follows from an event that left a trace
-     * of its own - a dunning letter that went out, an application the court has, a title, a measure
-     * - because a status field maintained by hand says what somebody last remembered to say, and
-     * that is what nobody can rely on when opening a file they have not touched in a year.
-     *
-     * Beside the stations it carries what has taken the matter off that line - an objection that
-     * sent it to the litigation court, an instalment agreement, the two years of § 802d ZPO - and
-     * the next deadline out of both procedures, overdue ones first. The stations say how far the
-     * matter has come; only the deadline says whether anybody has to do something.
-     *
-     * @param ledgerId the claim ledger
-     * @return its status; never null
-     * @throws Exception if the ledger does not exist or the user may not access its case
-     */
-    ClaimProcessStatus getProcessStatus(String ledgerId) throws Exception;
-
+        int width = g2.getFontMetrics().stringWidth(text);
+        int left = x - width / 2;
+        if (index == 0) {
+            left = Math.max(SIDE, left);
+        }
+        if (index == count - 1) {
+            left = Math.min(SIDE + usable - width, left);
+        }
+        g2.drawString(text, left, y);
+    }
 }

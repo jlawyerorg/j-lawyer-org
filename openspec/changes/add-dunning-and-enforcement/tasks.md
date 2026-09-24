@@ -1049,6 +1049,37 @@
       And the grey button now says why it is grey, in the hint below: for a Vollstreckungsandrohung
       or an inquiry the ZVFV prescribes no form, and a button that refuses without a reason is the
       same puzzle as an empty list.
+- [x] 4.11 Process timeline in the head of the ledger (Mahnung - Mahnverfahren - Zwangsvollstreckung
+      as one strip). Asked for because the question somebody has when opening a ledger is not what it
+      contains but how far it has come, and answering it meant opening four tabs.
+      Six stations, and the cut is not arbitrary - each marks a change in the legal position rather
+      than another letter: **Offen** (recorded), **Gemahnt** (default, so interest and costs are
+      recoverable), **Mahnbescheid** (at the court, limitation suspended, § 204 Abs. 1 Nr. 3 BGB),
+      **Tituliert** (thirty years, § 197 Abs. 1 Nr. 3 BGB - the most valuable step of all),
+      **Vollstreckung**, **Erledigt**.
+      Nothing in it is a state somebody sets. `ClaimProcessStatusAssembler` derives every station
+      from an event that left a trace of its own - a dunning letter that went out, an application
+      the court has, a title, a measure - because a status field kept by hand says what somebody
+      last remembered to say, which is exactly what nobody can rely on when opening a file they have
+      not touched in a year. It closes backwards, too: a title proves the matter was dunned even if
+      nobody recorded the letter, and a line that shows the fourth station reached and the second
+      not would argue with itself.
+      *The deviations are the point of it.* A strip of six stations would claim an order the matter
+      does not have: an objection has taken it to the litigation court (§ 696 Abs. 1 ZPO - it
+      continues only on application), an instalment agreement has stopped it, and § 802d ZPO can
+      make it wait two years. Those are painted beside the stations, and the § 802d wait stops being
+      a deviation the day it expires - from then on it is an opportunity and says so as the next
+      deadline.
+      *And a third line, which the stations never answer:* what is due next, out of both procedures,
+      overdue first. A matter can stand at "Vollstreckung" for two years with nothing to do, and one
+      at "Gemahnt" can be a week from limitation.
+      `ClaimProcessTimelinePanel` paints it rather than assembling labels: what it has to show is
+      the *relation* between the stations, and six pieces of text do not show a shape. Rendered
+      against the dark head to check it - the first grey for what is still ahead was barely
+      distinguishable from the background, which would have shown only half the distance.
+      Fifteen tests, four mutations killed: a later station no longer implying the earlier ones, the
+      first dunning procedure describing the ledger instead of the furthest, an expired § 802d wait
+      still counting as a deviation, and closed deadlines being proposed as the next one.
 - [ ] 4.10 Tests: form field mapping per annex incl. check-box on-states, itemisation vs. statement
       equality, cost bookings, follow-up lifecycle
 
