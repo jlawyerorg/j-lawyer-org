@@ -710,6 +710,7 @@ import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.InstantMessageDeletedEvent;
 import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
+import com.jdimension.jlawyer.client.events.PartyAddedEvent;
 import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
 import com.jdimension.jlawyer.client.launcher.CaseDocumentStore;
@@ -1218,6 +1219,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         b.subscribeConsumer(this, Event.TYPE_DOCUMENTADDED);
         b.subscribeConsumer(this, Event.TYPE_DOCUMENTREMOVED);
         b.subscribeConsumer(this, Event.TYPE_DOCUMENTUPDATED);
+        b.subscribeConsumer(this, Event.TYPE_PARTYADDED);
         b.subscribeConsumer(this, Event.TYPE_REVIEWADDED);
         b.subscribeConsumer(this, Event.TYPE_REVIEWUPDATED);
         b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_MESSAGEDELETED);
@@ -6126,6 +6128,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             return;
         }
 
+        this.addPartyEntry(contact, afab, allPartyTypes);
+    }
+
+    /**
+     * Shows an already stored party in the party list of the open case, without storing anything.
+     *
+     * @param contact the contact of the party
+     * @param afab the stored involvement
+     * @param allPartyTypes all party types, as offered by the entry's party type selection
+     */
+    private void addPartyEntry(AddressBean contact, ArchiveFileAddressesBean afab, List<PartyTypeBean> allPartyTypes) {
         InvolvedPartyEntryPanel ipep = new InvolvedPartyEntryPanel(dto, this, this.pnlInvolvedParties, this.getClass().getName(), BeaAccess.isBeaEnabled(), allPartyTypes);
         ipep.setEntry(contact, afab, false);
         ipep.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -6140,6 +6153,25 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ipep.repaint();
         ipep.doLayout();
         this.pnlInvolvedParties.doLayout();
+    }
+
+    /**
+     * @param involvement a stored involvement
+     * @return true if the party list of the open case already shows this involvement
+     */
+    private boolean isPartyShown(ArchiveFileAddressesBean involvement) {
+        if (involvement.getId() == null) {
+            return false;
+        }
+        for (Component c : this.pnlInvolvedParties.getComponents()) {
+            if (c instanceof InvolvedPartyEntryPanel) {
+                ArchiveFileAddressesBean shown = ((InvolvedPartyEntryPanel) c).getInvolvement();
+                if (shown != null && involvement.getId().equals(shown.getId())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -10304,6 +10336,21 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         if (eventDoc.getId().equals(lastPreviewDocId)) {
                             updateDocumentPreview(true);
                         }
+                    }
+                }
+            }
+        } else if (e instanceof PartyAddedEvent) {
+            if (this.dto != null && this.dto.getId() != null) {
+                ArchiveFileAddressesBean involvement = ((PartyAddedEvent) e).getInvolvement();
+                if (involvement != null && involvement.getArchiveFileKey() != null && this.dto.getId().equals(involvement.getArchiveFileKey().getId()) && !this.isPartyShown(involvement)) {
+                    try {
+                        ClientSettings settings = ClientSettings.getInstance();
+                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                        List<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+                        involvement.setArchiveFileKey(dto);
+                        this.addPartyEntry(((PartyAddedEvent) e).getContact(), involvement, allPartyTypes);
+                    } catch (Exception ex) {
+                        log.error("Error showing party added to case " + this.dto.getId(), ex);
                     }
                 }
             }

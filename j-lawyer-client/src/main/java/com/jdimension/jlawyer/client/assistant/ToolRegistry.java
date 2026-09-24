@@ -82,6 +82,7 @@ import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
 import com.jdimension.jlawyer.client.events.InvoicePositionAddedEvent;
 import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
+import com.jdimension.jlawyer.client.events.PartyAddedEvent;
 import org.apache.log4j.Logger;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -3203,6 +3204,7 @@ public class ToolRegistry {
         }
 
         ArchiveFileAddressesBean created = svc.addAddressToCase(party);
+        EventBroker.getInstance().publishEvent(new PartyAddedEvent(created, contact));
         EventBroker.getInstance().publishEvent(new CasesChangedEvent());
 
         StringBuilder sb = new StringBuilder();
